@@ -6,5 +6,12 @@ license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 
+[dependencies]
+jolt_text = { path = "../jolt_text" }
+unicode-general-category = "1.1"
+
+[dev-dependencies]
+insta = "1.48"
+
 [lints]
 workspace = true

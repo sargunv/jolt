@@ -15,6 +15,9 @@ lockfile = true
 [tasks.check]
 run = "hk check --all"
 
+[tasks.test]
+run = "cargo test --workspace"
+
 [tasks.fix]
 run = "hk fix --all"
 

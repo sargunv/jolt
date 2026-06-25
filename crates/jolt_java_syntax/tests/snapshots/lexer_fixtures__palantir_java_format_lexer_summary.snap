@@ -1,0 +1,108 @@
+---
+source: crates/jolt_java_syntax/tests/lexer_fixtures.rs
+expression: palantir_summary
+---
+suite: palantir-java-format
+files: 226
+
+tokens:
+  AbstractKw: 5
+  Amp: 22
+  AndAnd: 13
+  Arrow: 111
+  AssertKw: 4
+  Assign: 422
+  At: 343
+  Bang: 10
+  BangEq: 7
+  Bar: 20
+  BooleanKw: 22
+  BooleanLiteral: 157
+  BreakKw: 8
+  ByteKw: 4
+  Caret: 2
+  CaseKw: 47
+  CatchKw: 20
+  CharKw: 3
+  CharacterLiteral: 12
+  ClassKw: 324
+  Colon: 80
+  Comma: 3084
+  ContinueKw: 2
+  DefaultKw: 24
+  DoKw: 3
+  Dot: 2282
+  DoubleColon: 23
+  DoubleKw: 1
+  Ellipsis: 13
+  ElseKw: 25
+  EnumKw: 20
+  Eof: 226
+  EqEq: 38
+  ExtendsKw: 74
+  FinalKw: 67
+  FinallyKw: 6
+  FloatingPointLiteral: 9
+  ForKw: 22
+  Gt: 257
+  GtEq: 3
+  Identifier: 8450
+  IfKw: 55
+  ImplementsKw: 16
+  ImportKw: 34
+  InstanceofKw: 10
+  IntKw: 514
+  IntegerLiteral: 2710
+  InterfaceKw: 33
+  LBrace: 906
+  LBracket: 204
+  LParen: 2325
+  LShift: 6
+  LongKw: 1
+  Lt: 525
+  Minus: 35
+  MinusMinus: 1
+  NativeKw: 2
+  NewKw: 122
+  NullLiteral: 77
+  OrOr: 5
+  PackageKw: 32
+  Plus: 1400
+  PlusPlus: 10
+  PrivateKw: 42
+  ProtectedKw: 2
+  PublicKw: 119
+  Question: 58
+  RBrace: 906
+  RBracket: 204
+  RParen: 2325
+  RShift: 70
+  ReturnKw: 98
+  Semicolon: 976
+  ShortKw: 2
+  Slash: 11
+  Star: 19
+  StaticKw: 65
+  StringLiteral: 409
+  SuperKw: 18
+  SwitchKw: 25
+  SynchronizedKw: 1
+  TextBlockLiteral: 53
+  ThisKw: 29
+  ThrowKw: 24
+  ThrowsKw: 20
+  TryKw: 33
+  UnderscoreKw: 11
+  UnsignedRShift: 46
+  VoidKw: 126
+  WhileKw: 10
+
+trivia:
+  BlockComment: 107
+  JavadocComment: 54
+  LineComment: 140
+  Newline: 5084
+  Whitespace: 14739
+
+diagnostics:
+  <none>: 0

@@ -1,0 +1,109 @@
+---
+source: crates/jolt_java_syntax/tests/lexer_fixtures.rs
+expression: google_summary
+---
+suite: google-java-format
+files: 209
+
+tokens:
+  AbstractKw: 5
+  Amp: 22
+  AndAnd: 10
+  Arrow: 74
+  AssertKw: 4
+  Assign: 390
+  At: 319
+  Bang: 6
+  BangEq: 5
+  Bar: 19
+  BooleanKw: 20
+  BooleanLiteral: 144
+  BreakKw: 8
+  ByteKw: 4
+  Caret: 2
+  CaseKw: 59
+  CatchKw: 21
+  CharKw: 2
+  CharacterLiteral: 11
+  ClassKw: 302
+  Colon: 81
+  Comma: 2957
+  ContinueKw: 2
+  DefaultKw: 30
+  DoKw: 3
+  Dot: 1861
+  DoubleColon: 14
+  DoubleKw: 2
+  Ellipsis: 14
+  ElseKw: 22
+  EnumKw: 21
+  Eof: 209
+  EqEq: 36
+  ExtendsKw: 78
+  FinalKw: 69
+  FinallyKw: 6
+  FloatingPointLiteral: 12
+  ForKw: 21
+  Gt: 247
+  GtEq: 3
+  Identifier: 7415
+  IfKw: 45
+  ImplementsKw: 20
+  ImportKw: 37
+  InstanceofKw: 4
+  IntKw: 540
+  IntegerLiteral: 2745
+  InterfaceKw: 40
+  LBrace: 865
+  LBracket: 197
+  LParen: 1788
+  LShift: 6
+  LongKw: 1
+  Lt: 515
+  Minus: 43
+  MinusMinus: 3
+  NativeKw: 2
+  NewKw: 94
+  NullLiteral: 76
+  OrOr: 5
+  PackageKw: 32
+  Plus: 1362
+  PlusPlus: 13
+  PrivateKw: 36
+  ProtectedKw: 2
+  PublicKw: 101
+  Question: 58
+  RBrace: 865
+  RBracket: 197
+  RParen: 1788
+  RShift: 70
+  ReturnKw: 89
+  Semicolon: 944
+  ShortKw: 2
+  Slash: 12
+  Star: 18
+  StaticKw: 66
+  StringLiteral: 323
+  SuperKw: 18
+  SwitchKw: 32
+  SynchronizedKw: 1
+  TextBlockLiteral: 29
+  ThisKw: 26
+  ThrowKw: 17
+  ThrowsKw: 20
+  Tilde: 1
+  TryKw: 35
+  UnderscoreKw: 12
+  UnsignedRShift: 46
+  VoidKw: 96
+  WhileKw: 10
+
+trivia:
+  BlockComment: 130
+  JavadocComment: 55
+  LineComment: 144
+  Newline: 4705
+  Whitespace: 14013
+
+diagnostics:
+  <none>: 0
