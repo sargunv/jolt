@@ -1,20 +1,23 @@
+use jolt_syntax::RawSyntaxKind;
+use num_enum::{IntoPrimitive, TryFromPrimitive};
+
 /// A Java token or syntax node kind.
 ///
 /// This enum is language-wide: lexer tokens and parser-created CST nodes share
 /// the same kind space, while the green tree stores whether an element is a
 /// token or node structurally.
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[repr(u16)]
+#[derive(Clone, Copy, Debug, Eq, Hash, IntoPrimitive, PartialEq, TryFromPrimitive)]
 #[allow(clippy::enum_variant_names)]
 pub enum JavaSyntaxKind {
-    // Tokens.
-    //
-    // Token variants come from JLS Chapter 3 lexical structure: identifiers,
-    // literals, reserved keywords, separators, and operators. Contextual
-    // keywords remain Identifier tokens until parser context interprets them.
+    /// End-of-file marker.
     Eof,
+    /// Unknown token emitted for lexer recovery.
     Unknown,
+    /// Identifier token, including contextual keyword spellings until parsed in context.
     Identifier,
 
+    // Literals.
     IntegerLiteral,
     FloatingPointLiteral,
     BooleanLiteral,
@@ -23,6 +26,7 @@ pub enum JavaSyntaxKind {
     TextBlockLiteral,
     NullLiteral,
 
+    // Reserved keywords.
     AbstractKw,
     AssertKw,
     BooleanKw,
@@ -75,6 +79,7 @@ pub enum JavaSyntaxKind {
     WhileKw,
     UnderscoreKw,
 
+    // Separators.
     LParen,
     RParen,
     LBrace,
@@ -89,6 +94,7 @@ pub enum JavaSyntaxKind {
     Colon,
     DoubleColon,
 
+    // Operators.
     Assign,
     Gt,
     GtEq,
@@ -126,6 +132,7 @@ pub enum JavaSyntaxKind {
     LShiftEq,
     RShiftEq,
     UnsignedRShiftEq,
+
     // Nodes.
     //
     // Contributor note: derive node variants from the Java syntax grammar, but
@@ -138,4 +145,146 @@ pub enum JavaSyntaxKind {
     // - Account for every JLS syntax production in the parser coverage matrix
     //   as represented by a node, folded into another node, or handled as token
     //   or contextual-keyword behavior.
+    ErrorNode,
+
+    CompilationUnit,
+    PackageDeclaration,
+    ImportDeclaration,
+
+    ModuleDeclaration,
+    ModuleDirective,
+    RequiresDirective,
+    ExportsDirective,
+    OpensDirective,
+    UsesDirective,
+    ProvidesDirective,
+
+    ModifierList,
+    Annotation,
+    AnnotationArgumentList,
+    AnnotationElement,
+    AnnotationElementList,
+    AnnotationArrayInitializer,
+
+    ClassDeclaration,
+    RecordDeclaration,
+    EnumDeclaration,
+    InterfaceDeclaration,
+    AnnotationInterfaceDeclaration,
+    TypeParameterList,
+    TypeParameter,
+    TypeBoundList,
+    ExtendsClause,
+    ImplementsClause,
+    PermitsClause,
+    ClassBody,
+    ClassBodyDeclaration,
+    EnumBody,
+    EnumConstantList,
+    EnumConstant,
+    RecordComponentList,
+    RecordComponent,
+    FieldDeclaration,
+    MethodDeclaration,
+    ConstructorDeclaration,
+    CompactConstructorDeclaration,
+    StaticInitializer,
+    InstanceInitializer,
+
+    FormalParameterList,
+    FormalParameter,
+    ReceiverParameter,
+    ThrowsClause,
+    VariableDeclaratorList,
+    VariableDeclarator,
+    VariableInitializer,
+
+    Block,
+    BlockStatement,
+    LocalVariableDeclaration,
+    LocalClassOrInterfaceDeclaration,
+    EmptyStatement,
+    LabeledStatement,
+    ExpressionStatement,
+    IfStatement,
+    AssertStatement,
+    SwitchStatement,
+    SwitchBlock,
+    SwitchRule,
+    SwitchLabel,
+    WhileStatement,
+    DoStatement,
+    ForStatement,
+    BasicForStatement,
+    EnhancedForStatement,
+    ForInitializer,
+    ForUpdate,
+    BreakStatement,
+    YieldStatement,
+    ContinueStatement,
+    ReturnStatement,
+    ThrowStatement,
+    SynchronizedStatement,
+    TryStatement,
+    TryWithResourcesStatement,
+    CatchClause,
+    CatchTypeList,
+    FinallyClause,
+    ResourceList,
+    Resource,
+
+    PrimitiveType,
+    ClassType,
+    ArrayType,
+    TypeArgumentList,
+    TypeArgument,
+    WildcardType,
+    ArrayDimensions,
+
+    Name,
+    QualifiedName,
+
+    LiteralExpression,
+    NameExpression,
+    ThisExpression,
+    SuperExpression,
+    ParenthesizedExpression,
+    ClassLiteralExpression,
+    FieldAccessExpression,
+    ArrayAccessExpression,
+    MethodInvocationExpression,
+    MethodReferenceExpression,
+    ObjectCreationExpression,
+    ArrayCreationExpression,
+    ArrayInitializer,
+    AssignmentExpression,
+    ConditionalExpression,
+    BinaryExpression,
+    UnaryExpression,
+    PostfixExpression,
+    CastExpression,
+    LambdaExpression,
+    LambdaParameterList,
+    LambdaParameter,
+    SwitchExpression,
+    ArgumentList,
+
+    TypePattern,
+    RecordPattern,
+    ComponentPattern,
+    MatchAllPattern,
+}
+
+impl JavaSyntaxKind {
+    /// Converts this kind into the raw representation used by shared syntax data.
+    #[must_use]
+    pub fn to_raw(self) -> RawSyntaxKind {
+        RawSyntaxKind::new(u16::from(self))
+    }
+
+    /// Converts a raw kind back into a Java syntax kind.
+    #[must_use]
+    pub fn from_raw(raw: RawSyntaxKind) -> Option<Self> {
+        Self::try_from(raw.get()).ok()
+    }
 }

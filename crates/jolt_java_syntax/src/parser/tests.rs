@@ -15,3 +15,25 @@
 //
 // Focused tests should not try to enumerate the combinatorial product of the
 // grammar. Each test should make one source-shape claim obvious.
+
+use jolt_syntax::green_text;
+
+use super::parse_compilation_unit;
+use crate::JavaSyntaxKind;
+
+#[test]
+fn parser_shell_wraps_source_in_compilation_unit() {
+    let parse = parse_compilation_unit("package a;\nclass A {}\n");
+
+    assert_eq!(parse.syntax().kind(), JavaSyntaxKind::CompilationUnit);
+    assert!(parse.diagnostics().is_empty());
+    assert!(parse.lexer_diagnostics().is_empty());
+}
+
+#[test]
+fn parser_shell_preserves_source_text() {
+    let source = "class A {\n  // hello\n}\n";
+    let parse = parse_compilation_unit(source);
+
+    assert_eq!(green_text(parse.syntax().green()), source);
+}
