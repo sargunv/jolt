@@ -1,0 +1,15 @@
+---
+source: crates/jolt_java_syntax/tests/parser_fixtures.rs
+expression: google_summary.render()
+---
+suite: google-java-format
+files: 209
+
+nodes:
+  CompilationUnit: 209
+
+parser diagnostics:
+  <none>: 0
+
+lexer diagnostics:
+  <none>: 0
