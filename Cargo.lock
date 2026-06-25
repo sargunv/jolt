@@ -113,6 +113,9 @@ version = "0.0.0"
 [[package]]
 name = "jolt_syntax"
 version = "0.0.0"
+dependencies = [
+ "jolt_text",
+]
 
 [[package]]
 name = "jolt_text"

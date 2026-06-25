@@ -1,6 +1,9 @@
 //! Source text primitives shared by Jolt parser and formatter crates.
 
-use std::fmt;
+use std::{
+    fmt,
+    ops::{Add, AddAssign, Sub, SubAssign},
+};
 
 /// A UTF-8 byte offset or length in source text.
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -29,6 +32,42 @@ impl From<usize> for TextSize {
 impl From<TextSize> for usize {
     fn from(value: TextSize) -> Self {
         value.0
+    }
+}
+
+impl Add for TextSize {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self(
+            self.0
+                .checked_add(rhs.0)
+                .expect("text size addition overflowed"),
+        )
+    }
+}
+
+impl AddAssign for TextSize {
+    fn add_assign(&mut self, rhs: Self) {
+        *self = *self + rhs;
+    }
+}
+
+impl Sub for TextSize {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self(
+            self.0
+                .checked_sub(rhs.0)
+                .expect("text size subtraction underflowed"),
+        )
+    }
+}
+
+impl SubAssign for TextSize {
+    fn sub_assign(&mut self, rhs: Self) {
+        *self = *self - rhs;
     }
 }
 
@@ -81,7 +120,7 @@ impl TextRange {
     /// Returns the byte length of the range.
     #[must_use]
     pub fn len(self) -> TextSize {
-        TextSize::new(self.end.get() - self.start.get())
+        self.end - self.start
     }
 
     /// Returns true when the range contains no bytes.
@@ -147,7 +186,7 @@ impl LineIndex {
             Err(next_line) => next_line.saturating_sub(1),
         };
         let line_start = self.line_starts[line];
-        let column = TextSize::new(offset.get() - line_start.get());
+        let column = offset - line_start;
 
         LineCol { line, column }
     }
