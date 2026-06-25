@@ -3,6 +3,14 @@ import "package://github.com/jdx/hk/releases/download/v1.48.0/hk@1.48.0#/Builtin
 
 local lintSteps = new Mapping<String, Step> {
     ["dprint"] = (Builtins.dprint)
+    ["cargo-check"] {
+        glob = List("**/*.rs", "Cargo.toml", "Cargo.lock")
+        check = "cargo check --workspace"
+    }
+    ["cargo-check-wasm"] {
+        glob = List("**/*.rs", "Cargo.toml", "Cargo.lock")
+        check = "cargo check --target wasm32-unknown-unknown --package jolt_text --package jolt_fmt_core --package jolt_fmt_ir --package jolt_syntax --package jolt_java_syntax --package jolt_kotlin_syntax --package jolt_java_fmt --package jolt_kotlin_fmt --package jolt_fmt_dprint"
+    }
     ["cargo-clippy"] {
         glob = List("**/*.rs")
         check = "cargo clippy --workspace -- -D warnings"

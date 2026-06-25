@@ -19,3 +19,6 @@ Run `mise tasks ls --all` for the full task list.
 ## Project Invariants
 
 <!-- Add concise invariants to this section when the user asks you to always or never do something. -->
+
+- Do not add tests that only duplicate source definitions, such as pinning enum
+  defaults or simple accessors.
