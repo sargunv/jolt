@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use jolt_java_syntax::{JavaSyntaxKind, Lexed, lex};
+use jolt_java_syntax::{JavaLexer, JavaSyntaxKind, LexerDiagnostic, Token};
 
 #[test]
 fn oracle_java_inputs_lex_without_loss() {
@@ -42,6 +42,29 @@ fn assert_corpus(suite: &str, expected_files: usize) -> String {
     }
 
     summary.render()
+}
+
+struct Lexed {
+    tokens: Vec<Token>,
+    diagnostics: Vec<LexerDiagnostic>,
+}
+
+fn lex(source: &str) -> Lexed {
+    let mut lexer = JavaLexer::new(source);
+    let mut tokens = Vec::new();
+    loop {
+        let token = lexer.next_token();
+        let at_eof = token.kind == JavaSyntaxKind::Eof;
+        tokens.push(token);
+        if at_eof {
+            break;
+        }
+    }
+    let diagnostics = lexer.finish();
+    Lexed {
+        tokens,
+        diagnostics,
+    }
 }
 
 fn fixture_root(suite: &str) -> PathBuf {

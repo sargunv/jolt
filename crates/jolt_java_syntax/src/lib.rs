@@ -3,5 +3,6 @@
 mod lexer;
 
 pub use lexer::{
-    JavaSyntaxKind, Lexed, LexerDiagnostic, LexerDiagnosticKind, Token, Trivia, TriviaKind, lex,
+    JavaLexer, JavaLexerCheckpoint, JavaSyntaxKind, JavaTokenSource, JavaTokenSourceCheckpoint,
+    LexerDiagnostic, LexerDiagnosticKind, Token, Trivia, TriviaKind,
 };

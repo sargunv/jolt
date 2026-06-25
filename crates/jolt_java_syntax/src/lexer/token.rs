@@ -29,13 +29,6 @@ pub struct Token {
     pub trailing: Vec<Trivia>,
 }
 
-/// The result of lexing Java source.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Lexed {
-    pub tokens: Vec<Token>,
-    pub diagnostics: Vec<LexerDiagnostic>,
-}
-
 /// A lexer diagnostic with a raw source range.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct LexerDiagnostic {

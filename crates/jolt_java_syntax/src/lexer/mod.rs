@@ -4,27 +4,189 @@ mod tests;
 mod token;
 mod unicode;
 
+use std::collections::VecDeque;
+
 use jolt_text::{TextRange, TextSize};
 use unicode_general_category::{GeneralCategory, get_general_category};
 
 pub use kind::JavaSyntaxKind;
-pub use token::{Lexed, LexerDiagnostic, LexerDiagnosticKind, Token, Trivia, TriviaKind};
+pub use token::{LexerDiagnostic, LexerDiagnosticKind, Token, Trivia, TriviaKind};
 use unicode::{InputChar, translate_unicode_escapes};
 
-/// Lexes Java source into tokens, trivia, and diagnostics.
-#[must_use]
-pub fn lex(source: &str) -> Lexed {
-    Lexer::new(source).lex()
+/// A Java lexer that produces tokens on demand.
+pub struct JavaLexer<'source> {
+    scanner: Scanner<'source>,
+    emitted_eof: bool,
 }
 
-struct Lexer<'source> {
+impl<'source> JavaLexer<'source> {
+    /// Creates a lexer for Java source text.
+    #[must_use]
+    pub fn new(source: &'source str) -> Self {
+        Self {
+            scanner: Scanner::new(source),
+            emitted_eof: false,
+        }
+    }
+
+    /// Returns the next token, including trivia attached to that token.
+    pub fn next_token(&mut self) -> Token {
+        if self.emitted_eof {
+            return self.eof_token(Vec::new());
+        }
+
+        let leading = self.scanner.leading_trivia();
+        if self.scanner.at_end() {
+            self.emitted_eof = true;
+            return self.eof_token(leading);
+        }
+
+        let (kind, range) = self.scanner.token();
+        let trailing = self.scanner.trailing_trivia();
+        Token {
+            kind,
+            range,
+            leading,
+            trailing,
+        }
+    }
+
+    /// Creates a checkpoint that can be restored with [`Self::rewind`].
+    #[must_use]
+    pub fn checkpoint(&self) -> JavaLexerCheckpoint {
+        JavaLexerCheckpoint {
+            pos: self.scanner.pos,
+            diagnostics_len: self.scanner.diagnostics.len(),
+            emitted_eof: self.emitted_eof,
+        }
+    }
+
+    /// Restores the lexer to a previous checkpoint.
+    pub fn rewind(&mut self, checkpoint: JavaLexerCheckpoint) {
+        self.scanner.pos = checkpoint.pos;
+        self.scanner
+            .diagnostics
+            .truncate(checkpoint.diagnostics_len);
+        self.emitted_eof = checkpoint.emitted_eof;
+    }
+
+    /// Drains the remaining source and returns all lexer diagnostics.
+    #[must_use]
+    pub fn finish(mut self) -> Vec<LexerDiagnostic> {
+        while !self.emitted_eof {
+            self.next_token();
+        }
+        self.scanner.diagnostics
+    }
+
+    fn eof_token(&self, leading: Vec<Trivia>) -> Token {
+        Token {
+            kind: JavaSyntaxKind::Eof,
+            range: TextRange::empty(TextSize::new(self.scanner.source.len())),
+            leading,
+            trailing: Vec::new(),
+        }
+    }
+}
+
+/// A checkpoint for [`JavaLexer`].
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct JavaLexerCheckpoint {
+    pos: usize,
+    diagnostics_len: usize,
+    emitted_eof: bool,
+}
+
+/// Parser-facing token source with lookahead and rewind support.
+pub struct JavaTokenSource<'source> {
+    lexer: JavaLexer<'source>,
+    current: Token,
+    lookahead: VecDeque<Token>,
+}
+
+impl<'source> JavaTokenSource<'source> {
+    /// Creates a token source and positions it at the first token.
+    #[must_use]
+    pub fn new(source: &'source str) -> Self {
+        let mut lexer = JavaLexer::new(source);
+        let current = lexer.next_token();
+        Self {
+            lexer,
+            current,
+            lookahead: VecDeque::new(),
+        }
+    }
+
+    /// Returns the current token.
+    #[must_use]
+    pub fn current(&self) -> &Token {
+        &self.current
+    }
+
+    /// Advances to the next token.
+    pub fn bump(&mut self) {
+        self.current = self
+            .lookahead
+            .pop_front()
+            .unwrap_or_else(|| self.lexer.next_token());
+    }
+
+    /// Returns the nth token from the current token, where zero is current.
+    pub fn nth(&mut self, n: usize) -> &Token {
+        if n == 0 {
+            return &self.current;
+        }
+
+        while self.lookahead.len() < n {
+            self.lookahead.push_back(self.lexer.next_token());
+        }
+
+        &self.lookahead[n - 1]
+    }
+
+    /// Creates a checkpoint that can be restored with [`Self::rewind`].
+    #[must_use]
+    pub fn checkpoint(&self) -> JavaTokenSourceCheckpoint {
+        JavaTokenSourceCheckpoint {
+            lexer: self.lexer.checkpoint(),
+            current: self.current.clone(),
+            lookahead: self.lookahead.clone(),
+        }
+    }
+
+    /// Restores the token source to a previous checkpoint.
+    pub fn rewind(&mut self, checkpoint: JavaTokenSourceCheckpoint) {
+        self.lexer.rewind(checkpoint.lexer);
+        self.current = checkpoint.current;
+        self.lookahead = checkpoint.lookahead;
+    }
+
+    /// Drains the remaining source and returns all lexer diagnostics.
+    #[must_use]
+    pub fn finish(mut self) -> Vec<LexerDiagnostic> {
+        while self.current.kind != JavaSyntaxKind::Eof {
+            self.bump();
+        }
+        self.lexer.finish()
+    }
+}
+
+/// A checkpoint for [`JavaTokenSource`].
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct JavaTokenSourceCheckpoint {
+    lexer: JavaLexerCheckpoint,
+    current: Token,
+    lookahead: VecDeque<Token>,
+}
+
+struct Scanner<'source> {
     source: &'source str,
     chars: Vec<InputChar>,
     pos: usize,
     diagnostics: Vec<LexerDiagnostic>,
 }
 
-impl<'source> Lexer<'source> {
+impl<'source> Scanner<'source> {
     fn new(source: &'source str) -> Self {
         let (chars, diagnostics) = translate_unicode_escapes(source);
         Self {
@@ -32,37 +194,6 @@ impl<'source> Lexer<'source> {
             chars,
             pos: 0,
             diagnostics,
-        }
-    }
-
-    fn lex(mut self) -> Lexed {
-        let mut tokens = Vec::new();
-
-        loop {
-            let leading = self.leading_trivia();
-            if self.at_end() {
-                tokens.push(Token {
-                    kind: JavaSyntaxKind::Eof,
-                    range: TextRange::empty(TextSize::new(self.source.len())),
-                    leading,
-                    trailing: Vec::new(),
-                });
-                break;
-            }
-
-            let (kind, range) = self.token();
-            let trailing = self.trailing_trivia();
-            tokens.push(Token {
-                kind,
-                range,
-                leading,
-                trailing,
-            });
-        }
-
-        Lexed {
-            tokens,
-            diagnostics: self.diagnostics,
         }
     }
 

@@ -1,9 +1,35 @@
 use jolt_text::{TextRange, TextSize};
 
-use super::{JavaSyntaxKind, LexerDiagnostic, LexerDiagnosticKind, TriviaKind, lex};
+use super::{
+    JavaLexer, JavaSyntaxKind, JavaTokenSource, LexerDiagnostic, LexerDiagnosticKind, Token,
+    TriviaKind,
+};
 
 // Java SE 25 lexical specification:
 // https://docs.oracle.com/javase/specs/jls/se25/html/jls-3.html
+
+struct Lexed {
+    tokens: Vec<Token>,
+    diagnostics: Vec<LexerDiagnostic>,
+}
+
+fn lex(source: &str) -> Lexed {
+    let mut lexer = JavaLexer::new(source);
+    let mut tokens = Vec::new();
+    loop {
+        let token = lexer.next_token();
+        let at_eof = token.kind == JavaSyntaxKind::Eof;
+        tokens.push(token);
+        if at_eof {
+            break;
+        }
+    }
+    let diagnostics = lexer.finish();
+    Lexed {
+        tokens,
+        diagnostics,
+    }
+}
 
 fn real_tokens(source: &str) -> Vec<JavaSyntaxKind> {
     lex(source)
@@ -35,6 +61,47 @@ fn reconstructed(source: &str) -> String {
         }
     }
     out
+}
+
+#[test]
+fn token_source_supports_lookahead_without_bumping() {
+    let mut source = JavaTokenSource::new("class A {}");
+
+    assert_eq!(source.current().kind, JavaSyntaxKind::ClassKw);
+    assert_eq!(source.nth(1).kind, JavaSyntaxKind::Identifier);
+    assert_eq!(source.nth(2).kind, JavaSyntaxKind::LBrace);
+    assert_eq!(source.current().kind, JavaSyntaxKind::ClassKw);
+
+    source.bump();
+    assert_eq!(source.current().kind, JavaSyntaxKind::Identifier);
+    source.bump();
+    assert_eq!(source.current().kind, JavaSyntaxKind::LBrace);
+}
+
+#[test]
+fn token_source_can_rewind_to_checkpoint() {
+    let mut source = JavaTokenSource::new("class A {}");
+    let checkpoint = source.checkpoint();
+
+    assert_eq!(source.nth(2).kind, JavaSyntaxKind::LBrace);
+    source.bump();
+    source.bump();
+    assert_eq!(source.current().kind, JavaSyntaxKind::LBrace);
+
+    source.rewind(checkpoint);
+    assert_eq!(source.current().kind, JavaSyntaxKind::ClassKw);
+    assert_eq!(source.nth(1).kind, JavaSyntaxKind::Identifier);
+}
+
+#[test]
+fn lexer_rewind_restores_diagnostics() {
+    let mut lexer = JavaLexer::new("/* unterminated");
+    let checkpoint = lexer.checkpoint();
+
+    assert_eq!(lexer.next_token().kind, JavaSyntaxKind::Eof);
+    lexer.rewind(checkpoint);
+    assert_eq!(lexer.next_token().kind, JavaSyntaxKind::Eof);
+    assert_eq!(lexer.finish().len(), 1);
 }
 
 #[test]
