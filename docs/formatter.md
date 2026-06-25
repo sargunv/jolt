@@ -20,7 +20,8 @@ The formatter should be opinionated, profile-driven, and compatibility-oriented.
   - Google Java Format AOSP mode.
   - Palantir Java Format.
 - Kotlin formatting profiles compatible with:
-  - ktfmt's default/Facebook style.
+  - ktfmt's default/Meta style.
+  - ktfmt's Google style.
   - ktfmt's Kotlin language style.
 - A native-only oracle test harness that imports upstream formatter fixtures and materializes expected outputs.
 - A shared formatter IR and renderer used by both Java and Kotlin printers.
@@ -74,7 +75,8 @@ jolt fmt --java-profile google
 jolt fmt --java-profile aosp
 jolt fmt --java-profile palantir
 
-jolt fmt --kotlin-profile facebook
+jolt fmt --kotlin-profile meta
+jolt fmt --kotlin-profile google
 jolt fmt --kotlin-profile kotlinlang
 ```
 
@@ -82,7 +84,7 @@ Tentative defaults:
 
 ```text
 java-profile   = google
-kotlin-profile = facebook
+kotlin-profile = meta
 ```
 
 The dprint plugin should expose equivalent configuration:
@@ -92,7 +94,7 @@ The dprint plugin should expose equivalent configuration:
   "plugins": ["https://example.invalid/jolt_fmt.wasm"],
   "jolt": {
     "javaProfile": "google",
-    "kotlinProfile": "facebook"
+    "kotlinProfile": "meta"
   }
 }
 ```
@@ -384,7 +386,8 @@ pub enum JavaProfile {
 }
 
 pub enum KotlinProfile {
-    Facebook,
+    Meta,
+    Google,
     Kotlinlang,
 }
 ```
@@ -495,7 +498,7 @@ crates/
 
   jolt_kotlin_fmt/
     Kotlin CST -> Doc printer
-    ktfmt default/Facebook and kotlinlang profile behavior
+    ktfmt meta, google, and kotlinlang profile behavior
 
   jolt_fmt_core/
     public format API
@@ -560,29 +563,34 @@ Initial oracle suites:
 
 ```text
 google-java-format:
-  upstream executable: google-java-format
   upstream fixtures: google-java-format fixtures
-  Jolt config: java-profile = google
-
-google-java-format-aosp:
-  upstream executable: google-java-format --aosp
-  upstream fixtures: google-java-format fixtures
-  Jolt config: java-profile = aosp
+  profiles:
+    google:
+      upstream executable: google-java-format --skip-removing-unused-imports
+      Jolt config: java-profile = google
+    aosp:
+      upstream executable: google-java-format --aosp --skip-removing-unused-imports
+      Jolt config: java-profile = aosp
 
 palantir-java-format:
-  upstream executable: palantir-java-format
   upstream fixtures: palantir-java-format fixtures
-  Jolt config: java-profile = palantir
+  profiles:
+    palantir:
+      upstream executable: palantir-java-format --palantir --skip-removing-unused-imports
+      Jolt config: java-profile = palantir
 
-ktfmt-facebook:
-  upstream executable: ktfmt
+ktfmt:
   upstream fixtures: ktfmt fixtures
-  Jolt config: kotlin-profile = facebook
-
-ktfmt-kotlinlang:
-  upstream executable: ktfmt --kotlinlang-style
-  upstream fixtures: ktfmt fixtures
-  Jolt config: kotlin-profile = kotlinlang
+  profiles:
+    meta:
+      upstream executable: ktfmt
+      Jolt config: kotlin-profile = meta
+    google:
+      upstream executable: ktfmt --google-style
+      Jolt config: kotlin-profile = google
+    kotlinlang:
+      upstream executable: ktfmt --kotlinlang-style
+      Jolt config: kotlin-profile = kotlinlang
 ```
 
 ### Fixture import
@@ -593,9 +601,8 @@ Oracle output should be materialized during an explicit import/update step.
 mise run import-oracles
   -> checkout pinned upstream formatter repos
   -> collect fixture inputs
-  -> run upstream formatter once
-  -> write input and expected output into Jolt's oracle fixture directory
-  -> record metadata with upstream repo, commit, command, and profile
+  -> write inputs into Jolt's oracle fixture directory
+  -> materialize expected output for each supported profile
 ```
 
 Ordinary test runs should not spawn upstream formatters.
@@ -869,8 +876,11 @@ java-profile = aosp
 java-profile = palantir
   -> compatible with Palantir Java Format fixture output
 
-kotlin-profile = facebook
-  -> compatible with ktfmt default/Facebook fixture output
+kotlin-profile = meta
+  -> compatible with ktfmt default/Meta fixture output
+
+kotlin-profile = google
+  -> compatible with ktfmt Google style fixture output
 
 kotlin-profile = kotlinlang
   -> compatible with ktfmt Kotlin language style fixture output
@@ -982,5 +992,5 @@ Oracle references:
 
 - Initial Java formatter: no formatter suppression comments.
 - Parse errors: no writes by default; recoverable-error formatting can be added later behind an explicit policy.
-- Kotlin profiles: expose `facebook` for ktfmt's default style and `kotlinlang` for ktfmt's Kotlin language style.
+- Kotlin profiles: expose `meta` for ktfmt's default style, `google` for ktfmt's Google style, and `kotlinlang` for ktfmt's Kotlin language style.
 - Syntax sharing: share storage, traversal, events, diagnostics, and text utilities; keep grammar, typed wrappers, and printers language-specific.

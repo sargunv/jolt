@@ -1,0 +1,11 @@
+["google/google-java-format"]
+tag = "v1.35.0"
+commit = "cdd8a84012838205747cfd54b389a37397bdb701"
+
+["palantir/palantir-java-format"]
+tag = "2.94.0"
+commit = "df34ef135c326a290046f793deb945ac714359f4"
+
+["facebook/ktfmt"]
+tag = "v0.64"
+commit = "682a5cd32d741bd7126183714aa4ee2e3246defe"

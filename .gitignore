@@ -1,1 +1,5 @@
 /target/
+__pycache__/
+/.oracles/
+/tools/oracles/formatter-harness/.gradle/
+/tools/oracles/formatter-harness/build/

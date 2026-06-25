@@ -32,6 +32,38 @@ url = "https://github.com/dprint/dprint/releases/download/0.54.0/dprint-x86_64-a
 checksum = "sha256:3fd881acaf7fd4fbc5d07c3030ce79b965a4cb7128fe0eb1ebe725188ccd2715"
 url = "https://github.com/dprint/dprint/releases/download/0.54.0/dprint-x86_64-pc-windows-msvc.zip"
 
+[[tools."aqua:gradle/gradle"]]
+version = "9.6.0"
+backend = "aqua:gradle/gradle"
+
+[tools."aqua:gradle/gradle"."platforms.linux-arm64"]
+checksum = "sha256:bbaeb2fef8710818cf0e261201dab964c572f92b942812df0c3620d62a529a01"
+url = "https://github.com/gradle/gradle-distributions/releases/download/v9.6.0/gradle-9.6.0-bin.zip"
+
+[tools."aqua:gradle/gradle"."platforms.linux-arm64-musl"]
+checksum = "sha256:bbaeb2fef8710818cf0e261201dab964c572f92b942812df0c3620d62a529a01"
+url = "https://github.com/gradle/gradle-distributions/releases/download/v9.6.0/gradle-9.6.0-bin.zip"
+
+[tools."aqua:gradle/gradle"."platforms.linux-x64"]
+checksum = "sha256:bbaeb2fef8710818cf0e261201dab964c572f92b942812df0c3620d62a529a01"
+url = "https://github.com/gradle/gradle-distributions/releases/download/v9.6.0/gradle-9.6.0-bin.zip"
+
+[tools."aqua:gradle/gradle"."platforms.linux-x64-musl"]
+checksum = "sha256:bbaeb2fef8710818cf0e261201dab964c572f92b942812df0c3620d62a529a01"
+url = "https://github.com/gradle/gradle-distributions/releases/download/v9.6.0/gradle-9.6.0-bin.zip"
+
+[tools."aqua:gradle/gradle"."platforms.macos-arm64"]
+checksum = "sha256:bbaeb2fef8710818cf0e261201dab964c572f92b942812df0c3620d62a529a01"
+url = "https://github.com/gradle/gradle-distributions/releases/download/v9.6.0/gradle-9.6.0-bin.zip"
+
+[tools."aqua:gradle/gradle"."platforms.macos-x64"]
+checksum = "sha256:bbaeb2fef8710818cf0e261201dab964c572f92b942812df0c3620d62a529a01"
+url = "https://github.com/gradle/gradle-distributions/releases/download/v9.6.0/gradle-9.6.0-bin.zip"
+
+[tools."aqua:gradle/gradle"."platforms.windows-x64"]
+checksum = "sha256:bbaeb2fef8710818cf0e261201dab964c572f92b942812df0c3620d62a529a01"
+url = "https://github.com/gradle/gradle-distributions/releases/download/v9.6.0/gradle-9.6.0-bin.zip"
+
 [[tools."aqua:jdx/hk"]]
 version = "1.48.0"
 backend = "aqua:jdx/hk"
@@ -59,6 +91,77 @@ url = "https://github.com/jdx/hk/releases/download/v1.48.0/hk-aarch64-apple-darw
 [tools."aqua:jdx/hk"."platforms.windows-x64"]
 checksum = "sha256:6349ab27cd7a9c07e68edc7c2af0859c8a540482e97a5b7306e9e88460a5ca43"
 url = "https://github.com/jdx/hk/releases/download/v1.48.0/hk-x86_64-pc-windows-msvc.zip"
+
+[[tools.java]]
+version = "zulu-25.34.17.0"
+backend = "core:java"
+
+[tools.java."platforms.linux-arm64"]
+checksum = "sha256:2610e5c64df94cee5fb591d70183c5bf8532d8e1d394c754e8ba06751bcceb1b"
+url = "https://cdn.azul.com/zulu/bin/zulu25.34.17-ca-jdk25.0.3-linux_aarch64.tar.gz"
+
+[tools.java."platforms.linux-arm64-musl"]
+checksum = "sha256:a19b1c5cad474b6fe7309769da35786f2ca7059c32ce175eddb06148bce85872"
+url = "https://cdn.azul.com/zulu/bin/zulu25.34.17-ca-jdk25.0.3-linux_musl_aarch64.tar.gz"
+
+[tools.java."platforms.linux-x64"]
+checksum = "sha256:3a93235f4e5b313232647916219e91dc5cca0b9835c9b52a404ba58c43571697"
+url = "https://cdn.azul.com/zulu/bin/zulu25.34.17-ca-jdk25.0.3-linux_x64.tar.gz"
+
+[tools.java."platforms.linux-x64-musl"]
+checksum = "sha256:f0b9cf36db2742e1d8f350bd9884b2d32c6391dd3b2bc9cd10c3c4d4856931aa"
+url = "https://cdn.azul.com/zulu/bin/zulu25.34.17-ca-jdk25.0.3-linux_musl_x64.tar.gz"
+
+[tools.java."platforms.macos-arm64"]
+checksum = "sha256:74847e7ac930ad143950607421dd6c0a7ccb3d1cbbd8b1665f24ab62b8b7de42"
+url = "https://cdn.azul.com/zulu/bin/zulu25.34.17-ca-jdk25.0.3-macosx_aarch64.tar.gz"
+
+[tools.java."platforms.macos-x64"]
+checksum = "sha256:ecc005bf7b129c035379e0de9bebfd667be93098f5f1e329cd498c46769167ae"
+url = "https://cdn.azul.com/zulu/bin/zulu25.34.17-ca-jdk25.0.3-macosx_x64.tar.gz"
+
+[tools.java."platforms.windows-x64"]
+checksum = "sha256:ddd68ee54e78b6b19388f517b8a61fbed2856ae3320febe42449bac3021e2729"
+url = "https://cdn.azul.com/zulu/bin/zulu25.34.17-ca-jdk25.0.3-win_x64.zip"
+
+[[tools.python]]
+version = "3.14.5"
+backend = "core:python"
+
+[tools.python."platforms.linux-arm64"]
+checksum = "sha256:1d3ea1b3cd9b8f3d53afb629e82e9bc8f6dab6cbb1a7d23524bd86ba5bc22570"
+url = "https://github.com/astral-sh/python-build-standalone/releases/download/20260602/cpython-3.14.5+20260602-aarch64-unknown-linux-gnu-install_only_stripped.tar.gz"
+provenance = "github-attestations"
+
+[tools.python."platforms.linux-arm64-musl"]
+checksum = "sha256:23dfd69917f1c693b7ce857f014a72da546c8132c277bb6ac98fdbe12334e221"
+url = "https://github.com/astral-sh/python-build-standalone/releases/download/20260602/cpython-3.14.5+20260602-aarch64-unknown-linux-musl-install_only_stripped.tar.gz"
+provenance = "github-attestations"
+
+[tools.python."platforms.linux-x64"]
+checksum = "sha256:982a60fc7f11bbe405ab54afcd4eb145f1134797bbbffac9f5c49df4ec98b13e"
+url = "https://github.com/astral-sh/python-build-standalone/releases/download/20260602/cpython-3.14.5+20260602-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz"
+provenance = "github-attestations"
+
+[tools.python."platforms.linux-x64-musl"]
+checksum = "sha256:09fb97b20df0ed9336d39468007619b3458489c33fa4166b43155587b382f84a"
+url = "https://github.com/astral-sh/python-build-standalone/releases/download/20260602/cpython-3.14.5+20260602-x86_64-unknown-linux-musl-install_only_stripped.tar.gz"
+provenance = "github-attestations"
+
+[tools.python."platforms.macos-arm64"]
+checksum = "sha256:3a0373cc39fefd494754ef555267f245c720cddbaaabf63a7c9a4269f1e56532"
+url = "https://github.com/astral-sh/python-build-standalone/releases/download/20260602/cpython-3.14.5+20260602-aarch64-apple-darwin-install_only_stripped.tar.gz"
+provenance = "github-attestations"
+
+[tools.python."platforms.macos-x64"]
+checksum = "sha256:d44ff6ec301cabc91eb0c756b1948b28579fb07feba36aaf1990e535649d5ea6"
+url = "https://github.com/astral-sh/python-build-standalone/releases/download/20260602/cpython-3.14.5+20260602-x86_64-apple-darwin-install_only_stripped.tar.gz"
+provenance = "github-attestations"
+
+[tools.python."platforms.windows-x64"]
+checksum = "sha256:66b065143e538c07f069f764d831d8ffae95507907d4ca211304e6f3a056435c"
+url = "https://github.com/astral-sh/python-build-standalone/releases/download/20260602/cpython-3.14.5+20260602-x86_64-pc-windows-msvc-install_only_stripped.tar.gz"
+provenance = "github-attestations"
 
 [[tools.rust]]
 version = "1.96.0"

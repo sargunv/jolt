@@ -6,7 +6,10 @@ lockfile = true
 
 [tools]
 "aqua:dprint/dprint" = "0.54.0"
+"aqua:gradle/gradle" = "9.6.0"
 "aqua:jdx/hk" = "1.48.0"
+"core:java" = "zulu-25.34.17.0"
+"core:python" = "3.14.5"
 "core:rust" = { version = "1.96.0", profile = "minimal", components = "rustfmt,clippy", targets = "wasm32-unknown-unknown" }
 
 [tasks.check]
@@ -14,6 +17,13 @@ run = "hk check --all"
 
 [tasks.fix]
 run = "hk fix --all"
+
+[tasks.import-oracles]
+description = "Import oracle inputs and materialize expected formatter outputs"
+run = [
+  "python tools/oracles/import_oracles.py",
+  "gradle -q --project-dir tools/oracles/formatter-harness run --args \"$PWD/.oracles/fixtures\"",
+]
 
 [hooks]
 postinstall = ["hk install --mise"]
