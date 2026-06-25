@@ -2,11 +2,18 @@
 
 ## Purpose
 
-The first Jolt product should be a formatter engine for Java and Kotlin source code.
+The first Jolt product should be a formatter engine for Java and Kotlin source
+code.
 
-The formatter is an adoption wedge for Jolt, but it should not be treated as a throwaway CLI tool. It should be the first durable piece of Jolt's source tooling substrate: a reusable, wasm-compatible formatting engine with a native CLI wrapper and a dprint plugin wrapper.
+The formatter is an adoption wedge for Jolt, but it should not be treated as a
+throwaway CLI tool. It should be the first durable piece of Jolt's source
+tooling substrate: a reusable, wasm-compatible formatting engine with a native
+CLI wrapper and a dprint plugin wrapper.
 
-The formatter should be opinionated, profile-driven, and compatibility-oriented. It should not introduce a new formatting style language, expose arbitrary formatting knobs, or invite users to assemble their own style from dozens of settings.
+The formatter should be opinionated, profile-driven, and compatibility-oriented.
+It should not introduce a new formatting style language, expose arbitrary
+formatting knobs, or invite users to assemble their own style from dozens of
+settings.
 
 ## Scope
 
@@ -23,9 +30,12 @@ The formatter should be opinionated, profile-driven, and compatibility-oriented.
   - ktfmt's default/Meta style.
   - ktfmt's Google style.
   - ktfmt's Kotlin language style.
-- A native-only oracle test harness that imports upstream formatter fixtures and materializes expected outputs.
-- A shared formatter IR and renderer used by both Java and Kotlin printers.
-- Formatter-native syntax infrastructure: lexer, parser, lossless CST, trivia, typed syntax wrappers.
+- An oracle test harness that imports upstream formatter fixtures and
+  materializes expected outputs.
+- A shared document IR and renderer used by both Java and Kotlin layout
+  builders.
+- Formatter-native syntax infrastructure: lexer, parser, lossless CST, trivia,
+  and language-specific CST wrappers.
 
 ### Out of scope for the first product
 
@@ -53,23 +63,26 @@ formatter engine
   -> dprint wasm plugin
 ```
 
-The CLI and dprint plugin should be thin shells over the same core engine. The engine should be pure: given source text, language, and options, it returns formatted source text plus diagnostics.
+The CLI and dprint plugin should be thin shells over the same core engine. The
+engine should be pure: given source text, language, and options, it returns
+formatted source text plus diagnostics.
 
 ```text
 source text + language + format options
   -> formatted text + diagnostics
 ```
 
-The engine should not know about filesystems, directory walking, ignore files, terminals, process spawning, Gradle, Maven, or editor state.
+The engine should not know about filesystems, directory walking, ignore files,
+terminals, process spawning, Gradle, Maven, or editor state.
 
 ## Command and Configuration Surface
 
-One formatting invocation may contain both Java and Kotlin files, so profile options must be language-scoped.
+One formatting invocation may contain both Java and Kotlin files, so profile
+options must be language-scoped.
 
 ```bash
 jolt fmt
 jolt fmt --check
-jolt fmt --write
 
 jolt fmt --java-profile google
 jolt fmt --java-profile aosp
@@ -92,14 +105,13 @@ The dprint plugin should expose equivalent configuration:
 ```json
 {
   "plugins": ["https://example.invalid/jolt_fmt.wasm"],
-  "jolt": {
-    "javaProfile": "google",
-    "kotlinProfile": "meta"
-  }
+  "jolt": { "javaProfile": "google", "kotlinProfile": "meta" }
 }
 ```
 
-Profiles configure Jolt's internal formatter behavior. They are not oracle definitions. Oracle suites are test harness concepts that compare one Jolt profile configuration against one upstream formatter's output.
+Profiles configure Jolt's internal formatter behavior. They are not oracle
+definitions. Oracle suites are test harness concepts that compare one Jolt
+profile configuration against one upstream formatter's output.
 
 ## File Discovery
 
@@ -138,20 +150,31 @@ The wasm engine and dprint plugin should not implement recursive file discovery.
 
 The formatter should own its parser and syntax model.
 
-```text
-source text
-  -> lexer
-  -> tokens + trivia
-  -> parser
-  -> lossless CST
-  -> typed syntax API
-  -> language-specific printer
-  -> common Doc IR
-  -> common renderer
-  -> formatted text
+```mermaid
+flowchart TD
+  source(source text)
+  tokens(token stream with trivia)
+  events(syntax events)
+  cst(lossless CST)
+  doc(common document IR)
+  output(formatted text)
+
+  source -->|language lexer| tokens
+  tokens -->|language parser| events
+  events -->|tree builder| cst
+  cst -->|language layout builder| doc
+  doc -->|common renderer| output
 ```
 
-The architecture should be formatter-native from the beginning. It should not be built on Tree-sitter, an AST-only parser, or a parser model that loses whitespace and comments.
+Language layout builders should consume the lossless CST, usually through
+language-specific CST wrappers. These wrappers are ergonomic views over raw
+syntax nodes, not a semantic AST and not a replacement for the CST. Layout
+builders may still inspect raw tokens, trivia, and syntax elements for comments,
+whitespace-sensitive cases, error handling, and formatting edge cases.
+
+The architecture should be formatter-native from the beginning. It should not be
+built on Tree-sitter, an AST-only parser, or a parser model that loses
+whitespace and comments.
 
 The durable architecture is:
 
@@ -160,8 +183,8 @@ Language-specific:
   - lexer
   - parser
   - syntax kinds
-  - typed CST wrappers
-  - CST-to-Doc printer
+  - language-specific CST wrappers
+  - CST-to-document layout builder
   - profile behavior
 
 Shared:
@@ -170,7 +193,7 @@ Shared:
   - green/red syntax tree infrastructure
   - trivia representation
   - parser diagnostics
-  - Doc IR
+  - document IR
   - renderer
   - engine API
   - wasm-safe option model
@@ -178,23 +201,30 @@ Shared:
 
 ## Why Not Tree-sitter
 
-Tree-sitter is useful for editor-oriented parsing and error-tolerant syntax trees, but it is not the right foundation for this formatter.
+Tree-sitter is useful for editor-oriented parsing and error-tolerant syntax
+trees, but it is not the right foundation for this formatter.
 
-The formatter needs a lossless source model: tokens, whitespace, comments, byte ranges, newlines, and trivia attachment. That model is central, not incidental.
+The formatter needs a lossless source model: tokens, whitespace, comments, byte
+ranges, newlines, and trivia attachment. That model is central, not incidental.
 
-The most relevant formatter/toolchain references do not use Tree-sitter as their source substrate:
+The most relevant formatter/toolchain references do not use Tree-sitter as their
+source substrate:
 
-- Ruff owns its parser, trivia utilities, Python formatter, and language-agnostic formatter IR.
-- Biome owns parser infrastructure, a lossless CST with trivia, and formatter infrastructure.
+- Ruff owns its parser, trivia utilities, Python formatter, and
+  language-agnostic formatter IR.
+- Biome owns parser infrastructure, a lossless CST with trivia, and formatter
+  infrastructure.
 - Oxc owns its lexer/parser/AST/trivia/codegen stack.
 
-The lesson is not merely that Tree-sitter is absent. The lesson is that serious formatter infrastructure tends to own the syntax substrate it depends on.
+The lesson is not merely that Tree-sitter is absent. The lesson is that serious
+formatter infrastructure tends to own the syntax substrate it depends on.
 
-For Jolt, avoiding Tree-sitter means accepting more initial parser work in exchange for:
+For Jolt, avoiding Tree-sitter means accepting more initial parser work in
+exchange for:
 
 - wasm-first implementation control,
 - formatter-native trivia behavior,
-- stable syntax APIs for printers,
+- stable syntax APIs for layout builders,
 - fewer parser-model impedance mismatches,
 - a stronger foundation for later source tools.
 
@@ -202,7 +232,9 @@ For Jolt, avoiding Tree-sitter means accepting more initial parser work in excha
 
 The formatter should use a lossless concrete syntax tree.
 
-A semantic AST is not sufficient for formatting. Formatting needs source-level structure, comments, whitespace, and syntactic edge cases. Semantic meaning may become important for later tools, but pure formatting should remain layout-only.
+A semantic AST is not sufficient for formatting. Formatting needs source-level
+structure, comments, whitespace, and syntactic edge cases. Semantic meaning may
+become important for later tools, but pure formatting should remain layout-only.
 
 ### Tree model
 
@@ -221,9 +253,10 @@ Red tree:
 - ergonomic wrapper around green nodes,
 - parent-aware,
 - computes offsets,
-- used by formatter and typed syntax APIs.
+- used for traversal, source-range queries, and language-specific CST access.
 
-The implementation does not need to expose green/red terminology publicly. The important design point is that storage and ergonomic traversal are separate.
+The implementation does not need to expose green/red terminology publicly. The
+important design point is that storage and ergonomic traversal are separate.
 
 ### Elements
 
@@ -307,17 +340,21 @@ parser:
 tree builder:
   syntax events -> lossless green tree
 
-typed syntax layer:
-  raw syntax nodes -> ergonomic Java/Kotlin syntax wrappers
+CST wrapper layer:
+  raw syntax nodes -> ergonomic Java/Kotlin CST wrappers
 ```
 
-The parser should use recursive descent for declarations, statements, types, and structural syntax. Expressions can use Pratt parsing or precedence climbing.
+The parser should use recursive descent for declarations, statements, types, and
+structural syntax. Expressions can use Pratt parsing or precedence climbing.
 
-The parser should support error recovery. A formatter should be able to report parse errors cleanly and avoid destructive output when source is syntactically invalid.
+The parser should support error recovery. A formatter should be able to report
+parse errors cleanly and avoid destructive output when source is syntactically
+invalid.
 
 ### Parser event stream
 
-The parser should not allocate final tree nodes directly. It should emit events that a tree builder consumes.
+The parser should not allocate final tree nodes directly. It should emit events
+that a tree builder consumes.
 
 Example shape:
 
@@ -330,29 +367,35 @@ enum Event {
 }
 ```
 
-This keeps parser control flow separate from syntax tree storage and leaves room for marker-based parsing patterns where the parser starts a node before it knows its final kind.
+This keeps parser control flow separate from syntax tree storage and leaves room
+for marker-based parsing patterns where the parser starts a node before it knows
+its final kind.
 
 ## Formatter IR
 
-The shared formatter middle should be a Wadler/Prettier/Biome-style document algebra.
+The shared formatter middle should be a Wadler/Prettier/Biome-style document
+algebra.
 
-Language printers should not render strings directly. They should convert syntax trees into a common Doc IR. The renderer then decides where groups fit, where lines break, and how indentation is applied.
+Language layout builders should not render strings directly. They should convert
+the lossless CST into a common document IR. The document IR is a layout program,
+not a second token stream with trivia. The renderer then decides where groups
+fit, where lines break, and how indentation is applied.
 
 Minimum IR:
 
 ```rust
-enum Doc {
+enum Document {
     Nil,
     Text(String),
     Line,
     SoftLine,
     HardLine,
-    Concat(Vec<Doc>),
-    Group(Box<Doc>),
-    Indent(Box<Doc>),
+    Concat(Vec<Document>),
+    Group(Box<Document>),
+    Indent(Box<Document>),
     IfBreak {
-        breaks: Box<Doc>,
-        flat: Box<Doc>,
+        breaks: Box<Document>,
+        flat: Box<Document>,
     },
 }
 ```
@@ -368,13 +411,15 @@ Labelled groups
 Profile-sensitive conditional groups
 ```
 
-The first implementation should stay small. Add IR features only when real Java/Kotlin formatting cases require them.
+The first implementation should stay small. Add IR features only when real
+Java/Kotlin formatting cases require them.
 
 ## Formatting Profiles
 
 Profiles should be small product-level choices.
 
-They should configure internal whitespace and line-breaking behavior, but should not expose arbitrary style options.
+They should configure internal whitespace and line-breaking behavior, but should
+not expose arbitrary style options.
 
 Tentative profile enums:
 
@@ -401,7 +446,8 @@ pub struct FormatOptions {
 }
 ```
 
-The formatter should not treat profiles as external executable choices. External executables are only used by the oracle harness.
+The formatter should not treat profiles as external executable choices. External
+executables are only used by the oracle harness.
 
 ## Imports Boundary
 
@@ -420,9 +466,12 @@ Import cleanup is not formatting.
 - add missing imports,
 - rename symbols,
 - perform semantic refactors,
-- expand or collapse wildcard imports unless that behavior is strictly part of the selected profile's formatting behavior and can be reproduced safely without project resolution.
+- expand or collapse wildcard imports unless that behavior is strictly part of
+  the selected profile's formatting behavior and can be reproduced safely
+  without project resolution.
 
-A future `jolt imports` command can perform semantic or project-aware import cleanup.
+A future `jolt imports` command can perform semantic or project-aware import
+cleanup.
 
 ## Engine API
 
@@ -431,11 +480,7 @@ The formatter core should expose a small, wasm-safe API.
 Conceptual shape:
 
 ```rust
-pub fn format_source(
-    source: &str,
-    language: Language,
-    options: FormatOptions,
-) -> FormatResult;
+pub fn format_source(source: &str, language: Language, options: FormatOptions) -> FormatResult;
 
 pub enum Language {
     Java,
@@ -448,7 +493,8 @@ pub struct FormatResult {
 }
 ```
 
-The real API may need allocation-aware or FFI-friendly variants for dprint, but the conceptual contract should remain pure.
+The real API may need allocation-aware or FFI-friendly variants for dprint, but
+the conceptual contract should remain pure.
 
 ## Crate Layout
 
@@ -477,27 +523,27 @@ crates/
     JavaSyntaxKind
     Java lexer
     Java parser
-    Java typed syntax wrappers
+    Java CST wrappers
 
   jolt_kotlin_syntax/
     KotlinSyntaxKind
     Kotlin lexer
     Kotlin parser
-    Kotlin typed syntax wrappers
+    Kotlin CST wrappers
 
   jolt_fmt_ir/
-    Doc IR
+    document IR
     groups
     indentation
     line breaking
     renderer
 
   jolt_java_fmt/
-    Java CST -> Doc printer
+    Java CST -> document layout builder
     Google/AOSP/Palantir profile behavior
 
   jolt_kotlin_fmt/
-    Kotlin CST -> Doc printer
+    Kotlin CST -> document layout builder
     ktfmt meta, google, and kotlinlang profile behavior
 
   jolt_fmt_core/
@@ -517,7 +563,8 @@ tools/
     native-only oracle fixture import/update helpers invoked by mise
 ```
 
-The exact crate boundaries can change, but the concern boundaries should remain stable.
+The exact crate boundaries can change, but the concern boundaries should remain
+stable.
 
 ## Native CLI Wrapper
 
@@ -549,11 +596,13 @@ The plugin owns only dprint integration:
 
 The plugin should not contain separate formatting behavior.
 
-The dprint plugin is the reason wasm compatibility must be a hard local build target from the beginning.
+The dprint plugin is the reason wasm compatibility must be a hard local build
+target from the beginning.
 
 ## Oracle Fixtures and Import
 
-Oracle import tooling is native-only. It can spawn JVM tools, clone upstream repositories, and perform filesystem-heavy fixture import work.
+Oracle import tooling is native-only. It can spawn JVM tools, clone upstream
+repositories, and perform filesystem-heavy fixture import work.
 
 The engine and dprint plugin must not depend on oracle machinery.
 
@@ -614,11 +663,13 @@ cargo test -p jolt_java_fmt
   -> compare output
 ```
 
-No hash cache is necessary for the initial design. Oracle import is a deliberate update operation, and normal tests are pure and fast.
+No hash cache is necessary for the initial design. Oracle import is a deliberate
+update operation, and normal tests are pure and fast.
 
 ### Owned tests
 
-Jolt should not invent broad formatter fixtures for upstream-compatible profiles.
+Jolt should not invent broad formatter fixtures for upstream-compatible
+profiles.
 
 Owned tests should focus on Jolt-owned behavior:
 
@@ -630,13 +681,21 @@ Owned tests should focus on Jolt-owned behavior:
 - invalid syntax diagnostics,
 - narrow regression cases not covered by upstream fixtures.
 
-If Jolt invents its own formatting profile later, that profile should get its own fixture suite.
+If Jolt invents its own formatting profile later, that profile should get its
+own fixture suite.
 
-## Formatter PR Plan
+## Formatter Implementation Plan
 
-The formatter is Jolt's first product. The implementation should start by making the Java compatibility target visible, then build complete Java layers in order. It should not start with an abstract formatter substrate detached from upstream fixtures, and it should not build a narrow vertical path that only handles convenient Java files.
+The formatter is Jolt's first product. The implementation should start by making
+the Java compatibility target visible, then build complete Java layers in order.
+It should not start with an abstract formatter substrate detached from upstream
+fixtures, and it should not build a narrow vertical path that only handles
+convenient Java files.
 
-The first end-to-end product target is Java. The architecture should preserve the planned multi-language shape, but Java should be implemented through the engine, native CLI, dprint wrapper, and Java profiles before Kotlin implementation work begins.
+The first end-to-end product target is Java. The architecture should preserve
+the planned multi-language shape, but Java should be implemented through the
+engine, native CLI, dprint wrapper, and Java profiles before Kotlin
+implementation work begins.
 
 Tests should live with the implementation they exercise:
 
@@ -644,11 +703,15 @@ Tests should live with the implementation they exercise:
 - Core API behavior lives in `jolt_fmt_core`.
 - CLI behavior lives in `jolt_fmt_cli`.
 - dprint behavior lives in `jolt_fmt_dprint`.
-- Oracle import/update tooling is invoked through mise and is not a formatter test crate.
+- Oracle import/update tooling is invoked through mise and is not a formatter
+  test crate.
 
-### PR 1: workspace, mise tasks, and Java oracle import
+### Milestone 1: workspace, mise tasks, and Java oracle import
 
-Create the minimum repository structure needed to import real Java formatter fixtures.
+Status: complete.
+
+Create the minimum repository structure needed to import real Java formatter
+fixtures.
 
 Add:
 
@@ -659,9 +722,11 @@ Add:
 - oracle metadata format,
 - pinned upstream source metadata for Google Java Format,
 - pinned upstream source metadata for Palantir Java Format,
-- materialized Java input and expected output fixtures for `java-profile = google`,
+- materialized Java input and expected output fixtures for
+  `java-profile = google`,
 - materialized Java expected output fixtures for `java-profile = aosp`,
-- materialized Java input and expected output fixtures for `java-profile = palantir`.
+- materialized Java input and expected output fixtures for
+  `java-profile = palantir`.
 
 The import operation is explicit:
 
@@ -669,11 +734,15 @@ The import operation is explicit:
 mise run import-oracles
 ```
 
-This PR answers the first implementation question: which Java files and formatter outputs are Jolt trying to match?
+This milestone answers the first implementation question: which Java files and
+formatter outputs are Jolt trying to match?
 
-### PR 2: core formatter contract
+### Milestone 2: core formatter contract
 
-Define the API all wrappers and tests will call before implementing Java formatting behavior.
+Status: complete.
+
+Define the API all wrappers and tests will call before implementing Java
+formatting behavior.
 
 Add crates and types for:
 
@@ -687,11 +756,16 @@ Add crates and types for:
 - `Diagnostic`,
 - `format_source`.
 
-The API should be filesystem-free and wasm-safe from the beginning. Local checks should include native builds and wasm builds for crates that are expected to compile to `wasm32-unknown-unknown`.
+The API should be filesystem-free and wasm-safe from the beginning. Local checks
+should include native builds and wasm builds for crates that are expected to
+compile to `wasm32-unknown-unknown`.
 
-### PR 3: Java lexer over the full Java corpus
+### Milestone 3: Java lexer over the full Java corpus
 
-Build the Java lexer against every valid Java source file in the imported Java oracle corpus.
+Status: complete.
+
+Build the Java lexer against every valid Java source file in the imported Java
+oracle corpus.
 
 Add:
 
@@ -705,11 +779,17 @@ Add:
 - lexer diagnostics,
 - token stream round-trip tests over all imported Java oracle inputs.
 
-This layer should operate correctly on the full imported Java corpus before parser work depends on it. The goal is not formatting yet. The goal is that Jolt can represent every byte, newline, token, and comment in the Java inputs without loss.
+This layer should operate correctly on the full imported Java corpus before
+parser work depends on it. The goal is not formatting yet. The goal is that Jolt
+can represent every byte, newline, token, and comment in the Java inputs without
+loss.
 
-### PR 4: Java lossless syntax tree over the full Java corpus
+### Milestone 4: Java lossless syntax tree over the full Java corpus
 
-Build the Java parser and syntax tree after the lexer has proven it can cover the corpus.
+Status: pending.
+
+Build the Java parser and syntax tree after the lexer has proven it can cover
+the corpus.
 
 Add:
 
@@ -719,14 +799,19 @@ Add:
 - Java parser event stream,
 - Java grammar coverage for valid source in the imported oracle corpus,
 - error nodes and parser diagnostics,
-- typed Java syntax wrappers needed by the formatter,
+- Java CST wrappers needed by the formatter,
 - parse tests over all imported Java oracle inputs.
 
-This PR should not be a minimal parser for a formatter demo. The parser layer should handle the valid Java source Jolt has imported before the Java printer is built on top of it.
+This milestone should not be a minimal parser for a formatter demo. The parser
+layer should handle the valid Java source Jolt has imported before the Java
+layout builder is built on top of it.
 
-### PR 5: shared Doc IR and renderer
+### Milestone 5: shared document IR and renderer
 
-Build the renderer after the Java corpus is visible and the parser has defined the syntax shape the printer will consume.
+Status: pending.
+
+Build the renderer after the Java corpus is visible and the parser has defined
+the syntax shape the layout builder will consume.
 
 Add:
 
@@ -743,26 +828,37 @@ Add:
 - indentation handling,
 - local renderer tests for the document shapes Java formatting needs.
 
-The IR should stay small, but it should be chosen with the Java oracle outputs in view. New IR features should be added when Java formatting requirements show that the existing algebra cannot express the layout.
+The IR should stay small, but it should be chosen with the Java oracle outputs
+in view. New IR features should be added when Java formatting requirements show
+that the existing algebra cannot express the layout.
 
-### PR 6: Google Java Format printer
+### Milestone 6: Google Java Format layout builder
 
-Implement the first Java formatter profile on top of the completed lexer, parser, CST, Doc IR, and renderer.
+Status: pending.
+
+Implement the first Java formatter profile on top of the completed lexer,
+parser, CST, document IR, and renderer.
 
 Add:
 
 - `jolt_java_fmt`,
-- Java CST-to-Doc printer,
+- Java CST-to-document layout builder,
 - `java-profile = google`,
 - Java wiring in `format_source`,
-- oracle comparisons in `jolt_java_fmt` against materialized Google Java Format outputs,
+- oracle comparisons in `jolt_java_fmt` against materialized Google Java Format
+  outputs,
 - idempotence checks for passing oracle cases.
 
-The comparison target is the full materialized Google Java Format corpus. Compatibility should be reported as fixture counts and percentages while implementation converges.
+The comparison target is the full materialized Google Java Format corpus.
+Compatibility should be reported as fixture counts and percentages while
+implementation converges.
 
-### PR 7: Java comments, trivia, and failure behavior
+### Milestone 7: Java comments, trivia, and failure behavior
 
-Tighten the parts most likely to cause destructive output after the main printer exists.
+Status: pending.
+
+Tighten the parts most likely to cause destructive output after the main layout
+builder exists.
 
 Add:
 
@@ -775,11 +871,15 @@ Add:
 - parse-error no-write behavior,
 - narrowed regression fixtures for cases not present upstream.
 
-Owned regression fixtures are appropriate here because they cover Jolt-owned safety behavior or gaps in upstream fixtures, not broad style compatibility.
+Owned regression fixtures are appropriate here because they cover Jolt-owned
+safety behavior or gaps in upstream fixtures, not broad style compatibility.
 
-### PR 8: native CLI wrapper
+### Milestone 8: native CLI wrapper
 
-Add the CLI after the Java engine can format real oracle inputs through `format_source`.
+Status: pending.
+
+Add the CLI after the Java engine can format real oracle inputs through
+`format_source`.
 
 Add:
 
@@ -794,11 +894,15 @@ Add:
 - `.gitignore` and `.ignore` handling,
 - owned CLI tests.
 
-The CLI should only call `jolt_fmt_core`. It should not implement formatting behavior.
+The CLI should only call `jolt_fmt_core`. It should not implement formatting
+behavior.
 
-### PR 9: dprint wrapper
+### Milestone 9: dprint wrapper
 
-Add dprint integration after the core API has survived real Java formatting work and the core crates already have local wasm build checks.
+Status: pending.
+
+Add dprint integration after the core API has survived real Java formatting work
+and the core crates already have local wasm build checks.
 
 Add:
 
@@ -808,11 +912,15 @@ Add:
 - Java extension registration,
 - dprint invocation tests over Java files from the committed oracle corpus.
 
-This PR proves the dprint wrapper is thin. The plugin should not get a separate printer or option model.
+This milestone proves the dprint wrapper is thin. The plugin should not get a
+separate layout builder or option model.
 
-### PR 10: AOSP Java profile
+### Milestone 10: AOSP Java profile
 
-Add the second Google Java Format-compatible profile using the same fixture inputs.
+Status: pending.
+
+Add the second Google Java Format-compatible profile using the same fixture
+inputs.
 
 Add:
 
@@ -821,9 +929,12 @@ Add:
 - profile-sensitive indentation and wrapping differences,
 - compatibility reporting separate from `java-profile = google`.
 
-This PR should validate that profiles configure internal behavior rather than swapping external formatter executables.
+This milestone should validate that profiles configure internal behavior rather
+than swapping external formatter executables.
 
-### PR 11: Palantir Java profile
+### Milestone 11: Palantir Java profile
+
+Status: pending.
 
 Add the third Java profile after the Google-shaped Java engine is mature.
 
@@ -833,11 +944,15 @@ Add:
 - profile behavior needed for Palantir compatibility,
 - separate Palantir compatibility reporting.
 
-Any Palantir-specific behavior should be isolated as profile policy, not parser forks.
+Any Palantir-specific behavior should be isolated as profile policy, not parser
+forks.
 
-### PR 12: Java formatter hardening
+### Milestone 12: Java formatter hardening
 
-Cut across the Java product surface after the three Java profiles have meaningful compatibility data.
+Status: pending.
+
+Cut across the Java product surface after the three Java profiles have
+meaningful compatibility data.
 
 Add:
 
@@ -849,11 +964,15 @@ Add:
 - final dprint plugin smoke tests,
 - formatter README or user docs.
 
-This PR turns the accumulated work into the first coherent Java formatter product. Kotlin should start after this by repeating the same fixture-first, layer-complete process with ktfmt fixtures, then expanding CLI discovery and options to Kotlin files.
+This milestone turns the accumulated work into the first coherent Java formatter
+product. Kotlin should start after this by repeating the same fixture-first,
+layer-complete process with ktfmt fixtures, then expanding CLI discovery and
+options to Kotlin files.
 
 ## Compatibility Goals
 
-The formatter should be judged by oracle compatibility, not subjective style quality.
+The formatter should be judged by oracle compatibility, not subjective style
+quality.
 
 Early Java target:
 
@@ -892,7 +1011,9 @@ Compatibility should be reported as a measurable percentage during development.
 
 The formatter should avoid destructive output.
 
-If parsing fails severely, the formatter should return diagnostics and avoid rewriting the file unless a safe partial-formatting strategy is explicitly designed.
+If parsing fails severely, the formatter should return diagnostics and avoid
+rewriting the file unless a safe partial-formatting strategy is explicitly
+designed.
 
 The first implementation can choose a conservative rule:
 
@@ -900,17 +1021,29 @@ The first implementation can choose a conservative rule:
 If parse errors exist, do not write formatted output by default.
 ```
 
-Later, Jolt can distinguish recoverable parse errors from fatal formatter errors.
+Later, Jolt can distinguish recoverable parse errors from fatal formatter
+errors.
 
-Formatting with parse errors is in scope as a later capability, but not as the default write behavior. Biome exposes this as an explicit `formatWithErrors` option, and Oxc's parser architecture treats recovery as important for formatters and linters. Jolt should first build parser recovery for diagnostics and tree construction, then only allow formatting through recoverable errors behind an explicit policy once it can prove the output is non-destructive.
+Formatting with parse errors is in scope as a later capability, but not as the
+default write behavior. Biome exposes this as an explicit `formatWithErrors`
+option, and Oxc's parser architecture treats recovery as important for
+formatters and linters. Jolt should first build parser recovery for diagnostics
+and tree construction, then only allow formatting through recoverable errors
+behind an explicit policy once it can prove the output is non-destructive.
 
 ## Formatter Suppression Comments
 
 Do not add formatter suppression comments to the initial Java formatter.
 
-Modern formatter ecosystems do have precedent for this feature: Ruff supports formatter pragmas, Biome supports formatter ignore comments, and Oxfmt supports inline formatter ignore comments. That makes suppression comments a legitimate future escape hatch, but not something Jolt should invent before Java oracle compatibility works.
+Modern formatter ecosystems do have precedent for this feature: Ruff supports
+formatter pragmas, Biome supports formatter ignore comments, and Oxfmt supports
+inline formatter ignore comments. That makes suppression comments a legitimate
+future escape hatch, but not something Jolt should invent before Java oracle
+compatibility works.
 
-For Java profiles, suppression comments should only be added later as explicit Jolt behavior, not as part of Google Java Format, AOSP, or Palantir compatibility unless an upstream oracle requires it.
+For Java profiles, suppression comments should only be added later as explicit
+Jolt behavior, not as part of Google Java Format, AOSP, or Palantir
+compatibility unless an upstream oracle requires it.
 
 ## Shared Syntax Boundary
 
@@ -932,30 +1065,37 @@ Language-specific:
 - syntax kind enums,
 - lexer rules,
 - grammar and parser recovery rules,
-- typed CST wrappers,
+- language-specific CST wrappers,
 - comment attachment policy where language syntax requires it,
-- formatter printers,
+- formatter layout builders,
 - profile behavior.
 
-The rule is: Java should prove the generic storage APIs, but Kotlin should not inherit Java's grammar model. When Kotlin needs a different shape, keep that difference language-owned unless both languages genuinely need the same abstraction.
+The rule is: Java should prove the generic storage APIs, but Kotlin should not
+inherit Java's grammar model. When Kotlin needs a different shape, keep that
+difference language-owned unless both languages genuinely need the same
+abstraction.
 
 ## Design Principles
 
 ### Own the substrate
 
-Formatting depends on syntax shape, token ranges, and trivia. Jolt should own those layers.
+Formatting depends on syntax shape, token ranges, and trivia. Jolt should own
+those layers.
 
 ### Keep the core pure
 
-The core formatter should be deterministic, wasm-compatible, and filesystem-free.
+The core formatter should be deterministic, wasm-compatible, and
+filesystem-free.
 
 ### Reuse the middle
 
-Java and Kotlin need separate syntax frontends and printers, but they should share the Doc IR and renderer.
+Java and Kotlin need separate syntax frontends and layout builders, but they
+should share the document IR and renderer.
 
 ### Let oracles guide compatibility
 
-For upstream-compatible profiles, imported upstream fixtures and materialized upstream outputs are the source of truth.
+For upstream-compatible profiles, imported upstream fixtures and materialized
+upstream outputs are the source of truth.
 
 ### Avoid style configuration sprawl
 
@@ -969,18 +1109,23 @@ Formatting should not perform semantic source actions.
 
 Architecture and formatter references:
 
-- Philip Wadler, "A prettier printer": https://homepages.inf.ed.ac.uk/wadler/papers/prettier/prettier.pdf
+- Philip Wadler, "A prettier printer":
+  https://homepages.inf.ed.ac.uk/wadler/papers/prettier/prettier.pdf
 - Biome architecture: https://biomejs.dev/internals/architecture/
 - Biome formatter documentation: https://biomejs.dev/formatter/
 - Biome configuration reference: https://biomejs.dev/reference/configuration/
 - Biome formatter crate: https://docs.rs/biome_formatter
 - Ruff formatter documentation: https://docs.astral.sh/ruff/formatter/
-- Ruff contributing architecture notes: https://docs.astral.sh/ruff/contributing/
+- Ruff contributing architecture notes:
+  https://docs.astral.sh/ruff/contributing/
 - Oxc parser documentation: https://oxc.rs/docs/contribute/parser.html
-- Oxc parser error recovery notes: https://oxc.rs/docs/learn/parser_in_rust/errors
-- Oxfmt ignore comments: https://oxc.rs/docs/guide/usage/formatter/ignore-comments.html
+- Oxc parser error recovery notes:
+  https://oxc.rs/docs/learn/parser_in_rust/errors
+- Oxfmt ignore comments:
+  https://oxc.rs/docs/guide/usage/formatter/ignore-comments.html
 - Oxc architecture: https://github.com/oxc-project/oxc/blob/main/ARCHITECTURE.md
-- dprint Wasm plugin development: https://github.com/dprint/dprint/blob/main/docs/wasm-plugin-development.md
+- dprint Wasm plugin development:
+  https://github.com/dprint/dprint/blob/main/docs/wasm-plugin-development.md
 
 Oracle references:
 
@@ -991,6 +1136,9 @@ Oracle references:
 ## Resolved Decisions
 
 - Initial Java formatter: no formatter suppression comments.
-- Parse errors: no writes by default; recoverable-error formatting can be added later behind an explicit policy.
-- Kotlin profiles: expose `meta` for ktfmt's default style, `google` for ktfmt's Google style, and `kotlinlang` for ktfmt's Kotlin language style.
-- Syntax sharing: share storage, traversal, events, diagnostics, and text utilities; keep grammar, typed wrappers, and printers language-specific.
+- Parse errors: no writes by default; recoverable-error formatting can be added
+  later behind an explicit policy.
+- Kotlin profiles: expose `meta` for ktfmt's default style, `google` for ktfmt's
+  Google style, and `kotlinlang` for ktfmt's Kotlin language style.
+- Syntax sharing: share storage, traversal, events, diagnostics, and text
+  utilities; keep grammar, CST wrappers, and layout builders language-specific.
