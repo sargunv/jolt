@@ -1,0 +1,26 @@
+amends "package://github.com/jdx/hk/releases/download/v1.48.0/hk@1.48.0#/Config.pkl"
+import "package://github.com/jdx/hk/releases/download/v1.48.0/hk@1.48.0#/Builtins.pkl"
+
+local lintSteps = new Mapping<String, Step> {
+    ["dprint"] = (Builtins.dprint)
+    ["cargo-clippy"] {
+        glob = List("**/*.rs")
+        check = "cargo clippy --workspace -- -D warnings"
+        fix = "cargo clippy --fix --workspace --allow-dirty --allow-staged -- -D warnings"
+    }
+}
+
+hooks {
+    ["pre-commit"] {
+        fix = true
+        stash = "git"
+        steps = lintSteps
+    }
+    ["fix"] {
+        fix = true
+        steps = lintSteps
+    }
+    ["check"] {
+        steps = lintSteps
+    }
+}

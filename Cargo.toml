@@ -1,0 +1,27 @@
+[workspace]
+members = [
+  "crates/jolt_fmt_cli",
+  "crates/jolt_fmt_core",
+  "crates/jolt_fmt_dprint",
+  "crates/jolt_fmt_ir",
+  "crates/jolt_java_fmt",
+  "crates/jolt_java_syntax",
+  "crates/jolt_kotlin_fmt",
+  "crates/jolt_kotlin_syntax",
+  "crates/jolt_syntax",
+  "crates/jolt_text",
+]
+resolver = "3"
+
+[workspace.package]
+edition = "2024"
+license = "Apache-2.0"
+repository = "https://github.com/sargunv/jolt"
+rust-version = "1.96"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = "warn"
+pedantic = "warn"
