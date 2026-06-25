@@ -1,4 +1,3 @@
-mod kind;
 #[cfg(test)]
 mod tests;
 mod token;
@@ -6,10 +5,10 @@ mod unicode;
 
 use std::collections::VecDeque;
 
+use crate::JavaSyntaxKind;
 use jolt_text::{TextRange, TextSize};
 use unicode_general_category::{GeneralCategory, get_general_category};
 
-pub use kind::JavaSyntaxKind;
 pub use token::{LexerDiagnostic, LexerDiagnosticKind, Token, Trivia, TriviaKind};
 use unicode::{InputChar, translate_unicode_escapes};
 

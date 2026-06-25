@@ -1,6 +1,6 @@
 use jolt_text::TextRange;
 
-use super::JavaSyntaxKind;
+use crate::JavaSyntaxKind;
 
 /// Trivia attached to a token.
 #[derive(Clone, Debug, Eq, PartialEq)]

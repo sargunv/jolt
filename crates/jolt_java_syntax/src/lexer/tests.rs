@@ -1,12 +1,28 @@
+// Java SE 26 lexical specification:
+// https://docs.oracle.com/javase/specs/jls/se26/html/jls-3.html
+//
+// Java lexer focused-test bar. Focused tests should cover:
+//
+// - every lexical category in JLS Chapter 3, using small representative
+//   snippets rather than every possible spelling;
+// - every lexer ambiguity or longest-match boundary, including Unicode escape
+//   translation, line terminators, comments, contextual keyword spellings,
+//   numeric literal boundaries, text blocks, and adjacent operators;
+// - token/trivia reconstruction behavior when source ownership or attachment
+//   policy matters to the formatter;
+// - diagnostics and recovery shapes for malformed input the lexer accepts
+//   losslessly;
+// - regression tests grounded in actual bugs we have written.
+//
+// Focused tests should not try to enumerate the combinatorial product of the
+// lexical grammar. Each test should make one source-shape claim obvious.
+
 use jolt_text::{TextRange, TextSize};
 
 use super::{
     JavaLexer, JavaSyntaxKind, JavaTokenSource, LexerDiagnostic, LexerDiagnosticKind, Token,
     TriviaKind,
 };
-
-// Java SE 25 lexical specification:
-// https://docs.oracle.com/javase/specs/jls/se25/html/jls-3.html
 
 struct Lexed {
     tokens: Vec<Token>,
