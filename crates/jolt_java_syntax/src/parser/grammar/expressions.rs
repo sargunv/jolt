@@ -213,8 +213,9 @@ impl Parser<'_> {
     pub(super) fn parse_cast_expression(&mut self) -> jolt_syntax::CompletedMarker {
         let cast = self.start();
         self.expect(JavaSyntaxKind::LParen, "expected `(` in cast expression");
-        let type_start = self.skip_annotations_from(self.position());
-        let is_primitive_cast = self.is_primitive_type_start_at(type_start);
+        let mut lookahead = self.lookahead();
+        lookahead.skip_annotations();
+        let is_primitive_cast = lookahead.at_primitive_type_start();
         self.parse_intersection_type();
         self.expect(JavaSyntaxKind::RParen, "expected `)` after cast type");
 
@@ -611,10 +612,7 @@ impl Parser<'_> {
         let mut qualified = false;
 
         loop {
-            if self.at(JavaSyntaxKind::Lt)
-                && self.kind_at(self.skip_balanced_type_arguments_from(self.position()))
-                    == JavaSyntaxKind::Dot
-            {
+            if self.at(JavaSyntaxKind::Lt) && self.type_arguments_are_followed_by_dot() {
                 let error = self.start();
                 self.unexpected_here(
                     "type arguments in class instance creation must appear on the final type segment",
@@ -627,8 +625,7 @@ impl Parser<'_> {
                 break;
             }
 
-            let after_dot = self.skip_annotations_from(self.position() + 1);
-            if !self.is_name_segment_at(after_dot) {
+            if !self.dot_is_followed_by_annotated_name() {
                 break;
             }
 

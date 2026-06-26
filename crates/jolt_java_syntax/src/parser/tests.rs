@@ -2255,6 +2255,21 @@ fn split_unsigned_right_shift_type_close_maps_virtual_gt_tokens_to_source_charac
 }
 
 #[test]
+fn recovers_malformed_generic_close_with_split_shift_token() {
+    // Regression coverage for recovery after a nested generic type consumes a
+    // split `>>` token but the member declaration is still malformed.
+    assert_parse_snapshot(
+        "recovers_malformed_generic_close_with_split_shift_token",
+        r"
+            class MalformedGenericClose {
+                java.util.Map<String, java.util.List<Integer>>;
+                int after;
+            }
+        ",
+    );
+}
+
+#[test]
 fn parses_mixed_generic_close_and_relational_greater_than() {
     // Spec: JLS 3.5 contextual tokenization splits adjacent `>` characters
     // when a type context consumes only part of a `>>` token.

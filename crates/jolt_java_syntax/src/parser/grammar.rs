@@ -47,7 +47,7 @@ mod expressions;
 mod patterns;
 #[path = "grammar/statements.rs"]
 mod statements;
+#[path = "grammar/support/mod.rs"]
+mod support;
 #[path = "grammar/types.rs"]
 mod types;
-#[path = "grammar/util.rs"]
-mod util;

@@ -1,0 +1,61 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "MalformedGenericClose" @ 19..40 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 41..42
+      ClassBodyDeclaration
+        FieldDeclaration
+          ClassType
+            QualifiedName
+              Identifier "java" @ 59..63 leading=[Newline "\n", Whitespace "                "]
+              Dot "." @ 63..64
+              Identifier "util" @ 64..68
+              Dot "." @ 68..69
+              Identifier "Map" @ 69..72
+            TypeArgumentList
+              Lt "<" @ 72..73
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "String" @ 73..79
+              Comma "," @ 79..80 trailing=[Whitespace " "]
+              TypeArgument
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 81..85
+                    Dot "." @ 85..86
+                    Identifier "util" @ 86..90
+                    Dot "." @ 90..91
+                    Identifier "List" @ 91..95
+                  TypeArgumentList
+                    Lt "<" @ 95..96
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "Integer" @ 96..103
+                    Gt ">" @ 103..104
+              Gt ">" @ 104..105
+          VariableDeclaratorList
+            VariableDeclarator
+          Semicolon ";" @ 105..106
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 123..126 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "after" @ 127..132
+          Semicolon ";" @ 132..133
+      RBrace "}" @ 146..147 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 156..156 leading=[Newline "\n", Whitespace "        "]
+
+outcome: Recovered
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=105..106 message="expected variable name"

@@ -104,11 +104,7 @@ impl Parser<'_> {
 
         self.parse_class_type_name_run();
         self.parse_optional_type_argument_list();
-        while self.at(JavaSyntaxKind::Dot) {
-            let after_dot = self.skip_annotations_from(self.position() + 1);
-            if !self.is_name_segment_at(after_dot) {
-                break;
-            }
+        while self.dot_is_followed_by_annotated_name() {
             self.bump();
             self.parse_annotations();
             self.parse_class_type_name_run();
@@ -120,11 +116,7 @@ impl Parser<'_> {
         let name = self.start();
         self.bump();
         let mut qualified = false;
-        while !self.at(JavaSyntaxKind::Lt) && self.at(JavaSyntaxKind::Dot) {
-            let after_dot = self.skip_annotations_from(self.position() + 1);
-            if !self.is_name_segment_at(after_dot) {
-                break;
-            }
+        while !self.at(JavaSyntaxKind::Lt) && self.dot_is_followed_by_annotated_name() {
             qualified = true;
             self.bump();
             self.parse_annotations();

@@ -1,3 +1,4 @@
+// Contains shallow token checks that do not need full grammar lookahead.
 use super::{JavaSyntaxKind, Parser};
 
 impl Parser<'_> {
@@ -61,14 +62,28 @@ impl Parser<'_> {
     }
 
     pub(in crate::parser::grammar) fn starts_array_dimensions(&self) -> bool {
-        let index = self.skip_annotations_from(self.position());
-        self.kind_at(index) == JavaSyntaxKind::LBracket
-            && self.kind_at(index + 1) == JavaSyntaxKind::RBracket
+        let mut lookahead = self.lookahead();
+        lookahead.skip_annotations();
+        lookahead.at(JavaSyntaxKind::LBracket) && lookahead.nth_kind(1) == JavaSyntaxKind::RBracket
     }
 
     pub(in crate::parser::grammar) fn starts_dim_expression(&self) -> bool {
-        let index = self.skip_annotations_from(self.position());
-        self.kind_at(index) == JavaSyntaxKind::LBracket
-            && self.kind_at(index + 1) != JavaSyntaxKind::RBracket
+        let mut lookahead = self.lookahead();
+        lookahead.skip_annotations();
+        lookahead.at(JavaSyntaxKind::LBracket) && lookahead.nth_kind(1) != JavaSyntaxKind::RBracket
+    }
+
+    pub(in crate::parser::grammar) fn is_primitive_type_start_at(&self, index: usize) -> bool {
+        matches!(
+            self.kind_at(index),
+            JavaSyntaxKind::BooleanKw
+                | JavaSyntaxKind::ByteKw
+                | JavaSyntaxKind::CharKw
+                | JavaSyntaxKind::DoubleKw
+                | JavaSyntaxKind::FloatKw
+                | JavaSyntaxKind::IntKw
+                | JavaSyntaxKind::LongKw
+                | JavaSyntaxKind::ShortKw
+        )
     }
 }

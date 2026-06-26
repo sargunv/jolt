@@ -1,6 +1,7 @@
 use jolt_diagnostics::{Diagnostic, DiagnosticCode, DiagnosticStage, Severity};
 use jolt_syntax::{CompletedMarker, Event, Marker};
 use jolt_text::{TextRange, TextSize};
+use std::sync::Arc;
 
 use crate::{JavaSyntaxKind, Token, Trivia};
 
@@ -20,21 +21,31 @@ pub(super) struct ParserToken {
 }
 
 pub(super) struct Parser<'source> {
-    source: &'source str,
-    /// Immutable lexer token stream used for parser lookahead.
-    tokens: Vec<ParserToken>,
+    cursor: TokenCursor<'source>,
     /// Logical tokens consumed by the parser and passed to the tree builder.
     tree_tokens: Vec<ParserToken>,
-    pos: usize,
-    pending_gt_split: Option<PendingGtSplit>,
     events: Vec<Event>,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-struct PendingGtSplit {
+pub(super) struct CursorCheckpoint {
+    pos: usize,
+    pending_gt_split: Option<PendingGtSplit>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(super) struct PendingGtSplit {
     original_index: usize,
     next_part: u8,
     total_parts: u8,
+}
+
+#[derive(Clone, Debug)]
+pub(super) struct TokenCursor<'source> {
+    source: &'source str,
+    tokens: Arc<[ParserToken]>,
+    pos: usize,
+    pending_gt_split: Option<PendingGtSplit>,
 }
 
 impl<'source> Parser<'source> {
@@ -42,11 +53,8 @@ impl<'source> Parser<'source> {
         let token_capacity = tokens.len();
         let event_capacity = token_capacity.saturating_mul(2);
         Self {
-            source,
-            tokens: tokens.into_iter().map(ParserToken::from).collect(),
+            cursor: TokenCursor::new(source, tokens.into_iter().map(ParserToken::from).collect()),
             tree_tokens: Vec::with_capacity(token_capacity),
-            pos: 0,
-            pending_gt_split: None,
             events: Vec::with_capacity(event_capacity),
         }
     }
@@ -59,7 +67,7 @@ impl<'source> Parser<'source> {
     }
 
     pub(super) const fn position(&self) -> usize {
-        self.pos
+        self.cursor.position()
     }
 
     pub(super) fn expect(&mut self, kind: JavaSyntaxKind, message: &str) {
@@ -105,63 +113,42 @@ impl<'source> Parser<'source> {
     }
 
     pub(super) fn current_kind(&self) -> JavaSyntaxKind {
-        self.logical_token_at(self.pos)
-            .map_or(JavaSyntaxKind::Eof, |token| token.kind)
+        self.cursor.kind()
     }
 
     pub(super) fn nth_kind(&self, n: usize) -> JavaSyntaxKind {
-        let Some(split) = self.pending_gt_split else {
-            return self.kind_at(self.pos + n);
-        };
-
-        let remaining_split_parts = usize::from(split.total_parts - split.next_part);
-        if n < remaining_split_parts {
-            JavaSyntaxKind::Gt
-        } else {
-            self.kind_at(self.pos + 1 + n - remaining_split_parts)
-        }
+        self.cursor.nth_kind(n)
     }
 
     pub(super) fn kind_at(&self, index: usize) -> JavaSyntaxKind {
-        self.tokens
-            .get(index)
-            .map_or(JavaSyntaxKind::Eof, |token| token.kind)
+        self.cursor.kind_at(index)
     }
 
     pub(super) fn current_text(&self) -> Option<&'source str> {
-        self.logical_token_at(self.pos)
-            .map(|token| self.token_text(&token))
+        self.cursor.text()
     }
 
     pub(super) fn text_at(&self, index: usize) -> Option<&'source str> {
-        let token = self.tokens.get(index)?;
-        Some(self.token_text(token))
+        self.cursor.text_at(index)
     }
 
     pub(super) fn bump(&mut self) {
-        if self.pending_gt_split.is_some() {
-            self.bump_pending_gt_split();
-            return;
-        }
-
-        let token = self
-            .tokens
-            .get(self.pos)
-            .expect("parser attempted to consume beyond EOF token")
-            .clone();
+        let token = self.cursor.bump();
         self.events.push(Event::Token);
         self.tree_tokens.push(token);
-        self.pos += 1;
     }
 
     pub(super) fn bump_split_gt(&mut self) {
-        match self.current_kind() {
-            JavaSyntaxKind::Gt if self.pending_gt_split.is_some() => self.bump_pending_gt_split(),
-            JavaSyntaxKind::Gt => self.bump(),
-            JavaSyntaxKind::RShift => self.start_pending_gt_split(2),
-            JavaSyntaxKind::UnsignedRShift => self.start_pending_gt_split(3),
-            _ => self.expected_here("expected `>`"),
+        if let Some(token) = self.cursor.bump_split_gt() {
+            self.events.push(Event::Token);
+            self.tree_tokens.push(token);
+        } else {
+            self.expected_here("expected `>`");
         }
+    }
+
+    pub(super) fn fork_cursor(&self) -> TokenCursor<'source> {
+        self.cursor.fork()
     }
 
     pub(super) fn expected_here(&mut self, message: &str) {
@@ -218,10 +205,10 @@ impl<'source> Parser<'source> {
 
     fn error_here(&mut self, code: JavaParseDiagnosticCode, message: &str) {
         let range = self
-            .logical_token_at(self.pos)
-            .or_else(|| self.tokens.last().cloned())
-            .expect("parser token stream must include EOF")
-            .range;
+            .cursor
+            .range()
+            .or_else(|| self.cursor.last_token().map(|token| token.range))
+            .expect("parser token stream must include EOF");
         self.events.push(Event::Error(Diagnostic {
             code: code.id(),
             severity: Severity::Error,
@@ -250,23 +237,122 @@ impl<'source> Parser<'source> {
     pub(super) fn abandon(&mut self, marker: Marker) {
         marker.abandon(&mut self.events);
     }
+}
 
-    fn start_pending_gt_split(&mut self, total_parts: u8) {
+impl<'source> TokenCursor<'source> {
+    fn new(source: &'source str, tokens: Vec<ParserToken>) -> Self {
+        Self {
+            source,
+            tokens: tokens.into(),
+            pos: 0,
+            pending_gt_split: None,
+        }
+    }
+
+    pub(super) const fn position(&self) -> usize {
+        self.pos
+    }
+
+    pub(super) fn kind(&self) -> JavaSyntaxKind {
+        self.token().map_or(JavaSyntaxKind::Eof, |token| token.kind)
+    }
+
+    pub(super) fn nth_kind(&self, n: usize) -> JavaSyntaxKind {
+        let Some(split) = self.pending_gt_split else {
+            return self.kind_at(self.pos + n);
+        };
+
+        let remaining_split_parts = usize::from(split.total_parts - split.next_part);
+        if n < remaining_split_parts {
+            JavaSyntaxKind::Gt
+        } else {
+            self.kind_at(self.pos + 1 + n - remaining_split_parts)
+        }
+    }
+
+    pub(super) fn kind_at(&self, index: usize) -> JavaSyntaxKind {
+        self.tokens
+            .get(index)
+            .map_or(JavaSyntaxKind::Eof, |token| token.kind)
+    }
+
+    pub(super) fn text(&self) -> Option<&'source str> {
+        self.token().map(|token| self.token_text(&token))
+    }
+
+    pub(super) fn text_at(&self, index: usize) -> Option<&'source str> {
+        let token = self.tokens.get(index)?;
+        Some(self.token_text(token))
+    }
+
+    pub(super) fn range(&self) -> Option<TextRange> {
+        self.token().map(|token| token.range)
+    }
+
+    pub(super) fn token(&self) -> Option<ParserToken> {
+        self.logical_token_at(self.pos)
+    }
+
+    pub(super) fn last_token(&self) -> Option<ParserToken> {
+        self.tokens.last().cloned()
+    }
+
+    pub(super) fn bump(&mut self) -> ParserToken {
+        if self.pending_gt_split.is_some() {
+            return self.bump_pending_gt_split();
+        }
+
+        let token = self
+            .tokens
+            .get(self.pos)
+            .expect("parser attempted to consume beyond EOF token")
+            .clone();
+        self.pos += 1;
+        token
+    }
+
+    pub(super) fn bump_split_gt(&mut self) -> Option<ParserToken> {
+        match self.kind() {
+            JavaSyntaxKind::Gt if self.pending_gt_split.is_some() => {
+                Some(self.bump_pending_gt_split())
+            }
+            JavaSyntaxKind::Gt => Some(self.bump()),
+            JavaSyntaxKind::RShift => Some(self.start_pending_gt_split(2)),
+            JavaSyntaxKind::UnsignedRShift => Some(self.start_pending_gt_split(3)),
+            _ => None,
+        }
+    }
+
+    pub(super) const fn checkpoint(&self) -> CursorCheckpoint {
+        CursorCheckpoint {
+            pos: self.pos,
+            pending_gt_split: self.pending_gt_split,
+        }
+    }
+
+    pub(super) fn rewind(&mut self, checkpoint: CursorCheckpoint) {
+        self.pos = checkpoint.pos;
+        self.pending_gt_split = checkpoint.pending_gt_split;
+    }
+
+    pub(super) fn fork(&self) -> Self {
+        self.clone()
+    }
+
+    fn start_pending_gt_split(&mut self, total_parts: u8) -> ParserToken {
         self.pending_gt_split = Some(PendingGtSplit {
             original_index: self.pos,
             next_part: 0,
             total_parts,
         });
-        self.bump_pending_gt_split();
+        self.bump_pending_gt_split()
     }
 
-    fn bump_pending_gt_split(&mut self) {
+    fn bump_pending_gt_split(&mut self) -> ParserToken {
         let split = self
             .pending_gt_split
             .expect("pending split must exist before bumping virtual `>`");
         let token = self.virtual_gt_token(split);
-        self.events.push(Event::Token);
-        self.tree_tokens.push(token);
 
         let next_part = split.next_part + 1;
         if next_part == split.total_parts {
@@ -275,6 +361,7 @@ impl<'source> Parser<'source> {
         } else {
             self.pending_gt_split = Some(PendingGtSplit { next_part, ..split });
         }
+        token
     }
 
     fn logical_token_at(&self, index: usize) -> Option<ParserToken> {

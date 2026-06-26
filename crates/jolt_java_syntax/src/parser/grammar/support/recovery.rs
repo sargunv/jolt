@@ -1,3 +1,4 @@
+// Contains recovery paths for malformed syntax after a parser error is reported.
 use super::{JavaSyntaxKind, Parser};
 
 impl Parser<'_> {
