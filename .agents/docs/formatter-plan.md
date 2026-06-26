@@ -760,24 +760,28 @@ The API should be filesystem-free and wasm-safe from the beginning. Local checks
 should include native builds and wasm builds for crates that are expected to
 compile to `wasm32-unknown-unknown`.
 
-### Milestone 3: shared diagnostics and failure policy
+### Milestone 3: shared diagnostics and syntax outcome policy
 
 Status: pending.
 
 Replace the temporary string-only diagnostic shape with the shared diagnostic
 model before more lexer/parser/formatter layers depend on diagnostic policy.
+Keep diagnostics as facts about source/tooling issues, and keep formatter
+write-safety decisions in formatter policy derived from lexer/parser outcomes.
+
+Design details live in `.agents/docs/milestone-3-diagnostics.md`.
 
 Add:
 
 - one shared diagnostic data shape,
 - stable diagnostic codes,
 - severity,
-- recoverability or `blocks_formatting`,
 - human message,
 - text range,
 - source stage, such as lexer, parser, or formatter,
-- conversion from Java lexer/parser diagnostics into the shared shape,
-- core tests for formatter no-write decisions based on structured diagnostics.
+- lexer/parser outcome state, such as clean, recovered, or aborted,
+- Java lexer/parser diagnostics authored in the shared shape,
+- core tests for formatter no-write decisions based on syntax outcomes.
 
 Language-specific diagnostic codes are acceptable inside the shared shape. For
 example, a Java parser diagnostic may have a Java-specific code, but CLI,
@@ -787,10 +791,11 @@ used by every language.
 The first write-safety policy can remain conservative:
 
 ```text
-If parse errors exist, do not write formatted output by default.
+If lexing/parsing recovers from errors or aborts, do not write formatted output
+by default.
 ```
 
-Formatting with recoverable parse errors can be designed later behind an
+Formatting with recovered syntax outcomes can be designed later behind an
 explicit policy once Jolt can prove the output is non-destructive.
 
 ### Milestone 4: Java lexer over the full Java corpus
@@ -1072,25 +1077,27 @@ Compatibility should be reported as a measurable percentage during development.
 
 The formatter should avoid destructive output.
 
-If parsing fails severely, the formatter should return diagnostics and avoid
-rewriting the file unless a safe partial-formatting strategy is explicitly
+If lexing or parsing fails severely, the formatter should return diagnostics and
+avoid rewriting the file unless a safe partial-formatting strategy is explicitly
 designed.
 
 The first implementation can choose a conservative rule:
 
 ```text
-If parse errors exist, do not write formatted output by default.
+If lexing/parsing recovers from errors or aborts, do not write formatted output
+by default.
 ```
 
-Later, Jolt can distinguish recoverable parse errors from fatal formatter
-errors.
+Later, Jolt can choose to format through recovered lexer/parser outcomes behind
+an explicit policy.
 
-Formatting with parse errors is in scope as a later capability, but not as the
-default write behavior. Biome exposes this as an explicit `formatWithErrors`
+Formatting with recovered syntax is in scope as a later capability, but not as
+the default write behavior. Biome exposes this as an explicit `formatWithErrors`
 option, and Oxc's parser architecture treats recovery as important for
-formatters and linters. Jolt should first build parser recovery for diagnostics
-and tree construction, then only allow formatting through recoverable errors
-behind an explicit policy once it can prove the output is non-destructive.
+formatters and linters. Jolt should first build lexer/parser recovery for
+diagnostics and tree construction, model recovered versus aborted syntax
+outcomes, then only allow formatting through recovered outcomes behind an
+explicit policy once it can prove the output is non-destructive.
 
 The shared diagnostic model needed for this policy is defined early in
 milestone 3.
