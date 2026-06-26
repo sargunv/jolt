@@ -1,0 +1,68 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "SwitchGroups" @ 19..31 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 32..33
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 50..54 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 55..61
+          LParen "(" @ 61..62
+          FormalParameterList
+            FormalParameter
+              PrimitiveType
+                IntKw "int" @ 62..65 trailing=[Whitespace " "]
+              Identifier "value" @ 66..71
+          RParen ")" @ 71..72 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 73..74
+            BlockStatement
+              SwitchStatement
+                SwitchKw "switch" @ 95..101 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                LParen "(" @ 102..103
+                NameExpression
+                  Identifier "value" @ 103..108
+                RParen ")" @ 108..109 trailing=[Whitespace " "]
+                SwitchBlock
+                  LBrace "{" @ 110..111
+                  SwitchBlockStatementGroup
+                    SwitchLabel
+                      CaseKw "case" @ 136..140 leading=[Newline "\n", Whitespace "                        "] trailing=[Whitespace " "]
+                      CaseConstant
+                        LiteralExpression
+                          IntegerLiteral "1" @ 141..142
+                    Colon ":" @ 142..143
+                    SwitchLabel
+                      CaseKw "case" @ 168..172 leading=[Newline "\n", Whitespace "                        "] trailing=[Whitespace " "]
+                      CaseConstant
+                        LiteralExpression
+                          IntegerLiteral "2" @ 173..174
+                    Colon ":" @ 174..175
+                    BlockStatement
+                      ExpressionStatement
+                        PostfixExpression
+                          NameExpression
+                            Identifier "value" @ 204..209 leading=[Newline "\n", Whitespace "                            "]
+                          PlusPlus "++" @ 209..211
+                        Semicolon ";" @ 211..212
+                    BlockStatement
+                      BreakStatement
+                        BreakKw "break" @ 241..246 leading=[Newline "\n", Whitespace "                            "]
+                        Semicolon ";" @ 246..247
+                  RBrace "}" @ 268..269 leading=[Newline "\n", Whitespace "                    "]
+            RBrace "}" @ 286..287 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 300..301 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 310..310 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

@@ -1,0 +1,81 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "ArrayCreationPerDimensionDims" @ 19..48 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 49..50
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 67..71 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 72..78
+          LParen "(" @ 78..79
+          RParen ")" @ 79..80 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 81..82
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  Name
+                    Identifier "Object" @ 103..109 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "values" @ 110..116 trailing=[Whitespace " "]
+                    Assign "=" @ 117..118 trailing=[Whitespace " "]
+                    VariableInitializer
+                      ArrayCreationExpression
+                        NewKw "new" @ 119..122 trailing=[Whitespace " "]
+                        ClassType
+                          Name
+                            Identifier "String" @ 123..129
+                        DimExpression
+                          LBracket "[" @ 129..130
+                          LiteralExpression
+                            IntegerLiteral "1" @ 130..131
+                          RBracket "]" @ 131..132 trailing=[Whitespace " "]
+                        ArrayDimensions
+                          ArrayDimension
+                            Annotation
+                              At "@" @ 133..134
+                              Name
+                                Identifier "A" @ 134..135 trailing=[Whitespace " "]
+                            LBracket "[" @ 136..137
+                            RBracket "]" @ 137..138 trailing=[Whitespace " "]
+                          ArrayDimension
+                            Annotation
+                              At "@" @ 139..140
+                              Name
+                                Identifier "B" @ 140..141 trailing=[Whitespace " "]
+                            LBracket "[" @ 142..143
+                            RBracket "]" @ 143..144
+              Semicolon ";" @ 144..145
+            RBrace "}" @ 162..163 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 176..177 leading=[Newline "\n", Whitespace "            "]
+  AnnotationInterfaceDeclaration
+    At "@" @ 191..192 leading=[Newline "\n", Newline "\n", Whitespace "            "]
+    InterfaceKw "interface" @ 192..201 trailing=[Whitespace " "]
+    Identifier "A" @ 202..203 trailing=[Whitespace " "]
+    AnnotationInterfaceBody
+      LBrace "{" @ 204..205
+      AnnotationElementList
+      RBrace "}" @ 205..206
+  AnnotationInterfaceDeclaration
+    At "@" @ 219..220 leading=[Newline "\n", Whitespace "            "]
+    InterfaceKw "interface" @ 220..229 trailing=[Whitespace " "]
+    Identifier "B" @ 230..231 trailing=[Whitespace " "]
+    AnnotationInterfaceBody
+      LBrace "{" @ 232..233
+      AnnotationElementList
+      RBrace "}" @ 233..234
+  Eof "" @ 243..243 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

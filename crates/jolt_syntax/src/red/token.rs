@@ -1,3 +1,5 @@
+use std::fmt;
+
 use jolt_text::{TextRange, TextSize};
 
 use crate::{GreenToken, GreenTrivia, Language, RawSyntaxKind};
@@ -155,6 +157,51 @@ impl<L: Language> PartialEq for SyntaxToken<L> {
 }
 
 impl<L: Language> Eq for SyntaxToken<L> {}
+
+impl<L> fmt::Debug for SyntaxToken<L>
+where
+    L: Language,
+    L::Kind: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let token_range = self.token_text_range();
+
+        write!(
+            f,
+            "{:?} {:?} @ {}..{}",
+            self.kind(),
+            self.text(),
+            token_range.start().get(),
+            token_range.end().get()
+        )?;
+
+        if !self.leading().is_empty() {
+            f.write_str(" leading=")?;
+            fmt_trivia(f, self.leading())?;
+        }
+
+        if !self.trailing().is_empty() {
+            f.write_str(" trailing=")?;
+            fmt_trivia(f, self.trailing())?;
+        }
+
+        Ok(())
+    }
+}
+
+fn fmt_trivia(f: &mut fmt::Formatter<'_>, trivia: &[GreenTrivia]) -> fmt::Result {
+    f.write_str("[")?;
+
+    for (index, piece) in trivia.iter().enumerate() {
+        if index > 0 {
+            f.write_str(", ")?;
+        }
+
+        write!(f, "{:?} {:?}", piece.kind(), piece.text())?;
+    }
+
+    f.write_str("]")
+}
 
 fn trivia_text_len(trivia: &[GreenTrivia]) -> TextSize {
     TextSize::new(trivia.iter().map(|piece| piece.text_len().get()).sum())

@@ -1,0 +1,49 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  RecordDeclaration
+    Identifier "record" @ 13..19 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "AnnotatedRecordComponents" @ 20..45
+    LParen "(" @ 45..46
+    RecordComponentList
+      RecordComponent
+        Annotation
+          At "@" @ 46..47
+          Name
+            Identifier "Marker" @ 47..53 trailing=[Whitespace " "]
+        PrimitiveType
+          IntKw "int" @ 54..57 trailing=[Whitespace " "]
+        Identifier "x" @ 58..59
+      Comma "," @ 59..60 trailing=[Whitespace " "]
+      RecordComponent
+        ClassType
+          Name
+            Identifier "String" @ 61..67 trailing=[Whitespace " "]
+        Annotation
+          At "@" @ 68..69
+          Name
+            Identifier "Marker" @ 69..75 trailing=[Whitespace " "]
+        Ellipsis "..." @ 76..79 trailing=[Whitespace " "]
+        Identifier "labels" @ 80..86
+    RParen ")" @ 86..87 trailing=[Whitespace " "]
+    RecordBody
+      LBrace "{" @ 88..89
+      RBrace "}" @ 89..90
+  AnnotationInterfaceDeclaration
+    At "@" @ 104..105 leading=[Newline "\n", Newline "\n", Whitespace "            "]
+    InterfaceKw "interface" @ 105..114 trailing=[Whitespace " "]
+    Identifier "Marker" @ 115..121 trailing=[Whitespace " "]
+    AnnotationInterfaceBody
+      LBrace "{" @ 122..123
+      AnnotationElementList
+      RBrace "}" @ 123..124
+  Eof "" @ 133..133 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

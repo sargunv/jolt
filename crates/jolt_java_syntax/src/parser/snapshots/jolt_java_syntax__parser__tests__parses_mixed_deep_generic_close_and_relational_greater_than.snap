@@ -1,0 +1,70 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "MixedDeepGenericCloseAndGreaterThan" @ 19..54 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 55..56
+      ClassBodyDeclaration
+        MethodDeclaration
+          PrimitiveType
+            BooleanKw "boolean" @ 73..80 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 81..87
+          LParen "(" @ 87..88
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "Object" @ 88..94 trailing=[Whitespace " "]
+              Identifier "value" @ 95..100
+            Comma "," @ 100..101 trailing=[Whitespace " "]
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "Object" @ 102..108 trailing=[Whitespace " "]
+              Identifier "limit" @ 109..114
+          RParen ")" @ 114..115 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 116..117
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 138..144 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                BinaryExpression
+                  InstanceofExpression
+                    NameExpression
+                      Identifier "value" @ 145..150 trailing=[Whitespace " "]
+                    InstanceofKw "instanceof" @ 151..161 trailing=[Whitespace " "]
+                    ClassType
+                      Name
+                        Identifier "Box" @ 162..165
+                      TypeArgumentList
+                        Lt "<" @ 165..166
+                        TypeArgument
+                          ClassType
+                            Name
+                              Identifier "List" @ 166..170
+                            TypeArgumentList
+                              Lt "<" @ 170..171
+                              TypeArgument
+                                ClassType
+                                  Name
+                                    Identifier "String" @ 171..177
+                              Gt ">" @ 177..178
+                        Gt ">" @ 178..179
+                  Gt ">" @ 179..180 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "limit" @ 181..186
+                Semicolon ";" @ 186..187
+            RBrace "}" @ 204..205 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 218..219 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 228..228 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

@@ -1,0 +1,41 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  EmptyDeclaration
+    Semicolon ";" @ 13..14 leading=[Newline "\n", Whitespace "            "]
+  ClassDeclaration
+    ClassKw "class" @ 28..33 leading=[Newline "\n", Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "EmptyDeclarations" @ 34..51 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 52..53
+      EmptyDeclaration
+        Semicolon ";" @ 70..71 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 84..85 leading=[Newline "\n", Whitespace "            "]
+  InterfaceDeclaration
+    InterfaceKw "interface" @ 99..108 leading=[Newline "\n", Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "EmptyInterface" @ 109..123 trailing=[Whitespace " "]
+    InterfaceBody
+      LBrace "{" @ 124..125
+      EmptyDeclaration
+        Semicolon ";" @ 142..143 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 156..157 leading=[Newline "\n", Whitespace "            "]
+  AnnotationInterfaceDeclaration
+    At "@" @ 171..172 leading=[Newline "\n", Newline "\n", Whitespace "            "]
+    InterfaceKw "interface" @ 172..181 trailing=[Whitespace " "]
+    Identifier "EmptyAnnotation" @ 182..197 trailing=[Whitespace " "]
+    AnnotationInterfaceBody
+      LBrace "{" @ 198..199
+      AnnotationElementList
+        EmptyDeclaration
+          Semicolon ";" @ 216..217 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 230..231 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 240..240 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

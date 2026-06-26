@@ -1,0 +1,248 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  RecordDeclaration
+    Identifier "record" @ 13..19 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "Box" @ 20..23
+    TypeParameterList
+      Lt "<" @ 23..24
+      TypeParameter
+        Identifier "T" @ 24..25
+      Gt ">" @ 25..26
+    LParen "(" @ 26..27
+    RecordComponentList
+      RecordComponent
+        ClassType
+          Name
+            Identifier "T" @ 27..28 trailing=[Whitespace " "]
+        Identifier "value" @ 29..34
+    RParen ")" @ 34..35 trailing=[Whitespace " "]
+    RecordBody
+      LBrace "{" @ 36..37
+      RBrace "}" @ 37..38
+  ClassDeclaration
+    ClassKw "class" @ 52..57 leading=[Newline "\n", Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "Ambiguities" @ 58..69
+    TypeParameterList
+      Lt "<" @ 69..70
+      TypeParameter
+        Identifier "T" @ 70..71 trailing=[Whitespace " "]
+        TypeBoundList
+          ExtendsKw "extends" @ 72..79 trailing=[Whitespace " "]
+          ClassType
+            QualifiedName
+              Identifier "java" @ 80..84
+              Dot "." @ 84..85
+              Identifier "util" @ 85..89
+              Dot "." @ 89..90
+              Identifier "Map" @ 90..93
+            TypeArgumentList
+              Lt "<" @ 93..94
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "String" @ 94..100
+              Comma "," @ 100..101 trailing=[Whitespace " "]
+              TypeArgument
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 102..106
+                    Dot "." @ 106..107
+                    Identifier "util" @ 107..111
+                    Dot "." @ 111..112
+                    Identifier "List" @ 112..116
+                  TypeArgumentList
+                    Lt "<" @ 116..117
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "Integer" @ 117..124
+                    Gt ">" @ 124..125
+              Gt ">" @ 125..126
+      Gt ">" @ 126..127 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 128..129
+      ClassBodyDeclaration
+        FieldDeclaration
+          ClassType
+            Name
+              Identifier "Object" @ 146..152 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "field" @ 153..158
+          Semicolon ";" @ 158..159
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 177..181 leading=[Newline "\n", Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 182..188
+          LParen "(" @ 188..189
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "Object" @ 189..195 trailing=[Whitespace " "]
+              Identifier "value" @ 196..201
+          RParen ")" @ 201..202 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 203..204
+            BlockStatement
+              LocalVariableDeclaration
+                Identifier "var" @ 225..228 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "local" @ 229..234 trailing=[Whitespace " "]
+                    Assign "=" @ 235..236 trailing=[Whitespace " "]
+                    VariableInitializer
+                      CastExpression
+                        LParen "(" @ 237..238
+                        ClassType
+                          Name
+                            Identifier "String" @ 238..244
+                        RParen ")" @ 244..245 trailing=[Whitespace " "]
+                        NameExpression
+                          Identifier "value" @ 246..251
+              Semicolon ";" @ 251..252
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 273..277 leading=[Newline "\n", Whitespace "                    "]
+                    Dot "." @ 277..278
+                    Identifier "util" @ 278..282
+                    Dot "." @ 282..283
+                    Identifier "function" @ 283..291
+                    Dot "." @ 291..292
+                    Identifier "Function" @ 292..300
+                  TypeArgumentList
+                    Lt "<" @ 300..301
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "String" @ 301..307
+                    Comma "," @ 307..308 trailing=[Whitespace " "]
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "String" @ 309..315
+                    Gt ">" @ 315..316 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "lambda" @ 317..323 trailing=[Whitespace " "]
+                    Assign "=" @ 324..325 trailing=[Whitespace " "]
+                    VariableInitializer
+                      LambdaExpression
+                        LParen "(" @ 326..327
+                        LambdaParameterList
+                          LambdaParameter
+                            ClassType
+                              Name
+                                Identifier "String" @ 327..333 trailing=[Whitespace " "]
+                            Identifier "s" @ 334..335
+                        RParen ")" @ 335..336 trailing=[Whitespace " "]
+                        Arrow "->" @ 337..339 trailing=[Whitespace " "]
+                        NameExpression
+                          Identifier "s" @ 340..341
+              Semicolon ";" @ 341..342
+            BlockStatement
+              ExpressionStatement
+                MethodInvocationExpression
+                  ThisExpression
+                    ThisKw "this" @ 363..367 leading=[Newline "\n", Whitespace "                    "]
+                  Dot "." @ 367..368
+                  Identifier "yield" @ 368..373
+                  ArgumentList
+                    LParen "(" @ 373..374
+                    RParen ")" @ 374..375
+                Semicolon ";" @ 375..376
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  Name
+                    Identifier "Object" @ 397..403 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "access" @ 404..410 trailing=[Whitespace " "]
+                    Assign "=" @ 411..412 trailing=[Whitespace " "]
+                    VariableInitializer
+                      FieldAccessExpression
+                        ThisExpression
+                          ThisKw "this" @ 413..417
+                        Dot "." @ 417..418
+                        Identifier "field" @ 418..423
+              Semicolon ";" @ 423..424
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 445..449 leading=[Newline "\n", Whitespace "                    "]
+                    Dot "." @ 449..450
+                    Identifier "util" @ 450..454
+                    Dot "." @ 454..455
+                    Identifier "Map" @ 455..458
+                  TypeArgumentList
+                    Lt "<" @ 458..459
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "String" @ 459..465
+                    Comma "," @ 465..466 trailing=[Whitespace " "]
+                    TypeArgument
+                      ClassType
+                        QualifiedName
+                          Identifier "java" @ 467..471
+                          Dot "." @ 471..472
+                          Identifier "util" @ 472..476
+                          Dot "." @ 476..477
+                          Identifier "List" @ 477..481
+                        TypeArgumentList
+                          Lt "<" @ 481..482
+                          TypeArgument
+                            ClassType
+                              Name
+                                Identifier "Integer" @ 482..489
+                          Gt ">" @ 489..490
+                    Gt ">" @ 490..491 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "nested" @ 492..498 trailing=[Whitespace " "]
+                    Assign "=" @ 499..500 trailing=[Whitespace " "]
+                    VariableInitializer
+                      LiteralExpression
+                        NullLiteral "null" @ 501..505
+              Semicolon ";" @ 505..506
+            BlockStatement
+              ExpressionStatement
+                MethodInvocationExpression
+                  NameExpression
+                    Identifier "nested" @ 527..533 leading=[Newline "\n", Whitespace "                    "]
+                  Dot "." @ 533..534
+                  Identifier "get" @ 534..537
+                  ArgumentList
+                    LParen "(" @ 537..538
+                    LiteralExpression
+                      StringLiteral "\"key\"" @ 538..543
+                    RParen ")" @ 543..544
+                Semicolon ";" @ 544..545
+            RBrace "}" @ 562..563 leading=[Newline "\n", Whitespace "                "]
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 581..585 leading=[Newline "\n", Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "yield" @ 586..591
+          LParen "(" @ 591..592
+          RParen ")" @ 592..593 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 594..595
+            RBrace "}" @ 595..596
+      RBrace "}" @ 609..610 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 619..619 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

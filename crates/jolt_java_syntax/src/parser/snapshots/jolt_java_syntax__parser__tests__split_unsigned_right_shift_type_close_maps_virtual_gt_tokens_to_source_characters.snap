@@ -1,0 +1,71 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "SplitUnsignedRightShiftTypeClose" @ 6..38 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 39..40
+      ClassBodyDeclaration
+        FieldDeclaration
+          ClassType
+            QualifiedName
+              Identifier "java" @ 45..49 leading=[Newline "\n", Whitespace "    "]
+              Dot "." @ 49..50
+              Identifier "util" @ 50..54
+              Dot "." @ 54..55
+              Identifier "Map" @ 55..58
+            TypeArgumentList
+              Lt "<" @ 58..59
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "String" @ 59..65
+              Comma "," @ 65..66 trailing=[Whitespace " "]
+              TypeArgument
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 67..71
+                    Dot "." @ 71..72
+                    Identifier "util" @ 72..76
+                    Dot "." @ 76..77
+                    Identifier "Map" @ 77..80
+                  TypeArgumentList
+                    Lt "<" @ 80..81
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "Integer" @ 81..88
+                    Comma "," @ 88..89 trailing=[Whitespace " "]
+                    TypeArgument
+                      ClassType
+                        QualifiedName
+                          Identifier "java" @ 90..94
+                          Dot "." @ 94..95
+                          Identifier "util" @ 95..99
+                          Dot "." @ 99..100
+                          Identifier "List" @ 100..104
+                        TypeArgumentList
+                          Lt "<" @ 104..105
+                          TypeArgument
+                            ClassType
+                              Name
+                                Identifier "Long" @ 105..109
+                          Gt ">" @ 122..123 leading=[Newline "\n", Whitespace "            "]
+                    Gt ">" @ 123..124
+              Gt ">" @ 124..125 trailing=[Whitespace " ", BlockComment "/*trail*/", Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "value" @ 136..141
+          Semicolon ";" @ 141..142
+      RBrace "}" @ 143..144 leading=[Newline "\n"]
+  Eof "" @ 145..145 leading=[Newline "\n"]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

@@ -1,0 +1,85 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "CatchUnionTypeShape" @ 19..38 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 39..40
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 57..61 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 62..68
+          LParen "(" @ 68..69
+          RParen ")" @ 69..70 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 71..72
+            BlockStatement
+              TryStatement
+                TryKw "try" @ 93..96 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                Block
+                  LBrace "{" @ 97..98
+                  BlockStatement
+                    ExpressionStatement
+                      MethodInvocationExpression
+                        NameExpression
+                          Identifier "risky" @ 123..128 leading=[Newline "\n", Whitespace "                        "]
+                        ArgumentList
+                          LParen "(" @ 128..129
+                          RParen ")" @ 129..130
+                      Semicolon ";" @ 130..131
+                  RBrace "}" @ 152..153 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                CatchClause
+                  CatchKw "catch" @ 154..159 trailing=[Whitespace " "]
+                  LParen "(" @ 160..161
+                  CatchParameter
+                    CatchTypeList
+                      UnionType
+                        ClassType
+                          QualifiedName
+                            Identifier "java" @ 161..165
+                            Dot "." @ 165..166
+                            Identifier "io" @ 166..168
+                            Dot "." @ 168..169
+                            Identifier "IOException" @ 169..180 trailing=[Whitespace " "]
+                        Bar "|" @ 181..182 trailing=[Whitespace " "]
+                        ClassType
+                          Name
+                            Identifier "RuntimeException" @ 183..199 trailing=[Whitespace " "]
+                    Identifier "ex" @ 200..202
+                  RParen ")" @ 202..203 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 204..205
+                    RBrace "}" @ 226..227 leading=[Newline "\n", Whitespace "                    "]
+            RBrace "}" @ 244..245 leading=[Newline "\n", Whitespace "                "]
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 263..267 leading=[Newline "\n", Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "risky" @ 268..273
+          LParen "(" @ 273..274
+          RParen ")" @ 274..275 trailing=[Whitespace " "]
+          ThrowsClause
+            ThrowsKw "throws" @ 276..282 trailing=[Whitespace " "]
+            ClassType
+              QualifiedName
+                Identifier "java" @ 283..287
+                Dot "." @ 287..288
+                Identifier "io" @ 288..290
+                Dot "." @ 290..291
+                Identifier "IOException" @ 291..302 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 303..304
+            RBrace "}" @ 304..305
+      RBrace "}" @ 318..319 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 328..328 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

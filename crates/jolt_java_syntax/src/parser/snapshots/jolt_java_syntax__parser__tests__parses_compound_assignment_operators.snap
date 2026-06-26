@@ -1,0 +1,68 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "CompoundAssignments" @ 19..38 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 39..40
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 57..61 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 62..68
+          LParen "(" @ 68..69
+          RParen ")" @ 69..70 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 71..72
+            BlockStatement
+              LocalVariableDeclaration
+                PrimitiveType
+                  IntKw "int" @ 93..96 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "value" @ 97..102 trailing=[Whitespace " "]
+                    Assign "=" @ 103..104 trailing=[Whitespace " "]
+                    VariableInitializer
+                      LiteralExpression
+                        IntegerLiteral "1" @ 105..106
+              Semicolon ";" @ 106..107
+            BlockStatement
+              ExpressionStatement
+                AssignmentExpression
+                  NameExpression
+                    Identifier "value" @ 128..133 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                  PlusEq "+=" @ 134..136 trailing=[Whitespace " "]
+                  LiteralExpression
+                    IntegerLiteral "2" @ 137..138
+                Semicolon ";" @ 138..139
+            BlockStatement
+              ExpressionStatement
+                AssignmentExpression
+                  NameExpression
+                    Identifier "value" @ 160..165 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                  LShiftEq "<<=" @ 166..169 trailing=[Whitespace " "]
+                  LiteralExpression
+                    IntegerLiteral "1" @ 170..171
+                Semicolon ";" @ 171..172
+            BlockStatement
+              ExpressionStatement
+                AssignmentExpression
+                  NameExpression
+                    Identifier "value" @ 193..198 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                  UnsignedRShiftEq ">>>=" @ 199..203 trailing=[Whitespace " "]
+                  LiteralExpression
+                    IntegerLiteral "1" @ 204..205
+                Semicolon ";" @ 205..206
+            RBrace "}" @ 223..224 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 237..238 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 247..247 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

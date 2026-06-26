@@ -1,0 +1,44 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "OptionalFlowExpressions" @ 19..42 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 43..44
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 61..65 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 66..72
+          LParen "(" @ 72..73
+          RParen ")" @ 73..74 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 75..76
+            BlockStatement
+              ForStatement
+                BasicForStatement
+                  ForKw "for" @ 97..100 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                  LParen "(" @ 101..102
+                  Semicolon ";" @ 102..103
+                  Semicolon ";" @ 103..104
+                  RParen ")" @ 104..105 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 106..107
+                    BlockStatement
+                      ReturnStatement
+                        ReturnKw "return" @ 132..138 leading=[Newline "\n", Whitespace "                        "]
+                        Semicolon ";" @ 138..139
+                    RBrace "}" @ 160..161 leading=[Newline "\n", Whitespace "                    "]
+            RBrace "}" @ 178..179 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 192..193 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 202..202 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

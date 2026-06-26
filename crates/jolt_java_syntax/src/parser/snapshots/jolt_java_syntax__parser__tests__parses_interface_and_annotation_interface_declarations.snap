@@ -1,0 +1,127 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  InterfaceDeclaration
+    ModifierList
+      Identifier "sealed" @ 13..19 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    InterfaceKw "interface" @ 20..29 trailing=[Whitespace " "]
+    Identifier "Shape" @ 30..35 trailing=[Whitespace " "]
+    ExtendsClause
+      ExtendsKw "extends" @ 36..43 trailing=[Whitespace " "]
+      ClassType
+        Name
+          Identifier "Drawable" @ 44..52 trailing=[Whitespace " "]
+    PermitsClause
+      Identifier "permits" @ 53..60 trailing=[Whitespace " "]
+      Name
+        Identifier "Circle" @ 61..67 trailing=[Whitespace " "]
+    InterfaceBody
+      LBrace "{" @ 68..69
+      FieldDeclaration
+        PrimitiveType
+          IntKw "int" @ 86..89 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+        VariableDeclaratorList
+          VariableDeclarator
+            Identifier "SIDES" @ 90..95 trailing=[Whitespace " "]
+            Assign "=" @ 96..97 trailing=[Whitespace " "]
+            VariableInitializer
+              LiteralExpression
+                IntegerLiteral "0" @ 98..99
+        Semicolon ";" @ 99..100
+      MethodDeclaration
+        ModifierList
+          PrivateKw "private" @ 118..125 leading=[Newline "\n", Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          StaticKw "static" @ 126..132 trailing=[Whitespace " "]
+        VoidType
+          VoidKw "void" @ 133..137 trailing=[Whitespace " "]
+        Identifier "helper" @ 138..144
+        LParen "(" @ 144..145
+        RParen ")" @ 145..146 trailing=[Whitespace " "]
+        Block
+          LBrace "{" @ 147..148
+          RBrace "}" @ 148..149
+      MethodDeclaration
+        VoidType
+          VoidKw "void" @ 167..171 leading=[Newline "\n", Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+        Identifier "draw" @ 172..176
+        LParen "(" @ 176..177
+        RParen ")" @ 177..178
+        Semicolon ";" @ 178..179
+      RBrace "}" @ 192..193 leading=[Newline "\n", Whitespace "            "]
+  InterfaceDeclaration
+    ModifierList
+      Identifier "non" @ 207..210 leading=[Newline "\n", Newline "\n", Whitespace "            "]
+      Minus "-" @ 210..211
+      Identifier "sealed" @ 211..217 trailing=[Whitespace " "]
+    InterfaceKw "interface" @ 218..227 trailing=[Whitespace " "]
+    Identifier "Circle" @ 228..234 trailing=[Whitespace " "]
+    ExtendsClause
+      ExtendsKw "extends" @ 235..242 trailing=[Whitespace " "]
+      ClassType
+        Name
+          Identifier "Shape" @ 243..248 trailing=[Whitespace " "]
+    InterfaceBody
+      LBrace "{" @ 249..250
+      RBrace "}" @ 250..251
+  InterfaceDeclaration
+    InterfaceKw "interface" @ 264..273 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "Drawable" @ 274..282 trailing=[Whitespace " "]
+    InterfaceBody
+      LBrace "{" @ 283..284
+      RBrace "}" @ 284..285
+  AnnotationInterfaceDeclaration
+    At "@" @ 299..300 leading=[Newline "\n", Newline "\n", Whitespace "            "]
+    InterfaceKw "interface" @ 300..309 trailing=[Whitespace " "]
+    Identifier "JsonName" @ 310..318 trailing=[Whitespace " "]
+    AnnotationInterfaceBody
+      LBrace "{" @ 319..320
+      AnnotationElementList
+        AnnotationElementDeclaration
+          ClassType
+            Name
+              Identifier "String" @ 337..343 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "value" @ 344..349
+          LParen "(" @ 349..350
+          RParen ")" @ 350..351 trailing=[Whitespace " "]
+          DefaultValue
+            DefaultKw "default" @ 352..359 trailing=[Whitespace " "]
+            AnnotationElementValue
+              LiteralExpression
+                StringLiteral "\"\"" @ 360..362
+          Semicolon ";" @ 362..363
+        AnnotationElementDeclaration
+          ArrayType
+            PrimitiveType
+              IntKw "int" @ 380..383 leading=[Newline "\n", Whitespace "                "]
+            ArrayDimensions
+              ArrayDimension
+                LBracket "[" @ 383..384
+                RBracket "]" @ 384..385 trailing=[Whitespace " "]
+          Identifier "flags" @ 386..391
+          LParen "(" @ 391..392
+          RParen ")" @ 392..393 trailing=[Whitespace " "]
+          DefaultValue
+            DefaultKw "default" @ 394..401 trailing=[Whitespace " "]
+            AnnotationElementValue
+              AnnotationArrayInitializer
+                LBrace "{" @ 402..403
+                AnnotationElementValue
+                  LiteralExpression
+                    IntegerLiteral "1" @ 403..404
+                Comma "," @ 404..405 trailing=[Whitespace " "]
+                AnnotationElementValue
+                  LiteralExpression
+                    IntegerLiteral "2" @ 406..407
+                RBrace "}" @ 407..408
+          Semicolon ";" @ 408..409
+      RBrace "}" @ 422..423 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 432..432 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

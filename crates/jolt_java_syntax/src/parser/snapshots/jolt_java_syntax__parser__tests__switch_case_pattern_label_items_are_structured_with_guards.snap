@@ -1,0 +1,77 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "SwitchCasePatternGuard" @ 19..41 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 42..43
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 60..64 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 65..71
+          LParen "(" @ 71..72
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "Object" @ 72..78 trailing=[Whitespace " "]
+              Identifier "value" @ 79..84
+          RParen ")" @ 84..85 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 86..87
+            BlockStatement
+              SwitchStatement
+                SwitchKw "switch" @ 108..114 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                LParen "(" @ 115..116
+                NameExpression
+                  Identifier "value" @ 116..121
+                RParen ")" @ 121..122 trailing=[Whitespace " "]
+                SwitchBlock
+                  LBrace "{" @ 123..124
+                  SwitchRule
+                    SwitchLabel
+                      CaseKw "case" @ 149..153 leading=[Newline "\n", Whitespace "                        "] trailing=[Whitespace " "]
+                      CasePattern
+                        TypePattern
+                          LocalVariableDeclaration
+                            ClassType
+                              Name
+                                Identifier "String" @ 154..160 trailing=[Whitespace " "]
+                            VariableDeclaratorList
+                              VariableDeclarator
+                                Identifier "s" @ 161..162 trailing=[Whitespace " "]
+                      Guard
+                        Identifier "when" @ 163..167 trailing=[Whitespace " "]
+                        MethodInvocationExpression
+                          NameExpression
+                            Identifier "s" @ 168..169
+                          Dot "." @ 169..170
+                          Identifier "isEmpty" @ 170..177
+                          ArgumentList
+                            LParen "(" @ 177..178
+                            RParen ")" @ 178..179 trailing=[Whitespace " "]
+                    Arrow "->" @ 180..182 trailing=[Whitespace " "]
+                    MethodInvocationExpression
+                      NameExpression
+                        Identifier "s" @ 183..184
+                      Dot "." @ 184..185
+                      Identifier "trim" @ 185..189
+                      ArgumentList
+                        LParen "(" @ 189..190
+                        RParen ")" @ 190..191
+                    Semicolon ";" @ 191..192
+                  RBrace "}" @ 213..214 leading=[Newline "\n", Whitespace "                    "]
+            RBrace "}" @ 231..232 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 245..246 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 255..255 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

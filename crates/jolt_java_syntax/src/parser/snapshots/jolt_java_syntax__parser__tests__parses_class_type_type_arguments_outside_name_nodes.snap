@@ -1,0 +1,49 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "ClassTypeTypeArgumentsOutsideNameNodes" @ 19..57 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 58..59
+      ClassBodyDeclaration
+        FieldDeclaration
+          ClassType
+            QualifiedName
+              Identifier "java" @ 76..80 leading=[Newline "\n", Whitespace "                "]
+              Dot "." @ 80..81
+              Identifier "util" @ 81..85
+              Dot "." @ 85..86
+              Identifier "Map" @ 86..89
+            TypeArgumentList
+              Lt "<" @ 89..90
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "String" @ 90..96
+              Gt ">" @ 96..97
+            Dot "." @ 97..98
+            Name
+              Identifier "Entry" @ 98..103
+            TypeArgumentList
+              Lt "<" @ 103..104
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "Integer" @ 104..111
+              Gt ">" @ 111..112 trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "value" @ 113..118
+          Semicolon ";" @ 118..119
+      RBrace "}" @ 132..133 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 142..142 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

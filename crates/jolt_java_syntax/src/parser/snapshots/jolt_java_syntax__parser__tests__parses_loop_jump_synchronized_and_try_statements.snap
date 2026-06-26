@@ -1,0 +1,270 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "Flow" @ 19..23 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 24..25
+      ClassBodyDeclaration
+        MethodDeclaration
+          PrimitiveType
+            IntKw "int" @ 42..45 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 46..52
+          LParen "(" @ 52..53
+          FormalParameterList
+            FormalParameter
+              ClassType
+                QualifiedName
+                  Identifier "java" @ 53..57
+                  Dot "." @ 57..58
+                  Identifier "util" @ 58..62
+                  Dot "." @ 62..63
+                  Identifier "List" @ 63..67
+                TypeArgumentList
+                  Lt "<" @ 67..68
+                  TypeArgument
+                    ClassType
+                      Name
+                        Identifier "String" @ 68..74
+                  Gt ">" @ 74..75 trailing=[Whitespace " "]
+              Identifier "values" @ 76..82
+          RParen ")" @ 82..83 trailing=[Whitespace " "]
+          ThrowsClause
+            ThrowsKw "throws" @ 84..90 trailing=[Whitespace " "]
+            ClassType
+              Name
+                Identifier "Exception" @ 91..100 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 101..102
+            BlockStatement
+              WhileStatement
+                WhileKw "while" @ 123..128 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                LParen "(" @ 129..130
+                MethodInvocationExpression
+                  NameExpression
+                    Identifier "values" @ 130..136
+                  Dot "." @ 136..137
+                  Identifier "isEmpty" @ 137..144
+                  ArgumentList
+                    LParen "(" @ 144..145
+                    RParen ")" @ 145..146
+                RParen ")" @ 146..147 trailing=[Whitespace " "]
+                ContinueStatement
+                  ContinueKw "continue" @ 148..156
+                  Semicolon ";" @ 156..157
+            BlockStatement
+              DoStatement
+                DoKw "do" @ 178..180 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                Block
+                  LBrace "{" @ 181..182 trailing=[Whitespace " "]
+                  BlockStatement
+                    BreakStatement
+                      BreakKw "break" @ 183..188
+                      Semicolon ";" @ 188..189 trailing=[Whitespace " "]
+                  RBrace "}" @ 190..191 trailing=[Whitespace " "]
+                WhileKw "while" @ 192..197 trailing=[Whitespace " "]
+                LParen "(" @ 198..199
+                LiteralExpression
+                  BooleanLiteral "false" @ 199..204
+                RParen ")" @ 204..205
+                Semicolon ";" @ 205..206
+            BlockStatement
+              ForStatement
+                BasicForStatement
+                  ForKw "for" @ 227..230 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                  LParen "(" @ 231..232
+                  ForInitializer
+                    LocalVariableDeclaration
+                      PrimitiveType
+                        IntKw "int" @ 232..235 trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "i" @ 236..237 trailing=[Whitespace " "]
+                          Assign "=" @ 238..239 trailing=[Whitespace " "]
+                          VariableInitializer
+                            LiteralExpression
+                              IntegerLiteral "0" @ 240..241
+                  Semicolon ";" @ 241..242 trailing=[Whitespace " "]
+                  BinaryExpression
+                    NameExpression
+                      Identifier "i" @ 243..244 trailing=[Whitespace " "]
+                    Lt "<" @ 245..246 trailing=[Whitespace " "]
+                    LiteralExpression
+                      IntegerLiteral "10" @ 247..249
+                  Semicolon ";" @ 249..250 trailing=[Whitespace " "]
+                  ForUpdate
+                    StatementExpressionList
+                      PostfixExpression
+                        NameExpression
+                          Identifier "i" @ 251..252
+                        PlusPlus "++" @ 252..254
+                  RParen ")" @ 254..255 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 256..257
+                    RBrace "}" @ 257..258
+            BlockStatement
+              ForStatement
+                EnhancedForStatement
+                  ForKw "for" @ 279..282 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                  LParen "(" @ 283..284
+                  LocalVariableDeclaration
+                    ClassType
+                      Name
+                        Identifier "String" @ 284..290 trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "value" @ 291..296 trailing=[Whitespace " "]
+                  Colon ":" @ 297..298 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "values" @ 299..305
+                  RParen ")" @ 305..306 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 307..308
+                    RBrace "}" @ 308..309
+            BlockStatement
+              SynchronizedStatement
+                SynchronizedKw "synchronized" @ 330..342 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                LParen "(" @ 343..344
+                ThisExpression
+                  ThisKw "this" @ 344..348
+                RParen ")" @ 348..349 trailing=[Whitespace " "]
+                Block
+                  LBrace "{" @ 350..351
+                  RBrace "}" @ 351..352
+            BlockStatement
+              TryStatement
+                TryKw "try" @ 373..376 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                Block
+                  LBrace "{" @ 377..378
+                  BlockStatement
+                    ThrowStatement
+                      ThrowKw "throw" @ 403..408 leading=[Newline "\n", Whitespace "                        "] trailing=[Whitespace " "]
+                      ObjectCreationExpression
+                        NewKw "new" @ 409..412 trailing=[Whitespace " "]
+                        ClassType
+                          Name
+                            Identifier "Exception" @ 413..422
+                        ArgumentList
+                          LParen "(" @ 422..423
+                          RParen ")" @ 423..424
+                      Semicolon ";" @ 424..425
+                  RBrace "}" @ 446..447 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                CatchClause
+                  CatchKw "catch" @ 448..453 trailing=[Whitespace " "]
+                  LParen "(" @ 454..455
+                  CatchParameter
+                    CatchTypeList
+                      UnionType
+                        ClassType
+                          QualifiedName
+                            Identifier "java" @ 455..459
+                            Dot "." @ 459..460
+                            Identifier "io" @ 460..462
+                            Dot "." @ 462..463
+                            Identifier "IOException" @ 463..474 trailing=[Whitespace " "]
+                        Bar "|" @ 475..476 trailing=[Whitespace " "]
+                        ClassType
+                          Name
+                            Identifier "RuntimeException" @ 477..493 trailing=[Whitespace " "]
+                    Identifier "ex" @ 494..496
+                  RParen ")" @ 496..497 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 498..499
+                    BlockStatement
+                      ReturnStatement
+                        ReturnKw "return" @ 524..530 leading=[Newline "\n", Whitespace "                        "] trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "1" @ 531..532
+                        Semicolon ";" @ 532..533
+                    RBrace "}" @ 554..555 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                FinallyClause
+                  FinallyKw "finally" @ 556..563 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 564..565
+                    BlockStatement
+                      ExpressionStatement
+                        MethodInvocationExpression
+                          NameExpression
+                            Identifier "values" @ 590..596 leading=[Newline "\n", Whitespace "                        "]
+                          Dot "." @ 596..597
+                          Identifier "clear" @ 597..602
+                          ArgumentList
+                            LParen "(" @ 602..603
+                            RParen ")" @ 603..604
+                        Semicolon ";" @ 604..605
+                    RBrace "}" @ 626..627 leading=[Newline "\n", Whitespace "                    "]
+            BlockStatement
+              TryStatement
+                TryWithResourcesStatement
+                  TryKw "try" @ 648..651 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                  ResourceSpecification
+                    LParen "(" @ 652..653
+                    ResourceList
+                      Resource
+                        LocalVariableDeclaration
+                          Identifier "var" @ 653..656 trailing=[Whitespace " "]
+                          VariableDeclaratorList
+                            VariableDeclarator
+                              Identifier "ignored" @ 657..664 trailing=[Whitespace " "]
+                              Assign "=" @ 665..666 trailing=[Whitespace " "]
+                              VariableInitializer
+                                MethodInvocationExpression
+                                  NameExpression
+                                    Identifier "open" @ 667..671
+                                  ArgumentList
+                                    LParen "(" @ 671..672
+                                    RParen ")" @ 672..673
+                      Semicolon ";" @ 673..674 trailing=[Whitespace " "]
+                      Resource
+                        VariableAccess
+                          NameExpression
+                            Identifier "existing" @ 675..683
+                    RParen ")" @ 683..684 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 685..686
+                    RBrace "}" @ 686..687
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 708..714 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "0" @ 715..716
+                Semicolon ";" @ 716..717
+            RBrace "}" @ 734..735 leading=[Newline "\n", Whitespace "                "]
+      ClassBodyDeclaration
+        MethodDeclaration
+          ClassType
+            Name
+              Identifier "AutoCloseable" @ 753..766 leading=[Newline "\n", Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "open" @ 767..771
+          LParen "(" @ 771..772
+          RParen ")" @ 772..773 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 774..775 trailing=[Whitespace " "]
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 776..782 trailing=[Whitespace " "]
+                LiteralExpression
+                  NullLiteral "null" @ 783..787
+                Semicolon ";" @ 787..788 trailing=[Whitespace " "]
+            RBrace "}" @ 789..790
+      ClassBodyDeclaration
+        FieldDeclaration
+          ClassType
+            Name
+              Identifier "AutoCloseable" @ 807..820 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "existing" @ 821..829
+          Semicolon ";" @ 829..830
+      RBrace "}" @ 843..844 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 853..853 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

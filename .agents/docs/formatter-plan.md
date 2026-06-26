@@ -760,7 +760,40 @@ The API should be filesystem-free and wasm-safe from the beginning. Local checks
 should include native builds and wasm builds for crates that are expected to
 compile to `wasm32-unknown-unknown`.
 
-### Milestone 3: Java lexer over the full Java corpus
+### Milestone 3: shared diagnostics and failure policy
+
+Status: pending.
+
+Replace the temporary string-only diagnostic shape with the shared diagnostic
+model before more lexer/parser/formatter layers depend on diagnostic policy.
+
+Add:
+
+- one shared diagnostic data shape,
+- stable diagnostic codes,
+- severity,
+- recoverability or `blocks_formatting`,
+- human message,
+- text range,
+- source stage, such as lexer, parser, or formatter,
+- conversion from Java lexer/parser diagnostics into the shared shape,
+- core tests for formatter no-write decisions based on structured diagnostics.
+
+Language-specific diagnostic codes are acceptable inside the shared shape. For
+example, a Java parser diagnostic may have a Java-specific code, but CLI,
+dprint, and formatter failure policy should consume the same diagnostic model
+used by every language.
+
+The first write-safety policy can remain conservative:
+
+```text
+If parse errors exist, do not write formatted output by default.
+```
+
+Formatting with recoverable parse errors can be designed later behind an
+explicit policy once Jolt can prove the output is non-destructive.
+
+### Milestone 4: Java lexer over the full Java corpus
 
 Status: complete.
 
@@ -784,9 +817,9 @@ parser work depends on it. The goal is not formatting yet. The goal is that Jolt
 can represent every byte, newline, token, and comment in the Java inputs without
 loss.
 
-### Milestone 4: Java lossless syntax tree over the full Java corpus
+### Milestone 5: Java lossless syntax tree over the full Java corpus
 
-Status: pending.
+Status: complete?
 
 Build the Java parser and syntax tree after the lexer has proven it can cover
 the corpus.
@@ -799,14 +832,38 @@ Add:
 - Java parser event stream,
 - Java grammar coverage for valid source in the imported oracle corpus,
 - error nodes and parser diagnostics,
-- Java CST wrappers needed by the formatter,
 - parse tests over all imported Java oracle inputs.
 
 This milestone should not be a minimal parser for a formatter demo. The parser
 layer should handle the valid Java source Jolt has imported before the Java
 layout builder is built on top of it.
 
-### Milestone 5: shared document IR and renderer
+### Milestone 6: Java CST wrappers
+
+Status: pending.
+
+Add typed Java CST wrappers after the raw Java CST shape is stable enough to
+wrap without churn.
+
+Wrappers are ergonomic views over raw syntax nodes, not a semantic AST and not a
+replacement for the CST. They should encode syntax expectations the Java layout
+builder will use repeatedly.
+
+Add handwritten wrappers for formatter-critical syntax first:
+
+- compilation units,
+- imports,
+- declarations and bodies,
+- blocks and statements,
+- expressions and argument lists,
+- types and annotations,
+- trivia/comment access helpers.
+
+Do not generate a full wrapper layer until the handwritten layer becomes
+repetitive enough to justify a schema and the CST shape is stable enough that
+generated coverage will not churn.
+
+### Milestone 7: shared document IR and renderer
 
 Status: pending.
 
@@ -832,7 +889,7 @@ The IR should stay small, but it should be chosen with the Java oracle outputs
 in view. New IR features should be added when Java formatting requirements show
 that the existing algebra cannot express the layout.
 
-### Milestone 6: Google Java Format layout builder
+### Milestone 8: Google Java Format layout builder
 
 Status: pending.
 
@@ -853,7 +910,7 @@ The comparison target is the full materialized Google Java Format corpus.
 Compatibility should be reported as fixture counts and percentages while
 implementation converges.
 
-### Milestone 7: Java comments, trivia, and failure behavior
+### Milestone 9: Java comments and trivia hardening
 
 Status: pending.
 
@@ -868,13 +925,17 @@ Add:
 - dangling comments in empty blocks and argument lists,
 - disabled-code comments,
 - blank-line normalization,
-- parse-error no-write behavior,
 - narrowed regression fixtures for cases not present upstream.
 
 Owned regression fixtures are appropriate here because they cover Jolt-owned
 safety behavior or gaps in upstream fixtures, not broad style compatibility.
 
-### Milestone 8: native CLI wrapper
+Parse-error no-write behavior belongs to the shared diagnostics/failure-policy
+milestone. This milestone may add Java-specific regression cases that exercise
+that policy with comments and tricky trivia, but it should not define the core
+diagnostic model.
+
+### Milestone 10: native CLI wrapper
 
 Status: pending.
 
@@ -897,7 +958,7 @@ Add:
 The CLI should only call `jolt_fmt_core`. It should not implement formatting
 behavior.
 
-### Milestone 9: dprint wrapper
+### Milestone 11: dprint wrapper
 
 Status: pending.
 
@@ -915,7 +976,7 @@ Add:
 This milestone proves the dprint wrapper is thin. The plugin should not get a
 separate layout builder or option model.
 
-### Milestone 10: AOSP Java profile
+### Milestone 12: AOSP Java profile
 
 Status: pending.
 
@@ -932,7 +993,7 @@ Add:
 This milestone should validate that profiles configure internal behavior rather
 than swapping external formatter executables.
 
-### Milestone 11: Palantir Java profile
+### Milestone 13: Palantir Java profile
 
 Status: pending.
 
@@ -947,7 +1008,7 @@ Add:
 Any Palantir-specific behavior should be isolated as profile policy, not parser
 forks.
 
-### Milestone 12: Java formatter hardening
+### Milestone 14: Java formatter hardening
 
 Status: pending.
 
@@ -1030,6 +1091,9 @@ option, and Oxc's parser architecture treats recovery as important for
 formatters and linters. Jolt should first build parser recovery for diagnostics
 and tree construction, then only allow formatting through recoverable errors
 behind an explicit policy once it can prove the output is non-destructive.
+
+The shared diagnostic model needed for this policy is defined early in
+milestone 3.
 
 ## Formatter Suppression Comments
 

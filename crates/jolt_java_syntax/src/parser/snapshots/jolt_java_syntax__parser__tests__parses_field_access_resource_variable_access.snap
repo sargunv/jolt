@@ -1,0 +1,61 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "FieldAccessResource" @ 19..38 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 39..40
+      ClassBodyDeclaration
+        FieldDeclaration
+          ClassType
+            Name
+              Identifier "AutoCloseable" @ 57..70 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "existing" @ 71..79
+          Semicolon ";" @ 79..80
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 98..102 leading=[Newline "\n", Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 103..109
+          LParen "(" @ 109..110
+          RParen ")" @ 110..111 trailing=[Whitespace " "]
+          ThrowsClause
+            ThrowsKw "throws" @ 112..118 trailing=[Whitespace " "]
+            ClassType
+              Name
+                Identifier "Exception" @ 119..128 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 129..130
+            BlockStatement
+              TryStatement
+                TryWithResourcesStatement
+                  TryKw "try" @ 151..154 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                  ResourceSpecification
+                    LParen "(" @ 155..156
+                    ResourceList
+                      Resource
+                        VariableAccess
+                          FieldAccessExpression
+                            ThisExpression
+                              ThisKw "this" @ 156..160
+                            Dot "." @ 160..161
+                            Identifier "existing" @ 161..169
+                    RParen ")" @ 169..170 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 171..172
+                    RBrace "}" @ 172..173
+            RBrace "}" @ 190..191 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 204..205 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 214..214 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

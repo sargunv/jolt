@@ -1,0 +1,94 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ImportDeclaration
+    ImportKw "import" @ 13..19 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "java" @ 20..24
+      Dot "." @ 24..25
+      Identifier "lang" @ 25..29
+      Dot "." @ 29..30
+      Identifier "annotation" @ 30..40
+      Dot "." @ 40..41
+      Identifier "Native" @ 41..47
+    Semicolon ";" @ 47..48
+  ModuleDeclaration
+    Annotation
+      At "@" @ 62..63 leading=[Newline "\n", Newline "\n", Whitespace "            "]
+      Name
+        Identifier "Deprecated" @ 63..73
+    Identifier "open" @ 86..90 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "module" @ 91..97 trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "example" @ 98..105
+      Dot "." @ 105..106
+      Identifier "module" @ 106..112 trailing=[Whitespace " "]
+    LBrace "{" @ 113..114
+    ModuleDirective
+      RequiresDirective
+        Identifier "requires" @ 131..139 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+        Identifier "transitive" @ 140..150 trailing=[Whitespace " "]
+        StaticKw "static" @ 151..157 trailing=[Whitespace " "]
+        QualifiedName
+          Identifier "java" @ 158..162
+          Dot "." @ 162..163
+          Identifier "sql" @ 163..166
+        Semicolon ";" @ 166..167
+    ModuleDirective
+      ExportsDirective
+        Identifier "exports" @ 184..191 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+        QualifiedName
+          Identifier "example" @ 192..199
+          Dot "." @ 199..200
+          Identifier "api" @ 200..203 trailing=[Whitespace " "]
+        Identifier "to" @ 204..206 trailing=[Whitespace " "]
+        QualifiedName
+          Identifier "friend" @ 207..213
+          Dot "." @ 213..214
+          Identifier "module" @ 214..220
+        Semicolon ";" @ 220..221
+    ModuleDirective
+      OpensDirective
+        Identifier "opens" @ 238..243 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+        QualifiedName
+          Identifier "example" @ 244..251
+          Dot "." @ 251..252
+          Identifier "internal" @ 252..260 trailing=[Whitespace " "]
+        Identifier "to" @ 261..263 trailing=[Whitespace " "]
+        QualifiedName
+          Identifier "friend" @ 264..270
+          Dot "." @ 270..271
+          Identifier "module" @ 271..277
+        Semicolon ";" @ 277..278
+    ModuleDirective
+      UsesDirective
+        Identifier "uses" @ 295..299 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+        QualifiedName
+          Identifier "example" @ 300..307
+          Dot "." @ 307..308
+          Identifier "Service" @ 308..315
+        Semicolon ";" @ 315..316
+    ModuleDirective
+      ProvidesDirective
+        Identifier "provides" @ 333..341 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+        QualifiedName
+          Identifier "example" @ 342..349
+          Dot "." @ 349..350
+          Identifier "Service" @ 350..357 trailing=[Whitespace " "]
+        Identifier "with" @ 358..362 trailing=[Whitespace " "]
+        QualifiedName
+          Identifier "example" @ 363..370
+          Dot "." @ 370..371
+          Identifier "ServiceImpl" @ 371..382
+        Semicolon ";" @ 382..383
+    RBrace "}" @ 396..397 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 406..406 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

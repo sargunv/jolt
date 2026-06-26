@@ -1,0 +1,70 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "InstanceofForms" @ 19..34 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 35..36
+      ClassBodyDeclaration
+        MethodDeclaration
+          PrimitiveType
+            BooleanKw "boolean" @ 53..60 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 61..67
+          LParen "(" @ 67..68
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "Object" @ 68..74 trailing=[Whitespace " "]
+              Identifier "value" @ 75..80
+          RParen ")" @ 80..81 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 82..83
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 104..110 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                BinaryExpression
+                  InstanceofExpression
+                    NameExpression
+                      Identifier "value" @ 111..116 trailing=[Whitespace " "]
+                    InstanceofKw "instanceof" @ 117..127 trailing=[Whitespace " "]
+                    ClassType
+                      QualifiedName
+                        Identifier "java" @ 128..132
+                        Dot "." @ 132..133
+                        Identifier "util" @ 133..137
+                        Dot "." @ 137..138
+                        Identifier "List" @ 138..142
+                      TypeArgumentList
+                        Lt "<" @ 142..143
+                        TypeArgument
+                          WildcardType
+                            Question "?" @ 143..144
+                        Gt ">" @ 144..145 trailing=[Whitespace " "]
+                  OrOr "||" @ 146..148 trailing=[Whitespace " "]
+                  InstanceofExpression
+                    NameExpression
+                      Identifier "value" @ 149..154 trailing=[Whitespace " "]
+                    InstanceofKw "instanceof" @ 155..165 trailing=[Whitespace " "]
+                    TypePattern
+                      LocalVariableDeclaration
+                        ClassType
+                          Name
+                            Identifier "String" @ 166..172 trailing=[Whitespace " "]
+                        VariableDeclaratorList
+                          VariableDeclarator
+                            Identifier "text" @ 173..177
+                Semicolon ";" @ 177..178
+            RBrace "}" @ 195..196 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 209..210 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 219..219 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

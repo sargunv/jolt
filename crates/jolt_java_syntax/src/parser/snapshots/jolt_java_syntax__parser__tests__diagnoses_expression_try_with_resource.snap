@@ -1,0 +1,70 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "ExpressionTryWithResource" @ 19..44 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 45..46
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 63..67 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 68..74
+          LParen "(" @ 74..75
+          RParen ")" @ 75..76 trailing=[Whitespace " "]
+          ThrowsClause
+            ThrowsKw "throws" @ 77..83 trailing=[Whitespace " "]
+            ClassType
+              Name
+                Identifier "Exception" @ 84..93 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 94..95
+            BlockStatement
+              TryStatement
+                TryWithResourcesStatement
+                  TryKw "try" @ 116..119 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                  ResourceSpecification
+                    LParen "(" @ 120..121
+                    ResourceList
+                      Resource
+                        ErrorNode
+                          MethodInvocationExpression
+                            NameExpression
+                              Identifier "open" @ 121..125
+                            ArgumentList
+                              LParen "(" @ 125..126
+                              RParen ")" @ 126..127
+                    RParen ")" @ 127..128 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 129..130
+                    RBrace "}" @ 130..131
+            RBrace "}" @ 148..149 leading=[Newline "\n", Whitespace "                "]
+      ClassBodyDeclaration
+        MethodDeclaration
+          ClassType
+            Name
+              Identifier "AutoCloseable" @ 167..180 leading=[Newline "\n", Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "open" @ 181..185
+          LParen "(" @ 185..186
+          RParen ")" @ 186..187 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 188..189 trailing=[Whitespace " "]
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 190..196 trailing=[Whitespace " "]
+                LiteralExpression
+                  NullLiteral "null" @ 197..201
+                Semicolon ";" @ 201..202 trailing=[Whitespace " "]
+            RBrace "}" @ 203..204
+      RBrace "}" @ 217..218 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 227..227 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  expected resource variable declaration or variable access
+
+lexer diagnostics:
+  (none)

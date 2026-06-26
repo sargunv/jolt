@@ -1,0 +1,133 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "Statements" @ 19..29 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 30..31
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 48..52 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 53..59
+          LParen "(" @ 59..60
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "Object" @ 60..66 trailing=[Whitespace " "]
+              Identifier "o" @ 67..68
+          RParen ")" @ 68..69 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 70..71
+            BlockStatement
+              EmptyStatement
+                Semicolon ";" @ 92..93 leading=[Newline "\n", Whitespace "                    "]
+            BlockStatement
+              LocalClassOrInterfaceDeclaration
+                ClassDeclaration
+                  ClassKw "class" @ 114..119 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                  Identifier "LocalClass" @ 120..130 trailing=[Whitespace " "]
+                  ClassBody
+                    LBrace "{" @ 131..132
+                    RBrace "}" @ 132..133
+            BlockStatement
+              LocalClassOrInterfaceDeclaration
+                InterfaceDeclaration
+                  InterfaceKw "interface" @ 154..163 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                  Identifier "LocalInterface" @ 164..178 trailing=[Whitespace " "]
+                  InterfaceBody
+                    LBrace "{" @ 179..180
+                    RBrace "}" @ 180..181
+            BlockStatement
+              LocalVariableDeclaration
+                FinalKw "final" @ 202..207 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                Identifier "var" @ 208..211 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "local" @ 212..217 trailing=[Whitespace " "]
+                    Assign "=" @ 218..219 trailing=[Whitespace " "]
+                    VariableInitializer
+                      NameExpression
+                        Identifier "o" @ 220..221
+              Semicolon ";" @ 221..222
+            BlockStatement
+              LabeledStatement
+                Identifier "label" @ 243..248 leading=[Newline "\n", Whitespace "                    "]
+                Colon ":" @ 248..249 trailing=[Whitespace " "]
+                IfStatement
+                  IfKw "if" @ 250..252 trailing=[Whitespace " "]
+                  LParen "(" @ 253..254
+                  BinaryExpression
+                    NameExpression
+                      Identifier "local" @ 254..259 trailing=[Whitespace " "]
+                    EqEq "==" @ 260..262 trailing=[Whitespace " "]
+                    LiteralExpression
+                      NullLiteral "null" @ 263..267
+                  RParen ")" @ 267..268 trailing=[Whitespace " "]
+                  EmptyStatement
+                    Semicolon ";" @ 269..270
+            BlockStatement
+              IfStatement
+                IfKw "if" @ 291..293 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                LParen "(" @ 294..295
+                InstanceofExpression
+                  NameExpression
+                    Identifier "local" @ 295..300 trailing=[Whitespace " "]
+                  InstanceofKw "instanceof" @ 301..311 trailing=[Whitespace " "]
+                  TypePattern
+                    LocalVariableDeclaration
+                      ClassType
+                        Name
+                          Identifier "String" @ 312..318 trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "s" @ 319..320
+                RParen ")" @ 320..321 trailing=[Whitespace " "]
+                ExpressionStatement
+                  MethodInvocationExpression
+                    NameExpression
+                      Identifier "s" @ 322..323
+                    Dot "." @ 323..324
+                    Identifier "trim" @ 324..328
+                    ArgumentList
+                      LParen "(" @ 328..329
+                      RParen ")" @ 329..330
+                  Semicolon ";" @ 330..331 trailing=[Whitespace " "]
+                ElseKw "else" @ 332..336 trailing=[Whitespace " "]
+                ExpressionStatement
+                  MethodInvocationExpression
+                    NameExpression
+                      Identifier "local" @ 337..342
+                    Dot "." @ 342..343
+                    Identifier "toString" @ 343..351
+                    ArgumentList
+                      LParen "(" @ 351..352
+                      RParen ")" @ 352..353
+                  Semicolon ";" @ 353..354
+            BlockStatement
+              AssertStatement
+                AssertKw "assert" @ 375..381 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                BinaryExpression
+                  NameExpression
+                    Identifier "local" @ 382..387 trailing=[Whitespace " "]
+                  BangEq "!=" @ 388..390 trailing=[Whitespace " "]
+                  LiteralExpression
+                    NullLiteral "null" @ 391..395 trailing=[Whitespace " "]
+                Colon ":" @ 396..397 trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "local" @ 398..403
+                Semicolon ";" @ 403..404
+            RBrace "}" @ 421..422 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 435..436 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 445..445 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

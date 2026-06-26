@@ -1,3 +1,5 @@
+use std::fmt;
+
 use jolt_text::{TextRange, TextSize};
 
 use crate::{Language, RawSyntaxKind};
@@ -97,6 +99,19 @@ impl<L: Language> Clone for SyntaxElement<L> {
         match self {
             Self::Node(node) => Self::Node(node.clone()),
             Self::Token(token) => Self::Token(token.clone()),
+        }
+    }
+}
+
+impl<L> fmt::Debug for SyntaxElement<L>
+where
+    L: Language,
+    L::Kind: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Node(node) => node.fmt(f),
+            Self::Token(token) => token.fmt(f),
         }
     }
 }

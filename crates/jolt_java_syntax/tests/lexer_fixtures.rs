@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -103,9 +104,7 @@ fn assert_reconstructs(path: &Path, source: &str, tokens: &[jolt_java_syntax::To
             append_range(path, source, &mut reconstructed, &mut cursor, trivia.range);
         }
 
-        if token.kind != JavaSyntaxKind::Eof {
-            append_range(path, source, &mut reconstructed, &mut cursor, token.range);
-        } else {
+        if token.kind == JavaSyntaxKind::Eof {
             assert_eq!(
                 token.range.start().get(),
                 source.len(),
@@ -118,6 +117,8 @@ fn assert_reconstructs(path: &Path, source: &str, tokens: &[jolt_java_syntax::To
                 "EOF token range must end at source end in {}",
                 path.display()
             );
+        } else {
+            append_range(path, source, &mut reconstructed, &mut cursor, token.range);
         }
 
         for trivia in &token.trailing {
@@ -199,8 +200,8 @@ impl CorpusSummary {
 
     fn render(&self) -> String {
         let mut output = String::new();
-        output.push_str(&format!("suite: {}\n", self.suite));
-        output.push_str(&format!("files: {}\n", self.files));
+        writeln!(&mut output, "suite: {}", self.suite).expect("write summary");
+        writeln!(&mut output, "files: {}", self.files).expect("write summary");
         output.push_str("\ntokens:\n");
         push_counts(&mut output, &self.tokens);
         output.push_str("\ntrivia:\n");
@@ -222,6 +223,6 @@ fn push_counts(output: &mut String, counts: &BTreeMap<String, usize>) {
     }
 
     for (kind, count) in counts {
-        output.push_str(&format!("  {kind}: {count}\n"));
+        writeln!(output, "  {kind}: {count}").expect("write summary");
     }
 }

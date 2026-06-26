@@ -1,0 +1,107 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "ConditionalLambda" @ 19..36 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 37..38
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 55..59 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 60..66
+          LParen "(" @ 66..67
+          FormalParameterList
+            FormalParameter
+              PrimitiveType
+                BooleanKw "boolean" @ 67..74 trailing=[Whitespace " "]
+              Identifier "flag" @ 75..79
+          RParen ")" @ 79..80 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 81..82
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 103..107 leading=[Newline "\n", Whitespace "                    "]
+                    Dot "." @ 107..108
+                    Identifier "util" @ 108..112
+                    Dot "." @ 112..113
+                    Identifier "function" @ 113..121
+                    Dot "." @ 121..122
+                    Identifier "Function" @ 122..130
+                  TypeArgumentList
+                    Lt "<" @ 130..131
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "Integer" @ 131..138
+                    Comma "," @ 138..139 trailing=[Whitespace " "]
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "Integer" @ 140..147
+                    Gt ">" @ 147..148 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "existing" @ 149..157 trailing=[Whitespace " "]
+                    Assign "=" @ 158..159 trailing=[Whitespace " "]
+                    VariableInitializer
+                      LiteralExpression
+                        NullLiteral "null" @ 160..164
+              Semicolon ";" @ 164..165
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 186..190 leading=[Newline "\n", Whitespace "                    "]
+                    Dot "." @ 190..191
+                    Identifier "util" @ 191..195
+                    Dot "." @ 195..196
+                    Identifier "function" @ 196..204
+                    Dot "." @ 204..205
+                    Identifier "Function" @ 205..213
+                  TypeArgumentList
+                    Lt "<" @ 213..214
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "Integer" @ 214..221
+                    Comma "," @ 221..222 trailing=[Whitespace " "]
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "Integer" @ 223..230
+                    Gt ">" @ 230..231 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "chosen" @ 232..238 trailing=[Whitespace " "]
+                    Assign "=" @ 239..240
+                    VariableInitializer
+                      ConditionalExpression
+                        NameExpression
+                          Identifier "flag" @ 265..269 leading=[Newline "\n", Whitespace "                        "] trailing=[Whitespace " "]
+                        Question "?" @ 270..271 trailing=[Whitespace " "]
+                        NameExpression
+                          Identifier "existing" @ 272..280 trailing=[Whitespace " "]
+                        Colon ":" @ 281..282 trailing=[Whitespace " "]
+                        LambdaExpression
+                          LambdaParameter
+                            Identifier "x" @ 283..284 trailing=[Whitespace " "]
+                          Arrow "->" @ 285..287 trailing=[Whitespace " "]
+                          NameExpression
+                            Identifier "x" @ 288..289
+              Semicolon ";" @ 289..290
+            RBrace "}" @ 307..308 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 321..322 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 331..331 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

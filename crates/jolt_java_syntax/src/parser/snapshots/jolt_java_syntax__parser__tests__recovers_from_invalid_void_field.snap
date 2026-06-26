@@ -1,0 +1,24 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "InvalidVoidField" @ 6..22 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 23..24 trailing=[Whitespace " "]
+      ClassBodyDeclaration
+        ErrorNode
+          VoidKw "void" @ 25..29 trailing=[Whitespace " "]
+          Identifier "x" @ 30..31
+          Semicolon ";" @ 31..32 trailing=[Whitespace " "]
+      RBrace "}" @ 33..34
+  Eof "" @ 34..34
+
+parser diagnostics:
+  unexpected token in type body
+
+lexer diagnostics:
+  (none)

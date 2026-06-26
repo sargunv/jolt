@@ -1,0 +1,59 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "IntersectionCast" @ 19..35 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 36..37
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 54..58 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 59..65
+          LParen "(" @ 65..66
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "Object" @ 66..72 trailing=[Whitespace " "]
+              Identifier "value" @ 73..78
+          RParen ")" @ 78..79 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 80..81
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  Name
+                    Identifier "Runnable" @ 102..110 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "runnable" @ 111..119 trailing=[Whitespace " "]
+                    Assign "=" @ 120..121 trailing=[Whitespace " "]
+                    VariableInitializer
+                      CastExpression
+                        LParen "(" @ 122..123
+                        IntersectionType
+                          ClassType
+                            Name
+                              Identifier "Runnable" @ 123..131 trailing=[Whitespace " "]
+                          Amp "&" @ 132..133 trailing=[Whitespace " "]
+                          ClassType
+                            Name
+                              Identifier "AutoCloseable" @ 134..147
+                        RParen ")" @ 147..148 trailing=[Whitespace " "]
+                        NameExpression
+                          Identifier "value" @ 149..154
+              Semicolon ";" @ 154..155
+            RBrace "}" @ 172..173 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 186..187 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 196..196 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

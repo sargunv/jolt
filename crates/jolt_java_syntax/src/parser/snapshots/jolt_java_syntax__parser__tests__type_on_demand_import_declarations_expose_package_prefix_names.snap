@@ -1,0 +1,28 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ImportDeclaration
+    ImportKw "import" @ 13..19 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "java" @ 20..24
+      Dot "." @ 24..25
+      Identifier "util" @ 25..29
+    Dot "." @ 29..30
+    Star "*" @ 30..31
+    Semicolon ";" @ 31..32
+  ClassDeclaration
+    ClassKw "class" @ 46..51 leading=[Newline "\n", Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "OnDemandImport" @ 52..66 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 67..68
+      RBrace "}" @ 68..69
+  Eof "" @ 78..78 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

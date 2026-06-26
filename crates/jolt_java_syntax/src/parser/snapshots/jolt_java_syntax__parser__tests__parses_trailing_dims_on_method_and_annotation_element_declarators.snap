@@ -1,0 +1,50 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "TrailingMethodDims" @ 19..37 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 38..39
+      ClassBodyDeclaration
+        MethodDeclaration
+          PrimitiveType
+            IntKw "int" @ 56..59 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "values" @ 60..66
+          LParen "(" @ 66..67
+          RParen ")" @ 67..68
+          ArrayDimensions
+            ArrayDimension
+              LBracket "[" @ 68..69
+              RBracket "]" @ 69..70
+          Semicolon ";" @ 70..71
+      RBrace "}" @ 84..85 leading=[Newline "\n", Whitespace "            "]
+  AnnotationInterfaceDeclaration
+    At "@" @ 99..100 leading=[Newline "\n", Newline "\n", Whitespace "            "]
+    InterfaceKw "interface" @ 100..109 trailing=[Whitespace " "]
+    Identifier "TrailingAnnotationElementDims" @ 110..139 trailing=[Whitespace " "]
+    AnnotationInterfaceBody
+      LBrace "{" @ 140..141
+      AnnotationElementList
+        AnnotationElementDeclaration
+          PrimitiveType
+            IntKw "int" @ 158..161 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "value" @ 162..167
+          LParen "(" @ 167..168
+          RParen ")" @ 168..169
+          ArrayDimensions
+            ArrayDimension
+              LBracket "[" @ 169..170
+              RBracket "]" @ 170..171
+          Semicolon ";" @ 171..172
+      RBrace "}" @ 185..186 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 195..195 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

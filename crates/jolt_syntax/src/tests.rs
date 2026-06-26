@@ -88,7 +88,7 @@ fn token_source_supplies_borrowed_trivia_pieces() {
             TOKEN
         }
 
-        fn token_text(&self, _index: usize) -> &str {
+        fn token_text(&self, _index: usize) -> &'static str {
             "token"
         }
 
@@ -136,4 +136,18 @@ fn last_token_ignores_empty_trailing_child_nodes() {
     let root = SyntaxNode::<TestLanguage>::new_root(root);
 
     assert_eq!(root.last_token().unwrap().text(), "a");
+}
+
+#[test]
+fn syntax_node_debug_prints_tree_shape_without_parent_recursion() {
+    let root = GreenNode::new(
+        ROOT,
+        [GreenNode::new(WRAPPER, [GreenToken::new(TOKEN, "a").into()]).into()],
+    );
+    let root = SyntaxNode::<TestLanguage>::new_root(root);
+
+    assert_eq!(
+        format!("{root:?}"),
+        "RawSyntaxKind(0)\n  RawSyntaxKind(1)\n    RawSyntaxKind(3) \"a\" @ 0..1"
+    );
 }

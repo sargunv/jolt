@@ -1,0 +1,294 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "ConstructorInvocationArguments" @ 19..49 trailing=[Whitespace " "]
+    ExtendsClause
+      ExtendsKw "extends" @ 50..57 trailing=[Whitespace " "]
+      ClassType
+        Name
+          Identifier "Base" @ 58..62 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 63..64
+      ClassBodyDeclaration
+        ConstructorDeclaration
+          Identifier "ConstructorInvocationArguments" @ 81..111 leading=[Newline "\n", Whitespace "                "]
+          LParen "(" @ 111..112
+          RParen ")" @ 112..113 trailing=[Whitespace " "]
+          ConstructorBody
+            LBrace "{" @ 114..115
+            ConstructorInvocation
+              ThisKw "this" @ 136..140 leading=[Newline "\n", Whitespace "                    "]
+              ArgumentList
+                LParen "(" @ 140..141
+                LiteralExpression
+                  IntegerLiteral "0" @ 141..142
+                RParen ")" @ 142..143
+              Semicolon ";" @ 143..144
+            RBrace "}" @ 161..162 leading=[Newline "\n", Whitespace "                "]
+      ClassBodyDeclaration
+        ConstructorDeclaration
+          Identifier "ConstructorInvocationArguments" @ 180..210 leading=[Newline "\n", Newline "\n", Whitespace "                "]
+          LParen "(" @ 210..211
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "String" @ 211..217 trailing=[Whitespace " "]
+              Identifier "value" @ 218..223
+          RParen ")" @ 223..224 trailing=[Whitespace " "]
+          ConstructorBody
+            LBrace "{" @ 225..226
+            ConstructorInvocation
+              TypeArgumentList
+                Lt "<" @ 247..248 leading=[Newline "\n", Whitespace "                    "]
+                TypeArgument
+                  ClassType
+                    Name
+                      Identifier "String" @ 248..254
+                Gt ">" @ 254..255
+              ThisKw "this" @ 255..259
+              ArgumentList
+                LParen "(" @ 259..260
+                NameExpression
+                  Identifier "value" @ 260..265
+                Comma "," @ 265..266 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "0" @ 267..268
+                RParen ")" @ 268..269
+              Semicolon ";" @ 269..270
+            RBrace "}" @ 287..288 leading=[Newline "\n", Whitespace "                "]
+      ClassBodyDeclaration
+        ConstructorDeclaration
+          TypeParameterList
+            Lt "<" @ 306..307 leading=[Newline "\n", Newline "\n", Whitespace "                "]
+            TypeParameter
+              Identifier "T" @ 307..308
+            Gt ">" @ 308..309 trailing=[Whitespace " "]
+          Identifier "ConstructorInvocationArguments" @ 310..340
+          LParen "(" @ 340..341
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "T" @ 341..342 trailing=[Whitespace " "]
+              Identifier "value" @ 343..348
+            Comma "," @ 348..349 trailing=[Whitespace " "]
+            FormalParameter
+              PrimitiveType
+                IntKw "int" @ 350..353 trailing=[Whitespace " "]
+              Identifier "marker" @ 354..360
+          RParen ")" @ 360..361 trailing=[Whitespace " "]
+          ConstructorBody
+            LBrace "{" @ 362..363
+            ConstructorInvocation
+              SuperKw "super" @ 384..389 leading=[Newline "\n", Whitespace "                    "]
+              ArgumentList
+                LParen "(" @ 389..390
+                NameExpression
+                  Identifier "value" @ 390..395
+                RParen ")" @ 395..396
+              Semicolon ";" @ 396..397
+            RBrace "}" @ 414..415 leading=[Newline "\n", Whitespace "                "]
+      ClassBodyDeclaration
+        ClassDeclaration
+          ClassKw "class" @ 433..438 leading=[Newline "\n", Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "Inner" @ 439..444 trailing=[Whitespace " "]
+          ExtendsClause
+            ExtendsKw "extends" @ 445..452 trailing=[Whitespace " "]
+            ClassType
+              Name
+                Identifier "Base" @ 453..457 trailing=[Whitespace " "]
+          ClassBody
+            LBrace "{" @ 458..459
+            ClassBodyDeclaration
+              ConstructorDeclaration
+                Identifier "Inner" @ 480..485 leading=[Newline "\n", Whitespace "                    "]
+                LParen "(" @ 485..486
+                FormalParameterList
+                  FormalParameter
+                    ClassType
+                      Name
+                        Identifier "ConstructorInvocationArguments" @ 486..516 trailing=[Whitespace " "]
+                    Identifier "outer" @ 517..522
+                RParen ")" @ 522..523 trailing=[Whitespace " "]
+                ConstructorBody
+                  LBrace "{" @ 524..525
+                  ConstructorInvocation
+                    Name
+                      Identifier "outer" @ 550..555 leading=[Newline "\n", Whitespace "                        "]
+                    Dot "." @ 555..556
+                    SuperKw "super" @ 556..561
+                    ArgumentList
+                      LParen "(" @ 561..562
+                      LiteralExpression
+                        IntegerLiteral "0" @ 562..563
+                      RParen ")" @ 563..564
+                    Semicolon ";" @ 564..565
+                  RBrace "}" @ 586..587 leading=[Newline "\n", Whitespace "                    "]
+            ClassBodyDeclaration
+              ConstructorDeclaration
+                Identifier "Inner" @ 609..614 leading=[Newline "\n", Newline "\n", Whitespace "                    "]
+                LParen "(" @ 614..615
+                FormalParameterList
+                  FormalParameter
+                    ClassType
+                      Name
+                        Identifier "ConstructorInvocationArguments" @ 615..645 trailing=[Whitespace " "]
+                    Identifier "outer" @ 646..651
+                  Comma "," @ 651..652 trailing=[Whitespace " "]
+                  FormalParameter
+                    ClassType
+                      Name
+                        Identifier "String" @ 653..659 trailing=[Whitespace " "]
+                    Identifier "value" @ 660..665
+                RParen ")" @ 665..666 trailing=[Whitespace " "]
+                ConstructorBody
+                  LBrace "{" @ 667..668
+                  ConstructorInvocation
+                    Name
+                      Identifier "outer" @ 693..698 leading=[Newline "\n", Whitespace "                        "]
+                    Dot "." @ 698..699
+                    TypeArgumentList
+                      Lt "<" @ 699..700
+                      TypeArgument
+                        ClassType
+                          Name
+                            Identifier "String" @ 700..706
+                      Gt ">" @ 706..707
+                    SuperKw "super" @ 707..712
+                    ArgumentList
+                      LParen "(" @ 712..713
+                      NameExpression
+                        Identifier "value" @ 713..718
+                      RParen ")" @ 718..719
+                    Semicolon ";" @ 719..720
+                  RBrace "}" @ 741..742 leading=[Newline "\n", Whitespace "                    "]
+            ClassBodyDeclaration
+              ConstructorDeclaration
+                Identifier "Inner" @ 764..769 leading=[Newline "\n", Newline "\n", Whitespace "                    "]
+                LParen "(" @ 769..770
+                RParen ")" @ 770..771 trailing=[Whitespace " "]
+                ConstructorBody
+                  LBrace "{" @ 772..773
+                  ConstructorInvocation
+                    ParenthesizedExpression
+                      LParen "(" @ 798..799 leading=[Newline "\n", Whitespace "                        "]
+                      ObjectCreationExpression
+                        NewKw "new" @ 799..802 trailing=[Whitespace " "]
+                        ClassType
+                          Name
+                            Identifier "ConstructorInvocationArguments" @ 803..833
+                        ArgumentList
+                          LParen "(" @ 833..834
+                          RParen ")" @ 834..835
+                      RParen ")" @ 835..836
+                    Dot "." @ 836..837
+                    SuperKw "super" @ 837..842
+                    ArgumentList
+                      LParen "(" @ 842..843
+                      LiteralExpression
+                        IntegerLiteral "0" @ 843..844
+                      RParen ")" @ 844..845
+                    Semicolon ";" @ 845..846
+                  RBrace "}" @ 867..868 leading=[Newline "\n", Whitespace "                    "]
+            ClassBodyDeclaration
+              ConstructorDeclaration
+                Identifier "Inner" @ 890..895 leading=[Newline "\n", Newline "\n", Whitespace "                    "]
+                LParen "(" @ 895..896
+                FormalParameterList
+                  FormalParameter
+                    ClassType
+                      Name
+                        Identifier "String" @ 896..902 trailing=[Whitespace " "]
+                    Identifier "value" @ 903..908
+                RParen ")" @ 908..909 trailing=[Whitespace " "]
+                ConstructorBody
+                  LBrace "{" @ 910..911
+                  ConstructorInvocation
+                    ParenthesizedExpression
+                      LParen "(" @ 936..937 leading=[Newline "\n", Whitespace "                        "]
+                      ObjectCreationExpression
+                        NewKw "new" @ 937..940 trailing=[Whitespace " "]
+                        ClassType
+                          Name
+                            Identifier "ConstructorInvocationArguments" @ 941..971
+                        ArgumentList
+                          LParen "(" @ 971..972
+                          RParen ")" @ 972..973
+                      RParen ")" @ 973..974
+                    Dot "." @ 974..975
+                    TypeArgumentList
+                      Lt "<" @ 975..976
+                      TypeArgument
+                        ClassType
+                          Name
+                            Identifier "String" @ 976..982
+                      Gt ">" @ 982..983
+                    SuperKw "super" @ 983..988
+                    ArgumentList
+                      LParen "(" @ 988..989
+                      NameExpression
+                        Identifier "value" @ 989..994
+                      RParen ")" @ 994..995
+                    Semicolon ";" @ 995..996
+                  RBrace "}" @ 1017..1018 leading=[Newline "\n", Whitespace "                    "]
+            RBrace "}" @ 1035..1036 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 1049..1050 leading=[Newline "\n", Whitespace "            "]
+  ClassDeclaration
+    ClassKw "class" @ 1064..1069 leading=[Newline "\n", Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "Base" @ 1070..1074 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 1075..1076
+      ClassBodyDeclaration
+        ConstructorDeclaration
+          Identifier "Base" @ 1093..1097 leading=[Newline "\n", Whitespace "                "]
+          LParen "(" @ 1097..1098
+          RParen ")" @ 1098..1099 trailing=[Whitespace " "]
+          ConstructorBody
+            LBrace "{" @ 1100..1101
+            RBrace "}" @ 1101..1102
+      ClassBodyDeclaration
+        ConstructorDeclaration
+          Identifier "Base" @ 1119..1123 leading=[Newline "\n", Whitespace "                "]
+          LParen "(" @ 1123..1124
+          FormalParameterList
+            FormalParameter
+              PrimitiveType
+                IntKw "int" @ 1124..1127 trailing=[Whitespace " "]
+              Identifier "value" @ 1128..1133
+          RParen ")" @ 1133..1134 trailing=[Whitespace " "]
+          ConstructorBody
+            LBrace "{" @ 1135..1136
+            RBrace "}" @ 1136..1137
+      ClassBodyDeclaration
+        ConstructorDeclaration
+          TypeParameterList
+            Lt "<" @ 1154..1155 leading=[Newline "\n", Whitespace "                "]
+            TypeParameter
+              Identifier "T" @ 1155..1156
+            Gt ">" @ 1156..1157 trailing=[Whitespace " "]
+          Identifier "Base" @ 1158..1162
+          LParen "(" @ 1162..1163
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "T" @ 1163..1164 trailing=[Whitespace " "]
+              Identifier "value" @ 1165..1170
+          RParen ")" @ 1170..1171 trailing=[Whitespace " "]
+          ConstructorBody
+            LBrace "{" @ 1172..1173
+            RBrace "}" @ 1173..1174
+      RBrace "}" @ 1187..1188 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 1197..1197 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

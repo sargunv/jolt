@@ -1,0 +1,46 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "QualifiedThis" @ 19..32 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 33..34
+      ClassBodyDeclaration
+        ClassDeclaration
+          ClassKw "class" @ 51..56 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "Inner" @ 57..62 trailing=[Whitespace " "]
+          ClassBody
+            LBrace "{" @ 63..64
+            ClassBodyDeclaration
+              MethodDeclaration
+                ClassType
+                  Name
+                    Identifier "Object" @ 85..91 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                Identifier "method" @ 92..98
+                LParen "(" @ 98..99
+                RParen ")" @ 99..100 trailing=[Whitespace " "]
+                Block
+                  LBrace "{" @ 101..102
+                  BlockStatement
+                    ReturnStatement
+                      ReturnKw "return" @ 127..133 leading=[Newline "\n", Whitespace "                        "] trailing=[Whitespace " "]
+                      ThisExpression
+                        NameExpression
+                          Identifier "QualifiedThis" @ 134..147
+                        Dot "." @ 147..148
+                        ThisKw "this" @ 148..152
+                      Semicolon ";" @ 152..153
+                  RBrace "}" @ 174..175 leading=[Newline "\n", Whitespace "                    "]
+            RBrace "}" @ 192..193 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 206..207 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 216..216 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

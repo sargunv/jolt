@@ -1,0 +1,87 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "SuperFieldAccess" @ 19..35 trailing=[Whitespace " "]
+    ExtendsClause
+      ExtendsKw "extends" @ 36..43 trailing=[Whitespace " "]
+      ClassType
+        Name
+          Identifier "Base" @ 44..48 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 49..50
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 67..70 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "field" @ 71..76
+          Semicolon ";" @ 76..77
+      ClassBodyDeclaration
+        ClassDeclaration
+          ClassKw "class" @ 95..100 leading=[Newline "\n", Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "Inner" @ 101..106 trailing=[Whitespace " "]
+          ExtendsClause
+            ExtendsKw "extends" @ 107..114 trailing=[Whitespace " "]
+            ClassType
+              Name
+                Identifier "Base" @ 115..119 trailing=[Whitespace " "]
+          ClassBody
+            LBrace "{" @ 120..121
+            ClassBodyDeclaration
+              MethodDeclaration
+                PrimitiveType
+                  IntKw "int" @ 142..145 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                Identifier "method" @ 146..152
+                LParen "(" @ 152..153
+                RParen ")" @ 153..154 trailing=[Whitespace " "]
+                Block
+                  LBrace "{" @ 155..156
+                  BlockStatement
+                    ReturnStatement
+                      ReturnKw "return" @ 181..187 leading=[Newline "\n", Whitespace "                        "] trailing=[Whitespace " "]
+                      BinaryExpression
+                        FieldAccessExpression
+                          SuperExpression
+                            SuperKw "super" @ 188..193
+                          Dot "." @ 193..194
+                          Identifier "field" @ 194..199 trailing=[Whitespace " "]
+                        Plus "+" @ 200..201 trailing=[Whitespace " "]
+                        FieldAccessExpression
+                          SuperExpression
+                            NameExpression
+                              Identifier "SuperFieldAccess" @ 202..218
+                            Dot "." @ 218..219
+                            SuperKw "super" @ 219..224
+                          Dot "." @ 224..225
+                          Identifier "field" @ 225..230
+                      Semicolon ";" @ 230..231
+                  RBrace "}" @ 252..253 leading=[Newline "\n", Whitespace "                    "]
+            RBrace "}" @ 270..271 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 284..285 leading=[Newline "\n", Whitespace "            "]
+  ClassDeclaration
+    ClassKw "class" @ 299..304 leading=[Newline "\n", Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "Base" @ 305..309 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 310..311
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 328..331 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "field" @ 332..337
+          Semicolon ";" @ 337..338
+      RBrace "}" @ 351..352 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 361..361 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

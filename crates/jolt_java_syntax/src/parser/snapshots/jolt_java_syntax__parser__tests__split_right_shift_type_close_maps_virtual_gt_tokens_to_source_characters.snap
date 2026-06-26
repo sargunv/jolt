@@ -1,0 +1,55 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "SplitRightShiftTypeClose" @ 6..30 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 31..32
+      ClassBodyDeclaration
+        FieldDeclaration
+          ClassType
+            QualifiedName
+              Identifier "java" @ 37..41 leading=[Newline "\n", Whitespace "    "]
+              Dot "." @ 41..42
+              Identifier "util" @ 42..46
+              Dot "." @ 46..47
+              Identifier "Map" @ 47..50
+            TypeArgumentList
+              Lt "<" @ 50..51
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "String" @ 51..57
+              Comma "," @ 57..58 trailing=[Whitespace " "]
+              TypeArgument
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 59..63
+                    Dot "." @ 63..64
+                    Identifier "util" @ 64..68
+                    Dot "." @ 68..69
+                    Identifier "List" @ 69..73
+                  TypeArgumentList
+                    Lt "<" @ 73..74
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "Integer" @ 74..81
+                    Gt ">" @ 94..95 leading=[Newline "\n", Whitespace "            "]
+              Gt ">" @ 95..96 trailing=[Whitespace " ", BlockComment "/*trail*/", Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "value" @ 107..112
+          Semicolon ";" @ 112..113
+      RBrace "}" @ 114..115 leading=[Newline "\n"]
+  Eof "" @ 116..116 leading=[Newline "\n"]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

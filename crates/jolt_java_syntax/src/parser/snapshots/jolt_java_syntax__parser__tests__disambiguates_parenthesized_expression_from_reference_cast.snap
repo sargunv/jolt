@@ -1,0 +1,58 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "CastAmbiguity" @ 19..32 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 33..34
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 51..55 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 56..62
+          LParen "(" @ 62..63
+          FormalParameterList
+            FormalParameter
+              PrimitiveType
+                IntKw "int" @ 63..66 trailing=[Whitespace " "]
+              Identifier "x" @ 67..68
+            Comma "," @ 68..69 trailing=[Whitespace " "]
+            FormalParameter
+              PrimitiveType
+                IntKw "int" @ 70..73 trailing=[Whitespace " "]
+              Identifier "y" @ 74..75
+          RParen ")" @ 75..76 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 77..78
+            BlockStatement
+              LocalVariableDeclaration
+                PrimitiveType
+                  IntKw "int" @ 99..102 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "value" @ 103..108 trailing=[Whitespace " "]
+                    Assign "=" @ 109..110 trailing=[Whitespace " "]
+                    VariableInitializer
+                      BinaryExpression
+                        ParenthesizedExpression
+                          LParen "(" @ 111..112
+                          NameExpression
+                            Identifier "x" @ 112..113
+                          RParen ")" @ 113..114 trailing=[Whitespace " "]
+                        Minus "-" @ 115..116 trailing=[Whitespace " "]
+                        NameExpression
+                          Identifier "y" @ 117..118
+              Semicolon ";" @ 118..119
+            RBrace "}" @ 136..137 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 150..151 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 160..160 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

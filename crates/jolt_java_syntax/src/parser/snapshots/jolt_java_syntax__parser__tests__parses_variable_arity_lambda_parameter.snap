@@ -1,0 +1,79 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "VarargsLambdaParameter" @ 19..41 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 42..43
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 60..64 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 65..71
+          LParen "(" @ 71..72
+          RParen ")" @ 72..73 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 74..75
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 96..100 leading=[Newline "\n", Whitespace "                    "]
+                    Dot "." @ 100..101
+                    Identifier "util" @ 101..105
+                    Dot "." @ 105..106
+                    Identifier "function" @ 106..114
+                    Dot "." @ 114..115
+                    Identifier "Function" @ 115..123
+                  TypeArgumentList
+                    Lt "<" @ 123..124
+                    TypeArgument
+                      ArrayType
+                        ClassType
+                          Name
+                            Identifier "String" @ 124..130
+                        ArrayDimensions
+                          ArrayDimension
+                            LBracket "[" @ 130..131
+                            RBracket "]" @ 131..132
+                    Comma "," @ 132..133 trailing=[Whitespace " "]
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "Integer" @ 134..141
+                    Gt ">" @ 141..142 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "lengths" @ 143..150 trailing=[Whitespace " "]
+                    Assign "=" @ 151..152
+                    VariableInitializer
+                      LambdaExpression
+                        LParen "(" @ 177..178 leading=[Newline "\n", Whitespace "                        "]
+                        LambdaParameterList
+                          LambdaParameter
+                            ClassType
+                              Name
+                                Identifier "String" @ 178..184
+                            Ellipsis "..." @ 184..187 trailing=[Whitespace " "]
+                            Identifier "values" @ 188..194
+                        RParen ")" @ 194..195 trailing=[Whitespace " "]
+                        Arrow "->" @ 196..198 trailing=[Whitespace " "]
+                        FieldAccessExpression
+                          NameExpression
+                            Identifier "values" @ 199..205
+                          Dot "." @ 205..206
+                          Identifier "length" @ 206..212
+              Semicolon ";" @ 212..213
+            RBrace "}" @ 230..231 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 244..245 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 254..254 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

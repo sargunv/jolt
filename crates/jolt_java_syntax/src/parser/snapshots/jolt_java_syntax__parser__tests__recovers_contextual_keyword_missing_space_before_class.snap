@@ -1,0 +1,20 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ErrorNode
+    Identifier "non" @ 13..16 leading=[Newline "\n", Whitespace "            "]
+    Minus "-" @ 16..17
+    Identifier "sealedclass" @ 17..28 trailing=[Whitespace " "]
+    Identifier "MissingSpace" @ 29..41 trailing=[Whitespace " "]
+    LBrace "{" @ 42..43
+    RBrace "}" @ 43..44
+  Eof "" @ 53..53 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  unexpected token at top level
+
+lexer diagnostics:
+  (none)

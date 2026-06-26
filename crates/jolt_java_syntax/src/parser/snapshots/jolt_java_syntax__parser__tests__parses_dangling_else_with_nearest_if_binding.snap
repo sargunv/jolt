@@ -1,0 +1,89 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "DanglingElse" @ 19..31 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 32..33
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 50..54 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 55..61
+          LParen "(" @ 61..62
+          FormalParameterList
+            FormalParameter
+              PrimitiveType
+                BooleanKw "boolean" @ 62..69 trailing=[Whitespace " "]
+              Identifier "first" @ 70..75
+            Comma "," @ 75..76 trailing=[Whitespace " "]
+            FormalParameter
+              PrimitiveType
+                BooleanKw "boolean" @ 77..84 trailing=[Whitespace " "]
+              Identifier "second" @ 85..91
+          RParen ")" @ 91..92 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 93..94
+            BlockStatement
+              IfStatement
+                IfKw "if" @ 115..117 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                LParen "(" @ 118..119
+                NameExpression
+                  Identifier "first" @ 119..124
+                RParen ")" @ 124..125
+                IfStatement
+                  IfKw "if" @ 150..152 leading=[Newline "\n", Whitespace "                        "] trailing=[Whitespace " "]
+                  LParen "(" @ 153..154
+                  NameExpression
+                    Identifier "second" @ 154..160
+                  RParen ")" @ 160..161
+                  ExpressionStatement
+                    MethodInvocationExpression
+                      NameExpression
+                        Identifier "winner" @ 190..196 leading=[Newline "\n", Whitespace "                            "]
+                      ArgumentList
+                        LParen "(" @ 196..197
+                        RParen ")" @ 197..198
+                    Semicolon ";" @ 198..199
+                  ElseKw "else" @ 224..228 leading=[Newline "\n", Whitespace "                        "]
+                  ExpressionStatement
+                    MethodInvocationExpression
+                      NameExpression
+                        Identifier "loser" @ 257..262 leading=[Newline "\n", Whitespace "                            "]
+                      ArgumentList
+                        LParen "(" @ 262..263
+                        RParen ")" @ 263..264
+                    Semicolon ";" @ 264..265
+            RBrace "}" @ 282..283 leading=[Newline "\n", Whitespace "                "]
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 301..305 leading=[Newline "\n", Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "winner" @ 306..312
+          LParen "(" @ 312..313
+          RParen ")" @ 313..314 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 315..316
+            RBrace "}" @ 316..317
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 334..338 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "loser" @ 339..344
+          LParen "(" @ 344..345
+          RParen ")" @ 345..346 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 347..348
+            RBrace "}" @ 348..349
+      RBrace "}" @ 362..363 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 372..372 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

@@ -1,0 +1,136 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "ExpressionEdges" @ 19..34 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 35..36
+      ClassBodyDeclaration
+        MethodDeclaration
+          PrimitiveType
+            IntKw "int" @ 53..56 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 57..63
+          LParen "(" @ 63..64
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "Object" @ 64..70 trailing=[Whitespace " "]
+              Identifier "value" @ 71..76
+          RParen ")" @ 76..77 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 78..79
+            BlockStatement
+              LocalVariableDeclaration
+                PrimitiveType
+                  IntKw "int" @ 100..103 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "i" @ 104..105 trailing=[Whitespace " "]
+                    Assign "=" @ 106..107 trailing=[Whitespace " "]
+                    VariableInitializer
+                      LiteralExpression
+                        IntegerLiteral "0" @ 108..109
+              Semicolon ";" @ 109..110
+            BlockStatement
+              ExpressionStatement
+                UnaryExpression
+                  PlusPlus "++" @ 131..133 leading=[Newline "\n", Whitespace "                    "]
+                  NameExpression
+                    Identifier "i" @ 133..134
+                Semicolon ";" @ 134..135
+            BlockStatement
+              ExpressionStatement
+                UnaryExpression
+                  MinusMinus "--" @ 156..158 leading=[Newline "\n", Whitespace "                    "]
+                  NameExpression
+                    Identifier "i" @ 158..159
+                Semicolon ";" @ 159..160
+            BlockStatement
+              ExpressionStatement
+                PostfixExpression
+                  NameExpression
+                    Identifier "i" @ 181..182 leading=[Newline "\n", Whitespace "                    "]
+                  PlusPlus "++" @ 182..184
+                Semicolon ";" @ 184..185
+            BlockStatement
+              ExpressionStatement
+                PostfixExpression
+                  NameExpression
+                    Identifier "i" @ 206..207 leading=[Newline "\n", Whitespace "                    "]
+                  MinusMinus "--" @ 207..209
+                Semicolon ";" @ 209..210
+            BlockStatement
+              LocalVariableDeclaration
+                PrimitiveType
+                  IntKw "int" @ 231..234 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "cast" @ 235..239 trailing=[Whitespace " "]
+                    Assign "=" @ 240..241 trailing=[Whitespace " "]
+                    VariableInitializer
+                      CastExpression
+                        LParen "(" @ 242..243
+                        PrimitiveType
+                          IntKw "int" @ 243..246
+                        RParen ")" @ 246..247 trailing=[Whitespace " "]
+                        NameExpression
+                          Identifier "value" @ 248..253
+              Semicolon ";" @ 253..254
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 275..281 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                SwitchExpression
+                  SwitchKw "switch" @ 282..288 trailing=[Whitespace " "]
+                  LParen "(" @ 289..290
+                  NameExpression
+                    Identifier "value" @ 290..295
+                  RParen ")" @ 295..296 trailing=[Whitespace " "]
+                  SwitchBlock
+                    LBrace "{" @ 297..298
+                    SwitchRule
+                      SwitchLabel
+                        CaseKw "case" @ 323..327 leading=[Newline "\n", Whitespace "                        "] trailing=[Whitespace " "]
+                        CasePattern
+                          TypePattern
+                            LocalVariableDeclaration
+                              ClassType
+                                Name
+                                  Identifier "Integer" @ 328..335 trailing=[Whitespace " "]
+                              VariableDeclaratorList
+                                VariableDeclarator
+                                  Identifier "n" @ 336..337 trailing=[Whitespace " "]
+                      Arrow "->" @ 338..340 trailing=[Whitespace " "]
+                      Block
+                        LBrace "{" @ 341..342
+                        BlockStatement
+                          YieldStatement
+                            Identifier "yield" @ 371..376 leading=[Newline "\n", Whitespace "                            "] trailing=[Whitespace " "]
+                            NameExpression
+                              Identifier "n" @ 377..378
+                            Semicolon ";" @ 378..379
+                        RBrace "}" @ 404..405 leading=[Newline "\n", Whitespace "                        "]
+                    SwitchRule
+                      SwitchLabel
+                        DefaultKw "default" @ 430..437 leading=[Newline "\n", Whitespace "                        "] trailing=[Whitespace " "]
+                      Arrow "->" @ 438..440 trailing=[Whitespace " "]
+                      UnaryExpression
+                        Minus "-" @ 441..442
+                        NameExpression
+                          Identifier "i" @ 442..443
+                      Semicolon ";" @ 443..444
+                    RBrace "}" @ 465..466 leading=[Newline "\n", Whitespace "                    "]
+                Semicolon ";" @ 466..467
+            RBrace "}" @ 484..485 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 498..499 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 508..508 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

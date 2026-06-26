@@ -1,0 +1,67 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  PackageDeclaration
+    PackageKw "package" @ 13..20 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+  ErrorNode
+    BooleanLiteral "true" @ 21..25
+    Semicolon ";" @ 25..26
+  ClassDeclaration
+    ClassKw "class" @ 40..45 leading=[Newline "\n", Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "InvalidIdentifiers" @ 46..64 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 65..66
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 83..86 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+      ClassBodyDeclaration
+        ErrorNode
+          BooleanLiteral "false" @ 87..92
+          Semicolon ";" @ 92..93
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 110..113 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+      ClassBodyDeclaration
+        ErrorNode
+          UnderscoreKw "_" @ 114..115
+          Semicolon ";" @ 115..116
+      ClassBodyDeclaration
+        ErrorNode
+          BooleanLiteral "true" @ 133..137 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "value" @ 138..143
+          Semicolon ";" @ 143..144
+      ClassBodyDeclaration
+        ErrorNode
+          VoidKw "void" @ 161..165 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          NullLiteral "null" @ 166..170
+          LParen "(" @ 170..171
+          RParen ")" @ 171..172 trailing=[Whitespace " "]
+          LBrace "{" @ 173..174
+          RBrace "}" @ 174..175
+      RBrace "}" @ 188..189 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 198..198 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  expected identifier
+  expected `;` after package declaration
+  unexpected token at top level
+  expected variable name
+  expected `;` after field declaration
+  unexpected token in type body
+  expected variable name
+  expected `;` after field declaration
+  unexpected token in type body
+  unexpected token in type body
+  unexpected token in type body
+
+lexer diagnostics:
+  (none)

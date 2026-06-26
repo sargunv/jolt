@@ -1,12 +1,19 @@
 #[cfg(test)]
 mod tests;
 
+mod grammar;
+mod source;
+
+use std::fmt;
+
 use jolt_syntax::{
-    BuildGreenTreeError, Event, GreenTokenSource, GreenTriviaPiece, ParseDiagnostic, SyntaxElement,
+    GreenTokenSource, GreenTriviaPiece, ParseDiagnostic, ParseDiagnosticKind, SyntaxElement,
     SyntaxNode, SyntaxToken, TriviaKind as GreenTriviaKind, build_green_tree,
 };
 
 use crate::{JavaLanguage, JavaLexer, JavaSyntaxKind, LexerDiagnostic, Token, Trivia};
+
+use self::source::{Parser, ParserToken};
 
 /// A Java syntax node.
 pub type JavaSyntaxNode = SyntaxNode<JavaLanguage>;
@@ -50,23 +57,58 @@ impl JavaParse {
     }
 }
 
+impl fmt::Debug for JavaParse {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "syntax:")?;
+        writeln!(f, "{:?}", self.syntax)?;
+
+        writeln!(f)?;
+        writeln!(f, "parser diagnostics:")?;
+        if self.diagnostics.is_empty() {
+            writeln!(f, "  (none)")?;
+        } else {
+            for diagnostic in &self.diagnostics {
+                write!(f, "  ")?;
+                fmt_parse_diagnostic_kind(f, diagnostic.kind())?;
+                writeln!(f)?;
+            }
+        }
+
+        writeln!(f)?;
+        writeln!(f, "lexer diagnostics:")?;
+        if self.lexer_diagnostics.is_empty() {
+            writeln!(f, "  (none)")?;
+        } else {
+            for diagnostic in &self.lexer_diagnostics {
+                writeln!(f, "  {:?}", diagnostic.kind)?;
+            }
+        }
+
+        Ok(())
+    }
+}
+
+fn fmt_parse_diagnostic_kind(
+    f: &mut fmt::Formatter<'_>,
+    kind: &ParseDiagnosticKind,
+) -> fmt::Result {
+    match kind {
+        ParseDiagnosticKind::Message(message) => f.write_str(message),
+    }
+}
+
 /// Parses a Java compilation unit.
-///
-/// This is currently an API shell: it creates a lossless `CompilationUnit`
-/// root and leaves grammar structure for the real parser implementation.
 ///
 /// # Panics
 ///
-/// Panics if the parser shell emits an internally invalid event stream.
+/// Panics if the parser emits an internally invalid event stream.
 #[must_use]
 pub fn parse_compilation_unit(source: &str) -> JavaParse {
-    // Temporary parser shell: collect the streaming lexer output so the existing
-    // shared event sink can read tokens by index. The public parser API should
-    // remain compatible with a future direct streaming implementation.
     let (tokens, lexer_diagnostics) = lex_tokens(source);
-    let token_source = JavaGreenTokenSource::new(source, &tokens);
-    let tree = build_compilation_unit_tree(&token_source)
-        .expect("parser shell must emit structurally valid green tree events");
+    let parse = Parser::new(source, tokens).parse_compilation_unit();
+    let token_source = JavaGreenTokenSource::new(source, &parse.tokens);
+    let tree = build_green_tree(&parse.events, &token_source)
+        .expect("parser must emit structurally valid green tree events");
     let (root, diagnostics) = tree.into_parts();
 
     JavaParse {
@@ -95,28 +137,17 @@ fn lex_tokens(source: &str) -> (Vec<Token>, Vec<LexerDiagnostic>) {
     (tokens, diagnostics)
 }
 
-fn build_compilation_unit_tree(
-    token_source: &JavaGreenTokenSource<'_>,
-) -> Result<jolt_syntax::GreenTree, BuildGreenTreeError> {
-    let mut events = Vec::with_capacity(token_source.token_count().saturating_add(2));
-    events.push(Event::start_node(JavaSyntaxKind::CompilationUnit.to_raw()));
-    events.extend((0..token_source.token_count()).map(|_| Event::Token));
-    events.push(Event::FinishNode);
-
-    build_green_tree(&events, token_source)
-}
-
 struct JavaGreenTokenSource<'source> {
     source: &'source str,
-    tokens: &'source [Token],
+    tokens: &'source [ParserToken],
 }
 
 impl<'source> JavaGreenTokenSource<'source> {
-    const fn new(source: &'source str, tokens: &'source [Token]) -> Self {
+    const fn new(source: &'source str, tokens: &'source [ParserToken]) -> Self {
         Self { source, tokens }
     }
 
-    fn token(&self, index: usize) -> &Token {
+    fn token(&self, index: usize) -> &ParserToken {
         &self.tokens[index]
     }
 

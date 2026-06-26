@@ -1,0 +1,35 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "BareTry" @ 19..26 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 27..28
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 45..49 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 50..56
+          LParen "(" @ 56..57
+          RParen ")" @ 57..58 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 59..60
+            BlockStatement
+              TryStatement
+                TryKw "try" @ 81..84 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                Block
+                  LBrace "{" @ 85..86
+                  RBrace "}" @ 86..87
+            RBrace "}" @ 104..105 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 118..119 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 128..128 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  expected `catch` or `finally` after try block
+
+lexer diagnostics:
+  (none)

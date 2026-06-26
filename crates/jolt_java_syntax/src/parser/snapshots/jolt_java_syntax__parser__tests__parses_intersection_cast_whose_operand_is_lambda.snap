@@ -1,0 +1,74 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  InterfaceDeclaration
+    InterfaceKw "interface" @ 13..22 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "CloseRunnable" @ 23..36 trailing=[Whitespace " "]
+    ExtendsClause
+      ExtendsKw "extends" @ 37..44 trailing=[Whitespace " "]
+      ClassType
+        Name
+          Identifier "Runnable" @ 45..53
+      Comma "," @ 53..54 trailing=[Whitespace " "]
+      ClassType
+        Name
+          Identifier "AutoCloseable" @ 55..68 trailing=[Whitespace " "]
+    InterfaceBody
+      LBrace "{" @ 69..70
+      RBrace "}" @ 70..71
+  ClassDeclaration
+    ClassKw "class" @ 85..90 leading=[Newline "\n", Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "IntersectionCastLambda" @ 91..113 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 114..115
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 132..136 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 137..143
+          LParen "(" @ 143..144
+          RParen ")" @ 144..145 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 146..147
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  Name
+                    Identifier "CloseRunnable" @ 168..181 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "runnable" @ 182..190 trailing=[Whitespace " "]
+                    Assign "=" @ 191..192 trailing=[Whitespace " "]
+                    VariableInitializer
+                      CastExpression
+                        LParen "(" @ 193..194
+                        IntersectionType
+                          ClassType
+                            Name
+                              Identifier "Runnable" @ 194..202 trailing=[Whitespace " "]
+                          Amp "&" @ 203..204 trailing=[Whitespace " "]
+                          ClassType
+                            Name
+                              Identifier "AutoCloseable" @ 205..218
+                        RParen ")" @ 218..219 trailing=[Whitespace " "]
+                        LambdaExpression
+                          LParen "(" @ 220..221
+                          LambdaParameterList
+                          RParen ")" @ 221..222 trailing=[Whitespace " "]
+                          Arrow "->" @ 223..225 trailing=[Whitespace " "]
+                          Block
+                            LBrace "{" @ 226..227
+                            RBrace "}" @ 227..228
+              Semicolon ";" @ 228..229
+            RBrace "}" @ 246..247 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 260..261 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 270..270 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

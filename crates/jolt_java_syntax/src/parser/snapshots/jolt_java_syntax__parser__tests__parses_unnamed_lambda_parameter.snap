@@ -1,0 +1,52 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "UnnamedLambdaParameter" @ 19..41 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 42..43
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 60..64 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 65..71
+          LParen "(" @ 71..72
+          RParen ")" @ 72..73 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 74..75
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 96..100 leading=[Newline "\n", Whitespace "                    "]
+                    Dot "." @ 100..101
+                    Identifier "util" @ 101..105
+                    Dot "." @ 105..106
+                    Identifier "function" @ 106..114
+                    Dot "." @ 114..115
+                    Identifier "IntUnaryOperator" @ 115..131 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "zero" @ 132..136 trailing=[Whitespace " "]
+                    Assign "=" @ 137..138 trailing=[Whitespace " "]
+                    VariableInitializer
+                      LambdaExpression
+                        LambdaParameter
+                          UnderscoreKw "_" @ 139..140 trailing=[Whitespace " "]
+                        Arrow "->" @ 141..143 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "0" @ 144..145
+              Semicolon ";" @ 145..146
+            RBrace "}" @ 163..164 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 177..178 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 187..187 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

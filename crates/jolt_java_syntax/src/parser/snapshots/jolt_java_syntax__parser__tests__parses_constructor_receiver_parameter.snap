@@ -1,0 +1,42 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "ConstructorReceiverOuter" @ 19..43 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 44..45
+      ClassBodyDeclaration
+        ClassDeclaration
+          ClassKw "class" @ 62..67 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "ConstructorReceiverInner" @ 68..92 trailing=[Whitespace " "]
+          ClassBody
+            LBrace "{" @ 93..94
+            ClassBodyDeclaration
+              ConstructorDeclaration
+                Identifier "ConstructorReceiverInner" @ 115..139 leading=[Newline "\n", Whitespace "                    "]
+                LParen "(" @ 139..140
+                FormalParameterList
+                  ReceiverParameter
+                    ClassType
+                      Name
+                        Identifier "ConstructorReceiverOuter" @ 140..164 trailing=[Whitespace " "]
+                    Identifier "ConstructorReceiverOuter" @ 165..189
+                    Dot "." @ 189..190
+                    ThisKw "this" @ 190..194
+                RParen ")" @ 194..195 trailing=[Whitespace " "]
+                ConstructorBody
+                  LBrace "{" @ 196..197
+                  RBrace "}" @ 197..198
+            RBrace "}" @ 215..216 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 229..230 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 239..239 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

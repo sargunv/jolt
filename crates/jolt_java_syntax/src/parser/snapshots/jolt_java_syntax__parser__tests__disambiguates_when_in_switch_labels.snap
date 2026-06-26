@@ -1,0 +1,55 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "SwitchWhenIdentifier" @ 19..39 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 40..41
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 58..62 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 63..69
+          LParen "(" @ 69..70
+          FormalParameterList
+            FormalParameter
+              PrimitiveType
+                IntKw "int" @ 70..73 trailing=[Whitespace " "]
+              Identifier "when" @ 74..78
+          RParen ")" @ 78..79 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 80..81
+            BlockStatement
+              SwitchStatement
+                SwitchKw "switch" @ 102..108 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                LParen "(" @ 109..110
+                NameExpression
+                  Identifier "when" @ 110..114
+                RParen ")" @ 114..115 trailing=[Whitespace " "]
+                SwitchBlock
+                  LBrace "{" @ 116..117
+                  SwitchBlockStatementGroup
+                    SwitchLabel
+                      CaseKw "case" @ 142..146 leading=[Newline "\n", Whitespace "                        "] trailing=[Whitespace " "]
+                      CaseConstant
+                        NameExpression
+                          Identifier "when" @ 147..151
+                    Colon ":" @ 151..152
+                    BlockStatement
+                      BreakStatement
+                        BreakKw "break" @ 181..186 leading=[Newline "\n", Whitespace "                            "]
+                        Semicolon ";" @ 186..187
+                  RBrace "}" @ 208..209 leading=[Newline "\n", Whitespace "                    "]
+            RBrace "}" @ 226..227 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 240..241 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 250..250 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

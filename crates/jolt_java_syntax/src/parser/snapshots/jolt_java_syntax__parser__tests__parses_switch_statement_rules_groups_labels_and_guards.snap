@@ -1,0 +1,145 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "Switches" @ 19..27 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 28..29
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 46..50 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "statement" @ 51..60
+          LParen "(" @ 60..61
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "Object" @ 61..67 trailing=[Whitespace " "]
+              Identifier "value" @ 68..73
+            Comma "," @ 73..74 trailing=[Whitespace " "]
+            FormalParameter
+              PrimitiveType
+                IntKw "int" @ 75..78 trailing=[Whitespace " "]
+              Identifier "count" @ 79..84
+          RParen ")" @ 84..85 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 86..87
+            BlockStatement
+              SwitchStatement
+                SwitchKw "switch" @ 108..114 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                LParen "(" @ 115..116
+                NameExpression
+                  Identifier "value" @ 116..121
+                RParen ")" @ 121..122 trailing=[Whitespace " "]
+                SwitchBlock
+                  LBrace "{" @ 123..124
+                  SwitchRule
+                    SwitchLabel
+                      CaseKw "case" @ 149..153 leading=[Newline "\n", Whitespace "                        "] trailing=[Whitespace " "]
+                      CaseConstant
+                        LiteralExpression
+                          NullLiteral "null" @ 154..158
+                      Comma "," @ 158..159 trailing=[Whitespace " "]
+                      DefaultKw "default" @ 160..167 trailing=[Whitespace " "]
+                    Arrow "->" @ 168..170 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 171..172
+                      RBrace "}" @ 172..173
+                  SwitchRule
+                    SwitchLabel
+                      CaseKw "case" @ 198..202 leading=[Newline "\n", Whitespace "                        "] trailing=[Whitespace " "]
+                      CasePattern
+                        TypePattern
+                          LocalVariableDeclaration
+                            ClassType
+                              Name
+                                Identifier "String" @ 203..209 trailing=[Whitespace " "]
+                            VariableDeclaratorList
+                              VariableDeclarator
+                                Identifier "s" @ 210..211 trailing=[Whitespace " "]
+                      Guard
+                        Identifier "when" @ 212..216 trailing=[Whitespace " "]
+                        MethodInvocationExpression
+                          NameExpression
+                            Identifier "s" @ 217..218
+                          Dot "." @ 218..219
+                          Identifier "isEmpty" @ 219..226
+                          ArgumentList
+                            LParen "(" @ 226..227
+                            RParen ")" @ 227..228 trailing=[Whitespace " "]
+                    Arrow "->" @ 229..231 trailing=[Whitespace " "]
+                    MethodInvocationExpression
+                      NameExpression
+                        Identifier "s" @ 232..233
+                      Dot "." @ 233..234
+                      Identifier "trim" @ 234..238
+                      ArgumentList
+                        LParen "(" @ 238..239
+                        RParen ")" @ 239..240
+                    Semicolon ";" @ 240..241
+                  SwitchRule
+                    SwitchLabel
+                      CaseKw "case" @ 266..270 leading=[Newline "\n", Whitespace "                        "] trailing=[Whitespace " "]
+                      CasePattern
+                        TypePattern
+                          LocalVariableDeclaration
+                            ClassType
+                              Name
+                                Identifier "Integer" @ 271..278 trailing=[Whitespace " "]
+                            VariableDeclaratorList
+                              VariableDeclarator
+                                Identifier "i" @ 279..280 trailing=[Whitespace " "]
+                    Arrow "->" @ 281..283 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 284..285
+                      RBrace "}" @ 285..286
+                  RBrace "}" @ 307..308 leading=[Newline "\n", Whitespace "                    "]
+            BlockStatement
+              SwitchStatement
+                SwitchKw "switch" @ 330..336 leading=[Newline "\n", Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                LParen "(" @ 337..338
+                NameExpression
+                  Identifier "count" @ 338..343
+                RParen ")" @ 343..344 trailing=[Whitespace " "]
+                SwitchBlock
+                  LBrace "{" @ 345..346
+                  SwitchBlockStatementGroup
+                    SwitchLabel
+                      CaseKw "case" @ 371..375 leading=[Newline "\n", Whitespace "                        "] trailing=[Whitespace " "]
+                      CaseConstant
+                        LiteralExpression
+                          IntegerLiteral "1" @ 376..377
+                    Colon ":" @ 377..378
+                    SwitchLabel
+                      CaseKw "case" @ 403..407 leading=[Newline "\n", Whitespace "                        "] trailing=[Whitespace " "]
+                      CaseConstant
+                        LiteralExpression
+                          IntegerLiteral "2" @ 408..409
+                    Colon ":" @ 409..410
+                    BlockStatement
+                      BreakStatement
+                        BreakKw "break" @ 439..444 leading=[Newline "\n", Whitespace "                            "]
+                        Semicolon ";" @ 444..445
+                  SwitchBlockStatementGroup
+                    SwitchLabel
+                      DefaultKw "default" @ 470..477 leading=[Newline "\n", Whitespace "                        "]
+                    Colon ":" @ 477..478
+                    BlockStatement
+                      BreakStatement
+                        BreakKw "break" @ 507..512 leading=[Newline "\n", Whitespace "                            "]
+                        Semicolon ";" @ 512..513
+                  RBrace "}" @ 534..535 leading=[Newline "\n", Whitespace "                    "]
+            RBrace "}" @ 552..553 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 566..567 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 576..576 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

@@ -1,0 +1,93 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  RecordDeclaration
+    Identifier "record" @ 13..19 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "Point" @ 20..25
+    LParen "(" @ 25..26
+    RecordComponentList
+      RecordComponent
+        Annotation
+          At "@" @ 26..27
+          Name
+            Identifier "Deprecated" @ 27..37 trailing=[Whitespace " "]
+        PrimitiveType
+          IntKw "int" @ 38..41 trailing=[Whitespace " "]
+        Identifier "x" @ 42..43
+      Comma "," @ 43..44 trailing=[Whitespace " "]
+      RecordComponent
+        ClassType
+          Name
+            Identifier "String" @ 45..51
+        Ellipsis "..." @ 51..54 trailing=[Whitespace " "]
+        Identifier "labels" @ 55..61
+    RParen ")" @ 61..62 trailing=[Whitespace " "]
+    ImplementsClause
+      ImplementsKw "implements" @ 63..73 trailing=[Whitespace " "]
+      ClassType
+        Name
+          Identifier "Named" @ 74..79 trailing=[Whitespace " "]
+    RecordBody
+      LBrace "{" @ 80..81
+      ClassBodyDeclaration
+        CompactConstructorDeclaration
+          Identifier "Point" @ 98..103 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          ConstructorBody
+            LBrace "{" @ 104..105
+            BlockStatement
+              ExpressionStatement
+                AssignmentExpression
+                  NameExpression
+                    Identifier "labels" @ 126..132 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                  Assign "=" @ 133..134 trailing=[Whitespace " "]
+                  MethodInvocationExpression
+                    NameExpression
+                      Identifier "labels" @ 135..141
+                    Dot "." @ 141..142
+                    Identifier "clone" @ 142..147
+                    ArgumentList
+                      LParen "(" @ 147..148
+                      RParen ")" @ 148..149
+                Semicolon ";" @ 149..150
+            RBrace "}" @ 167..168 leading=[Newline "\n", Whitespace "                "]
+      ClassBodyDeclaration
+        MethodDeclaration
+          ModifierList
+            PublicKw "public" @ 186..192 leading=[Newline "\n", Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          ClassType
+            Name
+              Identifier "String" @ 193..199 trailing=[Whitespace " "]
+          Identifier "name" @ 200..204
+          LParen "(" @ 204..205
+          RParen ")" @ 205..206 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 207..208
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 229..235 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                ArrayAccessExpression
+                  NameExpression
+                    Identifier "labels" @ 236..242
+                  LBracket "[" @ 242..243
+                  LiteralExpression
+                    IntegerLiteral "0" @ 243..244
+                  RBracket "]" @ 244..245
+                Semicolon ";" @ 245..246
+            RBrace "}" @ 263..264 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 277..278 leading=[Newline "\n", Whitespace "            "]
+  InterfaceDeclaration
+    InterfaceKw "interface" @ 292..301 leading=[Newline "\n", Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "Named" @ 302..307 trailing=[Whitespace " "]
+    InterfaceBody
+      LBrace "{" @ 308..309
+      RBrace "}" @ 309..310
+  Eof "" @ 319..319 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

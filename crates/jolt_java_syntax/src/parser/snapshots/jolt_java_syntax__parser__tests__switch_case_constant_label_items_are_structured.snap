@@ -1,0 +1,81 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "SwitchCaseConstants" @ 19..38 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 39..40
+      ClassBodyDeclaration
+        FieldDeclaration
+          ModifierList
+            StaticKw "static" @ 57..63 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+            FinalKw "final" @ 64..69 trailing=[Whitespace " "]
+          PrimitiveType
+            IntKw "int" @ 70..73 trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "NAME" @ 74..78 trailing=[Whitespace " "]
+              Assign "=" @ 79..80 trailing=[Whitespace " "]
+              VariableInitializer
+                LiteralExpression
+                  IntegerLiteral "3" @ 81..82
+          Semicolon ";" @ 82..83
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 101..105 leading=[Newline "\n", Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 106..112
+          LParen "(" @ 112..113
+          FormalParameterList
+            FormalParameter
+              PrimitiveType
+                IntKw "int" @ 113..116 trailing=[Whitespace " "]
+              Identifier "value" @ 117..122
+          RParen ")" @ 122..123 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 124..125
+            BlockStatement
+              SwitchStatement
+                SwitchKw "switch" @ 146..152 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                LParen "(" @ 153..154
+                NameExpression
+                  Identifier "value" @ 154..159
+                RParen ")" @ 159..160 trailing=[Whitespace " "]
+                SwitchBlock
+                  LBrace "{" @ 161..162
+                  SwitchRule
+                    SwitchLabel
+                      CaseKw "case" @ 187..191 leading=[Newline "\n", Whitespace "                        "] trailing=[Whitespace " "]
+                      CaseConstant
+                        LiteralExpression
+                          IntegerLiteral "1" @ 192..193
+                      Comma "," @ 193..194 trailing=[Whitespace " "]
+                      CaseConstant
+                        UnaryExpression
+                          Minus "-" @ 195..196
+                          LiteralExpression
+                            IntegerLiteral "2" @ 196..197
+                      Comma "," @ 197..198 trailing=[Whitespace " "]
+                      CaseConstant
+                        NameExpression
+                          Identifier "NAME" @ 199..203 trailing=[Whitespace " "]
+                    Arrow "->" @ 204..206 trailing=[Whitespace " "]
+                    PostfixExpression
+                      NameExpression
+                        Identifier "value" @ 207..212
+                      PlusPlus "++" @ 212..214
+                    Semicolon ";" @ 214..215
+                  RBrace "}" @ 236..237 leading=[Newline "\n", Whitespace "                    "]
+            RBrace "}" @ 254..255 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 268..269 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 278..278 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

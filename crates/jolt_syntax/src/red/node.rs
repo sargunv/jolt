@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, rc::Rc};
+use std::{fmt, marker::PhantomData, rc::Rc};
 
 use jolt_text::{TextRange, TextSize};
 
@@ -220,6 +220,46 @@ impl<L: Language> PartialEq for SyntaxNode<L> {
 }
 
 impl<L: Language> Eq for SyntaxNode<L> {}
+
+impl<L> fmt::Debug for SyntaxNode<L>
+where
+    L: Language,
+    L::Kind: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt_node(f, self, 0)
+    }
+}
+
+fn fmt_node<L>(f: &mut fmt::Formatter<'_>, node: &SyntaxNode<L>, indent: usize) -> fmt::Result
+where
+    L: Language,
+    L::Kind: fmt::Debug,
+{
+    fmt_indent(f, indent)?;
+    write!(f, "{:?}", node.kind())?;
+
+    for child in node.children_with_tokens() {
+        writeln!(f)?;
+        match child {
+            SyntaxElement::Node(node) => fmt_node(f, &node, indent + 1)?,
+            SyntaxElement::Token(token) => {
+                fmt_indent(f, indent + 1)?;
+                write!(f, "{token:?}")?;
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn fmt_indent(f: &mut fmt::Formatter<'_>, indent: usize) -> fmt::Result {
+    for _ in 0..indent {
+        f.write_str("  ")?;
+    }
+
+    Ok(())
+}
 
 struct Descendants<L: Language> {
     stack: Vec<SyntaxNode<L>>,

@@ -1,0 +1,90 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "Resources" @ 19..28 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 29..30
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 47..51 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 52..58
+          LParen "(" @ 58..59
+          RParen ")" @ 59..60 trailing=[Whitespace " "]
+          ThrowsClause
+            ThrowsKw "throws" @ 61..67 trailing=[Whitespace " "]
+            ClassType
+              Name
+                Identifier "Exception" @ 68..77 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 78..79
+            BlockStatement
+              TryStatement
+                TryWithResourcesStatement
+                  TryKw "try" @ 100..103 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                  ResourceSpecification
+                    LParen "(" @ 104..105
+                    ResourceList
+                      Resource
+                        LocalVariableDeclaration
+                          Identifier "var" @ 105..108 trailing=[Whitespace " "]
+                          VariableDeclaratorList
+                            VariableDeclarator
+                              Identifier "declared" @ 109..117 trailing=[Whitespace " "]
+                              Assign "=" @ 118..119 trailing=[Whitespace " "]
+                              VariableInitializer
+                                MethodInvocationExpression
+                                  NameExpression
+                                    Identifier "open" @ 120..124
+                                  ArgumentList
+                                    LParen "(" @ 124..125
+                                    RParen ")" @ 125..126
+                      Semicolon ";" @ 126..127 trailing=[Whitespace " "]
+                      Resource
+                        VariableAccess
+                          NameExpression
+                            Identifier "existing" @ 128..136
+                    RParen ")" @ 136..137 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 138..139
+                    RBrace "}" @ 139..140
+            RBrace "}" @ 157..158 leading=[Newline "\n", Whitespace "                "]
+      ClassBodyDeclaration
+        MethodDeclaration
+          ClassType
+            Name
+              Identifier "AutoCloseable" @ 176..189 leading=[Newline "\n", Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "open" @ 190..194
+          LParen "(" @ 194..195
+          RParen ")" @ 195..196 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 197..198 trailing=[Whitespace " "]
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 199..205 trailing=[Whitespace " "]
+                LiteralExpression
+                  NullLiteral "null" @ 206..210
+                Semicolon ";" @ 210..211 trailing=[Whitespace " "]
+            RBrace "}" @ 212..213
+      ClassBodyDeclaration
+        FieldDeclaration
+          ClassType
+            Name
+              Identifier "AutoCloseable" @ 230..243 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "existing" @ 244..252
+          Semicolon ";" @ 252..253
+      RBrace "}" @ 266..267 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 276..276 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

@@ -1,0 +1,102 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ModifierList
+      Annotation
+        At "@" @ 13..14 leading=[Newline "\n", Whitespace "            "]
+        Name
+          Identifier "Normal" @ 14..20
+        AnnotationArgumentList
+          LParen "(" @ 20..21
+          AnnotationElementList
+            AnnotationElementValuePair
+              Identifier "name" @ 21..25 trailing=[Whitespace " "]
+              Assign "=" @ 26..27 trailing=[Whitespace " "]
+              AnnotationElementValue
+                LiteralExpression
+                  StringLiteral "\"test\"" @ 28..34
+            Comma "," @ 34..35 trailing=[Whitespace " "]
+            AnnotationElementValuePair
+              Identifier "nested" @ 36..42 trailing=[Whitespace " "]
+              Assign "=" @ 43..44 trailing=[Whitespace " "]
+              AnnotationElementValue
+                Annotation
+                  At "@" @ 45..46
+                  Name
+                    Identifier "Marker" @ 46..52
+            Comma "," @ 52..53 trailing=[Whitespace " "]
+            AnnotationElementValuePair
+              Identifier "values" @ 54..60 trailing=[Whitespace " "]
+              Assign "=" @ 61..62 trailing=[Whitespace " "]
+              AnnotationElementValue
+                AnnotationArrayInitializer
+                  LBrace "{" @ 63..64
+                  AnnotationElementValue
+                    LiteralExpression
+                      IntegerLiteral "1" @ 64..65
+                  Comma "," @ 65..66 trailing=[Whitespace " "]
+                  AnnotationElementValue
+                    LiteralExpression
+                      IntegerLiteral "2" @ 67..68
+                  RBrace "}" @ 68..69
+          RParen ")" @ 69..70
+    ClassKw "class" @ 83..88 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "Annotated" @ 89..98 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 99..100
+      RBrace "}" @ 100..101
+  AnnotationInterfaceDeclaration
+    At "@" @ 115..116 leading=[Newline "\n", Newline "\n", Whitespace "            "]
+    InterfaceKw "interface" @ 116..125 trailing=[Whitespace " "]
+    Identifier "Normal" @ 126..132 trailing=[Whitespace " "]
+    AnnotationInterfaceBody
+      LBrace "{" @ 133..134
+      AnnotationElementList
+        AnnotationElementDeclaration
+          ClassType
+            Name
+              Identifier "String" @ 151..157 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "name" @ 158..162
+          LParen "(" @ 162..163
+          RParen ")" @ 163..164
+          Semicolon ";" @ 164..165
+        AnnotationElementDeclaration
+          ClassType
+            Name
+              Identifier "Marker" @ 182..188 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "nested" @ 189..195
+          LParen "(" @ 195..196
+          RParen ")" @ 196..197
+          Semicolon ";" @ 197..198
+        AnnotationElementDeclaration
+          ArrayType
+            PrimitiveType
+              IntKw "int" @ 215..218 leading=[Newline "\n", Whitespace "                "]
+            ArrayDimensions
+              ArrayDimension
+                LBracket "[" @ 218..219
+                RBracket "]" @ 219..220 trailing=[Whitespace " "]
+          Identifier "values" @ 221..227
+          LParen "(" @ 227..228
+          RParen ")" @ 228..229
+          Semicolon ";" @ 229..230
+      RBrace "}" @ 243..244 leading=[Newline "\n", Whitespace "            "]
+  AnnotationInterfaceDeclaration
+    At "@" @ 258..259 leading=[Newline "\n", Newline "\n", Whitespace "            "]
+    InterfaceKw "interface" @ 259..268 trailing=[Whitespace " "]
+    Identifier "Marker" @ 269..275 trailing=[Whitespace " "]
+    AnnotationInterfaceBody
+      LBrace "{" @ 276..277
+      AnnotationElementList
+      RBrace "}" @ 277..278
+  Eof "" @ 287..287 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

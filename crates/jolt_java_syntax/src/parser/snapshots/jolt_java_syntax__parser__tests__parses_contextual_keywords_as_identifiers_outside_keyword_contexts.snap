@@ -1,0 +1,195 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "ContextualKeywordIdentifiers" @ 19..47 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 48..49
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 66..69 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "module" @ 70..76
+          Semicolon ";" @ 76..77
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 94..97 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "open" @ 98..102
+          Semicolon ";" @ 102..103
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 120..123 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "opens" @ 124..129
+          Semicolon ";" @ 129..130
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 147..150 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "requires" @ 151..159
+          Semicolon ";" @ 159..160
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 177..180 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "transitive" @ 181..191
+          Semicolon ";" @ 191..192
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 209..212 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "exports" @ 213..220
+          Semicolon ";" @ 220..221
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 238..241 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "to" @ 242..244
+          Semicolon ";" @ 244..245
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 262..265 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "uses" @ 266..270
+          Semicolon ";" @ 270..271
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 288..291 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "provides" @ 292..300
+          Semicolon ";" @ 300..301
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 318..321 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "with" @ 322..326
+          Semicolon ";" @ 326..327
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 344..347 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "when" @ 348..352
+          Semicolon ";" @ 352..353
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 370..373 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "permits" @ 374..381
+          Semicolon ";" @ 381..382
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 399..402 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "sealed" @ 403..409
+          Semicolon ";" @ 409..410
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 427..430 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "record" @ 431..437
+          Semicolon ";" @ 437..438
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 455..458 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "var" @ 459..462
+          Semicolon ";" @ 462..463
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 481..485 leading=[Newline "\n", Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "when" @ 486..490
+          LParen "(" @ 490..491
+          RParen ")" @ 491..492 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 493..494
+            RBrace "}" @ 494..495
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 512..516 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "requires" @ 517..525
+          LParen "(" @ 525..526
+          RParen ")" @ 526..527 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 528..529
+            RBrace "}" @ 529..530
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 547..551 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 552..558
+          LParen "(" @ 558..559
+          RParen ")" @ 559..560 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 561..562
+            BlockStatement
+              LocalVariableDeclaration
+                PrimitiveType
+                  IntKw "int" @ 583..586 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "when" @ 587..591 trailing=[Whitespace " "]
+                    Assign "=" @ 592..593 trailing=[Whitespace " "]
+                    VariableInitializer
+                      FieldAccessExpression
+                        ThisExpression
+                          ThisKw "this" @ 594..598
+                        Dot "." @ 598..599
+                        Identifier "when" @ 599..603
+              Semicolon ";" @ 603..604
+            BlockStatement
+              ExpressionStatement
+                MethodInvocationExpression
+                  ThisExpression
+                    ThisKw "this" @ 625..629 leading=[Newline "\n", Whitespace "                    "]
+                  Dot "." @ 629..630
+                  Identifier "requires" @ 630..638
+                  ArgumentList
+                    LParen "(" @ 638..639
+                    RParen ")" @ 639..640
+                Semicolon ";" @ 640..641
+            RBrace "}" @ 658..659 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 672..673 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 682..682 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

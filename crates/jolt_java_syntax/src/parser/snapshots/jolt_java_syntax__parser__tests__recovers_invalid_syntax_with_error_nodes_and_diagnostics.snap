@@ -1,0 +1,45 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "Broken" @ 19..25 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 26..27
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 44..48 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 49..55
+          LParen "(" @ 55..56 trailing=[Whitespace " "]
+          FormalParameterList
+            FormalParameter
+              ErrorNode
+          Block
+            LBrace "{" @ 57..58
+            BlockStatement
+              LocalVariableDeclaration
+                PrimitiveType
+                  IntKw "int" @ 79..82 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "value" @ 83..88 trailing=[Whitespace " "]
+                    Assign "=" @ 89..90 trailing=[Whitespace " "]
+                    VariableInitializer
+                      ErrorNode
+              Semicolon ";" @ 91..92
+            RBrace "}" @ 109..110 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 123..124 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 133..133 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  expected type
+  expected parameter name
+  expected `)` after parameters
+  expected expression
+
+lexer diagnostics:
+  (none)

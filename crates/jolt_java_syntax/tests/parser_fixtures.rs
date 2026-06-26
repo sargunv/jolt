@@ -1,4 +1,5 @@
 use std::collections::{BTreeMap, HashMap};
+use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -140,8 +141,8 @@ impl CorpusSummary {
 
     fn render(&self) -> String {
         let mut output = String::new();
-        output.push_str(&format!("suite: {}\n", self.suite));
-        output.push_str(&format!("files: {}\n", self.files));
+        writeln!(&mut output, "suite: {}", self.suite).expect("write summary");
+        writeln!(&mut output, "files: {}", self.files).expect("write summary");
         output.push_str("\nnodes:\n");
         push_kind_counts(&mut output, &self.nodes);
         output.push_str("\nparser diagnostics:\n");
@@ -184,6 +185,6 @@ fn push_counts(output: &mut String, counts: &BTreeMap<String, usize>) {
     }
 
     for (kind, count) in counts {
-        output.push_str(&format!("  {kind}: {count}\n"));
+        writeln!(output, "  {kind}: {count}").expect("write summary");
     }
 }

@@ -1,0 +1,36 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "AnnotatedTypeParameter" @ 19..41
+    TypeParameterList
+      Lt "<" @ 41..42
+      TypeParameter
+        Annotation
+          At "@" @ 42..43
+          Name
+            Identifier "Marker" @ 43..49 trailing=[Whitespace " "]
+        Identifier "T" @ 50..51
+      Gt ">" @ 51..52 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 53..54
+      RBrace "}" @ 54..55
+  AnnotationInterfaceDeclaration
+    At "@" @ 69..70 leading=[Newline "\n", Newline "\n", Whitespace "            "]
+    InterfaceKw "interface" @ 70..79 trailing=[Whitespace " "]
+    Identifier "Marker" @ 80..86 trailing=[Whitespace " "]
+    AnnotationInterfaceBody
+      LBrace "{" @ 87..88
+      AnnotationElementList
+      RBrace "}" @ 88..89
+  Eof "" @ 98..98 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

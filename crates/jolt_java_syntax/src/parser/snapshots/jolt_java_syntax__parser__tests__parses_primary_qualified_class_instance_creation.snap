@@ -1,0 +1,70 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "PrimaryQualifiedCreation" @ 19..43 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 44..45
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 62..66 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 67..73
+          LParen "(" @ 73..74
+          RParen ")" @ 74..75 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 76..77
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  Name
+                    Identifier "Object" @ 98..104 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "inner" @ 105..110 trailing=[Whitespace " "]
+                    Assign "=" @ 111..112 trailing=[Whitespace " "]
+                    VariableInitializer
+                      ObjectCreationExpression
+                        ObjectCreationExpression
+                          NewKw "new" @ 113..116 trailing=[Whitespace " "]
+                          ClassType
+                            Name
+                              Identifier "Outer" @ 117..122
+                          ArgumentList
+                            LParen "(" @ 122..123
+                            RParen ")" @ 123..124
+                        Dot "." @ 124..125
+                        NewKw "new" @ 125..128 trailing=[Whitespace " "]
+                        ClassType
+                          Name
+                            Identifier "Inner" @ 129..134
+                        ArgumentList
+                          LParen "(" @ 134..135
+                          RParen ")" @ 135..136
+              Semicolon ";" @ 136..137
+            RBrace "}" @ 154..155 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 168..169 leading=[Newline "\n", Whitespace "            "]
+  ClassDeclaration
+    ClassKw "class" @ 183..188 leading=[Newline "\n", Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "Outer" @ 189..194 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 195..196
+      ClassBodyDeclaration
+        ClassDeclaration
+          ClassKw "class" @ 213..218 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "Inner" @ 219..224 trailing=[Whitespace " "]
+          ClassBody
+            LBrace "{" @ 225..226
+            RBrace "}" @ 226..227
+      RBrace "}" @ 240..241 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 250..250 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)

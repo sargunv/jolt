@@ -1,0 +1,89 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "InvalidStatementExpressions" @ 19..46 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 47..48
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 65..69 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 70..76
+          LParen "(" @ 76..77
+          FormalParameterList
+            FormalParameter
+              PrimitiveType
+                IntKw "int" @ 77..80 trailing=[Whitespace " "]
+              Identifier "i" @ 81..82
+            Comma "," @ 82..83 trailing=[Whitespace " "]
+            FormalParameter
+              PrimitiveType
+                IntKw "int" @ 84..87 trailing=[Whitespace " "]
+              Identifier "j" @ 88..89
+          RParen ")" @ 89..90 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 91..92
+            BlockStatement
+              ExpressionStatement
+                BinaryExpression
+                  LiteralExpression
+                    IntegerLiteral "1" @ 113..114 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                  Plus "+" @ 115..116 trailing=[Whitespace " "]
+                  LiteralExpression
+                    IntegerLiteral "2" @ 117..118
+                Semicolon ";" @ 118..119
+            BlockStatement
+              ExpressionStatement
+                NameExpression
+                  Identifier "i" @ 140..141 leading=[Newline "\n", Whitespace "                    "]
+                Semicolon ";" @ 141..142
+            BlockStatement
+              ForStatement
+                BasicForStatement
+                  ForKw "for" @ 163..166 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                  LParen "(" @ 167..168
+                  ForInitializer
+                    StatementExpressionList
+                      BinaryExpression
+                        NameExpression
+                          Identifier "i" @ 168..169 trailing=[Whitespace " "]
+                        Plus "+" @ 170..171 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "1" @ 172..173
+                  Semicolon ";" @ 173..174 trailing=[Whitespace " "]
+                  BinaryExpression
+                    NameExpression
+                      Identifier "i" @ 175..176 trailing=[Whitespace " "]
+                    Lt "<" @ 177..178 trailing=[Whitespace " "]
+                    LiteralExpression
+                      IntegerLiteral "10" @ 179..181
+                  Semicolon ";" @ 181..182 trailing=[Whitespace " "]
+                  ForUpdate
+                    StatementExpressionList
+                      BinaryExpression
+                        NameExpression
+                          Identifier "j" @ 183..184 trailing=[Whitespace " "]
+                        Plus "+" @ 185..186 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "1" @ 187..188
+                  RParen ")" @ 188..189 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 190..191
+                    RBrace "}" @ 191..192
+            RBrace "}" @ 209..210 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 223..224 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 233..233 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  expected statement expression
+  expected statement expression
+  expected statement expression
+  expected statement expression
+
+lexer diagnostics:
+  (none)

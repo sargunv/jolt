@@ -1,0 +1,48 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "ConstructorBodyShape" @ 19..39 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 40..41
+      ClassBodyDeclaration
+        ConstructorDeclaration
+          Identifier "ConstructorBodyShape" @ 58..78 leading=[Newline "\n", Whitespace "                "]
+          LParen "(" @ 78..79
+          RParen ")" @ 79..80 trailing=[Whitespace " "]
+          ConstructorBody
+            LBrace "{" @ 81..82
+            ConstructorInvocation
+              ThisKw "this" @ 103..107 leading=[Newline "\n", Whitespace "                    "]
+              ArgumentList
+                LParen "(" @ 107..108
+                LiteralExpression
+                  IntegerLiteral "0" @ 108..109
+                RParen ")" @ 109..110
+              Semicolon ";" @ 110..111
+            RBrace "}" @ 128..129 leading=[Newline "\n", Whitespace "                "]
+      ClassBodyDeclaration
+        ConstructorDeclaration
+          Identifier "ConstructorBodyShape" @ 147..167 leading=[Newline "\n", Newline "\n", Whitespace "                "]
+          LParen "(" @ 167..168
+          FormalParameterList
+            FormalParameter
+              PrimitiveType
+                IntKw "int" @ 168..171 trailing=[Whitespace " "]
+              Identifier "value" @ 172..177
+          RParen ")" @ 177..178 trailing=[Whitespace " "]
+          ConstructorBody
+            LBrace "{" @ 179..180
+            RBrace "}" @ 180..181
+      RBrace "}" @ 194..195 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 204..204 leading=[Newline "\n", Whitespace "        "]
+
+parser diagnostics:
+  (none)
+
+lexer diagnostics:
+  (none)
