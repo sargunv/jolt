@@ -21,26 +21,40 @@ pub(super) struct ParserToken {
 
 pub(super) struct Parser<'source> {
     source: &'source str,
+    /// Immutable lexer token stream used for parser lookahead.
     tokens: Vec<ParserToken>,
+    /// Logical tokens consumed by the parser and passed to the tree builder.
+    tree_tokens: Vec<ParserToken>,
     pos: usize,
+    pending_gt_split: Option<PendingGtSplit>,
     events: Vec<Event>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct PendingGtSplit {
+    original_index: usize,
+    next_part: u8,
+    total_parts: u8,
 }
 
 impl<'source> Parser<'source> {
     pub(super) fn new(source: &'source str, tokens: Vec<Token>) -> Self {
-        let capacity = tokens.len().saturating_mul(2);
+        let token_capacity = tokens.len();
+        let event_capacity = token_capacity.saturating_mul(2);
         Self {
             source,
             tokens: tokens.into_iter().map(ParserToken::from).collect(),
+            tree_tokens: Vec::with_capacity(token_capacity),
             pos: 0,
-            events: Vec::with_capacity(capacity),
+            pending_gt_split: None,
+            events: Vec::with_capacity(event_capacity),
         }
     }
 
     pub(super) fn finish(self) -> ParseEvents {
         ParseEvents {
             events: self.events,
-            tokens: self.tokens,
+            tokens: self.tree_tokens,
         }
     }
 
@@ -91,11 +105,21 @@ impl<'source> Parser<'source> {
     }
 
     pub(super) fn current_kind(&self) -> JavaSyntaxKind {
-        self.kind_at(self.pos)
+        self.logical_token_at(self.pos)
+            .map_or(JavaSyntaxKind::Eof, |token| token.kind)
     }
 
     pub(super) fn nth_kind(&self, n: usize) -> JavaSyntaxKind {
-        self.kind_at(self.pos + n)
+        let Some(split) = self.pending_gt_split else {
+            return self.kind_at(self.pos + n);
+        };
+
+        let remaining_split_parts = usize::from(split.total_parts - split.next_part);
+        if n < remaining_split_parts {
+            JavaSyntaxKind::Gt
+        } else {
+            self.kind_at(self.pos + 1 + n - remaining_split_parts)
+        }
     }
 
     pub(super) fn kind_at(&self, index: usize) -> JavaSyntaxKind {
@@ -105,28 +129,39 @@ impl<'source> Parser<'source> {
     }
 
     pub(super) fn current_text(&self) -> Option<&'source str> {
-        self.text_at(self.pos)
+        self.logical_token_at(self.pos)
+            .map(|token| self.token_text(&token))
     }
 
     pub(super) fn text_at(&self, index: usize) -> Option<&'source str> {
         let token = self.tokens.get(index)?;
-        let start = token.range.start().get();
-        let end = token.range.end().get();
-        Some(&self.source[start..end])
+        Some(self.token_text(token))
     }
 
     pub(super) fn bump(&mut self) {
-        assert!(
-            self.pos < self.tokens.len(),
-            "parser attempted to consume beyond EOF token"
-        );
+        if self.pending_gt_split.is_some() {
+            self.bump_pending_gt_split();
+            return;
+        }
+
+        let token = self
+            .tokens
+            .get(self.pos)
+            .expect("parser attempted to consume beyond EOF token")
+            .clone();
         self.events.push(Event::Token);
+        self.tree_tokens.push(token);
         self.pos += 1;
     }
 
     pub(super) fn bump_split_gt(&mut self) {
-        self.split_current_gt_token();
-        self.expect(JavaSyntaxKind::Gt, "expected `>`");
+        match self.current_kind() {
+            JavaSyntaxKind::Gt if self.pending_gt_split.is_some() => self.bump_pending_gt_split(),
+            JavaSyntaxKind::Gt => self.bump(),
+            JavaSyntaxKind::RShift => self.start_pending_gt_split(2),
+            JavaSyntaxKind::UnsignedRShift => self.start_pending_gt_split(3),
+            _ => self.expected_here("expected `>`"),
+        }
     }
 
     pub(super) fn expected_here(&mut self, message: &str) {
@@ -183,9 +218,8 @@ impl<'source> Parser<'source> {
 
     fn error_here(&mut self, code: JavaParseDiagnosticCode, message: &str) {
         let range = self
-            .tokens
-            .get(self.pos)
-            .or_else(|| self.tokens.last())
+            .logical_token_at(self.pos)
+            .or_else(|| self.tokens.last().cloned())
             .expect("parser token stream must include EOF")
             .range;
         self.events.push(Event::Error(Diagnostic {
@@ -217,41 +251,66 @@ impl<'source> Parser<'source> {
         marker.abandon(&mut self.events);
     }
 
-    fn split_current_gt_token(&mut self) {
-        let Some(token) = self.tokens.get(self.pos) else {
-            return;
-        };
+    fn start_pending_gt_split(&mut self, total_parts: u8) {
+        self.pending_gt_split = Some(PendingGtSplit {
+            original_index: self.pos,
+            next_part: 0,
+            total_parts,
+        });
+        self.bump_pending_gt_split();
+    }
 
-        let split_count = match token.kind {
-            JavaSyntaxKind::RShift => 2,
-            JavaSyntaxKind::UnsignedRShift => 3,
-            _ => return,
-        };
+    fn bump_pending_gt_split(&mut self) {
+        let split = self
+            .pending_gt_split
+            .expect("pending split must exist before bumping virtual `>`");
+        let token = self.virtual_gt_token(split);
+        self.events.push(Event::Token);
+        self.tree_tokens.push(token);
 
-        let token = self.tokens.remove(self.pos);
-        let start = token.range.start();
-        let mut split_tokens = Vec::with_capacity(split_count);
+        let next_part = split.next_part + 1;
+        if next_part == split.total_parts {
+            self.pending_gt_split = None;
+            self.pos += 1;
+        } else {
+            self.pending_gt_split = Some(PendingGtSplit { next_part, ..split });
+        }
+    }
 
-        for index in 0..split_count {
-            let token_start = start + TextSize::new(index);
-            let token_end = token_start + TextSize::new(1);
-            split_tokens.push(ParserToken {
-                kind: JavaSyntaxKind::Gt,
-                range: TextRange::new(token_start, token_end),
-                leading: if index == 0 {
-                    token.leading.clone()
-                } else {
-                    Vec::new()
-                },
-                trailing: if index + 1 == split_count {
-                    token.trailing.clone()
-                } else {
-                    Vec::new()
-                },
-            });
+    fn logical_token_at(&self, index: usize) -> Option<ParserToken> {
+        if index == self.pos
+            && let Some(split) = self.pending_gt_split
+        {
+            return Some(self.virtual_gt_token(split));
         }
 
-        self.tokens.splice(self.pos..self.pos, split_tokens);
+        self.tokens.get(index).cloned()
+    }
+
+    fn virtual_gt_token(&self, split: PendingGtSplit) -> ParserToken {
+        let token = &self.tokens[split.original_index];
+        let token_start = token.range.start() + TextSize::new(usize::from(split.next_part));
+        let token_end = token_start + TextSize::new(1);
+        ParserToken {
+            kind: JavaSyntaxKind::Gt,
+            range: TextRange::new(token_start, token_end),
+            leading: if split.next_part == 0 {
+                token.leading.clone()
+            } else {
+                Vec::new()
+            },
+            trailing: if split.next_part + 1 == split.total_parts {
+                token.trailing.clone()
+            } else {
+                Vec::new()
+            },
+        }
+    }
+
+    fn token_text(&self, token: &ParserToken) -> &'source str {
+        let start = token.range.start().get();
+        let end = token.range.end().get();
+        &self.source[start..end]
     }
 }
 

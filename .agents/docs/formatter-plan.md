@@ -351,6 +351,13 @@ The parser should support error recovery. A formatter should be able to report
 parse errors cleanly and avoid destructive output when source is syntactically
 invalid.
 
+Language parsers should work with zero configuration. For Java, parse the latest
+supported Java grammar by default, but keep recovery lossless and permissive
+enough that older source-level conflicts, such as identifiers that later became
+keywords or restricted identifiers, still produce a useful tree and diagnostics.
+Do not add `--source` or `--release` style parser configuration until formatter
+write-safety or compatibility behavior genuinely requires source-level policy.
+
 ### Parser event stream
 
 The parser should not allocate final tree nodes directly. It should emit events

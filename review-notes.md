@@ -25,27 +25,6 @@ tradeoffs, not straightforward cleanup.
   introduce a shared lookahead cursor/type-scanning primitive that makes grammar
   drift harder but adds parser infrastructure.
 
-- Virtual `>` tokens are produced by mutating the parser token vector.
-
-  When a `>>` or `>>>` token closes nested generic type arguments, the parser
-  rewrites the token stream with `remove` and `splice`, turning the shift token
-  into multiple synthetic `>` tokens.
-
-  This is pragmatic and keeps tree construction simple today. The cost is that
-  token indexing becomes mutable, pathological nested generic code can pay
-  repeated vector-shift costs, and the final CST no longer has a clean token
-  origin model.
-
-  A clean origin model means every parser token can answer where it came from:
-  either an original lexer token, or a virtual slice of an original lexer token.
-  That matters for formatter-grade tools because wrappers, diagnostics, source
-  maps, and token-preserving edits often need to relate CST tokens back to the
-  lexer stream and source bytes.
-
-  The judgement call is whether to keep the current simple mutation until
-  formatter wrappers prove they need stronger token identity, or invest now in
-  logical parser tokens with origin metadata / pending split state.
-
 - Recovery structure may need a formatter-facing policy.
 
   Lightweight recovery cleanup is done, but deeper recovery design is still a
@@ -68,15 +47,3 @@ tradeoffs, not straightforward cleanup.
   expose formatter-oriented roles such as conditions, selectors, return values,
   import kind, and switch-label items. The second option gives consumers a
   better API but creates a stronger wrapper maintenance layer.
-
-- Java language-level/config gating needs a product decision.
-
-  The parser currently acts like one modern Java grammar. Contextual keywords
-  such as `record`, `sealed`, `permits`, `var`, and `yield` are interpreted
-  according to that grammar.
-
-  The judgement call is whether Jolt formats one current Java dialect, or
-  whether parsing should be configurable for older/release-specific Java source
-  levels. Supporting multiple language levels would make contextual keyword and
-  feature-gating behavior more correct for mixed projects, but it adds config
-  and compatibility surface area.
