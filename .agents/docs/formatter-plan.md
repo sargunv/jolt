@@ -172,6 +172,14 @@ syntax nodes, not a semantic AST and not a replacement for the CST. Layout
 builders may still inspect raw tokens, trivia, and syntax elements for comments,
 whitespace-sensitive cases, error handling, and formatting edge cases.
 
+For language syntax crates, the intended public API should be the wrapper API
+once that layer exists. Raw syntax nodes and syntax kinds remain the lossless
+storage and implementation substrate, but formatter, linter, codemod, and other
+tooling crates should usually ask wrappers for grammar roles such as names,
+conditions, branches, parameters, import paths, and bodies. Building that
+wrapper API is a later milestone, not a requirement for the Java parser
+milestone.
+
 The architecture should be formatter-native from the beginning. It should not be
 built on Tree-sitter, an AST-only parser, or a parser model that loses
 whitespace and comments.
@@ -350,6 +358,21 @@ structural syntax. Expressions can use Pratt parsing or precedence climbing.
 The parser should support error recovery. A formatter should be able to report
 parse errors cleanly and avoid destructive output when source is syntactically
 invalid.
+
+Initial formatting should require a fully valid parse. If parsing recovers from
+syntax errors, the formatter should refuse to rewrite the file and report the
+parse diagnostics instead of trying to format around malformed structure.
+
+Partial formatting of recovered trees is a later capability, not the first
+contract. When added, it should preserve malformed subtrees or source ranges
+byte-for-byte before formatting surrounding valid regions. Do not add
+missing-token nodes, richer skipped-region nodes, or recovery-node APIs until
+that partial-formatting policy needs them.
+
+The Java syntax crate's long-term public API should be its wrapper API, not
+direct raw CST traversal. The Java parser milestone may expose raw syntax while
+wrappers do not exist yet, but formatter code should migrate to wrappers once
+that milestone lands.
 
 Language parsers should work with zero configuration. For Java, parse the latest
 supported Java grammar by default, but keep recovery lossless and permissive
