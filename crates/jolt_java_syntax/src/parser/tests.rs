@@ -1020,6 +1020,55 @@ fn diagnoses_invalid_statement_expressions() {
 }
 
 #[test]
+fn diagnoses_invalid_expression_forms() {
+    assert_parse_snapshot(
+        "diagnoses_invalid_expression_forms",
+        r"
+            class InvalidExpressions {
+                void method(Object x, C c) {
+                    (f)();
+                    this();
+                    new C()();
+                    1 = x;
+                    a + b = c;
+                    (a) = b;
+                    new C;
+                    new C {};
+                    new int();
+                    int[] xs = new int[][3];
+                    int[] ys = new int[3] {1, 2};
+                    boolean primitiveInstanceof = x instanceof int;
+                }
+            }
+        ",
+    );
+}
+
+#[test]
+fn diagnoses_invalid_declaration_contexts() {
+    assert_parse_snapshot(
+        "diagnoses_invalid_declaration_contexts",
+        r"
+            class InvalidDeclarationContexts<T extends int> {
+                void method(Object x, java.util.List<String> values) throws int {
+                    for (String value = null : values) {}
+                    for (String first, second : values) {}
+                    try (AutoCloseable missing, second = open()) {}
+                    try (AutoCloseable first = open(), second = open()) {}
+                    try {
+                        risky();
+                    } catch (int ex) {
+                    }
+                }
+
+                AutoCloseable open() { return null; }
+                void risky() throws Exception {}
+            }
+        ",
+    );
+}
+
+#[test]
 fn parses_switch_statement_rules_groups_labels_and_guards() {
     // Spec: JLS 19 SwitchStatement, SwitchBlock, SwitchRule,
     // SwitchBlockStatementGroup, SwitchLabel, CaseConstant, CasePattern,
@@ -2371,6 +2420,25 @@ fn parses_variable_arity_lambda_parameter() {
                 void method() {
                     java.util.function.Function<String[], Integer> lengths =
                         (String... values) -> values.length;
+                }
+            }
+        ",
+    );
+}
+
+#[test]
+fn diagnoses_invalid_lambda_parameters() {
+    assert_parse_snapshot(
+        "diagnoses_invalid_lambda_parameters",
+        r"
+            class InvalidLambdaParameters {
+                void method() {
+                    java.util.function.BiFunction<Integer, Integer, Integer> mixedImplicit =
+                        (x, int y) -> y;
+                    java.util.function.BiFunction<Integer, Integer, Integer> mixedVar =
+                        (var x, y) -> y;
+                    java.util.function.BiFunction<String[], String, Integer> trailingVarargs =
+                        (String... values, String suffix) -> values.length;
                 }
             }
         ",

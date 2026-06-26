@@ -1,5 +1,7 @@
+use super::{JavaSyntaxKind, ParseEvents, Parser};
+
 impl Parser<'_> {
-    pub(super) fn parse_compilation_unit(mut self) -> ParseEvents {
+    pub(in crate::parser) fn parse_compilation_unit(mut self) -> ParseEvents {
         let unit = self.start();
 
         if self.starts_package_declaration() {
@@ -31,7 +33,7 @@ impl Parser<'_> {
         self.finish()
     }
 
-    fn parse_package_declaration(&mut self) {
+    pub(super) fn parse_package_declaration(&mut self) {
         let package = self.start();
         self.parse_annotations();
         self.expect(JavaSyntaxKind::PackageKw, "expected `package`");
@@ -43,7 +45,7 @@ impl Parser<'_> {
         self.complete(package, JavaSyntaxKind::PackageDeclaration);
     }
 
-    fn parse_import_declaration(&mut self) {
+    pub(super) fn parse_import_declaration(&mut self) {
         let import = self.start();
         self.expect(JavaSyntaxKind::ImportKw, "expected `import`");
 
@@ -76,7 +78,7 @@ impl Parser<'_> {
         self.complete(import, JavaSyntaxKind::ImportDeclaration);
     }
 
-    fn parse_module_declaration(&mut self) {
+    pub(super) fn parse_module_declaration(&mut self) {
         let module = self.start();
         self.parse_annotations();
         self.eat_contextual("open");
@@ -102,7 +104,7 @@ impl Parser<'_> {
         self.complete(module, JavaSyntaxKind::ModuleDeclaration);
     }
 
-    fn parse_module_directive(&mut self) {
+    pub(super) fn parse_module_directive(&mut self) {
         let module_directive = self.start();
         let directive = self.start();
         let kind = match self.current_text() {
@@ -177,7 +179,7 @@ impl Parser<'_> {
         self.complete(module_directive, JavaSyntaxKind::ModuleDirective);
     }
 
-    fn parse_optional_module_list_after_to(&mut self) {
+    pub(super) fn parse_optional_module_list_after_to(&mut self) {
         if !self.eat_contextual("to") {
             return;
         }

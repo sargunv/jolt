@@ -2,10 +2,17 @@ use crate::JavaSyntaxKind;
 
 use super::source::{ParseEvents, Parser};
 
-include!("grammar/compilation_unit.rs");
-include!("grammar/declarations.rs");
-include!("grammar/statements.rs");
-include!("grammar/patterns.rs");
-include!("grammar/types.rs");
-include!("grammar/expressions.rs");
-include!("grammar/util.rs");
+#[path = "grammar/compilation_unit.rs"]
+mod compilation_unit;
+#[path = "grammar/declarations.rs"]
+mod declarations;
+#[path = "grammar/expressions.rs"]
+mod expressions;
+#[path = "grammar/patterns.rs"]
+mod patterns;
+#[path = "grammar/statements.rs"]
+mod statements;
+#[path = "grammar/types.rs"]
+mod types;
+#[path = "grammar/util.rs"]
+mod util;

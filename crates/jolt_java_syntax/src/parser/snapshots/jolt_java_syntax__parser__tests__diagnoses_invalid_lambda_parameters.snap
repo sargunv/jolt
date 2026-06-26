@@ -1,0 +1,189 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "InvalidLambdaParameters" @ 19..42 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 43..44
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 61..65 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 66..72
+          LParen "(" @ 72..73
+          RParen ")" @ 73..74 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 75..76
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 97..101 leading=[Newline "\n", Whitespace "                    "]
+                    Dot "." @ 101..102
+                    Identifier "util" @ 102..106
+                    Dot "." @ 106..107
+                    Identifier "function" @ 107..115
+                    Dot "." @ 115..116
+                    Identifier "BiFunction" @ 116..126
+                  TypeArgumentList
+                    Lt "<" @ 126..127
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "Integer" @ 127..134
+                    Comma "," @ 134..135 trailing=[Whitespace " "]
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "Integer" @ 136..143
+                    Comma "," @ 143..144 trailing=[Whitespace " "]
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "Integer" @ 145..152
+                    Gt ">" @ 152..153 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "mixedImplicit" @ 154..167 trailing=[Whitespace " "]
+                    Assign "=" @ 168..169
+                    VariableInitializer
+                      LambdaExpression
+                        LParen "(" @ 194..195 leading=[Newline "\n", Whitespace "                        "]
+                        LambdaParameterList
+                          LambdaParameter
+                            Identifier "x" @ 195..196
+                          Comma "," @ 196..197 trailing=[Whitespace " "]
+                          LambdaParameter
+                            PrimitiveType
+                              IntKw "int" @ 198..201 trailing=[Whitespace " "]
+                            Identifier "y" @ 202..203
+                          ErrorNode
+                        RParen ")" @ 203..204 trailing=[Whitespace " "]
+                        Arrow "->" @ 205..207 trailing=[Whitespace " "]
+                        NameExpression
+                          Identifier "y" @ 208..209
+              Semicolon ";" @ 209..210
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 231..235 leading=[Newline "\n", Whitespace "                    "]
+                    Dot "." @ 235..236
+                    Identifier "util" @ 236..240
+                    Dot "." @ 240..241
+                    Identifier "function" @ 241..249
+                    Dot "." @ 249..250
+                    Identifier "BiFunction" @ 250..260
+                  TypeArgumentList
+                    Lt "<" @ 260..261
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "Integer" @ 261..268
+                    Comma "," @ 268..269 trailing=[Whitespace " "]
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "Integer" @ 270..277
+                    Comma "," @ 277..278 trailing=[Whitespace " "]
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "Integer" @ 279..286
+                    Gt ">" @ 286..287 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "mixedVar" @ 288..296 trailing=[Whitespace " "]
+                    Assign "=" @ 297..298
+                    VariableInitializer
+                      LambdaExpression
+                        LParen "(" @ 323..324 leading=[Newline "\n", Whitespace "                        "]
+                        LambdaParameterList
+                          LambdaParameter
+                            Identifier "var" @ 324..327 trailing=[Whitespace " "]
+                            Identifier "x" @ 328..329
+                          Comma "," @ 329..330 trailing=[Whitespace " "]
+                          LambdaParameter
+                            Identifier "y" @ 331..332
+                          ErrorNode
+                        RParen ")" @ 332..333 trailing=[Whitespace " "]
+                        Arrow "->" @ 334..336 trailing=[Whitespace " "]
+                        NameExpression
+                          Identifier "y" @ 337..338
+              Semicolon ";" @ 338..339
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 360..364 leading=[Newline "\n", Whitespace "                    "]
+                    Dot "." @ 364..365
+                    Identifier "util" @ 365..369
+                    Dot "." @ 369..370
+                    Identifier "function" @ 370..378
+                    Dot "." @ 378..379
+                    Identifier "BiFunction" @ 379..389
+                  TypeArgumentList
+                    Lt "<" @ 389..390
+                    TypeArgument
+                      ArrayType
+                        ClassType
+                          Name
+                            Identifier "String" @ 390..396
+                        ArrayDimensions
+                          ArrayDimension
+                            LBracket "[" @ 396..397
+                            RBracket "]" @ 397..398
+                    Comma "," @ 398..399 trailing=[Whitespace " "]
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "String" @ 400..406
+                    Comma "," @ 406..407 trailing=[Whitespace " "]
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "Integer" @ 408..415
+                    Gt ">" @ 415..416 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "trailingVarargs" @ 417..432 trailing=[Whitespace " "]
+                    Assign "=" @ 433..434
+                    VariableInitializer
+                      LambdaExpression
+                        LParen "(" @ 459..460 leading=[Newline "\n", Whitespace "                        "]
+                        LambdaParameterList
+                          LambdaParameter
+                            ClassType
+                              Name
+                                Identifier "String" @ 460..466
+                            Ellipsis "..." @ 466..469 trailing=[Whitespace " "]
+                            Identifier "values" @ 470..476
+                          ErrorNode
+                            Comma "," @ 476..477 trailing=[Whitespace " "]
+                          LambdaParameter
+                            ClassType
+                              Name
+                                Identifier "String" @ 478..484 trailing=[Whitespace " "]
+                            Identifier "suffix" @ 485..491
+                        RParen ")" @ 491..492 trailing=[Whitespace " "]
+                        Arrow "->" @ 493..495 trailing=[Whitespace " "]
+                        FieldAccessExpression
+                          NameExpression
+                            Identifier "values" @ 496..502
+                          Dot "." @ 502..503
+                          Identifier "length" @ 503..509
+              Semicolon ";" @ 509..510
+            RBrace "}" @ 527..528 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 541..542 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 551..551 leading=[Newline "\n", Whitespace "        "]
+
+outcome: Recovered
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=203..204 message="lambda parameters must use the same form"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=332..333 message="lambda parameters must use the same form"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=476..477 message="varargs lambda parameter must be last"

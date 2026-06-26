@@ -1,5 +1,142 @@
+use super::{JavaSyntaxKind, Parser};
+
 impl Parser<'_> {
-    fn expect_type_identifier(&mut self, message: &str) {
+    pub(super) fn skip_type_modifiers_from(&self, mut index: usize) -> usize {
+        loop {
+            if let Some(next) = self.skip_annotation_from(index) {
+                index = next;
+            } else if self.is_type_modifier_at(index) {
+                index = self.skip_type_modifier_at(index);
+            } else {
+                return index;
+            }
+        }
+    }
+
+    pub(super) fn skip_annotations_from(&self, mut index: usize) -> usize {
+        while let Some(next) = self.skip_annotation_from(index) {
+            index = next;
+        }
+        index
+    }
+
+    pub(super) fn skip_annotation_from(&self, mut index: usize) -> Option<usize> {
+        if self.kind_at(index) != JavaSyntaxKind::At
+            || self.kind_at(index + 1) == JavaSyntaxKind::InterfaceKw
+        {
+            return None;
+        }
+
+        index += 1;
+        if !self.is_name_segment_at(index) {
+            return Some(index);
+        }
+
+        index += 1;
+        while self.kind_at(index) == JavaSyntaxKind::Dot && self.is_name_segment_at(index + 1) {
+            index += 2;
+        }
+
+        if self.kind_at(index) == JavaSyntaxKind::LParen {
+            index = self.skip_balanced_from(index, JavaSyntaxKind::LParen, JavaSyntaxKind::RParen);
+        }
+
+        Some(index)
+    }
+
+    pub(super) fn skip_balanced_from(
+        &self,
+        mut index: usize,
+        open: JavaSyntaxKind,
+        close: JavaSyntaxKind,
+    ) -> usize {
+        let mut depth = 0usize;
+        while self.kind_at(index) != JavaSyntaxKind::Eof {
+            if self.kind_at(index) == open {
+                depth += 1;
+            } else if self.kind_at(index) == close {
+                depth = depth.saturating_sub(1);
+                index += 1;
+                if depth == 0 {
+                    return index;
+                }
+                continue;
+            }
+            index += 1;
+        }
+        index
+    }
+
+    pub(super) fn skip_balanced_delimiter_at(&self, index: usize) -> Option<usize> {
+        match self.kind_at(index) {
+            JavaSyntaxKind::LParen => {
+                Some(self.skip_balanced_from(index, JavaSyntaxKind::LParen, JavaSyntaxKind::RParen))
+            }
+            JavaSyntaxKind::LBracket => Some(self.skip_balanced_from(
+                index,
+                JavaSyntaxKind::LBracket,
+                JavaSyntaxKind::RBracket,
+            )),
+            _ => None,
+        }
+    }
+
+    pub(super) fn at_type_modifier(&self) -> bool {
+        self.is_type_modifier_at(self.position())
+    }
+
+    pub(super) fn is_type_modifier_at(&self, index: usize) -> bool {
+        matches!(
+            self.kind_at(index),
+            JavaSyntaxKind::PublicKw
+                | JavaSyntaxKind::ProtectedKw
+                | JavaSyntaxKind::PrivateKw
+                | JavaSyntaxKind::AbstractKw
+                | JavaSyntaxKind::StaticKw
+                | JavaSyntaxKind::FinalKw
+                | JavaSyntaxKind::TransientKw
+                | JavaSyntaxKind::VolatileKw
+                | JavaSyntaxKind::SynchronizedKw
+                | JavaSyntaxKind::NativeKw
+                | JavaSyntaxKind::StrictfpKw
+                | JavaSyntaxKind::DefaultKw
+        ) || self.text_at(index) == Some("sealed")
+            || (self.text_at(index) == Some("non")
+                && self.kind_at(index + 1) == JavaSyntaxKind::Minus
+                && self.text_at(index + 2) == Some("sealed"))
+    }
+
+    pub(super) fn skip_type_modifier_at(&self, index: usize) -> usize {
+        if self.text_at(index) == Some("non")
+            && self.kind_at(index + 1) == JavaSyntaxKind::Minus
+            && self.text_at(index + 2) == Some("sealed")
+        {
+            index + 3
+        } else {
+            index + 1
+        }
+    }
+
+    pub(super) fn bump_type_modifier(&mut self) {
+        let next = self.skip_type_modifier_at(self.position());
+        while self.position() < next {
+            self.bump();
+        }
+    }
+
+    pub(super) fn at_name_segment(&self) -> bool {
+        self.is_name_segment_at(self.position())
+    }
+
+    pub(super) fn nth_is_name_segment(&self, n: usize) -> bool {
+        self.is_name_segment_at(self.position() + n)
+    }
+
+    pub(super) fn is_name_segment_at(&self, index: usize) -> bool {
+        self.kind_at(index) == JavaSyntaxKind::Identifier
+    }
+
+    pub(super) fn expect_type_identifier(&mut self, message: &str) {
         if self.at_type_identifier() {
             self.bump();
         } else if self.at_name_segment() {
@@ -12,7 +149,7 @@ impl Parser<'_> {
         }
     }
 
-    fn expect_method_identifier(&mut self, message: &str) {
+    pub(super) fn expect_method_identifier(&mut self, message: &str) {
         if self.at_name_segment() {
             self.bump();
         } else {
@@ -20,7 +157,7 @@ impl Parser<'_> {
         }
     }
 
-    fn expect_variable_identifier(&mut self, message: &str) {
+    pub(super) fn expect_variable_identifier(&mut self, message: &str) {
         if self.at_variable_identifier() {
             self.bump();
         } else {
@@ -28,7 +165,7 @@ impl Parser<'_> {
         }
     }
 
-    fn expect_named_variable_identifier(&mut self, message: &str) {
+    pub(super) fn expect_named_variable_identifier(&mut self, message: &str) {
         if self.at_name_segment() {
             self.bump();
         } else {
@@ -36,7 +173,7 @@ impl Parser<'_> {
         }
     }
 
-    fn consume_qualified_name(&mut self) -> bool {
+    pub(super) fn consume_qualified_name(&mut self) -> bool {
         if !self.at_name_segment() {
             self.expected_here("expected identifier");
             return false;
@@ -61,7 +198,11 @@ impl Parser<'_> {
         true
     }
 
-    fn consume_balanced_delimited(&mut self, open: JavaSyntaxKind, close: JavaSyntaxKind) {
+    pub(super) fn consume_balanced_delimited(
+        &mut self,
+        open: JavaSyntaxKind,
+        close: JavaSyntaxKind,
+    ) {
         if !self.at(open) {
             return;
         }
@@ -82,21 +223,21 @@ impl Parser<'_> {
         }
     }
 
-    fn error_unexpected_top_level_token(&mut self) {
+    pub(super) fn error_unexpected_top_level_token(&mut self) {
         let error = self.start();
         self.unexpected_here("unexpected token at top level");
         self.recover_top_level();
         self.complete(error, JavaSyntaxKind::ErrorNode);
     }
 
-    fn error_unexpected_module_token(&mut self) {
+    pub(super) fn error_unexpected_module_token(&mut self) {
         let error = self.start();
         self.unexpected_here("unexpected token in module declaration");
         self.recover_module_directive();
         self.complete(error, JavaSyntaxKind::ErrorNode);
     }
 
-    fn recover_top_level(&mut self) {
+    pub(super) fn recover_top_level(&mut self) {
         if self.at_eof() {
             return;
         }
@@ -114,7 +255,7 @@ impl Parser<'_> {
         self.eat(JavaSyntaxKind::Semicolon);
     }
 
-    fn recover_module_directive(&mut self) {
+    pub(super) fn recover_module_directive(&mut self) {
         if self.at_eof() || self.at(JavaSyntaxKind::RBrace) {
             return;
         }
@@ -130,7 +271,7 @@ impl Parser<'_> {
         self.eat(JavaSyntaxKind::Semicolon);
     }
 
-    fn at_header_clause_end(&self) -> bool {
+    pub(super) fn at_header_clause_end(&self) -> bool {
         matches!(
             self.current_kind(),
             JavaSyntaxKind::LBrace
@@ -141,14 +282,14 @@ impl Parser<'_> {
         ) || self.at_contextual("permits")
     }
 
-    fn at_type_argument_close(&self) -> bool {
+    pub(super) fn at_type_argument_close(&self) -> bool {
         matches!(
             self.current_kind(),
             JavaSyntaxKind::Gt | JavaSyntaxKind::RShift | JavaSyntaxKind::UnsignedRShift
         )
     }
 
-    fn eat_type_argument_close(&mut self) -> bool {
+    pub(super) fn eat_type_argument_close(&mut self) -> bool {
         if self.at_type_argument_close() {
             self.bump_split_gt();
             true
@@ -157,7 +298,7 @@ impl Parser<'_> {
         }
     }
 
-    fn at_primitive_type(&self) -> bool {
+    pub(super) fn at_primitive_type(&self) -> bool {
         matches!(
             self.current_kind(),
             JavaSyntaxKind::BooleanKw
@@ -171,19 +312,19 @@ impl Parser<'_> {
         )
     }
 
-    fn starts_array_dimensions(&self) -> bool {
+    pub(super) fn starts_array_dimensions(&self) -> bool {
         let index = self.skip_annotations_from(self.position());
         self.kind_at(index) == JavaSyntaxKind::LBracket
             && self.kind_at(index + 1) == JavaSyntaxKind::RBracket
     }
 
-    fn starts_dim_expression(&self) -> bool {
+    pub(super) fn starts_dim_expression(&self) -> bool {
         let index = self.skip_annotations_from(self.position());
         self.kind_at(index) == JavaSyntaxKind::LBracket
             && self.kind_at(index + 1) != JavaSyntaxKind::RBracket
     }
 
-    fn starts_constructor(&self, type_name: Option<&str>) -> bool {
+    pub(super) fn starts_constructor(&self, type_name: Option<&str>) -> bool {
         let mut index = self.skip_type_modifiers_from(self.position());
         if self.kind_at(index) == JavaSyntaxKind::Lt {
             index = self.skip_balanced_type_arguments_from(index);
@@ -196,13 +337,13 @@ impl Parser<'_> {
             && self.kind_at(index + 1) == JavaSyntaxKind::LParen
     }
 
-    fn starts_compact_constructor(&self, type_name: Option<&str>) -> bool {
+    pub(super) fn starts_compact_constructor(&self, type_name: Option<&str>) -> bool {
         let index = self.skip_type_modifiers_from(self.position());
         matches!(type_name, Some(name) if self.text_at(index) == Some(name))
             && self.kind_at(index + 1) == JavaSyntaxKind::LBrace
     }
 
-    fn starts_method_declaration(&self) -> bool {
+    pub(super) fn starts_method_declaration(&self) -> bool {
         let mut index = self.skip_type_modifiers_from(self.position());
         if self.kind_at(index) == JavaSyntaxKind::Lt {
             index = self.skip_balanced_type_arguments_from(index);
@@ -223,7 +364,7 @@ impl Parser<'_> {
             && self.kind_at(after_type + 1) == JavaSyntaxKind::LParen
     }
 
-    fn starts_annotation_element(&self) -> bool {
+    pub(super) fn starts_annotation_element(&self) -> bool {
         let index = self.skip_type_modifiers_from(self.position());
         if !self.is_non_void_type_start_at(index) {
             return false;
@@ -235,7 +376,7 @@ impl Parser<'_> {
             && self.kind_at(after_type + 2) == JavaSyntaxKind::RParen
     }
 
-    fn starts_receiver_parameter(&self) -> bool {
+    pub(super) fn starts_receiver_parameter(&self) -> bool {
         let mut index = self.position();
         while !matches!(
             self.kind_at(index),
@@ -252,7 +393,7 @@ impl Parser<'_> {
         false
     }
 
-    fn starts_local_class_or_interface_declaration(&self) -> bool {
+    pub(super) fn starts_local_class_or_interface_declaration(&self) -> bool {
         let index = self.skip_type_modifiers_from(self.position());
         matches!(
             self.kind_at(index),
@@ -262,7 +403,7 @@ impl Parser<'_> {
                 && self.kind_at(index + 1) == JavaSyntaxKind::InterfaceKw)
     }
 
-    fn starts_local_variable_declaration(&self) -> bool {
+    pub(super) fn starts_local_variable_declaration(&self) -> bool {
         let index = self.skip_variable_modifiers_from(self.position());
 
         if self.text_at(index) == Some("yield") && self.kind_at(index + 1) != JavaSyntaxKind::Dot {
@@ -286,35 +427,22 @@ impl Parser<'_> {
             && !matches!(self.kind_at(after_type + 1), JavaSyntaxKind::LParen)
     }
 
-    fn starts_resource_local_variable_declaration(&self) -> bool {
+    pub(super) fn starts_resource_local_variable_declaration(&self) -> bool {
         if !self.starts_local_variable_declaration() {
             return false;
         }
 
         let mut index = self.position();
-        let mut paren_depth = 0usize;
-        let mut bracket_depth = 0usize;
         while self.kind_at(index) != JavaSyntaxKind::Eof {
+            if let Some(next) = self.skip_balanced_delimiter_at(index) {
+                index = next;
+                continue;
+            }
+
             match self.kind_at(index) {
-                JavaSyntaxKind::Assign if paren_depth == 0 && bracket_depth == 0 => return true,
-                JavaSyntaxKind::Semicolon | JavaSyntaxKind::RParen
-                    if paren_depth == 0 && bracket_depth == 0 =>
-                {
+                JavaSyntaxKind::Assign => return true,
+                JavaSyntaxKind::Semicolon | JavaSyntaxKind::RParen | JavaSyntaxKind::RBracket => {
                     return false;
-                }
-                JavaSyntaxKind::LParen => paren_depth += 1,
-                JavaSyntaxKind::RParen => {
-                    if paren_depth == 0 {
-                        return false;
-                    }
-                    paren_depth -= 1;
-                }
-                JavaSyntaxKind::LBracket => bracket_depth += 1,
-                JavaSyntaxKind::RBracket => {
-                    if bracket_depth == 0 {
-                        return false;
-                    }
-                    bracket_depth -= 1;
                 }
                 _ => {}
             }
@@ -324,7 +452,7 @@ impl Parser<'_> {
         false
     }
 
-    fn skip_variable_modifiers_from(&self, mut index: usize) -> usize {
+    pub(super) fn skip_variable_modifiers_from(&self, mut index: usize) -> usize {
         loop {
             let after_annotations = self.skip_annotations_from(index);
             if after_annotations != index {
@@ -337,12 +465,12 @@ impl Parser<'_> {
         }
     }
 
-    fn starts_labeled_statement(&self) -> bool {
+    pub(super) fn starts_labeled_statement(&self) -> bool {
         self.current_kind() == JavaSyntaxKind::Identifier
             && self.nth_kind(1) == JavaSyntaxKind::Colon
     }
 
-    fn starts_yield_statement(&self) -> bool {
+    pub(super) fn starts_yield_statement(&self) -> bool {
         self.at_contextual("yield")
             && !matches!(
                 self.nth_kind(1),
@@ -367,7 +495,7 @@ impl Parser<'_> {
             )
     }
 
-    fn starts_parenthesized_lambda_expression(&self) -> bool {
+    pub(super) fn starts_parenthesized_lambda_expression(&self) -> bool {
         if self.current_kind() != JavaSyntaxKind::LParen {
             return false;
         }
@@ -380,14 +508,14 @@ impl Parser<'_> {
         self.kind_at(after_parameters) == JavaSyntaxKind::Arrow
     }
 
-    fn starts_lambda_expression(&self) -> bool {
+    pub(super) fn starts_lambda_expression(&self) -> bool {
         self.starts_parenthesized_lambda_expression()
             || ((self.current_kind() == JavaSyntaxKind::Identifier
                 || self.current_kind() == JavaSyntaxKind::UnderscoreKw)
                 && self.nth_kind(1) == JavaSyntaxKind::Arrow)
     }
 
-    fn at_assignment_operator(&self) -> bool {
+    pub(super) fn at_assignment_operator(&self) -> bool {
         matches!(
             self.current_kind(),
             JavaSyntaxKind::Assign
@@ -405,7 +533,7 @@ impl Parser<'_> {
         )
     }
 
-    fn binary_operator_precedence(&self) -> Option<u8> {
+    pub(super) fn binary_operator_precedence(&self) -> Option<u8> {
         Some(match self.current_kind() {
             JavaSyntaxKind::OrOr => 1,
             JavaSyntaxKind::AndAnd => 2,
@@ -425,7 +553,7 @@ impl Parser<'_> {
         })
     }
 
-    fn starts_cast_expression(&self) -> bool {
+    pub(super) fn starts_cast_expression(&self) -> bool {
         if self.current_kind() != JavaSyntaxKind::LParen
             || self.starts_parenthesized_lambda_expression()
         {
@@ -449,7 +577,7 @@ impl Parser<'_> {
         }
     }
 
-    fn skip_cast_type_from(&self, mut index: usize) -> usize {
+    pub(super) fn skip_cast_type_from(&self, mut index: usize) -> usize {
         index = self.skip_annotations_from(index);
         if !self.is_type_start_at(index) {
             return index;
@@ -462,12 +590,12 @@ impl Parser<'_> {
         index
     }
 
-    fn type_arguments_are_followed_by_double_colon(&self) -> bool {
+    pub(super) fn type_arguments_are_followed_by_double_colon(&self) -> bool {
         let index = self.skip_balanced_type_arguments_from(self.position());
         self.kind_at(index) == JavaSyntaxKind::DoubleColon
     }
 
-    fn starts_expression_at(&self, index: usize) -> bool {
+    pub(super) fn starts_expression_at(&self, index: usize) -> bool {
         matches!(
             self.kind_at(index),
             JavaSyntaxKind::Identifier
@@ -493,7 +621,7 @@ impl Parser<'_> {
         ) || self.starts_primitive_or_void_class_literal_at(index)
     }
 
-    fn starts_expression_not_plus_minus_at(&self, index: usize) -> bool {
+    pub(super) fn starts_expression_not_plus_minus_at(&self, index: usize) -> bool {
         self.starts_expression_at(index)
             && !matches!(
                 self.kind_at(index),
@@ -501,11 +629,11 @@ impl Parser<'_> {
             )
     }
 
-    fn starts_primitive_or_void_class_literal(&self) -> bool {
+    pub(super) fn starts_primitive_or_void_class_literal(&self) -> bool {
         self.starts_primitive_or_void_class_literal_at(self.position())
     }
 
-    fn starts_primitive_or_void_class_literal_at(&self, mut index: usize) -> bool {
+    pub(super) fn starts_primitive_or_void_class_literal_at(&self, mut index: usize) -> bool {
         if !matches!(
             self.kind_at(index),
             JavaSyntaxKind::BooleanKw
@@ -532,7 +660,7 @@ impl Parser<'_> {
             && self.kind_at(index + 1) == JavaSyntaxKind::ClassKw
     }
 
-    fn starts_typed_lambda_parameter(&self) -> bool {
+    pub(super) fn starts_typed_lambda_parameter(&self) -> bool {
         if self.text_at(self.position()) == Some("var") && self.nth_kind(1) != JavaSyntaxKind::Dot {
             return self.is_variable_identifier_at_offset(self.position() + 1);
         }
@@ -552,7 +680,7 @@ impl Parser<'_> {
         self.is_variable_identifier_at_offset(name)
     }
 
-    fn for_header_has_top_level_colon(&self) -> bool {
+    pub(super) fn for_header_has_top_level_colon(&self) -> bool {
         let mut index = self.position();
         while self.kind_at(index) != JavaSyntaxKind::Eof
             && self.kind_at(index) != JavaSyntaxKind::LParen
@@ -565,38 +693,21 @@ impl Parser<'_> {
         }
 
         index += 1;
-        let mut paren_depth = 0usize;
-        let mut bracket_depth = 0usize;
         let mut conditional_depth = 0usize;
         while self.kind_at(index) != JavaSyntaxKind::Eof {
+            if let Some(next) = self.skip_balanced_delimiter_at(index) {
+                index = next;
+                continue;
+            }
+
             match self.kind_at(index) {
-                JavaSyntaxKind::Question if paren_depth == 0 && bracket_depth == 0 => {
-                    conditional_depth += 1;
-                }
-                JavaSyntaxKind::Colon
-                    if paren_depth == 0 && bracket_depth == 0 && conditional_depth > 0 =>
-                {
+                JavaSyntaxKind::Question => conditional_depth += 1,
+                JavaSyntaxKind::Colon if conditional_depth > 0 => {
                     conditional_depth -= 1;
                 }
-                JavaSyntaxKind::Colon if paren_depth == 0 && bracket_depth == 0 => return true,
-                JavaSyntaxKind::Semicolon | JavaSyntaxKind::RParen
-                    if paren_depth == 0 && bracket_depth == 0 =>
-                {
+                JavaSyntaxKind::Colon => return true,
+                JavaSyntaxKind::Semicolon | JavaSyntaxKind::RParen | JavaSyntaxKind::RBracket => {
                     return false;
-                }
-                JavaSyntaxKind::LParen => paren_depth += 1,
-                JavaSyntaxKind::RParen => {
-                    if paren_depth == 0 {
-                        return false;
-                    }
-                    paren_depth -= 1;
-                }
-                JavaSyntaxKind::LBracket => bracket_depth += 1,
-                JavaSyntaxKind::RBracket => {
-                    if bracket_depth == 0 {
-                        return false;
-                    }
-                    bracket_depth -= 1;
                 }
                 _ => {}
             }
@@ -606,38 +717,28 @@ impl Parser<'_> {
         false
     }
 
-    fn starts_switch_label(&self) -> bool {
+    pub(super) fn starts_switch_label(&self) -> bool {
         matches!(
             self.current_kind(),
             JavaSyntaxKind::CaseKw | JavaSyntaxKind::DefaultKw
         )
     }
 
-    fn switch_label_is_rule(&self) -> bool {
+    pub(super) fn switch_label_is_rule(&self) -> bool {
         let mut index = self.position();
-        let mut paren_depth = 0usize;
-        let mut bracket_depth = 0usize;
         while self.kind_at(index) != JavaSyntaxKind::Eof {
+            if let Some(next) = self.skip_balanced_delimiter_at(index) {
+                index = next;
+                continue;
+            }
+
             match self.kind_at(index) {
-                JavaSyntaxKind::Arrow if paren_depth == 0 && bracket_depth == 0 => return true,
-                JavaSyntaxKind::Colon | JavaSyntaxKind::RBrace
-                    if paren_depth == 0 && bracket_depth == 0 =>
-                {
+                JavaSyntaxKind::Arrow => return true,
+                JavaSyntaxKind::Colon
+                | JavaSyntaxKind::RBrace
+                | JavaSyntaxKind::RParen
+                | JavaSyntaxKind::RBracket => {
                     return false;
-                }
-                JavaSyntaxKind::LParen => paren_depth += 1,
-                JavaSyntaxKind::RParen => {
-                    if paren_depth == 0 {
-                        return false;
-                    }
-                    paren_depth -= 1;
-                }
-                JavaSyntaxKind::LBracket => bracket_depth += 1,
-                JavaSyntaxKind::RBracket => {
-                    if bracket_depth == 0 {
-                        return false;
-                    }
-                    bracket_depth -= 1;
                 }
                 _ => {}
             }
@@ -647,7 +748,7 @@ impl Parser<'_> {
         false
     }
 
-    fn starts_case_type_pattern(&self) -> bool {
+    pub(super) fn starts_case_type_pattern(&self) -> bool {
         let index = self.skip_variable_modifiers_from(self.position());
         if !self.is_non_void_type_start_at(index) || self.starts_literal_expression_at(index) {
             return false;
@@ -657,11 +758,11 @@ impl Parser<'_> {
         self.is_variable_identifier_at_offset(after_type)
     }
 
-    fn starts_pattern(&self) -> bool {
+    pub(super) fn starts_pattern(&self) -> bool {
         self.starts_case_type_pattern() || self.starts_record_pattern()
     }
 
-    fn starts_record_pattern(&self) -> bool {
+    pub(super) fn starts_record_pattern(&self) -> bool {
         let index = self.skip_variable_modifiers_from(self.position());
         if !self.is_non_void_type_start_at(index) || self.starts_literal_expression_at(index) {
             return false;
@@ -671,11 +772,11 @@ impl Parser<'_> {
         self.kind_at(after_type) == JavaSyntaxKind::LParen
     }
 
-    fn starts_literal_expression(&self) -> bool {
+    pub(super) fn starts_literal_expression(&self) -> bool {
         self.starts_literal_expression_at(self.position())
     }
 
-    fn starts_literal_expression_at(&self, index: usize) -> bool {
+    pub(super) fn starts_literal_expression_at(&self, index: usize) -> bool {
         matches!(
             self.kind_at(index),
             JavaSyntaxKind::IntegerLiteral
@@ -688,7 +789,7 @@ impl Parser<'_> {
         )
     }
 
-    fn starts_constructor_invocation_statement(&self) -> bool {
+    pub(super) fn starts_constructor_invocation_statement(&self) -> bool {
         let mut index = self.position();
         let mut saw_constructor_keyword = false;
         while !matches!(
@@ -715,7 +816,7 @@ impl Parser<'_> {
         saw_constructor_keyword && self.kind_at(index) == JavaSyntaxKind::Semicolon
     }
 
-    fn starts_expression_name_qualified_constructor_invocation(&self) -> bool {
+    pub(super) fn starts_expression_name_qualified_constructor_invocation(&self) -> bool {
         if !self.at_name_segment() {
             return false;
         }
@@ -734,12 +835,12 @@ impl Parser<'_> {
         self.index_starts_constructor_super_suffix(index)
     }
 
-    fn dot_starts_constructor_super_suffix(&self) -> bool {
+    pub(super) fn dot_starts_constructor_super_suffix(&self) -> bool {
         self.current_kind() == JavaSyntaxKind::Dot
             && self.index_starts_constructor_super_suffix(self.position())
     }
 
-    fn index_starts_constructor_super_suffix(&self, dot_index: usize) -> bool {
+    pub(super) fn index_starts_constructor_super_suffix(&self, dot_index: usize) -> bool {
         let mut index = dot_index + 1;
         if self.kind_at(index) == JavaSyntaxKind::Lt {
             index = self.skip_balanced_type_arguments_from(index);
@@ -749,7 +850,7 @@ impl Parser<'_> {
             && self.kind_at(index + 1) == JavaSyntaxKind::LParen
     }
 
-    fn skip_type_from(&self, mut index: usize) -> usize {
+    pub(super) fn skip_type_from(&self, mut index: usize) -> usize {
         index = self.skip_type_base_from(index);
 
         loop {
@@ -766,7 +867,7 @@ impl Parser<'_> {
         index
     }
 
-    fn skip_type_base_from(&self, mut index: usize) -> usize {
+    pub(super) fn skip_type_base_from(&self, mut index: usize) -> usize {
         index = self.skip_annotations_from(index);
 
         if matches!(
@@ -803,7 +904,7 @@ impl Parser<'_> {
         index
     }
 
-    fn new_expression_is_array_creation(&self) -> bool {
+    pub(super) fn new_expression_is_array_creation(&self) -> bool {
         if self.current_kind() != JavaSyntaxKind::NewKw {
             return false;
         }
@@ -818,7 +919,7 @@ impl Parser<'_> {
         self.kind_at(index) == JavaSyntaxKind::LBracket
     }
 
-    fn skip_balanced_type_arguments_from(&self, mut index: usize) -> usize {
+    pub(super) fn skip_balanced_type_arguments_from(&self, mut index: usize) -> usize {
         if self.kind_at(index) != JavaSyntaxKind::Lt {
             return index;
         }
@@ -865,27 +966,27 @@ impl Parser<'_> {
         index
     }
 
-    fn is_name_segment_at_offset(&self, index: usize) -> bool {
+    pub(super) fn is_name_segment_at_offset(&self, index: usize) -> bool {
         self.kind_at(index) == JavaSyntaxKind::Identifier
     }
 
-    fn at_variable_identifier(&self) -> bool {
+    pub(super) fn at_variable_identifier(&self) -> bool {
         self.is_variable_identifier_at_offset(self.position())
     }
 
-    fn is_variable_identifier_at_offset(&self, index: usize) -> bool {
+    pub(super) fn is_variable_identifier_at_offset(&self, index: usize) -> bool {
         matches!(
             self.kind_at(index),
             JavaSyntaxKind::Identifier | JavaSyntaxKind::UnderscoreKw
         )
     }
 
-    fn starts_package_declaration(&self) -> bool {
+    pub(super) fn starts_package_declaration(&self) -> bool {
         let index = self.skip_annotations_from(self.position());
         self.kind_at(index) == JavaSyntaxKind::PackageKw
     }
 
-    fn starts_module_declaration(&self) -> bool {
+    pub(super) fn starts_module_declaration(&self) -> bool {
         let mut index = self.skip_annotations_from(self.position());
         if self.text_at(index) == Some("open") {
             index += 1;
@@ -894,14 +995,14 @@ impl Parser<'_> {
         self.text_at(index) == Some("module")
     }
 
-    fn starts_misspelled_non_sealed_type_declaration(&self) -> bool {
+    pub(super) fn starts_misspelled_non_sealed_type_declaration(&self) -> bool {
         self.current_text() == Some("non")
             && self.nth_kind(1) == JavaSyntaxKind::Minus
             && matches!(self.text_at(self.position() + 2), Some(text) if text.starts_with("sealed"))
             && self.nth_is_name_segment(3)
     }
 
-    fn starts_top_level_type_declaration(&self) -> bool {
+    pub(super) fn starts_top_level_type_declaration(&self) -> bool {
         let index = self.skip_type_modifiers_from(self.position());
         matches!(
             self.kind_at(index),
@@ -911,7 +1012,7 @@ impl Parser<'_> {
                 && self.kind_at(index + 1) == JavaSyntaxKind::InterfaceKw)
     }
 
-    fn starts_compact_member_declaration(&self) -> bool {
+    pub(super) fn starts_compact_member_declaration(&self) -> bool {
         let index = self.skip_type_modifiers_from(self.position());
         self.is_non_void_type_start_at(index)
             || (self.kind_at(index) == JavaSyntaxKind::VoidKw
@@ -919,15 +1020,15 @@ impl Parser<'_> {
                 && self.kind_at(index + 2) == JavaSyntaxKind::LParen)
     }
 
-    fn is_type_start_at(&self, index: usize) -> bool {
+    pub(super) fn is_type_start_at(&self, index: usize) -> bool {
         self.is_non_void_type_start_at(index) || self.kind_at(index) == JavaSyntaxKind::VoidKw
     }
 
-    fn is_non_void_type_start_at(&self, index: usize) -> bool {
+    pub(super) fn is_non_void_type_start_at(&self, index: usize) -> bool {
         self.is_name_segment_at_offset(index) || self.is_primitive_type_start_at(index)
     }
 
-    fn is_primitive_type_start_at(&self, index: usize) -> bool {
+    pub(super) fn is_primitive_type_start_at(&self, index: usize) -> bool {
         matches!(
             self.kind_at(index),
             JavaSyntaxKind::BooleanKw
@@ -941,7 +1042,7 @@ impl Parser<'_> {
         )
     }
 
-    fn at_type_identifier(&self) -> bool {
+    pub(super) fn at_type_identifier(&self) -> bool {
         self.current_kind() == JavaSyntaxKind::Identifier
             && !matches!(
                 self.current_text(),
@@ -949,26 +1050,17 @@ impl Parser<'_> {
             )
     }
 
-    fn member_header_ends_with_block(&self) -> bool {
+    pub(super) fn member_header_ends_with_block(&self) -> bool {
         let mut index = self.position();
         while self.kind_at(index) != JavaSyntaxKind::Eof {
+            if let Some(next) = self.skip_balanced_delimiter_at(index) {
+                index = next;
+                continue;
+            }
+
             match self.kind_at(index) {
                 JavaSyntaxKind::LBrace => return true,
                 JavaSyntaxKind::Semicolon => return false,
-                JavaSyntaxKind::LParen => {
-                    index = self.skip_balanced_from(
-                        index,
-                        JavaSyntaxKind::LParen,
-                        JavaSyntaxKind::RParen,
-                    );
-                }
-                JavaSyntaxKind::LBracket => {
-                    index = self.skip_balanced_from(
-                        index,
-                        JavaSyntaxKind::LBracket,
-                        JavaSyntaxKind::RBracket,
-                    );
-                }
                 _ => index += 1,
             }
         }
@@ -976,7 +1068,7 @@ impl Parser<'_> {
         false
     }
 
-    fn at_module_directive_start(&self) -> bool {
+    pub(super) fn at_module_directive_start(&self) -> bool {
         matches!(
             self.current_text(),
             Some("requires" | "exports" | "opens" | "uses" | "provides")

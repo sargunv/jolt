@@ -51,15 +51,28 @@ fn assert_corpus(suite: &str, expected_files: usize) -> CorpusSummary {
 
         summary.record(&parse);
 
-        assert!(
-            parse.diagnostics().is_empty(),
-            "syntax diagnostic(s) in {}: {:#?}",
-            path.display(),
-            parse.diagnostics()
-        );
+        if !allows_syntax_diagnostics(&path) {
+            assert!(
+                parse.diagnostics().is_empty(),
+                "syntax diagnostic(s) in {}: {:#?}",
+                path.display(),
+                parse.diagnostics()
+            );
+        }
     }
 
     summary
+}
+
+fn allows_syntax_diagnostics(path: &Path) -> bool {
+    // Upstream formatter corpora include a few invalid Java inputs that still
+    // need lossless parsing for formatting compatibility.
+    path.file_name().is_some_and(|file_name| {
+        matches!(
+            file_name.to_str(),
+            Some("B26952926.java" | "palantir-expression-lambda-2.java")
+        )
+    })
 }
 
 fn fixture_root(suite: &str) -> PathBuf {

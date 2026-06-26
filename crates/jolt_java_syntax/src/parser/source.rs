@@ -48,127 +48,6 @@ impl<'source> Parser<'source> {
         self.pos
     }
 
-    pub(super) fn skip_type_modifiers_from(&self, mut index: usize) -> usize {
-        loop {
-            if let Some(next) = self.skip_annotation_from(index) {
-                index = next;
-            } else if self.is_type_modifier_at(index) {
-                index = self.skip_type_modifier_at(index);
-            } else {
-                return index;
-            }
-        }
-    }
-
-    pub(super) fn skip_annotations_from(&self, mut index: usize) -> usize {
-        while let Some(next) = self.skip_annotation_from(index) {
-            index = next;
-        }
-        index
-    }
-
-    fn skip_annotation_from(&self, mut index: usize) -> Option<usize> {
-        if self.kind_at(index) != JavaSyntaxKind::At
-            || self.kind_at(index + 1) == JavaSyntaxKind::InterfaceKw
-        {
-            return None;
-        }
-
-        index += 1;
-        if !self.is_name_segment_at(index) {
-            return Some(index);
-        }
-
-        index += 1;
-        while self.kind_at(index) == JavaSyntaxKind::Dot && self.is_name_segment_at(index + 1) {
-            index += 2;
-        }
-
-        if self.kind_at(index) == JavaSyntaxKind::LParen {
-            index = self.skip_balanced_from(index, JavaSyntaxKind::LParen, JavaSyntaxKind::RParen);
-        }
-
-        Some(index)
-    }
-
-    pub(super) fn skip_balanced_from(
-        &self,
-        mut index: usize,
-        open: JavaSyntaxKind,
-        close: JavaSyntaxKind,
-    ) -> usize {
-        let mut depth = 0usize;
-        while self.kind_at(index) != JavaSyntaxKind::Eof {
-            if self.kind_at(index) == open {
-                depth += 1;
-            } else if self.kind_at(index) == close {
-                depth = depth.saturating_sub(1);
-                index += 1;
-                if depth == 0 {
-                    return index;
-                }
-                continue;
-            }
-            index += 1;
-        }
-        index
-    }
-
-    pub(super) fn at_type_modifier(&self) -> bool {
-        self.is_type_modifier_at(self.pos)
-    }
-
-    fn is_type_modifier_at(&self, index: usize) -> bool {
-        matches!(
-            self.kind_at(index),
-            JavaSyntaxKind::PublicKw
-                | JavaSyntaxKind::ProtectedKw
-                | JavaSyntaxKind::PrivateKw
-                | JavaSyntaxKind::AbstractKw
-                | JavaSyntaxKind::StaticKw
-                | JavaSyntaxKind::FinalKw
-                | JavaSyntaxKind::TransientKw
-                | JavaSyntaxKind::VolatileKw
-                | JavaSyntaxKind::SynchronizedKw
-                | JavaSyntaxKind::NativeKw
-                | JavaSyntaxKind::StrictfpKw
-                | JavaSyntaxKind::DefaultKw
-        ) || self.text_at(index) == Some("sealed")
-            || (self.text_at(index) == Some("non")
-                && self.kind_at(index + 1) == JavaSyntaxKind::Minus
-                && self.text_at(index + 2) == Some("sealed"))
-    }
-
-    fn skip_type_modifier_at(&self, index: usize) -> usize {
-        if self.text_at(index) == Some("non")
-            && self.kind_at(index + 1) == JavaSyntaxKind::Minus
-            && self.text_at(index + 2) == Some("sealed")
-        {
-            index + 3
-        } else {
-            index + 1
-        }
-    }
-
-    pub(super) fn bump_type_modifier(&mut self) {
-        let next = self.skip_type_modifier_at(self.pos);
-        while self.pos < next {
-            self.bump();
-        }
-    }
-
-    pub(super) fn at_name_segment(&self) -> bool {
-        self.is_name_segment_at(self.pos)
-    }
-
-    pub(super) fn nth_is_name_segment(&self, n: usize) -> bool {
-        self.is_name_segment_at(self.pos + n)
-    }
-
-    fn is_name_segment_at(&self, index: usize) -> bool {
-        self.kind_at(index) == JavaSyntaxKind::Identifier
-    }
-
     pub(super) fn expect(&mut self, kind: JavaSyntaxKind, message: &str) {
         if !self.eat(kind) {
             self.expected_here(message);
@@ -328,6 +207,10 @@ impl<'source> Parser<'source> {
 
     pub(super) fn precede(&mut self, marker: CompletedMarker) -> Marker {
         marker.precede(&mut self.events)
+    }
+
+    pub(super) fn completed_is_error_node(marker: &CompletedMarker) -> bool {
+        marker.kind() == JavaSyntaxKind::ErrorNode.to_raw()
     }
 
     pub(super) fn abandon(&mut self, marker: Marker) {

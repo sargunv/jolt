@@ -177,10 +177,10 @@ fn finish_parse(
     };
     let (root, parser_diagnostics) = tree.into_parts();
     diagnostics.extend(parser_diagnostics);
-    let outcome = if diagnostics.is_empty() {
-        SyntaxOutcome::Clean
-    } else {
+    let outcome = if diagnostics.iter().any(diagnostic_affects_syntax_tree) {
         SyntaxOutcome::Recovered
+    } else {
+        SyntaxOutcome::Clean
     };
 
     JavaParse {
@@ -188,6 +188,16 @@ fn finish_parse(
         diagnostics,
         outcome,
     }
+}
+
+const fn diagnostic_affects_syntax_tree(diagnostic: &Diagnostic) -> bool {
+    matches!(
+        diagnostic.stage,
+        DiagnosticStage::Lexer | DiagnosticStage::Parser
+    ) && matches!(
+        diagnostic.severity,
+        Severity::Error | Severity::InternalError
+    )
 }
 
 fn invalid_event_stream_diagnostic(error: &jolt_syntax::BuildGreenTreeError) -> Diagnostic {

@@ -15,7 +15,7 @@ nodes:
   AnnotationElementValuePair: 114
   AnnotationInterfaceBody: 9
   AnnotationInterfaceDeclaration: 9
-  ArgumentList: 1281
+  ArgumentList: 1277
   ArrayAccessExpression: 32
   ArrayCreationExpression: 12
   ArrayDimension: 161
@@ -58,6 +58,7 @@ nodes:
   EnumConstant: 52
   EnumConstantList: 15
   EnumDeclaration: 21
+  ErrorNode: 20
   ExportsDirective: 5
   ExpressionStatement: 253
   ExtendsClause: 50
@@ -87,13 +88,13 @@ nodes:
   LocalVariableDeclaration: 232
   MatchAllPattern: 1
   MethodDeclaration: 185
-  MethodInvocationExpression: 1179
+  MethodInvocationExpression: 1175
   MethodReferenceExpression: 14
   ModifierList: 248
   ModuleDeclaration: 3
   ModuleDirective: 17
   Name: 1882
-  NameExpression: 1402
+  NameExpression: 1396
   ObjectCreationExpression: 78
   OpensDirective: 4
   PackageDeclaration: 32
@@ -148,7 +149,7 @@ nodes:
   YieldStatement: 3
 
 parser diagnostics:
-  <none>: 0
+  java.parse.invalid_statement_expression: 20
 
 lexer diagnostics:
   <none>: 0

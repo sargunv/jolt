@@ -1,5 +1,7 @@
+use super::{JavaSyntaxKind, Parser};
+
 impl Parser<'_> {
-    fn parse_type_declaration(&mut self) {
+    pub(super) fn parse_type_declaration(&mut self) {
         let type_decl = self.start();
         self.parse_modifier_list();
 
@@ -30,7 +32,7 @@ impl Parser<'_> {
         self.complete(type_decl, kind);
     }
 
-    fn parse_type_body(&mut self, kind: JavaSyntaxKind, type_name: Option<&str>) {
+    pub(super) fn parse_type_body(&mut self, kind: JavaSyntaxKind, type_name: Option<&str>) {
         if !self.at(JavaSyntaxKind::LBrace) {
             let error = self.start();
             self.expected_here("expected type body");
@@ -56,13 +58,13 @@ impl Parser<'_> {
         self.complete(body, kind);
     }
 
-    fn parse_empty_declaration(&mut self) {
+    pub(super) fn parse_empty_declaration(&mut self) {
         let empty = self.start();
         self.expect(JavaSyntaxKind::Semicolon, "expected `;`");
         self.complete(empty, JavaSyntaxKind::EmptyDeclaration);
     }
 
-    fn parse_compact_member_declaration(&mut self) {
+    pub(super) fn parse_compact_member_declaration(&mut self) {
         if self.starts_method_declaration() {
             self.parse_method_declaration();
         } else {
@@ -70,7 +72,7 @@ impl Parser<'_> {
         }
     }
 
-    fn parse_modifier_list(&mut self) {
+    pub(super) fn parse_modifier_list(&mut self) {
         let modifiers = self.start();
         let start = self.position();
 
@@ -91,13 +93,13 @@ impl Parser<'_> {
         }
     }
 
-    fn parse_annotations(&mut self) {
+    pub(super) fn parse_annotations(&mut self) {
         while self.at(JavaSyntaxKind::At) && self.nth_kind(1) != JavaSyntaxKind::InterfaceKw {
             self.parse_annotation();
         }
     }
 
-    fn parse_annotation(&mut self) {
+    pub(super) fn parse_annotation(&mut self) {
         let annotation = self.start();
         self.expect(JavaSyntaxKind::At, "expected `@`");
         self.consume_qualified_name();
@@ -116,7 +118,7 @@ impl Parser<'_> {
         self.complete(annotation, JavaSyntaxKind::Annotation);
     }
 
-    fn parse_type_declaration_header(&mut self, kind: JavaSyntaxKind) {
+    pub(super) fn parse_type_declaration_header(&mut self, kind: JavaSyntaxKind) {
         match kind {
             JavaSyntaxKind::ClassDeclaration => {
                 self.parse_optional_type_parameter_list();
@@ -141,7 +143,7 @@ impl Parser<'_> {
         }
     }
 
-    fn parse_optional_type_parameter_list(&mut self) -> bool {
+    pub(super) fn parse_optional_type_parameter_list(&mut self) -> bool {
         if !self.at(JavaSyntaxKind::Lt) {
             return false;
         }
@@ -159,20 +161,20 @@ impl Parser<'_> {
         true
     }
 
-    fn parse_type_parameter(&mut self) {
+    pub(super) fn parse_type_parameter(&mut self) {
         let parameter = self.start();
         self.parse_annotations();
         self.expect_type_identifier("expected type parameter name");
         if self.at(JavaSyntaxKind::ExtendsKw) {
             let bounds = self.start();
             self.bump();
-            self.parse_intersection_type();
+            self.parse_class_intersection_type();
             self.complete(bounds, JavaSyntaxKind::TypeBoundList);
         }
         self.complete(parameter, JavaSyntaxKind::TypeParameter);
     }
 
-    fn parse_optional_extends_clause(&mut self) {
+    pub(super) fn parse_optional_extends_clause(&mut self) {
         if !self.at(JavaSyntaxKind::ExtendsKw) {
             return;
         }
@@ -183,7 +185,7 @@ impl Parser<'_> {
         self.complete(clause, JavaSyntaxKind::ExtendsClause);
     }
 
-    fn parse_optional_implements_clause(&mut self) {
+    pub(super) fn parse_optional_implements_clause(&mut self) {
         if !self.at(JavaSyntaxKind::ImplementsKw) {
             return;
         }
@@ -194,7 +196,7 @@ impl Parser<'_> {
         self.complete(clause, JavaSyntaxKind::ImplementsClause);
     }
 
-    fn parse_optional_permits_clause(&mut self) {
+    pub(super) fn parse_optional_permits_clause(&mut self) {
         if !self.at_contextual("permits") {
             return;
         }
@@ -205,16 +207,16 @@ impl Parser<'_> {
         self.complete(clause, JavaSyntaxKind::PermitsClause);
     }
 
-    fn parse_type_list_until_clause_end(&mut self) {
+    pub(super) fn parse_type_list_until_clause_end(&mut self) {
         while !self.at_eof() && !self.at_header_clause_end() {
-            self.parse_type();
+            self.parse_class_type();
             if !self.eat(JavaSyntaxKind::Comma) {
                 break;
             }
         }
     }
 
-    fn parse_type_name_list_until_clause_end(&mut self) {
+    pub(super) fn parse_type_name_list_until_clause_end(&mut self) {
         while !self.at_eof() && !self.at_header_clause_end() {
             self.consume_qualified_name();
             if !self.eat(JavaSyntaxKind::Comma) {
@@ -223,7 +225,7 @@ impl Parser<'_> {
         }
     }
 
-    fn parse_record_header(&mut self) {
+    pub(super) fn parse_record_header(&mut self) {
         if !self.eat(JavaSyntaxKind::LParen) {
             self.expected_here("expected record header");
             return;
@@ -243,7 +245,7 @@ impl Parser<'_> {
         self.expect(JavaSyntaxKind::RParen, "expected `)` after record header");
     }
 
-    fn parse_record_component(&mut self) {
+    pub(super) fn parse_record_component(&mut self) {
         let component = self.start();
         self.parse_annotations();
         self.parse_type();
@@ -253,7 +255,11 @@ impl Parser<'_> {
         self.complete(component, JavaSyntaxKind::RecordComponent);
     }
 
-    fn parse_body_declaration(&mut self, body_kind: JavaSyntaxKind, type_name: Option<&str>) {
+    pub(super) fn parse_body_declaration(
+        &mut self,
+        body_kind: JavaSyntaxKind,
+        type_name: Option<&str>,
+    ) {
         if self.at(JavaSyntaxKind::Semicolon) {
             self.parse_empty_declaration();
             return;
@@ -268,7 +274,7 @@ impl Parser<'_> {
         }
     }
 
-    fn parse_class_body_declaration_contents(
+    pub(super) fn parse_class_body_declaration_contents(
         &mut self,
         body_kind: JavaSyntaxKind,
         type_name: Option<&str>,
@@ -295,7 +301,11 @@ impl Parser<'_> {
         }
     }
 
-    fn parse_member_declaration(&mut self, type_name: Option<&str>, annotation_body: bool) {
+    pub(super) fn parse_member_declaration(
+        &mut self,
+        type_name: Option<&str>,
+        annotation_body: bool,
+    ) {
         if self.starts_top_level_type_declaration() {
             self.parse_type_declaration();
             return;
@@ -323,7 +333,7 @@ impl Parser<'_> {
         }
     }
 
-    fn parse_field_declaration(&mut self) {
+    pub(super) fn parse_field_declaration(&mut self) {
         let field = self.start();
         self.parse_modifier_list();
         self.parse_type();
@@ -335,15 +345,15 @@ impl Parser<'_> {
         self.complete(field, JavaSyntaxKind::FieldDeclaration);
     }
 
-    fn parse_variable_declarator_list(&mut self) {
+    pub(super) fn parse_variable_declarator_list(&mut self) {
         self.parse_variable_declarator_list_until_with(&[JavaSyntaxKind::Semicolon], false);
     }
 
-    fn parse_variable_declarator_list_until(&mut self, stops: &[JavaSyntaxKind]) {
+    pub(super) fn parse_variable_declarator_list_until(&mut self, stops: &[JavaSyntaxKind]) {
         self.parse_variable_declarator_list_until_with(stops, true);
     }
 
-    fn parse_variable_declarator_list_until_with(
+    pub(super) fn parse_variable_declarator_list_until_with(
         &mut self,
         stops: &[JavaSyntaxKind],
         allow_unnamed: bool,
@@ -361,21 +371,29 @@ impl Parser<'_> {
         self.complete(list, JavaSyntaxKind::VariableDeclaratorList);
     }
 
-    fn parse_variable_declarator_until(&mut self, stops: &[JavaSyntaxKind], allow_unnamed: bool) {
+    pub(super) fn parse_variable_declarator_until(
+        &mut self,
+        stops: &[JavaSyntaxKind],
+        allow_unnamed: bool,
+    ) {
         let declarator = self.start();
-        if allow_unnamed {
-            self.expect_variable_identifier("expected variable name");
-        } else {
-            self.expect_named_variable_identifier("expected variable name");
-        }
-        self.parse_array_dimensions();
+        self.parse_variable_declarator_id(allow_unnamed);
         if self.eat(JavaSyntaxKind::Assign) {
             self.parse_variable_initializer_until(stops);
         }
         self.complete(declarator, JavaSyntaxKind::VariableDeclarator);
     }
 
-    fn parse_variable_initializer_until(&mut self, stops: &[JavaSyntaxKind]) {
+    pub(super) fn parse_variable_declarator_id(&mut self, allow_unnamed: bool) {
+        if allow_unnamed {
+            self.expect_variable_identifier("expected variable name");
+        } else {
+            self.expect_named_variable_identifier("expected variable name");
+        }
+        self.parse_array_dimensions();
+    }
+
+    pub(super) fn parse_variable_initializer_until(&mut self, stops: &[JavaSyntaxKind]) {
         let initializer = self.start();
         let mut initializer_stops = Vec::with_capacity(stops.len() + 1);
         initializer_stops.push(JavaSyntaxKind::Comma);
@@ -388,7 +406,7 @@ impl Parser<'_> {
         self.complete(initializer, JavaSyntaxKind::VariableInitializer);
     }
 
-    fn parse_method_declaration(&mut self) {
+    pub(super) fn parse_method_declaration(&mut self) {
         let method = self.start();
         self.parse_modifier_list();
         self.parse_optional_type_parameter_list();
@@ -402,7 +420,7 @@ impl Parser<'_> {
         self.complete(method, JavaSyntaxKind::MethodDeclaration);
     }
 
-    fn parse_annotation_element(&mut self) {
+    pub(super) fn parse_annotation_element(&mut self) {
         let element = self.start();
         self.parse_modifier_list();
         self.parse_type();
@@ -420,14 +438,14 @@ impl Parser<'_> {
         self.complete(element, JavaSyntaxKind::AnnotationElementDeclaration);
     }
 
-    fn parse_default_value(&mut self) {
+    pub(super) fn parse_default_value(&mut self) {
         let default_value = self.start();
         self.expect(JavaSyntaxKind::DefaultKw, "expected `default`");
         self.parse_annotation_element_value(JavaSyntaxKind::Semicolon);
         self.complete(default_value, JavaSyntaxKind::DefaultValue);
     }
 
-    fn parse_constructor_declaration(&mut self) {
+    pub(super) fn parse_constructor_declaration(&mut self) {
         let constructor = self.start();
         self.parse_modifier_list();
         self.parse_optional_type_parameter_list();
@@ -438,7 +456,7 @@ impl Parser<'_> {
         self.complete(constructor, JavaSyntaxKind::ConstructorDeclaration);
     }
 
-    fn parse_compact_constructor_declaration(&mut self) {
+    pub(super) fn parse_compact_constructor_declaration(&mut self) {
         let constructor = self.start();
         self.parse_modifier_list();
         self.expect_type_identifier("expected compact constructor name");
@@ -446,7 +464,7 @@ impl Parser<'_> {
         self.complete(constructor, JavaSyntaxKind::CompactConstructorDeclaration);
     }
 
-    fn parse_result_type(&mut self) {
+    pub(super) fn parse_result_type(&mut self) {
         if self.at(JavaSyntaxKind::VoidKw) {
             self.parse_void_type();
             return;
@@ -454,7 +472,7 @@ impl Parser<'_> {
         self.parse_type();
     }
 
-    fn parse_formal_parameter_section(&mut self) {
+    pub(super) fn parse_formal_parameter_section(&mut self) {
         self.expect(JavaSyntaxKind::LParen, "expected `(`");
         if !self.at(JavaSyntaxKind::RParen) {
             let list = self.start();
@@ -468,7 +486,18 @@ impl Parser<'_> {
                     self.parse_receiver_parameter();
                     self.complete(error, JavaSyntaxKind::ErrorNode);
                 } else {
-                    self.parse_formal_parameter();
+                    let was_varargs = self.parse_formal_parameter();
+                    if was_varargs && !self.at(JavaSyntaxKind::RParen) && !self.at_eof() {
+                        let error = self.start();
+                        self.expected_here("varargs parameter must be last");
+                        let consumed_comma = self.eat(JavaSyntaxKind::Comma);
+                        self.complete(error, JavaSyntaxKind::ErrorNode);
+                        if consumed_comma {
+                            allow_receiver = false;
+                            continue;
+                        }
+                        break;
+                    }
                 }
                 allow_receiver = false;
                 if !self.eat(JavaSyntaxKind::Comma) {
@@ -480,7 +509,7 @@ impl Parser<'_> {
         self.expect(JavaSyntaxKind::RParen, "expected `)` after parameters");
     }
 
-    fn parse_receiver_parameter(&mut self) {
+    pub(super) fn parse_receiver_parameter(&mut self) {
         let parameter = self.start();
         self.parse_annotations();
         self.parse_type();
@@ -495,18 +524,19 @@ impl Parser<'_> {
         self.complete(parameter, JavaSyntaxKind::ReceiverParameter);
     }
 
-    fn parse_formal_parameter(&mut self) {
+    pub(super) fn parse_formal_parameter(&mut self) -> bool {
         let parameter = self.start();
         self.parse_variable_modifiers();
         self.parse_type();
         self.parse_annotations();
-        self.eat(JavaSyntaxKind::Ellipsis);
+        let varargs = self.eat(JavaSyntaxKind::Ellipsis);
         self.expect_variable_identifier("expected parameter name");
         self.parse_array_dimensions();
         self.complete(parameter, JavaSyntaxKind::FormalParameter);
+        varargs
     }
 
-    fn parse_variable_modifiers(&mut self) {
+    pub(super) fn parse_variable_modifiers(&mut self) {
         loop {
             if self.at(JavaSyntaxKind::At) && self.nth_kind(1) != JavaSyntaxKind::InterfaceKw {
                 self.parse_annotation();
@@ -518,7 +548,7 @@ impl Parser<'_> {
         }
     }
 
-    fn parse_optional_throws_clause(&mut self) {
+    pub(super) fn parse_optional_throws_clause(&mut self) {
         if !self.at(JavaSyntaxKind::ThrowsKw) {
             return;
         }
@@ -531,7 +561,7 @@ impl Parser<'_> {
                 JavaSyntaxKind::LBrace | JavaSyntaxKind::Semicolon
             )
         {
-            self.parse_type();
+            self.parse_class_type();
             if !self.eat(JavaSyntaxKind::Comma) {
                 break;
             }
@@ -539,7 +569,7 @@ impl Parser<'_> {
         self.complete(clause, JavaSyntaxKind::ThrowsClause);
     }
 
-    fn parse_method_body(&mut self) {
+    pub(super) fn parse_method_body(&mut self) {
         if self.at(JavaSyntaxKind::LBrace) {
             self.parse_block();
         } else {
@@ -547,7 +577,7 @@ impl Parser<'_> {
         }
     }
 
-    fn parse_constructor_block(&mut self) {
+    pub(super) fn parse_constructor_block(&mut self) {
         let block = self.start();
         self.expect(JavaSyntaxKind::LBrace, "expected constructor body");
         let mut allow_constructor_invocation = true;
@@ -574,7 +604,7 @@ impl Parser<'_> {
         self.complete(block, JavaSyntaxKind::ConstructorBody);
     }
 
-    fn parse_constructor_invocation(&mut self) {
+    pub(super) fn parse_constructor_invocation(&mut self) {
         let invocation = self.start();
 
         if self.at(JavaSyntaxKind::Lt)
@@ -608,7 +638,7 @@ impl Parser<'_> {
         self.complete(invocation, JavaSyntaxKind::ConstructorInvocation);
     }
 
-    fn parse_constructor_invocation_qualifier(&mut self) {
+    pub(super) fn parse_constructor_invocation_qualifier(&mut self) {
         if self.starts_expression_name_qualified_constructor_invocation() {
             self.consume_qualified_name();
         } else {
@@ -616,7 +646,7 @@ impl Parser<'_> {
         }
     }
 
-    fn parse_constructor_invocation_primary_qualifier(&mut self) {
+    pub(super) fn parse_constructor_invocation_primary_qualifier(&mut self) {
         let mut expression = self.parse_primary_expression(false);
 
         loop {
@@ -642,7 +672,7 @@ impl Parser<'_> {
         }
     }
 
-    fn parse_enum_body_contents(&mut self, type_name: Option<&str>) {
+    pub(super) fn parse_enum_body_contents(&mut self, type_name: Option<&str>) {
         if !self.at(JavaSyntaxKind::Semicolon) && !self.at(JavaSyntaxKind::RBrace) {
             let list = self.start();
             loop {
@@ -665,7 +695,7 @@ impl Parser<'_> {
         }
     }
 
-    fn parse_enum_constant(&mut self) {
+    pub(super) fn parse_enum_constant(&mut self) {
         let constant = self.start();
         self.parse_annotations();
         self.expect_named_variable_identifier("expected enum constant name");
@@ -678,7 +708,7 @@ impl Parser<'_> {
         self.complete(constant, JavaSyntaxKind::EnumConstant);
     }
 
-    fn parse_annotation_interface_body_contents(&mut self) {
+    pub(super) fn parse_annotation_interface_body_contents(&mut self) {
         let list = self.start();
         while !self.at_eof() && !self.at(JavaSyntaxKind::RBrace) {
             if self.at(JavaSyntaxKind::Semicolon) {
@@ -690,7 +720,7 @@ impl Parser<'_> {
         self.complete(list, JavaSyntaxKind::AnnotationElementList);
     }
 
-    fn consume_body_member_fragment(&mut self) {
+    pub(super) fn consume_body_member_fragment(&mut self) {
         while !self.at_eof() && !self.at(JavaSyntaxKind::RBrace) {
             if self.at(JavaSyntaxKind::LBrace) {
                 self.consume_balanced_delimited(JavaSyntaxKind::LBrace, JavaSyntaxKind::RBrace);

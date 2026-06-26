@@ -15,7 +15,7 @@ nodes:
   AnnotationElementValuePair: 139
   AnnotationInterfaceBody: 8
   AnnotationInterfaceDeclaration: 8
-  ArgumentList: 1734
+  ArgumentList: 1726
   ArrayAccessExpression: 36
   ArrayCreationExpression: 12
   ArrayDimension: 164
@@ -39,7 +39,7 @@ nodes:
   ClassBodyDeclaration: 546
   ClassDeclaration: 272
   ClassLiteralExpression: 52
-  ClassType: 1651
+  ClassType: 1650
   CompactConstructorDeclaration: 5
   CompilationUnit: 226
   ComponentPattern: 41
@@ -58,6 +58,7 @@ nodes:
   EnumConstant: 51
   EnumConstantList: 14
   EnumDeclaration: 20
+  ErrorNode: 46
   ExportsDirective: 5
   ExpressionStatement: 281
   ExtendsClause: 48
@@ -79,21 +80,21 @@ nodes:
   InterfaceDeclaration: 25
   IntersectionType: 1
   LabeledStatement: 3
-  LambdaExpression: 73
-  LambdaParameter: 61
+  LambdaExpression: 72
+  LambdaParameter: 60
   LambdaParameterList: 35
   LiteralExpression: 3427
   LocalClassOrInterfaceDeclaration: 12
   LocalVariableDeclaration: 243
   MethodDeclaration: 211
-  MethodInvocationExpression: 1603
+  MethodInvocationExpression: 1596
   MethodReferenceExpression: 23
   ModifierList: 259
   ModuleDeclaration: 3
   ModuleDirective: 17
-  Name: 1982
-  NameExpression: 1767
-  ObjectCreationExpression: 107
+  Name: 1981
+  NameExpression: 1756
+  ObjectCreationExpression: 106
   OpensDirective: 4
   PackageDeclaration: 32
   ParenthesizedExpression: 14
@@ -147,7 +148,7 @@ nodes:
   YieldStatement: 2
 
 parser diagnostics:
-  <none>: 0
+  java.parse.invalid_statement_expression: 46
 
 lexer diagnostics:
   <none>: 0
