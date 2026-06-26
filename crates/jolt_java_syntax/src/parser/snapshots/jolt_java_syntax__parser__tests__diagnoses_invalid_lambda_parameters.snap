@@ -177,9 +177,92 @@ CompilationUnit
                           Dot "." @ 502..503
                           Identifier "length" @ 503..509
               Semicolon ";" @ 509..510
-            RBrace "}" @ 527..528 leading=[Newline "\n", Whitespace "                "]
-      RBrace "}" @ 541..542 leading=[Newline "\n", Whitespace "            "]
-  Eof "" @ 551..551 leading=[Newline "\n", Whitespace "        "]
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 531..535 leading=[Newline "\n", Whitespace "                    "]
+                    Dot "." @ 535..536
+                    Identifier "util" @ 536..540
+                    Dot "." @ 540..541
+                    Identifier "function" @ 541..549
+                    Dot "." @ 549..550
+                    Identifier "Function" @ 550..558
+                  TypeArgumentList
+                    Lt "<" @ 558..559
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "Integer" @ 559..566
+                    Comma "," @ 566..567 trailing=[Whitespace " "]
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "Integer" @ 568..575
+                    Gt ">" @ 575..576 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "finalImplicit" @ 577..590 trailing=[Whitespace " "]
+                    Assign "=" @ 591..592
+                    VariableInitializer
+                      LambdaExpression
+                        LParen "(" @ 617..618 leading=[Newline "\n", Whitespace "                        "]
+                        LambdaParameterList
+                          LambdaParameter
+                            FinalKw "final" @ 618..623 trailing=[Whitespace " "]
+                            ErrorNode
+                              Identifier "x" @ 624..625
+                        RParen ")" @ 625..626 trailing=[Whitespace " "]
+                        Arrow "->" @ 627..629 trailing=[Whitespace " "]
+                        NameExpression
+                          Identifier "x" @ 630..631
+              Semicolon ";" @ 631..632
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 653..657 leading=[Newline "\n", Whitespace "                    "]
+                    Dot "." @ 657..658
+                    Identifier "util" @ 658..662
+                    Dot "." @ 662..663
+                    Identifier "function" @ 663..671
+                    Dot "." @ 671..672
+                    Identifier "Function" @ 672..680
+                  TypeArgumentList
+                    Lt "<" @ 680..681
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "Integer" @ 681..688
+                    Comma "," @ 688..689 trailing=[Whitespace " "]
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "Integer" @ 690..697
+                    Gt ">" @ 697..698 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "annotatedImplicit" @ 699..716 trailing=[Whitespace " "]
+                    Assign "=" @ 717..718
+                    VariableInitializer
+                      LambdaExpression
+                        LParen "(" @ 743..744 leading=[Newline "\n", Whitespace "                        "]
+                        LambdaParameterList
+                          LambdaParameter
+                            Annotation
+                              At "@" @ 744..745
+                              Name
+                                Identifier "Deprecated" @ 745..755 trailing=[Whitespace " "]
+                            ErrorNode
+                              Identifier "x" @ 756..757
+                        RParen ")" @ 757..758 trailing=[Whitespace " "]
+                        Arrow "->" @ 759..761 trailing=[Whitespace " "]
+                        NameExpression
+                          Identifier "x" @ 762..763
+              Semicolon ";" @ 763..764
+            RBrace "}" @ 781..782 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 795..796 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 805..805 leading=[Newline "\n", Whitespace "        "]
 
 outcome: Recovered
 
@@ -187,3 +270,5 @@ diagnostics:
   code=java.parse.expected_syntax severity=Error stage=Parser range=203..204 message="lambda parameters must use the same form"
   code=java.parse.expected_syntax severity=Error stage=Parser range=332..333 message="lambda parameters must use the same form"
   code=java.parse.expected_syntax severity=Error stage=Parser range=476..477 message="varargs lambda parameter must be last"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=624..625 message="expected lambda parameter type after modifiers"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=756..757 message="expected lambda parameter type after modifiers"

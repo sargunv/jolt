@@ -232,8 +232,43 @@ CompilationUnit
           Block
             LBrace "{" @ 644..645
             RBrace "}" @ 645..646
-      RBrace "}" @ 659..660 leading=[Newline "\n", Whitespace "            "]
-  Eof "" @ 669..669 leading=[Newline "\n", Whitespace "        "]
+      ClassBodyDeclaration
+        MethodDeclaration
+          ModifierList
+            ErrorNode
+              TransientKw "transient" @ 663..672 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          VoidType
+            VoidKw "void" @ 673..677 trailing=[Whitespace " "]
+          Identifier "transientMethod" @ 678..693
+          LParen "(" @ 693..694
+          RParen ")" @ 694..695 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 696..697
+            RBrace "}" @ 697..698
+      ClassBodyDeclaration
+        ConstructorDeclaration
+          ModifierList
+            ErrorNode
+              VolatileKw "volatile" @ 715..723 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "InvalidDeclarationContexts" @ 724..750
+          LParen "(" @ 750..751
+          RParen ")" @ 751..752 trailing=[Whitespace " "]
+          ConstructorBody
+            LBrace "{" @ 753..754
+            RBrace "}" @ 754..755
+      ClassBodyDeclaration
+        FieldDeclaration
+          ModifierList
+            ErrorNode
+              SynchronizedKw "synchronized" @ 772..784 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          PrimitiveType
+            IntKw "int" @ 785..788 trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "synchronizedField" @ 789..806
+          Semicolon ";" @ 806..807
+      RBrace "}" @ 820..821 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 830..830 leading=[Newline "\n", Whitespace "        "]
 
 outcome: Recovered
 
@@ -246,3 +281,6 @@ diagnostics:
   code=java.parse.unexpected_syntax severity=Error stage=Parser range=308..309 message="resource declaration must declare a single variable"
   code=java.parse.unexpected_syntax severity=Error stage=Parser range=383..384 message="resource declaration must declare a single variable"
   code=java.parse.expected_syntax severity=Error stage=Parser range=493..496 message="expected class or interface type"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=663..672 message="invalid method modifier"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=715..723 message="invalid constructor modifier"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=772..784 message="invalid field modifier"

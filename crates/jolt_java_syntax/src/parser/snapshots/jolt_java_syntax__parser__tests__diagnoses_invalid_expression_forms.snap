@@ -138,86 +138,143 @@ CompilationUnit
                 Semicolon ";" @ 344..345
             BlockStatement
               LocalVariableDeclaration
-                ArrayType
-                  PrimitiveType
-                    IntKw "int" @ 366..369 leading=[Newline "\n", Whitespace "                    "]
-                  ArrayDimensions
-                    ArrayDimension
-                      LBracket "[" @ 369..370
-                      RBracket "]" @ 370..371 trailing=[Whitespace " "]
+                ClassType
+                  Name
+                    Identifier "Object" @ 366..372 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
                 VariableDeclaratorList
                   VariableDeclarator
-                    Identifier "xs" @ 372..374 trailing=[Whitespace " "]
-                    Assign "=" @ 375..376 trailing=[Whitespace " "]
+                    Identifier "invalidQualifiedCreation" @ 373..397 trailing=[Whitespace " "]
+                    Assign "=" @ 398..399 trailing=[Whitespace " "]
                     VariableInitializer
-                      ArrayCreationExpression
-                        NewKw "new" @ 377..380 trailing=[Whitespace " "]
-                        ArrayType
-                          PrimitiveType
-                            IntKw "int" @ 381..384
-                          ArrayDimensions
-                            ArrayDimension
-                              LBracket "[" @ 384..385
-                              RBracket "]" @ 385..386
-                        ErrorNode
-                          DimExpression
-                            LBracket "[" @ 386..387
-                            LiteralExpression
-                              IntegerLiteral "3" @ 387..388
-                            RBracket "]" @ 388..389
-              Semicolon ";" @ 389..390
+                      ObjectCreationExpression
+                        NewKw "new" @ 400..403 trailing=[Whitespace " "]
+                        ClassType
+                          QualifiedName
+                            Identifier "Outer" @ 404..409
+                            ErrorNode
+                              TypeArgumentList
+                                Lt "<" @ 409..410
+                                TypeArgument
+                                  ClassType
+                                    Name
+                                      Identifier "String" @ 410..416
+                                Gt ">" @ 416..417
+                            Dot "." @ 417..418
+                            Identifier "Inner" @ 418..423
+                        ArgumentList
+                          LParen "(" @ 423..424
+                          RParen ")" @ 424..425
+              Semicolon ";" @ 425..426
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  Name
+                    Identifier "Object" @ 447..453 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "validQualifiedCreation" @ 454..476 trailing=[Whitespace " "]
+                    Assign "=" @ 477..478 trailing=[Whitespace " "]
+                    VariableInitializer
+                      ObjectCreationExpression
+                        NewKw "new" @ 479..482 trailing=[Whitespace " "]
+                        ClassType
+                          QualifiedName
+                            Identifier "Outer" @ 483..488
+                            Dot "." @ 488..489
+                            Identifier "Inner" @ 489..494
+                          TypeArgumentList
+                            Lt "<" @ 494..495
+                            TypeArgument
+                              ClassType
+                                Name
+                                  Identifier "String" @ 495..501
+                            Gt ">" @ 501..502
+                        ArgumentList
+                          LParen "(" @ 502..503
+                          RParen ")" @ 503..504
+              Semicolon ";" @ 504..505
             BlockStatement
               LocalVariableDeclaration
                 ArrayType
                   PrimitiveType
-                    IntKw "int" @ 411..414 leading=[Newline "\n", Whitespace "                    "]
+                    IntKw "int" @ 526..529 leading=[Newline "\n", Whitespace "                    "]
                   ArrayDimensions
                     ArrayDimension
-                      LBracket "[" @ 414..415
-                      RBracket "]" @ 415..416 trailing=[Whitespace " "]
+                      LBracket "[" @ 529..530
+                      RBracket "]" @ 530..531 trailing=[Whitespace " "]
                 VariableDeclaratorList
                   VariableDeclarator
-                    Identifier "ys" @ 417..419 trailing=[Whitespace " "]
-                    Assign "=" @ 420..421 trailing=[Whitespace " "]
+                    Identifier "xs" @ 532..534 trailing=[Whitespace " "]
+                    Assign "=" @ 535..536 trailing=[Whitespace " "]
                     VariableInitializer
                       ArrayCreationExpression
-                        NewKw "new" @ 422..425 trailing=[Whitespace " "]
+                        NewKw "new" @ 537..540 trailing=[Whitespace " "]
+                        ArrayType
+                          PrimitiveType
+                            IntKw "int" @ 541..544
+                          ArrayDimensions
+                            ArrayDimension
+                              LBracket "[" @ 544..545
+                              RBracket "]" @ 545..546
+                        ErrorNode
+                          DimExpression
+                            LBracket "[" @ 546..547
+                            LiteralExpression
+                              IntegerLiteral "3" @ 547..548
+                            RBracket "]" @ 548..549
+              Semicolon ";" @ 549..550
+            BlockStatement
+              LocalVariableDeclaration
+                ArrayType
+                  PrimitiveType
+                    IntKw "int" @ 571..574 leading=[Newline "\n", Whitespace "                    "]
+                  ArrayDimensions
+                    ArrayDimension
+                      LBracket "[" @ 574..575
+                      RBracket "]" @ 575..576 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "ys" @ 577..579 trailing=[Whitespace " "]
+                    Assign "=" @ 580..581 trailing=[Whitespace " "]
+                    VariableInitializer
+                      ArrayCreationExpression
+                        NewKw "new" @ 582..585 trailing=[Whitespace " "]
                         PrimitiveType
-                          IntKw "int" @ 426..429
+                          IntKw "int" @ 586..589
                         DimExpression
-                          LBracket "[" @ 429..430
+                          LBracket "[" @ 589..590
                           LiteralExpression
-                            IntegerLiteral "3" @ 430..431
-                          RBracket "]" @ 431..432 trailing=[Whitespace " "]
+                            IntegerLiteral "3" @ 590..591
+                          RBracket "]" @ 591..592 trailing=[Whitespace " "]
                         ErrorNode
                           ArrayInitializer
-                            LBrace "{" @ 433..434
+                            LBrace "{" @ 593..594
                             LiteralExpression
-                              IntegerLiteral "1" @ 434..435
-                            Comma "," @ 435..436 trailing=[Whitespace " "]
+                              IntegerLiteral "1" @ 594..595
+                            Comma "," @ 595..596 trailing=[Whitespace " "]
                             LiteralExpression
-                              IntegerLiteral "2" @ 437..438
-                            RBrace "}" @ 438..439
-              Semicolon ";" @ 439..440
+                              IntegerLiteral "2" @ 597..598
+                            RBrace "}" @ 598..599
+              Semicolon ";" @ 599..600
             BlockStatement
               LocalVariableDeclaration
                 PrimitiveType
-                  BooleanKw "boolean" @ 461..468 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                  BooleanKw "boolean" @ 621..628 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
                 VariableDeclaratorList
                   VariableDeclarator
-                    Identifier "primitiveInstanceof" @ 469..488 trailing=[Whitespace " "]
-                    Assign "=" @ 489..490 trailing=[Whitespace " "]
+                    Identifier "primitiveInstanceof" @ 629..648 trailing=[Whitespace " "]
+                    Assign "=" @ 649..650 trailing=[Whitespace " "]
                     VariableInitializer
                       InstanceofExpression
                         NameExpression
-                          Identifier "x" @ 491..492 trailing=[Whitespace " "]
-                        InstanceofKw "instanceof" @ 493..503 trailing=[Whitespace " "]
+                          Identifier "x" @ 651..652 trailing=[Whitespace " "]
+                        InstanceofKw "instanceof" @ 653..663 trailing=[Whitespace " "]
                         ErrorNode
-                          IntKw "int" @ 504..507
-              Semicolon ";" @ 507..508
-            RBrace "}" @ 525..526 leading=[Newline "\n", Whitespace "                "]
-      RBrace "}" @ 539..540 leading=[Newline "\n", Whitespace "            "]
-  Eof "" @ 549..549 leading=[Newline "\n", Whitespace "        "]
+                          IntKw "int" @ 664..667
+              Semicolon ";" @ 667..668
+            RBrace "}" @ 685..686 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 699..700 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 709..709 leading=[Newline "\n", Whitespace "        "]
 
 outcome: Recovered
 
@@ -234,6 +291,7 @@ diagnostics:
   code=java.parse.expected_syntax severity=Error stage=Parser range=283..284 message="expected constructor arguments"
   code=java.parse.expected_syntax severity=Error stage=Parser range=311..312 message="expected constructor arguments"
   code=java.parse.expected_syntax severity=Error stage=Parser range=339..342 message="expected class type in object creation"
-  code=java.parse.unexpected_syntax severity=Error stage=Parser range=386..387 message="sized array dimension cannot follow unsized dimensions"
-  code=java.parse.unexpected_syntax severity=Error stage=Parser range=433..434 message="array initializer cannot follow dimension expressions"
-  code=java.parse.expected_syntax severity=Error stage=Parser range=504..507 message="expected class or interface type"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=409..410 message="type arguments in class instance creation must appear on the final type segment"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=546..547 message="sized array dimension cannot follow unsized dimensions"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=593..594 message="array initializer cannot follow dimension expressions"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=664..667 message="expected class or interface type"

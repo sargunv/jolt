@@ -106,7 +106,7 @@ impl Parser<'_> {
         self.parse_optional_type_argument_list();
         while self.at(JavaSyntaxKind::Dot) {
             let after_dot = self.skip_annotations_from(self.position() + 1);
-            if !self.is_name_segment_at_offset(after_dot) {
+            if !self.is_name_segment_at(after_dot) {
                 break;
             }
             self.bump();
@@ -122,7 +122,7 @@ impl Parser<'_> {
         let mut qualified = false;
         while !self.at(JavaSyntaxKind::Lt) && self.at(JavaSyntaxKind::Dot) {
             let after_dot = self.skip_annotations_from(self.position() + 1);
-            if !self.is_name_segment_at_offset(after_dot) {
+            if !self.is_name_segment_at(after_dot) {
                 break;
             }
             qualified = true;
@@ -237,7 +237,7 @@ impl Parser<'_> {
         } else if self.at(JavaSyntaxKind::At) && self.nth_kind(1) != JavaSyntaxKind::InterfaceKw {
             self.parse_annotation();
         } else {
-            self.consume_shallow_expression_until(&[JavaSyntaxKind::Comma, stop]);
+            self.parse_expression_until(&[JavaSyntaxKind::Comma, stop]);
         }
     }
 }

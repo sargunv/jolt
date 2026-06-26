@@ -109,7 +109,10 @@ impl Parser<'_> {
     pub(super) fn parse_if_statement(&mut self) {
         let statement = self.start();
         self.expect(JavaSyntaxKind::IfKw, "expected `if`");
-        self.parse_parenthesized_shallow_expression("if condition");
+        self.parse_parenthesized_expression(
+            "expected `(` before if condition",
+            "expected `)` after if condition",
+        );
         self.parse_statement();
         if self.eat(JavaSyntaxKind::ElseKw) {
             self.parse_statement();
@@ -120,9 +123,9 @@ impl Parser<'_> {
     pub(super) fn parse_assert_statement(&mut self) {
         let statement = self.start();
         self.expect(JavaSyntaxKind::AssertKw, "expected `assert`");
-        self.consume_shallow_expression_until(&[JavaSyntaxKind::Colon, JavaSyntaxKind::Semicolon]);
+        self.parse_expression_until(&[JavaSyntaxKind::Colon, JavaSyntaxKind::Semicolon]);
         if self.eat(JavaSyntaxKind::Colon) {
-            self.consume_shallow_expression_until(&[JavaSyntaxKind::Semicolon]);
+            self.parse_expression_until(&[JavaSyntaxKind::Semicolon]);
         }
         self.expect(
             JavaSyntaxKind::Semicolon,
@@ -134,7 +137,10 @@ impl Parser<'_> {
     pub(super) fn parse_while_statement(&mut self) {
         let statement = self.start();
         self.expect(JavaSyntaxKind::WhileKw, "expected `while`");
-        self.parse_parenthesized_shallow_expression("while condition");
+        self.parse_parenthesized_expression(
+            "expected `(` before while condition",
+            "expected `)` after while condition",
+        );
         self.parse_statement();
         self.complete(statement, JavaSyntaxKind::WhileStatement);
     }
@@ -144,7 +150,10 @@ impl Parser<'_> {
         self.expect(JavaSyntaxKind::DoKw, "expected `do`");
         self.parse_statement();
         self.expect(JavaSyntaxKind::WhileKw, "expected `while` after do body");
-        self.parse_parenthesized_shallow_expression("do condition");
+        self.parse_parenthesized_expression(
+            "expected `(` before do condition",
+            "expected `)` after do condition",
+        );
         self.expect(JavaSyntaxKind::Semicolon, "expected `;` after do statement");
         self.complete(statement, JavaSyntaxKind::DoStatement);
     }
@@ -160,7 +169,7 @@ impl Parser<'_> {
                 JavaSyntaxKind::Colon,
                 "expected `:` in enhanced for statement",
             );
-            self.consume_shallow_expression_until(&[JavaSyntaxKind::RParen]);
+            self.parse_expression_until(&[JavaSyntaxKind::RParen]);
             self.expect(
                 JavaSyntaxKind::RParen,
                 "expected `)` after enhanced for header",
@@ -182,7 +191,7 @@ impl Parser<'_> {
             }
             self.expect(JavaSyntaxKind::Semicolon, "expected `;` in for header");
             if !self.at(JavaSyntaxKind::Semicolon) {
-                self.consume_shallow_expression_until(&[JavaSyntaxKind::Semicolon]);
+                self.parse_expression_until(&[JavaSyntaxKind::Semicolon]);
             }
             self.expect(JavaSyntaxKind::Semicolon, "expected `;` in for header");
             if !self.at(JavaSyntaxKind::RParen) {
@@ -280,7 +289,7 @@ impl Parser<'_> {
     pub(super) fn parse_yield_statement(&mut self) {
         let statement = self.start();
         self.expect_contextual("yield", "expected `yield`");
-        self.consume_shallow_expression_until(&[JavaSyntaxKind::Semicolon]);
+        self.parse_expression_until(&[JavaSyntaxKind::Semicolon]);
         self.expect(
             JavaSyntaxKind::Semicolon,
             "expected `;` after yield statement",
@@ -292,7 +301,7 @@ impl Parser<'_> {
         let statement = self.start();
         self.expect(JavaSyntaxKind::ReturnKw, "expected `return`");
         if !self.at(JavaSyntaxKind::Semicolon) {
-            self.consume_shallow_expression_until(&[JavaSyntaxKind::Semicolon]);
+            self.parse_expression_until(&[JavaSyntaxKind::Semicolon]);
         }
         self.expect(
             JavaSyntaxKind::Semicolon,
@@ -304,7 +313,7 @@ impl Parser<'_> {
     pub(super) fn parse_throw_statement(&mut self) {
         let statement = self.start();
         self.expect(JavaSyntaxKind::ThrowKw, "expected `throw`");
-        self.consume_shallow_expression_until(&[JavaSyntaxKind::Semicolon]);
+        self.parse_expression_until(&[JavaSyntaxKind::Semicolon]);
         self.expect(
             JavaSyntaxKind::Semicolon,
             "expected `;` after throw statement",
@@ -315,7 +324,10 @@ impl Parser<'_> {
     pub(super) fn parse_synchronized_statement(&mut self) {
         let statement = self.start();
         self.expect(JavaSyntaxKind::SynchronizedKw, "expected `synchronized`");
-        self.parse_parenthesized_shallow_expression("synchronized expression");
+        self.parse_parenthesized_expression(
+            "expected `(` before synchronized expression",
+            "expected `)` after synchronized expression",
+        );
         self.parse_block();
         self.complete(statement, JavaSyntaxKind::SynchronizedStatement);
     }
@@ -498,7 +510,10 @@ impl Parser<'_> {
     pub(super) fn parse_switch_statement(&mut self) {
         let statement = self.start();
         self.expect(JavaSyntaxKind::SwitchKw, "expected `switch`");
-        self.parse_parenthesized_shallow_expression("switch selector");
+        self.parse_parenthesized_expression(
+            "expected `(` before switch selector",
+            "expected `)` after switch selector",
+        );
         self.parse_switch_block();
         self.complete(statement, JavaSyntaxKind::SwitchStatement);
     }
@@ -506,7 +521,10 @@ impl Parser<'_> {
     pub(super) fn parse_switch_expression_fragment(&mut self) -> jolt_syntax::CompletedMarker {
         let expression = self.start();
         self.expect(JavaSyntaxKind::SwitchKw, "expected `switch`");
-        self.parse_parenthesized_shallow_expression("switch selector");
+        self.parse_parenthesized_expression(
+            "expected `(` before switch selector",
+            "expected `)` after switch selector",
+        );
         self.parse_switch_block();
         self.complete(expression, JavaSyntaxKind::SwitchExpression)
     }
@@ -538,7 +556,7 @@ impl Parser<'_> {
         } else if self.at(JavaSyntaxKind::ThrowKw) {
             self.parse_throw_statement();
         } else {
-            self.consume_shallow_expression_until(&[JavaSyntaxKind::Semicolon]);
+            self.parse_expression_until(&[JavaSyntaxKind::Semicolon]);
             self.expect(JavaSyntaxKind::Semicolon, "expected `;` after switch rule");
         }
         self.complete(rule, JavaSyntaxKind::SwitchRule);
@@ -637,19 +655,17 @@ impl Parser<'_> {
     pub(super) fn parse_guard(&mut self) {
         let guard = self.start();
         self.expect_contextual("when", "expected `when`");
-        self.consume_shallow_expression_until(&[JavaSyntaxKind::Colon, JavaSyntaxKind::Arrow]);
+        self.parse_expression_until(&[JavaSyntaxKind::Colon, JavaSyntaxKind::Arrow]);
         self.complete(guard, JavaSyntaxKind::Guard);
     }
 
-    pub(super) fn parse_parenthesized_shallow_expression(&mut self, context: &str) {
-        self.expect(
-            JavaSyntaxKind::LParen,
-            &format!("expected `(` before {context}"),
-        );
-        self.consume_shallow_expression_until(&[JavaSyntaxKind::RParen]);
-        self.expect(
-            JavaSyntaxKind::RParen,
-            &format!("expected `)` after {context}"),
-        );
+    pub(super) fn parse_parenthesized_expression(
+        &mut self,
+        open_message: &'static str,
+        close_message: &'static str,
+    ) {
+        self.expect(JavaSyntaxKind::LParen, open_message);
+        self.parse_expression_until(&[JavaSyntaxKind::RParen]);
+        self.expect(JavaSyntaxKind::RParen, close_message);
     }
 }

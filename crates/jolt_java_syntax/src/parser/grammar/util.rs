@@ -1,5 +1,10 @@
 use super::{JavaSyntaxKind, Parser};
 
+#[path = "util/recovery.rs"]
+mod recovery;
+#[path = "util/token_sets.rs"]
+mod token_sets;
+
 impl Parser<'_> {
     pub(super) fn skip_type_modifiers_from(&self, mut index: usize) -> usize {
         loop {
@@ -79,61 +84,6 @@ impl Parser<'_> {
             )),
             _ => None,
         }
-    }
-
-    pub(super) fn at_type_modifier(&self) -> bool {
-        self.is_type_modifier_at(self.position())
-    }
-
-    pub(super) fn is_type_modifier_at(&self, index: usize) -> bool {
-        matches!(
-            self.kind_at(index),
-            JavaSyntaxKind::PublicKw
-                | JavaSyntaxKind::ProtectedKw
-                | JavaSyntaxKind::PrivateKw
-                | JavaSyntaxKind::AbstractKw
-                | JavaSyntaxKind::StaticKw
-                | JavaSyntaxKind::FinalKw
-                | JavaSyntaxKind::TransientKw
-                | JavaSyntaxKind::VolatileKw
-                | JavaSyntaxKind::SynchronizedKw
-                | JavaSyntaxKind::NativeKw
-                | JavaSyntaxKind::StrictfpKw
-                | JavaSyntaxKind::DefaultKw
-        ) || self.text_at(index) == Some("sealed")
-            || (self.text_at(index) == Some("non")
-                && self.kind_at(index + 1) == JavaSyntaxKind::Minus
-                && self.text_at(index + 2) == Some("sealed"))
-    }
-
-    pub(super) fn skip_type_modifier_at(&self, index: usize) -> usize {
-        if self.text_at(index) == Some("non")
-            && self.kind_at(index + 1) == JavaSyntaxKind::Minus
-            && self.text_at(index + 2) == Some("sealed")
-        {
-            index + 3
-        } else {
-            index + 1
-        }
-    }
-
-    pub(super) fn bump_type_modifier(&mut self) {
-        let next = self.skip_type_modifier_at(self.position());
-        while self.position() < next {
-            self.bump();
-        }
-    }
-
-    pub(super) fn at_name_segment(&self) -> bool {
-        self.is_name_segment_at(self.position())
-    }
-
-    pub(super) fn nth_is_name_segment(&self, n: usize) -> bool {
-        self.is_name_segment_at(self.position() + n)
-    }
-
-    pub(super) fn is_name_segment_at(&self, index: usize) -> bool {
-        self.kind_at(index) == JavaSyntaxKind::Identifier
     }
 
     pub(super) fn expect_type_identifier(&mut self, message: &str) {
@@ -223,54 +173,6 @@ impl Parser<'_> {
         }
     }
 
-    pub(super) fn error_unexpected_top_level_token(&mut self) {
-        let error = self.start();
-        self.unexpected_here("unexpected token at top level");
-        self.recover_top_level();
-        self.complete(error, JavaSyntaxKind::ErrorNode);
-    }
-
-    pub(super) fn error_unexpected_module_token(&mut self) {
-        let error = self.start();
-        self.unexpected_here("unexpected token in module declaration");
-        self.recover_module_directive();
-        self.complete(error, JavaSyntaxKind::ErrorNode);
-    }
-
-    pub(super) fn recover_top_level(&mut self) {
-        if self.at_eof() {
-            return;
-        }
-
-        self.bump();
-        while !self.at_eof()
-            && !self.at(JavaSyntaxKind::Semicolon)
-            && !self.at(JavaSyntaxKind::ImportKw)
-            && !self.starts_module_declaration()
-            && !self.starts_top_level_type_declaration()
-        {
-            self.bump();
-        }
-
-        self.eat(JavaSyntaxKind::Semicolon);
-    }
-
-    pub(super) fn recover_module_directive(&mut self) {
-        if self.at_eof() || self.at(JavaSyntaxKind::RBrace) {
-            return;
-        }
-
-        self.bump();
-        while !self.at_eof()
-            && !self.at(JavaSyntaxKind::Semicolon)
-            && !self.at(JavaSyntaxKind::RBrace)
-        {
-            self.bump();
-        }
-
-        self.eat(JavaSyntaxKind::Semicolon);
-    }
-
     pub(super) fn at_header_clause_end(&self) -> bool {
         matches!(
             self.current_kind(),
@@ -298,32 +200,6 @@ impl Parser<'_> {
         }
     }
 
-    pub(super) fn at_primitive_type(&self) -> bool {
-        matches!(
-            self.current_kind(),
-            JavaSyntaxKind::BooleanKw
-                | JavaSyntaxKind::ByteKw
-                | JavaSyntaxKind::CharKw
-                | JavaSyntaxKind::DoubleKw
-                | JavaSyntaxKind::FloatKw
-                | JavaSyntaxKind::IntKw
-                | JavaSyntaxKind::LongKw
-                | JavaSyntaxKind::ShortKw
-        )
-    }
-
-    pub(super) fn starts_array_dimensions(&self) -> bool {
-        let index = self.skip_annotations_from(self.position());
-        self.kind_at(index) == JavaSyntaxKind::LBracket
-            && self.kind_at(index + 1) == JavaSyntaxKind::RBracket
-    }
-
-    pub(super) fn starts_dim_expression(&self) -> bool {
-        let index = self.skip_annotations_from(self.position());
-        self.kind_at(index) == JavaSyntaxKind::LBracket
-            && self.kind_at(index + 1) != JavaSyntaxKind::RBracket
-    }
-
     pub(super) fn starts_constructor(&self, type_name: Option<&str>) -> bool {
         let mut index = self.skip_type_modifiers_from(self.position());
         if self.kind_at(index) == JavaSyntaxKind::Lt {
@@ -331,7 +207,7 @@ impl Parser<'_> {
         }
 
         (matches!(type_name, Some(name) if self.text_at(index) == Some(name))
-            || (self.is_name_segment_at_offset(index)
+            || (self.is_name_segment_at(index)
                 && self.kind_at(index + 1) == JavaSyntaxKind::LParen
                 && self.member_header_ends_with_block()))
             && self.kind_at(index + 1) == JavaSyntaxKind::LParen
@@ -351,7 +227,7 @@ impl Parser<'_> {
         }
 
         if self.kind_at(index) == JavaSyntaxKind::VoidKw {
-            return self.is_name_segment_at_offset(index + 1)
+            return self.is_name_segment_at(index + 1)
                 && self.kind_at(index + 2) == JavaSyntaxKind::LParen;
         }
 
@@ -360,7 +236,7 @@ impl Parser<'_> {
         }
 
         let after_type = self.skip_type_from(index);
-        self.is_name_segment_at_offset(after_type)
+        self.is_name_segment_at(after_type)
             && self.kind_at(after_type + 1) == JavaSyntaxKind::LParen
     }
 
@@ -371,7 +247,7 @@ impl Parser<'_> {
         }
 
         let after_type = self.skip_type_from(index);
-        self.is_name_segment_at_offset(after_type)
+        self.is_name_segment_at(after_type)
             && self.kind_at(after_type + 1) == JavaSyntaxKind::LParen
             && self.kind_at(after_type + 2) == JavaSyntaxKind::RParen
     }
@@ -822,9 +698,7 @@ impl Parser<'_> {
         }
 
         let mut index = self.position() + 1;
-        while self.kind_at(index) == JavaSyntaxKind::Dot
-            && self.is_name_segment_at_offset(index + 1)
-        {
+        while self.kind_at(index) == JavaSyntaxKind::Dot && self.is_name_segment_at(index + 1) {
             index += 2;
         }
 
@@ -884,14 +758,14 @@ impl Parser<'_> {
             return index + 1;
         }
 
-        if self.is_name_segment_at_offset(index) {
+        if self.is_name_segment_at(index) {
             index += 1;
             if self.kind_at(index) == JavaSyntaxKind::Lt {
                 index = self.skip_balanced_type_arguments_from(index);
             }
             while self.kind_at(index) == JavaSyntaxKind::Dot {
                 let after_dot = self.skip_annotations_from(index + 1);
-                if !self.is_name_segment_at_offset(after_dot) {
+                if !self.is_name_segment_at(after_dot) {
                     break;
                 }
                 index = after_dot + 1;
@@ -966,10 +840,6 @@ impl Parser<'_> {
         index
     }
 
-    pub(super) fn is_name_segment_at_offset(&self, index: usize) -> bool {
-        self.kind_at(index) == JavaSyntaxKind::Identifier
-    }
-
     pub(super) fn at_variable_identifier(&self) -> bool {
         self.is_variable_identifier_at_offset(self.position())
     }
@@ -1016,7 +886,7 @@ impl Parser<'_> {
         let index = self.skip_type_modifiers_from(self.position());
         self.is_non_void_type_start_at(index)
             || (self.kind_at(index) == JavaSyntaxKind::VoidKw
-                && self.is_name_segment_at_offset(index + 1)
+                && self.is_name_segment_at(index + 1)
                 && self.kind_at(index + 2) == JavaSyntaxKind::LParen)
     }
 
@@ -1025,7 +895,7 @@ impl Parser<'_> {
     }
 
     pub(super) fn is_non_void_type_start_at(&self, index: usize) -> bool {
-        self.is_name_segment_at_offset(index) || self.is_primitive_type_start_at(index)
+        self.is_name_segment_at(index) || self.is_primitive_type_start_at(index)
     }
 
     pub(super) fn is_primitive_type_start_at(&self, index: usize) -> bool {

@@ -1035,6 +1035,8 @@ fn diagnoses_invalid_expression_forms() {
                     new C;
                     new C {};
                     new int();
+                    Object invalidQualifiedCreation = new Outer<String>.Inner();
+                    Object validQualifiedCreation = new Outer.Inner<String>();
                     int[] xs = new int[][3];
                     int[] ys = new int[3] {1, 2};
                     boolean primitiveInstanceof = x instanceof int;
@@ -1063,6 +1065,9 @@ fn diagnoses_invalid_declaration_contexts() {
 
                 AutoCloseable open() { return null; }
                 void risky() throws Exception {}
+                transient void transientMethod() {}
+                volatile InvalidDeclarationContexts() {}
+                synchronized int synchronizedField;
             }
         ",
     );
@@ -2439,6 +2444,10 @@ fn diagnoses_invalid_lambda_parameters() {
                         (var x, y) -> y;
                     java.util.function.BiFunction<String[], String, Integer> trailingVarargs =
                         (String... values, String suffix) -> values.length;
+                    java.util.function.Function<Integer, Integer> finalImplicit =
+                        (final x) -> x;
+                    java.util.function.Function<Integer, Integer> annotatedImplicit =
+                        (@Deprecated x) -> x;
                 }
             }
         ",

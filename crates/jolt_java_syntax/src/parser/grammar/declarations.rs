@@ -1,4 +1,4 @@
-use super::{JavaSyntaxKind, Parser};
+use super::{JavaSyntaxKind, Parser, StopSet};
 
 impl Parser<'_> {
     pub(super) fn parse_type_declaration(&mut self) {
@@ -73,6 +73,26 @@ impl Parser<'_> {
     }
 
     pub(super) fn parse_modifier_list(&mut self) {
+        self.parse_modifier_list_for(ModifierContext::Type);
+    }
+
+    pub(super) fn parse_field_modifier_list(&mut self) {
+        self.parse_modifier_list_for(ModifierContext::Field);
+    }
+
+    pub(super) fn parse_method_modifier_list(&mut self) {
+        self.parse_modifier_list_for(ModifierContext::Method);
+    }
+
+    pub(super) fn parse_constructor_modifier_list(&mut self) {
+        self.parse_modifier_list_for(ModifierContext::Constructor);
+    }
+
+    pub(super) fn parse_annotation_element_modifier_list(&mut self) {
+        self.parse_modifier_list_for(ModifierContext::AnnotationElement);
+    }
+
+    fn parse_modifier_list_for(&mut self, context: ModifierContext) {
         let modifiers = self.start();
         let start = self.position();
 
@@ -80,7 +100,14 @@ impl Parser<'_> {
             if self.at(JavaSyntaxKind::At) && self.nth_kind(1) != JavaSyntaxKind::InterfaceKw {
                 self.parse_annotation();
             } else if self.at_type_modifier() {
-                self.bump_type_modifier();
+                if context.allows(self) {
+                    self.bump_type_modifier();
+                } else {
+                    let error = self.start();
+                    self.unexpected_here(context.invalid_message());
+                    self.bump_type_modifier();
+                    self.complete(error, JavaSyntaxKind::ErrorNode);
+                }
             } else {
                 break;
             }
@@ -335,7 +362,7 @@ impl Parser<'_> {
 
     pub(super) fn parse_field_declaration(&mut self) {
         let field = self.start();
-        self.parse_modifier_list();
+        self.parse_field_modifier_list();
         self.parse_type();
         self.parse_variable_declarator_list();
         self.expect(
@@ -395,20 +422,17 @@ impl Parser<'_> {
 
     pub(super) fn parse_variable_initializer_until(&mut self, stops: &[JavaSyntaxKind]) {
         let initializer = self.start();
-        let mut initializer_stops = Vec::with_capacity(stops.len() + 1);
-        initializer_stops.push(JavaSyntaxKind::Comma);
-        initializer_stops.extend(stops.iter().copied());
         if self.at(JavaSyntaxKind::LBrace) {
             self.parse_array_initializer_fragment();
         } else {
-            self.consume_shallow_expression_until(&initializer_stops);
+            self.parse_expression_until(StopSet::new(stops).with_extra(JavaSyntaxKind::Comma));
         }
         self.complete(initializer, JavaSyntaxKind::VariableInitializer);
     }
 
     pub(super) fn parse_method_declaration(&mut self) {
         let method = self.start();
-        self.parse_modifier_list();
+        self.parse_method_modifier_list();
         self.parse_optional_type_parameter_list();
         self.parse_annotations();
         self.parse_result_type();
@@ -422,7 +446,7 @@ impl Parser<'_> {
 
     pub(super) fn parse_annotation_element(&mut self) {
         let element = self.start();
-        self.parse_modifier_list();
+        self.parse_annotation_element_modifier_list();
         self.parse_type();
         self.expect_method_identifier("expected annotation element name");
         self.expect(JavaSyntaxKind::LParen, "expected `(`");
@@ -447,7 +471,7 @@ impl Parser<'_> {
 
     pub(super) fn parse_constructor_declaration(&mut self) {
         let constructor = self.start();
-        self.parse_modifier_list();
+        self.parse_constructor_modifier_list();
         self.parse_optional_type_parameter_list();
         self.expect_type_identifier("expected constructor name");
         self.parse_formal_parameter_section();
@@ -458,7 +482,7 @@ impl Parser<'_> {
 
     pub(super) fn parse_compact_constructor_declaration(&mut self) {
         let constructor = self.start();
-        self.parse_modifier_list();
+        self.parse_constructor_modifier_list();
         self.expect_type_identifier("expected compact constructor name");
         self.parse_constructor_block();
         self.complete(constructor, JavaSyntaxKind::CompactConstructorDeclaration);
@@ -536,7 +560,8 @@ impl Parser<'_> {
         varargs
     }
 
-    pub(super) fn parse_variable_modifiers(&mut self) {
+    pub(super) fn parse_variable_modifiers(&mut self) -> bool {
+        let start = self.position();
         loop {
             if self.at(JavaSyntaxKind::At) && self.nth_kind(1) != JavaSyntaxKind::InterfaceKw {
                 self.parse_annotation();
@@ -546,6 +571,7 @@ impl Parser<'_> {
                 break;
             }
         }
+        self.position() != start
     }
 
     pub(super) fn parse_optional_throws_clause(&mut self) {
@@ -732,6 +758,64 @@ impl Parser<'_> {
             } else {
                 self.bump();
             }
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+enum ModifierContext {
+    Type,
+    Field,
+    Method,
+    Constructor,
+    AnnotationElement,
+}
+
+impl ModifierContext {
+    fn allows(self, parser: &Parser<'_>) -> bool {
+        match self {
+            Self::Type => true,
+            Self::Field => matches!(
+                parser.current_kind(),
+                JavaSyntaxKind::PublicKw
+                    | JavaSyntaxKind::ProtectedKw
+                    | JavaSyntaxKind::PrivateKw
+                    | JavaSyntaxKind::StaticKw
+                    | JavaSyntaxKind::FinalKw
+                    | JavaSyntaxKind::TransientKw
+                    | JavaSyntaxKind::VolatileKw
+            ),
+            Self::Method => matches!(
+                parser.current_kind(),
+                JavaSyntaxKind::PublicKw
+                    | JavaSyntaxKind::ProtectedKw
+                    | JavaSyntaxKind::PrivateKw
+                    | JavaSyntaxKind::AbstractKw
+                    | JavaSyntaxKind::StaticKw
+                    | JavaSyntaxKind::FinalKw
+                    | JavaSyntaxKind::SynchronizedKw
+                    | JavaSyntaxKind::NativeKw
+                    | JavaSyntaxKind::StrictfpKw
+                    | JavaSyntaxKind::DefaultKw
+            ),
+            Self::Constructor => matches!(
+                parser.current_kind(),
+                JavaSyntaxKind::PublicKw | JavaSyntaxKind::ProtectedKw | JavaSyntaxKind::PrivateKw
+            ),
+            Self::AnnotationElement => matches!(
+                parser.current_kind(),
+                JavaSyntaxKind::PublicKw | JavaSyntaxKind::AbstractKw
+            ),
+        }
+    }
+
+    const fn invalid_message(self) -> &'static str {
+        match self {
+            Self::Type => "invalid type modifier",
+            Self::Field => "invalid field modifier",
+            Self::Method => "invalid method modifier",
+            Self::Constructor => "invalid constructor modifier",
+            Self::AnnotationElement => "invalid annotation element modifier",
         }
     }
 }

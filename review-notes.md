@@ -1,62 +1,82 @@
 # Java Parser Review Notes
 
 Review performed after commit
-`04f6aa5 Model shared diagnostics and syntax
-outcomes`.
+`1734bd0 Tighten Java parser recovery and organization`.
 
-## Highest Priority
+These are the remaining architecture questions that need judgement between real
+tradeoffs, not straightforward cleanup.
 
-- Java spec correctness: the parser accepts several invalid Java constructs
-  cleanly.
-  - Arbitrary expressions can be called like functions, such as `(f)();`,
-    `this();` in a method, or `new C()();`.
-  - Assignment left-hand sides are not grammar-checked, so `1 = x;`,
-    `a + b = c;`, and `(a) = b;` can parse as clean assignments.
-  - Object creation accepts missing or impossible constructor syntax, such as
-    `new C;`, `new C {}`, and `new int()`.
-  - Enhanced-for and resource declarations reuse full local-variable declaration
-    parsing where Java requires a narrower single-variable shape.
+## Open Judgement Calls
 
-- Recovered diagnostics are not consistently represented in CST shape. Some
-  recovery paths emit diagnostics without an `ErrorNode`, which will make
-  recovered formatting or CST wrappers unable to identify malformed regions from
-  tree shape alone.
+- Grammar decisions still depend on duplicated speculative scanners.
 
-## Medium Priority
+  Many branch decisions are made by lookahead helpers such as
+  `starts_method_declaration`, `starts_local_variable_declaration`,
+  `starts_cast_expression`, `starts_pattern`, and `skip_type_from`. These
+  helpers duplicate parts of the real grammar parser, especially type parsing.
 
-- Reference-type-only grammar sites accept unrestricted `parse_type`, including
-  primitive or array types in type bounds, catch types, throws clauses, and
-  `instanceof`.
+  Keeping this style preserves a simple, fast, predictive recursive-descent
+  parser. The cost is drift: any new type syntax, annotation placement, pattern
+  form, or generic-close rule has to be updated in both the scanner and the real
+  parser. When they disagree, the parser chooses the wrong production before
+  recovery can be precise.
 
-- Parameter-list grammar is too permissive. It does not enforce last-varargs,
-  and lambda parameter parsing accepts invalid mixed forms such as
-  `(x, int y) -> y` or `(var x, y) -> y`.
+  The judgement call is whether to keep paying that local simplicity cost, or
+  introduce a shared lookahead cursor/type-scanning primitive that makes grammar
+  drift harder but adds parser infrastructure.
 
-- Array creation accepts illegal dimension and initializer combinations, such as
-  `new int[][3]` and `new int[3] { 1, 2 }`.
+- Virtual `>` tokens are produced by mutating the parser token vector.
 
-- `SyntaxOutcome::Recovered` is currently derived from any diagnostic. That is
-  acceptable while Java syntax diagnostics are all syntax-affecting errors, but
-  the outcome should eventually be derived from syntax validity facts rather
-  than the mere presence of diagnostics once warnings or notes exist.
+  When a `>>` or `>>>` token closes nested generic type arguments, the parser
+  rewrites the token stream with `remove` and `splice`, turning the shift token
+  into multiple synthetic `>` tokens.
 
-- Parser organization is showing strain:
-  - grammar concepts live in `source.rs` next to token cursor and event
-    machinery;
-  - `include!` flattens all grammar files into one namespace;
-  - top-level delimiter scanning is duplicated in resource detection, for-header
-    detection, switch-label detection, and member-header scanning.
+  This is pragmatic and keeps tree construction simple today. The cost is that
+  token indexing becomes mutable, pathological nested generic code can pay
+  repeated vector-shift costs, and the final CST no longer has a clean token
+  origin model.
 
-## Lower Priority / Watchlist
+  A clean origin model means every parser token can answer where it came from:
+  either an original lexer token, or a virtual slice of an original lexer token.
+  That matters for formatter-grade tools because wrappers, diagnostics, source
+  maps, and token-preserving edits often need to relate CST tokens back to the
+  lexer stream and source bytes.
 
-- The public Java syntax surface currently exposes raw CST aliases and
-  `JavaSyntaxKind`. This is expected until typed wrappers exist, but downstream
-  consumers should avoid treating the raw shape as stable.
+  The judgement call is whether to keep the current simple mutation until
+  formatter wrappers prove they need stronger token identity, or invest now in
+  logical parser tokens with origin metadata / pending split state.
 
-- Dangling/comment-sensitive trivia currently relies on leading/trailing token
-  attachment. This will need a clear formatter-facing access story, but it is
-  not a Java parser correctness blocker yet.
+- Recovery structure may need a formatter-facing policy.
 
-- The claim that there is no corpus parser gate is false. The parser fixture
-  test parses the imported oracle Java inputs in
-  `crates/jolt_java_syntax/tests/parser_fixtures.rs`.
+  Lightweight recovery cleanup is done, but deeper recovery design is still a
+  product/API call. Today diagnostics are side-channel events and `ErrorNode`s
+  mark malformed syntax that was actually consumed. Missing tokens are
+  diagnostics, not tree nodes, and skipped ranges are not represented by a
+  richer recovery object.
+
+  The judgement call is how much structure formatter wrappers should rely on:
+  keep recovery lightweight and infer from diagnostics plus `ErrorNode`s, or add
+  more explicit CST/recovery constructs such as missing-token nodes, wider
+  skipped-region nodes, or diagnostic ranges tied directly to recovery nodes.
+
+- Typed wrappers need a public API stance.
+
+  The parser exposes raw CST aliases and `JavaSyntaxKind` today. Formatter code
+  can build on that, but then CST shape becomes an implicit public contract.
+
+  The judgement call is whether wrappers should closely mirror raw CST shape, or
+  expose formatter-oriented roles such as conditions, selectors, return values,
+  import kind, and switch-label items. The second option gives consumers a
+  better API but creates a stronger wrapper maintenance layer.
+
+- Java language-level/config gating needs a product decision.
+
+  The parser currently acts like one modern Java grammar. Contextual keywords
+  such as `record`, `sealed`, `permits`, `var`, and `yield` are interpreted
+  according to that grammar.
+
+  The judgement call is whether Jolt formats one current Java dialect, or
+  whether parsing should be configurable for older/release-specific Java source
+  levels. Supporting multiple language levels would make contextual keyword and
+  feature-gating behavior more correct for mixed projects, but it adds config
+  and compatibility surface area.

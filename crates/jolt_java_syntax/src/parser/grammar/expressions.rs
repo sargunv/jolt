@@ -1,4 +1,4 @@
-use super::{JavaSyntaxKind, Parser};
+use super::{JavaSyntaxKind, Parser, StopSet};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(super) enum LambdaParameterStyle {
@@ -14,10 +14,6 @@ pub(super) struct ParsedLambdaParameter {
 }
 
 impl Parser<'_> {
-    pub(super) fn consume_shallow_expression_until(&mut self, stops: &[JavaSyntaxKind]) {
-        self.parse_expression_until(stops);
-    }
-
     pub(super) fn consume_statement_expression_until(&mut self, stops: &[JavaSyntaxKind]) {
         if self.at_eof() || stops.contains(&self.current_kind()) {
             let error = self.start();
@@ -63,8 +59,9 @@ impl Parser<'_> {
             )
     }
 
-    pub(super) fn parse_expression_until(&mut self, stops: &[JavaSyntaxKind]) {
-        if self.at_eof() || stops.contains(&self.current_kind()) {
+    pub(super) fn parse_expression_until<'a>(&mut self, stops: impl Into<StopSet<'a>>) {
+        let stops = stops.into();
+        if self.at_eof() || stops.contains(self.current_kind()) {
             let error = self.start();
             self.expected_here("expected expression");
             self.complete(error, JavaSyntaxKind::ErrorNode);
@@ -73,7 +70,7 @@ impl Parser<'_> {
 
         self.parse_expression();
 
-        while !self.at_eof() && !stops.contains(&self.current_kind()) {
+        while !self.at_eof() && !stops.contains(self.current_kind()) {
             let error = self.start();
             self.unexpected_here("unexpected token in expression");
             self.bump();
@@ -519,15 +516,25 @@ impl Parser<'_> {
 
     pub(super) fn parse_lambda_parameter(&mut self) -> ParsedLambdaParameter {
         let parameter = self.start();
-        self.parse_variable_modifiers();
-        let style = self.current_lambda_parameter_style();
+        let has_modifiers = self.parse_variable_modifiers();
+        let starts_typed_parameter = self.starts_typed_lambda_parameter();
+        let style = if has_modifiers && !starts_typed_parameter {
+            LambdaParameterStyle::Explicit
+        } else {
+            self.current_lambda_parameter_style()
+        };
         let mut varargs = false;
-        if self.starts_typed_lambda_parameter() {
+        if starts_typed_parameter {
             self.parse_local_variable_type();
             self.parse_annotations();
             varargs = self.eat(JavaSyntaxKind::Ellipsis);
             self.expect_variable_identifier("expected lambda parameter name");
             self.parse_array_dimensions();
+        } else if has_modifiers {
+            let error = self.start();
+            self.expected_here("expected lambda parameter type after modifiers");
+            self.expect_variable_identifier("expected lambda parameter name");
+            self.complete(error, JavaSyntaxKind::ErrorNode);
         } else {
             self.expect_variable_identifier("expected lambda parameter name");
         }
@@ -584,7 +591,7 @@ impl Parser<'_> {
         self.parse_annotations();
 
         if self.at_name_segment() {
-            self.parse_class_type_tail();
+            self.parse_class_type_to_instantiate_tail();
             return self.complete(ty, JavaSyntaxKind::ClassType);
         }
 
@@ -596,6 +603,50 @@ impl Parser<'_> {
         }
 
         self.complete(ty, JavaSyntaxKind::ErrorNode)
+    }
+
+    pub(super) fn parse_class_type_to_instantiate_tail(&mut self) {
+        let name = self.start();
+        self.bump();
+        let mut qualified = false;
+
+        loop {
+            if self.at(JavaSyntaxKind::Lt)
+                && self.kind_at(self.skip_balanced_type_arguments_from(self.position()))
+                    == JavaSyntaxKind::Dot
+            {
+                let error = self.start();
+                self.unexpected_here(
+                    "type arguments in class instance creation must appear on the final type segment",
+                );
+                self.parse_optional_type_argument_list();
+                self.complete(error, JavaSyntaxKind::ErrorNode);
+            }
+
+            if !self.at(JavaSyntaxKind::Dot) {
+                break;
+            }
+
+            let after_dot = self.skip_annotations_from(self.position() + 1);
+            if !self.is_name_segment_at(after_dot) {
+                break;
+            }
+
+            qualified = true;
+            self.bump();
+            self.parse_annotations();
+            self.bump();
+        }
+
+        self.complete(
+            name,
+            if qualified {
+                JavaSyntaxKind::QualifiedName
+            } else {
+                JavaSyntaxKind::Name
+            },
+        );
+        self.parse_optional_type_argument_list();
     }
 
     pub(super) fn parse_array_creation_expression_fragment(
@@ -644,7 +695,7 @@ impl Parser<'_> {
         let dim = self.start();
         self.parse_annotations();
         self.expect(JavaSyntaxKind::LBracket, "expected `[`");
-        self.consume_shallow_expression_until(&[JavaSyntaxKind::RBracket]);
+        self.parse_expression_until(&[JavaSyntaxKind::RBracket]);
         self.expect(JavaSyntaxKind::RBracket, "expected `]`");
         self.complete(dim, JavaSyntaxKind::DimExpression);
     }
@@ -656,10 +707,7 @@ impl Parser<'_> {
             if self.at(JavaSyntaxKind::LBrace) {
                 self.parse_array_initializer_fragment();
             } else {
-                self.consume_shallow_expression_until(&[
-                    JavaSyntaxKind::Comma,
-                    JavaSyntaxKind::RBrace,
-                ]);
+                self.parse_expression_until(&[JavaSyntaxKind::Comma, JavaSyntaxKind::RBrace]);
             }
 
             self.eat(JavaSyntaxKind::Comma);
