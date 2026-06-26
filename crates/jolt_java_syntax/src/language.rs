@@ -3,7 +3,7 @@ use jolt_syntax::{Language, RawSyntaxKind};
 use crate::JavaSyntaxKind;
 
 /// Java language binding for the shared syntax tree infrastructure.
-pub enum JavaLanguage {}
+pub(crate) enum JavaLanguage {}
 
 impl Language for JavaLanguage {
     type Kind = JavaSyntaxKind;

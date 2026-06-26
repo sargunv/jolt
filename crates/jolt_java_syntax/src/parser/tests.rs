@@ -16,7 +16,7 @@
 // Focused tests should not try to enumerate the combinatorial product of the
 // grammar. Each test should make one source-shape claim obvious.
 
-use jolt_syntax::{Event, green_text};
+use jolt_syntax::Event;
 
 use super::{finish_parse, parse_compilation_unit, source::ParseEvents};
 use crate::{DiagnosticStage, JavaSyntaxKind, Severity, SyntaxOutcome};
@@ -37,7 +37,7 @@ fn parser_shell_preserves_source_text() {
     let parse = parse_compilation_unit(source);
     let syntax = parse.syntax().expect("clean parse should produce syntax");
 
-    assert_eq!(green_text(syntax.green()), source);
+    assert_eq!(syntax.source_text(), source);
 }
 
 #[test]
@@ -2571,7 +2571,7 @@ fn assert_parse_snapshot(snapshot_name: &str, source: &str) {
     let syntax = parse.syntax().expect("parse should produce syntax");
 
     assert_eq!(
-        green_text(syntax.green()),
+        syntax.source_text(),
         source,
         "parser reconstruction changed source"
     );

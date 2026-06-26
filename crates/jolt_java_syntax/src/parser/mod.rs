@@ -10,22 +10,15 @@ use jolt_diagnostics::{
     Diagnostic, DiagnosticCode, DiagnosticCodeId, DiagnosticStage, Severity, SyntaxOutcome,
 };
 use jolt_syntax::{
-    GreenTokenSource, GreenTriviaPiece, SyntaxElement, SyntaxNode, SyntaxToken,
-    TriviaKind as GreenTriviaKind, build_green_tree,
+    GreenTokenSource, GreenTriviaPiece, TriviaKind as GreenTriviaKind, build_green_tree,
 };
 
-use crate::{JavaLanguage, JavaLexer, JavaSyntaxKind, Token, Trivia};
+use crate::{
+    CompilationUnit, JavaLexer, JavaSyntaxKind, Token, Trivia,
+    nodes::{JavaSyntaxNode, cast_compilation_unit},
+};
 
 use self::source::{Parser, ParserToken};
-
-/// A Java syntax node.
-pub type JavaSyntaxNode = SyntaxNode<JavaLanguage>;
-
-/// A Java syntax token.
-pub type JavaSyntaxToken = SyntaxToken<JavaLanguage>;
-
-/// A Java syntax node or token.
-pub type JavaSyntaxElement = SyntaxElement<JavaLanguage>;
 
 /// Stable Java parser diagnostic codes.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -79,7 +72,7 @@ impl DiagnosticCode for JavaParseDiagnosticCode {
 
 /// The result of parsing Java source text.
 pub struct JavaParse {
-    syntax: Option<JavaSyntaxNode>,
+    syntax: Option<CompilationUnit>,
     diagnostics: Vec<Diagnostic>,
     outcome: SyntaxOutcome,
 }
@@ -87,7 +80,7 @@ pub struct JavaParse {
 impl JavaParse {
     /// Returns the parsed syntax tree root.
     #[must_use]
-    pub const fn syntax(&self) -> Option<&JavaSyntaxNode> {
+    pub fn syntax(&self) -> Option<&CompilationUnit> {
         self.syntax.as_ref()
     }
 
@@ -105,7 +98,7 @@ impl JavaParse {
 
     /// Splits this parse result into its syntax root, diagnostics, and outcome.
     #[must_use]
-    pub fn into_parts(self) -> (Option<JavaSyntaxNode>, Vec<Diagnostic>, SyntaxOutcome) {
+    pub fn into_parts(self) -> (Option<CompilationUnit>, Vec<Diagnostic>, SyntaxOutcome) {
         (self.syntax, self.diagnostics, self.outcome)
     }
 }
@@ -184,7 +177,10 @@ fn finish_parse(
     };
 
     JavaParse {
-        syntax: Some(JavaSyntaxNode::new_root(root)),
+        syntax: Some(
+            cast_compilation_unit(JavaSyntaxNode::new_root(root))
+                .expect("parser root must be a compilation unit"),
+        ),
         diagnostics,
         outcome,
     }

@@ -4,7 +4,6 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use jolt_java_syntax::{DiagnosticStage, JavaParse, JavaSyntaxKind, parse_compilation_unit};
-use jolt_syntax::green_text;
 
 #[test]
 fn oracle_java_inputs_parse_without_loss() {
@@ -43,7 +42,7 @@ fn assert_corpus(suite: &str, expected_files: usize) -> CorpusSummary {
             .unwrap_or_else(|| panic!("parser aborted in {}", path.display()));
 
         assert_eq!(
-            green_text(syntax.green()),
+            syntax.source_text(),
             source,
             "parser reconstruction changed source in {}",
             path.display()
@@ -123,9 +122,8 @@ impl CorpusSummary {
 
     fn record(&mut self, parse: &JavaParse) {
         let syntax = parse.syntax().expect("parser summary requires syntax");
-        increment(&mut self.nodes, syntax.kind());
-        for node in syntax.descendants() {
-            increment(&mut self.nodes, node.kind());
+        for node in syntax.self_and_descendants() {
+            *self.nodes.entry(node.kind()).or_default() += 1;
         }
 
         for diagnostic in parse.diagnostics() {
@@ -176,10 +174,6 @@ fn assert_has_parser_nodes(summary: &CorpusSummary) {
         summary.suite,
         summary.render()
     );
-}
-
-fn increment<K: Eq + std::hash::Hash>(counts: &mut HashMap<K, usize>, key: K) {
-    *counts.entry(key).or_default() += 1;
 }
 
 fn increment_rendered(counts: &mut BTreeMap<String, usize>, key: String) {

@@ -792,7 +792,7 @@ compile to `wasm32-unknown-unknown`.
 
 ### Milestone 3: shared diagnostics and syntax outcome policy
 
-Status: pending.
+Status: complete.
 
 Replace the temporary string-only diagnostic shape with the shared diagnostic
 model before more lexer/parser/formatter layers depend on diagnostic policy.
@@ -852,7 +852,7 @@ loss.
 
 ### Milestone 5: Java lossless syntax tree over the full Java corpus
 
-Status: complete?
+Status: complete.
 
 Build the Java parser and syntax tree after the lexer has proven it can cover
 the corpus.
@@ -873,7 +873,7 @@ layout builder is built on top of it.
 
 ### Milestone 6: Java CST wrappers
 
-Status: pending.
+Status: complete.
 
 Add typed Java CST wrappers after the raw Java CST shape is stable enough to
 wrap without churn.
