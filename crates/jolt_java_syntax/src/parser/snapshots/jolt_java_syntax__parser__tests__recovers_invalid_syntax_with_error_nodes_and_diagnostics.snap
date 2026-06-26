@@ -1,5 +1,6 @@
 ---
 source: crates/jolt_java_syntax/src/parser/tests.rs
+assertion_line: 2458
 expression: "&parse"
 ---
 syntax:
@@ -35,11 +36,10 @@ CompilationUnit
       RBrace "}" @ 123..124 leading=[Newline "\n", Whitespace "            "]
   Eof "" @ 133..133 leading=[Newline "\n", Whitespace "        "]
 
-parser diagnostics:
-  expected type
-  expected parameter name
-  expected `)` after parameters
-  expected expression
+outcome: Recovered
 
-lexer diagnostics:
-  (none)
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=57..58 message="expected type"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=57..58 message="expected parameter name"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=57..58 message="expected `)` after parameters"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=91..92 message="expected expression"

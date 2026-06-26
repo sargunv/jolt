@@ -40,9 +40,8 @@ CompilationUnit
       RBrace "}" @ 162..163 leading=[Newline "\n", Whitespace "            "]
   Eof "" @ 172..172 leading=[Newline "\n", Whitespace "        "]
 
-parser diagnostics:
-  unqualified `yield` method invocation is not allowed
-  expected statement expression
+outcome: Recovered
 
-lexer diagnostics:
-  (none)
+diagnostics:
+  code=java.parse.unqualified_yield_method_invocation severity=Error stage=Parser range=90..95 message="unqualified `yield` method invocation is not allowed"
+  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=97..98 message="expected statement expression"

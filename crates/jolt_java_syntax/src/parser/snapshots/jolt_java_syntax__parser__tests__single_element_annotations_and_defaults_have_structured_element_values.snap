@@ -1,5 +1,6 @@
 ---
 source: crates/jolt_java_syntax/src/parser/tests.rs
+assertion_line: 2458
 expression: "&parse"
 ---
 syntax:
@@ -146,8 +147,7 @@ CompilationUnit
       RBrace "}" @ 488..489
   Eof "" @ 498..498 leading=[Newline "\n", Whitespace "        "]
 
-parser diagnostics:
-  (none)
+outcome: Clean
 
-lexer diagnostics:
+diagnostics:
   (none)

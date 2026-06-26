@@ -139,12 +139,11 @@ CompilationUnit
       RBrace "}" @ 665..666 leading=[Newline "\n", Whitespace "            "]
   Eof "" @ 675..675 leading=[Newline "\n", Whitespace "        "]
 
-parser diagnostics:
-  decimal integer boundary literal may appear only as the operand of unary minus
-  decimal integer boundary literal may appear only as the operand of unary minus
-  decimal integer boundary literal may appear only as the operand of unary minus
-  decimal integer boundary literal may appear only as the operand of unary minus
-  decimal integer boundary literal may appear only as the operand of unary minus
+outcome: Recovered
 
-lexer diagnostics:
-  (none)
+diagnostics:
+  code=java.parse.decimal_integer_boundary_literal severity=Error stage=Parser range=157..170 message="decimal integer boundary literal may appear only as the operand of unary minus"
+  code=java.parse.decimal_integer_boundary_literal severity=Error stage=Parser range=220..230 message="decimal integer boundary literal may appear only as the operand of unary minus"
+  code=java.parse.decimal_integer_boundary_literal severity=Error stage=Parser range=332..358 message="decimal integer boundary literal may appear only as the operand of unary minus"
+  code=java.parse.decimal_integer_boundary_literal severity=Error stage=Parser range=400..420 message="decimal integer boundary literal may appear only as the operand of unary minus"
+  code=java.parse.decimal_integer_boundary_literal severity=Error stage=Parser range=566..576 message="decimal integer boundary literal may appear only as the operand of unary minus"

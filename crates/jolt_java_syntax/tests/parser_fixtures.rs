@@ -3,7 +3,7 @@ use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use jolt_java_syntax::{JavaParse, JavaSyntaxKind, parse_compilation_unit};
+use jolt_java_syntax::{DiagnosticStage, JavaParse, JavaSyntaxKind, parse_compilation_unit};
 use jolt_syntax::green_text;
 
 #[test]
@@ -38,9 +38,12 @@ fn assert_corpus(suite: &str, expected_files: usize) -> CorpusSummary {
         let source = fs::read_to_string(&path)
             .unwrap_or_else(|error| panic!("failed to read {}: {error}", path.display()));
         let parse = parse_compilation_unit(&source);
+        let syntax = parse
+            .syntax()
+            .unwrap_or_else(|| panic!("parser aborted in {}", path.display()));
 
         assert_eq!(
-            green_text(parse.syntax().green()),
+            green_text(syntax.green()),
             source,
             "parser reconstruction changed source in {}",
             path.display()
@@ -49,14 +52,8 @@ fn assert_corpus(suite: &str, expected_files: usize) -> CorpusSummary {
         summary.record(&parse);
 
         assert!(
-            parse.lexer_diagnostics().is_empty(),
-            "lexer diagnostic(s) while parsing {}: {:#?}",
-            path.display(),
-            parse.lexer_diagnostics()
-        );
-        assert!(
             parse.diagnostics().is_empty(),
-            "parser diagnostic(s) in {}: {:#?}",
+            "syntax diagnostic(s) in {}: {:#?}",
             path.display(),
             parse.diagnostics()
         );
@@ -112,22 +109,28 @@ impl CorpusSummary {
     }
 
     fn record(&mut self, parse: &JavaParse) {
-        increment(&mut self.nodes, parse.syntax().kind());
-        for node in parse.syntax().descendants() {
+        let syntax = parse.syntax().expect("parser summary requires syntax");
+        increment(&mut self.nodes, syntax.kind());
+        for node in syntax.descendants() {
             increment(&mut self.nodes, node.kind());
         }
 
         for diagnostic in parse.diagnostics() {
-            increment_rendered(
-                &mut self.parser_diagnostics,
-                format!("{:?}", diagnostic.kind()),
-            );
-        }
-        for diagnostic in parse.lexer_diagnostics() {
-            increment_rendered(
-                &mut self.lexer_diagnostics,
-                format!("{:?}", diagnostic.kind),
-            );
+            match diagnostic.stage {
+                DiagnosticStage::Parser => {
+                    increment_rendered(
+                        &mut self.parser_diagnostics,
+                        diagnostic.code.as_str().to_owned(),
+                    );
+                }
+                DiagnosticStage::Lexer => {
+                    increment_rendered(
+                        &mut self.lexer_diagnostics,
+                        diagnostic.code.as_str().to_owned(),
+                    );
+                }
+                DiagnosticStage::Config | DiagnosticStage::Formatter => {}
+            }
         }
     }
 

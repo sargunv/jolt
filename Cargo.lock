@@ -93,6 +93,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "jolt_diagnostics"
+version = "0.0.0"
+dependencies = [
+ "jolt_text",
+]
+
+[[package]]
 name = "jolt_fmt_cli"
 version = "0.0.0"
 
@@ -100,6 +107,7 @@ version = "0.0.0"
 name = "jolt_fmt_core"
 version = "0.0.0"
 dependencies = [
+ "jolt_diagnostics",
  "jolt_text",
 ]
 
@@ -120,6 +128,7 @@ name = "jolt_java_syntax"
 version = "0.0.0"
 dependencies = [
  "insta",
+ "jolt_diagnostics",
  "jolt_syntax",
  "jolt_text",
  "num_enum",
@@ -138,6 +147,7 @@ version = "0.0.0"
 name = "jolt_syntax"
 version = "0.0.0"
 dependencies = [
+ "jolt_diagnostics",
  "jolt_text",
 ]
 

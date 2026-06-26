@@ -96,7 +96,7 @@ impl Parser<'_> {
                 "expected `}` after module declaration",
             );
         } else {
-            self.error_here("expected module body");
+            self.expected_here("expected module body");
         }
 
         self.complete(module, JavaSyntaxKind::ModuleDeclaration);
@@ -168,7 +168,7 @@ impl Parser<'_> {
                 JavaSyntaxKind::ProvidesDirective
             }
             _ => {
-                self.error_here("expected module directive");
+                self.expected_here("expected module directive");
                 self.recover_module_directive();
                 JavaSyntaxKind::ModuleDirective
             }

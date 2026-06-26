@@ -1,6 +1,5 @@
 //! Shared lossless syntax tree infrastructure for Jolt.
 
-mod diagnostic;
 mod event;
 mod kind;
 mod language;
@@ -10,9 +9,11 @@ mod tree_sink;
 pub mod green;
 pub mod red;
 
-pub use diagnostic::{ParseDiagnostic, ParseDiagnosticKind};
 pub use event::{CompletedMarker, Event, Marker};
 pub use green::{GreenElement, GreenNode, GreenToken, GreenTrivia, TriviaKind};
+pub use jolt_diagnostics::{
+    Diagnostic, DiagnosticCode, DiagnosticCodeId, DiagnosticStage, Severity, SyntaxOutcome,
+};
 pub use kind::RawSyntaxKind;
 pub use language::Language;
 pub use red::{SyntaxElement, SyntaxNode, SyntaxToken};

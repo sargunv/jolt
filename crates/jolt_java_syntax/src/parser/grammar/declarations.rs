@@ -17,7 +17,7 @@ impl Parser<'_> {
         } else if self.eat_contextual("record") {
             JavaSyntaxKind::RecordDeclaration
         } else {
-            self.error_here("expected top-level type declaration");
+            self.expected_here("expected top-level type declaration");
             self.recover_top_level();
             self.complete(type_decl, JavaSyntaxKind::ErrorNode);
             return;
@@ -33,7 +33,7 @@ impl Parser<'_> {
     fn parse_type_body(&mut self, kind: JavaSyntaxKind, type_name: Option<&str>) {
         if !self.at(JavaSyntaxKind::LBrace) {
             let error = self.start();
-            self.error_here("expected type body");
+            self.expected_here("expected type body");
             self.eat(JavaSyntaxKind::Semicolon);
             self.complete(error, JavaSyntaxKind::ErrorNode);
             return;
@@ -225,7 +225,7 @@ impl Parser<'_> {
 
     fn parse_record_header(&mut self) {
         if !self.eat(JavaSyntaxKind::LParen) {
-            self.error_here("expected record header");
+            self.expected_here("expected record header");
             return;
         }
 
@@ -317,7 +317,7 @@ impl Parser<'_> {
             self.parse_field_declaration();
         } else {
             let error = self.start();
-            self.error_here("unexpected token in type body");
+            self.unexpected_here("unexpected token in type body");
             self.consume_body_member_fragment();
             self.complete(error, JavaSyntaxKind::ErrorNode);
         }
@@ -464,7 +464,7 @@ impl Parser<'_> {
                     self.parse_receiver_parameter();
                 } else if self.starts_receiver_parameter() {
                     let error = self.start();
-                    self.error_here("receiver parameter must be first");
+                    self.misplaced_receiver_parameter_here("receiver parameter must be first");
                     self.parse_receiver_parameter();
                     self.complete(error, JavaSyntaxKind::ErrorNode);
                 } else {
@@ -557,7 +557,7 @@ impl Parser<'_> {
                 allow_constructor_invocation = false;
             } else if self.starts_constructor_invocation_statement() {
                 let error = self.start();
-                self.error_here(
+                self.misplaced_constructor_invocation_here(
                     "explicit constructor invocation must be first in constructor body",
                 );
                 self.parse_constructor_invocation();
@@ -587,7 +587,7 @@ impl Parser<'_> {
             if self.at(JavaSyntaxKind::ThisKw) || self.at(JavaSyntaxKind::SuperKw) {
                 self.bump();
             } else {
-                self.error_here("expected `this` or `super` in constructor invocation");
+                self.expected_here("expected `this` or `super` in constructor invocation");
             }
             self.parse_argument_list();
         } else {

@@ -1,5 +1,6 @@
 ---
 source: crates/jolt_java_syntax/src/parser/tests.rs
+assertion_line: 2458
 expression: "&parse"
 ---
 syntax:
@@ -11,8 +12,7 @@ CompilationUnit
       Semicolon ";" @ 7..8
   Eof "" @ 8..8
 
-parser diagnostics:
-  expected type body
+outcome: Recovered
 
-lexer diagnostics:
-  (none)
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=7..8 message="expected type body"

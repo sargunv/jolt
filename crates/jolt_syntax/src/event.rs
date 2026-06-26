@@ -1,4 +1,4 @@
-use crate::{ParseDiagnostic, RawSyntaxKind};
+use crate::{Diagnostic, RawSyntaxKind};
 
 /// A parser event consumed by the shared green tree sink.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -15,7 +15,7 @@ pub enum Event {
     /// Finishes the current syntax node.
     FinishNode,
     /// Records a parser diagnostic without changing the tree shape.
-    Error(ParseDiagnostic),
+    Error(Diagnostic),
     /// A placeholder event reserved by parser marker APIs.
     Tombstone,
 }

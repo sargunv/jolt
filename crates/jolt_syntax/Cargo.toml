@@ -7,6 +7,7 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+jolt_diagnostics = { path = "../jolt_diagnostics" }
 jolt_text = { path = "../jolt_text" }
 
 [lints]

@@ -16,26 +16,53 @@
 // Focused tests should not try to enumerate the combinatorial product of the
 // grammar. Each test should make one source-shape claim obvious.
 
-use jolt_syntax::green_text;
+use jolt_syntax::{Event, green_text};
 
-use super::parse_compilation_unit;
-use crate::JavaSyntaxKind;
+use super::{finish_parse, parse_compilation_unit, source::ParseEvents};
+use crate::{DiagnosticStage, JavaSyntaxKind, Severity, SyntaxOutcome};
 
 #[test]
 fn parser_shell_wraps_source_in_compilation_unit() {
     let parse = parse_compilation_unit("package a;\nclass A {}\n");
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
 
-    assert_eq!(parse.syntax().kind(), JavaSyntaxKind::CompilationUnit);
+    assert_eq!(syntax.kind(), JavaSyntaxKind::CompilationUnit);
+    assert_eq!(parse.outcome(), SyntaxOutcome::Clean);
     assert!(parse.diagnostics().is_empty());
-    assert!(parse.lexer_diagnostics().is_empty());
 }
 
 #[test]
 fn parser_shell_preserves_source_text() {
     let source = "class A {\n  // hello\n}\n";
     let parse = parse_compilation_unit(source);
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
 
-    assert_eq!(green_text(parse.syntax().green()), source);
+    assert_eq!(green_text(syntax.green()), source);
+}
+
+#[test]
+fn invalid_event_stream_aborts_without_syntax() {
+    let parse = finish_parse(
+        "",
+        Vec::new(),
+        &ParseEvents {
+            events: vec![Event::Token],
+            tokens: Vec::new(),
+        },
+    );
+
+    assert_eq!(parse.outcome(), SyntaxOutcome::Aborted);
+    assert!(parse.syntax().is_none());
+    assert_eq!(parse.diagnostics().len(), 1);
+
+    let diagnostic = &parse.diagnostics()[0];
+    assert_eq!(
+        diagnostic.code.as_str(),
+        "internal.syntax.invalid_event_stream"
+    );
+    assert_eq!(diagnostic.severity, Severity::InternalError);
+    assert_eq!(diagnostic.stage, DiagnosticStage::Parser);
+    assert_eq!(diagnostic.range, None);
 }
 
 #[test]
@@ -2449,9 +2476,10 @@ fn parses_intersection_cast_whose_operand_is_lambda() {
 
 fn assert_parse_snapshot(snapshot_name: &str, source: &str) {
     let parse = parse_compilation_unit(source);
+    let syntax = parse.syntax().expect("parse should produce syntax");
 
     assert_eq!(
-        green_text(parse.syntax().green()),
+        green_text(syntax.green()),
         source,
         "parser reconstruction changed source"
     );

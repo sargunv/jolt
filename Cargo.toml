@@ -1,5 +1,6 @@
 [workspace]
 members = [
+  "crates/jolt_diagnostics",
   "crates/jolt_fmt_cli",
   "crates/jolt_fmt_core",
   "crates/jolt_fmt_dprint",

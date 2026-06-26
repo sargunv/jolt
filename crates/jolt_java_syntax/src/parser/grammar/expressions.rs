@@ -6,7 +6,7 @@ impl Parser<'_> {
     fn consume_statement_expression_until(&mut self, stops: &[JavaSyntaxKind]) {
         if self.at_eof() || stops.contains(&self.current_kind()) {
             let error = self.start();
-            self.error_here("expected statement expression");
+            self.invalid_statement_expression_here("expected statement expression");
             self.complete(error, JavaSyntaxKind::ErrorNode);
             return;
         }
@@ -14,12 +14,12 @@ impl Parser<'_> {
         let start_kind = self.current_kind();
         let expression = self.parse_expression();
         if !Self::is_statement_expression(expression.kind(), start_kind) {
-            self.error_here("expected statement expression");
+            self.invalid_statement_expression_here("expected statement expression");
         }
 
         while !self.at_eof() && !stops.contains(&self.current_kind()) {
             let error = self.start();
-            self.error_here("unexpected token in statement expression");
+            self.invalid_statement_expression_here("unexpected token in statement expression");
             self.bump();
             self.complete(error, JavaSyntaxKind::ErrorNode);
         }
@@ -47,7 +47,7 @@ impl Parser<'_> {
     fn parse_expression_until(&mut self, stops: &[JavaSyntaxKind]) {
         if self.at_eof() || stops.contains(&self.current_kind()) {
             let error = self.start();
-            self.error_here("expected expression");
+            self.expected_here("expected expression");
             self.complete(error, JavaSyntaxKind::ErrorNode);
             return;
         }
@@ -56,7 +56,7 @@ impl Parser<'_> {
 
         while !self.at_eof() && !stops.contains(&self.current_kind()) {
             let error = self.start();
-            self.error_here("unexpected token in expression");
+            self.unexpected_here("unexpected token in expression");
             self.bump();
             self.complete(error, JavaSyntaxKind::ErrorNode);
         }
@@ -278,7 +278,9 @@ impl Parser<'_> {
     ) -> jolt_syntax::CompletedMarker {
         if self.at_contextual("yield") && self.nth_kind(1) == JavaSyntaxKind::LParen {
             let error = self.start();
-            self.error_here("unqualified `yield` method invocation is not allowed");
+            self.unqualified_yield_method_invocation_here(
+                "unqualified `yield` method invocation is not allowed",
+            );
             self.bump();
             self.parse_argument_list();
             return self.complete(error, JavaSyntaxKind::ErrorNode);
@@ -343,7 +345,7 @@ impl Parser<'_> {
                 return self.complete(annotated, JavaSyntaxKind::NameExpression);
             }
 
-            self.error_here("expected expression after annotation");
+            self.expected_here("expected expression after annotation");
             return self.complete(annotated, JavaSyntaxKind::ErrorNode);
         }
 
@@ -354,7 +356,7 @@ impl Parser<'_> {
         }
 
         let error = self.start();
-        self.error_here("expected expression");
+        self.expected_here("expected expression");
         if !self.at_eof() {
             self.bump();
         }
@@ -556,7 +558,7 @@ impl Parser<'_> {
     ) -> jolt_syntax::CompletedMarker {
         let literal = self.start();
         if !allow_decimal_boundary_literal && self.at_decimal_integer_boundary_literal() {
-            self.error_here(
+            self.decimal_integer_boundary_literal_here(
                 "decimal integer boundary literal may appear only as the operand of unary minus",
             );
         }

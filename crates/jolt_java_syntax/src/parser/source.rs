@@ -1,7 +1,10 @@
-use jolt_syntax::{CompletedMarker, Event, Marker, ParseDiagnostic};
+use jolt_diagnostics::{Diagnostic, DiagnosticCode, DiagnosticStage, Severity};
+use jolt_syntax::{CompletedMarker, Event, Marker};
 use jolt_text::{TextRange, TextSize};
 
 use crate::{JavaSyntaxKind, Token, Trivia};
+
+use super::JavaParseDiagnosticCode;
 
 pub(super) struct ParseEvents {
     pub(super) events: Vec<Event>,
@@ -168,13 +171,13 @@ impl<'source> Parser<'source> {
 
     pub(super) fn expect(&mut self, kind: JavaSyntaxKind, message: &str) {
         if !self.eat(kind) {
-            self.error_here(message);
+            self.expected_here(message);
         }
     }
 
     pub(super) fn expect_contextual(&mut self, text: &str, message: &str) {
         if !self.eat_contextual(text) {
-            self.error_here(message);
+            self.expected_here(message);
         }
     }
 
@@ -247,15 +250,72 @@ impl<'source> Parser<'source> {
         self.expect(JavaSyntaxKind::Gt, "expected `>`");
     }
 
-    pub(super) fn error_here(&mut self, message: &str) {
+    pub(super) fn expected_here(&mut self, message: &str) {
+        self.error_here(JavaParseDiagnosticCode::ExpectedSyntax, message);
+    }
+
+    pub(super) fn unexpected_here(&mut self, message: &str) {
+        self.error_here(JavaParseDiagnosticCode::UnexpectedSyntax, message);
+    }
+
+    pub(super) fn invalid_statement_expression_here(&mut self, message: &str) {
+        self.error_here(JavaParseDiagnosticCode::InvalidStatementExpression, message);
+    }
+
+    pub(super) fn invalid_resource_variable_access_here(&mut self, message: &str) {
+        self.error_here(
+            JavaParseDiagnosticCode::InvalidResourceVariableAccess,
+            message,
+        );
+    }
+
+    pub(super) fn invalid_switch_guard_here(&mut self, message: &str) {
+        self.error_here(JavaParseDiagnosticCode::InvalidSwitchGuard, message);
+    }
+
+    pub(super) fn unqualified_yield_method_invocation_here(&mut self, message: &str) {
+        self.error_here(
+            JavaParseDiagnosticCode::UnqualifiedYieldMethodInvocation,
+            message,
+        );
+    }
+
+    pub(super) fn decimal_integer_boundary_literal_here(&mut self, message: &str) {
+        self.error_here(
+            JavaParseDiagnosticCode::DecimalIntegerBoundaryLiteral,
+            message,
+        );
+    }
+
+    pub(super) fn misplaced_receiver_parameter_here(&mut self, message: &str) {
+        self.error_here(JavaParseDiagnosticCode::MisplacedReceiverParameter, message);
+    }
+
+    pub(super) fn misplaced_constructor_invocation_here(&mut self, message: &str) {
+        self.error_here(
+            JavaParseDiagnosticCode::MisplacedConstructorInvocation,
+            message,
+        );
+    }
+
+    pub(super) fn restricted_type_identifier_here(&mut self, message: &str) {
+        self.error_here(JavaParseDiagnosticCode::RestrictedTypeIdentifier, message);
+    }
+
+    fn error_here(&mut self, code: JavaParseDiagnosticCode, message: &str) {
         let range = self
             .tokens
             .get(self.pos)
             .or_else(|| self.tokens.last())
             .expect("parser token stream must include EOF")
             .range;
-        self.events
-            .push(Event::Error(ParseDiagnostic::message(message, range)));
+        self.events.push(Event::Error(Diagnostic {
+            code: code.id(),
+            severity: Severity::Error,
+            stage: DiagnosticStage::Parser,
+            message: message.to_owned(),
+            range: Some(range),
+        }));
     }
 
     pub(super) fn start(&mut self) -> Marker {

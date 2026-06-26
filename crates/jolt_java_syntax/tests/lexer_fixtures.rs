@@ -194,7 +194,7 @@ impl CorpusSummary {
         }
 
         for diagnostic in &lexed.diagnostics {
-            increment(&mut self.diagnostics, format!("{:?}", diagnostic.kind));
+            increment(&mut self.diagnostics, diagnostic.code.as_str().to_owned());
         }
     }
 

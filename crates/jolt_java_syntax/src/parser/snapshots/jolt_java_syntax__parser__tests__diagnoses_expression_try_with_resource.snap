@@ -63,8 +63,7 @@ CompilationUnit
       RBrace "}" @ 217..218 leading=[Newline "\n", Whitespace "            "]
   Eof "" @ 227..227 leading=[Newline "\n", Whitespace "        "]
 
-parser diagnostics:
-  expected resource variable declaration or variable access
+outcome: Recovered
 
-lexer diagnostics:
-  (none)
+diagnostics:
+  code=java.parse.invalid_resource_variable_access severity=Error stage=Parser range=127..128 message="expected resource variable declaration or variable access"

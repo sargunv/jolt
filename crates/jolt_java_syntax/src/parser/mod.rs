@@ -6,12 +6,15 @@ mod source;
 
 use std::fmt;
 
+use jolt_diagnostics::{
+    Diagnostic, DiagnosticCode, DiagnosticCodeId, DiagnosticStage, Severity, SyntaxOutcome,
+};
 use jolt_syntax::{
-    GreenTokenSource, GreenTriviaPiece, ParseDiagnostic, ParseDiagnosticKind, SyntaxElement,
-    SyntaxNode, SyntaxToken, TriviaKind as GreenTriviaKind, build_green_tree,
+    GreenTokenSource, GreenTriviaPiece, SyntaxElement, SyntaxNode, SyntaxToken,
+    TriviaKind as GreenTriviaKind, build_green_tree,
 };
 
-use crate::{JavaLanguage, JavaLexer, JavaSyntaxKind, LexerDiagnostic, Token, Trivia};
+use crate::{JavaLanguage, JavaLexer, JavaSyntaxKind, Token, Trivia};
 
 use self::source::{Parser, ParserToken};
 
@@ -24,63 +27,108 @@ pub type JavaSyntaxToken = SyntaxToken<JavaLanguage>;
 /// A Java syntax node or token.
 pub type JavaSyntaxElement = SyntaxElement<JavaLanguage>;
 
+/// Stable Java parser diagnostic codes.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum JavaParseDiagnosticCode {
+    ExpectedSyntax,
+    UnexpectedSyntax,
+    InvalidStatementExpression,
+    InvalidResourceVariableAccess,
+    InvalidSwitchGuard,
+    UnqualifiedYieldMethodInvocation,
+    DecimalIntegerBoundaryLiteral,
+    MisplacedReceiverParameter,
+    MisplacedConstructorInvocation,
+    RestrictedTypeIdentifier,
+    InvalidEventStream,
+}
+
+impl DiagnosticCode for JavaParseDiagnosticCode {
+    fn id(&self) -> DiagnosticCodeId {
+        match self {
+            Self::ExpectedSyntax => DiagnosticCodeId::new("java.parse.expected_syntax"),
+            Self::UnexpectedSyntax => DiagnosticCodeId::new("java.parse.unexpected_syntax"),
+            Self::InvalidStatementExpression => {
+                DiagnosticCodeId::new("java.parse.invalid_statement_expression")
+            }
+            Self::InvalidResourceVariableAccess => {
+                DiagnosticCodeId::new("java.parse.invalid_resource_variable_access")
+            }
+            Self::InvalidSwitchGuard => DiagnosticCodeId::new("java.parse.invalid_switch_guard"),
+            Self::UnqualifiedYieldMethodInvocation => {
+                DiagnosticCodeId::new("java.parse.unqualified_yield_method_invocation")
+            }
+            Self::DecimalIntegerBoundaryLiteral => {
+                DiagnosticCodeId::new("java.parse.decimal_integer_boundary_literal")
+            }
+            Self::MisplacedReceiverParameter => {
+                DiagnosticCodeId::new("java.parse.misplaced_receiver_parameter")
+            }
+            Self::MisplacedConstructorInvocation => {
+                DiagnosticCodeId::new("java.parse.misplaced_constructor_invocation")
+            }
+            Self::RestrictedTypeIdentifier => {
+                DiagnosticCodeId::new("java.parse.restricted_type_identifier")
+            }
+            Self::InvalidEventStream => {
+                DiagnosticCodeId::new("internal.syntax.invalid_event_stream")
+            }
+        }
+    }
+}
+
 /// The result of parsing Java source text.
 pub struct JavaParse {
-    syntax: JavaSyntaxNode,
-    diagnostics: Vec<ParseDiagnostic>,
-    lexer_diagnostics: Vec<LexerDiagnostic>,
+    syntax: Option<JavaSyntaxNode>,
+    diagnostics: Vec<Diagnostic>,
+    outcome: SyntaxOutcome,
 }
 
 impl JavaParse {
     /// Returns the parsed syntax tree root.
     #[must_use]
-    pub const fn syntax(&self) -> &JavaSyntaxNode {
-        &self.syntax
+    pub const fn syntax(&self) -> Option<&JavaSyntaxNode> {
+        self.syntax.as_ref()
     }
 
     /// Returns parser diagnostics.
     #[must_use]
-    pub fn diagnostics(&self) -> &[ParseDiagnostic] {
+    pub fn diagnostics(&self) -> &[Diagnostic] {
         &self.diagnostics
     }
 
-    /// Returns lexer diagnostics produced while parsing.
+    /// Returns the syntax production outcome.
     #[must_use]
-    pub fn lexer_diagnostics(&self) -> &[LexerDiagnostic] {
-        &self.lexer_diagnostics
+    pub const fn outcome(&self) -> SyntaxOutcome {
+        self.outcome
     }
 
-    /// Splits this parse result into its syntax root and diagnostics.
+    /// Splits this parse result into its syntax root, diagnostics, and outcome.
     #[must_use]
-    pub fn into_parts(self) -> (JavaSyntaxNode, Vec<ParseDiagnostic>, Vec<LexerDiagnostic>) {
-        (self.syntax, self.diagnostics, self.lexer_diagnostics)
+    pub fn into_parts(self) -> (Option<JavaSyntaxNode>, Vec<Diagnostic>, SyntaxOutcome) {
+        (self.syntax, self.diagnostics, self.outcome)
     }
 }
 
 impl fmt::Debug for JavaParse {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "syntax:")?;
-        writeln!(f, "{:?}", self.syntax)?;
+        if let Some(syntax) = &self.syntax {
+            writeln!(f, "{syntax:?}")?;
+        } else {
+            writeln!(f, "  (none)")?;
+        }
 
         writeln!(f)?;
-        writeln!(f, "parser diagnostics:")?;
+        writeln!(f, "outcome: {:?}", self.outcome)?;
+
+        writeln!(f)?;
+        writeln!(f, "diagnostics:")?;
         if self.diagnostics.is_empty() {
             writeln!(f, "  (none)")?;
         } else {
             for diagnostic in &self.diagnostics {
-                write!(f, "  ")?;
-                fmt_parse_diagnostic_kind(f, diagnostic.kind())?;
-                writeln!(f)?;
-            }
-        }
-
-        writeln!(f)?;
-        writeln!(f, "lexer diagnostics:")?;
-        if self.lexer_diagnostics.is_empty() {
-            writeln!(f, "  (none)")?;
-        } else {
-            for diagnostic in &self.lexer_diagnostics {
-                writeln!(f, "  {:?}", diagnostic.kind)?;
+                fmt_diagnostic(f, diagnostic)?;
             }
         }
 
@@ -88,37 +136,71 @@ impl fmt::Debug for JavaParse {
     }
 }
 
-fn fmt_parse_diagnostic_kind(
-    f: &mut fmt::Formatter<'_>,
-    kind: &ParseDiagnosticKind,
-) -> fmt::Result {
-    match kind {
-        ParseDiagnosticKind::Message(message) => f.write_str(message),
+fn fmt_diagnostic(f: &mut fmt::Formatter<'_>, diagnostic: &Diagnostic) -> fmt::Result {
+    write!(
+        f,
+        "  code={} severity={:?} stage={:?}",
+        diagnostic.code, diagnostic.severity, diagnostic.stage
+    )?;
+    if let Some(range) = diagnostic.range {
+        write!(f, " range={range}")?;
+    } else {
+        write!(f, " range=<none>")?;
     }
+    writeln!(f, " message={:?}", diagnostic.message)
 }
 
 /// Parses a Java compilation unit.
-///
-/// # Panics
-///
-/// Panics if the parser emits an internally invalid event stream.
 #[must_use]
 pub fn parse_compilation_unit(source: &str) -> JavaParse {
-    let (tokens, lexer_diagnostics) = lex_tokens(source);
+    let (tokens, diagnostics) = lex_tokens(source);
     let parse = Parser::new(source, tokens).parse_compilation_unit();
+    finish_parse(source, diagnostics, &parse)
+}
+
+fn finish_parse(
+    source: &str,
+    mut diagnostics: Vec<Diagnostic>,
+    parse: &source::ParseEvents,
+) -> JavaParse {
     let token_source = JavaGreenTokenSource::new(source, &parse.tokens);
-    let tree = build_green_tree(&parse.events, &token_source)
-        .expect("parser must emit structurally valid green tree events");
-    let (root, diagnostics) = tree.into_parts();
+    let tree = match build_green_tree(&parse.events, &token_source) {
+        Ok(tree) => tree,
+        Err(error) => {
+            diagnostics.push(invalid_event_stream_diagnostic(&error));
+            return JavaParse {
+                syntax: None,
+                diagnostics,
+                outcome: SyntaxOutcome::Aborted,
+            };
+        }
+    };
+    let (root, parser_diagnostics) = tree.into_parts();
+    diagnostics.extend(parser_diagnostics);
+    let outcome = if diagnostics.is_empty() {
+        SyntaxOutcome::Clean
+    } else {
+        SyntaxOutcome::Recovered
+    };
 
     JavaParse {
-        syntax: JavaSyntaxNode::new_root(root),
+        syntax: Some(JavaSyntaxNode::new_root(root)),
         diagnostics,
-        lexer_diagnostics,
+        outcome,
     }
 }
 
-fn lex_tokens(source: &str) -> (Vec<Token>, Vec<LexerDiagnostic>) {
+fn invalid_event_stream_diagnostic(error: &jolt_syntax::BuildGreenTreeError) -> Diagnostic {
+    Diagnostic {
+        code: JavaParseDiagnosticCode::InvalidEventStream.id(),
+        severity: Severity::InternalError,
+        stage: DiagnosticStage::Parser,
+        message: format!("Jolt parser produced an invalid event stream: {error:?}"),
+        range: None,
+    }
+}
+
+fn lex_tokens(source: &str) -> (Vec<Token>, Vec<Diagnostic>) {
     let mut lexer = JavaLexer::new(source);
     let mut tokens = Vec::new();
 

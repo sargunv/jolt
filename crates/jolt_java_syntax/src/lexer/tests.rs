@@ -17,10 +17,11 @@
 // Focused tests should not try to enumerate the combinatorial product of the
 // lexical grammar. Each test should make one source-shape claim obvious.
 
+use jolt_diagnostics::{DiagnosticCode, DiagnosticCodeId, DiagnosticStage, Severity};
 use jolt_text::{TextRange, TextSize};
 
 use super::{
-    JavaLexer, JavaSyntaxKind, JavaTokenSource, LexerDiagnostic, LexerDiagnosticKind, Token,
+    JavaLexDiagnosticCode, JavaLexer, JavaSyntaxKind, JavaTokenSource, LexerDiagnostic, Token,
     TriviaKind,
 };
 
@@ -56,11 +57,11 @@ fn real_tokens(source: &str) -> Vec<JavaSyntaxKind> {
         .collect()
 }
 
-fn diagnostic_kinds(source: &str) -> Vec<LexerDiagnosticKind> {
+fn diagnostic_codes(source: &str) -> Vec<DiagnosticCodeId> {
     lex(source)
         .diagnostics
         .into_iter()
-        .map(|diagnostic| diagnostic.kind)
+        .map(|diagnostic| diagnostic.code)
         .collect()
 }
 
@@ -222,11 +223,11 @@ fn accepts_unicode_escapes_with_multiple_u_markers() {
 #[test]
 fn raw_backslash_without_lowercase_u_is_not_a_unicode_escape() {
     // Spec: JLS 3.3 Unicode Escapes.
-    let malformed_unicode_errors = diagnostic_kinds("\\x \\U0061")
+    let malformed_unicode_errors = diagnostic_codes("\\x \\U0061")
         .into_iter()
-        .filter(|kind| *kind == LexerDiagnosticKind::MalformedUnicodeEscape)
+        .filter(|kind| *kind == JavaLexDiagnosticCode::MalformedUnicodeEscape.id())
         .collect::<Vec<_>>();
-    assert_eq!(malformed_unicode_errors, vec![]);
+    assert!(malformed_unicode_errors.is_empty());
 }
 
 #[test]
@@ -271,15 +272,15 @@ fn diagnoses_malformed_eligible_unicode_escapes() {
     // Spec: JLS 3.3 Unicode Escapes requires four hexadecimal digits after the
     // eligible backslash and `u` marker sequence.
     assert_eq!(
-        diagnostic_kinds("\\u12G4 \\u \\u123 \\uu12")
+        diagnostic_codes("\\u12G4 \\u \\u123 \\uu12")
             .into_iter()
-            .filter(|kind| *kind == LexerDiagnosticKind::MalformedUnicodeEscape)
+            .filter(|kind| *kind == JavaLexDiagnosticCode::MalformedUnicodeEscape.id())
             .collect::<Vec<_>>(),
         vec![
-            LexerDiagnosticKind::MalformedUnicodeEscape,
-            LexerDiagnosticKind::MalformedUnicodeEscape,
-            LexerDiagnosticKind::MalformedUnicodeEscape,
-            LexerDiagnosticKind::MalformedUnicodeEscape,
+            JavaLexDiagnosticCode::MalformedUnicodeEscape.id(),
+            JavaLexDiagnosticCode::MalformedUnicodeEscape.id(),
+            JavaLexDiagnosticCode::MalformedUnicodeEscape.id(),
+            JavaLexDiagnosticCode::MalformedUnicodeEscape.id(),
         ]
     );
 }
@@ -293,11 +294,11 @@ fn unicode_line_escape_is_a_newline_before_string_scanning() {
     assert_eq!(
         diagnostics
             .into_iter()
-            .map(|diagnostic| diagnostic.kind)
+            .map(|diagnostic| diagnostic.code)
             .collect::<Vec<_>>(),
         vec![
-            LexerDiagnosticKind::UnterminatedStringLiteral,
-            LexerDiagnosticKind::UnterminatedStringLiteral,
+            JavaLexDiagnosticCode::UnterminatedStringLiteral.id(),
+            JavaLexDiagnosticCode::UnterminatedStringLiteral.id(),
         ]
     );
 }
@@ -308,10 +309,10 @@ fn unicode_line_escape_is_a_newline_before_character_scanning() {
     // Unicode escapes are translated before tokenization, so line-terminator
     // escapes cannot appear inside a character literal.
     assert_eq!(
-        diagnostic_kinds("'\\u000a' '\\u000d'"),
+        diagnostic_codes("'\\u000a' '\\u000d'"),
         vec![
-            LexerDiagnosticKind::UnterminatedCharacterLiteral,
-            LexerDiagnosticKind::UnterminatedCharacterLiteral,
+            JavaLexDiagnosticCode::UnterminatedCharacterLiteral.id(),
+            JavaLexDiagnosticCode::UnterminatedCharacterLiteral.id(),
         ]
     );
 }
@@ -348,10 +349,10 @@ fn unicode_escapes_become_character_literal_delimiters_before_scanning() {
 fn unicode_escaped_character_delimiter_does_not_escape_character_literal() {
     // Spec: JLS 3.3 Unicode Escapes.
     assert_eq!(
-        diagnostic_kinds("'\\u0027'"),
+        diagnostic_codes("'\\u0027'"),
         vec![
-            LexerDiagnosticKind::InvalidCharacterLiteral,
-            LexerDiagnosticKind::UnterminatedCharacterLiteral,
+            JavaLexDiagnosticCode::InvalidCharacterLiteral.id(),
+            JavaLexDiagnosticCode::UnterminatedCharacterLiteral.id(),
         ]
     );
 }
@@ -369,10 +370,10 @@ fn unicode_escapes_become_string_literal_delimiters_before_scanning() {
 fn unicode_escaped_string_delimiter_obeys_text_block_rules() {
     // Spec: JLS 3.3 Unicode Escapes.
     assert_eq!(
-        diagnostic_kinds("\"\\u0022\""),
+        diagnostic_codes("\"\\u0022\""),
         vec![
-            LexerDiagnosticKind::MissingTextBlockLineTerminator,
-            LexerDiagnosticKind::UnterminatedTextBlock,
+            JavaLexDiagnosticCode::MissingTextBlockLineTerminator.id(),
+            JavaLexDiagnosticCode::UnterminatedTextBlock.id(),
         ]
     );
 }
@@ -780,8 +781,8 @@ fn non_ascii_characters_are_allowed_inside_comments() {
 fn reports_unterminated_block_comments() {
     // Spec: JLS 3.7 Comments.
     assert_eq!(
-        diagnostic_kinds("/* c"),
-        vec![LexerDiagnosticKind::UnterminatedBlockComment]
+        diagnostic_codes("/* c"),
+        vec![JavaLexDiagnosticCode::UnterminatedBlockComment.id()]
     );
 }
 
@@ -789,8 +790,8 @@ fn reports_unterminated_block_comments() {
 fn reports_unterminated_character_literals() {
     // Spec: JLS 3.10.4 Character Literals.
     assert_eq!(
-        diagnostic_kinds("'a\n"),
-        vec![LexerDiagnosticKind::UnterminatedCharacterLiteral]
+        diagnostic_codes("'a\n"),
+        vec![JavaLexDiagnosticCode::UnterminatedCharacterLiteral.id()]
     );
 }
 
@@ -798,12 +799,12 @@ fn reports_unterminated_character_literals() {
 fn reports_character_literals_unterminated_at_eof() {
     // Spec: JLS 3.10.4 Character Literals.
     assert_eq!(
-        diagnostic_kinds("'a"),
-        vec![LexerDiagnosticKind::UnterminatedCharacterLiteral]
+        diagnostic_codes("'a"),
+        vec![JavaLexDiagnosticCode::UnterminatedCharacterLiteral.id()]
     );
     assert_eq!(
-        diagnostic_kinds("'\\n"),
-        vec![LexerDiagnosticKind::UnterminatedCharacterLiteral]
+        diagnostic_codes("'\\n"),
+        vec![JavaLexDiagnosticCode::UnterminatedCharacterLiteral.id()]
     );
 }
 
@@ -811,8 +812,8 @@ fn reports_character_literals_unterminated_at_eof() {
 fn reports_unterminated_string_literals() {
     // Spec: JLS 3.10.5 String Literals.
     assert_eq!(
-        diagnostic_kinds("\"b\n"),
-        vec![LexerDiagnosticKind::UnterminatedStringLiteral]
+        diagnostic_codes("\"b\n"),
+        vec![JavaLexDiagnosticCode::UnterminatedStringLiteral.id()]
     );
 }
 
@@ -820,8 +821,8 @@ fn reports_unterminated_string_literals() {
 fn reports_string_literals_unterminated_at_eof() {
     // Spec: JLS 3.10.5 String Literals.
     assert_eq!(
-        diagnostic_kinds("\"abc"),
-        vec![LexerDiagnosticKind::UnterminatedStringLiteral]
+        diagnostic_codes("\"abc"),
+        vec![JavaLexDiagnosticCode::UnterminatedStringLiteral.id()]
     );
 }
 
@@ -1037,18 +1038,18 @@ fn recognizes_integer_literal_radices_and_suffixes() {
 fn diagnoses_malformed_integer_literals() {
     // Spec: JLS 3.10.1 Integer Literals.
     assert_eq!(
-        diagnostic_kinds("0x_1 1_ 0x 0X 0b 0B 0x1_ 0b1_ 01_ 1_L"),
+        diagnostic_codes("0x_1 1_ 0x 0X 0b 0B 0x1_ 0b1_ 01_ 1_L"),
         vec![
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
         ]
     );
 }
@@ -1088,10 +1089,10 @@ fn recognizes_lowercase_integer_suffix_for_non_decimal_radices() {
 fn diagnoses_invalid_hexadecimal_digits() {
     // Spec: JLS 3.10.1 Integer Literals.
     assert_eq!(
-        diagnostic_kinds("0xG 0XCAFE_Z"),
+        diagnostic_codes("0xG 0XCAFE_Z"),
         vec![
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
         ]
     );
 }
@@ -1100,18 +1101,18 @@ fn diagnoses_invalid_hexadecimal_digits() {
 fn diagnoses_underscores_next_to_floating_point_parts() {
     // Spec: JLS 3.10.2 Floating-Point Literals.
     assert_eq!(
-        diagnostic_kinds("1e+ 1_f 1_e2 1.0_f 1_.0 1._0 0x1_.p0 0x1._p0 1e_2 1e+_2"),
+        diagnostic_codes("1e+ 1_f 1_e2 1.0_f 1_.0 1._0 0x1_.p0 0x1._p0 1e_2 1e+_2"),
         vec![
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
         ]
     );
 }
@@ -1141,12 +1142,12 @@ fn permits_multiple_underscores_between_floating_point_digits() {
 fn diagnoses_invalid_octal_digits() {
     // Spec: JLS 3.10.1 Integer Literals.
     assert_eq!(
-        diagnostic_kinds("08 09 078 0_8"),
+        diagnostic_codes("08 09 078 0_8"),
         vec![
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
         ]
     );
 }
@@ -1155,11 +1156,11 @@ fn diagnoses_invalid_octal_digits() {
 fn diagnoses_invalid_binary_digits() {
     // Spec: JLS 3.10.1 Integer Literals.
     assert_eq!(
-        diagnostic_kinds("0b2 0b10_2 0B102"),
+        diagnostic_codes("0b2 0b10_2 0B102"),
         vec![
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
         ]
     );
 }
@@ -1178,8 +1179,8 @@ fn rejects_non_ascii_numeric_lookalikes() {
         ]
     );
     assert_eq!(
-        diagnostic_kinds("0x\u{FF21}"),
-        vec![LexerDiagnosticKind::InvalidNumericLiteral]
+        diagnostic_codes("0x\u{FF21}"),
+        vec![JavaLexDiagnosticCode::InvalidNumericLiteral.id()]
     );
 }
 
@@ -1228,12 +1229,12 @@ fn accepts_binary_and_octal_integer_literals_at_jls_width_boundaries() {
 fn diagnoses_integer_literals_outside_jls_ranges() {
     // Spec: JLS 3.10.1 Integer Literals.
     assert_eq!(
-        diagnostic_kinds("2147483649 0x1_0000_0000 9223372036854775809L 0x1_0000_0000_0000_0000L",),
+        diagnostic_codes("2147483649 0x1_0000_0000 9223372036854775809L 0x1_0000_0000_0000_0000L",),
         vec![
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
         ]
     );
 }
@@ -1242,16 +1243,16 @@ fn diagnoses_integer_literals_outside_jls_ranges() {
 fn diagnoses_binary_and_octal_integer_literals_outside_jls_widths() {
     // Spec: JLS 3.10.1 Integer Literals.
     assert_eq!(
-        diagnostic_kinds(
+        diagnostic_codes(
             "0b111111111111111111111111111111111 040000000000 \
              0b11111111111111111111111111111111111111111111111111111111111111111L \
              02000000000000000000000L",
         ),
         vec![
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
         ]
     );
 }
@@ -1260,16 +1261,16 @@ fn diagnoses_binary_and_octal_integer_literals_outside_jls_widths() {
 fn diagnoses_hex_floats_without_binary_exponent() {
     // Spec: JLS 3.10.2 Floating-Point Literals requires a binary exponent for hex floats.
     assert_eq!(
-        diagnostic_kinds("0x1. 0x.1 0x1p 0x1p+ 0x1p_1 0xp1 0x.p1 0X.p1"),
+        diagnostic_codes("0x1. 0x.1 0x1p 0x1p+ 0x1p_1 0xp1 0x.p1 0X.p1"),
         vec![
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
         ]
     );
 }
@@ -1370,12 +1371,12 @@ fn accepts_alternate_hexadecimal_minimum_floating_point_literals() {
 fn diagnoses_floating_point_literals_outside_jls_ranges() {
     // Spec: JLS 3.10.2 Floating-Point Literals.
     assert_eq!(
-        diagnostic_kinds("3.5e38f 1e-46f 1e309 1e-325"),
+        diagnostic_codes("3.5e38f 1e-46f 1e309 1e-325"),
         vec![
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
         ]
     );
 }
@@ -1384,12 +1385,12 @@ fn diagnoses_floating_point_literals_outside_jls_ranges() {
 fn diagnoses_hexadecimal_floating_point_literals_outside_jls_ranges() {
     // Spec: JLS 3.10.2 Floating-Point Literals.
     assert_eq!(
-        diagnostic_kinds("0x1.0p128f 0x1.0p-150f 0x1.0p1024 0x1.0p-1075"),
+        diagnostic_codes("0x1.0p128f 0x1.0p-150f 0x1.0p1024 0x1.0p-1075"),
         vec![
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
-            LexerDiagnosticKind::InvalidNumericLiteral,
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
         ]
     );
 }
@@ -1472,12 +1473,12 @@ fn recognizes_single_utf16_code_unit_character_literals() {
 fn rejects_character_literals_with_multiple_utf16_code_units() {
     // Spec: JLS 3.10.4 Character Literals are limited to one UTF-16 code unit.
     assert_eq!(
-        diagnostic_kinds("'𝒂'"),
-        vec![LexerDiagnosticKind::InvalidCharacterLiteral]
+        diagnostic_codes("'𝒂'"),
+        vec![JavaLexDiagnosticCode::InvalidCharacterLiteral.id()]
     );
     assert_eq!(
-        diagnostic_kinds("'\\uD835\\uDC82'"),
-        vec![LexerDiagnosticKind::InvalidCharacterLiteral]
+        diagnostic_codes("'\\uD835\\uDC82'"),
+        vec![JavaLexDiagnosticCode::InvalidCharacterLiteral.id()]
     );
 }
 
@@ -1485,10 +1486,10 @@ fn rejects_character_literals_with_multiple_utf16_code_units() {
 fn rejects_empty_and_multi_character_literals() {
     // Spec: JLS 3.10.4 Character Literals require exactly one character or escape sequence.
     assert_eq!(
-        diagnostic_kinds("'' 'ab'"),
+        diagnostic_codes("'' 'ab'"),
         vec![
-            LexerDiagnosticKind::InvalidCharacterLiteral,
-            LexerDiagnosticKind::InvalidCharacterLiteral,
+            JavaLexDiagnosticCode::InvalidCharacterLiteral.id(),
+            JavaLexDiagnosticCode::InvalidCharacterLiteral.id(),
         ]
     );
 }
@@ -1577,11 +1578,11 @@ fn rejects_line_continuation_escape_in_character_literals() {
     // closing quote, even after a backslash. The InvalidEscapeSequence diagnostic
     // is this lexer's recovery wording for the backslash before that line terminator.
     assert_eq!(
-        diagnostic_kinds("'\\\n'"),
+        diagnostic_codes("'\\\n'"),
         vec![
-            LexerDiagnosticKind::InvalidEscapeSequence,
-            LexerDiagnosticKind::UnterminatedCharacterLiteral,
-            LexerDiagnosticKind::UnterminatedCharacterLiteral,
+            JavaLexDiagnosticCode::InvalidEscapeSequence.id(),
+            JavaLexDiagnosticCode::UnterminatedCharacterLiteral.id(),
+            JavaLexDiagnosticCode::UnterminatedCharacterLiteral.id(),
         ]
     );
 }
@@ -1590,19 +1591,19 @@ fn rejects_line_continuation_escape_in_character_literals() {
 fn rejects_cr_and_crlf_line_continuation_escape_in_character_literals() {
     // Spec: JLS 3.10.4 Character Literals.
     assert_eq!(
-        diagnostic_kinds("'\\\r'"),
+        diagnostic_codes("'\\\r'"),
         vec![
-            LexerDiagnosticKind::InvalidEscapeSequence,
-            LexerDiagnosticKind::UnterminatedCharacterLiteral,
-            LexerDiagnosticKind::UnterminatedCharacterLiteral,
+            JavaLexDiagnosticCode::InvalidEscapeSequence.id(),
+            JavaLexDiagnosticCode::UnterminatedCharacterLiteral.id(),
+            JavaLexDiagnosticCode::UnterminatedCharacterLiteral.id(),
         ]
     );
     assert_eq!(
-        diagnostic_kinds("'\\\r\n'"),
+        diagnostic_codes("'\\\r\n'"),
         vec![
-            LexerDiagnosticKind::InvalidEscapeSequence,
-            LexerDiagnosticKind::UnterminatedCharacterLiteral,
-            LexerDiagnosticKind::UnterminatedCharacterLiteral,
+            JavaLexDiagnosticCode::InvalidEscapeSequence.id(),
+            JavaLexDiagnosticCode::UnterminatedCharacterLiteral.id(),
+            JavaLexDiagnosticCode::UnterminatedCharacterLiteral.id(),
         ]
     );
 }
@@ -1611,10 +1612,10 @@ fn rejects_cr_and_crlf_line_continuation_escape_in_character_literals() {
 fn rejects_raw_cr_and_crlf_in_character_literals() {
     // Spec: JLS 3.10.4 Character Literals.
     assert_eq!(
-        diagnostic_kinds("'\r' '\r\n'"),
+        diagnostic_codes("'\r' '\r\n'"),
         vec![
-            LexerDiagnosticKind::UnterminatedCharacterLiteral,
-            LexerDiagnosticKind::UnterminatedCharacterLiteral,
+            JavaLexDiagnosticCode::UnterminatedCharacterLiteral.id(),
+            JavaLexDiagnosticCode::UnterminatedCharacterLiteral.id(),
         ]
     );
 }
@@ -1625,11 +1626,11 @@ fn rejects_line_continuation_escape_in_string_literals() {
     // closing quote, even after a backslash. The InvalidEscapeSequence diagnostic
     // is this lexer's recovery wording for the backslash before that line terminator.
     assert_eq!(
-        diagnostic_kinds("\"hello\\\nworld\""),
+        diagnostic_codes("\"hello\\\nworld\""),
         vec![
-            LexerDiagnosticKind::InvalidEscapeSequence,
-            LexerDiagnosticKind::UnterminatedStringLiteral,
-            LexerDiagnosticKind::UnterminatedStringLiteral,
+            JavaLexDiagnosticCode::InvalidEscapeSequence.id(),
+            JavaLexDiagnosticCode::UnterminatedStringLiteral.id(),
+            JavaLexDiagnosticCode::UnterminatedStringLiteral.id(),
         ]
     );
 }
@@ -1638,19 +1639,19 @@ fn rejects_line_continuation_escape_in_string_literals() {
 fn rejects_cr_and_crlf_line_continuation_escape_in_string_literals() {
     // Spec: JLS 3.10.5 String Literals.
     assert_eq!(
-        diagnostic_kinds("\"hello\\\rworld\""),
+        diagnostic_codes("\"hello\\\rworld\""),
         vec![
-            LexerDiagnosticKind::InvalidEscapeSequence,
-            LexerDiagnosticKind::UnterminatedStringLiteral,
-            LexerDiagnosticKind::UnterminatedStringLiteral,
+            JavaLexDiagnosticCode::InvalidEscapeSequence.id(),
+            JavaLexDiagnosticCode::UnterminatedStringLiteral.id(),
+            JavaLexDiagnosticCode::UnterminatedStringLiteral.id(),
         ]
     );
     assert_eq!(
-        diagnostic_kinds("\"hello\\\r\nworld\""),
+        diagnostic_codes("\"hello\\\r\nworld\""),
         vec![
-            LexerDiagnosticKind::InvalidEscapeSequence,
-            LexerDiagnosticKind::UnterminatedStringLiteral,
-            LexerDiagnosticKind::UnterminatedStringLiteral,
+            JavaLexDiagnosticCode::InvalidEscapeSequence.id(),
+            JavaLexDiagnosticCode::UnterminatedStringLiteral.id(),
+            JavaLexDiagnosticCode::UnterminatedStringLiteral.id(),
         ]
     );
 }
@@ -1659,10 +1660,10 @@ fn rejects_cr_and_crlf_line_continuation_escape_in_string_literals() {
 fn rejects_raw_cr_and_crlf_in_string_literals() {
     // Spec: JLS 3.10.5 String Literals.
     assert_eq!(
-        diagnostic_kinds("\"a\rb\" \"a\r\nb\""),
+        diagnostic_codes("\"a\rb\" \"a\r\nb\""),
         vec![
-            LexerDiagnosticKind::UnterminatedStringLiteral,
-            LexerDiagnosticKind::UnterminatedStringLiteral,
+            JavaLexDiagnosticCode::UnterminatedStringLiteral.id(),
+            JavaLexDiagnosticCode::UnterminatedStringLiteral.id(),
         ]
     );
 }
@@ -1671,14 +1672,14 @@ fn rejects_raw_cr_and_crlf_in_string_literals() {
 fn reports_invalid_escape_sequences_in_string_and_character_literals() {
     // Spec: JLS 3.10.7 Escape Sequences.
     assert_eq!(
-        diagnostic_kinds(r#""\q" '\q' "\8" "\9" '\8' '\9'"#),
+        diagnostic_codes(r#""\q" '\q' "\8" "\9" '\8' '\9'"#),
         vec![
-            LexerDiagnosticKind::InvalidEscapeSequence,
-            LexerDiagnosticKind::InvalidEscapeSequence,
-            LexerDiagnosticKind::InvalidEscapeSequence,
-            LexerDiagnosticKind::InvalidEscapeSequence,
-            LexerDiagnosticKind::InvalidEscapeSequence,
-            LexerDiagnosticKind::InvalidEscapeSequence,
+            JavaLexDiagnosticCode::InvalidEscapeSequence.id(),
+            JavaLexDiagnosticCode::InvalidEscapeSequence.id(),
+            JavaLexDiagnosticCode::InvalidEscapeSequence.id(),
+            JavaLexDiagnosticCode::InvalidEscapeSequence.id(),
+            JavaLexDiagnosticCode::InvalidEscapeSequence.id(),
+            JavaLexDiagnosticCode::InvalidEscapeSequence.id(),
         ]
     );
 }
@@ -1722,8 +1723,8 @@ fn rejects_text_block_without_opening_line_terminator() {
     // Spec: JLS 3.10.6 Text Blocks requires optional whitespace after the opening
     // delimiter to be followed by a line terminator.
     assert_eq!(
-        diagnostic_kinds("\"\"\"hello\"\"\""),
-        vec![LexerDiagnosticKind::MissingTextBlockLineTerminator]
+        diagnostic_codes("\"\"\"hello\"\"\""),
+        vec![JavaLexDiagnosticCode::MissingTextBlockLineTerminator.id()]
     );
 }
 
@@ -1731,8 +1732,8 @@ fn rejects_text_block_without_opening_line_terminator() {
 fn rejects_text_block_opening_whitespace_without_line_terminator() {
     // Spec: JLS 3.10.6 Text Blocks.
     assert_eq!(
-        diagnostic_kinds("\"\"\" \t\u{000C}hello\"\"\""),
-        vec![LexerDiagnosticKind::MissingTextBlockLineTerminator]
+        diagnostic_codes("\"\"\" \t\u{000C}hello\"\"\""),
+        vec![JavaLexDiagnosticCode::MissingTextBlockLineTerminator.id()]
     );
 }
 
@@ -1740,8 +1741,8 @@ fn rejects_text_block_opening_whitespace_without_line_terminator() {
 fn rejects_text_block_opening_non_jls_whitespace() {
     // Spec: JLS 3.10.6 Text Blocks.
     assert_eq!(
-        diagnostic_kinds("\"\"\"\u{00A0}\ntext\n\"\"\""),
-        vec![LexerDiagnosticKind::MissingTextBlockLineTerminator]
+        diagnostic_codes("\"\"\"\u{00A0}\ntext\n\"\"\""),
+        vec![JavaLexDiagnosticCode::MissingTextBlockLineTerminator.id()]
     );
 }
 
@@ -1766,8 +1767,8 @@ fn fourth_quote_after_text_block_closing_delimiter_is_outside_token() {
         ]
     );
     assert_eq!(
-        diagnostic_kinds(source),
-        vec![LexerDiagnosticKind::UnterminatedStringLiteral]
+        diagnostic_codes(source),
+        vec![JavaLexDiagnosticCode::UnterminatedStringLiteral.id()]
     );
 }
 
@@ -1793,8 +1794,8 @@ fn recognizes_non_ascii_text_block_content() {
 fn reports_unterminated_text_blocks() {
     // Spec: JLS 3.10.6 Text Blocks require a closing delimiter.
     assert_eq!(
-        diagnostic_kinds("\"\"\"\nabc"),
-        vec![LexerDiagnosticKind::UnterminatedTextBlock]
+        diagnostic_codes("\"\"\"\nabc"),
+        vec![JavaLexDiagnosticCode::UnterminatedTextBlock.id()]
     );
 }
 
@@ -1830,8 +1831,8 @@ fn recognizes_escape_sequences_in_text_blocks() {
 fn reports_invalid_text_block_escapes() {
     // Spec: JLS 3.10.7 Escape Sequences.
     assert_eq!(
-        diagnostic_kinds("\"\"\"\n\\q\n\"\"\""),
-        vec![LexerDiagnosticKind::InvalidEscapeSequence]
+        diagnostic_codes("\"\"\"\n\\q\n\"\"\""),
+        vec![JavaLexDiagnosticCode::InvalidEscapeSequence.id()]
     );
 }
 
@@ -1847,8 +1848,13 @@ fn two_digit_octal_escape_followed_by_digit_is_extra_character_in_char_literals(
     assert_eq!(
         lexed.diagnostics,
         vec![LexerDiagnostic {
-            kind: LexerDiagnosticKind::InvalidCharacterLiteral,
-            range: TextRange::new(TextSize::new(0), TextSize::new(6)),
+            code: JavaLexDiagnosticCode::InvalidCharacterLiteral.id(),
+            severity: Severity::Error,
+            stage: DiagnosticStage::Lexer,
+            message: JavaLexDiagnosticCode::InvalidCharacterLiteral
+                .message()
+                .to_owned(),
+            range: Some(TextRange::new(TextSize::new(0), TextSize::new(6))),
         }]
     );
 }
@@ -1874,8 +1880,8 @@ fn two_digit_octal_escape_before_non_octal_digit_falls_back() {
         vec![JavaSyntaxKind::StringLiteral]
     );
     assert_eq!(
-        diagnostic_kinds("'\\378'"),
-        vec![LexerDiagnosticKind::InvalidCharacterLiteral]
+        diagnostic_codes("'\\378'"),
+        vec![JavaLexDiagnosticCode::InvalidCharacterLiteral.id()]
     );
 }
 

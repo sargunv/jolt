@@ -48,12 +48,11 @@ CompilationUnit
       RBrace "}" @ 152..153
   Eof "" @ 162..162 leading=[Newline "\n", Whitespace "        "]
 
-parser diagnostics:
-  expected type name
-  expected type name
-  expected type name
-  expected type name
-  expected type name
+outcome: Recovered
 
-lexer diagnostics:
-  (none)
+diagnostics:
+  code=java.parse.restricted_type_identifier severity=Error stage=Parser range=19..22 message="expected type name"
+  code=java.parse.restricted_type_identifier severity=Error stage=Parser range=44..50 message="expected type name"
+  code=java.parse.restricted_type_identifier severity=Error stage=Parser range=72..79 message="expected type name"
+  code=java.parse.restricted_type_identifier severity=Error stage=Parser range=102..108 message="expected type name"
+  code=java.parse.restricted_type_identifier severity=Error stage=Parser range=145..150 message="expected type name"

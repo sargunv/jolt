@@ -1,5 +1,8 @@
 //! Public formatter engine API for Jolt.
 
+pub use jolt_diagnostics::{
+    Diagnostic, DiagnosticCode, DiagnosticCodeId, DiagnosticStage, Severity, SyntaxOutcome,
+};
 pub use jolt_text::{LineCol, LineIndex, TextRange, TextSize};
 
 /// Source language to format.
@@ -60,139 +63,87 @@ impl FormatOptions {
     }
 }
 
-/// Diagnostic severity.
+/// Formatter operation status.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub enum Severity {
-    /// A fatal formatting problem.
-    Error,
-    /// A non-fatal problem callers may want to surface.
-    Warning,
-    /// Informational diagnostic.
-    Note,
-}
-
-/// A formatter diagnostic.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Diagnostic {
-    severity: Severity,
-    message: String,
-    code: Option<String>,
-    range: Option<TextRange>,
-}
-
-impl Diagnostic {
-    /// Creates a diagnostic.
-    #[must_use]
-    pub fn new(severity: Severity, message: impl Into<String>) -> Self {
-        Self {
-            severity,
-            message: message.into(),
-            code: None,
-            range: None,
-        }
-    }
-
-    /// Creates an error diagnostic.
-    #[must_use]
-    pub fn error(message: impl Into<String>) -> Self {
-        Self::new(Severity::Error, message)
-    }
-
-    /// Returns this diagnostic with a stable machine-readable code.
-    #[must_use]
-    pub fn with_code(mut self, code: impl Into<String>) -> Self {
-        self.code = Some(code.into());
-        self
-    }
-
-    /// Returns this diagnostic with a source range.
-    #[must_use]
-    pub const fn with_range(mut self, range: TextRange) -> Self {
-        self.range = Some(range);
-        self
-    }
-
-    /// Returns the severity.
-    #[must_use]
-    pub const fn severity(&self) -> Severity {
-        self.severity
-    }
-
-    /// Returns the human-readable message.
-    #[must_use]
-    pub fn message(&self) -> &str {
-        &self.message
-    }
-
-    /// Returns the stable machine-readable code, if present.
-    #[must_use]
-    pub fn code(&self) -> Option<&str> {
-        self.code.as_deref()
-    }
-
-    /// Returns the source range, if present.
-    #[must_use]
-    pub const fn range(&self) -> Option<TextRange> {
-        self.range
-    }
+pub enum FormatStatus {
+    /// The source changed.
+    Formatted,
+    /// The source was already formatted.
+    Unchanged,
+    /// Formatting was blocked and no formatted source was produced.
+    Blocked,
 }
 
 /// Formatter output plus diagnostics.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct FormatResult {
-    formatted_source: String,
-    diagnostics: Vec<Diagnostic>,
+    /// Formatted source text, absent when formatting was blocked.
+    pub formatted_source: Option<String>,
+    /// Diagnostics produced while formatting.
+    pub diagnostics: Vec<Diagnostic>,
+    /// Formatter operation status.
+    pub status: FormatStatus,
 }
 
-impl FormatResult {
-    /// Creates a formatter result.
-    #[must_use]
-    pub fn new(formatted_source: impl Into<String>, diagnostics: Vec<Diagnostic>) -> Self {
-        Self {
-            formatted_source: formatted_source.into(),
-            diagnostics,
+/// Stable formatter diagnostic codes.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum FormatDiagnosticCode {
+    Unimplemented,
+}
+
+impl DiagnosticCode for FormatDiagnosticCode {
+    fn id(&self) -> DiagnosticCodeId {
+        match self {
+            Self::Unimplemented => DiagnosticCodeId::new("format.unimplemented"),
         }
-    }
-
-    /// Returns formatted source text.
-    #[must_use]
-    pub fn formatted_source(&self) -> &str {
-        &self.formatted_source
-    }
-
-    /// Consumes the result and returns formatted source text.
-    #[must_use]
-    pub fn into_formatted_source(self) -> String {
-        self.formatted_source
-    }
-
-    /// Returns formatter diagnostics.
-    #[must_use]
-    pub fn diagnostics(&self) -> &[Diagnostic] {
-        &self.diagnostics
-    }
-
-    /// Returns true when at least one diagnostic has error severity.
-    #[must_use]
-    pub fn has_errors(&self) -> bool {
-        self.diagnostics
-            .iter()
-            .any(|diagnostic| diagnostic.severity() == Severity::Error)
     }
 }
 
 /// Formats source text for `language` using `options`.
 ///
-/// Until the language-specific printers land, this contract preserves the input
-/// text and reports that formatting is not implemented. This lets wrappers wire
+/// Until the language-specific printers land, this contract blocks formatting
+/// and reports that formatting is not implemented. This lets wrappers wire
 /// against the stable API without risking destructive output.
 #[must_use]
-pub fn format_source(source: &str, language: Language, _options: &FormatOptions) -> FormatResult {
+pub fn format_source(_source: &str, language: Language, _options: &FormatOptions) -> FormatResult {
     let message = match language {
         Language::Java => "Java formatting is not implemented yet",
         Language::Kotlin => "Kotlin formatting is not implemented yet",
     };
-    let diagnostic = Diagnostic::error(message).with_code("format.unimplemented");
+    let diagnostic = Diagnostic {
+        code: FormatDiagnosticCode::Unimplemented.id(),
+        severity: Severity::Error,
+        stage: DiagnosticStage::Formatter,
+        message: message.to_owned(),
+        range: None,
+    };
 
-    FormatResult::new(source, vec![diagnostic])
+    FormatResult {
+        formatted_source: None,
+        diagnostics: vec![diagnostic],
+        status: FormatStatus::Blocked,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn unimplemented_formatter_blocks_without_output() {
+        let result = format_source("class A {}", Language::Java, &FormatOptions::default());
+
+        assert_eq!(result.status, FormatStatus::Blocked);
+        assert_eq!(result.formatted_source, None);
+        assert_eq!(result.diagnostics.len(), 1);
+
+        let diagnostic = &result.diagnostics[0];
+        assert_eq!(
+            diagnostic.code.as_str(),
+            FormatDiagnosticCode::Unimplemented.id().as_str()
+        );
+        assert_eq!(diagnostic.severity, Severity::Error);
+        assert_eq!(diagnostic.stage, DiagnosticStage::Formatter);
+        assert_eq!(diagnostic.range, None);
+    }
 }

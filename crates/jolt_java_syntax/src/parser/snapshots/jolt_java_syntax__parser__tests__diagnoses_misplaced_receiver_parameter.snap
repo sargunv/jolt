@@ -44,8 +44,7 @@ CompilationUnit
       RBrace "}" @ 222..223 leading=[Newline "\n", Whitespace "            "]
   Eof "" @ 232..232 leading=[Newline "\n", Whitespace "        "]
 
-parser diagnostics:
-  receiver parameter must be first
+outcome: Recovered
 
-lexer diagnostics:
-  (none)
+diagnostics:
+  code=java.parse.misplaced_receiver_parameter severity=Error stage=Parser range=137..159 message="receiver parameter must be first"

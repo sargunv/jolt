@@ -4,11 +4,11 @@ impl Parser<'_> {
             self.bump();
         } else if self.at_name_segment() {
             let error = self.start();
-            self.error_here(message);
+            self.restricted_type_identifier_here(message);
             self.bump();
             self.complete(error, JavaSyntaxKind::ErrorNode);
         } else {
-            self.error_here(message);
+            self.expected_here(message);
         }
     }
 
@@ -16,7 +16,7 @@ impl Parser<'_> {
         if self.at_name_segment() {
             self.bump();
         } else {
-            self.error_here(message);
+            self.expected_here(message);
         }
     }
 
@@ -24,7 +24,7 @@ impl Parser<'_> {
         if self.at_variable_identifier() {
             self.bump();
         } else {
-            self.error_here(message);
+            self.expected_here(message);
         }
     }
 
@@ -32,13 +32,13 @@ impl Parser<'_> {
         if self.at_name_segment() {
             self.bump();
         } else {
-            self.error_here(message);
+            self.expected_here(message);
         }
     }
 
     fn consume_qualified_name(&mut self) -> bool {
         if !self.at_name_segment() {
-            self.error_here("expected identifier");
+            self.expected_here("expected identifier");
             return false;
         }
 
@@ -84,14 +84,14 @@ impl Parser<'_> {
 
     fn error_unexpected_top_level_token(&mut self) {
         let error = self.start();
-        self.error_here("unexpected token at top level");
+        self.unexpected_here("unexpected token at top level");
         self.recover_top_level();
         self.complete(error, JavaSyntaxKind::ErrorNode);
     }
 
     fn error_unexpected_module_token(&mut self) {
         let error = self.start();
-        self.error_here("unexpected token in module declaration");
+        self.unexpected_here("unexpected token in module declaration");
         self.recover_module_directive();
         self.complete(error, JavaSyntaxKind::ErrorNode);
     }

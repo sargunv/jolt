@@ -1,6 +1,6 @@
 use jolt_text::{TextRange, TextSize};
 
-use super::{LexerDiagnostic, LexerDiagnosticKind};
+use super::{JavaLexDiagnosticCode, LexerDiagnostic, lexer_diagnostic};
 
 // Java processes Unicode escapes before tokenization, everywhere in the source.
 // For example, `\u000a` becomes an actual line terminator before string or
@@ -65,10 +65,10 @@ pub(super) fn translate_unicode_escapes(source: &str) -> (Vec<InputChar>, Vec<Le
             }
 
             let end = malformed_unicode_escape_end(&raw, index, source);
-            diagnostics.push(LexerDiagnostic {
-                kind: LexerDiagnosticKind::MalformedUnicodeEscape,
-                range: TextRange::new(TextSize::new(start), TextSize::new(end)),
-            });
+            diagnostics.push(lexer_diagnostic(
+                JavaLexDiagnosticCode::MalformedUnicodeEscape,
+                TextRange::new(TextSize::new(start), TextSize::new(end)),
+            ));
         }
 
         let end = raw

@@ -10,7 +10,7 @@ impl Parser<'_> {
             self.parse_class_type_tail();
             JavaSyntaxKind::ClassType
         } else {
-            self.error_here("expected type");
+            self.expected_here("expected type");
             return self.complete(ty, JavaSyntaxKind::ErrorNode);
         };
 
@@ -58,7 +58,7 @@ impl Parser<'_> {
 
     fn parse_class_type_tail(&mut self) {
         if !self.at_name_segment() {
-            self.error_here("expected type");
+            self.expected_here("expected type");
             return;
         }
 

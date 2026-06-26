@@ -300,7 +300,7 @@ impl Parser<'_> {
                 saw_handler = true;
             }
             if !saw_handler {
-                self.error_here("expected `catch` or `finally` after try block");
+                self.expected_here("expected `catch` or `finally` after try block");
             }
         }
         self.complete(statement, JavaSyntaxKind::TryStatement);
@@ -360,7 +360,9 @@ impl Parser<'_> {
     fn parse_resource_variable_access_until(&mut self, stops: &[JavaSyntaxKind]) {
         if self.at_eof() || stops.contains(&self.current_kind()) {
             let error = self.start();
-            self.error_here("expected resource variable declaration or variable access");
+            self.invalid_resource_variable_access_here(
+                "expected resource variable declaration or variable access",
+            );
             self.complete(error, JavaSyntaxKind::ErrorNode);
             return;
         }
@@ -376,7 +378,9 @@ impl Parser<'_> {
         while !self.at_eof() && !stops.contains(&self.current_kind()) {
             valid = false;
             let error = self.start();
-            self.error_here("unexpected token in resource variable access");
+            self.invalid_resource_variable_access_here(
+                "unexpected token in resource variable access",
+            );
             self.bump();
             self.complete(error, JavaSyntaxKind::ErrorNode);
         }
@@ -384,7 +388,9 @@ impl Parser<'_> {
         if valid {
             self.complete(access, JavaSyntaxKind::VariableAccess);
         } else {
-            self.error_here("expected resource variable declaration or variable access");
+            self.invalid_resource_variable_access_here(
+                "expected resource variable declaration or variable access",
+            );
             self.complete(access, JavaSyntaxKind::ErrorNode);
         }
     }
@@ -507,7 +513,7 @@ impl Parser<'_> {
                 previous_was_pattern = false;
             } else if self.at_contextual("when") && saw_case_item {
                 let error = self.start();
-                self.error_here("switch guard requires a pattern");
+                self.invalid_switch_guard_here("switch guard requires a pattern");
                 self.parse_guard();
                 self.complete(error, JavaSyntaxKind::ErrorNode);
                 previous_was_pattern = false;
@@ -545,7 +551,7 @@ impl Parser<'_> {
             && !self.at_contextual("when")
         {
             let error = self.start();
-            self.error_here("unexpected token in case constant");
+            self.unexpected_here("unexpected token in case constant");
             self.bump();
             self.complete(error, JavaSyntaxKind::ErrorNode);
         }

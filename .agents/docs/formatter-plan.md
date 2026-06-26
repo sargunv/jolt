@@ -769,8 +769,6 @@ model before more lexer/parser/formatter layers depend on diagnostic policy.
 Keep diagnostics as facts about source/tooling issues, and keep formatter
 write-safety decisions in formatter policy derived from lexer/parser outcomes.
 
-Design details live in `.agents/docs/milestone-3-diagnostics.md`.
-
 Add:
 
 - one shared diagnostic data shape,
