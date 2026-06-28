@@ -1,12 +1,25 @@
 use super::{
-    Annotation, AnnotationArgumentList, AnnotationInterfaceBody, AnnotationInterfaceDeclaration,
-    AnyJavaNode, ArgumentList, ArrayDimensions, ArrayType, Block, BlockItem, BlockStatement,
-    ClassBody, ClassDeclaration, CompilationUnit, EnumBody, EnumDeclaration, Expression,
-    FormalParameterList, IfStatement, ImportDeclaration, InterfaceBody, InterfaceDeclaration,
-    JavaSyntaxKind, JavaSyntaxToken, MethodDeclaration, MethodInvocationExpression,
-    ModuleDeclaration, ModuleDirective, ModuleDirectiveNode, NameSyntax, PackageDeclaration,
-    RecordBody, RecordDeclaration, Statement, TypeDeclaration, child, child_family, child_token,
-    children, children_family, nth_child_family, nth_child_token,
+    Annotation, AnnotationArgumentList, AnnotationElementList, AnnotationInterfaceBody,
+    AnnotationInterfaceBodyMember, AnnotationInterfaceDeclaration, AnyJavaNode, ArgumentList,
+    ArrayCreationExpression, ArrayDimensions, ArrayInitializer, ArrayType, AssignmentExpression,
+    BasicForStatement, BinaryExpression, Block, BlockItem, BlockStatement, CastExpression,
+    ClassBody, ClassBodyDeclaration, ClassBodyMember, ClassDeclaration, CompilationUnit,
+    ConditionalExpression, ConstructorBody, ConstructorDeclaration, DimExpression, DoStatement,
+    EnhancedForStatement, EnumBody, EnumConstant, EnumConstantList, EnumDeclaration, Expression,
+    ExpressionStatement, ExtendsClause, FieldDeclaration, ForInitializer, ForStatement, ForUpdate,
+    FormalParameter, FormalParameterList, IfStatement, ImplementsClause, ImportDeclaration,
+    InstanceInitializer, InterfaceBody, InterfaceBodyMember, InterfaceDeclaration, JavaSyntaxKind,
+    JavaSyntaxToken, LambdaExpression, LambdaParameter, LambdaParameterList,
+    LocalVariableDeclaration, MethodDeclaration, MethodInvocationExpression, ModifierList,
+    ModuleDeclaration, ModuleDirective, ModuleDirectiveNode, NameSyntax, ObjectCreationExpression,
+    PackageDeclaration, ParenthesizedExpression, PermitsClause, PostfixExpression, RecordBody,
+    RecordComponent, RecordComponentList, RecordDeclaration, ReturnStatement, Statement,
+    StatementExpressionList, StaticInitializer, SwitchBlock, SwitchBlockStatementGroup,
+    SwitchExpression, SwitchRule, SwitchStatement, SynchronizedStatement, ThrowStatement,
+    ThrowsClause, Type, TypeDeclaration, TypeParameter, TypeParameterList, UnaryExpression,
+    VariableDeclarator, VariableDeclaratorList, VariableInitializer, VariableInitializerValue,
+    WhileStatement, YieldStatement, child, child_family, child_token, child_token_in, children,
+    children_family, children_tokens_matching, nth_child_family, nth_child_token,
 };
 
 impl CompilationUnit {
@@ -54,8 +67,33 @@ impl ImportDeclaration {
 
 impl ClassDeclaration {
     #[must_use]
+    pub fn modifiers(&self) -> Option<ModifierList> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
     pub fn name(&self) -> Option<JavaSyntaxToken> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
+    }
+
+    #[must_use]
+    pub fn type_parameters(&self) -> Option<TypeParameterList> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn extends_clause(&self) -> Option<ExtendsClause> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn implements_clause(&self) -> Option<ImplementsClause> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn permits_clause(&self) -> Option<PermitsClause> {
+        child(&self.syntax)
     }
 
     #[must_use]
@@ -66,8 +104,28 @@ impl ClassDeclaration {
 
 impl RecordDeclaration {
     #[must_use]
+    pub fn modifiers(&self) -> Option<ModifierList> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
     pub fn name(&self) -> Option<JavaSyntaxToken> {
         nth_child_token(&self.syntax, JavaSyntaxKind::Identifier, 1)
+    }
+
+    #[must_use]
+    pub fn type_parameters(&self) -> Option<TypeParameterList> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn components(&self) -> Option<RecordComponentList> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn implements_clause(&self) -> Option<ImplementsClause> {
+        child(&self.syntax)
     }
 
     #[must_use]
@@ -78,8 +136,18 @@ impl RecordDeclaration {
 
 impl EnumDeclaration {
     #[must_use]
+    pub fn modifiers(&self) -> Option<ModifierList> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
     pub fn name(&self) -> Option<JavaSyntaxToken> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
+    }
+
+    #[must_use]
+    pub fn implements_clause(&self) -> Option<ImplementsClause> {
+        child(&self.syntax)
     }
 
     #[must_use]
@@ -90,8 +158,28 @@ impl EnumDeclaration {
 
 impl InterfaceDeclaration {
     #[must_use]
+    pub fn modifiers(&self) -> Option<ModifierList> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
     pub fn name(&self) -> Option<JavaSyntaxToken> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
+    }
+
+    #[must_use]
+    pub fn type_parameters(&self) -> Option<TypeParameterList> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn extends_clause(&self) -> Option<ExtendsClause> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn permits_clause(&self) -> Option<PermitsClause> {
+        child(&self.syntax)
     }
 
     #[must_use]
@@ -101,6 +189,11 @@ impl InterfaceDeclaration {
 }
 
 impl AnnotationInterfaceDeclaration {
+    #[must_use]
+    pub fn modifiers(&self) -> Option<ModifierList> {
+        child(&self.syntax)
+    }
+
     #[must_use]
     pub fn name(&self) -> Option<JavaSyntaxToken> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
@@ -112,7 +205,152 @@ impl AnnotationInterfaceDeclaration {
     }
 }
 
+impl ModifierList {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation> + '_ {
+        children(&self.syntax)
+    }
+
+    pub fn modifier_tokens(&self) -> impl Iterator<Item = JavaSyntaxToken> + '_ {
+        children_tokens_matching(&self.syntax, is_modifier_token)
+    }
+}
+
+impl TypeParameterList {
+    pub fn parameters(&self) -> impl Iterator<Item = TypeParameter> + '_ {
+        children(&self.syntax)
+    }
+}
+
+impl RecordComponentList {
+    pub fn components(&self) -> impl Iterator<Item = RecordComponent> + '_ {
+        children(&self.syntax)
+    }
+}
+
+impl RecordComponent {
+    #[must_use]
+    pub fn ty(&self) -> Option<Type> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn name(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Identifier)
+    }
+
+    #[must_use]
+    pub fn dimensions(&self) -> Option<ArrayDimensions> {
+        child(&self.syntax)
+    }
+}
+
+impl ClassBody {
+    pub fn members(&self) -> impl Iterator<Item = ClassBodyMember> + '_ {
+        children::<ClassBodyDeclaration>(&self.syntax).filter_map(|node| node.member())
+    }
+}
+
+impl RecordBody {
+    pub fn members(&self) -> impl Iterator<Item = ClassBodyMember> + '_ {
+        children::<ClassBodyDeclaration>(&self.syntax).filter_map(|node| node.member())
+    }
+}
+
+impl ClassBodyDeclaration {
+    #[must_use]
+    pub fn member(&self) -> Option<ClassBodyMember> {
+        child_family(&self.syntax)
+    }
+}
+
+impl InterfaceBody {
+    pub fn members(&self) -> impl Iterator<Item = InterfaceBodyMember> + '_ {
+        children_family(&self.syntax)
+    }
+}
+
+impl AnnotationInterfaceBody {
+    pub fn members(&self) -> impl Iterator<Item = AnnotationInterfaceBodyMember> {
+        child::<AnnotationElementList>(&self.syntax)
+            .map(|list| list.members().collect::<Vec<_>>())
+            .unwrap_or_default()
+            .into_iter()
+    }
+}
+
+impl AnnotationElementList {
+    pub fn members(&self) -> impl Iterator<Item = AnnotationInterfaceBodyMember> + '_ {
+        children_family(&self.syntax)
+    }
+}
+
+impl EnumBody {
+    #[must_use]
+    pub fn constants(&self) -> Option<EnumConstantList> {
+        child(&self.syntax)
+    }
+
+    pub fn members(&self) -> impl Iterator<Item = ClassBodyMember> + '_ {
+        children::<ClassBodyDeclaration>(&self.syntax).filter_map(|node| node.member())
+    }
+}
+
+impl EnumConstantList {
+    pub fn constants(&self) -> impl Iterator<Item = EnumConstant> + '_ {
+        children(&self.syntax)
+    }
+}
+
+impl EnumConstant {
+    #[must_use]
+    pub fn name(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Identifier)
+    }
+
+    #[must_use]
+    pub fn arguments(&self) -> Option<ArgumentList> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn body(&self) -> Option<ClassBody> {
+        child(&self.syntax)
+    }
+}
+
+impl FieldDeclaration {
+    #[must_use]
+    pub fn modifiers(&self) -> Option<ModifierList> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn ty(&self) -> Option<Type> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn declarators(&self) -> Option<VariableDeclaratorList> {
+        child(&self.syntax)
+    }
+}
+
 impl MethodDeclaration {
+    #[must_use]
+    pub fn modifiers(&self) -> Option<ModifierList> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn type_parameters(&self) -> Option<TypeParameterList> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn return_type(&self) -> Option<Type> {
+        child_family(&self.syntax)
+    }
+
     #[must_use]
     pub fn name(&self) -> Option<JavaSyntaxToken> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
@@ -120,6 +358,130 @@ impl MethodDeclaration {
 
     #[must_use]
     pub fn parameters(&self) -> Option<FormalParameterList> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn throws_clause(&self) -> Option<ThrowsClause> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn body(&self) -> Option<Block> {
+        child(&self.syntax)
+    }
+}
+
+impl ConstructorDeclaration {
+    #[must_use]
+    pub fn modifiers(&self) -> Option<ModifierList> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn type_parameters(&self) -> Option<TypeParameterList> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn name(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Identifier)
+    }
+
+    #[must_use]
+    pub fn parameters(&self) -> Option<FormalParameterList> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn throws_clause(&self) -> Option<ThrowsClause> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn body(&self) -> Option<ConstructorBody> {
+        child(&self.syntax)
+    }
+}
+
+impl StaticInitializer {
+    #[must_use]
+    pub fn body(&self) -> Option<Block> {
+        child(&self.syntax)
+    }
+}
+
+impl InstanceInitializer {
+    #[must_use]
+    pub fn body(&self) -> Option<Block> {
+        child(&self.syntax)
+    }
+}
+
+impl FormalParameterList {
+    pub fn parameters(&self) -> impl Iterator<Item = FormalParameter> + '_ {
+        children(&self.syntax)
+    }
+}
+
+impl FormalParameter {
+    #[must_use]
+    pub fn ty(&self) -> Option<Type> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn name(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Identifier)
+    }
+
+    #[must_use]
+    pub fn dimensions(&self) -> Option<ArrayDimensions> {
+        child(&self.syntax)
+    }
+}
+
+impl VariableDeclaratorList {
+    pub fn declarators(&self) -> impl Iterator<Item = VariableDeclarator> + '_ {
+        children(&self.syntax)
+    }
+}
+
+impl VariableDeclarator {
+    #[must_use]
+    pub fn name(&self) -> Option<JavaSyntaxToken> {
+        child_token_in(
+            &self.syntax,
+            &[JavaSyntaxKind::Identifier, JavaSyntaxKind::UnderscoreKw],
+        )
+    }
+
+    #[must_use]
+    pub fn dimensions(&self) -> Option<ArrayDimensions> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn initializer(&self) -> Option<VariableInitializer> {
+        child(&self.syntax)
+    }
+}
+
+impl VariableInitializer {
+    #[must_use]
+    pub fn value(&self) -> Option<VariableInitializerValue> {
+        child_family(&self.syntax)
+    }
+}
+
+impl LocalVariableDeclaration {
+    #[must_use]
+    pub fn ty(&self) -> Option<Type> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn declarators(&self) -> Option<VariableDeclaratorList> {
         child(&self.syntax)
     }
 }
@@ -148,6 +510,12 @@ impl MethodInvocationExpression {
     }
 }
 
+impl ArgumentList {
+    pub fn arguments(&self) -> impl Iterator<Item = Expression> + '_ {
+        children_family(&self.syntax)
+    }
+}
+
 impl ArrayType {
     #[must_use]
     pub fn dimensions(&self) -> Option<ArrayDimensions> {
@@ -161,6 +529,414 @@ impl Annotation {
         child(&self.syntax)
     }
 }
+
+impl ParenthesizedExpression {
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression> {
+        child_family(&self.syntax)
+    }
+}
+
+impl AssignmentExpression {
+    #[must_use]
+    pub fn left(&self) -> Option<Expression> {
+        nth_child_family(&self.syntax, 0)
+    }
+
+    #[must_use]
+    pub fn operator(&self) -> Option<JavaSyntaxToken> {
+        child_token_in(&self.syntax, ASSIGNMENT_OPERATORS)
+    }
+
+    #[must_use]
+    pub fn right(&self) -> Option<Expression> {
+        nth_child_family(&self.syntax, 1)
+    }
+}
+
+impl ConditionalExpression {
+    #[must_use]
+    pub fn condition(&self) -> Option<Expression> {
+        nth_child_family(&self.syntax, 0)
+    }
+
+    #[must_use]
+    pub fn true_expression(&self) -> Option<Expression> {
+        nth_child_family(&self.syntax, 1)
+    }
+
+    #[must_use]
+    pub fn false_expression(&self) -> Option<Expression> {
+        nth_child_family(&self.syntax, 2)
+    }
+}
+
+impl BinaryExpression {
+    #[must_use]
+    pub fn left(&self) -> Option<Expression> {
+        nth_child_family(&self.syntax, 0)
+    }
+
+    #[must_use]
+    pub fn operator(&self) -> Option<JavaSyntaxToken> {
+        child_token_in(&self.syntax, BINARY_OPERATORS)
+    }
+
+    #[must_use]
+    pub fn right(&self) -> Option<Expression> {
+        nth_child_family(&self.syntax, 1)
+    }
+}
+
+impl UnaryExpression {
+    #[must_use]
+    pub fn operator(&self) -> Option<JavaSyntaxToken> {
+        child_token_in(
+            &self.syntax,
+            &[
+                JavaSyntaxKind::PlusPlus,
+                JavaSyntaxKind::MinusMinus,
+                JavaSyntaxKind::Plus,
+                JavaSyntaxKind::Minus,
+                JavaSyntaxKind::Bang,
+                JavaSyntaxKind::Tilde,
+            ],
+        )
+    }
+
+    #[must_use]
+    pub fn operand(&self) -> Option<Expression> {
+        child_family(&self.syntax)
+    }
+}
+
+impl PostfixExpression {
+    #[must_use]
+    pub fn operand(&self) -> Option<Expression> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn operator(&self) -> Option<JavaSyntaxToken> {
+        child_token_in(
+            &self.syntax,
+            &[JavaSyntaxKind::PlusPlus, JavaSyntaxKind::MinusMinus],
+        )
+    }
+}
+
+impl CastExpression {
+    #[must_use]
+    pub fn ty(&self) -> Option<Type> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression> {
+        child_family(&self.syntax)
+    }
+}
+
+impl ObjectCreationExpression {
+    #[must_use]
+    pub fn ty(&self) -> Option<Type> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn arguments(&self) -> Option<ArgumentList> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn body(&self) -> Option<ClassBody> {
+        child(&self.syntax)
+    }
+}
+
+impl ArrayCreationExpression {
+    #[must_use]
+    pub fn ty(&self) -> Option<Type> {
+        child_family(&self.syntax)
+    }
+
+    pub fn dimensions(&self) -> impl Iterator<Item = DimExpression> + '_ {
+        children(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn initializer(&self) -> Option<ArrayInitializer> {
+        child(&self.syntax)
+    }
+}
+
+impl LambdaExpression {
+    #[must_use]
+    pub fn parameters(&self) -> Option<LambdaParameterList> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn expression_body(&self) -> Option<Expression> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn block_body(&self) -> Option<Block> {
+        child(&self.syntax)
+    }
+}
+
+impl LambdaParameterList {
+    pub fn parameters(&self) -> impl Iterator<Item = LambdaParameter> + '_ {
+        children(&self.syntax)
+    }
+}
+
+impl LambdaParameter {
+    #[must_use]
+    pub fn ty(&self) -> Option<Type> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn name(&self) -> Option<JavaSyntaxToken> {
+        child_token_in(
+            &self.syntax,
+            &[JavaSyntaxKind::Identifier, JavaSyntaxKind::UnderscoreKw],
+        )
+    }
+}
+
+impl ExpressionStatement {
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression> {
+        child_family(&self.syntax)
+    }
+}
+
+impl ReturnStatement {
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression> {
+        child_family(&self.syntax)
+    }
+}
+
+impl ThrowStatement {
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression> {
+        child_family(&self.syntax)
+    }
+}
+
+impl YieldStatement {
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression> {
+        child_family(&self.syntax)
+    }
+}
+
+impl WhileStatement {
+    #[must_use]
+    pub fn condition(&self) -> Option<Expression> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn body(&self) -> Option<Statement> {
+        child_family(&self.syntax)
+    }
+}
+
+impl DoStatement {
+    #[must_use]
+    pub fn body(&self) -> Option<Statement> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn condition(&self) -> Option<Expression> {
+        child_family(&self.syntax)
+    }
+}
+
+impl SynchronizedStatement {
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn body(&self) -> Option<Block> {
+        child(&self.syntax)
+    }
+}
+
+impl ForStatement {
+    #[must_use]
+    pub fn basic(&self) -> Option<BasicForStatement> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn enhanced(&self) -> Option<EnhancedForStatement> {
+        child(&self.syntax)
+    }
+}
+
+impl BasicForStatement {
+    #[must_use]
+    pub fn initializer(&self) -> Option<ForInitializer> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn condition(&self) -> Option<Expression> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn update(&self) -> Option<ForUpdate> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn body(&self) -> Option<Statement> {
+        child_family(&self.syntax)
+    }
+}
+
+impl EnhancedForStatement {
+    #[must_use]
+    pub fn variable(&self) -> Option<LocalVariableDeclaration> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn iterable(&self) -> Option<Expression> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn body(&self) -> Option<Statement> {
+        child_family(&self.syntax)
+    }
+}
+
+impl ForInitializer {
+    #[must_use]
+    pub fn local_variable_declaration(&self) -> Option<LocalVariableDeclaration> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn expressions(&self) -> Option<StatementExpressionList> {
+        child(&self.syntax)
+    }
+}
+
+impl ForUpdate {
+    #[must_use]
+    pub fn expressions(&self) -> Option<StatementExpressionList> {
+        child(&self.syntax)
+    }
+}
+
+impl StatementExpressionList {
+    pub fn expressions(&self) -> impl Iterator<Item = Expression> + '_ {
+        children_family(&self.syntax)
+    }
+}
+
+impl SwitchStatement {
+    #[must_use]
+    pub fn selector(&self) -> Option<Expression> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn block(&self) -> Option<SwitchBlock> {
+        child(&self.syntax)
+    }
+}
+
+impl SwitchExpression {
+    #[must_use]
+    pub fn selector(&self) -> Option<Expression> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn block(&self) -> Option<SwitchBlock> {
+        child(&self.syntax)
+    }
+}
+
+impl SwitchBlock {
+    pub fn statement_groups(&self) -> impl Iterator<Item = SwitchBlockStatementGroup> + '_ {
+        children(&self.syntax)
+    }
+
+    pub fn rules(&self) -> impl Iterator<Item = SwitchRule> + '_ {
+        children(&self.syntax)
+    }
+}
+
+fn is_modifier_token(kind: JavaSyntaxKind) -> bool {
+    matches!(
+        kind,
+        JavaSyntaxKind::PublicKw
+            | JavaSyntaxKind::ProtectedKw
+            | JavaSyntaxKind::PrivateKw
+            | JavaSyntaxKind::AbstractKw
+            | JavaSyntaxKind::StaticKw
+            | JavaSyntaxKind::FinalKw
+            | JavaSyntaxKind::TransientKw
+            | JavaSyntaxKind::VolatileKw
+            | JavaSyntaxKind::SynchronizedKw
+            | JavaSyntaxKind::NativeKw
+            | JavaSyntaxKind::StrictfpKw
+            | JavaSyntaxKind::DefaultKw
+    )
+}
+
+const ASSIGNMENT_OPERATORS: &[JavaSyntaxKind] = &[
+    JavaSyntaxKind::Assign,
+    JavaSyntaxKind::PlusEq,
+    JavaSyntaxKind::MinusEq,
+    JavaSyntaxKind::StarEq,
+    JavaSyntaxKind::SlashEq,
+    JavaSyntaxKind::AmpEq,
+    JavaSyntaxKind::BarEq,
+    JavaSyntaxKind::CaretEq,
+    JavaSyntaxKind::PercentEq,
+    JavaSyntaxKind::LShiftEq,
+    JavaSyntaxKind::RShiftEq,
+    JavaSyntaxKind::UnsignedRShiftEq,
+];
+
+const BINARY_OPERATORS: &[JavaSyntaxKind] = &[
+    JavaSyntaxKind::InstanceofKw,
+    JavaSyntaxKind::OrOr,
+    JavaSyntaxKind::AndAnd,
+    JavaSyntaxKind::Bar,
+    JavaSyntaxKind::Caret,
+    JavaSyntaxKind::Amp,
+    JavaSyntaxKind::EqEq,
+    JavaSyntaxKind::BangEq,
+    JavaSyntaxKind::Lt,
+    JavaSyntaxKind::Gt,
+    JavaSyntaxKind::LtEq,
+    JavaSyntaxKind::GtEq,
+    JavaSyntaxKind::LShift,
+    JavaSyntaxKind::RShift,
+    JavaSyntaxKind::UnsignedRShift,
+    JavaSyntaxKind::Plus,
+    JavaSyntaxKind::Minus,
+    JavaSyntaxKind::Star,
+    JavaSyntaxKind::Slash,
+    JavaSyntaxKind::Percent,
+];
 
 impl ModuleDeclaration {
     pub fn directives(&self) -> impl Iterator<Item = ModuleDirective> + '_ {

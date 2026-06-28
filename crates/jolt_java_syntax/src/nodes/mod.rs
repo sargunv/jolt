@@ -548,6 +548,27 @@ java_cst! {
             StaticInitializer |
             InstanceInitializer;
 
+        InterfaceBodyMember =
+            EmptyDeclaration |
+            ClassDeclaration |
+            RecordDeclaration |
+            EnumDeclaration |
+            InterfaceDeclaration |
+            AnnotationInterfaceDeclaration |
+            FieldDeclaration |
+            MethodDeclaration;
+
+        AnnotationInterfaceBodyMember =
+            EmptyDeclaration |
+            ClassDeclaration |
+            RecordDeclaration |
+            EnumDeclaration |
+            InterfaceDeclaration |
+            AnnotationInterfaceDeclaration |
+            FieldDeclaration |
+            MethodDeclaration |
+            AnnotationElementDeclaration;
+
         VariableInitializerValue =
             LiteralExpression |
             NameExpression |
@@ -616,6 +637,25 @@ fn nth_child_token(
         .filter_map(SyntaxElement::into_token)
         .filter(|token| token.kind() == kind)
         .nth(index)
+        .map(|syntax| JavaSyntaxToken { syntax })
+}
+
+fn child_token_in(syntax: &JavaSyntaxNode, kinds: &[JavaSyntaxKind]) -> Option<JavaSyntaxToken> {
+    syntax
+        .children_with_tokens()
+        .filter_map(SyntaxElement::into_token)
+        .find(|token| kinds.contains(&token.kind()))
+        .map(|syntax| JavaSyntaxToken { syntax })
+}
+
+fn children_tokens_matching<'a>(
+    syntax: &'a JavaSyntaxNode,
+    predicate: impl Fn(JavaSyntaxKind) -> bool + Copy + 'a,
+) -> impl Iterator<Item = JavaSyntaxToken> + 'a {
+    syntax
+        .children_with_tokens()
+        .filter_map(SyntaxElement::into_token)
+        .filter(move |token| predicate(token.kind()))
         .map(|syntax| JavaSyntaxToken { syntax })
 }
 

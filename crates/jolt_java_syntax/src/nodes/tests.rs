@@ -482,3 +482,398 @@ fn annotations_expose_argument_lists() {
     );
     assert!(marker.arguments().is_none());
 }
+
+#[test]
+fn declaration_accessors_expose_formatter_facing_structure() {
+    let syntax = parse_clean(
+        r#"
+                @Deprecated
+                public class Accessors<T> extends Base implements Runnable permits Other {
+                    static {}
+                    {}
+                    int first = 1, second[];
+                    Accessors(String name) throws Exception {}
+                    String method(int count) throws Exception { return ""; }
+                    class Nested {}
+                }
+
+                record Data(int value, String... names) implements Runnable {
+                    Data {}
+                }
+
+                enum Choice {
+                    ONE(1) { void hook() {} },
+                    TWO;
+
+                    int code;
+                }
+            "#,
+    );
+
+    let class = syntax
+        .type_declarations()
+        .find_map(|declaration| match declaration {
+            TypeDeclaration::ClassDeclaration(class) => Some(class),
+            _ => None,
+        })
+        .expect("expected class declaration");
+
+    let modifiers = class.modifiers().expect("class modifiers");
+    assert_eq!(modifiers.annotations().count(), 1);
+    assert_eq!(
+        modifiers
+            .modifier_tokens()
+            .map(|token| token.kind())
+            .collect::<Vec<_>>(),
+        [JavaSyntaxKind::PublicKw]
+    );
+    assert_eq!(class.name().expect("class name").text(), "Accessors");
+    assert_eq!(
+        class
+            .type_parameters()
+            .expect("type parameters")
+            .parameters()
+            .count(),
+        1
+    );
+    assert!(class.extends_clause().is_some());
+    assert!(class.implements_clause().is_some());
+    assert!(class.permits_clause().is_some());
+
+    let class_body = class.body().expect("class body");
+    let member_kinds = class_body
+        .members()
+        .map(|member| member.kind())
+        .collect::<Vec<_>>();
+    assert_eq!(
+        member_kinds,
+        [
+            JavaSyntaxKind::StaticInitializer,
+            JavaSyntaxKind::InstanceInitializer,
+            JavaSyntaxKind::FieldDeclaration,
+            JavaSyntaxKind::ConstructorDeclaration,
+            JavaSyntaxKind::MethodDeclaration,
+            JavaSyntaxKind::ClassDeclaration,
+        ]
+    );
+
+    let field = descendants::<FieldDeclaration>(&syntax)
+        .into_iter()
+        .find(|field| field.source_text().contains("first"))
+        .expect("field declaration");
+    let declarators = field.declarators().expect("field declarators");
+    let declarator_names = declarators
+        .declarators()
+        .map(|declarator| {
+            declarator
+                .name()
+                .expect("declarator name")
+                .text()
+                .to_owned()
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(declarator_names, ["first", "second"]);
+
+    let constructor = descendants::<ConstructorDeclaration>(&syntax)
+        .into_iter()
+        .find(|constructor| {
+            constructor
+                .name()
+                .is_some_and(|name| name.text() == "Accessors")
+        })
+        .expect("constructor declaration");
+    assert_eq!(
+        constructor
+            .parameters()
+            .expect("parameters")
+            .parameters()
+            .count(),
+        1
+    );
+    assert!(constructor.throws_clause().is_some());
+    assert!(constructor.body().is_some());
+
+    let method = descendants::<MethodDeclaration>(&syntax)
+        .into_iter()
+        .find(|method| method.name().is_some_and(|name| name.text() == "method"))
+        .expect("method declaration");
+    assert_eq!(
+        method
+            .return_type()
+            .expect("return type")
+            .source_text()
+            .trim(),
+        "String"
+    );
+    assert_eq!(
+        method
+            .parameters()
+            .expect("parameters")
+            .parameters()
+            .count(),
+        1
+    );
+    assert!(method.throws_clause().is_some());
+    assert!(method.body().is_some());
+
+    let record = syntax
+        .type_declarations()
+        .find_map(|declaration| match declaration {
+            TypeDeclaration::RecordDeclaration(record) => Some(record),
+            _ => None,
+        })
+        .expect("record declaration");
+    let component_names = record
+        .components()
+        .expect("record components")
+        .components()
+        .map(|component| component.name().expect("component name").text().to_owned())
+        .collect::<Vec<_>>();
+    assert_eq!(component_names, ["value", "names"]);
+    assert!(record.implements_clause().is_some());
+    assert_eq!(
+        record
+            .body()
+            .expect("record body")
+            .members()
+            .map(|member| member.kind())
+            .collect::<Vec<_>>(),
+        [JavaSyntaxKind::CompactConstructorDeclaration]
+    );
+
+    let enum_ = syntax
+        .type_declarations()
+        .find_map(|declaration| match declaration {
+            TypeDeclaration::EnumDeclaration(enum_) => Some(enum_),
+            _ => None,
+        })
+        .expect("enum declaration");
+    let enum_body = enum_.body().expect("enum body");
+    let constants = enum_body.constants().expect("enum constants");
+    assert_eq!(
+        constants
+            .constants()
+            .map(|constant| constant.name().expect("constant name").text().to_owned())
+            .collect::<Vec<_>>(),
+        ["ONE", "TWO"]
+    );
+    assert_eq!(enum_body.members().count(), 1);
+}
+
+#[test]
+fn interface_and_annotation_body_accessors_expose_members() {
+    let syntax = parse_clean(
+        r#"
+                interface Api {
+                    int VALUE = 1;
+                    void call();
+                    class Nested {}
+                }
+
+                @interface Anno {
+                    String value() default "x";
+                    int COUNT = 1;
+                    class Nested {}
+                    ;
+                }
+            "#,
+    );
+
+    let interface = syntax
+        .type_declarations()
+        .find_map(|declaration| match declaration {
+            TypeDeclaration::InterfaceDeclaration(interface) => Some(interface),
+            _ => None,
+        })
+        .expect("interface declaration");
+    assert_eq!(
+        interface
+            .body()
+            .expect("interface body")
+            .members()
+            .map(|member| member.kind())
+            .collect::<Vec<_>>(),
+        [
+            JavaSyntaxKind::FieldDeclaration,
+            JavaSyntaxKind::MethodDeclaration,
+            JavaSyntaxKind::ClassDeclaration,
+        ]
+    );
+
+    let annotation = syntax
+        .type_declarations()
+        .find_map(|declaration| match declaration {
+            TypeDeclaration::AnnotationInterfaceDeclaration(annotation) => Some(annotation),
+            _ => None,
+        })
+        .expect("annotation interface declaration");
+    assert_eq!(
+        annotation
+            .body()
+            .expect("annotation interface body")
+            .members()
+            .map(|member| member.kind())
+            .collect::<Vec<_>>(),
+        [
+            JavaSyntaxKind::AnnotationElementDeclaration,
+            JavaSyntaxKind::FieldDeclaration,
+            JavaSyntaxKind::ClassDeclaration,
+            JavaSyntaxKind::EmptyDeclaration,
+        ]
+    );
+}
+
+#[test]
+fn expression_and_statement_accessors_expose_layout_roles() {
+    let syntax = parse_clean(
+        r#"
+                class Expressions {
+                    void test(int a, int b, int c, boolean ready) {
+                        int value = (a + b) * -c;
+                        value += ready ? call(1, 2) : new int[] { 3 };
+                        for (int i = 0; i < 3; i++) value += i;
+                        for (String item : names()) call(item);
+                        while (ready) value++;
+                        do value--; while (ready);
+                        synchronized (this) { call(value); }
+                        return;
+                    }
+                }
+            "#,
+    );
+
+    let assignment = descendants::<AssignmentExpression>(&syntax)
+        .into_iter()
+        .find(|assignment| assignment.source_text().contains("+="))
+        .expect("compound assignment");
+    assert_eq!(
+        assignment.operator().expect("assignment operator").kind(),
+        JavaSyntaxKind::PlusEq
+    );
+    assert_eq!(
+        assignment
+            .left()
+            .expect("assignment lhs")
+            .source_text()
+            .trim(),
+        "value"
+    );
+    assert!(matches!(
+        assignment.right().expect("assignment rhs"),
+        Expression::ConditionalExpression(_)
+    ));
+
+    let conditional = descendants::<ConditionalExpression>(&syntax)
+        .into_iter()
+        .next()
+        .expect("conditional expression");
+    assert_eq!(
+        conditional
+            .condition()
+            .expect("condition")
+            .source_text()
+            .trim(),
+        "ready"
+    );
+    assert_eq!(
+        conditional
+            .true_expression()
+            .expect("true expression")
+            .source_text()
+            .trim(),
+        "call(1, 2)"
+    );
+    assert!(matches!(
+        conditional.false_expression().expect("false expression"),
+        Expression::ArrayCreationExpression(_)
+    ));
+
+    let binary = descendants::<BinaryExpression>(&syntax)
+        .into_iter()
+        .find(|binary| binary.source_text().contains("*"))
+        .expect("binary expression");
+    assert_eq!(
+        binary.operator().expect("binary operator").kind(),
+        JavaSyntaxKind::Star
+    );
+    assert!(matches!(
+        binary.left().expect("binary lhs"),
+        Expression::ParenthesizedExpression(_)
+    ));
+    assert!(matches!(
+        binary.right().expect("binary rhs"),
+        Expression::UnaryExpression(_)
+    ));
+
+    let invocation = descendants::<MethodInvocationExpression>(&syntax)
+        .into_iter()
+        .find(|invocation| invocation.source_text().trim() == "call(1, 2)")
+        .expect("method invocation");
+    assert_eq!(
+        invocation
+            .arguments()
+            .expect("arguments")
+            .arguments()
+            .count(),
+        2
+    );
+
+    let basic_for = descendants::<ForStatement>(&syntax)
+        .into_iter()
+        .find_map(|for_statement| for_statement.basic())
+        .expect("basic for statement");
+    assert!(basic_for.initializer().is_some());
+    assert_eq!(
+        basic_for
+            .condition()
+            .expect("for condition")
+            .source_text()
+            .trim(),
+        "i < 3"
+    );
+    assert!(basic_for.update().is_some());
+    assert!(basic_for.body().is_some());
+
+    let enhanced_for = descendants::<ForStatement>(&syntax)
+        .into_iter()
+        .find_map(|for_statement| for_statement.enhanced())
+        .expect("enhanced for statement");
+    assert!(enhanced_for.variable().is_some());
+    assert_eq!(
+        enhanced_for
+            .iterable()
+            .expect("iterable")
+            .source_text()
+            .trim(),
+        "names()"
+    );
+    assert!(enhanced_for.body().is_some());
+
+    let while_statement = descendants::<WhileStatement>(&syntax)
+        .into_iter()
+        .next()
+        .expect("while statement");
+    assert_eq!(
+        while_statement
+            .condition()
+            .expect("condition")
+            .source_text()
+            .trim(),
+        "ready"
+    );
+    assert!(while_statement.body().is_some());
+
+    let synchronized = descendants::<SynchronizedStatement>(&syntax)
+        .into_iter()
+        .next()
+        .expect("synchronized statement");
+    assert_eq!(
+        synchronized
+            .expression()
+            .expect("expression")
+            .source_text()
+            .trim(),
+        "this"
+    );
+    assert!(synchronized.body().is_some());
+}
