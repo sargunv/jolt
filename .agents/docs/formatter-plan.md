@@ -892,7 +892,7 @@ layout builder on top of it.
 
 ### Milestone 7: shared document IR and renderer
 
-Status: pending.
+Status: complete.
 
 Build the shared document IR and renderer as a complete formatting substrate
 before language layout builders depend on it.
