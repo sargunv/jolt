@@ -105,11 +105,17 @@ pub fn format_java_source(source: &str) -> JavaFormatResult {
     }
 
     match render(&doc, RenderOptions::default()) {
-        Ok(rendered) => JavaFormatResult {
-            formatted_source: Some(rendered.text),
-            diagnostics,
-            status: JavaFormatStatus::Formatted,
-        },
+        Ok(rendered) => {
+            let mut formatted_source = rendered.text;
+            if !formatted_source.ends_with('\n') {
+                formatted_source.push('\n');
+            }
+            JavaFormatResult {
+                formatted_source: Some(formatted_source),
+                diagnostics,
+                status: JavaFormatStatus::Formatted,
+            }
+        }
         Err(error) => blocked(vec![Diagnostic {
             code: JavaFormatDiagnosticCode::RenderFailed.id(),
             severity: Severity::InternalError,
@@ -1052,8 +1058,14 @@ fn format_unary_expression(unary: &jolt_java_syntax::UnaryExpression) -> FormatR
             operand.text_range(),
         ));
     }
+    let separator = if unary_operator_needs_separator(&operator, &operand) {
+        text(" ")
+    } else {
+        text("")
+    };
     Ok(concat([
         format_token(&operator),
+        separator,
         format_expression(&operand)?,
     ]))
 }
@@ -1329,6 +1341,25 @@ fn is_supported_assignment_left(expression: &Expression) -> bool {
     )
 }
 
+fn unary_operator_needs_separator(operator: &JavaSyntaxToken, operand: &Expression) -> bool {
+    let Expression::UnaryExpression(operand) = operand else {
+        return false;
+    };
+    let Some(operand_operator) = operand.operator() else {
+        return false;
+    };
+    matches!(
+        (operator.kind(), operand_operator.kind()),
+        (
+            JavaSyntaxKind::Plus,
+            JavaSyntaxKind::Plus | JavaSyntaxKind::PlusPlus
+        ) | (
+            JavaSyntaxKind::Minus,
+            JavaSyntaxKind::Minus | JavaSyntaxKind::MinusMinus
+        )
+    )
+}
+
 const fn is_line_terminator(ch: char) -> bool {
     matches!(ch, '\n' | '\r' | '\u{2028}' | '\u{2029}')
 }
@@ -1442,6 +1473,7 @@ fn missing_layout(message: impl Into<String>, range: TextRange) -> Diagnostic {
 #[cfg(test)]
 fn assert_formatted(source: &str, expected: &str) {
     let result = format_java_source(source);
+    let expected = expected.to_owned() + "\n";
 
     assert_eq!(
         result.status,
@@ -1450,7 +1482,7 @@ fn assert_formatted(source: &str, expected: &str) {
     );
     assert_eq!(
         result.formatted_source.as_deref(),
-        Some(expected),
+        Some(expected.as_str()),
         "{source}"
     );
     assert!(result.diagnostics.is_empty(), "{source}");
@@ -1584,8 +1616,8 @@ mod tests {
     #[test]
     fn field_and_local_initializers_format_supported_expressions() {
         assert_formatted(
-            "class A { int value = 1; Object output = System.out; int total = a + b * c; int grouped = (a + b) * -c; int first, second = 2; void m() { int local = (value + 1), other; } int sum() { return a + b * c; } }",
-            "class A {\n  int value = 1;\n  Object output = System.out;\n  int total = a + b * c;\n  int grouped = (a + b) * -c;\n  int first, second = 2;\n  void m() {\n    int local = (value + 1), other;\n  }\n  int sum() {\n    return a + b * c;\n  }\n}",
+            "class A { int value = 1; Object output = System.out; int total = a + b * c; int grouped = (a + b) * -c; int negative = - -1; int positive = + +1; int first, second = 2; void m() { int local = (value + 1), other; } int sum() { return a + b * c; } }",
+            "class A {\n  int value = 1;\n  Object output = System.out;\n  int total = a + b * c;\n  int grouped = (a + b) * -c;\n  int negative = - -1;\n  int positive = + +1;\n  int first, second = 2;\n  void m() {\n    int local = (value + 1), other;\n  }\n  int sum() {\n    return a + b * c;\n  }\n}",
         );
     }
 

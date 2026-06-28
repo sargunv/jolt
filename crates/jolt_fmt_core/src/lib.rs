@@ -152,8 +152,8 @@ mod tests {
     fn minimal_clean_java_formats_successfully() {
         let result = format_source("class A {}", Language::Java, &FormatOptions::default());
 
-        assert_eq!(result.status, FormatStatus::Unchanged);
-        assert_eq!(result.formatted_source.as_deref(), Some("class A {}"));
+        assert_eq!(result.status, FormatStatus::Formatted);
+        assert_eq!(result.formatted_source.as_deref(), Some("class A {}\n"));
         assert!(result.diagnostics.is_empty());
     }
 

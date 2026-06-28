@@ -1,4 +1,5 @@
 use std::cmp::Reverse;
+use std::collections::BTreeMap;
 use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -85,6 +86,10 @@ fn assert_profile(profile: Profile<'_>) -> OracleSummary {
         let result = format_java_source(&source);
         match result.status {
             JavaFormatStatus::Blocked => {
+                let missing_rule_diagnostic = result.diagnostics.iter().find(|diagnostic| {
+                    diagnostic.code.as_str()
+                        == JavaFormatDiagnosticCode::MissingLayoutRules.id().as_str()
+                });
                 let kind = if result
                     .diagnostics
                     .iter()
@@ -92,10 +97,7 @@ fn assert_profile(profile: Profile<'_>) -> OracleSummary {
                 {
                     summary.parse_blocked += 1;
                     BlockKind::Parse
-                } else if result.diagnostics.iter().any(|diagnostic| {
-                    diagnostic.code.as_str()
-                        == JavaFormatDiagnosticCode::MissingLayoutRules.id().as_str()
-                }) {
+                } else if missing_rule_diagnostic.is_some() {
                     summary.missing_rule_blocked += 1;
                     BlockKind::MissingRule
                 } else {
@@ -105,6 +107,8 @@ fn assert_profile(profile: Profile<'_>) -> OracleSummary {
                 summary.blocked.push(BlockedFile {
                     path: relative_name,
                     kind,
+                    missing_rule_bucket: missing_rule_diagnostic
+                        .map(|diagnostic| diagnostic.message.clone()),
                     diagnostics: result.diagnostics.iter().map(render_diagnostic).collect(),
                 });
             }
@@ -243,6 +247,22 @@ impl OracleSummary {
             .max_by_key(|mismatch| mismatch.diff_size)
     }
 
+    fn missing_rule_buckets(&self) -> Vec<MissingRuleBucket<'_>> {
+        let mut counts = BTreeMap::<&str, usize>::new();
+        for blocked in &self.blocked {
+            let Some(bucket) = blocked.missing_rule_bucket.as_deref() else {
+                continue;
+            };
+            *counts.entry(bucket).or_default() += 1;
+        }
+        let mut buckets = counts
+            .into_iter()
+            .map(|(message, count)| MissingRuleBucket { message, count })
+            .collect::<Vec<_>>();
+        buckets.sort_by_key(|bucket| (Reverse(bucket.count), bucket.message));
+        buckets
+    }
+
     fn render(&self) -> String {
         let mut output = String::new();
         writeln!(&mut output, "suite: {}", self.suite).expect("write summary");
@@ -305,8 +325,22 @@ impl OracleSummary {
             output.push_str("  <none>: 0\n");
         }
 
+        output.push_str("\ntop missing-rule blockers:\n");
+        let missing_rule_buckets = self.missing_rule_buckets();
+        for bucket in missing_rule_buckets.iter().take(10) {
+            writeln!(&mut output, "  {}: {}", bucket.count, bucket.message).expect("write summary");
+        }
+        if missing_rule_buckets.is_empty() {
+            output.push_str("  0: <none>\n");
+        }
+
         output
     }
+}
+
+struct MissingRuleBucket<'a> {
+    message: &'a str,
+    count: usize,
 }
 
 struct Mismatch {
@@ -319,6 +353,7 @@ struct Mismatch {
 struct BlockedFile {
     path: String,
     kind: BlockKind,
+    missing_rule_bucket: Option<String>,
     diagnostics: Vec<String>,
 }
 
@@ -346,6 +381,19 @@ fn write_reports(summary: &OracleSummary, report_root: &Path) {
     blocked.sort_by_key(|blocked| (blocked.kind.as_str(), blocked.path.as_str()));
 
     let mut index = String::new();
+    write_index_summary(summary, &mut index);
+    write_mismatch_reports(&mut index, report_root, &mismatches);
+    write_blocked_reports(&mut index, report_root, &blocked);
+
+    fs::write(report_root.join("index.md"), index).unwrap_or_else(|error| {
+        panic!(
+            "failed to write oracle report index {}: {error}",
+            report_root.display()
+        )
+    });
+}
+
+fn write_index_summary(summary: &OracleSummary, mut index: &mut String) {
     writeln!(&mut index, "# {} / {}", summary.suite, summary.profile).expect("write index");
     writeln!(&mut index).expect("write index");
     writeln!(
@@ -361,8 +409,20 @@ fn write_reports(summary: &OracleSummary, report_root: &Path) {
     )
     .expect("write index");
     writeln!(&mut index).expect("write index");
-    index.push_str("## Mismatches\n\n");
+    index.push_str("## Missing Rule Buckets\n\n");
+    let missing_rule_buckets = summary.missing_rule_buckets();
+    if missing_rule_buckets.is_empty() {
+        index.push_str("- <none>: 0\n");
+    } else {
+        for bucket in missing_rule_buckets {
+            writeln!(&mut index, "- {}: {}", bucket.count, bucket.message).expect("write index");
+        }
+    }
+    writeln!(&mut index).expect("write index");
+}
 
+fn write_mismatch_reports(mut index: &mut String, report_root: &Path, mismatches: &[&Mismatch]) {
+    index.push_str("## Mismatches\n\n");
     for mismatch in mismatches {
         let artifact_name = artifact_name(&mismatch.path);
         writeln!(
@@ -397,7 +457,9 @@ fn write_reports(summary: &OracleSummary, report_root: &Path) {
             )
         });
     }
+}
 
+fn write_blocked_reports(mut index: &mut String, report_root: &Path, blocked: &[&BlockedFile]) {
     index.push_str("\n## Blocked\n\n");
     for blocked_file in blocked {
         let artifact_name = "blocked_".to_owned() + &artifact_name(&blocked_file.path);
@@ -431,13 +493,6 @@ fn write_reports(summary: &OracleSummary, report_root: &Path) {
             )
         });
     }
-
-    fs::write(report_root.join("index.md"), index).unwrap_or_else(|error| {
-        panic!(
-            "failed to write oracle report index {}: {error}",
-            report_root.display()
-        )
-    });
 }
 
 fn render_diagnostic(diagnostic: &jolt_diagnostics::Diagnostic) -> String {

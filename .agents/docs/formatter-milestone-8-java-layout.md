@@ -51,8 +51,8 @@ The current google-java-format oracle scoreboard is:
 - missing-rule blocked: 187,
 - other blocked: 0,
 - formatted: 21,
-- exact matches: 0,
-- aggregate diff size: 711.
+- exact matches: 9,
+- aggregate diff size: 665.
 
 The next useful step is therefore not more parser or IR design. It is the Java
 CST-to-doc layout layer, built horizontally over the completed syntax layer and

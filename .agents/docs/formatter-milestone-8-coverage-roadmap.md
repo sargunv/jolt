@@ -13,8 +13,8 @@ snapshot currently reports:
 - missing-rule blocked: 187,
 - other blocked: 0,
 - formatted: 21,
-- exact matches: 0,
-- aggregate diff size: 711.
+- exact matches: 9,
+- aggregate diff size: 665.
 
 That means the current failure is formatter coverage. The layout builder still
 contains broad unsupported-shape guards and explicit `missing_layout` exits for
@@ -30,8 +30,9 @@ Coverage and oracle compatibility are related but separate:
   `java.format.missing_layout_rules`.
 - Safety: parse diagnostics still block formatting without output.
 - Rendering: render failures are internal bugs, not acceptable blocked output.
-- Oracle compatibility: the pinned valid google-java-format corpus reaches 100%
-  exact matches for the Google profile.
+- Oracle measurement: the pinned valid google-java-format corpus reports exact
+  matches and aggregate diff size as progress metrics, not Milestone 8 exit
+  criteria.
 - Source inventory: every `missing_layout` call site is either removed, narrowed
   to invalid/unreachable parser-clean structure, or covered by a test proving
   the input is not valid clean Java.
@@ -86,6 +87,141 @@ This table is "first blocker per file", not total missing syntax. Removing one
 large blocker will expose deeper blockers in the same files. The roadmap should
 therefore be driven by both this histogram and the source-level `missing_layout`
 inventory.
+
+## Early Wrapping Policy And Architecture
+
+Wrapping is not a late oracle-compatibility pass. The current Java formatter can
+emit short flat files, but it does not yet use the renderer's width-aware group
+machinery in the rules that will unlock declarations, lists, chains,
+expressions, and comments. Those rule families should land with wrapping from
+the start, because adding them as flat-only formatters would immediately create
+valid formatted output that is structurally wrong for long Java sources.
+
+### google-java-format Policy Audit
+
+Primary source revision:
+`google-java-format@fb9528917c524c8eb9c8c0d7b4bcd7ce3b6a604b`.
+
+Actionable policy:
+
+- Line width is fixed at 100 columns for the Google profile. The formatter emits
+  break opportunities and lets document fitting choose which levels break.
+- Style changes the indentation multiplier, not the width. Google uses the
+  normal logical indentation unit; AOSP doubles it.
+- Wrapping is represented with document breaks, not rule-local
+  `if length > width` checks. Breaks are selected as unified, independent, or
+  forced groups.
+- Method and constructor headers need a specialized helper, not a generic list:
+  type parameters, return type, name, parameters, throws clauses, default
+  values, and bodies have separate break tags and conditional indentation.
+- Variable, field, and parameter declarations need a tagged break between type
+  and name. If the type breaks, the name and initializer align through
+  conditional indentation; initializers break after `=`.
+- Argument and formal-parameter lists open with a break opportunity after `(`,
+  then use comma separators with break opportunities. Short item lists may fill
+  independently; longer lists break in unified form.
+- Type arguments and type parameters need their own helpers because `<...>`
+  lists use different opening and separator breaks than call arguments.
+- Method chains must be flattened before formatting. Member select, invocation,
+  and array access selectors should go through one `dot_chain` helper that
+  breaks before dots and handles prefix classification.
+- Binary expressions should flatten only across operators of the same
+  precedence. Break before the operator for binary operators; break after the
+  operator for assignment and compound assignment.
+- Annotation layout is declaration-sensitive. Type declarations use vertical
+  declaration annotations; fields and locals allow horizontal annotations only
+  in narrower cases. Annotation argument lists use the same grouped list
+  machinery as calls.
+- Comment handling participates in wrapping. Trailing line comments are suffixes
+  that affect group fitting; line comments are normalized and wrapped to the
+  same 100-column target; Javadocs and block comments need indentation-aware
+  preservation.
+- Blank lines are explicit layout requests. Top-level sections, blocks,
+  statement lists, and class bodies each have their own blank-line policy.
+
+Relevant google-java-format source identifiers: `Formatter.MAX_LINE_LENGTH`,
+`Formatter.format`, `Doc.FillMode`, `Doc.Level.computeBreaks`, `Doc.Break`,
+`JavaFormatterOptions.Style`, `JavaInputAstVisitor.visitMethod`,
+`JavaInputAstVisitor.visitClassDeclaration`,
+`JavaInputAstVisitor.visitRecordDeclaration`,
+`JavaInputAstVisitor.typeParametersRest`,
+`JavaInputAstVisitor.classDeclarationTypeList`,
+`JavaInputAstVisitor.declareOne`, `JavaInputAstVisitor.addArguments`,
+`JavaInputAstVisitor.argList`, `JavaInputAstVisitor.hasOnlyShortItems`,
+`JavaInputAstVisitor.visitDot`, `JavaInputAstVisitor.visitRegularDot`,
+`JavaInputAstVisitor.walkInfix`, `JavaInputAstVisitor.visitBinary`,
+`JavaInputAstVisitor.visitAssignment`,
+`JavaInputAstVisitor.visitCompoundAssignment`,
+`JavaInputAstVisitor.visitAnnotation`, `JavaCommentsHelper.rewrite`,
+`BlankLineWanted`, `JavaInputAstVisitor.visitCompilationUnit`,
+`JavaInputAstVisitor.visitBlock`, `JavaInputAstVisitor.visitStatements`, and
+`JavaInputAstVisitor.addBodyDeclarations`.
+
+### Architecture Audit
+
+Ruff, Oxc, and Prettier agree on the architecture shape Jolt should use:
+
+- Keep `jolt_fmt_ir` language-neutral. The renderer should know about groups,
+  lines, fill, best-fitting alternatives, line suffixes, and fitting. It should
+  not know Java declaration, argument, chain, or annotation policy.
+- Put wrapping policy in Java rule helpers with domain names:
+  `declaration_header`, `formal_list`, `argument_list`, `type_argument_list`,
+  `dot_chain`, `binary_chain`, `annotation_or_modifier_list`,
+  `block_blank_lines`, and `class_body_blank_lines`.
+- Build policy-bearing list helpers early. These helpers should own separators,
+  open/close behavior, trailing and dangling comments, forced parent expansion,
+  and whether a list breaks independently or as one group.
+- Use normal groups first. Reserve `best_fitting` or multi-alternative layouts
+  for cases that actually need staged expansion, such as method chains or other
+  Java-specific special cases.
+- Treat comments as formatter-owned source facts. Keep comment attachment and
+  accounting in `jolt_java_fmt`, not in CST wrappers or the renderer.
+- Rule boundaries should own comment accounting. Leading, trailing, dangling,
+  inner, and list-item comments must be consumed deliberately, and supported
+  rules should fail tests if a comment is left unformatted.
+- Use `line_suffix` and `line_suffix_boundary` for trailing comments so pending
+  suffix width affects group fitting.
+- Keep generated rule glue out of Milestone 8 until the handwritten Java helper
+  surface and wrapper accessors stabilize.
+- Add focused narrow-width tests at helper boundaries, plus idempotence checks
+  where practical. The oracle scoreboard remains the integration signal, not the
+  only wrapping test.
+
+Primary architecture references from the audit:
+
+- Prettier document builders and printer:
+  `src/document/builders/{group,if-break,fill,line,line-suffix}.js`,
+  `src/document/printer/printer.js`, and `src/main/comments/{attach,print}.js`.
+- Ruff formatter core and Python formatter:
+  `crates/ruff_formatter/src/{format_element,builders,printer/mod}.rs`,
+  `crates/ruff_python_formatter/src/{context,lib,builders}.rs`, and
+  `crates/ruff_python_formatter/src/comments/`.
+- Oxc formatter core and JavaScript formatter:
+  `crates/oxc_formatter_core/src/{format_element,builders,printer/mod}.rs`,
+  `crates/oxc_formatter/src/formatter/{context,comments,trivia}.rs`,
+  `crates/oxc_formatter/src/print/call_like_expression/arguments.rs`,
+  `crates/oxc_formatter/src/utils/member_chain/mod.rs`, and
+  `crates/oxc_formatter/src/print/binary_like_expression.rs`.
+
+### Required Early Jolt Work
+
+Before expanding method declarations, argument lists, chained selectors, binary
+expressions, or annotation layouts, add the Java wrapping substrate:
+
+1. Make `JavaFormatContext` carry the state needed by wrapping helpers: profile,
+   source text, comment cursor, group ids, break markers, and any current
+   container/list context proven by call sites.
+2. Add policy-bearing helpers for declaration headers, parenthesized lists,
+   comma lists, type argument/type parameter lists, method chains, binary
+   chains, annotations/modifiers, braced blocks, and blank-line decisions.
+3. Map google-java-format's unified/independent/forced break choices onto the
+   existing IR primitives. Add an IR primitive only if a concrete Java helper
+   cannot express the required policy.
+4. Add narrow-width tests for each helper as it lands: parameters, arguments,
+   throws clauses, type arguments, binary chains, method chains, trailing
+   comments, dangling comments, and blank-line-sensitive class bodies.
+5. Keep flat short-case tests beside the forced-wrapping tests so helpers prove
+   both fit modes.
 
 ## Source-Level Audit
 
@@ -382,10 +518,12 @@ Roadmap:
 The implementation order should maximize coverage while avoiding partial output.
 After each step, run the full oracle harness and update the blocker histogram.
 
-1. Improve reporting:
-   - add a missing-rule histogram to the oracle report index,
-   - optionally include the top buckets in the compact `insta` snapshot,
-   - keep per-file diagnostics gitignored.
+1. Add the Java wrapping substrate before expanding list-bearing syntax:
+   - `JavaFormatContext` state for groups, markers, comments, and profile,
+   - policy-bearing helpers for declarations, lists, chains, binary expressions,
+     annotations, blocks, and blank lines,
+   - narrow-width tests that force multiline output,
+   - trailing-comment tests proving `line_suffix` affects fitting.
 2. Continue localizing coarse blockers:
    - module declarations,
    - compact compilation-unit members,
@@ -420,22 +558,18 @@ After each step, run the full oracle harness and update the blocker histogram.
    - control flow,
    - try/resources,
    - switch.
-9. Expressions:
-   - selector chains,
-   - object/array creation,
-   - class literals,
-   - casts,
-   - conditionals,
-   - lambdas,
-   - method references,
-   - patterns and switch expressions,
-   - multiline literals.
-10. Compatibility pass:
-    - with `missing-rule blocked: 0`, drive exact-match percentage to 100%,
-    - fix policy diffs by descending aggregate diff size,
+9. Expressions: selector chains, object/array creation, class literals, casts,
+   conditionals, lambdas, method references, patterns and switch expressions,
+   and multiline literals.
+
+10. Milestone 8 coverage closeout:
+    - drive `missing-rule blocked` and `other blocked` to zero,
+    - keep exact-match percentage and aggregate diff size reporting so later
+      compatibility milestones can drive policy diffs down,
+    - do not require 100% google-java-format exact matches for Milestone 8,
     - keep import sorting, modifier ordering, suppression comments, and range
-      formatting explicitly scoped unless oracle evidence proves they are part
-      of the required Google profile behavior.
+      formatting explicitly scoped unless they are required to format all valid
+      Java source without blocked output.
 
 ## Tracking Checklist
 
@@ -444,10 +578,16 @@ Milestone 8 remains open until all of these are true:
 - [ ] `missing-rule blocked: 0` for the pinned valid google-java-format corpus.
 - [ ] `other blocked: 0` for the pinned valid google-java-format corpus.
 - [ ] `formatted` equals the number of valid corpus files.
-- [ ] exact matches are 100% for the pinned valid google-java-format corpus.
+- [ ] exact-match percentage and aggregate diff size are still reported for the
+      pinned valid google-java-format corpus, but are not Milestone 8 gates.
 - [ ] every valid-Java `missing_layout` call site in `jolt_java_fmt` has been
       removed or proven unreachable for clean parser output.
 - [ ] broad shape guards no longer block valid Java grammar families.
+- [ ] Java wrapping helpers exist for declarations, lists, chains, binary
+      expressions, comments, and blank-line-sensitive blocks before those
+      grammar families report formatted output.
+- [ ] narrow-width tests force multiline behavior for every wrapping helper that
+      can affect oracle output.
 - [ ] parser diagnostics still block formatting without output.
 - [ ] formatter output remains comment/trivia-accounted.
 - [ ] targeted tests cover each Java grammar family, not only oracle fixtures.
