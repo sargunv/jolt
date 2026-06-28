@@ -207,33 +207,90 @@ fn import_declarations_expose_structured_names() {
                 import static java.util.Collections.emptyList;
                 import static java.util.Collections.*;
                 import module java.base;
+                import module.foo.Bar;
 
                 class Imports {}
             ",
     );
 
-    let names = syntax
-        .imports()
+    let imports = syntax.imports().collect::<Vec<_>>();
+    let names = imports
+        .iter()
         .map(|import| {
             let name = import.name().expect("import should expose its parsed name");
-            (name.kind(), name.source_text())
+            (
+                name.kind(),
+                name.segments()
+                    .map(|segment| segment.text().to_owned())
+                    .collect::<Vec<_>>(),
+                import.is_static(),
+                import.is_module(),
+                import.is_on_demand(),
+                import.has_supported_layout_shape(),
+            )
         })
         .collect::<Vec<_>>();
 
     assert_eq!(
         names,
         [
-            (JavaSyntaxKind::QualifiedName, "java.util.List".to_owned()),
-            (JavaSyntaxKind::QualifiedName, "java.util".to_owned()),
             (
                 JavaSyntaxKind::QualifiedName,
-                "java.util.Collections.emptyList".to_owned()
+                vec!["java".to_owned(), "util".to_owned(), "List".to_owned()],
+                false,
+                false,
+                false,
+                true,
             ),
             (
                 JavaSyntaxKind::QualifiedName,
-                "java.util.Collections".to_owned()
+                vec!["java".to_owned(), "util".to_owned()],
+                false,
+                false,
+                true,
+                true,
             ),
-            (JavaSyntaxKind::QualifiedName, "java.base".to_owned()),
+            (
+                JavaSyntaxKind::QualifiedName,
+                vec![
+                    "java".to_owned(),
+                    "util".to_owned(),
+                    "Collections".to_owned(),
+                    "emptyList".to_owned(),
+                ],
+                true,
+                false,
+                false,
+                true,
+            ),
+            (
+                JavaSyntaxKind::QualifiedName,
+                vec![
+                    "java".to_owned(),
+                    "util".to_owned(),
+                    "Collections".to_owned()
+                ],
+                true,
+                false,
+                true,
+                true,
+            ),
+            (
+                JavaSyntaxKind::QualifiedName,
+                vec!["java".to_owned(), "base".to_owned()],
+                false,
+                true,
+                false,
+                true,
+            ),
+            (
+                JavaSyntaxKind::QualifiedName,
+                vec!["module".to_owned(), "foo".to_owned(), "Bar".to_owned()],
+                false,
+                false,
+                false,
+                true,
+            ),
         ]
     );
 }
@@ -484,6 +541,7 @@ fn annotations_expose_argument_lists() {
 }
 
 #[test]
+#[allow(clippy::too_many_lines)]
 fn declaration_accessors_expose_formatter_facing_structure() {
     let syntax = parse_clean(
         r#"
@@ -661,6 +719,200 @@ fn declaration_accessors_expose_formatter_facing_structure() {
 }
 
 #[test]
+fn member_layout_accessors_account_for_supported_direct_shapes() {
+    let syntax = parse_clean(
+        r"
+                class A {
+                    int value;
+                    A() {}
+                    void clear() {}
+                }
+            ",
+    );
+
+    let class = syntax
+        .type_declarations()
+        .find_map(|declaration| match declaration {
+            TypeDeclaration::ClassDeclaration(class) => Some(class),
+            _ => None,
+        })
+        .expect("expected class declaration");
+    assert!(class.has_supported_layout_shape());
+
+    let body = class.body().expect("class body");
+    assert!(body.has_supported_layout_shape());
+    let declarations = body.declarations().collect::<Vec<_>>();
+    assert_eq!(declarations.len(), 3);
+    assert!(
+        declarations
+            .iter()
+            .all(ClassBodyDeclaration::has_supported_layout_shape)
+    );
+
+    let field = descendants::<FieldDeclaration>(&syntax)
+        .into_iter()
+        .next()
+        .expect("field declaration");
+    assert!(field.has_supported_layout_shape());
+    assert_eq!(
+        field
+            .ty()
+            .expect("field type")
+            .simple_layout_tokens()
+            .expect("simple type")
+            .iter()
+            .map(JavaSyntaxToken::text)
+            .collect::<Vec<_>>(),
+        ["int"]
+    );
+    let declarators = field.declarators().expect("field declarators");
+    assert!(declarators.has_single_declarator_layout_shape());
+    assert!(
+        declarators
+            .declarators()
+            .next()
+            .expect("field declarator")
+            .has_identifier_layout_shape()
+    );
+
+    let constructor = descendants::<ConstructorDeclaration>(&syntax)
+        .into_iter()
+        .next()
+        .expect("constructor declaration");
+    assert!(constructor.has_supported_layout_shape());
+    assert!(
+        constructor
+            .body()
+            .expect("constructor body")
+            .has_empty_layout_shape()
+    );
+
+    let method = descendants::<MethodDeclaration>(&syntax)
+        .into_iter()
+        .next()
+        .expect("method declaration");
+    assert!(method.has_supported_layout_shape());
+    assert!(method.body().expect("method body").has_empty_layout_shape());
+}
+
+#[test]
+fn block_statement_accessors_expose_supported_layout_shapes() {
+    let syntax = parse_clean(
+        r"
+                class A {
+                    A() {
+                        String name;
+                        { return; }
+                    }
+
+                    void m() {
+                        int local;
+                        return;
+                        return 1;
+                        throw local;
+                    }
+                }
+            ",
+    );
+
+    let constructor = descendants::<ConstructorDeclaration>(&syntax)
+        .into_iter()
+        .next()
+        .expect("constructor declaration");
+    let constructor_body = constructor.body().expect("constructor body");
+    assert!(constructor_body.has_supported_layout_shape());
+    let constructor_statements = constructor_body.block_statements().collect::<Vec<_>>();
+    assert_eq!(constructor_statements.len(), 2);
+    assert!(
+        constructor_statements
+            .iter()
+            .all(BlockStatement::has_supported_layout_shape)
+    );
+
+    let method = descendants::<MethodDeclaration>(&syntax)
+        .into_iter()
+        .next()
+        .expect("method declaration");
+    let block = method.body().expect("method body");
+    assert!(block.has_supported_layout_shape());
+    let statements = block.block_statements().collect::<Vec<_>>();
+    assert_eq!(statements.len(), 4);
+    assert!(
+        statements
+            .iter()
+            .all(BlockStatement::has_supported_layout_shape)
+    );
+
+    let local = descendants::<LocalVariableDeclaration>(&syntax)
+        .into_iter()
+        .find(|declaration| declaration.source_text().contains("local"))
+        .expect("local variable declaration");
+    assert!(local.has_supported_layout_shape());
+
+    let returns = descendants::<ReturnStatement>(&syntax);
+    assert_eq!(returns.len(), 3);
+    assert!(
+        returns
+            .iter()
+            .all(ReturnStatement::has_supported_layout_shape)
+    );
+    assert!(returns[0].expression().is_none());
+    assert!(returns[1].expression().is_none());
+    assert!(matches!(
+        returns[2].expression().expect("return expression"),
+        Expression::LiteralExpression(_)
+    ));
+
+    let throw = descendants::<ThrowStatement>(&syntax)
+        .into_iter()
+        .next()
+        .expect("throw statement");
+    assert!(throw.has_supported_layout_shape());
+    assert!(matches!(
+        throw.expression().expect("throw expression"),
+        Expression::NameExpression(_)
+    ));
+}
+
+#[test]
+fn simple_expression_accessors_are_token_backed() {
+    let syntax = parse_clean(
+        r"
+                class A {
+                    Object m() {
+                        return this;
+                    }
+
+                    Object parent() {
+                        return super;
+                    }
+
+                    int one() {
+                        return 1;
+                    }
+                }
+            ",
+    );
+
+    let expressions = descendants::<ReturnStatement>(&syntax)
+        .into_iter()
+        .map(|statement| statement.expression().expect("return expression"))
+        .collect::<Vec<_>>();
+    assert!(matches!(
+        &expressions[0],
+        Expression::ThisExpression(expression) if expression.has_simple_layout_shape()
+    ));
+    assert!(matches!(
+        &expressions[1],
+        Expression::SuperExpression(expression) if expression.has_simple_layout_shape()
+    ));
+    assert!(matches!(
+        &expressions[2],
+        Expression::LiteralExpression(expression) if expression.has_simple_layout_shape()
+    ));
+}
+
+#[test]
 fn interface_and_annotation_body_accessors_expose_members() {
     let syntax = parse_clean(
         r#"
@@ -724,9 +976,10 @@ fn interface_and_annotation_body_accessors_expose_members() {
 }
 
 #[test]
+#[allow(clippy::too_many_lines)]
 fn expression_and_statement_accessors_expose_layout_roles() {
     let syntax = parse_clean(
-        r#"
+        r"
                 class Expressions {
                     void test(int a, int b, int c, boolean ready) {
                         int value = (a + b) * -c;
@@ -739,7 +992,7 @@ fn expression_and_statement_accessors_expose_layout_roles() {
                         return;
                     }
                 }
-            "#,
+            ",
     );
 
     let assignment = descendants::<AssignmentExpression>(&syntax)
@@ -790,7 +1043,7 @@ fn expression_and_statement_accessors_expose_layout_roles() {
 
     let binary = descendants::<BinaryExpression>(&syntax)
         .into_iter()
-        .find(|binary| binary.source_text().contains("*"))
+        .find(|binary| binary.source_text().contains('*'))
         .expect("binary expression");
     assert_eq!(
         binary.operator().expect("binary operator").kind(),
@@ -876,4 +1129,110 @@ fn expression_and_statement_accessors_expose_layout_roles() {
         "this"
     );
     assert!(synchronized.body().is_some());
+}
+
+#[test]
+fn expression_layout_accessors_account_for_phase_7_shapes() {
+    let syntax = parse_clean(
+        r"
+                class Expressions {
+                    int field = System.out;
+
+                    void test() {
+                        int local = (a + b) * -c;
+                        call();
+                        target.call(1, this.value);
+                        System.out.println((value));
+                        this.value = value + 1;
+                        value++;
+                        ++value;
+                    }
+                }
+            ",
+    );
+
+    let field = descendants::<FieldDeclaration>(&syntax)
+        .into_iter()
+        .next()
+        .expect("field");
+    let field_declarator = field
+        .declarators()
+        .expect("field declarators")
+        .declarators()
+        .next()
+        .expect("field declarator");
+    assert!(field_declarator.has_identifier_layout_shape());
+    let field_initializer = field_declarator.initializer().expect("field initializer");
+    assert!(field_initializer.has_expression_layout_shape());
+    assert!(matches!(
+        field_initializer.expression().expect("field expression"),
+        Expression::FieldAccessExpression(_)
+    ));
+
+    let local = descendants::<LocalVariableDeclaration>(&syntax)
+        .into_iter()
+        .find(|declaration| declaration.source_text().contains("local"))
+        .expect("local declaration");
+    let local_declarator = local
+        .declarators()
+        .expect("local declarators")
+        .declarators()
+        .next()
+        .expect("local declarator");
+    assert!(local_declarator.has_identifier_layout_shape());
+    assert!(matches!(
+        local_declarator
+            .initializer()
+            .expect("local initializer")
+            .expression()
+            .expect("local expression"),
+        Expression::BinaryExpression(_)
+    ));
+
+    let invocations = descendants::<MethodInvocationExpression>(&syntax);
+    let simple = invocations
+        .iter()
+        .find(|invocation| invocation.source_text().trim() == "call()")
+        .expect("simple invocation");
+    assert!(simple.has_supported_layout_shape());
+    assert_eq!(simple.simple_name().expect("simple name").text(), "call");
+    assert!(simple.receiver().is_none());
+    assert!(
+        simple
+            .arguments()
+            .expect("arguments")
+            .has_empty_layout_shape()
+    );
+
+    let qualified = invocations
+        .iter()
+        .find(|invocation| invocation.source_text().trim() == "target.call(1, this.value)")
+        .expect("qualified invocation");
+    assert!(qualified.has_supported_layout_shape());
+    assert_eq!(qualified.name().expect("qualified name").text(), "call");
+    assert!(matches!(
+        qualified.receiver().expect("receiver"),
+        Expression::NameExpression(_)
+    ));
+    assert!(
+        qualified
+            .arguments()
+            .expect("arguments")
+            .has_supported_layout_shape()
+    );
+
+    let output = descendants::<FieldAccessExpression>(&syntax)
+        .into_iter()
+        .find(|access| access.source_text().trim() == "System.out")
+        .expect("field access");
+    assert!(output.has_supported_layout_shape());
+    assert_eq!(output.name().expect("field name").text(), "out");
+
+    let statements = descendants::<ExpressionStatement>(&syntax);
+    assert_eq!(statements.len(), 6);
+    assert!(
+        statements
+            .iter()
+            .all(ExpressionStatement::has_supported_layout_shape)
+    );
 }

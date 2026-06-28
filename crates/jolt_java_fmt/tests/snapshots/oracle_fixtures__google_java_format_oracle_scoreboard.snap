@@ -1,0 +1,30 @@
+---
+source: crates/jolt_java_fmt/tests/oracle_fixtures.rs
+assertion_line: 19
+expression: summary.render()
+---
+suite: google-java-format
+profile: google
+total considered: 209
+invalid upstream fixtures skipped: 1
+parse blocked: 0
+missing-rule blocked: 187
+other blocked: 0
+formatted: 21
+exact matches: 0
+exact-match percentage: 0.00%
+mismatching formatted files: 21
+aggregate diff size: 711
+largest per-file diff: B24909927.java (545)
+
+worst mismatches:
+  B24909927.java: 545
+  PairedArguments.java: 60
+  SuperQualifier.java: 15
+  B21278211.java: 13
+  B23708487.java: 10
+  B112853497.java: 9
+  B21329312.java: 7
+  B23514513.java: 7
+  Fields.java: 7
+  B126411718.java: 6

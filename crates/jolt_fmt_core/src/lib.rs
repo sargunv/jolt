@@ -100,16 +100,35 @@ impl DiagnosticCode for FormatDiagnosticCode {
 }
 
 /// Formats source text for `language` using `options`.
-///
-/// Until the language-specific printers land, this contract blocks formatting
-/// and reports that formatting is not implemented. This lets wrappers wire
-/// against the stable API without risking destructive output.
 #[must_use]
-pub fn format_source(_source: &str, language: Language, _options: &FormatOptions) -> FormatResult {
-    let message = match language {
-        Language::Java => "Java formatting is not implemented yet",
-        Language::Kotlin => "Kotlin formatting is not implemented yet",
+pub fn format_source(source: &str, language: Language, _options: &FormatOptions) -> FormatResult {
+    match language {
+        Language::Java => format_java_source(source),
+        Language::Kotlin => unimplemented_format_result("Kotlin formatting is not implemented yet"),
+    }
+}
+
+fn format_java_source(source: &str) -> FormatResult {
+    let result = jolt_java_fmt::format_java_source(source);
+    let status = match result.status {
+        jolt_java_fmt::JavaFormatStatus::Formatted => {
+            if result.formatted_source.as_deref() == Some(source) {
+                FormatStatus::Unchanged
+            } else {
+                FormatStatus::Formatted
+            }
+        }
+        jolt_java_fmt::JavaFormatStatus::Blocked => FormatStatus::Blocked,
     };
+
+    FormatResult {
+        formatted_source: result.formatted_source,
+        diagnostics: result.diagnostics,
+        status,
+    }
+}
+
+fn unimplemented_format_result(message: &str) -> FormatResult {
     let diagnostic = Diagnostic {
         code: FormatDiagnosticCode::Unimplemented.id(),
         severity: Severity::Error,
@@ -130,8 +149,32 @@ mod tests {
     use super::*;
 
     #[test]
-    fn unimplemented_formatter_blocks_without_output() {
+    fn minimal_clean_java_formats_successfully() {
         let result = format_source("class A {}", Language::Java, &FormatOptions::default());
+
+        assert_eq!(result.status, FormatStatus::Unchanged);
+        assert_eq!(result.formatted_source.as_deref(), Some("class A {}"));
+        assert!(result.diagnostics.is_empty());
+    }
+
+    #[test]
+    fn invalid_java_blocks_and_returns_parser_diagnostics() {
+        let result = format_source("class A {", Language::Java, &FormatOptions::default());
+
+        assert_eq!(result.status, FormatStatus::Blocked);
+        assert_eq!(result.formatted_source, None);
+        assert!(!result.diagnostics.is_empty());
+        assert!(
+            result
+                .diagnostics
+                .iter()
+                .any(|diagnostic| diagnostic.stage == DiagnosticStage::Parser)
+        );
+    }
+
+    #[test]
+    fn kotlin_formatter_remains_blocked_without_output() {
+        let result = format_source("class A", Language::Kotlin, &FormatOptions::default());
 
         assert_eq!(result.status, FormatStatus::Blocked);
         assert_eq!(result.formatted_source, None);

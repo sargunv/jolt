@@ -35,6 +35,13 @@ impl JavaSyntaxToken {
     }
 }
 
+fn code_text_range(syntax: &JavaSyntaxNode) -> Option<TextRange> {
+    let start = syntax.first_token()?.token_text_range().start();
+    let end = syntax.last_token()?.token_text_range().end();
+
+    Some(TextRange::new(start, end))
+}
+
 impl fmt::Debug for JavaSyntaxToken {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.syntax.fmt(f)
@@ -88,6 +95,11 @@ macro_rules! java_cst {
                 }
 
                 #[must_use]
+                pub fn code_text_range(&self) -> Option<TextRange> {
+                    code_text_range(&self.syntax)
+                }
+
+                #[must_use]
                 pub fn source_text(&self) -> String {
                     green_text(self.syntax.green())
                 }
@@ -129,6 +141,11 @@ macro_rules! java_cst {
             #[must_use]
             pub fn text_range(&self) -> TextRange {
                 self.syntax().text_range()
+            }
+
+            #[must_use]
+            pub fn code_text_range(&self) -> Option<TextRange> {
+                code_text_range(self.syntax())
             }
 
             #[must_use]
@@ -182,6 +199,11 @@ macro_rules! java_cst {
                 #[must_use]
                 pub fn text_range(&self) -> TextRange {
                     self.syntax().text_range()
+                }
+
+                #[must_use]
+                pub fn code_text_range(&self) -> Option<TextRange> {
+                    code_text_range(self.syntax())
                 }
 
                 #[must_use]

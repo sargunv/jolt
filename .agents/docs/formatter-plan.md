@@ -937,6 +937,10 @@ The comparison target is the full materialized Google Java Format corpus.
 Compatibility should be reported as fixture counts and percentages while
 implementation converges.
 
+Coverage roadmap:
+
+- `.agents/docs/formatter-milestone-8-coverage-roadmap.md`
+
 ### Milestone 9: Java comments and trivia hardening
 
 Status: pending.
