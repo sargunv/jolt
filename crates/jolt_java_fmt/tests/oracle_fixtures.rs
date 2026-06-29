@@ -20,6 +20,30 @@ fn google_java_format_oracle_scoreboard() {
     insta::assert_snapshot!("google_java_format_oracle_scoreboard", summary.render());
 }
 
+#[test]
+fn aosp_java_format_oracle_scoreboard() {
+    let summary = assert_profile(Profile {
+        suite: "google-java-format",
+        style: "aosp",
+        expected_files: 209,
+        invalid_upstream_fixtures: &["B26952926.java"],
+    });
+
+    insta::assert_snapshot!("aosp_java_format_oracle_scoreboard", summary.render());
+}
+
+#[test]
+fn palantir_java_format_oracle_scoreboard() {
+    let summary = assert_profile(Profile {
+        suite: "palantir-java-format",
+        style: "palantir",
+        expected_files: 226,
+        invalid_upstream_fixtures: &["B26952926.java", "palantir-expression-lambda-2.java"],
+    });
+
+    insta::assert_snapshot!("palantir_java_format_oracle_scoreboard", summary.render());
+}
+
 #[derive(Clone, Copy)]
 struct Profile<'a> {
     suite: &'a str,

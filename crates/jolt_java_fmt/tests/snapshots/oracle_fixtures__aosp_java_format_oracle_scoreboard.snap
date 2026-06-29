@@ -1,0 +1,42 @@
+---
+source: crates/jolt_java_fmt/tests/oracle_fixtures.rs
+assertion_line: 32
+expression: summary.render()
+---
+suite: google-java-format
+profile: aosp
+total considered: 209
+invalid upstream fixtures skipped: 1
+parse blocked: 0
+missing-rule blocked: 187
+other blocked: 0
+formatted: 21
+exact matches: 1
+exact-match percentage: 0.48%
+mismatching formatted files: 20
+aggregate diff size: 931
+largest per-file diff: B24909927.java (679)
+
+worst mismatches:
+  B24909927.java: 679
+  PairedArguments.java: 62
+  B21278211.java: 25
+  I1153.java: 25
+  SuperQualifier.java: 25
+  Fields.java: 19
+  B23708487.java: 12
+  B112853497.java: 11
+  B21329312.java: 10
+  B23514513.java: 9
+
+top missing-rule blockers:
+  35: Java formatter does not support this method declaration shape yet
+  20: Java formatter does not support this block statement shape yet
+  19: Java formatter does not support multiline block comments yet
+  16: Java formatter does not support declaration annotations yet
+  10: Java formatter does not support nested class declarations yet
+  10: Java formatter found unhandled comment or ignored trivia
+  7: Java formatter does not support enum declarations yet
+  6: Java formatter does not support annotation interface declarations yet
+  6: Java formatter does not support interface declarations yet
+  6: Java formatter only supports own-line leading comments here
