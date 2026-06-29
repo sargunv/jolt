@@ -1,6 +1,5 @@
 ---
 source: crates/jolt_java_fmt/tests/oracle_fixtures.rs
-assertion_line: 23
 expression: summary.render()
 ---
 suite: google-java-format
@@ -8,35 +7,35 @@ profile: google
 total considered: 209
 invalid upstream fixtures skipped: 1
 parse blocked: 0
-missing-rule blocked: 187
+missing-rule blocked: 173
 other blocked: 0
-formatted: 21
-exact matches: 10
-exact-match percentage: 4.80%
-mismatching formatted files: 11
-aggregate diff size: 347
+formatted: 35
+exact matches: 14
+exact-match percentage: 6.73%
+mismatching formatted files: 21
+aggregate diff size: 534
 largest per-file diff: B24909927.java (217)
 
 worst mismatches:
   B24909927.java: 217
   PairedArguments.java: 59
+  B20569245.java: 55
+  R.java: 35
+  B29368546.java: 23
+  B30223986.java: 23
   SuperQualifier.java: 18
+  B19950815.java: 17
   B23708487.java: 16
-  B21278211.java: 8
-  b26306390.java: 8
-  B126411718.java: 7
-  Fields.java: 5
-  B112853497.java: 4
-  B23514513.java: 3
+  B30153869.java: 15
 
 top missing-rule blockers:
-  35: Java formatter does not support this method declaration shape yet
-  20: Java formatter does not support this block statement shape yet
-  19: Java formatter does not support multiline block comments yet
-  16: Java formatter does not support declaration annotations yet
+  24: Java formatter does not support declaration annotations yet
+  23: Java formatter does not support this block statement shape yet
   10: Java formatter does not support nested class declarations yet
-  10: Java formatter found unhandled comment or ignored trivia
+  10: Java formatter does not support this type shape yet
+  8: Java formatter only supports own-line leading comments here
   7: Java formatter does not support enum declarations yet
+  7: Java formatter found unhandled comment or ignored trivia
   6: Java formatter does not support annotation interface declarations yet
+  6: Java formatter does not support class type parameters yet
   6: Java formatter does not support interface declarations yet
-  6: Java formatter only supports own-line leading comments here

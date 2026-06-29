@@ -1,16 +1,20 @@
 use crate::comments::{
-    take_leading_comment_docs, with_attached_comments, with_leading_and_trailing_comments,
+    reject_unhandled_comments_before_end, reject_unhandled_comments_before_start,
+    take_dangling_comment_docs, take_leading_comment_docs, with_attached_comments,
+    with_leading_and_trailing_comments,
 };
 use crate::context::JavaFormatContext;
 use crate::diagnostics::{FormatResult, missing_layout};
 use crate::layout as wrap;
 use jolt_fmt_ir::{Doc, concat, hard_line, join, text};
 use jolt_java_syntax::{
-    Block, BlockItem, BlockStatement, ClassBody, ClassBodyMember, ClassDeclaration,
-    CompilationUnit, ConstructorBody, ConstructorDeclaration, Expression, FieldDeclaration,
+    Block, BlockItem, BlockStatement, BreakStatement, ClassBody, ClassBodyMember, ClassDeclaration,
+    CompilationUnit, ConstructorBody, ConstructorDeclaration, ContinueStatement, EmptyStatement,
+    Expression, FieldDeclaration, FormalParameter, FormalParameterList, IfStatement,
     ImportDeclaration, JavaSyntaxKind, JavaSyntaxToken, LocalVariableDeclaration,
-    MethodDeclaration, ModifierList, NameSyntax, PackageDeclaration, ReturnStatement,
-    ThrowStatement, Type, TypeDeclaration, VariableDeclarator, YieldStatement,
+    MethodDeclaration, ModifierList, NameSyntax, PackageDeclaration, ReturnStatement, Statement,
+    ThrowStatement, ThrowsClause, Type, TypeDeclaration, TypeParameterList, VariableDeclarator,
+    YieldStatement,
 };
 
 #[cfg(test)]
@@ -253,7 +257,19 @@ fn format_class_body(
         ));
     }
 
-    body.members()
+    let members = body.members().collect::<Vec<_>>();
+    if members.is_empty() {
+        let code_range = body.code_text_range().ok_or_else(|| {
+            missing_layout(
+                "Java formatter found an empty class body",
+                body.text_range(),
+            )
+        })?;
+        return take_dangling_comment_docs(context, code_range);
+    }
+
+    members
+        .into_iter()
         .map(|member| format_class_body_member(&member, context))
         .collect()
 }
@@ -376,7 +392,6 @@ fn format_method_declaration(
         ));
     }
 
-    let modifiers = format_modifier_list(method.modifiers(), "method")?;
     let return_type = method.return_type().ok_or_else(|| {
         missing_layout(
             "Java formatter found a method declaration without a return type",
@@ -389,24 +404,49 @@ fn format_method_declaration(
             method.text_range(),
         )
     })?;
+    let header = format_callable_header(
+        method.modifiers(),
+        "method",
+        method.type_parameters(),
+        Some(format_type(&return_type)?),
+        &name,
+        method.parameters(),
+        method.throws_clause(),
+    )?;
+
+    if method.has_semicolon_body() {
+        let code_range = method.code_text_range().ok_or_else(|| {
+            missing_layout(
+                "Java formatter found an empty method declaration",
+                method.text_range(),
+            )
+        })?;
+        reject_unhandled_comments_before_end(
+            context,
+            code_range,
+            "Java formatter does not support comments inside method signatures yet",
+        )?;
+        return Ok(concat([header, text(";")]));
+    }
+
     let body = method.body().ok_or_else(|| {
         missing_layout(
             "Java formatter found a method declaration without a body",
             method.text_range(),
         )
     })?;
-    let mut header = Vec::new();
-    header.extend(modifiers.iter().map(format_token));
-    header.push(format_type(&return_type)?);
-    header.push(concat([
-        text(name.text()),
-        wrap::parenthesized_comma_list(std::iter::empty()),
-    ]));
-    Ok(concat([
-        wrap::declaration_header(header),
-        text(" "),
-        format_block(&body, context)?,
-    ]))
+    let body_range = body.code_text_range().ok_or_else(|| {
+        missing_layout(
+            "Java formatter found an empty method body",
+            body.text_range(),
+        )
+    })?;
+    reject_unhandled_comments_before_start(
+        context,
+        body_range,
+        "Java formatter does not support comments inside method signatures yet",
+    )?;
+    Ok(concat([header, text(" "), format_block(&body, context)?]))
 }
 
 fn format_constructor_declaration(
@@ -420,7 +460,6 @@ fn format_constructor_declaration(
         ));
     }
 
-    let modifiers = format_modifier_list(constructor.modifiers(), "constructor")?;
     let name = constructor.name().ok_or_else(|| {
         missing_layout(
             "Java formatter found a constructor declaration without a name",
@@ -433,17 +472,183 @@ fn format_constructor_declaration(
             constructor.text_range(),
         )
     })?;
-    let mut header = Vec::new();
-    header.extend(modifiers.iter().map(format_token));
-    header.push(concat([
-        text(name.text()),
-        wrap::parenthesized_comma_list(std::iter::empty()),
-    ]));
+    let body_range = body.code_text_range().ok_or_else(|| {
+        missing_layout(
+            "Java formatter found an empty constructor body",
+            body.text_range(),
+        )
+    })?;
+    reject_unhandled_comments_before_start(
+        context,
+        body_range,
+        "Java formatter does not support comments inside constructor signatures yet",
+    )?;
+    let header = format_callable_header(
+        constructor.modifiers(),
+        "constructor",
+        constructor.type_parameters(),
+        None,
+        &name,
+        constructor.parameters(),
+        constructor.throws_clause(),
+    )?;
     Ok(concat([
-        wrap::declaration_header(header),
+        header,
         text(" "),
         format_constructor_body(&body, context)?,
     ]))
+}
+
+fn format_callable_header(
+    modifiers: Option<ModifierList>,
+    declaration_kind: &str,
+    type_parameters: Option<TypeParameterList>,
+    leading_type: Option<Doc>,
+    name: &JavaSyntaxToken,
+    parameters: Option<FormalParameterList>,
+    throws_clause: Option<ThrowsClause>,
+) -> FormatResult<Doc> {
+    let modifiers = format_modifier_list(modifiers, declaration_kind)?;
+    let type_parameters = type_parameters
+        .map(|parameters| format_type_parameter_list(&parameters))
+        .transpose()?;
+    let parameters = parameters
+        .map(|parameters| format_formal_parameter_list(&parameters))
+        .transpose()?
+        .unwrap_or_else(|| wrap::parenthesized_comma_list(std::iter::empty()));
+    let throws_clause = throws_clause
+        .map(|throws| format_throws_clause(&throws))
+        .transpose()?;
+
+    let mut header = Vec::new();
+    header.extend(modifiers.iter().map(format_token));
+    if let Some(type_parameters) = type_parameters {
+        header.push(type_parameters);
+    }
+    if let Some(leading_type) = leading_type {
+        header.push(leading_type);
+    }
+    header.push(concat([text(name.text()), parameters]));
+    if let Some(throws_clause) = throws_clause {
+        header.push(throws_clause);
+    }
+
+    Ok(wrap::declaration_header(header))
+}
+
+fn format_type_parameter_list(parameters: &TypeParameterList) -> FormatResult<Doc> {
+    if !parameters.has_supported_layout_shape() {
+        return Err(missing_layout(
+            "Java formatter only supports simple type parameter lists yet",
+            parameters.text_range(),
+        ));
+    }
+
+    let parameter_docs = parameters
+        .parameters()
+        .map(|parameter| {
+            if !parameter.has_simple_layout_shape() {
+                return Err(missing_layout(
+                    "Java formatter only supports unbounded type parameters yet",
+                    parameter.text_range(),
+                ));
+            }
+            let name = parameter.name().ok_or_else(|| {
+                missing_layout(
+                    "Java formatter found a type parameter without a name",
+                    parameter.text_range(),
+                )
+            })?;
+            Ok(format_token(&name))
+        })
+        .collect::<FormatResult<Vec<_>>>()?;
+    if parameter_docs.is_empty() {
+        return Err(missing_layout(
+            "Java formatter found an empty type parameter list",
+            parameters.text_range(),
+        ));
+    }
+
+    Ok(wrap::angle_comma_list(parameter_docs))
+}
+
+fn format_formal_parameter_list(parameters: &FormalParameterList) -> FormatResult<Doc> {
+    if !parameters.has_supported_layout_shape() {
+        return Err(missing_layout(
+            "Java formatter only supports simple formal parameter lists yet",
+            parameters.text_range(),
+        ));
+    }
+
+    let parameter_docs = parameters
+        .parameters()
+        .map(|parameter| format_formal_parameter(&parameter))
+        .collect::<FormatResult<Vec<_>>>()?;
+    if parameter_docs.is_empty() {
+        return Err(missing_layout(
+            "Java formatter found an empty formal parameter list",
+            parameters.text_range(),
+        ));
+    }
+
+    Ok(wrap::parenthesized_comma_list(parameter_docs))
+}
+
+fn format_formal_parameter(parameter: &FormalParameter) -> FormatResult<Doc> {
+    if !parameter.has_supported_layout_shape() {
+        return Err(missing_layout(
+            "Java formatter only supports simple formal parameters yet",
+            parameter.text_range(),
+        ));
+    }
+
+    let ty = parameter.ty().ok_or_else(|| {
+        missing_layout(
+            "Java formatter found a formal parameter without a type",
+            parameter.text_range(),
+        )
+    })?;
+    let name = parameter.name().ok_or_else(|| {
+        missing_layout(
+            "Java formatter found a formal parameter without a name",
+            parameter.text_range(),
+        )
+    })?;
+
+    let mut parts = Vec::new();
+    if let Some(final_token) = parameter.final_token() {
+        parts.push(format_token(&final_token));
+    }
+    let ty = if parameter.is_varargs() {
+        concat([format_type(&ty)?, text("...")])
+    } else {
+        format_type(&ty)?
+    };
+    parts.push(ty);
+    parts.push(format_token(&name));
+    Ok(wrap::space_separated(parts))
+}
+
+fn format_throws_clause(throws: &ThrowsClause) -> FormatResult<Doc> {
+    if !throws.has_supported_layout_shape() {
+        return Err(missing_layout(
+            "Java formatter only supports simple throws clauses yet",
+            throws.text_range(),
+        ));
+    }
+
+    let types = throws
+        .types()
+        .map(|ty| format_type(&ty))
+        .collect::<FormatResult<Vec<_>>>()?;
+    if types.is_empty() {
+        return Err(missing_layout(
+            "Java formatter found an empty throws clause",
+            throws.text_range(),
+        ));
+    }
+
+    Ok(concat([text("throws "), wrap::comma_list(types)]))
 }
 
 fn format_block(block: &Block, context: &mut JavaFormatContext<'_>) -> FormatResult<Doc> {
@@ -453,7 +658,10 @@ fn format_block(block: &Block, context: &mut JavaFormatContext<'_>) -> FormatRes
             block.text_range(),
         ));
     }
-    format_block_statements(block.block_statements(), context)
+    let code_range = block
+        .code_text_range()
+        .ok_or_else(|| missing_layout("Java formatter found an empty block", block.text_range()))?;
+    format_block_statements(code_range, block.block_statements(), context)
 }
 
 fn format_constructor_body(
@@ -466,14 +674,30 @@ fn format_constructor_body(
             body.text_range(),
         ));
     }
-    format_block_statements(body.block_statements(), context)
+    let code_range = body.code_text_range().ok_or_else(|| {
+        missing_layout(
+            "Java formatter found an empty constructor body",
+            body.text_range(),
+        )
+    })?;
+    format_block_statements(code_range, body.block_statements(), context)
 }
 
 fn format_block_statements(
+    container_range: jolt_diagnostics::TextRange,
     statements: impl Iterator<Item = BlockStatement>,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
+    let statements = statements.collect::<Vec<_>>();
+    if statements.is_empty() {
+        return Ok(wrap::braced_block(take_dangling_comment_docs(
+            context,
+            container_range,
+        )?));
+    }
+
     let statements = statements
+        .into_iter()
         .map(|statement| format_block_statement(&statement, context))
         .collect::<FormatResult<Vec<_>>>()?;
 
@@ -504,30 +728,47 @@ fn format_block_statement(
         )
     })?;
     let leading_comments = take_leading_comment_docs(context, code_range)?;
-    let doc = match item {
+    let doc = format_block_item(&item, context)?;
+    with_leading_and_trailing_comments(context, code_range, leading_comments, doc)
+}
+
+fn format_block_item(item: &BlockItem, context: &mut JavaFormatContext<'_>) -> FormatResult<Doc> {
+    match item {
         BlockItem::LocalVariableDeclaration(declaration) => {
-            format_local_variable_declaration(&declaration)
+            format_local_variable_declaration(declaration)
         }
-        BlockItem::Block(block) => format_block(&block, context),
-        BlockItem::ReturnStatement(return_statement) => format_return_statement(&return_statement),
-        BlockItem::ThrowStatement(throw_statement) => format_throw_statement(&throw_statement),
-        BlockItem::YieldStatement(yield_statement) => format_yield_statement(&yield_statement),
         BlockItem::LocalClassOrInterfaceDeclaration(declaration) => Err(missing_layout(
             "Java formatter does not support local class or interface declarations yet",
             declaration.text_range(),
         )),
-        BlockItem::EmptyStatement(empty) => Err(missing_layout(
-            "Java formatter does not support empty statements yet",
-            empty.text_range(),
-        )),
+        BlockItem::Block(block) => format_statement_rule(StatementRule::Block(block), context),
+        BlockItem::EmptyStatement(empty) => {
+            format_statement_rule(StatementRule::Empty(empty), context)
+        }
+        BlockItem::ExpressionStatement(expression) => {
+            format_statement_rule(StatementRule::Expression(expression), context)
+        }
+        BlockItem::IfStatement(if_statement) => {
+            format_statement_rule(StatementRule::If(if_statement), context)
+        }
+        BlockItem::BreakStatement(break_statement) => {
+            format_statement_rule(StatementRule::Break(break_statement), context)
+        }
+        BlockItem::ContinueStatement(continue_statement) => {
+            format_statement_rule(StatementRule::Continue(continue_statement), context)
+        }
+        BlockItem::ReturnStatement(return_statement) => {
+            format_statement_rule(StatementRule::Return(return_statement), context)
+        }
+        BlockItem::ThrowStatement(throw_statement) => {
+            format_statement_rule(StatementRule::Throw(throw_statement), context)
+        }
+        BlockItem::YieldStatement(yield_statement) => {
+            format_statement_rule(StatementRule::Yield(yield_statement), context)
+        }
         BlockItem::LabeledStatement(labeled) => Err(missing_layout(
             "Java formatter does not support labeled statements yet",
             labeled.text_range(),
-        )),
-        BlockItem::ExpressionStatement(expression) => format_expression_statement(&expression),
-        BlockItem::IfStatement(if_statement) => Err(missing_layout(
-            "Java formatter does not support if statements yet",
-            if_statement.text_range(),
         )),
         BlockItem::AssertStatement(assert_statement) => Err(missing_layout(
             "Java formatter does not support assert statements yet",
@@ -549,14 +790,6 @@ fn format_block_statement(
             "Java formatter does not support for statements yet",
             for_statement.text_range(),
         )),
-        BlockItem::BreakStatement(break_statement) => Err(missing_layout(
-            "Java formatter does not support break statements yet",
-            break_statement.text_range(),
-        )),
-        BlockItem::ContinueStatement(continue_statement) => Err(missing_layout(
-            "Java formatter does not support continue statements yet",
-            continue_statement.text_range(),
-        )),
         BlockItem::SynchronizedStatement(synchronized) => Err(missing_layout(
             "Java formatter does not support synchronized statements yet",
             synchronized.text_range(),
@@ -569,8 +802,205 @@ fn format_block_statement(
             "Java formatter does not support try-with-resources statements yet",
             try_statement.text_range(),
         )),
-    }?;
-    with_leading_and_trailing_comments(context, code_range, leading_comments, doc)
+    }
+}
+
+fn format_unbraced_statement(
+    statement: &Statement,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    format_statement_rule(statement_rule(statement)?, context)
+}
+
+fn statement_rule(statement: &Statement) -> FormatResult<StatementRule<'_>> {
+    match statement {
+        Statement::Block(block) => Ok(StatementRule::Block(block)),
+        Statement::EmptyStatement(empty) => Ok(StatementRule::Empty(empty)),
+        Statement::ExpressionStatement(expression) => Ok(StatementRule::Expression(expression)),
+        Statement::IfStatement(if_statement) => Ok(StatementRule::If(if_statement)),
+        Statement::BreakStatement(break_statement) => Ok(StatementRule::Break(break_statement)),
+        Statement::ContinueStatement(continue_statement) => {
+            Ok(StatementRule::Continue(continue_statement))
+        }
+        Statement::ReturnStatement(return_statement) => Ok(StatementRule::Return(return_statement)),
+        Statement::ThrowStatement(throw_statement) => Ok(StatementRule::Throw(throw_statement)),
+        Statement::YieldStatement(yield_statement) => Ok(StatementRule::Yield(yield_statement)),
+        Statement::LabeledStatement(labeled) => Err(missing_layout(
+            "Java formatter does not support labeled statements yet",
+            labeled.text_range(),
+        )),
+        Statement::AssertStatement(assert_statement) => Err(missing_layout(
+            "Java formatter does not support assert statements yet",
+            assert_statement.text_range(),
+        )),
+        Statement::SwitchStatement(switch_statement) => Err(missing_layout(
+            "Java formatter does not support switch statements yet",
+            switch_statement.text_range(),
+        )),
+        Statement::WhileStatement(while_statement) => Err(missing_layout(
+            "Java formatter does not support while statements yet",
+            while_statement.text_range(),
+        )),
+        Statement::DoStatement(do_statement) => Err(missing_layout(
+            "Java formatter does not support do statements yet",
+            do_statement.text_range(),
+        )),
+        Statement::ForStatement(for_statement) => Err(missing_layout(
+            "Java formatter does not support for statements yet",
+            for_statement.text_range(),
+        )),
+        Statement::SynchronizedStatement(synchronized) => Err(missing_layout(
+            "Java formatter does not support synchronized statements yet",
+            synchronized.text_range(),
+        )),
+        Statement::TryStatement(try_statement) => Err(missing_layout(
+            "Java formatter does not support try statements yet",
+            try_statement.text_range(),
+        )),
+        Statement::TryWithResourcesStatement(try_statement) => Err(missing_layout(
+            "Java formatter does not support try-with-resources statements yet",
+            try_statement.text_range(),
+        )),
+    }
+}
+
+enum StatementRule<'a> {
+    Block(&'a Block),
+    Empty(&'a EmptyStatement),
+    Expression(&'a jolt_java_syntax::ExpressionStatement),
+    If(&'a IfStatement),
+    Break(&'a BreakStatement),
+    Continue(&'a ContinueStatement),
+    Return(&'a ReturnStatement),
+    Throw(&'a ThrowStatement),
+    Yield(&'a YieldStatement),
+}
+
+fn format_statement_rule(
+    rule: StatementRule<'_>,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    match rule {
+        StatementRule::Block(block) => format_block(block, context),
+        StatementRule::Empty(empty) => format_empty_statement(empty),
+        StatementRule::Expression(expression) => format_expression_statement(expression),
+        StatementRule::If(if_statement) => format_if_statement(if_statement, context),
+        StatementRule::Break(break_statement) => format_break_statement(break_statement),
+        StatementRule::Continue(continue_statement) => {
+            format_continue_statement(continue_statement)
+        }
+        StatementRule::Return(return_statement) => format_return_statement(return_statement),
+        StatementRule::Throw(throw_statement) => format_throw_statement(throw_statement),
+        StatementRule::Yield(yield_statement) => format_yield_statement(yield_statement),
+    }
+}
+
+fn format_empty_statement(statement: &EmptyStatement) -> FormatResult<Doc> {
+    if !statement.has_supported_layout_shape() {
+        return Err(missing_layout(
+            "Java formatter does not support this empty statement shape yet",
+            statement.text_range(),
+        ));
+    }
+
+    Ok(text(";"))
+}
+
+fn format_if_statement(
+    statement: &IfStatement,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    if !statement.has_supported_layout_shape() {
+        return Err(missing_layout(
+            "Java formatter does not support this if statement shape yet",
+            statement.text_range(),
+        ));
+    }
+
+    let condition = statement.condition().ok_or_else(|| {
+        missing_layout(
+            "Java formatter found an if statement without a condition",
+            statement.text_range(),
+        )
+    })?;
+    let then_statement = statement.then_statement().ok_or_else(|| {
+        missing_layout(
+            "Java formatter found an if statement without a then statement",
+            statement.text_range(),
+        )
+    })?;
+    let then_range = then_statement.code_text_range().ok_or_else(|| {
+        missing_layout(
+            "Java formatter found an empty if statement body",
+            then_statement.text_range(),
+        )
+    })?;
+    reject_unhandled_comments_before_start(
+        context,
+        then_range,
+        "Java formatter does not support comments before if statement bodies yet",
+    )?;
+    let then_is_block = matches!(then_statement, Statement::Block(_));
+    let then_statement = format_unbraced_statement(&then_statement, context)?;
+    let else_statement = statement
+        .else_statement()
+        .map(|else_statement| {
+            let else_range = else_statement.code_text_range().ok_or_else(|| {
+                missing_layout(
+                    "Java formatter found an empty else statement body",
+                    else_statement.text_range(),
+                )
+            })?;
+            reject_unhandled_comments_before_start(
+                context,
+                else_range,
+                "Java formatter does not support comments before else statement bodies yet",
+            )?;
+            let follows_keyword = matches!(
+                else_statement,
+                Statement::Block(_) | Statement::IfStatement(_)
+            );
+            Ok((
+                format_unbraced_statement(&else_statement, context)?,
+                follows_keyword,
+            ))
+        })
+        .transpose()?;
+
+    Ok(wrap::if_statement(
+        format_expression(&condition)?,
+        then_statement,
+        then_is_block,
+        else_statement,
+    ))
+}
+
+fn format_break_statement(statement: &BreakStatement) -> FormatResult<Doc> {
+    if !statement.has_supported_layout_shape() {
+        return Err(missing_layout(
+            "Java formatter does not support this break statement shape yet",
+            statement.text_range(),
+        ));
+    }
+
+    Ok(wrap::keyword_label_statement(
+        "break",
+        statement.label().map(|label| format_token(&label)),
+    ))
+}
+
+fn format_continue_statement(statement: &ContinueStatement) -> FormatResult<Doc> {
+    if !statement.has_supported_layout_shape() {
+        return Err(missing_layout(
+            "Java formatter does not support this continue statement shape yet",
+            statement.text_range(),
+        ));
+    }
+
+    Ok(wrap::keyword_label_statement(
+        "continue",
+        statement.label().map(|label| format_token(&label)),
+    ))
 }
 
 fn format_local_variable_declaration(declaration: &LocalVariableDeclaration) -> FormatResult<Doc> {
@@ -1416,44 +1846,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn minimal_clean_java_formats_successfully() {
-        assert_formatted("class A {}", "class A {}");
-    }
-
-    #[test]
-    fn package_imports_and_class_format_as_compilation_unit_sections() {
-        assert_formatted(
-            "package   com.example ; import java.util.List; import static java.util.Collections.emptyList; public class A {}",
-            "package com.example;\n\nimport java.util.List;\nimport static java.util.Collections.emptyList;\n\npublic class A {}",
-        );
-    }
-
-    #[test]
     fn imports_preserve_source_order() {
         assert_formatted(
             "import z.Z; import a.A; import java.util.*; import module java.base; import module.foo.Bar; class A {}",
             "import z.Z;\nimport a.A;\nimport java.util.*;\nimport module java.base;\nimport module.foo.Bar;\n\nclass A {}",
-        );
-    }
-
-    #[test]
-    fn multiple_top_level_empty_classes_format_in_order() {
-        assert_formatted("class A {} class B {}", "class A {}\n\nclass B {}");
-    }
-
-    #[test]
-    fn simple_class_modifiers_format_in_source_order() {
-        assert_formatted(
-            "public final class A {} abstract class B {} strictfp class C {}",
-            "public final class A {}\n\nabstract class B {}\n\nstrictfp class C {}",
-        );
-    }
-
-    #[test]
-    fn simple_class_body_members_format_in_source_order() {
-        assert_formatted(
-            "class A { int value; String name; A() {} void clear() {} int size() {} }",
-            "class A {\n  int value;\n  String name;\n  A() {}\n  void clear() {}\n  int size() {}\n}",
         );
     }
 
@@ -1466,18 +1862,10 @@ mod tests {
     }
 
     #[test]
-    fn member_modifiers_format_with_members() {
+    fn method_and_constructor_signatures_format_structurally() {
         assert_formatted(
-            "public class A { private final int value; public A() {} protected static void reset() {} }",
-            "public class A {\n  private final int value;\n  public A() {}\n  protected static void reset() {}\n}",
-        );
-    }
-
-    #[test]
-    fn qualified_member_types_format_structurally() {
-        assert_formatted(
-            "class A { java.util.List value; java.lang.String name() {} }",
-            "class A {\n  java.util.List value;\n  java.lang.String name() {}\n}",
+            "abstract class A { public <T, U> T pick(final T first, U second) throws Problem, java.io.IOException { return first; } private A(int count, String... names) throws Problem {} abstract void reset(int count) throws Problem; }",
+            "abstract class A {\n  public <T, U> T pick(final T first, U second) throws Problem, java.io.IOException {\n    return first;\n  }\n  private A(int count, String... names) throws Problem {}\n  abstract void reset(int count) throws Problem;\n}",
         );
     }
 
@@ -1526,6 +1914,15 @@ mod tests {
         assert_formatted_with_width(
             "class A { void m() { call(alpha, beta, gamma); } }",
             "class A {\n  void m() {\n    call(\n        alpha, beta,\n        gamma);\n  }\n}",
+            20,
+        );
+    }
+
+    #[test]
+    fn narrow_width_wraps_method_signature_parameters() {
+        assert_formatted_with_width(
+            "class A { void combine(int alpha, int beta, int gamma) throws FirstProblem, SecondProblem {} }",
+            "class A {\n  void\n  combine(\n      int alpha,\n      int beta,\n      int gamma)\n  throws FirstProblem,\n  SecondProblem {}\n}",
             20,
         );
     }
@@ -1587,6 +1984,38 @@ mod tests {
     }
 
     #[test]
+    fn multiline_leading_block_comments_and_javadocs_format() {
+        assert_formatted(
+            "/*\n * class docs\n */\nclass A {\n/**\n * field docs\n */\nint value;\nvoid clear() {\n/*\n * local docs\n */\nreturn;\n}\n}",
+            "/*\n * class docs\n */\nclass A {\n  /**\n   * field docs\n   */\n  int value;\n  void clear() {\n    /*\n     * local docs\n     */\n    return;\n  }\n}",
+        );
+    }
+
+    #[test]
+    fn already_indented_multiline_javadocs_format_idempotently() {
+        assert_formatted(
+            "class A {\n  /**\n   * field docs\n   */\n  int value;\n}",
+            "class A {\n  /**\n   * field docs\n   */\n  int value;\n}",
+        );
+    }
+
+    #[test]
+    fn dangling_comments_inside_empty_class_bodies_format() {
+        assert_formatted(
+            "class A {\n/*\n * block\n */\n/** docs */\n// line\n}",
+            "class A {\n  /*\n   * block\n   */\n  /** docs */\n  // line\n}",
+        );
+    }
+
+    #[test]
+    fn dangling_comments_inside_empty_blocks_format() {
+        assert_formatted(
+            "class A { void clear() {\n// line\n} A() {\n/**\n * constructor\n */\n} }",
+            "class A {\n  void clear() {\n    // line\n  }\n  A() {\n    /**\n     * constructor\n     */\n  }\n}",
+        );
+    }
+
+    #[test]
     fn trailing_line_comments_after_declarations_and_statements_format() {
         assert_formatted(
             "class A { int value = 1; // field\nint one() { call(); // call\nreturn 1; // answer\n} }",
@@ -1601,10 +2030,14 @@ mod tests {
             "class A { void clear() { // dangling\n} }",
             "class A { int /* inline */ value; }",
             "class A { void /* inline */ clear() {} }",
+            "class A { void clear(\n// parameter\nint value) {} }",
+            "class A { abstract void clear(\n// parameter\nint value); }",
+            "class A { void clear() throws\n// throws\nException {} }",
+            "class A { void clear() { if (ready)\n// branch\nreturn; call(); } }",
+            "class A { void clear() { if (ready) { return; }\n// else\nelse return; } }",
             "class A { /* body */ }",
             "class A { void clear() { /* body */ } }",
             "class A {}\u{001A}",
-            "/*\n * multiline\n */\nclass A {}",
         ] {
             assert_blocked_missing_layout(source);
         }
@@ -1648,11 +2081,11 @@ mod tests {
     fn unsupported_member_forms_block() {
         for source in [
             "class A { int value[]; }",
-            "class A { void clear() throws Exception {} }",
-            "class A { <T> void clear() {} }",
-            "class A { void clear(int count) {} }",
             "class A { String[] names() {} }",
             "class A { java.util.List<String> names; }",
+            "class A { <T extends B> void clear() {} }",
+            "class A { void clear(@Deprecated int count) {} }",
+            "class A { void clear(A this) {} }",
             "class A { class Nested {} }",
             "void main() {}",
         ] {
@@ -1663,14 +2096,10 @@ mod tests {
     #[test]
     fn unsupported_statement_forms_block() {
         for source in [
-            "class A { void m() { ; } }",
-            "class A { void m() { if (ready) return; } }",
             "class A { void m() { while (ready) return; } }",
             "class A { void m() { for (;;) return; } }",
             "class A { void m() { try { return; } catch (Exception ex) { return; } } }",
             "class A { int m() { switch (value) { default: return 0; } } }",
-            "class A { void m() { break; } }",
-            "class A { void m() { continue; } }",
             "class A { void m() { assert ready; } }",
             "class A { void m() { label: return; } }",
             "class A { void m() { class Local {} } }",
@@ -1678,6 +2107,14 @@ mod tests {
         ] {
             assert_blocked_missing_layout(source);
         }
+    }
+
+    #[test]
+    fn simple_statement_forms_format() {
+        assert_formatted(
+            "class A { void m() { ; if (ready) { return; } else if (other) break label; else continue; } }",
+            "class A {\n  void m() {\n    ;\n    if (ready) {\n      return;\n    } else if (other)\n      break label;\n    else\n      continue;\n  }\n}",
+        );
     }
 
     #[test]

@@ -17,9 +17,21 @@ pub(crate) fn declaration_header(parts: impl IntoIterator<Item = Doc>) -> Doc {
 }
 
 pub(crate) fn parenthesized_comma_list(items: impl IntoIterator<Item = Doc>) -> Doc {
+    delimited_comma_list("(", ")", items)
+}
+
+pub(crate) fn angle_comma_list(items: impl IntoIterator<Item = Doc>) -> Doc {
+    delimited_comma_list("<", ">", items)
+}
+
+fn delimited_comma_list(
+    open: &'static str,
+    close: &'static str,
+    items: impl IntoIterator<Item = Doc>,
+) -> Doc {
     let mut items = items.into_iter().collect::<Vec<_>>();
     if items.is_empty() {
-        return text("()");
+        return text(format!("{open}{close}"));
     }
 
     let last = items.pop().expect("non-empty items checked above");
@@ -28,10 +40,10 @@ pub(crate) fn parenthesized_comma_list(items: impl IntoIterator<Item = Doc>) -> 
         .map(|item| fill_entry(item, concat([text(","), line()])));
 
     group(concat([
-        text("("),
+        text(open),
         continuation_indent(concat([
             soft_line(),
-            fill(entries, concat([last, text(")")])),
+            fill(entries, concat([last, text(close)])),
         ])),
     ]))
 }
@@ -83,6 +95,14 @@ pub(crate) fn keyword_expression_statement(keyword: &'static str, expression: Op
     group(concat([text(keyword), text(" "), expression, text(";")]))
 }
 
+pub(crate) fn keyword_label_statement(keyword: &'static str, label: Option<Doc>) -> Doc {
+    let Some(label) = label else {
+        return text(format!("{keyword};"));
+    };
+
+    group(concat([text(keyword), text(" "), label, text(";")]))
+}
+
 pub(crate) fn expression_statement(expression: Doc) -> Doc {
     group(concat([expression, text(";")]))
 }
@@ -94,6 +114,38 @@ pub(crate) fn parenthesized_expression(expression: Doc) -> Doc {
         soft_line(),
         text(")"),
     ]))
+}
+
+pub(crate) fn if_statement(
+    condition: Doc,
+    then_statement: Doc,
+    then_is_block: bool,
+    else_statement: Option<(Doc, bool)>,
+) -> Doc {
+    let mut parts = vec![text("if "), parenthesized_expression(condition)];
+    if then_is_block {
+        parts.push(text(" "));
+        parts.push(then_statement);
+    } else {
+        parts.push(indent(concat([hard_line(), then_statement])));
+    }
+
+    if let Some((else_statement, else_follows_keyword)) = else_statement {
+        if then_is_block {
+            parts.push(text(" "));
+        } else {
+            parts.push(hard_line());
+        }
+        parts.push(text("else"));
+        if else_follows_keyword {
+            parts.push(text(" "));
+            parts.push(else_statement);
+        } else {
+            parts.push(indent(concat([hard_line(), else_statement])));
+        }
+    }
+
+    concat(parts)
 }
 
 pub(crate) fn assignment_expression(left: Doc, operator: Doc, right: Doc) -> Doc {

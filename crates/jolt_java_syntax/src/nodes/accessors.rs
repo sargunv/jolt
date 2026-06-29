@@ -1,22 +1,25 @@
+use std::iter::Peekable;
+
 use super::{
     Annotation, AnnotationArgumentList, AnnotationElementList, AnnotationInterfaceBody,
     AnnotationInterfaceBodyMember, AnnotationInterfaceDeclaration, AnyJavaNode, ArgumentList,
     ArrayCreationExpression, ArrayDimensions, ArrayInitializer, ArrayType, AssignmentExpression,
-    BasicForStatement, BinaryExpression, Block, BlockItem, BlockStatement, CastExpression,
-    ClassBody, ClassBodyDeclaration, ClassBodyMember, ClassDeclaration, ClassType, CompilationUnit,
-    ConditionalExpression, ConstructorBody, ConstructorDeclaration, DimExpression, DoStatement,
-    EmptyDeclaration, EnhancedForStatement, EnumBody, EnumConstant, EnumConstantList,
-    EnumDeclaration, Expression, ExpressionStatement, ExtendsClause, FieldAccessExpression,
-    FieldDeclaration, ForInitializer, ForStatement, ForUpdate, FormalParameter,
-    FormalParameterList, IfStatement, ImplementsClause, ImportDeclaration, InstanceInitializer,
-    InterfaceBody, InterfaceBodyMember, InterfaceDeclaration, JavaNode, JavaSyntaxKind,
-    JavaSyntaxToken, LambdaExpression, LambdaParameter, LambdaParameterList, LiteralExpression,
-    LocalVariableDeclaration, MethodDeclaration, MethodInvocationExpression, ModifierList,
-    ModuleDeclaration, ModuleDirective, ModuleDirectiveNode, NameExpression, NameSyntax,
-    ObjectCreationExpression, PackageDeclaration, ParenthesizedExpression, PermitsClause,
-    PostfixExpression, RecordBody, RecordComponent, RecordComponentList, RecordDeclaration,
-    ReturnStatement, Statement, StatementExpressionList, StaticInitializer, SuperExpression,
-    SwitchBlock, SwitchBlockStatementGroup, SwitchExpression, SwitchRule, SwitchStatement,
+    BasicForStatement, BinaryExpression, Block, BlockItem, BlockStatement, BreakStatement,
+    CastExpression, ClassBody, ClassBodyDeclaration, ClassBodyMember, ClassDeclaration, ClassType,
+    CompilationUnit, ConditionalExpression, ConstructorBody, ConstructorDeclaration,
+    ContinueStatement, DimExpression, DoStatement, EmptyDeclaration, EmptyStatement,
+    EnhancedForStatement, EnumBody, EnumConstant, EnumConstantList, EnumDeclaration, Expression,
+    ExpressionStatement, ExtendsClause, FieldAccessExpression, FieldDeclaration, ForInitializer,
+    ForStatement, ForUpdate, FormalParameter, FormalParameterList, IfStatement, ImplementsClause,
+    ImportDeclaration, InstanceInitializer, InterfaceBody, InterfaceBodyMember,
+    InterfaceDeclaration, JavaNode, JavaSyntaxKind, JavaSyntaxToken, LambdaExpression,
+    LambdaParameter, LambdaParameterList, LiteralExpression, LocalVariableDeclaration,
+    MethodDeclaration, MethodInvocationExpression, ModifierList, ModuleDeclaration,
+    ModuleDirective, ModuleDirectiveNode, NameExpression, NameSyntax, ObjectCreationExpression,
+    PackageDeclaration, ParenthesizedExpression, PermitsClause, PostfixExpression, RecordBody,
+    RecordComponent, RecordComponentList, RecordDeclaration, ReturnStatement, Statement,
+    StatementExpressionList, StaticInitializer, SuperExpression, SwitchBlock,
+    SwitchBlockStatementGroup, SwitchExpression, SwitchRule, SwitchStatement,
     SynchronizedStatement, ThisExpression, ThrowStatement, ThrowsClause, Type, TypeDeclaration,
     TypeParameter, TypeParameterList, UnaryExpression, VariableDeclarator, VariableDeclaratorList,
     VariableInitializer, VariableInitializerValue, WhileStatement, YieldStatement, child,
@@ -368,6 +371,26 @@ impl TypeParameterList {
     pub fn parameters(&self) -> impl Iterator<Item = TypeParameter> + '_ {
         children(&self.syntax)
     }
+
+    #[must_use]
+    pub fn has_supported_layout_shape(&self) -> bool {
+        has_angle_comma_list_layout_shape(&self.syntax, JavaSyntaxKind::TypeParameter)
+    }
+}
+
+impl TypeParameter {
+    #[must_use]
+    pub fn name(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Identifier)
+    }
+
+    #[must_use]
+    pub fn has_simple_layout_shape(&self) -> bool {
+        self.syntax
+            .children_with_tokens()
+            .map(|element| element.kind())
+            .eq([JavaSyntaxKind::Identifier])
+    }
 }
 
 impl RecordComponentList {
@@ -579,27 +602,13 @@ impl MethodDeclaration {
     }
 
     #[must_use]
+    pub fn has_semicolon_body(&self) -> bool {
+        child_token(&self.syntax, JavaSyntaxKind::Semicolon).is_some()
+    }
+
+    #[must_use]
     pub fn has_supported_layout_shape(&self) -> bool {
-        let mut kinds = self
-            .syntax
-            .children_with_tokens()
-            .map(|element| element.kind())
-            .collect::<Vec<_>>();
-        if kinds.first() == Some(&JavaSyntaxKind::ModifierList) {
-            kinds.remove(0);
-        }
-        matches!(
-            kinds.as_slice(),
-            [
-                JavaSyntaxKind::PrimitiveType
-                    | JavaSyntaxKind::VoidType
-                    | JavaSyntaxKind::ClassType,
-                JavaSyntaxKind::Identifier,
-                JavaSyntaxKind::LParen,
-                JavaSyntaxKind::RParen,
-                JavaSyntaxKind::Block,
-            ]
-        )
+        has_method_declaration_layout_shape(&self.syntax)
     }
 }
 
@@ -636,23 +645,7 @@ impl ConstructorDeclaration {
 
     #[must_use]
     pub fn has_supported_layout_shape(&self) -> bool {
-        let mut kinds = self
-            .syntax
-            .children_with_tokens()
-            .map(|element| element.kind())
-            .collect::<Vec<_>>();
-        if kinds.first() == Some(&JavaSyntaxKind::ModifierList) {
-            kinds.remove(0);
-        }
-        matches!(
-            kinds.as_slice(),
-            [
-                JavaSyntaxKind::Identifier,
-                JavaSyntaxKind::LParen,
-                JavaSyntaxKind::RParen,
-                JavaSyntaxKind::ConstructorBody,
-            ]
-        )
+        has_constructor_declaration_layout_shape(&self.syntax)
     }
 }
 
@@ -693,9 +686,19 @@ impl FormalParameterList {
     pub fn parameters(&self) -> impl Iterator<Item = FormalParameter> + '_ {
         children(&self.syntax)
     }
+
+    #[must_use]
+    pub fn has_supported_layout_shape(&self) -> bool {
+        has_comma_list_layout_shape(&self.syntax, JavaSyntaxKind::FormalParameter)
+    }
 }
 
 impl FormalParameter {
+    #[must_use]
+    pub fn final_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::FinalKw)
+    }
+
     #[must_use]
     pub fn ty(&self) -> Option<Type> {
         child_family(&self.syntax)
@@ -709,6 +712,53 @@ impl FormalParameter {
     #[must_use]
     pub fn dimensions(&self) -> Option<ArrayDimensions> {
         child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn is_varargs(&self) -> bool {
+        child_token(&self.syntax, JavaSyntaxKind::Ellipsis).is_some()
+    }
+
+    #[must_use]
+    pub fn has_supported_layout_shape(&self) -> bool {
+        let mut kinds = self
+            .syntax
+            .children_with_tokens()
+            .map(|element| element.kind())
+            .collect::<Vec<_>>();
+        if kinds.first() == Some(&JavaSyntaxKind::FinalKw) {
+            kinds.remove(0);
+        }
+        matches!(
+            kinds.as_slice(),
+            [
+                JavaSyntaxKind::PrimitiveType | JavaSyntaxKind::ClassType,
+                JavaSyntaxKind::Identifier,
+            ] | [
+                JavaSyntaxKind::PrimitiveType | JavaSyntaxKind::ClassType,
+                JavaSyntaxKind::Ellipsis,
+                JavaSyntaxKind::Identifier,
+            ]
+        )
+    }
+}
+
+impl ThrowsClause {
+    pub fn types(&self) -> impl Iterator<Item = Type> + '_ {
+        children_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn has_supported_layout_shape(&self) -> bool {
+        let elements = self.syntax.children_with_tokens().collect::<Vec<_>>();
+        let Some(first) = elements.first() else {
+            return false;
+        };
+        if first.kind() != JavaSyntaxKind::ThrowsKw {
+            return false;
+        }
+
+        has_comma_separated_elements(&elements[1..], Type::can_cast)
     }
 }
 
@@ -843,6 +893,72 @@ impl IfStatement {
     #[must_use]
     pub fn else_statement(&self) -> Option<Statement> {
         nth_child_family(&self.syntax, 1)
+    }
+
+    #[must_use]
+    pub fn has_supported_layout_shape(&self) -> bool {
+        let elements = self.syntax.children_with_tokens().collect::<Vec<_>>();
+        match elements.as_slice() {
+            [if_kw, left, condition, right, then_statement] => {
+                if_kw.kind() == JavaSyntaxKind::IfKw
+                    && left.kind() == JavaSyntaxKind::LParen
+                    && Expression::can_cast(condition.kind())
+                    && right.kind() == JavaSyntaxKind::RParen
+                    && Statement::can_cast(then_statement.kind())
+            }
+            [
+                if_kw,
+                left,
+                condition,
+                right,
+                then_statement,
+                else_kw,
+                else_statement,
+            ] => {
+                if_kw.kind() == JavaSyntaxKind::IfKw
+                    && left.kind() == JavaSyntaxKind::LParen
+                    && Expression::can_cast(condition.kind())
+                    && right.kind() == JavaSyntaxKind::RParen
+                    && Statement::can_cast(then_statement.kind())
+                    && else_kw.kind() == JavaSyntaxKind::ElseKw
+                    && Statement::can_cast(else_statement.kind())
+            }
+            _ => false,
+        }
+    }
+}
+
+impl EmptyStatement {
+    #[must_use]
+    pub fn has_supported_layout_shape(&self) -> bool {
+        self.syntax
+            .children_with_tokens()
+            .map(|element| element.kind())
+            .eq([JavaSyntaxKind::Semicolon])
+    }
+}
+
+impl BreakStatement {
+    #[must_use]
+    pub fn label(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Identifier)
+    }
+
+    #[must_use]
+    pub fn has_supported_layout_shape(&self) -> bool {
+        has_keyword_optional_label_semicolon_shape(&self.syntax, JavaSyntaxKind::BreakKw)
+    }
+}
+
+impl ContinueStatement {
+    #[must_use]
+    pub fn label(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Identifier)
+    }
+
+    #[must_use]
+    pub fn has_supported_layout_shape(&self) -> bool {
+        has_keyword_optional_label_semicolon_shape(&self.syntax, JavaSyntaxKind::ContinueKw)
     }
 }
 
@@ -1673,6 +1789,25 @@ fn has_keyword_required_expression_semicolon_shape(
         && semicolon.kind() == JavaSyntaxKind::Semicolon
 }
 
+fn has_keyword_optional_label_semicolon_shape(
+    syntax: &super::JavaSyntaxNode,
+    keyword_kind: JavaSyntaxKind,
+) -> bool {
+    let elements = syntax.children_with_tokens().collect::<Vec<_>>();
+    match elements.as_slice() {
+        [keyword, semicolon] => {
+            keyword_matches(keyword, keyword_kind, None)
+                && semicolon.kind() == JavaSyntaxKind::Semicolon
+        }
+        [keyword, label, semicolon] => {
+            keyword_matches(keyword, keyword_kind, None)
+                && label.kind() == JavaSyntaxKind::Identifier
+                && semicolon.kind() == JavaSyntaxKind::Semicolon
+        }
+        _ => false,
+    }
+}
+
 fn keyword_matches(
     element: &jolt_syntax::SyntaxElement<crate::language::JavaLanguage>,
     expected: JavaSyntaxKind,
@@ -1694,6 +1829,139 @@ fn has_braced_block_statement_layout_shape(syntax: &super::JavaSyntaxNode) -> bo
         && kinds[1..kinds.len().saturating_sub(1)]
             .iter()
             .all(|kind| *kind == JavaSyntaxKind::BlockStatement)
+}
+
+fn has_method_declaration_layout_shape(syntax: &super::JavaSyntaxNode) -> bool {
+    let mut cursor = syntax_kind_cursor(syntax);
+    cursor.eat(JavaSyntaxKind::ModifierList);
+    cursor.eat(JavaSyntaxKind::TypeParameterList);
+    if !cursor.eat_one_of(&[
+        JavaSyntaxKind::PrimitiveType,
+        JavaSyntaxKind::VoidType,
+        JavaSyntaxKind::ClassType,
+    ]) {
+        return false;
+    }
+    if !cursor.eat(JavaSyntaxKind::Identifier) {
+        return false;
+    }
+    if !cursor.eat(JavaSyntaxKind::LParen) {
+        return false;
+    }
+    cursor.eat(JavaSyntaxKind::FormalParameterList);
+    if !cursor.eat(JavaSyntaxKind::RParen) {
+        return false;
+    }
+    cursor.eat(JavaSyntaxKind::ThrowsClause);
+
+    cursor.eat_one_of(&[JavaSyntaxKind::Block, JavaSyntaxKind::Semicolon]) && cursor.is_done()
+}
+
+fn has_constructor_declaration_layout_shape(syntax: &super::JavaSyntaxNode) -> bool {
+    let mut cursor = syntax_kind_cursor(syntax);
+    cursor.eat(JavaSyntaxKind::ModifierList);
+    cursor.eat(JavaSyntaxKind::TypeParameterList);
+    if !cursor.eat(JavaSyntaxKind::Identifier) {
+        return false;
+    }
+    if !cursor.eat(JavaSyntaxKind::LParen) {
+        return false;
+    }
+    cursor.eat(JavaSyntaxKind::FormalParameterList);
+    if !cursor.eat(JavaSyntaxKind::RParen) {
+        return false;
+    }
+    cursor.eat(JavaSyntaxKind::ThrowsClause);
+
+    cursor.eat(JavaSyntaxKind::ConstructorBody) && cursor.is_done()
+}
+
+struct SyntaxKindCursor<I>
+where
+    I: Iterator<Item = JavaSyntaxKind>,
+{
+    kinds: Peekable<I>,
+}
+
+fn syntax_kind_cursor(
+    syntax: &super::JavaSyntaxNode,
+) -> SyntaxKindCursor<impl Iterator<Item = JavaSyntaxKind> + '_> {
+    SyntaxKindCursor {
+        kinds: syntax
+            .children_with_tokens()
+            .map(|element| element.kind())
+            .peekable(),
+    }
+}
+
+impl<I> SyntaxKindCursor<I>
+where
+    I: Iterator<Item = JavaSyntaxKind>,
+{
+    fn eat(&mut self, expected: JavaSyntaxKind) -> bool {
+        self.eat_if(|kind| kind == expected)
+    }
+
+    fn eat_one_of(&mut self, expected: &[JavaSyntaxKind]) -> bool {
+        self.eat_if(|kind| expected.contains(&kind))
+    }
+
+    fn eat_if(&mut self, predicate: impl FnOnce(JavaSyntaxKind) -> bool) -> bool {
+        let Some(kind) = self.kinds.peek().copied() else {
+            return false;
+        };
+        if !predicate(kind) {
+            return false;
+        }
+
+        self.kinds.next();
+        true
+    }
+
+    fn is_done(mut self) -> bool {
+        self.kinds.next().is_none()
+    }
+}
+
+fn has_angle_comma_list_layout_shape(
+    syntax: &super::JavaSyntaxNode,
+    element_kind: JavaSyntaxKind,
+) -> bool {
+    let elements = syntax.children_with_tokens().collect::<Vec<_>>();
+    let Some(first) = elements.first() else {
+        return false;
+    };
+    let Some(last) = elements.last() else {
+        return false;
+    };
+    first.kind() == JavaSyntaxKind::Lt
+        && last.kind() == JavaSyntaxKind::Gt
+        && has_comma_separated_elements(&elements[1..elements.len().saturating_sub(1)], |kind| {
+            kind == element_kind
+        })
+}
+
+fn has_comma_list_layout_shape(
+    syntax: &super::JavaSyntaxNode,
+    element_kind: JavaSyntaxKind,
+) -> bool {
+    let elements = syntax.children_with_tokens().collect::<Vec<_>>();
+    has_comma_separated_elements(&elements, |kind| kind == element_kind)
+}
+
+fn has_comma_separated_elements(
+    elements: &[jolt_syntax::SyntaxElement<crate::language::JavaLanguage>],
+    is_element: impl Fn(JavaSyntaxKind) -> bool,
+) -> bool {
+    !elements.is_empty()
+        && elements.len() % 2 == 1
+        && elements.iter().enumerate().all(|(index, element)| {
+            if index % 2 == 0 {
+                is_element(element.kind())
+            } else {
+                element.kind() == JavaSyntaxKind::Comma
+            }
+        })
 }
 
 fn is_literal_token(kind: JavaSyntaxKind) -> bool {
@@ -1772,10 +2040,14 @@ impl BlockStatement {
                 JavaSyntaxKind::LocalVariableDeclaration,
                 JavaSyntaxKind::Semicolon
             ] | [JavaSyntaxKind::Block
+                | JavaSyntaxKind::EmptyStatement
                 | JavaSyntaxKind::ReturnStatement
                 | JavaSyntaxKind::ThrowStatement
                 | JavaSyntaxKind::YieldStatement
-                | JavaSyntaxKind::ExpressionStatement]
+                | JavaSyntaxKind::ExpressionStatement
+                | JavaSyntaxKind::IfStatement
+                | JavaSyntaxKind::BreakStatement
+                | JavaSyntaxKind::ContinueStatement]
         )
     }
 }

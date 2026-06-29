@@ -87,14 +87,39 @@ impl<'source> JavaFormatContext<'source> {
                     range: comment.trivia.range,
                 });
             }
-            if self.raw_text(comment).contains(is_line_terminator)
-                && matches!(
-                    comment.trivia.kind,
-                    TriviaKind::BlockComment | TriviaKind::JavadocComment
-                )
-            {
+
+            let comment = self
+                .next_unhandled_comment_trivia()
+                .expect("unhandled comment checked above")
+                .clone();
+            comments.push(comment);
+        }
+
+        Ok(comments)
+    }
+
+    pub(crate) fn take_dangling_comments(
+        &mut self,
+        container_range: TextRange,
+    ) -> Result<Vec<JavaCommentTrivia>, JavaCommentPlacementError> {
+        let mut comments = Vec::new();
+
+        while let Some(comment) = self.unhandled_comment_trivia() {
+            if comment.trivia.kind == TriviaKind::Ignored {
+                break;
+            }
+            if comment.trivia.range.start() <= container_range.start() {
+                break;
+            }
+            if comment.trivia.range.start() >= container_range.end() {
+                break;
+            }
+            if comment.trivia.range.end() >= container_range.end() {
+                break;
+            }
+            if !self.is_own_line_comment(comment) {
                 return Err(JavaCommentPlacementError {
-                    message: "Java formatter does not support multiline block comments yet"
+                    message: "Java formatter only supports own-line dangling comments here"
                         .to_owned(),
                     range: comment.trivia.range,
                 });
@@ -108,6 +133,46 @@ impl<'source> JavaFormatContext<'source> {
         }
 
         Ok(comments)
+    }
+
+    pub(crate) fn reject_unhandled_comments_before_start(
+        &self,
+        boundary: TextRange,
+        message: &'static str,
+    ) -> Result<(), JavaCommentPlacementError> {
+        let Some(comment) = self.unhandled_comment_trivia() else {
+            return Ok(());
+        };
+        if comment.trivia.kind != TriviaKind::Ignored
+            && comment.trivia.range.start() < boundary.start()
+        {
+            return Err(JavaCommentPlacementError {
+                message: message.to_owned(),
+                range: comment.trivia.range,
+            });
+        }
+
+        Ok(())
+    }
+
+    pub(crate) fn reject_unhandled_comments_before_end(
+        &self,
+        boundary: TextRange,
+        message: &'static str,
+    ) -> Result<(), JavaCommentPlacementError> {
+        let Some(comment) = self.unhandled_comment_trivia() else {
+            return Ok(());
+        };
+        if comment.trivia.kind != TriviaKind::Ignored
+            && comment.trivia.range.start() < boundary.end()
+        {
+            return Err(JavaCommentPlacementError {
+                message: message.to_owned(),
+                range: comment.trivia.range,
+            });
+        }
+
+        Ok(())
     }
 
     pub(crate) fn take_trailing_line_comment(
