@@ -1,4 +1,10 @@
-use jolt_fmt_ir::{Doc, concat, group, hard_line, indent, join, line, soft_line, text};
+use jolt_fmt_ir::{Doc, concat, group, hard_line, indent, indent_by, join, line, soft_line, text};
+
+const CONTINUATION_INDENT_LEVELS: u16 = 2;
+
+fn continuation_indent(doc: Doc) -> Doc {
+    indent_by(CONTINUATION_INDENT_LEVELS, doc)
+}
 
 pub(crate) fn space_separated(parts: impl IntoIterator<Item = Doc>) -> Doc {
     group(join(line(), parts))
@@ -9,9 +15,14 @@ pub(crate) fn declaration_header(parts: impl IntoIterator<Item = Doc>) -> Doc {
 }
 
 pub(crate) fn parenthesized_comma_list(items: impl IntoIterator<Item = Doc>) -> Doc {
+    let items = items.into_iter().collect::<Vec<_>>();
+    if items.is_empty() {
+        return text("()");
+    }
+
     group(concat([
         text("("),
-        indent(concat([
+        continuation_indent(concat([
             soft_line(),
             join(concat([text(","), line()]), items),
         ])),
@@ -41,7 +52,7 @@ pub(crate) fn variable_declarator(name: Doc, initializer: Option<Doc>) -> Doc {
     group(concat([
         name,
         text(" ="),
-        indent(concat([line(), initializer])),
+        continuation_indent(concat([line(), initializer])),
     ]))
 }
 
@@ -66,7 +77,7 @@ pub(crate) fn keyword_expression_statement(keyword: &'static str, expression: Op
 
     group(concat([
         text(keyword),
-        indent(concat([line(), expression])),
+        continuation_indent(concat([line(), expression])),
         text(";"),
     ]))
 }
@@ -78,7 +89,7 @@ pub(crate) fn expression_statement(expression: Doc) -> Doc {
 pub(crate) fn parenthesized_expression(expression: Doc) -> Doc {
     group(concat([
         text("("),
-        indent(concat([soft_line(), expression])),
+        continuation_indent(concat([soft_line(), expression])),
         soft_line(),
         text(")"),
     ]))
@@ -89,7 +100,7 @@ pub(crate) fn assignment_expression(left: Doc, operator: Doc, right: Doc) -> Doc
         left,
         text(" "),
         operator,
-        indent(concat([line(), right])),
+        continuation_indent(concat([line(), right])),
     ]))
 }
 
@@ -98,7 +109,7 @@ pub(crate) fn binary_chain(first: Doc, rest: impl IntoIterator<Item = (Doc, Doc)
         .into_iter()
         .map(|(operator, operand)| concat([line(), operator, text(" "), operand]));
 
-    group(concat([first, indent(concat(continuations))]))
+    group(concat([first, continuation_indent(concat(continuations))]))
 }
 
 pub(crate) fn dot_chain(base: Doc, selectors: impl IntoIterator<Item = Doc>) -> Doc {
@@ -109,7 +120,7 @@ pub(crate) fn dot_chain(base: Doc, selectors: impl IntoIterator<Item = Doc>) -> 
 
     group(concat([
         base,
-        indent(concat(
+        continuation_indent(concat(
             selectors
                 .into_iter()
                 .map(|selector| concat([soft_line(), text("."), selector])),

@@ -11,23 +11,23 @@ parse blocked: 0
 missing-rule blocked: 202
 other blocked: 0
 formatted: 22
-exact matches: 1
-exact-match percentage: 0.44%
-mismatching formatted files: 21
-aggregate diff size: 1274
-largest per-file diff: B24909927.java (952)
+exact matches: 10
+exact-match percentage: 4.46%
+mismatching formatted files: 12
+aggregate diff size: 1391
+largest per-file diff: B24909927.java (1240)
 
 worst mismatches:
-  B24909927.java: 952
-  PairedArguments.java: 125
-  SuperQualifier.java: 29
-  B21278211.java: 23
-  B23708487.java: 17
-  B112853497.java: 15
-  palantir-long-method-chain-arg.java: 15
-  palantir-long-safearg.java: 14
-  B126411718.java: 13
-  B21329312.java: 13
+  B24909927.java: 1240
+  PairedArguments.java: 51
+  SuperQualifier.java: 17
+  B23708487.java: 13
+  palantir-long-method-chain-arg.java: 12
+  B112853497.java: 11
+  B21278211.java: 10
+  B21329312.java: 10
+  palantir-long-safearg.java: 10
+  B126411718.java: 9
 
 top missing-rule blockers:
   37: Java formatter does not support this method declaration shape yet

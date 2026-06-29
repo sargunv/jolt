@@ -11,23 +11,23 @@ parse blocked: 0
 missing-rule blocked: 187
 other blocked: 0
 formatted: 21
-exact matches: 9
-exact-match percentage: 4.32%
-mismatching formatted files: 12
-aggregate diff size: 1205
-largest per-file diff: B24909927.java (1023)
+exact matches: 11
+exact-match percentage: 5.28%
+mismatching formatted files: 10
+aggregate diff size: 633
+largest per-file diff: B24909927.java (524)
 
 worst mismatches:
-  B24909927.java: 1023
-  PairedArguments.java: 107
-  SuperQualifier.java: 14
-  B23708487.java: 13
-  B112853497.java: 10
-  B21278211.java: 10
-  B126411718.java: 7
-  B23514513.java: 7
+  B24909927.java: 524
+  PairedArguments.java: 51
+  SuperQualifier.java: 18
+  B21329312.java: 10
+  B126411718.java: 9
+  B21278211.java: 8
   Fields.java: 5
-  b26306390.java: 4
+  B23514513.java: 3
+  B23708487.java: 3
+  I1153.java: 2
 
 top missing-rule blockers:
   35: Java formatter does not support this method declaration shape yet

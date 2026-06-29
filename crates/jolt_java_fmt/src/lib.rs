@@ -59,8 +59,8 @@ impl JavaFormatOptions {
     #[must_use]
     pub fn for_profile(profile: JavaFormatProfile) -> Self {
         let render = match profile {
-            JavaFormatProfile::Google | JavaFormatProfile::Palantir => RenderOptions::default(),
-            JavaFormatProfile::Aosp => RenderOptions {
+            JavaFormatProfile::Google => RenderOptions::default(),
+            JavaFormatProfile::Aosp | JavaFormatProfile::Palantir => RenderOptions {
                 indent_width: 4,
                 ..RenderOptions::default()
             },
@@ -1744,7 +1744,7 @@ mod tests {
     fn narrow_width_wraps_existing_argument_lists() {
         assert_formatted_with_width(
             "class A { void m() { call(alpha, beta, gamma); } }",
-            "class A {\n  void m() {\n    call(\n      alpha,\n      beta,\n      gamma\n    );\n  }\n}",
+            "class A {\n  void m() {\n    call(\n        alpha,\n        beta,\n        gamma\n    );\n  }\n}",
             20,
         );
     }
@@ -1753,7 +1753,7 @@ mod tests {
     fn narrow_width_wraps_existing_variable_declarations() {
         assert_formatted_with_width(
             "class A { int total = alpha + beta + gamma; void m() { final int local = alpha + beta + gamma; } }",
-            "class A {\n  int total =\n    alpha\n      + beta\n      + gamma;\n  void m() {\n    final int local =\n      alpha\n        + beta\n        + gamma;\n  }\n}",
+            "class A {\n  int total =\n      alpha\n          + beta\n          + gamma;\n  void m() {\n    final int local =\n        alpha\n            + beta\n            + gamma;\n  }\n}",
             20,
         );
     }
@@ -1762,7 +1762,7 @@ mod tests {
     fn narrow_width_wraps_existing_assignments_and_binary_expressions() {
         assert_formatted_with_width(
             "class A { void m() { target.value = alpha + beta + gamma; } }",
-            "class A {\n  void m() {\n    target.value =\n      alpha\n        + beta\n        + gamma;\n  }\n}",
+            "class A {\n  void m() {\n    target.value =\n        alpha\n            + beta\n            + gamma;\n  }\n}",
             20,
         );
     }
@@ -1771,7 +1771,7 @@ mod tests {
     fn narrow_width_wraps_existing_selector_chains() {
         assert_formatted_with_width(
             "class A { void m() { builder.first().second(value).third(); } }",
-            "class A {\n  void m() {\n    builder.first()\n      .second(value)\n      .third();\n  }\n}",
+            "class A {\n  void m() {\n    builder.first()\n        .second(\n            value\n        )\n        .third();\n  }\n}",
             20,
         );
     }
