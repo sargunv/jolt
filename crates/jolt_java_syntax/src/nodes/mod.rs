@@ -618,7 +618,9 @@ java_cst! {
 }
 
 mod accessors;
-pub use accessors::TypeLayoutPart;
+pub use accessors::{
+    CompilationUnitMember, FormalParameterModifier, SwitchBlockItem, SwitchRuleBody, TypeLayoutPart,
+};
 
 pub(crate) fn cast_compilation_unit(syntax: JavaSyntaxNode) -> Option<CompilationUnit> {
     <CompilationUnit as JavaNode>::cast(syntax)

@@ -1,0 +1,59 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "EmptyLambdaParameters" @ 19..40 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 41..42
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 59..63 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 64..70
+          LParen "(" @ 70..71
+          RParen ")" @ 71..72 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 73..74
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 95..99 leading=[Newline "\n", Whitespace "                    "]
+                    Dot "." @ 99..100
+                    Identifier "util" @ 100..104
+                    Dot "." @ 104..105
+                    Identifier "function" @ 105..113
+                    Dot "." @ 113..114
+                    Identifier "Supplier" @ 114..122
+                  TypeArgumentList
+                    Lt "<" @ 122..123
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "Integer" @ 123..130
+                    Gt ">" @ 130..131 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "size" @ 132..136 trailing=[Whitespace " "]
+                    Assign "=" @ 137..138 trailing=[Whitespace " "]
+                    VariableInitializer
+                      LambdaExpression
+                        LParen "(" @ 139..140
+                        LambdaParameterList
+                        RParen ")" @ 140..141 trailing=[Whitespace " "]
+                        Arrow "->" @ 142..144 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "1" @ 145..146
+              Semicolon ";" @ 146..147
+            RBrace "}" @ 164..165 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 178..179 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 188..188 leading=[Newline "\n", Whitespace "        "]
+
+outcome: Clean
+
+diagnostics:
+  (none)

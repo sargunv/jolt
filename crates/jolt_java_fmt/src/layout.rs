@@ -54,11 +54,16 @@ pub(crate) fn comma_list(items: impl IntoIterator<Item = Doc>) -> Doc {
 
 pub(crate) fn variable_declaration(prefix: impl IntoIterator<Item = Doc>, declarators: Doc) -> Doc {
     group(concat([
-        space_separated(prefix),
-        text(" "),
-        declarators,
+        variable_declaration_header(prefix, declarators),
         text(";"),
     ]))
+}
+
+pub(crate) fn variable_declaration_header(
+    prefix: impl IntoIterator<Item = Doc>,
+    declarators: Doc,
+) -> Doc {
+    group(concat([space_separated(prefix), text(" "), declarators]))
 }
 
 pub(crate) fn variable_declarator(name: Doc, initializer: Option<Doc>) -> Doc {
@@ -143,6 +148,65 @@ pub(crate) fn if_statement(
         } else {
             parts.push(indent(concat([hard_line(), else_statement])));
         }
+    }
+
+    concat(parts)
+}
+
+pub(crate) fn while_statement(condition: Doc, body: Doc, body_is_block: bool) -> Doc {
+    loop_statement(
+        concat([text("while "), parenthesized_expression(condition)]),
+        body,
+        body_is_block,
+    )
+}
+
+pub(crate) fn for_statement(header: Doc, body: Doc, body_is_block: bool) -> Doc {
+    loop_statement(header, body, body_is_block)
+}
+
+fn loop_statement(header: Doc, body: Doc, body_is_block: bool) -> Doc {
+    let mut parts = vec![header];
+    if body_is_block {
+        parts.push(text(" "));
+        parts.push(body);
+    } else {
+        parts.push(indent(concat([hard_line(), body])));
+    }
+
+    concat(parts)
+}
+
+pub(crate) fn do_statement(body: Doc, body_is_block: bool, condition: Doc) -> Doc {
+    let mut parts = vec![text("do")];
+    if body_is_block {
+        parts.push(text(" "));
+        parts.push(body);
+        parts.push(text(" "));
+    } else {
+        parts.push(indent(concat([hard_line(), body])));
+        parts.push(hard_line());
+    }
+    parts.push(text("while "));
+    parts.push(parenthesized_expression(condition));
+    parts.push(text(";"));
+
+    concat(parts)
+}
+
+pub(crate) fn try_statement(
+    body: Doc,
+    catches: impl IntoIterator<Item = Doc>,
+    finally_clause: Option<Doc>,
+) -> Doc {
+    let mut parts = vec![text("try "), body];
+    for catch in catches {
+        parts.push(text(" "));
+        parts.push(catch);
+    }
+    if let Some(finally_clause) = finally_clause {
+        parts.push(text(" "));
+        parts.push(finally_clause);
     }
 
     concat(parts)

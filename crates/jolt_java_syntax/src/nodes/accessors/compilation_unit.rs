@@ -1,9 +1,18 @@
 use super::super::{
-    Annotation, AnyJavaNode, CompilationUnit, ImportDeclaration, JavaSyntaxKind, JavaSyntaxToken,
+    Annotation, AnyJavaNode, CompilationUnit, EmptyDeclaration, FieldDeclaration,
+    ImportDeclaration, JavaFamily, JavaNode, JavaSyntaxKind, JavaSyntaxToken, MethodDeclaration,
     ModuleDeclaration, ModuleDirective, ModuleDirectiveNode, NameSyntax, PackageDeclaration,
     TypeDeclaration, child, child_family, child_token, children, children_family,
     children_tokens_matching,
 };
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum CompilationUnitMember {
+    EmptyDeclaration(EmptyDeclaration),
+    FieldDeclaration(FieldDeclaration),
+    MethodDeclaration(MethodDeclaration),
+    TypeDeclaration(TypeDeclaration),
+}
 
 impl CompilationUnit {
     #[must_use]
@@ -24,6 +33,22 @@ impl CompilationUnit {
         children_family(&self.syntax)
     }
 
+    pub fn compact_members(&self) -> impl Iterator<Item = CompilationUnitMember> + '_ {
+        self.syntax.children().filter_map(|node| {
+            EmptyDeclaration::cast(node.clone())
+                .map(CompilationUnitMember::EmptyDeclaration)
+                .or_else(|| {
+                    FieldDeclaration::cast(node.clone())
+                        .map(CompilationUnitMember::FieldDeclaration)
+                })
+                .or_else(|| {
+                    MethodDeclaration::cast(node.clone())
+                        .map(CompilationUnitMember::MethodDeclaration)
+                })
+                .or_else(|| TypeDeclaration::cast(node).map(CompilationUnitMember::TypeDeclaration))
+        })
+    }
+
     pub fn unsupported_layout_child(&self) -> Option<AnyJavaNode> {
         self.syntax
             .children()
@@ -39,6 +64,9 @@ impl CompilationUnit {
                         | JavaSyntaxKind::EnumDeclaration
                         | JavaSyntaxKind::InterfaceDeclaration
                         | JavaSyntaxKind::AnnotationInterfaceDeclaration
+                        | JavaSyntaxKind::EmptyDeclaration
+                        | JavaSyntaxKind::FieldDeclaration
+                        | JavaSyntaxKind::MethodDeclaration
                 )
             })
     }

@@ -7,35 +7,35 @@ profile: palantir
 total considered: 226
 invalid upstream fixtures skipped: 2
 parse blocked: 0
-missing-rule blocked: 178
+missing-rule blocked: 100
 other blocked: 0
-formatted: 46
-exact matches: 17
-exact-match percentage: 7.58%
-mismatching formatted files: 29
-aggregate diff size: 1254
-largest per-file diff: B24909927.java (875)
+formatted: 124
+exact matches: 33
+exact-match percentage: 14.73%
+mismatching formatted files: 91
+aggregate diff size: 4054
+largest per-file diff: M.java (1312)
 
 worst mismatches:
+  M.java: 1312
   B24909927.java: 875
+  E.java: 317
+  B20128760.java: 147
+  palantir-deeply-nested-calls.java: 117
+  B28066276.java: 72
   PairedArguments.java: 59
   B20569245.java: 55
-  R.java: 35
-  B21192435.java: 31
-  B23708487.java: 24
-  B20529113.java: 20
-  B65214682.java: 17
-  SuperQualifier.java: 17
-  B20577626.java: 15
+  B24702438.java: 54
+  B26207047.java: 47
 
 top missing-rule blockers:
-  27: Java formatter does not support this block statement shape yet
-  19: Java formatter does not support this type shape yet
-  14: Java formatter does not support expression kind LambdaExpression yet
-  9: Java formatter only supports own-line leading comments here
-  9: Java formatter only supports simple formal parameters yet
-  8: Java formatter does not support expression kind ObjectCreationExpression yet
-  7: Java formatter does not support enum declarations yet
-  7: Java formatter found unhandled comment or ignored trivia
-  5: Java formatter does not support annotation interface declarations yet
-  5: Java formatter does not support expression kind MethodReferenceExpression yet
+  14: Java formatter found unhandled comment or ignored trivia
+  11: Java formatter only supports own-line leading comments here
+  6: Java formatter does not support this try statement shape yet
+  5: Java formatter does not support this object creation expression shape yet
+  5: Java formatter only supports unbounded type parameters yet
+  4: Java formatter does not support multiline literals yet
+  4: Java formatter does not support this switch label shape yet
+  4: Java formatter does not support this type shape yet
+  3: Java formatter does not support constructor invocations or this constructor body shape yet
+  3: Java formatter does not support expression kind ConditionalExpression yet

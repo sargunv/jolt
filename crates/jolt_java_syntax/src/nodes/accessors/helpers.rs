@@ -171,6 +171,7 @@ pub(super) fn has_method_declaration_layout_shape(syntax: &JavaSyntaxNode) -> bo
         JavaSyntaxKind::PrimitiveType,
         JavaSyntaxKind::VoidType,
         JavaSyntaxKind::ClassType,
+        JavaSyntaxKind::ArrayType,
     ]) {
         return false;
     }

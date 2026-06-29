@@ -208,6 +208,69 @@ impl<'source> JavaFormatContext<'source> {
         ))
     }
 
+    pub(crate) fn take_inline_leading_block_comments(
+        &mut self,
+        code_range: TextRange,
+    ) -> Vec<JavaCommentTrivia> {
+        let mut comments = Vec::new();
+
+        while let Some(comment) = self.unhandled_comment_trivia() {
+            if comment.trivia.kind != TriviaKind::BlockComment {
+                break;
+            }
+            if comment.trivia.range.start() >= code_range.start() {
+                break;
+            }
+            if comment.trivia.range.end() > code_range.start() {
+                break;
+            }
+            if !self.is_same_line_span(comment.trivia.range.end().get(), code_range.start().get()) {
+                break;
+            }
+            if !self.only_whitespace(comment.trivia.range.end().get(), code_range.start().get()) {
+                break;
+            }
+
+            let comment = self
+                .next_unhandled_comment_trivia()
+                .expect("unhandled comment checked above")
+                .clone();
+            comments.push(comment);
+        }
+
+        comments
+    }
+
+    pub(crate) fn take_inline_trailing_block_comments(
+        &mut self,
+        code_range: TextRange,
+    ) -> Vec<JavaCommentTrivia> {
+        let mut comments = Vec::new();
+
+        while let Some(comment) = self.unhandled_comment_trivia() {
+            if comment.trivia.kind != TriviaKind::BlockComment {
+                break;
+            }
+            if comment.trivia.range.start() < code_range.end() {
+                break;
+            }
+            if !self.is_same_line_span(code_range.end().get(), comment.trivia.range.start().get()) {
+                break;
+            }
+            if !self.only_whitespace(code_range.end().get(), comment.trivia.range.start().get()) {
+                break;
+            }
+
+            let comment = self
+                .next_unhandled_comment_trivia()
+                .expect("unhandled comment checked above")
+                .clone();
+            comments.push(comment);
+        }
+
+        comments
+    }
+
     pub(crate) fn raw_text(&self, comment: &JavaCommentTrivia) -> &'source str {
         &self.source[comment.trivia.range.start().get()..comment.trivia.range.end().get()]
     }

@@ -44,6 +44,28 @@ pub(crate) fn take_dangling_comment_docs(
         })
 }
 
+pub(crate) fn take_inline_leading_block_comment_docs(
+    context: &mut JavaFormatContext<'_>,
+    code_range: TextRange,
+) -> Vec<Doc> {
+    context
+        .take_inline_leading_block_comments(code_range)
+        .into_iter()
+        .map(|comment| text(context.raw_text(&comment)))
+        .collect()
+}
+
+pub(crate) fn take_inline_trailing_block_comment_docs(
+    context: &mut JavaFormatContext<'_>,
+    code_range: TextRange,
+) -> Vec<Doc> {
+    context
+        .take_inline_trailing_block_comments(code_range)
+        .into_iter()
+        .map(|comment| text(context.raw_text(&comment)))
+        .collect()
+}
+
 pub(crate) fn reject_unhandled_comments_before_start(
     context: &JavaFormatContext<'_>,
     boundary: TextRange,

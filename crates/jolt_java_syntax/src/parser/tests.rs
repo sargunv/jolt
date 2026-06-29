@@ -2429,6 +2429,21 @@ fn parses_var_lambda_parameter() {
 }
 
 #[test]
+fn parses_empty_lambda_parameters() {
+    // Spec: JLS 19 LambdaParameters permits an empty parenthesized parameter list.
+    assert_parse_snapshot(
+        "parses_empty_lambda_parameters",
+        r"
+            class EmptyLambdaParameters {
+                void method() {
+                    java.util.function.Supplier<Integer> size = () -> 1;
+                }
+            }
+        ",
+    );
+}
+
+#[test]
 fn parses_parenthesized_concise_lambda_parameter_list() {
     // Spec: JLS 19 LambdaParameterList permits comma-separated
     // ConciseLambdaParameter entries inside parentheses.
