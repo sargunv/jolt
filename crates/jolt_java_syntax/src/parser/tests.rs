@@ -675,6 +675,20 @@ fn parses_annotation_forms_and_element_values() {
 }
 
 #[test]
+fn diagnoses_assignment_annotation_element_values() {
+    // Spec: JLS 19 ElementValue permits a conditional expression, nested
+    // annotation, or element-value array initializer, not an assignment
+    // expression.
+    assert_parse_snapshot(
+        "diagnoses_assignment_annotation_element_values",
+        r#"
+            @Anno(value = x = 1)
+            class Annotated {}
+        "#,
+    );
+}
+
+#[test]
 fn annotation_interface_members_are_annotation_element_declarations() {
     // Spec: JLS 19 AnnotationInterfaceElementDeclaration is a declaration
     // inside an annotation interface, distinct from annotation-use values.

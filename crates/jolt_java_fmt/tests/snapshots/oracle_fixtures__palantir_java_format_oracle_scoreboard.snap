@@ -7,13 +7,13 @@ profile: palantir
 total considered: 226
 invalid upstream fixtures skipped: 2
 parse blocked: 0
-missing-rule blocked: 189
+missing-rule blocked: 178
 other blocked: 0
-formatted: 35
-exact matches: 16
-exact-match percentage: 7.14%
-mismatching formatted files: 19
-aggregate diff size: 1147
+formatted: 46
+exact matches: 17
+exact-match percentage: 7.58%
+mismatching formatted files: 29
+aggregate diff size: 1254
 largest per-file diff: B24909927.java (875)
 
 worst mismatches:
@@ -21,21 +21,21 @@ worst mismatches:
   PairedArguments.java: 59
   B20569245.java: 55
   R.java: 35
+  B21192435.java: 31
   B23708487.java: 24
+  B20529113.java: 20
+  B65214682.java: 17
   SuperQualifier.java: 17
-  B19950815.java: 14
-  B112853497.java: 13
-  B21278211.java: 11
-  palantir-long-method-chain-arg.java: 11
+  B20577626.java: 15
 
 top missing-rule blockers:
-  24: Java formatter does not support this block statement shape yet
-  22: Java formatter does not support declaration annotations yet
+  27: Java formatter does not support this block statement shape yet
+  19: Java formatter does not support this type shape yet
   14: Java formatter does not support expression kind LambdaExpression yet
-  14: Java formatter does not support this type shape yet
-  9: Java formatter does not support nested class declarations yet
-  8: Java formatter only supports own-line leading comments here
+  9: Java formatter only supports own-line leading comments here
+  9: Java formatter only supports simple formal parameters yet
+  8: Java formatter does not support expression kind ObjectCreationExpression yet
   7: Java formatter does not support enum declarations yet
   7: Java formatter found unhandled comment or ignored trivia
-  7: Java formatter only supports simple formal parameters yet
-  6: Java formatter does not support class type parameters yet
+  5: Java formatter does not support annotation interface declarations yet
+  5: Java formatter does not support expression kind MethodReferenceExpression yet

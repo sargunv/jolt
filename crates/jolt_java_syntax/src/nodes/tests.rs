@@ -754,16 +754,13 @@ fn member_layout_accessors_account_for_supported_direct_shapes() {
         .next()
         .expect("field declaration");
     assert!(field.has_supported_layout_shape());
-    assert_eq!(
-        field
-            .ty()
-            .expect("field type")
-            .simple_layout_tokens()
-            .expect("simple type")
-            .iter()
-            .map(JavaSyntaxToken::text)
-            .collect::<Vec<_>>(),
-        ["int"]
+    let type_parts = field
+        .ty()
+        .expect("field type")
+        .simple_layout_parts()
+        .expect("simple type");
+    assert!(
+        matches!(type_parts.as_slice(), [TypeLayoutPart::Token(token)] if token.text() == "int")
     );
     let declarators = field.declarators().expect("field declarators");
     assert!(declarators.has_single_declarator_layout_shape());

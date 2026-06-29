@@ -1,7 +1,14 @@
 use super::super::{
-    ArrayDimensions, ArrayType, ClassType, JavaSyntaxToken, NameSyntax, Type, child, child_family,
+    Annotation, ArrayDimensions, ArrayType, ClassType, JavaFamily, JavaNode, JavaSyntaxKind,
+    JavaSyntaxToken, NameSyntax, Type, child,
 };
 use super::helpers::simple_single_token;
+
+#[derive(Clone)]
+pub enum TypeLayoutPart {
+    Annotation(Annotation),
+    Token(JavaSyntaxToken),
+}
 
 impl ArrayType {
     #[must_use]
@@ -12,10 +19,12 @@ impl ArrayType {
 
 impl Type {
     #[must_use]
-    pub fn simple_layout_tokens(&self) -> Option<Vec<JavaSyntaxToken>> {
+    pub fn simple_layout_parts(&self) -> Option<Vec<TypeLayoutPart>> {
         match self {
-            Self::PrimitiveType(primitive) => simple_single_token(&primitive.syntax),
-            Self::VoidType(void) => simple_single_token(&void.syntax),
+            Self::PrimitiveType(primitive) => simple_single_token(&primitive.syntax)
+                .map(|tokens| tokens.into_iter().map(TypeLayoutPart::Token).collect()),
+            Self::VoidType(void) => simple_single_token(&void.syntax)
+                .map(|tokens| tokens.into_iter().map(TypeLayoutPart::Token).collect()),
             Self::ClassType(class) => class.simple_layout_name_tokens(),
             Self::ArrayType(_)
             | Self::IntersectionType(_)
@@ -26,20 +35,43 @@ impl Type {
 }
 
 impl ClassType {
-    fn simple_layout_name_tokens(&self) -> Option<Vec<JavaSyntaxToken>> {
-        let kinds = self
-            .syntax
-            .children_with_tokens()
-            .map(|element| element.kind())
-            .collect::<Vec<_>>();
-        let [kind] = kinds.as_slice() else {
-            return None;
-        };
-        if !NameSyntax::can_cast(*kind) {
-            return None;
+    fn simple_layout_name_tokens(&self) -> Option<Vec<TypeLayoutPart>> {
+        let mut parts = Vec::new();
+        for element in self.syntax.children_with_tokens() {
+            match element.kind() {
+                JavaSyntaxKind::Annotation => parts.push(TypeLayoutPart::Annotation(
+                    Annotation::cast(element.into_node()?)?,
+                )),
+                JavaSyntaxKind::Name | JavaSyntaxKind::QualifiedName => {
+                    parts.extend(simple_name_layout_parts(&NameSyntax::cast(
+                        element.into_node()?,
+                    )?)?);
+                }
+                JavaSyntaxKind::Dot => parts.push(TypeLayoutPart::Token(JavaSyntaxToken {
+                    syntax: element.into_token()?,
+                })),
+                _ => return None,
+            }
         }
 
-        let name: NameSyntax = child_family(&self.syntax)?;
-        Some(name.segments().collect())
+        (!parts.is_empty()).then_some(parts)
     }
+}
+
+fn simple_name_layout_parts(name: &NameSyntax) -> Option<Vec<TypeLayoutPart>> {
+    let mut parts = Vec::new();
+    for element in name.syntax().children_with_tokens() {
+        match element.kind() {
+            JavaSyntaxKind::Annotation => parts.push(TypeLayoutPart::Annotation(Annotation::cast(
+                element.into_node()?,
+            )?)),
+            JavaSyntaxKind::Dot | JavaSyntaxKind::Identifier => {
+                parts.push(TypeLayoutPart::Token(JavaSyntaxToken {
+                    syntax: element.into_token()?,
+                }));
+            }
+            _ => return None,
+        }
+    }
+    Some(parts)
 }

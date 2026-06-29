@@ -1,4 +1,4 @@
-use super::{JavaSyntaxKind, Parser};
+use super::{JavaSyntaxKind, Parser, StopSet};
 
 impl Parser<'_> {
     pub(super) fn parse_type(&mut self) -> jolt_syntax::CompletedMarker {
@@ -229,7 +229,26 @@ impl Parser<'_> {
         } else if self.at(JavaSyntaxKind::At) && self.nth_kind(1) != JavaSyntaxKind::InterfaceKw {
             self.parse_annotation();
         } else {
-            self.parse_expression_until(&[JavaSyntaxKind::Comma, stop]);
+            self.parse_annotation_element_expression_until(&[JavaSyntaxKind::Comma, stop]);
+        }
+    }
+
+    fn parse_annotation_element_expression_until<'a>(&mut self, stops: impl Into<StopSet<'a>>) {
+        let stops = stops.into();
+        if self.at_eof() || stops.contains(self.current_kind()) {
+            let error = self.start();
+            self.expected_here("expected annotation element value");
+            self.complete(error, JavaSyntaxKind::ErrorNode);
+            return;
+        }
+
+        self.parse_conditional_expression();
+
+        while !self.at_eof() && !stops.contains(self.current_kind()) {
+            let error = self.start();
+            self.unexpected_here("unexpected token in annotation element value");
+            self.bump();
+            self.complete(error, JavaSyntaxKind::ErrorNode);
         }
     }
 }

@@ -8,13 +8,14 @@ use crate::diagnostics::{FormatResult, missing_layout};
 use crate::layout as wrap;
 use jolt_fmt_ir::{Doc, concat, hard_line, join, text};
 use jolt_java_syntax::{
-    Block, BlockItem, BlockStatement, BreakStatement, ClassBody, ClassBodyMember, ClassDeclaration,
+    Annotation, AnnotationArgumentList, AnnotationElementValue, AnnotationElementValuePair, Block,
+    BlockItem, BlockStatement, BreakStatement, ClassBody, ClassBodyMember, ClassDeclaration,
     CompilationUnit, ConstructorBody, ConstructorDeclaration, ContinueStatement, EmptyStatement,
-    Expression, FieldDeclaration, FormalParameter, FormalParameterList, IfStatement,
-    ImportDeclaration, JavaSyntaxKind, JavaSyntaxToken, LocalVariableDeclaration,
-    MethodDeclaration, ModifierList, NameSyntax, PackageDeclaration, ReturnStatement, Statement,
-    ThrowStatement, ThrowsClause, Type, TypeDeclaration, TypeParameterList, VariableDeclarator,
-    YieldStatement,
+    Expression, ExtendsClause, FieldDeclaration, FormalParameter, FormalParameterList, IfStatement,
+    ImplementsClause, ImportDeclaration, JavaSyntaxKind, JavaSyntaxToken, LocalVariableDeclaration,
+    MethodDeclaration, ModifierList, NameSyntax, PackageDeclaration, PermitsClause,
+    ReturnStatement, Statement, ThrowStatement, ThrowsClause, Type, TypeDeclaration,
+    TypeLayoutPart, TypeParameterList, VariableDeclarator, YieldStatement,
 };
 
 #[cfg(test)]
@@ -79,28 +80,40 @@ fn format_package_declaration(
     package: &PackageDeclaration,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    if let Some(annotation) = package.annotations().next() {
-        return Err(missing_layout(
-            "Java formatter does not support package annotations yet",
-            annotation.text_range(),
-        ));
-    }
     let code_range = package.code_text_range().ok_or_else(|| {
         missing_layout(
             "Java formatter found an empty package declaration",
             package.text_range(),
         )
     })?;
+    let leading_comments = take_leading_comment_docs(context, code_range)?;
+    let annotations = format_annotation_list(package.annotations(), context, "declaration")?;
     let name = package.name().ok_or_else(|| {
         missing_layout(
             "Java formatter found a package declaration without a name",
             package.text_range(),
         )
     })?;
-    with_attached_comments(
+    if !annotations.is_empty() {
+        reject_unhandled_comments_before_start(
+            context,
+            name.code_text_range().ok_or_else(|| {
+                missing_layout(
+                    "Java formatter found an empty package name",
+                    name.text_range(),
+                )
+            })?,
+            "Java formatter does not support comments between declaration annotations and declaration headers yet",
+        )?;
+    }
+    with_leading_and_trailing_comments(
         context,
         code_range,
-        concat([text("package "), format_name(&name), text(";")]),
+        leading_comments,
+        with_vertical_annotations(
+            annotations,
+            concat([text("package "), format_name(&name), text(";")]),
+        ),
     )
 }
 
@@ -185,32 +198,8 @@ fn format_class_declaration(
         )
     })?;
     let leading_comments = take_leading_comment_docs(context, code_range)?;
-    let modifiers = format_modifier_list(class.modifiers(), "class")?;
+    let modifiers = format_modifier_list(class.modifiers(), "class", context)?;
 
-    if let Some(type_parameters) = class.type_parameters() {
-        return Err(missing_layout(
-            "Java formatter does not support class type parameters yet",
-            type_parameters.text_range(),
-        ));
-    }
-    if let Some(extends_clause) = class.extends_clause() {
-        return Err(missing_layout(
-            "Java formatter does not support extends clauses yet",
-            extends_clause.text_range(),
-        ));
-    }
-    if let Some(implements_clause) = class.implements_clause() {
-        return Err(missing_layout(
-            "Java formatter does not support implements clauses yet",
-            implements_clause.text_range(),
-        ));
-    }
-    if let Some(permits_clause) = class.permits_clause() {
-        return Err(missing_layout(
-            "Java formatter does not support permits clauses yet",
-            permits_clause.text_range(),
-        ));
-    }
     if !class.has_supported_layout_shape() {
         return Err(missing_layout(
             "Java formatter does not support this class declaration shape yet",
@@ -224,25 +213,76 @@ fn format_class_declaration(
             class.text_range(),
         )
     })?;
+    if modifiers.has_annotations() {
+        reject_unhandled_comments_before_start(
+            context,
+            name.token_text_range(),
+            "Java formatter does not support comments between declaration annotations and declaration headers yet",
+        )?;
+    }
     let body = class.body().ok_or_else(|| {
         missing_layout(
             "Java formatter found a class declaration without a body",
             class.text_range(),
         )
     })?;
+    let body_range = body.code_text_range().ok_or_else(|| {
+        missing_layout(
+            "Java formatter found an empty class body",
+            body.text_range(),
+        )
+    })?;
+    reject_unhandled_comments_before_start(
+        context,
+        body_range,
+        "Java formatter does not support comments inside class headers yet",
+    )?;
+    let type_parameters = class
+        .type_parameters()
+        .map(|parameters| format_type_parameter_list(&parameters))
+        .transpose()?;
+    let extends_clause = class
+        .extends_clause()
+        .map(|clause| format_extends_clause(&clause, context))
+        .transpose()?;
+    let implements_clause = class
+        .implements_clause()
+        .map(|clause| format_implements_clause(&clause, context))
+        .transpose()?;
+    let permits_clause = class
+        .permits_clause()
+        .map(|clause| format_permits_clause(&clause))
+        .transpose()?;
     let body_members = format_class_body(&body, context)?;
 
     let mut header = Vec::new();
-    header.extend(modifiers.iter().map(format_token));
+    header.extend(modifiers.modifier_tokens.iter().map(format_token));
     header.push(text("class"));
-    header.push(text(name.text()));
+    header.push(if let Some(type_parameters) = type_parameters {
+        concat([text(name.text()), type_parameters])
+    } else {
+        text(name.text())
+    });
+    if let Some(extends_clause) = extends_clause {
+        header.push(extends_clause);
+    }
+    if let Some(implements_clause) = implements_clause {
+        header.push(implements_clause);
+    }
+    if let Some(permits_clause) = permits_clause {
+        header.push(permits_clause);
+    }
     let header = wrap::declaration_header(header);
 
     with_leading_and_trailing_comments(
         context,
         code_range,
         leading_comments,
-        concat([header, text(" "), wrap::braced_block(body_members)]),
+        modifiers.with_annotations(concat([
+            header,
+            text(" "),
+            wrap::braced_block(body_members),
+        ])),
     )
 }
 
@@ -286,16 +326,13 @@ fn format_class_body_member(
     })?;
     let leading_comments = take_leading_comment_docs(context, code_range)?;
     let doc = match member {
-        ClassBodyMember::FieldDeclaration(field) => format_field_declaration(field),
+        ClassBodyMember::FieldDeclaration(field) => format_field_declaration(field, context),
         ClassBodyMember::MethodDeclaration(method) => format_method_declaration(method, context),
         ClassBodyMember::ConstructorDeclaration(constructor) => {
             format_constructor_declaration(constructor, context)
         }
         ClassBodyMember::EmptyDeclaration(_) => Ok(text(";")),
-        ClassBodyMember::ClassDeclaration(class) => Err(missing_layout(
-            "Java formatter does not support nested class declarations yet",
-            class.text_range(),
-        )),
+        ClassBodyMember::ClassDeclaration(class) => format_class_declaration(class, context),
         ClassBodyMember::RecordDeclaration(record) => Err(missing_layout(
             "Java formatter does not support nested record declarations yet",
             record.text_range(),
@@ -326,7 +363,10 @@ fn format_class_body_member(
     with_leading_and_trailing_comments(context, code_range, leading_comments, doc)
 }
 
-fn format_field_declaration(field: &FieldDeclaration) -> FormatResult<Doc> {
+fn format_field_declaration(
+    field: &FieldDeclaration,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
     if !field.has_supported_layout_shape() {
         return Err(missing_layout(
             "Java formatter does not support this field declaration shape yet",
@@ -334,13 +374,23 @@ fn format_field_declaration(field: &FieldDeclaration) -> FormatResult<Doc> {
         ));
     }
 
-    let modifiers = format_modifier_list(field.modifiers(), "field")?;
+    let modifiers = format_modifier_list(field.modifiers(), "field", context)?;
     let ty = field.ty().ok_or_else(|| {
         missing_layout(
             "Java formatter found a field declaration without a type",
             field.text_range(),
         )
     })?;
+    if modifiers.has_annotations() {
+        let ty_range = ty.code_text_range().ok_or_else(|| {
+            missing_layout("Java formatter found an empty field type", ty.text_range())
+        })?;
+        reject_unhandled_comments_before_start(
+            context,
+            ty_range,
+            "Java formatter does not support comments between declaration annotations and declaration headers yet",
+        )?;
+    }
     let declarators = field.declarators().ok_or_else(|| {
         missing_layout(
             "Java formatter found a field declaration without declarators",
@@ -350,9 +400,9 @@ fn format_field_declaration(field: &FieldDeclaration) -> FormatResult<Doc> {
     let declarators = format_variable_declarator_list(&declarators, "field")?;
 
     let mut prefix = Vec::new();
-    prefix.extend(modifiers.iter().map(format_token));
-    prefix.push(format_type(&ty)?);
-    Ok(wrap::variable_declaration(prefix, declarators))
+    prefix.extend(modifiers.modifier_tokens.iter().map(format_token));
+    prefix.push(format_type(&ty, context)?);
+    Ok(modifiers.with_annotations(wrap::variable_declaration(prefix, declarators)))
 }
 
 fn format_static_initializer(
@@ -404,11 +454,13 @@ fn format_method_declaration(
             method.text_range(),
         )
     })?;
+    let return_type = format_type(&return_type, context)?;
     let header = format_callable_header(
         method.modifiers(),
         "method",
+        context,
         method.type_parameters(),
-        Some(format_type(&return_type)?),
+        Some(return_type),
         &name,
         method.parameters(),
         method.throws_clause(),
@@ -486,6 +538,7 @@ fn format_constructor_declaration(
     let header = format_callable_header(
         constructor.modifiers(),
         "constructor",
+        context,
         constructor.type_parameters(),
         None,
         &name,
@@ -502,26 +555,34 @@ fn format_constructor_declaration(
 fn format_callable_header(
     modifiers: Option<ModifierList>,
     declaration_kind: &str,
+    context: &mut JavaFormatContext<'_>,
     type_parameters: Option<TypeParameterList>,
     leading_type: Option<Doc>,
     name: &JavaSyntaxToken,
     parameters: Option<FormalParameterList>,
     throws_clause: Option<ThrowsClause>,
 ) -> FormatResult<Doc> {
-    let modifiers = format_modifier_list(modifiers, declaration_kind)?;
+    let modifiers = format_modifier_list(modifiers, declaration_kind, context)?;
+    if modifiers.has_annotations() {
+        reject_unhandled_comments_before_start(
+            context,
+            name.token_text_range(),
+            "Java formatter does not support comments between declaration annotations and declaration headers yet",
+        )?;
+    }
     let type_parameters = type_parameters
         .map(|parameters| format_type_parameter_list(&parameters))
         .transpose()?;
     let parameters = parameters
-        .map(|parameters| format_formal_parameter_list(&parameters))
+        .map(|parameters| format_formal_parameter_list(&parameters, context))
         .transpose()?
         .unwrap_or_else(|| wrap::parenthesized_comma_list(std::iter::empty()));
     let throws_clause = throws_clause
-        .map(|throws| format_throws_clause(&throws))
+        .map(|throws| format_throws_clause(&throws, context))
         .transpose()?;
 
     let mut header = Vec::new();
-    header.extend(modifiers.iter().map(format_token));
+    header.extend(modifiers.modifier_tokens.iter().map(format_token));
     if let Some(type_parameters) = type_parameters {
         header.push(type_parameters);
     }
@@ -533,7 +594,7 @@ fn format_callable_header(
         header.push(throws_clause);
     }
 
-    Ok(wrap::declaration_header(header))
+    Ok(modifiers.with_annotations(wrap::declaration_header(header)))
 }
 
 fn format_type_parameter_list(parameters: &TypeParameterList) -> FormatResult<Doc> {
@@ -572,7 +633,85 @@ fn format_type_parameter_list(parameters: &TypeParameterList) -> FormatResult<Do
     Ok(wrap::angle_comma_list(parameter_docs))
 }
 
-fn format_formal_parameter_list(parameters: &FormalParameterList) -> FormatResult<Doc> {
+fn format_extends_clause(
+    clause: &ExtendsClause,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    format_type_clause(
+        "extends",
+        clause.types(),
+        clause.has_supported_layout_shape(),
+        clause.text_range(),
+        context,
+    )
+}
+
+fn format_implements_clause(
+    clause: &ImplementsClause,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    format_type_clause(
+        "implements",
+        clause.types(),
+        clause.has_supported_layout_shape(),
+        clause.text_range(),
+        context,
+    )
+}
+
+fn format_type_clause(
+    keyword: &'static str,
+    types: impl Iterator<Item = Type>,
+    has_supported_shape: bool,
+    range: jolt_diagnostics::TextRange,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    if !has_supported_shape {
+        return Err(missing_layout(
+            format!("Java formatter does not support this {keyword} clause shape yet"),
+            range,
+        ));
+    }
+
+    let types = types
+        .map(|ty| format_type(&ty, context))
+        .collect::<FormatResult<Vec<_>>>()?;
+    if types.is_empty() {
+        return Err(missing_layout(
+            format!("Java formatter found an empty {keyword} clause"),
+            range,
+        ));
+    }
+
+    Ok(concat([text(keyword), text(" "), wrap::comma_list(types)]))
+}
+
+fn format_permits_clause(clause: &PermitsClause) -> FormatResult<Doc> {
+    if !clause.has_supported_layout_shape() {
+        return Err(missing_layout(
+            "Java formatter does not support this permits clause shape yet",
+            clause.text_range(),
+        ));
+    }
+
+    let names = clause
+        .names()
+        .map(|name| format_name(&name))
+        .collect::<Vec<_>>();
+    if names.is_empty() {
+        return Err(missing_layout(
+            "Java formatter found an empty permits clause",
+            clause.text_range(),
+        ));
+    }
+
+    Ok(concat([text("permits "), wrap::comma_list(names)]))
+}
+
+fn format_formal_parameter_list(
+    parameters: &FormalParameterList,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
     if !parameters.has_supported_layout_shape() {
         return Err(missing_layout(
             "Java formatter only supports simple formal parameter lists yet",
@@ -582,7 +721,7 @@ fn format_formal_parameter_list(parameters: &FormalParameterList) -> FormatResul
 
     let parameter_docs = parameters
         .parameters()
-        .map(|parameter| format_formal_parameter(&parameter))
+        .map(|parameter| format_formal_parameter(&parameter, context))
         .collect::<FormatResult<Vec<_>>>()?;
     if parameter_docs.is_empty() {
         return Err(missing_layout(
@@ -594,7 +733,10 @@ fn format_formal_parameter_list(parameters: &FormalParameterList) -> FormatResul
     Ok(wrap::parenthesized_comma_list(parameter_docs))
 }
 
-fn format_formal_parameter(parameter: &FormalParameter) -> FormatResult<Doc> {
+fn format_formal_parameter(
+    parameter: &FormalParameter,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
     if !parameter.has_supported_layout_shape() {
         return Err(missing_layout(
             "Java formatter only supports simple formal parameters yet",
@@ -620,16 +762,19 @@ fn format_formal_parameter(parameter: &FormalParameter) -> FormatResult<Doc> {
         parts.push(format_token(&final_token));
     }
     let ty = if parameter.is_varargs() {
-        concat([format_type(&ty)?, text("...")])
+        concat([format_type(&ty, context)?, text("...")])
     } else {
-        format_type(&ty)?
+        format_type(&ty, context)?
     };
     parts.push(ty);
     parts.push(format_token(&name));
     Ok(wrap::space_separated(parts))
 }
 
-fn format_throws_clause(throws: &ThrowsClause) -> FormatResult<Doc> {
+fn format_throws_clause(
+    throws: &ThrowsClause,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
     if !throws.has_supported_layout_shape() {
         return Err(missing_layout(
             "Java formatter only supports simple throws clauses yet",
@@ -639,7 +784,7 @@ fn format_throws_clause(throws: &ThrowsClause) -> FormatResult<Doc> {
 
     let types = throws
         .types()
-        .map(|ty| format_type(&ty))
+        .map(|ty| format_type(&ty, context))
         .collect::<FormatResult<Vec<_>>>()?;
     if types.is_empty() {
         return Err(missing_layout(
@@ -735,7 +880,7 @@ fn format_block_statement(
 fn format_block_item(item: &BlockItem, context: &mut JavaFormatContext<'_>) -> FormatResult<Doc> {
     match item {
         BlockItem::LocalVariableDeclaration(declaration) => {
-            format_local_variable_declaration(declaration)
+            format_local_variable_declaration(declaration, context)
         }
         BlockItem::LocalClassOrInterfaceDeclaration(declaration) => Err(missing_layout(
             "Java formatter does not support local class or interface declarations yet",
@@ -1003,7 +1148,10 @@ fn format_continue_statement(statement: &ContinueStatement) -> FormatResult<Doc>
     ))
 }
 
-fn format_local_variable_declaration(declaration: &LocalVariableDeclaration) -> FormatResult<Doc> {
+fn format_local_variable_declaration(
+    declaration: &LocalVariableDeclaration,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
     if !declaration.has_supported_layout_shape() {
         return Err(missing_layout(
             "Java formatter does not support this local variable declaration shape yet",
@@ -1012,7 +1160,7 @@ fn format_local_variable_declaration(declaration: &LocalVariableDeclaration) -> 
     }
 
     let ty = if let Some(ty) = declaration.ty() {
-        format_type(&ty)?
+        format_type(&ty, context)?
     } else {
         let token = declaration.var_type_token().ok_or_else(|| {
             missing_layout(
@@ -1734,17 +1882,13 @@ const fn is_line_terminator(ch: char) -> bool {
 fn format_modifier_list(
     modifiers: Option<ModifierList>,
     declaration_kind: &str,
-) -> FormatResult<Vec<JavaSyntaxToken>> {
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<ModifierDocs> {
     let Some(modifiers) = modifiers else {
-        return Ok(Vec::new());
+        return Ok(ModifierDocs::default());
     };
-    if let Some(annotation) = modifiers.annotations().next() {
-        return Err(missing_layout(
-            "Java formatter does not support declaration annotations yet",
-            annotation.text_range(),
-        ));
-    }
 
+    let annotations = format_annotation_list(modifiers.annotations(), context, "declaration")?;
     let tokens = modifiers.tokens().collect::<Vec<_>>();
     let keyword_tokens = modifiers.modifier_tokens().collect::<Vec<_>>();
     if tokens.len() != keyword_tokens.len() {
@@ -1753,18 +1897,234 @@ fn format_modifier_list(
             modifiers.text_range(),
         ));
     }
+    if !annotations.is_empty()
+        && let Some(first_modifier) = keyword_tokens.first()
+    {
+        reject_unhandled_comments_before_start(
+            context,
+            first_modifier.token_text_range(),
+            "Java formatter does not support comments between declaration annotations and modifiers yet",
+        )?;
+    }
 
-    Ok(keyword_tokens)
+    Ok(ModifierDocs {
+        annotations,
+        modifier_tokens: keyword_tokens,
+    })
 }
 
-fn format_type(ty: &Type) -> FormatResult<Doc> {
-    let tokens = ty.simple_layout_tokens().ok_or_else(|| {
+#[derive(Default)]
+struct ModifierDocs {
+    annotations: Vec<Doc>,
+    modifier_tokens: Vec<JavaSyntaxToken>,
+}
+
+impl ModifierDocs {
+    fn has_annotations(&self) -> bool {
+        !self.annotations.is_empty()
+    }
+
+    fn with_annotations(self, declaration: Doc) -> Doc {
+        with_vertical_annotations(self.annotations, declaration)
+    }
+}
+
+fn with_vertical_annotations(annotations: Vec<Doc>, declaration: Doc) -> Doc {
+    if annotations.is_empty() {
+        return declaration;
+    }
+
+    concat([join(hard_line(), annotations), hard_line(), declaration])
+}
+
+fn format_annotation_list(
+    annotations: impl Iterator<Item = Annotation>,
+    context: &mut JavaFormatContext<'_>,
+    annotation_kind: &'static str,
+) -> FormatResult<Vec<Doc>> {
+    annotations
+        .map(|annotation| format_annotation(&annotation, context, annotation_kind))
+        .collect()
+}
+
+fn format_annotation(
+    annotation: &Annotation,
+    context: &mut JavaFormatContext<'_>,
+    annotation_kind: &'static str,
+) -> FormatResult<Doc> {
+    let messages = annotation_messages(annotation_kind);
+    let code_range = annotation
+        .code_text_range()
+        .ok_or_else(|| missing_layout(messages.empty, annotation.text_range()))?;
+    reject_unhandled_comments_before_start(context, code_range, messages.between)?;
+    reject_unhandled_comments_before_end(context, code_range, messages.inside)?;
+    if !annotation.has_supported_layout_shape() {
+        return Err(missing_layout(messages.shape, annotation.text_range()));
+    }
+
+    let name = annotation
+        .name()
+        .ok_or_else(|| missing_layout(messages.missing_name, annotation.text_range()))?;
+    let Some(arguments) = annotation.arguments() else {
+        return Ok(concat([text("@"), format_name(&name)]));
+    };
+
+    Ok(concat([
+        text("@"),
+        format_name(&name),
+        format_annotation_argument_list(&arguments)?,
+    ]))
+}
+
+struct AnnotationMessages {
+    empty: &'static str,
+    between: &'static str,
+    inside: &'static str,
+    shape: &'static str,
+    missing_name: &'static str,
+}
+
+fn annotation_messages(annotation_kind: &'static str) -> AnnotationMessages {
+    match annotation_kind {
+        "type-use" => AnnotationMessages {
+            empty: "Java formatter found an empty type-use annotation",
+            between: "Java formatter does not support comments between type-use annotations yet",
+            inside: "Java formatter does not support comments inside type-use annotations yet",
+            shape: "Java formatter does not support this type-use annotation shape yet",
+            missing_name: "Java formatter found a type-use annotation without a name",
+        },
+        "declaration" => AnnotationMessages {
+            empty: "Java formatter found an empty declaration annotation",
+            between: "Java formatter does not support comments between declaration annotations yet",
+            inside: "Java formatter does not support comments inside declaration annotations yet",
+            shape: "Java formatter does not support this declaration annotation shape yet",
+            missing_name: "Java formatter found a declaration annotation without a name",
+        },
+        _ => unreachable!("unknown annotation kind"),
+    }
+}
+
+fn format_annotation_argument_list(arguments: &AnnotationArgumentList) -> FormatResult<Doc> {
+    if !arguments.has_supported_layout_shape() {
+        return Err(missing_layout(
+            "Java formatter does not support this annotation argument list shape yet",
+            arguments.text_range(),
+        ));
+    }
+    let Some(elements) = arguments.elements() else {
+        return Ok(wrap::parenthesized_comma_list(std::iter::empty()));
+    };
+
+    if elements.has_pair_list_layout_shape() {
+        return Ok(wrap::parenthesized_comma_list(
+            elements
+                .pairs()
+                .map(|pair| format_annotation_element_value_pair(&pair))
+                .collect::<FormatResult<Vec<_>>>()?,
+        ));
+    }
+
+    if elements.has_value_list_layout_shape() {
+        let values = elements.values().collect::<Vec<_>>();
+        if values.len() != 1 {
+            return Err(missing_layout(
+                "Java formatter only supports single-member annotation values yet",
+                elements.text_range(),
+            ));
+        }
+        return Ok(wrap::parenthesized_comma_list([
+            format_annotation_element_value(&values[0])?,
+        ]));
+    }
+
+    Err(missing_layout(
+        "Java formatter does not support mixed annotation argument lists yet",
+        elements.text_range(),
+    ))
+}
+
+fn format_annotation_element_value_pair(pair: &AnnotationElementValuePair) -> FormatResult<Doc> {
+    if !pair.has_supported_layout_shape() {
+        return Err(missing_layout(
+            "Java formatter does not support this annotation element pair shape yet",
+            pair.text_range(),
+        ));
+    }
+    let name = pair.name().ok_or_else(|| {
+        missing_layout(
+            "Java formatter found an annotation element pair without a name",
+            pair.text_range(),
+        )
+    })?;
+    let value = pair.value().ok_or_else(|| {
+        missing_layout(
+            "Java formatter found an annotation element pair without a value",
+            pair.text_range(),
+        )
+    })?;
+
+    Ok(wrap::assignment_expression(
+        format_token(&name),
+        text("="),
+        format_annotation_element_value(&value)?,
+    ))
+}
+
+fn format_annotation_element_value(value: &AnnotationElementValue) -> FormatResult<Doc> {
+    if !value.has_expression_layout_shape() {
+        return Err(missing_layout(
+            "Java formatter only supports expression annotation values yet",
+            value.text_range(),
+        ));
+    }
+    let expression = value.expression().ok_or_else(|| {
+        missing_layout(
+            "Java formatter found an annotation element value without an expression",
+            value.text_range(),
+        )
+    })?;
+
+    format_expression(&expression)
+}
+
+fn format_type(ty: &Type, context: &mut JavaFormatContext<'_>) -> FormatResult<Doc> {
+    let parts = ty.simple_layout_parts().ok_or_else(|| {
         missing_layout(
             "Java formatter does not support this type shape yet",
             ty.text_range(),
         )
     })?;
-    Ok(join(text("."), tokens.iter().map(format_token)))
+
+    let mut docs = Vec::new();
+    let mut previous_was_annotation = false;
+    let mut previous_was_dot = false;
+    for part in parts {
+        match part {
+            TypeLayoutPart::Annotation(annotation) => {
+                if !docs.is_empty() && !previous_was_dot {
+                    docs.push(text(" "));
+                }
+                docs.push(format_annotation(&annotation, context, "type-use")?);
+                previous_was_annotation = true;
+                previous_was_dot = false;
+            }
+            TypeLayoutPart::Token(token) => {
+                if previous_was_annotation && token.kind() == JavaSyntaxKind::Identifier {
+                    reject_unhandled_comments_before_start(
+                        context,
+                        token.token_text_range(),
+                        "Java formatter does not support comments between type-use annotations and types yet",
+                    )?;
+                    docs.push(text(" "));
+                }
+                previous_was_dot = token.kind() == JavaSyntaxKind::Dot;
+                previous_was_annotation = false;
+                docs.push(format_token(&token));
+            }
+        }
+    }
+
+    Ok(concat(docs))
 }
 
 fn format_token(token: &JavaSyntaxToken) -> Doc {
@@ -1866,6 +2226,38 @@ mod tests {
         assert_formatted(
             "abstract class A { public <T, U> T pick(final T first, U second) throws Problem, java.io.IOException { return first; } private A(int count, String... names) throws Problem {} abstract void reset(int count) throws Problem; }",
             "abstract class A {\n  public <T, U> T pick(final T first, U second) throws Problem, java.io.IOException {\n    return first;\n  }\n  private A(int count, String... names) throws Problem {}\n  abstract void reset(int count) throws Problem;\n}",
+        );
+    }
+
+    #[test]
+    fn class_headers_and_nested_classes_format_structurally() {
+        assert_formatted(
+            "class A<T, U> extends base.Parent implements First, second.Third permits One, two.Three { private static class Nested extends Parent implements Marker {} }",
+            "class A<T, U> extends base.Parent implements First, second.Third permits One, two.Three {\n  private static class Nested extends Parent implements Marker {}\n}",
+        );
+    }
+
+    #[test]
+    fn declaration_marker_annotations_format_vertically() {
+        assert_formatted(
+            "@Pkg package com.example; @Type public class A { @Field private String value; @Method public String name() { return value; } @Ctor A() {} @Nested static class Nested {} }",
+            "@Pkg\npackage com.example;\n\n@Type\npublic class A {\n  @Field\n  private String value;\n  @Method\n  public String name() {\n    return value;\n  }\n  @Ctor\n  A() {}\n  @Nested\n  static class Nested {}\n}",
+        );
+    }
+
+    #[test]
+    fn declaration_annotation_arguments_format_structurally() {
+        assert_formatted(
+            "@Single(\"type\") @Normal(first = 1, second=value + 2) class A { @SuppressWarnings(\"unchecked\") String value; }",
+            "@Single(\"type\")\n@Normal(first = 1, second = value + 2)\nclass A {\n  @SuppressWarnings(\"unchecked\")\n  String value;\n}",
+        );
+    }
+
+    #[test]
+    fn type_use_annotations_in_simple_types_format_structurally() {
+        assert_formatted(
+            "class A { java.lang.@Anno String value; void m() { java.lang.@Anno String local; } }",
+            "class A {\n  java.lang.@Anno String value;\n  void m() {\n    java.lang.@Anno String local;\n  }\n}",
         );
     }
 
@@ -2028,6 +2420,7 @@ mod tests {
         for source in [
             "class A { // dangling\n}",
             "class A { void clear() { // dangling\n} }",
+            "class A // header\n{}",
             "class A { int /* inline */ value; }",
             "class A { void /* inline */ clear() {} }",
             "class A { void clear(\n// parameter\nint value) {} }",
@@ -2044,12 +2437,12 @@ mod tests {
     }
 
     #[test]
-    fn unsupported_annotations_block() {
+    fn unsupported_annotation_forms_block() {
         for source in [
-            "@Deprecated class A {}",
-            "public @Deprecated class A {}",
-            "@Deprecated package com.example; class A {}",
-            "class A { @Deprecated int value; }",
+            "class A { @Anno(\n// value\n1) int value; }",
+            "@Anno /* between */ class A {}",
+            "@First /* between */ @Second class A {}",
+            "@ /* inside */ Anno class A {}",
         ] {
             assert_blocked_missing_layout(source);
         }
@@ -2058,10 +2451,9 @@ mod tests {
     #[test]
     fn unsupported_declaration_forms_block() {
         for source in [
-            "class A<T> {}",
-            "class A extends B {}",
-            "class A implements B {}",
-            "class A permits B {}",
+            "class A<T extends B> {}",
+            "class A extends B, C {}",
+            "class A extends java.util.List<String> {}",
             "sealed class A {}",
             "non-sealed class A {}",
             "import java.util.List garbage; class A {}",
@@ -2086,7 +2478,6 @@ mod tests {
             "class A { <T extends B> void clear() {} }",
             "class A { void clear(@Deprecated int count) {} }",
             "class A { void clear(A this) {} }",
-            "class A { class Nested {} }",
             "void main() {}",
         ] {
             assert_blocked_missing_layout(source);

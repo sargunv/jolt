@@ -1,0 +1,38 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ModifierList
+      Annotation
+        At "@" @ 13..14 leading=[Newline "\n", Whitespace "            "]
+        Name
+          Identifier "Anno" @ 14..18
+        AnnotationArgumentList
+          LParen "(" @ 18..19
+          AnnotationElementList
+            AnnotationElementValuePair
+              Identifier "value" @ 19..24 trailing=[Whitespace " "]
+              Assign "=" @ 25..26 trailing=[Whitespace " "]
+              AnnotationElementValue
+                NameExpression
+                  Identifier "x" @ 27..28 trailing=[Whitespace " "]
+                ErrorNode
+                  Assign "=" @ 29..30 trailing=[Whitespace " "]
+                ErrorNode
+                  IntegerLiteral "1" @ 31..32
+          RParen ")" @ 32..33
+    ClassKw "class" @ 46..51 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "Annotated" @ 52..61 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 62..63
+      RBrace "}" @ 63..64
+  Eof "" @ 73..73 leading=[Newline "\n", Whitespace "        "]
+
+outcome: Recovered
+
+diagnostics:
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=29..30 message="unexpected token in annotation element value"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=31..32 message="unexpected token in annotation element value"

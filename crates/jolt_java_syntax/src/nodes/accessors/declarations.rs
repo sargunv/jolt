@@ -1,16 +1,17 @@
 use super::super::{
-    Annotation, AnnotationArgumentList, AnnotationElementList, AnnotationInterfaceBody,
-    AnnotationInterfaceBodyMember, AnnotationInterfaceDeclaration, ArgumentList, ArrayDimensions,
-    Block, BlockStatement, ClassBody, ClassBodyDeclaration, ClassBodyMember, ClassDeclaration,
-    ConstructorBody, ConstructorDeclaration, EmptyDeclaration, EnumBody, EnumConstant,
-    EnumConstantList, EnumDeclaration, Expression, ExtendsClause, FieldDeclaration,
-    FormalParameter, FormalParameterList, ImplementsClause, InstanceInitializer, InterfaceBody,
-    InterfaceBodyMember, InterfaceDeclaration, JavaNode, JavaSyntaxKind, JavaSyntaxToken,
-    LocalVariableDeclaration, MethodDeclaration, ModifierList, PermitsClause, RecordBody,
-    RecordComponent, RecordComponentList, RecordDeclaration, StaticInitializer, ThrowsClause, Type,
-    TypeParameter, TypeParameterList, VariableDeclarator, VariableDeclaratorList,
-    VariableInitializer, VariableInitializerValue, child, child_family, child_token,
-    child_token_in, children, children_family, children_tokens_matching, nth_child_token,
+    Annotation, AnnotationArgumentList, AnnotationElementList, AnnotationElementValue,
+    AnnotationElementValuePair, AnnotationInterfaceBody, AnnotationInterfaceBodyMember,
+    AnnotationInterfaceDeclaration, ArgumentList, ArrayDimensions, Block, BlockStatement,
+    ClassBody, ClassBodyDeclaration, ClassBodyMember, ClassDeclaration, ConstructorBody,
+    ConstructorDeclaration, EmptyDeclaration, EnumBody, EnumConstant, EnumConstantList,
+    EnumDeclaration, Expression, ExtendsClause, FieldDeclaration, FormalParameter,
+    FormalParameterList, ImplementsClause, InstanceInitializer, InterfaceBody, InterfaceBodyMember,
+    InterfaceDeclaration, JavaNode, JavaSyntaxKind, JavaSyntaxToken, LocalVariableDeclaration,
+    MethodDeclaration, ModifierList, NameSyntax, PermitsClause, RecordBody, RecordComponent,
+    RecordComponentList, RecordDeclaration, StaticInitializer, ThrowsClause, Type, TypeParameter,
+    TypeParameterList, VariableDeclarator, VariableDeclaratorList, VariableInitializer,
+    VariableInitializerValue, child, child_family, child_token, child_token_in, children,
+    children_family, children_tokens_matching, nth_child_token,
 };
 use super::helpers::{
     has_angle_comma_list_layout_shape, has_braced_block_statement_layout_shape,
@@ -57,21 +58,94 @@ impl ClassDeclaration {
 
     #[must_use]
     pub fn has_supported_layout_shape(&self) -> bool {
-        let mut kinds = self
+        let kinds = self
             .syntax
             .children_with_tokens()
             .map(|element| element.kind())
             .collect::<Vec<_>>();
-        if kinds.first() == Some(&JavaSyntaxKind::ModifierList) {
-            kinds.remove(0);
+        let mut index = 0;
+        if kinds.get(index) == Some(&JavaSyntaxKind::ModifierList) {
+            index += 1;
         }
-        kinds
-            == [
-                JavaSyntaxKind::ClassKw,
-                JavaSyntaxKind::Identifier,
-                JavaSyntaxKind::ClassBody,
-            ]
+        if kinds.get(index) != Some(&JavaSyntaxKind::ClassKw) {
+            return false;
+        }
+        index += 1;
+        if kinds.get(index) != Some(&JavaSyntaxKind::Identifier) {
+            return false;
+        }
+        index += 1;
+        if kinds.get(index) == Some(&JavaSyntaxKind::TypeParameterList) {
+            index += 1;
+        }
+        if kinds.get(index) == Some(&JavaSyntaxKind::ExtendsClause) {
+            index += 1;
+        }
+        if kinds.get(index) == Some(&JavaSyntaxKind::ImplementsClause) {
+            index += 1;
+        }
+        if kinds.get(index) == Some(&JavaSyntaxKind::PermitsClause) {
+            index += 1;
+        }
+
+        kinds.get(index) == Some(&JavaSyntaxKind::ClassBody) && index + 1 == kinds.len()
     }
+}
+
+impl ExtendsClause {
+    pub fn types(&self) -> impl Iterator<Item = Type> + '_ {
+        children_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn has_supported_layout_shape(&self) -> bool {
+        let elements = self.syntax.children_with_tokens().collect::<Vec<_>>();
+        elements.len() == 2
+            && elements[0].kind() == JavaSyntaxKind::ExtendsKw
+            && Type::can_cast(elements[1].kind())
+    }
+}
+
+impl ImplementsClause {
+    pub fn types(&self) -> impl Iterator<Item = Type> + '_ {
+        children_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn has_supported_layout_shape(&self) -> bool {
+        has_keyword_type_list_shape(&self.syntax, JavaSyntaxKind::ImplementsKw)
+    }
+}
+
+impl PermitsClause {
+    pub fn names(&self) -> impl Iterator<Item = NameSyntax> + '_ {
+        children_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn has_supported_layout_shape(&self) -> bool {
+        let elements = self.syntax.children_with_tokens().collect::<Vec<_>>();
+        let Some(keyword) = elements
+            .first()
+            .and_then(|element| element.clone().into_token())
+        else {
+            return false;
+        };
+        keyword.kind() == JavaSyntaxKind::Identifier
+            && keyword.text() == "permits"
+            && has_comma_separated_elements(&elements[1..], NameSyntax::can_cast)
+    }
+}
+
+fn has_keyword_type_list_shape(
+    syntax: &super::super::JavaSyntaxNode,
+    keyword: JavaSyntaxKind,
+) -> bool {
+    let elements = syntax.children_with_tokens().collect::<Vec<_>>();
+    let Some(first) = elements.first() else {
+        return false;
+    };
+    first.kind() == keyword && has_comma_separated_elements(&elements[1..], Type::can_cast)
 }
 
 impl RecordDeclaration {
@@ -707,7 +781,111 @@ impl LocalVariableDeclaration {
 }
 impl Annotation {
     #[must_use]
+    pub fn name(&self) -> Option<NameSyntax> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
     pub fn arguments(&self) -> Option<AnnotationArgumentList> {
         child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn has_supported_layout_shape(&self) -> bool {
+        let elements = self.syntax.children_with_tokens().collect::<Vec<_>>();
+        matches!(
+            elements.as_slice(),
+            [at, name]
+                if at.kind() == JavaSyntaxKind::At && NameSyntax::can_cast(name.kind())
+        ) || matches!(
+            elements.as_slice(),
+            [at, name, arguments]
+                if at.kind() == JavaSyntaxKind::At
+                    && NameSyntax::can_cast(name.kind())
+                    && arguments.kind() == JavaSyntaxKind::AnnotationArgumentList
+        )
+    }
+}
+
+impl AnnotationArgumentList {
+    #[must_use]
+    pub fn elements(&self) -> Option<AnnotationElementList> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn has_supported_layout_shape(&self) -> bool {
+        let elements = self.syntax.children_with_tokens().collect::<Vec<_>>();
+        matches!(
+            elements.as_slice(),
+            [left, right]
+                if left.kind() == JavaSyntaxKind::LParen && right.kind() == JavaSyntaxKind::RParen
+        ) || matches!(
+            elements.as_slice(),
+            [left, list, right]
+                if left.kind() == JavaSyntaxKind::LParen
+                    && list.kind() == JavaSyntaxKind::AnnotationElementList
+                    && right.kind() == JavaSyntaxKind::RParen
+        )
+    }
+}
+
+impl AnnotationElementList {
+    pub fn values(&self) -> impl Iterator<Item = AnnotationElementValue> + '_ {
+        children(&self.syntax)
+    }
+
+    pub fn pairs(&self) -> impl Iterator<Item = AnnotationElementValuePair> + '_ {
+        children(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn has_value_list_layout_shape(&self) -> bool {
+        has_comma_list_layout_shape(&self.syntax, JavaSyntaxKind::AnnotationElementValue)
+    }
+
+    #[must_use]
+    pub fn has_pair_list_layout_shape(&self) -> bool {
+        has_comma_list_layout_shape(&self.syntax, JavaSyntaxKind::AnnotationElementValuePair)
+    }
+}
+
+impl AnnotationElementValue {
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn has_expression_layout_shape(&self) -> bool {
+        let elements = self.syntax.children_with_tokens().collect::<Vec<_>>();
+        let [expression] = elements.as_slice() else {
+            return false;
+        };
+        Expression::can_cast(expression.kind())
+    }
+}
+
+impl AnnotationElementValuePair {
+    #[must_use]
+    pub fn name(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Identifier)
+    }
+
+    #[must_use]
+    pub fn value(&self) -> Option<AnnotationElementValue> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn has_supported_layout_shape(&self) -> bool {
+        let elements = self.syntax.children_with_tokens().collect::<Vec<_>>();
+        matches!(
+            elements.as_slice(),
+            [name, assign, value]
+                if name.kind() == JavaSyntaxKind::Identifier
+                    && assign.kind() == JavaSyntaxKind::Assign
+                    && value.kind() == JavaSyntaxKind::AnnotationElementValue
+        )
     }
 }
