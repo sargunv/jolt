@@ -101,15 +101,16 @@ impl DiagnosticCode for FormatDiagnosticCode {
 
 /// Formats source text for `language` using `options`.
 #[must_use]
-pub fn format_source(source: &str, language: Language, _options: &FormatOptions) -> FormatResult {
+pub fn format_source(source: &str, language: Language, options: &FormatOptions) -> FormatResult {
     match language {
-        Language::Java => format_java_source(source),
+        Language::Java => format_java_source(source, options.java_profile),
         Language::Kotlin => unimplemented_format_result("Kotlin formatting is not implemented yet"),
     }
 }
 
-fn format_java_source(source: &str) -> FormatResult {
-    let result = jolt_java_fmt::format_java_source(source);
+fn format_java_source(source: &str, profile: JavaProfile) -> FormatResult {
+    let result =
+        jolt_java_fmt::format_java_source_with_profile(source, java_format_profile(profile));
     let status = match result.status {
         jolt_java_fmt::JavaFormatStatus::Formatted => {
             if result.formatted_source.as_deref() == Some(source) {
@@ -125,6 +126,14 @@ fn format_java_source(source: &str) -> FormatResult {
         formatted_source: result.formatted_source,
         diagnostics: result.diagnostics,
         status,
+    }
+}
+
+const fn java_format_profile(profile: JavaProfile) -> jolt_java_fmt::JavaFormatProfile {
+    match profile {
+        JavaProfile::Google => jolt_java_fmt::JavaFormatProfile::Google,
+        JavaProfile::Aosp => jolt_java_fmt::JavaFormatProfile::Aosp,
+        JavaProfile::Palantir => jolt_java_fmt::JavaFormatProfile::Palantir,
     }
 }
 
@@ -170,6 +179,22 @@ mod tests {
                 .iter()
                 .any(|diagnostic| diagnostic.stage == DiagnosticStage::Parser)
         );
+    }
+
+    #[test]
+    fn java_profile_controls_render_options() {
+        let result = format_source(
+            "class A { void m() { return; } }",
+            Language::Java,
+            &FormatOptions::default().with_java_profile(JavaProfile::Aosp),
+        );
+
+        assert_eq!(result.status, FormatStatus::Formatted);
+        assert_eq!(
+            result.formatted_source.as_deref(),
+            Some("class A {\n    void m() {\n        return;\n    }\n}\n")
+        );
+        assert!(result.diagnostics.is_empty());
     }
 
     #[test]

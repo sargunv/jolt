@@ -14,20 +14,20 @@ formatted: 22
 exact matches: 1
 exact-match percentage: 0.44%
 mismatching formatted files: 21
-aggregate diff size: 664
-largest per-file diff: B24909927.java (446)
+aggregate diff size: 1274
+largest per-file diff: B24909927.java (952)
 
 worst mismatches:
-  B24909927.java: 446
-  PairedArguments.java: 62
-  SuperQualifier.java: 24
-  B21278211.java: 22
-  B112853497.java: 10
-  B23708487.java: 10
-  palantir-long-method-chain-arg.java: 10
-  B21329312.java: 9
-  palantir-long-safearg.java: 9
-  B126411718.java: 8
+  B24909927.java: 952
+  PairedArguments.java: 125
+  SuperQualifier.java: 29
+  B21278211.java: 23
+  B23708487.java: 17
+  B112853497.java: 15
+  palantir-long-method-chain-arg.java: 15
+  palantir-long-safearg.java: 14
+  B126411718.java: 13
+  B21329312.java: 13
 
 top missing-rule blockers:
   37: Java formatter does not support this method declaration shape yet

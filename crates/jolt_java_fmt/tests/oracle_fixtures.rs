@@ -5,7 +5,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use jolt_diagnostics::{DiagnosticCode, DiagnosticStage};
-use jolt_java_fmt::{JavaFormatDiagnosticCode, JavaFormatStatus, format_java_source};
+use jolt_java_fmt::{
+    JavaFormatDiagnosticCode, JavaFormatProfile, JavaFormatStatus, format_java_source_with_profile,
+};
 use similar::{ChangeTag, TextDiff};
 
 #[test]
@@ -13,6 +15,7 @@ fn google_java_format_oracle_scoreboard() {
     let summary = assert_profile(Profile {
         suite: "google-java-format",
         style: "google",
+        java_profile: JavaFormatProfile::Google,
         expected_files: 209,
         invalid_upstream_fixtures: &["B26952926.java"],
     });
@@ -25,6 +28,7 @@ fn aosp_java_format_oracle_scoreboard() {
     let summary = assert_profile(Profile {
         suite: "google-java-format",
         style: "aosp",
+        java_profile: JavaFormatProfile::Aosp,
         expected_files: 209,
         invalid_upstream_fixtures: &["B26952926.java"],
     });
@@ -37,6 +41,7 @@ fn palantir_java_format_oracle_scoreboard() {
     let summary = assert_profile(Profile {
         suite: "palantir-java-format",
         style: "palantir",
+        java_profile: JavaFormatProfile::Palantir,
         expected_files: 226,
         invalid_upstream_fixtures: &["B26952926.java", "palantir-expression-lambda-2.java"],
     });
@@ -48,6 +53,7 @@ fn palantir_java_format_oracle_scoreboard() {
 struct Profile<'a> {
     suite: &'a str,
     style: &'a str,
+    java_profile: JavaFormatProfile,
     expected_files: usize,
     invalid_upstream_fixtures: &'a [&'a str],
 }
@@ -107,7 +113,7 @@ fn assert_profile(profile: Profile<'_>) -> OracleSummary {
             continue;
         }
 
-        let result = format_java_source(&source);
+        let result = format_java_source_with_profile(&source, profile.java_profile);
         match result.status {
             JavaFormatStatus::Blocked => {
                 let missing_rule_diagnostic = result.diagnostics.iter().find(|diagnostic| {

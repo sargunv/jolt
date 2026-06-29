@@ -1,15 +1,16 @@
 //! Java formatter implementation for Jolt.
 
 mod context;
+mod wrapping;
 
+use crate::wrapping as wrap;
 use context::{JavaCommentTrivia, JavaFormatContext};
 use jolt_diagnostics::{
     Diagnostic, DiagnosticCode, DiagnosticCodeId, DiagnosticStage, Severity, SyntaxOutcome,
     TextRange,
 };
 use jolt_fmt_ir::{
-    Doc, RenderOptions, concat, group, hard_line, indent, join, line, line_suffix,
-    line_suffix_boundary, render, text,
+    Doc, RenderOptions, concat, hard_line, join, line_suffix, line_suffix_boundary, render, text,
 };
 use jolt_java_syntax::{
     Block, BlockItem, BlockStatement, ClassBody, ClassBodyMember, ClassDeclaration,
@@ -40,6 +41,47 @@ pub struct JavaFormatResult {
     pub status: JavaFormatStatus,
 }
 
+/// Java formatter options.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct JavaFormatOptions {
+    /// Language-neutral rendering options used by the Java formatter.
+    pub render: RenderOptions,
+}
+
+impl Default for JavaFormatOptions {
+    fn default() -> Self {
+        Self::for_profile(JavaFormatProfile::Google)
+    }
+}
+
+impl JavaFormatOptions {
+    /// Returns concrete Java formatter options for a compatibility profile.
+    #[must_use]
+    pub fn for_profile(profile: JavaFormatProfile) -> Self {
+        let render = match profile {
+            JavaFormatProfile::Google | JavaFormatProfile::Palantir => RenderOptions::default(),
+            JavaFormatProfile::Aosp => RenderOptions {
+                indent_width: 4,
+                ..RenderOptions::default()
+            },
+        };
+
+        Self { render }
+    }
+}
+
+/// Java formatter compatibility profile convenience selector.
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+pub enum JavaFormatProfile {
+    /// Compatibility target for Google Java Format.
+    #[default]
+    Google,
+    /// Compatibility target for Google Java Format AOSP mode.
+    Aosp,
+    /// Compatibility target for Palantir Java Format.
+    Palantir,
+}
+
 /// Stable Java formatter diagnostic codes.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum JavaFormatDiagnosticCode {
@@ -61,6 +103,24 @@ impl DiagnosticCode for JavaFormatDiagnosticCode {
 /// Formats Java source text.
 #[must_use]
 pub fn format_java_source(source: &str) -> JavaFormatResult {
+    format_java_source_with_options(source, JavaFormatOptions::default())
+}
+
+/// Formats Java source text with options resolved from a compatibility profile.
+#[must_use]
+pub fn format_java_source_with_profile(
+    source: &str,
+    profile: JavaFormatProfile,
+) -> JavaFormatResult {
+    format_java_source_with_options(source, JavaFormatOptions::for_profile(profile))
+}
+
+/// Formats Java source text with explicit Java formatter options.
+#[must_use]
+pub fn format_java_source_with_options(
+    source: &str,
+    options: JavaFormatOptions,
+) -> JavaFormatResult {
     let parse = parse_compilation_unit(source);
     let (syntax, diagnostics, outcome) = parse.into_parts();
 
@@ -104,7 +164,7 @@ pub fn format_java_source(source: &str) -> JavaFormatResult {
         }]);
     }
 
-    match render(&doc, RenderOptions::default()) {
+    match render(&doc, options.render) {
         Ok(rendered) => {
             let mut formatted_source = rendered.text;
             if !formatted_source.ends_with('\n') {
@@ -345,28 +405,13 @@ fn format_class_declaration(
     header.extend(modifiers.iter().map(format_token));
     header.push(text("class"));
     header.push(text(name.text()));
-    let header = join(text(" "), header);
-
-    if body_members.is_empty() {
-        return with_leading_and_trailing_comments(
-            context,
-            code_range,
-            leading_comments,
-            group(concat([header, line(), text("{}")])),
-        );
-    }
+    let header = wrap::declaration_header(header);
 
     with_leading_and_trailing_comments(
         context,
         code_range,
         leading_comments,
-        concat([
-            header,
-            text(" {"),
-            indent(concat([hard_line(), join(hard_line(), body_members)])),
-            hard_line(),
-            text("}"),
-        ]),
+        concat([header, text(" "), wrap::braced_block(body_members)]),
     )
 }
 
@@ -461,11 +506,10 @@ fn format_field_declaration(field: &FieldDeclaration) -> FormatResult<Doc> {
     })?;
     let declarators = format_variable_declarator_list(&declarators, "field")?;
 
-    let mut parts = Vec::new();
-    parts.extend(modifiers.iter().map(format_token));
-    parts.push(format_type(&ty)?);
-    parts.push(declarators);
-    Ok(concat([join(text(" "), parts), text(";")]))
+    let mut prefix = Vec::new();
+    prefix.extend(modifiers.iter().map(format_token));
+    prefix.push(format_type(&ty)?);
+    Ok(wrap::variable_declaration(prefix, declarators))
 }
 
 fn format_static_initializer(
@@ -527,10 +571,13 @@ fn format_method_declaration(
     let mut header = Vec::new();
     header.extend(modifiers.iter().map(format_token));
     header.push(format_type(&return_type)?);
-    header.push(text(name.text()));
+    header.push(concat([
+        text(name.text()),
+        wrap::parenthesized_comma_list(std::iter::empty()),
+    ]));
     Ok(concat([
-        join(text(" "), header),
-        text("() "),
+        wrap::declaration_header(header),
+        text(" "),
         format_block(&body, context)?,
     ]))
 }
@@ -561,10 +608,13 @@ fn format_constructor_declaration(
     })?;
     let mut header = Vec::new();
     header.extend(modifiers.iter().map(format_token));
-    header.push(text(name.text()));
+    header.push(concat([
+        text(name.text()),
+        wrap::parenthesized_comma_list(std::iter::empty()),
+    ]));
     Ok(concat([
-        join(text(" "), header),
-        text("() "),
+        wrap::declaration_header(header),
+        text(" "),
         format_constructor_body(&body, context)?,
     ]))
 }
@@ -600,16 +650,7 @@ fn format_block_statements(
         .map(|statement| format_block_statement(&statement, context))
         .collect::<FormatResult<Vec<_>>>()?;
 
-    if statements.is_empty() {
-        return Ok(text("{}"));
-    }
-
-    Ok(concat([
-        text("{"),
-        indent(concat([hard_line(), join(hard_line(), statements)])),
-        hard_line(),
-        text("}"),
-    ]))
+    Ok(wrap::braced_block(statements))
 }
 
 fn format_block_statement(
@@ -732,14 +773,13 @@ fn format_local_variable_declaration(declaration: &LocalVariableDeclaration) -> 
     })?;
     let declarators = format_variable_declarator_list(&declarators, "local variable")?;
 
-    let mut parts = Vec::new();
+    let mut prefix = Vec::new();
     if let Some(final_token) = declaration.final_token() {
-        parts.push(format_token(&final_token));
+        prefix.push(format_token(&final_token));
     }
-    parts.push(ty);
-    parts.push(declarators);
+    prefix.push(ty);
 
-    Ok(concat([join(text(" "), parts), text(";")]))
+    Ok(wrap::variable_declaration(prefix, declarators))
 }
 
 fn format_variable_declarator_list(
@@ -768,7 +808,7 @@ fn format_variable_declarator_list(
         ));
     }
 
-    Ok(join(text(", "), declarator_docs))
+    Ok(wrap::comma_list(declarator_docs))
 }
 
 fn format_variable_declarator(declarator: &VariableDeclarator) -> FormatResult<Doc> {
@@ -779,7 +819,7 @@ fn format_variable_declarator(declarator: &VariableDeclarator) -> FormatResult<D
         )
     })?;
     let Some(initializer) = declarator.initializer() else {
-        return Ok(text(name.text()));
+        return Ok(wrap::variable_declarator(text(name.text()), None));
     };
     if !initializer.has_expression_layout_shape() {
         return Err(missing_layout(
@@ -794,11 +834,10 @@ fn format_variable_declarator(declarator: &VariableDeclarator) -> FormatResult<D
         )
     })?;
 
-    Ok(concat([
+    Ok(wrap::variable_declarator(
         text(name.text()),
-        text(" = "),
-        format_expression(&expression)?,
-    ]))
+        Some(format_expression(&expression)?),
+    ))
 }
 
 fn format_return_statement(statement: &ReturnStatement) -> FormatResult<Doc> {
@@ -809,14 +848,11 @@ fn format_return_statement(statement: &ReturnStatement) -> FormatResult<Doc> {
         ));
     }
 
-    let Some(expression) = statement.expression() else {
-        return Ok(text("return;"));
-    };
-    Ok(concat([
-        text("return "),
-        format_expression(&expression)?,
-        text(";"),
-    ]))
+    let expression = statement
+        .expression()
+        .map(|expression| format_expression(&expression))
+        .transpose()?;
+    Ok(wrap::keyword_expression_statement("return", expression))
 }
 
 fn format_throw_statement(statement: &ThrowStatement) -> FormatResult<Doc> {
@@ -832,11 +868,10 @@ fn format_throw_statement(statement: &ThrowStatement) -> FormatResult<Doc> {
             statement.text_range(),
         )
     })?;
-    Ok(concat([
-        text("throw "),
-        format_expression(&expression)?,
-        text(";"),
-    ]))
+    Ok(wrap::keyword_expression_statement(
+        "throw",
+        Some(format_expression(&expression)?),
+    ))
 }
 
 fn format_yield_statement(statement: &YieldStatement) -> FormatResult<Doc> {
@@ -852,11 +887,10 @@ fn format_yield_statement(statement: &YieldStatement) -> FormatResult<Doc> {
             statement.text_range(),
         )
     })?;
-    Ok(concat([
-        text("yield "),
-        format_expression(&expression)?,
-        text(";"),
-    ]))
+    Ok(wrap::keyword_expression_statement(
+        "yield",
+        Some(format_expression(&expression)?),
+    ))
 }
 
 fn format_expression_statement(
@@ -888,7 +922,7 @@ fn format_expression_statement(
         ));
     }
 
-    Ok(concat([format_expression(&expression)?, text(";")]))
+    Ok(wrap::expression_statement(format_expression(&expression)?))
 }
 
 fn format_expression(expression: &Expression) -> FormatResult<Doc> {
@@ -979,11 +1013,9 @@ fn format_parenthesized_expression(
             parenthesized.text_range(),
         )
     })?;
-    Ok(concat([
-        text("("),
-        format_expression(&expression)?,
-        text(")"),
-    ]))
+    Ok(wrap::parenthesized_expression(format_expression(
+        &expression,
+    )?))
 }
 
 fn format_field_access_expression(
@@ -1013,11 +1045,10 @@ fn format_field_access_expression(
             field.text_range(),
         )
     })?;
-    Ok(concat([
+    Ok(wrap::dot_chain(
         format_expression(&receiver)?,
-        text("."),
-        text(name.text()),
-    ]))
+        [text(name.text())],
+    ))
 }
 
 fn format_unary_expression(unary: &jolt_java_syntax::UnaryExpression) -> FormatResult<Doc> {
@@ -1143,13 +1174,11 @@ fn format_assignment_expression(
             assignment.text_range(),
         )
     })?;
-    Ok(concat([
+    Ok(wrap::assignment_expression(
         format_expression(&left)?,
-        text(" "),
         format_token(&operator),
-        text(" "),
         format_expression(&right)?,
-    ]))
+    ))
 }
 
 fn format_method_invocation(
@@ -1188,12 +1217,13 @@ fn format_method_invocation(
                 invocation.text_range(),
             )
         })?;
-        return Ok(concat([
+        return Ok(wrap::dot_chain(
             format_expression(&receiver)?,
-            text("."),
-            text(name.text()),
-            format_argument_list(&arguments)?,
-        ]));
+            [concat([
+                text(name.text()),
+                format_argument_list(&arguments)?,
+            ])],
+        ));
     }
 
     let name = invocation.simple_name().ok_or_else(|| {
@@ -1220,7 +1250,7 @@ fn format_argument_list(arguments: &jolt_java_syntax::ArgumentList) -> FormatRes
         .arguments()
         .map(|argument| format_expression(&argument))
         .collect::<FormatResult<Vec<_>>>()?;
-    Ok(concat([text("("), join(text(", "), arguments), text(")")]))
+    Ok(wrap::parenthesized_comma_list(arguments))
 }
 
 fn format_binary_expression(binary: &jolt_java_syntax::BinaryExpression) -> FormatResult<Doc> {
@@ -1255,19 +1285,79 @@ fn format_binary_expression(binary: &jolt_java_syntax::BinaryExpression) -> Form
         )
     })?;
 
-    Ok(concat([
-        format_binary_operand(&left, precedence, BinarySide::Left)?,
-        text(" "),
+    let mut first = None;
+    let mut rest = Vec::new();
+    collect_binary_left_chain(&left, precedence, &mut first, &mut rest)?;
+    rest.push((
         format_token(&operator),
-        text(" "),
         format_binary_operand(&right, precedence, BinarySide::Right)?,
-    ]))
+    ));
+
+    let first = first.ok_or_else(|| {
+        missing_layout(
+            "Java formatter found a binary expression without a left chain",
+            binary.text_range(),
+        )
+    })?;
+    Ok(wrap::binary_chain(first, rest))
 }
 
 #[derive(Clone, Copy)]
 enum BinarySide {
     Left,
     Right,
+}
+
+fn collect_binary_left_chain(
+    expression: &Expression,
+    parent_precedence: u8,
+    first: &mut Option<Doc>,
+    rest: &mut Vec<(Doc, Doc)>,
+) -> FormatResult<()> {
+    if let Expression::BinaryExpression(binary) = expression
+        && binary.has_supported_layout_shape()
+    {
+        let operator = binary.operator().ok_or_else(|| {
+            missing_layout(
+                "Java formatter found a binary expression without an operator",
+                binary.text_range(),
+            )
+        })?;
+        let child_precedence = binary_precedence(operator.kind()).ok_or_else(|| {
+            missing_layout(
+                "Java formatter does not support this binary operator yet",
+                operator.text_range(),
+            )
+        })?;
+        if child_precedence == parent_precedence {
+            let left = binary.left().ok_or_else(|| {
+                missing_layout(
+                    "Java formatter found a binary expression without a left side",
+                    binary.text_range(),
+                )
+            })?;
+            let right = binary.right().ok_or_else(|| {
+                missing_layout(
+                    "Java formatter found a binary expression without a right side",
+                    binary.text_range(),
+                )
+            })?;
+
+            collect_binary_left_chain(&left, parent_precedence, first, rest)?;
+            rest.push((
+                format_token(&operator),
+                format_binary_operand(&right, parent_precedence, BinarySide::Right)?,
+            ));
+            return Ok(());
+        }
+    }
+
+    *first = Some(format_binary_operand(
+        expression,
+        parent_precedence,
+        BinarySide::Left,
+    )?);
+    Ok(())
 }
 
 fn format_binary_operand(
@@ -1472,7 +1562,20 @@ fn missing_layout(message: impl Into<String>, range: TextRange) -> Diagnostic {
 
 #[cfg(test)]
 fn assert_formatted(source: &str, expected: &str) {
-    let result = format_java_source(source);
+    assert_formatted_with_width(source, expected, 100);
+}
+
+#[cfg(test)]
+fn assert_formatted_with_width(source: &str, expected: &str, line_width: u32) {
+    let result = format_java_source_with_options(
+        source,
+        JavaFormatOptions {
+            render: RenderOptions {
+                line_width: jolt_fmt_ir::TextWidth::new(line_width),
+                ..RenderOptions::default()
+            },
+        },
+    );
     let expected = expected.to_owned() + "\n";
 
     assert_eq!(
@@ -1634,6 +1737,42 @@ mod tests {
         assert_formatted(
             "class A { void m() { call(); target.call(1, this.value); System.out.println((value)); builder.first().second(value); this.value = value + 1; value += -delta; value++; ++value; } }",
             "class A {\n  void m() {\n    call();\n    target.call(1, this.value);\n    System.out.println((value));\n    builder.first().second(value);\n    this.value = value + 1;\n    value += -delta;\n    value++;\n    ++value;\n  }\n}",
+        );
+    }
+
+    #[test]
+    fn narrow_width_wraps_existing_argument_lists() {
+        assert_formatted_with_width(
+            "class A { void m() { call(alpha, beta, gamma); } }",
+            "class A {\n  void m() {\n    call(\n      alpha,\n      beta,\n      gamma\n    );\n  }\n}",
+            20,
+        );
+    }
+
+    #[test]
+    fn narrow_width_wraps_existing_variable_declarations() {
+        assert_formatted_with_width(
+            "class A { int total = alpha + beta + gamma; void m() { final int local = alpha + beta + gamma; } }",
+            "class A {\n  int total =\n    alpha\n      + beta\n      + gamma;\n  void m() {\n    final int local =\n      alpha\n        + beta\n        + gamma;\n  }\n}",
+            20,
+        );
+    }
+
+    #[test]
+    fn narrow_width_wraps_existing_assignments_and_binary_expressions() {
+        assert_formatted_with_width(
+            "class A { void m() { target.value = alpha + beta + gamma; } }",
+            "class A {\n  void m() {\n    target.value =\n      alpha\n        + beta\n        + gamma;\n  }\n}",
+            20,
+        );
+    }
+
+    #[test]
+    fn narrow_width_wraps_existing_selector_chains() {
+        assert_formatted_with_width(
+            "class A { void m() { builder.first().second(value).third(); } }",
+            "class A {\n  void m() {\n    builder.first()\n      .second(value)\n      .third();\n  }\n}",
+            20,
         );
     }
 
