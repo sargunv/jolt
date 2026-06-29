@@ -3,24 +3,12 @@
 Milestone 8 is not complete until Jolt can format any valid Java source accepted
 by `jolt_java_syntax` without returning `java.format.missing_layout_rules`.
 
-The current parser/input layer is not the blocker. The pinned google-java-format
-oracle corpus already round-trips through the parser, and the formatter oracle
-snapshot currently reports:
-
-- total considered: 209,
-- invalid upstream fixtures skipped: 1,
-- parse blocked: 0,
-- missing-rule blocked: 187,
-- other blocked: 0,
-- formatted: 21,
-- exact matches: 9,
-- aggregate diff size: 665.
-
-That means the current failure is formatter coverage. The layout builder still
-contains broad unsupported-shape guards and explicit `missing_layout` exits for
-valid Java syntax. Those exits are useful while developing because they prevent
-partial output, but every valid-Java `missing_layout` path must be removed
-before Milestone 8 is done.
+The parser/input layer is not expected to be the blocker for Milestone 8. The
+remaining work is formatter coverage: the layout builder still contains broad
+unsupported-shape guards and explicit `missing_layout` exits for valid Java
+syntax. Those exits are useful while developing because they prevent partial
+output, but every valid-Java `missing_layout` path must be removed before
+Milestone 8 is done.
 
 ## Completion Bar
 
@@ -40,53 +28,6 @@ Coverage and oracle compatibility are related but separate:
 The source inventory criterion is required because the oracle corpus is finite.
 Passing the pinned corpus is not the same as being able to format any valid Java
 source.
-
-## Current Blocker Buckets
-
-Current blocked diagnostics from
-`.oracles/reports/java/google-java-format/google/`:
-
-| Count | First blocker                              |
-| ----: | ------------------------------------------ |
-|    35 | method declaration shapes                  |
-|    20 | block statement shapes                     |
-|    19 | multiline block comments                   |
-|    16 | declaration annotations                    |
-|    10 | unhandled comment or ignored trivia        |
-|    10 | nested class declarations                  |
-|     7 | enum declarations                          |
-|     6 | non-own-line leading comments              |
-|     6 | interface declarations                     |
-|     5 | field declaration shapes                   |
-|     6 | annotation interface declarations          |
-|     4 | type shapes                                |
-|     4 | method invocation shapes                   |
-|     4 | multiline literals                         |
-|     4 | lambda expressions                         |
-|     3 | method invocation receivers                |
-|     3 | module declarations                        |
-|     3 | method reference expressions               |
-|     3 | array creation expressions                 |
-|     2 | record declarations                        |
-|     2 | nested interface declarations              |
-|     2 | nested enum declarations                   |
-|     2 | class type parameters                      |
-|     1 | local variable declaration shape           |
-|     1 | constructor declaration shape              |
-|     1 | package annotations                        |
-|     1 | nested record declarations                 |
-|     1 | object creation expressions                |
-|     1 | conditional expressions                    |
-|     1 | class literal expressions                  |
-|     1 | array access expressions                   |
-|     1 | contextual class modifiers                 |
-|     1 | compact compilation-unit field declaration |
-|     1 | compact compilation-unit empty declaration |
-
-This table is "first blocker per file", not total missing syntax. Removing one
-large blocker will expose deeper blockers in the same files. The roadmap should
-therefore be driven by both this histogram and the source-level `missing_layout`
-inventory.
 
 ## Early Wrapping Policy And Architecture
 
@@ -225,6 +166,27 @@ expressions, or annotation layouts, add the Java wrapping substrate:
 
 ## Source-Level Audit
 
+Effort ratings below estimate the Jolt work to remove the current coverage
+blocker once the wrapping substrate exists: S is local rule work, M is one
+helper family, L is multiple helper families, and XL is cross-cutting
+infrastructure. Confidence is confidence in the estimate, not oracle exact-match
+parity.
+
+Local source citation shorthand used below:
+
+- GJF visitor:
+  `.oracles/repos/google__google-java-format/core/src/main/java/com/google/googlejavaformat/java/JavaInputAstVisitor.java`
+- GJF comments:
+  `.oracles/repos/google__google-java-format/core/src/main/java/com/google/googlejavaformat/java/JavaCommentsHelper.java`
+- GJF formatter:
+  `.oracles/repos/google__google-java-format/core/src/main/java/com/google/googlejavaformat/java/Formatter.java`
+- PJF visitor:
+  `.oracles/repos/palantir__palantir-java-format/palantir-java-format/src/main/java/com/palantir/javaformat/java/JavaInputAstVisitor.java`
+- PJF Java 14 visitor:
+  `.oracles/repos/palantir__palantir-java-format/palantir-java-format/src/main/java/com/palantir/javaformat/java/java14/Java14InputAstVisitor.java`
+- PJF comments:
+  `.oracles/repos/palantir__palantir-java-format/palantir-java-format/src/main/java/com/palantir/javaformat/java/JavaCommentsHelper.java`
+
 ### Global Preflight Blockers
 
 Completed cleanup:
@@ -251,6 +213,26 @@ Missing or incomplete:
 - malformed import shape diagnostics should remain unreachable for parser-clean
   valid Java, while ordinary single/static/type-on-demand imports must format.
 
+Upstream evidence and estimates:
+
+- Module declarations: GJF formats annotations, `open module`, directive blocks,
+  blank lines between directive kinds, and `exports`/`opens`/`provides`/
+  `requires`/`uses`; PJF Java 14 delegates modules from `handleModule` into the
+  same directive visitors. Effort L, confidence Medium. Citations: GJF
+  visitor:2828, :2867, :2897, :2903, :2909, :2915, :2935; PJF Java 14
+  visitor:70.
+- Package annotations: GJF and PJF print each package annotation on its own line
+  before `package`. Effort S, confidence High. Citations: GJF visitor:389,
+  :1818; PJF visitor:347, :1653.
+- Compact compilation-unit field declarations: GJF detects implicit classes and
+  formats compilation-unit members through `addBodyDeclarations` without braces.
+  Effort M, confidence Medium. Citation: GJF visitor:454, :471.
+- Compact compilation-unit empty declarations: GJF handles extra semicolons with
+  `dropEmptyDeclarations` at compilation-unit and member boundaries; PJF has the
+  same cleanup in ordinary compilation units/imports/members. Effort S,
+  confidence High. Citations: GJF visitor:397, :440, :471; PJF visitor:355,
+  :395, :1138.
+
 Roadmap:
 
 1. Add module declaration and directive formatting.
@@ -276,6 +258,41 @@ Missing or incomplete:
 - nested class/record/enum/interface/annotation declarations,
 - local class/interface declarations,
 - compact constructors.
+
+Upstream evidence and estimates:
+
+- Nested class declarations: GJF and PJF do not special-case nesting; class-like
+  members flow through `addBodyDeclarations` and re-enter the same declaration
+  visitors. Effort M, confidence High. Citations: GJF visitor:454, :475, :858,
+  :961, :2181, :3882; PJF visitor:406, :424, :817, :1989; PJF Java 14
+  visitor:153, :174.
+- Enum declarations: GJF and PJF separate enum constants from ordinary members,
+  format constant arguments/class bodies, preserve blank lines between
+  constants, handle optional semicolons, then reuse class-body formatting for
+  members. Effort L, confidence High. Citations: GJF visitor:839, :858, :927,
+  :951; PJF visitor:799, :817, :894, :911.
+- Interface declarations and nested interface declarations: GJF and PJF use the
+  class-declaration path with an `interface` keyword and `extends` supertype
+  list, including when nested. Effort M, confidence High. Citations: GJF
+  visitor:454, :2181, :2207, :2216, :3882; PJF visitor:406, :1989, :2017.
+- Annotation interface declarations: GJF and PJF format `@interface` in a
+  dedicated declaration visitor and then reuse class-body formatting for
+  annotation elements and members. Effort M, confidence High. Citations: GJF
+  visitor:475, :491, :1501, :1633; PJF visitor:424, :441.
+- Record declarations and nested record declarations: GJF formats records with
+  type parameters, record components via formal-parameter helpers, implements
+  clauses, generated-member filtering, and class-body reuse; PJF Java 14 follows
+  the same record-specific path. Effort L, confidence High. Citations: GJF
+  visitor:454, :961, :975, :984, :1007, :1011, :3882; PJF Java 14 visitor:153,
+  :174, :189, :199, :222.
+- Nested enum declarations: GJF and PJF re-enter enum formatting from class-body
+  member formatting, so nested enums share constant/member handling with
+  top-level enums. Effort M, confidence High. Citations: GJF visitor:454, :858,
+  :951, :3882; PJF visitor:406, :817, :911.
+- Class type parameters: GJF and PJF print type parameters with
+  `typeParametersRest`, then format bounds in `visitTypeParameter` with
+  indentation driven by following header clauses. Effort M, confidence High.
+  Citations: GJF visitor:2191, :2197, :2222; PJF visitor:2007, :2031.
 
 Roadmap:
 
@@ -311,6 +328,21 @@ Missing or incomplete:
 - contextual modifiers such as `sealed`, `non-sealed`, and `permits`-related
   forms where they belong.
 
+Upstream evidence and estimates:
+
+- Declaration annotations: GJF splits modifier tokens and annotation AST nodes
+  into declaration modifiers versus type annotations, prints declaration
+  annotations vertically or horizontally by context, then returns type
+  annotations to the owning type rule; PJF uses the same split with
+  list-returning op helpers. Effort M, confidence High. Citations: GJF
+  visitor:2291, :2407, :2431, :2453, :2585; PJF visitor:2097, :2219.
+- Contextual class modifiers: GJF scans modifier tokens from the input stream
+  instead of relying only on AST modifier enums, so contextual tokens such as
+  `sealed`/`non-sealed` can stay in source order before header clauses like
+  `permits`; PJF has the same token-scanning modifier infrastructure. Effort M,
+  confidence Medium. Citations: GJF visitor:2181, :2210, :2585; PJF
+  visitor:1989, :2019, :2228.
+
 Roadmap:
 
 1. Add an annotation formatter independent of declaration kind.
@@ -336,6 +368,14 @@ Missing or incomplete:
 - `var` local variable types,
 - receiver parameter types,
 - class literal pseudo-types.
+
+Upstream evidence and estimates:
+
+- Type shapes: GJF and PJF use structured visitors for primitive/void,
+  parameterized, annotated, array, wildcard, type-parameter, union/intersection,
+  and dimension formatting rather than token flattening. Effort L, confidence
+  High. Citations: GJF visitor:629, :1474, :1836, :1927, :2222, :2251, :2272,
+  :3767; PJF visitor:582, :1359, :1670, :1751, :2031, :2060, :2078.
 
 Roadmap:
 
@@ -370,6 +410,26 @@ Missing or incomplete:
 - annotation type elements and defaults,
 - field and local variable array initializers.
 
+Upstream evidence and estimates:
+
+- Method declaration shapes: GJF uses one specialized `visitMethod` path for
+  declaration annotations, type parameters, return type, name, receiver/formal
+  parameters, trailing dimensions, throws, annotation defaults, semicolon
+  bodies, and block bodies, with `BreakTag`s tying type/name/parameter
+  indentation together; PJF keeps the same shape but uses Palantir
+  `BreakBehaviours` for wrapping. Effort L, confidence High. Citations: GJF
+  visitor:1501, :1618, :1629; PJF visitor:1386.
+- Field declaration shapes: GJF and PJF format fields through
+  `visitVariable`/`visitVariables`, then `declareOne` or `declareMany`, carrying
+  modifier/annotation policy, initializer wrapping, array dimensions, and
+  semicolon handling. Effort M, confidence High. Citations: GJF visitor:1048,
+  :1057, :3635, :3832; PJF visitor:959, :965, :1932.
+- Constructor declaration shape: GJF and PJF use `visitMethod` for constructors,
+  detecting `<init>` and compact record constructors, omitting return type,
+  supporting receiver/formals/throws/dims, and choosing semicolon versus body
+  output. Effort L, confidence High. Citations: GJF visitor:1501, :1597, :1602,
+  :1618, :1656; PJF visitor:1386.
+
 Roadmap:
 
 1. Add shared method/constructor signature formatting: type parameters,
@@ -400,6 +460,19 @@ Missing or incomplete:
 - `try`, `catch`, `finally`,
 - try-with-resources,
 - constructor invocations in constructor bodies.
+
+Upstream evidence and estimates:
+
+- Block statement shapes: GJF formats blocks with `visitBlock`, explicit
+  blank-line policy, `visitStatements`, local-variable-fragment grouping, and
+  `visitStatement` for braced versus unbraced statement bodies; PJF mirrors this
+  and adds an `inlineFirst` variant for some call sites. Effort M, confidence
+  High. Citations: GJF visitor:2320, :2363, :2383; PJF visitor:2117, :2180.
+- Local variable declaration shape: GJF and PJF group adjacent javac variable
+  fragments in statement lists and format them through the same declaration
+  helpers used for fields, including annotations, dims, initializers, and
+  semicolons. Effort M, confidence High. Citations: GJF visitor:2383, :2395,
+  :1048, :3832; PJF visitor:2180, :2197, :959.
 
 Roadmap:
 
@@ -442,6 +515,58 @@ Missing or incomplete:
 - expression names vs primary expressions in assignment/update operands,
 - multiline text block literals.
 
+Upstream evidence and estimates:
+
+- Method invocation shapes: GJF formats invocations as flattened dot chains;
+  `visitMethodInvocation` delegates to `visitDot`, which classifies prefixes and
+  emits type arguments, arguments, and parens via dedicated helpers. PJF uses
+  the same chain model with Palantir breakability controls. Effort L, confidence
+  High. Citations: GJF visitor:1688, :3019, :3294, :3379, :3406; PJF
+  visitor:1547, :2686, :3040, :3134, :3160.
+- Method invocation receivers: GJF flattens member select, invocation, and array
+  access receiver chains, including primary-expression prefixes, type-name
+  prefixes, `this`/`super`, and stream prefixes; PJF keeps the same model with
+  additional chain-fitting knobs. Effort L, confidence High. Citations: GJF
+  visitor:3019, :3073, :3124, :3144, :3223; PJF visitor:2686, :2823, :2839,
+  :2932.
+- Multiline literals: GJF preserves literal source text and has text-block
+  handling for indentation/deindentation before emitting the token; PJF has the
+  same general literal-token path. Effort M, confidence Medium. Citations: GJF
+  visitor:1782; PJF visitor:1638.
+- Lambda expressions: GJF formats lambda parameters through variable declaration
+  helpers, emits `->`, and chooses block versus expression-body indentation
+  separately; PJF adds custom break behavior for lambda arguments/body. Effort
+  M, confidence High. Citations: GJF visitor:1354, :1368, :1387; PJF
+  visitor:1221, :1228.
+- Method reference expressions: GJF emits the qualifier, a break before `::`,
+  optional type arguments, then either the member name or `new`; PJF applies
+  Palantir inline-suffix breakability to the same structure. Effort S,
+  confidence High. Citations: GJF visitor:1025; PJF visitor:922.
+- Array creation expressions: GJF formats `new` array base types, dimensions
+  with annotations, and optional initializers; initializer lists support empty,
+  tabular, filled, unified, forced-trailing-comma, and annotation-array cases.
+  PJF mirrors this with Palantir breakability settings. Effort M, confidence
+  High. Citations: GJF visitor:504, :522, :535, :590, :596; PJF visitor:454,
+  :485.
+- Object creation expressions: GJF handles optional enclosing expressions,
+  constructor type arguments, anonymous-class modifiers, constructor arguments,
+  and anonymous class bodies through shared class-body formatting; PJF uses the
+  same structure with Palantir breakability for `new` expressions. Effort M,
+  confidence High. Citations: GJF visitor:725, :735, :743, :746; PJF
+  visitor:687, :705, :710, :713.
+- Conditional expressions: GJF and PJF emit condition, `?`, true expression,
+  `:`, and false expression in one indented group with break opportunities
+  around the operators. Effort S, confidence High. Citations: GJF visitor:753;
+  PJF visitor:719.
+- Class literal expressions: GJF and PJF handle `Type.class` through the
+  member-select/dot pipeline, so coverage depends on both type formatting and
+  receiver-chain formatting. Effort M, confidence Medium. Citations: GJF
+  visitor:1775, :3019; PJF visitor:1631, :2686.
+- Array access expressions: GJF and PJF treat array access as a selector in the
+  dot pipeline, using array-base/index extraction so chained calls, fields, and
+  indexes share one receiver path. Effort M, confidence High. Citations: GJF
+  visitor:497, :3019, :3028, :3066; PJF visitor:447, :2686.
+
 Roadmap:
 
 1. Add receiver-chain formatting so method invocation, field access, array
@@ -473,6 +598,26 @@ Current blockers:
 - comments inside parameter, argument, type argument, array initializer, and
   switch label lists,
 - ignored trivia such as trailing SUB.
+
+Upstream evidence and estimates:
+
+- Multiline block comments: GJF routes every comment through
+  `JavaCommentsHelper.rewrite`; block/Javadoc comments either use
+  `JavadocFormatter`, Javadoc-shaped indentation, or preserved relative
+  indentation. PJF follows the same preserve-or-indent policy without newer
+  markdown-Javadoc handling. Effort M, confidence High. Citations: GJF
+  comments:41, :64, :71, :149; PJF comments:45, :60, :69, :159.
+- Non-own-line leading comments: GJF's separate token stream assigns non-tokens
+  before/after tokens; rules use `sync` and token emission to place skipped
+  trivia, while `tokenBreakTrailingComment` gives selected tokens special
+  trailing block/Javadoc handling. PJF follows the same token/comment model.
+  Effort L, confidence Medium. Citations: GJF formatter:37; GJF visitor:4077,
+  :4095; PJF comments:45.
+- Unhandled comment or ignored trivia: GJF lexes input separately from javac,
+  assigns non-tokens to adjacent tokens/EOF, attaches comments while building
+  docs, and rewrites them with `JavaCommentsHelper`; Jolt needs comparable
+  formatter-owned trivia accounting rather than rule-local skips. Effort XL,
+  confidence Medium. Citations: GJF formatter:37, :102; GJF comments:41.
 
 Roadmap:
 
@@ -516,7 +661,8 @@ Roadmap:
 ## Recommended Implementation Order
 
 The implementation order should maximize coverage while avoiding partial output.
-After each step, run the full oracle harness and update the blocker histogram.
+After each step, run the full oracle harness and use the generated blocker
+reports to choose the next highest-impact coverage gap.
 
 1. Add the Java wrapping substrate before expanding list-bearing syntax:
    - `JavaFormatContext` state for groups, markers, comments, and profile,

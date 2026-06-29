@@ -1,4 +1,6 @@
-use jolt_fmt_ir::{Doc, concat, group, hard_line, indent, indent_by, join, line, soft_line, text};
+use jolt_fmt_ir::{
+    Doc, concat, fill, fill_entry, group, hard_line, indent, indent_by, join, line, soft_line, text,
+};
 
 const CONTINUATION_INDENT_LEVELS: u16 = 2;
 
@@ -15,19 +17,22 @@ pub(crate) fn declaration_header(parts: impl IntoIterator<Item = Doc>) -> Doc {
 }
 
 pub(crate) fn parenthesized_comma_list(items: impl IntoIterator<Item = Doc>) -> Doc {
-    let items = items.into_iter().collect::<Vec<_>>();
+    let mut items = items.into_iter().collect::<Vec<_>>();
     if items.is_empty() {
         return text("()");
     }
+
+    let last = items.pop().expect("non-empty items checked above");
+    let entries = items
+        .into_iter()
+        .map(|item| fill_entry(item, concat([text(","), line()])));
 
     group(concat([
         text("("),
         continuation_indent(concat([
             soft_line(),
-            join(concat([text(","), line()]), items),
+            fill(entries, concat([last, text(")")])),
         ])),
-        soft_line(),
-        text(")"),
     ]))
 }
 
@@ -75,11 +80,7 @@ pub(crate) fn keyword_expression_statement(keyword: &'static str, expression: Op
         return text(format!("{keyword};"));
     };
 
-    group(concat([
-        text(keyword),
-        continuation_indent(concat([line(), expression])),
-        text(";"),
-    ]))
+    group(concat([text(keyword), text(" "), expression, text(";")]))
 }
 
 pub(crate) fn expression_statement(expression: Doc) -> Doc {
@@ -113,7 +114,13 @@ pub(crate) fn binary_chain(first: Doc, rest: impl IntoIterator<Item = (Doc, Doc)
 }
 
 pub(crate) fn dot_chain(base: Doc, selectors: impl IntoIterator<Item = Doc>) -> Doc {
-    let selectors = selectors.into_iter().collect::<Vec<_>>();
+    let mut selectors = selectors.into_iter().collect::<Vec<_>>();
+    if selectors.is_empty() {
+        return base;
+    }
+
+    let first_selector = selectors.remove(0);
+    let base = concat([base, text("."), first_selector]);
     if selectors.is_empty() {
         return base;
     }

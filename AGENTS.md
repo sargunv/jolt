@@ -6,12 +6,17 @@ Fast, opinionated JVM and Kotlin Multiplatform project tooling.
 
 - `.agents/docs/VISION.md`: product vision.
 - `.agents/docs/formatter-plan.md`: formatter architecture notes.
+- `.oracles/fixtures/`: imported test fixtures for the formatter
+- `.oracles/reports/`: formatter per-fixture reports from the latest test run
 - `crates/`: Rust workspace crates for the formatter engine and wrappers.
 
 ## Dev Workflow
 
 - `mise run fix`: run all checks and fixers through hk.
-- `mise run test`: run all tests.
+- `mise run test`: run tests without updating snapshots
+  (`INSTA_UPDATE=no cargo test`).
+- `mise run test-update`: run tests and update snapshots
+  (`INSTA_UPDATE=always cargo test`).
 
 Run `mise tasks ls --all` for the full task list.
 

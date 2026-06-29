@@ -1,6 +1,6 @@
 ---
 source: crates/jolt_java_fmt/tests/oracle_fixtures.rs
-assertion_line: 32
+assertion_line: 36
 expression: summary.render()
 ---
 suite: google-java-format
@@ -11,23 +11,23 @@ parse blocked: 0
 missing-rule blocked: 187
 other blocked: 0
 formatted: 21
-exact matches: 11
-exact-match percentage: 5.28%
-mismatching formatted files: 10
-aggregate diff size: 719
-largest per-file diff: B24909927.java (607)
+exact matches: 10
+exact-match percentage: 4.80%
+mismatching formatted files: 11
+aggregate diff size: 601
+largest per-file diff: B24909927.java (472)
 
 worst mismatches:
-  B24909927.java: 607
-  PairedArguments.java: 51
+  B24909927.java: 472
+  PairedArguments.java: 59
   SuperQualifier.java: 18
-  B21329312.java: 11
-  B126411718.java: 9
-  B21278211.java: 7
+  B23708487.java: 16
+  b26306390.java: 8
+  B126411718.java: 7
   Fields.java: 5
   I1153.java: 5
-  B23514513.java: 3
-  B23708487.java: 3
+  B112853497.java: 4
+  B21278211.java: 4
 
 top missing-rule blockers:
   35: Java formatter does not support this method declaration shape yet

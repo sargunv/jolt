@@ -16,7 +16,12 @@ lockfile = true
 run = "hk check --all"
 
 [tasks.test]
-run = "cargo test --workspace"
+description = "Run tests without updating snapshots"
+run = "INSTA_UPDATE=no cargo test"
+
+[tasks.test-update]
+description = "Run tests and update snapshots"
+run = "INSTA_UPDATE=always cargo test"
 
 [tasks.fix]
 run = "hk fix --all"

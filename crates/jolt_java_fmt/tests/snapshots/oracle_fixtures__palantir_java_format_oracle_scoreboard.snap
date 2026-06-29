@@ -1,6 +1,6 @@
 ---
 source: crates/jolt_java_fmt/tests/oracle_fixtures.rs
-assertion_line: 44
+assertion_line: 49
 expression: summary.render()
 ---
 suite: palantir-java-format
@@ -11,32 +11,32 @@ parse blocked: 0
 missing-rule blocked: 202
 other blocked: 0
 formatted: 22
-exact matches: 10
-exact-match percentage: 4.46%
-mismatching formatted files: 12
-aggregate diff size: 1391
-largest per-file diff: B24909927.java (1240)
+exact matches: 11
+exact-match percentage: 4.91%
+mismatching formatted files: 11
+aggregate diff size: 1026
+largest per-file diff: B24909927.java (875)
 
 worst mismatches:
-  B24909927.java: 1240
-  PairedArguments.java: 51
+  B24909927.java: 875
+  PairedArguments.java: 59
+  B23708487.java: 24
   SuperQualifier.java: 17
-  B23708487.java: 13
-  palantir-long-method-chain-arg.java: 12
-  B112853497.java: 11
-  B21278211.java: 10
-  B21329312.java: 10
-  palantir-long-safearg.java: 10
-  B126411718.java: 9
+  B112853497.java: 13
+  B21278211.java: 11
+  palantir-long-method-chain-arg.java: 11
+  B126411718.java: 7
+  B23514513.java: 4
+  B21329312.java: 3
 
 top missing-rule blockers:
   37: Java formatter does not support this method declaration shape yet
   23: Java formatter does not support this block statement shape yet
   20: Java formatter does not support multiline block comments yet
   14: Java formatter does not support declaration annotations yet
-  11: Java formatter does not support expression kind LambdaExpression yet
+  14: Java formatter does not support expression kind LambdaExpression yet
   10: Java formatter found unhandled comment or ignored trivia
   9: Java formatter does not support nested class declarations yet
   7: Java formatter does not support enum declarations yet
   7: Java formatter only supports own-line leading comments here
-  6: Java formatter does not support this method invocation receiver yet
+  6: Java formatter does not support this type shape yet
