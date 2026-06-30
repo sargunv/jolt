@@ -293,6 +293,15 @@ impl JavaFormatPolicy {
         }
     }
 
+    pub(crate) const fn selector_chain_breaks_qualified_this_super_before_explicit_type_arguments(
+        self,
+    ) -> bool {
+        matches!(
+            self.profile,
+            JavaFormatProfile::Google | JavaFormatProfile::Aosp
+        )
+    }
+
     pub(crate) const fn array_access_index_indent_levels(self) -> u16 {
         match self.profile {
             JavaFormatProfile::Google | JavaFormatProfile::Aosp => {

@@ -13,20 +13,20 @@ formatted: 208
 exact matches: 127
 exact-match percentage: 61.05%
 mismatching formatted files: 81
-aggregate diff size: 413
+aggregate diff size: 403
 largest per-file diff: B20128760.java (18)
 
 worst mismatches:
   B20128760.java: 18
   B20701054.java: 17
   B24909927.java: 13
-  B26884608.java: 13
   A.java: 12
   B21331232.java: 12
   B21954779.java: 12
   B22488373.java: 11
   B26293162.java: 11
   B20128588.java: 10
+  B26207047.java: 10
 
 top missing-rule blockers:
   0: <none>

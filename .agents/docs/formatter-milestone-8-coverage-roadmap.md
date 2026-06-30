@@ -56,8 +56,8 @@ Oracle alignment is the active gap. Current scoreboards (from pinned snapshots):
 
 | Profile  | Exact match | Aggregate diff | Worst fixture          |
 | -------- | ----------- | -------------- | ---------------------- |
-| Google   | 61.05%      | 413            | `B20128760.java` (18)  |
-| AOSP     | 59.13%      | 742            | `B24909927.java` (205) |
+| Google   | 61.05%      | 403            | `B20128760.java` (18)  |
+| AOSP     | 59.61%      | 732            | `B24909927.java` (205) |
 | Palantir | 42.85%      | 3,755          | `B24909927.java` (916) |
 
 Selector chains, declaration headers, and expression/list fill dominate the
@@ -133,7 +133,7 @@ Report indexes:
 - AOSP: `.oracles/reports/java/google-java-format/aosp/index.md`
 - Palantir: `.oracles/reports/java/palantir-java-format/palantir/index.md`
 
-Google has **81** mismatching formatted files; AOSP has **85** on the same
+Google has **81** mismatching formatted files; AOSP has **84** on the same
 corpus. Palantir has **128** mismatches on its own corpus. Aggregate diff grows
 profile-to-profile because wrong break decisions cost more lines at 4-space
 indent, and Palantir adds chain, lambda, and assignment policy beyond
@@ -141,9 +141,9 @@ google-java-format.
 
 | Profile  | Mismatching | Aggregate diff | vs Google |
 | -------- | ----------- | -------------- | --------- |
-| Google   | 81 / 208    | 413            | —         |
-| AOSP     | 85 / 208    | 742            | +329      |
-| Palantir | 128 / 224   | 3,755          | +3,342    |
+| Google   | 81 / 208    | 403            | —         |
+| AOSP     | 84 / 208    | 732            | +329      |
+| Palantir | 128 / 224   | 3,755          | +3,352    |
 
 Gap categories overlap in practice; impact estimates below are directional, not
 additive to 100%.

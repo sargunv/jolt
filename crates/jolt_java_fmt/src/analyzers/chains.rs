@@ -11,10 +11,6 @@ pub(crate) struct Chain {
 }
 
 impl Chain {
-    pub(crate) fn new(base: Doc, members: Vec<ChainMember>) -> Self {
-        Self::with_base_metadata(base, members, BaseMetadata::simple(0, None))
-    }
-
     pub(crate) fn with_base_metadata(
         base: Doc,
         members: Vec<ChainMember>,
@@ -28,10 +24,6 @@ impl Chain {
             metadata,
             tail_range: None,
         }
-    }
-
-    pub(crate) fn base(base: Doc) -> Self {
-        Self::new(base, Vec::new())
     }
 
     pub(crate) fn simple_base(base: Doc, source_width: usize, simple_name: Option<String>) -> Self {
@@ -117,6 +109,7 @@ pub(crate) struct BaseMetadata {
     pub(crate) kind: ChainBaseKind,
     pub(crate) simple_name: Option<String>,
     pub(crate) forces_break_before_first_selector: bool,
+    pub(crate) is_qualified_this_super_prefix: bool,
 }
 
 impl BaseMetadata {
@@ -128,6 +121,22 @@ impl BaseMetadata {
             kind: ChainBaseKind::Simple,
             simple_name,
             forces_break_before_first_selector: false,
+            is_qualified_this_super_prefix: false,
+        }
+    }
+
+    pub(crate) fn qualified_this_super_prefix(
+        source_width: usize,
+        simple_name: Option<String>,
+    ) -> Self {
+        Self {
+            source_width,
+            is_complex: false,
+            call_count: 0,
+            kind: ChainBaseKind::Simple,
+            simple_name,
+            forces_break_before_first_selector: false,
+            is_qualified_this_super_prefix: true,
         }
     }
 
@@ -139,6 +148,7 @@ impl BaseMetadata {
             kind: ChainBaseKind::Complex,
             simple_name: None,
             forces_break_before_first_selector: false,
+            is_qualified_this_super_prefix: false,
         }
     }
 
@@ -150,6 +160,7 @@ impl BaseMetadata {
             kind: ChainBaseKind::PrimaryExpression,
             simple_name: None,
             forces_break_before_first_selector: true,
+            is_qualified_this_super_prefix: false,
         }
     }
 
@@ -161,6 +172,7 @@ impl BaseMetadata {
             kind: ChainBaseKind::CastPrimaryExpression,
             simple_name: None,
             forces_break_before_first_selector: true,
+            is_qualified_this_super_prefix: false,
         }
     }
 
@@ -172,6 +184,7 @@ impl BaseMetadata {
             kind: ChainBaseKind::Call,
             simple_name: None,
             forces_break_before_first_selector: false,
+            is_qualified_this_super_prefix: false,
         }
     }
 
@@ -183,6 +196,7 @@ impl BaseMetadata {
             kind: ChainBaseKind::ObjectCreation,
             simple_name: None,
             forces_break_before_first_selector: false,
+            is_qualified_this_super_prefix: false,
         }
     }
 }

@@ -225,17 +225,32 @@ pub(super) fn collect_selector_chain(
             )
             .with_tail_range(name.code_text_range()))
         }
-        Expression::ThisExpression(this) => Ok(Chain::simple_base(
-            format_this_expression(this, context)?,
-            node_width(this.code_text_range()),
-            Some("this".to_string()),
-        )
-        .with_tail_range(this.code_text_range())),
-        Expression::SuperExpression(super_expression) => Ok(Chain::base(format_super_expression(
-            super_expression,
-            context,
-        )?)
-        .with_tail_range(super_expression.code_text_range())),
+        Expression::ThisExpression(this) => {
+            let metadata = this_super_base_metadata(
+                "this",
+                node_width(this.code_text_range()),
+                this.receiver().as_ref(),
+            );
+            Ok(Chain::with_base_metadata(
+                format_this_expression(this, context)?,
+                Vec::new(),
+                metadata,
+            )
+            .with_tail_range(this.code_text_range()))
+        }
+        Expression::SuperExpression(super_expression) => {
+            let metadata = this_super_base_metadata(
+                "super",
+                node_width(super_expression.code_text_range()),
+                super_expression.receiver().as_ref(),
+            );
+            Ok(Chain::with_base_metadata(
+                format_super_expression(super_expression, context)?,
+                Vec::new(),
+                metadata,
+            )
+            .with_tail_range(super_expression.code_text_range()))
+        }
         Expression::ObjectCreationExpression(creation) => Ok(Chain::object_creation_base(
             format_object_creation_expression(creation, context)?,
             node_width(creation.code_text_range()),
@@ -269,6 +284,32 @@ pub(super) fn collect_selector_chain(
             node_width(expression.code_text_range()),
         )
         .with_tail_range(expression.code_text_range())),
+    }
+}
+
+fn this_super_base_metadata(
+    keyword: &str,
+    source_width: usize,
+    receiver: Option<&Expression>,
+) -> BaseMetadata {
+    let simple_name = Some(keyword.to_string());
+    if receiver.is_some_and(is_qualified_name_receiver) {
+        BaseMetadata::qualified_this_super_prefix(source_width, simple_name)
+    } else {
+        BaseMetadata::simple(source_width, simple_name)
+    }
+}
+
+fn is_qualified_name_receiver(expression: &Expression) -> bool {
+    match expression {
+        Expression::FieldAccessExpression(field) => {
+            field.name().is_some()
+                && field.receiver().as_ref().is_some_and(|receiver| {
+                    matches!(receiver, Expression::NameExpression(_))
+                        || is_qualified_name_receiver(receiver)
+                })
+        }
+        _ => false,
     }
 }
 

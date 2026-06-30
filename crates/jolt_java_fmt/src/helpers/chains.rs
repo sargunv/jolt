@@ -152,6 +152,7 @@ pub(crate) fn selector_chain(chain: Chain, policy: JavaFormatPolicy, role: Chain
         let broken_chain = explicit_type_argument_selector_chain(
             base,
             members,
+            &metadata.base,
             leading_type_argument_call_len,
             policy,
         );
@@ -385,6 +386,7 @@ fn simple_receiver_call_run_chain(
 fn explicit_type_argument_selector_chain(
     base: Doc,
     members: Vec<ChainMember>,
+    base_metadata: &BaseMetadata,
     leading_type_argument_call_len: usize,
     policy: JavaFormatPolicy,
 ) -> Doc {
@@ -398,6 +400,18 @@ fn explicit_type_argument_selector_chain(
         policy,
         false,
     );
+
+    if base_metadata.is_qualified_this_super_prefix
+        && policy.selector_chain_breaks_qualified_this_super_before_explicit_type_arguments()
+    {
+        return break_before_first_selector_chain(
+            base,
+            members,
+            false,
+            policy.continuation_indent_levels(),
+        );
+    }
+
     if !breaks_type_argument_head || !policy.selector_chain_breaks_before_first_selector() {
         return cohesive;
     }
