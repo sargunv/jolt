@@ -976,18 +976,20 @@ pub(super) fn format_method_declaration(
     }
     let return_type = wrap::space_separated(return_type_parts);
     let header = format_callable_header(
-        method.modifiers(),
-        "method",
+        CallableHeaderInput {
+            modifiers: method.modifiers(),
+            declaration_kind: "method",
+            type_parameters: method.type_parameters(),
+            leading_type: Some(return_type),
+            break_after_leading_type: break_after_return_type,
+            before_name_boundary: Some(before_name_boundary),
+            name: &name,
+            parameters: method.parameters(),
+            parameter_open: method.l_paren().map(|token| token.token_text_range()),
+            parameter_close: method.r_paren().map(|token| token.token_text_range()),
+            throws_clause: method.throws_clause(),
+        },
         context,
-        method.type_parameters(),
-        Some(return_type),
-        break_after_return_type,
-        Some(before_name_boundary),
-        &name,
-        method.parameters(),
-        method.l_paren().map(|token| token.token_text_range()),
-        method.r_paren().map(|token| token.token_text_range()),
-        method.throws_clause(),
     )?;
 
     if method.has_semicolon_body() {
@@ -1010,15 +1012,12 @@ pub(super) fn format_method_declaration(
                 "Java formatter does not support comments inside method signatures yet",
             )?;
         }
-        if signature_tail_comments.is_empty() {
-            return Ok(concat([header, text(";")]));
-        }
-        return Ok(concat([
+        return Ok(callables::callable_declaration(
             header,
-            text(" "),
-            join(text(" "), signature_tail_comments),
-            text(";"),
-        ]));
+            callables::CallableDeclarationTail::Semicolon {
+                signature_tail_comments,
+            },
+        ));
     }
 
     let body = method
@@ -1042,17 +1041,13 @@ pub(super) fn format_method_declaration(
         )?;
     }
     let body = format_block(&body, context)?;
-    if body_leading_comments.is_empty() {
-        Ok(concat([header, text(" "), body]))
-    } else {
-        Ok(concat([
-            header,
-            hard_line(),
-            join(hard_line(), body_leading_comments),
-            hard_line(),
+    Ok(callables::callable_declaration(
+        header,
+        callables::CallableDeclarationTail::Block {
+            before_body_comments: body_leading_comments,
             body,
-        ]))
-    }
+        },
+    ))
 }
 
 pub(super) fn format_constructor_declaration(
@@ -1076,20 +1071,22 @@ pub(super) fn format_constructor_declaration(
         Vec::new()
     };
     let header = format_callable_header(
-        constructor.modifiers(),
-        "constructor",
+        CallableHeaderInput {
+            modifiers: constructor.modifiers(),
+            declaration_kind: "constructor",
+            type_parameters: constructor.type_parameters(),
+            leading_type: None,
+            break_after_leading_type: false,
+            before_name_boundary: constructor
+                .type_parameters()
+                .and_then(|parameters| parameters.code_text_range()),
+            name: &name,
+            parameters: constructor.parameters(),
+            parameter_open: constructor.l_paren().map(|token| token.token_text_range()),
+            parameter_close: constructor.r_paren().map(|token| token.token_text_range()),
+            throws_clause: constructor.throws_clause(),
+        },
         context,
-        constructor.type_parameters(),
-        None,
-        false,
-        constructor
-            .type_parameters()
-            .and_then(|parameters| parameters.code_text_range()),
-        &name,
-        constructor.parameters(),
-        constructor.l_paren().map(|token| token.token_text_range()),
-        constructor.r_paren().map(|token| token.token_text_range()),
-        constructor.throws_clause(),
     )?;
     if let Some(body_range) = body.code_text_range() {
         reject_unhandled_comments_before_start(
@@ -1099,17 +1096,13 @@ pub(super) fn format_constructor_declaration(
         )?;
     }
     let body = format_constructor_body(&body, context)?;
-    if body_leading_comments.is_empty() {
-        Ok(concat([header, text(" "), body]))
-    } else {
-        Ok(concat([
-            header,
-            hard_line(),
-            join(hard_line(), body_leading_comments),
-            hard_line(),
+    Ok(callables::callable_declaration(
+        header,
+        callables::CallableDeclarationTail::Block {
+            before_body_comments: body_leading_comments,
             body,
-        ]))
-    }
+        },
+    ))
 }
 
 pub(super) fn format_compact_constructor_declaration(
@@ -1148,35 +1141,48 @@ pub(super) fn format_compact_constructor_declaration(
     }
     let body = format_constructor_body(&body, context)?;
 
-    let doc = if body_leading_comments.is_empty() {
-        concat([header, text(" "), body])
-    } else {
-        concat([
-            header,
-            hard_line(),
-            join(hard_line(), body_leading_comments),
-            hard_line(),
+    let doc = callables::callable_declaration(
+        header,
+        callables::CallableDeclarationTail::Block {
+            before_body_comments: body_leading_comments,
             body,
-        ])
-    };
+        },
+    );
 
     Ok(modifiers.with_annotations(doc))
 }
 
-pub(super) fn format_callable_header(
+struct CallableHeaderInput<'a> {
     modifiers: Option<ModifierList>,
-    declaration_kind: &str,
-    context: &mut JavaFormatContext<'_>,
+    declaration_kind: &'a str,
     type_parameters: Option<TypeParameterList>,
     leading_type: Option<Doc>,
     break_after_leading_type: bool,
     before_name_boundary: Option<TextRange>,
-    name: &JavaSyntaxToken,
+    name: &'a JavaSyntaxToken,
     parameters: Option<FormalParameterList>,
     parameter_open: Option<TextRange>,
     parameter_close: Option<TextRange>,
     throws_clause: Option<ThrowsClause>,
+}
+
+fn format_callable_header(
+    input: CallableHeaderInput<'_>,
+    context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
+    let CallableHeaderInput {
+        modifiers,
+        declaration_kind,
+        type_parameters,
+        leading_type,
+        break_after_leading_type,
+        before_name_boundary,
+        name,
+        parameters,
+        parameter_open,
+        parameter_close,
+        throws_clause,
+    } = input;
     let modifiers = format_modifier_list(modifiers, declaration_kind, context)?;
     let before_name_comments = before_name_boundary
         .map(|boundary| take_comments_between_tokens(context, boundary, name.token_text_range()))

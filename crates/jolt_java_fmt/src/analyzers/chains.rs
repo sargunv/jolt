@@ -46,6 +46,14 @@ impl Chain {
         Self::with_base_metadata(base, Vec::new(), BaseMetadata::call(source_width))
     }
 
+    pub(crate) fn object_creation_base(base: Doc, source_width: usize) -> Self {
+        Self::with_base_metadata(
+            base,
+            Vec::new(),
+            BaseMetadata::object_creation(source_width),
+        )
+    }
+
     pub(crate) fn push(&mut self, member: ChainMember) {
         self.members.push(member);
         self.metadata = ChainMetadata::from_parts(self.metadata.base, &self.members);
@@ -86,6 +94,7 @@ pub(crate) struct BaseMetadata {
     pub(crate) source_width: usize,
     pub(crate) is_complex: bool,
     pub(crate) call_count: usize,
+    pub(crate) kind: ChainBaseKind,
 }
 
 impl BaseMetadata {
@@ -94,6 +103,7 @@ impl BaseMetadata {
             source_width,
             is_complex: false,
             call_count: 0,
+            kind: ChainBaseKind::Simple,
         }
     }
 
@@ -102,6 +112,7 @@ impl BaseMetadata {
             source_width,
             is_complex: true,
             call_count: 0,
+            kind: ChainBaseKind::Complex,
         }
     }
 
@@ -110,8 +121,33 @@ impl BaseMetadata {
             source_width,
             is_complex: false,
             call_count: 1,
+            kind: ChainBaseKind::Call,
         }
     }
+
+    pub(crate) const fn object_creation(source_width: usize) -> Self {
+        Self {
+            source_width,
+            is_complex: false,
+            call_count: 0,
+            kind: ChainBaseKind::ObjectCreation,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Eq, PartialEq)]
+pub(crate) enum ChainBaseKind {
+    Simple,
+    Complex,
+    Call,
+    ObjectCreation,
+}
+
+#[derive(Clone, Copy, Eq, PartialEq)]
+pub(crate) enum ChainRole {
+    Default,
+    NestedArgument,
+    LambdaBody,
 }
 
 #[derive(Clone)]
@@ -146,6 +182,16 @@ impl ChainMember {
             trailing_comments: Vec::new(),
             source_width,
             has_type_arguments,
+        }
+    }
+
+    pub(crate) fn array_access(doc: Doc, source_width: usize) -> Self {
+        Self {
+            kind: ChainMemberKind::ArrayAccess,
+            doc,
+            trailing_comments: Vec::new(),
+            source_width,
+            has_type_arguments: false,
         }
     }
 
@@ -219,6 +265,7 @@ pub(crate) enum ChainGroupKind {
     FieldRun,
     LeadingTypeArgumentCall,
     FluentCallRun,
+    ArrayAccessRun,
 }
 
 impl ChainGroupKind {
@@ -229,6 +276,7 @@ impl ChainGroupKind {
                 Self::LeadingTypeArgumentCall
             }
             ChainMemberKind::Call { .. } => Self::FluentCallRun,
+            ChainMemberKind::ArrayAccess => Self::ArrayAccessRun,
         }
     }
 }
@@ -237,6 +285,7 @@ impl ChainGroupKind {
 pub(crate) enum ChainMemberKind {
     Field,
     Call { argument_count: usize },
+    ArrayAccess,
 }
 
 #[derive(Clone, Copy)]
@@ -262,6 +311,7 @@ impl ChainMetadata {
             .map(|member| match member.kind {
                 ChainMemberKind::Field => 0,
                 ChainMemberKind::Call { argument_count } => argument_count,
+                ChainMemberKind::ArrayAccess => 0,
             })
             .unwrap_or_default();
 

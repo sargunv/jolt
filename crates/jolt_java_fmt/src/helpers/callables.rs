@@ -23,6 +23,16 @@ pub(crate) struct AnnotationElementDeclaration {
     pub(crate) default_value: Option<Doc>,
 }
 
+pub(crate) enum CallableDeclarationTail {
+    Block {
+        before_body_comments: Vec<Doc>,
+        body: Doc,
+    },
+    Semicolon {
+        signature_tail_comments: Vec<Doc>,
+    },
+}
+
 pub(crate) fn callable_header(header: CallableHeader) -> Doc {
     let CallableHeader {
         modifiers,
@@ -65,6 +75,45 @@ pub(crate) fn callable_header(header: CallableHeader) -> Doc {
     declaration_parts.extend(tail);
 
     wrap::declaration_header(declaration_parts)
+}
+
+pub(crate) fn callable_declaration(header: Doc, tail: CallableDeclarationTail) -> Doc {
+    match tail {
+        CallableDeclarationTail::Block {
+            before_body_comments,
+            body,
+        } => callable_block_declaration(header, before_body_comments, body),
+        CallableDeclarationTail::Semicolon {
+            signature_tail_comments,
+        } => callable_semicolon_declaration(header, signature_tail_comments),
+    }
+}
+
+fn callable_block_declaration(header: Doc, before_body_comments: Vec<Doc>, body: Doc) -> Doc {
+    if before_body_comments.is_empty() {
+        concat([header, text(" "), body])
+    } else {
+        concat([
+            header,
+            hard_line(),
+            join(hard_line(), before_body_comments),
+            hard_line(),
+            body,
+        ])
+    }
+}
+
+fn callable_semicolon_declaration(header: Doc, signature_tail_comments: Vec<Doc>) -> Doc {
+    if signature_tail_comments.is_empty() {
+        concat([header, text(";")])
+    } else {
+        concat([
+            header,
+            text(" "),
+            join(text(" "), signature_tail_comments),
+            text(";"),
+        ])
+    }
 }
 
 pub(crate) fn annotation_element_declaration(declaration: AnnotationElementDeclaration) -> Doc {

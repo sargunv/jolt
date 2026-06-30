@@ -152,6 +152,25 @@ pub(crate) fn statement_block<Statement>(
     ))
 }
 
+pub(crate) fn constructor_body(
+    body_range: TextRange,
+    invocation: Option<Doc>,
+    statements: Vec<Doc>,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    let mut items = Vec::new();
+    items.extend(invocation);
+    items.extend(statements);
+
+    if items.is_empty() {
+        return Ok(wrap::braced_block(take_dangling_comment_docs(
+            context, body_range,
+        )?));
+    }
+
+    Ok(wrap::braced_block(items))
+}
+
 pub(crate) fn take_body_tail_comment_docs(
     context: &mut JavaFormatContext<'_>,
     body_range: TextRange,

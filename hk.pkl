@@ -2,7 +2,6 @@ amends "package://github.com/jdx/hk/releases/download/v1.48.0/hk@1.48.0#/Config.
 import "package://github.com/jdx/hk/releases/download/v1.48.0/hk@1.48.0#/Builtins.pkl"
 
 local lintSteps = new Mapping<String, Step> {
-    ["dprint"] = (Builtins.dprint)
     ["cargo-check"] {
         glob = List("**/*.rs", "Cargo.toml", "Cargo.lock")
         check = "cargo check --workspace"
@@ -16,6 +15,7 @@ local lintSteps = new Mapping<String, Step> {
         check = "cargo clippy --workspace -- -D warnings"
         fix = "cargo clippy --fix --workspace --allow-dirty --allow-staged -- -D warnings"
     }
+    ["dprint"] = (Builtins.dprint)
 }
 
 hooks {

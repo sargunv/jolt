@@ -2,12 +2,12 @@ use jolt_fmt_ir::{
     Doc, best_fitting, concat, fill, fill_entry, group, hard_line, indent_by, soft_line, text,
 };
 
-use crate::analyzers::chains::{Chain, ChainMember};
+use crate::analyzers::chains::{Chain, ChainMember, ChainMemberKind, ChainRole};
 use crate::policy::JavaFormatPolicy;
 
 const CONTINUATION_INDENT_LEVELS: u16 = 2;
 
-pub(crate) fn selector_chain(chain: Chain, policy: JavaFormatPolicy) -> Doc {
+pub(crate) fn selector_chain(chain: Chain, policy: JavaFormatPolicy, role: ChainRole) -> Doc {
     let groups = chain.groups();
     let Chain {
         base,
@@ -46,16 +46,12 @@ pub(crate) fn selector_chain(chain: Chain, policy: JavaFormatPolicy) -> Doc {
             )
             .with_tail_range(None),
             policy,
+            role,
         );
     }
 
-    let flat_chain = concat(
-        std::iter::once(base.clone()).chain(
-            members
-                .iter()
-                .flat_map(|member| [text("."), member.doc.clone()]),
-        ),
-    );
+    let flat_chain =
+        concat(std::iter::once(base.clone()).chain(members.iter().map(prefixed_member_doc)));
 
     let leading_type_argument_call_len = groups.leading_type_argument_call_len();
     if leading_type_argument_call_len > 0 {
@@ -64,29 +60,26 @@ pub(crate) fn selector_chain(chain: Chain, policy: JavaFormatPolicy) -> Doc {
         return best_fitting(flat_chain, [broken_chain]);
     }
 
-    if keeps_simple_receiver_call_head(&groups, metadata, policy) {
+    if keeps_simple_receiver_call_head(&groups, metadata, policy, role) {
         let broken_chain = selector_chain_with_cohesive_head(base, members, 1);
         return best_fitting(flat_chain, [broken_chain]);
     }
 
-    if metadata.call_count >= 10 || breaks_before_first_selector(metadata, policy) {
+    if metadata.call_count >= 10 || breaks_before_first_selector(metadata, policy, role) {
         let broken_chain = break_before_first_selector_chain(base, members, true);
         return best_fitting(flat_chain, [broken_chain]);
     }
 
     let first_member = members.remove(0);
-    let base = concat([base, text("."), first_member.doc]);
+    let base =
+        append_leading_array_accesses(concat([base, member_doc(first_member)]), &mut members);
     if members.is_empty() {
         return best_fitting(flat_chain, [base]);
     }
 
     let broken_chain = group(concat([
         base,
-        continuation_indent(concat(
-            members
-                .into_iter()
-                .map(|member| concat([soft_line(), text("."), member.doc])),
-        )),
+        continuation_indent(concat(member_docs_after_line(soft_line(), members))),
     ]));
     best_fitting(flat_chain, [broken_chain])
 }
@@ -95,6 +88,7 @@ fn keeps_simple_receiver_call_head(
     groups: &crate::analyzers::chains::ChainGroups,
     metadata: crate::analyzers::chains::ChainMetadata,
     policy: JavaFormatPolicy,
+    role: ChainRole,
 ) -> bool {
     if !(groups.starts_with_call_run()
         && !metadata.base.is_complex
@@ -106,8 +100,12 @@ fn keeps_simple_receiver_call_head(
         return false;
     }
 
+    if policy.selector_chain_preserves_nested_argument_head(role) {
+        return true;
+    }
+
     if metadata.first_call_argument_count == 0 {
-        return !policy.selector_chain_breaks_before_first_selector();
+        return !policy.selector_chain_breaks_before_first_selector_for_role(role);
     }
 
     metadata.base.source_width <= 3 && metadata.first_call_argument_count <= 3
@@ -118,14 +116,9 @@ fn selector_chain_with_cohesive_head(
     mut members: Vec<ChainMember>,
     head_len: usize,
 ) -> Doc {
+    let head_len = head_len_with_array_access_suffix(&members, head_len);
     let tail = members.split_off(head_len);
-    let head = concat(
-        std::iter::once(base).chain(
-            members
-                .into_iter()
-                .flat_map(|member| [text("."), member.doc]),
-        ),
-    );
+    let head = concat(std::iter::once(base).chain(members.into_iter().map(member_doc)));
 
     if tail.is_empty() {
         return head;
@@ -133,18 +126,24 @@ fn selector_chain_with_cohesive_head(
 
     group(concat([
         head,
-        continuation_indent(concat(
-            tail.into_iter()
-                .map(|member| concat([soft_line(), text("."), member.doc])),
-        )),
+        continuation_indent(concat(member_docs_after_line(soft_line(), tail))),
     ]))
 }
 
 fn breaks_before_first_selector(
     metadata: crate::analyzers::chains::ChainMetadata,
     policy: JavaFormatPolicy,
+    role: ChainRole,
 ) -> bool {
-    if !policy.selector_chain_breaks_before_first_selector() {
+    if policy.selector_chain_role_breaks_before_first_selector(
+        role,
+        metadata.base.kind,
+        metadata.first_member_is_call,
+    ) {
+        return true;
+    }
+
+    if !policy.selector_chain_breaks_before_first_selector_for_role(role) {
         return false;
     }
 
@@ -177,11 +176,7 @@ fn break_before_first_selector_chain(
     };
     group(concat([
         base,
-        continuation_indent(concat(
-            members
-                .into_iter()
-                .map(|member| concat([separator.clone(), text("."), member.doc])),
-        )),
+        continuation_indent(concat(member_docs_after_line(separator, members))),
     ]))
 }
 
@@ -193,11 +188,9 @@ fn commented_selector_chain(
     group(concat([
         append_trailing_comments(base, base_trailing_comments),
         continuation_indent(concat(members.into_iter().map(|member| {
-            concat([
-                hard_line(),
-                text("."),
-                append_trailing_comments(member.doc, member.trailing_comments),
-            ])
+            let kind = member.kind;
+            let doc = append_trailing_comments(member.doc, member.trailing_comments);
+            concat([hard_line(), member_doc_with_kind(kind, doc)])
         }))),
     ]))
 }
@@ -243,6 +236,67 @@ fn append_trailing_comments(doc: Doc, comments: Vec<Doc>) -> Doc {
                 .flat_map(|comment| [text(" "), comment]),
         ),
     )
+}
+
+fn prefixed_member_doc(member: &ChainMember) -> Doc {
+    match member.kind {
+        ChainMemberKind::Field | ChainMemberKind::Call { .. } => {
+            concat([text("."), member.doc.clone()])
+        }
+        ChainMemberKind::ArrayAccess => member.doc.clone(),
+    }
+}
+
+fn member_doc(member: ChainMember) -> Doc {
+    member_doc_with_kind(member.kind, member.doc)
+}
+
+fn member_doc_with_kind(kind: ChainMemberKind, doc: Doc) -> Doc {
+    match kind {
+        ChainMemberKind::Field | ChainMemberKind::Call { .. } => concat([text("."), doc]),
+        ChainMemberKind::ArrayAccess => doc,
+    }
+}
+
+fn member_docs_after_line(line: Doc, members: Vec<ChainMember>) -> Vec<Doc> {
+    let mut docs = Vec::new();
+    for member in members {
+        match member.kind {
+            ChainMemberKind::Field | ChainMemberKind::Call { .. } => {
+                docs.push(concat([line.clone(), text("."), member.doc]));
+            }
+            ChainMemberKind::ArrayAccess => {
+                if let Some(last) = docs.last_mut() {
+                    *last = concat([last.clone(), member.doc]);
+                } else {
+                    docs.push(concat([line.clone(), member.doc]));
+                }
+            }
+        }
+    }
+    docs
+}
+
+fn head_len_with_array_access_suffix(members: &[ChainMember], head_len: usize) -> usize {
+    let mut len = head_len;
+    while members
+        .get(len)
+        .is_some_and(|member| matches!(member.kind, ChainMemberKind::ArrayAccess))
+    {
+        len += 1;
+    }
+    len
+}
+
+fn append_leading_array_accesses(mut base: Doc, members: &mut Vec<ChainMember>) -> Doc {
+    while members
+        .first()
+        .is_some_and(|member| matches!(member.kind, ChainMemberKind::ArrayAccess))
+    {
+        let member = members.remove(0);
+        base = concat([base, member.doc]);
+    }
+    base
 }
 
 fn continuation_indent(doc: Doc) -> Doc {

@@ -9,14 +9,23 @@ use super::{
     take_inline_trailing_block_comment_docs, take_leading_comment_docs_in_range,
     take_trailing_line_comment_docs_in_range_as_own_line, text, wrap,
 };
-use crate::analyzers::chains::{Chain, ChainMember};
+use crate::analyzers::chains::{Chain, ChainMember, ChainRole};
 use crate::helpers::chains as java_chains;
 use crate::helpers::literals as java_literals;
 use jolt_diagnostics::TextRange;
+use jolt_fmt_ir::{group, soft_line};
 
 pub(super) fn format_expression(
     expression: &Expression,
     context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    format_expression_with_chain_role(expression, context, ChainRole::Default)
+}
+
+fn format_expression_with_chain_role(
+    expression: &Expression,
+    context: &mut JavaFormatContext<'_>,
+    chain_role: ChainRole,
 ) -> FormatResult<Doc> {
     match expression {
         Expression::LiteralExpression(literal) => format_literal_expression(literal, context),
@@ -26,16 +35,15 @@ pub(super) fn format_expression(
             format_super_expression(super_expression, context)
         }
         Expression::ParenthesizedExpression(parenthesized) => {
-            format_parenthesized_expression(parenthesized, context)
+            format_parenthesized_expression_with_chain_role(parenthesized, context, chain_role)
         }
         Expression::ClassLiteralExpression(class_literal) => {
             format_class_literal_expression(class_literal, context)
         }
-        Expression::FieldAccessExpression(_) | Expression::MethodInvocationExpression(_) => {
-            format_selector_chain(expression, context)
-        }
-        Expression::ArrayAccessExpression(array_access) => {
-            format_array_access_expression(array_access, context)
+        Expression::FieldAccessExpression(_)
+        | Expression::MethodInvocationExpression(_)
+        | Expression::ArrayAccessExpression(_) => {
+            format_selector_chain(expression, context, chain_role)
         }
         Expression::UnaryExpression(unary) => format_unary_expression(unary, context),
         Expression::PostfixExpression(postfix) => format_postfix_expression(postfix, context),
@@ -165,9 +173,10 @@ fn format_component_pattern(
 pub(super) fn format_selector_chain(
     expression: &Expression,
     context: &mut JavaFormatContext<'_>,
+    role: ChainRole,
 ) -> FormatResult<Doc> {
     let chain = collect_selector_chain(expression, context)?;
-    Ok(java_chains::selector_chain(chain, context.policy()))
+    Ok(java_chains::selector_chain(chain, context.policy(), role))
 }
 
 pub(super) fn collect_selector_chain(
@@ -190,15 +199,14 @@ pub(super) fn collect_selector_chain(
             context,
         )?)
         .with_tail_range(super_expression.code_text_range())),
-        Expression::ObjectCreationExpression(creation) => Ok(Chain::base(
+        Expression::ObjectCreationExpression(creation) => Ok(Chain::object_creation_base(
             format_object_creation_expression(creation, context)?,
+            node_width(creation.code_text_range()),
         )
         .with_tail_range(creation.code_text_range())),
-        Expression::ArrayAccessExpression(array_access) => Ok(Chain::complex_base(
-            format_array_access_expression(array_access, context)?,
-            node_width(array_access.code_text_range()),
-        )
-        .with_tail_range(array_access.code_text_range())),
+        Expression::ArrayAccessExpression(array_access) => {
+            collect_array_access_chain(array_access, context)
+        }
         Expression::ClassLiteralExpression(class_literal) => Ok(Chain::complex_base(
             format_class_literal_expression(class_literal, context)?,
             node_width(class_literal.code_text_range()),
@@ -314,6 +322,33 @@ pub(super) fn collect_method_invocation_chain(
         node_width(invocation.code_text_range()),
     )
     .with_tail_range(invocation.code_text_range()))
+}
+
+pub(super) fn collect_array_access_chain(
+    array_access: &jolt_java_syntax::ArrayAccessExpression,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Chain> {
+    let receiver = array_access
+        .receiver()
+        .expect("parser-clean array access should have a receiver");
+    let l_bracket = array_access
+        .l_bracket()
+        .expect("parser-clean array access should have an opening bracket");
+    let r_bracket = array_access
+        .r_bracket()
+        .expect("parser-clean array access should have a closing bracket");
+
+    let mut chain = collect_selector_chain(&receiver, context)?;
+    attach_selector_boundary_comments(&mut chain, l_bracket.token_text_range(), context);
+    chain.push(ChainMember::array_access(
+        format_array_access_selector(array_access, context)?,
+        text_range_width(TextRange::new(
+            l_bracket.token_text_range().start(),
+            r_bracket.token_text_range().end(),
+        )),
+    ));
+    chain.set_tail_range(array_access.code_text_range());
+    Ok(chain)
 }
 
 fn attach_selector_boundary_comments(
@@ -471,13 +506,20 @@ pub(super) fn format_parenthesized_expression(
     parenthesized: &jolt_java_syntax::ParenthesizedExpression,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
+    format_parenthesized_expression_with_chain_role(parenthesized, context, ChainRole::Default)
+}
+
+fn format_parenthesized_expression_with_chain_role(
+    parenthesized: &jolt_java_syntax::ParenthesizedExpression,
+    context: &mut JavaFormatContext<'_>,
+    chain_role: ChainRole,
+) -> FormatResult<Doc> {
     let expression = parenthesized
         .expression()
         .expect("parser-clean parenthesized expression should have an expression");
-    Ok(wrap::parenthesized_expression(format_expression(
-        &expression,
-        context,
-    )?))
+    Ok(wrap::parenthesized_expression(
+        format_expression_with_chain_role(&expression, context, chain_role)?,
+    ))
 }
 
 pub(super) fn format_class_literal_expression(
@@ -601,23 +643,20 @@ pub(super) fn format_assignment_expression(
     ))
 }
 
-pub(super) fn format_array_access_expression(
+fn format_array_access_selector(
     array_access: &jolt_java_syntax::ArrayAccessExpression,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    let receiver = array_access
-        .receiver()
-        .expect("parser-clean array access should have a receiver");
     let index = array_access
         .index()
         .expect("parser-clean array access should have an index");
 
-    Ok(concat([
-        format_expression(&receiver, context)?,
+    Ok(group(concat([
         text("["),
+        soft_line(),
         format_expression(&index, context)?,
         text("]"),
-    ]))
+    ])))
 }
 
 pub(super) fn format_argument_list(
@@ -672,7 +711,8 @@ pub(super) fn format_argument(
         .code_text_range()
         .expect("parser-clean argument expression should have a code range");
     let comments = take_inline_leading_block_comment_docs(context, code_range);
-    let expression = format_expression(argument, context)?;
+    let expression =
+        format_expression_with_chain_role(argument, context, ChainRole::NestedArgument)?;
     let trailing_comments = take_inline_trailing_block_comment_docs(context, code_range);
 
     let mut parts = Vec::new();
@@ -899,7 +939,7 @@ pub(super) fn format_variable_initializer_value(
                 }
                 _ => unreachable!("matched selector initializer values"),
             };
-            format_selector_chain(&expression, context)
+            format_selector_chain(&expression, context, ChainRole::Default)
         }
         VariableInitializerValue::MethodReferenceExpression(reference) => {
             format_method_reference_expression(reference, context)
@@ -957,7 +997,7 @@ pub(super) fn format_lambda_expression(
     };
 
     let body = if let Some(expression) = lambda.expression_body() {
-        format_expression(&expression, context)?
+        format_expression_with_chain_role(&expression, context, ChainRole::LambdaBody)?
     } else {
         let block = lambda
             .block_body()

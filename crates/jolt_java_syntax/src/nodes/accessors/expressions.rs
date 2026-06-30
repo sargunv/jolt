@@ -263,6 +263,16 @@ impl ArrayAccessExpression {
     }
 
     #[must_use]
+    pub fn l_bracket(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LBracket)
+    }
+
+    #[must_use]
+    pub fn r_bracket(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RBracket)
+    }
+
+    #[must_use]
     pub fn has_supported_layout_shape(&self) -> bool {
         let elements = self.syntax.children_with_tokens().collect::<Vec<_>>();
         matches!(

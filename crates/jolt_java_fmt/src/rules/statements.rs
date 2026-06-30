@@ -11,11 +11,10 @@ use super::{
     format_array_dimensions, format_expression, format_modifier_list, format_name, format_pattern,
     format_token, format_type, format_type_argument_list, format_type_declaration,
     format_variable_initializer_value, hard_line, join, reject_unhandled_comments_before_start,
-    take_block_comment_docs_in_range_as_inline, take_dangling_comment_docs,
-    take_inline_leading_block_comment_docs_in_range, take_leading_comment_docs,
-    take_leading_comment_docs_in_range, take_own_line_comment_docs_in_range,
-    take_trailing_line_comment_docs_in_range_as_own_line, text, with_leading_and_trailing_comments,
-    with_vertical_annotations, wrap,
+    take_block_comment_docs_in_range_as_inline, take_inline_leading_block_comment_docs_in_range,
+    take_leading_comment_docs, take_leading_comment_docs_in_range,
+    take_own_line_comment_docs_in_range, take_trailing_line_comment_docs_in_range_as_own_line,
+    text, with_leading_and_trailing_comments, with_vertical_annotations, wrap,
 };
 use crate::helpers::lists as java_lists;
 use jolt_diagnostics::TextRange;
@@ -36,23 +35,16 @@ pub(super) fn format_constructor_body(
 ) -> FormatResult<Doc> {
     let code_range = body.code_text_range().unwrap_or_else(|| body.text_range());
 
-    let mut statements = Vec::new();
-    if let Some(invocation) = body.constructor_invocation() {
-        statements.push(format_constructor_invocation(&invocation, context)?);
-    }
-    statements.extend(
-        body.block_statements()
-            .map(|statement| format_block_statement(&statement, context))
-            .collect::<FormatResult<Vec<_>>>()?,
-    );
+    let invocation = body
+        .constructor_invocation()
+        .map(|invocation| format_constructor_invocation(&invocation, context))
+        .transpose()?;
+    let statements = body
+        .block_statements()
+        .map(|statement| format_block_statement(&statement, context))
+        .collect::<FormatResult<Vec<_>>>()?;
 
-    if statements.is_empty() {
-        return Ok(wrap::braced_block(take_dangling_comment_docs(
-            context, code_range,
-        )?));
-    }
-
-    Ok(wrap::braced_block(statements))
+    crate::helpers::bodies::constructor_body(code_range, invocation, statements, context)
 }
 
 fn format_constructor_invocation(
