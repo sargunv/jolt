@@ -5,6 +5,7 @@ pub(crate) mod callables;
 pub(crate) mod chains;
 pub(crate) mod comments;
 pub(crate) mod expressions;
+pub(crate) mod imports;
 pub(crate) mod lambdas;
 pub(crate) mod lists;
 pub(crate) mod literals;

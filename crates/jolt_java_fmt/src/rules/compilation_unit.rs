@@ -6,8 +6,8 @@ use super::{
     take_leading_comment_docs, take_own_line_comment_docs_in_range, text, with_attached_comments,
     with_leading_and_trailing_comments, with_vertical_annotations,
 };
+use crate::helpers::imports::{self, ImportDeclarationLayout, ImportSectionItem};
 use crate::helpers::modules::{self, ModuleDirectiveLayout};
-use crate::policy::JavaFormatPolicy;
 use jolt_diagnostics::TextRange;
 
 pub(crate) fn format_compilation_unit(
@@ -46,7 +46,7 @@ pub(crate) fn format_compilation_unit(
         sections.push(package);
     }
     if !imports.is_empty() {
-        sections.push(format_import_section(imports, context.policy()));
+        sections.push(imports::import_section(imports, context.policy()));
     }
     if let Some(module) = module {
         sections.push(module);
@@ -106,58 +106,20 @@ fn compilation_unit_member_code_range(member: &CompilationUnitMember) -> Option<
     }
 }
 
-struct ImportSectionItem {
-    doc: Doc,
-    group: Option<String>,
-}
-
-fn format_import_section(imports: Vec<ImportSectionItem>, policy: JavaFormatPolicy) -> Doc {
-    let mut imports = imports.into_iter();
-    let Some(first) = imports.next() else {
-        return text("");
-    };
-
-    let mut docs = vec![first.doc];
-    let mut previous_group = first.group;
-    for import in imports {
-        let separator = if policy.separates_static_import_section()
-            && previous_group.is_some()
-            && import.group.is_some()
-            && previous_group != import.group
-        {
-            concat([hard_line(), hard_line()])
-        } else {
-            hard_line()
-        };
-        docs.push(separator);
-        docs.push(import.doc);
-        previous_group = import.group;
-    }
-
-    concat(docs)
-}
-
 fn format_import_section_item(
     import: &ImportDeclaration,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<ImportSectionItem> {
-    let group = import_group(import);
     let doc = format_import_declaration(import, context)?;
-    Ok(ImportSectionItem { doc, group })
-}
-
-fn import_group(import: &ImportDeclaration) -> Option<String> {
-    if import.is_module() {
-        return Some("module".to_owned());
-    }
-    if import.is_static() {
-        return Some("static".to_owned());
-    }
-    import
-        .name()?
-        .segments()
-        .next()
-        .map(|token| token.text().to_owned())
+    let top_level = import
+        .name()
+        .and_then(|name| name.segments().next().map(|token| token.text().to_owned()));
+    Ok(ImportSectionItem::new(
+        doc,
+        import.is_module(),
+        import.is_static(),
+        top_level,
+    ))
 }
 
 pub(super) fn format_module_declaration(
@@ -321,17 +283,11 @@ pub(super) fn format_import_declaration(
     let name = import
         .name()
         .expect("parser-clean import declaration should have a name");
-    let mut parts = vec![text("import ")];
-    if import.is_module() {
-        parts.push(text("module "));
-    }
-    if import.is_static() {
-        parts.push(text("static "));
-    }
-    parts.push(format_name(&name));
-    if import.is_on_demand() {
-        parts.push(text(".*"));
-    }
-    parts.push(text(";"));
-    with_attached_comments(context, code_range, concat(parts))
+    let doc = imports::import_declaration(ImportDeclarationLayout {
+        is_module: import.is_module(),
+        is_static: import.is_static(),
+        name: format_name(&name),
+        is_on_demand: import.is_on_demand(),
+    });
+    with_attached_comments(context, code_range, doc)
 }

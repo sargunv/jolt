@@ -114,8 +114,9 @@ than missing formatter coverage.
   the same class of problem affects lists, assignments, array initializers, and
   Palantir last-dot policy. See
   [Global break selection](#global-break-selection-architecture-debt).
-- Import section policy lives in `rules/compilation_unit.rs` rather than a
-  dedicated helper module.
+- Import section grouping and blank-line policy now live in
+  `helpers/imports.rs`; `rules/compilation_unit.rs` still owns
+  package/module/member traversal.
 
 See [Oracle compatibility gaps](#oracle-compatibility-gaps) for a report-derived
 breakdown of what the mismatches actually are.
@@ -864,17 +865,17 @@ helpers/
   chains.rs                selector chain layout policy
   bodies.rs                blocks and type bodies
   annotations.rs           annotation layout helpers
+  imports.rs               import declaration and section grouping policy
   literals.rs              literal formatting
 analyzers/
   chains.rs                chain flattening, metadata, grouping
+  binary.rs                same-precedence binary flattening
 ```
 
 Not yet extracted (extract only when a real policy surface justifies it):
 
-- `helpers/expressions.rs` — binary chains, assignment, lambda, array
-  initializer
-- `helpers/imports.rs` — import section grouping and blank-line policy
-- `analyzers/binary.rs` — same-precedence binary flattening
+- Broader `helpers/expressions.rs` ownership for conditional, cast,
+  parenthesized, array-initializer, and lambda wrapping policy
 
 Do not move code merely to satisfy this tree.
 
@@ -983,11 +984,14 @@ tails (`B20535125.java` tail), plus switch-block spacing polish.
 
 ### Imports and compilation units — partial
 
-`rules/compilation_unit.rs` handles package, imports, modules, and compact
-members. AOSP static-import separation goes through `JavaFormatPolicy`.
+`helpers/imports.rs` owns import declaration rendering, import section grouping,
+and blank-line separation via `JavaFormatPolicy`. `rules/compilation_unit.rs`
+collects package/import/module/member syntax and comment ranges, then delegates
+import layout to the helper.
 
-Remaining: extract an `import_section` helper when compilation-unit rules need
-more profile-specific grouping without growing the rule module.
+Remaining: implement oracle import ordering/removal only when the formatter
+pipeline owns a source-level import-ordering pass; do not grow
+`rules/compilation_unit.rs` for profile-specific grouping.
 
 ## Remaining Work
 
