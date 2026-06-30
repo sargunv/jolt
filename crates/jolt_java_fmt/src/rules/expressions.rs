@@ -10,7 +10,7 @@ use super::{
     take_leading_comment_docs_in_range, take_same_line_trailing_block_comment_docs_in_range,
     take_trailing_line_comment_docs_in_range_as_own_line, text, wrap,
 };
-use crate::analyzers::binary::{self as binary_analysis, BinaryChain, BinarySide};
+use crate::analyzers::binary::{self as binary_analysis, BinarySide};
 use crate::analyzers::chains::{BaseMetadata, Chain, ChainMember, ChainRole};
 use crate::analyzers::expressions::ExpressionLayout;
 use crate::context::JavaCommentBucket;
@@ -985,21 +985,12 @@ pub(super) fn format_assignment_expression(
         TextRange::new(operator_range.end(), right_range.start()),
         right_range,
     )?;
-    let right_layout = ExpressionLayout::for_expression(&right, context.policy());
-    let mut right = format_expression(&right, context)?;
-    let has_leading = !leading.is_empty();
-    if has_leading {
-        right = concat([join(hard_line(), leading), hard_line(), right]);
-    }
-    let right = if has_leading {
-        java_expressions::AssignmentValue::new(right)
-    } else {
-        java_expressions::AssignmentValue::from_expression_layout(right, right_layout)
-    };
-    Ok(java_expressions::assignment_expression(
+    Ok(java_expressions::assignment_expression_from_parts(
         format_expression(&left, context)?,
         operator_doc,
-        right,
+        format_expression(&right, context)?,
+        ExpressionLayout::for_expression(&right, context.policy()),
+        leading,
         context.policy(),
     ))
 }
@@ -1522,7 +1513,11 @@ fn format_lambda_expression_body(
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
     if let Expression::BinaryExpression(binary) = expression {
-        return format_binary_expression_with_layout(binary, context, BinaryLayout::LambdaBody);
+        return format_binary_expression_with_layout(
+            binary,
+            context,
+            java_expressions::BinaryExpressionLayout::LambdaBody,
+        );
     }
 
     format_expression_with_chain_role(expression, context, ChainRole::LambdaBody)
@@ -1664,72 +1659,57 @@ pub(super) fn format_binary_expression(
     binary: &jolt_java_syntax::BinaryExpression,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    format_binary_expression_with_layout(binary, context, BinaryLayout::Default)
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum BinaryLayout {
-    Default,
-    LambdaBody,
+    format_binary_expression_with_layout(
+        binary,
+        context,
+        java_expressions::BinaryExpressionLayout::Default,
+    )
 }
 
 fn format_binary_expression_with_layout(
     binary: &jolt_java_syntax::BinaryExpression,
     context: &mut JavaFormatContext<'_>,
-    layout: BinaryLayout,
+    layout: java_expressions::BinaryExpressionLayout,
 ) -> FormatResult<Doc> {
-    let chain = BinaryChain::for_expression(binary);
-    let precedence = chain.precedence();
-    let operands = chain.operands();
-    let operators = chain.operators();
+    let policy = context.policy();
+    let mut formatter = BinaryExpressionRuleFormatter { context };
+    java_expressions::binary_expression(binary, layout, policy, &mut formatter)
+}
 
-    let first_operand = operands
-        .first()
-        .expect("parser-clean binary chain should have a first operand");
-    let first_operator = operators
-        .first()
-        .expect("parser-clean binary chain should have an operator");
-    let first = format_binary_operand_with_comments(
-        first_operand,
-        precedence,
-        BinarySide::Left,
-        first_operand
-            .code_text_range()
-            .expect("parser-clean binary operand should have a code range"),
-        Some(first_operator.token_text_range()),
-        context,
-    )?;
+struct BinaryExpressionRuleFormatter<'context, 'source> {
+    context: &'context mut JavaFormatContext<'source>,
+}
 
-    let mut rest = Vec::new();
-    for (index, operator) in operators.iter().enumerate() {
-        let operand = operands
-            .get(index + 1)
-            .expect("binary operator should have a following operand");
-        let operand_range = operand
-            .code_text_range()
-            .expect("parser-clean binary operand should have a code range");
-        let next_operator_range = operators
-            .get(index + 1)
-            .map(JavaSyntaxToken::token_text_range);
-        rest.push((
-            format_binary_operator(operator, operand_range, context),
-            format_binary_operand_with_comments(
-                operand,
-                precedence,
-                BinarySide::Right,
-                operator.token_text_range(),
-                next_operator_range,
-                context,
-            )?,
-        ));
+impl java_expressions::BinaryExpressionFormatter for BinaryExpressionRuleFormatter<'_, '_> {
+    fn format_operand(
+        &mut self,
+        java_expressions::BinaryOperandSlot {
+            operand,
+            parent_precedence,
+            side,
+            previous_range,
+            next_operator_range,
+        }: java_expressions::BinaryOperandSlot<'_>,
+    ) -> FormatResult<java_expressions::BinaryOperand> {
+        format_binary_operand_with_comments(
+            operand,
+            parent_precedence,
+            side,
+            previous_range,
+            next_operator_range,
+            self.context,
+        )
     }
 
-    Ok(match layout {
-        BinaryLayout::Default => java_expressions::binary_chain(first, rest, context.policy()),
-        BinaryLayout::LambdaBody => {
-            java_expressions::lambda_body_binary_chain(first, rest, context.policy())
-        }
-    })
+    fn format_operator(
+        &mut self,
+        java_expressions::BinaryOperatorSlot {
+            operator,
+            next_operand_range,
+        }: java_expressions::BinaryOperatorSlot<'_>,
+    ) -> java_expressions::BinaryOperator {
+        format_binary_operator(operator, next_operand_range, self.context)
+    }
 }
 
 fn format_binary_operator(
@@ -1743,15 +1723,7 @@ fn format_binary_operator(
         operator_range,
         TextRange::new(operator_range.end(), next_operand_range.start()),
     );
-    if trailing.is_empty() {
-        java_expressions::BinaryOperator::new(format_token(operator))
-    } else {
-        java_expressions::BinaryOperator::with_forced_break_after(concat([
-            format_token(operator),
-            text(" "),
-            join(hard_line(), trailing),
-        ]))
-    }
+    java_expressions::binary_operator_with_trailing_comments(format_token(operator), trailing)
 }
 
 fn format_assignment_operator(
@@ -1763,25 +1735,13 @@ fn format_assignment_operator(
     let boundary = TextRange::new(operator_range.end(), right_range.start());
     let trailing_line =
         take_trailing_line_comment_docs_in_range_as_own_line(context, operator_range, boundary);
-    if !trailing_line.is_empty() {
-        return java_expressions::AssignmentOperator::with_forced_break_after(concat([
-            format_token(operator),
-            text(" "),
-            join(hard_line(), trailing_line),
-        ]));
-    }
-
     let trailing_block =
         take_same_line_trailing_block_comment_docs_in_range(context, operator_range, boundary);
-    if !trailing_block.is_empty() {
-        return java_expressions::AssignmentOperator::with_forced_break_after(concat([
-            format_token(operator),
-            text(" "),
-            join(text(" "), trailing_block),
-        ]));
-    }
-
-    java_expressions::AssignmentOperator::new(format_token(operator))
+    java_expressions::assignment_operator_with_trailing_comments(
+        format_token(operator),
+        trailing_line,
+        trailing_block,
+    )
 }
 
 fn take_expression_gap_comment_docs(
@@ -1815,35 +1775,23 @@ fn format_binary_operand_with_comments(
     } else {
         Vec::new()
     };
-    let mut doc = format_binary_operand(operand, parent_precedence, side, context)?;
-    let mut force_break_after = false;
-    if let Some(next_operator_range) = next_operator_range {
-        let trailing = take_trailing_line_comment_docs_in_range_as_own_line(
+    let trailing = if let Some(next_operator_range) = next_operator_range {
+        
+        take_trailing_line_comment_docs_in_range_as_own_line(
             context,
             operand_range,
             TextRange::new(operand_range.end(), next_operator_range.start()),
-        );
-        if !trailing.is_empty() {
-            force_break_after = true;
-            doc = concat([doc, text(" "), join(hard_line(), trailing)]);
-        }
-    }
-    let has_leading = !leading.is_empty();
-    if has_leading {
-        doc = concat([join(hard_line(), leading), hard_line(), doc]);
-    }
-    if force_break_after {
-        Ok(java_expressions::BinaryOperand::with_forced_break_after(
-            doc,
-        ))
-    } else if !has_leading {
-        Ok(java_expressions::BinaryOperand::from_expression_layout(
-            doc,
-            ExpressionLayout::for_expression(operand, context.policy()),
-        ))
+        )
     } else {
-        Ok(java_expressions::BinaryOperand::new(doc))
-    }
+        Vec::new()
+    };
+
+    Ok(java_expressions::binary_operand_from_parts(
+        format_binary_operand(operand, parent_precedence, side, context)?,
+        ExpressionLayout::for_expression(operand, context.policy()),
+        leading,
+        trailing,
+    ))
 }
 
 fn format_binary_operand(

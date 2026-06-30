@@ -1,10 +1,14 @@
 use jolt_fmt_ir::{
-    Doc, FlatLine, break_, concat, fill, fill_entry, group, hard_line, indent_by, line, text,
+    Doc, FlatLine, break_, concat, fill, fill_entry, group, hard_line, indent_by, join, line, text,
 };
 
+use crate::analyzers::binary::{BinaryChain, BinarySide};
 use crate::analyzers::expressions::ExpressionLayout;
+use crate::diagnostics::FormatResult;
 use crate::helpers::literals::TextBlockOpeningIndent;
 use crate::policy::JavaFormatPolicy;
+use jolt_diagnostics::TextRange;
+use jolt_java_syntax::{BinaryExpression, Expression, JavaSyntaxToken};
 
 pub(crate) struct AssignmentOperator {
     doc: Doc,
@@ -27,6 +31,30 @@ impl AssignmentOperator {
     }
 }
 
+pub(crate) fn assignment_operator_with_trailing_comments(
+    operator: Doc,
+    trailing_line: Vec<Doc>,
+    trailing_block: Vec<Doc>,
+) -> AssignmentOperator {
+    if !trailing_line.is_empty() {
+        return AssignmentOperator::with_forced_break_after(concat([
+            operator,
+            text(" "),
+            join(hard_line(), trailing_line),
+        ]));
+    }
+
+    if !trailing_block.is_empty() {
+        return AssignmentOperator::with_forced_break_after(concat([
+            operator,
+            text(" "),
+            join(text(" "), trailing_block),
+        ]));
+    }
+
+    AssignmentOperator::new(operator)
+}
+
 pub(crate) fn assignment_expression(
     left: Doc,
     operator: AssignmentOperator,
@@ -34,6 +62,29 @@ pub(crate) fn assignment_expression(
     policy: JavaFormatPolicy,
 ) -> Doc {
     assignment_expression_with_indent(left, operator, right, policy.continuation_indent_levels())
+}
+
+pub(crate) fn assignment_expression_from_parts(
+    left: Doc,
+    operator: AssignmentOperator,
+    right: Doc,
+    right_layout: ExpressionLayout,
+    leading_comments: Vec<Doc>,
+    policy: JavaFormatPolicy,
+) -> Doc {
+    let has_leading_comments = !leading_comments.is_empty();
+    let right = if has_leading_comments {
+        concat([join(hard_line(), leading_comments), hard_line(), right])
+    } else {
+        right
+    };
+    let right = if has_leading_comments {
+        AssignmentValue::new(right)
+    } else {
+        AssignmentValue::from_expression_layout(right, right_layout)
+    };
+
+    assignment_expression(left, operator, right, policy)
 }
 
 pub(crate) fn variable_declarator_block_initializer(name: Doc, initializer: Doc) -> Doc {
@@ -198,6 +249,131 @@ impl BinaryOperator {
             force_break_after: true,
         }
     }
+}
+
+pub(crate) fn binary_operator_with_trailing_comments(
+    operator: Doc,
+    trailing_comments: Vec<Doc>,
+) -> BinaryOperator {
+    if trailing_comments.is_empty() {
+        BinaryOperator::new(operator)
+    } else {
+        BinaryOperator::with_forced_break_after(concat([
+            operator,
+            text(" "),
+            join(hard_line(), trailing_comments),
+        ]))
+    }
+}
+
+pub(crate) fn binary_operand_from_parts(
+    operand: Doc,
+    layout: ExpressionLayout,
+    leading_comments: Vec<Doc>,
+    trailing_comments: Vec<Doc>,
+) -> BinaryOperand {
+    let mut operand = operand;
+    let has_leading_comments = !leading_comments.is_empty();
+    let has_trailing_comments = !trailing_comments.is_empty();
+
+    if has_trailing_comments {
+        operand = concat([operand, text(" "), join(hard_line(), trailing_comments)]);
+    }
+    if has_leading_comments {
+        operand = concat([join(hard_line(), leading_comments), hard_line(), operand]);
+    }
+
+    if has_trailing_comments {
+        BinaryOperand::with_forced_break_after(operand)
+    } else if has_leading_comments {
+        BinaryOperand::new(operand)
+    } else {
+        BinaryOperand::from_expression_layout(operand, layout)
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum BinaryExpressionLayout {
+    Default,
+    LambdaBody,
+}
+
+pub(crate) struct BinaryOperandSlot<'a> {
+    pub(crate) operand: &'a Expression,
+    pub(crate) parent_precedence: u8,
+    pub(crate) side: BinarySide,
+    pub(crate) previous_range: TextRange,
+    pub(crate) next_operator_range: Option<TextRange>,
+}
+
+pub(crate) struct BinaryOperatorSlot<'a> {
+    pub(crate) operator: &'a JavaSyntaxToken,
+    pub(crate) next_operand_range: TextRange,
+}
+
+pub(crate) trait BinaryExpressionFormatter {
+    fn format_operand(&mut self, slot: BinaryOperandSlot<'_>) -> FormatResult<BinaryOperand>;
+
+    fn format_operator(&mut self, slot: BinaryOperatorSlot<'_>) -> BinaryOperator;
+}
+
+pub(crate) fn binary_expression(
+    binary: &BinaryExpression,
+    layout: BinaryExpressionLayout,
+    policy: JavaFormatPolicy,
+    formatter: &mut impl BinaryExpressionFormatter,
+) -> FormatResult<Doc> {
+    let chain = BinaryChain::for_expression(binary);
+    let precedence = chain.precedence();
+    let operands = chain.operands();
+    let operators = chain.operators();
+
+    let first_operand = operands
+        .first()
+        .expect("parser-clean binary chain should have a first operand");
+    let first_operator = operators
+        .first()
+        .expect("parser-clean binary chain should have an operator");
+    let first = formatter.format_operand(BinaryOperandSlot {
+        operand: first_operand,
+        parent_precedence: precedence,
+        side: BinarySide::Left,
+        previous_range: first_operand
+            .code_text_range()
+            .expect("parser-clean binary operand should have a code range"),
+        next_operator_range: Some(first_operator.token_text_range()),
+    })?;
+
+    let mut rest = Vec::new();
+    for (index, operator) in operators.iter().enumerate() {
+        let operand = operands
+            .get(index + 1)
+            .expect("binary operator should have a following operand");
+        let operand_range = operand
+            .code_text_range()
+            .expect("parser-clean binary operand should have a code range");
+        let next_operator_range = operators
+            .get(index + 1)
+            .map(JavaSyntaxToken::token_text_range);
+        rest.push((
+            formatter.format_operator(BinaryOperatorSlot {
+                operator,
+                next_operand_range: operand_range,
+            }),
+            formatter.format_operand(BinaryOperandSlot {
+                operand,
+                parent_precedence: precedence,
+                side: BinarySide::Right,
+                previous_range: operator.token_text_range(),
+                next_operator_range,
+            })?,
+        ));
+    }
+
+    Ok(match layout {
+        BinaryExpressionLayout::Default => binary_chain(first, rest, policy),
+        BinaryExpressionLayout::LambdaBody => lambda_body_binary_chain(first, rest, policy),
+    })
 }
 
 pub(crate) fn binary_chain(

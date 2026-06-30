@@ -950,15 +950,18 @@ shape, not fixture-name heuristics.
 GJF parity for inline nested chains depends on
 [global break selection](#global-break-selection-architecture-debt).
 
-### Expressions — not extracted
+### Expressions — partial
 
-Binary, assignment, conditional, cast, parenthesized, array initializer, and
-lambda wrapping still live in `rules/expressions.rs` and `layout.rs`.
+`helpers/expressions.rs` owns assignment expression layout, binary chain layout,
+and text-block-aware expression value handling. `analyzers/binary.rs` owns
+same-precedence chain flattening and precedence/parenthesization metadata.
+`rules/expressions.rs` still owns expression syntax traversal and comment slot
+collection before delegating binary and assignment layout into the helper.
 
-Target: a `helpers/expressions.rs` (and possibly `analyzers/binary.rs`) that
-owns precedence, associativity, and comment-forced breaks. New expression
-helpers should use optional breaks / deferred layout—not nested `best_fitting`
-on eager subtrees—see
+Remaining: conditional, cast, parenthesized, array initializer, and broader
+lambda wrapping policy still need helper ownership. New expression helpers
+should use optional breaks / deferred layout—not nested `best_fitting` on eager
+subtrees—see
 [global break selection](#global-break-selection-architecture-debt).
 
 ### Blocks and bodies — largely done
