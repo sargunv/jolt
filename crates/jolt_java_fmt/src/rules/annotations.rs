@@ -20,7 +20,7 @@ pub(super) fn format_modifier_list(
         return Ok(ModifierDocs::default());
     };
 
-    let annotations = format_annotation_list(modifiers.annotations(), context, "declaration")?;
+    let annotations = format_annotation_doc_list(modifiers.annotations(), context, "declaration")?;
     let tokens = modifiers.tokens().collect::<Vec<_>>();
     let keyword_tokens = modifiers.modifier_tokens().collect::<Vec<_>>();
     let (leading_comments, inline_leading_comments) =
@@ -73,7 +73,7 @@ pub(super) fn format_modifier_list(
 #[derive(Default)]
 pub(super) struct ModifierDocs {
     pub(super) leading_comments: Vec<Doc>,
-    pub(super) annotations: Vec<Doc>,
+    pub(super) annotations: Vec<java_annotations::AnnotationDoc>,
     pub(super) inline_leading_comments: Vec<Doc>,
     pub(super) modifier_tokens: Vec<JavaSyntaxToken>,
 }
@@ -118,7 +118,16 @@ impl ModifierDocs {
     }
 
     pub(super) fn with_annotations(self, declaration: Doc) -> Doc {
-        let doc = with_vertical_annotations(self.annotations, declaration);
+        self.with_annotations_layout(declaration, java_annotations::AnnotationLayout::Vertical)
+    }
+
+    pub(super) fn with_annotations_layout(
+        self,
+        declaration: Doc,
+        layout: java_annotations::AnnotationLayout,
+    ) -> Doc {
+        let doc =
+            java_annotations::with_declaration_annotations(self.annotations, declaration, layout);
         if self.leading_comments.is_empty() {
             doc
         } else {
@@ -143,6 +152,50 @@ pub(super) fn format_annotation_list(
     annotations
         .map(|annotation| format_annotation(&annotation, context, annotation_kind))
         .collect()
+}
+
+pub(super) fn format_annotation_doc_list(
+    annotations: impl Iterator<Item = Annotation>,
+    context: &mut JavaFormatContext<'_>,
+    annotation_kind: &'static str,
+) -> FormatResult<Vec<java_annotations::AnnotationDoc>> {
+    annotations
+        .map(|annotation| format_annotation_doc(&annotation, context, annotation_kind))
+        .collect()
+}
+
+pub(super) fn format_annotation_doc(
+    annotation: &Annotation,
+    context: &mut JavaFormatContext<'_>,
+    annotation_kind: &'static str,
+) -> FormatResult<java_annotations::AnnotationDoc> {
+    let range = annotation
+        .code_text_range()
+        .unwrap_or_else(|| annotation.text_range());
+    let has_arguments = annotation
+        .arguments()
+        .and_then(|arguments| arguments.elements())
+        .is_some();
+    let simple_name = annotation_simple_name(annotation);
+    let is_type_use = java_annotations::is_known_type_use_annotation_name(&simple_name);
+    Ok(java_annotations::AnnotationDoc::new(
+        format_annotation(annotation, context, annotation_kind)?,
+        range,
+        has_arguments,
+        is_type_use,
+    ))
+}
+
+fn annotation_simple_name(annotation: &Annotation) -> String {
+    let source = annotation.source_text();
+    let annotation_text = source.trim_start();
+    let name = annotation_text
+        .strip_prefix('@')
+        .unwrap_or(annotation_text)
+        .split(|ch: char| !(ch == '.' || ch == '_' || ch.is_ascii_alphanumeric()))
+        .next()
+        .unwrap_or_default();
+    name.rsplit('.').next().unwrap_or_default().to_owned()
 }
 
 pub(super) fn format_annotation(
@@ -205,20 +258,35 @@ pub(super) fn format_annotation_argument_list(
     };
 
     if elements.has_pair_list_layout_shape() {
+        let raw_pairs = elements.pairs().collect::<Vec<_>>();
+        if !raw_pairs.iter().any(annotation_pair_has_array_initializer)
+            || context
+                .unhandled_comment_trivia_in_range(list_range)
+                .is_some()
+        {
+            let pairs = raw_pairs
+                .into_iter()
+                .map(|pair| {
+                    let range = pair
+                        .code_text_range()
+                        .expect("parser-clean annotation pair should have a source range");
+                    Ok(java_lists::ListItem::new(range, move |context| {
+                        format_annotation_element_value_pair(&pair, context)
+                            .map(java_annotations::AnnotationPair::into_doc)
+                    }))
+                })
+                .collect::<FormatResult<Vec<_>>>()?;
+            return java_lists::formal_parameter_list(pairs, list_range, None, context);
+        }
+
         let pairs = elements
             .pairs()
-            .map(|pair| {
-                let range = pair
-                    .code_text_range()
-                    .expect("parser-clean annotation pair should have a source range");
-                let pair = pair.clone();
-                Ok(java_lists::ListItem::new(range, move |context| {
-                    format_annotation_element_value_pair(&pair, context)
-                        .map(java_annotations::AnnotationPair::into_doc)
-                }))
-            })
+            .map(|pair| format_annotation_element_value_pair(&pair, context))
             .collect::<FormatResult<Vec<_>>>()?;
-        return java_lists::formal_parameter_list(pairs, list_range, None, context);
+        return Ok(java_annotations::pair_argument_list(
+            pairs,
+            context.policy(),
+        ));
     }
 
     if elements.has_value_list_layout_shape() {
@@ -259,6 +327,11 @@ pub(super) fn format_annotation_argument_list(
             })
             .collect::<FormatResult<Vec<_>>>()?,
     ))
+}
+
+fn annotation_pair_has_array_initializer(pair: &AnnotationElementValuePair) -> bool {
+    pair.value()
+        .is_some_and(|value| value.array_initializer().is_some())
 }
 
 pub(super) fn format_annotation_element_value_pair(
@@ -303,8 +376,7 @@ fn format_annotation_array_initializer(
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
     use crate::analyzers::array_initializers::{
-        ParallelKind, TabularEntry, has_only_short_entries, row_opens_without_extra_indent,
-        tabular_layout_for_entries,
+        has_only_short_entries, row_opens_without_extra_indent, tabular_layout_for_entries,
     };
     use crate::helpers::array_initializers::{InitializerLayout, braced_initializer_block};
 
@@ -329,14 +401,7 @@ fn format_annotation_array_initializer(
     let policy = context.policy();
     let entries = raw_values
         .iter()
-        .map(|value| TabularEntry {
-            range: value
-                .code_text_range()
-                .expect("parser-clean annotation array value should have a source range"),
-            kind: ParallelKind::Literal,
-            row_weight: 1,
-            is_nested_array: false,
-        })
+        .map(crate::analyzers::array_initializers::annotation_array_tabular_entry)
         .collect::<Vec<_>>();
 
     let layout = if let Some(tabular) = tabular_layout_for_entries(&entries, context) {
@@ -352,8 +417,20 @@ fn format_annotation_array_initializer(
         }
     } else {
         let short_items = has_only_short_entries(&entries, policy);
-        InitializerLayout::Fill { short_items }
+        let tight_fit = entries.len() >= policy.array_initializer_tight_fit_min_items()
+            && raw_values
+                .iter()
+                .all(|value| value.array_initializer().is_none());
+        InitializerLayout::Fill {
+            short_items,
+            tight_fit,
+        }
     };
 
-    Ok(braced_initializer_block(list, layout, false, policy))
+    Ok(braced_initializer_block(
+        list,
+        layout,
+        initializer.has_trailing_comma(),
+        policy,
+    ))
 }

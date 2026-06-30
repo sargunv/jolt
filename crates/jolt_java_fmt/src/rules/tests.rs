@@ -115,7 +115,7 @@ fn imports_preserve_source_order() {
 fn module_declarations_format() {
     assert_formatted(
         "@Deprecated open module example.module { requires transitive static java.sql; exports example.api to friend.module, other.module; opens example.internal; uses example.Service; provides example.Service with example.ServiceImpl, other.ServiceImpl; }",
-        "@Deprecated\nopen module example.module {\n  requires transitive static java.sql;\n  exports example.api to friend.module, other.module;\n  opens example.internal;\n  uses example.Service;\n  provides example.Service with example.ServiceImpl, other.ServiceImpl;\n}",
+        "@Deprecated\nopen module example.module {\n  requires transitive static java.sql;\n\n  exports example.api to\n      friend.module,\n      other.module;\n\n  opens example.internal;\n\n  uses example.Service;\n\n  provides example.Service with\n      example.ServiceImpl,\n      other.ServiceImpl;\n}",
     );
 }
 
@@ -157,13 +157,17 @@ fn method_and_constructor_signatures_format_structurally() {
 
 #[test]
 fn method_signature_comments_format() {
-    assert_formats_successfully("class A { void g( // line comment\nint x) {} }");
-    assert_formats_successfully(
-        "class A { void //\ng //\n( //\nint //\nx //\n, //\nint //\ny //\n) //\n{} }",
+    assert_formatted(
+        "class A { void g( // line comment\nint x) {} }",
+        "class A {\n  void g( // line comment\n      int x) {}\n}",
+    );
+    assert_formatted(
+        "class A { void //\ng //\n( //\nint //\nx //\n, //\nint //\ny //\n) //\n{ //\n} //\n}",
+        "class A {\n  void //\n      g //\n      ( //\n      int //\n          x //\n          , //\n      int //\n          y //\n      ) //\n      { //\n  } //\n}",
     );
     assert_formatted(
         "class A { /**\n */private static void method() {} }",
-        "class A {\n  /** */\n  private static void method() {}\n}",
+        "class A {\n  /**\n   */\n  private static void method() {}\n}",
     );
     assert_formats_successfully(
         "class A { private native Object f() /*-{\n  return null;\n}-*/; }",
@@ -206,7 +210,7 @@ fn interface_declarations_format_structurally() {
 fn enum_declarations_format_structurally() {
     assert_formatted(
         "enum Empty {} enum Op implements Marker { @A ONE, TWO(1 + helper(\"x\"), new Box()), SPECIAL { void run() {} }; int code; Op(int code) { this.code = code; } enum Nested { VALUE } }",
-        "enum Empty {}\n\nenum Op implements Marker {\n  @A ONE,\n  TWO(1 + helper(\"x\"), new Box()),\n  SPECIAL {\n    void run() {}\n  }\n  ;\n  int code;\n  Op(int code) {\n    this.code = code;\n  }\n  enum Nested {\n    VALUE\n  }\n}",
+        "enum Empty {}\n\nenum Op implements Marker {\n  @A\n  ONE,\n  TWO(1 + helper(\"x\"), new Box()),\n  SPECIAL {\n    void run() {}\n  };\n\n  int code;\n  Op(int code) {\n    this.code = code;\n  }\n  enum Nested {\n    VALUE\n  }\n}",
     );
     assert_formatted("enum E { A, }", "enum E {\n  A,\n}");
 }
@@ -232,7 +236,7 @@ fn dangling_comments_inside_empty_interface_bodies_format() {
 fn declaration_marker_annotations_format_vertically() {
     assert_formatted(
         "@Pkg package com.example; @Type public class A { @Field private String value; @Method public String name() { return value; } @Ctor A() {} @Nested static class Nested {} }",
-        "@Pkg\npackage com.example;\n\n@Type\npublic class A {\n  @Field\n  private String value;\n\n  @Method\n  public String name() {\n    return value;\n  }\n\n  @Ctor\n  A() {}\n\n  @Nested\n  static class Nested {}\n}",
+        "@Pkg\npackage com.example;\n\n@Type\npublic class A {\n  @Field private String value;\n\n  @Method\n  public String name() {\n    return value;\n  }\n\n  @Ctor\n  A() {}\n\n  @Nested\n  static class Nested {}\n}",
     );
 }
 
@@ -288,7 +292,7 @@ fn local_variable_types_and_throw_statements_format_structurally() {
 fn local_variable_annotations_and_declarator_dimensions_format() {
     assert_formatted(
         "class A { void m(Object values) { @Marker final Object annotated; @Marker Object plain; String legacy[] = names; int numbers[] = {1, 2}; var _ = values; } }",
-        "class A {\n  void m(Object values) {\n    @Marker\n    final Object annotated;\n    @Marker\n    Object plain;\n    String legacy[] = names;\n    int numbers[] = {1, 2};\n    var _ = values;\n  }\n}",
+        "class A {\n  void m(Object values) {\n    @Marker final Object annotated;\n    @Marker Object plain;\n    String legacy[] = names;\n    int numbers[] = {1, 2};\n    var _ = values;\n  }\n}",
     );
 }
 
@@ -354,7 +358,7 @@ fn object_creation_variants_format() {
 fn casts_arrays_and_switch_expressions_format() {
     assert_formatted(
         "class A { Object[] values = new Object[] { one, (String) two, new String @A [] { three, }, }; int[] sized = new int[count]; Object choice(int x) { values[0] = values[count - 1]; return switch (x) { case 1 -> new Object(); default -> (Object) fallback; }; } }",
-        "class A {\n  Object[] values = new Object[] {\n        one,\n        (String) two,\n        new String @A [] {three,},\n      };\n  int[] sized = new int[count];\n\n  Object choice(int x) {\n    values[0] = values[count - 1];\n    return switch (x) {\n      case 1 -> new Object();\n      default -> (Object) fallback;\n    };\n  }\n}",
+        "class A {\n  Object[] values =\n      new Object[] {\n        one, (String) two, new String @A [] {\n          three,\n        },\n      };\n  int[] sized = new int[count];\n\n  Object choice(int x) {\n    values[0] = values[count - 1];\n    return switch (x) {\n      case 1 -> new Object();\n      default -> (Object) fallback;\n    };\n  }\n}",
     );
 }
 
@@ -406,7 +410,7 @@ fn selector_receivers_format_general_expressions() {
     );
     assert_formatted(
         "class A { void m() { Object x = (String) foo.xxx().yyy(); } }",
-        "class A {\n  void m() {\n    Object x =\n        (String)\n            foo\n            .xxx()\n            .yyy();\n  }\n}",
+        "class A {\n  void m() {\n    Object x =\n        (String)\n            foo\n                .xxx()\n                .yyy();\n  }\n}",
     );
 }
 
@@ -414,7 +418,7 @@ fn selector_receivers_format_general_expressions() {
 fn selector_chain_comments_format() {
     assert_formatted(
         "class A { void m() { logger // receiver\n.atInfo() // member\n.log( // open\n\"message\"); } }",
-        "class A {\n  void m() {\n    logger // receiver\n        .atInfo() // member\n        .log(\n            // open\n            \"message\");\n  }\n}",
+        "class A {\n  void m() {\n    logger // receiver\n        .atInfo() // member\n        .log( // open\n            \"message\");\n  }\n}",
     );
 }
 
@@ -470,7 +474,7 @@ fn narrow_width_wraps_method_signature_parameters() {
 fn narrow_width_wraps_type_parameter_and_argument_lists() {
     assert_formatted_with_width(
         "class A<Alpha, Beta, Gamma> { java.util.Map<Alpha, Beta> value; }",
-        "class A<\n        Alpha,\n        Beta,\n        Gamma> {\n  java.util.Map<\n          Alpha,\n          Beta> value;\n}",
+        "class A<\n    Alpha, Beta,\n    Gamma> {\n  java.util.Map<\n          Alpha,\n          Beta>\n      value;\n}",
         20,
     );
 }
@@ -540,15 +544,15 @@ fn leading_javadocs_before_class_and_method_format() {
 fn multiline_leading_block_comments_and_javadocs_format() {
     assert_formatted(
         "/*\n * class docs\n */\nclass A {\n/**\n * field docs\n */\nint value;\nvoid clear() {\n/*\n * local docs\n */\nreturn;\n}\n}",
-        "/*\n * class docs\n */\nclass A {\n  /** field docs */\n  int value;\n\n  void clear() {\n    /*\n     * local docs\n     */\n    return;\n  }\n}",
+        "/*\n * class docs\n */\nclass A {\n  /**\n   * field docs\n   */\n  int value;\n\n  void clear() {\n    /*\n     * local docs\n     */\n    return;\n  }\n}",
     );
 }
 
 #[test]
-fn single_body_multiline_javadocs_collapse_to_one_line() {
+fn single_body_multiline_javadocs_preserve_vertical_shape() {
     assert_formatted(
         "class A {\n  /**\n   * field docs\n   */\n  int value;\n}",
-        "class A {\n  /** field docs */\n  int value;\n}",
+        "class A {\n  /**\n   * field docs\n   */\n  int value;\n}",
     );
 }
 
@@ -576,7 +580,7 @@ fn type_body_and_unit_tail_comments_format() {
 fn dangling_comments_inside_empty_blocks_format() {
     assert_formatted(
         "class A { void clear() {\n// line\n} A() {\n/**\n * constructor\n */\n} }",
-        "class A {\n  void clear() {\n    // line\n  }\n\n  A() {\n    /** constructor */\n  }\n}",
+        "class A {\n  void clear() {\n    // line\n  }\n\n  A() {\n    /**\n     * constructor\n     */\n  }\n}",
     );
 }
 
@@ -693,7 +697,7 @@ fn switch_pattern_labels_format() {
 fn simple_loop_statements_format() {
     assert_formatted(
         "class A { void m() { while (ready) return; while (again) { call(); } do continue; while (ready); do { call(); } while (again); for (;;) return; for (int i = 0; i < limit; i++) { call(i); } for (value = 0, other = 1; value < limit; value++, other++) call(value); for (String value : values) call(value); } }",
-        "class A {\n  void m() {\n    while (ready) return;\n    while (again) {\n      call();\n    }\n    do continue; while (ready);\n    do {\n      call();\n    } while (again);\n    for ( ; ; ) return;\n    for (int i = 0; i < limit; i++) {\n      call(i);\n    }\n    for (value = 0, other = 1; value < limit; value++, other++) call(value);\n    for (String value : values) call(value);\n  }\n}",
+        "class A {\n  void m() {\n    while (ready) return;\n    while (again) {\n      call();\n    }\n    do continue; while (ready);\n    do {\n      call();\n    } while (again);\n    for (; ; ) return;\n    for (int i = 0; i < limit; i++) {\n      call(i);\n    }\n    for (value = 0, other = 1; value < limit; value++, other++) call(value);\n    for (String value : values) call(value);\n  }\n}",
     );
 }
 
@@ -741,6 +745,14 @@ fn simple_try_finally_statements_format() {
 fn try_with_resources_statements_format() {
     assert_formatted(
         "class A { void m(Resource existing) { try (final Resource r = open(); existing;) { use(r); } catch (Exception ex) { handle(ex); } finally { cleanup(); } try (this.existing) {} } }",
-        "class A {\n  void m(Resource existing) {\n    try (final Resource r = open(); existing) {\n      use(r);\n    } catch (Exception ex) {\n      handle(ex);\n    } finally {\n      cleanup();\n    }\n    try (this.existing) {}\n  }\n}",
+        "class A {\n  void m(Resource existing) {\n    try (final Resource r = open(); existing; ) {\n      use(r);\n    } catch (Exception ex) {\n      handle(ex);\n    } finally {\n      cleanup();\n    }\n    try (this.existing) {}\n  }\n}",
+    );
+}
+
+#[test]
+fn try_with_resources_resource_comments_format() {
+    assert_formatted(
+        "class A { void m(Resource existing) { try (var r = open(); // keep\n existing) {} try (existing; /* keep */) {} } }",
+        "class A {\n  void m(Resource existing) {\n    try (\n        var r = open(); // keep\n        existing) {}\n    try (\n        existing; /* keep */) {}\n  }\n}",
     );
 }

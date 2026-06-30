@@ -1,7 +1,7 @@
 use jolt_diagnostics::TextRange;
 use jolt_java_syntax::{JavaLexer, JavaSyntaxKind, Trivia, TriviaKind};
 
-use crate::options::JavaFormatProfile;
+use crate::options::{JavaFormatOptions, JavaFormatProfile};
 use crate::policy::JavaFormatPolicy;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -9,6 +9,7 @@ pub(crate) struct JavaFormatContext<'source> {
     source: &'source str,
     policy: JavaFormatPolicy,
     comments: Vec<JavaCommentRecord>,
+    nested_argument_depth: usize,
 }
 
 impl<'source> JavaFormatContext<'source> {
@@ -18,6 +19,10 @@ impl<'source> JavaFormatContext<'source> {
     }
 
     pub(crate) fn with_profile(source: &'source str, profile: JavaFormatProfile) -> Self {
+        Self::with_options(source, JavaFormatOptions::for_profile(profile))
+    }
+
+    pub(crate) fn with_options(source: &'source str, options: JavaFormatOptions) -> Self {
         let mut lexer = JavaLexer::new(source);
         let mut comments = Vec::new();
 
@@ -59,13 +64,51 @@ impl<'source> JavaFormatContext<'source> {
 
         Self {
             source,
-            policy: JavaFormatPolicy::new(profile),
+            policy: JavaFormatPolicy::with_render_options(
+                options.profile,
+                options.render.line_width.get() as usize,
+                options.render.indent_width,
+            ),
             comments,
+            nested_argument_depth: 0,
         }
     }
 
     pub(crate) fn policy(&self) -> JavaFormatPolicy {
         self.policy
+    }
+
+    pub(crate) fn nested_argument_depth(&self) -> usize {
+        self.nested_argument_depth
+    }
+
+    pub(crate) fn in_nested_argument_scope<R>(
+        &mut self,
+        f: impl FnOnce(&mut JavaFormatContext<'source>) -> R,
+    ) -> R {
+        self.nested_argument_depth += 1;
+        let result = f(self);
+        self.nested_argument_depth -= 1;
+        result
+    }
+
+    pub(crate) fn line_context_for_range(&self, range: TextRange) -> LineContext {
+        let start = range.start().get();
+        let end = range.end().get();
+        let line_start = self.source[..start]
+            .rfind(['\n', '\r'])
+            .map_or(0, |index| index + 1);
+        let line_end = self.source[end..]
+            .find(['\n', '\r'])
+            .map_or(self.source.len(), |index| end + index);
+        let prefix = &self.source[line_start..start];
+        let suffix = &self.source[end..line_end];
+
+        LineContext {
+            start_column: prefix.chars().count(),
+            starts_line: prefix.chars().all(|ch| matches!(ch, ' ' | '\t')),
+            trailing_width: suffix.chars().count(),
+        }
     }
 
     pub(crate) fn has_unhandled_comment_trivia(&self) -> bool {
@@ -366,24 +409,31 @@ impl<'source> JavaFormatContext<'source> {
         self.claim_comments(indices)
     }
 
-    pub(crate) fn take_list_item_trailing_line_comment(
+    pub(crate) fn take_list_item_trailing_line_comment_with_separator(
         &mut self,
         item_range: TextRange,
         boundary: TextRange,
+        separator: char,
     ) -> Option<JavaCommentTrivia> {
         let index = self.comments.iter().position(|comment| {
             !comment.claimed
-                && self.is_list_item_trailing_line_comment(&comment.trivia, item_range, boundary)
+                && self.is_list_item_trailing_line_comment(
+                    &comment.trivia,
+                    item_range,
+                    boundary,
+                    separator,
+                )
         })?;
 
         self.comments[index].claimed = true;
         Some(self.comments[index].trivia.clone())
     }
 
-    pub(crate) fn take_list_item_trailing_block_comments(
+    pub(crate) fn take_list_item_trailing_block_comments_with_separator(
         &mut self,
         item_range: TextRange,
         boundary: TextRange,
+        separator: char,
     ) -> Vec<JavaCommentTrivia> {
         let mut saw_separator = false;
         let indices = self
@@ -397,6 +447,7 @@ impl<'source> JavaFormatContext<'source> {
                     item_range,
                     boundary,
                     saw_separator,
+                    separator,
                 );
                 if matches {
                     saw_separator = true;
@@ -409,9 +460,10 @@ impl<'source> JavaFormatContext<'source> {
         self.claim_comments(indices)
     }
 
-    pub(crate) fn take_list_separator_trailing_line_comments(
+    pub(crate) fn take_list_separator_trailing_line_comments_with_separator(
         &mut self,
         boundary: TextRange,
+        separator: char,
     ) -> Vec<JavaCommentTrivia> {
         let indices = self
             .comments
@@ -419,7 +471,7 @@ impl<'source> JavaFormatContext<'source> {
             .enumerate()
             .filter(|(_, comment)| !comment.claimed)
             .filter(|(_, comment)| {
-                self.is_list_separator_trailing_line_comment(&comment.trivia, boundary)
+                self.is_list_separator_trailing_line_comment(&comment.trivia, boundary, separator)
             })
             .map(|(index, _)| index)
             .collect();
@@ -449,6 +501,16 @@ impl<'source> JavaFormatContext<'source> {
         }
 
         JavaCommentBucket::Remaining
+    }
+
+    pub(crate) fn has_comment_in_bucket(
+        &self,
+        code_range: TextRange,
+        bucket: JavaCommentBucket,
+    ) -> bool {
+        self.comments.iter().any(|comment| {
+            !comment.claimed && self.comment_bucket_for_range(&comment.trivia, code_range) == bucket
+        })
     }
 
     pub(crate) fn raw_text(&self, comment: &JavaCommentTrivia) -> &'source str {
@@ -608,6 +670,7 @@ impl<'source> JavaFormatContext<'source> {
         comment: &JavaCommentTrivia,
         item_range: TextRange,
         boundary: TextRange,
+        separator: char,
     ) -> bool {
         if comment.trivia.kind != TriviaKind::LineComment {
             return false;
@@ -622,8 +685,10 @@ impl<'source> JavaFormatContext<'source> {
         }
 
         let between = &self.source[item_range.end().get()..comment.trivia.range.start().get()];
-        between.chars().all(|ch| ch == ',' || ch.is_whitespace())
-            && (between.contains(',') || between.chars().all(char::is_whitespace))
+        between
+            .chars()
+            .all(|ch| ch == separator || ch.is_whitespace())
+            && (between.contains(separator) || between.chars().all(char::is_whitespace))
     }
 
     fn is_list_item_trailing_block_comment(
@@ -632,6 +697,7 @@ impl<'source> JavaFormatContext<'source> {
         item_range: TextRange,
         boundary: TextRange,
         previous_comment_after_separator: bool,
+        separator: char,
     ) -> bool {
         if !self.is_inline_block_comment(comment) {
             return false;
@@ -654,13 +720,17 @@ impl<'source> JavaFormatContext<'source> {
         }
 
         let between = &self.source[item_range.end().get()..comment.trivia.range.start().get()];
-        between.contains(',') && between.chars().all(|ch| ch == ',' || ch.is_whitespace())
+        between.contains(separator)
+            && between
+                .chars()
+                .all(|ch| ch == separator || ch.is_whitespace())
     }
 
     fn is_list_separator_trailing_line_comment(
         &self,
         comment: &JavaCommentTrivia,
         boundary: TextRange,
+        separator: char,
     ) -> bool {
         if comment.trivia.kind != TriviaKind::LineComment {
             return false;
@@ -672,12 +742,12 @@ impl<'source> JavaFormatContext<'source> {
         }
 
         let before = &self.source[boundary.start().get()..comment.trivia.range.start().get()];
-        let Some(comma_index) = before.rfind(',') else {
+        let Some(separator_index) = before.rfind(separator) else {
             return false;
         };
-        let comma_end = boundary.start().get() + comma_index + ','.len_utf8();
-        self.is_same_line_span(comma_end, comment.trivia.range.start().get())
-            && self.only_whitespace(comma_end, comment.trivia.range.start().get())
+        let separator_end = boundary.start().get() + separator_index + separator.len_utf8();
+        self.is_same_line_span(separator_end, comment.trivia.range.start().get())
+            && self.only_whitespace(separator_end, comment.trivia.range.start().get())
     }
 
     fn is_dangling_comment(&self, comment: &JavaCommentTrivia, container_range: TextRange) -> bool {
@@ -784,6 +854,13 @@ impl<'source> JavaFormatContext<'source> {
             .find(is_line_terminator)
             .map_or(self.source.len(), |index| offset + index)
     }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) struct LineContext {
+    pub(crate) start_column: usize,
+    pub(crate) starts_line: bool,
+    pub(crate) trailing_width: usize,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]

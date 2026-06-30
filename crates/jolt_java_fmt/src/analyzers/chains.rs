@@ -1,5 +1,5 @@
 use jolt_diagnostics::TextRange;
-use jolt_fmt_ir::Doc;
+use jolt_fmt_ir::{Doc, text};
 
 #[derive(Clone)]
 pub(crate) struct Chain {
@@ -51,6 +51,14 @@ impl Chain {
             base,
             Vec::new(),
             BaseMetadata::primary_expression(source_width),
+        )
+    }
+
+    pub(crate) fn cast_primary_expression_base(base: Doc, source_width: usize) -> Self {
+        Self::with_base_metadata(
+            base,
+            Vec::new(),
+            BaseMetadata::cast_primary_expression(source_width),
         )
     }
 
@@ -145,6 +153,17 @@ impl BaseMetadata {
         }
     }
 
+    pub(crate) const fn cast_primary_expression(source_width: usize) -> Self {
+        Self {
+            source_width,
+            is_complex: true,
+            call_count: 0,
+            kind: ChainBaseKind::CastPrimaryExpression,
+            simple_name: None,
+            forces_break_before_first_selector: true,
+        }
+    }
+
     pub(crate) const fn call(source_width: usize) -> Self {
         Self {
             source_width,
@@ -173,6 +192,7 @@ pub(crate) enum ChainBaseKind {
     Simple,
     Complex,
     PrimaryExpression,
+    CastPrimaryExpression,
     Call,
     ObjectCreation,
 }
@@ -181,6 +201,7 @@ pub(crate) enum ChainBaseKind {
 pub(crate) enum ChainRole {
     Default,
     NestedArgument,
+    NestedArgumentFit,
     LambdaBody,
 }
 
@@ -188,8 +209,13 @@ pub(crate) enum ChainRole {
 pub(crate) struct ChainMember {
     pub(crate) kind: ChainMemberKind,
     pub(crate) doc: Doc,
+    pub(crate) doc_after_chain_break: Option<Doc>,
+    pub(crate) doc_as_receiver_head_after_chain_break: Option<Doc>,
+    pub(crate) selector_head_doc: Doc,
+    pub(crate) selector_suffix_doc: Doc,
     pub(crate) trailing_comments: Vec<Doc>,
     pub(crate) source_width: usize,
+    pub(crate) selector_head_width: usize,
     pub(crate) has_type_arguments: bool,
     pub(crate) simple_name: Option<String>,
 }
@@ -198,9 +224,14 @@ impl ChainMember {
     pub(crate) fn field(doc: Doc, source_width: usize, simple_name: Option<String>) -> Self {
         Self {
             kind: ChainMemberKind::Field,
+            selector_head_doc: doc.clone(),
             doc,
+            doc_after_chain_break: None,
+            doc_as_receiver_head_after_chain_break: None,
+            selector_suffix_doc: text(""),
             trailing_comments: Vec::new(),
             source_width,
+            selector_head_width: source_width,
             has_type_arguments: false,
             simple_name,
         }
@@ -208,16 +239,26 @@ impl ChainMember {
 
     pub(crate) fn call(
         doc: Doc,
+        selector_head_doc: Doc,
+        selector_suffix_doc: Doc,
+        doc_after_chain_break: Option<Doc>,
+        doc_as_receiver_head_after_chain_break: Option<Doc>,
         source_width: usize,
+        selector_head_width: usize,
         argument_count: usize,
         has_type_arguments: bool,
         simple_name: Option<String>,
     ) -> Self {
         Self {
             kind: ChainMemberKind::Call { argument_count },
+            selector_head_doc,
             doc,
+            doc_after_chain_break,
+            doc_as_receiver_head_after_chain_break,
+            selector_suffix_doc,
             trailing_comments: Vec::new(),
             source_width,
+            selector_head_width,
             has_type_arguments,
             simple_name,
         }
@@ -226,9 +267,14 @@ impl ChainMember {
     pub(crate) fn array_access(doc: Doc, source_width: usize) -> Self {
         Self {
             kind: ChainMemberKind::ArrayAccess,
+            selector_head_doc: doc.clone(),
             doc,
+            doc_after_chain_break: None,
+            doc_as_receiver_head_after_chain_break: None,
+            selector_suffix_doc: text(""),
             trailing_comments: Vec::new(),
             source_width,
+            selector_head_width: source_width,
             has_type_arguments: false,
             simple_name: None,
         }
@@ -394,6 +440,7 @@ pub(crate) struct ChainMetadata {
     pub(crate) call_count: usize,
     pub(crate) total_call_count: usize,
     pub(crate) first_member_width: usize,
+    pub(crate) first_member_head_width: usize,
     pub(crate) first_member_is_call: bool,
     pub(crate) first_call_argument_count: usize,
 }
@@ -405,6 +452,10 @@ impl ChainMetadata {
         let first_member_width = members
             .first()
             .map(|member| member.source_width)
+            .unwrap_or_default();
+        let first_member_head_width = members
+            .first()
+            .map(|member| member.selector_head_width)
             .unwrap_or_default();
         let first_call_argument_count = members
             .first()
@@ -420,6 +471,7 @@ impl ChainMetadata {
             call_count,
             total_call_count: base.call_count + call_count,
             first_member_width,
+            first_member_head_width,
             first_member_is_call,
             first_call_argument_count,
         }

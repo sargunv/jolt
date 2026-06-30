@@ -1,8 +1,147 @@
-use jolt_fmt_ir::{Doc, concat, hard_line, literal_text, text};
+use jolt_fmt_ir::{
+    Doc, concat, fill, fill_entry, group, hard_line, indent_by, line, literal_text, text,
+};
 
-pub(crate) fn text_block_literal(token_text: &str) -> Doc {
+use crate::policy::JavaFormatPolicy;
+
+pub(crate) fn string_literal_reflow(
+    token_text: &str,
+    start_column: usize,
+    trailing_width: usize,
+    policy: JavaFormatPolicy,
+) -> Option<Doc> {
+    if !policy.reflows_string_literals()
+        || !token_text.is_ascii()
+        || token_text.contains('\\')
+        || token_text.contains(['\n', '\r'])
+    {
+        return None;
+    }
+
+    let body = token_text.strip_prefix('"')?.strip_suffix('"')?;
+    if body.is_empty()
+        || start_column + token_text.len() + trailing_width <= policy.max_line_length()
+    {
+        return None;
+    }
+
+    let pieces = split_string_literal_body(body, start_column, trailing_width, policy)?;
+    if pieces.len() < 2 {
+        return None;
+    }
+
+    let docs = pieces
+        .into_iter()
+        .enumerate()
+        .map(|(index, piece)| {
+            let literal = text(format!("\"{piece}\""));
+            if index == 0 {
+                literal
+            } else {
+                concat([text("+ "), literal])
+            }
+        })
+        .collect::<Vec<_>>();
+    let last = docs.last().expect("length checked above").clone();
+    let entries = docs
+        .iter()
+        .take(docs.len() - 1)
+        .cloned()
+        .map(|doc| fill_entry(doc, line()));
+
+    Some(group(indent_by(
+        policy.continuation_indent_levels(),
+        fill(entries, last),
+    )))
+}
+
+fn split_string_literal_body(
+    body: &str,
+    start_column: usize,
+    trailing_width: usize,
+    policy: JavaFormatPolicy,
+) -> Option<Vec<&str>> {
+    let max_line_length = policy.max_line_length();
+    let first_literal_width = max_line_length.checked_sub(start_column)?;
+    let continuation_literal_width = max_line_length.checked_sub(start_column + 6)?;
+    let mut pieces = Vec::new();
+    let mut start = 0;
+    let mut first_line = true;
+
+    while start < body.len() {
+        let base_width = if first_line {
+            first_literal_width
+        } else {
+            continuation_literal_width
+        };
+        let Some(end) = next_string_piece_end(body, start, base_width, trailing_width) else {
+            return None;
+        };
+        pieces.push(&body[start..end]);
+        start = end;
+        first_line = false;
+    }
+
+    Some(pieces)
+}
+
+fn next_string_piece_end(
+    body: &str,
+    start: usize,
+    base_literal_width: usize,
+    trailing_width: usize,
+) -> Option<usize> {
+    let mut best = None;
+    for end in string_piece_boundaries(body, start) {
+        let is_final = end == body.len();
+        let literal_width = 2 + end - start;
+        let line_width = literal_width + usize::from(is_final) * trailing_width;
+        if line_width <= base_literal_width {
+            best = Some(end);
+        } else {
+            break;
+        }
+    }
+    best
+}
+
+fn string_piece_boundaries(body: &str, start: usize) -> impl Iterator<Item = usize> + '_ {
+    body[start..]
+        .match_indices(' ')
+        .filter_map(move |(index, _)| {
+            let boundary = start + index;
+            (boundary > start).then_some(boundary)
+        })
+        .chain(std::iter::once(body.len()))
+}
+
+pub(crate) struct TextBlockLiteral {
+    doc: Doc,
+    opening_indent: TextBlockOpeningIndent,
+}
+
+impl TextBlockLiteral {
+    pub(crate) fn into_doc(self) -> Doc {
+        self.doc
+    }
+
+    pub(crate) const fn opening_indent(&self) -> TextBlockOpeningIndent {
+        self.opening_indent
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum TextBlockOpeningIndent {
+    Continuation,
+    Absolute,
+}
+
+pub(crate) fn text_block_literal(token_text: &str) -> TextBlockLiteral {
     let Some(parts) = TextBlockParts::parse(token_text) else {
-        return literal_text(token_text);
+        return TextBlockLiteral {
+            doc: literal_text(token_text),
+            opening_indent: TextBlockOpeningIndent::Continuation,
+        };
     };
 
     let mut lines = content_lines(parts.content);
@@ -10,14 +149,20 @@ pub(crate) fn text_block_literal(token_text: &str) -> Doc {
         && let Some(last_line) = lines.last_mut()
     {
         if last_line.ends_with('\\') {
-            return literal_text(token_text);
+            return TextBlockLiteral {
+                doc: literal_text(token_text),
+                opening_indent: TextBlockOpeningIndent::Continuation,
+            };
         }
         last_line.push('\\');
     }
 
     let incidental_indent = incidental_indent(&lines, parts.closing_indent);
     if incidental_indent == 0 {
-        return literal_text(rewrite_absolute_text_block(parts, &lines));
+        return TextBlockLiteral {
+            doc: literal_text(rewrite_absolute_text_block(parts, &lines)),
+            opening_indent: TextBlockOpeningIndent::Absolute,
+        };
     }
 
     let mut docs = Vec::new();
@@ -32,7 +177,14 @@ pub(crate) fn text_block_literal(token_text: &str) -> Doc {
     }
     docs.push(hard_line());
     docs.push(text("\"\"\""));
-    concat(docs)
+    TextBlockLiteral {
+        doc: concat(docs),
+        opening_indent: TextBlockOpeningIndent::Continuation,
+    }
+}
+
+pub(crate) fn text_block_opening_indent(token_text: &str) -> TextBlockOpeningIndent {
+    text_block_literal(token_text).opening_indent()
 }
 
 struct TextBlockParts<'a> {

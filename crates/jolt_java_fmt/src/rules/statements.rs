@@ -1,23 +1,33 @@
+use super::expressions::{PatternLayout, format_pattern_with_layout};
 use super::{
     BasicForStatement, Block, BlockItem, BlockStatement, BreakStatement, CatchClause,
     CatchParameter, ConstructorBody, ConstructorInvocation, ContinueStatement, DoStatement, Doc,
     EmptyStatement, EnhancedForStatement, FinallyClause, ForInitializer, ForStatement, ForUpdate,
-    FormatResult, IfStatement, JavaFormatContext, LabeledStatement, LocalVariableDeclaration,
-    Resource, ResourceSpecification, ReturnStatement, Statement, StatementExpressionList,
-    SwitchBlock, SwitchBlockItem, SwitchBlockStatementGroup, SwitchLabel, SwitchLabelItem,
-    SwitchRule, SwitchRuleBody, SwitchStatement, ThrowStatement, TryStatement,
-    TryWithResourcesStatement, VariableAccess, VariableDeclarator, VariableInitializerValue,
-    WhileStatement, YieldStatement, concat, format_annotation_list, format_argument_list,
-    format_array_dimensions, format_expression, format_modifier_list, format_name, format_pattern,
-    format_token, format_type, format_type_argument_list, format_type_declaration,
+    FormatResult, IfStatement, JavaFormatContext, JavaSyntaxToken, LabeledStatement,
+    LocalVariableDeclaration, Resource, ResourceSpecification, ReturnStatement, Statement,
+    StatementExpressionList, SwitchBlock, SwitchBlockItem, SwitchBlockStatementGroup, SwitchLabel,
+    SwitchLabelItem, SwitchRule, SwitchRuleBody, SwitchStatement, ThrowStatement, TryStatement,
+    TryWithResourcesStatement, Type, TypeLayoutPart, VariableAccess, VariableDeclarator,
+    VariableInitializerValue, WhileStatement, YieldStatement, concat, format_annotation_doc_list,
+    format_argument_list, format_array_dimensions, format_expression, format_modifier_list,
+    format_name, format_token, format_type, format_type_argument_list, format_type_declaration,
     format_variable_initializer_value, hard_line, join, reject_unhandled_comments_before_start,
     take_block_comment_docs_in_range_as_inline, take_inline_leading_block_comment_docs_in_range,
     take_leading_comment_docs, take_leading_comment_docs_in_range,
-    take_own_line_comment_docs_in_range, take_trailing_line_comment_docs_in_range_as_own_line,
-    text, with_leading_and_trailing_comments, with_vertical_annotations, wrap,
+    take_own_line_comment_docs_in_range, take_same_line_trailing_block_comment_docs_in_range,
+    take_trailing_line_comment_docs_in_range_as_own_line,
+    take_trailing_line_comment_docs_in_range_as_suffix, text, with_leading_and_trailing_comments,
+    wrap,
 };
-use crate::helpers::bodies::{BlockLayoutOptions, statement_block};
+use crate::analyzers::expressions::ExpressionLayout;
+use crate::helpers::annotations as java_annotations;
+use crate::helpers::bodies::{
+    BlockLayoutOptions, statement_block, statement_block_with_opening_comments,
+};
+use crate::helpers::callables;
+use crate::helpers::expressions as java_expressions;
 use crate::helpers::lists as java_lists;
+use crate::helpers::switches as java_switches;
 use jolt_diagnostics::TextRange;
 
 pub(super) fn format_block(
@@ -38,8 +48,40 @@ pub(super) fn format_block_with_options(
     format_block_statements(code_range, block.block_statements(), context, options)
 }
 
-pub(super) fn format_constructor_body(
+pub(super) fn format_block_with_opening_comments(
+    block: &Block,
+    opening_comments: Vec<Doc>,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    format_block_with_options_and_opening_comments(
+        block,
+        opening_comments,
+        context,
+        BlockLayoutOptions::default(),
+    )
+}
+
+pub(super) fn format_block_with_options_and_opening_comments(
+    block: &Block,
+    opening_comments: Vec<Doc>,
+    context: &mut JavaFormatContext<'_>,
+    options: BlockLayoutOptions,
+) -> FormatResult<Doc> {
+    let code_range = block
+        .code_text_range()
+        .unwrap_or_else(|| block.text_range());
+    format_block_statements_with_opening_comments(
+        code_range,
+        block.block_statements(),
+        opening_comments,
+        context,
+        options,
+    )
+}
+
+pub(super) fn format_constructor_body_with_opening_comments(
     body: &ConstructorBody,
+    opening_comments: Vec<Doc>,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
     let code_range = body.code_text_range().unwrap_or_else(|| body.text_range());
@@ -53,7 +95,13 @@ pub(super) fn format_constructor_body(
         .map(|statement| format_block_statement(&statement, context))
         .collect::<FormatResult<Vec<_>>>()?;
 
-    crate::helpers::bodies::constructor_body(code_range, invocation, statements, context)
+    crate::helpers::bodies::constructor_body_with_opening_comments(
+        code_range,
+        invocation,
+        statements,
+        opening_comments,
+        context,
+    )
 }
 
 fn format_constructor_invocation(
@@ -101,6 +149,25 @@ pub(super) fn format_block_statements(
     statement_block(
         container_range,
         &statements,
+        context,
+        options,
+        BlockStatement::code_text_range,
+        format_block_statement,
+    )
+}
+
+pub(super) fn format_block_statements_with_opening_comments(
+    container_range: jolt_diagnostics::TextRange,
+    statements: impl Iterator<Item = BlockStatement>,
+    opening_comments: Vec<Doc>,
+    context: &mut JavaFormatContext<'_>,
+    options: BlockLayoutOptions,
+) -> FormatResult<Doc> {
+    let statements = statements.collect::<Vec<_>>();
+    statement_block_with_opening_comments(
+        container_range,
+        &statements,
+        opening_comments,
         context,
         options,
         BlockStatement::code_text_range,
@@ -206,6 +273,9 @@ fn format_unbraced_statement_with_block_options(
 ) -> FormatResult<Doc> {
     if let Statement::Block(block) = statement {
         return format_block_with_options(block, context, block_options);
+    }
+    if let Statement::IfStatement(if_statement) = statement {
+        return format_if_statement_with_then_options(if_statement, context, Some(block_options));
     }
 
     format_statement_rule(statement_rule(statement)?, context)
@@ -320,6 +390,14 @@ pub(super) fn format_if_statement(
     statement: &IfStatement,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
+    format_if_statement_with_then_options(statement, context, None)
+}
+
+fn format_if_statement_with_then_options(
+    statement: &IfStatement,
+    context: &mut JavaFormatContext<'_>,
+    then_options: Option<BlockLayoutOptions>,
+) -> FormatResult<Doc> {
     let condition = statement
         .condition()
         .expect("parser-clean if statement should have a condition");
@@ -336,7 +414,7 @@ pub(super) fn format_if_statement(
     let then_block_options = if statement.else_statement().is_some() {
         BlockLayoutOptions::if_then_with_trailing_clauses()
     } else {
-        BlockLayoutOptions::if_then_only_clause()
+        then_options.unwrap_or_else(BlockLayoutOptions::if_then_only_clause)
     };
     let (then_statement, then_is_block) =
         format_statement_body(&then_statement, context, then_block_options)?;
@@ -355,7 +433,9 @@ pub(super) fn format_if_statement(
                 Statement::Block(_) | Statement::IfStatement(_)
             );
             let else_block_options = if matches!(else_statement, Statement::Block(_)) {
-                BlockLayoutOptions::if_then_with_trailing_clauses()
+                BlockLayoutOptions::if_final_clause()
+            } else if matches!(else_statement, Statement::IfStatement(_)) {
+                BlockLayoutOptions::if_final_clause()
             } else {
                 BlockLayoutOptions::default()
             };
@@ -396,7 +476,11 @@ pub(super) fn format_while_statement(
         )?;
     }
     let body_is_block = matches!(body, Statement::Block(_));
-    let body = format_unbraced_statement(&body, context)?;
+    let body = format_unbraced_statement_with_block_options(
+        &body,
+        context,
+        BlockLayoutOptions::control_flow_body(),
+    )?;
 
     Ok(wrap::while_statement(
         format_expression(&condition, context)?,
@@ -423,7 +507,11 @@ pub(super) fn format_do_statement(
         .condition()
         .expect("parser-clean do statement should have a condition");
     let body_is_block = matches!(body, Statement::Block(_));
-    let body = format_unbraced_statement(&body, context)?;
+    let body = format_unbraced_statement_with_block_options(
+        &body,
+        context,
+        BlockLayoutOptions::do_body(),
+    )?;
 
     Ok(wrap::do_statement(
         body,
@@ -473,10 +561,14 @@ pub(super) fn format_basic_for_statement(
         )?;
     }
     let body_is_block = matches!(body, Statement::Block(_));
-    let body = format_unbraced_statement(&body, context)?;
+    let body = format_unbraced_statement_with_block_options(
+        &body,
+        context,
+        BlockLayoutOptions::control_flow_body(),
+    )?;
 
     Ok(wrap::for_statement(
-        format_basic_for_header(initializer, condition, update),
+        wrap::basic_for_header(initializer, condition, update),
         body,
         body_is_block,
     ))
@@ -503,44 +595,20 @@ pub(super) fn format_enhanced_for_statement(
         )?;
     }
     let body_is_block = matches!(body, Statement::Block(_));
-    let body = format_unbraced_statement(&body, context)?;
+    let body = format_unbraced_statement_with_block_options(
+        &body,
+        context,
+        BlockLayoutOptions::control_flow_body(),
+    )?;
 
     Ok(wrap::for_statement(
-        concat([
-            text("for ("),
+        wrap::enhanced_for_header(
             format_local_variable_declaration_header(&variable, context)?,
-            text(" : "),
             format_expression(&iterable, context)?,
-            text(")"),
-        ]),
+        ),
         body,
         body_is_block,
     ))
-}
-
-pub(super) fn format_basic_for_header(
-    initializer: Option<Doc>,
-    condition: Option<Doc>,
-    update: Option<Doc>,
-) -> Doc {
-    if initializer.is_none() && condition.is_none() && update.is_none() {
-        return text("for ( ; ; )");
-    }
-
-    let mut parts = vec![text("for (")];
-    if let Some(initializer) = initializer {
-        parts.push(initializer);
-    }
-    parts.push(text("; "));
-    if let Some(condition) = condition {
-        parts.push(condition);
-    }
-    parts.push(text("; "));
-    if let Some(update) = update {
-        parts.push(update);
-    }
-    parts.push(text(")"));
-    concat(parts)
 }
 
 pub(super) fn format_for_initializer(
@@ -642,17 +710,18 @@ pub(super) fn format_try_statement(
         BlockLayoutOptions::try_body_without_clauses()
     };
 
+    let catch_count = catches.len();
     let catches = catches
         .iter()
         .enumerate()
         .map(|(index, catch)| {
-            let trailing = index + 1 < catches.len() || has_finally;
-            let options = if trailing {
+            let has_trailing_clause = has_finally || index + 1 < catch_count;
+            let body_options = if has_trailing_clause {
                 BlockLayoutOptions::try_body_with_clauses()
             } else {
-                BlockLayoutOptions::try_body_without_clauses()
+                BlockLayoutOptions::try_final_clause_body()
             };
-            format_catch_clause(catch, context, options)
+            format_catch_clause(catch, context, body_options)
         })
         .collect::<FormatResult<Vec<_>>>()?;
     let finally_clause = statement
@@ -677,6 +746,7 @@ pub(super) fn format_try_with_resources_statement(
     let body = statement
         .body()
         .expect("parser-clean try-with-resources statement should have a body");
+    let resource_specification = format_resource_specification(&resources, context)?;
     if let Some(body_range) = body.code_text_range() {
         reject_unhandled_comments_before_start(
             context,
@@ -694,17 +764,18 @@ pub(super) fn format_try_with_resources_statement(
         BlockLayoutOptions::try_body_without_clauses()
     };
 
+    let catch_count = catches.len();
     let catches = catches
         .iter()
         .enumerate()
         .map(|(index, catch)| {
-            let trailing = index + 1 < catches.len() || has_finally;
-            let options = if trailing {
+            let has_trailing_clause = has_finally || index + 1 < catch_count;
+            let body_options = if has_trailing_clause {
                 BlockLayoutOptions::try_body_with_clauses()
             } else {
-                BlockLayoutOptions::try_body_without_clauses()
+                BlockLayoutOptions::try_final_clause_body()
             };
-            format_catch_clause(catch, context, options)
+            format_catch_clause(catch, context, body_options)
         })
         .collect::<FormatResult<Vec<_>>>()?;
     let finally_clause = statement
@@ -715,7 +786,7 @@ pub(super) fn format_try_with_resources_statement(
     Ok(wrap::try_statement_with_header(
         concat([
             text("try "),
-            format_resource_specification(&resources, context)?,
+            resource_specification,
             text(" "),
             format_block_with_options(&body, context, body_options)?,
         ]),
@@ -734,15 +805,31 @@ fn format_resource_specification(
 
     let resources = resources
         .resources()
-        .map(|resource| format_resource(&resource, context))
-        .collect::<FormatResult<Vec<_>>>()?;
+        .map(|resource| {
+            let range = resource
+                .code_text_range()
+                .unwrap_or_else(|| resource.text_range());
+            java_lists::ListItem::new(range, move |context| format_resource(&resource, context))
+        })
+        .collect::<Vec<_>>();
 
-    Ok(wrap::parenthesized_semicolon_list(resources))
+    java_lists::resource_specification(
+        resources,
+        specification.text_range(),
+        specification.has_trailing_semicolon(),
+        context,
+    )
 }
 
 fn format_resource(resource: &Resource, context: &mut JavaFormatContext<'_>) -> FormatResult<Doc> {
     if let Some(declaration) = resource.local_variable_declaration() {
-        return format_local_variable_declaration_header(&declaration, context);
+        return format_local_variable_declaration_header_with_options(
+            &declaration,
+            context,
+            LocalVariableDeclarationHeaderOptions {
+                indent_vertical_annotations: true,
+            },
+        );
     }
 
     let access = resource
@@ -806,11 +893,25 @@ pub(super) fn format_catch_parameter(
         .name()
         .expect("parser-clean catch parameter should have a name");
 
-    let mut parts = format_annotation_list(parameter.annotations(), context, "declaration")?;
+    let annotations = format_annotation_doc_list(parameter.annotations(), context, "declaration")?;
+    let final_ranges = parameter
+        .final_token()
+        .into_iter()
+        .map(|token| token.token_text_range());
+    let split =
+        java_annotations::split_type_bearing_declaration_annotations(annotations, final_ranges);
+    let mut parts = split
+        .declaration_annotations
+        .into_iter()
+        .map(java_annotations::AnnotationDoc::into_doc)
+        .collect::<Vec<_>>();
     if let Some(final_token) = parameter.final_token() {
         parts.push(format_token(&final_token));
     }
-    parts.push(format_catch_type_list(&ty, context)?);
+    parts.push(java_annotations::type_use_prefix(
+        split.type_use_annotations,
+        format_catch_type_list(&ty, context)?,
+    ));
     parts.push(format_token(&name));
     Ok(wrap::space_separated(parts))
 }
@@ -914,7 +1015,30 @@ pub(super) fn format_local_variable_declaration_header(
     declaration: &LocalVariableDeclaration,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    let ty = if let Some(ty) = declaration.ty() {
+    format_local_variable_declaration_header_with_options(
+        declaration,
+        context,
+        LocalVariableDeclarationHeaderOptions::default(),
+    )
+}
+
+#[derive(Default)]
+struct LocalVariableDeclarationHeaderOptions {
+    indent_vertical_annotations: bool,
+}
+
+fn format_local_variable_declaration_header_with_options(
+    declaration: &LocalVariableDeclaration,
+    context: &mut JavaFormatContext<'_>,
+    options: LocalVariableDeclarationHeaderOptions,
+) -> FormatResult<Doc> {
+    let ty_source_width = declaration.ty().map(|ty| {
+        let ty_range = ty
+            .code_text_range()
+            .expect("parser-clean local variable type should have a code range");
+        text_range_width(ty_range)
+    });
+    let mut ty = if let Some(ty) = declaration.ty() {
         format_type(&ty, context)?
     } else {
         let token = declaration
@@ -925,11 +1049,31 @@ pub(super) fn format_local_variable_declaration_header(
     let declarators = declaration
         .declarators()
         .expect("parser-clean local variable declaration should have declarators");
+    let first_declarator_name_width = declarators
+        .declarators()
+        .next()
+        .and_then(|declarator| variable_declarator_name_source_width(&declarator))
+        .expect("parser-clean local variable declaration should have a declarator name");
     let declarators = format_variable_declarator_list(&declarators, "local variable", context)?;
 
-    let modifiers = format_modifier_list(declaration.modifiers(), "local variable", context)?;
-    let direct_annotations =
-        format_annotation_list(declaration.annotations(), context, "declaration")?;
+    let mut modifiers = format_modifier_list(declaration.modifiers(), "local variable", context)?;
+    let mut annotations =
+        format_annotation_doc_list(declaration.annotations(), context, "declaration")?;
+    annotations.extend(modifiers.annotations);
+    let split_ranges = modifiers
+        .modifier_tokens
+        .iter()
+        .map(JavaSyntaxToken::token_text_range)
+        .chain(
+            declaration
+                .final_token()
+                .into_iter()
+                .map(|token| token.token_text_range()),
+        );
+    let split =
+        java_annotations::split_type_bearing_declaration_annotations(annotations, split_ranges);
+    modifiers.annotations = split.declaration_annotations;
+    ty = java_annotations::type_use_prefix(split.type_use_annotations, ty);
     let mut prefix = modifiers
         .modifier_tokens
         .iter()
@@ -942,11 +1086,92 @@ pub(super) fn format_local_variable_declaration_header(
     }
     prefix.push(ty);
 
-    let declaration = wrap::variable_declaration_header(prefix, declarators);
-    Ok(with_vertical_annotations(
-        direct_annotations,
-        modifiers.with_annotations(declaration),
-    ))
+    let leading_type_policy = ty_source_width.map(|width| {
+        let rendered_declaration_head_source_width =
+            local_declaration_head_source_width(declaration, width, first_declarator_name_width);
+        callables::DeclarationLeadingTypePolicy {
+            has_type_arguments: declaration
+                .ty()
+                .is_some_and(|ty| type_contains_type_arguments(&ty)),
+            rendered_leading_type_source_width: width,
+            rendered_declaration_head_source_width,
+        }
+    });
+
+    let declaration = callables::variable_declaration_header(
+        prefix,
+        declarators,
+        leading_type_policy,
+        context.policy(),
+    );
+    let layout = java_annotations::local_annotation_layout(&modifiers.annotations);
+    if options.indent_vertical_annotations {
+        let leading_comments = modifiers.leading_comments;
+        let doc = java_annotations::with_resource_declaration_annotations(
+            modifiers.annotations,
+            declaration,
+            layout,
+            context.policy().continuation_indent_levels(),
+        );
+        return Ok(if leading_comments.is_empty() {
+            doc
+        } else {
+            concat([join(hard_line(), leading_comments), hard_line(), doc])
+        });
+    }
+    Ok(modifiers.with_annotations_layout(declaration, layout))
+}
+
+fn type_contains_type_arguments(ty: &Type) -> bool {
+    ty.layout_parts()
+        .iter()
+        .any(|part| matches!(part, TypeLayoutPart::Token(token) if token.text() == "<"))
+}
+
+fn text_range_width(range: TextRange) -> usize {
+    range.end().get().saturating_sub(range.start().get())
+}
+
+fn local_declaration_head_source_width(
+    declaration: &LocalVariableDeclaration,
+    leading_type_width: usize,
+    name_width: usize,
+) -> usize {
+    let modifier_width = local_modifier_source_width(declaration);
+    let mut width = leading_type_width + 1 + name_width;
+    if modifier_width > 0 {
+        width += modifier_width + 1;
+    }
+    width
+}
+
+fn local_modifier_source_width(declaration: &LocalVariableDeclaration) -> usize {
+    let mut modifier_tokens = declaration
+        .modifiers()
+        .map(|modifiers| modifiers.modifier_tokens().collect::<Vec<_>>())
+        .unwrap_or_default();
+    modifier_tokens.extend(declaration.final_token());
+    if modifier_tokens.is_empty() {
+        return 0;
+    }
+
+    modifier_tokens
+        .iter()
+        .map(|token| token.text().len())
+        .sum::<usize>()
+        + modifier_tokens.len()
+        - 1
+}
+
+fn variable_declarator_name_source_width(declarator: &VariableDeclarator) -> Option<usize> {
+    let name = declarator.name()?;
+    let mut width = name.text().len();
+    if let Some(dimensions) = declarator.dimensions()
+        && let Some(range) = dimensions.code_text_range()
+    {
+        width += text_range_width(range);
+    }
+    Some(width)
 }
 
 pub(super) fn format_variable_declarator_list(
@@ -992,19 +1217,42 @@ pub(super) fn format_variable_declarator(
         .code_text_range()
         .expect("parser-clean variable initializer value should have a code range");
     let mut leading_comments = Vec::new();
+    let mut assignment_operator = java_expressions::AssignmentOperator::new(text("="));
     if let Some(assign) = declarator.assign() {
         let assign_range = assign.token_text_range();
         let owner_range = TextRange::new(assign_range.end(), value_range.start());
+        let trailing_line = take_trailing_line_comment_docs_in_range_as_own_line(
+            context,
+            assign_range,
+            owner_range,
+        );
+        if trailing_line.is_empty() {
+            let trailing_block = take_same_line_trailing_block_comment_docs_in_range(
+                context,
+                assign_range,
+                owner_range,
+            );
+            if !trailing_block.is_empty() {
+                assignment_operator =
+                    java_expressions::AssignmentOperator::with_forced_break_after(concat([
+                        format_token(&assign),
+                        text(" "),
+                        join(text(" "), trailing_block),
+                    ]));
+            }
+        } else {
+            assignment_operator =
+                java_expressions::AssignmentOperator::with_forced_break_after(concat([
+                    format_token(&assign),
+                    text(" "),
+                    join(hard_line(), trailing_line),
+                ]));
+        }
         leading_comments.extend(take_leading_comment_docs_in_range(
             context,
             owner_range,
             value_range,
         )?);
-        leading_comments.extend(take_trailing_line_comment_docs_in_range_as_own_line(
-            context,
-            assign_range,
-            owner_range,
-        ));
         leading_comments.extend(take_inline_leading_block_comment_docs_in_range(
             context,
             owner_range,
@@ -1015,8 +1263,10 @@ pub(super) fn format_variable_declarator(
             owner_range,
         ));
     }
+    let initializer_layout = ExpressionLayout::for_variable_initializer(&value, context.policy());
     let mut initializer = format_variable_initializer_value(&value, context)?;
-    if !leading_comments.is_empty() {
+    let has_leading_comments = !leading_comments.is_empty();
+    if has_leading_comments {
         initializer = concat([
             join(hard_line(), leading_comments),
             hard_line(),
@@ -1029,8 +1279,18 @@ pub(super) fn format_variable_declarator(
             initializer,
         ));
     }
+    let initializer = if has_leading_comments {
+        java_expressions::AssignmentValue::new(initializer)
+    } else {
+        java_expressions::AssignmentValue::from_expression_layout(initializer, initializer_layout)
+    };
 
-    Ok(wrap::variable_declarator(name, Some(initializer)))
+    Ok(java_expressions::assignment_expression(
+        name,
+        assignment_operator,
+        initializer,
+        context.policy(),
+    ))
 }
 
 pub(super) fn format_return_statement(
@@ -1225,7 +1485,14 @@ pub(super) fn format_switch_statement_group(
 
     let labels = group
         .labels()
-        .map(|label| Ok(concat([format_switch_label(&label, context)?, text(":")])))
+        .zip(group.colons())
+        .map(|(label, colon)| {
+            let colon_range = colon.token_text_range();
+            Ok(concat([
+                format_switch_label(&label, context)?,
+                with_leading_and_trailing_comments(context, colon_range, Vec::new(), text(":"))?,
+            ]))
+        })
         .collect::<FormatResult<Vec<_>>>()?;
     let statement_nodes = group.block_statements().collect::<Vec<_>>();
     let mut body_comments = Vec::new();
@@ -1239,11 +1506,6 @@ pub(super) fn format_switch_statement_group(
             owner_range,
             statement_range,
         )?);
-        body_comments.extend(take_trailing_line_comment_docs_in_range_as_own_line(
-            context,
-            colon_range,
-            owner_range,
-        ));
     }
     let statements = statement_nodes
         .iter()
@@ -1288,16 +1550,17 @@ pub(super) fn format_switch_rule(
     let arrow_range = arrow.token_text_range();
     let body_range = switch_rule_body_range(&body)
         .expect("parser-clean switch rule body should have a code range");
-    let mut body_comments = take_leading_comment_docs_in_range(
-        context,
-        TextRange::new(arrow_range.end(), body_range.start()),
-        body_range,
-    )?;
-    body_comments.extend(take_trailing_line_comment_docs_in_range_as_own_line(
+    let body_is_block = matches!(&body, SwitchRuleBody::Block(_));
+    let arrow_to_body_range = TextRange::new(arrow_range.end(), body_range.start());
+    let arrow_trailing_comments = take_trailing_line_comment_docs_in_range_as_suffix(
         context,
         arrow_range,
-        TextRange::new(arrow_range.end(), body_range.start()),
-    ));
+        arrow_to_body_range,
+    );
+    let arrow_has_trailing_comment = !arrow_trailing_comments.is_empty();
+    let arrow = concat([text(" ->"), concat(arrow_trailing_comments)]);
+    let body_comments =
+        take_leading_comment_docs_in_range(context, arrow_to_body_range, body_range)?;
 
     let body = match body {
         SwitchRuleBody::Block(block) => format_block(&block, context)?,
@@ -1306,12 +1569,24 @@ pub(super) fn format_switch_rule(
         }
         SwitchRuleBody::Throw(statement) => format_throw_statement(&statement, context)?,
     };
+    let has_body_comments = !body_comments.is_empty();
     let body = if body_comments.is_empty() {
         body
     } else {
         concat([join(hard_line(), body_comments), hard_line(), body])
     };
-    let doc = concat([format_switch_label(&label, context)?, text(" -> "), body]);
+    let label = format_switch_label(&label, context)?;
+    let doc = if body_is_block && !has_body_comments && !arrow_has_trailing_comment {
+        java_switches::switch_rule_with_block(label, arrow, body)
+    } else {
+        java_switches::switch_rule_with_expression(
+            label,
+            arrow,
+            body,
+            context.policy(),
+            arrow_has_trailing_comment,
+        )
+    };
     with_leading_and_trailing_comments(context, code_range, leading_comments, doc)
 }
 
@@ -1336,7 +1611,7 @@ pub(super) fn format_switch_label(
         .map(|item| format_switch_label_item(item, context))
         .collect::<FormatResult<Vec<_>>>()?;
 
-    Ok(concat([text("case "), wrap::comma_list(items)]))
+    Ok(java_switches::case_label(items, context.policy()))
 }
 
 fn format_switch_label_item(
@@ -1353,17 +1628,19 @@ fn format_switch_label_item(
         SwitchLabelItem::Pattern(pattern, guard) => {
             let base = pattern
                 .pattern()
-                .map(|pattern| format_pattern(&pattern, context))
+                .map(|pattern| {
+                    format_pattern_with_layout(&pattern, context, PatternLayout::SwitchLabel)
+                })
                 .transpose()?
                 .expect("parser-clean case pattern should have a pattern");
             let Some(guard) = guard.and_then(|guard| guard.expression()) else {
                 return Ok(base);
             };
-            Ok(concat([
+            Ok(java_switches::guarded_pattern(
                 base,
-                text(" when "),
                 format_expression(&guard, context)?,
-            ]))
+                context.policy(),
+            ))
         }
         SwitchLabelItem::Default(_) => Ok(text("default")),
     }

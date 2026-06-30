@@ -134,14 +134,40 @@ Before coding, summarize in one paragraph: **what layout behavior differs**
 
 ### 3. Study references
 
-For the selected gap, read the relevant upstream code linked under
-[Reference project lessons](.agents/docs/formatter-milestone-8-coverage-roadmap.md#reference-project-lessons):
+For the selected gap, read the relevant oracle implementation from the local
+mirrors under `.oracles/repos/`. These checked-out sources are the primary
+reference for Milestone 8; use `rg` locally instead of browsing GitHub.
 
-- **Google / AOSP policy** → google-java-format `JavaInputAstVisitor`,
-  list/chain helpers
-- **Palantir policy** → palantir-java-format `Level`, `BreakBehaviour`,
-  `LastLevelBreakability`, palantir `*.output` fixtures
-- **Comment ownership** → Ruff/Oxc comment bucket patterns (architecture only)
+- **Google / AOSP policy** →
+  `.oracles/repos/google__google-java-format/core/src/main/java/com/google/googlejavaformat/`
+  - Java layout visitor: `java/JavaInputAstVisitor.java`
+  - Formatting pipeline: `java/Formatter.java`
+  - Document IR and op lowering: `Doc.java`, `OpsBuilder.java`,
+    `DocBuilder.java`
+  - Token/comment model: `java/JavaInput.java`, `java/JavaCommentsHelper.java`
+  - Import ordering: `java/ImportOrderer.java`
+  - String/text handling: `java/StringWrapper.java`
+- **Palantir policy** → `.oracles/repos/palantir__palantir-java-format/`
+  - Java layout visitor:
+    `palantir-java-format/src/main/java/com/palantir/javaformat/java/JavaInputAstVisitor.java`
+  - Column-limit and break machinery:
+    `palantir-java-format/src/main/java/com/palantir/javaformat/doc/Level.java`,
+    `palantir-java-format/src/main/java/com/palantir/javaformat/BreakBehaviour.java`,
+    `palantir-java-format/src/main/java/com/palantir/javaformat/LastLevelBreakability.java`,
+    `palantir-java-format/src/main/java/com/palantir/javaformat/PartialInlineability.java`
+  - Style profiles:
+    `palantir-java-format-spi/src/main/java/com/palantir/javaformat/java/JavaFormatterOptions.java`
+  - Palantir fixtures:
+    `palantir-java-format/src/test/resources/com/palantir/javaformat/java/testdata/`
+- **Pinned oracle fixtures and generated reports** → `.oracles/fixtures/` and
+  `.oracles/reports/`.
+- **Comment ownership architecture only** → use external Ruff/Oxc references
+  only when specifically working on comment-bucket architecture.
+
+Do **not** fall back to network browsing for oracle implementation references.
+If a local oracle mirror is missing or lacks the needed file, report that as a
+repository setup problem and continue only with local reports, fixtures, and
+Jolt code until the mirror is restored.
 
 Also read Jolt's current implementation at the **Primary code** path from the
 fix map. Identify whether the bug is:

@@ -1,6 +1,7 @@
 use jolt_diagnostics::{Diagnostic, DiagnosticCode, DiagnosticStage, Severity, TextRange};
 use jolt_fmt_ir::{
-    Doc, FlatLine, break_, concat, hard_line, join, line_suffix, line_suffix_boundary, text,
+    Doc, FlatLine, break_, concat, force_group, hard_line, join, line_suffix, line_suffix_boundary,
+    text,
 };
 
 use crate::context::{JavaCommentTrivia, JavaFormatContext};
@@ -21,11 +22,12 @@ pub(crate) fn take_leading_comment_docs(
     context: &mut JavaFormatContext<'_>,
     code_range: TextRange,
 ) -> FormatResult<Vec<Doc>> {
-    Ok(context
-        .take_leading_comments(code_range)
-        .into_iter()
-        .map(|comment| format_own_line_comment(context, &comment))
-        .collect())
+    let comments = context.take_leading_comments(code_range);
+    Ok(format_own_line_comments(
+        context,
+        &comments,
+        Some(code_range),
+    ))
 }
 
 pub(crate) fn take_leading_comment_docs_in_range(
@@ -33,33 +35,28 @@ pub(crate) fn take_leading_comment_docs_in_range(
     owner_range: TextRange,
     code_range: TextRange,
 ) -> FormatResult<Vec<Doc>> {
-    Ok(context
-        .take_leading_comments_in_range(owner_range, code_range)
-        .into_iter()
-        .map(|comment| format_own_line_comment(context, &comment))
-        .collect())
+    let comments = context.take_leading_comments_in_range(owner_range, code_range);
+    Ok(format_own_line_comments(
+        context,
+        &comments,
+        Some(code_range),
+    ))
 }
 
 pub(crate) fn take_dangling_comment_docs(
     context: &mut JavaFormatContext<'_>,
     container_range: TextRange,
 ) -> FormatResult<Vec<Doc>> {
-    Ok(context
-        .take_dangling_comments(container_range)
-        .into_iter()
-        .map(|comment| format_own_line_comment(context, &comment))
-        .collect())
+    let comments = context.take_dangling_comments(container_range);
+    Ok(format_own_line_comments(context, &comments, None))
 }
 
 pub(crate) fn take_own_line_comment_docs_in_range(
     context: &mut JavaFormatContext<'_>,
     owner_range: TextRange,
 ) -> FormatResult<Vec<Doc>> {
-    Ok(context
-        .take_own_line_comments_in_range(owner_range)
-        .into_iter()
-        .map(|comment| format_own_line_comment(context, &comment))
-        .collect())
+    let comments = context.take_own_line_comments_in_range(owner_range);
+    Ok(format_own_line_comments(context, &comments, None))
 }
 
 pub(crate) fn take_inline_leading_block_comment_docs(
@@ -117,6 +114,26 @@ pub(crate) fn take_trailing_line_comment_docs_in_range_as_own_line(
         .take_trailing_line_comments_in_range(code_range, boundary)
         .into_iter()
         .map(|comment| format_own_line_comment(context, &comment))
+        .collect()
+}
+
+pub(crate) fn take_trailing_line_comment_docs_in_range_as_suffix(
+    context: &mut JavaFormatContext<'_>,
+    code_range: TextRange,
+    boundary: TextRange,
+) -> Vec<Doc> {
+    context
+        .take_trailing_line_comments_in_range(code_range, boundary)
+        .into_iter()
+        .map(|comment| {
+            concat([
+                line_suffix(concat([
+                    text(" "),
+                    format_trailing_line_comment(context, &comment),
+                ])),
+                line_suffix_boundary(),
+            ])
+        })
         .collect()
 }
 
@@ -269,13 +286,41 @@ fn format_own_line_comment(context: &JavaFormatContext<'_>, comment: &JavaCommen
     )
 }
 
+fn format_own_line_comments(
+    context: &JavaFormatContext<'_>,
+    comments: &[JavaCommentTrivia],
+    following_range: Option<TextRange>,
+) -> Vec<Doc> {
+    let mut docs: Vec<Doc> = Vec::with_capacity(comments.len());
+    for (index, comment) in comments.iter().enumerate() {
+        let mut doc = format_own_line_comment(context, comment);
+        if index > 0 {
+            let previous = &comments[index - 1];
+            if context.has_blank_line_between(previous.trivia.range, comment.trivia.range)
+                && let Some(previous_doc) = docs.last_mut() {
+                    *previous_doc =
+                        concat([previous_doc.clone(), break_(FlatLine::Empty, i16::MIN)]);
+                }
+        }
+        if index + 1 == comments.len()
+            && following_range.is_some_and(|following| {
+                context.has_blank_line_between(comment.trivia.range, following)
+            })
+        {
+            doc = concat([doc, break_(FlatLine::Empty, i16::MIN)]);
+        }
+        docs.push(doc);
+    }
+    docs
+}
+
 fn format_inline_comment(context: &JavaFormatContext<'_>, comment: &JavaCommentTrivia) -> Doc {
     let raw = context.raw_text(comment);
     if raw.contains(['\n', '\r', '\u{2028}', '\u{2029}']) {
-        comment_lines_to_doc(
+        force_group(comment_lines_to_doc(
             rewrite_comment_lines(context, comment, CommentPlacement::InlineBlock),
             CommentPlacement::InlineBlock,
-        )
+        ))
     } else {
         let lines = rewrite_comment_lines(context, comment, CommentPlacement::InlineBlock);
         text(lines.into_iter().next().unwrap_or_default())

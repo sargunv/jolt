@@ -1,6 +1,5 @@
 use jolt_fmt_ir::{
-    Doc, concat, empty_line, fill, fill_entry, group, hard_line, indent, indent_by, join, line,
-    soft_line, text,
+    Doc, FlatLine, break_, concat, group, hard_line, indent, indent_by, join, line, soft_line, text,
 };
 
 use crate::helpers::lists as java_lists;
@@ -15,51 +14,8 @@ pub(crate) fn space_separated(parts: impl IntoIterator<Item = Doc>) -> Doc {
     group(join(line(), parts))
 }
 
-pub(crate) fn declaration_header(parts: impl IntoIterator<Item = Doc>) -> Doc {
-    let mut parts = parts.into_iter();
-    let Some(first) = parts.next() else {
-        return text("");
-    };
-
-    group(concat([
-        first,
-        continuation_indent(concat(parts.map(|part| concat([line(), part])))),
-    ]))
-}
-
 pub(crate) fn comma_list(items: impl IntoIterator<Item = Doc>) -> Doc {
     java_lists::comma_list(items)
-}
-
-pub(crate) fn parenthesized_semicolon_list(items: impl IntoIterator<Item = Doc>) -> Doc {
-    let items = items.into_iter().collect::<Vec<_>>();
-    if items.is_empty() {
-        return text("()");
-    }
-
-    group(concat([
-        text("("),
-        continuation_indent(concat([
-            soft_line(),
-            join(concat([text(";"), line()]), items),
-        ])),
-        soft_line(),
-        text(")"),
-    ]))
-}
-
-pub(crate) fn variable_declaration(prefix: impl IntoIterator<Item = Doc>, declarators: Doc) -> Doc {
-    group(concat([
-        variable_declaration_header(prefix, declarators),
-        text(";"),
-    ]))
-}
-
-pub(crate) fn variable_declaration_header(
-    prefix: impl IntoIterator<Item = Doc>,
-    declarators: Doc,
-) -> Doc {
-    group(concat([space_separated(prefix), text(" "), declarators]))
 }
 
 pub(crate) fn variable_declarator(name: Doc, initializer: Option<Doc>) -> Doc {
@@ -99,10 +55,6 @@ pub(crate) fn braced_body(items: Vec<Doc>, separators: Vec<Doc>, layout: BracedB
     }
 
     let mut body = Vec::new();
-    if leading_blank_line {
-        body.push(empty_line());
-    }
-
     let mut items = items.into_iter();
     if let Some(first) = items.next() {
         body.push(first);
@@ -112,20 +64,21 @@ pub(crate) fn braced_body(items: Vec<Doc>, separators: Vec<Doc>, layout: BracedB
         body.push(item);
     }
 
-    if trailing_blank_line {
-        body.push(empty_line());
-    }
-
     if body.is_empty() {
         return concat([text("{"), hard_line(), text("}")]);
     }
 
-    concat([
-        text("{"),
-        indent(concat([hard_line(), concat(body)])),
-        hard_line(),
-        text("}"),
-    ])
+    let mut parts = vec![text("{")];
+    if leading_blank_line {
+        parts.push(break_(FlatLine::Empty, i16::MIN));
+    }
+    parts.push(indent(concat([hard_line(), concat(body)])));
+    if trailing_blank_line {
+        parts.push(break_(FlatLine::Empty, i16::MIN));
+    }
+    parts.push(hard_line());
+    parts.push(text("}"));
+    concat(parts)
 }
 
 pub(crate) fn braced_block_with_separators(
@@ -253,6 +206,49 @@ pub(crate) fn for_statement(header: Doc, body: Doc, body_is_block: bool) -> Doc 
     loop_statement(header, body, body_is_block)
 }
 
+pub(crate) fn basic_for_header(
+    initializer: Option<Doc>,
+    condition: Option<Doc>,
+    update: Option<Doc>,
+) -> Doc {
+    if initializer.is_none() && condition.is_none() && update.is_none() {
+        return text("for (; ; )");
+    }
+
+    let mut clauses = Vec::new();
+    if let Some(initializer) = initializer {
+        clauses.push(initializer);
+    }
+    clauses.push(text(";"));
+    clauses.push(line());
+    if let Some(condition) = condition {
+        clauses.push(condition);
+    }
+    clauses.push(text(";"));
+    if let Some(update) = update {
+        clauses.push(line());
+        clauses.push(update);
+    } else {
+        clauses.push(text(" "));
+    }
+
+    group(concat([
+        text("for ("),
+        continuation_indent(concat(clauses)),
+        text(")"),
+    ]))
+}
+
+pub(crate) fn enhanced_for_header(variable: Doc, iterable: Doc) -> Doc {
+    group(concat([
+        text("for ("),
+        variable,
+        text(" :"),
+        continuation_indent(concat([line(), iterable])),
+        text(")"),
+    ]))
+}
+
 fn loop_statement(header: Doc, body: Doc, body_is_block: bool) -> Doc {
     if body_is_block {
         concat([header, text(" "), body])
@@ -299,43 +295,4 @@ pub(crate) fn try_statement_with_header(
     }
 
     concat(parts)
-}
-
-pub(crate) fn assignment_expression(left: Doc, operator: Doc, right: Doc) -> Doc {
-    group(concat([
-        left,
-        text(" "),
-        operator,
-        continuation_indent(concat([line(), right])),
-    ]))
-}
-
-pub(crate) fn binary_chain(first: Doc, rest: impl IntoIterator<Item = (Doc, Doc)>) -> Doc {
-    let rest = rest.into_iter().collect::<Vec<_>>();
-    let Some((first_operator, _)) = rest.first() else {
-        return first;
-    };
-
-    let last = rest
-        .last()
-        .map(|(_, operand)| operand.clone())
-        .expect("non-empty operands checked above");
-    let entries = std::iter::once(fill_entry(
-        first,
-        concat([line(), first_operator.clone(), text(" ")]),
-    ))
-    .chain(
-        rest.windows(2)
-            .map(|window| {
-                let (_, operand) = &window[0];
-                let (next_operator, _) = &window[1];
-                fill_entry(
-                    operand.clone(),
-                    concat([line(), next_operator.clone(), text(" ")]),
-                )
-            })
-            .collect::<Vec<_>>(),
-    );
-
-    group(continuation_indent(fill(entries, last)))
 }

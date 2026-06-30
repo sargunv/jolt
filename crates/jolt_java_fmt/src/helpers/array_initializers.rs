@@ -1,6 +1,7 @@
+use jolt_fmt_ir::TextWidth;
 use jolt_fmt_ir::{
     Doc, best_fitting, concat, fill, fill_entry, group, hard_line_without_break_parent, indent,
-    indent_by, line, soft_line, text,
+    indent_by, line, soft_line, text, text_with_width,
 };
 
 use crate::helpers::lists::{FormattedList, comment_braced_comma_list};
@@ -16,7 +17,7 @@ pub(crate) fn braced_initializer_block(
         return comment_braced_comma_list(list, has_trailing_comma);
     }
 
-    let mut docs = list.into_docs();
+    let docs = list.into_docs();
     if docs.is_empty() {
         return if has_trailing_comma {
             text("{,}")
@@ -30,15 +31,17 @@ pub(crate) fn braced_initializer_block(
             rows,
             rows_nested,
         } => tabular_braced_block(docs, cols, rows, rows_nested, has_trailing_comma, policy),
-        InitializerLayout::Fill { short_items } => {
-            if has_trailing_comma && let Some(last) = docs.last_mut() {
-                *last = concat([last.clone(), text(",")]);
-            }
-            if short_items {
-                filled_braced_block(docs)
+        InitializerLayout::Fill {
+            short_items,
+            tight_fit,
+        } => {
+            if has_trailing_comma {
+                forced_filled_braced_block(docs)
+            } else if short_items {
+                filled_braced_block(docs, tight_fit)
             } else {
                 best_fitting(
-                    filled_braced_block(docs.clone()),
+                    filled_braced_block(docs.clone(), tight_fit),
                     [one_per_line_braced_block(docs)],
                 )
             }
@@ -54,6 +57,7 @@ pub(crate) enum InitializerLayout {
     },
     Fill {
         short_items: bool,
+        tight_fit: bool,
     },
 }
 
@@ -119,6 +123,11 @@ fn tabular_row(
 
     if items.len() == 1 {
         let item = items.into_iter().next().expect("one item");
+        let item = if is_last_row && !has_trailing_comma {
+            item
+        } else {
+            concat([item, text(",")])
+        };
         return if row_indent == 0 {
             item
         } else {
@@ -144,7 +153,30 @@ fn tabular_row(
     }
 }
 
-fn filled_braced_block(docs: Vec<Doc>) -> Doc {
+fn forced_filled_braced_block(docs: Vec<Doc>) -> Doc {
+    if docs.is_empty() {
+        return text("{,}");
+    }
+
+    let last = docs.last().cloned().expect("non-empty docs checked above");
+    let entries = docs
+        .iter()
+        .take(docs.len() - 1)
+        .cloned()
+        .map(|item| fill_entry(item, concat([text(","), line()])));
+
+    concat([
+        text("{"),
+        indent(concat([
+            hard_line_without_break_parent(),
+            fill(entries, concat([last, text(",")])),
+        ])),
+        hard_line_without_break_parent(),
+        text("}"),
+    ])
+}
+
+fn filled_braced_block(docs: Vec<Doc>, tight_fit: bool) -> Doc {
     if docs.is_empty() {
         return text("{}");
     }
@@ -156,9 +188,17 @@ fn filled_braced_block(docs: Vec<Doc>) -> Doc {
         .cloned()
         .map(|item| fill_entry(item, concat([text(","), line()])));
 
+    // Dense scalar initializers in GJF behave as if exact-width rows still break.
+    // Reserve one invisible column so exact fits choose the next row.
+    let fit_guard = if tight_fit {
+        text_with_width("", TextWidth::new(1))
+    } else {
+        text("")
+    };
+
     group(concat([
         text("{"),
-        indent(concat([soft_line(), fill(entries, last)])),
+        indent(concat([soft_line(), fit_guard, fill(entries, last)])),
         soft_line(),
         text("}"),
     ]))

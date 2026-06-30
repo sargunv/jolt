@@ -30,7 +30,7 @@ pub(crate) fn rewrite_comment_lines(
     match comment.trivia.kind {
         TriviaKind::LineComment => rewrite_line_comment_lines(raw, column0, context.policy()),
         TriviaKind::BlockComment | TriviaKind::JavadocComment => {
-            rewrite_block_comment_lines(raw, column0)
+            rewrite_block_comment_lines(raw, column0, placement)
         }
         TriviaKind::Ignored => vec![raw.to_owned()],
         TriviaKind::Whitespace | TriviaKind::Newline => {
@@ -39,15 +39,17 @@ pub(crate) fn rewrite_comment_lines(
     }
 }
 
-fn rewrite_block_comment_lines(raw: &str, column0: usize) -> Vec<String> {
+fn rewrite_block_comment_lines(
+    raw: &str,
+    column0: usize,
+    placement: CommentPlacement,
+) -> Vec<String> {
     let lines = raw_comment_lines(raw)
         .into_iter()
         .map(strip_trailing_whitespace)
         .collect::<Vec<_>>();
-    if let Some(comment) =
-        collapsed_single_line_javadoc(&lines.iter().map(String::as_str).collect::<Vec<_>>())
-    {
-        return vec![comment];
+    if matches!(placement, CommentPlacement::InlineBlock) && !javadoc_shaped(&lines) {
+        return lines;
     }
     if javadoc_shaped(&lines) {
         return indent_javadoc_lines(lines, column0);
@@ -245,30 +247,6 @@ fn preserve_comment_indentation(lines: Vec<String>, column0: usize) -> Vec<Strin
         result.push(formatted);
     }
     result
-}
-
-fn collapsed_single_line_javadoc(lines: &[&str]) -> Option<String> {
-    if let [open, close] = lines
-        && open.trim() == "/**"
-        && close.trim() == "*/"
-    {
-        return Some("/** */".to_owned());
-    }
-
-    let [open, body, close] = lines else {
-        return None;
-    };
-    if open.trim() != "/**" || close.trim() != "*/" {
-        return None;
-    }
-
-    let body = body.trim_start_matches([' ', '\t']);
-    let body = body.strip_prefix('*')?.trim();
-    if body.is_empty() || body.contains("*/") {
-        return None;
-    }
-
-    Some(format!("/** {body} */"))
 }
 
 fn raw_comment_lines(raw: &str) -> Vec<&str> {

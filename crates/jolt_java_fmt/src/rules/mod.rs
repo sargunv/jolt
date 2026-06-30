@@ -15,8 +15,10 @@ use crate::comments::{
     take_inline_trailing_block_comment_docs, take_leading_comment_docs,
     take_leading_comment_docs_in_range, take_own_line_comment_docs_in_range,
     take_same_line_separator_trailing_block_comment_docs_in_range,
+    take_same_line_trailing_block_comment_docs_in_range,
     take_separator_leading_javadoc_comment_docs_in_range,
-    take_trailing_line_comment_docs_in_range_as_own_line, with_attached_comments,
+    take_trailing_line_comment_docs_in_range_as_own_line,
+    take_trailing_line_comment_docs_in_range_as_suffix, with_attached_comments,
     with_leading_and_trailing_comments,
 };
 use crate::context::JavaFormatContext;
@@ -60,23 +62,28 @@ mod tokens;
 mod types;
 
 use annotations::{
-    format_annotation, format_annotation_element_value, format_annotation_list,
-    format_modifier_list, with_vertical_annotations,
+    format_annotation, format_annotation_doc, format_annotation_doc_list,
+    format_annotation_element_value, format_annotation_list, format_modifier_list,
+    with_vertical_annotations,
 };
 use declarations::{
     braced_type_body, format_class_body, format_field_declaration, format_method_declaration,
     format_type_declaration,
 };
 use expressions::{
-    format_argument_list, format_array_dimensions, format_expression, format_pattern,
+    format_argument_list, format_array_dimensions, format_expression,
     format_variable_initializer_value,
 };
 use names::format_name;
 use statements::{
-    format_block, format_constructor_body, format_local_variable_declaration_header,
+    format_block, format_block_with_opening_comments,
+    format_constructor_body_with_opening_comments, format_local_variable_declaration_header,
     format_switch_expression, format_variable_declarator_list,
 };
 use tokens::{format_multiline_token, format_token};
-use types::{format_type, format_type_argument_list, format_type_layout_parts};
+use types::{
+    format_selector_type_argument_list_variants, format_type, format_type_argument_list,
+    format_type_layout_parts,
+};
 
 pub(crate) use compilation_unit::format_compilation_unit;

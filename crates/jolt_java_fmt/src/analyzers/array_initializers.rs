@@ -1,5 +1,7 @@
 use jolt_diagnostics::TextRange;
-use jolt_java_syntax::VariableInitializerValue;
+use jolt_java_syntax::{
+    AnnotationElementValue, Expression, JavaSyntaxKind, VariableInitializerValue,
+};
 use std::collections::HashMap;
 
 use crate::context::JavaFormatContext;
@@ -9,22 +11,12 @@ pub(crate) struct TabularLayout {
     pub rows: Vec<Vec<usize>>,
 }
 
+#[derive(Clone, Copy)]
 pub(crate) struct TabularEntry {
     pub range: TextRange,
     pub kind: ParallelKind,
     pub row_weight: usize,
     pub is_nested_array: bool,
-}
-
-pub(crate) fn tabular_layout(
-    values: &[VariableInitializerValue],
-    context: &JavaFormatContext<'_>,
-) -> Option<TabularLayout> {
-    let entries = values
-        .iter()
-        .map(initializer_tabular_entry)
-        .collect::<Vec<_>>();
-    tabular_layout_for_entries(&entries, context)
 }
 
 pub(crate) fn tabular_layout_for_entries(
@@ -118,6 +110,17 @@ pub(crate) fn tabular_entries(values: &[VariableInitializerValue]) -> Vec<Tabula
     values.iter().map(initializer_tabular_entry).collect()
 }
 
+pub(crate) fn annotation_array_tabular_entry(value: &AnnotationElementValue) -> TabularEntry {
+    TabularEntry {
+        range: value
+            .code_text_range()
+            .expect("parser-clean annotation array value should have a source range"),
+        kind: annotation_value_parallel_kind(value),
+        row_weight: annotation_value_row_weight(value),
+        is_nested_array: value.array_initializer().is_some(),
+    }
+}
+
 pub(crate) fn row_opens_without_extra_indent(
     entries: &[TabularEntry],
     row: &[usize],
@@ -145,9 +148,9 @@ fn start_column(range: TextRange, context: &JavaFormatContext<'_>) -> Option<usi
 }
 
 fn value_source_width(value: &VariableInitializerValue) -> usize {
-    value
-        .code_text_range()
-        .map_or(usize::MAX, |range| range.end().get().saturating_sub(range.start().get()))
+    value.code_text_range().map_or(usize::MAX, |range| {
+        range.end().get().saturating_sub(range.start().get())
+    })
 }
 
 fn entry_width(entry: &TabularEntry) -> usize {
@@ -173,41 +176,141 @@ fn expressions_are_parallel(
         if column >= row.len() {
             continue;
         }
-        *counts.entry(entries[row[column]].kind).or_default() += 1;
+        let kind = entries[row[column]].kind;
+        if kind != ParallelKind::Other {
+            *counts.entry(kind).or_default() += 1;
+        }
     }
     counts.values().any(|count| *count >= at_least)
 }
 
 #[derive(Clone, Copy, Eq, Hash, PartialEq)]
 pub(crate) enum ParallelKind {
-    Literal,
-    Name,
-    ArrayInitializer,
-    ArrayCreation,
-    Binary,
-    UnaryLiteral,
+    Syntax(JavaSyntaxKind),
     Annotation,
     Other,
 }
 
+impl ParallelKind {
+    pub(crate) fn is_scalar_initializer(self) -> bool {
+        matches!(
+            self,
+            Self::Syntax(
+                JavaSyntaxKind::IntegerLiteral
+                    | JavaSyntaxKind::FloatingPointLiteral
+                    | JavaSyntaxKind::BooleanLiteral
+                    | JavaSyntaxKind::CharacterLiteral
+                    | JavaSyntaxKind::StringLiteral
+                    | JavaSyntaxKind::TextBlockLiteral
+                    | JavaSyntaxKind::NullLiteral
+                    | JavaSyntaxKind::NameExpression
+            )
+        )
+    }
+}
+
 fn parallel_kind_for_initializer(value: &VariableInitializerValue) -> ParallelKind {
     match value {
-        VariableInitializerValue::LiteralExpression(_) => ParallelKind::Literal,
-        VariableInitializerValue::NameExpression(_) => ParallelKind::Name,
-        VariableInitializerValue::ArrayInitializer(_) => ParallelKind::ArrayInitializer,
-        VariableInitializerValue::ArrayCreationExpression(_) => ParallelKind::ArrayCreation,
-        VariableInitializerValue::BinaryExpression(_) => ParallelKind::Binary,
-        VariableInitializerValue::UnaryExpression(unary) => {
-            if unary.operand().is_some_and(|operand| {
-                matches!(operand, jolt_java_syntax::Expression::LiteralExpression(_))
-            }) {
-                ParallelKind::UnaryLiteral
-            } else {
-                ParallelKind::Other
-            }
+        VariableInitializerValue::LiteralExpression(literal) => literal
+            .token()
+            .map_or(ParallelKind::Other, |token| syntax_kind(token.kind())),
+        VariableInitializerValue::AssignmentExpression(assignment) => assignment
+            .operator()
+            .map_or(ParallelKind::Other, |operator| syntax_kind(operator.kind())),
+        VariableInitializerValue::ArrayInitializer(_)
+        | VariableInitializerValue::ArrayCreationExpression(_) => {
+            syntax_kind(JavaSyntaxKind::ArrayInitializer)
         }
-        _ => ParallelKind::Other,
+        VariableInitializerValue::BinaryExpression(binary) => binary
+            .operator()
+            .map_or(ParallelKind::Other, |operator| syntax_kind(operator.kind())),
+        VariableInitializerValue::UnaryExpression(unary) => {
+            unary.operand().map_or(ParallelKind::Other, |operand| {
+                immediate_expression_kind(&operand)
+            })
+        }
+        VariableInitializerValue::PostfixExpression(postfix) => {
+            postfix.operand().map_or(ParallelKind::Other, |operand| {
+                immediate_expression_kind(&operand)
+            })
+        }
+        _ => syntax_kind(value.kind()),
     }
+}
+
+pub(crate) fn expression_parallel_kind(expression: &Expression) -> ParallelKind {
+    match expression {
+        Expression::LiteralExpression(literal) => literal
+            .token()
+            .map_or(ParallelKind::Other, |token| syntax_kind(token.kind())),
+        Expression::AssignmentExpression(assignment) => assignment
+            .operator()
+            .map_or(ParallelKind::Other, |operator| syntax_kind(operator.kind())),
+        Expression::ArrayCreationExpression(_) => syntax_kind(JavaSyntaxKind::ArrayInitializer),
+        Expression::BinaryExpression(binary) => binary
+            .operator()
+            .map_or(ParallelKind::Other, |operator| syntax_kind(operator.kind())),
+        Expression::UnaryExpression(unary) => {
+            unary.operand().map_or(ParallelKind::Other, |operand| {
+                immediate_expression_kind(&operand)
+            })
+        }
+        Expression::PostfixExpression(postfix) => {
+            postfix.operand().map_or(ParallelKind::Other, |operand| {
+                immediate_expression_kind(&operand)
+            })
+        }
+        _ => syntax_kind(expression.kind()),
+    }
+}
+
+pub(crate) fn annotation_value_parallel_kind(value: &AnnotationElementValue) -> ParallelKind {
+    if value.array_initializer().is_some() {
+        return syntax_kind(JavaSyntaxKind::ArrayInitializer);
+    }
+    if value.annotation().is_some() {
+        return ParallelKind::Annotation;
+    }
+    if let Some(expression) = value.expression() {
+        return expression_parallel_kind(&expression);
+    }
+    ParallelKind::Other
+}
+
+fn immediate_expression_kind(expression: &Expression) -> ParallelKind {
+    match expression {
+        Expression::LiteralExpression(literal) => literal
+            .token()
+            .map_or(ParallelKind::Other, |token| syntax_kind(token.kind())),
+        Expression::AssignmentExpression(assignment) => assignment
+            .operator()
+            .map_or(ParallelKind::Other, |operator| syntax_kind(operator.kind())),
+        Expression::ArrayCreationExpression(_) => syntax_kind(JavaSyntaxKind::ArrayInitializer),
+        Expression::BinaryExpression(binary) => binary
+            .operator()
+            .map_or(ParallelKind::Other, |operator| syntax_kind(operator.kind())),
+        Expression::UnaryExpression(unary) => unary
+            .operator()
+            .map_or(ParallelKind::Other, |operator| syntax_kind(operator.kind())),
+        Expression::PostfixExpression(postfix) => postfix
+            .operator()
+            .map_or(ParallelKind::Other, |operator| syntax_kind(operator.kind())),
+        _ => syntax_kind(expression.kind()),
+    }
+}
+
+fn syntax_kind(kind: JavaSyntaxKind) -> ParallelKind {
+    ParallelKind::Syntax(kind)
+}
+
+fn annotation_value_row_weight(value: &AnnotationElementValue) -> usize {
+    if let Some(initializer) = value.array_initializer() {
+        return initializer
+            .values()
+            .map(|value| annotation_value_row_weight(&value))
+            .sum();
+    }
+    1
 }
 
 fn value_row_weight(value: &VariableInitializerValue) -> usize {

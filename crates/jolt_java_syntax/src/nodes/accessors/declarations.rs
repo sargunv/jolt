@@ -1725,6 +1725,14 @@ impl AnnotationArrayInitializer {
     pub fn values(&self) -> impl Iterator<Item = AnnotationElementValue> + '_ {
         children(&self.syntax)
     }
+
+    #[must_use]
+    pub fn has_trailing_comma(&self) -> bool {
+        let elements = self.syntax.children_with_tokens().collect::<Vec<_>>();
+        elements
+            .get(elements.len().saturating_sub(2))
+            .is_some_and(|element| element.kind() == JavaSyntaxKind::Comma)
+    }
 }
 
 impl AnnotationElementValuePair {

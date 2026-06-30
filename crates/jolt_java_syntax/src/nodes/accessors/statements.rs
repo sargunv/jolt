@@ -407,6 +407,13 @@ impl ResourceSpecification {
     }
 
     #[must_use]
+    pub fn has_trailing_semicolon(&self) -> bool {
+        self.syntax
+            .children_with_tokens()
+            .any(|element| element.kind() == JavaSyntaxKind::Semicolon)
+    }
+
+    #[must_use]
     pub fn has_supported_layout_shape(&self) -> bool {
         let elements = self.syntax.children_with_tokens().collect::<Vec<_>>();
         matches!(

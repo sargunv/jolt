@@ -2,10 +2,11 @@ use super::{
     CompilationUnit, CompilationUnitMember, Doc, FormatResult, ImportDeclaration,
     JavaFormatContext, ModuleDeclaration, ModuleDirective, PackageDeclaration, concat,
     format_annotation_list, format_field_declaration, format_method_declaration, format_name,
-    format_type_declaration, hard_line, java_lists, join, reject_unhandled_comments_before_start,
+    format_type_declaration, hard_line, join, reject_unhandled_comments_before_start,
     take_leading_comment_docs, take_own_line_comment_docs_in_range, text, with_attached_comments,
-    with_leading_and_trailing_comments, with_vertical_annotations, wrap,
+    with_leading_and_trailing_comments, with_vertical_annotations,
 };
+use crate::helpers::modules::{self, ModuleDirectiveLayout};
 use crate::policy::JavaFormatPolicy;
 use jolt_diagnostics::TextRange;
 
@@ -173,85 +174,78 @@ pub(super) fn format_module_declaration(
         .expect("parser-clean module declaration should have a name");
     let directives = module
         .directives()
-        .map(|directive| format_module_directive(&directive))
+        .map(|directive| module_directive_layout(&directive))
         .collect::<Vec<_>>();
-
-    let mut header = Vec::new();
-    if module.is_open() {
-        header.push(text("open "));
-    }
-    header.push(text("module "));
-    header.push(format_name(&name));
-    header.push(text(" "));
 
     let doc = with_vertical_annotations(
         annotations,
-        concat([concat(header), wrap::braced_block(directives)]),
+        modules::module_declaration(
+            module.is_open(),
+            format_name(&name),
+            directives,
+            context.policy(),
+        ),
     );
     with_leading_and_trailing_comments(context, code_range, leading_comments, doc)
 }
 
-fn format_module_directive(directive: &ModuleDirective) -> Doc {
+fn module_directive_layout(directive: &ModuleDirective) -> ModuleDirectiveLayout {
     match directive {
         ModuleDirective::RequiresDirective(directive) => {
-            let mut parts = vec![text("requires ")];
-            if directive.is_transitive() {
-                parts.push(text("transitive "));
-            }
-            if directive.is_static() {
-                parts.push(text("static "));
-            }
             let name = directive
                 .name()
                 .expect("parser-clean requires directive should have a module name");
-            parts.push(format_name(&name));
-            parts.push(text(";"));
-            concat(parts)
+            ModuleDirectiveLayout::Requires {
+                is_transitive: directive.is_transitive(),
+                is_static: directive.is_static(),
+                name: format_name(&name),
+            }
         }
-        ModuleDirective::ExportsDirective(directive) => format_module_package_directive(
-            "exports",
-            directive.package_name(),
-            directive.target_modules().collect(),
-            "to",
-        ),
-        ModuleDirective::OpensDirective(directive) => format_module_package_directive(
-            "opens",
-            directive.package_name(),
-            directive.target_modules().collect(),
-            "to",
-        ),
+        ModuleDirective::ExportsDirective(directive) => {
+            let package_name = directive
+                .package_name()
+                .expect("parser-clean exports directive should have a package name");
+            ModuleDirectiveLayout::Exports {
+                package_name: format_name(&package_name),
+                targets: directive
+                    .target_modules()
+                    .map(|target| format_name(&target))
+                    .collect(),
+            }
+        }
+        ModuleDirective::OpensDirective(directive) => {
+            let package_name = directive
+                .package_name()
+                .expect("parser-clean opens directive should have a package name");
+            ModuleDirectiveLayout::Opens {
+                package_name: format_name(&package_name),
+                targets: directive
+                    .target_modules()
+                    .map(|target| format_name(&target))
+                    .collect(),
+            }
+        }
         ModuleDirective::UsesDirective(directive) => {
             let name = directive
                 .service_name()
                 .expect("parser-clean uses directive should have a service name");
-            concat([text("uses "), format_name(&name), text(";")])
+            ModuleDirectiveLayout::Uses {
+                service_name: format_name(&name),
+            }
         }
-        ModuleDirective::ProvidesDirective(directive) => format_module_package_directive(
-            "provides",
-            directive.service_name(),
-            directive.implementation_names().collect(),
-            "with",
-        ),
+        ModuleDirective::ProvidesDirective(directive) => {
+            let name = directive
+                .service_name()
+                .expect("parser-clean provides directive should have a service name");
+            ModuleDirectiveLayout::Provides {
+                service_name: format_name(&name),
+                implementations: directive
+                    .implementation_names()
+                    .map(|implementation| format_name(&implementation))
+                    .collect(),
+            }
+        }
     }
-}
-
-fn format_module_package_directive(
-    keyword: &'static str,
-    name: Option<super::NameSyntax>,
-    targets: Vec<super::NameSyntax>,
-    target_keyword: &'static str,
-) -> Doc {
-    let name = name.expect("parser-clean module package directive should have a required name");
-
-    let mut parts = vec![text(format!("{keyword} ")), format_name(&name)];
-    if !targets.is_empty() {
-        parts.push(text(format!(" {target_keyword} ")));
-        parts.push(java_lists::comma_list(
-            targets.into_iter().map(|target| format_name(&target)),
-        ));
-    }
-    parts.push(text(";"));
-    concat(parts)
 }
 
 pub(super) fn format_compilation_unit_member(

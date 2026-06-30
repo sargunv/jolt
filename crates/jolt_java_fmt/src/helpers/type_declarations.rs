@@ -1,4 +1,10 @@
-use jolt_fmt_ir::{Doc, concat, group, hard_line, indent_by, join, line, text};
+use jolt_fmt_ir::{
+    Doc, concat, group, hard_line, hard_line_without_break_parent, if_group_breaks, indent_by,
+    join, line, text,
+};
+
+use crate::helpers::lists::TYPE_DECLARATION_TYPE_PARAMETERS_GROUP_ID;
+use crate::policy::JavaFormatPolicy;
 
 pub(crate) struct TypeDeclaration {
     pub(crate) modifiers: Vec<Doc>,
@@ -14,10 +20,7 @@ pub(crate) struct TypeDeclaration {
     pub(crate) body: Doc,
 }
 
-pub(crate) fn type_declaration(
-    declaration: TypeDeclaration,
-    continuation_indent_levels: u16,
-) -> Doc {
+pub(crate) fn type_declaration(declaration: TypeDeclaration, policy: JavaFormatPolicy) -> Doc {
     let TypeDeclaration {
         modifiers,
         keyword,
@@ -35,6 +38,7 @@ pub(crate) fn type_declaration(
     let mut head_parts = modifiers;
     head_parts.push(keyword);
     head_parts.extend(before_name_comments);
+    let has_type_parameters = type_parameters.is_some();
     head_parts.push(concat(std::iter::once(name).chain(type_parameters)));
 
     let mut head = space_separated_head(head_parts);
@@ -47,7 +51,7 @@ pub(crate) fn type_declaration(
         .chain(implements_clause)
         .chain(permits_clause)
         .collect::<Vec<_>>();
-    let header = type_declaration_header(head, clauses, continuation_indent_levels);
+    let header = type_declaration_header(head, clauses, policy, has_type_parameters);
     if before_body_comments.is_empty() {
         concat([header, text(" "), body])
     } else {
@@ -64,7 +68,12 @@ pub(crate) fn type_declaration(
 /// google-java-format `visitClassDeclaration`: each header clause gets an independent
 /// `breakToFill(" ")` decision so a long `implements` list does not force `extends`
 /// onto its own line when `class A extends S` fits.
-fn type_declaration_header(head: Doc, clauses: Vec<Doc>, continuation_indent_levels: u16) -> Doc {
+fn type_declaration_header(
+    head: Doc,
+    clauses: Vec<Doc>,
+    policy: JavaFormatPolicy,
+    has_type_parameters: bool,
+) -> Doc {
     if clauses.is_empty() {
         return group(head);
     }
@@ -73,23 +82,41 @@ fn type_declaration_header(head: Doc, clauses: Vec<Doc>, continuation_indent_lev
         return group(concat([
             head,
             indent_by(
-                continuation_indent_levels,
+                policy.continuation_indent_levels(),
                 group(concat([
-                    line(),
+                    clause_separator(has_type_parameters),
                     clauses.into_iter().next().expect("one clause"),
                 ])),
             ),
         ]));
     }
 
-    let mut clauses = clauses.into_iter();
-    let first = clauses.next().expect("at least two clauses");
-    let mut parts: Vec<Doc> = vec![group(concat([head, line(), first]))];
-    parts.extend(
-        clauses
-            .map(|clause| indent_by(continuation_indent_levels, group(concat([line(), clause])))),
-    );
-    group(concat(parts))
+    group(concat([
+        head,
+        indent_by(
+            policy.continuation_indent_levels(),
+            concat(clauses.into_iter().enumerate().map(|(index, clause)| {
+                let separator = if index == 0 {
+                    clause_separator(has_type_parameters)
+                } else {
+                    line()
+                };
+                group(concat([separator, clause]))
+            })),
+        ),
+    ]))
+}
+
+fn clause_separator(has_type_parameters: bool) -> Doc {
+    if has_type_parameters {
+        if_group_breaks(
+            TYPE_DECLARATION_TYPE_PARAMETERS_GROUP_ID,
+            hard_line_without_break_parent(),
+            line(),
+        )
+    } else {
+        line()
+    }
 }
 
 fn space_separated_head(parts: impl IntoIterator<Item = Doc>) -> Doc {

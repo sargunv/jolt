@@ -1,9 +1,10 @@
 use jolt_diagnostics::TextRange;
 use jolt_fmt_ir::{
-    Doc, best_fitting, concat, fill, fill_entry, group, hard_line, hard_line_without_break_parent,
-    indent, indent_by, join, line, soft_line, text,
+    Doc, GroupId, best_fitting, concat, fill, fill_entry, group, group_id, hard_line,
+    hard_line_without_break_parent, indent, indent_by, join, line, soft_line, text,
 };
 
+use crate::analyzers::array_initializers::TabularEntry;
 use crate::comments::{
     format_own_line_comment_doc, reject_unhandled_comments_in_range, take_dangling_comment_docs,
     take_inline_leading_block_comment_docs, take_inline_trailing_block_comment_docs,
@@ -13,10 +14,15 @@ use crate::diagnostics::FormatResult;
 use crate::helpers::separated;
 use crate::policy::JavaFormatPolicy;
 
+pub(crate) const TYPE_DECLARATION_TYPE_PARAMETERS_GROUP_ID: GroupId = GroupId(1);
+pub(crate) const SELECTOR_TYPE_ARGUMENTS_GROUP_ID: GroupId = GroupId(2);
+
 pub(crate) struct ListItem {
     range: TextRange,
     source_width: usize,
     shape: ListItemShape,
+    tabular_entry: Option<TabularEntry>,
+    has_inline_comments: bool,
     format: Box<dyn for<'ctx> FnOnce(&mut JavaFormatContext<'ctx>) -> FormatResult<Doc>>,
 }
 
@@ -29,12 +35,24 @@ impl ListItem {
             range,
             source_width: text_range_width(range),
             shape: ListItemShape::Unknown,
+            tabular_entry: None,
+            has_inline_comments: false,
             format: Box::new(format),
         }
     }
 
     pub(crate) fn with_shape(mut self, shape: ListItemShape) -> Self {
         self.shape = shape;
+        self
+    }
+
+    pub(crate) fn with_tabular_entry(mut self, entry: TabularEntry) -> Self {
+        self.tabular_entry = Some(entry);
+        self
+    }
+
+    pub(crate) fn with_inline_comments(mut self, has_inline_comments: bool) -> Self {
+        self.has_inline_comments = has_inline_comments;
         self
     }
 
@@ -46,6 +64,10 @@ impl ListItem {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum ListItemShape {
     Simple,
+    SelectorChain,
+    AnonymousObjectCreationUnit,
+    NestedArgumentUnit,
+    WideHeadNestedArgumentUnit,
     Call,
     Complex,
     Unknown,
@@ -60,7 +82,14 @@ pub(crate) fn statement_expression_list(
     ownership_range: TextRange,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    let items = format_list_items(items, ownership_range, ListCommentMode::Clause, context)?;
+    let items = format_list_items(
+        items,
+        ownership_range,
+        ListCommentMode::Clause,
+        ',',
+        0,
+        context,
+    )?;
     if !items.has_structural_comments() {
         return Ok(comma_list(items.into_docs()));
     }
@@ -99,6 +128,22 @@ pub(crate) fn argument_list(
     is_format_method: bool,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
+    argument_list_with_continuation_indent(
+        items,
+        list_range,
+        is_format_method,
+        context.policy().continuation_indent_levels(),
+        context,
+    )
+}
+
+pub(crate) fn argument_list_with_continuation_indent(
+    items: impl IntoIterator<Item = ListItem>,
+    list_range: TextRange,
+    is_format_method: bool,
+    continuation_indent_levels: u16,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
     let items = format_list_items(
         items,
         list_range,
@@ -106,16 +151,19 @@ pub(crate) fn argument_list(
             open: "(",
             open_range: None,
         },
+        ',',
+        0,
         context,
     )?;
-    Ok(argument_list_with_policy(
+    argument_list_with_policy(
         "(",
         ")",
-        context.policy().continuation_indent_levels(),
+        continuation_indent_levels,
         context.policy(),
         is_format_method,
         items,
-    ))
+        context,
+    )
 }
 
 pub(crate) fn formal_parameter_list(
@@ -124,6 +172,27 @@ pub(crate) fn formal_parameter_list(
     open_range: Option<TextRange>,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
+    formal_parameter_list_with_indent(
+        items,
+        list_range,
+        open_range,
+        context.policy().continuation_indent_levels(),
+        context,
+    )
+}
+
+pub(crate) fn formal_parameter_list_with_indent(
+    items: impl IntoIterator<Item = ListItem>,
+    list_range: TextRange,
+    open_range: Option<TextRange>,
+    continuation_indent_levels: u16,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    let separator_leading_comment_indent_columns = if continuation_indent_levels == 0 {
+        context.policy().continuation_indent_columns()
+    } else {
+        0
+    };
     let items = format_list_items(
         items,
         list_range,
@@ -131,12 +200,14 @@ pub(crate) fn formal_parameter_list(
             open: "(",
             open_range,
         },
+        ',',
+        separator_leading_comment_indent_columns,
         context,
     )?;
     Ok(delimited_comma_list_one_per_line_with_comments(
         "(",
         ")",
-        context.policy().continuation_indent_levels(),
+        continuation_indent_levels,
         items,
     ))
 }
@@ -154,6 +225,8 @@ pub(crate) fn lambda_parameter_list(
             open: "(",
             open_range,
         },
+        ',',
+        0,
         context,
     )?;
     Ok(delimited_comma_list_with_comments(
@@ -169,26 +242,53 @@ pub(crate) fn type_argument_list(
     list_range: TextRange,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    let items = format_list_items(
+    type_argument_list_with_indent(
         items,
         list_range,
-        ListCommentMode::Delimited {
-            open: "<",
-            open_range: None,
-        },
-        context,
-    )?;
-    Ok(delimited_comma_list_with_comments(
-        "<",
-        ">",
         context.policy().type_argument_indent_levels(),
-        items,
-    ))
+        false,
+        context,
+    )
 }
 
-pub(crate) fn type_parameter_list(
+pub(crate) fn nested_type_argument_list(
     items: impl IntoIterator<Item = ListItem>,
     list_range: TextRange,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    type_argument_list_with_indent(
+        items,
+        list_range,
+        context.policy().nested_type_argument_indent_levels(),
+        false,
+        context,
+    )
+}
+
+pub(crate) fn type_clause_type_argument_list(
+    items: impl IntoIterator<Item = ListItem>,
+    list_range: TextRange,
+    has_multiple_clause_types: bool,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    type_argument_list_with_indent(
+        items,
+        list_range,
+        context
+            .policy()
+            .type_clause_type_argument_indent_levels(has_multiple_clause_types),
+        context
+            .policy()
+            .type_clause_type_arguments_one_per_line(has_multiple_clause_types),
+        context,
+    )
+}
+
+fn type_argument_list_with_indent(
+    items: impl IntoIterator<Item = ListItem>,
+    list_range: TextRange,
+    indent_levels: u16,
+    one_per_line: bool,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
     let items = format_list_items(
@@ -198,14 +298,136 @@ pub(crate) fn type_parameter_list(
             open: "<",
             open_range: None,
         },
+        ',',
+        0,
         context,
     )?;
-    Ok(delimited_comma_list_one_per_line_with_comments(
+    if one_per_line {
+        return Ok(delimited_comma_list_one_per_line_with_comments(
+            "<",
+            ">",
+            indent_levels,
+            items,
+        ));
+    }
+
+    Ok(delimited_comma_list_with_comments(
         "<",
         ">",
-        context.policy().type_argument_indent_levels(),
+        indent_levels,
         items,
     ))
+}
+
+pub(crate) fn selector_type_argument_list_variants(
+    items: impl IntoIterator<Item = ListItem>,
+    list_range: TextRange,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<(Doc, Doc)> {
+    let items = format_list_items(
+        items,
+        list_range,
+        ListCommentMode::Delimited {
+            open: "<",
+            open_range: None,
+        },
+        ',',
+        0,
+        context,
+    )?;
+    let default = selector_type_argument_list_doc(
+        items.clone(),
+        context.policy().type_argument_indent_levels(),
+    );
+    let after_chain_break = selector_type_argument_list_doc(
+        items,
+        context.policy().selector_type_argument_indent_levels(),
+    );
+    Ok((default, after_chain_break))
+}
+
+fn selector_type_argument_list_doc(items: FormattedList, indent_levels: u16) -> Doc {
+    if items.has_structural_comments() {
+        return group_id(
+            SELECTOR_TYPE_ARGUMENTS_GROUP_ID,
+            comment_delimited_comma_list("<", ">", indent_levels, items),
+        );
+    }
+
+    selector_head_type_argument_list(indent_levels, items.into_docs())
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum TypeParameterListContext {
+    TypeDeclaration { has_following_type_clauses: bool },
+    CallableDeclaration,
+}
+
+pub(crate) fn type_parameter_list(
+    items: impl IntoIterator<Item = ListItem>,
+    list_range: TextRange,
+    list_context: TypeParameterListContext,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    let items = format_list_items(
+        items,
+        list_range,
+        ListCommentMode::Delimited {
+            open: "<",
+            open_range: None,
+        },
+        ',',
+        0,
+        context,
+    )?;
+    let indent_levels = match list_context {
+        TypeParameterListContext::TypeDeclaration {
+            has_following_type_clauses,
+        } => context
+            .policy()
+            .declaration_type_parameter_indent_levels(has_following_type_clauses),
+        TypeParameterListContext::CallableDeclaration => {
+            context.policy().callable_type_parameter_indent_levels()
+        }
+    };
+
+    if matches!(
+        list_context,
+        TypeParameterListContext::TypeDeclaration { .. }
+    ) && context.policy().declaration_type_parameters_fill()
+        && items.items.len()
+            <= context
+                .policy()
+                .declaration_type_parameters_fill_max_items()
+        && !items.has_structural_comments()
+        && items
+            .items
+            .iter()
+            .all(|item| item.shape != ListItemShape::Complex)
+    {
+        let type_parameters = delimited_comma_list_with_group_id(
+            "<",
+            ">",
+            indent_levels,
+            TYPE_DECLARATION_TYPE_PARAMETERS_GROUP_ID,
+            items.into_docs(),
+        );
+        return Ok(type_parameters);
+    }
+
+    let type_parameters =
+        delimited_comma_list_one_per_line_with_comments("<", ">", indent_levels, items);
+    if matches!(
+        list_context,
+        TypeParameterListContext::TypeDeclaration { .. }
+    ) {
+        Ok(group_id(
+            TYPE_DECLARATION_TYPE_PARAMETERS_GROUP_ID,
+            type_parameters,
+        ))
+    } else {
+        Ok(type_parameters)
+    }
 }
 
 pub(crate) fn keyword_prefixed_clause_list(
@@ -232,8 +454,15 @@ pub(crate) fn type_clause_list(
     continuation_indent_levels: u16,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    let items = format_list_items(items, ownership_range, ListCommentMode::Clause, context)?;
-    if keyword == "throws" {
+    let items = format_list_items(
+        items,
+        ownership_range,
+        ListCommentMode::Clause,
+        ',',
+        0,
+        context,
+    )?;
+    if keyword == "throws" && items.has_structural_comments() {
         return Ok(keyword_prefixed_comma_list_with_comments(
             keyword,
             continuation_indent_levels,
@@ -292,6 +521,117 @@ fn keyword_type_list_clause(
     ]))
 }
 
+pub(crate) fn resource_specification(
+    items: impl IntoIterator<Item = ListItem>,
+    specification_range: TextRange,
+    has_trailing_semicolon: bool,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    let items = format_list_items(
+        items,
+        specification_range,
+        ListCommentMode::Delimited {
+            open: "(",
+            open_range: None,
+        },
+        ';',
+        0,
+        context,
+    )?;
+    Ok(resource_specification_with_comments(
+        items,
+        has_trailing_semicolon,
+        context.policy().continuation_indent_levels(),
+    ))
+}
+
+fn resource_specification_with_comments(
+    list: FormattedList,
+    has_trailing_semicolon: bool,
+    indent_levels: u16,
+) -> Doc {
+    if list.is_empty() {
+        return text("()");
+    }
+
+    if list.has_structural_comments() {
+        return comment_delimited_semicolon_list(
+            "(",
+            ")",
+            indent_levels,
+            list,
+            has_trailing_semicolon,
+        );
+    }
+
+    let mut docs = list.into_docs();
+    if docs.len() == 1 {
+        let resource = docs
+            .pop()
+            .expect("single resource checked above should have one doc");
+        let trailing = if has_trailing_semicolon {
+            text("; ")
+        } else {
+            text("")
+        };
+        return group(concat([text("("), resource, trailing, text(")")]));
+    }
+
+    let flat = semicolon_delimited_list_flat("(", ")", docs.clone(), has_trailing_semicolon);
+    let broken = semicolon_delimited_list("(", ")", indent_levels, docs, has_trailing_semicolon);
+    best_fitting(flat, [broken])
+}
+
+fn semicolon_delimited_list_flat(
+    open: &'static str,
+    close: &'static str,
+    items: Vec<Doc>,
+    has_trailing_semicolon: bool,
+) -> Doc {
+    let trailing = if has_trailing_semicolon {
+        text("; ")
+    } else {
+        text("")
+    };
+    group(concat([
+        text(open),
+        join(text("; "), items),
+        trailing,
+        text(close),
+    ]))
+}
+
+fn semicolon_delimited_list(
+    open: &'static str,
+    close: &'static str,
+    indent_levels: u16,
+    mut items: Vec<Doc>,
+    has_trailing_semicolon: bool,
+) -> Doc {
+    if items.is_empty() {
+        return text(format!("{open}{close}"));
+    }
+
+    let first = items.remove(0);
+    let rest = items
+        .into_iter()
+        .flat_map(|item| [text(";"), line(), item])
+        .collect::<Vec<_>>();
+    let trailing = if has_trailing_semicolon {
+        text("; ")
+    } else {
+        text("")
+    };
+
+    group(concat([
+        text(open),
+        first,
+        indent_by(indent_levels, concat(rest)),
+        trailing,
+        text(close),
+    ]))
+}
+
 pub(crate) fn braced_comma_list(
     items: impl IntoIterator<Item = ListItem>,
     list_range: TextRange,
@@ -306,6 +646,8 @@ pub(crate) fn braced_comma_list(
             open: "{",
             open_range: None,
         },
+        ',',
+        0,
         context,
     )?;
     Ok(braced_comma_list_with_comments(
@@ -328,6 +670,8 @@ fn format_list_items(
     items: impl IntoIterator<Item = ListItem>,
     ownership_range: TextRange,
     comment_mode: ListCommentMode,
+    separator: char,
+    separator_leading_comment_indent_columns: usize,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<FormattedList> {
     let items = items.into_iter().collect::<Vec<_>>();
@@ -340,7 +684,7 @@ fn format_list_items(
         .map(|item| item.range.start())
         .chain(std::iter::once(ownership_range.end()))
         .collect::<Vec<_>>();
-    let mut opening_comments = match comment_mode {
+    let mut after_open = match comment_mode {
         ListCommentMode::Delimited {
             open, open_range, ..
         } => take_opening_delimiter_comments(
@@ -357,8 +701,9 @@ fn format_list_items(
     let mut docs = Vec::new();
     let mut previous_item_end = None;
 
-    for (index, (item, next_item_start)) in items.into_iter().zip(next_item_starts).enumerate() {
+    for (item, next_item_start) in items.into_iter().zip(next_item_starts) {
         let gap_start = previous_item_end.unwrap_or_else(|| ownership_range.start());
+        let mut has_separator_leading_comments = false;
         let mut leading = context
             .take_leading_comments_in_range(ownership_range, item.range)
             .into_iter()
@@ -366,24 +711,33 @@ fn format_list_items(
             .collect::<Vec<_>>();
         if let Some(previous_item_end) = previous_item_end {
             let separator_comments = context
-                .take_list_separator_trailing_line_comments(TextRange::new(
-                    previous_item_end,
-                    item.range.start(),
-                ))
+                .take_list_separator_trailing_line_comments_with_separator(
+                    TextRange::new(previous_item_end, item.range.start()),
+                    separator,
+                )
                 .into_iter()
-                .map(|comment| format_own_line_comment_doc(context, &comment))
+                .map(|comment| {
+                    let comment = concat([
+                        text(separator.to_string()),
+                        text(" "),
+                        format_own_line_comment_doc(context, &comment),
+                    ]);
+                    if separator_leading_comment_indent_columns == 0 {
+                        comment
+                    } else {
+                        concat([
+                            text(" ".repeat(separator_leading_comment_indent_columns)),
+                            comment,
+                        ])
+                    }
+                })
                 .collect::<Vec<_>>();
             if !separator_comments.is_empty() {
+                has_separator_leading_comments = true;
                 let mut comments = separator_comments;
                 comments.extend(leading);
                 leading = comments;
             }
-        }
-        if index == 0 && !opening_comments.is_empty() {
-            let mut comments = Vec::new();
-            comments.append(&mut opening_comments);
-            comments.extend(leading);
-            leading = comments;
         }
         let inline_leading = take_inline_leading_block_comment_docs(context, item.range);
         let has_leading_comments = !leading.is_empty();
@@ -402,17 +756,19 @@ fn format_list_items(
 
         let inline_trailing = take_inline_trailing_block_comment_docs(context, item.range);
         let trailing_blocks = context
-            .take_list_item_trailing_block_comments(
+            .take_list_item_trailing_block_comments_with_separator(
                 item.range,
                 TextRange::new(item.range.end(), next_item_start),
+                separator,
             )
             .into_iter()
             .map(|comment| text(context.raw_text(&comment)))
             .collect::<Vec<_>>();
         let trailing_line = context
-            .take_list_item_trailing_line_comment(
+            .take_list_item_trailing_line_comment_with_separator(
                 item.range,
                 TextRange::new(item.range.end(), next_item_start),
+                separator,
             )
             .map(|comment| text(context.raw_text(&comment)));
         let has_comments = has_leading_comments
@@ -432,24 +788,23 @@ fn format_list_items(
             doc,
             shape: item.shape,
             source_width: item.source_width,
+            tabular_entry: item.tabular_entry,
+            has_inline_comments: item.has_inline_comments,
             has_comments,
             has_structural_comments: has_leading_comments
                 || !trailing_blocks.is_empty()
                 || trailing_line.is_some(),
+            has_separator_leading_comments,
             trailing_blocks,
             trailing_line,
         });
         previous_item_end = Some(item.range.end());
     }
 
-    let mut before_close = match comment_mode {
+    let before_close = match comment_mode {
         ListCommentMode::Delimited { .. } => take_dangling_comment_docs(context, dangling_range)?,
         ListCommentMode::Clause => Vec::new(),
     };
-    if docs.is_empty() && !opening_comments.is_empty() {
-        opening_comments.extend(before_close);
-        before_close = opening_comments;
-    }
     reject_unhandled_comments_in_range(
         context,
         ownership_range,
@@ -457,6 +812,7 @@ fn format_list_items(
     )?;
 
     Ok(FormattedList {
+        after_open: std::mem::take(&mut after_open),
         items: docs,
         before_close,
     })
@@ -469,11 +825,13 @@ fn take_opening_delimiter_comments(
     context
         .take_trailing_line_comment(delimiter_range)
         .into_iter()
-        .map(|comment| format_own_line_comment_doc(context, &comment))
+        .map(|comment| text(context.raw_text(&comment)))
         .collect()
 }
 
+#[derive(Clone)]
 pub(crate) struct FormattedList {
+    after_open: Vec<Doc>,
     items: Vec<FormattedListItem>,
     before_close: Vec<Doc>,
 }
@@ -484,11 +842,19 @@ impl FormattedList {
     }
 
     fn has_comments(&self) -> bool {
-        !self.before_close.is_empty() || self.items.iter().any(|item| item.has_comments)
+        !self.after_open.is_empty()
+            || !self.before_close.is_empty()
+            || self.items.iter().any(|item| item.has_comments)
     }
 
     pub(crate) fn has_structural_comments(&self) -> bool {
-        !self.before_close.is_empty() || self.items.iter().any(|item| item.has_structural_comments)
+        !self.after_open.is_empty()
+            || !self.before_close.is_empty()
+            || self.items.iter().any(|item| item.has_structural_comments)
+    }
+
+    fn has_inline_comments(&self) -> bool {
+        self.items.iter().any(|item| item.has_inline_comments)
     }
 
     pub(crate) fn into_docs(self) -> Vec<Doc> {
@@ -499,12 +865,16 @@ impl FormattedList {
     }
 }
 
+#[derive(Clone)]
 struct FormattedListItem {
     doc: Doc,
     shape: ListItemShape,
     source_width: usize,
+    tabular_entry: Option<TabularEntry>,
+    has_inline_comments: bool,
     has_comments: bool,
     has_structural_comments: bool,
+    has_separator_leading_comments: bool,
     trailing_blocks: Vec<Doc>,
     trailing_line: Option<Doc>,
 }
@@ -522,9 +892,15 @@ fn argument_list_with_policy(
     policy: JavaFormatPolicy,
     is_format_method: bool,
     items: FormattedList,
-) -> Doc {
+    context: &JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
     if items.is_empty() {
-        return delimited_comma_list_with_comments(open, close, indent_levels, items);
+        return Ok(delimited_comma_list_with_comments(
+            open,
+            close,
+            indent_levels,
+            items,
+        ));
     }
 
     let all_known = items
@@ -536,31 +912,166 @@ fn argument_list_with_policy(
         .iter()
         .map(|item| item.doc.clone())
         .collect::<Vec<_>>();
+    let has_policy_inline_comments = policy
+        .argument_list_breaks_inline_commented_items_one_per_line()
+        && items.has_inline_comments();
+    let has_policy_comments = items.has_comments() || has_policy_inline_comments;
 
-    if !items.has_comments()
+    if !has_policy_comments
         && all_known
         && items.items.len() >= 4
-        && pairable_argument_items(&items.items)
+        && items.items.len().is_multiple_of(2)
+        && tabular_argument_columns(&items.items, context)? == Some(2)
     {
-        return paired_delimited_comma_list(open, close, indent_levels, docs);
+        return Ok(paired_delimited_comma_list(
+            open,
+            close,
+            indent_levels,
+            docs,
+        ));
     }
 
-    if items.has_comments() {
-        return delimited_comma_list_with_comments(open, close, indent_levels, items);
+    if has_policy_comments {
+        if has_policy_inline_comments && !items.has_structural_comments() {
+            let flat = separated::delimited_comma_list_flat(open, close, docs.clone());
+            let broken =
+                separated::delimited_comma_list_one_per_line(open, close, indent_levels, docs);
+            return Ok(best_fitting(flat, [broken]));
+        }
+
+        return Ok(delimited_comma_list_with_comments(
+            open,
+            close,
+            indent_levels,
+            items,
+        ));
     }
 
     if is_format_method && items.items.len() >= 2 {
-        return format_method_argument_list(open, close, indent_levels, docs);
+        return Ok(format_method_argument_list(
+            open,
+            close,
+            indent_levels,
+            docs,
+        ));
     }
 
-    let all_short = has_only_short_argument_items(&items.items, policy);
+    if let Some(doc) =
+        single_nested_argument_unit_list(open, close, indent_levels, policy, &items, &docs)
+    {
+        return Ok(doc);
+    }
+
+    let all_short = argument_items_use_fill_layout(&items.items, policy, context);
     let flat = separated::delimited_comma_list_flat(open, close, docs.clone());
     let broken = if all_short {
         separated::delimited_comma_list(open, close, indent_levels, docs)
+    } else if indent_levels == policy.continuation_indent_levels() {
+        delimited_comma_list_unified(open, close, indent_levels, docs)
     } else {
         separated::delimited_comma_list_one_per_line(open, close, indent_levels, docs)
     };
-    best_fitting(flat, [broken])
+    Ok(best_fitting(flat, [broken]))
+}
+
+fn delimited_comma_list_unified(
+    open: &'static str,
+    close: &'static str,
+    indent_levels: u16,
+    items: Vec<Doc>,
+) -> Doc {
+    if items.is_empty() {
+        return text(format!("{open}{close}"));
+    }
+
+    group(concat([
+        text(open),
+        indent_by(
+            indent_levels,
+            concat([
+                soft_line(),
+                group(concat([
+                    join(concat([text(","), line()]), items),
+                    text(close),
+                ])),
+            ]),
+        ),
+    ]))
+}
+
+fn single_nested_argument_unit_list(
+    open: &'static str,
+    close: &'static str,
+    indent_levels: u16,
+    policy: JavaFormatPolicy,
+    items: &FormattedList,
+    docs: &[Doc],
+) -> Option<Doc> {
+    let [item] = items.items.as_slice() else {
+        return None;
+    };
+    if item.has_comments
+        || !matches!(
+            item.shape,
+            ListItemShape::AnonymousObjectCreationUnit
+                | ListItemShape::NestedArgumentUnit
+                | ListItemShape::WideHeadNestedArgumentUnit
+        )
+    {
+        return None;
+    }
+
+    let argument = docs
+        .first()
+        .expect("single formatted argument should have one doc")
+        .clone();
+    let flat = separated::delimited_comma_list_flat(open, close, docs.iter().cloned());
+    let mut broken = Vec::new();
+    let under_receiver_head =
+        policy.argument_list_contains_single_nested_unit_under_receiver_head(indent_levels);
+
+    if under_receiver_head
+        && matches!(
+            item.shape,
+            ListItemShape::AnonymousObjectCreationUnit | ListItemShape::WideHeadNestedArgumentUnit
+        )
+        && item.source_width >= policy.argument_list_single_nested_unit_min_width()
+    {
+        broken.push(group(concat([
+            text(open),
+            indent_by(policy.continuation_indent_levels(), argument.clone()),
+            text(close),
+        ])));
+    }
+
+    if !under_receiver_head
+        && matches!(item.shape, ListItemShape::AnonymousObjectCreationUnit)
+        && item.source_width >= policy.argument_list_single_anonymous_object_creation_min_width()
+    {
+        return Some(group(concat([
+            text(open),
+            indent_by(indent_levels, concat([hard_line(), argument])),
+            text(close),
+        ])));
+    } else if under_receiver_head
+        && !matches!(
+            item.shape,
+            ListItemShape::AnonymousObjectCreationUnit | ListItemShape::WideHeadNestedArgumentUnit
+        )
+        && item.source_width >= policy.argument_list_single_nested_unit_min_width()
+    {
+        broken.push(group(concat([
+            text(open),
+            indent_by(indent_levels, argument),
+            text(close),
+        ])));
+    }
+
+    if broken.is_empty() {
+        None
+    } else {
+        Some(best_fitting(flat, broken))
+    }
 }
 
 /// google-java-format `isFormatMethod`: format string on its own continuation
@@ -598,6 +1109,43 @@ fn format_method_argument_list_broken(
         ]));
     }
 
+    if rest.len() != 2 {
+        return group(concat([
+            text(open),
+            indent_by(
+                indent_levels,
+                concat([
+                    soft_line(),
+                    format_method_argument_list_broken_after_first(close, first, rest),
+                ]),
+            ),
+        ]));
+    }
+
+    let first_with_rest = concat([
+        first.clone(),
+        text(", "),
+        rest[0].clone(),
+        text(", "),
+        rest[1].clone(),
+        text(close),
+    ]);
+    let after_first = format_method_argument_list_broken_after_first(close, first, rest);
+
+    group(concat([
+        text(open),
+        indent_by(
+            indent_levels,
+            concat([soft_line(), best_fitting(first_with_rest, [after_first])]),
+        ),
+    ]))
+}
+
+fn format_method_argument_list_broken_after_first(
+    close: &'static str,
+    first: Doc,
+    rest: Vec<Doc>,
+) -> Doc {
     let mut rest = rest;
     let last = rest
         .pop()
@@ -606,46 +1154,59 @@ fn format_method_argument_list_broken(
         .into_iter()
         .map(|item| fill_entry(item, concat([text(","), line()])));
 
-    group(concat([
-        text(open),
-        indent_by(
-            indent_levels,
-            concat([
-                soft_line(),
-                concat([
-                    first,
-                    text(","),
-                    line(),
-                    fill(entries, concat([last, text(close)])),
-                ]),
-            ]),
-        ),
-    ]))
+    concat([
+        first,
+        text(","),
+        line(),
+        fill(entries, concat([last, text(close)])),
+    ])
 }
 
-fn has_only_short_argument_items(items: &[FormattedListItem], policy: JavaFormatPolicy) -> bool {
-    let max_length = policy.argument_list_max_item_length_for_filling();
-    items
-        .iter()
-        .all(|item| !item.has_comments && item.source_width < max_length)
+fn argument_items_use_fill_layout(
+    items: &[FormattedListItem],
+    policy: JavaFormatPolicy,
+    context: &JavaFormatContext<'_>,
+) -> bool {
+    if context.nested_argument_depth() > 0
+        && items.len() >= policy.argument_list_nested_fill_max_items()
+    {
+        return false;
+    }
+
+    items.iter().all(|item| {
+        !item.has_comments
+            && (item.source_width < policy.argument_list_max_item_length_for_filling()
+                || matches!(
+                    item.shape,
+                    ListItemShape::SelectorChain
+                        | ListItemShape::AnonymousObjectCreationUnit
+                        | ListItemShape::NestedArgumentUnit
+                        | ListItemShape::WideHeadNestedArgumentUnit
+                        | ListItemShape::Call
+                ))
+    })
 }
 
-fn pairable_argument_items(items: &[FormattedListItem]) -> bool {
-    let call_count = items
-        .iter()
-        .filter(|item| item.shape == ListItemShape::Call)
-        .count();
-    let starts_with_call = items
-        .first()
-        .is_some_and(|item| item.shape == ListItemShape::Call);
+fn tabular_argument_columns(
+    items: &[FormattedListItem],
+    context: &JavaFormatContext<'_>,
+) -> FormatResult<Option<usize>> {
+    if items.iter().any(|item| item.has_comments) {
+        return Ok(None);
+    }
 
-    call_count <= 1
-        && !starts_with_call
-        && items.iter().all(|item| !item.has_comments)
-        && items.iter().all(|item| item.source_width >= 20)
-        && items
-            .iter()
-            .all(|item| matches!(item.shape, ListItemShape::Simple | ListItemShape::Call))
+    let entries = items
+        .iter()
+        .map(|item| item.tabular_entry)
+        .collect::<Option<Vec<_>>>();
+    let Some(entries) = entries else {
+        return Ok(None);
+    };
+
+    Ok(
+        crate::analyzers::array_initializers::tabular_layout_for_entries(&entries, context)
+            .map(|layout| layout.cols),
+    )
 }
 
 fn delimited_comma_list_with_comments(
@@ -659,6 +1220,29 @@ fn delimited_comma_list_with_comments(
     }
 
     comment_delimited_comma_list(open, close, indent_levels, list)
+}
+
+fn selector_head_type_argument_list(
+    indent_levels: u16,
+    items: impl IntoIterator<Item = Doc>,
+) -> Doc {
+    let mut items = items.into_iter().collect::<Vec<_>>();
+    if items.is_empty() {
+        return text("<>");
+    }
+
+    let last = items.pop().expect("non-empty items checked above");
+    let entries = items
+        .into_iter()
+        .map(|item| fill_entry(item, concat([text(","), line()])));
+
+    group_id(
+        SELECTOR_TYPE_ARGUMENTS_GROUP_ID,
+        concat([
+            text("<"),
+            indent_by(indent_levels, fill(entries, concat([last, text(">")]))),
+        ]),
+    )
 }
 
 fn delimited_comma_list_one_per_line_with_comments(
@@ -677,6 +1261,35 @@ fn delimited_comma_list_one_per_line_with_comments(
     }
 
     comment_delimited_comma_list(open, close, indent_levels, list)
+}
+
+fn delimited_comma_list_with_group_id(
+    open: &'static str,
+    close: &'static str,
+    indent_levels: u16,
+    id: GroupId,
+    items: impl IntoIterator<Item = Doc>,
+) -> Doc {
+    let mut items = items.into_iter().collect::<Vec<_>>();
+    if items.is_empty() {
+        return text(format!("{open}{close}"));
+    }
+
+    let last = items.pop().expect("non-empty items checked above");
+    let entries = items
+        .into_iter()
+        .map(|item| fill_entry(item, concat([text(","), line()])));
+
+    group_id(
+        id,
+        concat([
+            text(open),
+            indent_by(
+                indent_levels,
+                concat([soft_line(), fill(entries, concat([last, text(close)]))]),
+            ),
+        ]),
+    )
 }
 
 fn keyword_prefixed_comma_list_with_comments(
@@ -748,6 +1361,89 @@ fn comment_delimited_comma_list(
     indent_levels: u16,
     list: FormattedList,
 ) -> Doc {
+    let after_open = list.after_open;
+    let list_item_count = list.items.len();
+    let has_before_close = !list.before_close.is_empty();
+    let close_on_own_line = has_before_close
+        || list
+            .items
+            .last()
+            .is_some_and(|item| item.trailing_line.is_some());
+    let mut parts = list
+        .items
+        .into_iter()
+        .map(|item| {
+            (
+                item.doc,
+                item.trailing_blocks,
+                item.trailing_line,
+                item.has_separator_leading_comments,
+            )
+        })
+        .collect::<Vec<_>>();
+    parts.extend(
+        list.before_close
+            .into_iter()
+            .map(|comment| (comment, Vec::new(), None, false)),
+    );
+
+    if parts.is_empty() {
+        if !after_open.is_empty() {
+            return group(concat([
+                open_with_comments(open, after_open),
+                hard_line(),
+                text(close),
+            ]));
+        }
+        return text(format!("{open}{close}"));
+    }
+
+    let mut body = Vec::new();
+    let total_parts = parts.len();
+    for (index, (part, trailing_blocks, trailing_line, _)) in parts.iter().cloned().enumerate() {
+        body.push(part);
+        if index + 1 < list_item_count && !parts[index + 1].3 {
+            body.push(text(","));
+        }
+        for comment in trailing_blocks {
+            body.push(text(" "));
+            body.push(comment);
+        }
+        if let Some(comment) = trailing_line {
+            body.push(text(" "));
+            body.push(comment);
+        }
+        if index + 1 < total_parts {
+            body.push(hard_line());
+        }
+    }
+
+    if close_on_own_line {
+        return group(concat([
+            open_with_comments(open, after_open),
+            indent_by(indent_levels, concat([hard_line(), concat(body)])),
+            hard_line(),
+            text(close),
+        ]));
+    }
+
+    group(concat([
+        open_with_comments(open, after_open),
+        indent_by(
+            indent_levels,
+            concat([hard_line(), concat(body), text(close)]),
+        ),
+    ]))
+}
+
+fn comment_delimited_semicolon_list(
+    open: &'static str,
+    close: &'static str,
+    indent_levels: u16,
+    list: FormattedList,
+    has_trailing_semicolon: bool,
+) -> Doc {
+    let after_open = list.after_open;
     let list_item_count = list.items.len();
     let has_before_close = !list.before_close.is_empty();
     let close_on_own_line = has_before_close
@@ -767,6 +1463,13 @@ fn comment_delimited_comma_list(
     );
 
     if parts.is_empty() {
+        if !after_open.is_empty() {
+            return group(concat([
+                open_with_comments(open, after_open),
+                hard_line(),
+                text(close),
+            ]));
+        }
         return text(format!("{open}{close}"));
     }
 
@@ -774,8 +1477,8 @@ fn comment_delimited_comma_list(
     let total_parts = parts.len();
     for (index, (part, trailing_blocks, trailing_line)) in parts.into_iter().enumerate() {
         body.push(part);
-        if index + 1 < list_item_count {
-            body.push(text(","));
+        if index + 1 < list_item_count || (has_trailing_semicolon && index + 1 == list_item_count) {
+            body.push(text(";"));
         }
         for comment in trailing_blocks {
             body.push(text(" "));
@@ -792,7 +1495,7 @@ fn comment_delimited_comma_list(
 
     if close_on_own_line {
         return group(concat([
-            text(open),
+            open_with_comments(open, after_open),
             indent_by(indent_levels, concat([hard_line(), concat(body)])),
             hard_line(),
             text(close),
@@ -800,12 +1503,20 @@ fn comment_delimited_comma_list(
     }
 
     group(concat([
-        text(open),
+        open_with_comments(open, after_open),
         indent_by(
             indent_levels,
             concat([hard_line(), concat(body), text(close)]),
         ),
     ]))
+}
+
+fn open_with_comments(open: &'static str, comments: Vec<Doc>) -> Doc {
+    if comments.is_empty() {
+        text(open)
+    } else {
+        concat([text(open), text(" "), join(text(" "), comments)])
+    }
 }
 
 fn braced_comma_list_with_comments(
@@ -882,6 +1593,8 @@ pub(crate) fn format_braced_list_items(
             open: "{",
             open_range: None,
         },
+        ',',
+        0,
         context,
     )
 }
@@ -956,7 +1669,7 @@ fn paired_delimited_comma_list(
         text(open),
         indent_by(
             indent_levels,
-            concat([soft_line(), join(concat([text(","), line()]), pairs)]),
+            concat([hard_line(), join(concat([text(","), hard_line()]), pairs)]),
         ),
         text(close),
     ]))

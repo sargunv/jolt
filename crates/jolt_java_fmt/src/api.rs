@@ -65,7 +65,7 @@ pub fn format_java_source_with_options(
         }]);
     };
 
-    let mut context = JavaFormatContext::with_profile(source, options.profile);
+    let mut context = JavaFormatContext::with_options(source, options);
     let doc = match format_compilation_unit(&syntax, &mut context) {
         Ok(doc) => doc,
         Err(diagnostic) => return blocked(vec![diagnostic]),

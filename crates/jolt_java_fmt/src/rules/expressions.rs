@@ -1,17 +1,24 @@
 use super::{
     ArrayDimensions, ArrayInitializer, Doc, Expression, FormatResult, JavaFormatContext,
-    JavaSyntaxKind, JavaSyntaxToken, MethodReferenceExpression, Pattern, Type,
+    JavaSyntaxKind, JavaSyntaxToken, MethodReferenceExpression, Pattern, Type, TypeLayoutPart,
     VariableInitializerValue, braced_type_body, concat, format_annotation, format_annotation_list,
     format_block, format_class_body, format_local_variable_declaration_header,
-    format_multiline_token, format_switch_expression, format_token, format_type,
-    format_type_argument_list, format_type_layout_parts, hard_line, java_lists, join,
-    take_inline_leading_block_comment_docs, take_inline_leading_block_comment_docs_in_range,
-    take_inline_trailing_block_comment_docs, take_leading_comment_docs_in_range,
+    format_multiline_token, format_selector_type_argument_list_variants, format_switch_expression,
+    format_token, format_type, format_type_argument_list, format_type_layout_parts, hard_line,
+    java_lists, join, take_inline_leading_block_comment_docs,
+    take_inline_leading_block_comment_docs_in_range, take_inline_trailing_block_comment_docs,
+    take_leading_comment_docs_in_range, take_same_line_trailing_block_comment_docs_in_range,
     take_trailing_line_comment_docs_in_range_as_own_line, text, wrap,
 };
 use crate::analyzers::chains::{BaseMetadata, Chain, ChainMember, ChainRole};
+use crate::analyzers::expressions::ExpressionLayout;
+use crate::context::JavaCommentBucket;
 use crate::helpers::chains as java_chains;
+use crate::helpers::expressions as java_expressions;
+use crate::helpers::lambdas as java_lambdas;
 use crate::helpers::literals as java_literals;
+use crate::helpers::switches as java_switches;
+use crate::policy::JavaFormatPolicy;
 use jolt_diagnostics::TextRange;
 use jolt_fmt_ir::{group, indent_by, line, soft_line};
 
@@ -126,6 +133,20 @@ pub(super) fn format_pattern(
     pattern: &Pattern,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
+    format_pattern_with_layout(pattern, context, PatternLayout::Default)
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(super) enum PatternLayout {
+    Default,
+    SwitchLabel,
+}
+
+pub(super) fn format_pattern_with_layout(
+    pattern: &Pattern,
+    context: &mut JavaFormatContext<'_>,
+    layout: PatternLayout,
+) -> FormatResult<Doc> {
     match pattern {
         Pattern::TypePattern(pattern) => {
             let declaration = pattern
@@ -133,8 +154,8 @@ pub(super) fn format_pattern(
                 .expect("parser-clean type pattern should have a local variable declaration");
             format_local_variable_declaration_header(&declaration, context)
         }
-        Pattern::RecordPattern(pattern) => format_record_pattern(pattern, context),
-        Pattern::ComponentPattern(pattern) => format_component_pattern(pattern, context),
+        Pattern::RecordPattern(pattern) => format_record_pattern(pattern, context, layout),
+        Pattern::ComponentPattern(pattern) => format_component_pattern(pattern, context, layout),
         Pattern::MatchAllPattern(pattern) => {
             let token = pattern
                 .token()
@@ -147,16 +168,25 @@ pub(super) fn format_pattern(
 fn format_record_pattern(
     pattern: &jolt_java_syntax::RecordPattern,
     context: &mut JavaFormatContext<'_>,
+    layout: PatternLayout,
 ) -> FormatResult<Doc> {
     let ty = pattern
         .ty()
         .expect("parser-clean record pattern should have a type");
     let components = pattern
         .components()
-        .map(|component| format_component_pattern(&component, context))
+        .map(|component| format_component_pattern(&component, context, layout))
         .collect::<FormatResult<Vec<_>>>()?;
+    let ty = format_type(&ty, context)?;
+    if layout == PatternLayout::SwitchLabel {
+        return Ok(java_switches::switch_record_pattern_components(
+            ty,
+            components,
+            context.policy(),
+        ));
+    }
     Ok(concat([
-        format_type(&ty, context)?,
+        ty,
         java_lists::argument_list_docs(components, context.policy()),
     ]))
 }
@@ -164,11 +194,12 @@ fn format_record_pattern(
 fn format_component_pattern(
     pattern: &jolt_java_syntax::ComponentPattern,
     context: &mut JavaFormatContext<'_>,
+    layout: PatternLayout,
 ) -> FormatResult<Doc> {
     let pattern = pattern
         .pattern()
         .expect("parser-clean component pattern should wrap a pattern");
-    format_pattern(&pattern, context)
+    format_pattern_with_layout(&pattern, context, layout)
 }
 
 pub(super) fn format_selector_chain(
@@ -221,7 +252,7 @@ pub(super) fn collect_selector_chain(
         )
         .with_tail_range(class_literal.code_text_range())),
         Expression::ParenthesizedExpression(parenthesized) => Ok(Chain::primary_expression_base(
-            format_parenthesized_expression(parenthesized, context)?,
+            format_parenthesized_chain_base(parenthesized, context)?,
             node_width(parenthesized.code_text_range()),
         )
         .with_tail_range(parenthesized.code_text_range())),
@@ -243,6 +274,25 @@ pub(super) fn collect_selector_chain(
     }
 }
 
+fn collect_selector_chain_as_receiver(
+    expression: &Expression,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Chain> {
+    if let Expression::MethodInvocationExpression(invocation) = expression
+        && invocation.receiver().is_none()
+    {
+        return collect_simple_method_invocation_chain(
+            invocation,
+            context,
+            context
+                .policy()
+                .selector_chain_receiver_argument_indent_levels(),
+        );
+    }
+
+    collect_selector_chain(expression, context)
+}
+
 pub(super) fn collect_cast_chain(
     cast: &jolt_java_syntax::CastExpression,
     context: &mut JavaFormatContext<'_>,
@@ -258,7 +308,7 @@ pub(super) fn collect_cast_chain(
         .expression()
         .expect("parser-clean cast expression should have an expression");
 
-    Ok(Chain::primary_expression_base(
+    Ok(Chain::cast_primary_expression_base(
         format_cast_primary_base(&ty, format_expression(&expression, context)?, context)?,
         node_width(cast.code_text_range()),
     )
@@ -285,7 +335,7 @@ fn peel_cast_operand_chain(
                 Chain::with_base_metadata(
                     chain.base,
                     chain.members,
-                    BaseMetadata::primary_expression(node_width(cast.code_text_range())),
+                    BaseMetadata::cast_primary_expression(node_width(cast.code_text_range())),
                 )
                 .with_tail_range(cast.code_text_range()),
             ))
@@ -329,7 +379,7 @@ pub(super) fn collect_field_access_chain(
         .map(|arguments| format_type_argument_list(&arguments, context))
         .transpose()?;
 
-    let mut chain = collect_selector_chain(&receiver, context)?;
+    let mut chain = collect_selector_chain_as_receiver(&receiver, context)?;
     attach_selector_boundary_comments(
         &mut chain,
         member_start_range(&type_arguments_node, name.token_text_range()),
@@ -368,24 +418,79 @@ pub(super) fn collect_method_invocation_chain(
                 .as_ref()
                 .map(|arguments| text_range_width(arguments.text_range()))
                 .unwrap_or_default();
-        let type_arguments = type_arguments_node
-            .clone()
-            .map(|arguments| format_type_argument_list(&arguments, context))
-            .transpose()?;
-        let mut chain = collect_selector_chain(&receiver, context)?;
+        let type_arguments_width = type_arguments_node
+            .as_ref()
+            .map(|arguments| text_range_width(arguments.text_range()))
+            .unwrap_or_default();
+        let selector_head_width = if argument_count > 0 {
+            name.text().chars().count() + type_arguments_width + 1
+        } else {
+            selector_width
+        };
+        let (type_arguments, type_arguments_after_chain_break) =
+            if let Some(arguments) = type_arguments_node.clone() {
+                let (default, after_chain_break) =
+                    format_selector_type_argument_list_variants(&arguments, context)?;
+                (Some(default), Some(after_chain_break))
+            } else {
+                (None, None)
+            };
+        let mut chain = collect_selector_chain_as_receiver(&receiver, context)?;
         attach_selector_boundary_comments(
             &mut chain,
             member_start_range(&type_arguments_node, name.token_text_range()),
             context,
         );
+        let can_build_receiver_head_arguments = context
+            .unhandled_comment_trivia_in_range(arguments_node.text_range())
+            .is_none();
         let arguments = format_argument_list(&arguments_node, context)?;
-        chain.push(ChainMember::call(
-            concat([
-                type_arguments.unwrap_or_else(|| text("")),
+        let arguments_as_receiver_head = if can_build_receiver_head_arguments {
+            Some(format_argument_list_with_continuation_indent(
+                &arguments_node,
+                context,
+                context
+                    .policy()
+                    .selector_chain_receiver_argument_indent_levels(),
+            )?)
+        } else {
+            None
+        };
+        let selector_head = java_chains::explicit_type_argument_invocation_selector_head(
+            type_arguments.clone(),
+            text(name.text()),
+            context.policy(),
+        );
+        let member = java_chains::explicit_type_argument_invocation_selector(
+            type_arguments,
+            text(name.text()),
+            arguments.clone(),
+            context.policy(),
+        );
+        let member_after_chain_break =
+            java_chains::explicit_type_argument_invocation_selector_after_chain_break(
+                type_arguments_after_chain_break.clone(),
                 text(name.text()),
-                arguments,
-            ]),
+                arguments.clone(),
+                context.policy(),
+            );
+        let member_as_receiver_head_after_chain_break =
+            arguments_as_receiver_head.map(|arguments| {
+                java_chains::explicit_type_argument_invocation_selector_after_chain_break(
+                    type_arguments_after_chain_break,
+                    text(name.text()),
+                    arguments,
+                    context.policy(),
+                )
+            });
+        chain.push(ChainMember::call(
+            member,
+            selector_head,
+            arguments,
+            Some(member_after_chain_break),
+            member_as_receiver_head_after_chain_break,
             selector_width,
+            selector_head_width,
             argument_count,
             has_type_arguments,
             Some(name.text().to_string()),
@@ -394,10 +499,29 @@ pub(super) fn collect_method_invocation_chain(
         return Ok(chain);
     }
 
+    collect_simple_method_invocation_chain(
+        invocation,
+        context,
+        context.policy().continuation_indent_levels(),
+    )
+}
+
+fn collect_simple_method_invocation_chain(
+    invocation: &jolt_java_syntax::MethodInvocationExpression,
+    context: &mut JavaFormatContext<'_>,
+    argument_indent_levels: u16,
+) -> FormatResult<Chain> {
+    let arguments_node = invocation
+        .arguments()
+        .expect("parser-clean method invocation should have arguments");
     let name = invocation
         .simple_name()
         .expect("parser-clean simple method invocation should have a name");
-    let arguments = format_argument_list(&arguments_node, context)?;
+    let arguments = format_argument_list_with_continuation_indent(
+        &arguments_node,
+        context,
+        argument_indent_levels,
+    )?;
     Ok(Chain::call_base(
         concat([text(name.text()), arguments]),
         node_width(invocation.code_text_range()),
@@ -419,7 +543,7 @@ pub(super) fn collect_array_access_chain(
         .r_bracket()
         .expect("parser-clean array access should have a closing bracket");
 
-    let mut chain = collect_selector_chain(&receiver, context)?;
+    let mut chain = collect_selector_chain_as_receiver(&receiver, context)?;
     attach_selector_boundary_comments(&mut chain, l_bracket.token_text_range(), context);
     chain.push(ChainMember::array_access(
         format_array_access_selector(array_access, context)?,
@@ -474,22 +598,32 @@ pub(super) fn format_method_reference_expression(
     reference: &MethodReferenceExpression,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
+    let qualifier_type_arguments = reference
+        .qualifier_type_arguments()
+        .map(|arguments| format_type_argument_list(&arguments, context))
+        .transpose()?;
+    let dimensions = reference
+        .dimensions()
+        .map(|dimensions| format_array_dimensions(&dimensions, context))
+        .transpose()?;
+
     let qualifier = if let Some(expression) = reference.expression_qualifier() {
         format_expression(&expression, context)?
     } else {
         let ty = reference
             .type_qualifier()
             .expect("validated method reference should have a qualifier");
-        format_simple_expression_type(&ty, context, "method reference qualifier")?
+        if context
+            .policy()
+            .method_reference_type_qualifier_uses_selector_chain()
+            && qualifier_type_arguments.is_none()
+            && dimensions.is_none()
+        {
+            format_method_reference_type_qualifier(&ty, context)?
+        } else {
+            format_simple_expression_type(&ty, context, "method reference qualifier")?
+        }
     };
-    let dimensions = reference
-        .dimensions()
-        .map(|dimensions| format_array_dimensions(&dimensions, context))
-        .transpose()?;
-    let qualifier_type_arguments = reference
-        .qualifier_type_arguments()
-        .map(|arguments| format_type_argument_list(&arguments, context))
-        .transpose()?;
     let member_type_arguments = reference
         .member_type_arguments()
         .map(|arguments| format_type_argument_list(&arguments, context))
@@ -504,14 +638,85 @@ pub(super) fn format_method_reference_expression(
         format_token(&name)
     };
 
-    Ok(concat([
-        qualifier,
-        qualifier_type_arguments.unwrap_or_else(|| text("")),
-        dimensions.unwrap_or_else(|| text("")),
+    let reference_tail = concat([
         text("::"),
         member_type_arguments.unwrap_or_else(|| text("")),
         member,
-    ]))
+    ]);
+
+    if !context
+        .policy()
+        .method_reference_type_qualifier_uses_selector_chain()
+    {
+        return Ok(concat([
+            qualifier,
+            qualifier_type_arguments.unwrap_or_else(|| text("")),
+            dimensions.unwrap_or_else(|| text("")),
+            reference_tail,
+        ]));
+    }
+
+    Ok(group(concat([
+        qualifier,
+        qualifier_type_arguments.unwrap_or_else(|| text("")),
+        dimensions.unwrap_or_else(|| text("")),
+        indent_by(
+            context.policy().continuation_indent_levels(),
+            concat([soft_line(), reference_tail]),
+        ),
+    ])))
+}
+
+fn format_method_reference_type_qualifier(
+    ty: &Type,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    let Some(chain) = simple_type_qualifier_chain(ty) else {
+        return format_simple_expression_type(ty, context, "method reference qualifier");
+    };
+
+    Ok(java_chains::selector_chain(
+        chain,
+        context.policy(),
+        ChainRole::Default,
+    ))
+}
+
+fn simple_type_qualifier_chain(ty: &Type) -> Option<Chain> {
+    let parts = ty.simple_layout_parts()?;
+    let mut names = Vec::new();
+    let mut expect_identifier = true;
+    for part in parts {
+        let TypeLayoutPart::Token(token) = part else {
+            return None;
+        };
+        match (expect_identifier, token.kind()) {
+            (true, JavaSyntaxKind::Identifier) => {
+                names.push(token.text().to_string());
+                expect_identifier = false;
+            }
+            (false, JavaSyntaxKind::Dot) => {
+                expect_identifier = true;
+            }
+            _ => return None,
+        }
+    }
+
+    if expect_identifier || names.len() < 2 {
+        return None;
+    }
+
+    let mut names = names.into_iter();
+    let first = names.next()?;
+    let mut chain = Chain::simple_base(text(first.clone()), first.len(), Some(first));
+    for name in names {
+        chain.push(ChainMember::field(
+            text(name.clone()),
+            name.len(),
+            Some(name),
+        ));
+    }
+    Some(chain)
 }
 
 pub(super) fn format_literal_expression(
@@ -524,7 +729,20 @@ pub(super) fn format_literal_expression(
     if token.kind() == JavaSyntaxKind::TextBlockLiteral
         && context.policy().normalizes_text_block_indentation()
     {
-        Ok(java_literals::text_block_literal(token.text()))
+        Ok(java_literals::text_block_literal(token.text()).into_doc())
+    } else if token.kind() == JavaSyntaxKind::StringLiteral {
+        let line_context = context.line_context_for_range(token.token_text_range());
+        if line_context.starts_line
+            && let Some(doc) = java_literals::string_literal_reflow(
+                token.text(),
+                line_context.start_column,
+                line_context.trailing_width,
+                context.policy(),
+            )
+        {
+            return Ok(doc);
+        }
+        Ok(format_token(&token))
     } else if token.text().contains(is_line_terminator) {
         Ok(format_multiline_token(&token))
     } else {
@@ -588,6 +806,19 @@ pub(super) fn format_parenthesized_expression(
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
     format_parenthesized_expression_with_chain_role(parenthesized, context, ChainRole::Default)
+}
+
+fn format_parenthesized_chain_base(
+    parenthesized: &jolt_java_syntax::ParenthesizedExpression,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    let expression = parenthesized
+        .expression()
+        .expect("parser-clean parenthesized expression should have an expression");
+    Ok(wrap::flat_parenthesized_expression(format_expression(
+        &expression,
+        context,
+    )?))
 }
 
 fn format_parenthesized_expression_with_chain_role(
@@ -708,19 +939,28 @@ pub(super) fn format_assignment_expression(
     let right_range = right
         .code_text_range()
         .expect("parser-clean assignment right side should have a code range");
+    let operator_doc = format_assignment_operator(&operator, right_range, context);
     let leading = take_expression_gap_comment_docs(
         context,
         TextRange::new(operator_range.end(), right_range.start()),
         right_range,
     )?;
+    let right_layout = ExpressionLayout::for_expression(&right, context.policy());
     let mut right = format_expression(&right, context)?;
-    if !leading.is_empty() {
+    let has_leading = !leading.is_empty();
+    if has_leading {
         right = concat([join(hard_line(), leading), hard_line(), right]);
     }
-    Ok(wrap::assignment_expression(
+    let right = if has_leading {
+        java_expressions::AssignmentValue::new(right)
+    } else {
+        java_expressions::AssignmentValue::from_expression_layout(right, right_layout)
+    };
+    Ok(java_expressions::assignment_expression(
         format_expression(&left, context)?,
-        format_token(&operator),
+        operator_doc,
         right,
+        context.policy(),
     ))
 }
 
@@ -734,8 +974,10 @@ fn format_array_access_selector(
 
     Ok(group(concat([
         text("["),
-        soft_line(),
-        format_expression(&index, context)?,
+        indent_by(
+            context.policy().array_access_index_indent_levels(),
+            concat([soft_line(), format_expression(&index, context)?]),
+        ),
         text("]"),
     ])))
 }
@@ -744,6 +986,20 @@ pub(super) fn format_argument_list(
     arguments: &jolt_java_syntax::ArgumentList,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
+    format_argument_list_with_continuation_indent(
+        arguments,
+        context,
+        context.policy().continuation_indent_levels(),
+    )
+}
+
+fn format_argument_list_with_continuation_indent(
+    arguments: &jolt_java_syntax::ArgumentList,
+    context: &mut JavaFormatContext<'_>,
+    continuation_indent_levels: u16,
+) -> FormatResult<Doc> {
+    use crate::analyzers::array_initializers::TabularEntry;
+
     assert!(
         !arguments.has_trailing_comma(),
         "parser-clean argument list should not have a trailing comma"
@@ -761,30 +1017,104 @@ pub(super) fn format_argument_list(
                 let range = argument
                     .code_text_range()
                     .expect("parser-clean argument expression should have a code range");
-                let shape = argument_list_item_shape(&argument);
+                let shape = argument_list_item_shape(&argument, context.policy());
+                let has_inline_comments = context
+                    .has_comment_in_bucket(range, JavaCommentBucket::InlineLeadingBlock)
+                    || context.has_comment_in_bucket(range, JavaCommentBucket::InlineTrailingBlock);
+                let tabular_entry = TabularEntry {
+                    range,
+                    kind: crate::analyzers::array_initializers::expression_parallel_kind(&argument),
+                    row_weight: 1,
+                    is_nested_array: false,
+                };
                 let argument = argument.clone();
                 Ok(java_lists::ListItem::new(range, move |context| {
                     format_argument(&argument, context)
                 })
-                .with_shape(shape))
+                .with_shape(shape)
+                .with_inline_comments(has_inline_comments)
+                .with_tabular_entry(tabular_entry))
             })
             .collect::<FormatResult<Vec<_>>>()?;
-    java_lists::argument_list(arguments, list_range, is_format_method, context)
+    java_lists::argument_list_with_continuation_indent(
+        arguments,
+        list_range,
+        is_format_method,
+        continuation_indent_levels,
+        context,
+    )
 }
 
-fn argument_list_item_shape(argument: &Expression) -> java_lists::ListItemShape {
+fn argument_list_item_shape(
+    argument: &Expression,
+    policy: JavaFormatPolicy,
+) -> java_lists::ListItemShape {
     match argument {
         Expression::LiteralExpression(_)
         | Expression::NameExpression(_)
         | Expression::ThisExpression(_)
         | Expression::SuperExpression(_)
-        | Expression::ClassLiteralExpression(_)
-        | Expression::FieldAccessExpression(_) => java_lists::ListItemShape::Simple,
-        Expression::MethodInvocationExpression(_) | Expression::ObjectCreationExpression(_) => {
-            java_lists::ListItemShape::Call
+        | Expression::ClassLiteralExpression(_) => java_lists::ListItemShape::Simple,
+        Expression::FieldAccessExpression(_) => java_lists::ListItemShape::SelectorChain,
+        Expression::MethodInvocationExpression(invocation) => {
+            method_invocation_argument_shape(invocation, policy)
+        }
+        Expression::ObjectCreationExpression(creation) => {
+            if creation.body().is_some() {
+                java_lists::ListItemShape::AnonymousObjectCreationUnit
+            } else {
+                java_lists::ListItemShape::NestedArgumentUnit
+            }
         }
         _ => java_lists::ListItemShape::Complex,
     }
+}
+
+fn method_invocation_argument_shape(
+    invocation: &jolt_java_syntax::MethodInvocationExpression,
+    policy: JavaFormatPolicy,
+) -> java_lists::ListItemShape {
+    let Some(receiver) = invocation.receiver() else {
+        return java_lists::ListItemShape::Call;
+    };
+
+    if is_single_unit_invocation_receiver(&receiver) {
+        if qualified_invocation_head_width(invocation, &receiver)
+            >= policy.argument_list_single_nested_invocation_head_min_width()
+        {
+            java_lists::ListItemShape::WideHeadNestedArgumentUnit
+        } else {
+            java_lists::ListItemShape::Call
+        }
+    } else {
+        java_lists::ListItemShape::SelectorChain
+    }
+}
+
+fn qualified_invocation_head_width(
+    invocation: &jolt_java_syntax::MethodInvocationExpression,
+    receiver: &Expression,
+) -> usize {
+    let receiver_width = node_width(receiver.code_text_range());
+    let name_width = invocation
+        .name()
+        .map(|name| name.text().chars().count())
+        .unwrap_or_default();
+    let type_arguments_width = invocation
+        .type_arguments()
+        .map(|arguments| text_range_width(arguments.text_range()))
+        .unwrap_or_default();
+    receiver_width + 1 + type_arguments_width + name_width + 1
+}
+
+fn is_single_unit_invocation_receiver(receiver: &Expression) -> bool {
+    matches!(
+        receiver,
+        Expression::NameExpression(_)
+            | Expression::ThisExpression(_)
+            | Expression::SuperExpression(_)
+            | Expression::ClassLiteralExpression(_)
+    )
 }
 
 pub(super) fn format_argument(
@@ -795,8 +1125,10 @@ pub(super) fn format_argument(
         .code_text_range()
         .expect("parser-clean argument expression should have a code range");
     let comments = take_inline_leading_block_comment_docs(context, code_range);
-    let expression =
-        format_expression_with_chain_role(argument, context, ChainRole::NestedArgument)?;
+    let role = nested_argument_chain_role(context);
+    let expression = context.in_nested_argument_scope(|context| {
+        format_expression_with_chain_role(argument, context, role)
+    })?;
     let trailing_comments = take_inline_trailing_block_comment_docs(context, code_range);
 
     let mut parts = Vec::new();
@@ -809,6 +1141,18 @@ pub(super) fn format_argument(
     }
 
     Ok(wrap::space_separated(parts))
+}
+
+fn nested_argument_chain_role(context: &JavaFormatContext<'_>) -> ChainRole {
+    if context.nested_argument_depth()
+        < context
+            .policy()
+            .nested_argument_selector_chain_fit_depth_limit()
+    {
+        ChainRole::NestedArgumentFit
+    } else {
+        ChainRole::NestedArgument
+    }
 }
 
 pub(super) fn format_cast_expression(
@@ -1005,7 +1349,14 @@ pub(super) fn format_array_initializer(
     } else {
         let short_items =
             crate::analyzers::array_initializers::has_only_short_items(&values, policy);
-        crate::helpers::array_initializers::InitializerLayout::Fill { short_items }
+        let tight_fit = entries.len() >= policy.array_initializer_tight_fit_min_items()
+            && entries
+                .iter()
+                .all(|entry| entry.kind.is_scalar_initializer() && entry.row_weight == 1);
+        crate::helpers::array_initializers::InitializerLayout::Fill {
+            short_items,
+            tight_fit,
+        }
     };
 
     Ok(
@@ -1110,7 +1461,12 @@ pub(super) fn format_lambda_expression(
     };
 
     let body = if let Some(expression) = lambda.expression_body() {
-        format_expression_with_chain_role(&expression, context, ChainRole::LambdaBody)?
+        let body = format_lambda_expression_body(&expression, context)?;
+        return Ok(java_lambdas::expression_lambda(
+            parameters,
+            body,
+            context.policy(),
+        ));
     } else {
         let block = lambda
             .block_body()
@@ -1118,7 +1474,18 @@ pub(super) fn format_lambda_expression(
         format_block(&block, context)?
     };
 
-    Ok(concat([parameters, text(" -> "), body]))
+    Ok(java_lambdas::block_lambda(parameters, body))
+}
+
+fn format_lambda_expression_body(
+    expression: &Expression,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    if let Expression::BinaryExpression(binary) = expression {
+        return format_binary_expression_with_layout(binary, context, BinaryLayout::LambdaBody);
+    }
+
+    format_expression_with_chain_role(expression, context, ChainRole::LambdaBody)
 }
 
 pub(super) fn format_lambda_parameter_list(
@@ -1143,12 +1510,13 @@ pub(super) fn format_lambda_parameter_list(
                 .code_text_range()
                 .expect("validated lambda parameter should have a code range");
             let parameter = parameter.clone();
-            Ok(java_lists::ListItem::new(range, move |context| {
-                format_lambda_parameter(&parameter, context)
-            }))
+            Ok(java_lambdas::LambdaParameterItem::new(
+                range,
+                move |context| format_lambda_parameter(&parameter, context),
+            ))
         })
         .collect::<FormatResult<Vec<_>>>()?;
-    java_lists::lambda_parameter_list(parameters, list_range, open_range, context)
+    java_lambdas::parenthesized_parameter_list(parameters, list_range, open_range, context)
 }
 
 pub(super) fn format_lambda_parameter(
@@ -1220,17 +1588,17 @@ fn format_lambda_parameter_name_gap(
     let name = format_token(name);
 
     if !trailing_comments.is_empty() {
-        let mut parts = vec![
-            prefix,
-            text(" "),
-            join(hard_line(), trailing_comments),
-            hard_line(),
-        ];
+        let mut parts = vec![prefix, text(" "), join(hard_line(), trailing_comments)];
+        let mut name_parts = Vec::new();
         if !inline_comments.is_empty() {
-            parts.push(join(text(" "), inline_comments));
-            parts.push(text(" "));
+            name_parts.push(join(text(" "), inline_comments));
+            name_parts.push(text(" "));
         }
-        parts.push(name);
+        name_parts.push(name);
+        parts.push(indent_by(
+            context.policy().continuation_indent_levels(),
+            concat([hard_line(), concat(name_parts)]),
+        ));
         return concat(parts);
     }
 
@@ -1255,6 +1623,20 @@ pub(super) fn format_simple_expression_type(
 pub(super) fn format_binary_expression(
     binary: &jolt_java_syntax::BinaryExpression,
     context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    format_binary_expression_with_layout(binary, context, BinaryLayout::Default)
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum BinaryLayout {
+    Default,
+    LambdaBody,
+}
+
+fn format_binary_expression_with_layout(
+    binary: &jolt_java_syntax::BinaryExpression,
+    context: &mut JavaFormatContext<'_>,
+    layout: BinaryLayout,
 ) -> FormatResult<Doc> {
     let operator = binary
         .operator()
@@ -1315,7 +1697,12 @@ pub(super) fn format_binary_expression(
         ));
     }
 
-    Ok(wrap::binary_chain(first, rest))
+    Ok(match layout {
+        BinaryLayout::Default => java_expressions::binary_chain(first, rest, context.policy()),
+        BinaryLayout::LambdaBody => {
+            java_expressions::lambda_body_binary_chain(first, rest, context.policy())
+        }
+    })
 }
 
 #[derive(Clone, Copy)]
@@ -1359,7 +1746,7 @@ fn format_binary_operator(
     operator: &JavaSyntaxToken,
     next_operand_range: TextRange,
     context: &mut JavaFormatContext<'_>,
-) -> Doc {
+) -> java_expressions::BinaryOperator {
     let operator_range = operator.token_text_range();
     let trailing = take_trailing_line_comment_docs_in_range_as_own_line(
         context,
@@ -1367,14 +1754,44 @@ fn format_binary_operator(
         TextRange::new(operator_range.end(), next_operand_range.start()),
     );
     if trailing.is_empty() {
-        format_token(operator)
+        java_expressions::BinaryOperator::new(format_token(operator))
     } else {
-        concat([
+        java_expressions::BinaryOperator::with_forced_break_after(concat([
             format_token(operator),
             text(" "),
             join(hard_line(), trailing),
-        ])
+        ]))
     }
+}
+
+fn format_assignment_operator(
+    operator: &JavaSyntaxToken,
+    right_range: TextRange,
+    context: &mut JavaFormatContext<'_>,
+) -> java_expressions::AssignmentOperator {
+    let operator_range = operator.token_text_range();
+    let boundary = TextRange::new(operator_range.end(), right_range.start());
+    let trailing_line =
+        take_trailing_line_comment_docs_in_range_as_own_line(context, operator_range, boundary);
+    if !trailing_line.is_empty() {
+        return java_expressions::AssignmentOperator::with_forced_break_after(concat([
+            format_token(operator),
+            text(" "),
+            join(hard_line(), trailing_line),
+        ]));
+    }
+
+    let trailing_block =
+        take_same_line_trailing_block_comment_docs_in_range(context, operator_range, boundary);
+    if !trailing_block.is_empty() {
+        return java_expressions::AssignmentOperator::with_forced_break_after(concat([
+            format_token(operator),
+            text(" "),
+            join(text(" "), trailing_block),
+        ]));
+    }
+
+    java_expressions::AssignmentOperator::new(format_token(operator))
 }
 
 fn take_expression_gap_comment_docs(
@@ -1395,7 +1812,7 @@ fn format_binary_operand_with_comments(
     previous_range: TextRange,
     next_operator_range: Option<TextRange>,
     context: &mut JavaFormatContext<'_>,
-) -> FormatResult<Doc> {
+) -> FormatResult<java_expressions::BinaryOperand> {
     let operand_range = operand
         .code_text_range()
         .expect("parser-clean binary operand should have a code range");
@@ -1409,6 +1826,7 @@ fn format_binary_operand_with_comments(
         Vec::new()
     };
     let mut doc = format_binary_operand(operand, parent_precedence, side, context)?;
+    let mut force_break_after = false;
     if let Some(next_operator_range) = next_operator_range {
         let trailing = take_trailing_line_comment_docs_in_range_as_own_line(
             context,
@@ -1416,13 +1834,26 @@ fn format_binary_operand_with_comments(
             TextRange::new(operand_range.end(), next_operator_range.start()),
         );
         if !trailing.is_empty() {
+            force_break_after = true;
             doc = concat([doc, text(" "), join(hard_line(), trailing)]);
         }
     }
-    if !leading.is_empty() {
+    let has_leading = !leading.is_empty();
+    if has_leading {
         doc = concat([join(hard_line(), leading), hard_line(), doc]);
     }
-    Ok(doc)
+    if force_break_after {
+        Ok(java_expressions::BinaryOperand::with_forced_break_after(
+            doc,
+        ))
+    } else if !has_leading {
+        Ok(java_expressions::BinaryOperand::from_expression_layout(
+            doc,
+            ExpressionLayout::for_expression(operand, context.policy()),
+        ))
+    } else {
+        Ok(java_expressions::BinaryOperand::new(doc))
+    }
 }
 
 fn format_binary_operand(
