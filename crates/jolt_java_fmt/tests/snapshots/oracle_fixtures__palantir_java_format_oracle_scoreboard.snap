@@ -8,12 +8,12 @@ total considered: 226
 invalid upstream fixtures skipped: 2
 parse blocked: 0
 missing-rule blocked: 0
-other blocked: 31
-formatted: 193
-exact matches: 52
-exact-match percentage: 23.21%
-mismatching formatted files: 141
-aggregate diff size: 4276
+other blocked: 25
+formatted: 199
+exact matches: 53
+exact-match percentage: 23.66%
+mismatching formatted files: 146
+aggregate diff size: 4410
 largest per-file diff: B24909927.java (916)
 
 worst mismatches:

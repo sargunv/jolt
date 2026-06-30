@@ -748,23 +748,25 @@ pub(super) fn format_array_initializer(
     let one_per_line = values
         .iter()
         .any(array_initializer_value_prefers_vertical_layout);
-    let mut values = values
-        .iter()
-        .map(|value| format_variable_initializer_value(value, context))
-        .collect::<FormatResult<Vec<_>>>()?;
+    let list_range = initializer
+        .code_text_range()
+        .expect("parser-clean array initializer should have a source range");
+    let values = values.into_iter().map(|value| {
+        let range = value
+            .code_text_range()
+            .expect("parser-clean array initializer value should have a source range");
+        java_lists::ListItem::new(range, move |context| {
+            format_variable_initializer_value(&value, context)
+        })
+    });
 
-    if values.is_empty() {
-        return Ok(text("{}"));
-    }
-    if has_trailing_comma && let Some(last) = values.last_mut() {
-        *last = concat([last.clone(), text(",")]);
-    }
-
-    if one_per_line {
-        return Ok(wrap::braced_comma_block_one_per_line(values));
-    }
-
-    Ok(wrap::braced_comma_block(values))
+    java_lists::braced_comma_list(
+        values,
+        list_range,
+        one_per_line,
+        has_trailing_comma,
+        context,
+    )
 }
 
 fn array_initializer_value_prefers_vertical_layout(value: &VariableInitializerValue) -> bool {

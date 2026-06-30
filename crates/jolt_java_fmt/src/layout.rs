@@ -1,6 +1,5 @@
 use jolt_fmt_ir::{
-    Doc, concat, fill, fill_entry, group, hard_line, hard_line_without_break_parent, indent,
-    indent_by, join, line, soft_line, text,
+    Doc, concat, fill, fill_entry, group, hard_line, indent, indent_by, join, line, soft_line, text,
 };
 
 use crate::helpers::lists as java_lists;
@@ -25,49 +24,6 @@ pub(crate) fn declaration_header(parts: impl IntoIterator<Item = Doc>) -> Doc {
         first,
         continuation_indent(concat(parts.map(|part| concat([line(), part])))),
     ]))
-}
-
-pub(crate) fn braced_comma_block(items: impl IntoIterator<Item = Doc>) -> Doc {
-    let mut items = items.into_iter().collect::<Vec<_>>();
-    if items.is_empty() {
-        return text("{}");
-    }
-
-    let last = items.pop().expect("non-empty items checked above");
-    let entries = items
-        .into_iter()
-        .map(|item| fill_entry(item, concat([text(","), line()])));
-
-    concat([
-        text("{"),
-        indent(concat([
-            hard_line_without_break_parent(),
-            fill(entries, last),
-        ])),
-        hard_line_without_break_parent(),
-        text("}"),
-    ])
-}
-
-pub(crate) fn braced_comma_block_one_per_line(items: impl IntoIterator<Item = Doc>) -> Doc {
-    let mut items = items.into_iter().collect::<Vec<_>>();
-    if items.is_empty() {
-        return text("{}");
-    }
-
-    let last = items.pop().expect("non-empty items checked above");
-    let mut body = items
-        .into_iter()
-        .flat_map(|item| [item, text(","), hard_line_without_break_parent()])
-        .collect::<Vec<_>>();
-    body.push(last);
-
-    concat([
-        text("{"),
-        indent(concat([hard_line_without_break_parent(), concat(body)])),
-        hard_line_without_break_parent(),
-        text("}"),
-    ])
 }
 
 pub(crate) fn comma_list(items: impl IntoIterator<Item = Doc>) -> Doc {

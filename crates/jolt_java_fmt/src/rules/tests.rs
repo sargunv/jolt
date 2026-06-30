@@ -393,9 +393,16 @@ fn list_helpers_own_leading_item_comments() {
         "class A { java.util.List<\n// type argument\n@Anno String> value; }",
         "record A(\n// component\nint value) {}",
         "class A { void m() throws\n// problem\nException {} }",
+        "class A { void m() { call(first, second, /* left *//* right */ third); } }",
+        "class A { Object[] values = { first, // keep\nsecond // last\n}; }",
     ] {
         assert_formats_successfully(source);
     }
+
+    assert_formatted(
+        "class A { void m() { call(first, second, // keep\nthird); } }",
+        "class A {\n  void m() {\n    call(\n        first,\n        second, // keep\n        third);\n  }\n}",
+    );
 }
 
 #[test]
