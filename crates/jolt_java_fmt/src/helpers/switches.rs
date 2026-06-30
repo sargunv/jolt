@@ -1,12 +1,13 @@
 use jolt_fmt_ir::{Doc, concat, group, hard_line, indent, indent_by, join, line, soft_line, text};
 
+use crate::helpers::expressions as java_expressions;
 use crate::layout as wrap;
 use crate::policy::JavaFormatPolicy;
 
-pub(crate) fn switch_construct(selector: Doc, block: Doc) -> Doc {
+pub(crate) fn switch_construct(selector: Doc, block: Doc, policy: JavaFormatPolicy) -> Doc {
     concat([
         text("switch "),
-        wrap::parenthesized_expression(selector),
+        java_expressions::parenthesized_expression(selector, policy),
         text(" "),
         block,
     ])

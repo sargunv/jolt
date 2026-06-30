@@ -29,6 +29,7 @@ use crate::helpers::bodies::{
 use crate::helpers::callables;
 use crate::helpers::expressions as java_expressions;
 use crate::helpers::lists as java_lists;
+use crate::helpers::statements as java_statements;
 use crate::helpers::switches as java_switches;
 use jolt_diagnostics::TextRange;
 use jolt_fmt_ir::{group, indent_by, line};
@@ -440,7 +441,7 @@ fn format_if_statement_with_then_options(
         })
         .transpose()?;
 
-    Ok(wrap::if_statement(
+    Ok(java_statements::if_statement(
         format_expression(&condition, context)?,
         then_statement.doc,
         then_statement.is_block,
@@ -469,7 +470,7 @@ pub(super) fn format_while_statement(
         format_unbraced_statement_with_block_options(&body, context, block_options)
     })?;
 
-    Ok(wrap::while_statement(
+    Ok(java_statements::while_statement(
         format_expression(&condition, context)?,
         body.doc,
         body.is_block,
@@ -497,7 +498,7 @@ pub(super) fn format_do_statement(
         format_unbraced_statement_with_block_options(&body, context, block_options)
     })?;
 
-    Ok(wrap::do_statement(
+    Ok(java_statements::do_statement(
         body.doc,
         body.is_block,
         format_expression(&condition, context)?,
@@ -548,8 +549,8 @@ pub(super) fn format_basic_for_statement(
         format_unbraced_statement_with_block_options(&body, context, block_options)
     })?;
 
-    Ok(wrap::for_statement(
-        wrap::basic_for_header(initializer, condition, update),
+    Ok(java_statements::for_statement(
+        java_statements::basic_for_header(initializer, condition, update, context.policy()),
         body.doc,
         body.is_block,
     ))
@@ -579,10 +580,11 @@ pub(super) fn format_enhanced_for_statement(
         format_unbraced_statement_with_block_options(&body, context, block_options)
     })?;
 
-    Ok(wrap::for_statement(
-        wrap::enhanced_for_header(
+    Ok(java_statements::for_statement(
+        java_statements::enhanced_for_header(
             format_local_variable_declaration_header(&variable, context)?,
             format_expression(&iterable, context)?,
+            context.policy(),
         ),
         body.doc,
         body.is_block,
@@ -654,7 +656,10 @@ pub(super) fn format_synchronized_statement(
 
     Ok(concat([
         text("synchronized "),
-        wrap::parenthesized_expression(format_expression(&expression, context)?),
+        java_expressions::parenthesized_expression(
+            format_expression(&expression, context)?,
+            context.policy(),
+        ),
         text(" "),
         format_block(&body, context)?,
     ]))
@@ -698,7 +703,7 @@ pub(super) fn format_try_statement(
         .map(|finally_clause| format_finally_clause(&finally_clause, context))
         .transpose()?;
 
-    Ok(wrap::try_statement(
+    Ok(java_statements::try_statement(
         format_block_with_options(&body, context, body_options)?,
         catches,
         finally_clause,
@@ -743,7 +748,7 @@ pub(super) fn format_try_with_resources_statement(
         .map(|finally_clause| format_finally_clause(&finally_clause, context))
         .transpose()?;
 
-    Ok(wrap::try_statement_with_header(
+    Ok(java_statements::try_statement_with_header(
         concat([
             text("try "),
             resource_specification,
@@ -854,7 +859,10 @@ fn format_catch_parameter_header(
             text(")"),
         ]))
     } else {
-        Ok(wrap::parenthesized_expression(parameter.doc))
+        Ok(java_expressions::parenthesized_expression(
+            parameter.doc,
+            context.policy(),
+        ))
     }
 }
 
@@ -1027,14 +1035,14 @@ pub(super) fn format_finally_clause(
 }
 
 pub(super) fn format_break_statement(statement: &BreakStatement) -> FormatResult<Doc> {
-    Ok(wrap::keyword_label_statement(
+    Ok(java_statements::keyword_label_statement(
         "break",
         statement.label().map(|label| format_token(&label)),
     ))
 }
 
 pub(super) fn format_continue_statement(statement: &ContinueStatement) -> FormatResult<Doc> {
-    Ok(wrap::keyword_label_statement(
+    Ok(java_statements::keyword_label_statement(
         "continue",
         statement.label().map(|label| format_token(&label)),
     ))
@@ -1366,7 +1374,9 @@ pub(super) fn format_return_statement(
         .expression()
         .map(|expression| format_expression(&expression, context))
         .transpose()?;
-    Ok(wrap::keyword_expression_statement("return", expression))
+    Ok(java_statements::keyword_expression_statement(
+        "return", expression,
+    ))
 }
 
 pub(super) fn format_throw_statement(
@@ -1376,7 +1386,7 @@ pub(super) fn format_throw_statement(
     let expression = statement
         .expression()
         .expect("parser-clean throw statement should have an expression");
-    Ok(wrap::keyword_expression_statement(
+    Ok(java_statements::keyword_expression_statement(
         "throw",
         Some(format_expression(&expression, context)?),
     ))
@@ -1389,7 +1399,7 @@ pub(super) fn format_yield_statement(
     let expression = statement
         .expression()
         .expect("parser-clean yield statement should have an expression");
-    Ok(wrap::keyword_expression_statement(
+    Ok(java_statements::keyword_expression_statement(
         "yield",
         Some(format_expression(&expression, context)?),
     ))
@@ -1401,7 +1411,7 @@ pub(super) fn format_assert_statement(
 ) -> FormatResult<Doc> {
     let expressions = statement.expressions().collect::<Vec<_>>();
     match expressions.as_slice() {
-        [condition] => Ok(wrap::keyword_expression_statement(
+        [condition] => Ok(java_statements::keyword_expression_statement(
             "assert",
             Some(format_expression(condition, context)?),
         )),
@@ -1430,6 +1440,7 @@ pub(super) fn format_switch_statement(
     Ok(java_switches::switch_construct(
         format_expression(&selector, context)?,
         format_switch_block(&block, context)?,
+        context.policy(),
     ))
 }
 
@@ -1447,6 +1458,7 @@ pub(super) fn format_switch_expression(
     Ok(java_switches::switch_construct(
         format_expression(&selector, context)?,
         format_switch_block(&block, context)?,
+        context.policy(),
     ))
 }
 
@@ -1597,7 +1609,7 @@ pub(super) fn format_switch_rule(
     let body = match body {
         SwitchRuleBody::Block(block) => format_block(&block, context)?,
         SwitchRuleBody::Expression(expression) => {
-            wrap::expression_statement(format_expression(&expression, context)?)
+            java_statements::expression_statement(format_expression(&expression, context)?)
         }
         SwitchRuleBody::Throw(statement) => format_throw_statement(&statement, context)?,
     };
@@ -1678,7 +1690,7 @@ pub(super) fn format_expression_statement(
         .expression()
         .expect("parser-clean expression statement should have an expression");
 
-    Ok(wrap::expression_statement(format_expression(
+    Ok(java_statements::expression_statement(format_expression(
         &expression,
         context,
     )?))

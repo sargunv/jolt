@@ -99,8 +99,8 @@ than missing formatter coverage.
 - `declarations.rs`, `expressions.rs`, and `statements.rs` are still large.
   Helpers exist, but rules still assemble many slots and own comment wiring
   locally.
-- `layout.rs` still holds expression-shaped helpers (`assignment_expression`,
-  etc.) that belong in a future `helpers/expressions.rs`.
+- `layout.rs` is now limited to generic braced/spacing wrappers; expression and
+  statement shell layout lives in Java helpers.
 - Comment placement is incomplete in annotation arguments, inline annotation
   positions, some header-boundary positions, and a few branch/else shapes. These
   currently block formatting rather than placing comments.
@@ -298,8 +298,8 @@ indent.
 
 **AOSP wiring gaps:**
 
-- `helpers/chains.rs`, `helpers/callables.rs`, and `layout.rs` hardcode
-  continuation indent instead of reading policy
+- `helpers/chains.rs` and `helpers/callables.rs` still need ongoing audits for
+  hardcoded continuation indent instead of reading policy
 - Chain break decisions must respect the 4-space line budget, not inherit
   2-space Google break points
 
@@ -988,8 +988,8 @@ item lists, guards, and record-pattern component layout. `rules/statements.rs`
 keeps selector/block/label/body extraction plus comment range ownership before
 delegating switch layout to the helper.
 
-`layout.rs` uses flat parenthesized conditions and fill-style (`line()`) breaks
-for inline if/while/for/do bodies when within width.
+`helpers/statements.rs` uses flat parenthesized conditions and fill-style
+(`line()`) breaks for inline if/while/for/do bodies when within width.
 
 Remaining: refine trailing-blank policy on final if/else clauses and try/catch
 tails (`B20535125.java` tail), plus switch guard/record-pattern oracle

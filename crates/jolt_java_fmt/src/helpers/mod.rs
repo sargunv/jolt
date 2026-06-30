@@ -11,5 +11,6 @@ pub(crate) mod lists;
 pub(crate) mod literals;
 pub(crate) mod modules;
 pub(crate) mod separated;
+pub(crate) mod statements;
 pub(crate) mod switches;
 pub(crate) mod type_declarations;
