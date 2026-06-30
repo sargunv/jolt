@@ -96,6 +96,7 @@ pub(crate) fn empty_formal_parameter_list(policy: JavaFormatPolicy) -> Doc {
 pub(crate) fn argument_list(
     items: impl IntoIterator<Item = ListItem>,
     list_range: TextRange,
+    is_format_method: bool,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
     let items = format_list_items(
@@ -112,6 +113,7 @@ pub(crate) fn argument_list(
         ")",
         context.policy().continuation_indent_levels(),
         context.policy(),
+        is_format_method,
         items,
     ))
 }
@@ -454,6 +456,7 @@ fn argument_list_with_policy(
     close: &'static str,
     indent_levels: u16,
     policy: JavaFormatPolicy,
+    is_format_method: bool,
     items: FormattedList,
 ) -> Doc {
     if items.is_empty() {
@@ -482,6 +485,10 @@ fn argument_list_with_policy(
         return delimited_comma_list_with_comments(open, close, indent_levels, items);
     }
 
+    if is_format_method && items.items.len() >= 2 {
+        return format_method_argument_list(open, close, indent_levels, docs);
+    }
+
     let all_short = has_only_short_argument_items(&items.items, policy);
     let flat = separated::delimited_comma_list_flat(open, close, docs.clone());
     let broken = if all_short {
@@ -490,6 +497,66 @@ fn argument_list_with_policy(
         separated::delimited_comma_list_one_per_line(open, close, indent_levels, docs)
     };
     best_fitting(flat, [broken])
+}
+
+/// google-java-format `isFormatMethod`: format string on its own continuation
+/// line, remaining arguments filled (not one-per-line).
+fn format_method_argument_list(
+    open: &'static str,
+    close: &'static str,
+    indent_levels: u16,
+    mut docs: Vec<Doc>,
+) -> Doc {
+    let first = docs.remove(0);
+    let flat = separated::delimited_comma_list_flat(
+        open,
+        close,
+        std::iter::once(first.clone()).chain(docs.clone()),
+    );
+    let broken = format_method_argument_list_broken(open, close, indent_levels, first, docs);
+    best_fitting(flat, [broken])
+}
+
+fn format_method_argument_list_broken(
+    open: &'static str,
+    close: &'static str,
+    indent_levels: u16,
+    first: Doc,
+    rest: Vec<Doc>,
+) -> Doc {
+    if rest.is_empty() {
+        return group(concat([
+            text(open),
+            indent_by(
+                indent_levels,
+                concat([soft_line(), concat([first, text(close)])]),
+            ),
+        ]));
+    }
+
+    let mut rest = rest;
+    let last = rest
+        .pop()
+        .expect("format method argument list has at least two items");
+    let entries = rest
+        .into_iter()
+        .map(|item| fill_entry(item, concat([text(","), line()])));
+
+    group(concat([
+        text(open),
+        indent_by(
+            indent_levels,
+            concat([
+                soft_line(),
+                concat([
+                    first,
+                    text(","),
+                    line(),
+                    fill(entries, concat([last, text(close)])),
+                ]),
+            ]),
+        ),
+    ]))
 }
 
 fn has_only_short_argument_items(items: &[FormattedListItem], policy: JavaFormatPolicy) -> bool {

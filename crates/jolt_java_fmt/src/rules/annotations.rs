@@ -236,7 +236,7 @@ pub(super) fn format_annotation_argument_list(
                     }))
                 })
                 .collect::<FormatResult<Vec<_>>>()?;
-            return java_lists::argument_list(values, list_range, context);
+            return java_lists::argument_list(values, list_range, false, context);
         }
         return Ok(java_annotations::single_argument(
             format_annotation_element_value(&values[0], context)?,

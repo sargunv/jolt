@@ -204,6 +204,14 @@ threshold.
 **Fix locus:** `helpers/lists.rs` fill and break policy — one cohesive helper
 change, many call sites.
 
+**Google baseline (2025-06-30):** aggregate 2112→**2049** via GJF
+`isFormatMethod` in `analyzers/format_strings.rs` and
+`format_method_argument_list` in `helpers/lists.rs` (format string on its own
+continuation line; remaining args filled, not one-per-line). `B26207047.java`
+64→**15**. General long-arg lists still use one-per-line when any item exceeds
+`MAX_ITEM_LENGTH_FOR_FILLING`; switching all arg lists to fill regressed
+`M.java` and aggregate.
+
 #### 4. Control-flow block compaction (~10–14%)
 
 **What differs in two directions:**

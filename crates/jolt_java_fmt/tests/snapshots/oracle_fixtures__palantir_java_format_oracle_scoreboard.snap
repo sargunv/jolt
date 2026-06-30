@@ -13,7 +13,7 @@ formatted: 224
 exact matches: 68
 exact-match percentage: 30.35%
 mismatching formatted files: 156
-aggregate diff size: 4649
+aggregate diff size: 4601
 largest per-file diff: B24909927.java (916)
 
 worst mismatches:
@@ -25,8 +25,8 @@ worst mismatches:
   B20128760.java: 117
   palantir-deeply-nested-calls.java: 114
   palantir-lambda-multiline-arg.java: 105
-  B26207047.java: 81
-  B21954779.java: 69
+  C.java: 69
+  B21954779.java: 66
 
 top missing-rule blockers:
   0: <none>

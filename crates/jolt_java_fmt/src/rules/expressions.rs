@@ -751,9 +751,12 @@ pub(super) fn format_argument_list(
     let list_range = arguments
         .code_text_range()
         .expect("parser-clean argument list should have a code range");
+    let argument_expressions = arguments.arguments().collect::<Vec<_>>();
+    let is_format_method = argument_expressions.len() >= 2
+        && crate::analyzers::format_strings::is_format_string_expression(&argument_expressions[0]);
     let arguments =
-        arguments
-            .arguments()
+        argument_expressions
+            .into_iter()
             .map(|argument| {
                 let range = argument
                     .code_text_range()
@@ -766,7 +769,7 @@ pub(super) fn format_argument_list(
                 .with_shape(shape))
             })
             .collect::<FormatResult<Vec<_>>>()?;
-    java_lists::argument_list(arguments, list_range, context)
+    java_lists::argument_list(arguments, list_range, is_format_method, context)
 }
 
 fn argument_list_item_shape(argument: &Expression) -> java_lists::ListItemShape {
