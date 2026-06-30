@@ -252,18 +252,11 @@ fn take_body_boundary_comment_docs(
     Ok(comments)
 }
 
-#[derive(Default)]
-struct CallableBodyBoundaryComments {
-    header_trailing_comments: Vec<Doc>,
-    body_opening_comments: Vec<Doc>,
-    before_body_comments: Vec<Doc>,
-}
-
 fn take_callable_body_boundary_comment_docs(
     context: &mut JavaFormatContext<'_>,
     header_end: TextRange,
     body_range: TextRange,
-) -> FormatResult<CallableBodyBoundaryComments> {
+) -> FormatResult<callables::CallableBodyBoundaryComments> {
     let header_trailing_comments = take_trailing_line_comment_docs_in_range_as_suffix(
         context,
         header_end,
@@ -280,7 +273,7 @@ fn take_callable_body_boundary_comment_docs(
         body_range,
     )?;
 
-    Ok(CallableBodyBoundaryComments {
+    Ok(callables::CallableBodyBoundaryComments {
         header_trailing_comments,
         body_opening_comments,
         before_body_comments,
@@ -1259,11 +1252,13 @@ pub(super) fn format_method_declaration(
         let semicolon = method
             .semicolon()
             .expect("parser-clean semicolon-body method should have a semicolon");
-        let boundary_range = method
-            .throws_clause()
-            .and_then(|throws| throws.code_text_range())
-            .or_else(|| method.r_paren().map(|token| token.token_text_range()))
-            .unwrap_or_else(|| name.token_text_range());
+        let boundary_range = callables::callable_body_boundary_end(
+            method
+                .throws_clause()
+                .and_then(|throws| throws.code_text_range()),
+            method.r_paren().map(|token| token.token_text_range()),
+            name.token_text_range(),
+        );
         let signature_tail_comments = take_block_comment_docs_in_range_as_inline(
             context,
             TextRange::new(boundary_range.end(), semicolon.token_text_range().start()),
@@ -1276,9 +1271,9 @@ pub(super) fn format_method_declaration(
             )?;
         }
         return Ok(callables::callable_declaration(
-            header,
-            callables::CallableDeclarationTail::Semicolon {
-                signature_tail_comments,
+            callables::CallableDeclaration {
+                header,
+                tail: callables::callable_semicolon_tail(signature_tail_comments),
             },
             context.policy(),
         ));
@@ -1287,15 +1282,17 @@ pub(super) fn format_method_declaration(
     let body = method
         .body()
         .expect("parser-clean method declaration should have a body or semicolon");
-    let body_boundary_comments = if let Some(body_range) = body.code_text_range() {
-        let boundary_range = method
-            .throws_clause()
-            .and_then(|throws| throws.code_text_range())
-            .or_else(|| method.r_paren().map(|token| token.token_text_range()))
-            .unwrap_or_else(|| name.token_text_range());
+    let mut body_boundary_comments = if let Some(body_range) = body.code_text_range() {
+        let boundary_range = callables::callable_body_boundary_end(
+            method
+                .throws_clause()
+                .and_then(|throws| throws.code_text_range()),
+            method.r_paren().map(|token| token.token_text_range()),
+            name.token_text_range(),
+        );
         take_callable_body_boundary_comment_docs(context, boundary_range, body_range)?
     } else {
-        CallableBodyBoundaryComments::default()
+        callables::CallableBodyBoundaryComments::default()
     };
     if let Some(body_range) = body.code_text_range() {
         reject_unhandled_comments_before_start(
@@ -1304,17 +1301,12 @@ pub(super) fn format_method_declaration(
             "Java formatter does not support comments inside method signatures yet",
         )?;
     }
-    let body = format_block_with_opening_comments(
-        &body,
-        body_boundary_comments.body_opening_comments,
-        context,
-    )?;
+    let body_opening_comments = body_boundary_comments.take_body_opening_comments();
+    let body = format_block_with_opening_comments(&body, body_opening_comments, context)?;
     Ok(callables::callable_declaration(
-        header,
-        callables::CallableDeclarationTail::Block {
-            header_trailing_comments: body_boundary_comments.header_trailing_comments,
-            before_body_comments: body_boundary_comments.before_body_comments,
-            body,
+        callables::CallableDeclaration {
+            header,
+            tail: callables::callable_block_tail(body_boundary_comments, body),
         },
         context.policy(),
     ))
@@ -1330,15 +1322,17 @@ pub(super) fn format_constructor_declaration(
     let body = constructor
         .body()
         .expect("parser-clean constructor declaration should have a body");
-    let body_boundary_comments = if let Some(body_range) = body.code_text_range() {
-        let boundary_range = constructor
-            .throws_clause()
-            .and_then(|throws| throws.code_text_range())
-            .or_else(|| constructor.r_paren().map(|token| token.token_text_range()))
-            .unwrap_or_else(|| name.token_text_range());
+    let mut body_boundary_comments = if let Some(body_range) = body.code_text_range() {
+        let boundary_range = callables::callable_body_boundary_end(
+            constructor
+                .throws_clause()
+                .and_then(|throws| throws.code_text_range()),
+            constructor.r_paren().map(|token| token.token_text_range()),
+            name.token_text_range(),
+        );
         take_callable_body_boundary_comment_docs(context, boundary_range, body_range)?
     } else {
-        CallableBodyBoundaryComments::default()
+        callables::CallableBodyBoundaryComments::default()
     };
     let header = format_callable_header(
         CallableHeaderInput {
@@ -1365,17 +1359,13 @@ pub(super) fn format_constructor_declaration(
             "Java formatter does not support comments inside constructor signatures yet",
         )?;
     }
-    let body = format_constructor_body_with_opening_comments(
-        &body,
-        body_boundary_comments.body_opening_comments,
-        context,
-    )?;
+    let body_opening_comments = body_boundary_comments.take_body_opening_comments();
+    let body =
+        format_constructor_body_with_opening_comments(&body, body_opening_comments, context)?;
     Ok(callables::callable_declaration(
-        header,
-        callables::CallableDeclarationTail::Block {
-            header_trailing_comments: body_boundary_comments.header_trailing_comments,
-            before_body_comments: body_boundary_comments.before_body_comments,
-            body,
+        callables::CallableDeclaration {
+            header,
+            tail: callables::callable_block_tail(body_boundary_comments, body),
         },
         context.policy(),
     ))
@@ -1392,10 +1382,10 @@ pub(super) fn format_compact_constructor_declaration(
     let body = constructor
         .body()
         .expect("parser-clean compact constructor declaration should have a body");
-    let body_boundary_comments = if let Some(body_range) = body.code_text_range() {
+    let mut body_boundary_comments = if let Some(body_range) = body.code_text_range() {
         take_callable_body_boundary_comment_docs(context, name.token_text_range(), body_range)?
     } else {
-        CallableBodyBoundaryComments::default()
+        callables::CallableBodyBoundaryComments::default()
     };
     let header = callables::callable_header(
         callables::CallableHeader {
@@ -1418,18 +1408,14 @@ pub(super) fn format_compact_constructor_declaration(
             "Java formatter does not support comments inside constructor signatures yet",
         )?;
     }
-    let body = format_constructor_body_with_opening_comments(
-        &body,
-        body_boundary_comments.body_opening_comments,
-        context,
-    )?;
+    let body_opening_comments = body_boundary_comments.take_body_opening_comments();
+    let body =
+        format_constructor_body_with_opening_comments(&body, body_opening_comments, context)?;
 
     let doc = callables::callable_declaration(
-        header,
-        callables::CallableDeclarationTail::Block {
-            header_trailing_comments: body_boundary_comments.header_trailing_comments,
-            before_body_comments: body_boundary_comments.before_body_comments,
-            body,
+        callables::CallableDeclaration {
+            header,
+            tail: callables::callable_block_tail(body_boundary_comments, body),
         },
         context.policy(),
     );
@@ -1514,11 +1500,8 @@ fn format_callable_header(
                 .code_text_range()
                 .unwrap_or_else(|| parameters.text_range())
         });
-        let parameter_indent_levels = if after_name_comments.is_empty() {
-            context.policy().continuation_indent_levels()
-        } else {
-            0
-        };
+        let parameter_indent_levels =
+            callables::callable_parameter_indent_levels(&after_name_comments, context.policy());
         let mut parameters = format_formal_parameter_list(
             &parameters,
             parameter_open,
@@ -1890,7 +1873,7 @@ pub(super) fn format_formal_parameter_list(
         "parser-clean formal parameter list node should contain parameters"
     );
 
-    java_lists::formal_parameter_list_with_indent(
+    callables::formal_parameter_list(
         parameter_docs,
         list_range,
         open_range,
@@ -2168,5 +2151,5 @@ pub(super) fn format_throws_clause(
         "parser-clean throws clause should contain at least one type"
     );
 
-    java_lists::keyword_prefixed_clause_list("throws", types, list_range, ownership_range, context)
+    callables::throws_clause(types, list_range, ownership_range, context)
 }

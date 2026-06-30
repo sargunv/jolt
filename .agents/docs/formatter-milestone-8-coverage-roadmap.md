@@ -918,11 +918,14 @@ fill vs flat policy shares the nested-`BestFitting` ceiling with chains—see
 
 `helpers/callables.rs` and `helpers/type_declarations.rs` are wired into
 `declarations.rs` for methods, constructors, compact constructors, annotation
-elements, and type headers.
+elements, and type headers. `helpers/callables.rs` owns signature/body tail
+assembly, semicolon vs block callable declaration construction, throws-clause
+list layout, and the parameter indentation policy used when comments split the
+name/parameter boundary.
 
-Remaining: move throws/default/annotation-header comment policy out of
-`declarations.rs`; shrink the rule module so header wrapping changes happen in
-one helper.
+Remaining: move default/annotation-header and broader type-header comment policy
+out of `declarations.rs`; continue shrinking the rule module so header wrapping
+changes happen in helpers.
 
 ### Selector chains — in progress
 
@@ -1034,9 +1037,11 @@ See `rules/tests.rs` tests named `*_remain_unowned_formatter_debt`.
 
 ### Phase 4: Callable and type declaration helpers — in progress
 
-Helpers exist and are adopted, but `declarations.rs` has not shrunk materially.
-Success means declaration wrapping and header comment policy change in helpers,
-with neutral or improved declaration-related oracle diffs.
+Helpers exist and are adopted. Core callable tail assembly now lives in
+`helpers/callables.rs`, but `declarations.rs` still owns several type-header and
+annotation-header comment boundaries. Success means declaration wrapping and
+header comment policy change in helpers, with neutral or improved
+declaration-related oracle diffs.
 
 ### Phase 5: Selector chain policy — in progress
 

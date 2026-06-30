@@ -1,6 +1,10 @@
+use jolt_diagnostics::TextRange;
 use jolt_fmt_ir::{Doc, best_fitting, concat, group, hard_line, indent_by, join, line, text};
 
+use crate::context::JavaFormatContext;
+use crate::diagnostics::FormatResult;
 use crate::helpers::expressions as java_expressions;
+use crate::helpers::lists::{self as java_lists, ListItem};
 use crate::policy::JavaFormatPolicy;
 
 pub(crate) struct CallableHeader {
@@ -38,6 +42,64 @@ pub(crate) enum CallableDeclarationTail {
     Semicolon {
         signature_tail_comments: Vec<Doc>,
     },
+}
+
+pub(crate) struct CallableDeclaration {
+    pub(crate) header: Doc,
+    pub(crate) tail: CallableDeclarationTail,
+}
+
+#[derive(Default)]
+pub(crate) struct CallableBodyBoundaryComments {
+    pub(crate) header_trailing_comments: Vec<Doc>,
+    pub(crate) body_opening_comments: Vec<Doc>,
+    pub(crate) before_body_comments: Vec<Doc>,
+}
+
+impl CallableBodyBoundaryComments {
+    pub(crate) fn take_body_opening_comments(&mut self) -> Vec<Doc> {
+        std::mem::take(&mut self.body_opening_comments)
+    }
+}
+
+pub(crate) fn callable_parameter_indent_levels(
+    after_name_comments: &[Doc],
+    policy: JavaFormatPolicy,
+) -> u16 {
+    if after_name_comments.is_empty() {
+        policy.continuation_indent_levels()
+    } else {
+        0
+    }
+}
+
+pub(crate) fn callable_body_boundary_end(
+    signature_tail_range: Option<TextRange>,
+    parameter_close: Option<TextRange>,
+    name_range: TextRange,
+) -> TextRange {
+    signature_tail_range
+        .or(parameter_close)
+        .unwrap_or(name_range)
+}
+
+pub(crate) fn callable_block_tail(
+    comments: CallableBodyBoundaryComments,
+    body: Doc,
+) -> CallableDeclarationTail {
+    CallableDeclarationTail::Block {
+        header_trailing_comments: comments.header_trailing_comments,
+        before_body_comments: comments.before_body_comments,
+        body,
+    }
+}
+
+pub(crate) fn callable_semicolon_tail(
+    signature_tail_comments: Vec<Doc>,
+) -> CallableDeclarationTail {
+    CallableDeclarationTail::Semicolon {
+        signature_tail_comments,
+    }
 }
 
 pub(crate) fn callable_header(header: CallableHeader, policy: JavaFormatPolicy) -> Doc {
@@ -102,10 +164,10 @@ pub(crate) fn callable_header(header: CallableHeader, policy: JavaFormatPolicy) 
 }
 
 pub(crate) fn callable_declaration(
-    header: Doc,
-    tail: CallableDeclarationTail,
+    declaration: CallableDeclaration,
     policy: JavaFormatPolicy,
 ) -> Doc {
+    let CallableDeclaration { header, tail } = declaration;
     match tail {
         CallableDeclarationTail::Block {
             header_trailing_comments,
@@ -122,6 +184,31 @@ pub(crate) fn callable_declaration(
             signature_tail_comments,
         } => callable_semicolon_declaration(header, signature_tail_comments),
     }
+}
+
+pub(crate) fn formal_parameter_list(
+    items: impl IntoIterator<Item = ListItem>,
+    list_range: TextRange,
+    open_range: Option<TextRange>,
+    continuation_indent_levels: u16,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    java_lists::formal_parameter_list_with_indent(
+        items,
+        list_range,
+        open_range,
+        continuation_indent_levels,
+        context,
+    )
+}
+
+pub(crate) fn throws_clause(
+    types: impl IntoIterator<Item = ListItem>,
+    list_range: TextRange,
+    ownership_range: TextRange,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    java_lists::keyword_prefixed_clause_list("throws", types, list_range, ownership_range, context)
 }
 
 fn callable_block_declaration(
