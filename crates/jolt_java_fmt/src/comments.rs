@@ -5,6 +5,7 @@ use jolt_fmt_ir::{
 
 use crate::context::{JavaCommentTrivia, JavaFormatContext};
 use crate::diagnostics::{FormatResult, JavaFormatDiagnosticCode};
+use crate::helpers::comments::{CommentPlacement, rewrite_comment_lines};
 
 pub(crate) fn with_attached_comments(
     context: &mut JavaFormatContext<'_>,
@@ -233,12 +234,13 @@ pub(crate) fn with_leading_and_trailing_comments(
 
     let doc = if let Some(comment) = trailing {
         let raw = context.raw_text(&comment);
+        let trailing_doc = format_trailing_line_comment(context, &comment);
         if raw.contains(['\n', '\r', '\u{2028}', '\u{2029}']) {
-            concat([doc, hard_line(), format_own_line_comment(context, &comment)])
+            concat([doc, hard_line(), trailing_doc])
         } else {
             concat([
                 doc,
-                line_suffix(text(format!(" {raw}"))),
+                line_suffix(concat([text(" "), trailing_doc])),
                 line_suffix_boundary(),
             ])
         }
@@ -261,11 +263,41 @@ pub(crate) fn format_own_line_comment_doc(
 }
 
 fn format_own_line_comment(context: &JavaFormatContext<'_>, comment: &JavaCommentTrivia) -> Doc {
-    let lines = comment_lines(context.raw_text(comment));
+    comment_lines_to_doc(
+        rewrite_comment_lines(context, comment, CommentPlacement::OwnLine),
+        CommentPlacement::OwnLine,
+    )
+}
+
+fn format_inline_comment(context: &JavaFormatContext<'_>, comment: &JavaCommentTrivia) -> Doc {
+    let raw = context.raw_text(comment);
+    if raw.contains(['\n', '\r', '\u{2028}', '\u{2029}']) {
+        comment_lines_to_doc(
+            rewrite_comment_lines(context, comment, CommentPlacement::InlineBlock),
+            CommentPlacement::InlineBlock,
+        )
+    } else {
+        let lines = rewrite_comment_lines(context, comment, CommentPlacement::InlineBlock);
+        text(lines.into_iter().next().unwrap_or_default())
+    }
+}
+
+fn format_trailing_line_comment(
+    context: &JavaFormatContext<'_>,
+    comment: &JavaCommentTrivia,
+) -> Doc {
+    comment_lines_to_doc(
+        rewrite_comment_lines(context, comment, CommentPlacement::TrailingLine),
+        CommentPlacement::TrailingLine,
+    )
+}
+
+fn comment_lines_to_doc(lines: Vec<String>, placement: CommentPlacement) -> Doc {
+    let dedent_continuations = matches!(placement, CommentPlacement::InlineBlock);
     let mut parts = Vec::new();
     for (index, line) in lines.into_iter().enumerate() {
         if index > 0 {
-            if line.is_empty() {
+            if dedent_continuations || line.is_empty() {
                 parts.push(break_(FlatLine::Empty, i16::MIN));
             } else {
                 parts.push(hard_line());
@@ -280,150 +312,4 @@ fn format_own_line_comment(context: &JavaFormatContext<'_>, comment: &JavaCommen
     }
 
     concat(parts)
-}
-
-fn format_inline_comment(context: &JavaFormatContext<'_>, comment: &JavaCommentTrivia) -> Doc {
-    let raw = context.raw_text(comment);
-    if raw.contains(['\n', '\r', '\u{2028}', '\u{2029}']) {
-        format_own_line_comment(context, comment)
-    } else {
-        text(raw)
-    }
-}
-
-fn comment_lines(raw: &str) -> Vec<String> {
-    let lines = raw_comment_lines(raw)
-        .into_iter()
-        .map(strip_trailing_whitespace)
-        .collect::<Vec<_>>();
-    if let Some(comment) =
-        collapsed_single_line_javadoc(&lines.iter().map(String::as_str).collect::<Vec<_>>())
-    {
-        return vec![comment];
-    }
-    if javadoc_shaped(&lines) {
-        return indent_javadoc_lines(lines, 0);
-    }
-
-    preserve_comment_indentation(lines, 0)
-}
-
-fn strip_trailing_whitespace(line: &str) -> String {
-    line.trim_end().to_owned()
-}
-
-fn javadoc_shaped(lines: &[String]) -> bool {
-    let Some(first) = lines.first() else {
-        return false;
-    };
-    let first = first.trim();
-    if first.starts_with("/**") {
-        return true;
-    }
-    if !first.starts_with("/*") {
-        return false;
-    }
-
-    lines[1..].iter().all(|line| {
-        let trimmed = line.trim();
-        trimmed.is_empty() || trimmed.starts_with('*')
-    })
-}
-
-fn indent_javadoc_lines(lines: Vec<String>, column0: usize) -> Vec<String> {
-    let Some(first) = lines.first() else {
-        return lines;
-    };
-
-    let mut result = vec![first.trim().to_owned()];
-    let indent = " ".repeat(column0 + 1);
-    for line in lines.into_iter().skip(1) {
-        let trimmed = line.trim();
-        let mut formatted = indent.clone();
-        if !trimmed.starts_with('*') {
-            formatted.push_str("* ");
-        }
-        formatted.push_str(trimmed);
-        result.push(formatted);
-    }
-    result
-}
-
-fn preserve_comment_indentation(lines: Vec<String>, column0: usize) -> Vec<String> {
-    if lines.is_empty() {
-        return lines;
-    }
-
-    let start_col = lines[1..]
-        .iter()
-        .filter_map(|line| line.find(|ch: char| !ch.is_whitespace()))
-        .min()
-        .unwrap_or(0);
-    let column_prefix = " ".repeat(column0);
-    let mut result = vec![lines[0].clone()];
-    for line in lines.into_iter().skip(1) {
-        if line.trim().is_empty() {
-            result.push(String::new());
-            continue;
-        }
-        let mut formatted = column_prefix.clone();
-        if line.len() >= start_col {
-            formatted.push_str(&line[start_col..]);
-        } else {
-            formatted.push_str(&line);
-        }
-        result.push(formatted);
-    }
-    result
-}
-
-fn collapsed_single_line_javadoc(lines: &[&str]) -> Option<String> {
-    if let [open, close] = lines
-        && open.trim() == "/**"
-        && close.trim() == "*/"
-    {
-        return Some("/** */".to_owned());
-    }
-
-    let [open, body, close] = lines else {
-        return None;
-    };
-    if open.trim() != "/**" || close.trim() != "*/" {
-        return None;
-    }
-
-    let body = body.trim_start_matches([' ', '\t']);
-    let body = body.strip_prefix('*')?.trim();
-    if body.is_empty() || body.contains("*/") {
-        return None;
-    }
-
-    Some(format!("/** {body} */"))
-}
-
-fn raw_comment_lines(raw: &str) -> Vec<&str> {
-    let mut lines = Vec::new();
-    let mut start = 0;
-    let mut chars = raw.char_indices().peekable();
-
-    while let Some((index, ch)) = chars.next() {
-        let end = match ch {
-            '\r' => {
-                let mut end = index + ch.len_utf8();
-                if let Some((next_index, '\n')) = chars.peek().copied() {
-                    chars.next();
-                    end = next_index + '\n'.len_utf8();
-                }
-                end
-            }
-            '\n' | '\u{2028}' | '\u{2029}' => index + ch.len_utf8(),
-            _ => continue,
-        };
-
-        lines.push(&raw[start..index]);
-        start = end;
-    }
-
-    lines.push(&raw[start..]);
-    lines
 }

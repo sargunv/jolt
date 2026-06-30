@@ -763,6 +763,10 @@ impl<'source> JavaFormatContext<'source> {
             && self.only_whitespace(comment.trivia.range.end().get(), line_end)
     }
 
+    pub(crate) fn source_column_at(&self, offset: usize) -> usize {
+        offset.saturating_sub(self.line_start(offset))
+    }
+
     fn line_start(&self, offset: usize) -> usize {
         self.source[..offset]
             .rfind(is_line_terminator)

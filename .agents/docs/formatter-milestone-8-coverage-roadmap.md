@@ -85,7 +85,8 @@ Google's.
   alternatives, profile-aware breaking.
 - **Comment ownership** in `context.rs` and `comments.rs`: leading, trailing,
   dangling, inline, separator, and list-item buckets; `reject_unhandled_*`
-  guards; end-of-format unconsumed-trivia diagnostics.
+  guards. Rewrite policy lives in `helpers/comments.rs`. guards; end-of-format
+  unconsumed-trivia diagnostics.
 - **Domain rule split** under `rules/`: compilation units, declarations,
   expressions, statements, annotations, types, names, tokens.
 - **Oracle scoreboards** for Google, AOSP, and Palantir profiles.
@@ -831,10 +832,11 @@ Current structure under `crates/jolt_java_fmt/src/`:
 ```text
 layout.rs                  low-level Doc composition helpers
 policy.rs                  profile policy accessors
-comments.rs                comment formatting wrappers
+comments.rs                comment ownership wrappers and Doc wiring
 context.rs                 comment ownership and trivia cursor
 rules/                     syntax-to-document rules by domain
 helpers/
+  comments.rs              GJF-style comment rewrite policy (block/line/javadoc-shaped)
   separated.rs             generic separated/delimited mechanics
   lists.rs                 Java list policy and comment-aware items
   callables.rs             callable declaration headers and tails
@@ -857,6 +859,24 @@ Not yet extracted (extract only when a real policy surface justifies it):
 Do not move code merely to satisfy this tree.
 
 ## Helper Surface Status
+
+### Comment rewrite — largely done
+
+`helpers/comments.rs` owns GJF `JavaCommentsHelper` rewrite policy: `column0`
+shifting for inline/trailing placement, block comment trailing-whitespace strip,
+javadoc-shaped indentation, `preserveIndentation`, single-line javadoc collapse,
+line-comment trim/wrap/normalize (`//noinspection`, `//$NON-NLS-`, `// MOE:`),
+and parameter-comment normalization (`/* name= */`).
+
+`comments.rs` keeps ownership buckets and Doc emission only; all rewrite routes
+through `rewrite_comment_lines()`.
+
+Remaining (Milestone 15): full `JavadocFormatter` HTML/`@tag` normalization for
+`/**` comments. Oracle upstream materialization uses `--skip-javadoc-formatting`
+until then.
+
+Remaining edge domains (currently blocked, not silently ignored): see Phase 3
+below.
 
 ### Lists — largely done
 

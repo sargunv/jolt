@@ -2,6 +2,7 @@ pub(crate) mod annotations;
 pub(crate) mod bodies;
 pub(crate) mod callables;
 pub(crate) mod chains;
+pub(crate) mod comments;
 pub(crate) mod lists;
 pub(crate) mod literals;
 pub(crate) mod separated;

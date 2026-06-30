@@ -422,7 +422,7 @@ fn selector_chain_comments_format() {
 fn argument_parameter_comments_format_inline() {
     assert_formatted(
         "class A { void m() { call(/*a=*/ 1, /* b */ value, false /* off */); } }",
-        "class A {\n  void m() {\n    call(/*a=*/ 1, /* b */ value, false /* off */);\n  }\n}",
+        "class A {\n  void m() {\n    call(/* a= */ 1, /* b */ value, false /* off */);\n  }\n}",
     );
 }
 

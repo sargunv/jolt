@@ -99,6 +99,10 @@ impl JavaFormatPolicy {
     }
 
     /// Matches google-java-format's `MAX_ITEM_LENGTH_FOR_FILLING`.
+    pub(crate) const fn max_line_length(self) -> usize {
+        100
+    }
+
     pub(crate) const fn argument_list_max_item_length_for_filling(self) -> usize {
         10
     }
