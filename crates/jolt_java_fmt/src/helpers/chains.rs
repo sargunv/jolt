@@ -26,6 +26,9 @@ pub(crate) fn selector_chain(chain: Chain, policy: JavaFormatPolicy, role: Chain
         return commented_selector_chain(base, base_trailing_comments, members, policy);
     }
 
+    let flat_chain =
+        concat(std::iter::once(base.clone()).chain(members.iter().map(prefixed_member_doc)));
+
     if groups.all_fields(members.len()) {
         return field_selector_chain(base, members, policy, role);
     }
@@ -56,9 +59,6 @@ pub(crate) fn selector_chain(chain: Chain, policy: JavaFormatPolicy, role: Chain
             role,
         );
     }
-
-    let flat_chain =
-        concat(std::iter::once(base.clone()).chain(members.iter().map(prefixed_member_doc)));
 
     let leading_type_argument_call_len = groups.leading_type_argument_call_len();
     if leading_type_argument_call_len > 0 {
@@ -92,7 +92,8 @@ pub(crate) fn selector_chain(chain: Chain, policy: JavaFormatPolicy, role: Chain
     }
 
     if metadata.base.forces_break_before_first_selector {
-        return break_before_first_selector_chain(base, members, true, policy);
+        let broken_chain = break_before_first_selector_chain(base, members, false, policy);
+        return chain_layout_preference(flat_chain, broken_chain, role);
     }
 
     if let Some(prefix_end) = classified_prefix_member_end_index(&metadata.base, &members)
@@ -335,6 +336,28 @@ fn commented_selector_chain(
     ]))
 }
 
+fn head_len_with_array_access_suffix(members: &[ChainMember], head_len: usize) -> usize {
+    let mut len = head_len;
+    while members
+        .get(len)
+        .is_some_and(|member| matches!(member.kind, ChainMemberKind::ArrayAccess))
+    {
+        len += 1;
+    }
+    len
+}
+
+fn append_leading_array_accesses(mut base: Doc, members: &mut Vec<ChainMember>) -> Doc {
+    while members
+        .first()
+        .is_some_and(|member| matches!(member.kind, ChainMemberKind::ArrayAccess))
+    {
+        let member = members.remove(0);
+        base = concat([base, member.doc]);
+    }
+    base
+}
+
 fn field_selector_chain(
     base: Doc,
     members: Vec<ChainMember>,
@@ -420,28 +443,6 @@ fn member_docs_after_line(line: Doc, members: Vec<ChainMember>) -> Vec<Doc> {
         }
     }
     docs
-}
-
-fn head_len_with_array_access_suffix(members: &[ChainMember], head_len: usize) -> usize {
-    let mut len = head_len;
-    while members
-        .get(len)
-        .is_some_and(|member| matches!(member.kind, ChainMemberKind::ArrayAccess))
-    {
-        len += 1;
-    }
-    len
-}
-
-fn append_leading_array_accesses(mut base: Doc, members: &mut Vec<ChainMember>) -> Doc {
-    while members
-        .first()
-        .is_some_and(|member| matches!(member.kind, ChainMemberKind::ArrayAccess))
-    {
-        let member = members.remove(0);
-        base = concat([base, member.doc]);
-    }
-    base
 }
 
 fn continuation_indent(doc: Doc, policy: JavaFormatPolicy) -> Doc {

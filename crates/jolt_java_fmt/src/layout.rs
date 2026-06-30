@@ -1,5 +1,6 @@
 use jolt_fmt_ir::{
-    Doc, concat, fill, fill_entry, group, hard_line, indent, indent_by, join, line, soft_line, text,
+    Doc, concat, empty_line, fill, fill_entry, group, hard_line, indent, indent_by, join, line,
+    soft_line, text,
 };
 
 use crate::helpers::lists as java_lists;
@@ -81,6 +82,52 @@ pub(crate) fn braced_block(items: impl IntoIterator<Item = Doc>) -> Doc {
     braced_block_with_separator(items, hard_line())
 }
 
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub(crate) struct BracedBodyLayout {
+    pub leading_blank_line: bool,
+    pub trailing_blank_line: bool,
+}
+
+pub(crate) fn braced_body(items: Vec<Doc>, separators: Vec<Doc>, layout: BracedBodyLayout) -> Doc {
+    let BracedBodyLayout {
+        leading_blank_line,
+        trailing_blank_line,
+    } = layout;
+
+    if items.is_empty() && !leading_blank_line && !trailing_blank_line {
+        return concat([text("{"), hard_line(), text("}")]);
+    }
+
+    let mut body = Vec::new();
+    if leading_blank_line {
+        body.push(empty_line());
+    }
+
+    let mut items = items.into_iter();
+    if let Some(first) = items.next() {
+        body.push(first);
+    }
+    for (separator, item) in separators.into_iter().zip(items) {
+        body.push(separator);
+        body.push(item);
+    }
+
+    if trailing_blank_line {
+        body.push(empty_line());
+    }
+
+    if body.is_empty() {
+        return concat([text("{"), hard_line(), text("}")]);
+    }
+
+    concat([
+        text("{"),
+        indent(concat([hard_line(), concat(body)])),
+        hard_line(),
+        text("}"),
+    ])
+}
+
 pub(crate) fn braced_block_with_separators(
     items: impl IntoIterator<Item = Doc>,
     separators: impl IntoIterator<Item = Doc>,
@@ -143,6 +190,10 @@ pub(crate) fn expression_statement(expression: Doc) -> Doc {
     group(concat([expression, text(";")]))
 }
 
+pub(crate) fn flat_parenthesized_expression(expression: Doc) -> Doc {
+    group(concat([text("("), expression, text(")")]))
+}
+
 pub(crate) fn parenthesized_expression(expression: Doc) -> Doc {
     group(concat([
         text("("),
@@ -158,12 +209,17 @@ pub(crate) fn if_statement(
     then_is_block: bool,
     else_statement: Option<(Doc, bool)>,
 ) -> Doc {
-    let mut parts = vec![text("if "), parenthesized_expression(condition)];
+    let header = group(concat([
+        text("if "),
+        flat_parenthesized_expression(condition),
+    ]));
+    let mut parts = Vec::new();
     if then_is_block {
+        parts.push(header);
         parts.push(text(" "));
         parts.push(then_statement);
     } else {
-        parts.push(indent(concat([hard_line(), then_statement])));
+        parts.push(group(concat([header, line(), then_statement])));
     }
 
     if let Some((else_statement, else_follows_keyword)) = else_statement {
@@ -172,12 +228,10 @@ pub(crate) fn if_statement(
         } else {
             parts.push(hard_line());
         }
-        parts.push(text("else"));
         if else_follows_keyword {
-            parts.push(text(" "));
-            parts.push(else_statement);
+            parts.push(group(concat([text("else "), else_statement])));
         } else {
-            parts.push(indent(concat([hard_line(), else_statement])));
+            parts.push(group(concat([text("else"), line(), else_statement])));
         }
     }
 
@@ -186,7 +240,10 @@ pub(crate) fn if_statement(
 
 pub(crate) fn while_statement(condition: Doc, body: Doc, body_is_block: bool) -> Doc {
     loop_statement(
-        concat([text("while "), parenthesized_expression(condition)]),
+        group(concat([
+            text("while "),
+            flat_parenthesized_expression(condition),
+        ])),
         body,
         body_is_block,
     )
@@ -197,32 +254,25 @@ pub(crate) fn for_statement(header: Doc, body: Doc, body_is_block: bool) -> Doc 
 }
 
 fn loop_statement(header: Doc, body: Doc, body_is_block: bool) -> Doc {
-    let mut parts = vec![header];
     if body_is_block {
-        parts.push(text(" "));
-        parts.push(body);
+        concat([header, text(" "), body])
     } else {
-        parts.push(indent(concat([hard_line(), body])));
+        group(concat([header, line(), body]))
     }
-
-    concat(parts)
 }
 
 pub(crate) fn do_statement(body: Doc, body_is_block: bool, condition: Doc) -> Doc {
-    let mut parts = vec![text("do")];
-    if body_is_block {
-        parts.push(text(" "));
-        parts.push(body);
-        parts.push(text(" "));
-    } else {
-        parts.push(indent(concat([hard_line(), body])));
-        parts.push(hard_line());
-    }
-    parts.push(text("while "));
-    parts.push(parenthesized_expression(condition));
-    parts.push(text(";"));
+    let while_clause = group(concat([
+        text("while "),
+        flat_parenthesized_expression(condition),
+        text(";"),
+    ]));
 
-    concat(parts)
+    if body_is_block {
+        group(concat([text("do "), body, text(" "), while_clause]))
+    } else {
+        group(concat([text("do"), line(), body, line(), while_clause]))
+    }
 }
 
 pub(crate) fn try_statement(

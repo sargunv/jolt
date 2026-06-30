@@ -16,6 +16,7 @@ use super::{
     take_own_line_comment_docs_in_range, take_trailing_line_comment_docs_in_range_as_own_line,
     text, with_leading_and_trailing_comments, with_vertical_annotations, wrap,
 };
+use crate::helpers::bodies::{BlockLayoutOptions, statement_block};
 use crate::helpers::lists as java_lists;
 use jolt_diagnostics::TextRange;
 
@@ -23,10 +24,18 @@ pub(super) fn format_block(
     block: &Block,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
+    format_block_with_options(block, context, BlockLayoutOptions::default())
+}
+
+pub(super) fn format_block_with_options(
+    block: &Block,
+    context: &mut JavaFormatContext<'_>,
+    options: BlockLayoutOptions,
+) -> FormatResult<Doc> {
     let code_range = block
         .code_text_range()
         .unwrap_or_else(|| block.text_range());
-    format_block_statements(code_range, block.block_statements(), context)
+    format_block_statements(code_range, block.block_statements(), context, options)
 }
 
 pub(super) fn format_constructor_body(
@@ -86,12 +95,14 @@ pub(super) fn format_block_statements(
     container_range: jolt_diagnostics::TextRange,
     statements: impl Iterator<Item = BlockStatement>,
     context: &mut JavaFormatContext<'_>,
+    options: BlockLayoutOptions,
 ) -> FormatResult<Doc> {
     let statements = statements.collect::<Vec<_>>();
-    crate::helpers::bodies::statement_block(
+    statement_block(
         container_range,
         &statements,
         context,
+        options,
         BlockStatement::code_text_range,
         format_block_statement,
     )
@@ -185,7 +196,31 @@ pub(super) fn format_unbraced_statement(
     statement: &Statement,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
+    format_unbraced_statement_with_block_options(statement, context, BlockLayoutOptions::default())
+}
+
+fn format_unbraced_statement_with_block_options(
+    statement: &Statement,
+    context: &mut JavaFormatContext<'_>,
+    block_options: BlockLayoutOptions,
+) -> FormatResult<Doc> {
+    if let Statement::Block(block) = statement {
+        return format_block_with_options(block, context, block_options);
+    }
+
     format_statement_rule(statement_rule(statement)?, context)
+}
+
+fn format_statement_body(
+    statement: &Statement,
+    context: &mut JavaFormatContext<'_>,
+    block_options: BlockLayoutOptions,
+) -> FormatResult<(Doc, bool)> {
+    let is_block = matches!(statement, Statement::Block(_));
+    Ok((
+        format_unbraced_statement_with_block_options(statement, context, block_options)?,
+        is_block,
+    ))
 }
 
 fn statement_rule(statement: &Statement) -> FormatResult<StatementRule<'_>> {
@@ -298,8 +333,13 @@ pub(super) fn format_if_statement(
             "Java formatter does not support comments before if statement bodies yet",
         )?;
     }
-    let then_is_block = matches!(then_statement, Statement::Block(_));
-    let then_statement = format_unbraced_statement(&then_statement, context)?;
+    let then_block_options = if statement.else_statement().is_some() {
+        BlockLayoutOptions::if_then_with_trailing_clauses()
+    } else {
+        BlockLayoutOptions::if_then_only_clause()
+    };
+    let (then_statement, then_is_block) =
+        format_statement_body(&then_statement, context, then_block_options)?;
     let else_statement = statement
         .else_statement()
         .map(|else_statement| {
@@ -314,8 +354,17 @@ pub(super) fn format_if_statement(
                 else_statement,
                 Statement::Block(_) | Statement::IfStatement(_)
             );
+            let else_block_options = if matches!(else_statement, Statement::Block(_)) {
+                BlockLayoutOptions::if_then_with_trailing_clauses()
+            } else {
+                BlockLayoutOptions::default()
+            };
             Ok((
-                format_unbraced_statement(&else_statement, context)?,
+                format_unbraced_statement_with_block_options(
+                    &else_statement,
+                    context,
+                    else_block_options,
+                )?,
                 follows_keyword,
             ))
         })
@@ -474,18 +523,20 @@ pub(super) fn format_basic_for_header(
     condition: Option<Doc>,
     update: Option<Doc>,
 ) -> Doc {
+    if initializer.is_none() && condition.is_none() && update.is_none() {
+        return text("for ( ; ; )");
+    }
+
     let mut parts = vec![text("for (")];
     if let Some(initializer) = initializer {
         parts.push(initializer);
     }
-    parts.push(text(";"));
+    parts.push(text("; "));
     if let Some(condition) = condition {
-        parts.push(text(" "));
         parts.push(condition);
     }
-    parts.push(text(";"));
+    parts.push(text("; "));
     if let Some(update) = update {
-        parts.push(text(" "));
         parts.push(update);
     }
     parts.push(text(")"));
@@ -582,9 +633,27 @@ pub(super) fn format_try_statement(
         )?;
     }
 
-    let catches = statement
-        .catches()
-        .map(|catch| format_catch_clause(&catch, context))
+    let catches: Vec<_> = statement.catches().collect();
+    let has_finally = statement.finally_clause().is_some();
+    let body_has_trailing = !catches.is_empty() || has_finally;
+    let body_options = if body_has_trailing {
+        BlockLayoutOptions::try_body_with_clauses()
+    } else {
+        BlockLayoutOptions::try_body_without_clauses()
+    };
+
+    let catches = catches
+        .iter()
+        .enumerate()
+        .map(|(index, catch)| {
+            let trailing = index + 1 < catches.len() || has_finally;
+            let options = if trailing {
+                BlockLayoutOptions::try_body_with_clauses()
+            } else {
+                BlockLayoutOptions::try_body_without_clauses()
+            };
+            format_catch_clause(catch, context, options)
+        })
         .collect::<FormatResult<Vec<_>>>()?;
     let finally_clause = statement
         .finally_clause()
@@ -592,7 +661,7 @@ pub(super) fn format_try_statement(
         .transpose()?;
 
     Ok(wrap::try_statement(
-        format_block(&body, context)?,
+        format_block_with_options(&body, context, body_options)?,
         catches,
         finally_clause,
     ))
@@ -616,9 +685,27 @@ pub(super) fn format_try_with_resources_statement(
         )?;
     }
 
-    let catches = statement
-        .catches()
-        .map(|catch| format_catch_clause(&catch, context))
+    let catches: Vec<_> = statement.catches().collect();
+    let has_finally = statement.finally_clause().is_some();
+    let body_has_trailing = !catches.is_empty() || has_finally;
+    let body_options = if body_has_trailing {
+        BlockLayoutOptions::try_body_with_clauses()
+    } else {
+        BlockLayoutOptions::try_body_without_clauses()
+    };
+
+    let catches = catches
+        .iter()
+        .enumerate()
+        .map(|(index, catch)| {
+            let trailing = index + 1 < catches.len() || has_finally;
+            let options = if trailing {
+                BlockLayoutOptions::try_body_with_clauses()
+            } else {
+                BlockLayoutOptions::try_body_without_clauses()
+            };
+            format_catch_clause(catch, context, options)
+        })
         .collect::<FormatResult<Vec<_>>>()?;
     let finally_clause = statement
         .finally_clause()
@@ -630,7 +717,7 @@ pub(super) fn format_try_with_resources_statement(
             text("try "),
             format_resource_specification(&resources, context)?,
             text(" "),
-            format_block(&body, context)?,
+            format_block_with_options(&body, context, body_options)?,
         ]),
         catches,
         finally_clause,
@@ -677,6 +764,7 @@ fn format_variable_access(
 pub(super) fn format_catch_clause(
     clause: &CatchClause,
     context: &mut JavaFormatContext<'_>,
+    body_options: BlockLayoutOptions,
 ) -> FormatResult<Doc> {
     let parameter = clause
         .parameter()
@@ -703,7 +791,7 @@ pub(super) fn format_catch_clause(
         text("catch "),
         wrap::parenthesized_expression(format_catch_parameter(&parameter, context)?),
         text(" "),
-        format_block(&body, context)?,
+        format_block_with_options(&body, context, body_options)?,
     ]))
 }
 
@@ -766,7 +854,10 @@ pub(super) fn format_finally_clause(
         )?;
     }
 
-    Ok(concat([text("finally "), format_block(&body, context)?]))
+    Ok(concat([
+        text("finally "),
+        format_block_with_options(&body, context, BlockLayoutOptions::finally_body())?,
+    ]))
 }
 
 pub(super) fn format_break_statement(statement: &BreakStatement) -> FormatResult<Doc> {

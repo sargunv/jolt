@@ -1,5 +1,5 @@
 use jolt_diagnostics::TextRange;
-use jolt_fmt_ir::{Doc, concat, empty_line, hard_line, join, text};
+use jolt_fmt_ir::{Doc, concat, empty_line, group, hard_line, join, soft_line, text};
 
 use crate::comments::{
     take_dangling_comment_docs, take_own_line_comment_docs_in_range,
@@ -9,6 +9,65 @@ use crate::comments::{
 use crate::context::JavaFormatContext;
 use crate::diagnostics::FormatResult;
 use crate::layout as wrap;
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) struct BlockLayoutOptions {
+    pub collapse_if_empty: bool,
+    pub preserve_leading_blank_line: bool,
+    pub preserve_trailing_blank_line: bool,
+}
+
+impl Default for BlockLayoutOptions {
+    fn default() -> Self {
+        Self {
+            collapse_if_empty: true,
+            preserve_leading_blank_line: true,
+            preserve_trailing_blank_line: true,
+        }
+    }
+}
+
+impl BlockLayoutOptions {
+    pub(crate) const fn if_then_only_clause() -> Self {
+        Self {
+            collapse_if_empty: true,
+            preserve_leading_blank_line: true,
+            preserve_trailing_blank_line: false,
+        }
+    }
+
+    pub(crate) const fn if_then_with_trailing_clauses() -> Self {
+        Self {
+            collapse_if_empty: false,
+            preserve_leading_blank_line: true,
+            preserve_trailing_blank_line: true,
+        }
+    }
+
+    pub(crate) const fn try_body_without_clauses() -> Self {
+        Self {
+            collapse_if_empty: true,
+            preserve_leading_blank_line: true,
+            preserve_trailing_blank_line: false,
+        }
+    }
+
+    pub(crate) const fn try_body_with_clauses() -> Self {
+        Self {
+            collapse_if_empty: false,
+            preserve_leading_blank_line: true,
+            preserve_trailing_blank_line: true,
+        }
+    }
+
+    pub(crate) const fn finally_body() -> Self {
+        Self {
+            collapse_if_empty: false,
+            preserve_leading_blank_line: true,
+            preserve_trailing_blank_line: false,
+        }
+    }
+}
 
 pub(crate) struct TypeBodyLayout {
     members: Vec<Doc>,
@@ -107,15 +166,37 @@ pub(crate) fn statement_block<Statement>(
     container_range: TextRange,
     statements: &[Statement],
     context: &mut JavaFormatContext<'_>,
+    options: BlockLayoutOptions,
     range: impl Fn(&Statement) -> Option<TextRange>,
     mut format_statement: impl FnMut(&Statement, &mut JavaFormatContext<'_>) -> FormatResult<Doc>,
 ) -> FormatResult<Doc> {
     if statements.is_empty() {
-        return Ok(wrap::braced_block(take_dangling_comment_docs(
+        let dangling = take_dangling_comment_docs(context, container_range)?;
+        return Ok(empty_braced_block(
             context,
             container_range,
-        )?));
+            options,
+            dangling,
+        ));
     }
+
+    let first_range = statements.iter().find_map(&range);
+    let last_range = statements.iter().filter_map(&range).next_back();
+    let open_brace = container_range.start();
+    let close_brace = container_range.end();
+    let open_brace_end = (open_brace.get() + 1).into();
+    let close_brace_start = close_brace.get().saturating_sub(1).into();
+    let leading_blank = options.preserve_leading_blank_line
+        && first_range.is_some_and(|first| {
+            context.has_blank_line_between(
+                TextRange::new(open_brace, open_brace_end),
+                TextRange::new(first.start(), first.start()),
+            )
+        });
+    let trailing_blank = options.preserve_trailing_blank_line
+        && last_range.is_some_and(|last| {
+            context.has_blank_line_between(last, TextRange::new(close_brace_start, close_brace))
+        });
 
     let mut separators = statements
         .windows(2)
@@ -146,10 +227,45 @@ pub(crate) fn statement_block<Statement>(
         }
     }
 
-    Ok(wrap::braced_block_with_separators(
+    Ok(wrap::braced_body(
         statement_docs,
         separators,
+        wrap::BracedBodyLayout {
+            leading_blank_line: leading_blank,
+            trailing_blank_line: trailing_blank,
+        },
     ))
+}
+
+fn empty_braced_block(
+    context: &JavaFormatContext<'_>,
+    container_range: TextRange,
+    options: BlockLayoutOptions,
+    dangling: Vec<Doc>,
+) -> Doc {
+    if options.collapse_if_empty && dangling.is_empty() {
+        return group(concat([text("{"), soft_line(), text("}")]));
+    }
+
+    let open_brace = container_range.start();
+    let close_brace = container_range.end();
+    let open_brace_end = (open_brace.get() + 1).into();
+    let close_brace_start = close_brace.get().saturating_sub(1).into();
+    let interior_blank = (options.preserve_leading_blank_line
+        || options.preserve_trailing_blank_line)
+        && context.has_blank_line_between(
+            TextRange::new(open_brace, open_brace_end),
+            TextRange::new(close_brace_start, close_brace),
+        );
+
+    wrap::braced_body(
+        dangling,
+        Vec::new(),
+        wrap::BracedBodyLayout {
+            leading_blank_line: options.preserve_leading_blank_line && interior_blank,
+            trailing_blank_line: options.preserve_trailing_blank_line && interior_blank,
+        },
+    )
 }
 
 pub(crate) fn constructor_body(

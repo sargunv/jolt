@@ -907,7 +907,9 @@ one helper.
 
 `analyzers/chains.rs` flattens selector syntax into `ChainMember` sequences with
 metadata and `ChainGroup`s. `helpers/chains.rs` renders staged alternatives with
-profile-aware breaking via `JavaFormatPolicy`.
+profile-aware breaking via `JavaFormatPolicy`. Primary-expression receivers
+(parenthesized, conditional) use flat preference before the first selector (GJF
+`visitDot` `needDot` + fill).
 
 Remaining: close oracle gaps catalogued under
 [selector / fluent chain breaking](#1-selector--fluent-chain-breaking--largest-bucket-30-of-google-diff):
@@ -933,11 +935,19 @@ on eager subtrees—see
 
 ### Blocks and bodies — largely done
 
-`helpers/bodies.rs` covers statement blocks, constructor bodies, and class,
-interface, and enum bodies with dangling-comment support.
+### Bodies and control-flow blocks — in progress
 
-Remaining: switch-block spacing polish and any body domains still delegating
-blank-line policy through scattered `join(hard_line())` calls in rules.
+`helpers/bodies.rs` covers statement blocks, constructor bodies, and class,
+interface, and enum bodies with dangling-comment support. `BlockLayoutOptions`
+threads GJF-style empty-block collapse and leading/trailing blank-line
+preservation through `statement_block()`; control-flow rules in
+`rules/statements.rs` pass profile-specific options for if/try/catch/finally.
+
+`layout.rs` uses flat parenthesized conditions and fill-style (`line()`) breaks
+for inline if/while/for/do bodies when within width.
+
+Remaining: refine trailing-blank policy on final if/else clauses and try/catch
+tails (`B20535125.java` tail), plus switch-block spacing polish.
 
 ### Imports and compilation units — partial
 

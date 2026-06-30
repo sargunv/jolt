@@ -402,7 +402,7 @@ fn generic_qualified_method_invocations_format() {
 fn selector_receivers_format_general_expressions() {
     assert_formatted(
         "class A { void m(Object value, boolean flag, Object one, Object two) { (flag ? one : two).toString(); ((String) value).trim(); } }",
-        "class A {\n  void m(Object value, boolean flag, Object one, Object two) {\n    (flag ? one : two)\n        .toString();\n    ((String) value)\n        .trim();\n  }\n}",
+        "class A {\n  void m(Object value, boolean flag, Object one, Object two) {\n    (flag ? one : two).toString();\n    ((String) value).trim();\n  }\n}",
     );
     assert_formatted(
         "class A { void m() { Object x = (String) foo.xxx().yyy(); } }",
@@ -657,7 +657,7 @@ fn boundary_comment_guards_report_domain_messages() {
 fn simple_statement_forms_format() {
     assert_formatted(
         "class A { void m() { ; if (ready) { return; } else if (other) break label; else continue; } }",
-        "class A {\n  void m() {\n    ;\n    if (ready) {\n      return;\n    } else if (other)\n      break label;\n    else\n      continue;\n  }\n}",
+        "class A {\n  void m() {\n    ;\n    if (ready) {\n      return;\n    } else if (other) break label;\n    else continue;\n  }\n}",
     );
 }
 
@@ -693,7 +693,7 @@ fn switch_pattern_labels_format() {
 fn simple_loop_statements_format() {
     assert_formatted(
         "class A { void m() { while (ready) return; while (again) { call(); } do continue; while (ready); do { call(); } while (again); for (;;) return; for (int i = 0; i < limit; i++) { call(i); } for (value = 0, other = 1; value < limit; value++, other++) call(value); for (String value : values) call(value); } }",
-        "class A {\n  void m() {\n    while (ready)\n      return;\n    while (again) {\n      call();\n    }\n    do\n      continue;\n    while (ready);\n    do {\n      call();\n    } while (again);\n    for (;;)\n      return;\n    for (int i = 0; i < limit; i++) {\n      call(i);\n    }\n    for (value = 0, other = 1; value < limit; value++, other++)\n      call(value);\n    for (String value : values)\n      call(value);\n  }\n}",
+        "class A {\n  void m() {\n    while (ready) return;\n    while (again) {\n      call();\n    }\n    do continue; while (ready);\n    do {\n      call();\n    } while (again);\n    for ( ; ; ) return;\n    for (int i = 0; i < limit; i++) {\n      call(i);\n    }\n    for (value = 0, other = 1; value < limit; value++, other++) call(value);\n    for (String value : values) call(value);\n  }\n}",
     );
 }
 
@@ -733,7 +733,7 @@ fn catch_parameter_variants_format() {
 fn simple_try_finally_statements_format() {
     assert_formatted(
         "class A { void m() { try { return; } finally {} } }",
-        "class A {\n  void m() {\n    try {\n      return;\n    } finally {}\n  }\n}",
+        "class A {\n  void m() {\n    try {\n      return;\n    } finally {\n    }\n  }\n}",
     );
 }
 

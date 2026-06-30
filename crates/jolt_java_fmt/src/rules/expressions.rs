@@ -224,6 +224,11 @@ pub(super) fn collect_selector_chain(
             node_width(parenthesized.code_text_range()),
         )
         .with_tail_range(parenthesized.code_text_range())),
+        Expression::ConditionalExpression(conditional) => Ok(Chain::primary_expression_base(
+            format_conditional_expression(conditional, context)?,
+            node_width(conditional.code_text_range()),
+        )
+        .with_tail_range(conditional.code_text_range())),
         Expression::CastExpression(cast) => collect_cast_chain(cast, context),
         Expression::FieldAccessExpression(field) => collect_field_access_chain(field, context),
         Expression::MethodInvocationExpression(invocation) => {
