@@ -1,5 +1,7 @@
 use jolt_diagnostics::{Diagnostic, DiagnosticCode, DiagnosticStage, Severity, TextRange};
-use jolt_fmt_ir::{Doc, concat, hard_line, join, line_suffix, line_suffix_boundary, text};
+use jolt_fmt_ir::{
+    Doc, FlatLine, break_, concat, hard_line, join, line_suffix, line_suffix_boundary, text,
+};
 
 use crate::context::{JavaCommentTrivia, JavaFormatContext};
 use crate::diagnostics::{FormatResult, JavaFormatDiagnosticCode};
@@ -259,12 +261,25 @@ pub(crate) fn format_own_line_comment_doc(
 }
 
 fn format_own_line_comment(context: &JavaFormatContext<'_>, comment: &JavaCommentTrivia) -> Doc {
-    join(
-        hard_line(),
-        comment_lines(context.raw_text(comment))
-            .into_iter()
-            .map(text),
-    )
+    let lines = comment_lines(context.raw_text(comment));
+    let mut parts = Vec::new();
+    for (index, line) in lines.into_iter().enumerate() {
+        if index > 0 {
+            if line.is_empty() {
+                parts.push(break_(FlatLine::Empty, i16::MIN));
+            } else {
+                parts.push(hard_line());
+            }
+        }
+        if !line.is_empty() {
+            parts.push(text(line));
+        }
+    }
+    if parts.is_empty() {
+        return text("");
+    }
+
+    concat(parts)
 }
 
 fn format_inline_comment(context: &JavaFormatContext<'_>, comment: &JavaCommentTrivia) -> Doc {
@@ -277,30 +292,89 @@ fn format_inline_comment(context: &JavaFormatContext<'_>, comment: &JavaCommentT
 }
 
 fn comment_lines(raw: &str) -> Vec<String> {
-    let lines = raw_comment_lines(raw);
-    if let Some(comment) = collapsed_single_line_javadoc(&lines) {
+    let lines = raw_comment_lines(raw)
+        .into_iter()
+        .map(strip_trailing_whitespace)
+        .collect::<Vec<_>>();
+    if let Some(comment) =
+        collapsed_single_line_javadoc(&lines.iter().map(String::as_str).collect::<Vec<_>>())
+    {
         return vec![comment];
     }
-    if !is_conventional_multiline_star_comment(&lines) {
-        return lines.into_iter().map(str::to_owned).collect();
+    if javadoc_shaped(&lines) {
+        return indent_javadoc_lines(lines, 0);
     }
 
-    lines
-        .into_iter()
-        .enumerate()
-        .map(|(index, line)| {
-            if index == 0 {
-                return line.to_owned();
-            }
+    preserve_comment_indentation(lines, 0)
+}
 
-            let trimmed = line.trim_start_matches([' ', '\t']);
-            if trimmed.is_empty() {
-                String::new()
-            } else {
-                format!(" {trimmed}")
-            }
-        })
-        .collect()
+fn strip_trailing_whitespace(line: &str) -> String {
+    line.trim_end().to_owned()
+}
+
+fn javadoc_shaped(lines: &[String]) -> bool {
+    let Some(first) = lines.first() else {
+        return false;
+    };
+    let first = first.trim();
+    if first.starts_with("/**") {
+        return true;
+    }
+    if !first.starts_with("/*") {
+        return false;
+    }
+
+    lines[1..].iter().all(|line| {
+        let trimmed = line.trim();
+        trimmed.is_empty() || trimmed.starts_with('*')
+    })
+}
+
+fn indent_javadoc_lines(lines: Vec<String>, column0: usize) -> Vec<String> {
+    let Some(first) = lines.first() else {
+        return lines;
+    };
+
+    let mut result = vec![first.trim().to_owned()];
+    let indent = " ".repeat(column0 + 1);
+    for line in lines.into_iter().skip(1) {
+        let trimmed = line.trim();
+        let mut formatted = indent.clone();
+        if !trimmed.starts_with('*') {
+            formatted.push_str("* ");
+        }
+        formatted.push_str(trimmed);
+        result.push(formatted);
+    }
+    result
+}
+
+fn preserve_comment_indentation(lines: Vec<String>, column0: usize) -> Vec<String> {
+    if lines.is_empty() {
+        return lines;
+    }
+
+    let start_col = lines[1..]
+        .iter()
+        .filter_map(|line| line.find(|ch: char| !ch.is_whitespace()))
+        .min()
+        .unwrap_or(0);
+    let column_prefix = " ".repeat(column0);
+    let mut result = vec![lines[0].clone()];
+    for line in lines.into_iter().skip(1) {
+        if line.trim().is_empty() {
+            result.push(String::new());
+            continue;
+        }
+        let mut formatted = column_prefix.clone();
+        if line.len() >= start_col {
+            formatted.push_str(&line[start_col..]);
+        } else {
+            formatted.push_str(&line);
+        }
+        result.push(formatted);
+    }
+    result
 }
 
 fn collapsed_single_line_javadoc(lines: &[&str]) -> Option<String> {
@@ -352,12 +426,4 @@ fn raw_comment_lines(raw: &str) -> Vec<&str> {
 
     lines.push(&raw[start..]);
     lines
-}
-
-fn is_conventional_multiline_star_comment(lines: &[&str]) -> bool {
-    lines.len() > 1
-        && lines[1..]
-            .iter()
-            .filter(|line| !line.trim().is_empty())
-            .all(|line| line.trim_start_matches([' ', '\t']).starts_with('*'))
 }

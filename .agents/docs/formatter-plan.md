@@ -645,10 +645,10 @@ google-java-format:
   upstream fixtures: google-java-format fixtures
   profiles:
     google:
-      upstream executable: google-java-format --skip-removing-unused-imports
+      upstream executable: google-java-format --skip-removing-unused-imports --skip-javadoc-formatting
       Jolt config: java-profile = google
     aosp:
-      upstream executable: google-java-format --aosp --skip-removing-unused-imports
+      upstream executable: google-java-format --aosp --skip-removing-unused-imports --skip-javadoc-formatting
       Jolt config: java-profile = aosp
 
 palantir-java-format:
@@ -692,6 +692,13 @@ cargo test -p jolt_java_fmt
   -> run Jolt formatter in-process
   -> compare output
 ```
+
+Oracle comparisons materialize upstream expected output with javadoc formatting
+disabled on the Google/AOSP side (`--skip-javadoc-formatting`; Palantir already
+defaults javadoc formatting off). Jolt does not implement a dedicated javadoc
+formatter yet, so both sides compare layout policy without GJF's
+`JavadocFormatter` HTML/`@tag` normalization layer. Full javadoc compatibility
+is Milestone 15.
 
 No hash cache is necessary for the initial design. Oracle import is a deliberate
 update operation, and normal tests are pure and fast.
@@ -930,7 +937,7 @@ Add:
 - `java-profile = google`,
 - Java wiring in `format_source`,
 - oracle comparisons in `jolt_java_fmt` against materialized Google Java Format
-  outputs,
+  outputs (upstream materialized with `--skip-javadoc-formatting`),
 - idempotence checks for passing oracle cases.
 
 The comparison target is the full materialized Google Java Format corpus.
@@ -1061,6 +1068,31 @@ product. Kotlin should start after this by repeating the same fixture-first,
 layer-complete process with ktfmt fixtures, then expanding CLI discovery and
 options to Kotlin files.
 
+### Milestone 15: Javadoc formatting
+
+Status: pending.
+
+Add dedicated `/** … */` formatting after the three Java layout profiles reach
+high oracle match with javadoc formatting disabled on both sides.
+
+Upstream reference: google-java-format's `JavadocLexer`, `JavadocFormatter`, and
+`JavadocWriter` — a comment-body lexer and token writer, not javadoc nodes in
+the Java CST. Jolt should follow the same boundary: opaque javadoc trivia in the
+syntax tree, rewrite at format time with known output column.
+
+Add:
+
+- a `JavadocFormatter`-equivalent for `TriviaKind::JavadocComment`,
+- HTML tag handling, `@`-tag layout, `<pre>` / `<code>` preservation rules,
+  one-line javadoc collapse, and paragraph blank-line policy aligned with
+  google-java-format,
+- oracle re-materialization **without** `--skip-javadoc-formatting` and a second
+  compatibility scoreboard or milestone gate for full upstream parity,
+- idempotence checks on javadoc-heavy fixtures.
+
+Until this milestone lands, oracle harnesses keep upstream javadoc formatting
+disabled so diffs isolate layout policy from javadoc HTML normalization.
+
 ## Compatibility Goals
 
 The formatter should be judged by oracle compatibility, not subjective style
@@ -1079,13 +1111,16 @@ Eventually:
 
 ```text
 java-profile = google
-  -> compatible with Google Java Format fixture output
+  -> compatible with Google Java Format fixture output (layout oracle with
+     javadoc formatting disabled; full parity including javadoc requires
+     Milestone 15)
 
 java-profile = aosp
-  -> compatible with Google Java Format AOSP fixture output
+  -> compatible with Google Java Format AOSP fixture output (same javadoc split)
 
 java-profile = palantir
-  -> compatible with Palantir Java Format fixture output
+  -> compatible with Palantir Java Format fixture output (layout oracle until
+     Milestone 15)
 
 kotlin-profile = meta
   -> compatible with ktfmt default/Meta fixture output
@@ -1233,6 +1268,10 @@ Oracle references:
 ## Resolved Decisions
 
 - Initial Java formatter: no formatter suppression comments.
+- Oracle layout comparisons materialize upstream expected output with javadoc
+  formatting disabled (Google/AOSP: `--skip-javadoc-formatting`; Palantir:
+  upstream default) until Milestone 15. Jolt has no javadoc formatter to toggle
+  yet.
 - Parse errors: no writes by default; recoverable-error formatting can be added
   later behind an explicit policy.
 - Kotlin profiles: expose `meta` for ktfmt's default style, `google` for ktfmt's

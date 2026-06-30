@@ -467,6 +467,39 @@ impl<'source> JavaFormatContext<'source> {
             return false;
         }
 
+        Self::whitespace_span_has_blank_line(between)
+    }
+
+    pub(crate) fn has_blank_line_before(&self, left: TextRange, right: TextRange) -> bool {
+        let boundary = self
+            .comments
+            .iter()
+            .filter(|comment| !comment.claimed)
+            .filter(|comment| {
+                comment.trivia.trivia.range.end() <= right.start()
+                    && self.comment_bucket_for_range(&comment.trivia, right)
+                        == JavaCommentBucket::Leading
+            })
+            .map(|comment| comment.trivia.trivia.range.start())
+            .min()
+            .unwrap_or(right.start());
+        if left.end() >= boundary {
+            return false;
+        }
+
+        self.has_blank_line_between(left, TextRange::new(boundary, right.start()))
+    }
+
+    pub(crate) fn has_leading_comments_before(&self, code_range: TextRange) -> bool {
+        self.comments.iter().any(|comment| {
+            !comment.claimed
+                && comment.trivia.trivia.range.end() <= code_range.start()
+                && self.comment_bucket_for_range(&comment.trivia, code_range)
+                    == JavaCommentBucket::Leading
+        })
+    }
+
+    fn whitespace_span_has_blank_line(between: &str) -> bool {
         let mut line_terminators = 0;
         let mut chars = between.chars().peekable();
         while let Some(ch) = chars.next() {

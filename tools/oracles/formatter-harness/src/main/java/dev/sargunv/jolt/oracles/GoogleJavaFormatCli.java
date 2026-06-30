@@ -30,8 +30,21 @@ public final class GoogleJavaFormatCli {
 
     private static String[] args(Profile profile, String filename) {
         return switch (profile) {
-            case GOOGLE -> new String[] {"--skip-removing-unused-imports", "--assume-filename", filename, "-"};
-            case AOSP -> new String[] {"--aosp", "--skip-removing-unused-imports", "--assume-filename", filename, "-"};
+            case GOOGLE -> new String[] {
+                "--skip-removing-unused-imports",
+                "--skip-javadoc-formatting",
+                "--assume-filename",
+                filename,
+                "-",
+            };
+            case AOSP -> new String[] {
+                "--aosp",
+                "--skip-removing-unused-imports",
+                "--skip-javadoc-formatting",
+                "--assume-filename",
+                filename,
+                "-",
+            };
         };
     }
 }

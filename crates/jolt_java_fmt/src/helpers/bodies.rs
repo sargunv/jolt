@@ -123,7 +123,7 @@ pub(crate) fn statement_block<Statement>(
             let left = range(&window[0]);
             let right = range(&window[1]);
             if let (Some(left), Some(right)) = (left, right)
-                && context.has_blank_line_between(left, right)
+                && context.has_blank_line_before(left, right)
             {
                 return empty_line();
             }
@@ -191,7 +191,8 @@ fn type_body_member_separators<Member>(
             let left = range(&window[0]);
             let right = range(&window[1]);
             let separator = if let (Some(left), Some(right)) = (left, right)
-                && context.has_blank_line_between(left, right)
+                && (context.has_blank_line_before(left, right)
+                    || context.has_leading_comments_before(right))
             {
                 empty_line()
             } else if keep_adjacent(&window[0], &window[1]) {

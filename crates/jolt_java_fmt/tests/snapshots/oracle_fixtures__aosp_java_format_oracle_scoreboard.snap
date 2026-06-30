@@ -10,23 +10,23 @@ parse blocked: 0
 missing-rule blocked: 0
 other blocked: 0
 formatted: 208
-exact matches: 75
-exact-match percentage: 36.05%
-mismatching formatted files: 133
-aggregate diff size: 2759
+exact matches: 79
+exact-match percentage: 37.98%
+mismatching formatted files: 129
+aggregate diff size: 2629
 largest per-file diff: B24909927.java (205)
 
 worst mismatches:
   B24909927.java: 205
   B20128760.java: 116
-  M.java: 94
-  B24543625.java: 91
+  M.java: 110
   B20535125.java: 89
-  A.java: 80
+  A.java: 84
   C.java: 70
   B26207047.java: 69
   B20701054.java: 67
   B28066276.java: 63
+  B22815364.java: 60
 
 top missing-rule blockers:
   0: <none>
