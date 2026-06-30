@@ -900,7 +900,7 @@ pub(super) fn format_array_creation_expression(
         .transpose()?;
     let initializer = creation
         .initializer()
-        .map(|initializer| format_array_initializer(&initializer, context))
+        .map(|initializer| format_array_initializer(&initializer, context, false))
         .transpose()?;
 
     assert!(
@@ -908,11 +908,28 @@ pub(super) fn format_array_creation_expression(
         "parser-clean array creation should have dimensions or an initializer"
     );
 
-    let mut parts = vec![text("new "), format_type(&ty, context)?];
-    parts.extend(dimensions);
+    let type_doc = format_type(&ty, context)?;
+    let dimension_count = dimensions.len();
+    let mut head = vec![text("new "), type_doc];
+    head.extend(
+        dimensions
+            .into_iter()
+            .map(|dimension| concat([soft_line(), dimension])),
+    );
     if let Some(trailing_dimensions) = trailing_dimensions {
-        parts.push(trailing_dimensions);
+        head.push(trailing_dimensions);
     }
+
+    let head_doc = if dimension_count > 1 {
+        group(indent_by(
+            context.policy().continuation_indent_levels(),
+            concat(head),
+        ))
+    } else {
+        concat(head)
+    };
+
+    let mut parts = vec![head_doc];
     if let Some(initializer) = initializer {
         parts.push(text(" "));
         parts.push(initializer);
@@ -946,55 +963,59 @@ pub(super) fn format_dim_expression(
 pub(super) fn format_array_initializer(
     initializer: &ArrayInitializer,
     context: &mut JavaFormatContext<'_>,
+    _in_annotation: bool,
 ) -> FormatResult<Doc> {
     let has_trailing_comma = initializer.has_trailing_comma();
     let values = initializer.values().collect::<Vec<_>>();
-    let one_per_line = values
-        .iter()
-        .any(array_initializer_value_prefers_vertical_layout);
     let list_range = initializer
         .code_text_range()
         .expect("parser-clean array initializer should have a source range");
-    let values = values.into_iter().map(|value| {
+    let list_items = values.iter().map(|value| {
         let range = value
             .code_text_range()
             .expect("parser-clean array initializer value should have a source range");
+        let value = value.clone();
         java_lists::ListItem::new(range, move |context| {
             format_variable_initializer_value(&value, context)
         })
     });
+    let list = java_lists::format_braced_list_items(list_items, list_range, context)?;
+    let policy = context.policy();
 
-    java_lists::braced_comma_list(
-        values,
-        list_range,
-        one_per_line,
-        has_trailing_comma,
-        context,
-    )
-}
-
-fn array_initializer_value_prefers_vertical_layout(value: &VariableInitializerValue) -> bool {
-    match value {
-        VariableInitializerValue::FieldAccessExpression(_)
-        | VariableInitializerValue::MethodInvocationExpression(_) => true,
-        VariableInitializerValue::LiteralExpression(literal) => {
-            literal.token().is_some_and(|token| {
-                token.kind() == JavaSyntaxKind::StringLiteral && token.text().len() >= 10
-            })
-        }
-        VariableInitializerValue::ParenthesizedExpression(parenthesized) => {
-            parenthesized.expression().is_some_and(|expression| {
-                matches!(
-                    expression,
-                    Expression::FieldAccessExpression(_)
-                        | Expression::MethodInvocationExpression(_)
-                        | Expression::ObjectCreationExpression(_)
-                        | Expression::ArrayCreationExpression(_)
+    let entries = crate::analyzers::array_initializers::tabular_entries(&values);
+    let layout = if let Some(tabular) =
+        crate::analyzers::array_initializers::tabular_layout_for_entries(&entries, context)
+    {
+        let rows_nested = tabular
+            .rows
+            .iter()
+            .map(|row| {
+                crate::analyzers::array_initializers::row_opens_without_extra_indent(
+                    &entries,
+                    row,
+                    tabular.cols,
                 )
             })
+            .collect();
+        crate::helpers::array_initializers::InitializerLayout::Tabular {
+            cols: tabular.cols,
+            rows: tabular.rows,
+            rows_nested,
         }
-        _ => false,
-    }
+    } else {
+        let short_items =
+            crate::analyzers::array_initializers::has_only_short_items(&values, policy);
+        crate::helpers::array_initializers::InitializerLayout::Fill { short_items }
+    };
+
+    Ok(
+        crate::helpers::array_initializers::braced_initializer_block(
+            list,
+            layout,
+            has_trailing_comma,
+            policy,
+        ),
+    )
 }
 
 pub(super) fn format_variable_initializer_value(
@@ -1060,7 +1081,7 @@ pub(super) fn format_variable_initializer_value(
             format_switch_expression(switch, context)
         }
         VariableInitializerValue::ArrayInitializer(initializer) => {
-            format_array_initializer(initializer, context)
+            format_array_initializer(initializer, context, false)
         }
         VariableInitializerValue::ConditionalExpression(conditional) => {
             format_conditional_expression(conditional, context)

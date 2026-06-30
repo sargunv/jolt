@@ -473,7 +473,7 @@ fn take_opening_delimiter_comments(
         .collect()
 }
 
-struct FormattedList {
+pub(crate) struct FormattedList {
     items: Vec<FormattedListItem>,
     before_close: Vec<Doc>,
 }
@@ -487,11 +487,11 @@ impl FormattedList {
         !self.before_close.is_empty() || self.items.iter().any(|item| item.has_comments)
     }
 
-    fn has_structural_comments(&self) -> bool {
+    pub(crate) fn has_structural_comments(&self) -> bool {
         !self.before_close.is_empty() || self.items.iter().any(|item| item.has_structural_comments)
     }
 
-    fn into_docs(self) -> Vec<Doc> {
+    pub(crate) fn into_docs(self) -> Vec<Doc> {
         self.items
             .into_iter()
             .map(FormattedListItem::into_doc)
@@ -870,7 +870,23 @@ fn braced_comma_block_one_per_line(items: impl IntoIterator<Item = Doc>) -> Doc 
     ])
 }
 
-fn comment_braced_comma_list(list: FormattedList, has_trailing_comma: bool) -> Doc {
+pub(crate) fn format_braced_list_items(
+    items: impl IntoIterator<Item = ListItem>,
+    list_range: TextRange,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<FormattedList> {
+    format_list_items(
+        items,
+        list_range,
+        ListCommentMode::Delimited {
+            open: "{",
+            open_range: None,
+        },
+        context,
+    )
+}
+
+pub(crate) fn comment_braced_comma_list(list: FormattedList, has_trailing_comma: bool) -> Doc {
     let list_item_count = list.items.len();
     let mut parts = list
         .items

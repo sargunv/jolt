@@ -288,7 +288,7 @@ fn local_variable_types_and_throw_statements_format_structurally() {
 fn local_variable_annotations_and_declarator_dimensions_format() {
     assert_formatted(
         "class A { void m(Object values) { @Marker final Object annotated; @Marker Object plain; String legacy[] = names; int numbers[] = {1, 2}; var _ = values; } }",
-        "class A {\n  void m(Object values) {\n    @Marker\n    final Object annotated;\n    @Marker\n    Object plain;\n    String legacy[] = names;\n    int numbers[] = {\n      1, 2\n    };\n    var _ = values;\n  }\n}",
+        "class A {\n  void m(Object values) {\n    @Marker\n    final Object annotated;\n    @Marker\n    Object plain;\n    String legacy[] = names;\n    int numbers[] = {1, 2};\n    var _ = values;\n  }\n}",
     );
 }
 
@@ -354,7 +354,7 @@ fn object_creation_variants_format() {
 fn casts_arrays_and_switch_expressions_format() {
     assert_formatted(
         "class A { Object[] values = new Object[] { one, (String) two, new String @A [] { three, }, }; int[] sized = new int[count]; Object choice(int x) { values[0] = values[count - 1]; return switch (x) { case 1 -> new Object(); default -> (Object) fallback; }; } }",
-        "class A {\n  Object[] values =\n      new Object[] {\n        one, (String) two, new String @A [] {\n          three,\n        },\n      };\n  int[] sized = new int[count];\n\n  Object choice(int x) {\n    values[0] = values[count - 1];\n    return switch (x) {\n      case 1 -> new Object();\n      default -> (Object) fallback;\n    };\n  }\n}",
+        "class A {\n  Object[] values = new Object[] {\n        one,\n        (String) two,\n        new String @A [] {three,},\n      };\n  int[] sized = new int[count];\n\n  Object choice(int x) {\n    values[0] = values[count - 1];\n    return switch (x) {\n      case 1 -> new Object();\n      default -> (Object) fallback;\n    };\n  }\n}",
     );
 }
 

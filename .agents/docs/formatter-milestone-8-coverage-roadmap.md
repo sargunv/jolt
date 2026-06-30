@@ -239,15 +239,19 @@ class indent.
 `type_clause_list` in `helpers/lists.rs` (first type on keyword line,
 continuations indented under keyword). `B28066276.java` 63→**7**.
 
-#### 6. Array / initializer layout (~7–9%)
+#### 6. Array / initializer layout (~7–9%) — **partial**
 
 **What differs:** Fill width for large `int[]` literals, compact `{0,1}` rows in
 2D arrays vs expanded blocks, annotation array row grouping.
 
-**Top fixtures:** `A.java`, `B22815364.java`, `LiteralReflow.java`
+**Top fixtures:** `A.java` (75→**42**), `B22815364.java` (60→**10**),
+`LiteralReflow.java` (30, unchanged)
 
-**Fix locus:** array initializer helper (not yet extracted to
-`helpers/expressions.rs`).
+**Fix locus:** `analyzers/array_initializers.rs` (GJF `argumentsAreTabular`) and
+`helpers/array_initializers.rs` (tabular rows, INDEPENDENT vs UNIFIED fill via
+`best_fitting`, array-creation dim breaks). Google aggregate **1987→1846** on
+this landing. Remaining: multi-dim `[][]` trailing breaks (`arrayWithLongName`),
+A.java blank-line/ternary/chain-index debt in other domains.
 
 #### 7. Switch formatting (~4–5%)
 

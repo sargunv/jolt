@@ -302,21 +302,58 @@ fn format_annotation_array_initializer(
     initializer: &AnnotationArrayInitializer,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
+    use crate::analyzers::array_initializers::{
+        ParallelKind, TabularEntry, has_only_short_entries, row_opens_without_extra_indent,
+        tabular_layout_for_entries,
+    };
+    use crate::helpers::array_initializers::{InitializerLayout, braced_initializer_block};
+
     let list_range = initializer
         .code_text_range()
         .expect("parser-clean annotation array initializer should have a source range");
-    let values = initializer
-        .values()
+    let raw_values = initializer.values().collect::<Vec<_>>();
+    let list_items = raw_values
+        .iter()
         .map(|value| {
             let range = value
                 .code_text_range()
                 .expect("parser-clean annotation array value should have a source range");
+            let value = value.clone();
             Ok(java_lists::ListItem::new(range, move |context| {
                 format_annotation_element_value(&value, context)
                     .map(java_annotations::AnnotationValue::into_doc)
             }))
         })
         .collect::<FormatResult<Vec<_>>>()?;
+    let list = java_lists::format_braced_list_items(list_items, list_range, context)?;
+    let policy = context.policy();
+    let entries = raw_values
+        .iter()
+        .map(|value| TabularEntry {
+            range: value
+                .code_text_range()
+                .expect("parser-clean annotation array value should have a source range"),
+            kind: ParallelKind::Literal,
+            row_weight: 1,
+            is_nested_array: false,
+        })
+        .collect::<Vec<_>>();
 
-    java_lists::braced_comma_list(values, list_range, false, false, context)
+    let layout = if let Some(tabular) = tabular_layout_for_entries(&entries, context) {
+        let rows_nested = tabular
+            .rows
+            .iter()
+            .map(|row| row_opens_without_extra_indent(&entries, row, tabular.cols))
+            .collect();
+        InitializerLayout::Tabular {
+            cols: tabular.cols,
+            rows: tabular.rows,
+            rows_nested,
+        }
+    } else {
+        let short_items = has_only_short_entries(&entries, policy);
+        InitializerLayout::Fill { short_items }
+    };
+
+    Ok(braced_initializer_block(list, layout, false, policy))
 }

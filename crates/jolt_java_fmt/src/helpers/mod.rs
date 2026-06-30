@@ -1,4 +1,5 @@
 pub(crate) mod annotations;
+pub(crate) mod array_initializers;
 pub(crate) mod bodies;
 pub(crate) mod callables;
 pub(crate) mod chains;
