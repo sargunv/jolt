@@ -14,18 +14,9 @@ impl BinaryChain {
             .expect("parser-clean binary expression should have an operator");
         let precedence = precedence(operator.kind())
             .expect("parser-clean binary expression should have a binary operator");
-        let left = binary
-            .left()
-            .expect("parser-clean binary expression should have a left side");
-        let right = binary
-            .right()
-            .expect("parser-clean binary expression should have a right side");
-
         let mut operands = Vec::new();
         let mut operators = Vec::new();
-        collect_left_chain(&left, precedence, &mut operands, &mut operators);
-        operands.push(right);
-        operators.push(operator);
+        walk_infix(binary, precedence, &mut operands, &mut operators);
 
         Self {
             precedence,
@@ -90,7 +81,34 @@ pub(crate) fn precedence(kind: JavaSyntaxKind) -> Option<u8> {
     }
 }
 
-fn collect_left_chain(
+fn walk_infix(
+    binary: &BinaryExpression,
+    parent_precedence: u8,
+    operands: &mut Vec<Expression>,
+    operators: &mut Vec<JavaSyntaxToken>,
+) {
+    let operator = binary
+        .operator()
+        .expect("parser-clean binary expression should have an operator");
+    let child_precedence = precedence(operator.kind())
+        .expect("parser-clean binary expression should have a binary operator");
+    if child_precedence != parent_precedence {
+        operands.push(Expression::BinaryExpression(binary.clone()));
+        return;
+    }
+
+    let left = binary
+        .left()
+        .expect("parser-clean binary expression should have a left side");
+    collect_infix_operand(&left, parent_precedence, operands, operators);
+    operators.push(operator);
+    let right = binary
+        .right()
+        .expect("parser-clean binary expression should have a right side");
+    collect_infix_operand(&right, parent_precedence, operands, operators);
+}
+
+fn collect_infix_operand(
     expression: &Expression,
     parent_precedence: u8,
     operands: &mut Vec<Expression>,
@@ -103,16 +121,7 @@ fn collect_left_chain(
         let child_precedence = precedence(operator.kind())
             .expect("parser-clean binary expression should have a binary operator");
         if child_precedence == parent_precedence {
-            let left = binary
-                .left()
-                .expect("parser-clean binary expression should have a left side");
-            let right = binary
-                .right()
-                .expect("parser-clean binary expression should have a right side");
-
-            collect_left_chain(&left, parent_precedence, operands, operators);
-            operands.push(right);
-            operators.push(operator);
+            walk_infix(binary, parent_precedence, operands, operators);
             return;
         }
     }
