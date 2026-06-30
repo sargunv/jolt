@@ -107,6 +107,285 @@ aggregate diff is roughly twice Google's.
 - Import section policy lives in `rules/compilation_unit.rs` rather than a
   dedicated helper module.
 
+See [Oracle compatibility gaps](#oracle-compatibility-gaps) for a report-derived
+breakdown of what the mismatches actually are.
+
+## Oracle Compatibility Gaps
+
+Every oracle mismatch is a **layout policy gap**, not a missing syntax rule.
+Missing-rule blockers are zero on all profiles. Detailed per-file diffs live
+under `.oracles/reports/java/`; regenerate them with the oracle fixture test
+harness.
+
+Report indexes:
+
+- Google: `.oracles/reports/java/google-java-format/google/index.md`
+- AOSP: `.oracles/reports/java/google-java-format/aosp/index.md`
+- Palantir: `.oracles/reports/java/palantir-java-format/palantir/index.md`
+
+The same **137 files** mismatch on Google and AOSP. Palantir adds **25 more**
+mismatches on its own corpus. Aggregate diff grows profile-to-profile because
+wrong break decisions cost more lines at 4-space indent, and Palantir adds
+chain, lambda, and assignment policy beyond google-java-format.
+
+| Profile  | Mismatching | Aggregate diff | vs Google |
+| -------- | ----------- | -------------- | --------- |
+| Google   | 137 / 208   | 2,621          | —         |
+| AOSP     | 137 / 208   | 2,883          | +262      |
+| Palantir | 162 / 224   | 4,886          | +2,265    |
+
+Gap categories overlap in practice; impact estimates below are directional, not
+additive to 100%.
+
+### Shared gaps (all three profiles)
+
+These dominate Google and AOSP and account for roughly half of Palantir's diff.
+Fixing them moves all scoreboards together.
+
+#### 1. Selector / fluent chain breaking — largest bucket (~30% of Google diff)
+
+**What differs:** Where the formatter breaks `.method()` chains — whether
+`Receiver.method()` stays on one line, whether nested builders split receiver
+and selector, break depth on field-prefix runs, and cast/paren receiver
+grouping.
+
+**Top fixtures:** `B24909927.java` (88 / 205 / 916), `B20128760.java` (95 / 119
+/ 116), `B20701054.java` (85 / 84 / 215), `M.java`, `B21305044.java`,
+`B24202287.java`
+
+**Example (`B24909927.java`):** Oracle keeps nested selectors on separate lines;
+Jolt merges receiver and first selector:
+
+```diff
+- XxxxxxxXxxx
+-         .xxxXxxxxxx()
++ XxxxxxxXxxx.xxxXxxxxxx()
+```
+
+At AOSP 4-space indent, every such decision multiplies diff lines.
+
+**Fix locus:** `analyzers/chains.rs`, `helpers/chains.rs`, expression chain
+collection. Several helpers hardcode `CONTINUATION_INDENT_LEVELS = 2` instead of
+`policy.continuation_indent_levels()`.
+
+#### 2. Comment and vertical-whitespace preservation (~18–22%)
+
+**What differs:** google-java-format preserves interior column alignment in
+block comments, trailing spaces on comment lines, blank lines between members
+and switch cases, and malformed-javadoc structure. Jolt normalizes or reflows
+them.
+
+**Top fixtures:** `B24543625.java` (~91 lines on Google, almost entirely this
+category), `B24702438.java`, `B20535125.java`, `A.java`
+
+**Example (`B24543625.java`):** ASCII-art block comment columns get
+trailing-space padding; interior alignment is rewritten instead of preserved.
+
+**Fix locus:** `comments.rs`, `context.rs`, body and member blank-line policy.
+
+#### 3. Argument-list fill vs one-per-line (~12–16%)
+
+**What differs:** Whether short arg lists pack on one line, break after `(`, use
+paired rows in annotation arrays, or force one arg per line at a width
+threshold.
+
+**Top fixtures:** `B22815364.java`, `C.java`, `M.java`, `B24202287.java`,
+`PairedArguments.java`
+
+**Fix locus:** `helpers/lists.rs` fill and break policy — one cohesive helper
+change, many call sites.
+
+#### 4. Control-flow block compaction (~10–14%)
+
+**What differs in two directions:**
+
+- Oracle **expands** empty blocks (`try {} catch (E e) {}` on one line); Jolt
+  collapses blank lines inside blocks differently (`B20535125.java`).
+- Oracle **keeps** single-statement `if (true) stmt;` inline when within width;
+  Jolt always breaks the body (`B20569245.java`, identical diff size on Google
+  and AOSP).
+
+**Fix locus:** `helpers/bodies.rs`, statement rules for if, try, and for.
+
+#### 5. Type declaration headers — `extends` / `implements` (~4–5%)
+
+**What differs:** Continuation lines indented under the keyword vs flush at
+class indent.
+
+**Top fixture:** `B28066276.java` (63 lines, same pattern on all profiles)
+
+**Fix locus:** `helpers/type_declarations.rs` — relatively small, high-leverage.
+
+#### 6. Array / initializer layout (~7–9%)
+
+**What differs:** Fill width for large `int[]` literals, compact `{0,1}` rows in
+2D arrays vs expanded blocks, annotation array row grouping.
+
+**Top fixtures:** `A.java`, `B22815364.java`, `LiteralReflow.java`
+
+**Fix locus:** array initializer helper (not yet extracted to
+`helpers/expressions.rs`).
+
+#### 7. Switch formatting (~4–5%)
+
+**What differs:** `case Type var when expr` line breaks, record-pattern
+component layout, continued case label indent, comments after `->`.
+
+**Top fixtures:** `SwitchGuardClause.java`, `ExpressionSwitch.java`,
+`SwitchRecord.java`, `SwitchComment.java`
+
+**Fix locus:** switch block helpers in `rules/statements.rs` and
+`helpers/bodies.rs`.
+
+#### 8. Generics, ternary, and annotations (medium tail)
+
+- **Generics:** split `List<Pair<…>>` from initializer, multiline diamond
+  (`M.java`, `F.java`, `B21305044.java`)
+- **Ternary:** nested `? :` indent vs flattening (`F.java`, `C.java`)
+- **Annotations:** `@Inject int x` inline vs annotation on its own line; stacked
+  type-use annotations (`B24702438.java`, `TypeAnnotations.java`,
+  `ParameterComment.java`)
+
+**Fix locus:** type rules, expression helpers, annotation helpers.
+
+### AOSP-specific amplification
+
+AOSP is not a different failure set from Google — it is the **same 137
+fixtures** with **+262 aggregate diff lines**, mostly the same bugs at 4-space
+indent.
+
+| Fixture          | Google diff | AOSP diff | Extra cause                                       |
+| ---------------- | ----------- | --------- | ------------------------------------------------- |
+| `B24909927.java` | 88          | 205       | Chain flattening plus deeper 4-space body indent  |
+| `M.java`         | 82          | 114       | Shared wrapping; wider indent shifts break points |
+| `A.java`         | 71          | 80        | Same array/ternary bugs, more lines at 4-space    |
+
+**Already in code:**
+
+- `JavaFormatPolicy::separates_static_import_section()` — blank lines between
+  import prefix groups (visible in `M.java` vs Google)
+- `indent_width: 4` for AOSP in `options.rs`
+
+**AOSP wiring gaps:**
+
+- `helpers/chains.rs`, `helpers/callables.rs`, and `layout.rs` hardcode
+  continuation indent instead of reading policy
+- Chain break decisions must respect the 4-space line budget, not inherit
+  2-space Google break points
+
+Closing shared layout bugs moves both Google and AOSP together. AOSP-only wins
+are narrower: wire policy through all layout paths and keep import-group
+separation tied to `JavaFormatPolicy`.
+
+### Palantir-specific gaps (~41–43% of 4,886 lines)
+
+Palantir shares all Google-style gaps above but adds a large chain, lambda, and
+assignment policy layer. The 30 `palantir-*.java` fixtures account for ~648 diff
+lines (13%); `B24909927.java` alone is **916**.
+
+#### Palantir chain policy
+
+**What differs from Google-style breaking:**
+
+- Keep chains flat longer; break only when the **last `.` before a wrap exceeds
+  ~80 columns** even if the full line fits in 120
+- Builder chains: count-based thresholds before wrapping (`.add()` × N)
+- Nested-argument heads: preserve `ImmutableList.of(builder()…)` inline
+
+**Example (`palantir-deeply-nested-calls.java`):** Oracle keeps nested builders
+inline in arguments; Jolt breaks before `MagicConfigV1.builder()` and explodes
+each `ImmutableList.of(...)` argument.
+
+**Missing in Jolt:** `marked_break` IR usage for last-dot column limits.
+`policy.rs` sets `selector_chain_breaks_before_first_selector = false` for
+Palantir, but `helpers/chains.rs` still applies width heuristics without 80-col
+enforcement. See palantir-java-format references for `Level.java`,
+`BreakBehaviour.java`, and `LastLevelBreakability.java`.
+
+#### Reluctant `=` break
+
+Palantir keeps `Type x = Receiver.chain()` on one line; Jolt breaks before the
+RHS. Hits `palantir-4`, `palantir-5`, `palantir-6`, `palantir-11`,
+`palantir-gcv-1`, `palantir-lambda-multiline-arg.java`, and many top B-fixtures.
+
+**Fix locus:** assignment layout in `layout.rs` or future
+`helpers/expressions.rs`, driven by Palantir policy.
+
+#### Lambda argument policy
+
+Palantir fixtures encode when a lambda stays on the call line vs breaks:
+
+- inline block lambdas in simple calls (`palantir-break-lambda-arg.java`)
+- break when the lambda body contains chains
+  (`palantir-lambda-inlining-prefers-break.java`)
+- expression-lambda arg packing (`palantir-expression-lambda-1.java`,
+  `palantir-expression-lambdas.java`)
+- cast lambdas (`palantir-lamda-cast.java`)
+
+**Fix locus:** new `helpers/lambdas.rs` or extension of `helpers/callables.rs`.
+
+#### Text blocks — `RSL.java` (310 lines, #2 Palantir mismatch)
+
+Palantir **preserves text-block content verbatim** (no interior normalization).
+Jolt breaks after `=`, reflows content, and mis-indents closing `"""`.
+
+**Fix locus:** `helpers/literals.rs` or a dedicated text-block helper.
+
+#### Palantir vs shared GJF gaps
+
+Rough split of the 4,886-line aggregate diff:
+
+| Bucket                                         | Est. share |
+| ---------------------------------------------- | ---------- |
+| Chain / lambda / assignment-inline policy      | ~41–43%    |
+| Shared GJF-style (throws, blanks, comments, …) | ~18–22%    |
+| Text blocks and string-concat preservation     | ~7–8%      |
+| Other structural (generics, switch, imports)   | ~27–33%    |
+
+Palantir is not "Google with 4-space indent." It is a different chain and lambda
+policy surface even when the underlying syntax is the same.
+
+### Impact-ordered fix map
+
+| Priority | Gap                              | Est. relief        | Primary code                               |
+| -------- | -------------------------------- | ------------------ | ------------------------------------------ |
+| 1        | Selector chain breaking (shared) | ~800+ all profiles | `analyzers/chains.rs`, `helpers/chains.rs` |
+| 2        | Palantir 80-col last-dot         | ~900+ Palantir     | `helpers/chains.rs`, `marked_break` in IR  |
+| 3        | Comment interior + blank lines   | ~200+              | `comments.rs`, body blank-line policy      |
+| 4        | Argument list fill               | ~300+ spread       | `helpers/lists.rs`                         |
+| 5        | Palantir `=` + lambda args       | ~500+ Palantir     | lambda/assignment policy helpers           |
+| 6        | Text block preservation          | ~310 (`RSL.java`)  | `helpers/literals.rs`                      |
+| 7        | `extends` / `implements` indent  | ~60+               | `helpers/type_declarations.rs`             |
+| 8        | Empty blocks / inline `if`       | ~100+              | `helpers/bodies.rs`, if/try rules          |
+| 9        | Array initializers               | ~80+               | expression/array helper                    |
+| 10       | Switch patterns/guards           | ~50+               | switch formatting                          |
+
+### What each north-star profile requires
+
+**100% Google** closes gaps 1, 3, 4, 5, 7, 8, 9, and 10 — mostly shared layout
+policy, not new syntax coverage.
+
+**100% AOSP** is Google parity plus correct 4-space continuation wiring and
+import-group blank lines. Do not treat AOSP as a separate rule set.
+
+**100% Palantir** requires everything above **plus** Palantir chain engine
+(80-col rule, nested-argument heads, reluctant assignment breaks, lambda-arg
+helpers, text-block preservation).
+
+### Representative reports to inspect
+
+| Category               | Report                                                                                     |
+| ---------------------- | ------------------------------------------------------------------------------------------ |
+| Deep fluent chains     | `.oracles/reports/java/google-java-format/google/B24909927.java.md`                        |
+| Chain + declarations   | `.oracles/reports/java/google-java-format/google/B20128760.java.md`                        |
+| Comments               | `.oracles/reports/java/google-java-format/google/B24543625.java.md`                        |
+| Empty blocks / blanks  | `.oracles/reports/java/google-java-format/google/B20535125.java.md`                        |
+| `extends`/`implements` | `.oracles/reports/java/google-java-format/google/B28066276.java.md`                        |
+| Switch guards          | `.oracles/reports/java/google-java-format/google/SwitchGuardClause.java.md`                |
+| Palantir nested calls  | `.oracles/reports/java/palantir-java-format/palantir/palantir-deeply-nested-calls.java.md` |
+| Text blocks            | `.oracles/reports/java/palantir-java-format/palantir/RSL.java.md`                          |
+| AOSP chain inflation   | `.oracles/reports/java/google-java-format/aosp/B24909927.java.md`                          |
+
 ## Reference Project Lessons
 
 Jolt should copy formatter **boundaries** from the projects below, not their
@@ -488,9 +767,11 @@ one helper.
 metadata and `ChainGroup`s. `helpers/chains.rs` renders staged alternatives with
 profile-aware breaking via `JavaFormatPolicy`.
 
-Remaining: close oracle gaps on long fluent chains, mixed field/call chains,
-nested-argument receivers, and Palantir-specific indentation—using syntax shape,
-not fixture-name heuristics.
+Remaining: close oracle gaps catalogued under
+[selector / fluent chain breaking](#1-selector--fluent-chain-breaking--largest-bucket-30-of-google-diff):
+long fluent chains, mixed field/call chains, nested-argument receivers, and
+Palantir 80-col last-dot policy — using syntax shape, not fixture-name
+heuristics.
 
 ### Expressions — not extracted
 
@@ -571,7 +852,9 @@ comment tests where oracle fixtures do not already cover a shape.
 ### Phase 7: Profile-specific oracle alignment — in progress
 
 Policy accessors centralize known profile differences. Remaining work tracks
-oracle reports: Palantir chain and indentation behavior is the largest gap.
+[oracle compatibility gaps](#oracle-compatibility-gaps): Palantir chain, lambda,
+and assignment policy is the largest profile-specific gap; AOSP needs policy
+wired through all continuation-indent paths.
 
 Keep Google as the base unless a helper has a documented profile divergence.
 
@@ -593,9 +876,9 @@ rg -n "missing-rule blocked|aggregate diff size|largest per-file diff" \
   crates/jolt_java_fmt/tests/snapshots/oracle_fixtures__*_scoreboard.snap
 ```
 
-Scoreboard changes should be reviewed by domain, not only by aggregate number.
-An aggregate improvement that creates a new concentrated regression in a core
-fixture should be treated skeptically.
+Per-file diffs are written to `.oracles/reports/java/` (see
+[Oracle compatibility gaps](#oracle-compatibility-gaps)). Review scoreboard
+changes by domain, not aggregate number alone.
 
 Coverage invariants (missing-layout exits, raw source passthrough, late
 remaining-comment appendage) are satisfied and should stay that way. Re-check
