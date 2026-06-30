@@ -7,35 +7,26 @@ profile: aosp
 total considered: 209
 invalid upstream fixtures skipped: 1
 parse blocked: 0
-missing-rule blocked: 100
-other blocked: 0
-formatted: 108
-exact matches: 31
-exact-match percentage: 14.90%
-mismatching formatted files: 77
-aggregate diff size: 3466
-largest per-file diff: M.java (1413)
+missing-rule blocked: 0
+other blocked: 30
+formatted: 178
+exact matches: 62
+exact-match percentage: 29.80%
+mismatching formatted files: 116
+aggregate diff size: 2357
+largest per-file diff: B24909927.java (205)
 
 worst mismatches:
-  M.java: 1413
-  B24909927.java: 472
-  E.java: 315
-  B20128760.java: 166
-  B24702438.java: 75
-  B28066276.java: 72
-  PairedArguments.java: 59
-  B20569245.java: 55
-  B23804934.java: 41
-  B26207047.java: 41
+  B24909927.java: 205
+  B20128760.java: 119
+  M.java: 119
+  B20535125.java: 89
+  A.java: 88
+  B20701054.java: 84
+  B28066276.java: 63
+  B24702438.java: 62
+  F.java: 60
+  SwitchGuardClause.java: 56
 
 top missing-rule blockers:
-  11: Java formatter found unhandled comment or ignored trivia
-  11: Java formatter only supports own-line leading comments here
-  6: Java formatter does not support this try statement shape yet
-  5: Java formatter does not support multiline literals yet
-  5: Java formatter does not support this local variable declaration shape yet
-  5: Java formatter only supports unbounded type parameters yet
-  4: Java formatter does not support this object creation expression shape yet
-  4: Java formatter does not support this switch label shape yet
-  4: Java formatter does not support this type shape yet
-  4: Java formatter only supports expression variable initializers
+  0: <none>

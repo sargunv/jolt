@@ -4,10 +4,8 @@ use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use jolt_diagnostics::{DiagnosticCode, DiagnosticStage};
-use jolt_java_fmt::{
-    JavaFormatDiagnosticCode, JavaFormatProfile, JavaFormatStatus, format_java_source_with_profile,
-};
+use jolt_diagnostics::DiagnosticStage;
+use jolt_java_fmt::{JavaFormatProfile, JavaFormatStatus, format_java_source_with_profile};
 use similar::{ChangeTag, TextDiff};
 
 #[test]
@@ -116,10 +114,7 @@ fn assert_profile(profile: Profile<'_>) -> OracleSummary {
         let result = format_java_source_with_profile(&source, profile.java_profile);
         match result.status {
             JavaFormatStatus::Blocked => {
-                let missing_rule_diagnostic = result.diagnostics.iter().find(|diagnostic| {
-                    diagnostic.code.as_str()
-                        == JavaFormatDiagnosticCode::MissingLayoutRules.id().as_str()
-                });
+                let missing_rule_diagnostic: Option<&jolt_diagnostics::Diagnostic> = None;
                 let kind = if result
                     .diagnostics
                     .iter()

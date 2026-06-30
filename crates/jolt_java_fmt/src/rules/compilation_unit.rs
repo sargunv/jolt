@@ -1,32 +1,21 @@
 use super::{
     CompilationUnit, CompilationUnitMember, Doc, FormatResult, ImportDeclaration,
-    JavaFormatContext, PackageDeclaration, concat, format_annotation_list,
-    format_field_declaration, format_method_declaration, format_name, format_type_declaration,
-    hard_line, join, missing_layout, reject_unhandled_comments_before_start,
+    JavaFormatContext, ModuleDeclaration, ModuleDirective, PackageDeclaration, concat,
+    format_annotation_list, format_field_declaration, format_method_declaration, format_name,
+    format_type_declaration, hard_line, java_lists, join, reject_unhandled_comments_before_start,
     take_leading_comment_docs, text, with_attached_comments, with_leading_and_trailing_comments,
-    with_vertical_annotations,
+    with_vertical_annotations, wrap,
 };
+use crate::policy::JavaFormatPolicy;
 
 pub(crate) fn format_compilation_unit(
     syntax: &CompilationUnit,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    if let Some(module) = syntax.module_declaration() {
-        return Err(missing_layout(
-            "Java formatter does not support module declarations yet",
-            module.text_range(),
-        ));
-    }
-
-    if let Some(child) = syntax.unsupported_layout_child() {
-        return Err(missing_layout(
-            format!(
-                "Java formatter does not support compilation unit child {:?} yet",
-                child.kind()
-            ),
-            child.text_range(),
-        ));
-    }
+    assert!(
+        syntax.unsupported_layout_child().is_none(),
+        "parser-clean compilation unit should not contain unsupported top-level children"
+    );
 
     let package = syntax
         .package_declaration()
@@ -34,8 +23,12 @@ pub(crate) fn format_compilation_unit(
         .transpose()?;
     let imports = syntax
         .imports()
-        .map(|import| format_import_declaration(&import, context))
+        .map(|import| format_import_section_item(&import, context))
         .collect::<FormatResult<Vec<_>>>()?;
+    let module = syntax
+        .module_declaration()
+        .map(|module| format_module_declaration(&module, context))
+        .transpose()?;
     let members = syntax
         .compact_members()
         .map(|member| format_compilation_unit_member(&member, context))
@@ -46,13 +39,165 @@ pub(crate) fn format_compilation_unit(
         sections.push(package);
     }
     if !imports.is_empty() {
-        sections.push(join(hard_line(), imports));
+        sections.push(format_import_section(imports, context.policy()));
+    }
+    if let Some(module) = module {
+        sections.push(module);
     }
     if !members.is_empty() {
         sections.push(join(concat([hard_line(), hard_line()]), members));
     }
 
     Ok(join(concat([hard_line(), hard_line()]), sections))
+}
+
+struct ImportSectionItem {
+    doc: Doc,
+    group: Option<String>,
+}
+
+fn format_import_section(imports: Vec<ImportSectionItem>, policy: JavaFormatPolicy) -> Doc {
+    let mut imports = imports.into_iter();
+    let Some(first) = imports.next() else {
+        return text("");
+    };
+
+    let mut docs = vec![first.doc];
+    let mut previous_group = first.group;
+    for import in imports {
+        let separator = if policy.separates_static_import_section()
+            && previous_group.is_some()
+            && import.group.is_some()
+            && previous_group != import.group
+        {
+            concat([hard_line(), hard_line()])
+        } else {
+            hard_line()
+        };
+        docs.push(separator);
+        docs.push(import.doc);
+        previous_group = import.group;
+    }
+
+    concat(docs)
+}
+
+fn format_import_section_item(
+    import: &ImportDeclaration,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<ImportSectionItem> {
+    let group = import_group(import);
+    let doc = format_import_declaration(import, context)?;
+    Ok(ImportSectionItem { doc, group })
+}
+
+fn import_group(import: &ImportDeclaration) -> Option<String> {
+    if import.is_module() {
+        return Some("module".to_owned());
+    }
+    if import.is_static() {
+        return Some("static".to_owned());
+    }
+    import
+        .name()?
+        .segments()
+        .next()
+        .map(|token| token.text().to_owned())
+}
+
+pub(super) fn format_module_declaration(
+    module: &ModuleDeclaration,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    let code_range = module
+        .code_text_range()
+        .unwrap_or_else(|| module.text_range());
+    let leading_comments = take_leading_comment_docs(context, code_range)?;
+    let annotations = format_annotation_list(module.annotations(), context, "declaration")?;
+    let name = module
+        .name()
+        .expect("parser-clean module declaration should have a name");
+    let directives = module
+        .directives()
+        .map(|directive| format_module_directive(&directive))
+        .collect::<Vec<_>>();
+
+    let mut header = Vec::new();
+    if module.is_open() {
+        header.push(text("open "));
+    }
+    header.push(text("module "));
+    header.push(format_name(&name));
+    header.push(text(" "));
+
+    let doc = with_vertical_annotations(
+        annotations,
+        concat([concat(header), wrap::braced_block(directives)]),
+    );
+    with_leading_and_trailing_comments(context, code_range, leading_comments, doc)
+}
+
+fn format_module_directive(directive: &ModuleDirective) -> Doc {
+    match directive {
+        ModuleDirective::RequiresDirective(directive) => {
+            let mut parts = vec![text("requires ")];
+            if directive.is_transitive() {
+                parts.push(text("transitive "));
+            }
+            if directive.is_static() {
+                parts.push(text("static "));
+            }
+            let name = directive
+                .name()
+                .expect("parser-clean requires directive should have a module name");
+            parts.push(format_name(&name));
+            parts.push(text(";"));
+            concat(parts)
+        }
+        ModuleDirective::ExportsDirective(directive) => format_module_package_directive(
+            "exports",
+            directive.package_name(),
+            directive.target_modules().collect(),
+            "to",
+        ),
+        ModuleDirective::OpensDirective(directive) => format_module_package_directive(
+            "opens",
+            directive.package_name(),
+            directive.target_modules().collect(),
+            "to",
+        ),
+        ModuleDirective::UsesDirective(directive) => {
+            let name = directive
+                .service_name()
+                .expect("parser-clean uses directive should have a service name");
+            concat([text("uses "), format_name(&name), text(";")])
+        }
+        ModuleDirective::ProvidesDirective(directive) => format_module_package_directive(
+            "provides",
+            directive.service_name(),
+            directive.implementation_names().collect(),
+            "with",
+        ),
+    }
+}
+
+fn format_module_package_directive(
+    keyword: &'static str,
+    name: Option<super::NameSyntax>,
+    targets: Vec<super::NameSyntax>,
+    target_keyword: &'static str,
+) -> Doc {
+    let name = name.expect("parser-clean module package directive should have a required name");
+
+    let mut parts = vec![text(format!("{keyword} ")), format_name(&name)];
+    if !targets.is_empty() {
+        parts.push(text(format!(" {target_keyword} ")));
+        parts.push(java_lists::comma_list(
+            targets.into_iter().map(|target| format_name(&target)),
+        ));
+    }
+    parts.push(text(";"));
+    concat(parts)
 }
 
 pub(super) fn format_compilation_unit_member(
@@ -65,18 +210,12 @@ pub(super) fn format_compilation_unit_member(
         CompilationUnitMember::MethodDeclaration(declaration) => declaration.code_text_range(),
         CompilationUnitMember::TypeDeclaration(declaration) => declaration.code_text_range(),
     }
-    .ok_or_else(|| {
-        let range = match member {
-            CompilationUnitMember::EmptyDeclaration(declaration) => declaration.text_range(),
-            CompilationUnitMember::FieldDeclaration(declaration) => declaration.text_range(),
-            CompilationUnitMember::MethodDeclaration(declaration) => declaration.text_range(),
-            CompilationUnitMember::TypeDeclaration(declaration) => declaration.text_range(),
-        };
-        missing_layout(
-            "Java formatter found an empty compilation unit member",
-            range,
-        )
-    })?;
+    .unwrap_or_else(|| match member {
+        CompilationUnitMember::EmptyDeclaration(declaration) => declaration.text_range(),
+        CompilationUnitMember::FieldDeclaration(declaration) => declaration.text_range(),
+        CompilationUnitMember::MethodDeclaration(declaration) => declaration.text_range(),
+        CompilationUnitMember::TypeDeclaration(declaration) => declaration.text_range(),
+    });
     let leading_comments = take_leading_comment_docs(context, code_range)?;
     let doc = match member {
         CompilationUnitMember::EmptyDeclaration(_) => Ok(text(";")),
@@ -96,29 +235,20 @@ pub(super) fn format_package_declaration(
     package: &PackageDeclaration,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    let code_range = package.code_text_range().ok_or_else(|| {
-        missing_layout(
-            "Java formatter found an empty package declaration",
-            package.text_range(),
-        )
-    })?;
+    let code_range = package
+        .code_text_range()
+        .unwrap_or_else(|| package.text_range());
     let leading_comments = take_leading_comment_docs(context, code_range)?;
     let annotations = format_annotation_list(package.annotations(), context, "declaration")?;
-    let name = package.name().ok_or_else(|| {
-        missing_layout(
-            "Java formatter found a package declaration without a name",
-            package.text_range(),
-        )
-    })?;
-    if !annotations.is_empty() {
+    let name = package
+        .name()
+        .expect("parser-clean package declaration should have a name");
+    if !annotations.is_empty()
+        && let Some(name_range) = name.code_text_range()
+    {
         reject_unhandled_comments_before_start(
             context,
-            name.code_text_range().ok_or_else(|| {
-                missing_layout(
-                    "Java formatter found an empty package name",
-                    name.text_range(),
-                )
-            })?,
+            name_range,
             "Java formatter does not support comments between declaration annotations and declaration headers yet",
         )?;
     }
@@ -137,25 +267,12 @@ pub(super) fn format_import_declaration(
     import: &ImportDeclaration,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    if !import.has_supported_layout_shape() {
-        return Err(missing_layout(
-            "Java formatter does not support malformed import declarations",
-            import.text_range(),
-        ));
-    }
-
-    let code_range = import.code_text_range().ok_or_else(|| {
-        missing_layout(
-            "Java formatter found an empty import declaration",
-            import.text_range(),
-        )
-    })?;
-    let name = import.name().ok_or_else(|| {
-        missing_layout(
-            "Java formatter found an import declaration without a name",
-            import.text_range(),
-        )
-    })?;
+    let code_range = import
+        .code_text_range()
+        .unwrap_or_else(|| import.text_range());
+    let name = import
+        .name()
+        .expect("parser-clean import declaration should have a name");
     let mut parts = vec![text("import ")];
     if import.is_module() {
         parts.push(text("module "));

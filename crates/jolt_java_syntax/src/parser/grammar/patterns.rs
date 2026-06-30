@@ -19,11 +19,17 @@ impl Parser<'_> {
         let pattern = self.start();
         self.parse_type();
         self.expect(JavaSyntaxKind::LParen, "expected `(` in record pattern");
+        let mut expecting_component = false;
         while !self.at_eof() && !self.at(JavaSyntaxKind::RParen) {
             self.parse_component_pattern();
+            expecting_component = false;
             if !self.eat(JavaSyntaxKind::Comma) {
                 break;
             }
+            expecting_component = true;
+        }
+        if expecting_component {
+            self.expected_here("expected component pattern");
         }
         self.expect(JavaSyntaxKind::RParen, "expected `)` after record pattern");
         self.complete(pattern, JavaSyntaxKind::RecordPattern);

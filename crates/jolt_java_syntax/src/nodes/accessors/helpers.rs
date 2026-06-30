@@ -71,22 +71,6 @@ pub(super) fn simple_single_token(syntax: &JavaSyntaxNode) -> Option<Vec<JavaSyn
     }])
 }
 
-pub(super) fn simple_keyword_token(
-    syntax: &JavaSyntaxNode,
-    expected: JavaSyntaxKind,
-) -> Option<JavaSyntaxToken> {
-    let tokens = syntax
-        .children_with_tokens()
-        .map(jolt_syntax::SyntaxElement::into_token)
-        .collect::<Option<Vec<_>>>()?;
-    let [token] = tokens.as_slice() else {
-        return None;
-    };
-    (token.kind() == expected).then(|| JavaSyntaxToken {
-        syntax: token.clone(),
-    })
-}
-
 pub(super) fn has_keyword_optional_expression_semicolon_shape(
     syntax: &JavaSyntaxNode,
     keyword_kind: JavaSyntaxKind,
@@ -167,6 +151,7 @@ pub(super) fn has_method_declaration_layout_shape(syntax: &JavaSyntaxNode) -> bo
     let mut cursor = syntax_kind_cursor(syntax);
     cursor.eat(JavaSyntaxKind::ModifierList);
     cursor.eat(JavaSyntaxKind::TypeParameterList);
+    while cursor.eat(JavaSyntaxKind::Annotation) {}
     if !cursor.eat_one_of(&[
         JavaSyntaxKind::PrimitiveType,
         JavaSyntaxKind::VoidType,
@@ -185,6 +170,7 @@ pub(super) fn has_method_declaration_layout_shape(syntax: &JavaSyntaxNode) -> bo
     if !cursor.eat(JavaSyntaxKind::RParen) {
         return false;
     }
+    cursor.eat(JavaSyntaxKind::ArrayDimensions);
     cursor.eat(JavaSyntaxKind::ThrowsClause);
 
     cursor.eat_one_of(&[JavaSyntaxKind::Block, JavaSyntaxKind::Semicolon]) && cursor.is_done()

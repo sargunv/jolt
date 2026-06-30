@@ -309,13 +309,23 @@ impl Parser<'_> {
             return self.complete(suffix, JavaSyntaxKind::SuperExpression);
         }
 
-        self.parse_optional_type_argument_list();
+        let has_member_type_arguments = self.parse_optional_type_argument_list();
         self.expect_method_identifier("expected member name");
-        self.parse_optional_type_argument_list();
+        if self.at(JavaSyntaxKind::Lt) && self.type_arguments_are_followed_by_double_colon() {
+            self.parse_optional_type_argument_list();
+        } else if self.at(JavaSyntaxKind::Lt) {
+            let error = self.start();
+            self.unexpected_here("type arguments must appear before method name");
+            self.parse_optional_type_argument_list();
+            self.complete(error, JavaSyntaxKind::ErrorNode);
+        }
         if self.at(JavaSyntaxKind::LParen) {
             self.parse_argument_list();
             self.complete(suffix, JavaSyntaxKind::MethodInvocationExpression)
         } else {
+            if has_member_type_arguments {
+                self.expected_here("type arguments require method invocation");
+            }
             self.complete(suffix, JavaSyntaxKind::FieldAccessExpression)
         }
     }
@@ -467,8 +477,10 @@ impl Parser<'_> {
         self.expect(JavaSyntaxKind::LParen, "expected lambda parameter list");
         let list = self.start();
         let mut style = None;
+        let mut expecting_parameter = false;
         while !self.at_eof() && !self.at(JavaSyntaxKind::RParen) {
             let parameter = self.parse_lambda_parameter();
+            expecting_parameter = false;
             if let Some(expected) = style {
                 if parameter.style != expected {
                     let error = self.start();
@@ -493,6 +505,10 @@ impl Parser<'_> {
             if !self.eat(JavaSyntaxKind::Comma) {
                 break;
             }
+            expecting_parameter = true;
+        }
+        if expecting_parameter {
+            self.expected_here("expected lambda parameter");
         }
         self.complete(list, JavaSyntaxKind::LambdaParameterList);
         self.expect(
@@ -719,11 +735,17 @@ impl Parser<'_> {
     pub(super) fn parse_argument_list(&mut self) {
         let arguments = self.start();
         self.expect(JavaSyntaxKind::LParen, "expected argument list");
+        let mut expecting_argument = false;
         while !self.at_eof() && !self.at(JavaSyntaxKind::RParen) {
             self.parse_expression_until(&[JavaSyntaxKind::Comma, JavaSyntaxKind::RParen]);
+            expecting_argument = false;
             if !self.eat(JavaSyntaxKind::Comma) {
                 break;
             }
+            expecting_argument = true;
+        }
+        if expecting_argument {
+            self.expected_here("expected argument");
         }
         self.expect(JavaSyntaxKind::RParen, "expected `)` after arguments");
         self.complete(arguments, JavaSyntaxKind::ArgumentList);

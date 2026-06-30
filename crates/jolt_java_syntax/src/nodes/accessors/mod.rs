@@ -6,6 +6,6 @@ mod statements;
 mod types;
 
 pub use compilation_unit::CompilationUnitMember;
-pub use declarations::FormalParameterModifier;
-pub use statements::{SwitchBlockItem, SwitchRuleBody};
+pub use declarations::{AnnotationElementListItem, FormalParameterModifier};
+pub use statements::{SwitchBlockItem, SwitchLabelItem, SwitchRuleBody};
 pub use types::TypeLayoutPart;

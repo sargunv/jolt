@@ -2,16 +2,15 @@ use super::super::{
     Annotation, ArgumentList, ArrayAccessExpression, ArrayCreationExpression, ArrayDimensions,
     ArrayInitializer, AssignmentExpression, BinaryExpression, Block, CastExpression, ClassBody,
     ClassLiteralExpression, ConditionalExpression, DimExpression, Expression,
-    FieldAccessExpression, JavaNode, JavaSyntaxKind, JavaSyntaxToken, LambdaExpression,
-    LambdaParameter, LambdaParameterList, LiteralExpression, MethodInvocationExpression,
-    MethodReferenceExpression, NameExpression, ObjectCreationExpression, ParenthesizedExpression,
-    PostfixExpression, SuperExpression, SwitchBlock, SwitchExpression, ThisExpression, Type,
-    TypeArgumentList, UnaryExpression, VariableInitializerValue, child, child_family, child_token,
-    child_token_in, children, children_family, nth_child_family,
+    FieldAccessExpression, InstanceofExpression, JavaNode, JavaSyntaxKind, JavaSyntaxToken,
+    LambdaExpression, LambdaParameter, LambdaParameterList, LiteralExpression,
+    LocalVariableDeclaration, MethodInvocationExpression, MethodReferenceExpression,
+    NameExpression, ObjectCreationExpression, ParenthesizedExpression, Pattern, PostfixExpression,
+    RecordPattern, SuperExpression, SwitchBlock, SwitchExpression, ThisExpression, Type,
+    TypeArgumentList, TypePattern, UnaryExpression, VariableInitializerValue, child, child_family,
+    child_token, child_token_in, children, children_family, nth_child_family,
 };
-use super::helpers::{
-    ASSIGNMENT_OPERATORS, BINARY_OPERATORS, is_literal_token, simple_keyword_token,
-};
+use super::helpers::{ASSIGNMENT_OPERATORS, BINARY_OPERATORS, is_literal_token};
 
 impl MethodInvocationExpression {
     #[must_use]
@@ -101,6 +100,14 @@ impl ArgumentList {
     }
 
     #[must_use]
+    pub fn has_trailing_comma(&self) -> bool {
+        let elements = self.syntax.children_with_tokens().collect::<Vec<_>>();
+        elements
+            .get(elements.len().saturating_sub(2))
+            .is_some_and(|element| element.kind() == JavaSyntaxKind::Comma)
+    }
+
+    #[must_use]
     pub fn has_empty_layout_shape(&self) -> bool {
         self.syntax
             .children_with_tokens()
@@ -155,8 +162,29 @@ impl MethodReferenceExpression {
     }
 
     #[must_use]
-    pub fn type_arguments(&self) -> Option<TypeArgumentList> {
-        child(&self.syntax)
+    pub fn qualifier_type_arguments(&self) -> Option<TypeArgumentList> {
+        let elements = self.syntax.children_with_tokens().collect::<Vec<_>>();
+        let double_colon_index = elements
+            .iter()
+            .position(|element| element.kind() == JavaSyntaxKind::DoubleColon)?;
+        elements[..double_colon_index]
+            .iter()
+            .find(|element| element.kind() == JavaSyntaxKind::TypeArgumentList)
+            .and_then(|element| element.clone().into_node())
+            .and_then(TypeArgumentList::cast)
+    }
+
+    #[must_use]
+    pub fn member_type_arguments(&self) -> Option<TypeArgumentList> {
+        let elements = self.syntax.children_with_tokens().collect::<Vec<_>>();
+        let double_colon_index = elements
+            .iter()
+            .position(|element| element.kind() == JavaSyntaxKind::DoubleColon)?;
+        elements[double_colon_index + 1..]
+            .iter()
+            .find(|element| element.kind() == JavaSyntaxKind::TypeArgumentList)
+            .and_then(|element| element.clone().into_node())
+            .and_then(TypeArgumentList::cast)
     }
 
     #[must_use]
@@ -267,31 +295,42 @@ impl LiteralExpression {
 }
 
 impl NameExpression {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation> + '_ {
+        children(&self.syntax)
+    }
+
     #[must_use]
     pub fn identifier(&self) -> Option<JavaSyntaxToken> {
-        let tokens = self
-            .syntax
+        self.syntax
             .children_with_tokens()
-            .map(jolt_syntax::SyntaxElement::into_token)
-            .collect::<Option<Vec<_>>>()?;
-        let [token] = tokens.as_slice() else {
-            return None;
-        };
-        (token.kind() == JavaSyntaxKind::Identifier).then(|| JavaSyntaxToken {
-            syntax: token.clone(),
-        })
+            .filter_map(jolt_syntax::SyntaxElement::into_token)
+            .find(|token| token.kind() == JavaSyntaxKind::Identifier)
+            .map(|syntax| JavaSyntaxToken { syntax })
     }
 
     #[must_use]
     pub fn has_simple_layout_shape(&self) -> bool {
-        self.identifier().is_some()
+        let mut saw_identifier = false;
+        for element in self.syntax.children_with_tokens() {
+            match element.kind() {
+                JavaSyntaxKind::Annotation if !saw_identifier => {}
+                JavaSyntaxKind::Identifier if !saw_identifier => saw_identifier = true,
+                _ => return false,
+            }
+        }
+        saw_identifier
     }
 }
 
 impl ThisExpression {
     #[must_use]
+    pub fn receiver(&self) -> Option<Expression> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
     pub fn token(&self) -> Option<JavaSyntaxToken> {
-        simple_keyword_token(&self.syntax, JavaSyntaxKind::ThisKw)
+        child_token(&self.syntax, JavaSyntaxKind::ThisKw)
     }
 
     #[must_use]
@@ -302,8 +341,13 @@ impl ThisExpression {
 
 impl SuperExpression {
     #[must_use]
+    pub fn receiver(&self) -> Option<Expression> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
     pub fn token(&self) -> Option<JavaSyntaxToken> {
-        simple_keyword_token(&self.syntax, JavaSyntaxKind::SuperKw)
+        child_token(&self.syntax, JavaSyntaxKind::SuperKw)
     }
 
     #[must_use]
@@ -321,6 +365,11 @@ impl FieldAccessExpression {
     #[must_use]
     pub fn name(&self) -> Option<JavaSyntaxToken> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
+    }
+
+    #[must_use]
+    pub fn type_arguments(&self) -> Option<TypeArgumentList> {
+        child(&self.syntax)
     }
 
     #[must_use]
@@ -472,6 +521,55 @@ impl ConditionalExpression {
     }
 }
 
+impl InstanceofExpression {
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn ty(&self) -> Option<Type> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn pattern(&self) -> Option<Pattern> {
+        child_family(&self.syntax)
+    }
+}
+
+impl TypePattern {
+    #[must_use]
+    pub fn local_variable_declaration(&self) -> Option<LocalVariableDeclaration> {
+        child(&self.syntax)
+    }
+}
+
+impl RecordPattern {
+    #[must_use]
+    pub fn ty(&self) -> Option<Type> {
+        child_family(&self.syntax)
+    }
+
+    pub fn components(&self) -> impl Iterator<Item = super::super::ComponentPattern> + '_ {
+        children(&self.syntax)
+    }
+}
+
+impl super::super::ComponentPattern {
+    #[must_use]
+    pub fn pattern(&self) -> Option<Pattern> {
+        child_family(&self.syntax)
+    }
+}
+
+impl super::super::MatchAllPattern {
+    #[must_use]
+    pub fn token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::UnderscoreKw)
+    }
+}
+
 impl BinaryExpression {
     #[must_use]
     pub fn left(&self) -> Option<Expression> {
@@ -583,6 +681,26 @@ impl CastExpression {
 
 impl ObjectCreationExpression {
     #[must_use]
+    pub fn qualifier(&self) -> Option<Expression> {
+        let elements = self.syntax.children_with_tokens().collect::<Vec<_>>();
+        let Some(qualifier) = elements.first() else {
+            return None;
+        };
+        let Some(dot) = elements.get(1) else {
+            return None;
+        };
+        if !Expression::can_cast(qualifier.kind()) || dot.kind() != JavaSyntaxKind::Dot {
+            return None;
+        }
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn type_arguments(&self) -> Option<TypeArgumentList> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
     pub fn ty(&self) -> Option<Type> {
         child_family(&self.syntax)
     }
@@ -600,13 +718,59 @@ impl ObjectCreationExpression {
     #[must_use]
     pub fn has_supported_layout_shape(&self) -> bool {
         let elements = self.syntax.children_with_tokens().collect::<Vec<_>>();
-        matches!(
-            elements.as_slice(),
-            [new_kw, ty, arguments]
-                if new_kw.kind() == JavaSyntaxKind::NewKw
-                    && Type::can_cast(ty.kind())
-                    && arguments.kind() == JavaSyntaxKind::ArgumentList
-        )
+        let mut index = 0;
+        if elements.get(index).is_some_and(|element| {
+            Expression::can_cast(element.kind())
+                && elements
+                    .get(index + 1)
+                    .is_some_and(|dot| dot.kind() == JavaSyntaxKind::Dot)
+        }) {
+            index += 2;
+        }
+        if !elements
+            .get(index)
+            .is_some_and(|element| element.kind() == JavaSyntaxKind::NewKw)
+        {
+            return false;
+        }
+        index += 1;
+        if elements
+            .get(index)
+            .is_some_and(|element| element.kind() == JavaSyntaxKind::TypeArgumentList)
+        {
+            let Some(arguments) = elements
+                .get(index)
+                .and_then(|element| element.clone().into_node())
+                .and_then(TypeArgumentList::cast)
+            else {
+                return false;
+            };
+            if arguments.simple_layout_parts().is_none() {
+                return false;
+            }
+            index += 1;
+        }
+        if !elements
+            .get(index)
+            .is_some_and(|element| Type::can_cast(element.kind()))
+        {
+            return false;
+        }
+        index += 1;
+        if !elements
+            .get(index)
+            .is_some_and(|element| element.kind() == JavaSyntaxKind::ArgumentList)
+        {
+            return false;
+        }
+        index += 1;
+        if elements
+            .get(index)
+            .is_some_and(|element| element.kind() == JavaSyntaxKind::ClassBody)
+        {
+            index += 1;
+        }
+        index == elements.len()
     }
 }
 
@@ -645,6 +809,14 @@ impl DimExpression {
 impl ArrayInitializer {
     pub fn values(&self) -> impl Iterator<Item = VariableInitializerValue> + '_ {
         children_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn has_trailing_comma(&self) -> bool {
+        let elements = self.syntax.children_with_tokens().collect::<Vec<_>>();
+        elements
+            .get(elements.len().saturating_sub(2))
+            .is_some_and(|element| element.kind() == JavaSyntaxKind::Comma)
     }
 }
 

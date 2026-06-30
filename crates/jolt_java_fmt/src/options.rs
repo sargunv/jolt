@@ -3,6 +3,8 @@ use jolt_fmt_ir::RenderOptions;
 /// Java formatter options.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct JavaFormatOptions {
+    /// Compatibility profile that selects Java-specific formatting policies.
+    pub profile: JavaFormatProfile,
     /// Language-neutral rendering options used by the Java formatter.
     pub render: RenderOptions,
 }
@@ -25,7 +27,7 @@ impl JavaFormatOptions {
             },
         };
 
-        Self { render }
+        Self { profile, render }
     }
 }
 

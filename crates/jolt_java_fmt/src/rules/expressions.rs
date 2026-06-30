@@ -1,20 +1,27 @@
 use super::{
     ArrayDimensions, ArrayInitializer, Doc, Expression, FormatResult, JavaFormatContext,
-    JavaSyntaxKind, JavaSyntaxToken, MethodReferenceExpression, Type, TypeArgumentList,
-    TypeLayoutPart, VariableInitializerValue, concat, format_annotation_list, format_block,
-    format_switch_expression, format_token, format_type, hard_line, join, missing_layout,
+    JavaSyntaxKind, JavaSyntaxToken, MethodReferenceExpression, Pattern, Type,
+    VariableInitializerValue, braced_type_body, concat, format_annotation, format_annotation_list,
+    format_block, format_class_body, format_local_variable_declaration_header,
+    format_multiline_token, format_switch_expression, format_token, format_type,
+    format_type_argument_list, format_type_layout_parts, java_lists, join,
     take_inline_leading_block_comment_docs, take_inline_trailing_block_comment_docs, text, wrap,
 };
+use crate::analyzers::chains::{Chain, ChainMember};
+use crate::helpers::chains as java_chains;
+use crate::helpers::literals as java_literals;
 
 pub(super) fn format_expression(
     expression: &Expression,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
     match expression {
-        Expression::LiteralExpression(literal) => format_literal_expression(literal),
-        Expression::NameExpression(name) => format_name_expression(name),
-        Expression::ThisExpression(this) => format_this_expression(this),
-        Expression::SuperExpression(super_expression) => format_super_expression(super_expression),
+        Expression::LiteralExpression(literal) => format_literal_expression(literal, context),
+        Expression::NameExpression(name) => format_name_expression(name, context),
+        Expression::ThisExpression(this) => format_this_expression(this, context),
+        Expression::SuperExpression(super_expression) => {
+            format_super_expression(super_expression, context)
+        }
         Expression::ParenthesizedExpression(parenthesized) => {
             format_parenthesized_expression(parenthesized, context)
         }
@@ -44,58 +51,161 @@ pub(super) fn format_expression(
         Expression::MethodReferenceExpression(reference) => {
             format_method_reference_expression(reference, context)
         }
+        Expression::ConditionalExpression(conditional) => {
+            format_conditional_expression(conditional, context)
+        }
+        Expression::InstanceofExpression(instanceof) => {
+            format_instanceof_expression(instanceof, context)
+        }
         Expression::SwitchExpression(switch) => format_switch_expression(switch, context),
-        _ => Err(missing_layout(
-            format!(
-                "Java formatter does not support expression kind {:?} yet",
-                expression.kind()
-            ),
-            expression.text_range(),
-        )),
     }
+}
+
+pub(super) fn format_conditional_expression(
+    conditional: &jolt_java_syntax::ConditionalExpression,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    let condition = conditional
+        .condition()
+        .map(|expression| format_expression(&expression, context))
+        .transpose()?
+        .unwrap_or_else(|| text(""));
+    let true_expression = conditional
+        .true_expression()
+        .map(|expression| format_expression(&expression, context))
+        .transpose()?
+        .unwrap_or_else(|| text(""));
+    let false_expression = conditional
+        .false_expression()
+        .map(|expression| format_expression(&expression, context))
+        .transpose()?
+        .unwrap_or_else(|| text(""));
+
+    Ok(concat([
+        condition,
+        text(" ? "),
+        true_expression,
+        text(" : "),
+        false_expression,
+    ]))
+}
+
+pub(super) fn format_instanceof_expression(
+    instanceof: &jolt_java_syntax::InstanceofExpression,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    let expression = instanceof
+        .expression()
+        .map(|expression| format_expression(&expression, context))
+        .transpose()?
+        .unwrap_or_else(|| text(""));
+    let right = if let Some(ty) = instanceof.ty() {
+        format_type(&ty, context)?
+    } else if let Some(pattern) = instanceof.pattern() {
+        format_pattern(&pattern, context)?
+    } else {
+        text("")
+    };
+
+    Ok(concat([expression, text(" instanceof "), right]))
+}
+
+pub(super) fn format_pattern(
+    pattern: &Pattern,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    match pattern {
+        Pattern::TypePattern(pattern) => {
+            let declaration = pattern
+                .local_variable_declaration()
+                .expect("parser-clean type pattern should have a local variable declaration");
+            format_local_variable_declaration_header(&declaration, context)
+        }
+        Pattern::RecordPattern(pattern) => format_record_pattern(pattern, context),
+        Pattern::ComponentPattern(pattern) => format_component_pattern(pattern, context),
+        Pattern::MatchAllPattern(pattern) => {
+            let token = pattern
+                .token()
+                .expect("parser-clean match-all pattern should have `_`");
+            Ok(format_token(&token))
+        }
+    }
+}
+
+fn format_record_pattern(
+    pattern: &jolt_java_syntax::RecordPattern,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    let ty = pattern
+        .ty()
+        .expect("parser-clean record pattern should have a type");
+    let components = pattern
+        .components()
+        .map(|component| format_component_pattern(&component, context))
+        .collect::<FormatResult<Vec<_>>>()?;
+    Ok(concat([
+        format_type(&ty, context)?,
+        java_lists::argument_list_docs(components, context.policy()),
+    ]))
+}
+
+fn format_component_pattern(
+    pattern: &jolt_java_syntax::ComponentPattern,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    let pattern = pattern
+        .pattern()
+        .expect("parser-clean component pattern should wrap a pattern");
+    format_pattern(&pattern, context)
 }
 
 pub(super) fn format_selector_chain(
     expression: &Expression,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    let (base, selectors) = collect_selector_chain(expression, context)?;
-    Ok(wrap::dot_chain(base, selectors))
+    let chain = collect_selector_chain(expression, context)?;
+    Ok(java_chains::selector_chain(chain, context.policy()))
 }
 
 pub(super) fn collect_selector_chain(
     expression: &Expression,
     context: &mut JavaFormatContext<'_>,
-) -> FormatResult<(Doc, Vec<Doc>)> {
+) -> FormatResult<Chain> {
     match expression {
-        Expression::NameExpression(name) => Ok((format_name_expression(name)?, Vec::new())),
-        Expression::ThisExpression(this) => Ok((format_this_expression(this)?, Vec::new())),
-        Expression::SuperExpression(super_expression) => {
-            Ok((format_super_expression(super_expression)?, Vec::new()))
-        }
-        Expression::ObjectCreationExpression(creation) => Ok((
+        Expression::NameExpression(name) => Ok(Chain::simple_base(
+            format_name_expression(name, context)?,
+            node_width(name.code_text_range()),
+        )),
+        Expression::ThisExpression(this) => Ok(Chain::simple_base(
+            format_this_expression(this, context)?,
+            node_width(this.code_text_range()),
+        )),
+        Expression::SuperExpression(super_expression) => Ok(Chain::base(format_super_expression(
+            super_expression,
+            context,
+        )?)),
+        Expression::ObjectCreationExpression(creation) => Ok(Chain::base(
             format_object_creation_expression(creation, context)?,
-            Vec::new(),
         )),
-        Expression::ArrayAccessExpression(array_access) => Ok((
+        Expression::ArrayAccessExpression(array_access) => Ok(Chain::complex_base(
             format_array_access_expression(array_access, context)?,
-            Vec::new(),
+            node_width(array_access.code_text_range()),
         )),
-        Expression::ClassLiteralExpression(class_literal) => Ok((
+        Expression::ClassLiteralExpression(class_literal) => Ok(Chain::complex_base(
             format_class_literal_expression(class_literal, context)?,
-            Vec::new(),
+            node_width(class_literal.code_text_range()),
         )),
-        Expression::ParenthesizedExpression(parenthesized) => Ok((
+        Expression::ParenthesizedExpression(parenthesized) => Ok(Chain::complex_base(
             format_parenthesized_expression(parenthesized, context)?,
-            Vec::new(),
+            node_width(parenthesized.code_text_range()),
         )),
         Expression::FieldAccessExpression(field) => collect_field_access_chain(field, context),
         Expression::MethodInvocationExpression(invocation) => {
             collect_method_invocation_chain(invocation, context)
         }
-        _ => Err(missing_layout(
-            "Java formatter does not support this selector chain expression yet",
-            expression.text_range(),
+        _ => Ok(Chain::complex_base(
+            format_expression(expression, context)?,
+            node_width(expression.code_text_range()),
         )),
     }
 }
@@ -103,123 +213,113 @@ pub(super) fn collect_selector_chain(
 pub(super) fn collect_field_access_chain(
     field: &jolt_java_syntax::FieldAccessExpression,
     context: &mut JavaFormatContext<'_>,
-) -> FormatResult<(Doc, Vec<Doc>)> {
-    if !field.has_supported_layout_shape() {
-        return Err(missing_layout(
-            "Java formatter does not support this field access expression shape yet",
-            field.text_range(),
-        ));
-    }
-    let receiver = field.receiver().ok_or_else(|| {
-        missing_layout(
-            "Java formatter found a field access expression without a receiver",
-            field.text_range(),
-        )
-    })?;
-    if !is_supported_selector_receiver(&receiver) {
-        return Err(missing_layout(
-            "Java formatter does not support this field access receiver yet",
-            receiver.text_range(),
-        ));
-    }
-    let name = field.name().ok_or_else(|| {
-        missing_layout(
-            "Java formatter found a field access expression without a name",
-            field.text_range(),
-        )
-    })?;
+) -> FormatResult<Chain> {
+    let receiver = field
+        .receiver()
+        .expect("parser-clean field access should have a receiver");
+    let name = field
+        .name()
+        .expect("parser-clean field access should have a name");
+    let type_arguments = field.type_arguments();
+    let selector_width = name.text().chars().count()
+        + type_arguments
+            .as_ref()
+            .map(|arguments| text_range_width(arguments.text_range()))
+            .unwrap_or_default();
+    let type_arguments = type_arguments
+        .map(|arguments| format_type_argument_list(&arguments, context))
+        .transpose()?;
 
-    let (base, mut selectors) = collect_selector_chain(&receiver, context)?;
-    selectors.push(text(name.text()));
-    Ok((base, selectors))
+    let mut chain = collect_selector_chain(&receiver, context)?;
+    chain.push(ChainMember::field(
+        concat([
+            format_token(&name),
+            type_arguments.unwrap_or_else(|| text("")),
+        ]),
+        selector_width,
+    ));
+    Ok(chain)
 }
 
 pub(super) fn collect_method_invocation_chain(
     invocation: &jolt_java_syntax::MethodInvocationExpression,
     context: &mut JavaFormatContext<'_>,
-) -> FormatResult<(Doc, Vec<Doc>)> {
-    if !invocation.has_supported_layout_shape() {
-        return Err(missing_layout(
-            "Java formatter does not support this method invocation shape yet",
-            invocation.text_range(),
-        ));
-    }
-
-    let arguments = invocation.arguments().ok_or_else(|| {
-        missing_layout(
-            "Java formatter found a method invocation without arguments",
-            invocation.text_range(),
-        )
-    })?;
-    if !arguments.has_supported_layout_shape() {
-        return Err(missing_layout(
-            "Java formatter does not support this method invocation argument shape yet",
-            arguments.text_range(),
-        ));
-    }
-    let arguments = format_argument_list(&arguments, context)?;
+) -> FormatResult<Chain> {
+    let arguments_node = invocation
+        .arguments()
+        .expect("parser-clean method invocation should have arguments");
+    let argument_count = arguments_node.arguments().count();
+    let arguments = format_argument_list(&arguments_node, context)?;
 
     if let Some(receiver) = invocation.receiver() {
-        if !is_supported_selector_receiver(&receiver) {
-            return Err(missing_layout(
-                "Java formatter does not support this method invocation receiver yet",
-                receiver.text_range(),
-            ));
-        }
-        let name = invocation.name().ok_or_else(|| {
-            missing_layout(
-                "Java formatter found a qualified method invocation without a name",
-                invocation.text_range(),
-            )
-        })?;
-        let type_arguments = invocation
-            .type_arguments()
-            .map(|arguments| format_type_argument_list(&arguments))
+        let name = invocation
+            .name()
+            .expect("parser-clean qualified method invocation should have a name");
+        let type_arguments = invocation.type_arguments();
+        let has_type_arguments = type_arguments.is_some();
+        let selector_width = name.text().chars().count()
+            + text_range_width(arguments_node.text_range())
+            + type_arguments
+                .as_ref()
+                .map(|arguments| text_range_width(arguments.text_range()))
+                .unwrap_or_default();
+        let type_arguments = type_arguments
+            .map(|arguments| format_type_argument_list(&arguments, context))
             .transpose()?;
-        let (base, mut selectors) = collect_selector_chain(&receiver, context)?;
-        selectors.push(concat([
-            type_arguments.unwrap_or_else(|| text("")),
-            text(name.text()),
-            arguments,
-        ]));
-        return Ok((base, selectors));
+        let mut chain = collect_selector_chain(&receiver, context)?;
+        chain.push(ChainMember::call(
+            concat([
+                type_arguments.unwrap_or_else(|| text("")),
+                text(name.text()),
+                arguments,
+            ]),
+            selector_width,
+            argument_count,
+            has_type_arguments,
+        ));
+        return Ok(chain);
     }
 
-    let name = invocation.simple_name().ok_or_else(|| {
-        missing_layout(
-            "Java formatter found a method invocation without a simple name",
-            invocation.text_range(),
-        )
-    })?;
-    Ok((concat([text(name.text()), arguments]), Vec::new()))
+    let name = invocation
+        .simple_name()
+        .expect("parser-clean simple method invocation should have a name");
+    Ok(Chain::call_base(
+        concat([text(name.text()), arguments]),
+        node_width(invocation.code_text_range()),
+    ))
+}
+
+fn node_width(range: Option<jolt_diagnostics::TextRange>) -> usize {
+    range.map(text_range_width).unwrap_or_default()
+}
+
+fn text_range_width(range: jolt_diagnostics::TextRange) -> usize {
+    range.end().get().saturating_sub(range.start().get())
 }
 
 pub(super) fn format_method_reference_expression(
     reference: &MethodReferenceExpression,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    if !reference.has_supported_layout_shape() {
-        return Err(missing_layout(
-            "Java formatter does not support this method reference expression shape yet",
-            reference.text_range(),
-        ));
-    }
-
     let qualifier = if let Some(expression) = reference.expression_qualifier() {
         format_expression(&expression, context)?
     } else {
         let ty = reference
             .type_qualifier()
             .expect("validated method reference should have a qualifier");
-        format_simple_expression_type(&ty, "method reference qualifier")?
+        format_simple_expression_type(&ty, context, "method reference qualifier")?
     };
     let dimensions = reference
         .dimensions()
-        .map(|dimensions| format_array_dimensions(&dimensions))
+        .map(|dimensions| format_array_dimensions(&dimensions, context))
         .transpose()?;
-    let type_arguments = reference
-        .type_arguments()
-        .map(|arguments| format_type_argument_list(&arguments))
+    let qualifier_type_arguments = reference
+        .qualifier_type_arguments()
+        .map(|arguments| format_type_argument_list(&arguments, context))
+        .transpose()?;
+    let member_type_arguments = reference
+        .member_type_arguments()
+        .map(|arguments| format_type_argument_list(&arguments, context))
         .transpose()?;
 
     let member = if reference.is_constructor_reference() {
@@ -233,79 +333,90 @@ pub(super) fn format_method_reference_expression(
 
     Ok(concat([
         qualifier,
+        qualifier_type_arguments.unwrap_or_else(|| text("")),
         dimensions.unwrap_or_else(|| text("")),
         text("::"),
-        type_arguments.unwrap_or_else(|| text("")),
+        member_type_arguments.unwrap_or_else(|| text("")),
         member,
     ]))
 }
 
 pub(super) fn format_literal_expression(
     literal: &jolt_java_syntax::LiteralExpression,
+    context: &JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    let token = literal.token().ok_or_else(|| {
-        missing_layout(
-            "Java formatter does not support this literal expression shape yet",
-            literal.text_range(),
-        )
-    })?;
-    if token.text().contains(is_line_terminator) {
-        return Err(missing_layout(
-            "Java formatter does not support multiline literals yet",
-            token.text_range(),
-        ));
+    let token = literal
+        .token()
+        .expect("parser-clean literal expression should have a literal token");
+    if token.kind() == JavaSyntaxKind::TextBlockLiteral
+        && context.policy().normalizes_text_block_indentation()
+    {
+        Ok(java_literals::text_block_literal(token.text()))
+    } else if token.text().contains(is_line_terminator) {
+        Ok(format_multiline_token(&token))
+    } else {
+        Ok(format_token(&token))
     }
-    Ok(format_token(&token))
 }
 
-pub(super) fn format_name_expression(name: &jolt_java_syntax::NameExpression) -> FormatResult<Doc> {
-    let identifier = name.identifier().ok_or_else(|| {
-        missing_layout(
-            "Java formatter only supports simple name expressions yet",
-            name.text_range(),
-        )
-    })?;
-    Ok(format_token(&identifier))
+pub(super) fn format_name_expression(
+    name: &jolt_java_syntax::NameExpression,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    let mut parts = name
+        .annotations()
+        .map(|annotation| format_annotation(&annotation, context, "type-use"))
+        .collect::<FormatResult<Vec<_>>>()?;
+    let identifier = name
+        .identifier()
+        .expect("parser-clean name expression should have an identifier");
+    parts.push(format_token(&identifier));
+    Ok(wrap::space_separated(parts))
 }
 
-pub(super) fn format_this_expression(this: &jolt_java_syntax::ThisExpression) -> FormatResult<Doc> {
-    let token = this.token().ok_or_else(|| {
-        missing_layout(
-            "Java formatter does not support this expression shape yet",
-            this.text_range(),
-        )
-    })?;
-    Ok(format_token(&token))
+pub(super) fn format_this_expression(
+    this: &jolt_java_syntax::ThisExpression,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    let token = this
+        .token()
+        .expect("parser-clean this expression should have `this`");
+    if let Some(receiver) = this.receiver() {
+        Ok(concat([
+            format_expression(&receiver, context)?,
+            text("."),
+            format_token(&token),
+        ]))
+    } else {
+        Ok(format_token(&token))
+    }
 }
 
 pub(super) fn format_super_expression(
     super_expression: &jolt_java_syntax::SuperExpression,
+    context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    let token = super_expression.token().ok_or_else(|| {
-        missing_layout(
-            "Java formatter does not support super expression shape yet",
-            super_expression.text_range(),
-        )
-    })?;
-    Ok(format_token(&token))
+    let token = super_expression
+        .token()
+        .expect("parser-clean super expression should have `super`");
+    if let Some(receiver) = super_expression.receiver() {
+        Ok(concat([
+            format_expression(&receiver, context)?,
+            text("."),
+            format_token(&token),
+        ]))
+    } else {
+        Ok(format_token(&token))
+    }
 }
 
 pub(super) fn format_parenthesized_expression(
     parenthesized: &jolt_java_syntax::ParenthesizedExpression,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    if !parenthesized.has_supported_layout_shape() {
-        return Err(missing_layout(
-            "Java formatter does not support this parenthesized expression shape yet",
-            parenthesized.text_range(),
-        ));
-    }
-    let expression = parenthesized.expression().ok_or_else(|| {
-        missing_layout(
-            "Java formatter found a parenthesized expression without an expression",
-            parenthesized.text_range(),
-        )
-    })?;
+    let expression = parenthesized
+        .expression()
+        .expect("parser-clean parenthesized expression should have an expression");
     Ok(wrap::parenthesized_expression(format_expression(
         &expression,
         context,
@@ -316,55 +427,23 @@ pub(super) fn format_class_literal_expression(
     class_literal: &jolt_java_syntax::ClassLiteralExpression,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    if !class_literal.has_supported_layout_shape() {
-        return Err(missing_layout(
-            "Java formatter does not support this class literal expression shape yet",
-            class_literal.text_range(),
-        ));
-    }
-
-    let class_token = class_literal.class_token().ok_or_else(|| {
-        missing_layout(
-            "Java formatter found a class literal expression without `class`",
-            class_literal.text_range(),
-        )
-    })?;
+    let class_token = class_literal
+        .class_token()
+        .expect("parser-clean class literal should have `class`");
 
     let qualifier = if let Some(expression) = class_literal.expression() {
         format_expression(&expression, context)?
     } else if let Some(token) = class_literal.primitive_or_void_token() {
         format_token(&token)
     } else {
-        let ty = class_literal.ty().ok_or_else(|| {
-            missing_layout(
-                "Java formatter found a class literal expression without a qualifier",
-                class_literal.text_range(),
-            )
-        })?;
-        let parts = ty.simple_layout_parts().ok_or_else(|| {
-            missing_layout(
-                "Java formatter does not support this class literal type qualifier yet",
-                ty.text_range(),
-            )
-        })?;
-        let mut docs = Vec::new();
-        for part in parts {
-            match part {
-                TypeLayoutPart::Text(value) => docs.push(text(value)),
-                TypeLayoutPart::Token(token) => docs.push(format_token(&token)),
-                TypeLayoutPart::Annotation(annotation) => {
-                    return Err(missing_layout(
-                        "Java formatter does not support annotated class literal type qualifiers yet",
-                        annotation.text_range(),
-                    ));
-                }
-            }
-        }
-        concat(docs)
+        let ty = class_literal
+            .ty()
+            .expect("parser-clean class literal should have a qualifier");
+        format_type_layout_parts(&ty.layout_parts(), context)?
     };
     let dimensions = class_literal
         .dimensions()
-        .map(|dimensions| format_array_dimensions(&dimensions))
+        .map(|dimensions| format_array_dimensions(&dimensions, context))
         .transpose()?;
 
     Ok(concat([
@@ -375,109 +454,59 @@ pub(super) fn format_class_literal_expression(
     ]))
 }
 
-pub(super) fn format_array_dimensions(dimensions: &ArrayDimensions) -> FormatResult<Doc> {
-    let count = dimensions.simple_layout_count().ok_or_else(|| {
-        missing_layout(
-            "Java formatter does not support this array dimensions shape yet",
-            dimensions.text_range(),
-        )
-    })?;
-
-    Ok(concat(std::iter::repeat_n(text("[]"), count)))
+pub(super) fn format_array_dimensions(
+    dimensions: &ArrayDimensions,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    format_type_layout_parts(&dimensions.layout_parts(), context)
 }
 
 pub(super) fn format_unary_expression(
     unary: &jolt_java_syntax::UnaryExpression,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    if !unary.has_supported_layout_shape() {
-        return Err(missing_layout(
-            "Java formatter does not support this unary expression shape yet",
-            unary.text_range(),
-        ));
-    }
-    let operator = unary.operator().ok_or_else(|| {
-        missing_layout(
-            "Java formatter found a unary expression without an operator",
-            unary.text_range(),
-        )
-    })?;
-    let operand = unary.operand().ok_or_else(|| {
-        missing_layout(
-            "Java formatter found a unary expression without an operand",
-            unary.text_range(),
-        )
-    })?;
-    if matches!(
-        operand,
-        Expression::AssignmentExpression(_) | Expression::BinaryExpression(_)
-    ) {
-        return Err(missing_layout(
-            "Java formatter does not support this unary operand without parentheses",
-            operand.text_range(),
-        ));
-    }
-    if matches!(
-        operator.kind(),
-        JavaSyntaxKind::PlusPlus | JavaSyntaxKind::MinusMinus
-    ) && !is_supported_assignment_left(&operand)
-    {
-        return Err(missing_layout(
-            "Java formatter does not support this update operand yet",
-            operand.text_range(),
-        ));
-    }
+    let operator = unary
+        .operator()
+        .expect("parser-clean unary expression should have an operator");
+    let operand = unary
+        .operand()
+        .expect("parser-clean unary expression should have an operand");
     let separator = if unary_operator_needs_separator(&operator, &operand) {
         text(" ")
     } else {
         text("")
     };
-    Ok(concat([
-        format_token(&operator),
-        separator,
-        format_expression(&operand, context)?,
-    ]))
+    let operand = format_unary_operand(&operand, context)?;
+    Ok(concat([format_token(&operator), separator, operand]))
+}
+
+fn format_unary_operand(
+    operand: &Expression,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    let doc = format_expression(operand, context)?;
+    if matches!(
+        operand,
+        Expression::AssignmentExpression(_) | Expression::BinaryExpression(_)
+    ) {
+        Ok(concat([text("("), doc, text(")")]))
+    } else {
+        Ok(doc)
+    }
 }
 
 pub(super) fn format_postfix_expression(
     postfix: &jolt_java_syntax::PostfixExpression,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    if !postfix.has_supported_layout_shape() {
-        return Err(missing_layout(
-            "Java formatter does not support this postfix expression shape yet",
-            postfix.text_range(),
-        ));
-    }
-    let operand = postfix.operand().ok_or_else(|| {
-        missing_layout(
-            "Java formatter found a postfix expression without an operand",
-            postfix.text_range(),
-        )
-    })?;
-    if matches!(
-        operand,
-        Expression::AssignmentExpression(_) | Expression::BinaryExpression(_)
-    ) {
-        return Err(missing_layout(
-            "Java formatter does not support this postfix operand without parentheses",
-            operand.text_range(),
-        ));
-    }
-    if !is_supported_assignment_left(&operand) {
-        return Err(missing_layout(
-            "Java formatter does not support this postfix operand yet",
-            operand.text_range(),
-        ));
-    }
-    let operator = postfix.operator().ok_or_else(|| {
-        missing_layout(
-            "Java formatter found a postfix expression without an operator",
-            postfix.text_range(),
-        )
-    })?;
+    let operand = postfix
+        .operand()
+        .expect("parser-clean postfix expression should have an operand");
+    let operator = postfix
+        .operator()
+        .expect("parser-clean postfix expression should have an operator");
     Ok(concat([
-        format_expression(&operand, context)?,
+        format_unary_operand(&operand, context)?,
         format_token(&operator),
     ]))
 }
@@ -486,36 +515,15 @@ pub(super) fn format_assignment_expression(
     assignment: &jolt_java_syntax::AssignmentExpression,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    if !assignment.has_supported_layout_shape() {
-        return Err(missing_layout(
-            "Java formatter does not support this assignment expression shape yet",
-            assignment.text_range(),
-        ));
-    }
-    let left = assignment.left().ok_or_else(|| {
-        missing_layout(
-            "Java formatter found an assignment expression without a left side",
-            assignment.text_range(),
-        )
-    })?;
-    if !is_supported_assignment_left(&left) {
-        return Err(missing_layout(
-            "Java formatter does not support this assignment left side yet",
-            left.text_range(),
-        ));
-    }
-    let operator = assignment.operator().ok_or_else(|| {
-        missing_layout(
-            "Java formatter found an assignment expression without an operator",
-            assignment.text_range(),
-        )
-    })?;
-    let right = assignment.right().ok_or_else(|| {
-        missing_layout(
-            "Java formatter found an assignment expression without a right side",
-            assignment.text_range(),
-        )
-    })?;
+    let left = assignment
+        .left()
+        .expect("parser-clean assignment expression should have a left side");
+    let operator = assignment
+        .operator()
+        .expect("parser-clean assignment expression should have an operator");
+    let right = assignment
+        .right()
+        .expect("parser-clean assignment expression should have a right side");
     Ok(wrap::assignment_expression(
         format_expression(&left, context)?,
         format_token(&operator),
@@ -527,24 +535,12 @@ pub(super) fn format_array_access_expression(
     array_access: &jolt_java_syntax::ArrayAccessExpression,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    if !array_access.has_supported_layout_shape() {
-        return Err(missing_layout(
-            "Java formatter does not support this array access expression shape yet",
-            array_access.text_range(),
-        ));
-    }
-    let receiver = array_access.receiver().ok_or_else(|| {
-        missing_layout(
-            "Java formatter found an array access expression without a receiver",
-            array_access.text_range(),
-        )
-    })?;
-    let index = array_access.index().ok_or_else(|| {
-        missing_layout(
-            "Java formatter found an array access expression without an index",
-            array_access.text_range(),
-        )
-    })?;
+    let receiver = array_access
+        .receiver()
+        .expect("parser-clean array access should have a receiver");
+    let index = array_access
+        .index()
+        .expect("parser-clean array access should have an index");
 
     Ok(concat([
         format_expression(&receiver, context)?,
@@ -558,29 +554,51 @@ pub(super) fn format_argument_list(
     arguments: &jolt_java_syntax::ArgumentList,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    if !arguments.has_supported_layout_shape() {
-        return Err(missing_layout(
-            "Java formatter does not support this argument list shape yet",
-            arguments.text_range(),
-        ));
+    assert!(
+        !arguments.has_trailing_comma(),
+        "parser-clean argument list should not have a trailing comma"
+    );
+    let list_range = arguments.text_range();
+    let arguments =
+        arguments
+            .arguments()
+            .map(|argument| {
+                let range = argument
+                    .code_text_range()
+                    .expect("parser-clean argument expression should have a code range");
+                let shape = argument_list_item_shape(&argument);
+                let argument = argument.clone();
+                Ok(java_lists::ListItem::new(range, move |context| {
+                    format_argument(&argument, context)
+                })
+                .with_shape(shape))
+            })
+            .collect::<FormatResult<Vec<_>>>()?;
+    java_lists::argument_list(arguments, list_range, context)
+}
+
+fn argument_list_item_shape(argument: &Expression) -> java_lists::ListItemShape {
+    match argument {
+        Expression::LiteralExpression(_)
+        | Expression::NameExpression(_)
+        | Expression::ThisExpression(_)
+        | Expression::SuperExpression(_)
+        | Expression::ClassLiteralExpression(_)
+        | Expression::FieldAccessExpression(_) => java_lists::ListItemShape::Simple,
+        Expression::MethodInvocationExpression(_) | Expression::ObjectCreationExpression(_) => {
+            java_lists::ListItemShape::Call
+        }
+        _ => java_lists::ListItemShape::Complex,
     }
-    let arguments = arguments
-        .arguments()
-        .map(|argument| format_argument(&argument, context))
-        .collect::<FormatResult<Vec<_>>>()?;
-    Ok(wrap::parenthesized_comma_list(arguments))
 }
 
 pub(super) fn format_argument(
     argument: &Expression,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    let code_range = argument.code_text_range().ok_or_else(|| {
-        missing_layout(
-            "Java formatter found an empty argument expression",
-            argument.text_range(),
-        )
-    })?;
+    let code_range = argument
+        .code_text_range()
+        .expect("parser-clean argument expression should have a code range");
     let comments = take_inline_leading_block_comment_docs(context, code_range);
     let expression = format_expression(argument, context)?;
     let trailing_comments = take_inline_trailing_block_comment_docs(context, code_range);
@@ -601,18 +619,12 @@ pub(super) fn format_cast_expression(
     cast: &jolt_java_syntax::CastExpression,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    let ty = cast.ty().ok_or_else(|| {
-        missing_layout(
-            "Java formatter found a cast expression without a type",
-            cast.text_range(),
-        )
-    })?;
-    let expression = cast.expression().ok_or_else(|| {
-        missing_layout(
-            "Java formatter found a cast expression without an operand",
-            cast.text_range(),
-        )
-    })?;
+    let ty = cast
+        .ty()
+        .expect("parser-clean cast expression should have a type");
+    let expression = cast
+        .expression()
+        .expect("parser-clean cast expression should have an expression");
 
     Ok(group_cast_expression(
         format_type(&ty, context)?,
@@ -628,42 +640,51 @@ pub(super) fn format_object_creation_expression(
     creation: &jolt_java_syntax::ObjectCreationExpression,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    if !creation.has_supported_layout_shape() {
-        return Err(missing_layout(
-            "Java formatter does not support this object creation expression shape yet",
-            creation.text_range(),
-        ));
-    }
-    let ty = creation.ty().ok_or_else(|| {
-        missing_layout(
-            "Java formatter found an object creation expression without a type",
-            creation.text_range(),
-        )
-    })?;
-    let arguments = creation.arguments().ok_or_else(|| {
-        missing_layout(
-            "Java formatter found an object creation expression without arguments",
-            creation.text_range(),
-        )
-    })?;
+    let ty = creation
+        .ty()
+        .expect("parser-clean object creation should have a type");
+    let qualifier = creation
+        .qualifier()
+        .map(|qualifier| format_expression(&qualifier, context))
+        .transpose()?;
+    let type_arguments = creation
+        .type_arguments()
+        .map(|arguments| format_type_argument_list(&arguments, context))
+        .transpose()?;
+    let arguments = creation
+        .arguments()
+        .expect("parser-clean object creation should have arguments");
+    let body = creation
+        .body()
+        .map(|body| format_class_body(&body, context))
+        .transpose()?;
 
-    Ok(concat([
-        text("new "),
-        format_type(&ty, context)?,
-        format_argument_list(&arguments, context)?,
-    ]))
+    let mut parts = Vec::new();
+    if let Some(qualifier) = qualifier {
+        parts.push(qualifier);
+        parts.push(text("."));
+    }
+    parts.push(text("new "));
+    if let Some(type_arguments) = type_arguments {
+        parts.push(type_arguments);
+    }
+    parts.push(format_type(&ty, context)?);
+    parts.push(format_argument_list(&arguments, context)?);
+    if let Some(body) = body {
+        parts.push(text(" "));
+        parts.push(braced_type_body(body));
+    }
+
+    Ok(concat(parts))
 }
 
 pub(super) fn format_array_creation_expression(
     creation: &jolt_java_syntax::ArrayCreationExpression,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    let ty = creation.ty().ok_or_else(|| {
-        missing_layout(
-            "Java formatter found an array creation expression without a type",
-            creation.text_range(),
-        )
-    })?;
+    let ty = creation
+        .ty()
+        .expect("parser-clean array creation should have a type");
 
     let dimensions = creation
         .dimensions()
@@ -671,19 +692,17 @@ pub(super) fn format_array_creation_expression(
         .collect::<FormatResult<Vec<_>>>()?;
     let trailing_dimensions = creation
         .trailing_dimensions()
-        .map(|dimensions| format_array_dimensions(&dimensions))
+        .map(|dimensions| format_array_dimensions(&dimensions, context))
         .transpose()?;
     let initializer = creation
         .initializer()
         .map(|initializer| format_array_initializer(&initializer, context))
         .transpose()?;
 
-    if dimensions.is_empty() && initializer.is_none() {
-        return Err(missing_layout(
-            "Java formatter found an array creation expression without dimensions or an initializer",
-            creation.text_range(),
-        ));
-    }
+    assert!(
+        !dimensions.is_empty() || initializer.is_some(),
+        "parser-clean array creation should have dimensions or an initializer"
+    );
 
     let mut parts = vec![text("new "), format_type(&ty, context)?];
     parts.extend(dimensions);
@@ -703,12 +722,9 @@ pub(super) fn format_dim_expression(
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
     let annotations = format_annotation_list(dimension.annotations(), context, "type-use")?;
-    let expression = dimension.expression().ok_or_else(|| {
-        missing_layout(
-            "Java formatter found an array dimension without an expression",
-            dimension.text_range(),
-        )
-    })?;
+    let expression = dimension
+        .expression()
+        .expect("parser-clean dimension expression should have an expression");
 
     let mut parts = Vec::new();
     if !annotations.is_empty() {
@@ -727,24 +743,52 @@ pub(super) fn format_array_initializer(
     initializer: &ArrayInitializer,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    let values = initializer
-        .values()
-        .map(|value| format_variable_initializer_value(&value, context))
+    let has_trailing_comma = initializer.has_trailing_comma();
+    let values = initializer.values().collect::<Vec<_>>();
+    let one_per_line = values
+        .iter()
+        .any(array_initializer_value_prefers_vertical_layout);
+    let mut values = values
+        .iter()
+        .map(|value| format_variable_initializer_value(value, context))
         .collect::<FormatResult<Vec<_>>>()?;
 
     if values.is_empty() {
         return Ok(text("{}"));
     }
+    if has_trailing_comma && let Some(last) = values.last_mut() {
+        *last = concat([last.clone(), text(",")]);
+    }
 
-    Ok(concat([
-        text("{"),
-        jolt_fmt_ir::indent(concat([
-            hard_line(),
-            join(concat([text(","), hard_line()]), values),
-        ])),
-        hard_line(),
-        text("}"),
-    ]))
+    if one_per_line {
+        return Ok(wrap::braced_comma_block_one_per_line(values));
+    }
+
+    Ok(wrap::braced_comma_block(values))
+}
+
+fn array_initializer_value_prefers_vertical_layout(value: &VariableInitializerValue) -> bool {
+    match value {
+        VariableInitializerValue::FieldAccessExpression(_)
+        | VariableInitializerValue::MethodInvocationExpression(_) => true,
+        VariableInitializerValue::LiteralExpression(literal) => {
+            literal.token().is_some_and(|token| {
+                token.kind() == JavaSyntaxKind::StringLiteral && token.text().len() >= 10
+            })
+        }
+        VariableInitializerValue::ParenthesizedExpression(parenthesized) => {
+            parenthesized.expression().is_some_and(|expression| {
+                matches!(
+                    expression,
+                    Expression::FieldAccessExpression(_)
+                        | Expression::MethodInvocationExpression(_)
+                        | Expression::ObjectCreationExpression(_)
+                        | Expression::ArrayCreationExpression(_)
+                )
+            })
+        }
+        _ => false,
+    }
 }
 
 pub(super) fn format_variable_initializer_value(
@@ -752,11 +796,13 @@ pub(super) fn format_variable_initializer_value(
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
     match value {
-        VariableInitializerValue::LiteralExpression(literal) => format_literal_expression(literal),
-        VariableInitializerValue::NameExpression(name) => format_name_expression(name),
-        VariableInitializerValue::ThisExpression(this) => format_this_expression(this),
+        VariableInitializerValue::LiteralExpression(literal) => {
+            format_literal_expression(literal, context)
+        }
+        VariableInitializerValue::NameExpression(name) => format_name_expression(name, context),
+        VariableInitializerValue::ThisExpression(this) => format_this_expression(this, context),
         VariableInitializerValue::SuperExpression(super_expression) => {
-            format_super_expression(super_expression)
+            format_super_expression(super_expression, context)
         }
         VariableInitializerValue::ParenthesizedExpression(parenthesized) => {
             format_parenthesized_expression(parenthesized, context)
@@ -810,14 +856,12 @@ pub(super) fn format_variable_initializer_value(
         VariableInitializerValue::ArrayInitializer(initializer) => {
             format_array_initializer(initializer, context)
         }
-        VariableInitializerValue::ConditionalExpression(_)
-        | VariableInitializerValue::InstanceofExpression(_) => Err(missing_layout(
-            format!(
-                "Java formatter does not support array initializer value kind {:?} yet",
-                value.kind()
-            ),
-            value.text_range(),
-        )),
+        VariableInitializerValue::ConditionalExpression(conditional) => {
+            format_conditional_expression(conditional, context)
+        }
+        VariableInitializerValue::InstanceofExpression(instanceof) => {
+            format_instanceof_expression(instanceof, context)
+        }
     }
 }
 
@@ -825,33 +869,23 @@ pub(super) fn format_lambda_expression(
     lambda: &jolt_java_syntax::LambdaExpression,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    if !lambda.has_supported_layout_shape() {
-        return Err(missing_layout(
-            "Java formatter does not support this lambda expression shape yet",
-            lambda.text_range(),
-        ));
-    }
-
     let parameters = if lambda.has_empty_parameter_list() {
         text("()")
     } else if let Some(parameter) = lambda.single_parameter() {
-        format_lambda_parameter(&parameter)?
+        format_lambda_parameter(&parameter, context)?
     } else {
         let parameters = lambda
             .parameters()
             .expect("validated lambda expression should have parameters");
-        format_lambda_parameter_list(&parameters)?
+        format_lambda_parameter_list(&parameters, context)?
     };
 
     let body = if let Some(expression) = lambda.expression_body() {
         format_expression(&expression, context)?
     } else {
-        let block = lambda.block_body().ok_or_else(|| {
-            missing_layout(
-                "Java formatter found a lambda expression without a body",
-                lambda.text_range(),
-            )
-        })?;
+        let block = lambda
+            .block_body()
+            .expect("parser-clean lambda expression should have a body");
         format_block(&block, context)?
     };
 
@@ -860,16 +894,27 @@ pub(super) fn format_lambda_expression(
 
 pub(super) fn format_lambda_parameter_list(
     parameters: &jolt_java_syntax::LambdaParameterList,
+    context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
+    let list_range = parameters.text_range();
     let parameters = parameters
         .parameters()
-        .map(|parameter| format_lambda_parameter(&parameter))
+        .map(|parameter| {
+            let range = parameter
+                .code_text_range()
+                .expect("validated lambda parameter should have a code range");
+            let parameter = parameter.clone();
+            Ok(java_lists::ListItem::new(range, move |context| {
+                format_lambda_parameter(&parameter, context)
+            }))
+        })
         .collect::<FormatResult<Vec<_>>>()?;
-    Ok(wrap::parenthesized_comma_list(parameters))
+    java_lists::argument_list(parameters, list_range, context)
 }
 
 pub(super) fn format_lambda_parameter(
     parameter: &jolt_java_syntax::LambdaParameter,
+    context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
     let name = parameter
         .name()
@@ -884,14 +929,14 @@ pub(super) fn format_lambda_parameter(
         let prefix = if let Some(ellipsis) = parameter.ellipsis() {
             concat([
                 final_prefix,
-                format_simple_expression_type(&ty, "lambda parameter")?,
+                format_simple_expression_type(&ty, context, "lambda parameter")?,
                 format_token(&ellipsis),
                 text(" "),
             ])
         } else {
             concat([
                 final_prefix,
-                format_simple_expression_type(&ty, "lambda parameter")?,
+                format_simple_expression_type(&ty, context, "lambda parameter")?,
                 text(" "),
             ])
         };
@@ -910,78 +955,30 @@ pub(super) fn format_lambda_parameter(
     Ok(concat([final_prefix, format_token(&name)]))
 }
 
-pub(super) fn format_simple_expression_type(ty: &Type, context: &str) -> FormatResult<Doc> {
-    let parts = ty.simple_layout_parts().ok_or_else(|| {
-        missing_layout(
-            format!("Java formatter does not support this {context} type shape yet"),
-            ty.text_range(),
-        )
-    })?;
-    format_simple_type_layout_parts(parts, context)
-}
-
-pub(super) fn format_type_argument_list(arguments: &TypeArgumentList) -> FormatResult<Doc> {
-    let parts = arguments
-        .simple_layout_parts()
-        .expect("validated method invocation should have supported type arguments");
-    format_simple_type_layout_parts(parts, "method invocation type argument")
-}
-
-pub(super) fn format_simple_type_layout_parts(
-    parts: Vec<TypeLayoutPart>,
-    context: &str,
+pub(super) fn format_simple_expression_type(
+    ty: &Type,
+    context: &mut JavaFormatContext<'_>,
+    type_context: &str,
 ) -> FormatResult<Doc> {
-    let mut docs = Vec::new();
-    for part in parts {
-        match part {
-            TypeLayoutPart::Text(value) => docs.push(text(value)),
-            TypeLayoutPart::Token(token) => docs.push(format_token(&token)),
-            TypeLayoutPart::Annotation(annotation) => {
-                return Err(missing_layout(
-                    format!("Java formatter does not support annotated {context} types yet"),
-                    annotation.text_range(),
-                ));
-            }
-        }
-    }
-
-    Ok(concat(docs))
+    let _ = type_context;
+    format_type_layout_parts(&ty.layout_parts(), context)
 }
 
 pub(super) fn format_binary_expression(
     binary: &jolt_java_syntax::BinaryExpression,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    if !binary.has_supported_layout_shape() {
-        return Err(missing_layout(
-            "Java formatter does not support this binary expression shape yet",
-            binary.text_range(),
-        ));
-    }
-    let operator = binary.operator().ok_or_else(|| {
-        missing_layout(
-            "Java formatter found a binary expression without an operator",
-            binary.text_range(),
-        )
-    })?;
-    let precedence = binary_precedence(operator.kind()).ok_or_else(|| {
-        missing_layout(
-            "Java formatter does not support this binary operator yet",
-            operator.text_range(),
-        )
-    })?;
-    let left = binary.left().ok_or_else(|| {
-        missing_layout(
-            "Java formatter found a binary expression without a left side",
-            binary.text_range(),
-        )
-    })?;
-    let right = binary.right().ok_or_else(|| {
-        missing_layout(
-            "Java formatter found a binary expression without a right side",
-            binary.text_range(),
-        )
-    })?;
+    let operator = binary
+        .operator()
+        .expect("parser-clean binary expression should have an operator");
+    let precedence = binary_precedence(operator.kind())
+        .expect("parser-clean binary expression should have a binary operator");
+    let left = binary
+        .left()
+        .expect("parser-clean binary expression should have a left side");
+    let right = binary
+        .right()
+        .expect("parser-clean binary expression should have a right side");
 
     let mut first = None;
     let mut rest = Vec::new();
@@ -991,12 +988,7 @@ pub(super) fn format_binary_expression(
         format_binary_operand(&right, precedence, BinarySide::Right, context)?,
     ));
 
-    let first = first.ok_or_else(|| {
-        missing_layout(
-            "Java formatter found a binary expression without a left chain",
-            binary.text_range(),
-        )
-    })?;
+    let first = first.expect("parser-clean binary expression should have a first operand");
     Ok(wrap::binary_chain(first, rest))
 }
 
@@ -1013,34 +1005,19 @@ pub(super) fn collect_binary_left_chain(
     rest: &mut Vec<(Doc, Doc)>,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<()> {
-    if let Expression::BinaryExpression(binary) = expression
-        && binary.has_supported_layout_shape()
-    {
-        let operator = binary.operator().ok_or_else(|| {
-            missing_layout(
-                "Java formatter found a binary expression without an operator",
-                binary.text_range(),
-            )
-        })?;
-        let child_precedence = binary_precedence(operator.kind()).ok_or_else(|| {
-            missing_layout(
-                "Java formatter does not support this binary operator yet",
-                operator.text_range(),
-            )
-        })?;
+    if let Expression::BinaryExpression(binary) = expression {
+        let operator = binary
+            .operator()
+            .expect("parser-clean binary expression should have an operator");
+        let child_precedence = binary_precedence(operator.kind())
+            .expect("parser-clean binary expression should have a binary operator");
         if child_precedence == parent_precedence {
-            let left = binary.left().ok_or_else(|| {
-                missing_layout(
-                    "Java formatter found a binary expression without a left side",
-                    binary.text_range(),
-                )
-            })?;
-            let right = binary.right().ok_or_else(|| {
-                missing_layout(
-                    "Java formatter found a binary expression without a right side",
-                    binary.text_range(),
-                )
-            })?;
+            let left = binary
+                .left()
+                .expect("parser-clean binary expression should have a left side");
+            let right = binary
+                .right()
+                .expect("parser-clean binary expression should have a right side");
 
             collect_binary_left_chain(&left, parent_precedence, first, rest, context)?;
             rest.push((
@@ -1070,18 +1047,11 @@ fn format_binary_operand(
     let Expression::BinaryExpression(binary) = operand else {
         return Ok(doc);
     };
-    let operator = binary.operator().ok_or_else(|| {
-        missing_layout(
-            "Java formatter found a binary expression without an operator",
-            binary.text_range(),
-        )
-    })?;
-    let child_precedence = binary_precedence(operator.kind()).ok_or_else(|| {
-        missing_layout(
-            "Java formatter does not support this binary operator yet",
-            operator.text_range(),
-        )
-    })?;
+    let operator = binary
+        .operator()
+        .expect("parser-clean binary expression should have an operator");
+    let child_precedence = binary_precedence(operator.kind())
+        .expect("parser-clean binary expression should have a binary operator");
     let needs_parentheses = child_precedence < parent_precedence
         || (child_precedence == parent_precedence && matches!(side, BinarySide::Right));
     if needs_parentheses {
@@ -1109,32 +1079,6 @@ pub(super) fn binary_precedence(kind: JavaSyntaxKind) -> Option<u8> {
         JavaSyntaxKind::Star | JavaSyntaxKind::Slash | JavaSyntaxKind::Percent => Some(12),
         _ => None,
     }
-}
-
-pub(super) fn is_supported_selector_receiver(expression: &Expression) -> bool {
-    match expression {
-        Expression::NameExpression(_)
-        | Expression::ThisExpression(_)
-        | Expression::SuperExpression(_)
-        | Expression::ClassLiteralExpression(_)
-        | Expression::FieldAccessExpression(_)
-        | Expression::MethodInvocationExpression(_)
-        | Expression::ArrayAccessExpression(_)
-        | Expression::ObjectCreationExpression(_) => true,
-        Expression::ParenthesizedExpression(parenthesized) => parenthesized
-            .expression()
-            .is_some_and(|inner| is_supported_selector_receiver(&inner)),
-        _ => false,
-    }
-}
-
-pub(super) fn is_supported_assignment_left(expression: &Expression) -> bool {
-    matches!(
-        expression,
-        Expression::NameExpression(_)
-            | Expression::FieldAccessExpression(_)
-            | Expression::ArrayAccessExpression(_)
-    )
 }
 
 pub(super) fn unary_operator_needs_separator(

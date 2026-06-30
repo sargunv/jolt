@@ -619,7 +619,8 @@ java_cst! {
 
 mod accessors;
 pub use accessors::{
-    CompilationUnitMember, FormalParameterModifier, SwitchBlockItem, SwitchRuleBody, TypeLayoutPart,
+    AnnotationElementListItem, CompilationUnitMember, FormalParameterModifier, SwitchBlockItem,
+    SwitchLabelItem, SwitchRuleBody, TypeLayoutPart,
 };
 
 pub(crate) fn cast_compilation_unit(syntax: JavaSyntaxNode) -> Option<CompilationUnit> {

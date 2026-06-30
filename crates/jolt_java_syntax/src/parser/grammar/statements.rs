@@ -361,11 +361,13 @@ impl Parser<'_> {
         let specification = self.start();
         self.expect(JavaSyntaxKind::LParen, "expected resource specification");
         let resources = self.start();
+        let mut saw_resource = false;
         while !self.at_eof()
             && !self.at(JavaSyntaxKind::RParen)
             && !self.at(JavaSyntaxKind::Semicolon)
         {
             self.parse_resource();
+            saw_resource = true;
             if !self.at(JavaSyntaxKind::Semicolon)
                 || matches!(
                     self.nth_kind(1),
@@ -375,6 +377,9 @@ impl Parser<'_> {
                 break;
             }
             self.bump();
+        }
+        if !saw_resource {
+            self.expected_here("expected resource");
         }
         self.complete(resources, JavaSyntaxKind::ResourceList);
         self.eat(JavaSyntaxKind::Semicolon);
@@ -591,7 +596,8 @@ impl Parser<'_> {
         }
 
         self.expect(JavaSyntaxKind::CaseKw, "expected `case`");
-        let mut saw_case_item = false;
+        let mut saw_any_case_item = false;
+        let mut expecting_case_item = true;
         let mut previous_was_pattern = false;
         while !self.at_eof()
             && !matches!(
@@ -600,12 +606,15 @@ impl Parser<'_> {
             )
         {
             if self.eat(JavaSyntaxKind::Comma) {
-                saw_case_item = false;
+                if expecting_case_item {
+                    self.expected_here("expected switch case label item");
+                }
+                expecting_case_item = true;
                 previous_was_pattern = false;
             } else if self.at_contextual("when") && previous_was_pattern {
                 self.parse_guard();
                 previous_was_pattern = false;
-            } else if self.at_contextual("when") && saw_case_item {
+            } else if self.at_contextual("when") && !expecting_case_item {
                 let error = self.start();
                 self.invalid_switch_guard_here("switch guard requires a pattern");
                 self.parse_guard();
@@ -619,17 +628,23 @@ impl Parser<'_> {
                     JavaSyntaxKind::Arrow,
                 ]);
                 self.complete(case_pattern, JavaSyntaxKind::CasePattern);
-                saw_case_item = true;
+                saw_any_case_item = true;
+                expecting_case_item = false;
                 previous_was_pattern = true;
             } else if self.at(JavaSyntaxKind::DefaultKw) {
                 self.bump();
-                saw_case_item = true;
+                saw_any_case_item = true;
+                expecting_case_item = false;
                 previous_was_pattern = false;
             } else {
                 self.parse_case_constant();
-                saw_case_item = true;
+                saw_any_case_item = true;
+                expecting_case_item = false;
                 previous_was_pattern = false;
             }
+        }
+        if expecting_case_item || !saw_any_case_item {
+            self.expected_here("expected switch case label item");
         }
         self.complete(label, JavaSyntaxKind::SwitchLabel);
     }

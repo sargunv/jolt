@@ -1,11 +1,14 @@
 //! Java formatter implementation for Jolt.
 
+mod analyzers;
 mod api;
 mod comments;
 mod context;
 mod diagnostics;
+mod helpers;
 mod layout;
 mod options;
+mod policy;
 mod rules;
 
 pub use api::{

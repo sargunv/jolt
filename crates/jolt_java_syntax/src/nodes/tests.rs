@@ -769,7 +769,7 @@ fn member_layout_accessors_account_for_supported_direct_shapes() {
             .declarators()
             .next()
             .expect("field declarator")
-            .has_identifier_layout_shape()
+            .has_supported_layout_shape()
     );
 
     let constructor = descendants::<ConstructorDeclaration>(&syntax)
@@ -1158,7 +1158,7 @@ fn expression_layout_accessors_account_for_phase_7_shapes() {
         .declarators()
         .next()
         .expect("field declarator");
-    assert!(field_declarator.has_identifier_layout_shape());
+    assert!(field_declarator.has_supported_layout_shape());
     let field_initializer = field_declarator.initializer().expect("field initializer");
     assert!(field_initializer.has_expression_layout_shape());
     assert!(matches!(
@@ -1176,7 +1176,7 @@ fn expression_layout_accessors_account_for_phase_7_shapes() {
         .declarators()
         .next()
         .expect("local declarator");
-    assert!(local_declarator.has_identifier_layout_shape());
+    assert!(local_declarator.has_supported_layout_shape());
     assert!(matches!(
         local_declarator
             .initializer()

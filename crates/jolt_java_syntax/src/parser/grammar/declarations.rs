@@ -177,11 +177,19 @@ impl Parser<'_> {
 
         let list = self.start();
         self.bump();
+        let mut saw_parameter = false;
+        let mut expecting_parameter = true;
         while !self.at_eof() && !self.at_type_argument_close() {
             self.parse_type_parameter();
+            saw_parameter = true;
+            expecting_parameter = false;
             if !self.eat(JavaSyntaxKind::Comma) {
                 break;
             }
+            expecting_parameter = true;
+        }
+        if expecting_parameter || !saw_parameter {
+            self.expected_here("expected type parameter");
         }
         self.eat_type_argument_close();
         self.complete(list, JavaSyntaxKind::TypeParameterList);
@@ -235,20 +243,36 @@ impl Parser<'_> {
     }
 
     pub(super) fn parse_type_list_until_clause_end(&mut self) {
+        let mut saw_type = false;
+        let mut expecting_type = true;
         while !self.at_eof() && !self.at_header_clause_end() {
             self.parse_class_type();
+            saw_type = true;
+            expecting_type = false;
             if !self.eat(JavaSyntaxKind::Comma) {
                 break;
             }
+            expecting_type = true;
+        }
+        if expecting_type || !saw_type {
+            self.expected_here("expected type");
         }
     }
 
     pub(super) fn parse_type_name_list_until_clause_end(&mut self) {
+        let mut saw_name = false;
+        let mut expecting_name = true;
         while !self.at_eof() && !self.at_header_clause_end() {
             self.consume_qualified_name();
+            saw_name = true;
+            expecting_name = false;
             if !self.eat(JavaSyntaxKind::Comma) {
                 break;
             }
+            expecting_name = true;
+        }
+        if expecting_name || !saw_name {
+            self.expected_here("expected type name");
         }
     }
 
@@ -260,11 +284,17 @@ impl Parser<'_> {
 
         if !self.at(JavaSyntaxKind::RParen) {
             let list = self.start();
+            let mut expecting_component = true;
             while !self.at_eof() && !self.at(JavaSyntaxKind::RParen) {
                 self.parse_record_component();
+                expecting_component = false;
                 if !self.eat(JavaSyntaxKind::Comma) {
                     break;
                 }
+                expecting_component = true;
+            }
+            if expecting_component {
+                self.expected_here("expected record component");
             }
             self.complete(list, JavaSyntaxKind::RecordComponentList);
         }
@@ -501,6 +531,7 @@ impl Parser<'_> {
         if !self.at(JavaSyntaxKind::RParen) {
             let list = self.start();
             let mut allow_receiver = true;
+            let mut expecting_parameter = true;
             while !self.at_eof() && !self.at(JavaSyntaxKind::RParen) {
                 if allow_receiver && self.starts_receiver_parameter() {
                     self.parse_receiver_parameter();
@@ -524,9 +555,14 @@ impl Parser<'_> {
                     }
                 }
                 allow_receiver = false;
+                expecting_parameter = false;
                 if !self.eat(JavaSyntaxKind::Comma) {
                     break;
                 }
+                expecting_parameter = true;
+            }
+            if expecting_parameter {
+                self.expected_here("expected parameter");
             }
             self.complete(list, JavaSyntaxKind::FormalParameterList);
         }
@@ -581,6 +617,8 @@ impl Parser<'_> {
 
         let clause = self.start();
         self.bump();
+        let mut saw_type = false;
+        let mut expecting_type = true;
         while !self.at_eof()
             && !matches!(
                 self.current_kind(),
@@ -588,9 +626,15 @@ impl Parser<'_> {
             )
         {
             self.parse_class_type();
+            saw_type = true;
+            expecting_type = false;
             if !self.eat(JavaSyntaxKind::Comma) {
                 break;
             }
+            expecting_type = true;
+        }
+        if expecting_type || !saw_type {
+            self.expected_here("expected thrown type");
         }
         self.complete(clause, JavaSyntaxKind::ThrowsClause);
     }

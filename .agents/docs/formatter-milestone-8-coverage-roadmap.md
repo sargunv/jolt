@@ -1,740 +1,705 @@
-# Formatter Milestone 8 Coverage Roadmap
+# Formatter Abstraction Layer Improvement Plan
 
-Milestone 8 is not complete until Jolt can format any valid Java source accepted
-by `jolt_java_syntax` without returning `java.format.missing_layout_rules`.
+The Java formatter has crossed the first important architectural threshold:
+parser-clean Java accepted by `jolt_java_syntax` should be routed through real
+layout rules, not unsupported-layout exits. The next phase is to make the
+formatter easier to improve without turning every oracle mismatch into a local
+case patch.
 
-The parser/input layer is not expected to be the blocker for Milestone 8. The
-remaining work is formatter coverage: the layout builder still contains broad
-unsupported-shape guards and explicit `missing_layout` exits for valid Java
-syntax. Those exits are useful while developing because they prevent partial
-output, but every valid-Java `missing_layout` path must be removed before
-Milestone 8 is done.
+This document replaces the old coverage-blocker inventory. Its focus is the
+abstraction layer between Java CST wrappers and the shared document IR.
 
-## Completion Bar
+## Current Status
 
-Coverage and oracle compatibility are related but separate:
+The broad architecture remains correct:
 
-- Coverage: every valid Java source that parses cleanly formats without
-  `java.format.missing_layout_rules`.
-- Safety: parse diagnostics still block formatting without output.
-- Rendering: render failures are internal bugs, not acceptable blocked output.
-- Oracle measurement: the pinned valid google-java-format corpus reports exact
-  matches and aggregate diff size as progress metrics, not Milestone 8 exit
-  criteria.
-- Source inventory: every `missing_layout` call site is either removed, narrowed
-  to invalid/unreachable parser-clean structure, or covered by a test proving
-  the input is not valid clean Java.
+```text
+source text
+  -> jolt_java_syntax parser
+  -> lossless CST + wrapper accessors
+  -> Java rule modules
+  -> Java layout helpers
+  -> shared document IR
+  -> shared renderer
+```
 
-The source inventory criterion is required because the oracle corpus is finite.
-Passing the pinned corpus is not the same as being able to format any valid Java
-source.
+The right next step is not a different formatter architecture. The right next
+step is stronger Java-specific layout abstractions so the rule modules describe
+syntax roles and the helper layer owns formatting policy.
 
-## Early Wrapping Policy And Architecture
+Current strengths:
 
-Wrapping is not a late oracle-compatibility pass. The current Java formatter can
-emit short flat files, but it does not yet use the renderer's width-aware group
-machinery in the rules that will unlock declarations, lists, chains,
-expressions, and comments. Those rule families should land with wrapping from
-the start, because adding them as flat-only formatters would immediately create
-valid formatted output that is structurally wrong for long Java sources.
+- Java formatting profiles are part of formatter options and context.
+- Rule code is split by domain: compilation units, declarations, expressions,
+  statements, annotations, types, names, and tokens.
+- The shared renderer stays language-neutral.
+- Comment trivia is tracked in the Java formatter rather than hidden in the
+  parser or renderer.
+- Oracle scoreboards provide integration feedback across Google, AOSP, and
+  Palantir profiles.
 
-### google-java-format Policy Audit
+Current pressure points:
 
-Primary source revision:
-`google-java-format@fb9528917c524c8eb9c8c0d7b4bcd7ce3b6a604b`.
+- `declarations.rs`, `expressions.rs`, and `statements.rs` still contain too
+  much local policy.
+- `layout.rs` has useful primitives, but not enough domain-shaped helpers.
+- Comment handling is accounted for in simple cases, but the current
+  source-ordered cursor and late remaining-comment appendage are transitional.
+  The long-term model needs explicit ownership before list, chain, declaration,
+  and body helpers can place comments well.
+- Profile-specific behavior exists, but the abstraction boundary for profile
+  policy is still thin.
+- The largest oracle diffs are layout-policy issues, especially nested call
+  chains, argument lists, text blocks, and Palantir-specific indentation.
 
-Actionable policy:
+## Reference Project Lessons
 
-- Line width is fixed at 100 columns for the Google profile. The formatter emits
-  break opportunities and lets document fitting choose which levels break.
-- Style changes the indentation multiplier, not the width. Google uses the
-  normal logical indentation unit; AOSP doubles it.
-- Wrapping is represented with document breaks, not rule-local
-  `if length > width` checks. Breaks are selected as unified, independent, or
-  forced groups.
-- Method and constructor headers need a specialized helper, not a generic list:
-  type parameters, return type, name, parameters, throws clauses, default
-  values, and bodies have separate break tags and conditional indentation.
-- Variable, field, and parameter declarations need a tagged break between type
-  and name. If the type breaks, the name and initializer align through
-  conditional indentation; initializers break after `=`.
-- Argument and formal-parameter lists open with a break opportunity after `(`,
-  then use comma separators with break opportunities. Short item lists may fill
-  independently; longer lists break in unified form.
-- Type arguments and type parameters need their own helpers because `<...>`
-  lists use different opening and separator breaks than call arguments.
-- Method chains must be flattened before formatting. Member select, invocation,
-  and array access selectors should go through one `dot_chain` helper that
-  breaks before dots and handles prefix classification.
-- Binary expressions should flatten only across operators of the same
-  precedence. Break before the operator for binary operators; break after the
-  operator for assignment and compound assignment.
-- Annotation layout is declaration-sensitive. Type declarations use vertical
-  declaration annotations; fields and locals allow horizontal annotations only
-  in narrower cases. Annotation argument lists use the same grouped list
-  machinery as calls.
-- Comment handling participates in wrapping. Trailing line comments are suffixes
-  that affect group fitting; line comments are normalized and wrapped to the
-  same 100-column target; Javadocs and block comments need indentation-aware
-  preservation.
-- Blank lines are explicit layout requests. Top-level sections, blocks,
-  statement lists, and class bodies each have their own blank-line policy.
+The plan is intentionally informed by Ruff, Oxc, and Prettier, but Jolt should
+copy their boundaries rather than their exact APIs.
 
-Relevant google-java-format source identifiers: `Formatter.MAX_LINE_LENGTH`,
-`Formatter.format`, `Doc.FillMode`, `Doc.Level.computeBreaks`, `Doc.Break`,
-`JavaFormatterOptions.Style`, `JavaInputAstVisitor.visitMethod`,
-`JavaInputAstVisitor.visitClassDeclaration`,
-`JavaInputAstVisitor.visitRecordDeclaration`,
-`JavaInputAstVisitor.typeParametersRest`,
-`JavaInputAstVisitor.classDeclarationTypeList`,
-`JavaInputAstVisitor.declareOne`, `JavaInputAstVisitor.addArguments`,
-`JavaInputAstVisitor.argList`, `JavaInputAstVisitor.hasOnlyShortItems`,
-`JavaInputAstVisitor.visitDot`, `JavaInputAstVisitor.visitRegularDot`,
-`JavaInputAstVisitor.walkInfix`, `JavaInputAstVisitor.visitBinary`,
-`JavaInputAstVisitor.visitAssignment`,
-`JavaInputAstVisitor.visitCompoundAssignment`,
-`JavaInputAstVisitor.visitAnnotation`, `JavaCommentsHelper.rewrite`,
-`BlankLineWanted`, `JavaInputAstVisitor.visitCompilationUnit`,
-`JavaInputAstVisitor.visitBlock`, `JavaInputAstVisitor.visitStatements`, and
-`JavaInputAstVisitor.addBodyDeclarations`.
+Emulate:
 
-### Architecture Audit
+- a small language-neutral document algebra,
+- a language-specific syntax-to-document layer,
+- formatter context services for comments, source positions, and options,
+- named helpers for lists, chains, declarations, expressions, and bodies,
+- source-aware comment classification before rendering,
+- analyzer objects for complex syntax shapes such as selector chains.
 
-Ruff, Oxc, and Prettier agree on the architecture shape Jolt should use:
+Do not emulate:
 
-- Keep `jolt_fmt_ir` language-neutral. The renderer should know about groups,
-  lines, fill, best-fitting alternatives, line suffixes, and fitting. It should
-  not know Java declaration, argument, chain, or annotation policy.
-- Put wrapping policy in Java rule helpers with domain names:
-  `declaration_header`, `formal_list`, `argument_list`, `type_argument_list`,
-  `dot_chain`, `binary_chain`, `annotation_or_modifier_list`,
-  `block_blank_lines`, and `class_body_blank_lines`.
-- Build policy-bearing list helpers early. These helpers should own separators,
-  open/close behavior, trailing and dangling comments, forced parent expansion,
-  and whether a list breaks independently or as one group.
-- Use normal groups first. Reserve `best_fitting` or multi-alternative layouts
-  for cases that actually need staged expansion, such as method chains or other
-  Java-specific special cases.
-- Treat comments as formatter-owned source facts. Keep comment attachment and
-  accounting in `jolt_java_fmt`, not in CST wrappers or the renderer.
-- Rule boundaries should own comment accounting. Leading, trailing, dangling,
-  inner, and list-item comments must be consumed deliberately, and supported
-  rules should fail tests if a comment is left unformatted.
-- Use `line_suffix` and `line_suffix_boundary` for trailing comments so pending
-  suffix width affects group fitting.
-- Keep generated rule glue out of Milestone 8 until the handwritten Java helper
-  surface and wrapper accessors stabilize.
-- Add focused narrow-width tests at helper boundaries, plus idempotence checks
-  where practical. The oracle scoreboard remains the integration signal, not the
-  only wrapping test.
+- AST-only source models,
+- AST mutation for comment attachment,
+- JavaScript/Python-specific naming heuristics without Java oracle evidence,
+- plugin API shapes that do not fit Jolt,
+- arbitrary style configuration,
+- ignored-source passthrough as a coverage mechanism.
 
-Primary architecture references from the audit:
+Layering target:
 
-- Prettier document builders and printer:
-  `src/document/builders/{group,if-break,fill,line,line-suffix}.js`,
-  `src/document/printer/printer.js`, and `src/main/comments/{attach,print}.js`.
-- Ruff formatter core and Python formatter:
-  `crates/ruff_formatter/src/{format_element,builders,printer/mod}.rs`,
-  `crates/ruff_python_formatter/src/{context,lib,builders}.rs`, and
-  `crates/ruff_python_formatter/src/comments/`.
-- Oxc formatter core and JavaScript formatter:
-  `crates/oxc_formatter_core/src/{format_element,builders,printer/mod}.rs`,
-  `crates/oxc_formatter/src/formatter/{context,comments,trivia}.rs`,
-  `crates/oxc_formatter/src/print/call_like_expression/arguments.rs`,
-  `crates/oxc_formatter/src/utils/member_chain/mod.rs`, and
-  `crates/oxc_formatter/src/print/binary_like_expression.rs`.
+```text
+shared IR, builders, and renderer
+  -> Java formatter context, profile policy, comments, and trivia services
+  -> Java node rules with an explicit formatting contract
+  -> Java analyzers and layout helpers
+```
 
-### Required Early Jolt Work
+## Design Principles
 
-Before expanding method declarations, argument lists, chained selectors, binary
-expressions, or annotation layouts, add the Java wrapping substrate:
+### Keep The Renderer Language-Neutral
 
-1. Make `JavaFormatContext` carry the state needed by wrapping helpers: profile,
-   source text, comment cursor, group ids, break markers, and any current
-   container/list context proven by call sites.
-2. Add policy-bearing helpers for declaration headers, parenthesized lists,
-   comma lists, type argument/type parameter lists, method chains, binary
-   chains, annotations/modifiers, braced blocks, and blank-line decisions.
-3. Map google-java-format's unified/independent/forced break choices onto the
-   existing IR primitives. Add an IR primitive only if a concrete Java helper
-   cannot express the required policy.
-4. Add narrow-width tests for each helper as it lands: parameters, arguments,
-   throws clauses, type arguments, binary chains, method chains, trailing
-   comments, dangling comments, and blank-line-sensitive class bodies.
-5. Keep flat short-case tests beside the forced-wrapping tests so helpers prove
-   both fit modes.
+`jolt_fmt_ir` should not learn Java concepts. It may grow general document
+features if a Java helper proves the need, but concepts such as method chains,
+throws clauses, type parameters, imports, annotations, and switch labels belong
+in `jolt_java_fmt`.
 
-## Source-Level Audit
+Add renderer features only when the helper layer cannot express a broad policy
+with existing primitives. Preference order:
 
-Effort ratings below estimate the Jolt work to remove the current coverage
-blocker once the wrapping substrate exists: S is local rule work, M is one
-helper family, L is multiple helper families, and XL is cross-cutting
-infrastructure. Confidence is confidence in the estimate, not oracle exact-match
-parity.
+1. Compose existing `Doc` primitives in a Java helper.
+2. Add a small Java helper that names the formatting policy.
+3. Add a general IR primitive only after multiple helpers need the same renderer
+   behavior.
 
-Local source citation shorthand used below:
+Keep generic formatter ergonomics separate from Java policy. A reusable
+delimited or separated-list utility can live below Java-specific argument,
+parameter, annotation, or type-list policy. A selector-chain classifier, by
+contrast, is Java formatter policy and should not leak into `jolt_fmt_ir`.
 
-- GJF visitor:
-  `.oracles/repos/google__google-java-format/core/src/main/java/com/google/googlejavaformat/java/JavaInputAstVisitor.java`
-- GJF comments:
-  `.oracles/repos/google__google-java-format/core/src/main/java/com/google/googlejavaformat/java/JavaCommentsHelper.java`
-- GJF formatter:
-  `.oracles/repos/google__google-java-format/core/src/main/java/com/google/googlejavaformat/java/Formatter.java`
-- PJF visitor:
-  `.oracles/repos/palantir__palantir-java-format/palantir-java-format/src/main/java/com/palantir/javaformat/java/JavaInputAstVisitor.java`
-- PJF Java 14 visitor:
-  `.oracles/repos/palantir__palantir-java-format/palantir-java-format/src/main/java/com/palantir/javaformat/java/java14/Java14InputAstVisitor.java`
-- PJF comments:
-  `.oracles/repos/palantir__palantir-java-format/palantir-java-format/src/main/java/com/palantir/javaformat/java/JavaCommentsHelper.java`
+### Make Rule Modules Structural
 
-### Global Preflight Blockers
+Rule modules should answer grammar questions:
 
-Completed cleanup:
+- What kind of syntax node is this?
+- Which child nodes and source ranges belong to each semantic slot?
+- Which helper should format this Java construct?
+- Which associated comments must be emitted or delegated?
 
-- the whole-file descendant scan for `Annotation` was removed,
-- the whole-file descendant scan for `EmptyDeclaration` was removed,
-- class-body empty declarations now format as `;`,
-- package annotations now fail at the package declaration rule,
-- declaration annotations now fail at the owning modifier-list rule.
+Rule modules should avoid owning low-level wrapping decisions such as whether a
+comma list fills independently, whether a selector chain breaks before the first
+selector, or how a declaration header aligns when a type breaks.
 
-Remaining compilation-unit preflight blockers are local to direct compilation
-unit structure:
+### Define A Formatter Rule Contract
 
-- module declarations,
-- compact compilation-unit children such as `FieldDeclaration` and
-  `EmptyDeclaration`.
+Each Java node rule should follow the same contract:
 
-### Compilation Units And Imports
+1. Identify the node's source range and grammar slots through CST wrappers.
+2. Ask the formatter context/comment service for comments associated with the
+   node or slot.
+3. Format child slots through rule functions or domain helpers.
+4. Emit leading and trailing comments through shared wrappers.
+5. Explicitly place, delegate, or reject dangling and inline comments.
+6. Return a real `Doc` for parser-clean syntax.
 
-Missing or incomplete:
+This contract is the local analogue of Ruff's node-formatting rule layer and
+Prettier's path-driven printer. It should make unsupported or unplaced source
+facts visible during tests instead of being hidden by late fallback output.
 
-- module declarations,
-- compact compilation units with top-level fields/methods/classes,
-- malformed import shape diagnostics should remain unreachable for parser-clean
-  valid Java, while ordinary single/static/type-on-demand imports must format.
+Raw source passthrough is not a formatter rule. For parser-clean syntax,
+returning a document made from an arbitrary node's original source text is
+illegal for the same reason `missing_layout` is illegal: it hides missing layout
+coverage instead of implementing it. Source text may be used only at the
+token/literal boundary where preserving the token spelling is the formatting
+rule.
 
-Upstream evidence and estimates:
+### Preserve Context Explicitly
 
-- Module declarations: GJF formats annotations, `open module`, directive blocks,
-  blank lines between directive kinds, and `exports`/`opens`/`provides`/
-  `requires`/`uses`; PJF Java 14 delegates modules from `handleModule` into the
-  same directive visitors. Effort L, confidence Medium. Citations: GJF
-  visitor:2828, :2867, :2897, :2903, :2909, :2915, :2935; PJF Java 14
-  visitor:70.
-- Package annotations: GJF and PJF print each package annotation on its own line
-  before `package`. Effort S, confidence High. Citations: GJF visitor:389,
-  :1818; PJF visitor:347, :1653.
-- Compact compilation-unit field declarations: GJF detects implicit classes and
-  formats compilation-unit members through `addBodyDeclarations` without braces.
-  Effort M, confidence Medium. Citation: GJF visitor:454, :471.
-- Compact compilation-unit empty declarations: GJF handles extra semicolons with
-  `dropEmptyDeclarations` at compilation-unit and member boundaries; PJF has the
-  same cleanup in ordinary compilation units/imports/members. Effort S,
-  confidence High. Citations: GJF visitor:397, :440, :471; PJF visitor:355,
-  :395, :1138.
+Prettier uses `AstPath` to make parent, sibling, and list-position-sensitive
+decisions. Jolt does not need a generic path object, but it does need an
+explicit context story.
 
-Roadmap:
+CST wrappers should expose grammar roles and source ranges. Formatter rules and
+helpers may pass narrow context objects when layout depends on ancestry or
+position, for example:
 
-1. Add module declaration and directive formatting.
-2. Add compact compilation-unit member formatting through the same declaration
-   and member rules used inside classes.
-3. Keep import order policy separate, but make every valid import declaration
-   format.
+- whether an expression is a nested argument,
+- whether a selector chain is itself a receiver,
+- whether a node is first, last, or separated by comments in a list,
+- whether a declaration appears in a class, interface, enum, annotation body,
+  compact compilation unit, or local block,
+- whether parenthesization is required by parent precedence.
+
+Avoid hiding layout policy in CST wrappers. Wrappers expose source facts;
+formatter rules and helpers decide layout.
+
+### Put Policy In Named Helpers
+
+The helper layer should have Java-domain names. A future reader should be able
+to scan a rule and see Java formatting intent rather than raw document-builder
+plumbing.
+
+Good helper names:
+
+- `callable_header`
+- `formal_parameter_list`
+- `argument_list`
+- `type_argument_list`
+- `type_parameter_list`
+- `selector_chain`
+- `binary_expression_chain`
+- `assignment_expression`
+- `annotation_group`
+- `declaration_modifiers`
+- `class_body_members`
+- `statement_block`
+- `switch_block`
+- `import_section`
+
+Prefer "helper", "rule", "analyzer", or "formatter" for Java-domain code. Save
+"builder" for generic document construction APIs if Jolt grows a Ruff/Oxc-like
+builder facade.
+
+Poor long-term rule-module patterns:
+
+- open-coded `concat([text("("), soft_line(), ...])`
+- open-coded comma separators in multiple domains
+- width-sensitive conditionals in rule modules
+- profile checks repeated near leaf syntax formatting
+- ad hoc comment fallbacks that append source text outside the owning rule
+
+### Treat Comments As Layout Inputs
+
+Comments are not an afterthought. A helper that formats a list, block, chain, or
+declaration should have an answer for comments inside that construct.
+
+The long-term comment model should have two distinct phases:
+
+1. Classify and associate comments from source positions.
+2. Render associated comments through node rules and helpers.
+
+Source-position classification should distinguish:
+
+- own-line comments,
+- end-of-line comments,
+- inline or remaining comments.
+
+Ownership resolution should use:
+
+- preceding node range,
+- enclosing node range,
+- following node range,
+- adjacency and blank-line facts.
+
+Rendering should expose associated comments as:
+
+- leading comments before a node,
+- trailing line comments after a node,
+- inline block comments between tokens,
+- dangling comments inside empty or sparse containers,
+- comments between list items,
+- comments before closing delimiters.
+
+The formatter should continue to fail tests when comments are unaccounted. The
+current `take_remaining_comment_docs` appendage is debt: it preserves text while
+coverage is maturing, but new supported syntax should place comments through the
+owning rule/helper instead of relying on a late append.
+
+Jolt already has `line_suffix` and `line_suffix_boundary`; the work is to route
+trailing comments through helpers consistently, not to add basic IR support.
+
+### Keep Profiles Coarse And Opinionated
+
+Profiles are compatibility targets, not arbitrary style knobs. The formatter
+should expose Google, AOSP, and Palantir profile behavior through a small number
+of policy structs or helper methods, not through dozens of independent options.
+
+Profile differences should be centralized when possible:
+
+- indentation width,
+- import section grouping,
+- continuation indentation,
+- chain and argument wrapping preferences,
+- Palantir-specific line breaking where it is a systematic style difference.
+
+## Target Helper Surface
+
+### Lists
+
+Lists are the most important abstraction to strengthen. They appear in
+arguments, parameters, type arguments, type parameters, annotation arguments,
+array initializers, resources, throws clauses, switch labels, enum constants,
+and module directive targets.
+
+Build a small family of policy-bearing list helpers:
+
+- generic separated-list and delimited-list mechanics,
+- delimited comma list: `(...)`, `<...>`, `{...}`
+- one-per-line delimited list
+- fill-style list for short items
+- forced-break list for declaration-sensitive constructs
+- semicolon list for `for` headers and resources
+- pipe list for catch unions
+- keyword-prefixed lists such as `throws`, `implements`, `permits`, `to`, and
+  `with`
+
+Each list helper should own:
+
+- delimiters,
+- separators,
+- indentation,
+- empty-list behavior,
+- trailing and dangling comments,
+- whether items break independently or as one group,
+- profile-specific indentation.
+
+Refactoring target: rule modules should pass item docs and list kind, not build
+the separator machinery directly.
+
+Keep the layers separate:
+
+- generic separated/delimited helpers own reusable separator mechanics,
+- Java helpers such as argument lists and parameter lists own construct-specific
+  wrapping and comment policy.
+
+### Callable Declarations
+
+Method, constructor, annotation element, compact constructor, and record
+component declarations share a header problem: modifiers, type parameters,
+result type, name, parameter list, throws/default clauses, and body/default
+value all compete for line width.
+
+Create a callable declaration helper that accepts named slots:
+
+- modifiers and annotations,
+- optional type parameters,
+- optional result type,
+- callable name,
+- formal parameter or receiver parameter list,
+- optional trailing dimensions,
+- optional throws clause,
+- optional default value,
+- body shape.
+
+The helper should own:
+
+- breaking between type and name,
+- continuation indentation for throws/default clauses,
+- when parameter lists force one-per-line behavior,
+- comment attachment around header slots,
+- profile-specific continuation rules.
 
 ### Type Declarations
 
-Currently supported narrowly:
+Classes, records, interfaces, annotation interfaces, and enums share a header
+shape: modifiers, declaration keyword, name, type parameters, clauses, and body.
 
-- ordinary classes with simple headers and bodies.
+Create a type declaration helper that owns:
 
-Missing or incomplete:
+- vertical declaration annotations,
+- keyword/name spacing,
+- type parameter placement,
+- `extends`, `implements`, and `permits` clauses,
+- record component list placement,
+- body opening and empty-body behavior,
+- blank lines between body member groups.
 
-- class type parameters,
-- `extends`, `implements`, and `permits`,
-- records and record components,
-- enums, enum constants, enum class bodies,
-- interfaces,
-- annotation interfaces,
-- nested class/record/enum/interface/annotation declarations,
-- local class/interface declarations,
-- compact constructors.
+This should reduce the amount of local header construction in `declarations.rs`.
 
-Upstream evidence and estimates:
+### Selector Chains
 
-- Nested class declarations: GJF and PJF do not special-case nesting; class-like
-  members flow through `addBodyDeclarations` and re-enter the same declaration
-  visitors. Effort M, confidence High. Citations: GJF visitor:454, :475, :858,
-  :961, :2181, :3882; PJF visitor:406, :424, :817, :1989; PJF Java 14
-  visitor:153, :174.
-- Enum declarations: GJF and PJF separate enum constants from ordinary members,
-  format constant arguments/class bodies, preserve blank lines between
-  constants, handle optional semicolons, then reuse class-body formatting for
-  members. Effort L, confidence High. Citations: GJF visitor:839, :858, :927,
-  :951; PJF visitor:799, :817, :894, :911.
-- Interface declarations and nested interface declarations: GJF and PJF use the
-  class-declaration path with an `interface` keyword and `extends` supertype
-  list, including when nested. Effort M, confidence High. Citations: GJF
-  visitor:454, :2181, :2207, :2216, :3882; PJF visitor:406, :1989, :2017.
-- Annotation interface declarations: GJF and PJF format `@interface` in a
-  dedicated declaration visitor and then reuse class-body formatting for
-  annotation elements and members. Effort M, confidence High. Citations: GJF
-  visitor:475, :491, :1501, :1633; PJF visitor:424, :441.
-- Record declarations and nested record declarations: GJF formats records with
-  type parameters, record components via formal-parameter helpers, implements
-  clauses, generated-member filtering, and class-body reuse; PJF Java 14 follows
-  the same record-specific path. Effort L, confidence High. Citations: GJF
-  visitor:454, :961, :975, :984, :1007, :1011, :3882; PJF Java 14 visitor:153,
-  :174, :189, :199, :222.
-- Nested enum declarations: GJF and PJF re-enter enum formatting from class-body
-  member formatting, so nested enums share constant/member handling with
-  top-level enums. Effort M, confidence High. Citations: GJF visitor:454, :858,
-  :951, :3882; PJF visitor:406, :817, :911.
-- Class type parameters: GJF and PJF print type parameters with
-  `typeParametersRest`, then format bounds in `visitTypeParameter` with
-  indentation driven by following header clauses. Effort M, confidence High.
-  Citations: GJF visitor:2191, :2197, :2222; PJF visitor:2007, :2031.
+Selector chains are currently the largest oracle-alignment domain. The helper
+should flatten all selector-like syntax before layout:
 
-Roadmap:
+- member select,
+- method invocation,
+- array access,
+- class instance creation selectors,
+- `this` and `super` qualified selectors where applicable.
 
-1. Remove top-level/nested declaration asymmetry. Nested and local declarations
-   should reuse the same declaration formatters with only placement-specific
-   wrapping.
-2. Implement class header clauses and type parameters before records/enums,
-   because records, interfaces, methods, constructors, and annotation types all
-   depend on type parameter and type-list formatting.
-3. Implement interfaces and annotation interfaces.
-4. Implement records, including record components, compact constructors, and
-   canonical constructors.
-5. Implement enums after class/interface bodies can handle mixed constants,
-   fields, methods, constructors, and nested declarations.
-6. Implement module declarations once the declaration-list machinery is stable.
+The chain helper should classify:
 
-### Modifiers And Annotations
+- field-only chains,
+- static factory plus builder chains,
+- long fluent call chains,
+- mixed field/call chains,
+- chains used as nested arguments,
+- chains with long argument lists,
+- chains ending in simple terminal calls.
 
-Current blockers:
+The helper should own:
 
-- global annotation preflight,
-- declaration annotations in modifier lists,
-- contextual modifiers,
-- type-use annotations.
+- whether the first selector remains glued to the receiver,
+- when to break before every dot,
+- when field prefixes use fill behavior,
+- how nested argument lists influence selector breaking,
+- profile-specific chain preferences.
 
-Missing or incomplete:
+Avoid case patches keyed to fixture names or method names. If selector metadata
+is needed, add it because it describes syntax shape: selector kind, argument
+count, argument complexity, source span, or whether the receiver is itself a
+chain.
 
-- marker, single-member, and normal annotations,
-- annotation element values,
-- annotation arrays and nested annotations,
-- annotations in modifiers, types, dimensions, type parameters, record
-  components, receiver parameters, casts, patterns, and package declarations,
-- contextual modifiers such as `sealed`, `non-sealed`, and `permits`-related
-  forms where they belong.
+The implementation should be analyzer-first:
 
-Upstream evidence and estimates:
+1. Flatten selector syntax into a `ChainMember` sequence.
+2. Attach syntax metadata such as selector kind, argument count, argument
+   complexity, receiver shape, comments, and source ranges.
+3. Partition members into `ChainGroup`s or equivalent grouping objects.
+4. Render from those groups with a small number of staged alternatives.
 
-- Declaration annotations: GJF splits modifier tokens and annotation AST nodes
-  into declaration modifiers versus type annotations, prints declaration
-  annotations vertically or horizontally by context, then returns type
-  annotations to the owning type rule; PJF uses the same split with
-  list-returning op helpers. Effort M, confidence High. Citations: GJF
-  visitor:2291, :2407, :2431, :2453, :2585; PJF visitor:2097, :2219.
-- Contextual class modifiers: GJF scans modifier tokens from the input stream
-  instead of relying only on AST modifier enums, so contextual tokens such as
-  `sealed`/`non-sealed` can stay in source order before header clauses like
-  `permits`; PJF has the same token-scanning modifier infrastructure. Effort M,
-  confidence Medium. Citations: GJF visitor:2181, :2210, :2585; PJF
-  visitor:1989, :2019, :2228.
-
-Roadmap:
-
-1. Add an annotation formatter independent of declaration kind.
-2. Replace `format_modifier_list` returning raw tokens with a doc-producing
-   modifier/annotation formatter.
-3. Support type-use annotations in the type formatter and dimension formatter.
-4. Only after annotations format locally, remove the global annotation
-   preflight.
-
-### Types
-
-Current type formatting is simple-token based.
-
-Missing or incomplete:
-
-- primitive and void types in every grammar position,
-- qualified class/interface types with type arguments,
-- nested generic types and split `>` token handling,
-- wildcard type arguments and bounds,
-- arrays and annotated dimensions,
-- varargs dimensions,
-- union and intersection types,
-- `var` local variable types,
-- receiver parameter types,
-- class literal pseudo-types.
-
-Upstream evidence and estimates:
-
-- Type shapes: GJF and PJF use structured visitors for primitive/void,
-  parameterized, annotated, array, wildcard, type-parameter, union/intersection,
-  and dimension formatting rather than token flattening. Effort L, confidence
-  High. Citations: GJF visitor:629, :1474, :1836, :1927, :2222, :2251, :2272,
-  :3767; PJF visitor:582, :1359, :1670, :1751, :2031, :2060, :2078.
-
-Roadmap:
-
-1. Replace `simple_layout_tokens` as the main type path with structured type
-   formatting.
-2. Add reusable comma-list, type-argument-list, bound-list, and dimension-list
-   helpers.
-3. Format arrays/dimensions as part of both types and declarators, since Java
-   allows dimensions after the type and after the variable name.
-4. Add narrow tests for nested generic close tokens to protect parser/CST
-   semantics while formatting.
-
-### Class Bodies And Members
-
-Current blockers:
-
-- nested declarations,
-- compact constructors,
-- field declaration shapes,
-- method declaration shapes,
-- constructor declaration shapes.
-
-Missing or incomplete:
-
-- initializer blocks,
-- empty semicolon declarations,
-- multiple field/local declarators,
-- array dimensions on declarators,
-- method parameters, receiver parameters, varargs, type parameters, throws
-  clauses, trailing dimensions,
-- abstract/native methods and annotation elements without bodies,
-- annotation type elements and defaults,
-- field and local variable array initializers.
-
-Upstream evidence and estimates:
-
-- Method declaration shapes: GJF uses one specialized `visitMethod` path for
-  declaration annotations, type parameters, return type, name, receiver/formal
-  parameters, trailing dimensions, throws, annotation defaults, semicolon
-  bodies, and block bodies, with `BreakTag`s tying type/name/parameter
-  indentation together; PJF keeps the same shape but uses Palantir
-  `BreakBehaviours` for wrapping. Effort L, confidence High. Citations: GJF
-  visitor:1501, :1618, :1629; PJF visitor:1386.
-- Field declaration shapes: GJF and PJF format fields through
-  `visitVariable`/`visitVariables`, then `declareOne` or `declareMany`, carrying
-  modifier/annotation policy, initializer wrapping, array dimensions, and
-  semicolon handling. Effort M, confidence High. Citations: GJF visitor:1048,
-  :1057, :3635, :3832; PJF visitor:959, :965, :1932.
-- Constructor declaration shape: GJF and PJF use `visitMethod` for constructors,
-  detecting `<init>` and compact record constructors, omitting return type,
-  supporting receiver/formals/throws/dims, and choosing semicolon versus body
-  output. Effort L, confidence High. Citations: GJF visitor:1501, :1597, :1602,
-  :1618, :1656; PJF visitor:1386.
-
-Roadmap:
-
-1. Add shared method/constructor signature formatting: type parameters,
-   parameters, receiver parameters, throws, varargs, and trailing dimensions.
-2. Add method body vs semicolon body handling.
-3. Add annotation elements and defaults.
-
-### Statements
-
-Current supported statements are a small subset:
-
-- local variable declarations with simple shape,
-- nested blocks,
-- return, throw, yield,
-- expression statements for a few expression kinds.
-
-Missing or incomplete:
-
-- empty statements,
-- labeled statements,
-- local declarations,
-- `if`/`else`,
-- `assert`,
-- `switch` statements and rules/groups,
-- `while`, `do`, basic `for`, enhanced `for`,
-- `break` and `continue`,
-- `synchronized`,
-- `try`, `catch`, `finally`,
-- try-with-resources,
-- constructor invocations in constructor bodies.
-
-Upstream evidence and estimates:
-
-- Block statement shapes: GJF formats blocks with `visitBlock`, explicit
-  blank-line policy, `visitStatements`, local-variable-fragment grouping, and
-  `visitStatement` for braced versus unbraced statement bodies; PJF mirrors this
-  and adds an `inlineFirst` variant for some call sites. Effort M, confidence
-  High. Citations: GJF visitor:2320, :2363, :2383; PJF visitor:2117, :2180.
-- Local variable declaration shape: GJF and PJF group adjacent javac variable
-  fragments in statement lists and format them through the same declaration
-  helpers used for fields, including annotations, dims, initializers, and
-  semicolons. Effort M, confidence High. Citations: GJF visitor:2383, :2395,
-  :1048, :3832; PJF visitor:2180, :2197, :959.
-
-Roadmap:
-
-1. Add constructor invocation formatting before broader block work, because
-   constructors are valid Java and currently blocked by constructor-body shape.
-2. Implement simple control flow (`if`, loops, `break`, `continue`, labels,
-   empty statements).
-3. Implement try/catch/finally and try-with-resources after resource formatting
-   exists.
-4. Implement switch statements and switch expressions with one shared switch
-   block formatter.
-5. Add statement-body helpers so braced and unbraced bodies use one policy.
+Name-based heuristics should be avoided by default. If a Java profile or oracle
+eventually requires one, document the evidence and keep the heuristic narrow.
 
 ### Expressions
 
-Current expression support is partial:
+Expression helpers should focus on precedence and shape rather than individual
+syntax variants.
 
-- literals except multiline literals,
-- simple names,
-- `this` and `super`,
-- parenthesized expressions,
-- field access with limited receivers,
-- method invocation with limited receivers and arguments,
-- unary, postfix, binary, assignment.
+Targets:
 
-Missing or incomplete:
+- binary chain helper that flattens only same-precedence operators,
+- associativity and operator exception handling for binary flattening,
+- assignment helper that breaks after the operator,
+- conditional expression helper,
+- cast and parenthesized expression helpers,
+- array initializer helper with policy for short values, nested values, and
+  one-per-line values,
+- lambda helper for concise vs typed parameters and expression vs block bodies.
 
-- object creation and anonymous classes,
-- array creation, array access, and array initializers,
-- class literals,
-- casts,
-- conditional expressions,
-- lambdas,
-- method references,
-- `instanceof` expressions and patterns,
-- switch expressions,
-- qualified `this` and `super`,
-- generic method invocations and explicit type arguments,
-- broader method/field access receivers,
-- expression names vs primary expressions in assignment/update operands,
-- multiline text block literals.
+Rule modules should not hand-roll binary or assignment wrapping. Binary-like
+formatting should know about parent precedence, associativity, operator
+families, and comment-forced breaks.
 
-Upstream evidence and estimates:
+### Blocks And Bodies
 
-- Method invocation shapes: GJF formats invocations as flattened dot chains;
-  `visitMethodInvocation` delegates to `visitDot`, which classifies prefixes and
-  emits type arguments, arguments, and parens via dedicated helpers. PJF uses
-  the same chain model with Palantir breakability controls. Effort L, confidence
-  High. Citations: GJF visitor:1688, :3019, :3294, :3379, :3406; PJF
-  visitor:1547, :2686, :3040, :3134, :3160.
-- Method invocation receivers: GJF flattens member select, invocation, and array
-  access receiver chains, including primary-expression prefixes, type-name
-  prefixes, `this`/`super`, and stream prefixes; PJF keeps the same model with
-  additional chain-fitting knobs. Effort L, confidence High. Citations: GJF
-  visitor:3019, :3073, :3124, :3144, :3223; PJF visitor:2686, :2823, :2839,
-  :2932.
-- Multiline literals: GJF preserves literal source text and has text-block
-  handling for indentation/deindentation before emitting the token; PJF has the
-  same general literal-token path. Effort M, confidence Medium. Citations: GJF
-  visitor:1782; PJF visitor:1638.
-- Lambda expressions: GJF formats lambda parameters through variable declaration
-  helpers, emits `->`, and chooses block versus expression-body indentation
-  separately; PJF adds custom break behavior for lambda arguments/body. Effort
-  M, confidence High. Citations: GJF visitor:1354, :1368, :1387; PJF
-  visitor:1221, :1228.
-- Method reference expressions: GJF emits the qualifier, a break before `::`,
-  optional type arguments, then either the member name or `new`; PJF applies
-  Palantir inline-suffix breakability to the same structure. Effort S,
-  confidence High. Citations: GJF visitor:1025; PJF visitor:922.
-- Array creation expressions: GJF formats `new` array base types, dimensions
-  with annotations, and optional initializers; initializer lists support empty,
-  tabular, filled, unified, forced-trailing-comma, and annotation-array cases.
-  PJF mirrors this with Palantir breakability settings. Effort M, confidence
-  High. Citations: GJF visitor:504, :522, :535, :590, :596; PJF visitor:454,
-  :485.
-- Object creation expressions: GJF handles optional enclosing expressions,
-  constructor type arguments, anonymous-class modifiers, constructor arguments,
-  and anonymous class bodies through shared class-body formatting; PJF uses the
-  same structure with Palantir breakability for `new` expressions. Effort M,
-  confidence High. Citations: GJF visitor:725, :735, :743, :746; PJF
-  visitor:687, :705, :710, :713.
-- Conditional expressions: GJF and PJF emit condition, `?`, true expression,
-  `:`, and false expression in one indented group with break opportunities
-  around the operators. Effort S, confidence High. Citations: GJF visitor:753;
-  PJF visitor:719.
-- Class literal expressions: GJF and PJF handle `Type.class` through the
-  member-select/dot pipeline, so coverage depends on both type formatting and
-  receiver-chain formatting. Effort M, confidence Medium. Citations: GJF
-  visitor:1775, :3019; PJF visitor:1631, :2686.
-- Array access expressions: GJF and PJF treat array access as a selector in the
-  dot pipeline, using array-base/index extraction so chained calls, fields, and
-  indexes share one receiver path. Effort M, confidence High. Citations: GJF
-  visitor:497, :3019, :3028, :3066; PJF visitor:447, :2686.
+Blocks need explicit blank-line and separator policy. This should not live as
+scattered `join(hard_line())` calls.
 
-Roadmap:
+Targets:
 
-1. Add receiver-chain formatting so method invocation, field access, array
-   access, qualified `this`, qualified `super`, and method references share one
-   selector pipeline.
-2. Add object creation and anonymous class bodies after class body/member
-   formatting is reusable.
-3. Add array access/creation/initializers and reuse list formatting.
-4. Add casts and class literals with type formatting.
-5. Add conditional, lambda, method reference, `instanceof`, patterns, and switch
-   expression support.
-6. Add multiline literal/text block formatting once comment/trivia placement can
-   preserve multiline raw text safely.
+- ordinary statement blocks,
+- constructor bodies with explicit constructor invocation,
+- class and interface bodies,
+- enum bodies with constants and members,
+- annotation interface bodies,
+- switch blocks,
+- module directive blocks,
+- compact compilation-unit member lists.
 
-### Comments And Trivia
+Each body helper should own:
 
-Current comment support is intentionally narrow:
+- empty body behavior,
+- blank lines between member groups,
+- dangling comments,
+- empty declarations,
+- separators after enum constants,
+- switch group/rule spacing.
 
-- own-line leading line comments,
-- own-line single-line block/Javadoc comments,
-- trailing line comments.
+### Imports And Compilation Units
 
-Current blockers:
+Compilation-unit formatting should stay thin. It should identify package,
+imports, module declaration, and compact members, then delegate policy.
 
-- multiline block/Javadoc comments,
-- non-own-line leading comments,
-- trailing block comments,
-- dangling comments in empty bodies/blocks/lists,
-- comments inside parameter, argument, type argument, array initializer, and
-  switch label lists,
-- ignored trivia such as trailing SUB.
+Targets:
 
-Upstream evidence and estimates:
+- import section helper with profile-specific grouping,
+- package annotations helper,
+- module directive grouping helper,
+- compact compilation-unit member list helper,
+- top-level blank-line policy helper.
 
-- Multiline block comments: GJF routes every comment through
-  `JavaCommentsHelper.rewrite`; block/Javadoc comments either use
-  `JavadocFormatter`, Javadoc-shaped indentation, or preserved relative
-  indentation. PJF follows the same preserve-or-indent policy without newer
-  markdown-Javadoc handling. Effort M, confidence High. Citations: GJF
-  comments:41, :64, :71, :149; PJF comments:45, :60, :69, :159.
-- Non-own-line leading comments: GJF's separate token stream assigns non-tokens
-  before/after tokens; rules use `sync` and token emission to place skipped
-  trivia, while `tokenBreakTrailingComment` gives selected tokens special
-  trailing block/Javadoc handling. PJF follows the same token/comment model.
-  Effort L, confidence Medium. Citations: GJF formatter:37; GJF visitor:4077,
-  :4095; PJF comments:45.
-- Unhandled comment or ignored trivia: GJF lexes input separately from javac,
-  assigns non-tokens to adjacent tokens/EOF, attaches comments while building
-  docs, and rewrites them with `JavaCommentsHelper`; Jolt needs comparable
-  formatter-owned trivia accounting rather than rule-local skips. Effort XL,
-  confidence Medium. Citations: GJF formatter:37, :102; GJF comments:41.
+## Suggested Module Shape
 
-Roadmap:
+The current domain split is good. The next split should separate syntax rules
+from reusable policy helpers.
 
-1. Replace the single cursor with placement-aware comment attachment records:
-   leading, trailing, dangling, inner, and list-item comments.
-2. Support multiline block and Javadoc comments as preserved raw text with
-   indentation normalization where required by google-java-format evidence.
-3. Add dangling comments for empty class bodies, blocks, parameter lists,
-   argument lists, array initializers, and switch blocks.
-4. Add list-aware comment handling before parameters and arguments are expanded.
-5. Decide and test the policy for ignored trivia; valid Java formatting should
-   not be blocked by trailing ignored trivia unless preserving it would be
-   destructive.
+Possible structure:
 
-### Shape Guards And Accessors
+```text
+crates/jolt_java_fmt/src/
+  layout.rs                  low-level Doc composition helpers
+  policy.rs                  profile policy accessors
+  comments.rs                comment collection, ownership, and formatting
+  rules/
+    compilation_unit.rs
+    declarations.rs
+    expressions.rs
+    statements.rs
+    annotations.rs
+    types.rs
+    names.rs
+    tokens.rs
+  helpers/
+    separated.rs
+    lists.rs
+    callables.rs
+    type_declarations.rs
+    chains.rs
+    expressions.rs
+    bodies.rs
+    imports.rs
+  analyzers/
+    chains.rs
+    binary.rs
+```
 
-Current formatter coverage is limited by boolean guards such as:
+This split should happen incrementally. Do not move code merely to satisfy this
+tree. Extract a helper module when there is a real policy surface and at least
+two call sites or one high-complexity call site that becomes clearer.
 
-- `unsupported_layout_child`,
-- `has_supported_layout_shape`,
-- `has_single_declarator_layout_shape`,
-- `has_expression_layout_shape`,
-- `simple_layout_tokens`.
+## Work Plan
 
-These guards were useful for safe scaffolding, but they must not remain as broad
-coverage boundaries. They should evolve into one of:
+### Phase 1: Stabilize The Helper Vocabulary
 
-- structured accessors used by complete formatting rules,
-- local unreachable diagnostics for parser-clean impossible shapes,
-- tests that demonstrate an unsupported shape is not valid Java.
+Goal: make future formatter changes speak in domain helpers.
 
-Roadmap:
+Tasks:
 
-1. For each formatter family, replace the broad boolean guard with explicit
-   child extraction and formatting.
-2. Keep adding accessors in `jolt_java_syntax` as the formatter needs them.
-3. Add tests for each accessor only when grounded in grammar behavior or a
-   formatter rule, not as duplicate source-definition tests.
-4. Track remaining guards in the coverage roadmap until none block valid Java.
+1. Introduce a profile policy accessor layer, even if it initially wraps the
+   existing `JavaFormatProfile` checks.
+2. Define the formatter rule contract in code comments or module docs near the
+   rule entry points.
+3. Move generic separated/delimited-list mechanics out of generic `layout.rs`
+   into a focused helper module or clearly named section.
+4. Define Java helper entry points for argument lists, formal parameter lists,
+   type parameter lists, type argument lists, and keyword-prefixed clause lists.
+5. Add narrow-width tests at helper boundaries for flat and broken forms.
 
-## Recommended Implementation Order
+Success signal:
 
-The implementation order should maximize coverage while avoiding partial output.
-After each step, run the full oracle harness and use the generated blocker
-reports to choose the next highest-impact coverage gap.
+- rule modules call named helpers for common list shapes,
+- rules expose source ranges and grammar slots without hiding policy in CST
+  wrappers,
+- no oracle regressions,
+- no missing layout exits,
+- formatter and syntax tests pass.
 
-1. Add the Java wrapping substrate before expanding list-bearing syntax:
-   - `JavaFormatContext` state for groups, markers, comments, and profile,
-   - policy-bearing helpers for declarations, lists, chains, binary expressions,
-     annotations, blocks, and blank lines,
-   - narrow-width tests that force multiline output,
-   - trailing-comment tests proving `line_suffix` affects fitting.
-2. Continue localizing coarse blockers:
-   - module declarations,
-   - compact compilation-unit members,
-   - remaining broad shape guards.
-3. Comments baseline:
-   - multiline block/Javadoc comments,
-   - dangling comments in empty blocks/bodies/lists,
-   - list-aware comment attachment.
-4. Initializer and empty declarations:
-   - compact compilation-unit members.
-5. Signatures and declarators:
-   - method/constructor parameters,
-   - type parameters,
-   - throws clauses,
-   - receiver parameters,
-   - multiple declarators and declarator dimensions.
-6. Type formatter:
-   - generics,
-   - arrays,
-   - wildcards,
-   - union/intersection types,
-   - type-use annotations.
-7. Declarations:
-   - interfaces,
-   - annotation interfaces,
-   - records,
-   - enums,
-   - nested and local declarations,
-   - modules.
-8. Statements:
-   - constructor invocations,
-   - control flow,
-   - try/resources,
-   - switch.
-9. Expressions: selector chains, object/array creation, class literals, casts,
-   conditionals, lambdas, method references, patterns and switch expressions,
-   and multiline literals.
+### Phase 2: Eliminate Raw Source Passthrough
 
-10. Milestone 8 coverage closeout:
-    - drive `missing-rule blocked` and `other blocked` to zero,
-    - keep exact-match percentage and aggregate diff size reporting so later
-      compatibility milestones can drive policy diffs down,
-    - do not require 100% google-java-format exact matches for Milestone 8,
-    - keep import sorting, modifier ordering, suppression comments, and range
-      formatting explicitly scoped unless they are required to format all valid
-      Java source without blocked output.
+Goal: remove arbitrary source-copy formatting paths for parser-clean syntax.
 
-## Tracking Checklist
+Tasks:
 
-Milestone 8 remains open until all of these are true:
+1. Inventory every `format_raw_source_text` call site by syntax domain.
+2. Replace raw-source fallbacks with real layout rules, starting with the
+   largest domains rather than isolated cases.
+3. Keep exact token spelling through token or literal formatting helpers only.
+4. Add focused tests only for rule boundaries or syntax shapes not already
+   exercised by existing formatter tests or oracle fixtures.
+5. Remove `format_raw_source_text` when no longer needed by formatter rules.
 
-- [ ] `missing-rule blocked: 0` for the pinned valid google-java-format corpus.
-- [ ] `other blocked: 0` for the pinned valid google-java-format corpus.
-- [ ] `formatted` equals the number of valid corpus files.
-- [ ] exact-match percentage and aggregate diff size are still reported for the
-      pinned valid google-java-format corpus, but are not Milestone 8 gates.
-- [ ] every valid-Java `missing_layout` call site in `jolt_java_fmt` has been
-      removed or proven unreachable for clean parser output.
-- [ ] broad shape guards no longer block valid Java grammar families.
-- [ ] Java wrapping helpers exist for declarations, lists, chains, binary
-      expressions, comments, and blank-line-sensitive blocks before those
-      grammar families report formatted output.
-- [ ] narrow-width tests force multiline behavior for every wrapping helper that
-      can affect oracle output.
-- [ ] parser diagnostics still block formatting without output.
-- [ ] formatter output remains comment/trivia-accounted.
-- [ ] targeted tests cover each Java grammar family, not only oracle fixtures.
-- [ ] `mise run test` passes.
+Success signal:
+
+- `rg -n "format_raw_source_text" crates/jolt_java_fmt/src` produces no
+  formatter rule matches,
+- parser-clean syntax either formats through real rules or exposes a parser/
+  wrapper bug that must be fixed,
+- no missing layout exits,
+- formatter and syntax tests pass.
+
+The oracle suites are the broad coverage signal for this phase. Unit tests
+should stay focused and minimal; do not add one test per removed fallback when
+an existing oracle fixture already covers the domain.
+
+### Phase 3: Build Comment Ownership Before Comment Placement
+
+Goal: replace order-only comment handling with explicit ownership.
+
+Tasks:
+
+1. Classify comments by source position: own-line, end-of-line, and
+   inline/remaining.
+2. Resolve ownership using preceding, enclosing, and following ranges.
+3. Expose leading, trailing, dangling, inline, and list-item comment buckets to
+   rules/helpers.
+4. Keep `line_suffix` and `line_suffix_boundary` as the trailing-comment
+   rendering mechanism.
+5. Add tests that fail on unconsumed comments instead of relying on late
+   appendage.
+
+Success signal:
+
+- new supported syntax does not depend on `take_remaining_comment_docs`,
+- helper tests cover comments inside lists, bodies, chains, and declarations,
+- ambiguous comment ownership is reported in tests or diagnostics rather than
+  silently appended.
+
+### Phase 4: Extract Callable And Type Declaration Helpers
+
+Goal: make declarations declarative instead of locally assembled.
+
+Tasks:
+
+1. Add a callable declaration helper for methods, constructors, annotation
+   elements, and compact constructors.
+2. Add a type declaration helper for class, record, interface, annotation
+   interface, and enum headers.
+3. Move throws, default value, type parameter, and declaration annotation
+   policies into these helpers.
+4. Add tests for long headers, annotations, type parameters, throws clauses,
+   record components, and compact constructors.
+
+Success signal:
+
+- `declarations.rs` shrinks materially,
+- declaration wrapping changes can be made in one helper,
+- largest declaration-related oracle diffs decrease or remain neutral.
+
+### Phase 5: Rebuild Selector Chain Policy
+
+Goal: attack the largest shared oracle mismatch domain without case patches.
+
+Tasks:
+
+1. Make selector flattening produce structured metadata, not just docs.
+2. Introduce chain member/group analyzer types.
+3. Classify chain shape before rendering.
+4. Implement staged alternatives for field chains, builder chains, and deeply
+   nested call chains.
+5. Measure Google, AOSP, and Palantir scoreboards after each broad rule.
+6. Keep unit tests for narrow selector chains so local readability does not
+   regress unnoticed.
+
+Success signal:
+
+- `B24909927.java` improves across at least Google and AOSP without a Palantir
+  blow-up,
+- `B20701054.java` and deeply nested call fixtures do not regress materially,
+- chain behavior is explainable from syntax shape.
+
+### Phase 6: Integrate Owned Comments Into Helpers
+
+Goal: move comments from accounting correctness toward layout correctness.
+
+Tasks:
+
+1. Teach list helpers about associated comments between items and before closing
+   delimiters.
+2. Teach body helpers about dangling comments and blank-line preservation.
+3. Teach selector-chain and callable helpers where inline and dangling comments
+   may appear.
+4. Add focused comment tests for arguments, parameters, blocks, class bodies,
+   switch blocks, and selector chains.
+
+Success signal:
+
+- fewer late remaining-comment appendages,
+- comment tests exercise helper boundaries,
+- oracle diffs caused by comments shrink without hiding unhandled trivia.
+
+### Phase 7: Profile-Specific Oracle Alignment
+
+Goal: make profile differences explicit and maintainable.
+
+Tasks:
+
+1. Centralize known profile differences in policy accessors.
+2. Keep Google as the base unless a helper has a documented profile divergence.
+3. Add AOSP import grouping and indentation behavior through profile policy.
+4. Add Palantir-specific wrapping only where reports show systematic style
+   divergence.
+
+Success signal:
+
+- profile checks are rare in rule modules,
+- profile behavior is easy to audit,
+- scoreboard changes can be attributed to policy decisions.
+
+## Verification Gates
+
+Every abstraction change should preserve the coverage invariant:
+
+```sh
+rg -n "MissingLayoutRules|missing_layout_rules|missing_layout" crates/jolt_java_fmt
+```
+
+The command should produce no formatter matches.
+
+Minimum local gates:
+
+```sh
+cargo fmt --check
+INSTA_UPDATE=no cargo test -p jolt_java_fmt
+cargo test -p jolt_java_syntax --lib
+```
+
+When changing oracle-facing layout policy:
+
+```sh
+INSTA_UPDATE=always cargo test -p jolt_java_fmt --test oracle_fixtures
+rg -n "missing-rule blocked|aggregate diff size|largest per-file diff" \
+  crates/jolt_java_fmt/tests/snapshots/oracle_fixtures__*_scoreboard.snap
+```
+
+Scoreboard changes should be reviewed by domain, not only by aggregate number.
+An aggregate improvement that creates a new concentrated regression in a core
+fixture should be treated skeptically.
+
+Raw source passthrough is illegal and must be eliminated alongside
+missing-layout exits:
+
+```sh
+rg -n "format_raw_source_text" crates/jolt_java_fmt/src
+```
+
+This command should produce no formatter rule matches. Token and literal rules
+may preserve exact token spelling through dedicated token-formatting helpers,
+but rules must not format arbitrary accepted syntax by copying its source text.
+
+## Non-Goals
+
+- Do not introduce arbitrary user style knobs.
+- Do not move Java policy into `jolt_fmt_ir`.
+- Do not add unsupported-layout exits as scaffolding.
+- Do not add raw-source formatting fallbacks as scaffolding.
+- Do not optimize for one fixture by naming methods, classes, or files.
+- Do not silently drop, append, or ignore comments to make tests pass.
+- Do not split modules mechanically without extracting a real abstraction.
+
+## Practical Next Moves
+
+The best next implementation sequence is:
+
+1. Define the formatter rule contract and profile policy accessor layer.
+2. Extract generic separated/delimited mechanics, then route Java argument,
+   formal, and type lists through Java helpers.
+3. Eliminate raw source passthrough domain by domain.
+4. Replace order-only comment handling with comment ownership buckets.
+5. Extract callable and type declaration helpers from `declarations.rs`.
+6. Rework selector chain metadata and staged layout alternatives.
+7. Integrate owned list/body/chain comments into those helpers.
+8. Centralize profile policy decisions as they become visible.
+
+This keeps the formatter moving in broad domains while improving the codebase's
+ability to absorb oracle-alignment work without becoming a fixture-by-fixture
+patch pile.

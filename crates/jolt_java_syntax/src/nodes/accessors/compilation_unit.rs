@@ -1,9 +1,9 @@
 use super::super::{
-    Annotation, AnyJavaNode, CompilationUnit, EmptyDeclaration, FieldDeclaration,
+    Annotation, AnyJavaNode, CompilationUnit, EmptyDeclaration, ExportsDirective, FieldDeclaration,
     ImportDeclaration, JavaFamily, JavaNode, JavaSyntaxKind, JavaSyntaxToken, MethodDeclaration,
-    ModuleDeclaration, ModuleDirective, ModuleDirectiveNode, NameSyntax, PackageDeclaration,
-    TypeDeclaration, child, child_family, child_token, children, children_family,
-    children_tokens_matching,
+    ModuleDeclaration, ModuleDirective, ModuleDirectiveNode, NameSyntax, OpensDirective,
+    PackageDeclaration, ProvidesDirective, RequiresDirective, TypeDeclaration, UsesDirective,
+    child, child_family, child_token, children, children_family, children_tokens_matching,
 };
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -198,8 +198,90 @@ impl NameSyntax {
     }
 }
 impl ModuleDeclaration {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation> + '_ {
+        children(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn is_open(&self) -> bool {
+        self.syntax
+            .children_with_tokens()
+            .filter_map(jolt_syntax::SyntaxElement::into_token)
+            .any(|token| token.kind() == JavaSyntaxKind::Identifier && token.text() == "open")
+    }
+
+    #[must_use]
+    pub fn name(&self) -> Option<NameSyntax> {
+        child_family(&self.syntax)
+    }
+
     pub fn directives(&self) -> impl Iterator<Item = ModuleDirective> + '_ {
-        children::<ModuleDirectiveNode>(&self.syntax).filter_map(|node| node.directive())
+        children::<ModuleDirectiveNode>(&self.syntax).map(|node| {
+            node.directive()
+                .expect("parser-clean module directive node should have a directive child")
+        })
+    }
+
+    #[must_use]
+    pub fn has_supported_layout_shape(&self) -> bool {
+        let elements = self.syntax.children_with_tokens().collect::<Vec<_>>();
+        let mut index = 0;
+
+        while elements
+            .get(index)
+            .is_some_and(|element| element.kind() == JavaSyntaxKind::Annotation)
+        {
+            index += 1;
+        }
+
+        if elements
+            .get(index)
+            .and_then(|element| element.clone().into_token())
+            .is_some_and(|token| {
+                token.kind() == JavaSyntaxKind::Identifier && token.text() == "open"
+            })
+        {
+            index += 1;
+        }
+
+        let Some(module_kw) = elements
+            .get(index)
+            .and_then(|element| element.clone().into_token())
+        else {
+            return false;
+        };
+        if module_kw.kind() != JavaSyntaxKind::Identifier || module_kw.text() != "module" {
+            return false;
+        }
+        index += 1;
+
+        if !elements
+            .get(index)
+            .is_some_and(|element| NameSyntax::can_cast(element.kind()))
+        {
+            return false;
+        }
+        index += 1;
+
+        if !elements
+            .get(index)
+            .is_some_and(|element| element.kind() == JavaSyntaxKind::LBrace)
+        {
+            return false;
+        }
+        index += 1;
+
+        while elements
+            .get(index)
+            .is_some_and(|element| element.kind() == JavaSyntaxKind::ModuleDirective)
+        {
+            index += 1;
+        }
+
+        elements
+            .get(index)
+            .is_some_and(|element| element.kind() == JavaSyntaxKind::RBrace)
+            && index + 1 == elements.len()
     }
 }
 
@@ -207,5 +289,65 @@ impl ModuleDirectiveNode {
     #[must_use]
     pub fn directive(&self) -> Option<ModuleDirective> {
         child_family(&self.syntax)
+    }
+}
+
+impl RequiresDirective {
+    #[must_use]
+    pub fn is_transitive(&self) -> bool {
+        self.syntax
+            .children_with_tokens()
+            .filter_map(jolt_syntax::SyntaxElement::into_token)
+            .any(|token| token.kind() == JavaSyntaxKind::Identifier && token.text() == "transitive")
+    }
+
+    #[must_use]
+    pub fn is_static(&self) -> bool {
+        child_token(&self.syntax, JavaSyntaxKind::StaticKw).is_some()
+    }
+
+    #[must_use]
+    pub fn name(&self) -> Option<NameSyntax> {
+        child_family(&self.syntax)
+    }
+}
+
+impl ExportsDirective {
+    #[must_use]
+    pub fn package_name(&self) -> Option<NameSyntax> {
+        child_family(&self.syntax)
+    }
+
+    pub fn target_modules(&self) -> impl Iterator<Item = NameSyntax> + '_ {
+        children_family(&self.syntax).skip(1)
+    }
+}
+
+impl OpensDirective {
+    #[must_use]
+    pub fn package_name(&self) -> Option<NameSyntax> {
+        child_family(&self.syntax)
+    }
+
+    pub fn target_modules(&self) -> impl Iterator<Item = NameSyntax> + '_ {
+        children_family(&self.syntax).skip(1)
+    }
+}
+
+impl UsesDirective {
+    #[must_use]
+    pub fn service_name(&self) -> Option<NameSyntax> {
+        child_family(&self.syntax)
+    }
+}
+
+impl ProvidesDirective {
+    #[must_use]
+    pub fn service_name(&self) -> Option<NameSyntax> {
+        child_family(&self.syntax)
+    }
+
+    pub fn implementation_names(&self) -> impl Iterator<Item = NameSyntax> + '_ {
+        children_family(&self.syntax).skip(1)
     }
 }

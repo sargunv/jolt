@@ -66,6 +66,127 @@ fn invalid_event_stream_aborts_without_syntax() {
 }
 
 #[test]
+fn recovers_empty_switch_case_labels() {
+    for source in [
+        "class A { void m(int value) { switch (value) { case: break; } } }",
+        "class A { void m(int value) { switch (value) { case A, : break; } } }",
+    ] {
+        let parse = parse_compilation_unit(source);
+
+        assert_eq!(parse.outcome(), SyntaxOutcome::Recovered, "{source}");
+        assert!(
+            parse
+                .diagnostics()
+                .iter()
+                .any(|diagnostic| diagnostic.message == "expected switch case label item"),
+            "{source}\n{parse:#?}"
+        );
+    }
+}
+
+#[test]
+fn recovers_empty_try_with_resources_lists() {
+    for source in [
+        "class A { void m() { try () {} } }",
+        "class A { void m() { try (;) {} } }",
+    ] {
+        let parse = parse_compilation_unit(source);
+
+        assert_eq!(parse.outcome(), SyntaxOutcome::Recovered, "{source}");
+        assert!(
+            parse
+                .diagnostics()
+                .iter()
+                .any(|diagnostic| diagnostic.message == "expected resource"),
+            "{source}\n{parse:#?}"
+        );
+    }
+}
+
+#[test]
+fn recovers_empty_or_trailing_declaration_lists() {
+    for (source, message) in [
+        ("class A<> {}", "expected type parameter"),
+        ("class A<T,> {}", "expected type parameter"),
+        ("class A extends {}", "expected type"),
+        ("class A implements {}", "expected type"),
+        ("class A permits {}", "expected type name"),
+        ("record A(int value,) {}", "expected record component"),
+        ("class A { void m(int value,) {} }", "expected parameter"),
+        ("class A { void m() throws {} }", "expected thrown type"),
+    ] {
+        let parse = parse_compilation_unit(source);
+
+        assert_eq!(parse.outcome(), SyntaxOutcome::Recovered, "{source}");
+        assert!(
+            parse
+                .diagnostics()
+                .iter()
+                .any(|diagnostic| diagnostic.message == message),
+            "{source}\n{parse:#?}"
+        );
+    }
+}
+
+#[test]
+fn recovers_trailing_expression_lists() {
+    for (source, message) in [
+        (
+            "class A { void m() { call(value,); } }",
+            "expected argument",
+        ),
+        (
+            "class A { void m() { java.util.function.BiFunction<Integer, Integer, Integer> f = (left,) -> left; } }",
+            "expected lambda parameter",
+        ),
+        (
+            "record Pair(int left, int right) {} class A { boolean m(Object value) { return value instanceof Pair(int left,); } }",
+            "expected component pattern",
+        ),
+    ] {
+        let parse = parse_compilation_unit(source);
+
+        assert_eq!(parse.outcome(), SyntaxOutcome::Recovered, "{source}");
+        assert!(
+            parse
+                .diagnostics()
+                .iter()
+                .any(|diagnostic| diagnostic.message == message),
+            "{source}\n{parse:#?}"
+        );
+    }
+}
+
+#[test]
+fn recovers_invalid_member_type_argument_placements() {
+    for (source, message) in [
+        (
+            "class A { Object m(A a) { return a.<T>b; } }",
+            "type arguments require method invocation",
+        ),
+        (
+            "class A { Object m(A a) { return a.b<T>(); } }",
+            "type arguments must appear before method name",
+        ),
+        (
+            "class A { Object m(A a) { return a.<T>b<U>(); } }",
+            "type arguments must appear before method name",
+        ),
+    ] {
+        let parse = parse_compilation_unit(source);
+
+        assert_eq!(parse.outcome(), SyntaxOutcome::Recovered, "{source}");
+        assert!(
+            parse
+                .diagnostics()
+                .iter()
+                .any(|diagnostic| diagnostic.message == message),
+            "{source}\n{parse:#?}"
+        );
+    }
+}
+
+#[test]
 fn parses_ordinary_compilation_unit_package_imports_and_top_level_types() {
     // Spec: JLS 19 CompilationUnit, OrdinaryCompilationUnit, PackageDeclaration,
     // ImportDeclaration, and TopLevelClassOrInterfaceDeclaration.

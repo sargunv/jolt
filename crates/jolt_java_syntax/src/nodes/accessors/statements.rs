@@ -1,18 +1,26 @@
 use super::super::{
-    AssertStatement, BasicForStatement, Block, BlockItem, BlockStatement, BreakStatement,
-    CaseConstant, CasePattern, CatchClause, CatchParameter, CatchTypeList, ContinueStatement,
-    DoStatement, EmptyStatement, EnhancedForStatement, Expression, ExpressionStatement,
-    FinallyClause, ForInitializer, ForStatement, ForUpdate, IfStatement, JavaFamily, JavaNode,
-    JavaSyntaxKind, JavaSyntaxToken, LabeledStatement, LocalVariableDeclaration, ReturnStatement,
-    Statement, StatementExpressionList, SwitchBlock, SwitchBlockStatementGroup, SwitchLabel,
-    SwitchRule, SwitchStatement, SynchronizedStatement, ThrowStatement, TryStatement, Type,
-    UnaryExpression, WhileStatement, YieldStatement, child, child_family, child_token, children,
-    children_family, nth_child_family,
+    Annotation, AssertStatement, BasicForStatement, Block, BlockItem, BlockStatement,
+    BreakStatement, CaseConstant, CasePattern, CatchClause, CatchParameter, CatchTypeList,
+    ContinueStatement, DoStatement, EmptyStatement, EnhancedForStatement, Expression,
+    ExpressionStatement, FinallyClause, ForInitializer, ForStatement, ForUpdate, Guard,
+    IfStatement, JavaFamily, JavaNode, JavaSyntaxKind, JavaSyntaxToken, LabeledStatement,
+    LocalClassOrInterfaceDeclaration, LocalVariableDeclaration, Pattern, Resource, ResourceList,
+    ResourceSpecification, ReturnStatement, Statement, StatementExpressionList, SwitchBlock,
+    SwitchBlockStatementGroup, SwitchLabel, SwitchRule, SwitchStatement, SynchronizedStatement,
+    ThrowStatement, TryStatement, TryWithResourcesStatement, Type, TypeDeclaration,
+    UnaryExpression, VariableAccess, WhileStatement, YieldStatement, child, child_family,
+    child_token, child_token_in, children, children_family, nth_child_family,
 };
 use super::helpers::{
     has_braced_block_statement_layout_shape, has_keyword_optional_expression_semicolon_shape,
     has_keyword_optional_label_semicolon_shape, has_keyword_required_expression_semicolon_shape,
 };
+
+pub enum SwitchLabelItem {
+    Constant(CaseConstant),
+    Pattern(CasePattern, Option<Guard>),
+    Default(JavaSyntaxToken),
+}
 
 impl IfStatement {
     #[must_use]
@@ -304,6 +312,11 @@ impl SynchronizedStatement {
 
 impl TryStatement {
     #[must_use]
+    pub fn try_with_resources(&self) -> Option<TryWithResourcesStatement> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
     pub fn body(&self) -> Option<Block> {
         child(&self.syntax)
     }
@@ -341,6 +354,138 @@ impl TryStatement {
     }
 }
 
+impl TryWithResourcesStatement {
+    #[must_use]
+    pub fn resources(&self) -> Option<ResourceSpecification> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn body(&self) -> Option<Block> {
+        child(&self.syntax)
+    }
+
+    pub fn catches(&self) -> impl Iterator<Item = CatchClause> + '_ {
+        children(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn finally_clause(&self) -> Option<FinallyClause> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn has_supported_layout_shape(&self) -> bool {
+        let elements = self.syntax.children_with_tokens().collect::<Vec<_>>();
+        let [try_kw, resources, body, rest @ ..] = elements.as_slice() else {
+            return false;
+        };
+        if try_kw.kind() != JavaSyntaxKind::TryKw
+            || resources.kind() != JavaSyntaxKind::ResourceSpecification
+            || body.kind() != JavaSyntaxKind::Block
+        {
+            return false;
+        }
+
+        let mut saw_finally = false;
+        for element in rest {
+            match element.kind() {
+                JavaSyntaxKind::CatchClause if !saw_finally => {}
+                JavaSyntaxKind::FinallyClause if !saw_finally => saw_finally = true,
+                _ => return false,
+            }
+        }
+
+        true
+    }
+}
+
+impl ResourceSpecification {
+    #[must_use]
+    pub fn resources(&self) -> Option<ResourceList> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn has_supported_layout_shape(&self) -> bool {
+        let elements = self.syntax.children_with_tokens().collect::<Vec<_>>();
+        matches!(
+            elements.as_slice(),
+            [left, resources, right]
+                if left.kind() == JavaSyntaxKind::LParen
+                    && resources.kind() == JavaSyntaxKind::ResourceList
+                    && right.kind() == JavaSyntaxKind::RParen
+        ) || matches!(
+            elements.as_slice(),
+            [left, resources, semicolon, right]
+                if left.kind() == JavaSyntaxKind::LParen
+                    && resources.kind() == JavaSyntaxKind::ResourceList
+                    && semicolon.kind() == JavaSyntaxKind::Semicolon
+                    && right.kind() == JavaSyntaxKind::RParen
+        )
+    }
+}
+
+impl ResourceList {
+    pub fn resources(&self) -> impl Iterator<Item = Resource> + '_ {
+        children(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn has_supported_layout_shape(&self) -> bool {
+        let mut expect_resource = true;
+        let mut saw_resource = false;
+        for element in self.syntax.children_with_tokens() {
+            match (expect_resource, element.kind()) {
+                (true, JavaSyntaxKind::Resource) => {
+                    expect_resource = false;
+                    saw_resource = true;
+                }
+                (false, JavaSyntaxKind::Semicolon) => expect_resource = true,
+                _ => return false,
+            }
+        }
+
+        saw_resource && !expect_resource
+    }
+}
+
+impl Resource {
+    #[must_use]
+    pub fn local_variable_declaration(&self) -> Option<LocalVariableDeclaration> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn variable_access(&self) -> Option<VariableAccess> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn has_supported_layout_shape(&self) -> bool {
+        let elements = self.syntax.children_with_tokens().collect::<Vec<_>>();
+        matches!(
+            elements.as_slice(),
+            [resource]
+                if resource.kind() == JavaSyntaxKind::LocalVariableDeclaration
+                    || resource.kind() == JavaSyntaxKind::VariableAccess
+        )
+    }
+}
+
+impl VariableAccess {
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn has_supported_layout_shape(&self) -> bool {
+        let elements = self.syntax.children_with_tokens().collect::<Vec<_>>();
+        matches!(elements.as_slice(), [expression] if Expression::can_cast(expression.kind()))
+    }
+}
+
 impl CatchClause {
     #[must_use]
     pub fn parameter(&self) -> Option<CatchParameter> {
@@ -368,6 +513,13 @@ impl CatchClause {
 }
 
 impl CatchParameter {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation> + '_ {
+        self.syntax
+            .children()
+            .take_while(|node| node.kind() == JavaSyntaxKind::Annotation)
+            .filter_map(Annotation::cast)
+    }
+
     #[must_use]
     pub fn final_token(&self) -> Option<JavaSyntaxToken> {
         child_token(&self.syntax, JavaSyntaxKind::FinalKw)
@@ -380,23 +532,33 @@ impl CatchParameter {
 
     #[must_use]
     pub fn name(&self) -> Option<JavaSyntaxToken> {
-        child_token(&self.syntax, JavaSyntaxKind::Identifier)
+        child_token_in(
+            &self.syntax,
+            &[JavaSyntaxKind::Identifier, JavaSyntaxKind::UnderscoreKw],
+        )
     }
 
     #[must_use]
     pub fn has_supported_layout_shape(&self) -> bool {
-        let mut kinds = self
+        let kinds = self
             .syntax
             .children_with_tokens()
             .map(|element| element.kind())
             .collect::<Vec<_>>();
-        if kinds.first() == Some(&JavaSyntaxKind::FinalKw) {
-            kinds.remove(0);
+
+        let mut index = 0;
+        while kinds.get(index) == Some(&JavaSyntaxKind::Annotation) {
+            index += 1;
         }
-        matches!(
-            kinds.as_slice(),
-            [JavaSyntaxKind::CatchTypeList, JavaSyntaxKind::Identifier]
-        )
+        if kinds.get(index) == Some(&JavaSyntaxKind::FinalKw) {
+            index += 1;
+        }
+        kinds.get(index) == Some(&JavaSyntaxKind::CatchTypeList)
+            && matches!(
+                kinds.get(index + 1),
+                Some(JavaSyntaxKind::Identifier | JavaSyntaxKind::UnderscoreKw)
+            )
+            && index + 2 == kinds.len()
     }
 }
 
@@ -406,10 +568,31 @@ impl CatchTypeList {
         child_family(&self.syntax)
     }
 
+    pub fn types(&self) -> impl Iterator<Item = Type> + '_ {
+        children_family(&self.syntax)
+    }
+
     #[must_use]
     pub fn has_supported_layout_shape(&self) -> bool {
-        let elements = self.syntax.children_with_tokens().collect::<Vec<_>>();
-        matches!(elements.as_slice(), [ty] if Type::can_cast(ty.kind()))
+        let mut expect_type = true;
+        let mut saw_type = false;
+
+        for element in self.syntax.children_with_tokens() {
+            let kind = element.kind();
+            if expect_type {
+                if !Type::can_cast(kind) {
+                    return false;
+                }
+                saw_type = true;
+                expect_type = false;
+            } else if kind == JavaSyntaxKind::Bar {
+                expect_type = true;
+            } else {
+                return false;
+            }
+        }
+
+        saw_type && !expect_type
     }
 }
 
@@ -658,6 +841,7 @@ impl SwitchStatement {
 pub enum SwitchBlockItem {
     StatementGroup(SwitchBlockStatementGroup),
     Rule(SwitchRule),
+    BlockStatement(BlockStatement),
 }
 
 impl SwitchBlock {
@@ -669,6 +853,9 @@ impl SwitchBlock {
                     SwitchBlockStatementGroup::cast(node).map(SwitchBlockItem::StatementGroup)
                 }
                 JavaSyntaxKind::SwitchRule => SwitchRule::cast(node).map(SwitchBlockItem::Rule),
+                JavaSyntaxKind::BlockStatement => {
+                    BlockStatement::cast(node).map(SwitchBlockItem::BlockStatement)
+                }
                 _ => None,
             }
         })
@@ -698,7 +885,9 @@ impl SwitchBlock {
                 .all(|element| {
                     matches!(
                         element.kind(),
-                        JavaSyntaxKind::SwitchBlockStatementGroup | JavaSyntaxKind::SwitchRule
+                        JavaSyntaxKind::SwitchBlockStatementGroup
+                            | JavaSyntaxKind::SwitchRule
+                            | JavaSyntaxKind::BlockStatement
                     )
                 })
     }
@@ -783,7 +972,54 @@ impl SwitchRule {
 }
 
 impl SwitchLabel {
+    pub fn items(&self) -> impl Iterator<Item = SwitchLabelItem> {
+        let elements = self.syntax.children_with_tokens().collect::<Vec<_>>();
+        let mut items = Vec::new();
+        let mut index = 0;
+
+        while let Some(element) = elements.get(index) {
+            match element.kind() {
+                JavaSyntaxKind::CaseConstant => {
+                    if let Some(item) = element
+                        .clone()
+                        .into_node()
+                        .and_then(CaseConstant::cast)
+                        .map(SwitchLabelItem::Constant)
+                    {
+                        items.push(item);
+                    }
+                }
+                JavaSyntaxKind::CasePattern => {
+                    let pattern = element.clone().into_node().and_then(CasePattern::cast);
+                    let guard = elements
+                        .get(index + 1)
+                        .filter(|next| next.kind() == JavaSyntaxKind::Guard)
+                        .and_then(|next| next.clone().into_node().and_then(Guard::cast));
+                    if guard.is_some() {
+                        index += 1;
+                    }
+                    if let Some(pattern) = pattern {
+                        items.push(SwitchLabelItem::Pattern(pattern, guard));
+                    }
+                }
+                JavaSyntaxKind::DefaultKw => {
+                    if let Some(syntax) = element.clone().into_token() {
+                        items.push(SwitchLabelItem::Default(JavaSyntaxToken { syntax }));
+                    }
+                }
+                _ => {}
+            }
+            index += 1;
+        }
+
+        items.into_iter()
+    }
+
     pub fn constants(&self) -> impl Iterator<Item = CaseConstant> + '_ {
+        children(&self.syntax)
+    }
+
+    pub fn patterns(&self) -> impl Iterator<Item = CasePattern> + '_ {
         children(&self.syntax)
     }
 
@@ -806,13 +1042,7 @@ impl SwitchLabel {
         match elements.as_slice() {
             [default_kw] => default_kw.kind() == JavaSyntaxKind::DefaultKw,
             [case_kw, rest @ ..] if case_kw.kind() == JavaSyntaxKind::CaseKw => {
-                !rest.is_empty()
-                    && has_comma_separated_switch_label_items(rest, |kind| {
-                        matches!(
-                            kind,
-                            JavaSyntaxKind::CaseConstant | JavaSyntaxKind::DefaultKw
-                        )
-                    })
+                has_supported_switch_label_items(rest)
             }
             _ => false,
         }
@@ -833,23 +1063,70 @@ impl CaseConstant {
 
 impl CasePattern {
     #[must_use]
+    pub fn pattern(&self) -> Option<Pattern> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
     pub fn has_supported_layout_shape(&self) -> bool {
-        false
+        let elements = self.syntax.children_with_tokens().collect::<Vec<_>>();
+        matches!(elements.as_slice(), [pattern] if Pattern::can_cast(pattern.kind()))
     }
 }
 
-fn has_comma_separated_switch_label_items(
-    elements: &[jolt_syntax::SyntaxElement<crate::language::JavaLanguage>],
-    is_item: impl Fn(JavaSyntaxKind) -> bool,
-) -> bool {
-    elements.len() % 2 == 1
-        && elements.iter().enumerate().all(|(index, element)| {
-            if index % 2 == 0 {
-                is_item(element.kind())
-            } else {
-                element.kind() == JavaSyntaxKind::Comma
+impl Guard {
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn has_supported_layout_shape(&self) -> bool {
+        let elements = self.syntax.children_with_tokens().collect::<Vec<_>>();
+        match elements.as_slice() {
+            [when_kw, expression] => {
+                let is_when = when_kw.clone().into_token().is_some_and(|token| {
+                    token.kind() == JavaSyntaxKind::Identifier && token.text() == "when"
+                });
+                is_when && Expression::can_cast(expression.kind())
             }
-        })
+            _ => false,
+        }
+    }
+}
+
+fn has_supported_switch_label_items(
+    elements: &[jolt_syntax::SyntaxElement<crate::language::JavaLanguage>],
+) -> bool {
+    let mut index = 0;
+    let mut expect_item = true;
+    let mut saw_item = false;
+
+    while let Some(element) = elements.get(index) {
+        if expect_item {
+            match element.kind() {
+                JavaSyntaxKind::CaseConstant | JavaSyntaxKind::DefaultKw => {}
+                JavaSyntaxKind::CasePattern => {
+                    if elements
+                        .get(index + 1)
+                        .is_some_and(|next| next.kind() == JavaSyntaxKind::Guard)
+                    {
+                        index += 1;
+                    }
+                }
+                _ => return false,
+            }
+            saw_item = true;
+            expect_item = false;
+        } else if element.kind() == JavaSyntaxKind::Comma {
+            expect_item = true;
+        } else {
+            return false;
+        }
+        index += 1;
+    }
+
+    saw_item && !expect_item
 }
 
 impl Block {
@@ -901,7 +1178,8 @@ impl BlockStatement {
             [
                 JavaSyntaxKind::LocalVariableDeclaration,
                 JavaSyntaxKind::Semicolon
-            ] | [JavaSyntaxKind::Block
+            ] | [JavaSyntaxKind::LocalClassOrInterfaceDeclaration
+                | JavaSyntaxKind::Block
                 | JavaSyntaxKind::EmptyStatement
                 | JavaSyntaxKind::ReturnStatement
                 | JavaSyntaxKind::ThrowStatement
@@ -918,6 +1196,29 @@ impl BlockStatement {
                 | JavaSyntaxKind::TryStatement
                 | JavaSyntaxKind::BreakStatement
                 | JavaSyntaxKind::ContinueStatement]
+        )
+    }
+}
+
+impl LocalClassOrInterfaceDeclaration {
+    #[must_use]
+    pub fn declaration(&self) -> Option<TypeDeclaration> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn has_supported_layout_shape(&self) -> bool {
+        matches!(
+            self.syntax
+                .children_with_tokens()
+                .map(|element| element.kind())
+                .collect::<Vec<_>>()
+                .as_slice(),
+            [JavaSyntaxKind::ClassDeclaration
+                | JavaSyntaxKind::RecordDeclaration
+                | JavaSyntaxKind::EnumDeclaration
+                | JavaSyntaxKind::InterfaceDeclaration
+                | JavaSyntaxKind::AnnotationInterfaceDeclaration]
         )
     }
 }

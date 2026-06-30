@@ -57,7 +57,7 @@ pub fn format_java_source_with_options(
 
     let Some(syntax) = syntax else {
         return blocked(vec![Diagnostic {
-            code: JavaFormatDiagnosticCode::MissingLayoutRules.id(),
+            code: JavaFormatDiagnosticCode::InternalError.id(),
             severity: Severity::InternalError,
             stage: DiagnosticStage::Formatter,
             message: "Java parser produced a clean outcome without syntax".to_owned(),
@@ -65,7 +65,7 @@ pub fn format_java_source_with_options(
         }]);
     };
 
-    let mut context = JavaFormatContext::new(source);
+    let mut context = JavaFormatContext::with_profile(source, options.profile);
     let doc = match format_compilation_unit(&syntax, &mut context) {
         Ok(doc) => doc,
         Err(diagnostic) => return blocked(vec![diagnostic]),
@@ -74,7 +74,7 @@ pub fn format_java_source_with_options(
     if context.has_unhandled_comment_trivia() {
         let Some(trivia) = context.next_unhandled_comment_trivia() else {
             return blocked(vec![Diagnostic {
-                code: JavaFormatDiagnosticCode::MissingLayoutRules.id(),
+                code: JavaFormatDiagnosticCode::InternalError.id(),
                 severity: Severity::InternalError,
                 stage: DiagnosticStage::Formatter,
                 message: "Java formatter context reported unhandled trivia without a record"
@@ -83,8 +83,8 @@ pub fn format_java_source_with_options(
             }]);
         };
         return blocked(vec![Diagnostic {
-            code: JavaFormatDiagnosticCode::MissingLayoutRules.id(),
-            severity: Severity::Error,
+            code: JavaFormatDiagnosticCode::InternalError.id(),
+            severity: Severity::InternalError,
             stage: DiagnosticStage::Formatter,
             message: "Java formatter found unhandled comment or ignored trivia".to_owned(),
             range: Some(trivia.trivia.range),
