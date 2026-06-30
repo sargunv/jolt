@@ -4,7 +4,9 @@ use jolt_fmt_ir::{
     indent_by, line, soft_line, text, text_with_width,
 };
 
-use crate::helpers::lists::{FormattedList, comment_braced_comma_list};
+use crate::helpers::lists::{
+    FormattedList, comment_braced_comma_list, tabular_braced_comma_list_with_before_close_comments,
+};
 use crate::policy::JavaFormatPolicy;
 
 pub(crate) fn braced_initializer_block(
@@ -14,6 +16,22 @@ pub(crate) fn braced_initializer_block(
     policy: JavaFormatPolicy,
 ) -> Doc {
     if list.has_structural_comments() {
+        if let InitializerLayout::Tabular {
+            cols,
+            rows,
+            rows_nested,
+        } = layout
+            && let Some(doc) = tabular_braced_comma_list_with_before_close_comments(
+                list.clone(),
+                cols,
+                rows,
+                rows_nested,
+                has_trailing_comma,
+                policy,
+            )
+        {
+            return doc;
+        }
         return comment_braced_comma_list(list, has_trailing_comma);
     }
 

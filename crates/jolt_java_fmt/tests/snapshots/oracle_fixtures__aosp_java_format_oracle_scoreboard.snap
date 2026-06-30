@@ -10,10 +10,10 @@ parse blocked: 0
 missing-rule blocked: 0
 other blocked: 0
 formatted: 208
-exact matches: 122
-exact-match percentage: 58.65%
-mismatching formatted files: 86
-aggregate diff size: 748
+exact matches: 123
+exact-match percentage: 59.13%
+mismatching formatted files: 85
+aggregate diff size: 742
 largest per-file diff: B24909927.java (205)
 
 worst mismatches:

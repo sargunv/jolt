@@ -873,6 +873,18 @@ impl FormattedList {
             || self.items.iter().any(|item| item.has_structural_comments)
     }
 
+    fn has_only_before_close_structural_comments(&self) -> bool {
+        self.after_open.is_empty()
+            && !self.before_close.is_empty()
+            && self.items.iter().all(|item| {
+                !item.has_comments
+                    && !item.has_structural_comments
+                    && item.trailing_blocks.is_empty()
+                    && item.trailing_line.is_none()
+                    && !item.has_separator_leading_comments
+            })
+    }
+
     fn has_inline_comments(&self) -> bool {
         self.items.iter().any(|item| item.has_inline_comments)
     }
@@ -1663,6 +1675,117 @@ pub(crate) fn comment_braced_comma_list(list: FormattedList, has_trailing_comma:
         hard_line_without_break_parent(),
         text("}"),
     ])
+}
+
+pub(crate) fn tabular_braced_comma_list_with_before_close_comments(
+    list: FormattedList,
+    cols: usize,
+    rows: Vec<Vec<usize>>,
+    rows_nested: Vec<bool>,
+    has_trailing_comma: bool,
+    policy: JavaFormatPolicy,
+) -> Option<Doc> {
+    if cols != 2 || !list.has_only_before_close_structural_comments() {
+        return None;
+    }
+
+    let FormattedList {
+        after_open: _,
+        items,
+        before_close,
+    } = list;
+    let docs = items
+        .into_iter()
+        .map(FormattedListItem::into_doc)
+        .collect::<Vec<_>>();
+    if docs.is_empty() {
+        return None;
+    }
+
+    let row_count = rows.len();
+    let mut body = Vec::new();
+    for (row_index, row) in rows.iter().enumerate() {
+        if row_index > 0 {
+            body.push(hard_line_without_break_parent());
+        }
+
+        let nested = rows_nested.get(row_index).copied().unwrap_or(false);
+        let is_last_row = row_index + 1 == row_count;
+        let row_items = row
+            .iter()
+            .map(|&index| docs.get(index).cloned())
+            .collect::<Option<Vec<_>>>()?;
+        body.push(tabular_braced_comma_row(
+            row_items,
+            cols,
+            nested,
+            is_last_row,
+            has_trailing_comma || !before_close.is_empty(),
+            policy,
+        ));
+    }
+    body.extend(
+        before_close
+            .into_iter()
+            .flat_map(|comment| [hard_line_without_break_parent(), comment]),
+    );
+
+    Some(concat([
+        text("{"),
+        indent(concat([hard_line_without_break_parent(), concat(body)])),
+        hard_line_without_break_parent(),
+        text("}"),
+    ]))
+}
+
+fn tabular_braced_comma_row(
+    mut items: Vec<Doc>,
+    cols: usize,
+    nested_row: bool,
+    is_last_row: bool,
+    has_trailing_comma: bool,
+    policy: JavaFormatPolicy,
+) -> Doc {
+    if items.is_empty() {
+        return text("");
+    }
+
+    let row_indent = if cols == 1 || nested_row {
+        0
+    } else {
+        policy.continuation_indent_levels()
+    };
+
+    if items.len() == 1 {
+        let item = items.into_iter().next().expect("one item");
+        let item = if is_last_row && !has_trailing_comma {
+            item
+        } else {
+            concat([item, text(",")])
+        };
+        return if row_indent == 0 {
+            item
+        } else {
+            indent_by(row_indent, item)
+        };
+    }
+
+    let last = items.pop().expect("multiple items checked above");
+    let entries = items
+        .into_iter()
+        .map(|item| fill_entry(item, concat([text(","), line()])));
+    let last_doc = if is_last_row && !has_trailing_comma {
+        last
+    } else {
+        concat([last, text(",")])
+    };
+    let body = fill(entries, last_doc);
+
+    if row_indent == 0 {
+        group(body)
+    } else {
+        group(indent_by(row_indent, body))
+    }
 }
 
 fn text_range_width(range: TextRange) -> usize {
