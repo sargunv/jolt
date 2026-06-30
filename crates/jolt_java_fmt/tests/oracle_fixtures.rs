@@ -3,6 +3,7 @@ use std::collections::BTreeMap;
 use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::time::{Duration, Instant};
 
 use jolt_diagnostics::DiagnosticStage;
 use jolt_java_fmt::{JavaFormatProfile, JavaFormatStatus, format_java_source_with_profile};
@@ -87,6 +88,7 @@ fn assert_profile(profile: Profile<'_>) -> OracleSummary {
 
     let mut summary = OracleSummary::new(profile);
     for input_path in input_paths {
+        let fixture_start = Instant::now();
         let relative = input_path
             .strip_prefix(&input_root)
             .expect("fixture should be under input root");
@@ -111,7 +113,10 @@ fn assert_profile(profile: Profile<'_>) -> OracleSummary {
             continue;
         }
 
+        let format_start = Instant::now();
         let result = format_java_source_with_profile(&source, profile.java_profile);
+        let format_duration = format_start.elapsed();
+        let mut diff_duration = Duration::ZERO;
         match result.status {
             JavaFormatStatus::Blocked => {
                 let missing_rule_diagnostic: Option<&jolt_diagnostics::Diagnostic> = None;
@@ -130,7 +135,7 @@ fn assert_profile(profile: Profile<'_>) -> OracleSummary {
                     BlockKind::Other
                 };
                 summary.blocked.push(BlockedFile {
-                    path: relative_name,
+                    path: relative_name.clone(),
                     kind,
                     missing_rule_bucket: missing_rule_diagnostic
                         .map(|diagnostic| diagnostic.message.clone()),
@@ -146,9 +151,11 @@ fn assert_profile(profile: Profile<'_>) -> OracleSummary {
                 if actual == expected {
                     summary.exact_matches += 1;
                 } else {
+                    let diff_start = Instant::now();
                     let diff = line_diff(&expected, actual);
+                    diff_duration = diff_start.elapsed();
                     summary.mismatches.push(Mismatch {
-                        path: relative_name,
+                        path: relative_name.clone(),
                         diff_size: diff.changed_line_count,
                         actual: actual.to_owned(),
                         diff: diff.text,
@@ -156,6 +163,12 @@ fn assert_profile(profile: Profile<'_>) -> OracleSummary {
                 }
             }
         }
+        summary.fixture_timings.push(FixtureTiming {
+            path: relative_name,
+            total: fixture_start.elapsed(),
+            format: format_duration,
+            diff: diff_duration,
+        });
     }
 
     write_reports(&summary, &report_root);
@@ -226,6 +239,7 @@ struct OracleSummary {
     exact_matches: usize,
     mismatches: Vec<Mismatch>,
     blocked: Vec<BlockedFile>,
+    fixture_timings: Vec<FixtureTiming>,
 }
 
 impl OracleSummary {
@@ -242,6 +256,7 @@ impl OracleSummary {
             exact_matches: 0,
             mismatches: Vec::new(),
             blocked: Vec::new(),
+            fixture_timings: Vec::new(),
         }
     }
 
@@ -368,6 +383,17 @@ struct MissingRuleBucket<'a> {
     count: usize,
 }
 
+struct FixtureTiming {
+    path: String,
+    total: Duration,
+    format: Duration,
+    diff: Duration,
+}
+
+fn format_duration(duration: Duration) -> String {
+    format!("{:.3}s", duration.as_secs_f64())
+}
+
 struct Mismatch {
     path: String,
     diff_size: usize,
@@ -407,6 +433,7 @@ fn write_reports(summary: &OracleSummary, report_root: &Path) {
 
     let mut index = String::new();
     write_index_summary(summary, &mut index);
+    write_timing_summary(summary, &mut index);
     write_mismatch_reports(&mut index, report_root, &mismatches);
     write_blocked_reports(&mut index, report_root, &blocked);
 
@@ -442,6 +469,43 @@ fn write_index_summary(summary: &OracleSummary, mut index: &mut String) {
         for bucket in missing_rule_buckets {
             writeln!(&mut index, "- {}: {}", bucket.count, bucket.message).expect("write index");
         }
+    }
+    writeln!(&mut index).expect("write index");
+}
+
+fn write_timing_summary(summary: &OracleSummary, mut index: &mut String) {
+    index.push_str("## Slowest Fixtures\n\n");
+    if summary.fixture_timings.is_empty() {
+        index.push_str("- <none>: 0.000s\n\n");
+        return;
+    }
+
+    let total = summary
+        .fixture_timings
+        .iter()
+        .fold(Duration::ZERO, |duration, timing| duration + timing.total);
+    writeln!(
+        &mut index,
+        "- total fixture time: {}",
+        format_duration(total)
+    )
+    .expect("write index");
+    writeln!(&mut index).expect("write index");
+    writeln!(&mut index, "| Fixture | Total | Format | Diff |").expect("write index");
+    writeln!(&mut index, "| ------- | ----- | ------ | ---- |").expect("write index");
+
+    let mut timings = summary.fixture_timings.iter().collect::<Vec<_>>();
+    timings.sort_by_key(|timing| (Reverse(timing.total), timing.path.as_str()));
+    for timing in timings.into_iter().take(20) {
+        writeln!(
+            &mut index,
+            "| `{}` | {} | {} | {} |",
+            timing.path,
+            format_duration(timing.total),
+            format_duration(timing.format),
+            format_duration(timing.diff)
+        )
+        .expect("write index");
     }
     writeln!(&mut index).expect("write index");
 }

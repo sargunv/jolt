@@ -31,5 +31,6 @@ Run `mise tasks ls --all` for the full task list.
   misconfiguration; do not silently skip them.
 - Do not add convenience APIs unless they carry real behavior needed by current
   code.
-- Do not add formatter `missing_layout` fallbacks. Parser-accepted syntax must
-  either be invalidated by the parser or receive a real formatting rule.
+- Do not add formatter fallback exits for parser-accepted syntax.
+  Parser-accepted syntax must either be invalidated by the parser or receive a
+  real formatting rule.
