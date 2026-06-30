@@ -142,11 +142,54 @@ impl<'source> JavaFormatContext<'source> {
         self.take_comments_in_bucket(container_range, JavaCommentBucket::Dangling)
     }
 
+    pub(crate) fn take_own_line_comments_in_range(
+        &mut self,
+        owner_range: TextRange,
+    ) -> Vec<JavaCommentTrivia> {
+        let indices = self
+            .comments
+            .iter()
+            .enumerate()
+            .filter(|(_, comment)| !comment.claimed)
+            .filter(|(_, comment)| {
+                let range = comment.trivia.trivia.range;
+                self.is_comment_trivia(&comment.trivia)
+                    && range.start() >= owner_range.start()
+                    && range.end() <= owner_range.end()
+                    && self.is_own_line_comment(&comment.trivia)
+            })
+            .map(|(index, _)| index)
+            .collect();
+
+        self.claim_comments(indices)
+    }
+
     pub(crate) fn take_trailing_line_comment(
         &mut self,
         code_range: TextRange,
     ) -> Option<JavaCommentTrivia> {
         self.take_first_comment_in_bucket(code_range, JavaCommentBucket::TrailingLine)
+    }
+
+    pub(crate) fn take_trailing_line_comments_in_range(
+        &mut self,
+        code_range: TextRange,
+        boundary: TextRange,
+    ) -> Vec<JavaCommentTrivia> {
+        let indices = self
+            .comments
+            .iter()
+            .enumerate()
+            .filter(|(_, comment)| !comment.claimed)
+            .filter(|(_, comment)| {
+                comment.trivia.trivia.range.start() >= boundary.start()
+                    && comment.trivia.trivia.range.end() <= boundary.end()
+                    && self.is_trailing_line_comment(&comment.trivia, code_range)
+            })
+            .map(|(index, _)| index)
+            .collect();
+
+        self.claim_comments(indices)
     }
 
     pub(crate) fn take_inline_leading_block_comments(
@@ -156,11 +199,46 @@ impl<'source> JavaFormatContext<'source> {
         self.take_comments_in_bucket(code_range, JavaCommentBucket::InlineLeadingBlock)
     }
 
+    pub(crate) fn take_inline_leading_block_comments_in_range(
+        &mut self,
+        owner_range: TextRange,
+        code_range: TextRange,
+    ) -> Vec<JavaCommentTrivia> {
+        let indices =
+            self.comment_indices_in_bucket(code_range, JavaCommentBucket::InlineLeadingBlock);
+        let indices = indices
+            .into_iter()
+            .filter(|index| {
+                let range = self.comments[*index].trivia.trivia.range;
+                range.start() >= owner_range.start() && range.end() <= owner_range.end()
+            })
+            .collect();
+        self.claim_comments(indices)
+    }
+
     pub(crate) fn take_inline_trailing_block_comments(
         &mut self,
         code_range: TextRange,
     ) -> Vec<JavaCommentTrivia> {
         self.take_comments_in_bucket(code_range, JavaCommentBucket::InlineTrailingBlock)
+    }
+
+    pub(crate) fn take_adjacent_trailing_block_comments(
+        &mut self,
+        code_range: TextRange,
+    ) -> Vec<JavaCommentTrivia> {
+        let indices = self
+            .comments
+            .iter()
+            .enumerate()
+            .filter(|(_, comment)| !comment.claimed)
+            .filter(|(_, comment)| {
+                self.is_adjacent_trailing_block_comment(&comment.trivia, code_range)
+            })
+            .map(|(index, _)| index)
+            .collect();
+
+        self.claim_comments(indices)
     }
 
     pub(crate) fn take_list_item_trailing_line_comment(
@@ -199,6 +277,24 @@ impl<'source> JavaFormatContext<'source> {
                     saw_separator = true;
                 }
                 matches
+            })
+            .map(|(index, _)| index)
+            .collect();
+
+        self.claim_comments(indices)
+    }
+
+    pub(crate) fn take_list_separator_trailing_line_comments(
+        &mut self,
+        boundary: TextRange,
+    ) -> Vec<JavaCommentTrivia> {
+        let indices = self
+            .comments
+            .iter()
+            .enumerate()
+            .filter(|(_, comment)| !comment.claimed)
+            .filter(|(_, comment)| {
+                self.is_list_separator_trailing_line_comment(&comment.trivia, boundary)
             })
             .map(|(index, _)| index)
             .collect();
@@ -403,6 +499,29 @@ impl<'source> JavaFormatContext<'source> {
         between.contains(',') && between.chars().all(|ch| ch == ',' || ch.is_whitespace())
     }
 
+    fn is_list_separator_trailing_line_comment(
+        &self,
+        comment: &JavaCommentTrivia,
+        boundary: TextRange,
+    ) -> bool {
+        if comment.trivia.kind != TriviaKind::LineComment {
+            return false;
+        }
+        if comment.trivia.range.start() < boundary.start()
+            || comment.trivia.range.end() > boundary.end()
+        {
+            return false;
+        }
+
+        let before = &self.source[boundary.start().get()..comment.trivia.range.start().get()];
+        let Some(comma_index) = before.rfind(',') else {
+            return false;
+        };
+        let comma_end = boundary.start().get() + comma_index + ','.len_utf8();
+        self.is_same_line_span(comma_end, comment.trivia.range.start().get())
+            && self.only_whitespace(comma_end, comment.trivia.range.start().get())
+    }
+
     fn is_dangling_comment(&self, comment: &JavaCommentTrivia, container_range: TextRange) -> bool {
         if !self.is_comment_trivia(comment) {
             return false;
@@ -435,13 +554,25 @@ impl<'source> JavaFormatContext<'source> {
             && self.only_whitespace(code_range.end().get(), comment.trivia.range.start().get())
     }
 
+    fn is_adjacent_trailing_block_comment(
+        &self,
+        comment: &JavaCommentTrivia,
+        code_range: TextRange,
+    ) -> bool {
+        comment.trivia.kind == TriviaKind::BlockComment
+            && !self
+                .raw_text(comment)
+                .contains(['\n', '\r', '\u{2028}', '\u{2029}'])
+            && comment.trivia.range.start() >= code_range.end()
+            && self.is_same_line_span(code_range.end().get(), comment.trivia.range.start().get())
+            && self.only_whitespace(code_range.end().get(), comment.trivia.range.start().get())
+    }
+
     fn is_inline_block_comment(&self, comment: &JavaCommentTrivia) -> bool {
-        matches!(
-            comment.trivia.kind,
-            TriviaKind::BlockComment | TriviaKind::JavadocComment
-        ) && !self
-            .raw_text(comment)
-            .contains(['\n', '\r', '\u{2028}', '\u{2029}'])
+        comment.trivia.kind == TriviaKind::BlockComment
+            && !self
+                .raw_text(comment)
+                .contains(['\n', '\r', '\u{2028}', '\u{2029}'])
     }
 
     fn is_comment_trivia(&self, comment: &JavaCommentTrivia) -> bool {

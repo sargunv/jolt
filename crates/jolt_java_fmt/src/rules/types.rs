@@ -3,7 +3,7 @@ use jolt_diagnostics::TextRange;
 use super::{
     Doc, FormatResult, JavaFormatContext, JavaSyntaxKind, Type, TypeArgumentList, TypeLayoutPart,
     concat, format_annotation, format_token, java_lists, reject_unhandled_comments_before_start,
-    text,
+    take_inline_leading_block_comment_docs_in_range, text,
 };
 
 pub(super) fn format_type(ty: &Type, context: &mut JavaFormatContext<'_>) -> FormatResult<Doc> {
@@ -33,6 +33,7 @@ fn format_type_layout_sequence(
     let mut docs = Vec::new();
     let mut previous_was_annotation = false;
     let mut previous_was_dot = false;
+    let mut previous_dot_range = None;
     let mut index = 0;
     while index < parts.len() {
         let part = &parts[index];
@@ -43,15 +44,26 @@ fn format_type_layout_sequence(
                 }
                 previous_was_annotation = false;
                 previous_was_dot = false;
+                previous_dot_range = None;
                 docs.push(text(*value));
             }
             TypeLayoutPart::Annotation(annotation) => {
-                if !docs.is_empty() && !previous_was_dot {
+                let inserted_qualified_comments = previous_was_dot
+                    && annotation.code_text_range().is_some_and(|range| {
+                        append_qualified_segment_comments(
+                            &mut docs,
+                            previous_dot_range,
+                            range,
+                            context,
+                        )
+                    });
+                if !docs.is_empty() && !previous_was_dot && !inserted_qualified_comments {
                     docs.push(text(" "));
                 }
                 docs.push(format_annotation(annotation, context, "type-use")?);
                 previous_was_annotation = true;
                 previous_was_dot = false;
+                previous_dot_range = None;
             }
             TypeLayoutPart::Token(token) => {
                 if token.kind() == JavaSyntaxKind::Lt
@@ -70,8 +82,17 @@ fn format_type_layout_sequence(
                     )?);
                     previous_was_annotation = false;
                     previous_was_dot = false;
+                    previous_dot_range = None;
                     index = close_index + 1;
                     continue;
+                }
+                if previous_was_dot && token.kind() == JavaSyntaxKind::Identifier {
+                    append_qualified_segment_comments(
+                        &mut docs,
+                        previous_dot_range,
+                        token.token_text_range(),
+                        context,
+                    );
                 }
                 if previous_was_annotation && token.kind() == JavaSyntaxKind::Identifier {
                     reject_unhandled_comments_before_start(
@@ -82,6 +103,7 @@ fn format_type_layout_sequence(
                     docs.push(text(" "));
                 }
                 previous_was_dot = token.kind() == JavaSyntaxKind::Dot;
+                previous_dot_range = previous_was_dot.then_some(token.token_text_range());
                 previous_was_annotation = false;
                 docs.push(format_token(token));
             }
@@ -90,6 +112,27 @@ fn format_type_layout_sequence(
     }
 
     Ok(concat(docs))
+}
+
+fn append_qualified_segment_comments(
+    docs: &mut Vec<Doc>,
+    previous_dot_range: Option<TextRange>,
+    segment_range: TextRange,
+    context: &mut JavaFormatContext<'_>,
+) -> bool {
+    let Some(dot_range) = previous_dot_range else {
+        return false;
+    };
+    let owner_range = TextRange::new(dot_range.end(), segment_range.start());
+    let comments =
+        take_inline_leading_block_comment_docs_in_range(context, owner_range, segment_range);
+    if comments.is_empty() {
+        return false;
+    }
+
+    docs.extend(comments);
+    docs.push(text(" "));
+    true
 }
 
 fn matching_type_argument_close(parts: &[TypeLayoutPart], open_index: usize) -> Option<usize> {
@@ -196,6 +239,7 @@ fn format_flat_type_layout_sequence(
     let mut docs = Vec::new();
     let mut previous_was_annotation = false;
     let mut previous_was_dot = false;
+    let mut previous_dot_range = None;
     for part in parts {
         match part {
             TypeLayoutPart::Text(value) => {
@@ -204,17 +248,36 @@ fn format_flat_type_layout_sequence(
                 }
                 previous_was_annotation = false;
                 previous_was_dot = false;
+                previous_dot_range = None;
                 docs.push(text(*value));
             }
             TypeLayoutPart::Annotation(annotation) => {
-                if !docs.is_empty() && !previous_was_dot {
+                let inserted_qualified_comments = previous_was_dot
+                    && annotation.code_text_range().is_some_and(|range| {
+                        append_qualified_segment_comments(
+                            &mut docs,
+                            previous_dot_range,
+                            range,
+                            context,
+                        )
+                    });
+                if !docs.is_empty() && !previous_was_dot && !inserted_qualified_comments {
                     docs.push(text(" "));
                 }
                 docs.push(format_annotation(annotation, context, "type-use")?);
                 previous_was_annotation = true;
                 previous_was_dot = false;
+                previous_dot_range = None;
             }
             TypeLayoutPart::Token(token) => {
+                if previous_was_dot && token.kind() == JavaSyntaxKind::Identifier {
+                    append_qualified_segment_comments(
+                        &mut docs,
+                        previous_dot_range,
+                        token.token_text_range(),
+                        context,
+                    );
+                }
                 if previous_was_annotation && token.kind() == JavaSyntaxKind::Identifier {
                     reject_unhandled_comments_before_start(
                         context,
@@ -224,6 +287,7 @@ fn format_flat_type_layout_sequence(
                     docs.push(text(" "));
                 }
                 previous_was_dot = token.kind() == JavaSyntaxKind::Dot;
+                previous_dot_range = previous_was_dot.then_some(token.token_text_range());
                 previous_was_annotation = false;
                 docs.push(format_token(token));
             }

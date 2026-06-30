@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, best_fitting, concat, group, indent_by, line, text};
+use jolt_fmt_ir::{Doc, best_fitting, concat, group, hard_line, indent_by, join, line, text};
 
 use crate::layout as wrap;
 
@@ -9,7 +9,9 @@ pub(crate) struct CallableHeader {
     pub(crate) type_parameters: Option<Doc>,
     pub(crate) leading_type: Option<Doc>,
     pub(crate) break_after_leading_type: bool,
+    pub(crate) before_name_comments: Vec<Doc>,
     pub(crate) name: Doc,
+    pub(crate) after_name_comments: Vec<Doc>,
     pub(crate) parameters: Option<Doc>,
     pub(crate) tail: Option<Doc>,
 }
@@ -27,7 +29,9 @@ pub(crate) fn callable_header(header: CallableHeader) -> Doc {
         type_parameters,
         leading_type,
         break_after_leading_type,
+        before_name_comments,
         name,
+        after_name_comments,
         parameters,
         tail,
     } = header;
@@ -37,7 +41,18 @@ pub(crate) fn callable_header(header: CallableHeader) -> Doc {
     let mut declaration_parts = modifiers;
     declaration_parts.extend(type_parameters);
 
-    let name_and_parameters = concat([name, parameters.unwrap_or_else(|| text(""))]);
+    let name_and_parameters = if after_name_comments.is_empty() {
+        concat([name, parameters.unwrap_or_else(|| text(""))])
+    } else {
+        concat([
+            name,
+            continuation_indent(concat([
+                hard_line(),
+                join(hard_line(), after_name_comments),
+            ])),
+            parameters.unwrap_or_else(|| text("")),
+        ])
+    };
     let signature = callable_signature(
         leading_type,
         break_after_leading_type,
@@ -45,6 +60,7 @@ pub(crate) fn callable_header(header: CallableHeader) -> Doc {
         name_and_parameters,
         &mut tail,
     );
+    declaration_parts.extend(before_name_comments);
     declaration_parts.push(signature);
     declaration_parts.extend(tail);
 

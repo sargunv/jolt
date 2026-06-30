@@ -11,12 +11,18 @@ pub(crate) fn selector_chain(chain: Chain, policy: JavaFormatPolicy) -> Doc {
     let groups = chain.groups();
     let Chain {
         base,
+        base_trailing_comments,
         mut members,
         metadata,
+        ..
     } = chain;
 
     if members.is_empty() {
-        return base;
+        return append_trailing_comments(base, base_trailing_comments);
+    }
+
+    if has_trailing_comments(&base_trailing_comments, &members) {
+        return commented_selector_chain(base, base_trailing_comments, members);
     }
 
     if groups.all_fields(members.len()) {
@@ -37,7 +43,8 @@ pub(crate) fn selector_chain(chain: Chain, policy: JavaFormatPolicy) -> Doc {
                 receiver,
                 remaining,
                 crate::analyzers::chains::BaseMetadata::complex(receiver_width),
-            ),
+            )
+            .with_tail_range(None),
             policy,
         );
     }
@@ -178,6 +185,23 @@ fn break_before_first_selector_chain(
     ]))
 }
 
+fn commented_selector_chain(
+    base: Doc,
+    base_trailing_comments: Vec<Doc>,
+    members: Vec<ChainMember>,
+) -> Doc {
+    group(concat([
+        append_trailing_comments(base, base_trailing_comments),
+        continuation_indent(concat(members.into_iter().map(|member| {
+            concat([
+                hard_line(),
+                text("."),
+                append_trailing_comments(member.doc, member.trailing_comments),
+            ])
+        }))),
+    ]))
+}
+
 fn field_selector_chain(base: Doc, members: Vec<ChainMember>) -> Doc {
     let mut segments = members
         .into_iter()
@@ -198,6 +222,27 @@ fn field_selector_chain(base: Doc, members: Vec<ChainMember>) -> Doc {
         .map(|segment| fill_entry(segment, concat([soft_line(), text(".")])));
 
     group(continuation_indent(fill(entries, last)))
+}
+
+fn has_trailing_comments(base_trailing_comments: &[Doc], members: &[ChainMember]) -> bool {
+    !base_trailing_comments.is_empty()
+        || members
+            .iter()
+            .any(|member| !member.trailing_comments.is_empty())
+}
+
+fn append_trailing_comments(doc: Doc, comments: Vec<Doc>) -> Doc {
+    if comments.is_empty() {
+        return doc;
+    }
+
+    concat(
+        std::iter::once(doc).chain(
+            comments
+                .into_iter()
+                .flat_map(|comment| [text(" "), comment]),
+        ),
+    )
 }
 
 fn continuation_indent(doc: Doc) -> Doc {

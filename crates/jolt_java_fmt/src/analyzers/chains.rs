@@ -1,10 +1,13 @@
+use jolt_diagnostics::TextRange;
 use jolt_fmt_ir::Doc;
 
 #[derive(Clone)]
 pub(crate) struct Chain {
     pub(crate) base: Doc,
+    pub(crate) base_trailing_comments: Vec<Doc>,
     pub(crate) members: Vec<ChainMember>,
     pub(crate) metadata: ChainMetadata,
+    tail_range: Option<TextRange>,
 }
 
 impl Chain {
@@ -20,8 +23,10 @@ impl Chain {
         let metadata = ChainMetadata::from_parts(base_metadata, &members);
         Self {
             base,
+            base_trailing_comments: Vec::new(),
             members,
             metadata,
+            tail_range: None,
         }
     }
 
@@ -44,6 +49,31 @@ impl Chain {
     pub(crate) fn push(&mut self, member: ChainMember) {
         self.members.push(member);
         self.metadata = ChainMetadata::from_parts(self.metadata.base, &self.members);
+    }
+
+    pub(crate) fn with_tail_range(mut self, range: Option<TextRange>) -> Self {
+        self.tail_range = range;
+        self
+    }
+
+    pub(crate) fn tail_range(&self) -> Option<TextRange> {
+        self.tail_range
+    }
+
+    pub(crate) fn set_tail_range(&mut self, range: Option<TextRange>) {
+        self.tail_range = range;
+    }
+
+    pub(crate) fn push_trailing_comments_to_tail(&mut self, comments: Vec<Doc>) {
+        if comments.is_empty() {
+            return;
+        }
+
+        if let Some(member) = self.members.last_mut() {
+            member.trailing_comments.extend(comments);
+        } else {
+            self.base_trailing_comments.extend(comments);
+        }
     }
 
     pub(crate) fn groups(&self) -> ChainGroups {
@@ -88,6 +118,7 @@ impl BaseMetadata {
 pub(crate) struct ChainMember {
     pub(crate) kind: ChainMemberKind,
     pub(crate) doc: Doc,
+    pub(crate) trailing_comments: Vec<Doc>,
     pub(crate) source_width: usize,
     pub(crate) has_type_arguments: bool,
 }
@@ -97,6 +128,7 @@ impl ChainMember {
         Self {
             kind: ChainMemberKind::Field,
             doc,
+            trailing_comments: Vec::new(),
             source_width,
             has_type_arguments: false,
         }
@@ -111,6 +143,7 @@ impl ChainMember {
         Self {
             kind: ChainMemberKind::Call { argument_count },
             doc,
+            trailing_comments: Vec::new(),
             source_width,
             has_type_arguments,
         }

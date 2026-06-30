@@ -2,8 +2,8 @@ use super::super::{
     Annotation, ArgumentList, ArrayAccessExpression, ArrayCreationExpression, ArrayDimensions,
     ArrayInitializer, AssignmentExpression, BinaryExpression, Block, CastExpression, ClassBody,
     ClassLiteralExpression, ConditionalExpression, DimExpression, Expression,
-    FieldAccessExpression, InstanceofExpression, JavaNode, JavaSyntaxKind, JavaSyntaxToken,
-    LambdaExpression, LambdaParameter, LambdaParameterList, LiteralExpression,
+    FieldAccessExpression, InstanceofExpression, JavaNode, JavaSyntaxKind, JavaSyntaxNode,
+    JavaSyntaxToken, LambdaExpression, LambdaParameter, LambdaParameterList, LiteralExpression,
     LocalVariableDeclaration, MethodInvocationExpression, MethodReferenceExpression,
     NameExpression, ObjectCreationExpression, ParenthesizedExpression, Pattern, PostfixExpression,
     RecordPattern, SuperExpression, SwitchBlock, SwitchExpression, ThisExpression, Type,
@@ -53,12 +53,12 @@ impl MethodInvocationExpression {
 
     #[must_use]
     pub fn arguments(&self) -> Option<ArgumentList> {
-        child(&self.syntax)
+        direct_child(&self.syntax)
     }
 
     #[must_use]
     pub fn type_arguments(&self) -> Option<TypeArgumentList> {
-        child(&self.syntax)
+        direct_child(&self.syntax)
     }
 
     #[must_use]
@@ -92,6 +92,10 @@ impl MethodInvocationExpression {
             _ => false,
         }
     }
+}
+
+fn direct_child<N: JavaNode>(syntax: &JavaSyntaxNode) -> Option<N> {
+    syntax.children().find_map(N::cast)
 }
 
 impl ArgumentList {

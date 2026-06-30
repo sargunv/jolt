@@ -2,9 +2,10 @@ use super::{
     Annotation, AnnotationArgumentList, AnnotationArrayInitializer, AnnotationElementListItem,
     AnnotationElementValue, AnnotationElementValuePair, Doc, FormatResult, JavaFormatContext,
     JavaSyntaxToken, ModifierList, concat, format_expression, format_name, format_token, hard_line,
-    join, reject_unhandled_comments_before_end, reject_unhandled_comments_before_start, text,
+    join, reject_unhandled_comments_before_start, text,
 };
-use crate::helpers::annotations as java_annotations;
+use crate::comments::reject_unhandled_comments_in_range;
+use crate::helpers::{annotations as java_annotations, lists as java_lists};
 
 pub(super) fn format_modifier_list(
     modifiers: Option<ModifierList>,
@@ -108,20 +109,22 @@ pub(super) fn format_annotation(
         .code_text_range()
         .unwrap_or_else(|| annotation.text_range());
     reject_unhandled_comments_before_start(context, code_range, messages.between)?;
-    reject_unhandled_comments_before_end(context, code_range, messages.inside)?;
 
     let name = annotation
         .name()
         .expect("parser-clean annotation should have a name");
     let Some(arguments) = annotation.arguments() else {
+        reject_unhandled_comments_in_range(context, code_range, messages.inside)?;
         return Ok(concat([text("@"), format_name(&name)]));
     };
 
-    Ok(concat([
+    let doc = concat([
         text("@"),
         format_name(&name),
         format_annotation_argument_list(&arguments, context)?,
-    ]))
+    ]);
+    reject_unhandled_comments_in_range(context, code_range, messages.inside)?;
+    Ok(doc)
 }
 
 struct AnnotationMessages {
@@ -147,6 +150,7 @@ pub(super) fn format_annotation_argument_list(
     arguments: &AnnotationArgumentList,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
+    let list_range = arguments.text_range();
     let Some(elements) = arguments.elements() else {
         return Ok(java_annotations::argument_list(
             std::iter::empty(),
@@ -155,25 +159,38 @@ pub(super) fn format_annotation_argument_list(
     };
 
     if elements.has_pair_list_layout_shape() {
-        return Ok(java_annotations::pair_list(
-            elements
-                .pairs()
-                .map(|pair| format_annotation_element_value_pair(&pair, context))
-                .collect::<FormatResult<Vec<_>>>()?,
-            context.policy(),
-        ));
+        let pairs = elements
+            .pairs()
+            .map(|pair| {
+                let range = pair
+                    .code_text_range()
+                    .expect("parser-clean annotation pair should have a source range");
+                let pair = pair.clone();
+                Ok(java_lists::ListItem::new(range, move |context| {
+                    format_annotation_element_value_pair(&pair, context)
+                        .map(java_annotations::AnnotationPair::into_doc)
+                }))
+            })
+            .collect::<FormatResult<Vec<_>>>()?;
+        return java_lists::formal_parameter_list(pairs, list_range, None, context);
     }
 
     if elements.has_value_list_layout_shape() {
         let values = elements.values().collect::<Vec<_>>();
         if values.len() != 1 {
-            return Ok(java_annotations::argument_list(
-                values
-                    .iter()
-                    .map(|value| format_annotation_element_value(value, context))
-                    .collect::<FormatResult<Vec<_>>>()?,
-                context.policy(),
-            ));
+            let values = values
+                .into_iter()
+                .map(|value| {
+                    let range = value
+                        .code_text_range()
+                        .expect("parser-clean annotation value should have a source range");
+                    Ok(java_lists::ListItem::new(range, move |context| {
+                        format_annotation_element_value(&value, context)
+                            .map(java_annotations::AnnotationValue::into_doc)
+                    }))
+                })
+                .collect::<FormatResult<Vec<_>>>()?;
+            return java_lists::argument_list(values, list_range, context);
         }
         return Ok(java_annotations::single_argument(
             format_annotation_element_value(&values[0], context)?,
@@ -239,10 +256,21 @@ fn format_annotation_array_initializer(
     initializer: &AnnotationArrayInitializer,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
+    let list_range = initializer
+        .code_text_range()
+        .expect("parser-clean annotation array initializer should have a source range");
     let values = initializer
         .values()
-        .map(|value| format_annotation_element_value(&value, context))
+        .map(|value| {
+            let range = value
+                .code_text_range()
+                .expect("parser-clean annotation array value should have a source range");
+            Ok(java_lists::ListItem::new(range, move |context| {
+                format_annotation_element_value(&value, context)
+                    .map(java_annotations::AnnotationValue::into_doc)
+            }))
+        })
         .collect::<FormatResult<Vec<_>>>()?;
 
-    Ok(java_annotations::array_initializer(values))
+    java_lists::braced_comma_list(values, list_range, false, false, context)
 }

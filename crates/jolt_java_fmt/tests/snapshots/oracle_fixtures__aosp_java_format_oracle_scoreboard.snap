@@ -8,12 +8,12 @@ total considered: 209
 invalid upstream fixtures skipped: 1
 parse blocked: 0
 missing-rule blocked: 0
-other blocked: 25
-formatted: 183
-exact matches: 63
-exact-match percentage: 30.28%
-mismatching formatted files: 120
-aggregate diff size: 2449
+other blocked: 12
+formatted: 196
+exact matches: 68
+exact-match percentage: 32.69%
+mismatching formatted files: 128
+aggregate diff size: 2660
 largest per-file diff: B24909927.java (205)
 
 worst mismatches:
@@ -25,8 +25,8 @@ worst mismatches:
   B20701054.java: 84
   B28066276.java: 63
   B24702438.java: 62
+  B22815364.java: 60
   F.java: 60
-  SwitchGuardClause.java: 56
 
 top missing-rule blockers:
   0: <none>

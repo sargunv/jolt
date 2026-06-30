@@ -5,11 +5,13 @@ use super::{
     format_block, format_class_body, format_local_variable_declaration_header,
     format_multiline_token, format_switch_expression, format_token, format_type,
     format_type_argument_list, format_type_layout_parts, java_lists, join,
-    take_inline_leading_block_comment_docs, take_inline_trailing_block_comment_docs, text, wrap,
+    take_inline_leading_block_comment_docs, take_inline_trailing_block_comment_docs,
+    take_trailing_line_comment_docs_in_range_as_own_line, text, wrap,
 };
 use crate::analyzers::chains::{Chain, ChainMember};
 use crate::helpers::chains as java_chains;
 use crate::helpers::literals as java_literals;
+use jolt_diagnostics::TextRange;
 
 pub(super) fn format_expression(
     expression: &Expression,
@@ -175,30 +177,37 @@ pub(super) fn collect_selector_chain(
         Expression::NameExpression(name) => Ok(Chain::simple_base(
             format_name_expression(name, context)?,
             node_width(name.code_text_range()),
-        )),
+        )
+        .with_tail_range(name.code_text_range())),
         Expression::ThisExpression(this) => Ok(Chain::simple_base(
             format_this_expression(this, context)?,
             node_width(this.code_text_range()),
-        )),
+        )
+        .with_tail_range(this.code_text_range())),
         Expression::SuperExpression(super_expression) => Ok(Chain::base(format_super_expression(
             super_expression,
             context,
-        )?)),
+        )?)
+        .with_tail_range(super_expression.code_text_range())),
         Expression::ObjectCreationExpression(creation) => Ok(Chain::base(
             format_object_creation_expression(creation, context)?,
-        )),
+        )
+        .with_tail_range(creation.code_text_range())),
         Expression::ArrayAccessExpression(array_access) => Ok(Chain::complex_base(
             format_array_access_expression(array_access, context)?,
             node_width(array_access.code_text_range()),
-        )),
+        )
+        .with_tail_range(array_access.code_text_range())),
         Expression::ClassLiteralExpression(class_literal) => Ok(Chain::complex_base(
             format_class_literal_expression(class_literal, context)?,
             node_width(class_literal.code_text_range()),
-        )),
+        )
+        .with_tail_range(class_literal.code_text_range())),
         Expression::ParenthesizedExpression(parenthesized) => Ok(Chain::complex_base(
             format_parenthesized_expression(parenthesized, context)?,
             node_width(parenthesized.code_text_range()),
-        )),
+        )
+        .with_tail_range(parenthesized.code_text_range())),
         Expression::FieldAccessExpression(field) => collect_field_access_chain(field, context),
         Expression::MethodInvocationExpression(invocation) => {
             collect_method_invocation_chain(invocation, context)
@@ -206,7 +215,8 @@ pub(super) fn collect_selector_chain(
         _ => Ok(Chain::complex_base(
             format_expression(expression, context)?,
             node_width(expression.code_text_range()),
-        )),
+        )
+        .with_tail_range(expression.code_text_range())),
     }
 }
 
@@ -220,17 +230,23 @@ pub(super) fn collect_field_access_chain(
     let name = field
         .name()
         .expect("parser-clean field access should have a name");
-    let type_arguments = field.type_arguments();
+    let type_arguments_node = field.type_arguments();
     let selector_width = name.text().chars().count()
-        + type_arguments
+        + type_arguments_node
             .as_ref()
             .map(|arguments| text_range_width(arguments.text_range()))
             .unwrap_or_default();
-    let type_arguments = type_arguments
+    let type_arguments = type_arguments_node
+        .clone()
         .map(|arguments| format_type_argument_list(&arguments, context))
         .transpose()?;
 
     let mut chain = collect_selector_chain(&receiver, context)?;
+    attach_selector_boundary_comments(
+        &mut chain,
+        member_start_range(&type_arguments_node, name.token_text_range()),
+        context,
+    );
     chain.push(ChainMember::field(
         concat([
             format_token(&name),
@@ -238,6 +254,7 @@ pub(super) fn collect_field_access_chain(
         ]),
         selector_width,
     ));
+    chain.set_tail_range(field.code_text_range());
     Ok(chain)
 }
 
@@ -249,24 +266,30 @@ pub(super) fn collect_method_invocation_chain(
         .arguments()
         .expect("parser-clean method invocation should have arguments");
     let argument_count = arguments_node.arguments().count();
-    let arguments = format_argument_list(&arguments_node, context)?;
 
     if let Some(receiver) = invocation.receiver() {
         let name = invocation
             .name()
             .expect("parser-clean qualified method invocation should have a name");
-        let type_arguments = invocation.type_arguments();
-        let has_type_arguments = type_arguments.is_some();
+        let type_arguments_node = invocation.type_arguments();
+        let has_type_arguments = type_arguments_node.is_some();
         let selector_width = name.text().chars().count()
             + text_range_width(arguments_node.text_range())
-            + type_arguments
+            + type_arguments_node
                 .as_ref()
                 .map(|arguments| text_range_width(arguments.text_range()))
                 .unwrap_or_default();
-        let type_arguments = type_arguments
+        let type_arguments = type_arguments_node
+            .clone()
             .map(|arguments| format_type_argument_list(&arguments, context))
             .transpose()?;
         let mut chain = collect_selector_chain(&receiver, context)?;
+        attach_selector_boundary_comments(
+            &mut chain,
+            member_start_range(&type_arguments_node, name.token_text_range()),
+            context,
+        );
+        let arguments = format_argument_list(&arguments_node, context)?;
         chain.push(ChainMember::call(
             concat([
                 type_arguments.unwrap_or_else(|| text("")),
@@ -277,16 +300,49 @@ pub(super) fn collect_method_invocation_chain(
             argument_count,
             has_type_arguments,
         ));
+        chain.set_tail_range(invocation.code_text_range());
         return Ok(chain);
     }
 
     let name = invocation
         .simple_name()
         .expect("parser-clean simple method invocation should have a name");
+    let arguments = format_argument_list(&arguments_node, context)?;
     Ok(Chain::call_base(
         concat([text(name.text()), arguments]),
         node_width(invocation.code_text_range()),
-    ))
+    )
+    .with_tail_range(invocation.code_text_range()))
+}
+
+fn attach_selector_boundary_comments(
+    chain: &mut Chain,
+    member_start_range: TextRange,
+    context: &mut JavaFormatContext<'_>,
+) {
+    let Some(tail_range) = chain.tail_range() else {
+        return;
+    };
+    let member_start = member_start_range.start();
+    if member_start < tail_range.end() {
+        return;
+    }
+
+    let comments = take_trailing_line_comment_docs_in_range_as_own_line(
+        context,
+        tail_range,
+        TextRange::new(tail_range.end(), member_start),
+    );
+    chain.push_trailing_comments_to_tail(comments);
+}
+
+fn member_start_range(
+    type_arguments: &Option<jolt_java_syntax::TypeArgumentList>,
+    name_range: TextRange,
+) -> TextRange {
+    type_arguments
+        .as_ref()
+        .map_or(name_range, jolt_java_syntax::TypeArgumentList::text_range)
 }
 
 fn node_width(range: Option<jolt_diagnostics::TextRange>) -> usize {
@@ -558,7 +614,9 @@ pub(super) fn format_argument_list(
         !arguments.has_trailing_comma(),
         "parser-clean argument list should not have a trailing comma"
     );
-    let list_range = arguments.text_range();
+    let list_range = arguments
+        .code_text_range()
+        .expect("parser-clean argument list should have a code range");
     let arguments =
         arguments
             .arguments()

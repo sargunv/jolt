@@ -38,6 +38,11 @@ impl ClassDeclaration {
     }
 
     #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::ClassKw)
+    }
+
+    #[must_use]
     pub fn name(&self) -> Option<JavaSyntaxToken> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
     }
@@ -176,6 +181,12 @@ impl RecordDeclaration {
     }
 
     #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        nth_child_token(&self.syntax, JavaSyntaxKind::Identifier, 0)
+            .filter(|token| token.text() == "record")
+    }
+
+    #[must_use]
     pub fn name(&self) -> Option<JavaSyntaxToken> {
         nth_child_token(&self.syntax, JavaSyntaxKind::Identifier, 1)
     }
@@ -247,6 +258,11 @@ impl EnumDeclaration {
     }
 
     #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::EnumKw)
+    }
+
+    #[must_use]
     pub fn name(&self) -> Option<JavaSyntaxToken> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
     }
@@ -304,6 +320,11 @@ impl InterfaceDeclaration {
     }
 
     #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::InterfaceKw)
+    }
+
+    #[must_use]
     pub fn name(&self) -> Option<JavaSyntaxToken> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
     }
@@ -333,6 +354,11 @@ impl AnnotationInterfaceDeclaration {
     #[must_use]
     pub fn modifiers(&self) -> Option<ModifierList> {
         child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::InterfaceKw)
     }
 
     #[must_use]
@@ -637,6 +663,11 @@ impl EnumBody {
     }
 
     #[must_use]
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Semicolon)
+    }
+
+    #[must_use]
     pub fn has_supported_layout_shape(&self) -> bool {
         let elements = self.syntax.children_with_tokens().collect::<Vec<_>>();
         let Some(first) = elements.first() else {
@@ -860,6 +891,16 @@ impl MethodDeclaration {
     }
 
     #[must_use]
+    pub fn l_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn r_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RParen)
+    }
+
+    #[must_use]
     pub fn dimensions(&self) -> Option<ArrayDimensions> {
         child(&self.syntax)
     }
@@ -904,6 +945,16 @@ impl ConstructorDeclaration {
     #[must_use]
     pub fn parameters(&self) -> Option<FormalParameterList> {
         child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn l_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn r_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RParen)
     }
 
     #[must_use]

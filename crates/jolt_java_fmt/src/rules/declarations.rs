@@ -11,10 +11,15 @@ use super::{
     format_annotation_list, format_argument_list, format_array_dimensions, format_block,
     format_constructor_body, format_modifier_list, format_name, format_token, format_type,
     format_variable_declarator_list, java_lists, join, reject_unhandled_comments_before_end,
-    reject_unhandled_comments_before_start, take_dangling_comment_docs, take_leading_comment_docs,
-    text, with_leading_and_trailing_comments, wrap,
+    reject_unhandled_comments_before_start, reject_unhandled_comments_in_range,
+    take_adjacent_trailing_block_comment_docs, take_dangling_comment_docs,
+    take_inline_trailing_block_comment_docs, take_leading_comment_docs,
+    take_leading_comment_docs_in_range, take_own_line_comment_docs_in_range,
+    take_trailing_line_comment_docs_in_range_as_own_line, text, with_leading_and_trailing_comments,
+    wrap,
 };
 use crate::helpers::{callables, type_declarations};
+use jolt_diagnostics::TextRange;
 use jolt_fmt_ir::{empty_line, hard_line};
 
 pub(super) fn format_type_declaration(
@@ -49,6 +54,16 @@ pub(super) fn format_record_declaration(
     let name = record
         .name()
         .expect("parser-clean record declaration should have a name");
+    let keyword = record
+        .keyword()
+        .expect("parser-clean record declaration should have a keyword");
+    reject_unhandled_comments_before_start(
+        context,
+        keyword.token_text_range(),
+        "Java formatter does not support comments between declaration annotations and declaration headers yet",
+    )?;
+    let before_name_comments =
+        take_comments_between_tokens(context, keyword.token_text_range(), name.token_text_range())?;
     let components = record
         .components()
         .map(|components| format_record_component_list(&components, context))
@@ -65,17 +80,33 @@ pub(super) fn format_record_declaration(
     let body = record
         .body()
         .expect("parser-clean record declaration should have a body");
+    let before_body_comments = if let Some(body_range) = body.code_text_range() {
+        let header_end = record
+            .implements_clause()
+            .and_then(|clause| clause.code_text_range())
+            .or_else(|| {
+                record
+                    .components()
+                    .map(|components| components.text_range())
+            })
+            .unwrap_or_else(|| name.token_text_range());
+        take_body_boundary_comment_docs(context, header_end, body_range)?
+    } else {
+        Vec::new()
+    };
     let body_members = format_record_body(&body, context)?;
 
     let doc = type_declarations::type_declaration(type_declarations::TypeDeclaration {
         modifiers: modifiers.modifier_docs(),
         keyword: text("record"),
+        before_name_comments,
         name: format_token(&name),
         type_parameters,
         record_components: Some(components),
         extends_clause: None,
         implements_clause,
         permits_clause: None,
+        before_body_comments,
         body: braced_type_body(body_members),
     });
     with_leading_and_trailing_comments(
@@ -99,13 +130,16 @@ pub(super) fn format_class_declaration(
     let name = class
         .name()
         .expect("parser-clean class declaration should have a name");
-    if modifiers.has_annotations() {
-        reject_unhandled_comments_before_start(
-            context,
-            name.token_text_range(),
-            "Java formatter does not support comments between declaration annotations and declaration headers yet",
-        )?;
-    }
+    let keyword = class
+        .keyword()
+        .expect("parser-clean class declaration should have a keyword");
+    reject_unhandled_comments_before_start(
+        context,
+        keyword.token_text_range(),
+        "Java formatter does not support comments between declaration annotations and declaration headers yet",
+    )?;
+    let before_name_comments =
+        take_comments_between_tokens(context, keyword.token_text_range(), name.token_text_range())?;
     let body = class
         .body()
         .expect("parser-clean class declaration should have a body");
@@ -125,24 +159,38 @@ pub(super) fn format_class_declaration(
         .permits_clause()
         .map(|clause| format_permits_clause(&clause, context))
         .transpose()?;
-    if let Some(body_range) = body.code_text_range() {
-        reject_unhandled_comments_before_start(
-            context,
-            body_range,
-            "Java formatter does not support comments inside class headers yet",
-        )?;
-    }
+    let before_body_comments = if let Some(body_range) = body.code_text_range() {
+        let header_end = class
+            .permits_clause()
+            .and_then(|clause| clause.code_text_range())
+            .or_else(|| {
+                class
+                    .implements_clause()
+                    .and_then(|clause| clause.code_text_range())
+            })
+            .or_else(|| {
+                class
+                    .extends_clause()
+                    .and_then(|clause| clause.code_text_range())
+            })
+            .unwrap_or_else(|| name.token_text_range());
+        take_body_boundary_comment_docs(context, header_end, body_range)?
+    } else {
+        Vec::new()
+    };
     let body_members = format_class_body(&body, context)?;
 
     let doc = type_declarations::type_declaration(type_declarations::TypeDeclaration {
         modifiers: modifiers.modifier_docs(),
         keyword: text("class"),
+        before_name_comments,
         name: format_token(&name),
         type_parameters,
         record_components: None,
         extends_clause,
         implements_clause,
         permits_clause,
+        before_body_comments,
         body: braced_type_body(body_members),
     });
 
@@ -157,15 +205,73 @@ pub(super) fn format_class_declaration(
 pub(super) struct TypeBodyLayout {
     members: Vec<Doc>,
     separators: Vec<Doc>,
+    before_close: Vec<Doc>,
     has_members: bool,
 }
 
 pub(super) fn braced_type_body(body: TypeBodyLayout) -> Doc {
-    if body.has_members {
-        wrap::braced_block_with_separators(body.members, body.separators)
-    } else {
-        wrap::braced_block(body.members)
+    let TypeBodyLayout {
+        mut members,
+        mut separators,
+        before_close,
+        has_members,
+    } = body;
+    if !before_close.is_empty() {
+        if !members.is_empty() {
+            separators.push(empty_line());
+        }
+        members.extend(before_close);
     }
+    if has_members {
+        wrap::braced_block_with_separators(members, separators)
+    } else {
+        wrap::braced_block(members)
+    }
+}
+
+fn take_body_boundary_comment_docs(
+    context: &mut JavaFormatContext<'_>,
+    header_end: TextRange,
+    body_range: TextRange,
+) -> FormatResult<Vec<Doc>> {
+    let mut comments = Vec::new();
+    comments.extend(take_trailing_line_comment_docs_in_range_as_own_line(
+        context,
+        header_end,
+        TextRange::new(header_end.end(), body_range.end()),
+    ));
+    comments.extend(take_leading_comment_docs_in_range(
+        context,
+        TextRange::new(header_end.end(), body_range.end()),
+        body_range,
+    )?);
+    Ok(comments)
+}
+
+fn take_comments_between_tokens(
+    context: &mut JavaFormatContext<'_>,
+    left: TextRange,
+    right: TextRange,
+) -> FormatResult<Vec<Doc>> {
+    let mut comments = take_trailing_line_comment_docs_in_range_as_own_line(
+        context,
+        left,
+        TextRange::new(left.end(), right.end()),
+    );
+    comments.extend(take_leading_comment_docs_in_range(
+        context,
+        TextRange::new(left.end(), right.end()),
+        right,
+    )?);
+    Ok(comments)
+}
+
+fn take_body_tail_comment_docs(
+    context: &mut JavaFormatContext<'_>,
+    body_range: TextRange,
+    tail_start: TextRange,
+) -> FormatResult<Vec<Doc>> {
+    take_own_line_comment_docs_in_range(context, TextRange::new(tail_start.end(), body_range.end()))
 }
 
 pub(super) fn format_interface_declaration(
@@ -180,13 +286,16 @@ pub(super) fn format_interface_declaration(
     let name = interface
         .name()
         .expect("parser-clean interface declaration should have a name");
-    if modifiers.has_annotations() {
-        reject_unhandled_comments_before_start(
-            context,
-            name.token_text_range(),
-            "Java formatter does not support comments between declaration annotations and declaration headers yet",
-        )?;
-    }
+    let keyword = interface
+        .keyword()
+        .expect("parser-clean interface declaration should have a keyword");
+    reject_unhandled_comments_before_start(
+        context,
+        keyword.token_text_range(),
+        "Java formatter does not support comments between declaration annotations and declaration headers yet",
+    )?;
+    let before_name_comments =
+        take_comments_between_tokens(context, keyword.token_text_range(), name.token_text_range())?;
     let body = interface
         .body()
         .expect("parser-clean interface declaration should have a body");
@@ -202,24 +311,33 @@ pub(super) fn format_interface_declaration(
         .permits_clause()
         .map(|clause| format_permits_clause(&clause, context))
         .transpose()?;
-    if let Some(body_range) = body.code_text_range() {
-        reject_unhandled_comments_before_start(
-            context,
-            body_range,
-            "Java formatter does not support comments inside interface headers yet",
-        )?;
-    }
+    let before_body_comments = if let Some(body_range) = body.code_text_range() {
+        let header_end = interface
+            .permits_clause()
+            .and_then(|clause| clause.code_text_range())
+            .or_else(|| {
+                interface
+                    .extends_clause()
+                    .and_then(|clause| clause.code_text_range())
+            })
+            .unwrap_or_else(|| name.token_text_range());
+        take_body_boundary_comment_docs(context, header_end, body_range)?
+    } else {
+        Vec::new()
+    };
     let body_members = format_interface_body(&body, context)?;
 
     let doc = type_declarations::type_declaration(type_declarations::TypeDeclaration {
         modifiers: modifiers.modifier_docs(),
         keyword: text("interface"),
+        before_name_comments,
         name: format_token(&name),
         type_parameters,
         record_components: None,
         extends_clause,
         implements_clause: None,
         permits_clause,
+        before_body_comments,
         body: braced_type_body(body_members),
     });
 
@@ -243,34 +361,37 @@ pub(super) fn format_annotation_interface_declaration(
     let name = annotation
         .name()
         .expect("parser-clean annotation interface declaration should have a name");
-    if modifiers.has_annotations() {
-        reject_unhandled_comments_before_start(
-            context,
-            name.token_text_range(),
-            "Java formatter does not support comments between declaration annotations and declaration headers yet",
-        )?;
-    }
+    let keyword = annotation
+        .keyword()
+        .expect("parser-clean annotation interface declaration should have a keyword");
+    reject_unhandled_comments_before_start(
+        context,
+        keyword.token_text_range(),
+        "Java formatter does not support comments between declaration annotations and declaration headers yet",
+    )?;
+    let before_name_comments =
+        take_comments_between_tokens(context, keyword.token_text_range(), name.token_text_range())?;
     let body = annotation
         .body()
         .expect("parser-clean annotation interface declaration should have a body");
-    if let Some(body_range) = body.code_text_range() {
-        reject_unhandled_comments_before_start(
-            context,
-            body_range,
-            "Java formatter does not support comments inside annotation interface headers yet",
-        )?;
-    }
+    let before_body_comments = if let Some(body_range) = body.code_text_range() {
+        take_body_boundary_comment_docs(context, name.token_text_range(), body_range)?
+    } else {
+        Vec::new()
+    };
     let body_members = format_annotation_interface_body(&body, context)?;
 
     let doc = type_declarations::type_declaration(type_declarations::TypeDeclaration {
         modifiers: modifiers.modifier_docs(),
         keyword: text("@interface"),
+        before_name_comments,
         name: format_token(&name),
         type_parameters: None,
         record_components: None,
         extends_clause: None,
         implements_clause: None,
         permits_clause: None,
+        before_body_comments,
         body: braced_type_body(body_members),
     });
 
@@ -295,13 +416,16 @@ pub(super) fn format_enum_declaration(
     let name = enumeration
         .name()
         .expect("parser-clean enum declaration should have a name");
-    if modifiers.has_annotations() {
-        reject_unhandled_comments_before_start(
-            context,
-            name.token_text_range(),
-            "Java formatter does not support comments between declaration annotations and declaration headers yet",
-        )?;
-    }
+    let keyword = enumeration
+        .keyword()
+        .expect("parser-clean enum declaration should have a keyword");
+    reject_unhandled_comments_before_start(
+        context,
+        keyword.token_text_range(),
+        "Java formatter does not support comments between declaration annotations and declaration headers yet",
+    )?;
+    let before_name_comments =
+        take_comments_between_tokens(context, keyword.token_text_range(), name.token_text_range())?;
     let body = enumeration
         .body()
         .expect("parser-clean enum declaration should have a body");
@@ -309,24 +433,28 @@ pub(super) fn format_enum_declaration(
         .implements_clause()
         .map(|clause| format_implements_clause(&clause, context))
         .transpose()?;
-    if let Some(body_range) = body.code_text_range() {
-        reject_unhandled_comments_before_start(
-            context,
-            body_range,
-            "Java formatter does not support comments inside enum headers yet",
-        )?;
-    }
+    let before_body_comments = if let Some(body_range) = body.code_text_range() {
+        let header_end = enumeration
+            .implements_clause()
+            .and_then(|clause| clause.code_text_range())
+            .unwrap_or_else(|| name.token_text_range());
+        take_body_boundary_comment_docs(context, header_end, body_range)?
+    } else {
+        Vec::new()
+    };
     let body = format_enum_body(&body, context)?;
 
     let doc = type_declarations::type_declaration(type_declarations::TypeDeclaration {
         modifiers: modifiers.modifier_docs(),
         keyword: text("enum"),
+        before_name_comments,
         name: format_token(&name),
         type_parameters: None,
         record_components: None,
         extends_clause: None,
         implements_clause,
         permits_clause: None,
+        before_body_comments,
         body,
     });
 
@@ -366,7 +494,34 @@ pub(super) fn format_enum_body(
         items.push(text(";"));
     }
     items.extend(members);
-    Ok(wrap::braced_block(items))
+    let body_range = body
+        .code_text_range()
+        .expect("parser-clean enum body should have a code range");
+    let tail_start = body
+        .members()
+        .filter_map(|member| member.code_text_range())
+        .last()
+        .or_else(|| {
+            body.semicolon()
+                .map(|semicolon| semicolon.token_text_range())
+        })
+        .or_else(|| {
+            body.constants()
+                .and_then(|constants| constants.code_text_range())
+        })
+        .unwrap_or(body_range);
+    let before_close = take_body_tail_comment_docs(context, body_range, tail_start)?;
+    if before_close.is_empty() {
+        return Ok(wrap::braced_block(items));
+    }
+
+    let item_count = items.len();
+    items.extend(before_close);
+    let mut separators = vec![hard_line(); item_count.saturating_sub(1)];
+    if item_count > 0 {
+        separators.push(empty_line());
+    }
+    Ok(wrap::braced_block_with_separators(items, separators))
 }
 
 pub(super) fn format_enum_constant_list(
@@ -456,11 +611,21 @@ pub(super) fn format_class_body(
         return Ok(TypeBodyLayout {
             members: take_dangling_comment_docs(context, code_range)?,
             separators: Vec::new(),
+            before_close: Vec::new(),
             has_members: false,
         });
     }
 
     let separators = class_body_member_separators(&members, context);
+    let body_range = body
+        .code_text_range()
+        .expect("parser-clean class body should have a code range");
+    let tail_start = members
+        .iter()
+        .filter_map(jolt_java_syntax::ClassBodyMember::code_text_range)
+        .next_back()
+        .unwrap_or(body_range);
+    let before_close = take_body_tail_comment_docs(context, body_range, tail_start)?;
     let members = members
         .iter()
         .map(|member| format_class_body_member(member, context))
@@ -468,6 +633,7 @@ pub(super) fn format_class_body(
     Ok(TypeBodyLayout {
         members,
         separators,
+        before_close,
         has_members: true,
     })
 }
@@ -484,11 +650,21 @@ pub(super) fn format_record_body(
         return Ok(TypeBodyLayout {
             members: take_dangling_comment_docs(context, code_range)?,
             separators: Vec::new(),
+            before_close: Vec::new(),
             has_members: false,
         });
     }
 
     let separators = class_body_member_separators(&members, context);
+    let body_range = body
+        .code_text_range()
+        .expect("parser-clean record body should have a code range");
+    let tail_start = members
+        .iter()
+        .filter_map(jolt_java_syntax::ClassBodyMember::code_text_range)
+        .next_back()
+        .unwrap_or(body_range);
+    let before_close = take_body_tail_comment_docs(context, body_range, tail_start)?;
     let members = members
         .iter()
         .map(|member| format_class_body_member(member, context))
@@ -496,6 +672,7 @@ pub(super) fn format_record_body(
     Ok(TypeBodyLayout {
         members,
         separators,
+        before_close,
         has_members: true,
     })
 }
@@ -551,11 +728,21 @@ pub(super) fn format_interface_body(
         return Ok(TypeBodyLayout {
             members: take_dangling_comment_docs(context, code_range)?,
             separators: Vec::new(),
+            before_close: Vec::new(),
             has_members: false,
         });
     }
 
     let separators = interface_body_member_separators(&members, context);
+    let body_range = body
+        .code_text_range()
+        .expect("parser-clean interface body should have a code range");
+    let tail_start = members
+        .iter()
+        .filter_map(jolt_java_syntax::InterfaceBodyMember::code_text_range)
+        .next_back()
+        .unwrap_or(body_range);
+    let before_close = take_body_tail_comment_docs(context, body_range, tail_start)?;
     let members = members
         .iter()
         .map(|member| format_interface_body_member(member, context))
@@ -563,6 +750,7 @@ pub(super) fn format_interface_body(
     Ok(TypeBodyLayout {
         members,
         separators,
+        before_close,
         has_members: true,
     })
 }
@@ -610,11 +798,21 @@ pub(super) fn format_annotation_interface_body(
         return Ok(TypeBodyLayout {
             members: take_dangling_comment_docs(context, code_range)?,
             separators: Vec::new(),
+            before_close: Vec::new(),
             has_members: false,
         });
     }
 
     let separators = annotation_interface_body_member_separators(&members, context);
+    let body_range = body
+        .code_text_range()
+        .expect("parser-clean annotation interface body should have a code range");
+    let tail_start = members
+        .iter()
+        .filter_map(jolt_java_syntax::AnnotationInterfaceBodyMember::code_text_range)
+        .next_back()
+        .unwrap_or(body_range);
+    let before_close = take_body_tail_comment_docs(context, body_range, tail_start)?;
     let members = members
         .iter()
         .map(|member| format_annotation_interface_body_member(member, context))
@@ -622,6 +820,7 @@ pub(super) fn format_annotation_interface_body(
     Ok(TypeBodyLayout {
         members,
         separators,
+        before_close,
         has_members: true,
     })
 }
@@ -829,6 +1028,9 @@ pub(super) fn format_method_declaration(
     let return_type = method
         .return_type()
         .expect("parser-clean method declaration should have a return type");
+    let before_name_boundary = return_type
+        .code_text_range()
+        .expect("parser-clean method return type should have a code range");
     let break_after_return_type = type_contains_type_arguments(&return_type);
     let name = method
         .name()
@@ -849,8 +1051,11 @@ pub(super) fn format_method_declaration(
         method.type_parameters(),
         Some(return_type),
         break_after_return_type,
+        Some(before_name_boundary),
         &name,
         method.parameters(),
+        method.l_paren().map(|token| token.token_text_range()),
+        method.r_paren().map(|token| token.token_text_range()),
         method.throws_clause(),
     )?;
 
@@ -868,6 +1073,16 @@ pub(super) fn format_method_declaration(
     let body = method
         .body()
         .expect("parser-clean method declaration should have a body or semicolon");
+    let body_leading_comments = if let Some(body_range) = body.code_text_range() {
+        let boundary_range = method
+            .throws_clause()
+            .and_then(|throws| throws.code_text_range())
+            .or_else(|| method.r_paren().map(|token| token.token_text_range()))
+            .unwrap_or_else(|| name.token_text_range());
+        take_body_boundary_comment_docs(context, boundary_range, body_range)?
+    } else {
+        Vec::new()
+    };
     if let Some(body_range) = body.code_text_range() {
         reject_unhandled_comments_before_start(
             context,
@@ -875,7 +1090,18 @@ pub(super) fn format_method_declaration(
             "Java formatter does not support comments inside method signatures yet",
         )?;
     }
-    Ok(concat([header, text(" "), format_block(&body, context)?]))
+    let body = format_block(&body, context)?;
+    if body_leading_comments.is_empty() {
+        Ok(concat([header, text(" "), body]))
+    } else {
+        Ok(concat([
+            header,
+            hard_line(),
+            join(hard_line(), body_leading_comments),
+            hard_line(),
+            body,
+        ]))
+    }
 }
 
 pub(super) fn format_constructor_declaration(
@@ -888,13 +1114,16 @@ pub(super) fn format_constructor_declaration(
     let body = constructor
         .body()
         .expect("parser-clean constructor declaration should have a body");
-    if let Some(body_range) = body.code_text_range() {
-        reject_unhandled_comments_before_start(
-            context,
-            body_range,
-            "Java formatter does not support comments inside constructor signatures yet",
-        )?;
-    }
+    let body_leading_comments = if let Some(body_range) = body.code_text_range() {
+        let boundary_range = constructor
+            .throws_clause()
+            .and_then(|throws| throws.code_text_range())
+            .or_else(|| constructor.r_paren().map(|token| token.token_text_range()))
+            .unwrap_or_else(|| name.token_text_range());
+        take_body_boundary_comment_docs(context, boundary_range, body_range)?
+    } else {
+        Vec::new()
+    };
     let header = format_callable_header(
         constructor.modifiers(),
         "constructor",
@@ -902,15 +1131,34 @@ pub(super) fn format_constructor_declaration(
         constructor.type_parameters(),
         None,
         false,
+        constructor
+            .type_parameters()
+            .and_then(|parameters| parameters.code_text_range()),
         &name,
         constructor.parameters(),
+        constructor.l_paren().map(|token| token.token_text_range()),
+        constructor.r_paren().map(|token| token.token_text_range()),
         constructor.throws_clause(),
     )?;
-    Ok(concat([
-        header,
-        text(" "),
-        format_constructor_body(&body, context)?,
-    ]))
+    if let Some(body_range) = body.code_text_range() {
+        reject_unhandled_comments_before_start(
+            context,
+            body_range,
+            "Java formatter does not support comments inside constructor signatures yet",
+        )?;
+    }
+    let body = format_constructor_body(&body, context)?;
+    if body_leading_comments.is_empty() {
+        Ok(concat([header, text(" "), body]))
+    } else {
+        Ok(concat([
+            header,
+            hard_line(),
+            join(hard_line(), body_leading_comments),
+            hard_line(),
+            body,
+        ]))
+    }
 }
 
 pub(super) fn format_compact_constructor_declaration(
@@ -924,21 +1172,44 @@ pub(super) fn format_compact_constructor_declaration(
     let body = constructor
         .body()
         .expect("parser-clean compact constructor declaration should have a body");
+    let body_leading_comments = if let Some(body_range) = body.code_text_range() {
+        take_body_boundary_comment_docs(context, name.token_text_range(), body_range)?
+    } else {
+        Vec::new()
+    };
     let header = callables::callable_header(callables::CallableHeader {
         modifiers: modifiers.modifier_docs(),
         type_parameters: None,
         leading_type: None,
         break_after_leading_type: false,
+        before_name_comments: Vec::new(),
         name: format_token(&name),
+        after_name_comments: Vec::new(),
         parameters: None,
         tail: None,
     });
+    if let Some(body_range) = body.code_text_range() {
+        reject_unhandled_comments_before_start(
+            context,
+            body_range,
+            "Java formatter does not support comments inside constructor signatures yet",
+        )?;
+    }
+    let body = format_constructor_body(&body, context)?;
 
-    Ok(modifiers.with_annotations(concat([
-        header,
-        text(" "),
-        format_constructor_body(&body, context)?,
-    ])))
+    let doc = if body_leading_comments.is_empty() {
+        concat([header, text(" "), body])
+    } else {
+        concat([
+            header,
+            hard_line(),
+            join(hard_line(), body_leading_comments),
+            hard_line(),
+            body,
+        ])
+    };
+
+    Ok(modifiers.with_annotations(doc))
 }
 
 pub(super) fn format_callable_header(
@@ -948,25 +1219,45 @@ pub(super) fn format_callable_header(
     type_parameters: Option<TypeParameterList>,
     leading_type: Option<Doc>,
     break_after_leading_type: bool,
+    before_name_boundary: Option<TextRange>,
     name: &JavaSyntaxToken,
     parameters: Option<FormalParameterList>,
+    parameter_open: Option<TextRange>,
+    parameter_close: Option<TextRange>,
     throws_clause: Option<ThrowsClause>,
 ) -> FormatResult<Doc> {
     let modifiers = format_modifier_list(modifiers, declaration_kind, context)?;
-    if modifiers.has_annotations() {
-        reject_unhandled_comments_before_start(
-            context,
-            name.token_text_range(),
-            "Java formatter does not support comments between declaration annotations and declaration headers yet",
-        )?;
-    }
+    let before_name_comments = before_name_boundary
+        .map(|boundary| take_comments_between_tokens(context, boundary, name.token_text_range()))
+        .transpose()?
+        .unwrap_or_default();
     let type_parameters = type_parameters
         .map(|parameters| format_type_parameter_list(&parameters, context))
         .transpose()?;
-    let parameters = parameters
-        .map(|parameters| format_formal_parameter_list(&parameters, context))
-        .transpose()?
-        .unwrap_or_else(|| java_lists::empty_formal_parameter_list(context.policy()));
+    let mut after_name_comments = Vec::new();
+    let parameters = if let Some(parameters) = parameters {
+        if let Some(parameter_open) = parameter_open {
+            after_name_comments =
+                take_body_boundary_comment_docs(context, name.token_text_range(), parameter_open)?;
+        }
+        let parameter_range = parameter_close.unwrap_or_else(|| {
+            parameters
+                .code_text_range()
+                .unwrap_or_else(|| parameters.text_range())
+        });
+        let mut parameters = format_formal_parameter_list(&parameters, parameter_open, context)?;
+        let mut trailing = take_inline_trailing_block_comment_docs(context, parameter_range);
+        trailing.extend(take_adjacent_trailing_block_comment_docs(
+            context,
+            parameter_range,
+        ));
+        if !trailing.is_empty() {
+            parameters = concat([parameters, text(" "), join(text(" "), trailing)]);
+        }
+        parameters
+    } else {
+        java_lists::empty_formal_parameter_list(context.policy())
+    };
     let throws_clause = throws_clause
         .map(|throws| format_throws_clause(&throws, context))
         .transpose()?;
@@ -976,7 +1267,9 @@ pub(super) fn format_callable_header(
         type_parameters,
         leading_type,
         break_after_leading_type,
+        before_name_comments,
         name: text(name.text()),
+        after_name_comments,
         parameters: Some(parameters),
         tail: throws_clause,
     });
@@ -1148,6 +1441,7 @@ pub(super) fn format_permits_clause(
 
 pub(super) fn format_formal_parameter_list(
     parameters: &FormalParameterList,
+    open_range: Option<TextRange>,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
     let list_range = parameters.text_range();
@@ -1180,7 +1474,7 @@ pub(super) fn format_formal_parameter_list(
         "parser-clean formal parameter list node should contain parameters"
     );
 
-    java_lists::formal_parameter_list(parameter_docs, list_range, context)
+    java_lists::formal_parameter_list(parameter_docs, list_range, open_range, context)
 }
 
 fn format_receiver_parameter(
@@ -1212,6 +1506,9 @@ pub(super) fn format_formal_parameter(
     let ty = parameter
         .ty()
         .expect("parser-clean formal parameter should have a type");
+    let ty_range = ty
+        .code_text_range()
+        .expect("parser-clean formal parameter type should have a code range");
     let name = parameter
         .name()
         .expect("parser-clean formal parameter should have a name");
@@ -1225,11 +1522,18 @@ pub(super) fn format_formal_parameter(
             FormalParameterModifier::Final(token) => Ok(format_token(&token)),
         })
         .collect::<FormatResult<Vec<_>>>()?;
+    let mut before_name_boundary = ty_range;
     let ty = if let Some(ellipsis) = parameter.ellipsis() {
         let annotations = parameter
             .varargs_annotations()
             .map(|annotation| format_annotation(&annotation, context, "type-use"))
             .collect::<FormatResult<Vec<_>>>()?;
+        before_name_boundary = ellipsis.token_text_range();
+        reject_unhandled_comments_in_range(
+            context,
+            TextRange::new(ty_range.end(), before_name_boundary.start()),
+            "Java formatter does not support comments inside method signatures yet",
+        )?;
         if annotations.is_empty() {
             concat([format_type(&ty, context)?, format_token(&ellipsis)])
         } else {
@@ -1244,6 +1548,8 @@ pub(super) fn format_formal_parameter(
     } else {
         format_type(&ty, context)?
     };
+    let before_name_comments =
+        take_body_boundary_comment_docs(context, before_name_boundary, name.token_text_range())?;
     let name = if let Some(dimensions) = parameter.dimensions() {
         concat([
             format_token(&name),
@@ -1252,8 +1558,18 @@ pub(super) fn format_formal_parameter(
     } else {
         format_token(&name)
     };
-    parts.push(ty);
-    parts.push(name);
+    if before_name_comments.is_empty() {
+        parts.push(ty);
+        parts.push(name);
+    } else {
+        parts.push(concat([
+            ty,
+            hard_line(),
+            join(hard_line(), before_name_comments),
+            hard_line(),
+            name,
+        ]));
+    }
     Ok(wrap::space_separated(parts))
 }
 
@@ -1275,7 +1591,7 @@ pub(super) fn format_record_component_list(
         })
         .collect::<FormatResult<Vec<_>>>()?;
 
-    java_lists::formal_parameter_list(component_docs, list_range, context)
+    java_lists::formal_parameter_list(component_docs, list_range, None, context)
 }
 
 pub(super) fn format_record_component(

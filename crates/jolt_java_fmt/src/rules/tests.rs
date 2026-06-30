@@ -55,7 +55,11 @@ fn assert_formats_successfully(source: &str) {
 fn assert_blocked_parser(source: &str) {
     let result = format_java_source(source);
 
-    assert_eq!(result.status, JavaFormatStatus::Blocked);
+    assert_eq!(
+        result.status,
+        JavaFormatStatus::Blocked,
+        "{source}\n{result:#?}"
+    );
     assert_eq!(result.formatted_source, None);
     assert!(!result.diagnostics.is_empty());
     assert!(
@@ -75,7 +79,11 @@ fn assert_blocked_formatter(source: &str) {
 fn assert_blocked_formatter_with_message(source: &str, expected_message: Option<&str>) {
     let result = format_java_source(source);
 
-    assert_eq!(result.status, JavaFormatStatus::Blocked);
+    assert_eq!(
+        result.status,
+        JavaFormatStatus::Blocked,
+        "{source}\n{result:#?}"
+    );
     assert_eq!(result.formatted_source, None);
     assert!(!result.diagnostics.is_empty());
     assert!(
@@ -144,6 +152,14 @@ fn method_and_constructor_signatures_format_structurally() {
     assert_formatted(
         "class A { void a(@N T v, @A final String n, Object @N ... r) {} void legacy(int v[]) {} }",
         "class A {\n  void a(@N T v, @A final String n, Object @N ... r) {}\n\n  void legacy(int v[]) {}\n}",
+    );
+}
+
+#[test]
+fn method_signature_comments_format() {
+    assert_formats_successfully("class A { void g( // line comment\nint x) {} }");
+    assert_formats_successfully(
+        "class A { void //\ng //\n( //\nint //\nx //\n, //\nint //\ny //\n) //\n{} }",
     );
 }
 
@@ -226,6 +242,14 @@ fn type_use_annotations_in_simple_types_format_structurally() {
     assert_formatted(
         "class A { java.lang.@Anno String value; void m() { java.lang.@Anno String local; } }",
         "class A {\n  java.lang.@Anno String value;\n\n  void m() {\n    java.lang.@Anno String local;\n  }\n}",
+    );
+}
+
+#[test]
+fn qualified_type_segment_comments_format() {
+    assert_formatted(
+        "class A { java.util. /*comment*/ Map. /*comment*/ Entry e; }",
+        "class A {\n  java.util./*comment*/ Map./*comment*/ Entry e;\n}",
     );
 }
 
@@ -376,6 +400,14 @@ fn selector_receivers_format_general_expressions() {
 }
 
 #[test]
+fn selector_chain_comments_format() {
+    assert_formatted(
+        "class A { void m() { logger // receiver\n.atInfo() // member\n.log( // open\n\"message\"); } }",
+        "class A {\n  void m() {\n    logger // receiver\n        .atInfo() // member\n        .log(\n            // open\n            \"message\");\n  }\n}",
+    );
+}
+
+#[test]
 fn argument_parameter_comments_format_inline() {
     assert_formatted(
         "class A { void m() { call(/*a=*/ 1, /* b */ value, false /* off */); } }",
@@ -518,6 +550,15 @@ fn dangling_comments_inside_empty_class_bodies_format() {
 }
 
 #[test]
+fn type_body_and_unit_tail_comments_format() {
+    assert_formatted(
+        "class A { int code() {}\n\n// body\n}\n// file",
+        "class A {\n  int code() {}\n\n  // body\n}\n// file",
+    );
+    assert_formatted("enum E { ;\n// tail\n}", "enum E {\n  ;\n\n  // tail\n}");
+}
+
+#[test]
 fn dangling_comments_inside_empty_blocks_format() {
     assert_formatted(
         "class A { void clear() {\n// line\n} A() {\n/**\n * constructor\n */\n} }",
@@ -561,7 +602,6 @@ fn annotation_argument_comments_remain_unowned_formatter_debt() {
 #[test]
 fn header_and_annotation_between_comments_remain_unowned_formatter_debt() {
     for source in [
-        "class A // header\n{}",
         "class A\n// header\nextends B {}",
         "class A { int /* inline */ value; }",
         "class A { void /* inline */ clear() {} }",
@@ -575,6 +615,11 @@ fn header_and_annotation_between_comments_remain_unowned_formatter_debt() {
 }
 
 #[test]
+fn declaration_header_boundary_comments_format() {
+    assert_formatted("class A // header\n{}", "class A\n// header\n{}");
+}
+
+#[test]
 fn boundary_comment_guards_report_domain_messages() {
     for (source, message) in [
         (
@@ -584,10 +629,6 @@ fn boundary_comment_guards_report_domain_messages() {
         (
             "class A { java.util.List<@A /* gap */ String> value; }",
             "Java formatter does not support comments between type-use annotations and types yet",
-        ),
-        (
-            "class A // header\n{}",
-            "Java formatter does not support comments inside class headers yet",
         ),
         (
             "class A { void clear() { if (ready)\n// branch\nreturn; } }",

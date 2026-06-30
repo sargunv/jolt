@@ -3,10 +3,11 @@ use super::{
     JavaFormatContext, ModuleDeclaration, ModuleDirective, PackageDeclaration, concat,
     format_annotation_list, format_field_declaration, format_method_declaration, format_name,
     format_type_declaration, hard_line, java_lists, join, reject_unhandled_comments_before_start,
-    take_leading_comment_docs, text, with_attached_comments, with_leading_and_trailing_comments,
-    with_vertical_annotations, wrap,
+    take_leading_comment_docs, take_own_line_comment_docs_in_range, text, with_attached_comments,
+    with_leading_and_trailing_comments, with_vertical_annotations, wrap,
 };
 use crate::policy::JavaFormatPolicy;
+use jolt_diagnostics::TextRange;
 
 pub(crate) fn format_compilation_unit(
     syntax: &CompilationUnit,
@@ -17,21 +18,26 @@ pub(crate) fn format_compilation_unit(
         "parser-clean compilation unit should not contain unsupported top-level children"
     );
 
-    let package = syntax
-        .package_declaration()
-        .map(|package| format_package_declaration(&package, context))
+    let package_node = syntax.package_declaration();
+    let import_nodes = syntax.imports().collect::<Vec<_>>();
+    let module_node = syntax.module_declaration();
+    let member_nodes = syntax.compact_members().collect::<Vec<_>>();
+
+    let package = package_node
+        .as_ref()
+        .map(|package| format_package_declaration(package, context))
         .transpose()?;
-    let imports = syntax
-        .imports()
-        .map(|import| format_import_section_item(&import, context))
+    let imports = import_nodes
+        .iter()
+        .map(|import| format_import_section_item(import, context))
         .collect::<FormatResult<Vec<_>>>()?;
-    let module = syntax
-        .module_declaration()
-        .map(|module| format_module_declaration(&module, context))
+    let module = module_node
+        .as_ref()
+        .map(|module| format_module_declaration(module, context))
         .transpose()?;
-    let members = syntax
-        .compact_members()
-        .map(|member| format_compilation_unit_member(&member, context))
+    let members = member_nodes
+        .iter()
+        .map(|member| format_compilation_unit_member(member, context))
         .collect::<FormatResult<Vec<_>>>()?;
 
     let mut sections = Vec::new();
@@ -47,8 +53,56 @@ pub(crate) fn format_compilation_unit(
     if !members.is_empty() {
         sections.push(join(concat([hard_line(), hard_line()]), members));
     }
+    if let Some(tail_start) = compilation_unit_tail_start(
+        &member_nodes,
+        module_node.as_ref(),
+        &import_nodes,
+        package_node.as_ref(),
+    ) {
+        let trailing_comments = take_own_line_comment_docs_in_range(
+            context,
+            TextRange::new(tail_start.end(), syntax.text_range().end()),
+        )?;
+        if !trailing_comments.is_empty() {
+            let comments = join(hard_line(), trailing_comments);
+            if let Some(last) = sections.last_mut() {
+                *last = concat([last.clone(), hard_line(), comments]);
+            } else {
+                sections.push(comments);
+            }
+        }
+    }
 
     Ok(join(concat([hard_line(), hard_line()]), sections))
+}
+
+fn compilation_unit_tail_start(
+    members: &[CompilationUnitMember],
+    module: Option<&ModuleDeclaration>,
+    imports: &[ImportDeclaration],
+    package: Option<&PackageDeclaration>,
+) -> Option<TextRange> {
+    members
+        .iter()
+        .filter_map(compilation_unit_member_code_range)
+        .next_back()
+        .or_else(|| module.and_then(jolt_java_syntax::ModuleDeclaration::code_text_range))
+        .or_else(|| {
+            imports
+                .iter()
+                .filter_map(ImportDeclaration::code_text_range)
+                .next_back()
+        })
+        .or_else(|| package.and_then(jolt_java_syntax::PackageDeclaration::code_text_range))
+}
+
+fn compilation_unit_member_code_range(member: &CompilationUnitMember) -> Option<TextRange> {
+    match member {
+        CompilationUnitMember::EmptyDeclaration(declaration) => declaration.code_text_range(),
+        CompilationUnitMember::FieldDeclaration(declaration) => declaration.code_text_range(),
+        CompilationUnitMember::MethodDeclaration(declaration) => declaration.code_text_range(),
+        CompilationUnitMember::TypeDeclaration(declaration) => declaration.code_text_range(),
+    }
 }
 
 struct ImportSectionItem {

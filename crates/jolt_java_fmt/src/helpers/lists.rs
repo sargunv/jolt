@@ -62,18 +62,6 @@ pub(crate) fn argument_list_docs(
     separated::delimited_comma_list("(", ")", policy.continuation_indent_levels(), items)
 }
 
-pub(crate) fn formal_parameter_list_docs(
-    items: impl IntoIterator<Item = Doc>,
-    policy: JavaFormatPolicy,
-) -> Doc {
-    separated::delimited_comma_list_one_per_line(
-        "(",
-        ")",
-        policy.continuation_indent_levels(),
-        items,
-    )
-}
-
 pub(crate) fn empty_argument_list(policy: JavaFormatPolicy) -> Doc {
     separated::delimited_comma_list(
         "(",
@@ -97,7 +85,15 @@ pub(crate) fn argument_list(
     list_range: TextRange,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    let items = format_list_items(items, list_range, ListCommentMode::Delimited, context)?;
+    let items = format_list_items(
+        items,
+        list_range,
+        ListCommentMode::Delimited {
+            open: "(",
+            open_range: None,
+        },
+        context,
+    )?;
     Ok(argument_list_with_policy(
         "(",
         ")",
@@ -109,9 +105,18 @@ pub(crate) fn argument_list(
 pub(crate) fn formal_parameter_list(
     items: impl IntoIterator<Item = ListItem>,
     list_range: TextRange,
+    open_range: Option<TextRange>,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    let items = format_list_items(items, list_range, ListCommentMode::Delimited, context)?;
+    let items = format_list_items(
+        items,
+        list_range,
+        ListCommentMode::Delimited {
+            open: "(",
+            open_range,
+        },
+        context,
+    )?;
     Ok(delimited_comma_list_one_per_line_with_comments(
         "(",
         ")",
@@ -125,7 +130,15 @@ pub(crate) fn type_argument_list(
     list_range: TextRange,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    let items = format_list_items(items, list_range, ListCommentMode::Delimited, context)?;
+    let items = format_list_items(
+        items,
+        list_range,
+        ListCommentMode::Delimited {
+            open: "<",
+            open_range: None,
+        },
+        context,
+    )?;
     Ok(delimited_comma_list_with_comments(
         "<",
         ">",
@@ -139,7 +152,15 @@ pub(crate) fn type_parameter_list(
     list_range: TextRange,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    let items = format_list_items(items, list_range, ListCommentMode::Delimited, context)?;
+    let items = format_list_items(
+        items,
+        list_range,
+        ListCommentMode::Delimited {
+            open: "<",
+            open_range: None,
+        },
+        context,
+    )?;
     Ok(delimited_comma_list_one_per_line_with_comments(
         "<",
         ">",
@@ -175,7 +196,15 @@ pub(crate) fn braced_comma_list(
     has_trailing_comma: bool,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    let items = format_list_items(items, list_range, ListCommentMode::Delimited, context)?;
+    let items = format_list_items(
+        items,
+        list_range,
+        ListCommentMode::Delimited {
+            open: "{",
+            open_range: None,
+        },
+        context,
+    )?;
     Ok(braced_comma_list_with_comments(
         items,
         one_per_line,
@@ -185,7 +214,10 @@ pub(crate) fn braced_comma_list(
 
 #[derive(Clone, Copy)]
 enum ListCommentMode {
-    Delimited,
+    Delimited {
+        open: &'static str,
+        open_range: Option<TextRange>,
+    },
     Clause,
 }
 
@@ -196,29 +228,66 @@ fn format_list_items(
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<FormattedList> {
     let items = items.into_iter().collect::<Vec<_>>();
-    let dangling_range = items
-        .last()
-        .map_or(ownership_range, |item| TextRange::new(item.range.end(), ownership_range.end()));
+    let dangling_range = items.last().map_or(ownership_range, |item| {
+        TextRange::new(item.range.end(), ownership_range.end())
+    });
     let next_item_starts = items
         .iter()
         .skip(1)
         .map(|item| item.range.start())
         .chain(std::iter::once(ownership_range.end()))
         .collect::<Vec<_>>();
+    let mut opening_comments = match comment_mode {
+        ListCommentMode::Delimited {
+            open, open_range, ..
+        } => take_opening_delimiter_comments(
+            context,
+            open_range.unwrap_or_else(|| {
+                TextRange::new(
+                    ownership_range.start(),
+                    ownership_range.start() + open.len().into(),
+                )
+            }),
+        ),
+        ListCommentMode::Clause => Vec::new(),
+    };
     let mut docs = Vec::new();
+    let mut previous_item_end = None;
 
-    for (item, next_item_start) in items.into_iter().zip(next_item_starts) {
-        let leading = context
+    for (index, (item, next_item_start)) in items.into_iter().zip(next_item_starts).enumerate() {
+        let gap_start = previous_item_end.unwrap_or_else(|| ownership_range.start());
+        let mut leading = context
             .take_leading_comments_in_range(ownership_range, item.range)
             .into_iter()
             .map(|comment| format_own_line_comment_doc(context, &comment))
             .collect::<Vec<_>>();
+        if let Some(previous_item_end) = previous_item_end {
+            let separator_comments = context
+                .take_list_separator_trailing_line_comments(TextRange::new(
+                    previous_item_end,
+                    item.range.start(),
+                ))
+                .into_iter()
+                .map(|comment| format_own_line_comment_doc(context, &comment))
+                .collect::<Vec<_>>();
+            if !separator_comments.is_empty() {
+                let mut comments = separator_comments;
+                comments.extend(leading);
+                leading = comments;
+            }
+        }
+        if index == 0 && !opening_comments.is_empty() {
+            let mut comments = Vec::new();
+            comments.append(&mut opening_comments);
+            comments.extend(leading);
+            leading = comments;
+        }
         let inline_leading = take_inline_leading_block_comment_docs(context, item.range);
         let has_leading_comments = !leading.is_empty();
         let has_inline_leading_comments = !inline_leading.is_empty();
         reject_unhandled_comments_in_range(
             context,
-            TextRange::new(ownership_range.start(), item.range.start()),
+            TextRange::new(gap_start, item.range.start()),
             "Java formatter does not support comments between list items yet",
         )?;
 
@@ -267,12 +336,17 @@ fn format_list_items(
             trailing_blocks,
             trailing_line,
         });
+        previous_item_end = Some(item.range.end());
     }
 
-    let before_close = match comment_mode {
-        ListCommentMode::Delimited => take_dangling_comment_docs(context, dangling_range)?,
+    let mut before_close = match comment_mode {
+        ListCommentMode::Delimited { .. } => take_dangling_comment_docs(context, dangling_range)?,
         ListCommentMode::Clause => Vec::new(),
     };
+    if docs.is_empty() && !opening_comments.is_empty() {
+        opening_comments.extend(before_close);
+        before_close = opening_comments;
+    }
     reject_unhandled_comments_in_range(
         context,
         ownership_range,
@@ -283,6 +357,17 @@ fn format_list_items(
         items: docs,
         before_close,
     })
+}
+
+fn take_opening_delimiter_comments(
+    context: &mut JavaFormatContext<'_>,
+    delimiter_range: TextRange,
+) -> Vec<Doc> {
+    context
+        .take_trailing_line_comment(delimiter_range)
+        .into_iter()
+        .map(|comment| format_own_line_comment_doc(context, &comment))
+        .collect()
 }
 
 struct FormattedList {

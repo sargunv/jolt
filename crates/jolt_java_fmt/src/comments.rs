@@ -25,12 +25,35 @@ pub(crate) fn take_leading_comment_docs(
         .collect())
 }
 
+pub(crate) fn take_leading_comment_docs_in_range(
+    context: &mut JavaFormatContext<'_>,
+    owner_range: TextRange,
+    code_range: TextRange,
+) -> FormatResult<Vec<Doc>> {
+    Ok(context
+        .take_leading_comments_in_range(owner_range, code_range)
+        .into_iter()
+        .map(|comment| format_own_line_comment(context, &comment))
+        .collect())
+}
+
 pub(crate) fn take_dangling_comment_docs(
     context: &mut JavaFormatContext<'_>,
     container_range: TextRange,
 ) -> FormatResult<Vec<Doc>> {
     Ok(context
         .take_dangling_comments(container_range)
+        .into_iter()
+        .map(|comment| format_own_line_comment(context, &comment))
+        .collect())
+}
+
+pub(crate) fn take_own_line_comment_docs_in_range(
+    context: &mut JavaFormatContext<'_>,
+    owner_range: TextRange,
+) -> FormatResult<Vec<Doc>> {
+    Ok(context
+        .take_own_line_comments_in_range(owner_range)
         .into_iter()
         .map(|comment| format_own_line_comment(context, &comment))
         .collect())
@@ -47,12 +70,47 @@ pub(crate) fn take_inline_leading_block_comment_docs(
         .collect()
 }
 
+pub(crate) fn take_inline_leading_block_comment_docs_in_range(
+    context: &mut JavaFormatContext<'_>,
+    owner_range: TextRange,
+    code_range: TextRange,
+) -> Vec<Doc> {
+    context
+        .take_inline_leading_block_comments_in_range(owner_range, code_range)
+        .into_iter()
+        .map(|comment| format_inline_comment(context, &comment))
+        .collect()
+}
+
 pub(crate) fn take_inline_trailing_block_comment_docs(
     context: &mut JavaFormatContext<'_>,
     code_range: TextRange,
 ) -> Vec<Doc> {
     context
         .take_inline_trailing_block_comments(code_range)
+        .into_iter()
+        .map(|comment| format_inline_comment(context, &comment))
+        .collect()
+}
+
+pub(crate) fn take_trailing_line_comment_docs_in_range_as_own_line(
+    context: &mut JavaFormatContext<'_>,
+    code_range: TextRange,
+    boundary: TextRange,
+) -> Vec<Doc> {
+    context
+        .take_trailing_line_comments_in_range(code_range, boundary)
+        .into_iter()
+        .map(|comment| format_own_line_comment(context, &comment))
+        .collect()
+}
+
+pub(crate) fn take_adjacent_trailing_block_comment_docs(
+    context: &mut JavaFormatContext<'_>,
+    code_range: TextRange,
+) -> Vec<Doc> {
+    context
+        .take_adjacent_trailing_block_comments(code_range)
         .into_iter()
         .map(|comment| format_inline_comment(context, &comment))
         .collect()
