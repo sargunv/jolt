@@ -4,8 +4,9 @@ use jolt_fmt_ir::{
 };
 
 use crate::analyzers::chains::{
-    BaseMetadata, Chain, ChainMember, ChainMemberKind, ChainMetadata, ChainRole,
-    classified_prefix_member_end_index, single_invocation_coalesced_prefix_len,
+    BaseMetadata, Chain, ChainBaseKind, ChainMember, ChainMemberKind, ChainMetadata, ChainRole,
+    classified_prefix_member_end_index, is_gjf_log_statement_chain,
+    single_invocation_coalesced_prefix_len,
 };
 use crate::helpers::lists::SELECTOR_TYPE_ARGUMENTS_GROUP_ID;
 use crate::policy::JavaFormatPolicy;
@@ -98,6 +99,24 @@ pub(crate) fn selector_chain(chain: Chain, policy: JavaFormatPolicy, role: Chain
 
     let flat_chain =
         concat(std::iter::once(base.clone()).chain(members.iter().map(prefixed_member_doc)));
+
+    if is_gjf_log_statement_chain(&metadata.base, &members) {
+        let broken_chain =
+            gjf_log_statement_chain(base, base_trailing_comments, members, &metadata, policy);
+        return chain_layout_preference(flat_chain, broken_chain, role, policy, Some(&metadata));
+    }
+
+    if matches!(metadata.base.kind, ChainBaseKind::PrimaryExpression)
+        && members
+            .first()
+            .is_some_and(|member| matches!(member.kind, ChainMemberKind::Field))
+        && !members
+            .first()
+            .is_some_and(|member| member.has_type_arguments)
+    {
+        let broken_chain = visit_regular_dot_chain_after_primary_receiver(base, members, policy);
+        return chain_layout_preference(flat_chain, broken_chain, role, policy, Some(&metadata));
+    }
 
     if groups.all_fields(members.len()) {
         if is_nested_argument_role(role) {
@@ -359,6 +378,61 @@ fn simple_receiver_call_run_chain(
         policy.max_line_length(),
         policy,
     )
+}
+
+fn gjf_log_statement_chain(
+    base: Doc,
+    base_trailing_comments: Vec<Doc>,
+    mut members: Vec<ChainMember>,
+    metadata: &ChainMetadata,
+    policy: JavaFormatPolicy,
+) -> Doc {
+    if has_trailing_comments(&base_trailing_comments, &members) {
+        return commented_selector_chain(base, base_trailing_comments, members, policy);
+    }
+
+    let Some(last) = members.pop() else {
+        return base;
+    };
+
+    let prefix_width = members
+        .iter()
+        .fold(metadata.base.source_width, |width, member| {
+            width + 1 + member.selector_head_width
+        })
+        + 1
+        + last.selector_head_width;
+    let prefix_flat = concat(
+        std::iter::once(base.clone())
+            .chain(members.iter().map(prefixed_member_doc))
+            .chain(std::iter::once(concat([
+                text("."),
+                last.selector_head_doc.clone(),
+            ]))),
+    );
+    if prefix_width <= policy.max_line_length() {
+        return concat([prefix_flat, last.selector_suffix_doc]);
+    }
+
+    let mut prefix_members = members;
+    prefix_members.push(selector_head_member(last.clone()));
+    let prefix_broken = regular_dot_line_limit_call_run_chain(
+        base,
+        prefix_members,
+        metadata.base.source_width,
+        policy.max_line_length(),
+        policy,
+    );
+    concat([prefix_broken, last.selector_suffix_doc])
+}
+
+fn selector_head_member(mut member: ChainMember) -> ChainMember {
+    member.doc = member.selector_head_doc.clone();
+    member.doc_after_chain_break = None;
+    member.doc_as_receiver_head_after_chain_break = None;
+    member.selector_suffix_doc = text("");
+    member.source_width = member.selector_head_width;
+    member
 }
 
 fn selector_chain_with_cohesive_head(
@@ -765,6 +839,98 @@ fn field_dot_fill_selector_segments(
     let _ = last_width;
 
     group(continuation_indent(fill(entries, last), policy))
+}
+
+/// google-java-format's primary-expression receiver path opens an indented
+/// regular-dot chain with `needDot=true` after scanning the receiver.
+fn visit_regular_dot_chain_after_primary_receiver(
+    base: Doc,
+    mut members: Vec<ChainMember>,
+    policy: JavaFormatPolicy,
+) -> Doc {
+    if members.is_empty() {
+        return group(base);
+    }
+
+    let base = append_leading_array_accesses(base, &mut members);
+    if members.is_empty() {
+        return group(base);
+    }
+
+    if let Some(first) = members.first()
+        && fits_fill_first_argument(first, &members[1..])
+    {
+        let first = members.remove(0);
+        let head = concat([base, soft_line(), member_doc(first)]);
+        let head = append_leading_array_accesses(head, &mut members);
+        if members.is_empty() {
+            return group(continuation_indent(head, policy));
+        }
+        return group(continuation_indent(
+            regular_dot_fill_from_head(head, members, 0, policy),
+            policy,
+        ));
+    }
+
+    group(continuation_indent(
+        regular_dot_fill_after_needed_dot(base, members, policy),
+        policy,
+    ))
+}
+
+fn regular_dot_fill_after_needed_dot(
+    base: Doc,
+    mut members: Vec<ChainMember>,
+    policy: JavaFormatPolicy,
+) -> Doc {
+    let first = members.remove(0);
+    let first_width = first.source_width;
+    let head = concat([base, soft_line(), member_doc(first)]);
+    regular_dot_fill_from_head(
+        head,
+        members,
+        policy
+            .selector_chain_min_receiver_length_before_break()
+            .saturating_add(1)
+            .saturating_add(first_width),
+        policy,
+    )
+}
+
+fn regular_dot_fill_from_head(
+    head: Doc,
+    members: Vec<ChainMember>,
+    mut accumulated_width: usize,
+    policy: JavaFormatPolicy,
+) -> Doc {
+    if members.is_empty() {
+        return head;
+    }
+
+    let min_length = policy.selector_chain_min_receiver_length_before_break();
+    let mut segments = members
+        .into_iter()
+        .map(|member| {
+            let doc = member.doc_after_chain_break.unwrap_or(member.doc);
+            (member.source_width, doc)
+        })
+        .collect::<Vec<_>>();
+    let (_last_width, last) = segments
+        .pop()
+        .expect("non-empty tail checked by regular dot caller");
+    let entries = std::iter::once((0, head))
+        .chain(segments)
+        .map(|(width, segment)| {
+            accumulated_width = accumulated_width.saturating_add(1).saturating_add(width);
+            let separator = if accumulated_width > min_length {
+                concat([soft_line(), text(".")])
+            } else {
+                text(".")
+            };
+            fill_entry(segment, separator)
+        });
+
+    fill(entries, last)
 }
 
 /// google-java-format `visitRegularDot` fallback when no prefix/cohesive route applies.

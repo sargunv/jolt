@@ -73,14 +73,13 @@ pub(crate) fn callable_header(header: CallableHeader, policy: JavaFormatPolicy) 
     };
     let signature = callable_signature(
         leading_type,
-        leading_type_policy
-            .is_some_and(|leading_type_policy| {
-                policy.declaration_leading_type_forces_name_break(
-                    leading_type_policy.has_type_arguments,
-                    leading_type_policy.rendered_leading_type_source_width,
-                    leading_type_policy.rendered_declaration_head_source_width,
-                )
-            }),
+        leading_type_policy.is_some_and(|leading_type_policy| {
+            policy.declaration_leading_type_forces_name_break(
+                leading_type_policy.has_type_arguments,
+                leading_type_policy.rendered_leading_type_source_width,
+                leading_type_policy.rendered_declaration_head_source_width,
+            )
+        }),
         has_type_parameters,
         &before_name_comments,
         name_and_parameters,
@@ -363,14 +362,12 @@ pub(crate) fn variable_declaration_header(
         text(" "),
         declarators.clone(),
     ]);
-    if leading_type_policy
-        .is_some_and(|leading_type_policy| {
-            policy.field_leading_type_forces_name_break(
-                leading_type_policy.rendered_leading_type_source_width,
-                leading_type_policy.rendered_declaration_head_source_width,
-            )
-        })
-    {
+    if leading_type_policy.is_some_and(|leading_type_policy| {
+        policy.field_leading_type_forces_name_break(
+            leading_type_policy.rendered_leading_type_source_width,
+            leading_type_policy.rendered_declaration_head_source_width,
+        )
+    }) {
         concat([
             space_separated(prefix),
             continuation_indent(policy, concat([line(), declarators])),

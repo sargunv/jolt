@@ -6,8 +6,9 @@ use jolt_fmt_ir::{
 
 use crate::analyzers::array_initializers::TabularEntry;
 use crate::comments::{
-    format_own_line_comment_doc, reject_unhandled_comments_in_range, take_dangling_comment_docs,
-    take_inline_leading_block_comment_docs, take_inline_trailing_block_comment_docs,
+    format_inline_comment_doc, format_own_line_comment_doc, reject_unhandled_comments_in_range,
+    take_dangling_comment_docs, take_inline_leading_block_comment_docs,
+    take_inline_trailing_block_comment_docs,
 };
 use crate::context::JavaFormatContext;
 use crate::diagnostics::FormatResult;
@@ -88,6 +89,7 @@ pub(crate) fn statement_expression_list(
         ListCommentMode::Clause,
         ',',
         0,
+        false,
         context,
     )?;
     if !items.has_structural_comments() {
@@ -153,6 +155,7 @@ pub(crate) fn argument_list_with_continuation_indent(
         },
         ',',
         0,
+        true,
         context,
     )?;
     argument_list_with_policy(
@@ -202,6 +205,7 @@ pub(crate) fn formal_parameter_list_with_indent(
         },
         ',',
         separator_leading_comment_indent_columns,
+        false,
         context,
     )?;
     Ok(delimited_comma_list_one_per_line_with_comments(
@@ -227,6 +231,7 @@ pub(crate) fn lambda_parameter_list(
         },
         ',',
         0,
+        false,
         context,
     )?;
     Ok(delimited_comma_list_with_comments(
@@ -300,6 +305,7 @@ fn type_argument_list_with_indent(
         },
         ',',
         0,
+        false,
         context,
     )?;
     if one_per_line {
@@ -333,6 +339,7 @@ pub(crate) fn selector_type_argument_list_variants(
         },
         ',',
         0,
+        false,
         context,
     )?;
     let default = selector_type_argument_list_doc(
@@ -378,6 +385,7 @@ pub(crate) fn type_parameter_list(
         },
         ',',
         0,
+        false,
         context,
     )?;
     let indent_levels = match list_context {
@@ -460,6 +468,7 @@ pub(crate) fn type_clause_list(
         ListCommentMode::Clause,
         ',',
         0,
+        false,
         context,
     )?;
     if keyword == "throws" && items.has_structural_comments() {
@@ -536,6 +545,7 @@ pub(crate) fn resource_specification(
         },
         ';',
         0,
+        false,
         context,
     )?;
     Ok(resource_specification_with_comments(
@@ -648,6 +658,7 @@ pub(crate) fn braced_comma_list(
         },
         ',',
         0,
+        false,
         context,
     )?;
     Ok(braced_comma_list_with_comments(
@@ -672,6 +683,7 @@ fn format_list_items(
     comment_mode: ListCommentMode,
     separator: char,
     separator_leading_comment_indent_columns: usize,
+    reattach_leading_parameter_comments: bool,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<FormattedList> {
     let items = items.into_iter().collect::<Vec<_>>();
@@ -704,11 +716,19 @@ fn format_list_items(
     for (item, next_item_start) in items.into_iter().zip(next_item_starts) {
         let gap_start = previous_item_end.unwrap_or_else(|| ownership_range.start());
         let mut has_separator_leading_comments = false;
-        let mut leading = context
-            .take_leading_comments_in_range(ownership_range, item.range)
-            .into_iter()
-            .map(|comment| format_own_line_comment_doc(context, &comment))
-            .collect::<Vec<_>>();
+        let mut inline_leading = if reattach_leading_parameter_comments {
+            context
+                .take_list_item_leading_block_comments(ownership_range, item.range)
+                .into_iter()
+                .map(|comment| format_inline_comment_doc(context, &comment))
+                .collect::<Vec<_>>()
+        } else {
+            Vec::new()
+        };
+        let mut leading = Vec::new();
+        for comment in context.take_leading_comments_in_range(ownership_range, item.range) {
+            leading.push(format_own_line_comment_doc(context, &comment));
+        }
         if let Some(previous_item_end) = previous_item_end {
             let separator_comments = context
                 .take_list_separator_trailing_line_comments_with_separator(
@@ -739,7 +759,7 @@ fn format_list_items(
                 leading = comments;
             }
         }
-        let inline_leading = take_inline_leading_block_comment_docs(context, item.range);
+        inline_leading.extend(take_inline_leading_block_comment_docs(context, item.range));
         let has_leading_comments = !leading.is_empty();
         let has_inline_leading_comments = !inline_leading.is_empty();
         reject_unhandled_comments_in_range(
@@ -789,7 +809,7 @@ fn format_list_items(
             shape: item.shape,
             source_width: item.source_width,
             tabular_entry: item.tabular_entry,
-            has_inline_comments: item.has_inline_comments,
+            has_inline_comments: item.has_inline_comments || has_inline_leading_comments,
             has_comments,
             has_structural_comments: has_leading_comments
                 || !trailing_blocks.is_empty()
@@ -1595,6 +1615,7 @@ pub(crate) fn format_braced_list_items(
         },
         ',',
         0,
+        false,
         context,
     )
 }

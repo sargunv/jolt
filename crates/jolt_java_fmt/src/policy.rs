@@ -135,6 +135,16 @@ impl JavaFormatPolicy {
         4
     }
 
+    /// GJF emits declaration modifiers with fill-style breaks before a simple
+    /// non-generic type header, allowing `static class Short` to stay flat while
+    /// `static` breaks before an overlong `class VeryLongName...` header.
+    pub(crate) const fn type_declaration_modifiers_fill_before_simple_header(self) -> bool {
+        matches!(
+            self.profile,
+            JavaFormatProfile::Google | JavaFormatProfile::Aosp
+        )
+    }
+
     pub(crate) const fn callable_type_parameter_indent_levels(self) -> u16 {
         self.type_argument_indent_levels()
     }
@@ -233,8 +243,10 @@ impl JavaFormatPolicy {
     ) -> bool {
         matches!(
             (self.profile, role),
-            (JavaFormatProfile::Palantir,
-ChainRole::NestedArgument | ChainRole::NestedArgumentFit)
+            (
+                JavaFormatProfile::Palantir,
+                ChainRole::NestedArgument | ChainRole::NestedArgumentFit
+            )
         )
     }
 

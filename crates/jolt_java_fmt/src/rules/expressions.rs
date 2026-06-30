@@ -20,7 +20,7 @@ use crate::helpers::literals as java_literals;
 use crate::helpers::switches as java_switches;
 use crate::policy::JavaFormatPolicy;
 use jolt_diagnostics::TextRange;
-use jolt_fmt_ir::{group, indent_by, line, soft_line};
+use jolt_fmt_ir::{group, indent_by, soft_line};
 
 pub(super) fn format_expression(
     expression: &Expression,
@@ -99,14 +99,12 @@ pub(super) fn format_conditional_expression(
         .transpose()?
         .unwrap_or_else(|| text(""));
 
-    Ok(group(indent_by(
-        context.policy().continuation_indent_levels(),
-        concat([
-            condition,
-            concat([line(), text("?"), text(" "), true_expression]),
-            concat([line(), text(":"), text(" "), false_expression]),
-        ]),
-    )))
+    Ok(java_expressions::conditional_expression(
+        condition,
+        true_expression,
+        false_expression,
+        context.policy(),
+    ))
 }
 
 pub(super) fn format_instanceof_expression(

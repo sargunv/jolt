@@ -652,7 +652,6 @@ pub(super) struct EnumConstantListLayout {
     separators: Vec<Doc>,
 }
 
-
 pub(super) fn format_enum_constant_list(
     constants: &EnumConstantList,
     context: &mut JavaFormatContext<'_>,

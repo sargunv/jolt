@@ -85,6 +85,26 @@ impl From<Doc> for AssignmentValue {
     }
 }
 
+pub(crate) fn conditional_expression(
+    condition: Doc,
+    true_expression: Doc,
+    false_expression: Doc,
+    policy: JavaFormatPolicy,
+) -> Doc {
+    group(indent_by(
+        policy.continuation_indent_levels(),
+        concat([
+            condition,
+            line(),
+            text("? "),
+            true_expression,
+            line(),
+            text(": "),
+            false_expression,
+        ]),
+    ))
+}
+
 fn assignment_expression_with_indent(
     left: Doc,
     operator: AssignmentOperator,

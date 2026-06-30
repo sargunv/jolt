@@ -377,6 +377,46 @@ pub(crate) fn stream_suffix_prefix_member_end_index(members: &[ChainMember]) -> 
     })
 }
 
+/// google-java-format's `handleLogStatement` special case keeps fluent logger
+/// calls as one prefix and lets the final `log(...)` argument list own its
+/// continuation. The method names below are copied from the local GJF oracle.
+pub(crate) fn is_gjf_log_statement_chain(base: &BaseMetadata, members: &[ChainMember]) -> bool {
+    matches!(base.kind, ChainBaseKind::Simple)
+        && base.simple_name.is_some()
+        && members
+            .last()
+            .and_then(|member| member.simple_name.as_deref())
+            == Some("log")
+        && members[..members.len().saturating_sub(1)]
+            .iter()
+            .all(|member| member.simple_name.as_deref() != Some("log"))
+        && members.iter().all(|member| {
+            matches!(member.kind, ChainMemberKind::Call { .. })
+                && member.simple_name.as_deref().is_some_and(is_gjf_log_method)
+        })
+}
+
+fn is_gjf_log_method(name: &str) -> bool {
+    matches!(
+        name,
+        "at" | "atConfig"
+            | "atDebug"
+            | "atFine"
+            | "atFiner"
+            | "atFinest"
+            | "atInfo"
+            | "atMostEvery"
+            | "atSevere"
+            | "atWarning"
+            | "every"
+            | "log"
+            | "logVarargs"
+            | "perUnique"
+            | "withCause"
+            | "withStackTrace"
+    )
+}
+
 /// Longest inclusive member index that should stay grouped with the receiver.
 ///
 /// Combines google-java-format's type-name prefix, single-invocation field prefix,

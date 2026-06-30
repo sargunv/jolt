@@ -279,6 +279,13 @@ pub(crate) fn format_own_line_comment_doc(
     format_own_line_comment(context, comment)
 }
 
+pub(crate) fn format_inline_comment_doc(
+    context: &JavaFormatContext<'_>,
+    comment: &JavaCommentTrivia,
+) -> Doc {
+    format_inline_comment(context, comment)
+}
+
 fn format_own_line_comment(context: &JavaFormatContext<'_>, comment: &JavaCommentTrivia) -> Doc {
     comment_lines_to_doc(
         rewrite_comment_lines(context, comment, CommentPlacement::OwnLine),
@@ -297,10 +304,10 @@ fn format_own_line_comments(
         if index > 0 {
             let previous = &comments[index - 1];
             if context.has_blank_line_between(previous.trivia.range, comment.trivia.range)
-                && let Some(previous_doc) = docs.last_mut() {
-                    *previous_doc =
-                        concat([previous_doc.clone(), break_(FlatLine::Empty, i16::MIN)]);
-                }
+                && let Some(previous_doc) = docs.last_mut()
+            {
+                *previous_doc = concat([previous_doc.clone(), break_(FlatLine::Empty, i16::MIN)]);
+            }
         }
         if index + 1 == comments.len()
             && following_range.is_some_and(|following| {

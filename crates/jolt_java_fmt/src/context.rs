@@ -435,24 +435,37 @@ impl<'source> JavaFormatContext<'source> {
         boundary: TextRange,
         separator: char,
     ) -> Vec<JavaCommentTrivia> {
-        let mut saw_separator = false;
         let indices = self
             .comments
             .iter()
             .enumerate()
             .filter(|(_, comment)| !comment.claimed)
             .filter(|(_, comment)| {
-                let matches = self.is_list_item_trailing_block_comment(
+                self.is_list_item_trailing_block_comment(
                     &comment.trivia,
                     item_range,
                     boundary,
-                    saw_separator,
                     separator,
-                );
-                if matches {
-                    saw_separator = true;
-                }
-                matches
+                )
+            })
+            .map(|(index, _)| index)
+            .collect();
+
+        self.claim_comments(indices)
+    }
+
+    pub(crate) fn take_list_item_leading_block_comments(
+        &mut self,
+        owner_range: TextRange,
+        item_range: TextRange,
+    ) -> Vec<JavaCommentTrivia> {
+        let indices = self
+            .comments
+            .iter()
+            .enumerate()
+            .filter(|(_, comment)| !comment.claimed)
+            .filter(|(_, comment)| {
+                self.is_list_item_leading_block_comment(&comment.trivia, owner_range, item_range)
             })
             .map(|(index, _)| index)
             .collect();
@@ -696,7 +709,6 @@ impl<'source> JavaFormatContext<'source> {
         comment: &JavaCommentTrivia,
         item_range: TextRange,
         boundary: TextRange,
-        previous_comment_after_separator: bool,
         separator: char,
     ) -> bool {
         if !self.is_inline_block_comment(comment) {
@@ -715,15 +727,23 @@ impl<'source> JavaFormatContext<'source> {
         {
             return false;
         }
-        if previous_comment_after_separator {
-            return true;
-        }
-
         let between = &self.source[item_range.end().get()..comment.trivia.range.start().get()];
         between.contains(separator)
             && between
                 .chars()
                 .all(|ch| ch == separator || ch.is_whitespace())
+    }
+
+    fn is_list_item_leading_block_comment(
+        &self,
+        comment: &JavaCommentTrivia,
+        owner_range: TextRange,
+        item_range: TextRange,
+    ) -> bool {
+        self.is_inline_block_comment(comment)
+            && comment.trivia.range.start() >= owner_range.start()
+            && comment.trivia.range.end() <= item_range.start()
+            && self.only_whitespace(comment.trivia.range.end().get(), item_range.start().get())
     }
 
     fn is_list_separator_trailing_line_comment(

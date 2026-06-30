@@ -1,6 +1,6 @@
 use jolt_fmt_ir::{
-    Doc, concat, group, hard_line, hard_line_without_break_parent, if_group_breaks, indent_by,
-    join, line, text,
+    Doc, concat, fill, fill_entry, group, hard_line, hard_line_without_break_parent,
+    if_group_breaks, indent_by, join, line, text,
 };
 
 use crate::helpers::lists::TYPE_DECLARATION_TYPE_PARAMETERS_GROUP_ID;
@@ -35,13 +35,19 @@ pub(crate) fn type_declaration(declaration: TypeDeclaration, policy: JavaFormatP
         body,
     } = declaration;
 
-    let mut head_parts = modifiers;
+    let has_type_parameters = type_parameters.is_some();
+    let mut head_parts = Vec::new();
     head_parts.push(keyword);
     head_parts.extend(before_name_comments);
-    let has_type_parameters = type_parameters.is_some();
     head_parts.push(concat(std::iter::once(name).chain(type_parameters)));
 
-    let mut head = space_separated_head(head_parts);
+    let fill_modifiers_before_simple_header =
+        !has_type_parameters && policy.type_declaration_modifiers_fill_before_simple_header();
+    let mut head = if fill_modifiers_before_simple_header {
+        modifier_prefixed_head(modifiers, space_separated_head(head_parts))
+    } else {
+        space_separated_head(modifiers.into_iter().chain(head_parts))
+    };
     if let Some(record_components) = record_components {
         head = concat([head, record_components]);
     }
@@ -117,6 +123,24 @@ fn clause_separator(has_type_parameters: bool) -> Doc {
     } else {
         line()
     }
+}
+
+/// google-java-format `visitModifiers` emits modifier separators with fill-style
+/// breaks before a simple non-generic type header. Generic type declarations keep
+/// the modifier and keyword/name prefix together before the type-parameter break.
+fn modifier_prefixed_head(modifiers: Vec<Doc>, head: Doc) -> Doc {
+    let mut modifiers = modifiers.into_iter();
+    let Some(first) = modifiers.next() else {
+        return head;
+    };
+    let mut entries = Vec::new();
+    let mut previous = first;
+    for modifier in modifiers {
+        entries.push(fill_entry(previous, line()));
+        previous = modifier;
+    }
+    entries.push(fill_entry(previous, line()));
+    fill(entries, head)
 }
 
 fn space_separated_head(parts: impl IntoIterator<Item = Doc>) -> Doc {

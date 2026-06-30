@@ -1,4 +1,5 @@
 use super::expressions::{PatternLayout, format_pattern_with_layout};
+use super::types::format_type_layout_parts;
 use super::{
     BasicForStatement, Block, BlockItem, BlockStatement, BreakStatement, CatchClause,
     CatchParameter, ConstructorBody, ConstructorInvocation, ContinueStatement, DoStatement, Doc,
@@ -29,6 +30,7 @@ use crate::helpers::expressions as java_expressions;
 use crate::helpers::lists as java_lists;
 use crate::helpers::switches as java_switches;
 use jolt_diagnostics::TextRange;
+use jolt_fmt_ir::{group, indent_by, line};
 
 pub(super) fn format_block(
     block: &Block,
@@ -876,16 +878,37 @@ pub(super) fn format_catch_clause(
 
     Ok(concat([
         text("catch "),
-        wrap::parenthesized_expression(format_catch_parameter(&parameter, context)?),
+        format_catch_parameter_header(&parameter, context)?,
         text(" "),
         format_block_with_options(&body, context, body_options)?,
     ]))
 }
 
-pub(super) fn format_catch_parameter(
+fn format_catch_parameter_header(
     parameter: &CatchParameter,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
+    let parameter = format_catch_parameter(parameter, context)?;
+    if parameter.is_union {
+        Ok(concat([
+            text("("),
+            indent_by(context.policy().continuation_indent_levels(), parameter.doc),
+            text(")"),
+        ]))
+    } else {
+        Ok(wrap::parenthesized_expression(parameter.doc))
+    }
+}
+
+struct CatchParameterDoc {
+    doc: Doc,
+    is_union: bool,
+}
+
+fn format_catch_parameter(
+    parameter: &CatchParameter,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<CatchParameterDoc> {
     let ty = parameter
         .ty()
         .expect("parser-clean catch parameter should have a type");
@@ -908,12 +931,96 @@ pub(super) fn format_catch_parameter(
     if let Some(final_token) = parameter.final_token() {
         parts.push(format_token(&final_token));
     }
-    parts.push(java_annotations::type_use_prefix(
-        split.type_use_annotations,
-        format_catch_type_list(&ty, context)?,
-    ));
-    parts.push(format_token(&name));
-    Ok(wrap::space_separated(parts))
+    let is_union = is_catch_union_type_list(&ty);
+    let doc = if is_union {
+        format_catch_union_parameter(
+            parts,
+            split.type_use_annotations,
+            &ty,
+            format_token(&name),
+            context,
+        )?
+    } else {
+        parts.push(java_annotations::type_use_prefix(
+            split.type_use_annotations,
+            format_catch_type_list(&ty, context)?,
+        ));
+        parts.push(format_token(&name));
+        wrap::space_separated(parts)
+    };
+    Ok(CatchParameterDoc { doc, is_union })
+}
+
+fn is_catch_union_type_list(types: &jolt_java_syntax::CatchTypeList) -> bool {
+    catch_union_type_alternatives(types).is_some()
+}
+
+fn format_catch_union_parameter(
+    mut prefix_parts: Vec<Doc>,
+    type_use_annotations: Vec<java_annotations::AnnotationDoc>,
+    types: &jolt_java_syntax::CatchTypeList,
+    name: Doc,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    let mut types = catch_union_type_alternatives(types)
+        .expect("parser-clean catch union parameter should have union alternatives")
+        .into_iter()
+        .map(|parts| format_type_layout_parts(&parts, context))
+        .collect::<FormatResult<Vec<_>>>()?;
+    let last = types
+        .pop()
+        .expect("parser-clean catch union parameter should have at least one type");
+    let mut alternatives = Vec::new();
+    let first = types
+        .first()
+        .cloned()
+        .expect("union parameter should keep at least one type before the last alternative");
+    let first = java_annotations::type_use_prefix(type_use_annotations, first);
+    if prefix_parts.is_empty() {
+        alternatives.push(first);
+    } else {
+        prefix_parts.push(first);
+        alternatives.push(wrap::space_separated(prefix_parts));
+    }
+    for ty in types.into_iter().skip(1) {
+        alternatives.push(concat([text("| "), ty]));
+    }
+    alternatives.push(concat([text("| "), wrap::space_separated([last, name])]));
+    Ok(group(join(line(), alternatives)))
+}
+
+fn catch_union_type_alternatives(
+    types: &jolt_java_syntax::CatchTypeList,
+) -> Option<Vec<Vec<TypeLayoutPart>>> {
+    let ty = types.ty()?;
+    if !matches!(ty, Type::UnionType(_)) {
+        return None;
+    }
+
+    let mut alternatives = Vec::new();
+    let mut current = Vec::new();
+    for part in ty.layout_parts() {
+        match &part {
+            TypeLayoutPart::Token(token)
+                if token.kind() == jolt_java_syntax::JavaSyntaxKind::Bar =>
+            {
+                trim_trailing_space_parts(&mut current);
+                alternatives.push(std::mem::take(&mut current));
+            }
+            TypeLayoutPart::Text(value) if current.is_empty() && value.trim().is_empty() => {}
+            _ => current.push(part),
+        }
+    }
+    trim_trailing_space_parts(&mut current);
+    alternatives.push(current);
+
+    (alternatives.len() > 1).then_some(alternatives)
+}
+
+fn trim_trailing_space_parts(parts: &mut Vec<TypeLayoutPart>) {
+    while matches!(parts.last(), Some(TypeLayoutPart::Text(value)) if value.trim().is_empty()) {
+        parts.pop();
+    }
 }
 
 fn format_catch_type_list(
