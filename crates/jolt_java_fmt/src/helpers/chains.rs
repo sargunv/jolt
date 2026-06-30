@@ -753,12 +753,12 @@ fn dot_fill_selector_segments(
     let entries = std::iter::once((accumulated_width, base))
         .chain(segments)
         .map(|(width, segment)| {
-            accumulated_width += width + 1;
             let separator = if accumulated_width > min_length {
                 concat([soft_line(), text(".")])
             } else {
                 text(".")
             };
+            accumulated_width += width + 1;
             fill_entry(segment, separator)
         });
     let _ = last_width;
@@ -873,12 +873,12 @@ fn field_dot_fill_selector_segments(
     let entries = std::iter::once((accumulated_width, base))
         .chain(segments)
         .map(|(width, segment)| {
-            accumulated_width += width + 1;
             let separator = if accumulated_width > min_length {
                 concat([soft_line(), text(".")])
             } else {
                 text(".")
             };
+            accumulated_width += width + 1;
             fill_entry(segment, separator)
         });
     let _ = last_width;
