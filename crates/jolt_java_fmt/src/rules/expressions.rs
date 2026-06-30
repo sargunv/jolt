@@ -389,13 +389,11 @@ fn format_cast_primary_base(
     receiver: Doc,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    Ok(group(concat([
-        concat([text("("), format_type(ty, context)?, text(")")]),
-        indent_by(
-            context.policy().continuation_indent_levels(),
-            concat([hard_line(), receiver]),
-        ),
-    ])))
+    Ok(java_expressions::cast_primary_base(
+        format_type(ty, context)?,
+        receiver,
+        context.policy(),
+    ))
 }
 
 pub(super) fn collect_field_access_chain(
@@ -855,10 +853,9 @@ fn format_parenthesized_chain_base(
     let expression = parenthesized
         .expression()
         .expect("parser-clean parenthesized expression should have an expression");
-    Ok(wrap::flat_parenthesized_expression(format_expression(
-        &expression,
-        context,
-    )?))
+    Ok(java_expressions::flat_parenthesized_expression(
+        format_expression(&expression, context)?,
+    ))
 }
 
 fn format_parenthesized_expression_with_chain_role(
@@ -869,8 +866,9 @@ fn format_parenthesized_expression_with_chain_role(
     let expression = parenthesized
         .expression()
         .expect("parser-clean parenthesized expression should have an expression");
-    Ok(wrap::parenthesized_expression(
+    Ok(java_expressions::parenthesized_expression(
         format_expression_with_chain_role(&expression, context, chain_role)?,
+        context.policy(),
     ))
 }
 

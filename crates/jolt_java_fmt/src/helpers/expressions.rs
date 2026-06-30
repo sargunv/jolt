@@ -1,5 +1,6 @@
 use jolt_fmt_ir::{
-    Doc, FlatLine, break_, concat, fill, fill_entry, group, hard_line, indent_by, join, line, text,
+    Doc, FlatLine, break_, concat, fill, fill_entry, group, hard_line, indent_by, join, line,
+    soft_line, text,
 };
 
 use crate::analyzers::binary::{BinaryChain, BinarySide};
@@ -158,6 +159,32 @@ pub(crate) fn conditional_expression(
             false_expression,
         ]),
     ))
+}
+
+pub(crate) fn parenthesized_expression(expression: Doc, policy: JavaFormatPolicy) -> Doc {
+    group(concat([
+        text("("),
+        indent_by(
+            policy.continuation_indent_levels(),
+            concat([soft_line(), expression]),
+        ),
+        soft_line(),
+        text(")"),
+    ]))
+}
+
+pub(crate) fn flat_parenthesized_expression(expression: Doc) -> Doc {
+    group(concat([text("("), expression, text(")")]))
+}
+
+pub(crate) fn cast_primary_base(ty: Doc, receiver: Doc, policy: JavaFormatPolicy) -> Doc {
+    group(concat([
+        concat([text("("), ty, text(")")]),
+        indent_by(
+            policy.continuation_indent_levels(),
+            concat([hard_line(), receiver]),
+        ),
+    ]))
 }
 
 fn assignment_expression_with_indent(
