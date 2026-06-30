@@ -911,11 +911,19 @@ profile-aware breaking via `JavaFormatPolicy`. Primary-expression receivers
 (parenthesized, conditional) use flat preference before the first selector (GJF
 `visitDot` `needDot` + fill).
 
-Remaining: close oracle gaps catalogued under
-[selector / fluent chain breaking](#1-selector--fluent-chain-breaking--largest-bucket-30-of-google-diff):
-long fluent chains, mixed field/call chains, nested-argument receivers, and
-Palantir 80-col last-dot policy — using syntax shape, not fixture-name
-heuristics.
+**Google baseline (2025-06-30):** aggregate diff 2132→**2112**; `B20701054.java`
+57→**45** via `selector_chain_with_single_invocation_field_prefix` (field
+`field_dot_fill` through lone call, then fluent tail) and a type-name
+field-prefix route (`type_name_prefix_member_end_index` without `is_call`
+guard). Guardrails held: `B24909927` 13, `B26207047` 64, `B20128760` 77.
+Conditional expressions now break before `?` / `:` (GJF
+`visitConditionalExpression`).
+
+Remaining: full `visitRegularDot` length loop for mixed call chains (peel-first
+fallback still regresses `B26207047` argument-list trials); type-name
+`ImmutableList.builder` double-dot on coalesced field+call concat; ternary paren
+layout inside chain receivers; Palantir 80-col last-dot policy — using syntax
+shape, not fixture-name heuristics.
 
 **Architecture note:** nested chains in arguments currently bypass
 `best_fitting` (`ChainRole::NestedArgument`) to avoid exponential fit cost. Full

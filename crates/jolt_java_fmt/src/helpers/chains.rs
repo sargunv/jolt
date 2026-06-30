@@ -3,8 +3,8 @@ use jolt_fmt_ir::{
 };
 
 use crate::analyzers::chains::{
-    Chain, ChainMember, ChainMemberKind, ChainRole, classified_prefix_member_end_index,
-    single_invocation_coalesced_prefix_len,
+    BaseMetadata, Chain, ChainMember, ChainMemberKind, ChainRole,
+    classified_prefix_member_end_index, single_invocation_coalesced_prefix_len,
 };
 use crate::policy::JavaFormatPolicy;
 
@@ -13,7 +13,7 @@ pub(crate) fn selector_chain(chain: Chain, policy: JavaFormatPolicy, role: Chain
     let Chain {
         base,
         base_trailing_comments,
-        mut members,
+        members,
         metadata,
         ..
     } = chain;
@@ -30,34 +30,18 @@ pub(crate) fn selector_chain(chain: Chain, policy: JavaFormatPolicy, role: Chain
         concat(std::iter::once(base.clone()).chain(members.iter().map(prefixed_member_doc)));
 
     if groups.all_fields(members.len()) {
-        return field_selector_chain(base, members, policy, role);
-    }
-
-    let field_prefix_len = groups.field_prefix_len();
-    if field_prefix_len >= 2
-        && crate::analyzers::type_names::type_name_prefix_member_end_index(
-            metadata.base.simple_name.as_deref(),
-            &members,
-        )
-        .is_none()
-    {
-        let remaining = members.split_off(field_prefix_len);
-        let receiver_width = metadata.base.source_width
-            + members
-                .iter()
-                .map(|member| member.source_width + 1)
-                .sum::<usize>();
-        let receiver = field_selector_chain(base, members, policy, role);
-        return selector_chain(
-            Chain::with_base_metadata(
-                receiver,
-                remaining,
-                crate::analyzers::chains::BaseMetadata::complex(receiver_width),
-            )
-            .with_tail_range(None),
+        if matches!(role, ChainRole::NestedArgument) {
+            return field_selector_chain(base, members, policy, role);
+        }
+        let min_length = policy.selector_chain_min_receiver_length_before_break();
+        let broken_chain = field_dot_fill_selector_segments(
+            base,
+            members,
+            metadata.base.source_width,
+            min_length,
             policy,
-            role,
         );
+        return chain_layout_preference(flat_chain, broken_chain, role);
     }
 
     let leading_type_argument_call_len = groups.leading_type_argument_call_len();
@@ -78,8 +62,14 @@ pub(crate) fn selector_chain(chain: Chain, policy: JavaFormatPolicy, role: Chain
 
     let coalesced_prefix_len = single_invocation_coalesced_prefix_len(&members);
     if coalesced_prefix_len > 0 {
-        let broken_chain =
-            selector_chain_with_cohesive_head(base, members, coalesced_prefix_len, policy);
+        let call_index = coalesced_prefix_len - 1;
+        let broken_chain = selector_chain_with_single_invocation_field_prefix(
+            base,
+            members,
+            call_index,
+            metadata.base.source_width,
+            policy,
+        );
         return chain_layout_preference(flat_chain, broken_chain, role);
     }
 
@@ -96,11 +86,27 @@ pub(crate) fn selector_chain(chain: Chain, policy: JavaFormatPolicy, role: Chain
         return chain_layout_preference(flat_chain, broken_chain, role);
     }
 
+    if let Some(type_prefix_end) = crate::analyzers::type_names::type_name_prefix_member_end_index(
+        metadata.base.simple_name.as_deref(),
+        &members,
+    ) && type_prefix_end + 1 < members.len()
+        && !members
+            .get(type_prefix_end)
+            .is_some_and(ChainMember::is_call)
+    {
+        let broken_chain = selector_chain_with_prefix_group(
+            base,
+            members,
+            type_prefix_end,
+            metadata.base.source_width,
+            policy,
+        );
+        return chain_layout_preference(flat_chain, broken_chain, role);
+    }
+
     if let Some(prefix_end) = classified_prefix_member_end_index(&metadata.base, &members)
         && prefix_end + 1 < members.len()
-        && members
-            .get(prefix_end)
-            .is_some_and(super::super::analyzers::chains::ChainMember::is_call)
+        && members.get(prefix_end).is_some_and(ChainMember::is_call)
     {
         let broken_chain = selector_chain_with_prefix_group(
             base,
@@ -117,20 +123,9 @@ pub(crate) fn selector_chain(chain: Chain, policy: JavaFormatPolicy, role: Chain
         return chain_layout_preference(flat_chain, broken_chain, role);
     }
 
-    let first_member = members.remove(0);
-    let base =
-        append_leading_array_accesses(concat([base, member_doc(first_member)]), &mut members);
-    if members.is_empty() {
-        return chain_layout_preference(flat_chain, base, role);
-    }
-
-    let broken_chain = group(concat([
-        base,
-        continuation_indent(concat(member_docs_after_line(soft_line(), members)), policy),
-    ]));
+    let broken_chain = visit_regular_dot_chain(base, members, policy, &metadata.base);
     chain_layout_preference(flat_chain, broken_chain, role)
 }
-
 /// Nested chain arguments are embedded in outer chain member docs. Avoid
 /// `best_fitting` there: each fit trial walks the full subtree and deeply
 /// nested call trees (e.g. `B24909927.java`) blow up exponentially.
@@ -227,6 +222,37 @@ fn breaks_before_first_selector(
             >= policy.selector_chain_long_receiver_width()
 }
 
+fn selector_chain_with_single_invocation_field_prefix(
+    base: Doc,
+    mut members: Vec<ChainMember>,
+    call_index: usize,
+    base_width: usize,
+    policy: JavaFormatPolicy,
+) -> Doc {
+    let call_index = head_len_with_array_access_suffix(&members, call_index);
+    let tail = members.split_off(call_index + 1);
+    let call_member = members
+        .pop()
+        .expect("call member checked by coalesced prefix");
+    let field_members = members;
+    let min_length = policy.selector_chain_min_receiver_length_before_break();
+    let receiver = if field_members.is_empty() {
+        base
+    } else {
+        field_dot_fill_selector_segments(base, field_members, base_width, min_length, policy)
+    };
+    let head = concat([receiver, member_doc(call_member)]);
+
+    if tail.is_empty() {
+        return group(head);
+    }
+
+    group(concat([
+        head,
+        continuation_indent(concat(member_docs_after_line(soft_line(), tail)), policy),
+    ]))
+}
+
 fn selector_chain_with_prefix_group(
     base: Doc,
     mut members: Vec<ChainMember>,
@@ -298,6 +324,110 @@ fn dot_fill_selector_segments(
         fill(entries, concat([text("."), last])),
         policy,
     ))
+}
+
+fn field_dot_fill_selector_segments(
+    base: Doc,
+    members: Vec<ChainMember>,
+    mut accumulated_width: usize,
+    min_length: usize,
+    policy: JavaFormatPolicy,
+) -> Doc {
+    if members.is_empty() {
+        return base;
+    }
+
+    if members.len() == 1 {
+        let member = members.into_iter().next().expect("one field member");
+        let break_before_dot = accumulated_width > min_length;
+        return if break_before_dot {
+            group(concat([
+                base,
+                continuation_indent(concat([soft_line(), member_doc(member)]), policy),
+            ]))
+        } else {
+            concat([base, member_doc(member)])
+        };
+    }
+
+    let mut segments = members
+        .into_iter()
+        .map(|member| (member.source_width, member.doc))
+        .collect::<Vec<_>>();
+    let (last_width, last) = segments
+        .pop()
+        .expect("multiple field members checked above");
+    let entries = std::iter::once((accumulated_width, base))
+        .chain(segments)
+        .map(|(width, segment)| {
+            accumulated_width += width + 1;
+            let separator = if accumulated_width > min_length {
+                concat([soft_line(), text(".")])
+            } else {
+                text(".")
+            };
+            fill_entry(segment, separator)
+        });
+    let _ = last_width;
+
+    group(continuation_indent(fill(entries, last), policy))
+}
+
+/// google-java-format `visitRegularDot` fallback when no prefix/cohesive route applies.
+fn visit_regular_dot_chain(
+    base: Doc,
+    mut members: Vec<ChainMember>,
+    policy: JavaFormatPolicy,
+    base_metadata: &BaseMetadata,
+) -> Doc {
+    let _ = base_metadata;
+    if members.is_empty() {
+        return group(base);
+    }
+
+    if let Some(first) = members.first()
+        && fits_fill_first_argument(first, &members[1..])
+    {
+        let first = members.remove(0);
+        let merged_base =
+            append_leading_array_accesses(concat([base, member_doc(first)]), &mut members);
+        if members.is_empty() {
+            return group(merged_base);
+        }
+        return group(concat([
+            merged_base,
+            continuation_indent(concat(member_docs_after_line(soft_line(), members)), policy),
+        ]));
+    }
+
+    let first_member = members.remove(0);
+    let base =
+        append_leading_array_accesses(concat([base, member_doc(first_member)]), &mut members);
+    if members.is_empty() {
+        return group(base);
+    }
+
+    group(concat([
+        base,
+        continuation_indent(concat(member_docs_after_line(soft_line(), members)), policy),
+    ]))
+}
+
+fn fits_fill_first_argument(first: &ChainMember, trailing: &[ChainMember]) -> bool {
+    if trailing.is_empty() {
+        return false;
+    }
+
+    match first.kind {
+        ChainMemberKind::Call { argument_count: 1 } => {
+            !first.has_type_arguments
+                && first
+                    .simple_name
+                    .as_ref()
+                    .is_some_and(|name| name.len() <= 4)
+        }
+        _ => false,
+    }
 }
 
 fn break_before_first_selector_chain(

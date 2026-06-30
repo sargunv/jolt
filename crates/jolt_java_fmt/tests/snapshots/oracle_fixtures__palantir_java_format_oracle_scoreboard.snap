@@ -13,14 +13,14 @@ formatted: 224
 exact matches: 68
 exact-match percentage: 30.35%
 mismatching formatted files: 156
-aggregate diff size: 4645
+aggregate diff size: 4649
 largest per-file diff: B24909927.java (916)
 
 worst mismatches:
   B24909927.java: 916
   RSL.java: 320
   M.java: 238
-  B20701054.java: 203
+  B20701054.java: 200
   A.java: 125
   B20128760.java: 117
   palantir-deeply-nested-calls.java: 114

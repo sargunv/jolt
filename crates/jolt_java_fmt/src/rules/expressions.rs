@@ -13,7 +13,7 @@ use crate::analyzers::chains::{BaseMetadata, Chain, ChainMember, ChainRole};
 use crate::helpers::chains as java_chains;
 use crate::helpers::literals as java_literals;
 use jolt_diagnostics::TextRange;
-use jolt_fmt_ir::{group, indent_by, soft_line};
+use jolt_fmt_ir::{group, indent_by, line, soft_line};
 
 pub(super) fn format_expression(
     expression: &Expression,
@@ -92,13 +92,14 @@ pub(super) fn format_conditional_expression(
         .transpose()?
         .unwrap_or_else(|| text(""));
 
-    Ok(concat([
-        condition,
-        text(" ? "),
-        true_expression,
-        text(" : "),
-        false_expression,
-    ]))
+    Ok(group(indent_by(
+        context.policy().continuation_indent_levels(),
+        concat([
+            condition,
+            concat([line(), text("?"), text(" "), true_expression]),
+            concat([line(), text(":"), text(" "), false_expression]),
+        ]),
+    )))
 }
 
 pub(super) fn format_instanceof_expression(
