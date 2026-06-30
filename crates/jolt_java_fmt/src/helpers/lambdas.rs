@@ -1,5 +1,6 @@
 use jolt_diagnostics::TextRange;
 use jolt_fmt_ir::{Doc, best_fitting, concat, group, hard_line, indent_by, join, text};
+use jolt_java_syntax::{BinaryExpression, Expression};
 
 use crate::comments::{
     format_own_line_comment_doc, reject_unhandled_comments_in_range,
@@ -8,6 +9,7 @@ use crate::comments::{
 };
 use crate::context::JavaFormatContext;
 use crate::diagnostics::FormatResult;
+use crate::helpers::expressions as java_expressions;
 use crate::helpers::lists as java_lists;
 use crate::policy::JavaFormatPolicy;
 
@@ -28,7 +30,47 @@ impl LambdaParameterItem {
     }
 }
 
-pub(crate) fn expression_lambda(parameters: Doc, body: Doc, policy: JavaFormatPolicy) -> Doc {
+pub(crate) enum LambdaBody {
+    Expression(Doc),
+    Block(Doc),
+}
+
+pub(crate) trait LambdaBodyExpressionFormatter {
+    fn format_binary_expression_body(
+        &mut self,
+        binary: &BinaryExpression,
+        layout: java_expressions::BinaryExpressionLayout,
+    ) -> FormatResult<Doc>;
+
+    fn format_expression_body(&mut self, expression: &Expression) -> FormatResult<Doc>;
+}
+
+pub(crate) fn expression_body(
+    expression: &Expression,
+    formatter: &mut impl LambdaBodyExpressionFormatter,
+) -> FormatResult<Doc> {
+    if let Expression::BinaryExpression(binary) = expression {
+        return formatter.format_binary_expression_body(
+            binary,
+            java_expressions::BinaryExpressionLayout::LambdaBody,
+        );
+    }
+
+    formatter.format_expression_body(expression)
+}
+
+pub(crate) fn lambda_expression(
+    parameters: Doc,
+    body: LambdaBody,
+    policy: JavaFormatPolicy,
+) -> Doc {
+    match body {
+        LambdaBody::Expression(body) => expression_lambda(parameters, body, policy),
+        LambdaBody::Block(body) => block_lambda(parameters, body),
+    }
+}
+
+fn expression_lambda(parameters: Doc, body: Doc, policy: JavaFormatPolicy) -> Doc {
     if !policy.lambda_expression_body_breaks_after_arrow() {
         return concat([parameters, text(" -> "), body]);
     }
@@ -45,7 +87,7 @@ pub(crate) fn expression_lambda(parameters: Doc, body: Doc, policy: JavaFormatPo
     best_fitting(flat, [broken])
 }
 
-pub(crate) fn block_lambda(parameters: Doc, body: Doc) -> Doc {
+fn block_lambda(parameters: Doc, body: Doc) -> Doc {
     concat([parameters, text(" -> "), body])
 }
 

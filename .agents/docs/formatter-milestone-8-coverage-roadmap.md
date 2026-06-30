@@ -957,15 +957,15 @@ GJF parity for inline nested chains depends on
 expression layout, parenthesized expression layout, cast-primary base layout,
 binary chain layout, and text-block-aware expression value handling.
 `helpers/array_initializers.rs` owns tabular-vs-fill layout selection and braced
-initializer rendering for expression and annotation arrays.
-`analyzers/binary.rs` owns same-precedence chain flattening and
-precedence/parenthesization metadata. `rules/expressions.rs` still owns
-expression syntax traversal and comment slot collection before delegating
-expression layout into the helper.
+initializer rendering for expression and annotation arrays. `helpers/lambdas.rs`
+owns lambda expression-vs-block assembly and expression body layout selection,
+including binary-chain lambda body handling. `analyzers/binary.rs` owns
+same-precedence chain flattening and precedence/parenthesization metadata.
+`rules/expressions.rs` still owns expression syntax traversal and comment slot
+collection before delegating expression layout into the helper.
 
-Remaining: broader lambda wrapping policy still needs helper ownership. New
-expression helpers should use optional breaks / deferred layout—not nested
-`best_fitting` on eager subtrees—see
+Remaining: broader expression helpers should use optional breaks / deferred
+layout—not nested `best_fitting` on eager subtrees—see
 [global break selection](#global-break-selection-architecture-debt).
 
 ### Blocks and bodies — largely done

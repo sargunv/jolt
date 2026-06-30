@@ -1459,35 +1459,41 @@ pub(super) fn format_lambda_expression(
     };
 
     let body = if let Some(expression) = lambda.expression_body() {
-        let body = format_lambda_expression_body(&expression, context)?;
-        return Ok(java_lambdas::expression_lambda(
-            parameters,
-            body,
-            context.policy(),
-        ));
+        let mut formatter = LambdaExpressionBodyFormatter { context };
+        java_lambdas::LambdaBody::Expression(java_lambdas::expression_body(
+            &expression,
+            &mut formatter,
+        )?)
     } else {
         let block = lambda
             .block_body()
             .expect("parser-clean lambda expression should have a body");
-        format_block(&block, context)?
+        java_lambdas::LambdaBody::Block(format_block(&block, context)?)
     };
 
-    Ok(java_lambdas::block_lambda(parameters, body))
+    Ok(java_lambdas::lambda_expression(
+        parameters,
+        body,
+        context.policy(),
+    ))
 }
 
-fn format_lambda_expression_body(
-    expression: &Expression,
-    context: &mut JavaFormatContext<'_>,
-) -> FormatResult<Doc> {
-    if let Expression::BinaryExpression(binary) = expression {
-        return format_binary_expression_with_layout(
-            binary,
-            context,
-            java_expressions::BinaryExpressionLayout::LambdaBody,
-        );
+struct LambdaExpressionBodyFormatter<'ctx, 'a> {
+    context: &'a mut JavaFormatContext<'ctx>,
+}
+
+impl java_lambdas::LambdaBodyExpressionFormatter for LambdaExpressionBodyFormatter<'_, '_> {
+    fn format_binary_expression_body(
+        &mut self,
+        binary: &jolt_java_syntax::BinaryExpression,
+        layout: java_expressions::BinaryExpressionLayout,
+    ) -> FormatResult<Doc> {
+        format_binary_expression_with_layout(binary, self.context, layout)
     }
 
-    format_expression_with_chain_role(expression, context, ChainRole::LambdaBody)
+    fn format_expression_body(&mut self, expression: &Expression) -> FormatResult<Doc> {
+        format_expression_with_chain_role(expression, self.context, ChainRole::LambdaBody)
+    }
 }
 
 pub(super) fn format_lambda_parameter_list(
