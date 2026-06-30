@@ -56,8 +56,8 @@ Oracle alignment is the active gap. Current scoreboards (from pinned snapshots):
 
 | Profile  | Exact match | Aggregate diff | Worst fixture          |
 | -------- | ----------- | -------------- | ---------------------- |
-| Google   | 60.57%      | 421            | `B20128760.java` (18)  |
-| AOSP     | 58.65%      | 750            | `B24909927.java` (205) |
+| Google   | 60.57%      | 419            | `B20128760.java` (18)  |
+| AOSP     | 58.65%      | 748            | `B24909927.java` (205) |
 | Palantir | 42.41%      | 3,761          | `B24909927.java` (916) |
 
 Selector chains, declaration headers, and expression/list fill dominate the
@@ -141,9 +141,9 @@ google-java-format.
 
 | Profile  | Mismatching | Aggregate diff | vs Google |
 | -------- | ----------- | -------------- | --------- |
-| Google   | 82 / 208    | 421            | —         |
-| AOSP     | 86 / 208    | 750            | +329      |
-| Palantir | 129 / 224   | 3,761          | +3,340    |
+| Google   | 82 / 208    | 419            | —         |
+| AOSP     | 86 / 208    | 748            | +329      |
+| Palantir | 129 / 224   | 3,761          | +3,342    |
 
 Gap categories overlap in practice; impact estimates below are directional, not
 additive to 100%.

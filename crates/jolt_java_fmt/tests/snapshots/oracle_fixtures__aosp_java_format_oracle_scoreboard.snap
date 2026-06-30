@@ -13,18 +13,18 @@ formatted: 208
 exact matches: 122
 exact-match percentage: 58.65%
 mismatching formatted files: 86
-aggregate diff size: 750
+aggregate diff size: 748
 largest per-file diff: B24909927.java (205)
 
 worst mismatches:
   B24909927.java: 205
-  M.java: 45
   B20128760.java: 44
+  M.java: 39
   LiteralReflow.java: 34
   B26207047.java: 18
   B26293162.java: 18
+  E.java: 18
   B21331232.java: 17
-  E.java: 17
   B20701054.java: 16
   B25787055.java: 15
 

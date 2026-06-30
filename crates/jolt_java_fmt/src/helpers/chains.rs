@@ -149,12 +149,11 @@ pub(crate) fn selector_chain(chain: Chain, policy: JavaFormatPolicy, role: Chain
     }
 
     if leading_type_argument_call_len > 0 {
-        let broken_chain = selector_chain_with_cohesive_head(
+        let broken_chain = explicit_type_argument_selector_chain(
             base,
             members,
             leading_type_argument_call_len,
             policy,
-            false,
         );
         return chain_layout_preference(flat_chain, broken_chain, role, policy, Some(&metadata));
     }
@@ -378,6 +377,38 @@ fn simple_receiver_call_run_chain(
         policy.max_line_length(),
         policy,
     )
+}
+
+/// google-java-format's `visitDotWithPrefix` still emits a break opportunity
+/// before explicit type-argument invocation selectors; the selector's `<...>`
+/// and method name own a separate unified break.
+fn explicit_type_argument_selector_chain(
+    base: Doc,
+    members: Vec<ChainMember>,
+    leading_type_argument_call_len: usize,
+    policy: JavaFormatPolicy,
+) -> Doc {
+    let breaks_type_argument_head = members
+        .first()
+        .is_some_and(|member| member.selector_head_width > policy.max_line_length());
+    let cohesive = selector_chain_with_cohesive_head(
+        base.clone(),
+        members.clone(),
+        leading_type_argument_call_len,
+        policy,
+        false,
+    );
+    if !breaks_type_argument_head || !policy.selector_chain_breaks_before_first_selector() {
+        return cohesive;
+    }
+
+    let break_before_selector = break_before_first_selector_chain(
+        base,
+        members,
+        false,
+        policy.continuation_indent_levels(),
+    );
+    best_fitting(cohesive, [break_before_selector])
 }
 
 fn gjf_log_statement_chain(
