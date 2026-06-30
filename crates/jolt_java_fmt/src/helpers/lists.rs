@@ -215,17 +215,81 @@ pub(crate) fn keyword_prefixed_clause_list(
     ownership_range: TextRange,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
+    type_clause_list(
+        keyword,
+        items,
+        ownership_range,
+        context.policy().continuation_indent_levels(),
+        context,
+    )
+}
+
+/// `extends` / `implements` / `permits` / `throws` keyword-prefixed type lists.
+pub(crate) fn type_clause_list(
+    keyword: &'static str,
+    items: impl IntoIterator<Item = ListItem>,
+    ownership_range: TextRange,
+    continuation_indent_levels: u16,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
     let items = format_list_items(items, ownership_range, ListCommentMode::Clause, context)?;
     if keyword == "throws" {
         return Ok(keyword_prefixed_comma_list_with_comments(
             keyword,
-            context.policy().continuation_indent_levels(),
+            continuation_indent_levels,
             items,
         ));
     }
 
-    let docs = items.into_docs();
-    Ok(concat([text(keyword), text(" "), comma_list(docs)]))
+    if items.has_structural_comments() {
+        return Ok(concat([
+            text(keyword),
+            text(" "),
+            comment_clause_comma_list(items),
+        ]));
+    }
+
+    Ok(keyword_type_list_clause(
+        keyword,
+        items.into_docs(),
+        continuation_indent_levels,
+    ))
+}
+
+fn keyword_type_list_clause(
+    keyword: &'static str,
+    type_docs: Vec<Doc>,
+    continuation_indent_levels: u16,
+) -> Doc {
+    assert!(
+        !type_docs.is_empty(),
+        "parser-clean type clause should contain at least one type"
+    );
+
+    if type_docs.len() == 1 {
+        return concat([
+            text(keyword),
+            text(" "),
+            type_docs
+                .into_iter()
+                .next()
+                .expect("one type checked above"),
+        ]);
+    }
+
+    let mut type_docs = type_docs;
+    let first = type_docs.remove(0);
+    let rest = type_docs
+        .into_iter()
+        .flat_map(|doc| [text(","), line(), doc])
+        .collect::<Vec<_>>();
+
+    group(concat([
+        text(keyword),
+        text(" "),
+        first,
+        indent_by(continuation_indent_levels, concat(rest)),
+    ]))
 }
 
 pub(crate) fn braced_comma_list(

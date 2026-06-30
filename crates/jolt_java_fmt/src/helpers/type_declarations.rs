@@ -1,6 +1,4 @@
-use jolt_fmt_ir::{Doc, concat, hard_line, join, text};
-
-use crate::layout as wrap;
+use jolt_fmt_ir::{Doc, concat, group, hard_line, indent_by, join, line, text};
 
 pub(crate) struct TypeDeclaration {
     pub(crate) modifiers: Vec<Doc>,
@@ -16,7 +14,10 @@ pub(crate) struct TypeDeclaration {
     pub(crate) body: Doc,
 }
 
-pub(crate) fn type_declaration(declaration: TypeDeclaration) -> Doc {
+pub(crate) fn type_declaration(
+    declaration: TypeDeclaration,
+    continuation_indent_levels: u16,
+) -> Doc {
     let TypeDeclaration {
         modifiers,
         keyword,
@@ -41,11 +42,12 @@ pub(crate) fn type_declaration(declaration: TypeDeclaration) -> Doc {
         head = concat([head, record_components]);
     }
 
-    let mut header = vec![head];
-    header.extend(extends_clause);
-    header.extend(implements_clause);
-    header.extend(permits_clause);
-    let header = wrap::declaration_header(header);
+    let clauses = extends_clause
+        .into_iter()
+        .chain(implements_clause)
+        .chain(permits_clause)
+        .collect::<Vec<_>>();
+    let header = type_declaration_header(head, clauses, continuation_indent_levels);
     if before_body_comments.is_empty() {
         concat([header, text(" "), body])
     } else {
@@ -57,6 +59,37 @@ pub(crate) fn type_declaration(declaration: TypeDeclaration) -> Doc {
             body,
         ])
     }
+}
+
+/// google-java-format `visitClassDeclaration`: each header clause gets an independent
+/// `breakToFill(" ")` decision so a long `implements` list does not force `extends`
+/// onto its own line when `class A extends S` fits.
+fn type_declaration_header(head: Doc, clauses: Vec<Doc>, continuation_indent_levels: u16) -> Doc {
+    if clauses.is_empty() {
+        return group(head);
+    }
+
+    if clauses.len() == 1 {
+        return group(concat([
+            head,
+            indent_by(
+                continuation_indent_levels,
+                group(concat([
+                    line(),
+                    clauses.into_iter().next().expect("one clause"),
+                ])),
+            ),
+        ]));
+    }
+
+    let mut clauses = clauses.into_iter();
+    let first = clauses.next().expect("at least two clauses");
+    let mut parts: Vec<Doc> = vec![group(concat([head, line(), first]))];
+    parts.extend(
+        clauses
+            .map(|clause| indent_by(continuation_indent_levels, group(concat([line(), clause])))),
+    );
+    group(concat(parts))
 }
 
 fn space_separated_head(parts: impl IntoIterator<Item = Doc>) -> Doc {

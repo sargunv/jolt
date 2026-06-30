@@ -100,19 +100,22 @@ pub(super) fn format_record_declaration(
     };
     let body_members = format_record_body(&body, context)?;
 
-    let doc = type_declarations::type_declaration(type_declarations::TypeDeclaration {
-        modifiers: modifiers.modifier_docs(),
-        keyword: text("record"),
-        before_name_comments,
-        name: format_token(&name),
-        type_parameters,
-        record_components: Some(components),
-        extends_clause: None,
-        implements_clause,
-        permits_clause: None,
-        before_body_comments,
-        body: braced_type_body(body_members),
-    });
+    let doc = type_declarations::type_declaration(
+        type_declarations::TypeDeclaration {
+            modifiers: modifiers.modifier_docs(),
+            keyword: text("record"),
+            before_name_comments,
+            name: format_token(&name),
+            type_parameters,
+            record_components: Some(components),
+            extends_clause: None,
+            implements_clause,
+            permits_clause: None,
+            before_body_comments,
+            body: braced_type_body(body_members),
+        },
+        context.policy().continuation_indent_levels(),
+    );
     with_leading_and_trailing_comments(
         context,
         code_range,
@@ -184,19 +187,22 @@ pub(super) fn format_class_declaration(
     };
     let body_members = format_class_body(&body, context)?;
 
-    let doc = type_declarations::type_declaration(type_declarations::TypeDeclaration {
-        modifiers: modifiers.modifier_docs(),
-        keyword: text("class"),
-        before_name_comments,
-        name: format_token(&name),
-        type_parameters,
-        record_components: None,
-        extends_clause,
-        implements_clause,
-        permits_clause,
-        before_body_comments,
-        body: braced_type_body(body_members),
-    });
+    let doc = type_declarations::type_declaration(
+        type_declarations::TypeDeclaration {
+            modifiers: modifiers.modifier_docs(),
+            keyword: text("class"),
+            before_name_comments,
+            name: format_token(&name),
+            type_parameters,
+            record_components: None,
+            extends_clause,
+            implements_clause,
+            permits_clause,
+            before_body_comments,
+            body: braced_type_body(body_members),
+        },
+        context.policy().continuation_indent_levels(),
+    );
 
     with_leading_and_trailing_comments(
         context,
@@ -296,19 +302,22 @@ pub(super) fn format_interface_declaration(
     };
     let body_members = format_interface_body(&body, context)?;
 
-    let doc = type_declarations::type_declaration(type_declarations::TypeDeclaration {
-        modifiers: modifiers.modifier_docs(),
-        keyword: text("interface"),
-        before_name_comments,
-        name: format_token(&name),
-        type_parameters,
-        record_components: None,
-        extends_clause,
-        implements_clause: None,
-        permits_clause,
-        before_body_comments,
-        body: braced_type_body(body_members),
-    });
+    let doc = type_declarations::type_declaration(
+        type_declarations::TypeDeclaration {
+            modifiers: modifiers.modifier_docs(),
+            keyword: text("interface"),
+            before_name_comments,
+            name: format_token(&name),
+            type_parameters,
+            record_components: None,
+            extends_clause,
+            implements_clause: None,
+            permits_clause,
+            before_body_comments,
+            body: braced_type_body(body_members),
+        },
+        context.policy().continuation_indent_levels(),
+    );
 
     with_leading_and_trailing_comments(
         context,
@@ -350,19 +359,22 @@ pub(super) fn format_annotation_interface_declaration(
     };
     let body_members = format_annotation_interface_body(&body, context)?;
 
-    let doc = type_declarations::type_declaration(type_declarations::TypeDeclaration {
-        modifiers: modifiers.modifier_docs(),
-        keyword: text("@interface"),
-        before_name_comments,
-        name: format_token(&name),
-        type_parameters: None,
-        record_components: None,
-        extends_clause: None,
-        implements_clause: None,
-        permits_clause: None,
-        before_body_comments,
-        body: braced_type_body(body_members),
-    });
+    let doc = type_declarations::type_declaration(
+        type_declarations::TypeDeclaration {
+            modifiers: modifiers.modifier_docs(),
+            keyword: text("@interface"),
+            before_name_comments,
+            name: format_token(&name),
+            type_parameters: None,
+            record_components: None,
+            extends_clause: None,
+            implements_clause: None,
+            permits_clause: None,
+            before_body_comments,
+            body: braced_type_body(body_members),
+        },
+        context.policy().continuation_indent_levels(),
+    );
 
     with_leading_and_trailing_comments(
         context,
@@ -413,19 +425,22 @@ pub(super) fn format_enum_declaration(
     };
     let body = format_enum_body(&body, context)?;
 
-    let doc = type_declarations::type_declaration(type_declarations::TypeDeclaration {
-        modifiers: modifiers.modifier_docs(),
-        keyword: text("enum"),
-        before_name_comments,
-        name: format_token(&name),
-        type_parameters: None,
-        record_components: None,
-        extends_clause: None,
-        implements_clause,
-        permits_clause: None,
-        before_body_comments,
-        body,
-    });
+    let doc = type_declarations::type_declaration(
+        type_declarations::TypeDeclaration {
+            modifiers: modifiers.modifier_docs(),
+            keyword: text("enum"),
+            before_name_comments,
+            name: format_token(&name),
+            type_parameters: None,
+            record_components: None,
+            extends_clause: None,
+            implements_clause,
+            permits_clause: None,
+            before_body_comments,
+            body,
+        },
+        context.policy().continuation_indent_levels(),
+    );
 
     with_leading_and_trailing_comments(
         context,
@@ -1360,12 +1375,12 @@ pub(super) fn format_implements_clause(
 
 pub(super) fn format_type_clause(
     keyword: &'static str,
-    clause_range: jolt_diagnostics::TextRange,
+    _clause_range: jolt_diagnostics::TextRange,
     ownership_range: jolt_diagnostics::TextRange,
     types: impl Iterator<Item = Type>,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    let types = types
+    let items = types
         .map(|ty| {
             let range = ty
                 .code_text_range()
@@ -1377,18 +1392,24 @@ pub(super) fn format_type_clause(
         })
         .collect::<FormatResult<Vec<_>>>()?;
     assert!(
-        !types.is_empty(),
+        !items.is_empty(),
         "parser-clean {keyword} clause should contain at least one type"
     );
 
-    java_lists::keyword_prefixed_clause_list(keyword, types, clause_range, ownership_range, context)
+    java_lists::type_clause_list(
+        keyword,
+        items,
+        ownership_range,
+        context.policy().continuation_indent_levels(),
+        context,
+    )
 }
 
 pub(super) fn format_permits_clause(
     clause: &PermitsClause,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    let list_range = clause.text_range();
+    let _list_range = clause.text_range();
     let ownership_range = clause
         .code_text_range()
         .expect("parser-clean permits clause should have a code range");
@@ -1406,7 +1427,13 @@ pub(super) fn format_permits_clause(
         "parser-clean permits clause should contain at least one name"
     );
 
-    java_lists::keyword_prefixed_clause_list("permits", names, list_range, ownership_range, context)
+    java_lists::type_clause_list(
+        "permits",
+        names,
+        ownership_range,
+        context.policy().continuation_indent_levels(),
+        context,
+    )
 }
 
 pub(super) fn format_formal_parameter_list(

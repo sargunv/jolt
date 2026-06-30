@@ -233,6 +233,12 @@ class indent.
 
 **Fix locus:** `helpers/type_declarations.rs` — relatively small, high-leverage.
 
+**Google baseline (2025-06-30):** aggregate 2049→**2026** via GJF
+`visitClassDeclaration` / `classDeclarationTypeList` in
+`helpers/type_declarations.rs` (soft `breakToFill` between name and clauses) and
+`type_clause_list` in `helpers/lists.rs` (first type on keyword line,
+continuations indented under keyword). `B28066276.java` 63→**7**.
+
 #### 6. Array / initializer layout (~7–9%)
 
 **What differs:** Fill width for large `int[]` literals, compact `{0,1}` rows in
