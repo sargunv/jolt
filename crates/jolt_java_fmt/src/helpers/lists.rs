@@ -1,7 +1,7 @@
 use jolt_diagnostics::TextRange;
 use jolt_fmt_ir::{
-    Doc, concat, fill, fill_entry, group, hard_line, hard_line_without_break_parent, indent,
-    indent_by, join, line, soft_line, text,
+    Doc, best_fitting, concat, fill, fill_entry, group, hard_line, hard_line_without_break_parent,
+    indent, indent_by, join, line, soft_line, text,
 };
 
 use crate::comments::{
@@ -111,6 +111,7 @@ pub(crate) fn argument_list(
         "(",
         ")",
         context.policy().continuation_indent_levels(),
+        context.policy(),
         items,
     ))
 }
@@ -153,7 +154,7 @@ pub(crate) fn lambda_parameter_list(
         },
         context,
     )?;
-    Ok(argument_list_with_policy(
+    Ok(delimited_comma_list_with_comments(
         "(",
         ")",
         context.policy().continuation_indent_levels(),
@@ -452,6 +453,7 @@ fn argument_list_with_policy(
     open: &'static str,
     close: &'static str,
     indent_levels: u16,
+    policy: JavaFormatPolicy,
     items: FormattedList,
 ) -> Doc {
     if items.is_empty() {
@@ -476,7 +478,25 @@ fn argument_list_with_policy(
         return paired_delimited_comma_list(open, close, indent_levels, docs);
     }
 
-    delimited_comma_list_with_comments(open, close, indent_levels, items)
+    if items.has_comments() {
+        return delimited_comma_list_with_comments(open, close, indent_levels, items);
+    }
+
+    let all_short = has_only_short_argument_items(&items.items, policy);
+    let flat = separated::delimited_comma_list_flat(open, close, docs.clone());
+    let broken = if all_short {
+        separated::delimited_comma_list(open, close, indent_levels, docs)
+    } else {
+        separated::delimited_comma_list_one_per_line(open, close, indent_levels, docs)
+    };
+    best_fitting(flat, [broken])
+}
+
+fn has_only_short_argument_items(items: &[FormattedListItem], policy: JavaFormatPolicy) -> bool {
+    let max_length = policy.argument_list_max_item_length_for_filling();
+    items
+        .iter()
+        .all(|item| !item.has_comments && item.source_width < max_length)
 }
 
 fn pairable_argument_items(items: &[FormattedListItem]) -> bool {

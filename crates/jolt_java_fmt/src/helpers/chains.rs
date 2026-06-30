@@ -27,7 +27,7 @@ pub(crate) fn selector_chain(chain: Chain, policy: JavaFormatPolicy, role: Chain
     }
 
     if groups.all_fields(members.len()) {
-        return field_selector_chain(base, members, policy);
+        return field_selector_chain(base, members, policy, role);
     }
 
     let field_prefix_len = groups.field_prefix_len();
@@ -44,7 +44,7 @@ pub(crate) fn selector_chain(chain: Chain, policy: JavaFormatPolicy, role: Chain
                 .iter()
                 .map(|member| member.source_width + 1)
                 .sum::<usize>();
-        let receiver = field_selector_chain(base, members, policy);
+        let receiver = field_selector_chain(base, members, policy, role);
         return selector_chain(
             Chain::with_base_metadata(
                 receiver,
@@ -68,28 +68,28 @@ pub(crate) fn selector_chain(chain: Chain, policy: JavaFormatPolicy, role: Chain
             leading_type_argument_call_len,
             policy,
         );
-        return best_fitting(flat_chain, [broken_chain]);
+        return chain_layout_preference(flat_chain, broken_chain, role);
     }
 
     if keeps_simple_receiver_call_head(&groups, &metadata, policy, role) {
         let broken_chain = selector_chain_with_cohesive_head(base, members, 1, policy);
-        return best_fitting(flat_chain, [broken_chain]);
+        return chain_layout_preference(flat_chain, broken_chain, role);
     }
 
     let coalesced_prefix_len = single_invocation_coalesced_prefix_len(&members);
     if coalesced_prefix_len > 0 {
         let broken_chain =
             selector_chain_with_cohesive_head(base, members, coalesced_prefix_len, policy);
-        return best_fitting(flat_chain, [broken_chain]);
+        return chain_layout_preference(flat_chain, broken_chain, role);
     }
 
     if let Some(stream_end) =
         crate::analyzers::chains::stream_suffix_prefix_member_end_index(&members)
-        && stream_end + 1 < members.len() {
-            let broken_chain =
-                selector_chain_with_cohesive_head(base, members, stream_end + 1, policy);
-            return best_fitting(flat_chain, [broken_chain]);
-        }
+        && stream_end + 1 < members.len()
+    {
+        let broken_chain = selector_chain_with_cohesive_head(base, members, stream_end + 1, policy);
+        return chain_layout_preference(flat_chain, broken_chain, role);
+    }
 
     if metadata.base.forces_break_before_first_selector {
         return break_before_first_selector_chain(base, members, true, policy);
@@ -97,37 +97,48 @@ pub(crate) fn selector_chain(chain: Chain, policy: JavaFormatPolicy, role: Chain
 
     if let Some(prefix_end) = classified_prefix_member_end_index(&metadata.base, &members)
         && prefix_end + 1 < members.len()
-            && members
-                .get(prefix_end)
-                .is_some_and(super::super::analyzers::chains::ChainMember::is_call)
-        {
-            let broken_chain = selector_chain_with_prefix_group(
-                base,
-                members,
-                prefix_end,
-                metadata.base.source_width,
-                policy,
-            );
-            return best_fitting(flat_chain, [broken_chain]);
-        }
+        && members
+            .get(prefix_end)
+            .is_some_and(super::super::analyzers::chains::ChainMember::is_call)
+    {
+        let broken_chain = selector_chain_with_prefix_group(
+            base,
+            members,
+            prefix_end,
+            metadata.base.source_width,
+            policy,
+        );
+        return chain_layout_preference(flat_chain, broken_chain, role);
+    }
 
     if metadata.call_count >= 10 || breaks_before_first_selector(&metadata, policy, role) {
         let broken_chain = break_before_first_selector_chain(base, members, true, policy);
-        return best_fitting(flat_chain, [broken_chain]);
+        return chain_layout_preference(flat_chain, broken_chain, role);
     }
 
     let first_member = members.remove(0);
     let base =
         append_leading_array_accesses(concat([base, member_doc(first_member)]), &mut members);
     if members.is_empty() {
-        return best_fitting(flat_chain, [base]);
+        return chain_layout_preference(flat_chain, base, role);
     }
 
     let broken_chain = group(concat([
         base,
         continuation_indent(concat(member_docs_after_line(soft_line(), members)), policy),
     ]));
-    best_fitting(flat_chain, [broken_chain])
+    chain_layout_preference(flat_chain, broken_chain, role)
+}
+
+/// Nested chain arguments are embedded in outer chain member docs. Avoid
+/// `best_fitting` there: each fit trial walks the full subtree and deeply
+/// nested call trees (e.g. `B24909927.java`) blow up exponentially.
+fn chain_layout_preference(flat: Doc, broken: Doc, role: ChainRole) -> Doc {
+    if matches!(role, ChainRole::NestedArgument) {
+        broken
+    } else {
+        best_fitting(flat, [broken])
+    }
 }
 
 fn keeps_simple_receiver_call_head(
@@ -324,7 +335,12 @@ fn commented_selector_chain(
     ]))
 }
 
-fn field_selector_chain(base: Doc, members: Vec<ChainMember>, policy: JavaFormatPolicy) -> Doc {
+fn field_selector_chain(
+    base: Doc,
+    members: Vec<ChainMember>,
+    policy: JavaFormatPolicy,
+    role: ChainRole,
+) -> Doc {
     let mut segments = members
         .into_iter()
         .map(|member| member.doc)
@@ -336,7 +352,7 @@ fn field_selector_chain(base: Doc, members: Vec<ChainMember>, policy: JavaFormat
             base,
             continuation_indent(concat([soft_line(), text("."), last]), policy),
         ]));
-        return best_fitting(flat, [broken]);
+        return chain_layout_preference(flat, broken, role);
     }
 
     let entries = std::iter::once(base)

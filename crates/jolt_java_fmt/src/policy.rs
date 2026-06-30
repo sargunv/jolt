@@ -97,4 +97,9 @@ impl JavaFormatPolicy {
             JavaFormatProfile::Google | JavaFormatProfile::Aosp
         )
     }
+
+    /// Matches google-java-format's `MAX_ITEM_LENGTH_FOR_FILLING`.
+    pub(crate) const fn argument_list_max_item_length_for_filling(self) -> usize {
+        10
+    }
 }

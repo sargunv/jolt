@@ -4,6 +4,19 @@ pub(crate) fn comma_list(items: impl IntoIterator<Item = Doc>) -> Doc {
     group(join(concat([text(","), line()]), items))
 }
 
+pub(crate) fn delimited_comma_list_flat(
+    open: &'static str,
+    close: &'static str,
+    items: impl IntoIterator<Item = Doc>,
+) -> Doc {
+    let items = items.into_iter().collect::<Vec<_>>();
+    if items.is_empty() {
+        return text(format!("{open}{close}"));
+    }
+
+    group(concat([text(open), join(text(", "), items), text(close)]))
+}
+
 pub(crate) fn delimited_comma_list(
     open: &'static str,
     close: &'static str,

@@ -56,13 +56,14 @@ Oracle alignment is the active gap. Current scoreboards (from pinned snapshots):
 
 | Profile  | Exact match | Aggregate diff | Worst fixture          |
 | -------- | ----------- | -------------- | ---------------------- |
-| Google   | 34.1%       | 2,621          | `B20128760.java` (95)  |
-| AOSP     | 34.1%       | 2,883          | `B24909927.java` (205) |
-| Palantir | 27.7%       | 4,886          | `B24909927.java` (916) |
+| Google   | 36.1%       | 2,441          | `B24543625.java` (91)  |
+| AOSP     | 36.1%       | 2,759          | `B24909927.java` (205) |
+| Palantir | 28.1%       | 4,854          | `B24909927.java` (916) |
 
-Selector chains dominate the largest per-file diffs. `B24909927.java` and
-`B20701054.java` remain in the top mismatches on all three profiles. Palantir
-aggregate diff is roughly twice Google's.
+Selector chains and argument-list fill dominate the largest per-file diffs.
+`B24909927.java` dropped off the Google worst-10 after chain policy work but
+remains the top AOSP/Palantir mismatch. Palantir aggregate diff is roughly twice
+Google's.
 
 ### What is in place
 
@@ -102,8 +103,15 @@ aggregate diff is roughly twice Google's.
   positions, some header-boundary positions, and a few branch/else shapes. These
   currently block formatting rather than placing comments.
 - Selector chain policy infrastructure exists, but oracle alignment for long
-  fluent chains—especially under Palantir—is still the largest shared mismatch
+  fluent chains—especially under Palantir—is still a large shared mismatch
   domain.
+- **Break-selection architecture debt:** helpers eagerly embed fully formatted
+  subtrees with nested `best_fitting` nodes. Deeply nested call trees (e.g.
+  `B24909927.java`) can make the renderer's fit pass exponential in nesting
+  depth. A chain hotfix skips `best_fitting` for `ChainRole::NestedArgument`;
+  the same class of problem affects lists, assignments, array initializers, and
+  Palantir last-dot policy. See
+  [Global break selection](#global-break-selection-architecture-debt).
 - Import section policy lives in `rules/compilation_unit.rs` rather than a
   dedicated helper module.
 
@@ -353,6 +361,7 @@ policy surface even when the underlying syntax is the same.
 | 2        | Palantir 80-col last-dot         | ~900+ Palantir     | `helpers/chains.rs`, `marked_break` in IR  |
 | 3        | Comment interior + blank lines   | ~200+              | `comments.rs`, body blank-line policy      |
 | 4        | Argument list fill               | ~300+ spread       | `helpers/lists.rs`                         |
+| —        | **Global break selection**       | cross-cutting      | `jolt_fmt_ir`, helpers across domains      |
 | 5        | Palantir `=` + lambda args       | ~500+ Palantir     | lambda/assignment policy helpers           |
 | 6        | Text block preservation          | ~310 (`RSL.java`)  | `helpers/literals.rs`                      |
 | 7        | `extends` / `implements` indent  | ~60+               | `helpers/type_declarations.rs`             |
@@ -707,6 +716,114 @@ Profile differences should be centralized when possible:
 - chain and argument wrapping preferences,
 - Palantir-specific line breaking where it is a systematic style difference.
 
+## Global break selection (architecture debt)
+
+### What “broken layout directly” means (and does not)
+
+Jolt helpers still **fully format** nested expressions. “Broken” is a layout
+variant (merge-first selector, broken argument list, vertical declaration
+header)—not skipping formatting or passthrough.
+
+The problem is **when** we choose flat vs broken. Today many helpers build two
+complete subtrees and wrap them in `best_fitting(flat, [broken])`. The renderer
+then asks “does the entire `flat` doc fit?” by walking the full tree. If that
+tree already contains nested `BestFitting` nodes (because an argument was
+eagerly formatted with its own flat/broken trial), fit work becomes
+**exponential in nesting depth**. Formatting `B24909927.java` this way consumed
+unbounded memory on a 128 GiB machine until chain nested-argument layout skipped
+`best_fitting`.
+
+### google-java-format model
+
+GJF separates **emission** from **break selection**:
+
+1. [`OpsBuilder`](https://github.com/google/google-java-format/blob/master/core/src/main/java/com/google/googlejavaformat/OpsBuilder.java)
+   walks the AST and appends tokens plus **optional breaks** (`breakOp()`), fill
+   modes (`INDEPENDENT` / `UNIFIED`), and indent levels.
+2. [`DocBuilder`](https://github.com/google/google-java-format/blob/master/core/src/main/java/com/google/googlejavaformat/DocBuilder.java)
+   lowers ops to a `Doc` tree once.
+3. Break selection runs as a **single global pass** over that tree—nested
+   expressions do not each re-run “does my whole subtree fit on one line?”
+
+Concretely:
+
+- **Chains** —
+  [`visitDot`](https://github.com/google/google-java-format/blob/master/core/src/main/java/com/google/googlejavaformat/java/JavaInputAstVisitor.java#L2998)
+  flattens a chain, classifies prefixes, emits optional breaks before dots;
+  inner chains in arguments are separate `visitDot` visits, not nested subtree
+  fit trials on pre-rendered docs.
+- **Argument lists** —
+  [`addArguments`](https://github.com/google/google-java-format/blob/master/core/src/main/java/com/google/googlejavaformat/java/JavaInputAstVisitor.java#L3386)
+  optional break after `(`, then `argList` with short-item fill mode—not a
+  pre-built flat `(a, b, c)` doc nested inside another list’s fit trial.
+
+### Current Jolt model and hotfix
+
+Jolt **eagerly** formats child slots (including whole selector chains and
+argument lists) into `Doc` values, then composes them in parents. Several
+helpers use `best_fitting` for width-sensitive policy:
+
+| Location                                   | Pattern                                             |
+| ------------------------------------------ | --------------------------------------------------- |
+| `helpers/chains.rs`                        | flat chain vs broken chain (many policy branches)   |
+| `helpers/lists.rs`                         | flat `(args…)` vs fill / one-per-line (method args) |
+| `helpers/chains.rs` `field_selector_chain` | flat `a.b` vs broken                                |
+| `helpers/callables.rs` / `declarations.rs` | inline vs vertical signature/header                 |
+| `helpers/lists.rs` braced blocks           | fill vs one-per-line array initializers             |
+
+**Chain hotfix (2025):** `chain_layout_preference` uses the broken chain doc
+directly for `ChainRole::NestedArgument` instead of `best_fitting`. Correct
+broken layout; does not replicate GJF’s global “maybe still fits on this line”
+behavior for short inner chains.
+
+### Domains that need the same rearchitecture
+
+This is **not** chain-only. Any helper that (1) pre-formats a subtree containing
+its own `BestFitting` or fill trials and (2) embeds that subtree inside another
+width-sensitive wrapper hits the same ceiling:
+
+1. **Selector chains** — nested fluent chains in arguments (`B24909927.java`);
+   outer chain flat vs broken; Palantir last-dot needs **column state at break
+   time**, not per-level subtree fit.
+2. **Argument and formal lists** — `best_fitting(flat, broken)` on method args;
+   arguments that are calls, lambdas, or inner lists nest more fit trials.
+3. **Array initializers** — braced fill in `lists.rs`; elements are full
+   expression docs, often with nested calls.
+4. **Assignment and declarations** — reluctant `=` breaks and header
+   inline/vertical pairs in `callables.rs` / `declarations.rs`; RHS/LHS are
+   eager expression docs.
+5. **Binary / conditional chains** (future `helpers/expressions.rs`) — GJF uses
+   fill with unified/independent modes; porting via nested `best_fitting` will
+   repeat the problem.
+6. **Palantir profile** — 80-column last-dot and partial inlining require
+   [`LastLevelBreakability`](https://github.com/palantir/palantir-java-format/blob/develop/palantir-java-format/src/main/java/com/palantir/javaformat/LastLevelBreakability.java)-style
+   **global** constraints; cannot be correct as nested subtree fit alone.
+
+### Target architecture (Phase 8 — cross-cutting)
+
+Keep Java policy in `jolt_java_fmt`; extend `jolt_fmt_ir` only where multiple
+helpers need the same break-selection primitive. Direction:
+
+1. **Prefer optional breaks over nested `BestFitting`** — one doc tree with
+   `soft_line` / `line()` separators; let the renderer choose breaks once
+   (closer to Prettier/Ruff `group` + `ifBreak` than to stacked subtree trials).
+2. **Defer formatting of nested slots where parent width matters** — chain
+   collectors carry syntax/metadata; member argument docs formatted once at the
+   outermost layout boundary, or formatted with break context passed down
+   (Jolt’s `ChainRole` is a narrow form of this).
+3. **Longer term: op stream or cached fit** — GJF-style emit-then-select, or
+   width memoization on subtrees so nested trials do not re-walk `BestFitting`
+   stacks (Oxc/Ruff separate IR build from print for the same reason).
+
+Until then, document hotfixes that skip `best_fitting` for known nested roles
+(`NestedArgument`, and similar when added) as **performance guards**, not final
+policy. Oracle gaps that depend on “short inner chain stays inline on the
+current line” may remain until global break selection lands.
+
+**Success criteria:** format `B24909927.java` and Palantir nested-call fixtures
+in linear time; nested short chains can still inline when the global pass says
+they fit; no regression to missing-layout or comment debt.
+
 ## Module Layout
 
 Current structure under `crates/jolt_java_fmt/src/`:
@@ -748,8 +865,13 @@ one-per-line lists, fill-style behavior, keyword-prefixed clause lists, and
 comment-aware item formatting for arguments, parameters, type arguments, and
 type parameters.
 
+Recent: method argument lists use `best_fitting(flat, broken)` with GJF
+short-item threshold; lambda parameter lists stay on fill-only path.
+
 Remaining: extend comment placement into any list domains still blocking on
-unowned trivia; keep profile-specific indentation centralized in policy.
+unowned trivia; keep profile-specific indentation centralized in policy. List
+fill vs flat policy shares the nested-`BestFitting` ceiling with chains—see
+[global break selection](#global-break-selection-architecture-debt).
 
 ### Callable and type declarations — partial
 
@@ -773,13 +895,21 @@ long fluent chains, mixed field/call chains, nested-argument receivers, and
 Palantir 80-col last-dot policy — using syntax shape, not fixture-name
 heuristics.
 
+**Architecture note:** nested chains in arguments currently bypass
+`best_fitting` (`ChainRole::NestedArgument`) to avoid exponential fit cost. Full
+GJF parity for inline nested chains depends on
+[global break selection](#global-break-selection-architecture-debt).
+
 ### Expressions — not extracted
 
 Binary, assignment, conditional, cast, parenthesized, array initializer, and
 lambda wrapping still live in `rules/expressions.rs` and `layout.rs`.
 
 Target: a `helpers/expressions.rs` (and possibly `analyzers/binary.rs`) that
-owns precedence, associativity, and comment-forced breaks.
+owns precedence, associativity, and comment-forced breaks. New expression
+helpers should use optional breaks / deferred layout—not nested `best_fitting`
+on eager subtrees—see
+[global break selection](#global-break-selection-architecture-debt).
 
 ### Blocks and bodies — largely done
 
@@ -841,6 +971,15 @@ elsewhere.
 
 Measure Google, AOSP, and Palantir scoreboards after each broad chain rule
 change. Review by domain, not aggregate number alone.
+
+### Phase 8: Global break selection — not started
+
+Cross-cutting rearchitecture so width-sensitive policy uses optional breaks and
+a single renderer pass (GJF `OpsBuilder` / `DocBuilder` shape) instead of nested
+`best_fitting` on eagerly formatted subtrees. Unblocks correct inline behavior
+for nested chains, list fill inside calls, assignment breaks, array fill, and
+Palantir last-dot policy. See
+[Global break selection](#global-break-selection-architecture-debt).
 
 ### Phase 6: Owned comments in helpers — in progress
 
