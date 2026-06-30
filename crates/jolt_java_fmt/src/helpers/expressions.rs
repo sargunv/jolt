@@ -36,6 +36,10 @@ pub(crate) fn assignment_expression(
     assignment_expression_with_indent(left, operator, right, policy.continuation_indent_levels())
 }
 
+pub(crate) fn variable_declarator_block_initializer(name: Doc, initializer: Doc) -> Doc {
+    concat([name, text(" = "), initializer])
+}
+
 pub(crate) fn simple_assignment_expression(
     left: Doc,
     operator: Doc,

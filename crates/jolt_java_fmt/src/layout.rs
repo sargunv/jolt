@@ -18,22 +18,6 @@ pub(crate) fn comma_list(items: impl IntoIterator<Item = Doc>) -> Doc {
     java_lists::comma_list(items)
 }
 
-pub(crate) fn variable_declarator(name: Doc, initializer: Option<Doc>) -> Doc {
-    let Some(initializer) = initializer else {
-        return name;
-    };
-
-    group(concat([
-        name,
-        text(" ="),
-        continuation_indent(concat([line(), initializer])),
-    ]))
-}
-
-pub(crate) fn variable_declarator_block_initializer(name: Doc, initializer: Doc) -> Doc {
-    concat([name, text(" = "), initializer])
-}
-
 pub(crate) fn braced_block(items: impl IntoIterator<Item = Doc>) -> Doc {
     braced_block_with_separator(items, hard_line())
 }

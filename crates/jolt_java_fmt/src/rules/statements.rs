@@ -1315,7 +1315,7 @@ pub(super) fn format_variable_declarator(
         format_token(&name)
     };
     let Some(initializer) = declarator.initializer() else {
-        return Ok(wrap::variable_declarator(name, None));
+        return Ok(name);
     };
     let value = initializer
         .value()
@@ -1381,7 +1381,7 @@ pub(super) fn format_variable_declarator(
         ]);
     }
     if matches!(value, VariableInitializerValue::ArrayInitializer(_)) {
-        return Ok(wrap::variable_declarator_block_initializer(
+        return Ok(java_expressions::variable_declarator_block_initializer(
             name,
             initializer,
         ));
