@@ -10,6 +10,7 @@ use super::{
     take_leading_comment_docs_in_range, take_same_line_trailing_block_comment_docs_in_range,
     take_trailing_line_comment_docs_in_range_as_own_line, text, wrap,
 };
+use crate::analyzers::binary::{self as binary_analysis, BinaryChain, BinarySide};
 use crate::analyzers::chains::{BaseMetadata, Chain, ChainMember, ChainRole};
 use crate::analyzers::expressions::ExpressionLayout;
 use crate::context::JavaCommentBucket;
@@ -1677,23 +1678,10 @@ fn format_binary_expression_with_layout(
     context: &mut JavaFormatContext<'_>,
     layout: BinaryLayout,
 ) -> FormatResult<Doc> {
-    let operator = binary
-        .operator()
-        .expect("parser-clean binary expression should have an operator");
-    let precedence = binary_precedence(operator.kind())
-        .expect("parser-clean binary expression should have a binary operator");
-    let left = binary
-        .left()
-        .expect("parser-clean binary expression should have a left side");
-    let right = binary
-        .right()
-        .expect("parser-clean binary expression should have a right side");
-
-    let mut operands = Vec::new();
-    let mut operators = Vec::new();
-    collect_binary_left_chain(&left, precedence, &mut operands, &mut operators)?;
-    operands.push(right);
-    operators.push(operator);
+    let chain = BinaryChain::for_expression(binary);
+    let precedence = chain.precedence();
+    let operands = chain.operands();
+    let operators = chain.operators();
 
     let first_operand = operands
         .first()
@@ -1742,43 +1730,6 @@ fn format_binary_expression_with_layout(
             java_expressions::lambda_body_binary_chain(first, rest, context.policy())
         }
     })
-}
-
-#[derive(Clone, Copy)]
-enum BinarySide {
-    Left,
-    Right,
-}
-
-pub(super) fn collect_binary_left_chain(
-    expression: &Expression,
-    parent_precedence: u8,
-    operands: &mut Vec<Expression>,
-    operators: &mut Vec<JavaSyntaxToken>,
-) -> FormatResult<()> {
-    if let Expression::BinaryExpression(binary) = expression {
-        let operator = binary
-            .operator()
-            .expect("parser-clean binary expression should have an operator");
-        let child_precedence = binary_precedence(operator.kind())
-            .expect("parser-clean binary expression should have a binary operator");
-        if child_precedence == parent_precedence {
-            let left = binary
-                .left()
-                .expect("parser-clean binary expression should have a left side");
-            let right = binary
-                .right()
-                .expect("parser-clean binary expression should have a right side");
-
-            collect_binary_left_chain(&left, parent_precedence, operands, operators)?;
-            operands.push(right);
-            operators.push(operator);
-            return Ok(());
-        }
-    }
-
-    operands.push(expression.clone());
-    Ok(())
 }
 
 fn format_binary_operator(
@@ -1902,40 +1853,10 @@ fn format_binary_operand(
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
     let doc = format_expression(operand, context)?;
-    let Expression::BinaryExpression(binary) = operand else {
-        return Ok(doc);
-    };
-    let operator = binary
-        .operator()
-        .expect("parser-clean binary expression should have an operator");
-    let child_precedence = binary_precedence(operator.kind())
-        .expect("parser-clean binary expression should have a binary operator");
-    let needs_parentheses = child_precedence < parent_precedence
-        || (child_precedence == parent_precedence && matches!(side, BinarySide::Right));
-    if needs_parentheses {
+    if binary_analysis::operand_needs_parentheses(operand, parent_precedence, side) {
         Ok(concat([text("("), doc, text(")")]))
     } else {
         Ok(doc)
-    }
-}
-
-pub(super) fn binary_precedence(kind: JavaSyntaxKind) -> Option<u8> {
-    match kind {
-        JavaSyntaxKind::OrOr => Some(3),
-        JavaSyntaxKind::AndAnd => Some(4),
-        JavaSyntaxKind::Bar => Some(5),
-        JavaSyntaxKind::Caret => Some(6),
-        JavaSyntaxKind::Amp => Some(7),
-        JavaSyntaxKind::EqEq | JavaSyntaxKind::BangEq => Some(8),
-        JavaSyntaxKind::Lt | JavaSyntaxKind::Gt | JavaSyntaxKind::LtEq | JavaSyntaxKind::GtEq => {
-            Some(9)
-        }
-        JavaSyntaxKind::LShift | JavaSyntaxKind::RShift | JavaSyntaxKind::UnsignedRShift => {
-            Some(10)
-        }
-        JavaSyntaxKind::Plus | JavaSyntaxKind::Minus => Some(11),
-        JavaSyntaxKind::Star | JavaSyntaxKind::Slash | JavaSyntaxKind::Percent => Some(12),
-        _ => None,
     }
 }
 
