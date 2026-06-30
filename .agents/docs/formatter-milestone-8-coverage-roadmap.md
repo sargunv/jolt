@@ -979,11 +979,18 @@ preservation, if/else body options, loop/do body options, and try/catch/finally
 trailing-clause options. `rules/statements.rs` keeps syntax traversal, comment
 rejection, and statement-formatting closures.
 
+`helpers/switches.rs` owns switch construct assembly, braced switch-block item
+separators, statement-group indentation, rule arrow/body wrapping, case-label
+item lists, guards, and record-pattern component layout. `rules/statements.rs`
+keeps selector/block/label/body extraction plus comment range ownership before
+delegating switch layout to the helper.
+
 `layout.rs` uses flat parenthesized conditions and fill-style (`line()`) breaks
 for inline if/while/for/do bodies when within width.
 
 Remaining: refine trailing-blank policy on final if/else clauses and try/catch
-tails (`B20535125.java` tail), plus switch-block spacing polish.
+tails (`B20535125.java` tail), plus switch guard/record-pattern oracle
+alignment.
 
 ### Imports and compilation units — partial
 

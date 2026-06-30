@@ -1427,12 +1427,10 @@ pub(super) fn format_switch_statement(
         .block()
         .expect("parser-clean switch statement should have a block");
 
-    Ok(concat([
-        text("switch "),
-        wrap::parenthesized_expression(format_expression(&selector, context)?),
-        text(" "),
+    Ok(java_switches::switch_construct(
+        format_expression(&selector, context)?,
         format_switch_block(&block, context)?,
-    ]))
+    ))
 }
 
 pub(super) fn format_switch_expression(
@@ -1446,12 +1444,10 @@ pub(super) fn format_switch_expression(
         .block()
         .expect("parser-clean switch expression should have a block");
 
-    Ok(concat([
-        text("switch "),
-        wrap::parenthesized_expression(format_expression(&selector, context)?),
-        text(" "),
+    Ok(java_switches::switch_construct(
+        format_expression(&selector, context)?,
         format_switch_block(&block, context)?,
-    ]))
+    ))
 }
 
 pub(super) fn format_switch_block(
@@ -1459,65 +1455,52 @@ pub(super) fn format_switch_block(
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
     let items = block.items().collect::<Vec<_>>();
-    if items.is_empty() {
-        return Ok(wrap::braced_block(Vec::<Doc>::new()));
-    }
-
     let ranges = items
         .iter()
         .map(switch_block_item_range)
         .collect::<Vec<_>>();
-    let mut separators = Vec::new();
-    for window in ranges.windows(2) {
-        let [Some(left), Some(right)] = window else {
-            separators.push(hard_line());
-            continue;
-        };
-        let boundary = TextRange::new(left.end(), right.start());
-        let comments = take_leading_comment_docs_in_range(context, boundary, *right)?;
-        if comments.is_empty() {
-            separators.push(hard_line());
-        } else {
-            separators.push(concat([
-                hard_line(),
-                join(hard_line(), comments),
-                hard_line(),
-            ]));
-        }
-    }
+    let separators = ranges
+        .windows(2)
+        .map(|window| {
+            let [Some(left), Some(right)] = window else {
+                return Ok(hard_line());
+            };
+            let boundary = TextRange::new(left.end(), right.start());
+            let comments = take_leading_comment_docs_in_range(context, boundary, *right)?;
+            Ok(java_switches::switch_block_item_separator(comments))
+        })
+        .collect::<FormatResult<Vec<_>>>()?;
 
-    let mut docs = items
+    let docs = items
         .iter()
         .map(|item| format_switch_block_item(item, context))
         .collect::<FormatResult<Vec<_>>>()?;
-    if let (Some(first), Some(first_range), Some(block_range)) = (
-        docs.first_mut(),
-        ranges.first().copied().flatten(),
-        block.code_text_range(),
-    ) {
-        let leading = take_leading_comment_docs_in_range(
+
+    let leading = if let (Some(first_range), Some(block_range)) =
+        (ranges.first().copied().flatten(), block.code_text_range())
+    {
+        take_leading_comment_docs_in_range(
             context,
             TextRange::new(block_range.start(), first_range.start()),
             first_range,
-        )?;
-        if !leading.is_empty() {
-            *first = concat([join(hard_line(), leading), hard_line(), first.clone()]);
-        }
-    }
-    if let (Some(last_range), Some(block_range)) =
+        )?
+    } else {
+        Vec::new()
+    };
+    let trailing = if let (Some(last_range), Some(block_range)) =
         (ranges.last().copied().flatten(), block.code_text_range())
     {
-        let tail = take_own_line_comment_docs_in_range(
+        take_own_line_comment_docs_in_range(
             context,
             TextRange::new(last_range.end(), block_range.end()),
-        )?;
-        if !tail.is_empty() {
-            separators.push(hard_line());
-            docs.push(join(hard_line(), tail));
-        }
-    }
+        )?
+    } else {
+        Vec::new()
+    };
 
-    Ok(wrap::braced_block_with_separators(docs, separators))
+    Ok(java_switches::switch_block(
+        docs, separators, leading, trailing,
+    ))
 }
 
 fn switch_block_item_range(item: &SwitchBlockItem) -> Option<TextRange> {
@@ -1577,23 +1560,7 @@ pub(super) fn format_switch_statement_group(
         .map(|statement| format_block_statement(statement, context))
         .collect::<FormatResult<Vec<_>>>()?;
 
-    let doc = if statements.is_empty() {
-        join(hard_line(), labels)
-    } else {
-        let statements = if body_comments.is_empty() {
-            join(hard_line(), statements)
-        } else {
-            concat([
-                join(hard_line(), body_comments),
-                hard_line(),
-                join(hard_line(), statements),
-            ])
-        };
-        concat([
-            join(hard_line(), labels),
-            jolt_fmt_ir::indent(concat([hard_line(), statements])),
-        ])
-    };
+    let doc = java_switches::switch_statement_group(labels, body_comments, statements);
     with_leading_and_trailing_comments(context, code_range, leading_comments, doc)
 }
 
@@ -1634,24 +1601,16 @@ pub(super) fn format_switch_rule(
         }
         SwitchRuleBody::Throw(statement) => format_throw_statement(&statement, context)?,
     };
-    let has_body_comments = !body_comments.is_empty();
-    let body = if body_comments.is_empty() {
-        body
-    } else {
-        concat([join(hard_line(), body_comments), hard_line(), body])
-    };
     let label = format_switch_label(&label, context)?;
-    let doc = if body_is_block && !has_body_comments && !arrow_has_trailing_comment {
-        java_switches::switch_rule_with_block(label, arrow, body)
-    } else {
-        java_switches::switch_rule_with_expression(
-            label,
-            arrow,
-            body,
-            context.policy(),
-            arrow_has_trailing_comment,
-        )
-    };
+    let doc = java_switches::switch_rule(
+        label,
+        arrow,
+        body,
+        body_comments,
+        body_is_block,
+        arrow_has_trailing_comment,
+        context.policy(),
+    );
     with_leading_and_trailing_comments(context, code_range, leading_comments, doc)
 }
 

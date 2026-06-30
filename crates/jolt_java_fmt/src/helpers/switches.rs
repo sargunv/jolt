@@ -1,6 +1,77 @@
-use jolt_fmt_ir::{Doc, concat, group, hard_line, indent_by, line, soft_line, text};
+use jolt_fmt_ir::{Doc, concat, group, hard_line, indent, indent_by, join, line, soft_line, text};
 
+use crate::layout as wrap;
 use crate::policy::JavaFormatPolicy;
+
+pub(crate) fn switch_construct(selector: Doc, block: Doc) -> Doc {
+    concat([
+        text("switch "),
+        wrap::parenthesized_expression(selector),
+        text(" "),
+        block,
+    ])
+}
+
+pub(crate) fn switch_block(
+    mut items: Vec<Doc>,
+    mut separators: Vec<Doc>,
+    before_first: Vec<Doc>,
+    after_last: Vec<Doc>,
+) -> Doc {
+    if items.is_empty() {
+        return wrap::braced_block(Vec::<Doc>::new());
+    }
+
+    if let Some(first) = items.first_mut()
+        && !before_first.is_empty()
+    {
+        *first = concat([join(hard_line(), before_first), hard_line(), first.clone()]);
+    }
+
+    if !after_last.is_empty() {
+        separators.push(hard_line());
+        items.push(join(hard_line(), after_last));
+    }
+
+    wrap::braced_block_with_separators(items, separators)
+}
+
+pub(crate) fn switch_block_item_separator(boundary_comments: Vec<Doc>) -> Doc {
+    if boundary_comments.is_empty() {
+        hard_line()
+    } else {
+        concat([
+            hard_line(),
+            join(hard_line(), boundary_comments),
+            hard_line(),
+        ])
+    }
+}
+
+pub(crate) fn switch_statement_group(
+    labels: Vec<Doc>,
+    body_comments: Vec<Doc>,
+    statements: Vec<Doc>,
+) -> Doc {
+    if statements.is_empty() {
+        return join(hard_line(), labels);
+    }
+
+    let statements = if body_comments.is_empty() {
+        join(hard_line(), statements)
+    } else {
+        concat([
+            join(hard_line(), body_comments),
+            hard_line(),
+            join(hard_line(), statements),
+        ])
+    };
+
+    concat([
+        join(hard_line(), labels),
+        indent(concat([hard_line(), statements])),
+    ])
+}
 
 pub(crate) fn case_label(items: impl IntoIterator<Item = Doc>, policy: JavaFormatPolicy) -> Doc {
     concat([text("case "), case_label_item_list(items, policy)])
@@ -16,18 +87,27 @@ pub(crate) fn guarded_pattern(base: Doc, guard: Doc, policy: JavaFormatPolicy) -
     ]))
 }
 
-pub(crate) fn switch_rule_with_block(label: Doc, arrow: Doc, body: Doc) -> Doc {
-    concat([label, arrow, text(" "), body])
-}
-
-pub(crate) fn switch_rule_with_expression(
+pub(crate) fn switch_rule(
     label: Doc,
     arrow: Doc,
     body: Doc,
+    body_comments: Vec<Doc>,
+    body_is_block: bool,
+    arrow_has_trailing_comment: bool,
     policy: JavaFormatPolicy,
-    force_break_after_arrow: bool,
 ) -> Doc {
-    let separator = if force_break_after_arrow {
+    let has_body_comments = !body_comments.is_empty();
+    let body = if body_comments.is_empty() {
+        body
+    } else {
+        concat([join(hard_line(), body_comments), hard_line(), body])
+    };
+
+    if body_is_block && !has_body_comments && !arrow_has_trailing_comment {
+        return concat([label, arrow, text(" "), body]);
+    }
+
+    let separator = if arrow_has_trailing_comment {
         hard_line()
     } else {
         line()
