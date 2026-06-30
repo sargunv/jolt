@@ -1354,39 +1354,8 @@ pub(super) fn format_array_initializer(
     });
     let list = java_lists::format_braced_list_items(list_items, list_range, context)?;
     let policy = context.policy();
-
-    let entries = crate::analyzers::array_initializers::tabular_entries(&values);
-    let layout = if let Some(tabular) =
-        crate::analyzers::array_initializers::tabular_layout_for_entries(&entries, context)
-    {
-        let rows_nested = tabular
-            .rows
-            .iter()
-            .map(|row| {
-                crate::analyzers::array_initializers::row_opens_without_extra_indent(
-                    &entries,
-                    row,
-                    tabular.cols,
-                )
-            })
-            .collect();
-        crate::helpers::array_initializers::InitializerLayout::Tabular {
-            cols: tabular.cols,
-            rows: tabular.rows,
-            rows_nested,
-        }
-    } else {
-        let short_items =
-            crate::analyzers::array_initializers::has_only_short_items(&values, policy);
-        let tight_fit = entries.len() >= policy.array_initializer_tight_fit_min_items()
-            && entries
-                .iter()
-                .all(|entry| entry.kind.is_scalar_initializer() && entry.row_weight == 1);
-        crate::helpers::array_initializers::InitializerLayout::Fill {
-            short_items,
-            tight_fit,
-        }
-    };
+    let layout =
+        crate::helpers::array_initializers::expression_initializer_layout(&values, context, policy);
 
     Ok(
         crate::helpers::array_initializers::braced_initializer_block(

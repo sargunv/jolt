@@ -3,7 +3,13 @@ use jolt_fmt_ir::{
     Doc, best_fitting, concat, fill, fill_entry, group, hard_line_without_break_parent, indent,
     indent_by, line, soft_line, text, text_with_width,
 };
+use jolt_java_syntax::VariableInitializerValue;
 
+use crate::analyzers::array_initializers::{
+    TabularEntry, has_only_short_entries, row_opens_without_extra_indent, tabular_entries,
+    tabular_layout_for_entries,
+};
+use crate::context::JavaFormatContext;
 use crate::helpers::lists::{
     FormattedList, comment_braced_comma_list, tabular_braced_comma_list_with_before_close_comments,
 };
@@ -77,6 +83,59 @@ pub(crate) enum InitializerLayout {
         short_items: bool,
         tight_fit: bool,
     },
+}
+
+pub(crate) fn expression_initializer_layout(
+    values: &[VariableInitializerValue],
+    context: &JavaFormatContext<'_>,
+    policy: JavaFormatPolicy,
+) -> InitializerLayout {
+    let entries = tabular_entries(values);
+    initializer_layout_for_entries(&entries, context, policy, FillTightFit::ScalarRows)
+}
+
+pub(crate) fn annotation_initializer_layout(
+    entries: &[TabularEntry],
+    context: &JavaFormatContext<'_>,
+    policy: JavaFormatPolicy,
+) -> InitializerLayout {
+    initializer_layout_for_entries(entries, context, policy, FillTightFit::NonNestedRows)
+}
+
+enum FillTightFit {
+    ScalarRows,
+    NonNestedRows,
+}
+
+fn initializer_layout_for_entries(
+    entries: &[TabularEntry],
+    context: &JavaFormatContext<'_>,
+    policy: JavaFormatPolicy,
+    tight_fit: FillTightFit,
+) -> InitializerLayout {
+    if let Some(tabular) = tabular_layout_for_entries(entries, context) {
+        let rows_nested = tabular
+            .rows
+            .iter()
+            .map(|row| row_opens_without_extra_indent(entries, row, tabular.cols))
+            .collect();
+        return InitializerLayout::Tabular {
+            cols: tabular.cols,
+            rows: tabular.rows,
+            rows_nested,
+        };
+    }
+
+    InitializerLayout::Fill {
+        short_items: has_only_short_entries(entries, policy),
+        tight_fit: entries.len() >= policy.array_initializer_tight_fit_min_items()
+            && match tight_fit {
+                FillTightFit::ScalarRows => entries
+                    .iter()
+                    .all(|entry| entry.kind.is_scalar_initializer() && entry.row_weight == 1),
+                FillTightFit::NonNestedRows => entries.iter().all(|entry| !entry.is_nested_array),
+            },
+    }
 }
 
 fn tabular_braced_block(

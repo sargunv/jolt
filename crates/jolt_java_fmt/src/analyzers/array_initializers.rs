@@ -88,16 +88,6 @@ pub(crate) fn tabular_layout_for_entries(
     Some(TabularLayout { cols: size0, rows })
 }
 
-pub(crate) fn has_only_short_items(
-    values: &[VariableInitializerValue],
-    policy: crate::policy::JavaFormatPolicy,
-) -> bool {
-    let max_length = policy.argument_list_max_item_length_for_filling();
-    values
-        .iter()
-        .all(|value| value_source_width(value) < max_length)
-}
-
 pub(crate) fn has_only_short_entries(
     entries: &[TabularEntry],
     policy: crate::policy::JavaFormatPolicy,
@@ -145,12 +135,6 @@ fn initializer_tabular_entry(value: &VariableInitializerValue) -> TabularEntry {
 
 fn start_column(range: TextRange, context: &JavaFormatContext<'_>) -> Option<usize> {
     Some(context.source_column_at(range.start().get()))
-}
-
-fn value_source_width(value: &VariableInitializerValue) -> usize {
-    value.code_text_range().map_or(usize::MAX, |range| {
-        range.end().get().saturating_sub(range.start().get())
-    })
 }
 
 fn entry_width(entry: &TabularEntry) -> usize {

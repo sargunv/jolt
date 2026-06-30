@@ -375,11 +375,6 @@ fn format_annotation_array_initializer(
     initializer: &AnnotationArrayInitializer,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    use crate::analyzers::array_initializers::{
-        has_only_short_entries, row_opens_without_extra_indent, tabular_layout_for_entries,
-    };
-    use crate::helpers::array_initializers::{InitializerLayout, braced_initializer_block};
-
     let list_range = initializer
         .code_text_range()
         .expect("parser-clean annotation array initializer should have a source range");
@@ -404,33 +399,16 @@ fn format_annotation_array_initializer(
         .map(crate::analyzers::array_initializers::annotation_array_tabular_entry)
         .collect::<Vec<_>>();
 
-    let layout = if let Some(tabular) = tabular_layout_for_entries(&entries, context) {
-        let rows_nested = tabular
-            .rows
-            .iter()
-            .map(|row| row_opens_without_extra_indent(&entries, row, tabular.cols))
-            .collect();
-        InitializerLayout::Tabular {
-            cols: tabular.cols,
-            rows: tabular.rows,
-            rows_nested,
-        }
-    } else {
-        let short_items = has_only_short_entries(&entries, policy);
-        let tight_fit = entries.len() >= policy.array_initializer_tight_fit_min_items()
-            && raw_values
-                .iter()
-                .all(|value| value.array_initializer().is_none());
-        InitializerLayout::Fill {
-            short_items,
-            tight_fit,
-        }
-    };
+    let layout = crate::helpers::array_initializers::annotation_initializer_layout(
+        &entries, context, policy,
+    );
 
-    Ok(braced_initializer_block(
-        list,
-        layout,
-        initializer.has_trailing_comma(),
-        policy,
-    ))
+    Ok(
+        crate::helpers::array_initializers::braced_initializer_block(
+            list,
+            layout,
+            initializer.has_trailing_comma(),
+            policy,
+        ),
+    )
 }
