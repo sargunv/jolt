@@ -82,6 +82,18 @@ pub(crate) fn take_inline_leading_block_comment_docs_in_range(
         .collect()
 }
 
+pub(crate) fn take_adjacent_leading_javadoc_comment_docs_in_range(
+    context: &mut JavaFormatContext<'_>,
+    owner_range: TextRange,
+    code_range: TextRange,
+) -> Vec<Doc> {
+    context
+        .take_adjacent_leading_javadoc_comments_in_range(owner_range, code_range)
+        .into_iter()
+        .map(|comment| format_own_line_comment(context, &comment))
+        .collect()
+}
+
 pub(crate) fn take_inline_trailing_block_comment_docs(
     context: &mut JavaFormatContext<'_>,
     code_range: TextRange,
@@ -113,6 +125,53 @@ pub(crate) fn take_adjacent_trailing_block_comment_docs(
         .take_adjacent_trailing_block_comments(code_range)
         .into_iter()
         .map(|comment| format_inline_comment(context, &comment))
+        .collect()
+}
+
+pub(crate) fn take_block_comment_docs_in_range_as_inline(
+    context: &mut JavaFormatContext<'_>,
+    owner_range: TextRange,
+) -> Vec<Doc> {
+    context
+        .take_block_comments_in_range(owner_range)
+        .into_iter()
+        .map(|comment| format_inline_comment(context, &comment))
+        .collect()
+}
+
+pub(crate) fn take_same_line_trailing_block_comment_docs_in_range(
+    context: &mut JavaFormatContext<'_>,
+    code_range: TextRange,
+    owner_range: TextRange,
+) -> Vec<Doc> {
+    context
+        .take_same_line_trailing_block_comments_in_range(code_range, owner_range)
+        .into_iter()
+        .map(|comment| format_inline_comment(context, &comment))
+        .collect()
+}
+
+pub(crate) fn take_same_line_separator_trailing_block_comment_docs_in_range(
+    context: &mut JavaFormatContext<'_>,
+    code_range: TextRange,
+    owner_range: TextRange,
+) -> Vec<Doc> {
+    context
+        .take_same_line_separator_trailing_block_comments_in_range(code_range, owner_range)
+        .into_iter()
+        .map(|comment| format_inline_comment(context, &comment))
+        .collect()
+}
+
+pub(crate) fn take_separator_leading_javadoc_comment_docs_in_range(
+    context: &mut JavaFormatContext<'_>,
+    owner_range: TextRange,
+    code_range: TextRange,
+) -> Vec<Doc> {
+    context
+        .take_separator_leading_javadoc_comments_in_range(owner_range, code_range)
+        .into_iter()
+        .map(|comment| format_own_line_comment(context, &comment))
         .collect()
 }
 
@@ -245,6 +304,13 @@ fn comment_lines(raw: &str) -> Vec<String> {
 }
 
 fn collapsed_single_line_javadoc(lines: &[&str]) -> Option<String> {
+    if let [open, close] = lines
+        && open.trim() == "/**"
+        && close.trim() == "*/"
+    {
+        return Some("/** */".to_owned());
+    }
+
     let [open, body, close] = lines else {
         return None;
     };

@@ -11,9 +11,14 @@ use super::{
     format_array_dimensions, format_expression, format_modifier_list, format_name, format_pattern,
     format_token, format_type, format_type_argument_list, format_type_declaration,
     format_variable_initializer_value, hard_line, join, reject_unhandled_comments_before_start,
-    take_dangling_comment_docs, take_leading_comment_docs, text,
-    with_leading_and_trailing_comments, with_vertical_annotations, wrap,
+    take_block_comment_docs_in_range_as_inline, take_dangling_comment_docs,
+    take_inline_leading_block_comment_docs_in_range, take_leading_comment_docs,
+    take_leading_comment_docs_in_range, take_own_line_comment_docs_in_range,
+    take_trailing_line_comment_docs_in_range_as_own_line, text, with_leading_and_trailing_comments,
+    with_vertical_annotations, wrap,
 };
+use crate::helpers::lists as java_lists;
+use jolt_diagnostics::TextRange;
 
 pub(super) fn format_block(
     block: &Block,
@@ -91,33 +96,13 @@ pub(super) fn format_block_statements(
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
     let statements = statements.collect::<Vec<_>>();
-    if statements.is_empty() {
-        return Ok(wrap::braced_block(take_dangling_comment_docs(
-            context,
-            container_range,
-        )?));
-    }
-
-    let separators = statements
-        .windows(2)
-        .map(|window| {
-            let left = window[0].code_text_range();
-            let right = window[1].code_text_range();
-            if let (Some(left), Some(right)) = (left, right)
-                && context.has_blank_line_between(left, right)
-            {
-                return jolt_fmt_ir::empty_line();
-            }
-            hard_line()
-        })
-        .collect::<Vec<_>>();
-
-    let statements = statements
-        .iter()
-        .map(|statement| format_block_statement(statement, context))
-        .collect::<FormatResult<Vec<_>>>()?;
-
-    Ok(wrap::braced_block_with_separators(statements, separators))
+    crate::helpers::bodies::statement_block(
+        container_range,
+        &statements,
+        context,
+        BlockStatement::code_text_range,
+        format_block_statement,
+    )
 }
 
 pub(super) fn format_block_statement(
@@ -542,11 +527,22 @@ pub(super) fn format_statement_expression_list(
     list: &StatementExpressionList,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
+    let list_range = list
+        .code_text_range()
+        .expect("parser-clean statement expression list should have a code range");
     let expressions = list
         .expressions()
-        .map(|expression| format_expression(&expression, context))
+        .map(|expression| {
+            let range = expression
+                .code_text_range()
+                .expect("parser-clean statement expression should have a code range");
+            let expression = expression.clone();
+            Ok(java_lists::ListItem::new(range, move |context| {
+                format_expression(&expression, context)
+            }))
+        })
         .collect::<FormatResult<Vec<_>>>()?;
-    Ok(wrap::comma_list(expressions))
+    java_lists::statement_expression_list(expressions, list_range, context)
 }
 
 pub(super) fn format_synchronized_statement(
@@ -909,7 +905,41 @@ pub(super) fn format_variable_declarator(
     let value = initializer
         .value()
         .expect("parser-clean variable initializer should have a value");
-    let initializer = format_variable_initializer_value(&value, context)?;
+    let value_range = value
+        .code_text_range()
+        .expect("parser-clean variable initializer value should have a code range");
+    let mut leading_comments = Vec::new();
+    if let Some(assign) = declarator.assign() {
+        let assign_range = assign.token_text_range();
+        let owner_range = TextRange::new(assign_range.end(), value_range.start());
+        leading_comments.extend(take_leading_comment_docs_in_range(
+            context,
+            owner_range,
+            value_range,
+        )?);
+        leading_comments.extend(take_trailing_line_comment_docs_in_range_as_own_line(
+            context,
+            assign_range,
+            owner_range,
+        ));
+        leading_comments.extend(take_inline_leading_block_comment_docs_in_range(
+            context,
+            owner_range,
+            value_range,
+        ));
+        leading_comments.extend(take_block_comment_docs_in_range_as_inline(
+            context,
+            owner_range,
+        ));
+    }
+    let mut initializer = format_variable_initializer_value(&value, context)?;
+    if !leading_comments.is_empty() {
+        initializer = concat([
+            join(hard_line(), leading_comments),
+            hard_line(),
+            initializer,
+        ]);
+    }
     if matches!(value, VariableInitializerValue::ArrayInitializer(_)) {
         return Ok(wrap::variable_declarator_block_initializer(
             name,
@@ -1020,11 +1050,74 @@ pub(super) fn format_switch_block(
     block: &SwitchBlock,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    let items = block
-        .items()
-        .map(|item| format_switch_block_item(&item, context))
+    let items = block.items().collect::<Vec<_>>();
+    if items.is_empty() {
+        return Ok(wrap::braced_block(Vec::<Doc>::new()));
+    }
+
+    let ranges = items
+        .iter()
+        .map(switch_block_item_range)
+        .collect::<Vec<_>>();
+    let mut separators = Vec::new();
+    for window in ranges.windows(2) {
+        let [Some(left), Some(right)] = window else {
+            separators.push(hard_line());
+            continue;
+        };
+        let boundary = TextRange::new(left.end(), right.start());
+        let comments = take_leading_comment_docs_in_range(context, boundary, *right)?;
+        if comments.is_empty() {
+            separators.push(hard_line());
+        } else {
+            separators.push(concat([
+                hard_line(),
+                join(hard_line(), comments),
+                hard_line(),
+            ]));
+        }
+    }
+
+    let mut docs = items
+        .iter()
+        .map(|item| format_switch_block_item(item, context))
         .collect::<FormatResult<Vec<_>>>()?;
-    Ok(wrap::braced_block(items))
+    if let (Some(first), Some(first_range), Some(block_range)) = (
+        docs.first_mut(),
+        ranges.first().copied().flatten(),
+        block.code_text_range(),
+    ) {
+        let leading = take_leading_comment_docs_in_range(
+            context,
+            TextRange::new(block_range.start(), first_range.start()),
+            first_range,
+        )?;
+        if !leading.is_empty() {
+            *first = concat([join(hard_line(), leading), hard_line(), first.clone()]);
+        }
+    }
+    if let (Some(last_range), Some(block_range)) =
+        (ranges.last().copied().flatten(), block.code_text_range())
+    {
+        let tail = take_own_line_comment_docs_in_range(
+            context,
+            TextRange::new(last_range.end(), block_range.end()),
+        )?;
+        if !tail.is_empty() {
+            separators.push(hard_line());
+            docs.push(join(hard_line(), tail));
+        }
+    }
+
+    Ok(wrap::braced_block_with_separators(docs, separators))
+}
+
+fn switch_block_item_range(item: &SwitchBlockItem) -> Option<TextRange> {
+    match item {
+        SwitchBlockItem::StatementGroup(group) => group.code_text_range(),
+        SwitchBlockItem::Rule(rule) => rule.code_text_range(),
+        SwitchBlockItem::BlockStatement(statement) => statement.code_text_range(),
+    }
 }
 
 pub(super) fn format_switch_block_item(
@@ -1051,17 +1144,44 @@ pub(super) fn format_switch_statement_group(
         .labels()
         .map(|label| Ok(concat([format_switch_label(&label, context)?, text(":")])))
         .collect::<FormatResult<Vec<_>>>()?;
-    let statements = group
-        .block_statements()
-        .map(|statement| format_block_statement(&statement, context))
+    let statement_nodes = group.block_statements().collect::<Vec<_>>();
+    let mut body_comments = Vec::new();
+    if let (Some(colon), Some(first_statement)) = (group.colons().last(), statement_nodes.first())
+        && let Some(statement_range) = first_statement.code_text_range()
+    {
+        let colon_range = colon.token_text_range();
+        let owner_range = TextRange::new(colon_range.end(), statement_range.start());
+        body_comments.extend(take_leading_comment_docs_in_range(
+            context,
+            owner_range,
+            statement_range,
+        )?);
+        body_comments.extend(take_trailing_line_comment_docs_in_range_as_own_line(
+            context,
+            colon_range,
+            owner_range,
+        ));
+    }
+    let statements = statement_nodes
+        .iter()
+        .map(|statement| format_block_statement(statement, context))
         .collect::<FormatResult<Vec<_>>>()?;
 
     let doc = if statements.is_empty() {
         join(hard_line(), labels)
     } else {
+        let statements = if body_comments.is_empty() {
+            join(hard_line(), statements)
+        } else {
+            concat([
+                join(hard_line(), body_comments),
+                hard_line(),
+                join(hard_line(), statements),
+            ])
+        };
         concat([
             join(hard_line(), labels),
-            jolt_fmt_ir::indent(concat([hard_line(), join(hard_line(), statements)])),
+            jolt_fmt_ir::indent(concat([hard_line(), statements])),
         ])
     };
     with_leading_and_trailing_comments(context, code_range, leading_comments, doc)
@@ -1079,6 +1199,22 @@ pub(super) fn format_switch_rule(
     let body = rule
         .body()
         .expect("parser-clean switch rule should have a body");
+    let arrow = rule
+        .arrow()
+        .expect("parser-clean switch rule should have an arrow");
+    let arrow_range = arrow.token_text_range();
+    let body_range = switch_rule_body_range(&body)
+        .expect("parser-clean switch rule body should have a code range");
+    let mut body_comments = take_leading_comment_docs_in_range(
+        context,
+        TextRange::new(arrow_range.end(), body_range.start()),
+        body_range,
+    )?;
+    body_comments.extend(take_trailing_line_comment_docs_in_range_as_own_line(
+        context,
+        arrow_range,
+        TextRange::new(arrow_range.end(), body_range.start()),
+    ));
 
     let body = match body {
         SwitchRuleBody::Block(block) => format_block(&block, context)?,
@@ -1087,8 +1223,21 @@ pub(super) fn format_switch_rule(
         }
         SwitchRuleBody::Throw(statement) => format_throw_statement(&statement, context)?,
     };
+    let body = if body_comments.is_empty() {
+        body
+    } else {
+        concat([join(hard_line(), body_comments), hard_line(), body])
+    };
     let doc = concat([format_switch_label(&label, context)?, text(" -> "), body]);
     with_leading_and_trailing_comments(context, code_range, leading_comments, doc)
+}
+
+fn switch_rule_body_range(body: &SwitchRuleBody) -> Option<TextRange> {
+    match body {
+        SwitchRuleBody::Block(block) => block.code_text_range(),
+        SwitchRuleBody::Expression(expression) => expression.code_text_range(),
+        SwitchRuleBody::Throw(statement) => statement.code_text_range(),
+    }
 }
 
 pub(super) fn format_switch_label(

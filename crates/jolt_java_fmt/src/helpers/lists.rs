@@ -55,6 +55,19 @@ pub(crate) fn comma_list(items: impl IntoIterator<Item = Doc>) -> Doc {
     separated::comma_list(items)
 }
 
+pub(crate) fn statement_expression_list(
+    items: impl IntoIterator<Item = ListItem>,
+    ownership_range: TextRange,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    let items = format_list_items(items, ownership_range, ListCommentMode::Clause, context)?;
+    if !items.has_structural_comments() {
+        return Ok(comma_list(items.into_docs()));
+    }
+
+    Ok(comment_clause_comma_list(items))
+}
+
 pub(crate) fn argument_list_docs(
     items: impl IntoIterator<Item = Doc>,
     policy: JavaFormatPolicy,
@@ -118,6 +131,29 @@ pub(crate) fn formal_parameter_list(
         context,
     )?;
     Ok(delimited_comma_list_one_per_line_with_comments(
+        "(",
+        ")",
+        context.policy().continuation_indent_levels(),
+        items,
+    ))
+}
+
+pub(crate) fn lambda_parameter_list(
+    items: impl IntoIterator<Item = ListItem>,
+    list_range: TextRange,
+    open_range: Option<TextRange>,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    let items = format_list_items(
+        items,
+        list_range,
+        ListCommentMode::Delimited {
+            open: "(",
+            open_range,
+        },
+        context,
+    )?;
+    Ok(argument_list_with_policy(
         "(",
         ")",
         context.policy().continuation_indent_levels(),
@@ -517,6 +553,42 @@ fn keyword_prefixed_comma_list_with_comments(
             concat([hard_line(), join(concat([text(","), hard_line()]), docs)]),
         ),
     ]))
+}
+
+fn comment_clause_comma_list(list: FormattedList) -> Doc {
+    let list_item_count = list.items.len();
+    let mut parts = list
+        .items
+        .into_iter()
+        .map(|item| (item.doc, item.trailing_blocks, item.trailing_line))
+        .collect::<Vec<_>>();
+    parts.extend(
+        list.before_close
+            .into_iter()
+            .map(|comment| (comment, Vec::new(), None)),
+    );
+
+    let mut body = Vec::new();
+    let total_parts = parts.len();
+    for (index, (part, trailing_blocks, trailing_line)) in parts.into_iter().enumerate() {
+        body.push(part);
+        if index + 1 < list_item_count {
+            body.push(text(","));
+        }
+        for comment in trailing_blocks {
+            body.push(text(" "));
+            body.push(comment);
+        }
+        if let Some(comment) = trailing_line {
+            body.push(text(" "));
+            body.push(comment);
+        }
+        if index + 1 < total_parts {
+            body.push(hard_line());
+        }
+    }
+
+    concat(body)
 }
 
 fn comment_delimited_comma_list(

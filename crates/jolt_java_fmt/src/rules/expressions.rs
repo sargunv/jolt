@@ -4,8 +4,9 @@ use super::{
     VariableInitializerValue, braced_type_body, concat, format_annotation, format_annotation_list,
     format_block, format_class_body, format_local_variable_declaration_header,
     format_multiline_token, format_switch_expression, format_token, format_type,
-    format_type_argument_list, format_type_layout_parts, java_lists, join,
-    take_inline_leading_block_comment_docs, take_inline_trailing_block_comment_docs,
+    format_type_argument_list, format_type_layout_parts, hard_line, java_lists, join,
+    take_inline_leading_block_comment_docs, take_inline_leading_block_comment_docs_in_range,
+    take_inline_trailing_block_comment_docs, take_leading_comment_docs_in_range,
     take_trailing_line_comment_docs_in_range_as_own_line, text, wrap,
 };
 use crate::analyzers::chains::{Chain, ChainMember};
@@ -580,10 +581,23 @@ pub(super) fn format_assignment_expression(
     let right = assignment
         .right()
         .expect("parser-clean assignment expression should have a right side");
+    let operator_range = operator.token_text_range();
+    let right_range = right
+        .code_text_range()
+        .expect("parser-clean assignment right side should have a code range");
+    let leading = take_expression_gap_comment_docs(
+        context,
+        TextRange::new(operator_range.end(), right_range.start()),
+        right_range,
+    )?;
+    let mut right = format_expression(&right, context)?;
+    if !leading.is_empty() {
+        right = concat([join(hard_line(), leading), hard_line(), right]);
+    }
     Ok(wrap::assignment_expression(
         format_expression(&left, context)?,
         format_token(&operator),
-        format_expression(&right, context)?,
+        right,
     ))
 }
 
@@ -937,7 +951,9 @@ pub(super) fn format_lambda_expression(
         let parameters = lambda
             .parameters()
             .expect("validated lambda expression should have parameters");
-        format_lambda_parameter_list(&parameters, context)?
+        let l_paren = lambda.l_paren();
+        let r_paren = lambda.r_paren();
+        format_lambda_parameter_list(&parameters, l_paren.as_ref(), r_paren.as_ref(), context)?
     };
 
     let body = if let Some(expression) = lambda.expression_body() {
@@ -954,9 +970,19 @@ pub(super) fn format_lambda_expression(
 
 pub(super) fn format_lambda_parameter_list(
     parameters: &jolt_java_syntax::LambdaParameterList,
+    l_paren: Option<&JavaSyntaxToken>,
+    r_paren: Option<&JavaSyntaxToken>,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
-    let list_range = parameters.text_range();
+    let list_range = if let (Some(l_paren), Some(r_paren)) = (l_paren, r_paren) {
+        TextRange::new(
+            l_paren.token_text_range().start(),
+            r_paren.token_text_range().end(),
+        )
+    } else {
+        parameters.text_range()
+    };
+    let open_range = l_paren.map(JavaSyntaxToken::token_text_range);
     let parameters = parameters
         .parameters()
         .map(|parameter| {
@@ -969,7 +995,7 @@ pub(super) fn format_lambda_parameter_list(
             }))
         })
         .collect::<FormatResult<Vec<_>>>()?;
-    java_lists::argument_list(parameters, list_range, context)
+    java_lists::lambda_parameter_list(parameters, list_range, open_range, context)
 }
 
 pub(super) fn format_lambda_parameter(
@@ -986,33 +1012,82 @@ pub(super) fn format_lambda_parameter(
     );
 
     if let Some(ty) = parameter.ty() {
+        let ty_range = ty
+            .code_text_range()
+            .expect("parser-clean lambda parameter type should have a code range");
         let prefix = if let Some(ellipsis) = parameter.ellipsis() {
             concat([
                 final_prefix,
                 format_simple_expression_type(&ty, context, "lambda parameter")?,
                 format_token(&ellipsis),
-                text(" "),
             ])
         } else {
             concat([
                 final_prefix,
                 format_simple_expression_type(&ty, context, "lambda parameter")?,
-                text(" "),
             ])
         };
-        return Ok(concat([prefix, format_token(&name)]));
+        let boundary = parameter
+            .ellipsis()
+            .map_or(ty_range, |ellipsis| ellipsis.token_text_range());
+        return Ok(format_lambda_parameter_name_gap(
+            context, prefix, boundary, &name,
+        ));
     }
 
     if let Some(var) = parameter.var_token() {
-        return Ok(concat([
-            final_prefix,
-            format_token(&var),
-            text(" "),
-            format_token(&name),
-        ]));
+        let prefix = concat([final_prefix, format_token(&var)]);
+        return Ok(format_lambda_parameter_name_gap(
+            context,
+            prefix,
+            var.token_text_range(),
+            &name,
+        ));
     }
 
     Ok(concat([final_prefix, format_token(&name)]))
+}
+
+fn format_lambda_parameter_name_gap(
+    context: &mut JavaFormatContext<'_>,
+    prefix: Doc,
+    boundary: TextRange,
+    name: &JavaSyntaxToken,
+) -> Doc {
+    let name_range = name.token_text_range();
+    if boundary.end() >= name_range.start() {
+        return concat([prefix, text(" "), format_token(name)]);
+    }
+
+    let owner_range = TextRange::new(boundary.end(), name_range.start());
+    let inline_comments =
+        take_inline_leading_block_comment_docs_in_range(context, owner_range, name_range);
+    let trailing_comments =
+        take_trailing_line_comment_docs_in_range_as_own_line(context, boundary, owner_range);
+    let name = format_token(name);
+
+    if !trailing_comments.is_empty() {
+        let mut parts = vec![
+            prefix,
+            text(" "),
+            join(hard_line(), trailing_comments),
+            hard_line(),
+        ];
+        if !inline_comments.is_empty() {
+            parts.push(join(text(" "), inline_comments));
+            parts.push(text(" "));
+        }
+        parts.push(name);
+        return concat(parts);
+    }
+
+    let mut parts = vec![prefix, text(" ")];
+    if !inline_comments.is_empty() {
+        parts.push(join(text(" "), inline_comments));
+        parts.push(text(" "));
+    }
+    parts.push(name);
+    concat(parts)
 }
 
 pub(super) fn format_simple_expression_type(
@@ -1040,15 +1115,53 @@ pub(super) fn format_binary_expression(
         .right()
         .expect("parser-clean binary expression should have a right side");
 
-    let mut first = None;
-    let mut rest = Vec::new();
-    collect_binary_left_chain(&left, precedence, &mut first, &mut rest, context)?;
-    rest.push((
-        format_token(&operator),
-        format_binary_operand(&right, precedence, BinarySide::Right, context)?,
-    ));
+    let mut operands = Vec::new();
+    let mut operators = Vec::new();
+    collect_binary_left_chain(&left, precedence, &mut operands, &mut operators)?;
+    operands.push(right);
+    operators.push(operator);
 
-    let first = first.expect("parser-clean binary expression should have a first operand");
+    let first_operand = operands
+        .first()
+        .expect("parser-clean binary chain should have a first operand");
+    let first_operator = operators
+        .first()
+        .expect("parser-clean binary chain should have an operator");
+    let first = format_binary_operand_with_comments(
+        first_operand,
+        precedence,
+        BinarySide::Left,
+        first_operand
+            .code_text_range()
+            .expect("parser-clean binary operand should have a code range"),
+        Some(first_operator.token_text_range()),
+        context,
+    )?;
+
+    let mut rest = Vec::new();
+    for (index, operator) in operators.iter().enumerate() {
+        let operand = operands
+            .get(index + 1)
+            .expect("binary operator should have a following operand");
+        let operand_range = operand
+            .code_text_range()
+            .expect("parser-clean binary operand should have a code range");
+        let next_operator_range = operators
+            .get(index + 1)
+            .map(JavaSyntaxToken::token_text_range);
+        rest.push((
+            format_binary_operator(operator, operand_range, context),
+            format_binary_operand_with_comments(
+                operand,
+                precedence,
+                BinarySide::Right,
+                operator.token_text_range(),
+                next_operator_range,
+                context,
+            )?,
+        ));
+    }
+
     Ok(wrap::binary_chain(first, rest))
 }
 
@@ -1061,9 +1174,8 @@ enum BinarySide {
 pub(super) fn collect_binary_left_chain(
     expression: &Expression,
     parent_precedence: u8,
-    first: &mut Option<Doc>,
-    rest: &mut Vec<(Doc, Doc)>,
-    context: &mut JavaFormatContext<'_>,
+    operands: &mut Vec<Expression>,
+    operators: &mut Vec<JavaSyntaxToken>,
 ) -> FormatResult<()> {
     if let Expression::BinaryExpression(binary) = expression {
         let operator = binary
@@ -1079,22 +1191,85 @@ pub(super) fn collect_binary_left_chain(
                 .right()
                 .expect("parser-clean binary expression should have a right side");
 
-            collect_binary_left_chain(&left, parent_precedence, first, rest, context)?;
-            rest.push((
-                format_token(&operator),
-                format_binary_operand(&right, parent_precedence, BinarySide::Right, context)?,
-            ));
+            collect_binary_left_chain(&left, parent_precedence, operands, operators)?;
+            operands.push(right);
+            operators.push(operator);
             return Ok(());
         }
     }
 
-    *first = Some(format_binary_operand(
-        expression,
-        parent_precedence,
-        BinarySide::Left,
-        context,
-    )?);
+    operands.push(expression.clone());
     Ok(())
+}
+
+fn format_binary_operator(
+    operator: &JavaSyntaxToken,
+    next_operand_range: TextRange,
+    context: &mut JavaFormatContext<'_>,
+) -> Doc {
+    let operator_range = operator.token_text_range();
+    let trailing = take_trailing_line_comment_docs_in_range_as_own_line(
+        context,
+        operator_range,
+        TextRange::new(operator_range.end(), next_operand_range.start()),
+    );
+    if trailing.is_empty() {
+        format_token(operator)
+    } else {
+        concat([
+            format_token(operator),
+            text(" "),
+            join(hard_line(), trailing),
+        ])
+    }
+}
+
+fn take_expression_gap_comment_docs(
+    context: &mut JavaFormatContext<'_>,
+    owner_range: TextRange,
+    code_range: TextRange,
+) -> FormatResult<Vec<Doc>> {
+    let mut comments = take_leading_comment_docs_in_range(context, owner_range, code_range)?;
+    let inline = take_inline_leading_block_comment_docs_in_range(context, owner_range, code_range);
+    comments.extend(inline);
+    Ok(comments)
+}
+
+fn format_binary_operand_with_comments(
+    operand: &Expression,
+    parent_precedence: u8,
+    side: BinarySide,
+    previous_range: TextRange,
+    next_operator_range: Option<TextRange>,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    let operand_range = operand
+        .code_text_range()
+        .expect("parser-clean binary operand should have a code range");
+    let leading = if previous_range.end() < operand_range.start() {
+        take_expression_gap_comment_docs(
+            context,
+            TextRange::new(previous_range.end(), operand_range.start()),
+            operand_range,
+        )?
+    } else {
+        Vec::new()
+    };
+    let mut doc = format_binary_operand(operand, parent_precedence, side, context)?;
+    if let Some(next_operator_range) = next_operator_range {
+        let trailing = take_trailing_line_comment_docs_in_range_as_own_line(
+            context,
+            operand_range,
+            TextRange::new(operand_range.end(), next_operator_range.start()),
+        );
+        if !trailing.is_empty() {
+            doc = concat([doc, text(" "), join(hard_line(), trailing)]);
+        }
+    }
+    if !leading.is_empty() {
+        doc = concat([join(hard_line(), leading), hard_line(), doc]);
+    }
+    Ok(doc)
 }
 
 fn format_binary_operand(

@@ -161,6 +161,13 @@ fn method_signature_comments_format() {
     assert_formats_successfully(
         "class A { void //\ng //\n( //\nint //\nx //\n, //\nint //\ny //\n) //\n{} }",
     );
+    assert_formatted(
+        "class A { /**\n */private static void method() {} }",
+        "class A {\n  /** */\n  private static void method() {}\n}",
+    );
+    assert_formats_successfully(
+        "class A { private native Object f() /*-{\n  return null;\n}-*/; }",
+    );
 }
 
 #[test]
@@ -555,7 +562,10 @@ fn type_body_and_unit_tail_comments_format() {
         "class A { int code() {}\n\n// body\n}\n// file",
         "class A {\n  int code() {}\n\n  // body\n}\n// file",
     );
-    assert_formatted("enum E { ;\n// tail\n}", "enum E {\n  ;\n\n  // tail\n}");
+    assert_formatted(
+        "enum E { ;\n// tail\n// more\n}",
+        "enum E {\n  ;\n\n  // tail\n  // more\n}",
+    );
 }
 
 #[test]
@@ -660,6 +670,10 @@ fn switch_statements_format_constant_groups_and_rules() {
     assert_formatted(
         "class A { void m(int x) { switch (x) { case 1: call(); break; case 2: case 3: return; default: throw problem; } switch (x) { case 1, -2, NAME -> value++; case null, default -> { break; } } } }",
         "class A {\n  void m(int x) {\n    switch (x) {\n      case 1:\n        call();\n        break;\n      case 2:\n      case 3:\n        return;\n      default:\n        throw problem;\n    }\n    switch (x) {\n      case 1, -2, NAME -> value++;\n      case null, default -> {\n        break;\n      }\n    }\n  }\n}",
+    );
+    assert_formatted(
+        "class A { int m(int x) { return switch (x) { case 0 -> 0;\n // one\n // two\n }; } }",
+        "class A {\n  int m(int x) {\n    return switch (x) {\n      case 0 -> 0;\n      // one\n      // two\n    };\n  }\n}",
     );
 }
 

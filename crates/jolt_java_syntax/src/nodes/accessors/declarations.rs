@@ -654,7 +654,11 @@ impl EnumBody {
     }
 
     pub fn members(&self) -> impl Iterator<Item = ClassBodyMember> + '_ {
-        children::<ClassBodyDeclaration>(&self.syntax).filter_map(|node| node.member())
+        self.syntax.children().filter_map(|node| {
+            ClassBodyDeclaration::cast(node.clone())
+                .and_then(|declaration| declaration.member())
+                .or_else(|| EmptyDeclaration::cast(node).map(ClassBodyMember::EmptyDeclaration))
+        })
     }
 
     #[must_use]
@@ -827,6 +831,11 @@ impl FieldDeclaration {
     }
 
     #[must_use]
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Semicolon)
+    }
+
+    #[must_use]
     pub fn has_supported_layout_shape(&self) -> bool {
         let mut kinds = self
             .syntax
@@ -918,6 +927,11 @@ impl MethodDeclaration {
     #[must_use]
     pub fn has_semicolon_body(&self) -> bool {
         child_token(&self.syntax, JavaSyntaxKind::Semicolon).is_some()
+    }
+
+    #[must_use]
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 
     #[must_use]
@@ -1377,6 +1391,11 @@ impl VariableDeclarator {
     #[must_use]
     pub fn initializer(&self) -> Option<VariableInitializer> {
         child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn assign(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Assign)
     }
 
     #[must_use]

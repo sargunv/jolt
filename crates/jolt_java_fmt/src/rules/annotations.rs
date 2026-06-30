@@ -4,8 +4,12 @@ use super::{
     JavaSyntaxToken, ModifierList, concat, format_expression, format_name, format_token, hard_line,
     join, reject_unhandled_comments_before_start, text,
 };
-use crate::comments::reject_unhandled_comments_in_range;
+use crate::comments::{
+    reject_unhandled_comments_in_range, take_adjacent_leading_javadoc_comment_docs_in_range,
+    take_inline_leading_block_comment_docs_in_range,
+};
 use crate::helpers::{annotations as java_annotations, lists as java_lists};
+use jolt_diagnostics::TextRange;
 
 pub(super) fn format_modifier_list(
     modifiers: Option<ModifierList>,
@@ -19,9 +23,32 @@ pub(super) fn format_modifier_list(
     let annotations = format_annotation_list(modifiers.annotations(), context, "declaration")?;
     let tokens = modifiers.tokens().collect::<Vec<_>>();
     let keyword_tokens = modifiers.modifier_tokens().collect::<Vec<_>>();
+    let (leading_comments, inline_leading_comments) =
+        if let Some(first_modifier) = keyword_tokens.first() {
+            let owner_range = TextRange::new(
+                modifiers.text_range().start(),
+                first_modifier.token_text_range().start(),
+            );
+            (
+                take_adjacent_leading_javadoc_comment_docs_in_range(
+                    context,
+                    owner_range,
+                    first_modifier.token_text_range(),
+                ),
+                take_inline_leading_block_comment_docs_in_range(
+                    context,
+                    owner_range,
+                    first_modifier.token_text_range(),
+                ),
+            )
+        } else {
+            (Vec::new(), Vec::new())
+        };
     if tokens.len() != keyword_tokens.len() {
         return Ok(ModifierDocs {
+            leading_comments,
             annotations,
+            inline_leading_comments,
             modifier_tokens: tokens,
         });
     }
@@ -36,14 +63,18 @@ pub(super) fn format_modifier_list(
     }
 
     Ok(ModifierDocs {
+        leading_comments,
         annotations,
+        inline_leading_comments,
         modifier_tokens: keyword_tokens,
     })
 }
 
 #[derive(Default)]
 pub(super) struct ModifierDocs {
+    pub(super) leading_comments: Vec<Doc>,
     pub(super) annotations: Vec<Doc>,
+    pub(super) inline_leading_comments: Vec<Doc>,
     pub(super) modifier_tokens: Vec<JavaSyntaxToken>,
 }
 
@@ -73,11 +104,26 @@ impl ModifierDocs {
                 index += 1;
             }
         }
+        if !self.inline_leading_comments.is_empty()
+            && let Some(first) = docs.first_mut()
+        {
+            *first = concat([
+                join(text(" "), self.inline_leading_comments.clone()),
+                text(" "),
+                first.clone(),
+            ]);
+        }
+
         docs
     }
 
     pub(super) fn with_annotations(self, declaration: Doc) -> Doc {
-        with_vertical_annotations(self.annotations, declaration)
+        let doc = with_vertical_annotations(self.annotations, declaration);
+        if self.leading_comments.is_empty() {
+            doc
+        } else {
+            concat([join(hard_line(), self.leading_comments), hard_line(), doc])
+        }
     }
 }
 

@@ -8,12 +8,12 @@ total considered: 226
 invalid upstream fixtures skipped: 2
 parse blocked: 0
 missing-rule blocked: 0
-other blocked: 13
-formatted: 211
-exact matches: 58
-exact-match percentage: 25.89%
-mismatching formatted files: 153
-aggregate diff size: 4575
+other blocked: 0
+formatted: 224
+exact matches: 60
+exact-match percentage: 26.78%
+mismatching formatted files: 164
+aggregate diff size: 4866
 largest per-file diff: B24909927.java (916)
 
 worst mismatches:
@@ -25,8 +25,8 @@ worst mismatches:
   B20128760.java: 116
   A.java: 109
   palantir-lambda-multiline-arg.java: 104
+  B24543625.java: 90
   B20535125.java: 87
-  B21954779.java: 63
 
 top missing-rule blockers:
   0: <none>

@@ -10,11 +10,14 @@
 use crate::comments::{
     reject_unhandled_comments_before_end, reject_unhandled_comments_before_start,
     reject_unhandled_comments_in_range, take_adjacent_trailing_block_comment_docs,
-    take_dangling_comment_docs, take_inline_leading_block_comment_docs,
-    take_inline_leading_block_comment_docs_in_range, take_inline_trailing_block_comment_docs,
-    take_leading_comment_docs, take_leading_comment_docs_in_range,
-    take_own_line_comment_docs_in_range, take_trailing_line_comment_docs_in_range_as_own_line,
-    with_attached_comments, with_leading_and_trailing_comments,
+    take_block_comment_docs_in_range_as_inline, take_dangling_comment_docs,
+    take_inline_leading_block_comment_docs, take_inline_leading_block_comment_docs_in_range,
+    take_inline_trailing_block_comment_docs, take_leading_comment_docs,
+    take_leading_comment_docs_in_range, take_own_line_comment_docs_in_range,
+    take_same_line_separator_trailing_block_comment_docs_in_range,
+    take_separator_leading_javadoc_comment_docs_in_range,
+    take_trailing_line_comment_docs_in_range_as_own_line, with_attached_comments,
+    with_leading_and_trailing_comments,
 };
 use crate::context::JavaFormatContext;
 use crate::diagnostics::FormatResult;

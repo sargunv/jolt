@@ -826,6 +826,16 @@ impl ArrayInitializer {
 
 impl LambdaExpression {
     #[must_use]
+    pub fn l_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn r_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RParen)
+    }
+
+    #[must_use]
     pub fn has_empty_parameter_list(&self) -> bool {
         let elements = self.syntax.children_with_tokens().collect::<Vec<_>>();
         matches!(

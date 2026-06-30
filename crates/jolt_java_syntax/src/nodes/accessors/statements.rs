@@ -898,6 +898,14 @@ impl SwitchBlockStatementGroup {
         children(&self.syntax)
     }
 
+    pub fn colons(&self) -> impl Iterator<Item = JavaSyntaxToken> + '_ {
+        self.syntax
+            .children_with_tokens()
+            .filter_map(jolt_syntax::SyntaxElement::into_token)
+            .filter(|token| token.kind() == JavaSyntaxKind::Colon)
+            .map(|syntax| JavaSyntaxToken { syntax })
+    }
+
     pub fn block_statements(&self) -> impl Iterator<Item = BlockStatement> + '_ {
         children(&self.syntax)
     }
@@ -932,6 +940,11 @@ impl SwitchRule {
     #[must_use]
     pub fn label(&self) -> Option<SwitchLabel> {
         child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn arrow(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Arrow)
     }
 
     #[must_use]

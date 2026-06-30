@@ -216,6 +216,31 @@ impl<'source> JavaFormatContext<'source> {
         self.claim_comments(indices)
     }
 
+    pub(crate) fn take_adjacent_leading_javadoc_comments_in_range(
+        &mut self,
+        owner_range: TextRange,
+        code_range: TextRange,
+    ) -> Vec<JavaCommentTrivia> {
+        let indices = self
+            .comments
+            .iter()
+            .enumerate()
+            .filter(|(_, comment)| !comment.claimed)
+            .filter(|(_, comment)| {
+                let range = comment.trivia.trivia.range;
+                comment.trivia.trivia.kind == TriviaKind::JavadocComment
+                    && range.start() >= owner_range.start()
+                    && range.end() <= owner_range.end()
+                    && range.end() <= code_range.start()
+                    && self.is_same_line_span(range.end().get(), code_range.start().get())
+                    && self.only_whitespace(range.end().get(), code_range.start().get())
+            })
+            .map(|(index, _)| index)
+            .collect();
+
+        self.claim_comments(indices)
+    }
+
     pub(crate) fn take_inline_trailing_block_comments(
         &mut self,
         code_range: TextRange,
@@ -234,6 +259,106 @@ impl<'source> JavaFormatContext<'source> {
             .filter(|(_, comment)| !comment.claimed)
             .filter(|(_, comment)| {
                 self.is_adjacent_trailing_block_comment(&comment.trivia, code_range)
+            })
+            .map(|(index, _)| index)
+            .collect();
+
+        self.claim_comments(indices)
+    }
+
+    pub(crate) fn take_block_comments_in_range(
+        &mut self,
+        owner_range: TextRange,
+    ) -> Vec<JavaCommentTrivia> {
+        let indices = self
+            .comments
+            .iter()
+            .enumerate()
+            .filter(|(_, comment)| !comment.claimed)
+            .filter(|(_, comment)| {
+                let range = comment.trivia.trivia.range;
+                comment.trivia.trivia.kind == TriviaKind::BlockComment
+                    && range.start() >= owner_range.start()
+                    && range.end() <= owner_range.end()
+            })
+            .map(|(index, _)| index)
+            .collect();
+
+        self.claim_comments(indices)
+    }
+
+    pub(crate) fn take_same_line_trailing_block_comments_in_range(
+        &mut self,
+        code_range: TextRange,
+        owner_range: TextRange,
+    ) -> Vec<JavaCommentTrivia> {
+        let indices = self
+            .comments
+            .iter()
+            .enumerate()
+            .filter(|(_, comment)| !comment.claimed)
+            .filter(|(_, comment)| {
+                let range = comment.trivia.trivia.range;
+                comment.trivia.trivia.kind == TriviaKind::BlockComment
+                    && range.start() >= owner_range.start()
+                    && range.end() <= owner_range.end()
+                    && range.start() >= code_range.end()
+                    && self.is_same_line_span(code_range.end().get(), range.start().get())
+                    && self.only_whitespace(code_range.end().get(), range.start().get())
+            })
+            .map(|(index, _)| index)
+            .collect();
+
+        self.claim_comments(indices)
+    }
+
+    pub(crate) fn take_same_line_separator_trailing_block_comments_in_range(
+        &mut self,
+        code_range: TextRange,
+        owner_range: TextRange,
+    ) -> Vec<JavaCommentTrivia> {
+        let indices = self
+            .comments
+            .iter()
+            .enumerate()
+            .filter(|(_, comment)| !comment.claimed)
+            .filter(|(_, comment)| {
+                let range = comment.trivia.trivia.range;
+                comment.trivia.trivia.kind == TriviaKind::BlockComment
+                    && range.start() >= owner_range.start()
+                    && range.end() <= owner_range.end()
+                    && range.start() >= code_range.end()
+                    && self.is_same_line_span(code_range.end().get(), range.start().get())
+                    && self.source[code_range.end().get()..range.start().get()]
+                        .chars()
+                        .all(|ch| ch == ',' || ch == ';' || ch.is_whitespace())
+            })
+            .map(|(index, _)| index)
+            .collect();
+
+        self.claim_comments(indices)
+    }
+
+    pub(crate) fn take_separator_leading_javadoc_comments_in_range(
+        &mut self,
+        owner_range: TextRange,
+        code_range: TextRange,
+    ) -> Vec<JavaCommentTrivia> {
+        let indices = self
+            .comments
+            .iter()
+            .enumerate()
+            .filter(|(_, comment)| !comment.claimed)
+            .filter(|(_, comment)| {
+                let range = comment.trivia.trivia.range;
+                comment.trivia.trivia.kind == TriviaKind::JavadocComment
+                    && range.start() >= owner_range.start()
+                    && range.end() <= owner_range.end()
+                    && range.end() <= code_range.start()
+                    && self.source[owner_range.start().get()..range.start().get()]
+                        .chars()
+                        .all(|ch| ch == ',' || ch == ';' || ch.is_whitespace())
+                    && self.only_whitespace(range.end().get(), code_range.start().get())
             })
             .map(|(index, _)| index)
             .collect();
