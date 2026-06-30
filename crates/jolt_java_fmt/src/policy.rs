@@ -20,6 +20,16 @@ impl JavaFormatPolicy {
         2
     }
 
+    /// Minimum accumulated receiver length before breaking before a selector.
+    /// Matches google-java-format's `indentationMultiplier * 4`.
+    pub(crate) const fn selector_chain_min_receiver_length_before_break(self) -> usize {
+        match self.profile {
+            JavaFormatProfile::Google => 8,
+            JavaFormatProfile::Aosp => 16,
+            JavaFormatProfile::Palantir => usize::MAX,
+        }
+    }
+
     pub(crate) const fn type_argument_indent_levels(self) -> u16 {
         4
     }

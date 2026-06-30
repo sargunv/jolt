@@ -10,21 +10,21 @@ parse blocked: 0
 missing-rule blocked: 0
 other blocked: 0
 formatted: 224
-exact matches: 62
-exact-match percentage: 27.67%
-mismatching formatted files: 162
-aggregate diff size: 4886
+exact matches: 61
+exact-match percentage: 27.23%
+mismatching formatted files: 163
+aggregate diff size: 4871
 largest per-file diff: B24909927.java (916)
 
 worst mismatches:
   B24909927.java: 916
   RSL.java: 310
   M.java: 252
-  B20701054.java: 215
+  B20701054.java: 204
   A.java: 121
+  B20128760.java: 117
   palantir-deeply-nested-calls.java: 117
-  B20128760.java: 116
-  palantir-lambda-multiline-arg.java: 103
+  palantir-lambda-multiline-arg.java: 104
   B24543625.java: 90
   B20535125.java: 87
 

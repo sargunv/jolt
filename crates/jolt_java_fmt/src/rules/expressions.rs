@@ -9,11 +9,11 @@ use super::{
     take_inline_trailing_block_comment_docs, take_leading_comment_docs_in_range,
     take_trailing_line_comment_docs_in_range_as_own_line, text, wrap,
 };
-use crate::analyzers::chains::{Chain, ChainMember, ChainRole};
+use crate::analyzers::chains::{BaseMetadata, Chain, ChainMember, ChainRole};
 use crate::helpers::chains as java_chains;
 use crate::helpers::literals as java_literals;
 use jolt_diagnostics::TextRange;
-use jolt_fmt_ir::{group, soft_line};
+use jolt_fmt_ir::{group, indent_by, soft_line};
 
 pub(super) fn format_expression(
     expression: &Expression,
@@ -184,14 +184,21 @@ pub(super) fn collect_selector_chain(
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Chain> {
     match expression {
-        Expression::NameExpression(name) => Ok(Chain::simple_base(
-            format_name_expression(name, context)?,
-            node_width(name.code_text_range()),
-        )
-        .with_tail_range(name.code_text_range())),
+        Expression::NameExpression(name) => {
+            let identifier = name
+                .identifier()
+                .expect("parser-clean name expression should have an identifier");
+            Ok(Chain::simple_base(
+                format_name_expression(name, context)?,
+                node_width(name.code_text_range()),
+                Some(identifier.text().to_string()),
+            )
+            .with_tail_range(name.code_text_range()))
+        }
         Expression::ThisExpression(this) => Ok(Chain::simple_base(
             format_this_expression(this, context)?,
             node_width(this.code_text_range()),
+            Some("this".to_string()),
         )
         .with_tail_range(this.code_text_range())),
         Expression::SuperExpression(super_expression) => Ok(Chain::base(format_super_expression(
@@ -212,11 +219,12 @@ pub(super) fn collect_selector_chain(
             node_width(class_literal.code_text_range()),
         )
         .with_tail_range(class_literal.code_text_range())),
-        Expression::ParenthesizedExpression(parenthesized) => Ok(Chain::complex_base(
+        Expression::ParenthesizedExpression(parenthesized) => Ok(Chain::primary_expression_base(
             format_parenthesized_expression(parenthesized, context)?,
             node_width(parenthesized.code_text_range()),
         )
         .with_tail_range(parenthesized.code_text_range())),
+        Expression::CastExpression(cast) => collect_cast_chain(cast, context),
         Expression::FieldAccessExpression(field) => collect_field_access_chain(field, context),
         Expression::MethodInvocationExpression(invocation) => {
             collect_method_invocation_chain(invocation, context)
@@ -227,6 +235,71 @@ pub(super) fn collect_selector_chain(
         )
         .with_tail_range(expression.code_text_range())),
     }
+}
+
+pub(super) fn collect_cast_chain(
+    cast: &jolt_java_syntax::CastExpression,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Chain> {
+    if let Some(chain) = peel_cast_operand_chain(cast, context)? {
+        return Ok(chain);
+    }
+
+    let ty = cast
+        .ty()
+        .expect("parser-clean cast expression should have a type");
+    let expression = cast
+        .expression()
+        .expect("parser-clean cast expression should have an expression");
+
+    Ok(Chain::primary_expression_base(
+        format_cast_primary_base(&ty, format_expression(&expression, context)?, context)?,
+        node_width(cast.code_text_range()),
+    )
+    .with_tail_range(cast.code_text_range()))
+}
+
+fn peel_cast_operand_chain(
+    cast: &jolt_java_syntax::CastExpression,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Option<Chain>> {
+    let ty = cast
+        .ty()
+        .expect("parser-clean cast expression should have a type");
+    let expression = cast
+        .expression()
+        .expect("parser-clean cast expression should have an expression");
+
+    match expression {
+        Expression::FieldAccessExpression(_) | Expression::MethodInvocationExpression(_) => {
+            let mut chain = collect_selector_chain(&expression, context)?;
+            let receiver_base = chain.base;
+            chain.base = format_cast_primary_base(&ty, receiver_base, context)?;
+            Ok(Some(
+                Chain::with_base_metadata(
+                    chain.base,
+                    chain.members,
+                    BaseMetadata::primary_expression(node_width(cast.code_text_range())),
+                )
+                .with_tail_range(cast.code_text_range()),
+            ))
+        }
+        _ => Ok(None),
+    }
+}
+
+fn format_cast_primary_base(
+    ty: &Type,
+    receiver: Doc,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    Ok(group(concat([
+        concat([text("("), format_type(ty, context)?, text(")")]),
+        indent_by(
+            context.policy().continuation_indent_levels(),
+            concat([hard_line(), receiver]),
+        ),
+    ])))
 }
 
 pub(super) fn collect_field_access_chain(
@@ -262,6 +335,7 @@ pub(super) fn collect_field_access_chain(
             type_arguments.unwrap_or_else(|| text("")),
         ]),
         selector_width,
+        Some(name.text().to_string()),
     ));
     chain.set_tail_range(field.code_text_range());
     Ok(chain)
@@ -308,6 +382,7 @@ pub(super) fn collect_method_invocation_chain(
             selector_width,
             argument_count,
             has_type_arguments,
+            Some(name.text().to_string()),
         ));
         chain.set_tail_range(invocation.code_text_range());
         return Ok(chain);
@@ -731,6 +806,14 @@ pub(super) fn format_cast_expression(
     cast: &jolt_java_syntax::CastExpression,
     context: &mut JavaFormatContext<'_>,
 ) -> FormatResult<Doc> {
+    if let Some(chain) = peel_cast_operand_chain(cast, context)? {
+        return Ok(java_chains::selector_chain(
+            chain,
+            context.policy(),
+            ChainRole::Default,
+        ));
+    }
+
     let ty = cast
         .ty()
         .expect("parser-clean cast expression should have a type");

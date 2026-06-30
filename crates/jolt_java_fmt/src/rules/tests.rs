@@ -402,7 +402,11 @@ fn generic_qualified_method_invocations_format() {
 fn selector_receivers_format_general_expressions() {
     assert_formatted(
         "class A { void m(Object value, boolean flag, Object one, Object two) { (flag ? one : two).toString(); ((String) value).trim(); } }",
-        "class A {\n  void m(Object value, boolean flag, Object one, Object two) {\n    (flag ? one : two).toString();\n    ((String) value).trim();\n  }\n}",
+        "class A {\n  void m(Object value, boolean flag, Object one, Object two) {\n    (flag ? one : two)\n        .toString();\n    ((String) value)\n        .trim();\n  }\n}",
+    );
+    assert_formatted(
+        "class A { void m() { Object x = (String) foo.xxx().yyy(); } }",
+        "class A {\n  void m() {\n    Object x =\n        (String)\n            foo\n            .xxx()\n            .yyy();\n  }\n}",
     );
 }
 

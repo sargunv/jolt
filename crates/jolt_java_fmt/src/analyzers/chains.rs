@@ -12,7 +12,7 @@ pub(crate) struct Chain {
 
 impl Chain {
     pub(crate) fn new(base: Doc, members: Vec<ChainMember>) -> Self {
-        Self::with_base_metadata(base, members, BaseMetadata::simple(0))
+        Self::with_base_metadata(base, members, BaseMetadata::simple(0, None))
     }
 
     pub(crate) fn with_base_metadata(
@@ -34,12 +34,24 @@ impl Chain {
         Self::new(base, Vec::new())
     }
 
-    pub(crate) fn simple_base(base: Doc, source_width: usize) -> Self {
-        Self::with_base_metadata(base, Vec::new(), BaseMetadata::simple(source_width))
+    pub(crate) fn simple_base(base: Doc, source_width: usize, simple_name: Option<String>) -> Self {
+        Self::with_base_metadata(
+            base,
+            Vec::new(),
+            BaseMetadata::simple(source_width, simple_name),
+        )
     }
 
     pub(crate) fn complex_base(base: Doc, source_width: usize) -> Self {
         Self::with_base_metadata(base, Vec::new(), BaseMetadata::complex(source_width))
+    }
+
+    pub(crate) fn primary_expression_base(base: Doc, source_width: usize) -> Self {
+        Self::with_base_metadata(
+            base,
+            Vec::new(),
+            BaseMetadata::primary_expression(source_width),
+        )
     }
 
     pub(crate) fn call_base(base: Doc, source_width: usize) -> Self {
@@ -56,7 +68,7 @@ impl Chain {
 
     pub(crate) fn push(&mut self, member: ChainMember) {
         self.members.push(member);
-        self.metadata = ChainMetadata::from_parts(self.metadata.base, &self.members);
+        self.metadata = ChainMetadata::from_parts(self.metadata.base.clone(), &self.members);
     }
 
     pub(crate) fn with_tail_range(mut self, range: Option<TextRange>) -> Self {
@@ -89,21 +101,25 @@ impl Chain {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub(crate) struct BaseMetadata {
     pub(crate) source_width: usize,
     pub(crate) is_complex: bool,
     pub(crate) call_count: usize,
     pub(crate) kind: ChainBaseKind,
+    pub(crate) simple_name: Option<String>,
+    pub(crate) forces_break_before_first_selector: bool,
 }
 
 impl BaseMetadata {
-    pub(crate) const fn simple(source_width: usize) -> Self {
+    pub(crate) fn simple(source_width: usize, simple_name: Option<String>) -> Self {
         Self {
             source_width,
             is_complex: false,
             call_count: 0,
             kind: ChainBaseKind::Simple,
+            simple_name,
+            forces_break_before_first_selector: false,
         }
     }
 
@@ -113,6 +129,19 @@ impl BaseMetadata {
             is_complex: true,
             call_count: 0,
             kind: ChainBaseKind::Complex,
+            simple_name: None,
+            forces_break_before_first_selector: false,
+        }
+    }
+
+    pub(crate) const fn primary_expression(source_width: usize) -> Self {
+        Self {
+            source_width,
+            is_complex: true,
+            call_count: 0,
+            kind: ChainBaseKind::PrimaryExpression,
+            simple_name: None,
+            forces_break_before_first_selector: true,
         }
     }
 
@@ -122,6 +151,8 @@ impl BaseMetadata {
             is_complex: false,
             call_count: 1,
             kind: ChainBaseKind::Call,
+            simple_name: None,
+            forces_break_before_first_selector: false,
         }
     }
 
@@ -131,6 +162,8 @@ impl BaseMetadata {
             is_complex: false,
             call_count: 0,
             kind: ChainBaseKind::ObjectCreation,
+            simple_name: None,
+            forces_break_before_first_selector: false,
         }
     }
 }
@@ -139,6 +172,7 @@ impl BaseMetadata {
 pub(crate) enum ChainBaseKind {
     Simple,
     Complex,
+    PrimaryExpression,
     Call,
     ObjectCreation,
 }
@@ -157,16 +191,18 @@ pub(crate) struct ChainMember {
     pub(crate) trailing_comments: Vec<Doc>,
     pub(crate) source_width: usize,
     pub(crate) has_type_arguments: bool,
+    pub(crate) simple_name: Option<String>,
 }
 
 impl ChainMember {
-    pub(crate) fn field(doc: Doc, source_width: usize) -> Self {
+    pub(crate) fn field(doc: Doc, source_width: usize, simple_name: Option<String>) -> Self {
         Self {
             kind: ChainMemberKind::Field,
             doc,
             trailing_comments: Vec::new(),
             source_width,
             has_type_arguments: false,
+            simple_name,
         }
     }
 
@@ -175,6 +211,7 @@ impl ChainMember {
         source_width: usize,
         argument_count: usize,
         has_type_arguments: bool,
+        simple_name: Option<String>,
     ) -> Self {
         Self {
             kind: ChainMemberKind::Call { argument_count },
@@ -182,6 +219,7 @@ impl ChainMember {
             trailing_comments: Vec::new(),
             source_width,
             has_type_arguments,
+            simple_name,
         }
     }
 
@@ -192,6 +230,7 @@ impl ChainMember {
             trailing_comments: Vec::new(),
             source_width,
             has_type_arguments: false,
+            simple_name: None,
         }
     }
 
@@ -260,6 +299,67 @@ impl ChainGroups {
     }
 }
 
+/// When a chain contains exactly one call, google-java-format may treat a
+/// leading field run plus that call as a single syntactic unit (e.g.
+/// `System.err.println(...)` stays flat).
+pub(crate) fn single_invocation_coalesced_prefix_len(members: &[ChainMember]) -> usize {
+    let call_count = members.iter().filter(|member| member.is_call()).count();
+    if call_count != 1 {
+        return 0;
+    }
+
+    let call_index = members
+        .iter()
+        .position(ChainMember::is_call)
+        .expect("single call checked above");
+    if call_index == 0 {
+        return 0;
+    }
+
+    call_index + 1
+}
+
+/// When a chain ends in `.stream()`, `.parallelStream()`, or `.toBuilder()`,
+/// google-java-format may keep the prefix through that call flat.
+pub(crate) fn stream_suffix_prefix_member_end_index(members: &[ChainMember]) -> Option<usize> {
+    members.iter().position(|member| {
+        member.is_call()
+            && member
+                .simple_name
+                .as_deref()
+                .is_some_and(|name| matches!(name, "stream" | "parallelStream" | "toBuilder"))
+    })
+}
+
+/// Longest inclusive member index that should stay grouped with the receiver.
+///
+/// Combines google-java-format's type-name prefix, single-invocation field prefix,
+/// and `this`/`super` rules.
+pub(crate) fn classified_prefix_member_end_index(
+    base: &BaseMetadata,
+    members: &[ChainMember],
+) -> Option<usize> {
+    let mut prefix_end = crate::analyzers::type_names::type_name_prefix_member_end_index(
+        base.simple_name.as_deref(),
+        members,
+    );
+
+    let coalesced = single_invocation_coalesced_prefix_len(members);
+    if coalesced > 0 && coalesced == members.len() {
+        prefix_end = Some(prefix_end.map_or(coalesced - 1, |end| end.max(coalesced - 1)));
+    }
+
+    if matches!(base.simple_name.as_deref(), Some("this" | "super")) && !members.is_empty() {
+        prefix_end = Some(prefix_end.map_or(0, |end| end));
+    }
+
+    if let Some(stream_end) = stream_suffix_prefix_member_end_index(members) {
+        prefix_end = Some(prefix_end.map_or(stream_end, |end| end.max(stream_end)));
+    }
+
+    prefix_end
+}
+
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub(crate) enum ChainGroupKind {
     FieldRun,
@@ -288,7 +388,7 @@ pub(crate) enum ChainMemberKind {
     ArrayAccess,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub(crate) struct ChainMetadata {
     pub(crate) base: BaseMetadata,
     pub(crate) call_count: usize,
@@ -316,7 +416,7 @@ impl ChainMetadata {
             .unwrap_or_default();
 
         Self {
-            base,
+            base: base.clone(),
             call_count,
             total_call_count: base.call_count + call_count,
             first_member_width,
