@@ -23,7 +23,8 @@ use super::{
 use crate::analyzers::expressions::ExpressionLayout;
 use crate::helpers::annotations as java_annotations;
 use crate::helpers::bodies::{
-    BlockLayoutOptions, statement_block, statement_block_with_opening_comments,
+    self, BlockLayoutOptions, StatementBodyKind, statement_block,
+    statement_block_with_opening_comments,
 };
 use crate::helpers::callables;
 use crate::helpers::expressions as java_expressions;
@@ -97,7 +98,7 @@ pub(super) fn format_constructor_body_with_opening_comments(
         .map(|statement| format_block_statement(&statement, context))
         .collect::<FormatResult<Vec<_>>>()?;
 
-    crate::helpers::bodies::constructor_body_with_opening_comments(
+    bodies::constructor_body_with_opening_comments(
         code_range,
         invocation,
         statements,
@@ -283,16 +284,12 @@ fn format_unbraced_statement_with_block_options(
     format_statement_rule(statement_rule(statement)?, context)
 }
 
-fn format_statement_body(
-    statement: &Statement,
-    context: &mut JavaFormatContext<'_>,
-    block_options: BlockLayoutOptions,
-) -> FormatResult<(Doc, bool)> {
-    let is_block = matches!(statement, Statement::Block(_));
-    Ok((
-        format_unbraced_statement_with_block_options(statement, context, block_options)?,
-        is_block,
-    ))
+fn statement_body_kind(statement: &Statement) -> StatementBodyKind {
+    match statement {
+        Statement::Block(_) => StatementBodyKind::Block,
+        Statement::IfStatement(_) => StatementBodyKind::If,
+        _ => StatementBodyKind::Other,
+    }
 }
 
 fn statement_rule(statement: &Statement) -> FormatResult<StatementRule<'_>> {
@@ -413,13 +410,14 @@ fn format_if_statement_with_then_options(
             "Java formatter does not support comments before if statement bodies yet",
         )?;
     }
-    let then_block_options = if statement.else_statement().is_some() {
-        BlockLayoutOptions::if_then_with_trailing_clauses()
-    } else {
-        then_options.unwrap_or_else(BlockLayoutOptions::if_then_only_clause)
-    };
-    let (then_statement, then_is_block) =
-        format_statement_body(&then_statement, context, then_block_options)?;
+    let then_statement = bodies::if_then_body(
+        statement_body_kind(&then_statement),
+        statement.else_statement().is_some(),
+        then_options,
+        |block_options| {
+            format_unbraced_statement_with_block_options(&then_statement, context, block_options)
+        },
+    )?;
     let else_statement = statement
         .else_statement()
         .map(|else_statement| {
@@ -430,32 +428,22 @@ fn format_if_statement_with_then_options(
                     "Java formatter does not support comments before else statement bodies yet",
                 )?;
             }
-            let follows_keyword = matches!(
-                else_statement,
-                Statement::Block(_) | Statement::IfStatement(_)
-            );
-            let else_block_options = if matches!(else_statement, Statement::Block(_)) {
-                BlockLayoutOptions::if_final_clause()
-            } else if matches!(else_statement, Statement::IfStatement(_)) {
-                BlockLayoutOptions::if_final_clause()
-            } else {
-                BlockLayoutOptions::default()
-            };
-            Ok((
-                format_unbraced_statement_with_block_options(
-                    &else_statement,
-                    context,
-                    else_block_options,
-                )?,
-                follows_keyword,
-            ))
+            let else_body =
+                bodies::if_else_body(statement_body_kind(&else_statement), |block_options| {
+                    format_unbraced_statement_with_block_options(
+                        &else_statement,
+                        context,
+                        block_options,
+                    )
+                })?;
+            Ok((else_body.doc, else_body.follows_keyword))
         })
         .transpose()?;
 
     Ok(wrap::if_statement(
         format_expression(&condition, context)?,
-        then_statement,
-        then_is_block,
+        then_statement.doc,
+        then_statement.is_block,
         else_statement,
     ))
 }
@@ -477,17 +465,14 @@ pub(super) fn format_while_statement(
             "Java formatter does not support comments before while statement bodies yet",
         )?;
     }
-    let body_is_block = matches!(body, Statement::Block(_));
-    let body = format_unbraced_statement_with_block_options(
-        &body,
-        context,
-        BlockLayoutOptions::control_flow_body(),
-    )?;
+    let body = bodies::loop_body(statement_body_kind(&body), |block_options| {
+        format_unbraced_statement_with_block_options(&body, context, block_options)
+    })?;
 
     Ok(wrap::while_statement(
         format_expression(&condition, context)?,
-        body,
-        body_is_block,
+        body.doc,
+        body.is_block,
     ))
 }
 
@@ -508,16 +493,13 @@ pub(super) fn format_do_statement(
     let condition = statement
         .condition()
         .expect("parser-clean do statement should have a condition");
-    let body_is_block = matches!(body, Statement::Block(_));
-    let body = format_unbraced_statement_with_block_options(
-        &body,
-        context,
-        BlockLayoutOptions::do_body(),
-    )?;
+    let body = bodies::do_body(statement_body_kind(&body), |block_options| {
+        format_unbraced_statement_with_block_options(&body, context, block_options)
+    })?;
 
     Ok(wrap::do_statement(
-        body,
-        body_is_block,
+        body.doc,
+        body.is_block,
         format_expression(&condition, context)?,
     ))
 }
@@ -562,17 +544,14 @@ pub(super) fn format_basic_for_statement(
             "Java formatter does not support comments before for statement bodies yet",
         )?;
     }
-    let body_is_block = matches!(body, Statement::Block(_));
-    let body = format_unbraced_statement_with_block_options(
-        &body,
-        context,
-        BlockLayoutOptions::control_flow_body(),
-    )?;
+    let body = bodies::loop_body(statement_body_kind(&body), |block_options| {
+        format_unbraced_statement_with_block_options(&body, context, block_options)
+    })?;
 
     Ok(wrap::for_statement(
         wrap::basic_for_header(initializer, condition, update),
-        body,
-        body_is_block,
+        body.doc,
+        body.is_block,
     ))
 }
 
@@ -596,20 +575,17 @@ pub(super) fn format_enhanced_for_statement(
             "Java formatter does not support comments before for statement bodies yet",
         )?;
     }
-    let body_is_block = matches!(body, Statement::Block(_));
-    let body = format_unbraced_statement_with_block_options(
-        &body,
-        context,
-        BlockLayoutOptions::control_flow_body(),
-    )?;
+    let body = bodies::loop_body(statement_body_kind(&body), |block_options| {
+        format_unbraced_statement_with_block_options(&body, context, block_options)
+    })?;
 
     Ok(wrap::for_statement(
         wrap::enhanced_for_header(
             format_local_variable_declaration_header(&variable, context)?,
             format_expression(&iterable, context)?,
         ),
-        body,
-        body_is_block,
+        body.doc,
+        body.is_block,
     ))
 }
 
@@ -705,12 +681,7 @@ pub(super) fn format_try_statement(
 
     let catches: Vec<_> = statement.catches().collect();
     let has_finally = statement.finally_clause().is_some();
-    let body_has_trailing = !catches.is_empty() || has_finally;
-    let body_options = if body_has_trailing {
-        BlockLayoutOptions::try_body_with_clauses()
-    } else {
-        BlockLayoutOptions::try_body_without_clauses()
-    };
+    let body_options = bodies::try_body_options(!catches.is_empty() || has_finally);
 
     let catch_count = catches.len();
     let catches = catches
@@ -718,11 +689,7 @@ pub(super) fn format_try_statement(
         .enumerate()
         .map(|(index, catch)| {
             let has_trailing_clause = has_finally || index + 1 < catch_count;
-            let body_options = if has_trailing_clause {
-                BlockLayoutOptions::try_body_with_clauses()
-            } else {
-                BlockLayoutOptions::try_final_clause_body()
-            };
+            let body_options = bodies::catch_body_options(has_trailing_clause);
             format_catch_clause(catch, context, body_options)
         })
         .collect::<FormatResult<Vec<_>>>()?;
@@ -759,12 +726,7 @@ pub(super) fn format_try_with_resources_statement(
 
     let catches: Vec<_> = statement.catches().collect();
     let has_finally = statement.finally_clause().is_some();
-    let body_has_trailing = !catches.is_empty() || has_finally;
-    let body_options = if body_has_trailing {
-        BlockLayoutOptions::try_body_with_clauses()
-    } else {
-        BlockLayoutOptions::try_body_without_clauses()
-    };
+    let body_options = bodies::try_body_options(!catches.is_empty() || has_finally);
 
     let catch_count = catches.len();
     let catches = catches
@@ -772,11 +734,7 @@ pub(super) fn format_try_with_resources_statement(
         .enumerate()
         .map(|(index, catch)| {
             let has_trailing_clause = has_finally || index + 1 < catch_count;
-            let body_options = if has_trailing_clause {
-                BlockLayoutOptions::try_body_with_clauses()
-            } else {
-                BlockLayoutOptions::try_final_clause_body()
-            };
+            let body_options = bodies::catch_body_options(has_trailing_clause);
             format_catch_clause(catch, context, body_options)
         })
         .collect::<FormatResult<Vec<_>>>()?;
@@ -1064,7 +1022,7 @@ pub(super) fn format_finally_clause(
 
     Ok(concat([
         text("finally "),
-        format_block_with_options(&body, context, BlockLayoutOptions::finally_body())?,
+        format_block_with_options(&body, context, bodies::finally_body_options())?,
     ]))
 }
 

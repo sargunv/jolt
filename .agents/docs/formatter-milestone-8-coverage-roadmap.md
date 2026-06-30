@@ -969,10 +969,11 @@ subtrees—see
 ### Bodies and control-flow blocks — in progress
 
 `helpers/bodies.rs` covers statement blocks, constructor bodies, and class,
-interface, and enum bodies with dangling-comment support. `BlockLayoutOptions`
-threads GJF-style empty-block collapse and leading/trailing blank-line
-preservation through `statement_block()`; control-flow rules in
-`rules/statements.rs` pass profile-specific options for if/try/catch/finally.
+interface, and enum bodies with dangling-comment support. It also owns GJF-style
+control-flow body policy: empty-block collapse, leading/trailing blank-line
+preservation, if/else body options, loop/do body options, and try/catch/finally
+trailing-clause options. `rules/statements.rs` keeps syntax traversal, comment
+rejection, and statement-formatting closures.
 
 `layout.rs` uses flat parenthesized conditions and fill-style (`line()`) breaks
 for inline if/while/for/do bodies when within width.

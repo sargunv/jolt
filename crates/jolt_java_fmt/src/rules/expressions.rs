@@ -1776,7 +1776,6 @@ fn format_binary_operand_with_comments(
         Vec::new()
     };
     let trailing = if let Some(next_operator_range) = next_operator_range {
-        
         take_trailing_line_comment_docs_in_range_as_own_line(
             context,
             operand_range,

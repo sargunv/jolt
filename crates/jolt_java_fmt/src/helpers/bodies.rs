@@ -30,7 +30,7 @@ impl Default for BlockLayoutOptions {
 }
 
 impl BlockLayoutOptions {
-    pub(crate) const fn control_flow_body() -> Self {
+    const fn control_flow_body() -> Self {
         Self {
             collapse_if_empty: true,
             preserve_leading_blank_line: true,
@@ -38,7 +38,7 @@ impl BlockLayoutOptions {
         }
     }
 
-    pub(crate) const fn if_then_only_clause() -> Self {
+    const fn if_then_only_clause() -> Self {
         Self {
             collapse_if_empty: Self::control_flow_body().collapse_if_empty,
             preserve_leading_blank_line: Self::control_flow_body().preserve_leading_blank_line,
@@ -46,7 +46,7 @@ impl BlockLayoutOptions {
         }
     }
 
-    pub(crate) const fn if_then_with_trailing_clauses() -> Self {
+    const fn if_then_with_trailing_clauses() -> Self {
         Self {
             collapse_if_empty: false,
             preserve_leading_blank_line: Self::control_flow_body().preserve_leading_blank_line,
@@ -54,7 +54,7 @@ impl BlockLayoutOptions {
         }
     }
 
-    pub(crate) const fn if_final_clause() -> Self {
+    const fn if_final_clause() -> Self {
         Self {
             collapse_if_empty: false,
             preserve_leading_blank_line: Self::control_flow_body().preserve_leading_blank_line,
@@ -62,7 +62,7 @@ impl BlockLayoutOptions {
         }
     }
 
-    pub(crate) const fn do_body() -> Self {
+    const fn do_body() -> Self {
         Self {
             collapse_if_empty: Self::control_flow_body().collapse_if_empty,
             preserve_leading_blank_line: Self::control_flow_body().preserve_leading_blank_line,
@@ -70,7 +70,7 @@ impl BlockLayoutOptions {
         }
     }
 
-    pub(crate) const fn try_body_without_clauses() -> Self {
+    const fn try_body_without_clauses() -> Self {
         Self {
             collapse_if_empty: Self::control_flow_body().collapse_if_empty,
             preserve_leading_blank_line: Self::control_flow_body().preserve_leading_blank_line,
@@ -78,7 +78,7 @@ impl BlockLayoutOptions {
         }
     }
 
-    pub(crate) const fn try_body_with_clauses() -> Self {
+    const fn try_body_with_clauses() -> Self {
         Self {
             collapse_if_empty: false,
             preserve_leading_blank_line: Self::control_flow_body().preserve_leading_blank_line,
@@ -86,7 +86,7 @@ impl BlockLayoutOptions {
         }
     }
 
-    pub(crate) const fn try_final_clause_body() -> Self {
+    const fn try_final_clause_body() -> Self {
         Self {
             collapse_if_empty: false,
             preserve_leading_blank_line: Self::control_flow_body().preserve_leading_blank_line,
@@ -94,13 +94,114 @@ impl BlockLayoutOptions {
         }
     }
 
-    pub(crate) const fn finally_body() -> Self {
+    const fn finally_body() -> Self {
         Self {
             collapse_if_empty: false,
             preserve_leading_blank_line: Self::control_flow_body().preserve_leading_blank_line,
             preserve_trailing_blank_line: false,
         }
     }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum StatementBodyKind {
+    Block,
+    If,
+    Other,
+}
+
+impl StatementBodyKind {
+    const fn is_block(self) -> bool {
+        matches!(self, Self::Block)
+    }
+
+    const fn follows_control_keyword(self) -> bool {
+        matches!(self, Self::Block | Self::If)
+    }
+}
+
+pub(crate) struct StatementBodyLayout {
+    pub(crate) doc: Doc,
+    pub(crate) is_block: bool,
+}
+
+pub(crate) struct ElseBodyLayout {
+    pub(crate) doc: Doc,
+    pub(crate) follows_keyword: bool,
+}
+
+pub(crate) fn statement_body(
+    kind: StatementBodyKind,
+    block_options: BlockLayoutOptions,
+    format_body: impl FnOnce(BlockLayoutOptions) -> FormatResult<Doc>,
+) -> FormatResult<StatementBodyLayout> {
+    Ok(StatementBodyLayout {
+        doc: format_body(block_options)?,
+        is_block: kind.is_block(),
+    })
+}
+
+pub(crate) fn if_then_body(
+    kind: StatementBodyKind,
+    has_else: bool,
+    inherited_only_clause_options: Option<BlockLayoutOptions>,
+    format_body: impl FnOnce(BlockLayoutOptions) -> FormatResult<Doc>,
+) -> FormatResult<StatementBodyLayout> {
+    let block_options = if has_else {
+        BlockLayoutOptions::if_then_with_trailing_clauses()
+    } else {
+        inherited_only_clause_options.unwrap_or_else(BlockLayoutOptions::if_then_only_clause)
+    };
+    statement_body(kind, block_options, format_body)
+}
+
+pub(crate) fn if_else_body(
+    kind: StatementBodyKind,
+    format_body: impl FnOnce(BlockLayoutOptions) -> FormatResult<Doc>,
+) -> FormatResult<ElseBodyLayout> {
+    let block_options = if kind.follows_control_keyword() {
+        BlockLayoutOptions::if_final_clause()
+    } else {
+        BlockLayoutOptions::default()
+    };
+    Ok(ElseBodyLayout {
+        doc: format_body(block_options)?,
+        follows_keyword: kind.follows_control_keyword(),
+    })
+}
+
+pub(crate) fn loop_body(
+    kind: StatementBodyKind,
+    format_body: impl FnOnce(BlockLayoutOptions) -> FormatResult<Doc>,
+) -> FormatResult<StatementBodyLayout> {
+    statement_body(kind, BlockLayoutOptions::control_flow_body(), format_body)
+}
+
+pub(crate) fn do_body(
+    kind: StatementBodyKind,
+    format_body: impl FnOnce(BlockLayoutOptions) -> FormatResult<Doc>,
+) -> FormatResult<StatementBodyLayout> {
+    statement_body(kind, BlockLayoutOptions::do_body(), format_body)
+}
+
+pub(crate) fn try_body_options(has_trailing_clauses: bool) -> BlockLayoutOptions {
+    if has_trailing_clauses {
+        BlockLayoutOptions::try_body_with_clauses()
+    } else {
+        BlockLayoutOptions::try_body_without_clauses()
+    }
+}
+
+pub(crate) fn catch_body_options(has_trailing_clauses: bool) -> BlockLayoutOptions {
+    if has_trailing_clauses {
+        BlockLayoutOptions::try_body_with_clauses()
+    } else {
+        BlockLayoutOptions::try_final_clause_body()
+    }
+}
+
+pub(crate) fn finally_body_options() -> BlockLayoutOptions {
+    BlockLayoutOptions::finally_body()
 }
 
 pub(crate) struct TypeBodyLayout {
