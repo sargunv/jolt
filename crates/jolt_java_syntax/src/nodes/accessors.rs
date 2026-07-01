@@ -17,29 +17,29 @@ use super::{
     FieldAccessExpression, FieldDeclaration, FinallyClause, ForInitializer, ForStatement,
     ForUpdate, FormalParameter, FormalParameterList, FormalParameterListEntry, Guard, IfStatement,
     ImplementsClause, ImportDeclaration, ImportKind, InstanceInitializer, InstanceofExpression,
-    InterfaceBody, InterfaceBodyMember, InterfaceDeclaration, IntersectionType, JavaFamily,
-    JavaNode, JavaSyntaxKind, JavaSyntaxToken, LabeledStatement, LambdaExpression, LambdaParameter,
-    LambdaParameterList, LiteralExpression, LocalClassOrInterfaceDeclaration,
-    LocalVariableDeclaration, MatchAllPattern, MemberChain, MemberChainSuffix, MethodDeclaration,
-    MethodInvocationExpression, MethodReferenceExpression, ModifierList, ModuleDeclaration,
-    ModuleDirective, ModuleDirectiveNode, ModuleDirectiveRole, ModuleNameListEntry, NameExpression,
-    NameSegment, NameSyntax, ObjectCreationExpression, OpensDirective, PackageDeclaration,
-    ParenthesizedExpression, Pattern, PermitsClause, PermitsClauseEntry, PostfixExpression,
-    PrimitiveType, ProvidesDirective, RecordBody, RecordComponent, RecordComponentList,
-    RecordComponentListEntry, RecordDeclaration, RecordPattern, RequiresDirective, Resource,
-    ResourceList, ResourceListEntry, ResourceSpecification, ReturnStatement, Statement,
-    StatementBody, StatementExpressionEntry, StatementExpressionList, StaticInitializer,
-    SuperExpression, SwitchBlock, SwitchBlockEntry, SwitchBlockStatementGroup, SwitchExpression,
-    SwitchLabel, SwitchLabelCaseEntry, SwitchLabelCaseItem, SwitchRule, SwitchStatement,
-    SynchronizedStatement, ThisExpression, ThrowStatement, ThrowsClause, ThrowsClauseEntry,
-    TryStatement, TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList,
-    TypeArgumentListEntry, TypeBoundList, TypeClauseEntry, TypeDeclaration, TypeParameter,
-    TypeParameterList, TypeParameterListEntry, TypePattern, UnaryExpression, UnionType,
-    UnionTypeEntry, UsesDirective, VariableAccess, VariableDeclarator, VariableDeclaratorEntry,
-    VariableDeclaratorList, VariableInitializer, VariableInitializerValue, VoidType,
-    WhileStatement, WildcardBound, WildcardType, YieldStatement, child, child_family, child_token,
-    child_token_in, children, children_family, children_tokens_matching, nth_child_family,
-    nth_child_token, starts_after_blank_line, tokens,
+    InterfaceBody, InterfaceBodyMember, InterfaceDeclaration, IntersectionType,
+    IntersectionTypeEntry, JavaFamily, JavaNode, JavaSyntaxKind, JavaSyntaxToken, LabeledStatement,
+    LambdaExpression, LambdaParameter, LambdaParameterList, LiteralExpression,
+    LocalClassOrInterfaceDeclaration, LocalVariableDeclaration, MatchAllPattern, MemberChain,
+    MemberChainSuffix, MethodDeclaration, MethodInvocationExpression, MethodReferenceExpression,
+    ModifierList, ModuleDeclaration, ModuleDirective, ModuleDirectiveNode, ModuleDirectiveRole,
+    ModuleNameListEntry, NameExpression, NameSegment, NameSyntax, ObjectCreationExpression,
+    OpensDirective, PackageDeclaration, ParenthesizedExpression, Pattern, PermitsClause,
+    PermitsClauseEntry, PostfixExpression, PrimitiveType, ProvidesDirective, RecordBody,
+    RecordComponent, RecordComponentList, RecordComponentListEntry, RecordDeclaration,
+    RecordPattern, RequiresDirective, Resource, ResourceList, ResourceListEntry,
+    ResourceSpecification, ReturnStatement, Statement, StatementBody, StatementExpressionEntry,
+    StatementExpressionList, StaticInitializer, SuperExpression, SwitchBlock, SwitchBlockEntry,
+    SwitchBlockStatementGroup, SwitchExpression, SwitchLabel, SwitchLabelCaseEntry,
+    SwitchLabelCaseItem, SwitchRule, SwitchStatement, SynchronizedStatement, ThisExpression,
+    ThrowStatement, ThrowsClause, ThrowsClauseEntry, TryStatement, TryWithResourcesStatement, Type,
+    TypeArgument, TypeArgumentList, TypeArgumentListEntry, TypeBoundList, TypeClauseEntry,
+    TypeDeclaration, TypeParameter, TypeParameterList, TypeParameterListEntry, TypePattern,
+    UnaryExpression, UnionType, UnionTypeEntry, UsesDirective, VariableAccess, VariableDeclarator,
+    VariableDeclaratorEntry, VariableDeclaratorList, VariableInitializer, VariableInitializerValue,
+    VoidType, WhileStatement, WildcardBound, WildcardType, YieldStatement, child, child_family,
+    child_token, child_token_in, children, children_family, children_tokens_matching,
+    nth_child_family, nth_child_token, starts_after_blank_line, tokens,
 };
 use jolt_syntax::{SyntaxElement, TriviaKind};
 
@@ -511,6 +511,22 @@ impl TypeParameter {
 impl TypeBoundList {
     pub fn bounds(&self) -> impl Iterator<Item = Type> + '_ {
         children_family(&self.syntax)
+    }
+
+    pub fn entries(&self) -> impl Iterator<Item = IntersectionTypeEntry> {
+        child::<IntersectionType>(&self.syntax)
+            .map_or_else(
+                || {
+                    children_family(&self.syntax)
+                        .map(|ty| IntersectionTypeEntry {
+                            ty,
+                            separator: None,
+                        })
+                        .collect()
+                },
+                |intersection| intersection.entries().collect::<Vec<_>>(),
+            )
+            .into_iter()
     }
 }
 
@@ -2099,6 +2115,10 @@ impl IntersectionType {
     pub fn types(&self) -> impl Iterator<Item = Type> + '_ {
         children_family(&self.syntax)
     }
+
+    pub fn entries(&self) -> impl Iterator<Item = IntersectionTypeEntry> {
+        intersection_type_entries(&self.syntax)
+    }
 }
 
 impl Annotation {
@@ -3676,6 +3696,46 @@ fn type_clause_entries(syntax: &super::JavaSyntaxNode) -> std::vec::IntoIter<Typ
 
     if let Some(ty) = pending_type {
         entries.push(TypeClauseEntry { ty, comma: None });
+    }
+
+    entries.into_iter()
+}
+
+fn intersection_type_entries(
+    syntax: &super::JavaSyntaxNode,
+) -> std::vec::IntoIter<IntersectionTypeEntry> {
+    let mut entries = Vec::new();
+    let mut pending_type = None;
+
+    for element in syntax.children_with_tokens() {
+        match element {
+            SyntaxElement::Node(node) => {
+                if let Some(ty) = Type::cast(node)
+                    && let Some(previous) = pending_type.replace(ty)
+                {
+                    entries.push(IntersectionTypeEntry {
+                        ty: previous,
+                        separator: None,
+                    });
+                }
+            }
+            SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Amp => {
+                if let Some(ty) = pending_type.take() {
+                    entries.push(IntersectionTypeEntry {
+                        ty,
+                        separator: Some(JavaSyntaxToken { syntax: token }),
+                    });
+                }
+            }
+            SyntaxElement::Token(_) => {}
+        }
+    }
+
+    if let Some(ty) = pending_type {
+        entries.push(IntersectionTypeEntry {
+            ty,
+            separator: None,
+        });
     }
 
     entries.into_iter()

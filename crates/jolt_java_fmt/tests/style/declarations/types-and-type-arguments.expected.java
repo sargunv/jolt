@@ -1,5 +1,7 @@
 class Types< /* params */
-  @Marker T extends Number & Comparable<T>, // first
+  @Marker T extends Number
+  & // numeric
+  Comparable<T>, // first
   U
 > {
   java.util.@Marker List<@Marker String> @Marker [] names;

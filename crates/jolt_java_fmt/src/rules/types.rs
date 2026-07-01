@@ -3,7 +3,7 @@ use jolt_java_syntax::{
     Annotation, ArrayDimension, ArrayDimensions, ClassType, IntersectionType, JavaComment,
     JavaSyntaxToken, NameSyntax, PrimitiveType, Type, TypeArgument, TypeArgumentList,
     TypeArgumentListEntry, TypeBoundList, TypeParameter, TypeParameterList, TypeParameterListEntry,
-    UnionType, VoidType, WildcardBound, WildcardType,
+    UnionType, UnionTypeEntry, VoidType, WildcardBound, WildcardType,
 };
 
 use crate::helpers::comments::{
@@ -178,17 +178,11 @@ fn format_type_name(name: &NameSyntax, leading_comments: LeadingComments) -> Doc
 }
 
 fn format_intersection_type(ty: &IntersectionType) -> Doc {
-    group(jolt_fmt_ir::join(
-        text(" & "),
-        ty.types().map(|ty| format_type(&ty)),
-    ))
+    format_intersection_entries(ty.entries().collect())
 }
 
 fn format_union_type(ty: &UnionType) -> Doc {
-    group(jolt_fmt_ir::join(
-        text(" | "),
-        ty.types().map(|ty| format_type(&ty)),
-    ))
+    format_union_entries(ty.entries().collect())
 }
 
 fn format_empty_type_parameter_list(parameters: &TypeParameterList) -> Doc {
@@ -482,10 +476,77 @@ fn format_type_parameter(parameter: &TypeParameter) -> Doc {
 }
 
 fn format_type_bounds(bounds: &TypeBoundList) -> Doc {
-    group(jolt_fmt_ir::join(
-        text(" & "),
-        bounds.bounds().map(|bound| format_type(&bound)),
-    ))
+    format_intersection_entries(bounds.entries().collect())
+}
+
+fn format_intersection_entries(entries: Vec<jolt_java_syntax::IntersectionTypeEntry>) -> Doc {
+    format_type_operator_entries(
+        entries
+            .into_iter()
+            .map(|entry| (entry.ty, entry.separator))
+            .collect(),
+        "&",
+    )
+}
+
+fn format_union_entries(entries: Vec<UnionTypeEntry>) -> Doc {
+    format_type_operator_entries(
+        entries
+            .into_iter()
+            .map(|entry| (entry.ty, entry.separator))
+            .collect(),
+        "|",
+    )
+}
+
+fn format_type_operator_entries(
+    entries: Vec<(Type, Option<JavaSyntaxToken>)>,
+    fallback_operator: &'static str,
+) -> Doc {
+    let mut docs = Vec::new();
+    let entries_len = entries.len();
+
+    for (index, (ty, separator)) in entries.into_iter().enumerate() {
+        docs.push(format_type(&ty));
+        if let Some(separator) = separator {
+            docs.push(format_type_operator_separator(
+                Some(&separator),
+                fallback_operator,
+            ));
+        } else if index + 1 < entries_len {
+            docs.push(format_type_operator_separator(None, fallback_operator));
+        }
+    }
+
+    group(concat(docs))
+}
+
+fn format_type_operator_separator(
+    separator: Option<&JavaSyntaxToken>,
+    fallback_operator: &'static str,
+) -> Doc {
+    concat([
+        line(),
+        separator.map_or_else(
+            || concat([text(fallback_operator), text(" ")]),
+            |separator| {
+                concat([
+                    format_leading_comments(separator),
+                    text(separator.text().to_owned()),
+                    format_trailing_comments_before_line_break(separator),
+                    if separator
+                        .trailing_comments()
+                        .iter()
+                        .any(comment_forces_line)
+                    {
+                        hard_line()
+                    } else {
+                        text(" ")
+                    },
+                ])
+            },
+        ),
+    ])
 }
 
 fn format_type_argument(argument: &TypeArgument) -> Doc {

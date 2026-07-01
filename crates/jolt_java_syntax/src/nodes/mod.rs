@@ -913,6 +913,12 @@ pub struct UnionTypeEntry {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct IntersectionTypeEntry {
+    pub ty: Type,
+    pub separator: Option<JavaSyntaxToken>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TypeArgumentListEntry {
     pub argument: TypeArgument,
     pub comma: Option<JavaSyntaxToken>,

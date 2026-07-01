@@ -1557,6 +1557,51 @@ fn type_parameter_and_argument_lists_expose_entries_with_commas_and_angles() {
 }
 
 #[test]
+fn type_intersections_expose_entries_with_ampersands() {
+    let syntax = parse_clean(
+        r"
+                class Accessors<T extends Number & // numeric
+                    Comparable<T>> {
+                    Object value(Object value) {
+                        return (Runnable & // runnable
+                            AutoCloseable) value;
+                    }
+                }
+            ",
+    );
+
+    let parameter = descendants::<TypeParameter>(&syntax)
+        .into_iter()
+        .next()
+        .expect("type parameter");
+    let bounds = parameter.bounds().expect("type bounds");
+    let bound_entries = bounds.entries().collect::<Vec<_>>();
+    assert_eq!(bound_entries.len(), 2);
+    assert_eq!(bound_entries[0].ty.source_text().trim(), "Number");
+    assert_eq!(
+        semicolon_trailing_comment(bound_entries[0].separator.clone()),
+        "// numeric"
+    );
+    assert_eq!(bound_entries[1].ty.source_text().trim(), "Comparable<T>");
+
+    let intersection = descendants::<IntersectionType>(&syntax)
+        .into_iter()
+        .find(|intersection| intersection.source_text().contains("Runnable"))
+        .expect("intersection cast type");
+    let intersection_entries = intersection.entries().collect::<Vec<_>>();
+    assert_eq!(intersection_entries.len(), 2);
+    assert_eq!(intersection_entries[0].ty.source_text().trim(), "Runnable");
+    assert_eq!(
+        semicolon_trailing_comment(intersection_entries[0].separator.clone()),
+        "// runnable"
+    );
+    assert_eq!(
+        intersection_entries[1].ty.source_text().trim(),
+        "AutoCloseable"
+    );
+}
+
+#[test]
 fn type_header_clauses_expose_entries_with_commas_and_keywords() {
     let syntax = parse_clean(
         r"
