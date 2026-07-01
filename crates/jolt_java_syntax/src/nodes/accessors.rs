@@ -4,20 +4,20 @@ use super::{
     AnnotationElementValuePair, AnnotationInterfaceBody, AnnotationInterfaceBodyMember,
     AnnotationInterfaceDeclaration, AnyJavaNode, ArgumentList, ArgumentListEntry,
     ArrayAccessExpression, ArrayCreationExpression, ArrayDimension, ArrayDimensions,
-    ArrayInitializer, ArrayType, AssertStatement, AssignmentExpression, BasicForStatement,
-    BinaryExpression, Block, BlockItem, BlockStatement, BreakStatement, CaseConstant, CasePattern,
-    CastExpression, CatchClause, CatchParameter, CatchTypeList, ClassBody, ClassBodyDeclaration,
-    ClassBodyMember, ClassDeclaration, ClassLiteralExpression, ClassType, ClassTypeSegment,
-    CompactConstructorDeclaration, CompilationUnit, CompilationUnitItem, ComponentPattern,
-    ConditionalExpression, ConstructorBody, ConstructorDeclaration, ConstructorInvocation,
-    ContinueStatement, DefaultValue, DimExpression, DoStatement, EmptyDeclaration,
-    EnhancedForStatement, EnumBody, EnumConstant, EnumConstantList, EnumDeclaration,
-    ExportsDirective, Expression, ExpressionParentRole, ExpressionStatement, ExtendsClause,
-    FieldAccessExpression, FieldDeclaration, FinallyClause, ForInitializer, ForStatement,
-    ForUpdate, FormalParameter, FormalParameterList, Guard, IfStatement, ImplementsClause,
-    ImportDeclaration, ImportKind, InstanceInitializer, InstanceofExpression, InterfaceBody,
-    InterfaceBodyMember, InterfaceDeclaration, IntersectionType, JavaFamily, JavaNode,
-    JavaSyntaxKind, JavaSyntaxToken, LabeledStatement, LambdaExpression, LambdaParameter,
+    ArrayInitializer, ArrayInitializerEntry, ArrayType, AssertStatement, AssignmentExpression,
+    BasicForStatement, BinaryExpression, Block, BlockItem, BlockStatement, BreakStatement,
+    CaseConstant, CasePattern, CastExpression, CatchClause, CatchParameter, CatchTypeList,
+    ClassBody, ClassBodyDeclaration, ClassBodyMember, ClassDeclaration, ClassLiteralExpression,
+    ClassType, ClassTypeSegment, CompactConstructorDeclaration, CompilationUnit,
+    CompilationUnitItem, ComponentPattern, ConditionalExpression, ConstructorBody,
+    ConstructorDeclaration, ConstructorInvocation, ContinueStatement, DefaultValue, DimExpression,
+    DoStatement, EmptyDeclaration, EnhancedForStatement, EnumBody, EnumConstant, EnumConstantList,
+    EnumDeclaration, ExportsDirective, Expression, ExpressionParentRole, ExpressionStatement,
+    ExtendsClause, FieldAccessExpression, FieldDeclaration, FinallyClause, ForInitializer,
+    ForStatement, ForUpdate, FormalParameter, FormalParameterList, Guard, IfStatement,
+    ImplementsClause, ImportDeclaration, ImportKind, InstanceInitializer, InstanceofExpression,
+    InterfaceBody, InterfaceBodyMember, InterfaceDeclaration, IntersectionType, JavaFamily,
+    JavaNode, JavaSyntaxKind, JavaSyntaxToken, LabeledStatement, LambdaExpression, LambdaParameter,
     LambdaParameterList, LiteralExpression, LocalClassOrInterfaceDeclaration,
     LocalVariableDeclaration, MatchAllPattern, MemberChain, MemberChainSuffix, MethodDeclaration,
     MethodInvocationExpression, MethodReferenceExpression, ModifierList, ModuleDeclaration,
@@ -2002,8 +2002,53 @@ impl DimExpression {
 }
 
 impl ArrayInitializer {
+    #[must_use]
+    pub fn open_brace(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LBrace)
+    }
+
+    #[must_use]
+    pub fn close_brace(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RBrace)
+    }
+
     pub fn values(&self) -> impl Iterator<Item = VariableInitializerValue> + '_ {
         children_family(&self.syntax)
+    }
+
+    pub fn entries(&self) -> impl Iterator<Item = ArrayInitializerEntry> {
+        let mut entries = Vec::new();
+        let mut pending_value = None;
+
+        for element in self.syntax.children_with_tokens() {
+            match element {
+                SyntaxElement::Node(node) => {
+                    if let Some(value) = VariableInitializerValue::cast(node)
+                        && let Some(previous) = pending_value.replace(value)
+                    {
+                        entries.push(ArrayInitializerEntry {
+                            value: previous,
+                            comma: None,
+                        });
+                    }
+                }
+                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
+                    if let Some(value) = pending_value.take() {
+                        entries.push(ArrayInitializerEntry {
+                            value,
+                            comma: Some(JavaSyntaxToken { syntax: token }),
+                        });
+                    }
+                }
+                SyntaxElement::Token(_) => {}
+            }
+        }
+
+        if let Some(value) = pending_value {
+            entries.push(ArrayInitializerEntry { value, comma: None });
+        }
+
+        entries.into_iter()
     }
 }
 

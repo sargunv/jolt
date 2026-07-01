@@ -877,6 +877,12 @@ pub struct ResourceListEntry {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ArrayInitializerEntry {
+    pub value: VariableInitializerValue,
+    pub comma: Option<JavaSyntaxToken>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct UnionTypeEntry {
     pub ty: Type,
     pub separator: Option<JavaSyntaxToken>,

@@ -669,6 +669,52 @@ fn resource_lists_without_trailing_semicolon_expose_no_optional_separator() {
 }
 
 #[test]
+fn array_initializers_expose_entries_with_commas_and_braces() {
+    let syntax = parse_clean(
+        r"
+                class Accessors {
+                    int[] values = {/* start */ 1, // one
+                        2, /* two */ 3, // trailing
+                    };
+                }
+            ",
+    );
+    let initializer = descendants::<ArrayInitializer>(&syntax)
+        .into_iter()
+        .next()
+        .expect("array initializer");
+    let entries = initializer.entries().collect::<Vec<_>>();
+
+    assert_eq!(entries.len(), 3);
+    assert_eq!(
+        initializer
+            .open_brace()
+            .expect("initializer open brace")
+            .trailing_comments()[0]
+            .text(),
+        "/* start */"
+    );
+    assert_eq!(
+        semicolon_trailing_comment(entries[0].comma.clone()),
+        "// one"
+    );
+    assert_eq!(
+        entries[1]
+            .comma
+            .as_ref()
+            .expect("second comma")
+            .trailing_comments()[0]
+            .text(),
+        "/* two */"
+    );
+    assert_eq!(
+        semicolon_trailing_comment(entries[2].comma.clone()),
+        "// trailing"
+    );
+    assert!(initializer.close_brace().is_some());
+}
+
+#[test]
 fn import_declarations_expose_structured_names() {
     let syntax = parse_clean(
         r"

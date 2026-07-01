@@ -11,6 +11,14 @@ class Example {
     return new int[] {1, 2, 3};
   }
 
+  int[] commentedNumbers() {
+    return new int[] {
+      /* start */
+      1, // one
+      2, /* two */ 3 /* three */, // trailing
+    };
+  }
+
   String[] labels() {
     return new String[] {
       "a very long label that forces the initializer to break across lines",
