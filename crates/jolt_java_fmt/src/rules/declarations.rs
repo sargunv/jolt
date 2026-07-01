@@ -6,9 +6,9 @@ use jolt_java_syntax::{
     BlockStatement, ClassBody, ClassBodyMember, ClassDeclaration, ConstructorInvocation,
     EnumConstant, EnumDeclaration, ExtendsClause, FormalParameterList, FormalParameterListEntry,
     ImplementsClause, InterfaceBody, InterfaceBodyMember, InterfaceDeclaration, JavaComment,
-    JavaSyntaxToken, MethodDeclaration, ModifierList, PermitsClause, RecordBody,
-    RecordComponentList, RecordComponentListEntry, RecordDeclaration, ThrowsClause,
-    ThrowsClauseEntry, Type, TypeDeclaration,
+    JavaSyntaxToken, MethodDeclaration, ModifierList, PermitsClause, PermitsClauseEntry,
+    RecordBody, RecordComponentList, RecordComponentListEntry, RecordDeclaration, ThrowsClause,
+    ThrowsClauseEntry, Type, TypeClauseEntry, TypeDeclaration,
 };
 
 use crate::helpers::blocks::{BodyItem, braced_body, join_body_items};
@@ -682,83 +682,238 @@ fn format_record_components(components: Option<RecordComponentList>) -> Doc {
 }
 
 fn format_extends_clause(clause: Option<ExtendsClause>) -> Doc {
-    format_type_list_clause(
+    let Some(clause) = clause else {
+        return jolt_fmt_ir::nil();
+    };
+    let keyword = clause.keyword();
+    format_type_header_clause(
+        keyword.as_ref(),
         "extends",
-        clause.map(|clause| clause.types().collect::<Vec<_>>()),
+        clause.entries().collect::<Vec<_>>(),
     )
 }
 
 fn format_implements_clause(clause: Option<ImplementsClause>) -> Doc {
-    format_type_list_clause(
+    let Some(clause) = clause else {
+        return jolt_fmt_ir::nil();
+    };
+    let keyword = clause.keyword();
+    format_type_header_clause(
+        keyword.as_ref(),
         "implements",
-        clause.map(|clause| clause.types().collect::<Vec<_>>()),
+        clause.entries().collect::<Vec<_>>(),
     )
 }
 
 fn format_permits_clause(clause: Option<PermitsClause>) -> Doc {
-    format_type_clause(
+    let Some(clause) = clause else {
+        return jolt_fmt_ir::nil();
+    };
+    let keyword = clause.keyword();
+    format_permits_header_clause(
+        keyword.as_ref(),
         "permits",
-        clause.map(|clause| {
-            clause
-                .names()
-                .map(|name| format_name(&name))
-                .collect::<Vec<_>>()
-        }),
+        clause.entries().collect::<Vec<_>>(),
     )
 }
 
-fn format_type_list_clause(keyword: &'static str, items: Option<Vec<Type>>) -> Doc {
-    let Some(items) = items else {
-        return jolt_fmt_ir::nil();
-    };
-    if items.is_empty() {
+fn format_type_header_clause(
+    keyword: Option<&JavaSyntaxToken>,
+    fallback: &'static str,
+    entries: Vec<TypeClauseEntry>,
+) -> Doc {
+    if entries.is_empty() {
         return jolt_fmt_ir::nil();
     }
 
-    if items.iter().any(type_has_leading_comments) {
-        let items = items
-            .into_iter()
-            .map(|ty| {
-                concat([
-                    format_construct_leading_comments(&ty.tokens()),
-                    format_type_without_leading_comments(&ty),
-                ])
-            })
-            .collect::<Vec<_>>();
-        return concat([
-            jolt_fmt_ir::indent(line()),
-            text(keyword),
+    let should_break = header_keyword_forces_line(keyword)
+        || entries.iter().any(|entry| {
+            type_has_leading_comments(&entry.ty)
+                || entry
+                    .comma
+                    .as_ref()
+                    .is_some_and(separator_token_has_comments)
+        });
+
+    if should_break {
+        return jolt_fmt_ir::indent(concat([
+            line(),
+            format_header_clause_keyword(keyword, fallback),
             jolt_fmt_ir::indent(concat([
-                line(),
-                join_docs(items, &concat([text(","), line()])),
+                format_header_clause_keyword_break(keyword),
+                format_type_clause_entries_broken(entries),
             ])),
-        ]);
+        ]));
     }
 
-    format_type_clause(
-        keyword,
-        Some(items.into_iter().map(|ty| format_type(&ty)).collect()),
+    jolt_fmt_ir::indent(concat([
+        line(),
+        format_header_clause_keyword(keyword, fallback),
+        text(" "),
+        format_type_clause_entries_inline(entries),
+    ]))
+}
+
+fn format_permits_header_clause(
+    keyword: Option<&JavaSyntaxToken>,
+    fallback: &'static str,
+    entries: Vec<PermitsClauseEntry>,
+) -> Doc {
+    if entries.is_empty() {
+        return jolt_fmt_ir::nil();
+    }
+
+    let should_break = header_keyword_forces_line(keyword)
+        || entries.iter().any(|entry| {
+            name_has_leading_comments(&entry.name)
+                || entry
+                    .comma
+                    .as_ref()
+                    .is_some_and(separator_token_has_comments)
+        });
+
+    if should_break {
+        return jolt_fmt_ir::indent(concat([
+            line(),
+            format_header_clause_keyword(keyword, fallback),
+            jolt_fmt_ir::indent(concat([
+                format_header_clause_keyword_break(keyword),
+                format_permits_clause_entries_broken(entries),
+            ])),
+        ]));
+    }
+
+    jolt_fmt_ir::indent(concat([
+        line(),
+        format_header_clause_keyword(keyword, fallback),
+        text(" "),
+        format_permits_clause_entries_inline(entries),
+    ]))
+}
+
+fn format_header_clause_keyword(keyword: Option<&JavaSyntaxToken>, fallback: &'static str) -> Doc {
+    keyword.map_or_else(
+        || text(fallback),
+        |keyword| {
+            concat([
+                format_leading_comments(keyword),
+                text(keyword.text().to_owned()),
+                format_trailing_comments_before_line_break(keyword),
+            ])
+        },
     )
 }
 
-fn format_type_clause(keyword: &'static str, items: Option<Vec<Doc>>) -> Doc {
-    let Some(items) = items else {
-        return jolt_fmt_ir::nil();
-    };
-    if items.is_empty() {
-        return jolt_fmt_ir::nil();
+fn format_header_clause_keyword_break(keyword: Option<&JavaSyntaxToken>) -> Doc {
+    if header_keyword_forces_line(keyword) {
+        hard_line()
+    } else {
+        line()
+    }
+}
+
+fn header_keyword_forces_line(keyword: Option<&JavaSyntaxToken>) -> bool {
+    keyword.is_some_and(|keyword| keyword.trailing_comments().iter().any(comment_forces_line))
+}
+
+fn format_type_clause_entries_inline(entries: Vec<TypeClauseEntry>) -> Doc {
+    let mut docs = Vec::new();
+
+    for entry in entries {
+        docs.push(format_type(&entry.ty));
+        if let Some(comma) = entry.comma {
+            docs.push(format_header_clause_separator_inline(&comma));
+        }
     }
 
+    concat(docs)
+}
+
+fn format_type_clause_entries_broken(entries: Vec<TypeClauseEntry>) -> Doc {
+    let mut docs = Vec::new();
+    let entries_len = entries.len();
+
+    for (index, entry) in entries.into_iter().enumerate() {
+        docs.push(concat([
+            format_construct_leading_comments(&entry.ty.tokens()),
+            format_type_without_leading_comments(&entry.ty),
+        ]));
+        if let Some(comma) = entry.comma {
+            docs.push(format_header_clause_separator_broken(&comma));
+        } else if index + 1 < entries_len {
+            docs.push(line());
+        }
+    }
+
+    concat(docs)
+}
+
+fn format_permits_clause_entries_inline(entries: Vec<PermitsClauseEntry>) -> Doc {
+    let mut docs = Vec::new();
+
+    for entry in entries {
+        docs.push(format_name(&entry.name));
+        if let Some(comma) = entry.comma {
+            docs.push(format_header_clause_separator_inline(&comma));
+        }
+    }
+
+    concat(docs)
+}
+
+fn format_permits_clause_entries_broken(entries: Vec<PermitsClauseEntry>) -> Doc {
+    let mut docs = Vec::new();
+    let entries_len = entries.len();
+
+    for (index, entry) in entries.into_iter().enumerate() {
+        docs.push(concat([
+            format_construct_leading_comments(&entry.name.tokens()),
+            format_name(&entry.name),
+        ]));
+        if let Some(comma) = entry.comma {
+            docs.push(format_header_clause_separator_broken(&comma));
+        } else if index + 1 < entries_len {
+            docs.push(line());
+        }
+    }
+
+    concat(docs)
+}
+
+fn format_header_clause_separator_inline(comma: &JavaSyntaxToken) -> Doc {
     concat([
-        jolt_fmt_ir::indent(line()),
-        text(keyword),
+        format_leading_comments(comma),
+        text(","),
+        format_trailing_comments_before_line_break(comma),
         text(" "),
-        jolt_fmt_ir::join(text(", "), items),
     ])
+}
+
+fn format_header_clause_separator_broken(comma: &JavaSyntaxToken) -> Doc {
+    concat([
+        format_leading_comments(comma),
+        text(","),
+        format_trailing_comments_before_line_break(comma),
+        if comma.trailing_comments().iter().any(comment_forces_line) {
+            hard_line()
+        } else {
+            line()
+        },
+    ])
+}
+
+fn separator_token_has_comments(token: &JavaSyntaxToken) -> bool {
+    !token.leading_comments().is_empty() || !token.trailing_comments().is_empty()
 }
 
 fn type_has_leading_comments(ty: &Type) -> bool {
     ty.tokens()
+        .first()
+        .is_some_and(|token| !token.leading_comments().is_empty())
+}
+
+fn name_has_leading_comments(name: &jolt_java_syntax::NameSyntax) -> bool {
+    name.tokens()
         .first()
         .is_some_and(|token| !token.leading_comments().is_empty())
 }

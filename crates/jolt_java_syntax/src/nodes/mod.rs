@@ -931,6 +931,18 @@ pub struct ThrowsClauseEntry {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TypeClauseEntry {
+    pub ty: Type,
+    pub comma: Option<JavaSyntaxToken>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PermitsClauseEntry {
+    pub name: NameSyntax,
+    pub comma: Option<JavaSyntaxToken>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ClassTypeSegment {
     pub annotations: Vec<Annotation>,
     pub name: NameSyntax,

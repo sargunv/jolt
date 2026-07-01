@@ -1,7 +1,11 @@
 class Derived<T>
-  extends base.@Marker Parent<String>
-  implements First, pkg.Second
-  permits Child, other.Child {
+  extends /* base */ base.@Marker Parent<String>
+  implements
+    First, // first
+    pkg.Second
+  permits
+    Child, // child
+    other.Child {
 }
 
 interface Shape extends Drawable, Scalable permits Circle, Square {

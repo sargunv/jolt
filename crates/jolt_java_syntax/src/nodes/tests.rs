@@ -1458,6 +1458,63 @@ fn type_parameter_and_argument_lists_expose_entries_with_commas_and_angles() {
 }
 
 #[test]
+fn type_header_clauses_expose_entries_with_commas_and_keywords() {
+    let syntax = parse_clean(
+        r"
+                class Derived extends /* base */ Base implements First, // first
+                    Second permits Child, // child
+                    Other {
+                }
+            ",
+    );
+    let class = descendants::<ClassDeclaration>(&syntax)
+        .into_iter()
+        .next()
+        .expect("class declaration");
+
+    let extends = class.extends_clause().expect("extends clause");
+    assert_eq!(
+        extends
+            .keyword()
+            .expect("extends keyword")
+            .trailing_comments()[0]
+            .text(),
+        "/* base */"
+    );
+    let extends_entries = extends.entries().collect::<Vec<_>>();
+    assert_eq!(extends_entries.len(), 1);
+    assert_eq!(extends_entries[0].ty.source_text().trim(), "Base");
+
+    let implements = class.implements_clause().expect("implements clause");
+    assert_eq!(
+        implements.keyword().expect("implements keyword").text(),
+        "implements"
+    );
+    let implements_entries = implements.entries().collect::<Vec<_>>();
+    assert_eq!(implements_entries.len(), 2);
+    assert_eq!(implements_entries[0].ty.source_text().trim(), "First");
+    assert_eq!(
+        semicolon_trailing_comment(implements_entries[0].comma.clone()),
+        "// first"
+    );
+    assert_eq!(implements_entries[1].ty.source_text().trim(), "Second");
+
+    let permits = class.permits_clause().expect("permits clause");
+    assert_eq!(
+        permits.keyword().expect("permits keyword").text(),
+        "permits"
+    );
+    let permits_entries = permits.entries().collect::<Vec<_>>();
+    assert_eq!(permits_entries.len(), 2);
+    assert_eq!(permits_entries[0].name.source_text().trim(), "Child");
+    assert_eq!(
+        semicolon_trailing_comment(permits_entries[0].comma.clone()),
+        "// child"
+    );
+    assert_eq!(permits_entries[1].name.source_text().trim(), "Other");
+}
+
+#[test]
 fn annotations_expose_argument_lists() {
     let syntax = parse_clean(
         r#"

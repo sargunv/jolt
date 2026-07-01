@@ -24,21 +24,22 @@ use super::{
     MethodInvocationExpression, MethodReferenceExpression, ModifierList, ModuleDeclaration,
     ModuleDirective, ModuleDirectiveNode, ModuleDirectiveRole, NameExpression, NameSegment,
     NameSyntax, ObjectCreationExpression, OpensDirective, PackageDeclaration,
-    ParenthesizedExpression, Pattern, PermitsClause, PostfixExpression, PrimitiveType,
-    ProvidesDirective, RecordBody, RecordComponent, RecordComponentList, RecordComponentListEntry,
-    RecordDeclaration, RecordPattern, RequiresDirective, Resource, ResourceList, ResourceListEntry,
-    ResourceSpecification, ReturnStatement, Statement, StatementBody, StatementExpressionEntry,
-    StatementExpressionList, StaticInitializer, SuperExpression, SwitchBlock, SwitchBlockEntry,
-    SwitchBlockStatementGroup, SwitchExpression, SwitchLabel, SwitchLabelCaseItem, SwitchRule,
-    SwitchStatement, SynchronizedStatement, ThisExpression, ThrowStatement, ThrowsClause,
-    ThrowsClauseEntry, TryStatement, TryWithResourcesStatement, Type, TypeArgument,
-    TypeArgumentList, TypeArgumentListEntry, TypeBoundList, TypeDeclaration, TypeParameter,
-    TypeParameterList, TypeParameterListEntry, TypePattern, UnaryExpression, UnionType,
-    UnionTypeEntry, UsesDirective, VariableAccess, VariableDeclarator, VariableDeclaratorEntry,
-    VariableDeclaratorList, VariableInitializer, VariableInitializerValue, VoidType,
-    WhileStatement, WildcardBound, WildcardType, YieldStatement, child, child_family, child_token,
-    child_token_in, children, children_family, children_tokens_matching, nth_child_family,
-    nth_child_token, starts_after_blank_line, tokens,
+    ParenthesizedExpression, Pattern, PermitsClause, PermitsClauseEntry, PostfixExpression,
+    PrimitiveType, ProvidesDirective, RecordBody, RecordComponent, RecordComponentList,
+    RecordComponentListEntry, RecordDeclaration, RecordPattern, RequiresDirective, Resource,
+    ResourceList, ResourceListEntry, ResourceSpecification, ReturnStatement, Statement,
+    StatementBody, StatementExpressionEntry, StatementExpressionList, StaticInitializer,
+    SuperExpression, SwitchBlock, SwitchBlockEntry, SwitchBlockStatementGroup, SwitchExpression,
+    SwitchLabel, SwitchLabelCaseItem, SwitchRule, SwitchStatement, SynchronizedStatement,
+    ThisExpression, ThrowStatement, ThrowsClause, ThrowsClauseEntry, TryStatement,
+    TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList, TypeArgumentListEntry,
+    TypeBoundList, TypeClauseEntry, TypeDeclaration, TypeParameter, TypeParameterList,
+    TypeParameterListEntry, TypePattern, UnaryExpression, UnionType, UnionTypeEntry, UsesDirective,
+    VariableAccess, VariableDeclarator, VariableDeclaratorEntry, VariableDeclaratorList,
+    VariableInitializer, VariableInitializerValue, VoidType, WhileStatement, WildcardBound,
+    WildcardType, YieldStatement, child, child_family, child_token, child_token_in, children,
+    children_family, children_tokens_matching, nth_child_family, nth_child_token,
+    starts_after_blank_line, tokens,
 };
 use jolt_syntax::{SyntaxElement, TriviaKind};
 
@@ -333,20 +334,80 @@ impl InterfaceDeclaration {
 }
 
 impl ExtendsClause {
+    #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::ExtendsKw)
+    }
+
     pub fn types(&self) -> impl Iterator<Item = Type> + '_ {
         children_family(&self.syntax)
+    }
+
+    pub fn entries(&self) -> impl Iterator<Item = TypeClauseEntry> {
+        type_clause_entries(&self.syntax)
     }
 }
 
 impl ImplementsClause {
+    #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::ImplementsKw)
+    }
+
     pub fn types(&self) -> impl Iterator<Item = Type> + '_ {
         children_family(&self.syntax)
+    }
+
+    pub fn entries(&self) -> impl Iterator<Item = TypeClauseEntry> {
+        type_clause_entries(&self.syntax)
     }
 }
 
 impl PermitsClause {
+    #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        self.syntax
+            .first_token()
+            .and_then(|syntax| (syntax.text() == "permits").then_some(JavaSyntaxToken { syntax }))
+    }
+
     pub fn names(&self) -> impl Iterator<Item = NameSyntax> + '_ {
         children_family(&self.syntax)
+    }
+
+    pub fn entries(&self) -> impl Iterator<Item = PermitsClauseEntry> {
+        let mut entries = Vec::new();
+        let mut pending_name = None;
+
+        for element in self.syntax.children_with_tokens() {
+            match element {
+                SyntaxElement::Node(node) => {
+                    if let Some(name) = NameSyntax::cast(node)
+                        && let Some(previous) = pending_name.replace(name)
+                    {
+                        entries.push(PermitsClauseEntry {
+                            name: previous,
+                            comma: None,
+                        });
+                    }
+                }
+                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
+                    if let Some(name) = pending_name.take() {
+                        entries.push(PermitsClauseEntry {
+                            name,
+                            comma: Some(JavaSyntaxToken { syntax: token }),
+                        });
+                    }
+                }
+                SyntaxElement::Token(_) => {}
+            }
+        }
+
+        if let Some(name) = pending_name {
+            entries.push(PermitsClauseEntry { name, comma: None });
+        }
+
+        entries.into_iter()
     }
 }
 
@@ -3535,6 +3596,41 @@ fn next_sibling_token(
         SyntaxElement::Token(syntax) if syntax.kind() == kind => Some(JavaSyntaxToken { syntax }),
         _ => None,
     }
+}
+
+fn type_clause_entries(syntax: &super::JavaSyntaxNode) -> std::vec::IntoIter<TypeClauseEntry> {
+    let mut entries = Vec::new();
+    let mut pending_type = None;
+
+    for element in syntax.children_with_tokens() {
+        match element {
+            SyntaxElement::Node(node) => {
+                if let Some(ty) = Type::cast(node)
+                    && let Some(previous) = pending_type.replace(ty)
+                {
+                    entries.push(TypeClauseEntry {
+                        ty: previous,
+                        comma: None,
+                    });
+                }
+            }
+            SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
+                if let Some(ty) = pending_type.take() {
+                    entries.push(TypeClauseEntry {
+                        ty,
+                        comma: Some(JavaSyntaxToken { syntax: token }),
+                    });
+                }
+            }
+            SyntaxElement::Token(_) => {}
+        }
+    }
+
+    if let Some(ty) = pending_type {
+        entries.push(TypeClauseEntry { ty, comma: None });
+    }
+
+    entries.into_iter()
 }
 
 fn node_leading_comment_texts(syntax: &super::JavaSyntaxNode) -> Vec<String> {
