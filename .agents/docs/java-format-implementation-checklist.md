@@ -203,7 +203,7 @@ Status legend:
 - `[x]` Literal, name, `this`, `super`, and class-literal expression leaves.
 - `[x]` Untyped, `var`, typed, annotated, final, and varargs lambda parameters.
 - `[x]` Arrays/initializers.
-- `[~]` Casts, `instanceof`, patterns, object creation, and type arguments.
+- `[x]` Casts, `instanceof`, patterns, object creation, and type arguments.
 - `[x]` Type, record, component, and match-all patterns in `instanceof` and
   switch labels.
 - `[x]` Anonymous class bodies in object creation expressions.

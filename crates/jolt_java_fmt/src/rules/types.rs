@@ -7,8 +7,9 @@ use jolt_java_syntax::{
 };
 
 use crate::helpers::comments::{
-    comment_forces_line, format_comment, format_leading_comments, format_token_with_comments,
-    format_trailing_comments, format_trailing_comments_before_line_break,
+    comment_forces_line, format_comment, format_dangling_comments, format_leading_comments,
+    format_token_with_comments, format_trailing_comments,
+    format_trailing_comments_before_line_break,
 };
 use crate::rules::annotations::format_annotation;
 
@@ -57,6 +58,7 @@ pub(crate) fn format_type_parameter_list(parameters: Option<TypeParameterList>) 
             indent(concat([
                 format_open_type_parameter_list_spacing(&parameters),
                 format_type_parameter_list_entries(entries),
+                format_type_parameter_list_close_leading_comments(&parameters),
             ])),
             format_type_parameter_list_close_with_spacing(&parameters),
         ]))
@@ -74,6 +76,7 @@ pub(crate) fn format_type_argument_list(arguments: &TypeArgumentList) -> Doc {
         indent(concat([
             format_open_type_argument_list_spacing(arguments),
             format_type_argument_list_entries(entries),
+            format_type_argument_list_close_leading_comments(arguments),
         ])),
         format_type_argument_list_close_with_spacing(arguments),
     ]))
@@ -263,12 +266,27 @@ fn format_type_parameter_list_close_with_spacing(parameters: &TypeParameterList)
 
     concat([
         if close_has_leading_comments {
-            line()
+            hard_line()
         } else {
             soft_line()
         },
-        format_type_parameter_list_close_delimiter(parameters),
+        format_type_parameter_list_close_delimiter_without_leading(parameters),
     ])
+}
+
+fn format_type_parameter_list_close_leading_comments(parameters: &TypeParameterList) -> Doc {
+    parameters
+        .close_angle()
+        .map_or_else(jolt_fmt_ir::nil, |close| {
+            if close.leading_comments().is_empty() {
+                jolt_fmt_ir::nil()
+            } else {
+                concat([
+                    hard_line(),
+                    format_dangling_comments(close.leading_comments()),
+                ])
+            }
+        })
 }
 
 fn format_type_parameter_list_close_delimiter(parameters: &TypeParameterList) -> Doc {
@@ -392,12 +410,27 @@ fn format_type_argument_list_close_with_spacing(arguments: &TypeArgumentList) ->
 
     concat([
         if close_has_leading_comments {
-            line()
+            hard_line()
         } else {
             soft_line()
         },
-        format_type_argument_list_close_delimiter(arguments),
+        format_type_argument_list_close_delimiter_without_leading(arguments),
     ])
+}
+
+fn format_type_argument_list_close_leading_comments(arguments: &TypeArgumentList) -> Doc {
+    arguments
+        .close_angle()
+        .map_or_else(jolt_fmt_ir::nil, |close| {
+            if close.leading_comments().is_empty() {
+                jolt_fmt_ir::nil()
+            } else {
+                concat([
+                    hard_line(),
+                    format_dangling_comments(close.leading_comments()),
+                ])
+            }
+        })
 }
 
 fn format_type_argument_list_close_delimiter(arguments: &TypeArgumentList) -> Doc {

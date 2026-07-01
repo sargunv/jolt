@@ -5,6 +5,9 @@ return (String)value instanceof /* target */ String text||value instanceof java.
 Object casted(Object value) {
 return (/* target */ String) /* cast */ value;
 }
+Object intersection(Object value) {
+return (Runnable & AutoCloseable)value;
+}
 int[] values(int size, int count) {
 return new int[ size ][ count ];
 }

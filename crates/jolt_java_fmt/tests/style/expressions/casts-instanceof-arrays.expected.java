@@ -8,6 +8,10 @@ class Example {
     return ( /* target */ String) /* cast */ value;
   }
 
+  Object intersection(Object value) {
+    return (Runnable & AutoCloseable) value;
+  }
+
   int[] values(int size, int count) {
     return new int[size][count];
   }

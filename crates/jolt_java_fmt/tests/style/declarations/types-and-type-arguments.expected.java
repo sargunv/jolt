@@ -3,6 +3,7 @@ class Types< /* params */
   & // numeric
   Comparable<T>, // first
   U
+  // before params close
 > {
   java.util.@Marker List<@Marker String> @Marker [] names;
 
@@ -10,6 +11,7 @@ class Types< /* params */
     java.util.Map< /* args */
       String, // key
       ? super T
+      // before args close
     > value
   ) {
   }
