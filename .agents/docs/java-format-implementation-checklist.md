@@ -66,6 +66,7 @@ Status legend:
 - `[~]` Module directive kind/name/target/comment roles.
 - `[~]` Modifier keyword and annotation roles.
 - `[~]` Declaration headers and bodies.
+- `[x]` Constructor body accessors.
 - `[~]` Statement body kind.
 - `[x]` Switch labels/rules/guards.
 - `[x]` For init/condition/update.
@@ -161,6 +162,8 @@ Status legend:
 - `[x]` Inline formal-parameter and record-component annotations, including
   varargs type-use annotations before `...`.
 - `[~]` `throws`.
+- `[x]` Structural constructor bodies.
+- `[x]` Compact record constructors.
 - `[~]` Enum constants and trailing comma policy.
 - `[x]` Enum constants with annotations, arguments, and class bodies.
 - `[x]` Annotation interface elements and default values.

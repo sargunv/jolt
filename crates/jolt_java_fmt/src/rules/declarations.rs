@@ -2,11 +2,11 @@ use jolt_fmt_ir::{Doc, concat, group, hard_line, line, soft_line, text};
 use jolt_java_syntax::{
     AnnotationElementDeclaration, AnnotationInterfaceBodyMember, AnnotationInterfaceDeclaration,
     ClassBody, ClassBodyMember, ClassDeclaration, EnumConstant, EnumDeclaration, ExtendsClause,
-    FormalParameterList, ImplementsClause, InterfaceDeclaration, JavaSyntaxKind, JavaSyntaxToken,
-    MethodDeclaration, ModifierList, PermitsClause, RecordDeclaration, TypeDeclaration,
+    FormalParameterList, ImplementsClause, InterfaceDeclaration, JavaSyntaxKind, MethodDeclaration,
+    ModifierList, PermitsClause, RecordDeclaration, TypeDeclaration,
 };
 
-use crate::helpers::blocks::{braced_body, empty_block};
+use crate::helpers::blocks::braced_body;
 use crate::helpers::comments::{
     format_leading_comments, format_token_sequence, format_trailing_comments,
     tokens_end_with_forced_line, tokens_have_comments,
@@ -15,7 +15,7 @@ use crate::helpers::modifiers::{modifier_prefix, modifier_prefix_from_parts};
 use crate::rules::annotations::format_annotation_element_value;
 use crate::rules::expressions::format_argument_list;
 use crate::rules::names::format_name;
-use crate::rules::statements::format_block;
+use crate::rules::statements::{format_block, format_block_items};
 use crate::rules::types::{format_array_dimensions, format_type, format_type_parameter_list};
 use crate::rules::variables::{
     format_field_declaration, format_formal_parameter, format_record_component,
@@ -39,19 +39,18 @@ pub(crate) fn format_anonymous_class_body(body: &ClassBody) -> Doc {
 }
 
 fn format_class_declaration(class: &ClassDeclaration) -> Doc {
-    let Some(name) = class.name() else {
-        return format_token_sequence(&class.tokens());
-    };
-    let Some(body) = class.body() else {
-        return format_token_sequence(&class.tokens());
-    };
-    let members = body.members().collect::<Vec<_>>();
+    let members = class
+        .body()
+        .map(|body| body.members().collect::<Vec<_>>())
+        .unwrap_or_default();
 
     format_type_with_body(
         class.modifiers(),
         concat([
             text("class "),
-            text(name.text().to_owned()),
+            class
+                .name()
+                .map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned())),
             format_type_parameter_list(class.type_parameters()),
             format_extends_clause(class.extends_clause()),
             format_implements_clause(class.implements_clause()),
@@ -62,9 +61,6 @@ fn format_class_declaration(class: &ClassDeclaration) -> Doc {
 }
 
 fn format_interface_declaration(interface: &InterfaceDeclaration) -> Doc {
-    let Some(name) = interface.name() else {
-        return format_token_sequence(&interface.tokens());
-    };
     let members = interface
         .body()
         .map(|body| {
@@ -78,7 +74,9 @@ fn format_interface_declaration(interface: &InterfaceDeclaration) -> Doc {
         interface.modifiers(),
         concat([
             text("interface "),
-            text(name.text().to_owned()),
+            interface
+                .name()
+                .map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned())),
             format_type_parameter_list(interface.type_parameters()),
             format_extends_clause(interface.extends_clause()),
             format_permits_clause(interface.permits_clause()),
@@ -88,9 +86,6 @@ fn format_interface_declaration(interface: &InterfaceDeclaration) -> Doc {
 }
 
 fn format_record_declaration(record: &RecordDeclaration) -> Doc {
-    let Some(name) = record.name() else {
-        return format_token_sequence(&record.tokens());
-    };
     let members = record
         .body()
         .map(|body| body.members().collect::<Vec<_>>())
@@ -100,7 +95,9 @@ fn format_record_declaration(record: &RecordDeclaration) -> Doc {
         record.modifiers(),
         group(concat([
             text("record "),
-            text(name.text().to_owned()),
+            record
+                .name()
+                .map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned())),
             format_type_parameter_list(record.type_parameters()),
             format_record_components(record.components()),
             format_implements_clause(record.implements_clause()),
@@ -110,16 +107,9 @@ fn format_record_declaration(record: &RecordDeclaration) -> Doc {
 }
 
 fn format_enum_declaration(enum_: &EnumDeclaration) -> Doc {
-    let Some(name) = enum_.name() else {
-        return format_token_sequence(&enum_.tokens());
-    };
-
-    let Some(body) = enum_.body() else {
-        return format_token_sequence(&enum_.tokens());
-    };
-
-    let constants = body
-        .constants()
+    let constants = enum_
+        .body()
+        .and_then(|body| body.constants())
         .map(|constants| {
             constants
                 .constants()
@@ -127,14 +117,19 @@ fn format_enum_declaration(enum_: &EnumDeclaration) -> Doc {
                 .collect::<Vec<_>>()
         })
         .unwrap_or_default();
-    let members = body.members().collect::<Vec<_>>();
+    let members = enum_
+        .body()
+        .map(|body| body.members().collect::<Vec<_>>())
+        .unwrap_or_default();
     let body_doc = format_enum_body_contents(constants, &members);
 
     format_header_with_body(
         enum_.modifiers(),
         concat([
             text("enum "),
-            text(name.text().to_owned()),
+            enum_
+                .name()
+                .map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned())),
             format_implements_clause(enum_.implements_clause()),
         ]),
         body_doc,
@@ -142,13 +137,14 @@ fn format_enum_declaration(enum_: &EnumDeclaration) -> Doc {
 }
 
 fn format_annotation_interface_declaration(annotation: &AnnotationInterfaceDeclaration) -> Doc {
-    let Some(name) = annotation.name() else {
-        return format_token_sequence(&annotation.tokens());
-    };
-
     format_header_with_body(
         annotation.modifiers(),
-        concat([text("@interface "), text(name.text().to_owned())]),
+        concat([
+            text("@interface "),
+            annotation
+                .name()
+                .map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned())),
+        ]),
         annotation.body().and_then(|body| {
             let members = body
                 .members()
@@ -429,6 +425,11 @@ impl FormattedMember {
                 starts_after_blank_line,
                 doc: format_constructor_declaration(constructor),
             },
+            ClassBodyMember::CompactConstructorDeclaration(constructor) => Self {
+                category: MemberCategory::Constructor,
+                starts_after_blank_line,
+                doc: format_compact_constructor_declaration(constructor),
+            },
             ClassBodyMember::MethodDeclaration(method) => Self {
                 category: MemberCategory::Method,
                 starts_after_blank_line,
@@ -476,10 +477,10 @@ impl FormattedMember {
                 starts_after_blank_line,
                 doc: format_annotation_interface_declaration(annotation),
             },
-            _ => Self {
+            ClassBodyMember::EmptyDeclaration(_) => Self {
                 category: MemberCategory::Type,
                 starts_after_blank_line,
-                doc: format_token_sequence(&member.tokens()),
+                doc: jolt_fmt_ir::nil(),
             },
         }
     }
@@ -519,8 +520,8 @@ fn format_constructor_declaration(constructor: &jolt_java_syntax::ConstructorDec
     if tokens_have_comments(&header_tokens) {
         return concat([
             group(format_token_sequence(&header_tokens)),
-            format_empty_executable_body_after_header(
-                constructor.body().map(|body| body.tokens()),
+            format_constructor_body_after_header(
+                constructor.body(),
                 tokens_end_with_forced_line(&header_tokens),
             ),
         ]);
@@ -533,7 +534,21 @@ fn format_constructor_declaration(constructor: &jolt_java_syntax::ConstructorDec
             format_parameters(constructor.parameters()),
             format_throws_clause(constructor.throws_clause()),
         ])),
-        format_empty_executable_body(constructor.body().map(|body| body.tokens())),
+        format_constructor_body(constructor.body()),
+    ])
+}
+
+fn format_compact_constructor_declaration(
+    constructor: &jolt_java_syntax::CompactConstructorDeclaration,
+) -> Doc {
+    concat([
+        group(concat([
+            modifier_prefix(constructor.modifiers()),
+            constructor
+                .name()
+                .map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned())),
+        ])),
+        format_constructor_body(constructor.body()),
     ])
 }
 
@@ -653,45 +668,27 @@ fn format_throws_clause(throws: Option<jolt_java_syntax::ThrowsClause>) -> Doc {
     jolt_fmt_ir::indent(concat(docs))
 }
 
-fn format_empty_executable_body(body: Option<Vec<JavaSyntaxToken>>) -> Doc {
-    format_empty_executable_body_after_header(body, false)
+fn format_constructor_body(body: Option<jolt_java_syntax::ConstructorBody>) -> Doc {
+    format_constructor_body_after_header(body, false)
 }
 
-fn format_empty_executable_body_after_header(
-    body: Option<Vec<JavaSyntaxToken>>,
+fn format_constructor_body_after_header(
+    body: Option<jolt_java_syntax::ConstructorBody>,
     header_ends_with_line: bool,
 ) -> Doc {
-    let Some(body) = body else {
-        return text(";");
-    };
-    if executable_body_is_empty(&body) {
-        concat([
-            if header_ends_with_line {
-                jolt_fmt_ir::nil()
-            } else {
-                text(" ")
-            },
-            empty_block(),
-        ])
-    } else {
-        concat([
-            if header_ends_with_line {
-                jolt_fmt_ir::nil()
-            } else {
-                text(" ")
-            },
-            format_token_sequence(&body),
-        ])
-    }
-}
-
-fn executable_body_is_empty(tokens: &[JavaSyntaxToken]) -> bool {
-    tokens.iter().all(|token| {
-        matches!(
-            token.kind(),
-            JavaSyntaxKind::LBrace | JavaSyntaxKind::RBrace
-        )
-    })
+    body.map_or_else(
+        || text(";"),
+        |body| {
+            concat([
+                if header_ends_with_line {
+                    jolt_fmt_ir::nil()
+                } else {
+                    text(" ")
+                },
+                format_block_items(body.items()),
+            ])
+        },
+    )
 }
 
 fn format_method_body(body: Option<jolt_java_syntax::Block>) -> Doc {

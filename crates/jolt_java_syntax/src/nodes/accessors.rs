@@ -7,32 +7,32 @@ use super::{
     AssertStatement, AssignmentExpression, BasicForStatement, BinaryExpression, Block, BlockItem,
     BlockStatement, BreakStatement, CaseConstant, CasePattern, CastExpression, CatchClause,
     CatchParameter, CatchTypeList, ClassBody, ClassBodyDeclaration, ClassBodyMember,
-    ClassDeclaration, ClassLiteralExpression, ClassType, ClassTypeSegment, CompilationUnit,
-    ComponentPattern, ConditionalExpression, ConstructorBody, ConstructorDeclaration,
-    ContinueStatement, DefaultValue, DimExpression, DoStatement, EnhancedForStatement, EnumBody,
-    EnumConstant, EnumConstantList, EnumDeclaration, Expression, ExpressionStatement,
-    ExtendsClause, FieldAccessExpression, FieldDeclaration, FinallyClause, ForInitializer,
-    ForStatement, ForUpdate, FormalParameter, FormalParameterList, Guard, IfStatement,
-    ImplementsClause, ImportDeclaration, InstanceInitializer, InstanceofExpression, InterfaceBody,
-    InterfaceBodyMember, InterfaceDeclaration, IntersectionType, JavaFamily, JavaNode,
-    JavaSyntaxKind, JavaSyntaxToken, LabeledStatement, LambdaExpression, LambdaParameter,
-    LambdaParameterList, LiteralExpression, LocalClassOrInterfaceDeclaration,
-    LocalVariableDeclaration, MatchAllPattern, MethodDeclaration, MethodInvocationExpression,
-    MethodReferenceExpression, ModifierList, ModuleDeclaration, ModuleDirective,
-    ModuleDirectiveNode, NameExpression, NameSegment, NameSyntax, ObjectCreationExpression,
-    PackageDeclaration, ParenthesizedExpression, Pattern, PermitsClause, PostfixExpression,
-    PrimitiveType, ProvidesDirective, RecordBody, RecordComponent, RecordComponentList,
-    RecordDeclaration, RecordPattern, RequiresDirective, Resource, ResourceList,
-    ResourceSpecification, ReturnStatement, Statement, StatementExpressionList, StaticInitializer,
-    SuperExpression, SwitchBlock, SwitchBlockEntry, SwitchBlockStatementGroup, SwitchExpression,
-    SwitchLabel, SwitchLabelCaseItem, SwitchRule, SwitchStatement, SynchronizedStatement,
-    ThisExpression, ThrowStatement, ThrowsClause, TryStatement, TryWithResourcesStatement, Type,
-    TypeArgument, TypeArgumentList, TypeBoundList, TypeDeclaration, TypeParameter,
-    TypeParameterList, TypePattern, UnaryExpression, UnionType, VariableAccess, VariableDeclarator,
-    VariableDeclaratorList, VariableInitializer, VariableInitializerValue, VoidType,
-    WhileStatement, WildcardType, YieldStatement, child, child_family, child_token, child_token_in,
-    children, children_family, children_tokens_matching, nth_child_family, nth_child_token,
-    starts_after_blank_line, tokens,
+    ClassDeclaration, ClassLiteralExpression, ClassType, ClassTypeSegment,
+    CompactConstructorDeclaration, CompilationUnit, ComponentPattern, ConditionalExpression,
+    ConstructorBody, ConstructorDeclaration, ContinueStatement, DefaultValue, DimExpression,
+    DoStatement, EnhancedForStatement, EnumBody, EnumConstant, EnumConstantList, EnumDeclaration,
+    Expression, ExpressionStatement, ExtendsClause, FieldAccessExpression, FieldDeclaration,
+    FinallyClause, ForInitializer, ForStatement, ForUpdate, FormalParameter, FormalParameterList,
+    Guard, IfStatement, ImplementsClause, ImportDeclaration, InstanceInitializer,
+    InstanceofExpression, InterfaceBody, InterfaceBodyMember, InterfaceDeclaration,
+    IntersectionType, JavaFamily, JavaNode, JavaSyntaxKind, JavaSyntaxToken, LabeledStatement,
+    LambdaExpression, LambdaParameter, LambdaParameterList, LiteralExpression,
+    LocalClassOrInterfaceDeclaration, LocalVariableDeclaration, MatchAllPattern, MethodDeclaration,
+    MethodInvocationExpression, MethodReferenceExpression, ModifierList, ModuleDeclaration,
+    ModuleDirective, ModuleDirectiveNode, NameExpression, NameSegment, NameSyntax,
+    ObjectCreationExpression, PackageDeclaration, ParenthesizedExpression, Pattern, PermitsClause,
+    PostfixExpression, PrimitiveType, ProvidesDirective, RecordBody, RecordComponent,
+    RecordComponentList, RecordDeclaration, RecordPattern, RequiresDirective, Resource,
+    ResourceList, ResourceSpecification, ReturnStatement, Statement, StatementExpressionList,
+    StaticInitializer, SuperExpression, SwitchBlock, SwitchBlockEntry, SwitchBlockStatementGroup,
+    SwitchExpression, SwitchLabel, SwitchLabelCaseItem, SwitchRule, SwitchStatement,
+    SynchronizedStatement, ThisExpression, ThrowStatement, ThrowsClause, TryStatement,
+    TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList, TypeBoundList,
+    TypeDeclaration, TypeParameter, TypeParameterList, TypePattern, UnaryExpression, UnionType,
+    VariableAccess, VariableDeclarator, VariableDeclaratorList, VariableInitializer,
+    VariableInitializerValue, VoidType, WhileStatement, WildcardType, YieldStatement, child,
+    child_family, child_token, child_token_in, children, children_family, children_tokens_matching,
+    nth_child_family, nth_child_token, starts_after_blank_line, tokens,
 };
 use jolt_syntax::{SyntaxElement, TriviaKind};
 
@@ -770,6 +770,29 @@ impl ConstructorDeclaration {
             .into_iter()
             .filter(|token| token.token_text_range().start() < header_end)
             .collect()
+    }
+}
+
+impl CompactConstructorDeclaration {
+    #[must_use]
+    pub fn modifiers(&self) -> Option<ModifierList> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn name(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Identifier)
+    }
+
+    #[must_use]
+    pub fn body(&self) -> Option<ConstructorBody> {
+        child(&self.syntax)
+    }
+}
+
+impl ConstructorBody {
+    pub fn items(&self) -> impl Iterator<Item = BlockItem> + '_ {
+        children::<BlockStatement>(&self.syntax).filter_map(|node| node.item())
     }
 }
 

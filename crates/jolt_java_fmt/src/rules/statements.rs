@@ -27,10 +27,11 @@ use crate::rules::types::format_type;
 use crate::rules::variables::format_local_variable_declaration;
 
 pub(crate) fn format_block(block: &Block) -> Doc {
-    let items = block
-        .items()
-        .filter_map(format_block_item)
-        .collect::<Vec<_>>();
+    format_block_items(block.items())
+}
+
+pub(crate) fn format_block_items<'a>(items: impl Iterator<Item = BlockItem> + 'a) -> Doc {
+    let items = items.filter_map(format_block_item).collect::<Vec<_>>();
     braced_body_items(items)
 }
 
@@ -191,7 +192,7 @@ fn format_for_statement(statement: &ForStatement) -> Doc {
         return format_enhanced_for_statement(&enhanced);
     }
 
-    format_token_sequence(&statement.tokens())
+    jolt_fmt_ir::nil()
 }
 
 fn format_basic_for_statement(statement: &BasicForStatement) -> Doc {
