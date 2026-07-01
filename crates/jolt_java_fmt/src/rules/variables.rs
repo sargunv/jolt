@@ -1,11 +1,11 @@
 use jolt_fmt_ir::{Doc, concat, group, indent, line, text};
 use jolt_java_syntax::{
     FieldDeclaration, FormalParameter, LocalVariableDeclaration, RecordComponent,
-    VariableDeclarator, VariableDeclaratorList, VariableInitializer,
+    VariableDeclarator, VariableDeclaratorEntry, VariableDeclaratorList, VariableInitializer,
 };
 
 use crate::helpers::comments::{
-    format_token_sequence, format_token_with_comments, tokens_have_comments,
+    format_leading_comments, format_token_with_comments, format_trailing_comments,
 };
 use crate::helpers::modifiers::inline_modifier_prefix_from_docs;
 use crate::rules::annotations::format_annotation;
@@ -157,24 +157,33 @@ fn local_variable_type(declaration: &LocalVariableDeclaration) -> Doc {
 }
 
 fn format_variable_declarator_list(declarators: &VariableDeclaratorList) -> Doc {
-    let tokens = declarators.tokens();
-    if tokens_have_comments(&tokens) {
-        return format_token_sequence(&tokens);
-    }
-
-    jolt_fmt_ir::join(
-        text(", "),
+    group(concat(
         declarators
-            .declarators()
-            .map(|declarator| format_variable_declarator(&declarator)),
-    )
+            .entries()
+            .map(format_variable_declarator_entry)
+            .collect::<Vec<_>>(),
+    ))
+}
+
+fn format_variable_declarator_entry(entry: VariableDeclaratorEntry) -> Doc {
+    concat([
+        format_variable_declarator(&entry.declarator),
+        entry.comma.map_or_else(jolt_fmt_ir::nil, |comma| {
+            concat([
+                format_leading_comments(&comma),
+                text(","),
+                format_trailing_comments(&comma),
+                line(),
+            ])
+        }),
+    ])
 }
 
 fn format_variable_declarator(declarator: &VariableDeclarator) -> Doc {
     group(concat([
         declarator
             .name()
-            .map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned())),
+            .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name)),
         declarator
             .dimensions()
             .map_or_else(jolt_fmt_ir::nil, |dimensions| {

@@ -815,6 +815,12 @@ pub struct NameSegment {
     pub identifier: JavaSyntaxToken,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct VariableDeclaratorEntry {
+    pub declarator: VariableDeclarator,
+    pub comma: Option<JavaSyntaxToken>,
+}
+
 impl AnnotationArgument {
     fn cast(syntax: JavaSyntaxNode) -> Option<Self> {
         match syntax.kind() {

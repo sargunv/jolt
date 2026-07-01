@@ -141,6 +141,46 @@ fn token_comments_expose_source_ranges() {
 }
 
 #[test]
+fn variable_declarator_lists_expose_entries_with_commas() {
+    let syntax = parse_clean("class A { int first /* a */, /* b */ second = 2, third; }\n");
+    let list = descendants::<VariableDeclaratorList>(&syntax)
+        .into_iter()
+        .next()
+        .expect("variable declarator list");
+
+    let entries = list.entries().collect::<Vec<_>>();
+    assert_eq!(entries.len(), 3);
+    assert_eq!(
+        entries[0].declarator.name().expect("first name").text(),
+        "first"
+    );
+    assert_eq!(
+        entries[0]
+            .declarator
+            .name()
+            .expect("first name")
+            .trailing_comments()[0]
+            .text(),
+        "/* a */"
+    );
+    assert!(entries[0].comma.is_some());
+    assert_eq!(
+        entries[1].declarator.name().expect("second name").text(),
+        "second"
+    );
+    assert_eq!(
+        entries[0]
+            .comma
+            .as_ref()
+            .expect("first comma")
+            .trailing_comments()[0]
+            .text(),
+        "/* b */"
+    );
+    assert!(entries[2].comma.is_none());
+}
+
+#[test]
 fn compilation_unit_items_expose_ordered_top_level_roles() {
     let syntax = parse_clean(
         r"

@@ -31,10 +31,11 @@ use super::{
     SynchronizedStatement, ThisExpression, ThrowStatement, ThrowsClause, TryStatement,
     TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList, TypeBoundList,
     TypeDeclaration, TypeParameter, TypeParameterList, TypePattern, UnaryExpression, UnionType,
-    UsesDirective, VariableAccess, VariableDeclarator, VariableDeclaratorList, VariableInitializer,
-    VariableInitializerValue, VoidType, WhileStatement, WildcardBound, WildcardType,
-    YieldStatement, child, child_family, child_token, child_token_in, children, children_family,
-    children_tokens_matching, nth_child_family, nth_child_token, starts_after_blank_line, tokens,
+    UsesDirective, VariableAccess, VariableDeclarator, VariableDeclaratorEntry,
+    VariableDeclaratorList, VariableInitializer, VariableInitializerValue, VoidType,
+    WhileStatement, WildcardBound, WildcardType, YieldStatement, child, child_family, child_token,
+    child_token_in, children, children_family, children_tokens_matching, nth_child_family,
+    nth_child_token, starts_after_blank_line, tokens,
 };
 use jolt_syntax::{SyntaxElement, TriviaKind};
 
@@ -921,6 +922,44 @@ impl FormalParameter {
 impl VariableDeclaratorList {
     pub fn declarators(&self) -> impl Iterator<Item = VariableDeclarator> + '_ {
         children(&self.syntax)
+    }
+
+    pub fn entries(&self) -> impl Iterator<Item = VariableDeclaratorEntry> {
+        let mut entries = Vec::new();
+        let mut pending_declarator = None;
+
+        for element in self.syntax.children_with_tokens() {
+            match element {
+                SyntaxElement::Node(node) => {
+                    if let Some(declarator) = VariableDeclarator::cast(node)
+                        && let Some(previous) = pending_declarator.replace(declarator)
+                    {
+                        entries.push(VariableDeclaratorEntry {
+                            declarator: previous,
+                            comma: None,
+                        });
+                    }
+                }
+                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
+                    if let Some(declarator) = pending_declarator.take() {
+                        entries.push(VariableDeclaratorEntry {
+                            declarator,
+                            comma: Some(JavaSyntaxToken { syntax: token }),
+                        });
+                    }
+                }
+                SyntaxElement::Token(_) => {}
+            }
+        }
+
+        if let Some(declarator) = pending_declarator {
+            entries.push(VariableDeclaratorEntry {
+                declarator,
+                comma: None,
+            });
+        }
+
+        entries.into_iter()
     }
 }
 

@@ -225,8 +225,8 @@ Status legend:
 - `[x]` Repeated formatting is deterministic.
 - `[~]` No parser-accepted syntax reaches an unimplemented formatter fallback
   (declaration method/constructor header and record-component-list comment
-  fallbacks removed; expression, statement, and variable-declarator comment
-  fallbacks remain).
+  fallbacks removed; variable-declarator-list comment fallback removed;
+  expression and statement comment fallbacks remain).
 - `[ ]` Code review can trace every formatting choice to the style guide or
   spec.
 - `[ ]` Audit report links each definition-of-done item to tests, fixtures, or
