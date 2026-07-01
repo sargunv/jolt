@@ -441,7 +441,7 @@ fn format_statement_expression_separator(comma: &JavaSyntaxToken) -> Doc {
 
 fn format_return_statement(statement: &ReturnStatement) -> Doc {
     format_keyword_expression_statement(
-        statement.keyword(),
+        statement.keyword().as_ref(),
         "return",
         statement.expression(),
         statement.semicolon(),
@@ -450,7 +450,7 @@ fn format_return_statement(statement: &ReturnStatement) -> Doc {
 
 fn format_throw_statement(statement: &ThrowStatement) -> Doc {
     format_keyword_expression_statement(
-        statement.keyword(),
+        statement.keyword().as_ref(),
         "throw",
         statement.expression(),
         statement.semicolon(),
@@ -459,7 +459,7 @@ fn format_throw_statement(statement: &ThrowStatement) -> Doc {
 
 fn format_yield_statement(statement: &YieldStatement) -> Doc {
     format_keyword_expression_statement(
-        statement.keyword(),
+        statement.keyword().as_ref(),
         "yield",
         statement.expression(),
         statement.semicolon(),
@@ -467,15 +467,18 @@ fn format_yield_statement(statement: &YieldStatement) -> Doc {
 }
 
 fn format_keyword_expression_statement(
-    keyword: Option<JavaSyntaxToken>,
+    keyword: Option<&JavaSyntaxToken>,
     fallback: &str,
     expression: Option<Expression>,
     semicolon: Option<JavaSyntaxToken>,
 ) -> Doc {
     concat([
-        format_statement_keyword(keyword, fallback),
+        format_statement_keyword_head(keyword, fallback),
         expression.map_or_else(jolt_fmt_ir::nil, |expression| {
-            let expression_doc = concat([text(" "), format_expression(&expression)]);
+            let expression_doc = concat([
+                format_keyword_expression_separator(keyword),
+                format_expression(&expression),
+            ]);
             if matches!(expression, Expression::SwitchExpression(_)) {
                 expression_doc
             } else {
@@ -483,6 +486,25 @@ fn format_keyword_expression_statement(
             }
         }),
         format_statement_semicolon(semicolon),
+    ])
+}
+
+fn format_keyword_expression_separator(keyword: Option<&JavaSyntaxToken>) -> Doc {
+    let Some(keyword) = keyword else {
+        return text(" ");
+    };
+
+    if keyword.trailing_comments().is_empty() {
+        return text(" ");
+    }
+
+    concat([
+        format_trailing_comments_before_line_break(keyword),
+        if trailing_comments_force_line(keyword) {
+            hard_line()
+        } else {
+            text(" ")
+        },
     ])
 }
 
@@ -1000,5 +1022,17 @@ fn format_statement_keyword(keyword: Option<JavaSyntaxToken>, fallback: &str) ->
     keyword.map_or_else(
         || text(fallback.to_owned()),
         |keyword| format_token_with_comments(&keyword),
+    )
+}
+
+fn format_statement_keyword_head(keyword: Option<&JavaSyntaxToken>, fallback: &str) -> Doc {
+    keyword.map_or_else(
+        || text(fallback.to_owned()),
+        |keyword| {
+            concat([
+                format_leading_comments(keyword),
+                text(keyword.text().to_owned()),
+            ])
+        },
     )
 }

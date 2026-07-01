@@ -9,6 +9,10 @@ class Example {
     if (value == 1) {
       return value /* returned value */; // return value
     }
+    if (value == 4) {
+      return // return line
+        value;
+    }
     if (value == 2) {
       break label; // break label
     }

@@ -2,19 +2,19 @@ class Example {
   int run(Object value) {
     assert value != null : value;
     if (value == null) {
-      throw new IllegalArgumentException();
+      throw /* problem */ new IllegalArgumentException();
     }
     while (ready()) {
       continue retry;
     }
-    return 1;
+    return /* result */ 1;
   }
 
   int choose(int value) {
     return switch (value) {
       case 1 -> 1;
       default -> {
-        yield 2;
+        yield /* fallback */ 2;
       }
     };
   }

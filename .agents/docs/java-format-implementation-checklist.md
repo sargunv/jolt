@@ -184,7 +184,7 @@ Status legend:
 - `[x]` Switch labels/rules/guards.
 - `[x]` Structural `case` labels, `default`, `case null, default`, and switch
   guards.
-- `[~]` `return`/`throw`/`yield`.
+- `[x]` `return`/`throw`/`yield`.
 - `[x]` Try/catch/finally/resources.
 - `[x]` Structural try-with-resources declarations and variable accesses.
 - `[x]` Inline catch-parameter annotations and modifiers.
