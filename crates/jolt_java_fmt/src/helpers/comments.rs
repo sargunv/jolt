@@ -50,9 +50,11 @@ pub(crate) fn format_token_sequence(tokens: &[JavaSyntaxToken]) -> Doc {
 }
 
 pub(crate) fn tokens_have_comments(tokens: &[JavaSyntaxToken]) -> bool {
-    tokens
-        .iter()
-        .any(|token| !token.leading_comments().is_empty() || !token.trailing_comments().is_empty())
+    tokens.iter().any(token_has_comments)
+}
+
+pub(crate) fn token_has_comments(token: &JavaSyntaxToken) -> bool {
+    !token.leading_comments().is_empty() || !token.trailing_comments().is_empty()
 }
 
 pub(crate) fn format_construct_leading_comments(tokens: &[JavaSyntaxToken]) -> Doc {
@@ -173,6 +175,10 @@ pub(crate) fn format_token_text(token_text: &str) -> Doc {
 
 pub(crate) fn comment_forces_line(comment: &JavaComment) -> bool {
     comment.kind() == JavaCommentKind::Line || comment.text().contains(['\n', '\r'])
+}
+
+pub(crate) fn comment_is_star_block(comment: &JavaComment) -> bool {
+    comment.kind() == JavaCommentKind::Doc || is_star_block_comment(comment.text())
 }
 
 fn format_comment_lines(lines: Vec<String>) -> Doc {

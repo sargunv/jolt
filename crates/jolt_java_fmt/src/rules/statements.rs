@@ -3,9 +3,9 @@ use jolt_java_syntax::{
     AssertStatement, BasicForStatement, Block, BlockItem, BlockStatement, CatchClause,
     CatchParameter, CatchTypeList, DoStatement, EnhancedForStatement, Expression,
     ExpressionStatement, FinallyClause, ForInitializer, ForStatement, ForUpdate, IfStatement,
-    JavaComment, JavaCommentKind, JavaSyntaxToken, LabeledStatement, Resource, ResourceListEntry,
-    ReturnStatement, Statement, StatementBody, StatementExpressionEntry, StatementExpressionList,
-    SwitchBlock, SwitchBlockEntry, SwitchBlockStatementGroup, SwitchLabel, SwitchLabelCaseEntry,
+    JavaComment, JavaSyntaxToken, LabeledStatement, Resource, ResourceListEntry, ReturnStatement,
+    Statement, StatementBody, StatementExpressionEntry, StatementExpressionList, SwitchBlock,
+    SwitchBlockEntry, SwitchBlockStatementGroup, SwitchLabel, SwitchLabelCaseEntry,
     SwitchLabelCaseItem, SwitchRule, SwitchStatement, SynchronizedStatement, ThrowStatement,
     TryStatement, TryWithResourcesStatement, Type, WhileStatement, YieldStatement,
 };
@@ -15,10 +15,11 @@ use crate::helpers::blocks::{
     BodyItem, braced_block, braced_body, empty_block, join_body_items, join_hard_lines,
 };
 use crate::helpers::comments::{
-    comment_forces_line, format_comment, format_dangling_comments, format_leading_comments,
-    format_removed_token_comments, format_token_text, format_token_with_comments,
-    format_trailing_comments, format_trailing_comments_before_line_break,
-    non_formatter_control_comments, trailing_comments_force_line,
+    comment_forces_line, comment_is_star_block, format_comment, format_dangling_comments,
+    format_leading_comments, format_removed_token_comments, format_token_text,
+    format_token_with_comments, format_trailing_comments,
+    format_trailing_comments_before_line_break, non_formatter_control_comments,
+    trailing_comments_force_line,
 };
 use crate::helpers::formatter_ignore::{
     FormatterIgnoreRange, formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
@@ -918,7 +919,7 @@ fn format_terminator_trailing_comments(token: &JavaSyntaxToken) -> Doc {
 }
 
 fn terminator_comment_starts_next_line(comment: &JavaComment) -> bool {
-    comment.kind() == JavaCommentKind::Doc || comment.text().trim_start().starts_with("/**")
+    comment_is_star_block(comment)
 }
 
 fn format_try_statement(statement: &TryStatement) -> Doc {

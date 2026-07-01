@@ -13,10 +13,10 @@ use jolt_java_syntax::{
 
 use crate::helpers::blocks::{BodyItem, braced_body, join_body_items};
 use crate::helpers::comments::{
-    comment_forces_line, format_comment, format_construct_leading_comments,
+    comment_forces_line, comment_is_star_block, format_comment, format_construct_leading_comments,
     format_dangling_comments, format_leading_comments, format_removed_token_comments,
     format_token_sequence, format_token_text, format_trailing_comments,
-    format_trailing_comments_before_line_break, non_formatter_control_comments,
+    format_trailing_comments_before_line_break, non_formatter_control_comments, token_has_comments,
 };
 use crate::helpers::declarations::{declaration_with_body, declaration_without_body};
 use crate::helpers::formatter_ignore::{
@@ -578,7 +578,7 @@ fn enum_separator_moved_comments(
 
 fn enum_separator_comment_moves(comment: &jolt_java_syntax::JavaComment) -> bool {
     comment.kind() != jolt_java_syntax::JavaCommentKind::Line
-        && (comment_forces_line(comment) || comment.text().trim_start().starts_with("/**"))
+        && (comment_forces_line(comment) || comment_is_star_block(comment))
 }
 
 fn format_enum_constant(constant: &EnumConstant) -> Doc {
@@ -804,10 +804,7 @@ fn format_type_header_clause(
     let should_break = header_keyword_forces_line(keyword)
         || entries.iter().any(|entry| {
             type_has_leading_comments(&entry.ty)
-                || entry
-                    .comma
-                    .as_ref()
-                    .is_some_and(separator_token_has_comments)
+                || entry.comma.as_ref().is_some_and(token_has_comments)
         });
 
     if should_break {
@@ -841,10 +838,7 @@ fn format_permits_header_clause(
     let should_break = header_keyword_forces_line(keyword)
         || entries.iter().any(|entry| {
             name_has_leading_comments(&entry.name)
-                || entry
-                    .comma
-                    .as_ref()
-                    .is_some_and(separator_token_has_comments)
+                || entry.comma.as_ref().is_some_and(token_has_comments)
         });
 
     if should_break {
@@ -975,10 +969,6 @@ fn format_header_clause_separator_broken(comma: &JavaSyntaxToken) -> Doc {
             line()
         },
     ])
-}
-
-fn separator_token_has_comments(token: &JavaSyntaxToken) -> bool {
-    !token.leading_comments().is_empty() || !token.trailing_comments().is_empty()
 }
 
 fn type_has_leading_comments(ty: &Type) -> bool {

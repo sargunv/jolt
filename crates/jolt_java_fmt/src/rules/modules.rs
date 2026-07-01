@@ -10,7 +10,7 @@ use crate::context::JavaFormatter;
 use crate::helpers::blocks::{join_empty_lines, join_hard_lines};
 use crate::helpers::comments::{
     comment_forces_line, format_comment, format_construct_leading_comments,
-    format_leading_comments, format_trailing_comments_before_line_break,
+    format_leading_comments, format_trailing_comments_before_line_break, token_has_comments,
 };
 use crate::helpers::formatter_ignore::{
     formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs, relative_token_range,
@@ -359,10 +359,7 @@ fn format_module_name_list_directive(
 fn format_module_name_list(entries: Vec<ModuleNameListEntry>) -> Doc {
     let should_break = entries.iter().any(|entry| {
         name_has_leading_comments(&entry.name)
-            || entry
-                .comma
-                .as_ref()
-                .is_some_and(separator_token_has_comments)
+            || entry.comma.as_ref().is_some_and(token_has_comments)
     });
 
     if should_break {
@@ -427,10 +424,6 @@ fn format_module_name_separator_broken(comma: &JavaSyntaxToken) -> Doc {
             jolt_fmt_ir::line()
         },
     ])
-}
-
-fn separator_token_has_comments(token: &JavaSyntaxToken) -> bool {
-    !token.leading_comments().is_empty() || !token.trailing_comments().is_empty()
 }
 
 fn name_has_leading_comments(name: &NameSyntax) -> bool {

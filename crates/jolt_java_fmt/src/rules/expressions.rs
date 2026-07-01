@@ -12,8 +12,8 @@ use jolt_java_syntax::{
 use crate::helpers::chains::member_chain;
 use crate::helpers::comments::{
     comment_forces_line, format_leading_comments, format_token_text, format_token_with_comments,
-    format_trailing_comments, format_trailing_comments_before_line_break, tokens_have_comments,
-    trailing_comments_force_line,
+    format_trailing_comments, format_trailing_comments_before_line_break, token_has_comments,
+    tokens_have_comments, trailing_comments_force_line,
 };
 use crate::helpers::lists::{
     CommaListItem, braced_comma_list_with_trailing_separator, parenthesized_list,
@@ -1234,7 +1234,7 @@ fn binary_operator_comments_in_tree(expression: &Expression, operator: &str) -> 
     {
         if binary
             .operator()
-            .is_some_and(|token| tokens_have_comments(&[token]))
+            .is_some_and(|token| token_has_comments(&token))
         {
             return true;
         }

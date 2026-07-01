@@ -90,7 +90,8 @@ Status legend:
 - `[~]` Formatter-owned `CommentMap` classifies leading, trailing, and
   delimiter-dangling comments; broader moved-construct dangling placement is
   still in progress. Generic construct-leading comment formatting and removed
-  token comment preservation are shared helpers.
+  token comment preservation are shared helpers, along with star-block and
+  token-has-comment classification.
 - `[~]` Comment placement is explicit for moved constructs; leading comments on
   type declarations are preserved before modifier/annotation formatting.
 - `[x]` Sortable import and module directive comments are barriers for v1.
@@ -225,7 +226,8 @@ Status legend:
 ### 9. Comments And Ignore Hardening
 
 - `[~]` Leading/trailing/dangling comment classification; delimiter dangling
-  comments and removed-token comment preservation are helper-owned.
+  comments, token comment checks, star-block checks, and removed-token comment
+  preservation are helper-owned.
 - `[~]` Comment placement for moved constructs.
 - `[x]` Star-block comment normalization.
 - `[x]` `@formatter:off/on` raw range preservation across top-level, module
