@@ -8,4 +8,10 @@ try { risky(); } catch (com.example.recovery.FirstVeryLongRecoverableException |
 int recoverAnnotated() {
 try { risky(); } catch (@Nonnull final Exception ex) { return 3; }
 }
+int recoverCommented() {
+try { risky(); } catch (final /* keep */ Exception ex /* handled */) { return 4; }
+}
+int recoverUnionCommented() {
+try { risky(); } catch (java.io.IOException | /* runtime */ RuntimeException ex) { return 5; }
+}
 }

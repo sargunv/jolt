@@ -815,6 +815,12 @@ pub struct StatementExpressionEntry {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct UnionTypeEntry {
+    pub ty: Type,
+    pub separator: Option<JavaSyntaxToken>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ClassTypeSegment {
     pub annotations: Vec<Annotation>,
     pub name: NameSyntax,

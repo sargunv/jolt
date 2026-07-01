@@ -228,7 +228,8 @@ Status legend:
   fallbacks removed; variable-declarator-list comment fallback removed;
   lambda-parameter comment fallback removed; argument-list comment fallback
   removed; method-reference comment fallback removed; statement-expression-list
-  comment fallback removed; catch-parameter comment fallback remains).
+  comment fallback removed; catch-parameter comment fallback removed;
+  declaration recovery fallbacks remain).
 - `[ ]` Code review can trace every formatting choice to the style guide or
   spec.
 - `[ ]` Audit report links each definition-of-done item to tests, fixtures, or

@@ -886,6 +886,39 @@ fn method_invocations_expose_argument_lists() {
 }
 
 #[test]
+fn catch_type_lists_expose_union_entries() {
+    let syntax = parse_clean(
+        r"
+                class Catches {
+                    void run() {
+                        try {
+                            work();
+                        } catch (java.io.IOException | RuntimeException ex) {
+                            recover(ex);
+                        }
+                    }
+                }
+            ",
+    );
+
+    let parameter = descendants::<CatchParameter>(&syntax)
+        .into_iter()
+        .next()
+        .expect("catch parameter");
+    let types = parameter.types().expect("catch types");
+    let entries = types.entries().collect::<Vec<_>>();
+
+    assert_eq!(entries.len(), 2);
+    assert_eq!(entries[0].ty.source_text().trim(), "java.io.IOException");
+    assert_eq!(
+        entries[0].separator.as_ref().expect("pipe").kind(),
+        JavaSyntaxKind::Bar
+    );
+    assert_eq!(entries[1].ty.source_text().trim(), "RuntimeException");
+    assert!(entries[1].separator.is_none());
+}
+
+#[test]
 fn array_types_expose_dimensions() {
     let syntax = parse_clean(
         r"

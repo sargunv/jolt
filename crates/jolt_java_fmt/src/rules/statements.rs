@@ -14,12 +14,10 @@ use crate::helpers::blocks::{
     BodyItem, braced_block, braced_body, empty_block, join_body_items, join_hard_lines,
 };
 use crate::helpers::comments::{
-    comment_forces_line, format_comment, format_leading_comments, format_token_sequence,
-    format_trailing_comments_before_line_break, tokens_have_comments, trailing_comments_force_line,
+    comment_forces_line, format_comment, format_leading_comments, format_token_with_comments,
+    format_trailing_comments_before_line_break, trailing_comments_force_line,
 };
 use crate::helpers::lists::{TrailingSeparator, comma_list, semicolon_list};
-use crate::helpers::modifiers::inline_modifier_prefix_from_docs;
-use crate::helpers::operators::binary_chain;
 use crate::rules::annotations::format_annotation;
 use crate::rules::declarations::format_type_declaration;
 use crate::rules::expressions::format_expression;
@@ -592,50 +590,81 @@ fn format_parenthesized_catch_parameter(parameter: &CatchParameter) -> Doc {
 }
 
 fn format_catch_parameter(parameter: &CatchParameter) -> Doc {
-    let tokens = parameter.tokens();
-    if tokens_have_comments(&tokens) {
-        return format_token_sequence(&tokens);
-    }
-
     concat([
-        inline_modifier_prefix_from_docs(
-            parameter
-                .annotations()
-                .map(|annotation| format_annotation(&annotation))
-                .collect(),
-            parameter.modifier_tokens().collect(),
-        ),
+        format_catch_modifier_prefix(parameter),
         parameter.types().map_or_else(jolt_fmt_ir::nil, |types| {
             format_catch_type_list(&types, parameter.name())
         }),
     ])
 }
 
+fn format_catch_modifier_prefix(parameter: &CatchParameter) -> Doc {
+    let mut docs = parameter
+        .annotations()
+        .map(|annotation| format_annotation(&annotation))
+        .collect::<Vec<_>>();
+    docs.extend(
+        parameter
+            .modifier_tokens()
+            .map(|token| format_token_with_comments(&token)),
+    );
+
+    if docs.is_empty() {
+        jolt_fmt_ir::nil()
+    } else {
+        concat([jolt_fmt_ir::join(text(" "), docs), text(" ")])
+    }
+}
+
 fn format_catch_type_list(
     types: &CatchTypeList,
     name: Option<jolt_java_syntax::JavaSyntaxToken>,
 ) -> Doc {
-    let mut types = types
-        .types()
-        .map(|ty| format_catch_type(&ty))
-        .collect::<Vec<_>>();
-    let name = name.map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned()));
+    let mut entries = types.entries().collect::<Vec<_>>();
+    let name = name.map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name));
 
-    let Some(last_type) = types.pop() else {
+    let Some(last_entry) = entries.pop() else {
         return name;
     };
-    let last = concat([last_type, text(" "), name]);
-    if types.is_empty() {
+
+    let last = concat([format_catch_type(&last_entry.ty), text(" "), name]);
+    if entries.is_empty() {
         return last;
     }
 
-    let first = types.remove(0);
-    let rest = types
-        .into_iter()
-        .chain(std::iter::once(last))
-        .map(|ty| ("|".to_owned(), ty))
-        .collect();
-    binary_chain(first, rest)
+    let first = entries.remove(0);
+    group(concat([
+        format_catch_type(&first.ty),
+        format_catch_type_separator(first.separator.as_ref()),
+        concat(entries.into_iter().map(|entry| {
+            concat([
+                format_catch_type(&entry.ty),
+                format_catch_type_separator(entry.separator.as_ref()),
+            ])
+        })),
+        last,
+    ]))
+}
+
+fn format_catch_type_separator(separator: Option<&JavaSyntaxToken>) -> Doc {
+    concat([
+        line(),
+        separator.map_or_else(
+            || text("| "),
+            |separator| {
+                concat([
+                    format_leading_comments(separator),
+                    text("|"),
+                    format_trailing_comments_before_line_break(separator),
+                    if trailing_comments_force_line(separator) {
+                        hard_line()
+                    } else {
+                        text(" ")
+                    },
+                ])
+            },
+        ),
+    ])
 }
 
 fn format_catch_type(ty: &Type) -> Doc {

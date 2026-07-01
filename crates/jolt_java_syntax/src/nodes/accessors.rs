@@ -31,7 +31,7 @@ use super::{
     SwitchStatement, SynchronizedStatement, ThisExpression, ThrowStatement, ThrowsClause,
     TryStatement, TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList, TypeBoundList,
     TypeDeclaration, TypeParameter, TypeParameterList, TypePattern, UnaryExpression, UnionType,
-    UsesDirective, VariableAccess, VariableDeclarator, VariableDeclaratorEntry,
+    UnionTypeEntry, UsesDirective, VariableAccess, VariableDeclarator, VariableDeclaratorEntry,
     VariableDeclaratorList, VariableInitializer, VariableInitializerValue, VoidType,
     WhileStatement, WildcardBound, WildcardType, YieldStatement, child, child_family, child_token,
     child_token_in, children, children_family, children_tokens_matching, nth_child_family,
@@ -1883,11 +1883,65 @@ impl CatchTypeList {
             )
             .into_iter()
     }
+
+    pub fn entries(&self) -> impl Iterator<Item = UnionTypeEntry> {
+        child::<UnionType>(&self.syntax)
+            .map_or_else(
+                || {
+                    children_family(&self.syntax)
+                        .map(|ty| UnionTypeEntry {
+                            ty,
+                            separator: None,
+                        })
+                        .collect()
+                },
+                |union| union.entries().collect::<Vec<_>>(),
+            )
+            .into_iter()
+    }
 }
 
 impl UnionType {
     pub fn types(&self) -> impl Iterator<Item = Type> + '_ {
         children_family(&self.syntax)
+    }
+
+    pub fn entries(&self) -> impl Iterator<Item = UnionTypeEntry> {
+        let mut entries = Vec::new();
+        let mut pending_type = None;
+
+        for element in self.syntax.children_with_tokens() {
+            match element {
+                SyntaxElement::Node(node) => {
+                    if let Some(ty) = Type::cast(node)
+                        && let Some(previous) = pending_type.replace(ty)
+                    {
+                        entries.push(UnionTypeEntry {
+                            ty: previous,
+                            separator: None,
+                        });
+                    }
+                }
+                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Bar => {
+                    if let Some(ty) = pending_type.take() {
+                        entries.push(UnionTypeEntry {
+                            ty,
+                            separator: Some(JavaSyntaxToken { syntax: token }),
+                        });
+                    }
+                }
+                SyntaxElement::Token(_) => {}
+            }
+        }
+
+        if let Some(ty) = pending_type {
+            entries.push(UnionTypeEntry {
+                ty,
+                separator: None,
+            });
+        }
+
+        entries.into_iter()
     }
 }
 
