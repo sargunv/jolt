@@ -31,7 +31,7 @@ Status legend:
 
 ## Proposed Module Shape
 
-- `[ ]` Add `context.rs`.
+- `[x]` Add `context.rs`.
 - `[x]` Add `format.rs`.
 - `[~]` Add `rules/` modules.
 - `[x]` Add `helpers/` modules.
@@ -40,8 +40,8 @@ Status legend:
 
 ## Rule Authoring Shape
 
-- `[ ]` Define the rule dispatch API.
-- `[ ]` Define `JavaFormatter` context.
+- `[x]` Define the rule dispatch API.
+- `[x]` Define `JavaFormatter` context.
 - `[ ]` Implement representative declaration-style rules with named helpers.
 - `[ ]` Keep rules free of output string assembly.
 

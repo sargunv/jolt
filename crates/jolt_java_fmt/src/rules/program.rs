@@ -4,11 +4,20 @@ use jolt_java_syntax::{
     ModuleDirective, ModuleDirectiveRole, PackageDeclaration,
 };
 
+use crate::context::{FormatRule, JavaFormatter};
 use crate::rules::annotations::format_annotation;
 use crate::rules::declarations::format_type_declaration;
 use crate::rules::names::{format_name, name_key};
 
-pub(crate) fn format_compilation_unit(unit: &CompilationUnit) -> Doc {
+pub(crate) struct ProgramRule;
+
+impl FormatRule<CompilationUnit> for ProgramRule {
+    fn fmt(&self, unit: &CompilationUnit, _formatter: &mut JavaFormatter<'_>) -> Doc {
+        format_compilation_unit(unit)
+    }
+}
+
+fn format_compilation_unit(unit: &CompilationUnit) -> Doc {
     let mut sections = Vec::new();
     let mut package = None;
     let mut imports = Vec::new();

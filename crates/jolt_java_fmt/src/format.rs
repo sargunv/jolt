@@ -1,10 +1,10 @@
 use jolt_diagnostics::{
     Diagnostic, DiagnosticCode, DiagnosticCodeId, DiagnosticStage, Severity, SyntaxOutcome,
 };
-use jolt_fmt_ir::{IndentStyle, LineEnding, RenderOptions, TextWidth, render};
+use jolt_fmt_ir::render;
 use jolt_java_syntax::parse_compilation_unit;
 
-use crate::rules::program::format_compilation_unit;
+use crate::context::JavaFormatter;
 
 /// Java formatter options consumed by the Java layout builder.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -71,8 +71,9 @@ pub fn format_source(source: &str, options: &JavaFormatOptions) -> JavaFormatRes
         };
     };
 
-    let doc = format_compilation_unit(&syntax);
-    match render(&doc, render_options(*options)) {
+    let mut formatter = JavaFormatter::new(options);
+    let doc = formatter.format_compilation_unit(&syntax);
+    match render(&doc, formatter.render_options()) {
         Ok(rendered) => JavaFormatResult {
             formatted_source: Some(rendered.text),
             diagnostics,
@@ -81,19 +82,6 @@ pub fn format_source(source: &str, options: &JavaFormatOptions) -> JavaFormatRes
             formatted_source: None,
             diagnostics: [diagnostics, vec![render_error_diagnostic(&error)]].concat(),
         },
-    }
-}
-
-fn render_options(options: JavaFormatOptions) -> RenderOptions {
-    RenderOptions {
-        line_width: TextWidth::from(options.line_width),
-        indent_width: u16::from(options.indent_width),
-        indent_style: if options.use_tabs {
-            IndentStyle::Tab
-        } else {
-            IndentStyle::Space
-        },
-        line_ending: LineEnding::Lf,
     }
 }
 
