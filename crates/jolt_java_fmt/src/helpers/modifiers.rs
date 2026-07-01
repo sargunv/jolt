@@ -1,24 +1,46 @@
 use jolt_fmt_ir::{Doc, concat, hard_line, text};
 use jolt_java_syntax::{JavaSyntaxKind, JavaSyntaxToken, ModifierEntry};
 
+use crate::helpers::comments::{
+    format_leading_comments, format_token_text, format_trailing_comments_before_line_break,
+};
+
 pub(crate) fn modifier_prefix_from_docs(
     annotation_docs: Vec<Doc>,
     modifier_entries: Vec<ModifierEntry>,
 ) -> Doc {
     let modifier_entries = sorted_modifier_entries(modifier_entries);
+    modifier_prefix_from_modifier_docs(
+        annotation_docs,
+        modifier_entries
+            .into_iter()
+            .map(|entry| format_modifier_entry(&entry, LeadingComments::Suppress))
+            .collect(),
+    )
+}
 
+pub(crate) fn modifier_prefix_from_token_docs(
+    annotation_docs: Vec<Doc>,
+    modifier_tokens: Vec<JavaSyntaxToken>,
+) -> Doc {
+    let modifier_tokens = sorted_modifier_tokens(modifier_tokens);
+    modifier_prefix_from_modifier_docs(
+        annotation_docs,
+        modifier_tokens
+            .into_iter()
+            .map(|token| format_modifier_token(&token, LeadingComments::Preserve))
+            .collect(),
+    )
+}
+
+fn modifier_prefix_from_modifier_docs(annotation_docs: Vec<Doc>, modifier_docs: Vec<Doc>) -> Doc {
     let mut docs = Vec::new();
     for annotation in annotation_docs {
         docs.push(annotation);
         docs.push(hard_line());
     }
-    if !modifier_entries.is_empty() {
-        docs.push(jolt_fmt_ir::join(
-            text(" "),
-            modifier_entries
-                .into_iter()
-                .map(|entry| text(modifier_entry_text(&entry))),
-        ));
+    if !modifier_docs.is_empty() {
+        docs.push(jolt_fmt_ir::join(text(" "), modifier_docs));
         docs.push(text(" "));
     }
 
@@ -34,7 +56,7 @@ pub(crate) fn inline_modifier_prefix_from_docs(
     docs.extend(
         modifier_tokens
             .into_iter()
-            .map(|token| text(token.text().to_owned())),
+            .map(|token| format_modifier_token(&token, LeadingComments::Preserve)),
     );
 
     if docs.is_empty() {
@@ -67,6 +89,33 @@ fn modifier_entry_order(entry: &ModifierEntry) -> u8 {
 
 fn modifier_entry_text(entry: &ModifierEntry) -> String {
     entry.tokens.iter().map(JavaSyntaxToken::text).collect()
+}
+
+fn format_modifier_entry(entry: &ModifierEntry, leading_comments: LeadingComments) -> Doc {
+    concat(
+        entry
+            .tokens
+            .iter()
+            .map(|token| format_modifier_token(token, leading_comments)),
+    )
+}
+
+fn format_modifier_token(token: &JavaSyntaxToken, leading_comments: LeadingComments) -> Doc {
+    concat([
+        if matches!(leading_comments, LeadingComments::Preserve) {
+            format_leading_comments(token)
+        } else {
+            jolt_fmt_ir::nil()
+        },
+        format_token_text(token.text()),
+        format_trailing_comments_before_line_break(token),
+    ])
+}
+
+#[derive(Clone, Copy)]
+enum LeadingComments {
+    Preserve,
+    Suppress,
 }
 
 const fn modifier_order(kind: JavaSyntaxKind) -> u8 {

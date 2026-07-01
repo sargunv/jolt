@@ -100,8 +100,8 @@ Status legend:
   constructor invocations now read through `CommentMap`.
 - `[~]` Comment placement is explicit for moved constructs; leading comments on
   type declarations, callable declarations, parameters/components, constructor
-  invocations, and broken header/list entries are preserved through
-  formatter-owned comment classification.
+  invocations, sorted modifiers, and broken header/list entries are preserved
+  through formatter-owned comment classification.
 - `[x]` Sortable import and module directive comments are barriers for v1.
 
 ## Helper Organization
@@ -171,7 +171,7 @@ Status legend:
 ### 6. Declaration Layer
 
 - `[x]` Modifier sorting, including contextual `sealed` and `non-sealed` type
-  modifiers.
+  modifiers and comments attached to sorted modifiers.
 - `[x]` Declaration/type-use annotation placement.
 - `[x]` Post-modifier field and method return type-use annotations remain inline
   with the type.

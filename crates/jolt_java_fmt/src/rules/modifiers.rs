@@ -2,7 +2,9 @@ use jolt_fmt_ir::Doc;
 use jolt_java_syntax::{Annotation, JavaSyntaxToken, ModifierEntry, ModifierList};
 
 use crate::context::JavaFormatter;
-use crate::helpers::modifiers::{inline_modifier_prefix_from_docs, modifier_prefix_from_docs};
+use crate::helpers::modifiers::{
+    inline_modifier_prefix_from_docs, modifier_prefix_from_docs, modifier_prefix_from_token_docs,
+};
 use crate::rules::annotations::format_annotation;
 
 pub(crate) struct TypedModifierPrefix {
@@ -72,17 +74,22 @@ pub(crate) fn format_typed_modifier_prefix_from_token_split_parts(
     modifier_tokens: Vec<JavaSyntaxToken>,
     formatter: &JavaFormatter<'_>,
 ) -> TypedModifierPrefix {
-    format_typed_modifier_prefix_from_split_parts(
-        declaration_annotations,
-        type_use_annotations,
-        modifier_tokens
-            .into_iter()
-            .map(|token| ModifierEntry {
-                tokens: vec![token],
-            })
-            .collect(),
-        formatter,
-    )
+    TypedModifierPrefix {
+        declaration_prefix: modifier_prefix_from_token_docs(
+            declaration_annotations
+                .into_iter()
+                .map(|annotation| format_annotation(&annotation, formatter))
+                .collect(),
+            modifier_tokens,
+        ),
+        type_use_prefix: inline_modifier_prefix_from_docs(
+            type_use_annotations
+                .into_iter()
+                .map(|annotation| format_annotation(&annotation, formatter))
+                .collect(),
+            Vec::new(),
+        ),
+    }
 }
 
 pub(crate) fn format_modifier_prefix_from_parts(
