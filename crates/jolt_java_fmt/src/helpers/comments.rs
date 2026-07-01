@@ -60,7 +60,15 @@ pub(crate) fn tokens_end_with_forced_line(tokens: &[JavaSyntaxToken]) -> bool {
 }
 
 pub(crate) fn format_comment(comment: &JavaComment) -> Doc {
-    literal_text(comment.text().trim().to_owned())
+    match comment.kind() {
+        JavaCommentKind::Doc => format_comment_lines(normalize_star_block_comment(comment.text())),
+        JavaCommentKind::Block if is_star_block_comment(comment.text()) => {
+            format_comment_lines(normalize_star_block_comment(comment.text()))
+        }
+        JavaCommentKind::Line | JavaCommentKind::Block => {
+            format_comment_lines(preserve_comment_lines(comment.text()))
+        }
+    }
 }
 
 fn format_token_text(token_text: &str) -> Doc {
@@ -73,6 +81,76 @@ fn format_token_text(token_text: &str) -> Doc {
 
 pub(crate) fn comment_forces_line(comment: &JavaComment) -> bool {
     comment.kind() == JavaCommentKind::Line || comment.text().contains(['\n', '\r'])
+}
+
+fn format_comment_lines(lines: Vec<String>) -> Doc {
+    let mut docs = Vec::new();
+    for line in lines {
+        if !docs.is_empty() {
+            docs.push(hard_line());
+        }
+        docs.push(text(line));
+    }
+    concat(docs)
+}
+
+fn preserve_comment_lines(comment: &str) -> Vec<String> {
+    comment
+        .trim()
+        .lines()
+        .map(|line| line.trim().to_owned())
+        .collect()
+}
+
+fn is_star_block_comment(comment: &str) -> bool {
+    let trimmed = comment.trim_start();
+    trimmed.starts_with("/**") || trimmed.starts_with("/*\n") || trimmed.starts_with("/*\r")
+}
+
+fn normalize_star_block_comment(comment: &str) -> Vec<String> {
+    let content = strip_block_comment_delimiters(comment);
+    let body = content
+        .lines()
+        .map(normalize_star_block_body_line)
+        .collect::<Vec<_>>();
+    let first_content = body.iter().position(|line| !line.is_empty());
+    let last_content = body.iter().rposition(|line| !line.is_empty());
+
+    let mut lines = vec!["/**".to_owned()];
+    if let (Some(first), Some(last)) = (first_content, last_content) {
+        for line in &body[first..=last] {
+            if line.is_empty() {
+                lines.push(" *".to_owned());
+            } else {
+                lines.push(format!(" * {line}"));
+            }
+        }
+    }
+    lines.push(" */".to_owned());
+    lines
+}
+
+fn strip_block_comment_delimiters(comment: &str) -> &str {
+    comment
+        .trim()
+        .strip_prefix("/**")
+        .or_else(|| comment.trim().strip_prefix("/*"))
+        .unwrap_or(comment.trim())
+        .strip_suffix("*/")
+        .unwrap_or_else(|| {
+            comment
+                .trim()
+                .strip_prefix("/**")
+                .or_else(|| comment.trim().strip_prefix("/*"))
+                .unwrap_or(comment.trim())
+        })
+}
+
+fn normalize_star_block_body_line(line: &str) -> String {
+    line.trim_start().strip_prefix('*').map_or_else(
+        || line.trim().to_owned(),
+        |line| line.trim_start().to_owned(),
+    )
 }
 
 fn needs_space(previous: JavaSyntaxKind, current: JavaSyntaxKind) -> bool {

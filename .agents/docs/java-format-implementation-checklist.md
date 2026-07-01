@@ -103,7 +103,7 @@ Status legend:
 - `[ ]` `qualified_name`
 - `[~]` `line_comment`
 - `[~]` `block_comment`
-- `[ ]` `star_block_comment`
+- `[x]` `star_block_comment`
 
 ## Rule Implementation Order
 
@@ -185,7 +185,7 @@ Status legend:
 
 - `[ ]` Leading/trailing/dangling comment classification.
 - `[ ]` Comment placement for moved constructs.
-- `[ ]` Star-block comment normalization.
+- `[x]` Star-block comment normalization.
 - `[ ]` `@formatter:off/on` raw range preservation.
 - `[ ]` Text-block internal preservation.
 - `[x]` Imported-corpus comment/idempotence tests.
