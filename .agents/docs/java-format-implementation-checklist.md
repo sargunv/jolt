@@ -68,7 +68,7 @@ Status legend:
 - `[~]` Declaration headers and bodies.
 - `[~]` Statement body kind.
 - `[ ]` Switch labels/rules/guards.
-- `[ ]` For init/condition/update.
+- `[x]` For init/condition/update.
 - `[ ]` Try resources and optional trailing semicolon.
 - `[ ]` Expression parent roles.
 - `[ ]` Member-chain linearization.
@@ -161,13 +161,13 @@ Status legend:
 ### 7. Statement Layer
 
 - `[~]` Blocks and braced bodies.
-- `[ ]` Labels.
+- `[x]` Labels.
 - `[~]` `if`/`else`.
 - `[~]` Loops and broken `for` headers.
 - `[ ]` Switch labels/rules/guards.
-- `[ ]` `return`/`throw`/`yield`.
+- `[~]` `return`/`throw`/`yield`.
 - `[ ]` Try/catch/finally/resources.
-- `[ ]` `assert`/`break`/`continue`.
+- `[x]` `assert`/`break`/`continue`.
 
 ### 8. Expression Layer
 

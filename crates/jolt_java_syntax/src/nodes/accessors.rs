@@ -1,15 +1,16 @@
 use super::{
     Annotation, AnnotationArgumentList, AnnotationElementList, AnnotationInterfaceBody,
     AnnotationInterfaceBodyMember, AnnotationInterfaceDeclaration, AnyJavaNode, ArgumentList,
-    ArrayCreationExpression, ArrayDimensions, ArrayInitializer, ArrayType, AssignmentExpression,
-    BasicForStatement, BinaryExpression, Block, BlockItem, BlockStatement, CastExpression,
-    ClassBody, ClassBodyDeclaration, ClassBodyMember, ClassDeclaration, CompilationUnit,
-    ConditionalExpression, ConstructorBody, ConstructorDeclaration, DimExpression, DoStatement,
-    EnhancedForStatement, EnumBody, EnumConstant, EnumConstantList, EnumDeclaration, Expression,
-    ExpressionStatement, ExtendsClause, FieldDeclaration, ForInitializer, ForStatement, ForUpdate,
-    FormalParameter, FormalParameterList, IfStatement, ImplementsClause, ImportDeclaration,
-    InstanceInitializer, InterfaceBody, InterfaceBodyMember, InterfaceDeclaration, JavaSyntaxKind,
-    JavaSyntaxToken, LambdaExpression, LambdaParameter, LambdaParameterList,
+    ArrayCreationExpression, ArrayDimensions, ArrayInitializer, ArrayType, AssertStatement,
+    AssignmentExpression, BasicForStatement, BinaryExpression, Block, BlockItem, BlockStatement,
+    BreakStatement, CastExpression, ClassBody, ClassBodyDeclaration, ClassBodyMember,
+    ClassDeclaration, CompilationUnit, ConditionalExpression, ConstructorBody,
+    ConstructorDeclaration, ContinueStatement, DimExpression, DoStatement, EnhancedForStatement,
+    EnumBody, EnumConstant, EnumConstantList, EnumDeclaration, Expression, ExpressionStatement,
+    ExtendsClause, FieldDeclaration, ForInitializer, ForStatement, ForUpdate, FormalParameter,
+    FormalParameterList, IfStatement, ImplementsClause, ImportDeclaration, InstanceInitializer,
+    InterfaceBody, InterfaceBodyMember, InterfaceDeclaration, JavaSyntaxKind, JavaSyntaxToken,
+    LabeledStatement, LambdaExpression, LambdaParameter, LambdaParameterList,
     LocalVariableDeclaration, MethodDeclaration, MethodInvocationExpression, ModifierList,
     ModuleDeclaration, ModuleDirective, ModuleDirectiveNode, NameSyntax, ObjectCreationExpression,
     PackageDeclaration, ParenthesizedExpression, PermitsClause, PostfixExpression,
@@ -766,6 +767,44 @@ impl ExpressionStatement {
     #[must_use]
     pub fn expression(&self) -> Option<Expression> {
         child_family(&self.syntax)
+    }
+}
+
+impl LabeledStatement {
+    #[must_use]
+    pub fn label(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Identifier)
+    }
+
+    #[must_use]
+    pub fn body(&self) -> Option<Statement> {
+        child_family(&self.syntax)
+    }
+}
+
+impl AssertStatement {
+    #[must_use]
+    pub fn condition(&self) -> Option<Expression> {
+        nth_child_family(&self.syntax, 0)
+    }
+
+    #[must_use]
+    pub fn detail(&self) -> Option<Expression> {
+        nth_child_family(&self.syntax, 1)
+    }
+}
+
+impl BreakStatement {
+    #[must_use]
+    pub fn label(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Identifier)
+    }
+}
+
+impl ContinueStatement {
+    #[must_use]
+    pub fn label(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Identifier)
     }
 }
 
