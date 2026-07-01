@@ -170,14 +170,70 @@ Evidence:
 
 ### Formatting Choices Are Traceable To The Style Guide Or Spec
 
-Status: incomplete audit.
+Status: proven for the current implementation.
 
 Evidence:
 
 - The implementation checklist records broad rule coverage and no permanent
   intentional deviations.
-
-Remaining work:
-
-- Review each formatter helper/rule against the style-guide documents and this
-  spec, then record any permanent intentional deviations.
+- Source review found no formatter references to Google Java Format, AOSP,
+  Palantir, Prettier-Java compatibility branches, oracle scoring, temporary
+  workarounds, or formatter-local parser workarounds.
+- Source review found no formatter rule/helper raw child-list scans (`children`,
+  `children_with_tokens`, `descendants`, or direct `.syntax()` traversal)
+  outside unit-test setup; formatter rules use typed syntax accessors for
+  grammar roles.
+- Layer ownership matches the spec: `jolt_fmt_core` converts public options and
+  owns shared status/diagnostics, `jolt_java_fmt` owns Java policy and
+  CST-to-document layout, `jolt_java_syntax` owns CST accessors/trivia/spans,
+  and `jolt_fmt_ir` owns document construction and rendering.
+- Helper/rule traceability:
+  - `helpers/blocks.rs` and `helpers/member_body.rs` implement the style rules
+    for braced empty blocks, one-indent bodies, body blank-line capping, and
+    member-category separation.
+  - `helpers/lists.rs` implements the spec's bounded delimiter/list helpers:
+    comma lists, broken closing delimiters on their own line, trailing separator
+    policy for braced lists, delimiter dangling comments, and break-all list
+    behavior.
+  - `helpers/operators.rs` and `rules/types.rs` implement the style rules for
+    assignment right-hand sides, leading binary/operator chains, ternaries,
+    intersection types, union types, and multi-catch alternatives.
+  - `helpers/chains.rs` plus `rules/expressions.rs` implement the Ruff-shaped
+    member-chain head policy, parenthesized expressions, calls/arguments, lambda
+    parameter policy, arrays/initializers, casts, `instanceof`, patterns, object
+    creation, method references, and finite binary flattening only where the
+    style guide permits it.
+  - `helpers/comments.rs`, `comments.rs`, and `rules/comments.rs` implement
+    token-span comment classification, leading/trailing/dangling comment
+    vocabulary, star-block normalization, raw comment-only file formatting, and
+    literal text preservation for source slices that policy says must remain
+    verbatim.
+  - `helpers/formatter_ignore.rs` implements the style-guide policy for generic
+    `@formatter:off/on` ranges by preserving raw source slices inside ignored
+    ranges while surrounding code continues through normal parser and formatter
+    rules.
+  - `rules/imports.rs`, `rules/modules.rs`, and `rules/program.rs` implement
+    file shape, package/import/module spacing, sorting with comment barriers,
+    module directive grouping, top-level semicolon removal, final newline, and
+    formatter-ignore segmentation.
+  - `rules/declarations.rs`, `rules/modifiers.rs`, and `rules/variables.rs`
+    implement declaration/type-use annotation roles, canonical modifier order,
+    class/interface/record/enum/annotation headers and bodies, parameters,
+    receiver parameters, varargs, `throws`, enum constants, type-body empty
+    statement removal, and variable declarations.
+  - `rules/statements.rs` implements braced bodies, empty-body normalization,
+    labels, if/else, loops, broken `for` headers, switch labels/rules/guards,
+    jump/assert statements, try/catch/finally, try-with-resources, and
+    comment-preserving removal of optional resource semicolons.
+- Renderer traceability:
+  - `jolt_fmt_ir` contains no best-fitting or compatibility-only Java
+    primitives.
+  - `render.rs` uses one flat fit probe per group, treats nested groups as flat
+    inside the measured group unless forced, and stops fitting as soon as width
+    is exceeded.
+  - `fit_checks_use_nested_current_group_state` and
+    `deeply_nested_fitting_groups_render_without_exploration` cover the bounded
+    group behavior required by the implementation spec.
+- Recovery-only token-sequence branches remain only for malformed declaration
+  nodes whose missing required names are blocked by the public formatter's
+  non-clean parse gate; clean parser-accepted syntax is covered by real rules.

@@ -14,21 +14,21 @@ Status legend:
 
 ## Build Philosophy
 
-- `[~]` Build layer by layer rather than proof-grade vertical slices.
-- `[~]` Start with tests that pin style-guide behavior.
-- `[~]` Add missing CST accessors before printer workarounds.
-- `[~]` Add reusable layout helpers before full rule implementation.
+- `[x]` Build layer by layer rather than proof-grade vertical slices.
+- `[x]` Start with tests that pin style-guide behavior.
+- `[x]` Add missing CST accessors before printer workarounds.
+- `[x]` Add reusable layout helpers before full rule implementation.
 - `[x]` Keep rendering bounded and linear: group fit probes push the measured
   group as flat, treat nested groups as flat contents unless forced, and are
   covered by deep-nesting/current-group renderer tests.
 
 ## Target Layering
 
-- `[~]` `jolt_java_syntax` owns parsing, CST shape, trivia, and accessors.
-- `[~]` `jolt_java_fmt` owns Java policy and CST-to-document layout.
+- `[x]` `jolt_java_syntax` owns parsing, CST shape, trivia, and accessors.
+- `[x]` `jolt_java_fmt` owns Java policy and CST-to-document layout.
 - `[x]` `jolt_fmt_ir` owns language-agnostic documents and rendering.
-- `[~]` `jolt_fmt_core` owns public options, diagnostics, and language wiring.
-- `[~]` Java formatter rules avoid raw syntax structure when stable accessors
+- `[x]` `jolt_fmt_core` owns public options, diagnostics, and language wiring.
+- `[x]` Java formatter rules avoid raw syntax structure when stable accessors
   should exist; formatter-ignore token range math is helper-owned, qualified
   name separator dots/comments, contextual modifier entries, and typed modifier
   annotation splits use syntax accessors, and formatter context is threaded
@@ -90,18 +90,19 @@ Status legend:
 
 - `[x]` Syntax-owned raw comments, token/source spans, and trivia positions are
   exposed enough for formatting.
-- `[~]` Formatter-owned `CommentMap` classifies leading, trailing, and
-  delimiter-dangling comments; broader moved-construct dangling placement is
-  still in progress. Generic construct-leading comment formatting and removed
-  token comment preservation are shared helpers, along with star-block and
-  token-has-comment classification. Construct-leading comments for type
+- `[x]` Formatter-owned `CommentMap` classifies leading, trailing, and
+  delimiter-dangling comments. Generic construct-leading comment formatting and
+  removed-token comment preservation are shared helpers, along with star-block
+  and token-has-comment classification. Construct-leading comments for type
   declarations, formal parameters, record components, receiver parameters,
   type/permits header entries, module target lists, constructors, methods, and
-  constructor invocations now read through `CommentMap`.
-- `[~]` Comment placement is explicit for moved constructs; leading comments on
-  type declarations, callable declarations, parameters/components, constructor
-  invocations, sorted modifiers, and broken header/list entries are preserved
-  through formatter-owned comment classification.
+  constructor invocations read through `CommentMap`.
+- `[x]` Comment placement is explicit for moved constructs; sortable
+  imports/modules treat leading comments as barriers, removed empty
+  statements/declarations preserve comments, sorted modifiers preserve token
+  comments, enum separator comments move when commas become semicolons, removed
+  try-resource trailing semicolon comments are preserved, and broken header/list
+  entries preserve leading and delimiter comments.
 - `[x]` Sortable import and module directive comments are barriers for v1.
 
 ## Helper Organization
@@ -238,10 +239,10 @@ Status legend:
 
 ### 9. Comments And Ignore Hardening
 
-- `[~]` Leading/trailing/dangling comment classification; delimiter dangling
+- `[x]` Leading/trailing/dangling comment classification; delimiter dangling
   comments, token comment checks, star-block checks, and removed-token comment
   preservation are helper-owned.
-- `[~]` Comment placement for moved constructs.
+- `[x]` Comment placement for moved constructs.
 - `[x]` Star-block comment normalization.
 - `[x]` `@formatter:off/on` raw range preservation across top-level, module
   directive, type-member, constructor-body, and block-statement sequences.
@@ -266,7 +267,7 @@ Status legend:
   declaration recovery branches remain only behind the public formatter's
   non-clean parse gate and are covered by
   `declaration_recovery_nodes_do_not_reach_layout`).
-- `[~]` Code review can trace every formatting choice to the style guide or
+- `[x]` Code review can trace every formatting choice to the style guide or
   spec.
 - `[x]` Audit report links each definition-of-done item to tests, fixtures, or
   implementation evidence.

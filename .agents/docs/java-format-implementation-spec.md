@@ -470,8 +470,8 @@ After the main syntax surface works:
 - add imported-corpus comment/idempotence tests.
 
 This is not permission to ignore comments earlier. It means the first formatter
-can use conservative placement while policy-specific harDefinition Of Donedening
-lands in a dedicated layer.
+can use conservative placement while policy-specific hardening lands in a
+dedicated layer.
 
 ## Representative Fixtures
 
