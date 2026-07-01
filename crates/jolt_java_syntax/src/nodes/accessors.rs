@@ -2494,6 +2494,10 @@ impl ProvidesDirective {
 }
 
 impl Block {
+    pub fn block_statements(&self) -> impl Iterator<Item = BlockStatement> + '_ {
+        children(&self.syntax)
+    }
+
     pub fn items(&self) -> impl Iterator<Item = BlockItem> + '_ {
         children::<BlockStatement>(&self.syntax).filter_map(|node| node.item())
     }
@@ -2507,6 +2511,11 @@ impl BlockStatement {
     #[must_use]
     pub fn item(&self) -> Option<BlockItem> {
         child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn starts_after_blank_line(&self) -> bool {
+        starts_after_blank_line(&self.syntax)
     }
 
     #[must_use]

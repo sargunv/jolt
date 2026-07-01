@@ -12,6 +12,13 @@ impl BodyItem {
             starts_after_blank_line,
         }
     }
+
+    pub(crate) fn without_blank_line_before(self) -> Self {
+        Self {
+            starts_after_blank_line: false,
+            ..self
+        }
+    }
 }
 
 pub(crate) fn braced_block(items: Vec<Doc>) -> Doc {
