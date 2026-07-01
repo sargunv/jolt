@@ -182,14 +182,72 @@ fn format_class_literal_expression(expression: &ClassLiteralExpression) -> Doc {
 }
 
 fn format_parenthesized_expression(expression: &ParenthesizedExpression) -> Doc {
+    group(concat([
+        format_parenthesized_expression_open(expression),
+        indent(concat([
+            format_open_parenthesized_expression_spacing(expression),
+            expression
+                .expression()
+                .map_or_else(jolt_fmt_ir::nil, |expression| {
+                    format_expression(&expression)
+                }),
+        ])),
+        format_parenthesized_expression_close_with_spacing(expression),
+    ]))
+}
+
+fn format_parenthesized_expression_open(expression: &ParenthesizedExpression) -> Doc {
+    expression.open_paren().map_or_else(
+        || text("("),
+        |open| concat([format_leading_comments(&open), text("(")]),
+    )
+}
+
+fn format_open_parenthesized_expression_spacing(expression: &ParenthesizedExpression) -> Doc {
+    let Some(open) = expression.open_paren() else {
+        return soft_line();
+    };
+
+    if open.trailing_comments().is_empty() {
+        return soft_line();
+    }
+
     concat([
-        text("("),
-        expression
-            .expression()
-            .map_or_else(jolt_fmt_ir::nil, |expression| {
-                format_expression(&expression)
-            }),
-        text(")"),
+        format_trailing_comments_before_line_break(&open),
+        if open.trailing_comments().iter().any(comment_forces_line) {
+            hard_line()
+        } else {
+            text(" ")
+        },
+    ])
+}
+
+fn format_parenthesized_expression_close_with_spacing(expression: &ParenthesizedExpression) -> Doc {
+    let close_has_leading_comments = expression
+        .close_paren()
+        .as_ref()
+        .is_some_and(|token| !token.leading_comments().is_empty());
+
+    concat([
+        if close_has_leading_comments {
+            line()
+        } else {
+            soft_line()
+        },
+        expression.close_paren().map_or_else(
+            || text(")"),
+            |close| {
+                concat([
+                    if close_has_leading_comments {
+                        format_leading_comments(&close)
+                    } else {
+                        jolt_fmt_ir::nil()
+                    },
+                    text(")"),
+                    format_trailing_comments(&close),
+                ])
+            },
+        ),
     ])
 }
 

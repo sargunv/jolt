@@ -2242,6 +2242,16 @@ impl AnnotationArrayInitializer {
 
 impl ParenthesizedExpression {
     #[must_use]
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RParen)
+    }
+
+    #[must_use]
     pub fn expression(&self) -> Option<Expression> {
         child_family(&self.syntax)
     }

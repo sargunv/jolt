@@ -1,6 +1,8 @@
 class Example {
   boolean allowed(User user, Account account) {
-    return (user.isActive() && account.hasPermission("write")) ? true : false;
+    return ( /* allowed */ user.isActive() && account.hasPermission("write"))
+      ? true
+      : false;
   }
 
   boolean commented(boolean ready) {

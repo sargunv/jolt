@@ -2089,6 +2089,7 @@ fn expression_and_statement_accessors_expose_layout_roles() {
                 class Expressions {
                     void test(int a, int b, int c, boolean ready) {
                         int value = (a + b) * -c;
+                        int grouped = (/* grouped */ a);
                         value += ready ? call(1, 2) : new int[] { 3 };
                         java.util.function.Supplier<Expressions> supplier = Expressions::new;
                         builder.add(a).add(b).build();
@@ -2175,6 +2176,23 @@ fn expression_and_statement_accessors_expose_layout_roles() {
         binary.right().expect("binary rhs"),
         Expression::UnaryExpression(_)
     ));
+
+    let parenthesized = descendants::<ParenthesizedExpression>(&syntax)
+        .into_iter()
+        .find(|expression| expression.source_text().contains("grouped"))
+        .expect("parenthesized expression");
+    assert_eq!(
+        parenthesized
+            .open_paren()
+            .expect("open paren")
+            .trailing_comments()[0]
+            .text(),
+        "/* grouped */"
+    );
+    assert_eq!(
+        parenthesized.close_paren().expect("close paren").text(),
+        ")"
+    );
 
     let invocation = descendants::<MethodInvocationExpression>(&syntax)
         .into_iter()
