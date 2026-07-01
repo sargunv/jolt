@@ -25,12 +25,12 @@ use super::{
     NameSyntax, ObjectCreationExpression, OpensDirective, PackageDeclaration,
     ParenthesizedExpression, Pattern, PermitsClause, PostfixExpression, PrimitiveType,
     ProvidesDirective, RecordBody, RecordComponent, RecordComponentList, RecordDeclaration,
-    RecordPattern, RequiresDirective, Resource, ResourceList, ResourceSpecification,
-    ReturnStatement, Statement, StatementBody, StatementExpressionEntry, StatementExpressionList,
-    StaticInitializer, SuperExpression, SwitchBlock, SwitchBlockEntry, SwitchBlockStatementGroup,
-    SwitchExpression, SwitchLabel, SwitchLabelCaseItem, SwitchRule, SwitchStatement,
-    SynchronizedStatement, ThisExpression, ThrowStatement, ThrowsClause, TryStatement,
-    TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList, TypeBoundList,
+    RecordPattern, RequiresDirective, Resource, ResourceList, ResourceListEntry,
+    ResourceSpecification, ReturnStatement, Statement, StatementBody, StatementExpressionEntry,
+    StatementExpressionList, StaticInitializer, SuperExpression, SwitchBlock, SwitchBlockEntry,
+    SwitchBlockStatementGroup, SwitchExpression, SwitchLabel, SwitchLabelCaseItem, SwitchRule,
+    SwitchStatement, SynchronizedStatement, ThisExpression, ThrowStatement, ThrowsClause,
+    TryStatement, TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList, TypeBoundList,
     TypeDeclaration, TypeParameter, TypeParameterList, TypePattern, UnaryExpression, UnionType,
     UnionTypeEntry, UsesDirective, VariableAccess, VariableDeclarator, VariableDeclaratorEntry,
     VariableDeclaratorList, VariableInitializer, VariableInitializerValue, VoidType,
@@ -2456,11 +2456,59 @@ impl ResourceSpecification {
     pub fn list(&self) -> Option<ResourceList> {
         child(&self.syntax)
     }
+
+    #[must_use]
+    pub fn trailing_semicolon(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Semicolon)
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RParen)
+    }
 }
 
 impl ResourceList {
     pub fn resources(&self) -> impl Iterator<Item = Resource> + '_ {
         children(&self.syntax)
+    }
+
+    pub fn entries(&self) -> impl Iterator<Item = ResourceListEntry> {
+        let mut entries = Vec::new();
+        let mut pending_resource = None;
+
+        for element in self.syntax.children_with_tokens() {
+            match element {
+                SyntaxElement::Node(node) => {
+                    if let Some(resource) = Resource::cast(node)
+                        && let Some(previous) = pending_resource.replace(resource)
+                    {
+                        entries.push(ResourceListEntry {
+                            resource: previous,
+                            separator: None,
+                        });
+                    }
+                }
+                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Semicolon => {
+                    if let Some(resource) = pending_resource.take() {
+                        entries.push(ResourceListEntry {
+                            resource,
+                            separator: Some(JavaSyntaxToken { syntax: token }),
+                        });
+                    }
+                }
+                SyntaxElement::Token(_) => {}
+            }
+        }
+
+        if let Some(resource) = pending_resource {
+            entries.push(ResourceListEntry {
+                resource,
+                separator: None,
+            });
+        }
+
+        entries.into_iter()
     }
 }
 

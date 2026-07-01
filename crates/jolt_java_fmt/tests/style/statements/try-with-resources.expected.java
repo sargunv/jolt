@@ -1,8 +1,9 @@
 class Example {
   void run() throws Exception {
     try (
-      var declared = open();
+      var declared = open(); // declared resource
       existing
+      // trailing resource semicolon
     ) {
       use(declared);
     } catch (Exception ex) {

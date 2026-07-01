@@ -871,6 +871,12 @@ pub struct StatementExpressionEntry {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ResourceListEntry {
+    pub resource: Resource,
+    pub separator: Option<JavaSyntaxToken>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct UnionTypeEntry {
     pub ty: Type,
     pub separator: Option<JavaSyntaxToken>,

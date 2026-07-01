@@ -560,6 +560,81 @@ fn statement_accessors_expose_terminal_semicolons() {
 }
 
 #[test]
+fn resource_lists_expose_entries_with_semicolons() {
+    let syntax = parse_clean(
+        r"
+                class Accessors {
+                    void run() throws Exception {
+                        try (
+                            var declared = open(); // declared
+                            existing; // optional trailing
+                        ) {
+                        }
+                    }
+                }
+            ",
+    );
+    let specification = descendants::<ResourceSpecification>(&syntax)
+        .into_iter()
+        .next()
+        .expect("resource specification");
+    let list = specification.list().expect("resource list");
+    let entries = list.entries().collect::<Vec<_>>();
+
+    assert_eq!(entries.len(), 2);
+    assert!(entries[0].resource.declaration().is_some());
+    assert_eq!(
+        semicolon_trailing_comment(entries[0].separator.clone()),
+        "// declared"
+    );
+    assert!(entries[1].resource.variable_access().is_some());
+    assert!(entries[1].separator.is_none());
+    assert_eq!(
+        semicolon_trailing_comment(specification.trailing_semicolon()),
+        "// optional trailing"
+    );
+}
+
+#[test]
+fn resource_lists_without_trailing_semicolon_expose_no_optional_separator() {
+    let syntax = parse_clean(
+        r"
+                class Accessors {
+                    void run() throws Exception {
+                        try (
+                            var declared = open();
+                            existing
+                            // before close
+                        ) {
+                        }
+                    }
+                }
+            ",
+    );
+    let specification = descendants::<ResourceSpecification>(&syntax)
+        .into_iter()
+        .next()
+        .expect("resource specification");
+    let list = specification.list().expect("resource list");
+    let entries = list.entries().collect::<Vec<_>>();
+
+    assert_eq!(entries.len(), 2);
+    assert!(entries[0].resource.declaration().is_some());
+    assert!(entries[0].separator.is_some());
+    assert!(entries[1].resource.variable_access().is_some());
+    assert!(entries[1].separator.is_none());
+    assert!(specification.trailing_semicolon().is_none());
+    assert_eq!(
+        specification
+            .close_paren()
+            .expect("resource close paren")
+            .leading_comments()[0]
+            .text(),
+        "// before close"
+    );
+}
+
+#[test]
 fn import_declarations_expose_structured_names() {
     let syntax = parse_clean(
         r"

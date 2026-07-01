@@ -3,8 +3,8 @@ use jolt_java_syntax::{
     AssertStatement, BasicForStatement, Block, BlockItem, BlockStatement, CatchClause,
     CatchParameter, CatchTypeList, DoStatement, EnhancedForStatement, Expression,
     ExpressionStatement, FinallyClause, ForInitializer, ForStatement, ForUpdate, IfStatement,
-    JavaComment, JavaSyntaxToken, LabeledStatement, Resource, ReturnStatement, Statement,
-    StatementBody, StatementExpressionEntry, StatementExpressionList, SwitchBlock,
+    JavaComment, JavaSyntaxToken, LabeledStatement, Resource, ResourceListEntry, ReturnStatement,
+    Statement, StatementBody, StatementExpressionEntry, StatementExpressionList, SwitchBlock,
     SwitchBlockEntry, SwitchBlockStatementGroup, SwitchLabel, SwitchLabelCaseItem, SwitchRule,
     SwitchStatement, SynchronizedStatement, ThrowStatement, TryStatement,
     TryWithResourcesStatement, Type, WhileStatement, YieldStatement,
@@ -713,12 +713,25 @@ fn format_try_with_resources_statement(statement: &TryWithResourcesStatement) ->
 }
 
 fn format_resource_specification(statement: &TryWithResourcesStatement) -> Doc {
-    let resources = statement
-        .resources()
-        .and_then(|specification| specification.list())
+    let specification = statement.resources();
+    let trailing_separator = specification
+        .as_ref()
+        .and_then(jolt_java_syntax::ResourceSpecification::trailing_semicolon);
+    let removed_trailing_separator_comments = trailing_separator
+        .as_ref()
+        .and_then(format_removed_resource_separator_comments);
+    let close_paren = specification
+        .as_ref()
+        .and_then(jolt_java_syntax::ResourceSpecification::close_paren);
+    let close_comments = close_paren
+        .as_ref()
+        .and_then(format_resource_close_dangling_comments);
+    let resources = specification
+        .as_ref()
+        .and_then(jolt_java_syntax::ResourceSpecification::list)
         .map(|list| {
-            list.resources()
-                .map(|resource| format_resource(&resource))
+            list.entries()
+                .map(|entry| format_resource_entry(&entry))
                 .collect::<Vec<_>>()
         })
         .unwrap_or_default();
@@ -727,10 +740,30 @@ fn format_resource_specification(statement: &TryWithResourcesStatement) -> Doc {
         return jolt_fmt_ir::nil();
     }
 
+    let trailing_comments = [removed_trailing_separator_comments, close_comments]
+        .into_iter()
+        .flatten()
+        .collect::<Vec<_>>();
+
     concat([
-        jolt_fmt_ir::indent(concat([hard_line(), join_resource_lines(resources)])),
+        jolt_fmt_ir::indent(concat([
+            hard_line(),
+            join_resource_lines(resources, &trailing_comments),
+        ])),
         hard_line(),
     ])
+}
+
+struct FormattedResource {
+    resource: Doc,
+    separator: Option<JavaSyntaxToken>,
+}
+
+fn format_resource_entry(entry: &ResourceListEntry) -> FormattedResource {
+    FormattedResource {
+        resource: format_resource(&entry.resource),
+        separator: entry.separator.clone(),
+    }
 }
 
 fn format_resource(resource: &Resource) -> Doc {
@@ -871,16 +904,44 @@ fn format_finally_clause(clause: &FinallyClause) -> Doc {
     ])
 }
 
-fn join_resource_lines(docs: Vec<Doc>) -> Doc {
+fn join_resource_lines(resources: Vec<FormattedResource>, trailing_comments: &[Doc]) -> Doc {
     let mut joined = Vec::new();
-    for (index, doc) in docs.into_iter().enumerate() {
-        if index > 0 {
-            joined.push(text(";"));
+    let resource_count = resources.len();
+    for (index, resource) in resources.into_iter().enumerate() {
+        let is_last = index + 1 == resource_count;
+
+        joined.push(resource.resource);
+        if is_last {
+            for comments in trailing_comments {
+                joined.push(hard_line());
+                joined.push(comments.clone());
+            }
+        } else {
+            joined.push(format_statement_semicolon(resource.separator));
             joined.push(hard_line());
         }
-        joined.push(doc);
     }
     concat(joined)
+}
+
+fn format_removed_resource_separator_comments(separator: &JavaSyntaxToken) -> Option<Doc> {
+    let comments = separator
+        .leading_comments()
+        .into_iter()
+        .chain(separator.trailing_comments())
+        .filter(|comment| !is_formatter_control_marker(comment.text()))
+        .collect::<Vec<_>>();
+    (!comments.is_empty()).then(|| format_dangling_comments(comments))
+}
+
+fn format_resource_close_dangling_comments(close: &JavaSyntaxToken) -> Option<Doc> {
+    let comments = close
+        .leading_comments()
+        .into_iter()
+        .filter(|comment| !is_formatter_control_marker(comment.text()))
+        .collect::<Vec<_>>();
+
+    (!comments.is_empty()).then(|| format_dangling_comments(comments))
 }
 
 fn statement_body_as_block(body: Option<StatementBody>) -> Doc {
