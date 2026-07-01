@@ -226,7 +226,8 @@ Status legend:
 - `[~]` No parser-accepted syntax reaches an unimplemented formatter fallback
   (declaration method/constructor header and record-component-list comment
   fallbacks removed; variable-declarator-list comment fallback removed;
-  expression and statement comment fallbacks remain).
+  lambda-parameter comment fallback removed; expression method-reference and
+  argument-list comment fallbacks and statement comment fallbacks remain).
 - `[ ]` Code review can trace every formatting choice to the style guide or
   spec.
 - `[ ]` Audit report links each definition-of-done item to tests, fixtures, or

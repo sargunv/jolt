@@ -26,4 +26,13 @@ return (String @Marker ... values) -> values.length;
 java.util.function.IntUnaryOperator unnamed() {
 return (_) -> 0;
 }
+java.util.function.Function<User, String> commentedMapper() {
+return user /* selected */ -> user.name();
+}
+java.util.function.Function<User, String> commentedTypedMapper() {
+return (User user /* selected */) -> user.name();
+}
+java.util.function.Function<String[], Integer> commentedLengths() {
+return (String... values /* all */) -> values.length;
+}
 }

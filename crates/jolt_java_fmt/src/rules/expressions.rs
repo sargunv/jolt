@@ -11,8 +11,8 @@ use jolt_java_syntax::{
 
 use crate::helpers::chains::member_chain;
 use crate::helpers::comments::{
-    format_leading_comments, format_token_sequence, format_token_text, format_trailing_comments,
-    tokens_have_comments,
+    format_leading_comments, format_token_sequence, format_token_text, format_token_with_comments,
+    format_trailing_comments, tokens_have_comments,
 };
 use crate::helpers::lists::{braced_initializer_list, parenthesized_list};
 use crate::helpers::modifiers::inline_modifier_prefix_from_docs;
@@ -536,6 +536,10 @@ fn format_lambda_parameters(expression: &LambdaExpression) -> Doc {
     if let Some(parameter) = expression.concise_parameter()
         && is_simple_untyped_lambda_parameter(&parameter)
     {
+        let tokens = parameter.tokens();
+        if tokens_have_comments(&tokens) {
+            return format_lambda_parameter(&parameter);
+        }
         return text(
             parameter
                 .name()
@@ -551,6 +555,10 @@ fn format_lambda_parameters(expression: &LambdaExpression) -> Doc {
     if let [parameter] = parameters.as_slice()
         && is_simple_untyped_lambda_parameter(parameter)
     {
+        let tokens = parameter.tokens();
+        if tokens_have_comments(&tokens) {
+            return format_lambda_parameter(parameter);
+        }
         return text(
             parameter
                 .name()
@@ -593,11 +601,6 @@ fn is_simple_untyped_lambda_parameter(parameter: &LambdaParameter) -> bool {
 }
 
 fn format_lambda_parameter(parameter: &LambdaParameter) -> Doc {
-    let tokens = parameter.tokens();
-    if tokens_have_comments(&tokens) {
-        return format_token_sequence(&tokens);
-    }
-
     let prefix_annotations = parameter
         .prefix_annotations()
         .map(|annotation| format_annotation(&annotation))
@@ -618,7 +621,7 @@ fn format_lambda_parameter(parameter: &LambdaParameter) -> Doc {
     );
     let name = parameter
         .name()
-        .map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned()));
+        .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name));
 
     if !has_inline_prefix && !has_type_prefix {
         return name;
