@@ -11,6 +11,6 @@ class Example {
   }
 
   Object box() {
-    return new <String> Box("x");
+    return new /* ctor */ <String> Box("x");
   }
 }

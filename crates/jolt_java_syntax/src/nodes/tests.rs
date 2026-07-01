@@ -2091,7 +2091,10 @@ fn expression_and_statement_accessors_expose_layout_roles() {
                         int value = (a + b) * -c;
                         int grouped = (/* grouped */ a);
                         int element = values[/* index */ a];
-                        int[] sized = new int[/* size */ c];
+                        int[] sized = new /* array */ int[/* size */ c];
+                        Object casted = (/* cast */ Object) this;
+                        boolean matched = this instanceof /* match */ Object;
+                        Object fresh = new /* object */ Object();
                         value += ready ? call(1, 2) : new int[] { 3 };
                         java.util.function.Supplier<Expressions> supplier = Expressions::new;
                         builder.add(a).add(b).build();
@@ -2231,6 +2234,55 @@ fn expression_and_statement_accessors_expose_layout_roles() {
             .expect("close bracket")
             .text(),
         "]"
+    );
+
+    let array_creation = descendants::<ArrayCreationExpression>(&syntax)
+        .into_iter()
+        .find(|expression| expression.source_text().contains("array"))
+        .expect("array creation expression");
+    assert_eq!(
+        array_creation
+            .new_token()
+            .expect("new token")
+            .trailing_comments()[0]
+            .text(),
+        "/* array */"
+    );
+
+    let cast = descendants::<CastExpression>(&syntax)
+        .into_iter()
+        .find(|expression| expression.source_text().contains("cast"))
+        .expect("cast expression");
+    assert_eq!(
+        cast.open_paren().expect("open paren").trailing_comments()[0].text(),
+        "/* cast */"
+    );
+    assert_eq!(cast.close_paren().expect("close paren").text(), ")");
+
+    let instanceof = descendants::<InstanceofExpression>(&syntax)
+        .into_iter()
+        .find(|expression| expression.source_text().contains("match"))
+        .expect("instanceof expression");
+    assert_eq!(
+        instanceof
+            .instanceof_token()
+            .expect("instanceof token")
+            .trailing_comments()[0]
+            .text(),
+        "/* match */"
+    );
+
+    let object_creation = descendants::<ObjectCreationExpression>(&syntax)
+        .into_iter()
+        .find(|expression| expression.source_text().contains("object"))
+        .expect("object creation expression");
+    assert_eq!(
+        object_creation
+            .new_token()
+            .expect("new token")
+            .trailing_comments()[0]
+            .text(),
+        "/* object */"
     );
 
     let invocation = descendants::<MethodInvocationExpression>(&syntax)

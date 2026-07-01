@@ -1,7 +1,11 @@
 class Example {
   boolean matches(Object value) {
-    return (String) value instanceof String text
+    return (String) value instanceof /* target */ String text
       || value instanceof java.util.List<?>;
+  }
+
+  Object casted(Object value) {
+    return ( /* target */ String) /* cast */ value;
   }
 
   int[] values(int size, int count) {

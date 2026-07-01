@@ -2367,6 +2367,16 @@ impl PostfixExpression {
 
 impl CastExpression {
     #[must_use]
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RParen)
+    }
+
+    #[must_use]
     pub fn ty(&self) -> Option<Type> {
         child_family(&self.syntax)
     }
@@ -2384,6 +2394,11 @@ impl InstanceofExpression {
     }
 
     #[must_use]
+    pub fn instanceof_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::InstanceofKw)
+    }
+
+    #[must_use]
     pub fn ty(&self) -> Option<Type> {
         child_family(&self.syntax)
     }
@@ -2395,6 +2410,11 @@ impl InstanceofExpression {
 }
 
 impl ObjectCreationExpression {
+    #[must_use]
+    pub fn new_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::NewKw)
+    }
+
     #[must_use]
     pub fn qualifier(&self) -> Option<Expression> {
         child_family(&self.syntax)
@@ -2422,6 +2442,11 @@ impl ObjectCreationExpression {
 }
 
 impl ArrayCreationExpression {
+    #[must_use]
+    pub fn new_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::NewKw)
+    }
+
     #[must_use]
     pub fn ty(&self) -> Option<Type> {
         child_family(&self.syntax)

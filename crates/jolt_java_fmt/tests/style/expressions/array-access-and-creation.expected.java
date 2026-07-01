@@ -12,7 +12,7 @@ class Example {
   }
 
   int[] sized(int count) {
-    return new int[ /* size */ count] /* sized */;
+    return new /* array */ int[ /* size */ count] /* sized */;
   }
 
   int[] numbers() {

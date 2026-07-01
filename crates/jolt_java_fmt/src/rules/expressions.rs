@@ -457,7 +457,7 @@ fn format_object_creation_expression(expression: &ObjectCreationExpression) -> D
             .map_or_else(jolt_fmt_ir::nil, |qualifier| {
                 concat([format_expression(&qualifier), text(".")])
             }),
-        text("new "),
+        format_creation_new_keyword(expression.new_token().as_ref()),
         expression
             .constructor_type_arguments()
             .map_or_else(jolt_fmt_ir::nil, |arguments| {
@@ -478,7 +478,7 @@ fn format_object_creation_expression(expression: &ObjectCreationExpression) -> D
 
 fn format_array_creation_expression(expression: &ArrayCreationExpression) -> Doc {
     group(concat([
-        text("new "),
+        format_creation_new_keyword(expression.new_token().as_ref()),
         expression
             .ty()
             .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty)),
@@ -496,6 +496,24 @@ fn format_array_creation_expression(expression: &ArrayCreationExpression) -> Doc
                 ])
             }),
     ]))
+}
+
+fn format_creation_new_keyword(keyword: Option<&JavaSyntaxToken>) -> Doc {
+    keyword.map_or_else(
+        || text("new "),
+        |keyword| {
+            concat([
+                format_leading_comments(keyword),
+                text("new"),
+                format_trailing_comments_before_line_break(keyword),
+                if trailing_comments_force_line(keyword) {
+                    hard_line()
+                } else {
+                    text(" ")
+                },
+            ])
+        },
+    )
 }
 
 fn format_dim_expression(dimension: &DimExpression) -> Doc {
@@ -824,17 +842,82 @@ pub(crate) fn format_variable_initializer_value(value: VariableInitializerValue)
 }
 
 fn format_cast_expression(expression: &CastExpression) -> Doc {
+    let open_paren = expression.open_paren();
+    let close_paren = expression.close_paren();
+
     concat([
-        text("("),
+        format_cast_open_paren(open_paren.as_ref()),
+        format_cast_open_paren_spacing(open_paren.as_ref()),
         expression
             .ty()
             .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty)),
-        text(") "),
+        format_cast_close_paren(close_paren.as_ref()),
+        if close_paren
+            .as_ref()
+            .is_some_and(trailing_comments_force_line)
+        {
+            jolt_fmt_ir::nil()
+        } else {
+            text(" ")
+        },
         expression
             .expression()
             .map_or_else(jolt_fmt_ir::nil, |expression| {
                 format_expression(&expression)
             }),
+    ])
+}
+
+fn format_cast_open_paren(open: Option<&JavaSyntaxToken>) -> Doc {
+    open.map_or_else(
+        || text("("),
+        |open| concat([format_leading_comments(open), text("(")]),
+    )
+}
+
+fn format_cast_open_paren_spacing(open: Option<&JavaSyntaxToken>) -> Doc {
+    let Some(open) = open else {
+        return jolt_fmt_ir::nil();
+    };
+
+    if open.trailing_comments().is_empty() {
+        return jolt_fmt_ir::nil();
+    }
+
+    concat([
+        format_trailing_comments_before_line_break(open),
+        if open.trailing_comments().iter().any(comment_forces_line) {
+            hard_line()
+        } else {
+            text(" ")
+        },
+    ])
+}
+
+fn format_cast_close_paren(close: Option<&JavaSyntaxToken>) -> Doc {
+    let close_has_leading_comments =
+        close.is_some_and(|token| !token.leading_comments().is_empty());
+
+    concat([
+        if close_has_leading_comments {
+            line()
+        } else {
+            jolt_fmt_ir::nil()
+        },
+        close.map_or_else(
+            || text(")"),
+            |close| {
+                concat([
+                    if close_has_leading_comments {
+                        format_leading_comments(close)
+                    } else {
+                        jolt_fmt_ir::nil()
+                    },
+                    text(")"),
+                    format_trailing_comments(close),
+                ])
+            },
+        ),
     ])
 }
 
@@ -845,7 +928,11 @@ fn format_instanceof_expression(expression: &InstanceofExpression) -> Doc {
             .map_or_else(jolt_fmt_ir::nil, |expression| {
                 format_expression(&expression)
             }),
-        text(" instanceof "),
+        text(" "),
+        expression.instanceof_token().map_or_else(
+            || text("instanceof "),
+            |token| format_instanceof_operator(&token),
+        ),
         expression.ty().map_or_else(
             || {
                 expression
@@ -854,6 +941,19 @@ fn format_instanceof_expression(expression: &InstanceofExpression) -> Doc {
             },
             |ty| format_type(&ty),
         ),
+    ])
+}
+
+fn format_instanceof_operator(operator: &JavaSyntaxToken) -> Doc {
+    concat([
+        format_leading_comments(operator),
+        text("instanceof"),
+        format_trailing_comments_before_line_break(operator),
+        if trailing_comments_force_line(operator) {
+            hard_line()
+        } else {
+            text(" ")
+        },
     ])
 }
 

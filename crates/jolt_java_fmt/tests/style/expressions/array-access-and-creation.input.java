@@ -9,7 +9,7 @@ Object create(Object first, Object second) {
 return new Outer<String>( ).new Inner(first,second);
 }
 int[] sized(int count) {
-return new int[/* size */ count] /* sized */;
+return new /* array */ int[/* size */ count] /* sized */;
 }
 int[] numbers() {
 return new int[] {1,2,3};
