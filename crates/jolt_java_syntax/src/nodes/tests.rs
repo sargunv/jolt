@@ -730,7 +730,10 @@ fn statement_body_accessors_expose_body_kind() {
 
     let basic_for = descendants::<ForStatement>(&syntax)
         .into_iter()
-        .find_map(|for_statement| for_statement.basic())
+        .filter_map(|for_statement| for_statement.basic())
+        .find(|basic| {
+            basic.initializer().is_none() && basic.condition().is_none() && basic.update().is_none()
+        })
         .expect("basic for statement");
     assert!(matches!(
         basic_for.statement_body(),
@@ -1220,6 +1223,7 @@ fn expression_and_statement_accessors_expose_layout_roles() {
                         java.util.function.Supplier<Expressions> supplier = Expressions::new;
                         builder.add(a).add(b).build();
                         this.field = builder.value;
+                        for (value = 0, a = 0; value < 3; value++, a++) value += a;
                         for (int i = 0; i < 3; i++) value += i;
                         for (String item : names()) call(item);
                         while (ready) value++;
@@ -1324,6 +1328,20 @@ fn expression_and_statement_accessors_expose_layout_roles() {
         JavaSyntaxKind::NewKw
     );
 
+    let statement_expression_list = descendants::<StatementExpressionList>(&syntax)
+        .into_iter()
+        .find(|list| list.source_text().contains("value = 0"))
+        .expect("statement expression list");
+    let entries = statement_expression_list.entries().collect::<Vec<_>>();
+    assert_eq!(entries.len(), 2);
+    assert_eq!(entries[0].expression.source_text().trim(), "value = 0");
+    assert_eq!(
+        entries[0].comma.as_ref().expect("first comma").kind(),
+        JavaSyntaxKind::Comma
+    );
+    assert_eq!(entries[1].expression.source_text().trim(), "a = 0");
+    assert!(entries[1].comma.is_none());
+
     let chain_invocation = descendants::<MethodInvocationExpression>(&syntax)
         .into_iter()
         .find(|invocation| invocation.source_text().trim() == "builder.add(a).add(b).build()")
@@ -1357,7 +1375,12 @@ fn expression_and_statement_accessors_expose_layout_roles() {
 
     let basic_for = descendants::<ForStatement>(&syntax)
         .into_iter()
-        .find_map(|for_statement| for_statement.basic())
+        .filter_map(|for_statement| for_statement.basic())
+        .find(|basic| {
+            basic
+                .condition()
+                .is_some_and(|condition| condition.source_text().trim() == "i < 3")
+        })
         .expect("basic for statement");
     assert!(basic_for.initializer().is_some());
     assert_eq!(

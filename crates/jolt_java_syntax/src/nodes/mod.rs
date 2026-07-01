@@ -809,6 +809,12 @@ pub struct ArgumentListEntry {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct StatementExpressionEntry {
+    pub expression: Expression,
+    pub comma: Option<JavaSyntaxToken>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ClassTypeSegment {
     pub annotations: Vec<Annotation>,
     pub name: NameSyntax,

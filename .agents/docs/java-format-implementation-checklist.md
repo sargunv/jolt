@@ -227,8 +227,8 @@ Status legend:
   (declaration method/constructor header and record-component-list comment
   fallbacks removed; variable-declarator-list comment fallback removed;
   lambda-parameter comment fallback removed; argument-list comment fallback
-  removed; method-reference comment fallback removed; statement comment
-  fallbacks remain).
+  removed; method-reference comment fallback removed; statement-expression-list
+  comment fallback removed; catch-parameter comment fallback remains).
 - `[ ]` Code review can trace every formatting choice to the style guide or
   spec.
 - `[ ]` Audit report links each definition-of-done item to tests, fixtures, or

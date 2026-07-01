@@ -1,19 +1,21 @@
-use jolt_fmt_ir::{Doc, concat, group, hard_line, indent, soft_line, text};
+use jolt_fmt_ir::{Doc, concat, group, hard_line, indent, line, soft_line, text};
 use jolt_java_syntax::{
     AssertStatement, BasicForStatement, Block, BlockItem, CatchClause, CatchParameter,
     CatchTypeList, DoStatement, EnhancedForStatement, Expression, ExpressionStatement,
-    FinallyClause, ForInitializer, ForStatement, ForUpdate, IfStatement, LabeledStatement,
-    Resource, ReturnStatement, Statement, StatementBody, StatementExpressionList, SwitchBlock,
-    SwitchBlockEntry, SwitchBlockStatementGroup, SwitchLabel, SwitchLabelCaseItem, SwitchRule,
-    SwitchStatement, SynchronizedStatement, ThrowStatement, TryStatement,
-    TryWithResourcesStatement, Type, WhileStatement, YieldStatement,
+    FinallyClause, ForInitializer, ForStatement, ForUpdate, IfStatement, JavaSyntaxToken,
+    LabeledStatement, Resource, ReturnStatement, Statement, StatementBody,
+    StatementExpressionEntry, StatementExpressionList, SwitchBlock, SwitchBlockEntry,
+    SwitchBlockStatementGroup, SwitchLabel, SwitchLabelCaseItem, SwitchRule, SwitchStatement,
+    SynchronizedStatement, ThrowStatement, TryStatement, TryWithResourcesStatement, Type,
+    WhileStatement, YieldStatement,
 };
 
 use crate::helpers::blocks::{
     BodyItem, braced_block, braced_body, empty_block, join_body_items, join_hard_lines,
 };
 use crate::helpers::comments::{
-    comment_forces_line, format_comment, format_token_sequence, tokens_have_comments,
+    comment_forces_line, format_comment, format_leading_comments, format_token_sequence,
+    format_trailing_comments_before_line_break, tokens_have_comments, trailing_comments_force_line,
 };
 use crate::helpers::lists::{TrailingSeparator, comma_list, semicolon_list};
 use crate::helpers::modifiers::inline_modifier_prefix_from_docs;
@@ -273,16 +275,36 @@ fn format_for_update(update: &ForUpdate) -> Doc {
 }
 
 fn format_statement_expression_list(expressions: &StatementExpressionList) -> Doc {
-    let tokens = expressions.tokens();
-    if tokens_have_comments(&tokens) {
-        return format_token_sequence(&tokens);
+    format_statement_expression_entries(expressions.entries().collect())
+}
+
+fn format_statement_expression_entries(entries: Vec<StatementExpressionEntry>) -> Doc {
+    let mut docs = Vec::new();
+    let entries_len = entries.len();
+
+    for (index, entry) in entries.into_iter().enumerate() {
+        docs.push(format_expression(&entry.expression));
+        if let Some(comma) = entry.comma {
+            docs.push(format_statement_expression_separator(&comma));
+        } else if index + 1 < entries_len {
+            docs.push(line());
+        }
     }
-    jolt_fmt_ir::join(
-        text(", "),
-        expressions
-            .expressions()
-            .map(|expression| format_expression(&expression)),
-    )
+
+    concat(docs)
+}
+
+fn format_statement_expression_separator(comma: &JavaSyntaxToken) -> Doc {
+    concat([
+        format_leading_comments(comma),
+        text(","),
+        format_trailing_comments_before_line_break(comma),
+        if trailing_comments_force_line(comma) {
+            hard_line()
+        } else {
+            text(" ")
+        },
+    ])
 }
 
 fn format_return_statement(statement: &ReturnStatement) -> Doc {

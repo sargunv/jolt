@@ -16,5 +16,13 @@ class Example {
     ) {
       run(index);
     }
+    for (
+      i = 0, /* reset */ j = 0;
+      i < count;
+      i++, // bump
+      j++
+    ) {
+      run(i, j);
+    }
   }
 }

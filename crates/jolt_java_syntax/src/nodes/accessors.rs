@@ -25,11 +25,11 @@ use super::{
     PackageDeclaration, ParenthesizedExpression, Pattern, PermitsClause, PostfixExpression,
     PrimitiveType, ProvidesDirective, RecordBody, RecordComponent, RecordComponentList,
     RecordDeclaration, RecordPattern, RequiresDirective, Resource, ResourceList,
-    ResourceSpecification, ReturnStatement, Statement, StatementBody, StatementExpressionList,
-    StaticInitializer, SuperExpression, SwitchBlock, SwitchBlockEntry, SwitchBlockStatementGroup,
-    SwitchExpression, SwitchLabel, SwitchLabelCaseItem, SwitchRule, SwitchStatement,
-    SynchronizedStatement, ThisExpression, ThrowStatement, ThrowsClause, TryStatement,
-    TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList, TypeBoundList,
+    ResourceSpecification, ReturnStatement, Statement, StatementBody, StatementExpressionEntry,
+    StatementExpressionList, StaticInitializer, SuperExpression, SwitchBlock, SwitchBlockEntry,
+    SwitchBlockStatementGroup, SwitchExpression, SwitchLabel, SwitchLabelCaseItem, SwitchRule,
+    SwitchStatement, SynchronizedStatement, ThisExpression, ThrowStatement, ThrowsClause,
+    TryStatement, TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList, TypeBoundList,
     TypeDeclaration, TypeParameter, TypeParameterList, TypePattern, UnaryExpression, UnionType,
     UsesDirective, VariableAccess, VariableDeclarator, VariableDeclaratorEntry,
     VariableDeclaratorList, VariableInitializer, VariableInitializerValue, VoidType,
@@ -2013,6 +2013,44 @@ impl ForUpdate {
 impl StatementExpressionList {
     pub fn expressions(&self) -> impl Iterator<Item = Expression> + '_ {
         children_family(&self.syntax)
+    }
+
+    pub fn entries(&self) -> impl Iterator<Item = StatementExpressionEntry> {
+        let mut entries = Vec::new();
+        let mut pending_expression = None;
+
+        for element in self.syntax.children_with_tokens() {
+            match element {
+                SyntaxElement::Node(node) => {
+                    if let Some(expression) = Expression::cast(node)
+                        && let Some(previous) = pending_expression.replace(expression)
+                    {
+                        entries.push(StatementExpressionEntry {
+                            expression: previous,
+                            comma: None,
+                        });
+                    }
+                }
+                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
+                    if let Some(expression) = pending_expression.take() {
+                        entries.push(StatementExpressionEntry {
+                            expression,
+                            comma: Some(JavaSyntaxToken { syntax: token }),
+                        });
+                    }
+                }
+                SyntaxElement::Token(_) => {}
+            }
+        }
+
+        if let Some(expression) = pending_expression {
+            entries.push(StatementExpressionEntry {
+                expression,
+                comma: None,
+            });
+        }
+
+        entries.into_iter()
     }
 }
 
