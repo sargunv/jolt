@@ -1,0 +1,197 @@
+use jolt_fmt_ir::{Doc, concat, group, literal_text, text};
+use jolt_java_syntax::{
+    AssignmentExpression, BinaryExpression, ConditionalExpression, Expression, LambdaExpression,
+    LambdaParameter, ParenthesizedExpression, PostfixExpression, UnaryExpression,
+};
+
+use crate::rules::statements::format_block;
+
+pub(crate) fn format_expression(expression: &Expression) -> Doc {
+    match expression {
+        Expression::ParenthesizedExpression(expression) => {
+            format_parenthesized_expression(expression)
+        }
+        Expression::AssignmentExpression(expression) => format_assignment_expression(expression),
+        Expression::ConditionalExpression(expression) => format_conditional_expression(expression),
+        Expression::BinaryExpression(expression) => format_binary_expression(expression),
+        Expression::UnaryExpression(expression) => format_unary_expression(expression),
+        Expression::PostfixExpression(expression) => format_postfix_expression(expression),
+        Expression::LambdaExpression(expression) => format_lambda_expression(expression),
+        Expression::LiteralExpression(_)
+        | Expression::NameExpression(_)
+        | Expression::ThisExpression(_)
+        | Expression::SuperExpression(_)
+        | Expression::ClassLiteralExpression(_)
+        | Expression::FieldAccessExpression(_)
+        | Expression::ArrayAccessExpression(_)
+        | Expression::MethodInvocationExpression(_)
+        | Expression::MethodReferenceExpression(_)
+        | Expression::ObjectCreationExpression(_)
+        | Expression::ArrayCreationExpression(_)
+        | Expression::InstanceofExpression(_)
+        | Expression::CastExpression(_)
+        | Expression::SwitchExpression(_) => source_doc(&expression.source_text()),
+    }
+}
+
+pub(crate) fn expression_source_text(expression: &Expression) -> String {
+    expression.source_text().trim().to_owned()
+}
+
+fn format_parenthesized_expression(expression: &ParenthesizedExpression) -> Doc {
+    concat([
+        text("("),
+        expression
+            .expression()
+            .map_or_else(jolt_fmt_ir::nil, |expression| {
+                format_expression(&expression)
+            }),
+        text(")"),
+    ])
+}
+
+fn format_assignment_expression(expression: &AssignmentExpression) -> Doc {
+    group(concat([
+        expression
+            .left()
+            .map_or_else(jolt_fmt_ir::nil, |left| format_expression(&left)),
+        text(" "),
+        text(
+            expression
+                .operator()
+                .map_or_else(String::new, |operator| operator.text().to_owned()),
+        ),
+        text(" "),
+        expression
+            .right()
+            .map_or_else(jolt_fmt_ir::nil, |right| format_expression(&right)),
+    ]))
+}
+
+fn format_conditional_expression(expression: &ConditionalExpression) -> Doc {
+    group(concat([
+        expression
+            .condition()
+            .map_or_else(jolt_fmt_ir::nil, |condition| format_expression(&condition)),
+        text(" ? "),
+        expression
+            .true_expression()
+            .map_or_else(jolt_fmt_ir::nil, |expression| {
+                format_expression(&expression)
+            }),
+        text(" : "),
+        expression
+            .false_expression()
+            .map_or_else(jolt_fmt_ir::nil, |expression| {
+                format_expression(&expression)
+            }),
+    ]))
+}
+
+fn format_binary_expression(expression: &BinaryExpression) -> Doc {
+    group(concat([
+        expression
+            .left()
+            .map_or_else(jolt_fmt_ir::nil, |left| format_expression(&left)),
+        text(" "),
+        text(
+            expression
+                .operator()
+                .map_or_else(String::new, |operator| operator.text().to_owned()),
+        ),
+        text(" "),
+        expression
+            .right()
+            .map_or_else(jolt_fmt_ir::nil, |right| format_expression(&right)),
+    ]))
+}
+
+fn format_unary_expression(expression: &UnaryExpression) -> Doc {
+    concat([
+        text(
+            expression
+                .operator()
+                .map_or_else(String::new, |operator| operator.text().to_owned()),
+        ),
+        expression
+            .operand()
+            .map_or_else(jolt_fmt_ir::nil, |operand| format_expression(&operand)),
+    ])
+}
+
+fn format_postfix_expression(expression: &PostfixExpression) -> Doc {
+    concat([
+        expression
+            .operand()
+            .map_or_else(jolt_fmt_ir::nil, |operand| format_expression(&operand)),
+        text(
+            expression
+                .operator()
+                .map_or_else(String::new, |operator| operator.text().to_owned()),
+        ),
+    ])
+}
+
+fn format_lambda_expression(expression: &LambdaExpression) -> Doc {
+    concat([
+        format_lambda_parameters(expression),
+        text(" -> "),
+        expression.expression_body().map_or_else(
+            || {
+                expression
+                    .block_body()
+                    .map_or_else(jolt_fmt_ir::nil, |block| format_block(&block))
+            },
+            |body| format_expression(&body),
+        ),
+    ])
+}
+
+fn format_lambda_parameters(expression: &LambdaExpression) -> Doc {
+    if let Some(parameter) = expression.concise_parameter()
+        && is_simple_untyped_lambda_parameter(&parameter)
+    {
+        return text(
+            parameter
+                .name()
+                .map_or_else(String::new, |name| name.text().to_owned()),
+        );
+    }
+
+    let parameters = expression
+        .parameters()
+        .map(|parameters| parameters.parameters().collect::<Vec<_>>())
+        .unwrap_or_default();
+
+    if let [parameter] = parameters.as_slice()
+        && is_simple_untyped_lambda_parameter(parameter)
+    {
+        return text(
+            parameter
+                .name()
+                .map_or_else(String::new, |name| name.text().to_owned()),
+        );
+    }
+
+    concat([
+        text("("),
+        jolt_fmt_ir::join(
+            text(", "),
+            parameters
+                .into_iter()
+                .map(|parameter| text(parameter.source_text().trim().to_owned())),
+        ),
+        text(")"),
+    ])
+}
+
+fn is_simple_untyped_lambda_parameter(parameter: &LambdaParameter) -> bool {
+    parameter.ty().is_none()
+        && parameter
+            .name()
+            .is_some_and(|name| parameter.source_text().trim() == name.text())
+}
+
+fn source_doc(source: &str) -> Doc {
+    literal_text(source.trim().to_owned())
+}

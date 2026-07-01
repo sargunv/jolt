@@ -8,6 +8,8 @@ use jolt_java_syntax::{
     TryWithResourcesStatement, WhileStatement, YieldStatement,
 };
 
+use crate::rules::expressions::{expression_source_text, format_expression};
+
 pub(crate) fn format_block(block: &Block) -> Doc {
     let items = block
         .items()
@@ -101,11 +103,11 @@ fn format_labeled_statement(statement: &LabeledStatement) -> Doc {
 
 fn format_expression_statement(statement: &ExpressionStatement) -> Doc {
     concat([
-        text(
-            statement
-                .expression()
-                .map_or_else(String::new, |expression| expression_text(&expression)),
-        ),
+        statement
+            .expression()
+            .map_or_else(jolt_fmt_ir::nil, |expression| {
+                format_expression(&expression)
+            }),
         text(";"),
     ])
 }
@@ -113,12 +115,12 @@ fn format_expression_statement(statement: &ExpressionStatement) -> Doc {
 fn format_if_statement(statement: &IfStatement) -> Doc {
     let condition = statement
         .condition()
-        .map_or_else(String::new, |condition| expression_text(&condition));
+        .map_or_else(jolt_fmt_ir::nil, |condition| format_expression(&condition));
     let then_body = statement_body_as_block(statement.then_statement());
 
     concat([
         text("if ("),
-        text(condition),
+        condition,
         text(") "),
         then_body,
         statement
@@ -138,13 +140,11 @@ fn format_if_statement(statement: &IfStatement) -> Doc {
 fn format_assert_statement(statement: &AssertStatement) -> Doc {
     concat([
         text("assert "),
-        text(
-            statement
-                .condition()
-                .map_or_else(String::new, |condition| expression_text(&condition)),
-        ),
+        statement
+            .condition()
+            .map_or_else(jolt_fmt_ir::nil, |condition| format_expression(&condition)),
         statement.detail().map_or_else(jolt_fmt_ir::nil, |detail| {
-            concat([text(" : "), text(expression_text(&detail))])
+            concat([text(" : "), format_expression(&detail)])
         }),
         text(";"),
     ])
@@ -153,10 +153,10 @@ fn format_assert_statement(statement: &AssertStatement) -> Doc {
 fn format_while_statement(statement: &WhileStatement) -> Doc {
     let condition = statement
         .condition()
-        .map_or_else(String::new, |condition| expression_text(&condition));
+        .map_or_else(jolt_fmt_ir::nil, |condition| format_expression(&condition));
     concat([
         text("while ("),
-        text(condition),
+        condition,
         text(") "),
         statement_body_as_block(statement.body()),
     ])
@@ -167,11 +167,9 @@ fn format_do_statement(statement: &DoStatement) -> Doc {
         text("do "),
         statement_body_as_block(statement.body()),
         text(" while ("),
-        text(
-            statement
-                .condition()
-                .map_or_else(String::new, |condition| expression_text(&condition)),
-        ),
+        statement
+            .condition()
+            .map_or_else(jolt_fmt_ir::nil, |condition| format_expression(&condition)),
         text(");"),
     ])
 }
@@ -195,7 +193,7 @@ fn format_basic_for_statement(statement: &BasicForStatement) -> Doc {
         });
     let condition = statement
         .condition()
-        .map_or_else(String::new, |condition| expression_text(&condition));
+        .map_or_else(String::new, |condition| expression_source_text(&condition));
     let update = statement
         .update()
         .map_or_else(String::new, |update| format_for_update_text(&update));
@@ -218,7 +216,7 @@ fn format_enhanced_for_statement(statement: &EnhancedForStatement) -> Doc {
     });
     let iterable = statement
         .iterable()
-        .map_or_else(String::new, |iterable| expression_text(&iterable));
+        .map_or_else(String::new, |iterable| expression_source_text(&iterable));
 
     concat([
         text("for ("),
@@ -252,7 +250,7 @@ fn format_for_update_text(update: &ForUpdate) -> String {
 fn format_statement_expression_list_text(expressions: &StatementExpressionList) -> String {
     expressions
         .expressions()
-        .map(|expression| expression_text(&expression))
+        .map(|expression| expression_source_text(&expression))
         .collect::<Vec<_>>()
         .join(", ")
 }
@@ -281,7 +279,7 @@ fn format_keyword_expression_statement(keyword: &str, expression: Option<Express
     concat([
         text(keyword.to_owned()),
         expression.map_or_else(jolt_fmt_ir::nil, |expression| {
-            concat([text(" "), text(expression_text(&expression))])
+            concat([text(" "), format_expression(&expression)])
         }),
         text(";"),
     ])
@@ -300,11 +298,11 @@ fn format_jump_statement(keyword: &str, label: Option<jolt_java_syntax::JavaSynt
 fn format_synchronized_statement(statement: &SynchronizedStatement) -> Doc {
     concat([
         text("synchronized ("),
-        text(
-            statement
-                .expression()
-                .map_or_else(String::new, |expression| expression_text(&expression)),
-        ),
+        statement
+            .expression()
+            .map_or_else(jolt_fmt_ir::nil, |expression| {
+                format_expression(&expression)
+            }),
         text(") "),
         statement.body().map_or_else(
             || concat([text("{"), hard_line(), text("}")]),
@@ -316,11 +314,9 @@ fn format_synchronized_statement(statement: &SynchronizedStatement) -> Doc {
 fn format_switch_statement(statement: &SwitchStatement) -> Doc {
     concat([
         text("switch ("),
-        text(
-            statement
-                .selector()
-                .map_or_else(String::new, |selector| expression_text(&selector)),
-        ),
+        statement
+            .selector()
+            .map_or_else(jolt_fmt_ir::nil, |selector| format_expression(&selector)),
         text(") "),
         statement
             .block()
@@ -385,7 +381,7 @@ fn format_switch_rule_body(rule: &SwitchRule) -> Doc {
         return format_throw_statement(&statement);
     }
     if let Some(expression) = rule.expression() {
-        return concat([text(expression_text(&expression)), text(";")]);
+        return concat([format_expression(&expression), text(";")]);
     }
 
     jolt_fmt_ir::nil()
@@ -453,11 +449,9 @@ fn format_resource(resource: &Resource) -> Doc {
         return text(declaration.source_text().trim().to_owned());
     }
     if let Some(access) = resource.variable_access() {
-        return text(
-            access
-                .expression()
-                .map_or_else(String::new, |expression| expression_text(&expression)),
-        );
+        return text(access.expression().map_or_else(String::new, |expression| {
+            expression_source_text(&expression)
+        }));
     }
 
     source_doc(&resource.source_text())
@@ -531,8 +525,4 @@ fn source_doc(source: &str) -> Doc {
 
 fn empty_block_doc() -> Doc {
     concat([text("{"), hard_line(), text("}")])
-}
-
-fn expression_text(expression: &Expression) -> String {
-    expression.source_text().trim().to_owned()
 }

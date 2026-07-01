@@ -72,7 +72,7 @@ Status legend:
 - `[x]` Try resources and optional trailing semicolon.
 - `[ ]` Expression parent roles.
 - `[ ]` Member-chain linearization.
-- `[ ]` Lambda parameter classification.
+- `[~]` Lambda parameter classification.
 - `[ ]` Wildcard and unnamed `_` roles.
 
 ## Comment And Trivia Model
@@ -171,13 +171,13 @@ Status legend:
 
 ### 8. Expression Layer
 
-- `[ ]` Parenthesized expressions.
-- `[ ]` Binary/operator chains.
-- `[ ]` Ternaries.
-- `[ ]` Assignments.
+- `[~]` Parenthesized expressions.
+- `[~]` Binary/operator chains.
+- `[~]` Ternaries.
+- `[~]` Assignments.
 - `[ ]` Calls and break-all argument lists.
 - `[ ]` Member chains.
-- `[ ]` Lambdas.
+- `[~]` Lambdas.
 - `[ ]` Arrays/initializers.
 - `[ ]` Casts, `instanceof`, patterns, object creation, and type arguments.
 

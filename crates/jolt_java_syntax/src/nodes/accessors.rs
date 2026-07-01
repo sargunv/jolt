@@ -734,6 +734,11 @@ impl LambdaExpression {
     }
 
     #[must_use]
+    pub fn concise_parameter(&self) -> Option<LambdaParameter> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
     pub fn expression_body(&self) -> Option<Expression> {
         child_family(&self.syntax)
     }
