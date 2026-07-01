@@ -1,4 +1,6 @@
-use jolt_fmt_ir::{Doc, concat, force_group, group, hard_line, indent, line, soft_line, text};
+use jolt_fmt_ir::{
+    Doc, concat, force_group, group, hard_line, if_break, indent, line, soft_line, text,
+};
 use jolt_java_syntax::JavaSyntaxToken;
 
 use crate::helpers::comments::{
@@ -33,6 +35,40 @@ pub(crate) fn parenthesized_list(
     items: Vec<CommaListItem>,
 ) -> Doc {
     delimited_comma_list("(", ")", open, close, items)
+}
+
+pub(crate) fn angle_bracket_list(
+    open: Option<&JavaSyntaxToken>,
+    close: Option<&JavaSyntaxToken>,
+    items: Vec<CommaListItem>,
+) -> Doc {
+    delimited_comma_list("<", ">", open, close, items)
+}
+
+pub(crate) fn braced_comma_list_with_trailing_separator(
+    open: Option<&JavaSyntaxToken>,
+    close: Option<&JavaSyntaxToken>,
+    items: Vec<CommaListItem>,
+) -> Doc {
+    if items.is_empty() {
+        return empty_delimited_list("{", "}", open, close);
+    }
+
+    let has_dangling_comments = has_dangling_delimiter_comments(open, close);
+    let doc = group(concat([
+        format_open_delimiter(open, "{"),
+        indent(concat([
+            format_braced_open_spacing(open),
+            comma_list_with_trailing_separator(items),
+        ])),
+        format_braced_close_with_spacing(close, "}"),
+    ]));
+
+    if has_dangling_comments {
+        force_group(doc)
+    } else {
+        doc
+    }
 }
 
 pub(crate) fn semicolon_list(items: Vec<Doc>) -> Doc {
@@ -129,6 +165,79 @@ fn comma_separator(comma: &JavaSyntaxToken) -> Doc {
         } else {
             line()
         },
+    ])
+}
+
+fn comma_list_with_trailing_separator(items: Vec<CommaListItem>) -> Doc {
+    let mut docs = Vec::new();
+    let items_len = items.len();
+
+    for (index, item) in items.into_iter().enumerate() {
+        docs.push(item.doc);
+        if let Some(comma) = item.comma {
+            docs.push(trailing_comma_separator(&comma, index + 1 == items_len));
+        } else if index + 1 < items_len {
+            docs.push(line());
+        } else {
+            docs.push(if_break(text(","), jolt_fmt_ir::nil()));
+        }
+    }
+
+    concat(docs)
+}
+
+fn trailing_comma_separator(comma: &JavaSyntaxToken, is_last: bool) -> Doc {
+    let trailing_comments = comma.trailing_comments();
+    let has_trailing_comments = !trailing_comments.is_empty();
+    let force_line = trailing_comments_force_line(comma);
+
+    concat([
+        format_leading_comments(comma),
+        text(","),
+        format_trailing_comments_before_line_break(comma),
+        if is_last {
+            if has_trailing_comments && !force_line {
+                text(" ")
+            } else {
+                jolt_fmt_ir::nil()
+            }
+        } else if force_line {
+            hard_line()
+        } else if has_trailing_comments {
+            text(" ")
+        } else {
+            line()
+        },
+    ])
+}
+
+fn format_braced_open_spacing(open: Option<&JavaSyntaxToken>) -> Doc {
+    let Some(open) = open else {
+        return soft_line();
+    };
+
+    let comments = open.trailing_comments();
+    if comments.is_empty() {
+        return soft_line();
+    }
+
+    concat([hard_line(), format_dangling_comments(comments), hard_line()])
+}
+
+fn format_braced_close_with_spacing(
+    close: Option<&JavaSyntaxToken>,
+    fallback: &'static str,
+) -> Doc {
+    let close_has_leading_comments =
+        close.is_some_and(|token| !token.leading_comments().is_empty());
+
+    concat([
+        if close_has_leading_comments {
+            line()
+        } else {
+            soft_line()
+        },
+        format_close_delimiter(close, fallback),
     ])
 }
 

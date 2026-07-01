@@ -37,7 +37,7 @@ Status legend:
 - `[x]` Add `format.rs`.
 - `[x]` Add `rules/` modules.
 - `[x]` Add `helpers/` modules.
-- `[ ]` Preserve dependency direction: rules -> helpers -> IR and rules ->
+- `[x]` Preserve dependency direction: rules -> helpers -> IR and rules ->
   syntax accessors.
 
 ## Rule Authoring Shape
@@ -137,8 +137,8 @@ Status legend:
 
 ### 4. Low-Level Helpers
 
-- `[~]` Broken closing delimiter on its own line.
-- `[~]` Trailing separator policies.
+- `[x]` Broken closing delimiter on its own line.
+- `[x]` Trailing separator policies.
 - `[x]` Body blank-line capping.
 - `[x]` Leading-operator chains with flat continuation alignment.
 - `[x]` Break-all argument lists.
