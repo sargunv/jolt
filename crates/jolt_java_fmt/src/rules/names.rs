@@ -1,12 +1,13 @@
-use jolt_fmt_ir::{Doc, text};
+use jolt_fmt_ir::Doc;
 use jolt_java_syntax::NameSyntax;
 
+use crate::helpers::comments::format_token_text;
 use crate::helpers::names::qualified_name;
 
 pub(crate) fn format_name(name: &NameSyntax) -> Doc {
     qualified_name(
         name.segments()
-            .map(|segment| text(segment.text().to_owned()))
+            .map(|segment| format_token_text(segment.text()))
             .collect(),
     )
 }

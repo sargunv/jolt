@@ -937,11 +937,9 @@ fn format_lambda_parameters(expression: &LambdaExpression) -> Doc {
         if tokens_have_comments(&tokens) {
             return format_lambda_parameter(&parameter);
         }
-        return text(
-            parameter
-                .name()
-                .map_or_else(String::new, |name| name.text().to_owned()),
-        );
+        return parameter
+            .name()
+            .map_or_else(jolt_fmt_ir::nil, |name| format_token_text(name.text()));
     }
 
     let parameters = expression
@@ -956,11 +954,9 @@ fn format_lambda_parameters(expression: &LambdaExpression) -> Doc {
         if tokens_have_comments(&tokens) {
             return format_lambda_parameter(parameter);
         }
-        return text(
-            parameter
-                .name()
-                .map_or_else(String::new, |name| name.text().to_owned()),
-        );
+        return parameter
+            .name()
+            .map_or_else(jolt_fmt_ir::nil, |name| format_token_text(name.text()));
     }
 
     concat([
@@ -1013,7 +1009,7 @@ fn format_lambda_parameter(parameter: &LambdaParameter) -> Doc {
         .map(|annotation| format_annotation(&annotation))
         .collect::<Vec<_>>();
     let ty = ty.map_or_else(
-        || var_token.map_or_else(jolt_fmt_ir::nil, |token| text(token.text().to_owned())),
+        || var_token.map_or_else(jolt_fmt_ir::nil, |token| format_token_text(token.text())),
         |ty| format_type(&ty),
     );
     let name = parameter
@@ -1160,8 +1156,8 @@ fn flatten_binary_expression(expression: &BinaryExpression) -> (Expression, Vec<
                 .collect(),
         );
     };
-    let operator_text = operator.text().to_owned();
-    if !is_flattenable_binary_operator(&operator_text) {
+    let operator_text = operator.text();
+    if !is_flattenable_binary_operator(operator_text) {
         return (
             expression
                 .left()
@@ -1177,7 +1173,7 @@ fn flatten_binary_expression(expression: &BinaryExpression) -> (Expression, Vec<
 
     let mut operands = Vec::new();
     let root = Expression::from(expression.clone());
-    if binary_operator_comments_in_tree(&root, &operator_text) {
+    if binary_operator_comments_in_tree(&root, operator_text) {
         return (
             expression.left().unwrap_or_else(|| root.clone()),
             expression
@@ -1193,7 +1189,7 @@ fn flatten_binary_expression(expression: &BinaryExpression) -> (Expression, Vec<
         );
     }
 
-    collect_binary_operands(&root, &operator_text, &mut operands);
+    collect_binary_operands(&root, operator_text, &mut operands);
     let mut operands = operands.into_iter();
     let first = operands.next().unwrap_or(root);
     let rest = operands

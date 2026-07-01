@@ -14,7 +14,8 @@ use jolt_java_syntax::{
 use crate::helpers::blocks::{BodyItem, braced_body, join_body_items};
 use crate::helpers::comments::{
     comment_forces_line, format_comment, format_dangling_comments, format_leading_comments,
-    format_token_sequence, format_trailing_comments, format_trailing_comments_before_line_break,
+    format_token_sequence, format_token_text, format_trailing_comments,
+    format_trailing_comments_before_line_break,
 };
 use crate::helpers::declarations::{declaration_with_body, declaration_without_body};
 use crate::helpers::formatter_ignore::{
@@ -68,7 +69,7 @@ fn format_class_declaration(class: &ClassDeclaration) -> Doc {
             text("class "),
             class
                 .name()
-                .map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned())),
+                .map_or_else(jolt_fmt_ir::nil, |name| format_token_text(name.text())),
             format_type_parameter_list(class.type_parameters()),
             format_extends_clause(class.extends_clause()),
             format_implements_clause(class.implements_clause()),
@@ -86,7 +87,7 @@ fn format_interface_declaration(interface: &InterfaceDeclaration) -> Doc {
             text("interface "),
             interface
                 .name()
-                .map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned())),
+                .map_or_else(jolt_fmt_ir::nil, |name| format_token_text(name.text())),
             format_type_parameter_list(interface.type_parameters()),
             format_extends_clause(interface.extends_clause()),
             format_permits_clause(interface.permits_clause()),
@@ -105,7 +106,7 @@ fn format_record_declaration(record: &RecordDeclaration) -> Doc {
             text("record "),
             record
                 .name()
-                .map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned())),
+                .map_or_else(jolt_fmt_ir::nil, |name| format_token_text(name.text())),
             format_type_parameter_list(record.type_parameters()),
             format_record_components(record.components()),
             format_implements_clause(record.implements_clause()),
@@ -136,7 +137,7 @@ fn format_enum_declaration(enum_: &EnumDeclaration) -> Doc {
             text("enum "),
             enum_
                 .name()
-                .map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned())),
+                .map_or_else(jolt_fmt_ir::nil, |name| format_token_text(name.text())),
             format_implements_clause(enum_.implements_clause()),
         ]),
         body_doc,
@@ -151,7 +152,7 @@ fn format_annotation_interface_declaration(annotation: &AnnotationInterfaceDecla
             text("@interface "),
             annotation
                 .name()
-                .map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned())),
+                .map_or_else(jolt_fmt_ir::nil, |name| format_token_text(name.text())),
         ]),
         annotation
             .body()
@@ -603,7 +604,7 @@ fn format_enum_constant(constant: &EnumConstant) -> Doc {
     concat([
         format_modifier_prefix_from_parts(constant.annotations().collect(), Vec::new()),
         format_leading_comments(&name),
-        text(name.text().to_owned()),
+        format_token_text(name.text()),
         format_trailing_comments(&name),
         constant
             .arguments()
@@ -904,7 +905,7 @@ fn format_header_clause_keyword(keyword: Option<&JavaSyntaxToken>, fallback: &'s
         |keyword| {
             concat([
                 format_leading_comments(keyword),
-                text(keyword.text().to_owned()),
+                format_token_text(keyword.text()),
                 format_trailing_comments_before_line_break(keyword),
             ])
         },
@@ -1225,7 +1226,7 @@ fn format_constructor_declaration(constructor: &jolt_java_syntax::ConstructorDec
         .is_some_and(|throws| throws.exceptions().next().is_some());
     let header = concat([
         format_type_parameter_list(constructor.type_parameters()),
-        text(name.text().to_owned()),
+        format_token_text(name.text()),
         format_parameters(constructor.parameters()),
         format_throws_clause(throws),
     ]);
@@ -1247,7 +1248,7 @@ fn format_compact_constructor_declaration(
     let prefix = format_modifier_prefix(constructor.modifiers());
     let header = constructor
         .name()
-        .map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned()));
+        .map_or_else(jolt_fmt_ir::nil, |name| format_token_text(name.text()));
 
     match constructor.body() {
         Some(body) => declaration_with_body(prefix, header, format_constructor_body(&body)),
@@ -1280,7 +1281,7 @@ fn format_method_declaration(method: &MethodDeclaration) -> Doc {
                     text(" "),
                 ])
             }),
-        text(name.text().to_owned()),
+        format_token_text(name.text()),
         format_parameters(method.parameters()),
         format_throws_clause(throws),
     ]);
@@ -1308,7 +1309,7 @@ fn format_annotation_element_declaration(element: &AnnotationElementDeclaration)
                 .ty()
                 .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty)),
             text(" "),
-            text(name.text().to_owned()),
+            format_token_text(name.text()),
             text("()"),
             element
                 .dimensions()
@@ -1536,7 +1537,7 @@ fn format_constructor_invocation(invocation: &ConstructorInvocation) -> Doc {
             }),
         invocation
             .target()
-            .map_or_else(jolt_fmt_ir::nil, |target| text(target.text().to_owned())),
+            .map_or_else(jolt_fmt_ir::nil, |target| format_token_text(target.text())),
         format_argument_list(invocation.arguments()),
         format_statement_semicolon(invocation.semicolon()),
     ])

@@ -16,7 +16,7 @@ use crate::helpers::blocks::{
 };
 use crate::helpers::comments::{
     comment_forces_line, format_comment, format_dangling_comments, format_leading_comments,
-    format_token_with_comments, format_trailing_comments,
+    format_token_text, format_token_with_comments, format_trailing_comments,
     format_trailing_comments_before_line_break, trailing_comments_force_line,
 };
 use crate::helpers::formatter_ignore::{
@@ -651,7 +651,7 @@ fn format_yield_statement(statement: &YieldStatement) -> Doc {
 
 fn format_keyword_expression_statement(
     keyword: Option<&JavaSyntaxToken>,
-    fallback: &str,
+    fallback: &'static str,
     expression: Option<Expression>,
     semicolon: Option<JavaSyntaxToken>,
 ) -> Doc {
@@ -693,7 +693,7 @@ fn format_keyword_expression_separator(keyword: Option<&JavaSyntaxToken>) -> Doc
 
 fn format_jump_statement(
     keyword: Option<JavaSyntaxToken>,
-    fallback: &str,
+    fallback: &'static str,
     label: Option<JavaSyntaxToken>,
     semicolon: Option<JavaSyntaxToken>,
 ) -> Doc {
@@ -1274,20 +1274,20 @@ fn statement_body_trailing_comments_force_line(body: Option<&StatementBody>) -> 
         .is_some_and(|close| trailing_comments_force_line(&close))
 }
 
-fn format_statement_keyword(keyword: Option<JavaSyntaxToken>, fallback: &str) -> Doc {
+fn format_statement_keyword(keyword: Option<JavaSyntaxToken>, fallback: &'static str) -> Doc {
     keyword.map_or_else(
-        || text(fallback.to_owned()),
+        || text(fallback),
         |keyword| format_token_with_comments(&keyword),
     )
 }
 
-fn format_statement_keyword_head(keyword: Option<&JavaSyntaxToken>, fallback: &str) -> Doc {
+fn format_statement_keyword_head(keyword: Option<&JavaSyntaxToken>, fallback: &'static str) -> Doc {
     keyword.map_or_else(
-        || text(fallback.to_owned()),
+        || text(fallback),
         |keyword| {
             concat([
                 format_leading_comments(keyword),
-                text(keyword.text().to_owned()),
+                format_token_text(keyword.text()),
             ])
         },
     )

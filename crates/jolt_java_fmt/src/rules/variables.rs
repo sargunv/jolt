@@ -6,7 +6,8 @@ use jolt_java_syntax::{
 };
 
 use crate::helpers::comments::{
-    format_leading_comments, format_token_with_comments, format_trailing_comments,
+    format_leading_comments, format_token_text, format_token_with_comments,
+    format_trailing_comments,
 };
 use crate::helpers::modifiers::inline_modifier_prefix_from_docs;
 use crate::rules::annotations::format_annotation;
@@ -198,7 +199,7 @@ fn local_variable_type(declaration: &LocalVariableDeclaration) -> Doc {
         || {
             declaration
                 .var_token()
-                .map_or_else(jolt_fmt_ir::nil, |token| text(token.text().to_owned()))
+                .map_or_else(jolt_fmt_ir::nil, |token| format_token_text(token.text()))
         },
         |ty| format_type(&ty),
     )

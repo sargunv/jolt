@@ -4,6 +4,7 @@ use jolt_java_syntax::{
     AnnotationElementValue, AnnotationElementValuePair,
 };
 
+use crate::helpers::comments::format_token_text;
 use crate::helpers::lists::{
     CommaListItem, braced_comma_list_with_trailing_separator, parenthesized_list,
 };
@@ -64,7 +65,7 @@ fn format_annotation_argument(argument: AnnotationArgument) -> Doc {
 fn format_annotation_element_value_pair(pair: &AnnotationElementValuePair) -> Doc {
     concat([
         pair.name()
-            .map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned())),
+            .map_or_else(jolt_fmt_ir::nil, |name| format_token_text(name.text())),
         text(" = "),
         pair.value().map_or_else(jolt_fmt_ir::nil, |value| {
             format_annotation_element_value(&value)

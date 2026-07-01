@@ -45,7 +45,7 @@ Status legend:
 - `[x]` Define the rule dispatch API.
 - `[x]` Define `JavaFormatter` context.
 - `[x]` Implement representative declaration-style rules with named helpers.
-- `[ ]` Keep rules free of output string assembly.
+- `[x]` Keep rules free of output string assembly.
 
 ## Test Strategy
 

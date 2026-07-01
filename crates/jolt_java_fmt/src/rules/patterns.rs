@@ -5,8 +5,8 @@ use jolt_java_syntax::{
 };
 
 use crate::helpers::comments::{
-    comment_forces_line, format_comment, format_leading_comments, format_trailing_comments,
-    format_trailing_comments_before_line_break,
+    comment_forces_line, format_comment, format_leading_comments, format_token_text,
+    format_trailing_comments, format_trailing_comments_before_line_break,
 };
 use crate::rules::types::format_type;
 use crate::rules::variables::format_local_variable_declaration;
@@ -211,5 +211,5 @@ fn format_component_pattern(pattern: &ComponentPattern) -> Doc {
 fn format_match_all_pattern(pattern: &MatchAllPattern) -> Doc {
     pattern
         .underscore()
-        .map_or_else(|| text("_"), |token| text(token.text().to_owned()))
+        .map_or_else(|| text("_"), |token| format_token_text(token.text()))
 }

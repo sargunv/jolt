@@ -6,7 +6,7 @@ use jolt_java_syntax::{
 };
 
 use crate::helpers::comments::{
-    comment_forces_line, format_leading_comments, format_token_with_comments,
+    comment_forces_line, format_leading_comments, format_token_text, format_token_with_comments,
     format_trailing_comments, format_trailing_comments_before_line_break,
 };
 use crate::helpers::lists::{CommaListItem, angle_bracket_list};
@@ -96,7 +96,7 @@ fn format_primitive_type(ty: &PrimitiveType, leading_comments: LeadingComments) 
                     LeadingComments::Preserve => format_leading_comments(&keyword),
                     LeadingComments::SuppressFirstToken => jolt_fmt_ir::nil(),
                 },
-                text(keyword.text().to_owned()),
+                format_token_text(keyword.text()),
                 format_trailing_comments(&keyword),
             ])
         }),
@@ -114,7 +114,7 @@ fn format_void_type_with_leading_comments(ty: &VoidType, leading_comments: Leadi
                 LeadingComments::Preserve => format_leading_comments(&keyword),
                 LeadingComments::SuppressFirstToken => jolt_fmt_ir::nil(),
             },
-            text(keyword.text().to_owned()),
+            format_token_text(keyword.text()),
             format_trailing_comments(&keyword),
         ])
     })
@@ -165,7 +165,7 @@ fn format_type_name(name: &NameSyntax, leading_comments: LeadingComments) -> Doc
                                 format_token_with_comments(&segment.identifier)
                             }
                             LeadingComments::SuppressFirstToken => concat([
-                                text(segment.identifier.text().to_owned()),
+                                format_token_text(segment.identifier.text()),
                                 format_trailing_comments(&segment.identifier),
                             ]),
                         }
@@ -190,7 +190,7 @@ fn format_type_parameter(parameter: &TypeParameter) -> Doc {
         format_inline_annotations(parameter.annotations().collect()),
         parameter
             .name()
-            .map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned())),
+            .map_or_else(jolt_fmt_ir::nil, |name| format_token_text(name.text())),
         parameter.bounds().map_or_else(jolt_fmt_ir::nil, |bounds| {
             concat([text(" extends "), format_type_bounds(&bounds)])
         }),
@@ -254,7 +254,7 @@ fn format_type_operator_separator(
             |separator| {
                 concat([
                     format_leading_comments(separator),
-                    text(separator.text().to_owned()),
+                    format_token_text(separator.text()),
                     format_trailing_comments_before_line_break(separator),
                     if separator
                         .trailing_comments()

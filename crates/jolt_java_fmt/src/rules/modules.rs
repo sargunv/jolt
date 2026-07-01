@@ -341,26 +341,21 @@ fn format_inline_trailing_comments(comments: &[jolt_java_syntax::JavaComment]) -
 }
 
 fn format_module_name_list_directive(
-    keyword: &str,
+    keyword: &'static str,
     subject: &NameSyntax,
-    connective: &str,
+    connective: &'static str,
     entries: Vec<ModuleNameListEntry>,
 ) -> Doc {
     if entries.is_empty() {
-        return concat([
-            text(keyword.to_owned()),
-            text(" "),
-            format_name(subject),
-            text(";"),
-        ]);
+        return concat([text(keyword), text(" "), format_name(subject), text(";")]);
     }
 
     concat([
-        text(keyword.to_owned()),
+        text(keyword),
         text(" "),
         format_name(subject),
         text(" "),
-        text(connective.to_owned()),
+        text(connective),
         format_module_name_list(entries),
         text(";"),
     ])
