@@ -159,7 +159,7 @@ Status legend:
 - `[x]` Class/interface/record/enum/annotation headers.
 - `[x]` Structural type declaration `extends`/`implements`/`permits` clauses.
 - `[x]` Broken-header brace placement.
-- `[~]` Body member category padding.
+- `[x]` Body member category padding.
 - `[x]` Parameter and record-component lists.
 - `[x]` Varargs formal parameters and record components.
 - `[x]` Inline formal-parameter and record-component annotations, including
