@@ -86,8 +86,9 @@ Status legend:
 
 - `[x]` Syntax-owned raw comments, token/source spans, and trivia positions are
   exposed enough for formatting.
-- `[~]` Formatter-owned `CommentMap` classifies leading, trailing, and dangling
-  comments.
+- `[~]` Formatter-owned `CommentMap` classifies leading, trailing, and
+  delimiter-dangling comments; broader moved-construct dangling placement is
+  still in progress.
 - `[~]` Comment placement is explicit for moved constructs; leading comments on
   type declarations are preserved before modifier/annotation formatting.
 - `[x]` Sortable import and module directive comments are barriers for v1.

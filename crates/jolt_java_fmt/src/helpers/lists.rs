@@ -3,6 +3,7 @@ use jolt_fmt_ir::{
 };
 use jolt_java_syntax::JavaSyntaxToken;
 
+use crate::comments::CommentMap;
 use crate::helpers::comments::{
     format_dangling_comments, format_leading_comments, format_trailing_comments,
     format_trailing_comments_before_line_break, trailing_comments_force_line,
@@ -125,8 +126,7 @@ fn has_dangling_delimiter_comments(
     open: Option<&JavaSyntaxToken>,
     close: Option<&JavaSyntaxToken>,
 ) -> bool {
-    open.is_some_and(|token| !token.trailing_comments().is_empty())
-        || close.is_some_and(|token| !token.leading_comments().is_empty())
+    CommentMap::has_delimiter_dangling_comments(open, close)
 }
 
 fn format_open_delimiter(open: Option<&JavaSyntaxToken>, fallback: &'static str) -> Doc {
@@ -301,14 +301,5 @@ fn format_delimiter_dangling_comments(
     open: Option<&JavaSyntaxToken>,
     close: Option<&JavaSyntaxToken>,
 ) -> Doc {
-    let mut comments = Vec::new();
-
-    if let Some(open) = open {
-        comments.extend(open.trailing_comments());
-    }
-    if let Some(close) = close {
-        comments.extend(close.leading_comments());
-    }
-
-    format_dangling_comments(comments)
+    format_dangling_comments(CommentMap::delimiter_dangling_comments(open, close))
 }

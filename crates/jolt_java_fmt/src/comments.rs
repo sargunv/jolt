@@ -45,6 +45,30 @@ impl CommentMap {
     pub(crate) fn has_leading_comment_for_tokens(&self, tokens: &[JavaSyntaxToken]) -> bool {
         !self.leading_comments_for_tokens(tokens).is_empty()
     }
+
+    pub(crate) fn has_delimiter_dangling_comments(
+        open: Option<&JavaSyntaxToken>,
+        close: Option<&JavaSyntaxToken>,
+    ) -> bool {
+        open.is_some_and(|token| !token.trailing_comments().is_empty())
+            || close.is_some_and(|token| !token.leading_comments().is_empty())
+    }
+
+    pub(crate) fn delimiter_dangling_comments(
+        open: Option<&JavaSyntaxToken>,
+        close: Option<&JavaSyntaxToken>,
+    ) -> Vec<JavaComment> {
+        let mut comments = Vec::new();
+
+        if let Some(open) = open {
+            comments.extend(open.trailing_comments());
+        }
+        if let Some(close) = close {
+            comments.extend(close.leading_comments());
+        }
+
+        comments
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -63,7 +87,7 @@ fn comment_anchor(token: &JavaSyntaxToken) -> CommentAnchor {
 
 #[cfg(test)]
 mod tests {
-    use jolt_java_syntax::{SyntaxOutcome, parse_compilation_unit};
+    use jolt_java_syntax::{JavaSyntaxKind, SyntaxOutcome, parse_compilation_unit};
 
     use super::CommentMap;
 
@@ -90,5 +114,37 @@ mod tests {
             "// leading"
         );
         assert!(map.has_leading_comment_for_tokens(&second_tokens));
+    }
+
+    #[test]
+    fn classifies_delimiter_dangling_comments() {
+        let parse =
+            parse_compilation_unit("class A { void f() { call( /* open */\n/* close */ ); } }\n");
+        let syntax = parse.syntax().expect("clean parse").clone();
+
+        assert_eq!(parse.outcome(), SyntaxOutcome::Clean);
+        assert!(parse.diagnostics().is_empty());
+
+        let tokens = syntax.tokens();
+        let open = tokens
+            .iter()
+            .find(|token| {
+                token.kind() == JavaSyntaxKind::LParen && token.trailing_comments().len() == 1
+            })
+            .expect("commented open paren");
+        let close = tokens
+            .iter()
+            .find(|token| {
+                token.kind() == JavaSyntaxKind::RParen && !token.leading_comments().is_empty()
+            })
+            .expect("commented close paren");
+
+        assert!(CommentMap::has_delimiter_dangling_comments(
+            Some(open),
+            Some(close)
+        ));
+        let comments = CommentMap::delimiter_dangling_comments(Some(open), Some(close));
+        assert_eq!(comments[0].text(), "/* open */");
+        assert_eq!(comments[1].text(), "/* close */");
     }
 }
