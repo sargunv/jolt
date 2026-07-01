@@ -13,4 +13,12 @@ class Example {
   Object box() {
     return new /* ctor */ <String> Box("x");
   }
+
+  Object configured(User user, Account account, Settings settings) {
+    return new Box(
+      user.profile().displayName(),
+      account.permissions().primaryRole(),
+      settings.region().identifier()
+    );
+  }
 }

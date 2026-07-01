@@ -52,7 +52,11 @@ fn delimited_comma_list(
 
     group(concat([
         format_open_delimiter(open, open_text),
-        indent(concat([format_open_spacing(open), comma_list(items)])),
+        indent(concat([
+            format_open_spacing(open),
+            comma_list(items),
+            format_close_leading_comments(close),
+        ])),
         format_close_with_spacing(close, close_text),
     ]))
 }
@@ -129,14 +133,30 @@ fn comma_separator(comma: &JavaSyntaxToken) -> Doc {
 }
 
 fn format_close_with_spacing(close: Option<&JavaSyntaxToken>, fallback: &'static str) -> Doc {
+    let close_has_leading_comments =
+        close.is_some_and(|token| !token.leading_comments().is_empty());
+
     concat([
-        if close.is_some_and(|token| !token.leading_comments().is_empty()) {
-            line()
+        if close_has_leading_comments {
+            hard_line()
         } else {
             soft_line()
         },
-        format_close_delimiter(close, fallback),
+        format_close_delimiter_without_leading(close, fallback),
     ])
+}
+
+fn format_close_leading_comments(close: Option<&JavaSyntaxToken>) -> Doc {
+    close.map_or_else(jolt_fmt_ir::nil, |close| {
+        if close.leading_comments().is_empty() {
+            jolt_fmt_ir::nil()
+        } else {
+            concat([
+                hard_line(),
+                format_dangling_comments(close.leading_comments()),
+            ])
+        }
+    })
 }
 
 fn format_close_delimiter(close: Option<&JavaSyntaxToken>, fallback: &'static str) -> Doc {

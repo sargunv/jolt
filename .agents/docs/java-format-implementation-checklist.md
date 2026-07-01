@@ -197,7 +197,7 @@ Status legend:
 - `[x]` Binary/operator chains.
 - `[x]` Ternaries.
 - `[x]` Assignments.
-- `[~]` Calls and break-all argument lists.
+- `[x]` Calls and break-all argument lists.
 - `[x]` Member chains.
 - `[x]` Lambdas.
 - `[x]` Literal, name, `this`, `super`, and class-literal expression leaves.

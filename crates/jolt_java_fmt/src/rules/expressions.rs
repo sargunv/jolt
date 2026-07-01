@@ -342,6 +342,7 @@ fn format_method_invocation_expression_with_leading_comments(
     leading_comments: LeadingComments,
 ) -> Doc {
     let expression = Expression::from(expression.clone());
+    let parent_role = expression.parent_role();
     if !is_member_chain_child(&expression)
         && let Some(chain) = expression.member_chain()
     {
@@ -353,7 +354,7 @@ fn format_method_invocation_expression_with_leading_comments(
 
     group(concat([
         format_method_invocation_callee(&expression, leading_comments),
-        format_argument_list(expression.arguments()),
+        format_argument_list_for_parent_role(expression.arguments(), parent_role),
     ]))
 }
 
@@ -480,7 +481,10 @@ fn format_object_creation_expression(expression: &ObjectCreationExpression) -> D
         expression
             .ty()
             .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty)),
-        format_argument_list(expression.arguments()),
+        format_argument_list_for_parent_role(
+            expression.arguments(),
+            Expression::from(expression.clone()).parent_role(),
+        ),
         expression.body().map_or_else(jolt_fmt_ir::nil, |body| {
             concat([
                 text(" "),
@@ -1018,6 +1022,31 @@ pub(crate) fn format_argument_list(arguments: Option<ArgumentList>) -> Doc {
                 comma: entry.comma,
             })
             .collect(),
+    )
+}
+
+fn format_argument_list_for_parent_role(
+    arguments: Option<ArgumentList>,
+    parent_role: Option<ExpressionParentRole>,
+) -> Doc {
+    let arguments = format_argument_list(arguments);
+    if parent_role_has_continuation_indent(parent_role) {
+        jolt_fmt_ir::dedent(arguments)
+    } else {
+        arguments
+    }
+}
+
+const fn parent_role_has_continuation_indent(parent_role: Option<ExpressionParentRole>) -> bool {
+    matches!(
+        parent_role,
+        Some(
+            ExpressionParentRole::AssignmentRight
+                | ExpressionParentRole::ReturnValue
+                | ExpressionParentRole::ThrowValue
+                | ExpressionParentRole::YieldValue
+                | ExpressionParentRole::VariableInitializer
+        )
     )
 }
 
