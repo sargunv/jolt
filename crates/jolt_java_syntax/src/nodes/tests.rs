@@ -1277,6 +1277,77 @@ fn array_types_expose_dimensions() {
 }
 
 #[test]
+fn type_parameter_and_argument_lists_expose_entries_with_commas_and_angles() {
+    let syntax = parse_clean(
+        r"
+                class Accessors</* params */ T, // type
+                    U
+                    // before parameter close
+                > {
+                    java.util.Map</* args */ String, // key
+                        ? super U
+                        // before argument close
+                    > values;
+                }
+            ",
+    );
+
+    let parameters = descendants::<TypeParameterList>(&syntax)
+        .into_iter()
+        .next()
+        .expect("type parameter list");
+    let parameter_entries = parameters.entries().collect::<Vec<_>>();
+    assert_eq!(parameter_entries.len(), 2);
+    assert_eq!(
+        parameters
+            .open_angle()
+            .expect("parameter open angle")
+            .trailing_comments()[0]
+            .text(),
+        "/* params */"
+    );
+    assert_eq!(
+        semicolon_trailing_comment(parameter_entries[0].comma.clone()),
+        "// type"
+    );
+    assert_eq!(
+        parameters
+            .close_angle()
+            .expect("parameter close angle")
+            .leading_comments()[0]
+            .text(),
+        "// before parameter close"
+    );
+
+    let arguments = descendants::<TypeArgumentList>(&syntax)
+        .into_iter()
+        .find(|arguments| arguments.source_text().contains("String"))
+        .expect("type argument list");
+    let argument_entries = arguments.entries().collect::<Vec<_>>();
+    assert_eq!(argument_entries.len(), 2);
+    assert_eq!(
+        arguments
+            .open_angle()
+            .expect("argument open angle")
+            .trailing_comments()[0]
+            .text(),
+        "/* args */"
+    );
+    assert_eq!(
+        semicolon_trailing_comment(argument_entries[0].comma.clone()),
+        "// key"
+    );
+    assert_eq!(
+        arguments
+            .close_angle()
+            .expect("argument close angle")
+            .leading_comments()[0]
+            .text(),
+        "// before argument close"
+    );
+}
+
+#[test]
 fn annotations_expose_argument_lists() {
     let syntax = parse_clean(
         r#"

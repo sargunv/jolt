@@ -16,10 +16,6 @@ pub(crate) fn parenthesized_list(items: Vec<Doc>) -> Doc {
     delimited_comma_list("(", items, ")")
 }
 
-pub(crate) fn angle_bracket_list(items: Vec<Doc>) -> Doc {
-    delimited_comma_list("<", items, ">")
-}
-
 fn delimited_comma_list(open: &'static str, items: Vec<Doc>, close: &'static str) -> Doc {
     if items.is_empty() {
         return concat([text(open), text(close)]);

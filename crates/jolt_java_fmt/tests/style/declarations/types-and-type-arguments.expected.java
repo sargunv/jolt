@@ -1,7 +1,15 @@
-class Types<@Marker T extends Number & Comparable<T>> {
+class Types< /* params */
+  @Marker T extends Number & Comparable<T>, // first
+  U
+> {
   java.util.@Marker List<@Marker String> @Marker [] names;
 
-  void use(java.util.Map<String, ? super T> value) {
+  void use(
+    java.util.Map< /* args */
+      String, // key
+      ? super T
+    > value
+  ) {
   }
 
   void read(java.util.List<? extends Number> numbers) {

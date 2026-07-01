@@ -901,6 +901,18 @@ pub struct UnionTypeEntry {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TypeArgumentListEntry {
+    pub argument: TypeArgument,
+    pub comma: Option<JavaSyntaxToken>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TypeParameterListEntry {
+    pub parameter: TypeParameter,
+    pub comma: Option<JavaSyntaxToken>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ClassTypeSegment {
     pub annotations: Vec<Annotation>,
     pub name: NameSyntax,

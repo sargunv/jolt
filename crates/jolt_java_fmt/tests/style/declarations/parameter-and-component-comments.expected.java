@@ -11,6 +11,5 @@ record Person(
   // display name
   String displayName,
   int age /* years */
-)
-{
+) {
 }

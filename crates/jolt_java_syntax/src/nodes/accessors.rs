@@ -31,13 +31,14 @@ use super::{
     StatementExpressionList, StaticInitializer, SuperExpression, SwitchBlock, SwitchBlockEntry,
     SwitchBlockStatementGroup, SwitchExpression, SwitchLabel, SwitchLabelCaseItem, SwitchRule,
     SwitchStatement, SynchronizedStatement, ThisExpression, ThrowStatement, ThrowsClause,
-    TryStatement, TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList, TypeBoundList,
-    TypeDeclaration, TypeParameter, TypeParameterList, TypePattern, UnaryExpression, UnionType,
-    UnionTypeEntry, UsesDirective, VariableAccess, VariableDeclarator, VariableDeclaratorEntry,
-    VariableDeclaratorList, VariableInitializer, VariableInitializerValue, VoidType,
-    WhileStatement, WildcardBound, WildcardType, YieldStatement, child, child_family, child_token,
-    child_token_in, children, children_family, children_tokens_matching, nth_child_family,
-    nth_child_token, starts_after_blank_line, tokens,
+    TryStatement, TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList,
+    TypeArgumentListEntry, TypeBoundList, TypeDeclaration, TypeParameter, TypeParameterList,
+    TypeParameterListEntry, TypePattern, UnaryExpression, UnionType, UnionTypeEntry, UsesDirective,
+    VariableAccess, VariableDeclarator, VariableDeclaratorEntry, VariableDeclaratorList,
+    VariableInitializer, VariableInitializerValue, VoidType, WhileStatement, WildcardBound,
+    WildcardType, YieldStatement, child, child_family, child_token, child_token_in, children,
+    children_family, children_tokens_matching, nth_child_family, nth_child_token,
+    starts_after_blank_line, tokens,
 };
 use jolt_syntax::{SyntaxElement, TriviaKind};
 
@@ -377,8 +378,56 @@ impl ModifierList {
 }
 
 impl TypeParameterList {
+    #[must_use]
+    pub fn open_angle(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Lt)
+    }
+
+    #[must_use]
+    pub fn close_angle(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Gt)
+    }
+
     pub fn parameters(&self) -> impl Iterator<Item = TypeParameter> + '_ {
         children(&self.syntax)
+    }
+
+    pub fn entries(&self) -> impl Iterator<Item = TypeParameterListEntry> {
+        let mut entries = Vec::new();
+        let mut pending_parameter = None;
+
+        for element in self.syntax.children_with_tokens() {
+            match element {
+                SyntaxElement::Node(node) => {
+                    if let Some(parameter) = TypeParameter::cast(node)
+                        && let Some(previous) = pending_parameter.replace(parameter)
+                    {
+                        entries.push(TypeParameterListEntry {
+                            parameter: previous,
+                            comma: None,
+                        });
+                    }
+                }
+                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
+                    if let Some(parameter) = pending_parameter.take() {
+                        entries.push(TypeParameterListEntry {
+                            parameter,
+                            comma: Some(JavaSyntaxToken { syntax: token }),
+                        });
+                    }
+                }
+                SyntaxElement::Token(_) => {}
+            }
+        }
+
+        if let Some(parameter) = pending_parameter {
+            entries.push(TypeParameterListEntry {
+                parameter,
+                comma: None,
+            });
+        }
+
+        entries.into_iter()
     }
 }
 
@@ -1694,8 +1743,56 @@ impl ArgumentList {
 }
 
 impl TypeArgumentList {
+    #[must_use]
+    pub fn open_angle(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Lt)
+    }
+
+    #[must_use]
+    pub fn close_angle(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Gt)
+    }
+
     pub fn arguments(&self) -> impl Iterator<Item = TypeArgument> + '_ {
         children(&self.syntax)
+    }
+
+    pub fn entries(&self) -> impl Iterator<Item = TypeArgumentListEntry> {
+        let mut entries = Vec::new();
+        let mut pending_argument = None;
+
+        for element in self.syntax.children_with_tokens() {
+            match element {
+                SyntaxElement::Node(node) => {
+                    if let Some(argument) = TypeArgument::cast(node)
+                        && let Some(previous) = pending_argument.replace(argument)
+                    {
+                        entries.push(TypeArgumentListEntry {
+                            argument: previous,
+                            comma: None,
+                        });
+                    }
+                }
+                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
+                    if let Some(argument) = pending_argument.take() {
+                        entries.push(TypeArgumentListEntry {
+                            argument,
+                            comma: Some(JavaSyntaxToken { syntax: token }),
+                        });
+                    }
+                }
+                SyntaxElement::Token(_) => {}
+            }
+        }
+
+        if let Some(argument) = pending_argument {
+            entries.push(TypeArgumentListEntry {
+                argument,
+                comma: None,
+            });
+        }
+
+        entries.into_iter()
     }
 }
 

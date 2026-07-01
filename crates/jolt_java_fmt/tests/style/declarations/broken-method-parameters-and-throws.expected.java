@@ -5,7 +5,6 @@ class Runner {
     RetryPolicy retryPolicy
   )
     throws IOException,
-    TimeoutException
-  {
+    TimeoutException {
   }
 }
