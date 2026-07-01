@@ -1,4 +1,14 @@
 class Example {
+  java.util.function.Supplier<String> supplier() {
+    return () -> "ready";
+  }
+
+  java.lang.Runnable runnable() {
+    return () -> {
+      run();
+    };
+  }
+
   java.util.function.Function<User, String> mapper() {
     return user -> user.name();
   }
@@ -37,6 +47,10 @@ class Example {
 
   java.util.function.Function<User, String> commentedMapper() {
     return user /* selected */ -> user.name();
+  }
+
+  java.util.function.Function<User, String> commentedArrowMapper() {
+    return user -> /* body */ user.name();
   }
 
   java.util.function.Function<User, String> commentedTypedMapper() {

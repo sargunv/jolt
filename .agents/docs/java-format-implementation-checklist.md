@@ -76,7 +76,7 @@ Status legend:
 - `[x]` Pattern roles for type, record, component, and match-all patterns.
 - `[x]` Expression parent roles.
 - `[x]` Member-chain linearization.
-- `[~]` Lambda parameter classification.
+- `[x]` Lambda parameter classification.
 - `[x]` Wildcard and unnamed `_` roles.
 
 ## Comment And Trivia Model
@@ -199,7 +199,7 @@ Status legend:
 - `[x]` Assignments.
 - `[~]` Calls and break-all argument lists.
 - `[x]` Member chains.
-- `[~]` Lambdas.
+- `[x]` Lambdas.
 - `[x]` Literal, name, `this`, `super`, and class-literal expression leaves.
 - `[x]` Untyped, `var`, typed, annotated, final, and varargs lambda parameters.
 - `[x]` Arrays/initializers.

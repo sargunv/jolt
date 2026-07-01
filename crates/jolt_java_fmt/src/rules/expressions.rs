@@ -1033,15 +1033,38 @@ fn push_dangling_comments(docs: &mut Vec<Doc>, comments: Vec<JavaComment>) {
 fn format_lambda_expression(expression: &LambdaExpression) -> Doc {
     concat([
         format_lambda_parameters(expression),
-        text(" -> "),
+        format_lambda_arrow(expression),
         expression.expression_body().map_or_else(
             || {
                 expression
                     .block_body()
-                    .map_or_else(jolt_fmt_ir::nil, |block| format_block(&block))
+                    .map_or_else(jolt_fmt_ir::nil, |block| {
+                        jolt_fmt_ir::dedent(format_block(&block))
+                    })
             },
             |body| format_expression(&body),
         ),
+    ])
+}
+
+fn format_lambda_arrow(expression: &LambdaExpression) -> Doc {
+    let Some(arrow) = expression.arrow() else {
+        return text(" -> ");
+    };
+
+    if arrow.leading_comments().is_empty() && arrow.trailing_comments().is_empty() {
+        return text(" -> ");
+    }
+
+    let trailing_comments = arrow.trailing_comments();
+    let forced_line = trailing_comments.iter().any(comment_forces_line);
+
+    concat([
+        text(" "),
+        format_leading_comments(&arrow),
+        text("->"),
+        format_trailing_comments_before_line_break(&arrow),
+        if forced_line { hard_line() } else { text(" ") },
     ])
 }
 

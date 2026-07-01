@@ -1343,6 +1343,12 @@ fn wildcard_and_unnamed_accessors_expose_roles() {
     assert_eq!(lambda_parameter.name().expect("lambda name").text(), "_");
     assert!(lambda_parameter.is_unnamed());
 
+    let lambda = descendants::<LambdaExpression>(&syntax)
+        .into_iter()
+        .next()
+        .expect("lambda expression");
+    assert_eq!(lambda.arrow().expect("lambda arrow").text(), "->");
+
     let wildcard_bounds = descendants::<WildcardType>(&syntax)
         .into_iter()
         .filter_map(|wildcard| wildcard.bound_clause())

@@ -2605,6 +2605,11 @@ impl LambdaExpression {
     }
 
     #[must_use]
+    pub fn arrow(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Arrow)
+    }
+
+    #[must_use]
     pub fn concise_parameter(&self) -> Option<LambdaParameter> {
         child(&self.syntax)
     }
