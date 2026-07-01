@@ -1,4 +1,7 @@
-@Complex(name = "demo", flags = {1, 2})
+@Complex( /* args */
+  name = "demo", // name
+  flags = {1, 2}
+)
 @Generated("tool")
 @Deprecated
 public final class User {

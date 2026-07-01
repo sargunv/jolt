@@ -1306,6 +1306,47 @@ fn annotations_expose_argument_lists() {
 }
 
 #[test]
+fn annotation_argument_lists_expose_entries_with_commas_and_parens() {
+    let syntax = parse_clean(
+        r#"
+                @Anno(/* start */ value = "x", // value
+                    count = 2
+                    // before close
+                )
+                class Annotated {}
+            "#,
+    );
+    let arguments = descendants::<AnnotationArgumentList>(&syntax)
+        .into_iter()
+        .next()
+        .expect("annotation argument list");
+    let entries = arguments.entries().collect::<Vec<_>>();
+
+    assert_eq!(entries.len(), 2);
+    assert_eq!(
+        arguments
+            .open_paren()
+            .expect("annotation open paren")
+            .trailing_comments()[0]
+            .text(),
+        "/* start */"
+    );
+    assert_eq!(
+        semicolon_trailing_comment(entries[0].comma.clone()),
+        "// value"
+    );
+    assert!(entries[1].comma.is_none());
+    assert_eq!(
+        arguments
+            .close_paren()
+            .expect("annotation close paren")
+            .leading_comments()[0]
+            .text(),
+        "// before close"
+    );
+}
+
+#[test]
 fn annotation_array_initializers_expose_entries_with_commas_and_braces() {
     let syntax = parse_clean(
         r"

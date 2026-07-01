@@ -1,23 +1,24 @@
 use super::{
-    Annotation, AnnotationArgument, AnnotationArgumentList, AnnotationArrayInitializer,
-    AnnotationArrayInitializerEntry, AnnotationElementDeclaration, AnnotationElementList,
-    AnnotationElementValue, AnnotationElementValuePair, AnnotationInterfaceBody,
-    AnnotationInterfaceBodyMember, AnnotationInterfaceDeclaration, AnyJavaNode, ArgumentList,
-    ArgumentListEntry, ArrayAccessExpression, ArrayCreationExpression, ArrayDimension,
-    ArrayDimensions, ArrayInitializer, ArrayInitializerEntry, ArrayType, AssertStatement,
-    AssignmentExpression, BasicForStatement, BinaryExpression, Block, BlockItem, BlockStatement,
-    BreakStatement, CaseConstant, CasePattern, CastExpression, CatchClause, CatchParameter,
-    CatchTypeList, ClassBody, ClassBodyDeclaration, ClassBodyMember, ClassDeclaration,
-    ClassLiteralExpression, ClassType, ClassTypeSegment, CompactConstructorDeclaration,
-    CompilationUnit, CompilationUnitItem, ComponentPattern, ConditionalExpression, ConstructorBody,
-    ConstructorDeclaration, ConstructorInvocation, ContinueStatement, DefaultValue, DimExpression,
-    DoStatement, EmptyDeclaration, EnhancedForStatement, EnumBody, EnumConstant, EnumConstantList,
-    EnumDeclaration, ExportsDirective, Expression, ExpressionParentRole, ExpressionStatement,
-    ExtendsClause, FieldAccessExpression, FieldDeclaration, FinallyClause, ForInitializer,
-    ForStatement, ForUpdate, FormalParameter, FormalParameterList, Guard, IfStatement,
-    ImplementsClause, ImportDeclaration, ImportKind, InstanceInitializer, InstanceofExpression,
-    InterfaceBody, InterfaceBodyMember, InterfaceDeclaration, IntersectionType, JavaFamily,
-    JavaNode, JavaSyntaxKind, JavaSyntaxToken, LabeledStatement, LambdaExpression, LambdaParameter,
+    Annotation, AnnotationArgument, AnnotationArgumentList, AnnotationArgumentListEntry,
+    AnnotationArrayInitializer, AnnotationArrayInitializerEntry, AnnotationElementDeclaration,
+    AnnotationElementList, AnnotationElementValue, AnnotationElementValuePair,
+    AnnotationInterfaceBody, AnnotationInterfaceBodyMember, AnnotationInterfaceDeclaration,
+    AnyJavaNode, ArgumentList, ArgumentListEntry, ArrayAccessExpression, ArrayCreationExpression,
+    ArrayDimension, ArrayDimensions, ArrayInitializer, ArrayInitializerEntry, ArrayType,
+    AssertStatement, AssignmentExpression, BasicForStatement, BinaryExpression, Block, BlockItem,
+    BlockStatement, BreakStatement, CaseConstant, CasePattern, CastExpression, CatchClause,
+    CatchParameter, CatchTypeList, ClassBody, ClassBodyDeclaration, ClassBodyMember,
+    ClassDeclaration, ClassLiteralExpression, ClassType, ClassTypeSegment,
+    CompactConstructorDeclaration, CompilationUnit, CompilationUnitItem, ComponentPattern,
+    ConditionalExpression, ConstructorBody, ConstructorDeclaration, ConstructorInvocation,
+    ContinueStatement, DefaultValue, DimExpression, DoStatement, EmptyDeclaration,
+    EnhancedForStatement, EnumBody, EnumConstant, EnumConstantList, EnumDeclaration,
+    ExportsDirective, Expression, ExpressionParentRole, ExpressionStatement, ExtendsClause,
+    FieldAccessExpression, FieldDeclaration, FinallyClause, ForInitializer, ForStatement,
+    ForUpdate, FormalParameter, FormalParameterList, Guard, IfStatement, ImplementsClause,
+    ImportDeclaration, ImportKind, InstanceInitializer, InstanceofExpression, InterfaceBody,
+    InterfaceBodyMember, InterfaceDeclaration, IntersectionType, JavaFamily, JavaNode,
+    JavaSyntaxKind, JavaSyntaxToken, LabeledStatement, LambdaExpression, LambdaParameter,
     LambdaParameterList, LiteralExpression, LocalClassOrInterfaceDeclaration,
     LocalVariableDeclaration, MatchAllPattern, MemberChain, MemberChainSuffix, MethodDeclaration,
     MethodInvocationExpression, MethodReferenceExpression, ModifierList, ModuleDeclaration,
@@ -669,6 +670,44 @@ impl AnnotationElementList {
 
     pub fn arguments(&self) -> impl Iterator<Item = AnnotationArgument> + '_ {
         self.syntax.children().filter_map(AnnotationArgument::cast)
+    }
+
+    pub fn argument_entries(&self) -> impl Iterator<Item = AnnotationArgumentListEntry> {
+        let mut entries = Vec::new();
+        let mut pending_argument = None;
+
+        for element in self.syntax.children_with_tokens() {
+            match element {
+                SyntaxElement::Node(node) => {
+                    if let Some(argument) = AnnotationArgument::cast(node)
+                        && let Some(previous) = pending_argument.replace(argument)
+                    {
+                        entries.push(AnnotationArgumentListEntry {
+                            argument: previous,
+                            comma: None,
+                        });
+                    }
+                }
+                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
+                    if let Some(argument) = pending_argument.take() {
+                        entries.push(AnnotationArgumentListEntry {
+                            argument,
+                            comma: Some(JavaSyntaxToken { syntax: token }),
+                        });
+                    }
+                }
+                SyntaxElement::Token(_) => {}
+            }
+        }
+
+        if let Some(argument) = pending_argument {
+            entries.push(AnnotationArgumentListEntry {
+                argument,
+                comma: None,
+            });
+        }
+
+        entries.into_iter()
     }
 }
 
@@ -1774,9 +1813,26 @@ impl Annotation {
 }
 
 impl AnnotationArgumentList {
+    #[must_use]
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RParen)
+    }
+
     pub fn arguments(&self) -> impl Iterator<Item = AnnotationArgument> {
         child::<AnnotationElementList>(&self.syntax)
             .map(|list| list.arguments().collect::<Vec<_>>())
+            .unwrap_or_default()
+            .into_iter()
+    }
+
+    pub fn entries(&self) -> impl Iterator<Item = AnnotationArgumentListEntry> {
+        child::<AnnotationElementList>(&self.syntax)
+            .map(|list| list.argument_entries().collect::<Vec<_>>())
             .unwrap_or_default()
             .into_iter()
     }
