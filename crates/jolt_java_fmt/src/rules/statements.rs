@@ -16,8 +16,8 @@ use crate::helpers::blocks::{
 };
 use crate::helpers::comments::{
     comment_forces_line, format_comment, format_dangling_comments, format_leading_comments,
-    format_token_with_comments, format_trailing_comments_before_line_break,
-    trailing_comments_force_line,
+    format_token_with_comments, format_trailing_comments,
+    format_trailing_comments_before_line_break, trailing_comments_force_line,
 };
 use crate::helpers::formatter_ignore::{
     FormatterIgnoreRange, formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
@@ -246,7 +246,10 @@ fn format_expression_statement(statement: &ExpressionStatement) -> Doc {
 }
 
 fn format_if_statement(statement: &IfStatement) -> Doc {
-    let then_body = statement_body_as_block(statement.then_body());
+    let else_body = statement.else_body();
+    let then_body = statement.then_body();
+    let then_body_trailing_comments_force_line =
+        else_body.is_some() && statement_body_trailing_comments_force_line(then_body.as_ref());
     let open = statement.open_paren();
     let close = statement.close_paren();
 
@@ -261,22 +264,24 @@ fn format_if_statement(statement: &IfStatement) -> Doc {
             close.as_ref(),
         ),
         format_statement_header_body_separator(close.as_ref()),
-        then_body,
-        statement
-            .else_body()
-            .map_or_else(jolt_fmt_ir::nil, |else_body| {
-                concat([
-                    text(" "),
-                    format_statement_keyword(statement.else_keyword(), "else"),
-                    text(" "),
-                    match else_body {
-                        StatementBody::Unbraced(Statement::IfStatement(else_if)) => {
-                            format_if_statement(&else_if)
-                        }
-                        body => statement_body_as_block(Some(body)),
-                    },
-                ])
-            }),
+        statement_body_as_block_with_trailing_comments(then_body),
+        else_body.map_or_else(jolt_fmt_ir::nil, |else_body| {
+            concat([
+                if then_body_trailing_comments_force_line {
+                    jolt_fmt_ir::nil()
+                } else {
+                    text(" ")
+                },
+                format_statement_keyword(statement.else_keyword(), "else"),
+                text(" "),
+                match else_body {
+                    StatementBody::Unbraced(Statement::IfStatement(else_if)) => {
+                        format_if_statement(&else_if)
+                    }
+                    body => statement_body_as_block(Some(body)),
+                },
+            ])
+        }),
     ])
 }
 
@@ -1214,6 +1219,27 @@ fn statement_body_as_block(body: Option<StatementBody>) -> Doc {
         Some(StatementBody::Empty(_)) | None => empty_block(),
         Some(StatementBody::Unbraced(statement)) => braced_body(Some(format_statement(&statement))),
     }
+}
+
+fn statement_body_as_block_with_trailing_comments(body: Option<StatementBody>) -> Doc {
+    match body {
+        Some(StatementBody::Block(block)) => concat([
+            format_block(&block),
+            block
+                .close_brace()
+                .map_or_else(jolt_fmt_ir::nil, |close| format_trailing_comments(&close)),
+        ]),
+        body => statement_body_as_block(body),
+    }
+}
+
+fn statement_body_trailing_comments_force_line(body: Option<&StatementBody>) -> bool {
+    let Some(StatementBody::Block(block)) = body else {
+        return false;
+    };
+    block
+        .close_brace()
+        .is_some_and(|close| trailing_comments_force_line(&close))
 }
 
 fn format_statement_keyword(keyword: Option<JavaSyntaxToken>, fallback: &str) -> Doc {

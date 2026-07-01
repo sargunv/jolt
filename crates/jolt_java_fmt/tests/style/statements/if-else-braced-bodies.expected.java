@@ -8,4 +8,18 @@ class Example {
       stop();
     }
   }
+
+  void comments() {
+    if (ready) {
+      run();
+    } /* after then */ else {
+      stop();
+    }
+    if (waiting) {
+      pause();
+    } // after wait
+    else {
+      resume();
+    }
+  }
 }
