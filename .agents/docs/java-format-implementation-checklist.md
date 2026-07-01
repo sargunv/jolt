@@ -223,13 +223,15 @@ Status legend:
 - `[x]` Imported Java fixture inputs format without formatter panics.
 - `[x]` Formatted imported fixtures parse.
 - `[x]` Repeated formatting is deterministic.
-- `[~]` No parser-accepted syntax reaches an unimplemented formatter fallback
+- `[x]` No parser-accepted syntax reaches an unimplemented formatter fallback
   (declaration method/constructor header and record-component-list comment
   fallbacks removed; variable-declarator-list comment fallback removed;
   lambda-parameter comment fallback removed; argument-list comment fallback
   removed; method-reference comment fallback removed; statement-expression-list
   comment fallback removed; catch-parameter comment fallback removed;
-  declaration recovery fallbacks remain).
+  declaration recovery branches remain only behind the public formatter's
+  non-clean parse gate and are covered by
+  `declaration_recovery_nodes_do_not_reach_layout`).
 - `[ ]` Code review can trace every formatting choice to the style guide or
   spec.
 - `[ ]` Audit report links each definition-of-done item to tests, fixtures, or

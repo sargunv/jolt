@@ -139,4 +139,27 @@ mod tests {
                 .all(|diagnostic| diagnostic.stage != DiagnosticStage::Formatter)
         );
     }
+
+    #[test]
+    fn declaration_recovery_nodes_do_not_reach_layout() {
+        for source in [
+            "enum E { , }",
+            "class C { <T>() {} }",
+            "class C { void () {} }",
+            "@interface A { int (); }",
+        ] {
+            let result = format_source(source, &JavaFormatOptions::default());
+
+            assert_eq!(result.formatted_source, None, "{source}");
+            assert!(!result.diagnostics.is_empty(), "{source}");
+            assert!(
+                result
+                    .diagnostics
+                    .iter()
+                    .all(|diagnostic| diagnostic.stage != DiagnosticStage::Formatter),
+                "{source}: {:#?}",
+                result.diagnostics
+            );
+        }
+    }
 }
