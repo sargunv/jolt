@@ -1306,6 +1306,52 @@ fn annotations_expose_argument_lists() {
 }
 
 #[test]
+fn annotation_array_initializers_expose_entries_with_commas_and_braces() {
+    let syntax = parse_clean(
+        r"
+                @interface Accessors {
+                    int[] values() default {/* start */ 1, // one
+                        2, /* two */ 3, // trailing
+                    };
+                }
+            ",
+    );
+    let initializer = descendants::<AnnotationArrayInitializer>(&syntax)
+        .into_iter()
+        .next()
+        .expect("annotation array initializer");
+    let entries = initializer.entries().collect::<Vec<_>>();
+
+    assert_eq!(entries.len(), 3);
+    assert_eq!(
+        initializer
+            .open_brace()
+            .expect("annotation initializer open brace")
+            .trailing_comments()[0]
+            .text(),
+        "/* start */"
+    );
+    assert_eq!(
+        semicolon_trailing_comment(entries[0].comma.clone()),
+        "// one"
+    );
+    assert_eq!(
+        entries[1]
+            .comma
+            .as_ref()
+            .expect("second comma")
+            .trailing_comments()[0]
+            .text(),
+        "/* two */"
+    );
+    assert_eq!(
+        semicolon_trailing_comment(entries[2].comma.clone()),
+        "// trailing"
+    );
+    assert!(initializer.close_brace().is_some());
+}
+
+#[test]
 #[allow(clippy::too_many_lines)]
 fn declaration_accessors_expose_formatter_facing_structure() {
     let syntax = parse_clean(

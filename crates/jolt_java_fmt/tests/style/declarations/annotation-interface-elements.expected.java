@@ -1,7 +1,11 @@
 @interface Contract {
   String value() default "x"; // value marker
 
-  int[] flags() default {1, 2};
+  int[] flags() default {
+    /* start */
+    1, // one
+    2, /* two */ 3, // trailing
+  };
 
   Nested nested() default @Nested(name = "demo", enabled = true);
 

@@ -737,6 +737,12 @@ pub enum AnnotationArgument {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AnnotationArrayInitializerEntry {
+    pub value: AnnotationElementValue,
+    pub comma: Option<JavaSyntaxToken>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum CompilationUnitItem {
     Package(PackageDeclaration),
     Import(ImportDeclaration),

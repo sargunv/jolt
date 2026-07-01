@@ -23,7 +23,7 @@ use crate::helpers::formatter_ignore::{
     FormatterIgnoreRange, formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
     is_formatter_control_marker,
 };
-use crate::helpers::lists::{TrailingSeparator, comma_list, semicolon_list};
+use crate::helpers::lists::{comma_list, semicolon_list};
 use crate::rules::annotations::format_annotation;
 use crate::rules::declarations::format_type_declaration;
 use crate::rules::expressions::format_expression;
@@ -608,7 +608,7 @@ fn format_switch_label(label: &SwitchLabel) -> Doc {
 
     concat([
         text("case "),
-        group(indent(comma_list(items, TrailingSeparator::Never))),
+        group(indent(comma_list(items))),
         label.guard().map_or_else(jolt_fmt_ir::nil, |guard| {
             concat([
                 text(" when "),

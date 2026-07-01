@@ -1133,7 +1133,7 @@ fn format_annotation_element_declaration(element: &AnnotationElementDeclaration)
 fn format_annotation_element_default(default: Option<jolt_java_syntax::DefaultValue>) -> Doc {
     default.map_or_else(jolt_fmt_ir::nil, |default| {
         concat([
-            line(),
+            text(" "),
             text("default "),
             default.value().map_or_else(jolt_fmt_ir::nil, |value| {
                 format_annotation_element_value(&value)
