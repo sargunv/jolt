@@ -4,15 +4,16 @@ use jolt_java_syntax::{
     AssignmentExpression, BinaryExpression, CastExpression, ConditionalExpression, DimExpression,
     Expression, FieldAccessExpression, InstanceofExpression, LambdaExpression, LambdaParameter,
     MethodInvocationExpression, MethodReferenceExpression, ObjectCreationExpression,
-    ParenthesizedExpression, PostfixExpression, SwitchExpression, TypeArgumentList,
-    UnaryExpression, VariableInitializerValue,
+    ParenthesizedExpression, PostfixExpression, SwitchExpression, UnaryExpression,
+    VariableInitializerValue,
 };
 
 use crate::helpers::chains::member_chain;
 use crate::helpers::comments::{format_token_sequence, tokens_have_comments};
-use crate::helpers::lists::{angle_bracket_list, braced_initializer_list, parenthesized_list};
+use crate::helpers::lists::{braced_initializer_list, parenthesized_list};
 use crate::helpers::operators::{assignment_expression, binary_chain, ternary_expression};
 use crate::rules::statements::{format_block, format_switch_block};
+use crate::rules::types::{format_array_dimensions, format_type, format_type_argument_list};
 
 pub(crate) fn format_expression(expression: &Expression) -> Doc {
     match expression {
@@ -190,14 +191,14 @@ fn format_method_reference_receiver(expression: &MethodReferenceExpression) -> D
             expression
                 .receiver_dimensions()
                 .map_or_else(jolt_fmt_ir::nil, |dimensions| {
-                    format_token_sequence(&dimensions.tokens())
+                    format_array_dimensions(&dimensions)
                 }),
         ]);
     }
 
     expression
         .receiver_type()
-        .map_or_else(jolt_fmt_ir::nil, |ty| format_token_sequence(&ty.tokens()))
+        .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty))
 }
 
 fn format_array_access_expression(expression: &ArrayAccessExpression) -> Doc {
@@ -223,7 +224,7 @@ fn format_object_creation_expression(expression: &ObjectCreationExpression) -> D
         text("new "),
         expression
             .ty()
-            .map_or_else(jolt_fmt_ir::nil, |ty| format_token_sequence(&ty.tokens())),
+            .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty)),
         format_argument_list(expression.arguments()),
         expression.body().map_or_else(jolt_fmt_ir::nil, |body| {
             concat([text(" "), format_token_sequence(&body.tokens())])
@@ -236,7 +237,7 @@ fn format_array_creation_expression(expression: &ArrayCreationExpression) -> Doc
         text("new "),
         expression
             .ty()
-            .map_or_else(jolt_fmt_ir::nil, |ty| format_token_sequence(&ty.tokens())),
+            .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty)),
         concat(
             expression
                 .dimensions()
@@ -347,7 +348,7 @@ fn format_cast_expression(expression: &CastExpression) -> Doc {
         text("("),
         expression
             .ty()
-            .map_or_else(jolt_fmt_ir::nil, |ty| format_token_sequence(&ty.tokens())),
+            .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty)),
         text(") "),
         expression
             .expression()
@@ -373,7 +374,7 @@ fn format_instanceof_expression(expression: &InstanceofExpression) -> Doc {
                         format_token_sequence(&pattern.tokens())
                     })
             },
-            |ty| format_token_sequence(&ty.tokens()),
+            |ty| format_type(&ty),
         ),
     ])
 }
@@ -497,7 +498,7 @@ fn format_lambda_parameter(parameter: &LambdaParameter) -> Doc {
     let has_prefix = ty.is_some() || var_token.is_some();
     let ty = ty.map_or_else(
         || var_token.map_or_else(jolt_fmt_ir::nil, |token| text(token.text().to_owned())),
-        |ty| format_token_sequence(&ty.tokens()),
+        |ty| format_type(&ty),
     );
     let name = parameter
         .name()
@@ -650,18 +651,4 @@ fn collect_binary_operands(
 
 const fn is_flattenable_binary_operator(operator: &str) -> bool {
     matches!(operator.as_bytes(), b"&&" | b"||")
-}
-
-fn format_type_argument_list(arguments: &TypeArgumentList) -> Doc {
-    let tokens = arguments.tokens();
-    if tokens_have_comments(&tokens) {
-        return format_token_sequence(&tokens);
-    }
-
-    let arguments = arguments
-        .arguments()
-        .map(|argument| format_token_sequence(&argument.tokens()))
-        .collect::<Vec<_>>();
-
-    angle_bracket_list(arguments)
 }

@@ -8,13 +8,14 @@ use jolt_java_syntax::{
 
 use crate::helpers::blocks::{braced_body, empty_block};
 use crate::helpers::comments::{
-    comment_forces_line, format_comment, format_token_sequence, tokens_end_with_forced_line,
-    tokens_have_comments,
+    format_leading_comments, format_token_sequence, format_trailing_comments,
+    tokens_end_with_forced_line, tokens_have_comments,
 };
 use crate::helpers::modifiers::{modifier_prefix, modifier_prefix_from_parts};
 use crate::rules::annotations::format_annotation_element_value;
 use crate::rules::expressions::format_argument_list;
 use crate::rules::statements::format_block;
+use crate::rules::types::{format_array_dimensions, format_type, format_type_parameter_list};
 use crate::rules::variables::{
     format_field_declaration, format_formal_parameter, format_record_component,
 };
@@ -45,7 +46,7 @@ fn format_class_declaration(class: &ClassDeclaration) -> Doc {
         concat([
             text("class "),
             text(name.text().to_owned()),
-            optional_tokens(class.type_parameters().map(|node| node.tokens())),
+            format_type_parameter_list(class.type_parameters()),
             optional_clause_tokens(class.extends_clause().map(|node| node.tokens())),
             optional_clause_tokens(class.implements_clause().map(|node| node.tokens())),
             optional_clause_tokens(class.permits_clause().map(|node| node.tokens())),
@@ -72,7 +73,7 @@ fn format_interface_declaration(interface: &InterfaceDeclaration) -> Doc {
         concat([
             text("interface "),
             text(name.text().to_owned()),
-            optional_tokens(interface.type_parameters().map(|node| node.tokens())),
+            format_type_parameter_list(interface.type_parameters()),
             optional_clause_tokens(interface.extends_clause().map(|node| node.tokens())),
             optional_clause_tokens(interface.permits_clause().map(|node| node.tokens())),
         ]),
@@ -94,7 +95,7 @@ fn format_record_declaration(record: &RecordDeclaration) -> Doc {
         group(concat([
             text("record "),
             text(name.text().to_owned()),
-            optional_tokens(record.type_parameters().map(|node| node.tokens())),
+            format_type_parameter_list(record.type_parameters()),
             format_record_components(record.components()),
             optional_clause_tokens(record.implements_clause().map(|node| node.tokens())),
         ])),
@@ -253,37 +254,12 @@ fn format_enum_constant(constant: &EnumConstant) -> Doc {
     ])
 }
 
-fn format_leading_comments(token: &JavaSyntaxToken) -> Doc {
-    let mut docs = Vec::new();
-    for comment in token.leading_comments() {
-        docs.push(format_comment(&comment));
-        docs.push(hard_line());
-    }
-    concat(docs)
-}
-
-fn format_trailing_comments(token: &JavaSyntaxToken) -> Doc {
-    let mut docs = Vec::new();
-    for comment in token.trailing_comments() {
-        docs.push(text(" "));
-        docs.push(format_comment(&comment));
-        if comment_forces_line(&comment) {
-            docs.push(hard_line());
-        }
-    }
-    concat(docs)
-}
-
 fn effective_members(members: &[ClassBodyMember]) -> Vec<ClassBodyMember> {
     members
         .iter()
         .filter(|member| member.kind() != JavaSyntaxKind::EmptyDeclaration)
         .cloned()
         .collect()
-}
-
-fn optional_tokens(tokens: Option<Vec<JavaSyntaxToken>>) -> Doc {
-    tokens.map_or_else(jolt_fmt_ir::nil, |tokens| format_token_sequence(&tokens))
 }
 
 fn optional_clause_tokens(tokens: Option<Vec<JavaSyntaxToken>>) -> Doc {
@@ -500,7 +476,7 @@ fn format_constructor_declaration(constructor: &jolt_java_syntax::ConstructorDec
     concat([
         group(concat([
             modifier_prefix(constructor.modifiers()),
-            optional_tokens(constructor.type_parameters().map(|node| node.tokens())),
+            format_type_parameter_list(constructor.type_parameters()),
             text(name.text().to_owned()),
             format_parameters(constructor.parameters()),
             format_throws_clause(constructor.throws_clause()),
@@ -526,11 +502,11 @@ fn format_method_declaration(method: &MethodDeclaration) -> Doc {
     concat([
         group(concat([
             modifier_prefix(method.modifiers()),
-            optional_tokens(method.type_parameters().map(|node| node.tokens())),
+            format_type_parameter_list(method.type_parameters()),
             method
                 .return_type()
                 .map_or_else(jolt_fmt_ir::nil, |return_type| {
-                    concat([format_token_sequence(&return_type.tokens()), text(" ")])
+                    concat([format_type(&return_type), text(" ")])
                 }),
             text(name.text().to_owned()),
             format_parameters(method.parameters()),
@@ -550,14 +526,14 @@ fn format_annotation_element_declaration(element: &AnnotationElementDeclaration)
             modifier_prefix(element.modifiers()),
             element
                 .ty()
-                .map_or_else(jolt_fmt_ir::nil, |ty| format_token_sequence(&ty.tokens())),
+                .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty)),
             text(" "),
             text(name.text().to_owned()),
             text("()"),
             element
                 .dimensions()
                 .map_or_else(jolt_fmt_ir::nil, |dimensions| {
-                    format_token_sequence(&dimensions.tokens())
+                    format_array_dimensions(&dimensions)
                 }),
             format_annotation_element_default(element.default_value()),
         ])),
@@ -611,7 +587,7 @@ fn format_throws_clause(throws: Option<jolt_java_syntax::ThrowsClause>) -> Doc {
     };
     let exceptions = throws
         .exceptions()
-        .map(|exception| format_token_sequence(&exception.tokens()))
+        .map(|exception| format_type(&exception))
         .collect::<Vec<_>>();
     if exceptions.is_empty() {
         return jolt_fmt_ir::nil();

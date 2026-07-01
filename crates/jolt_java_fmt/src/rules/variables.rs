@@ -7,13 +7,14 @@ use jolt_java_syntax::{
 use crate::helpers::comments::{format_token_sequence, tokens_have_comments};
 use crate::helpers::modifiers::{modifier_prefix, modifier_prefix_from_parts};
 use crate::rules::expressions::format_variable_initializer_value;
+use crate::rules::types::{format_array_dimensions, format_type};
 
 pub(crate) fn format_field_declaration(field: &FieldDeclaration) -> Doc {
     concat([
         modifier_prefix(field.modifiers()),
         field
             .ty()
-            .map_or_else(jolt_fmt_ir::nil, |ty| format_token_sequence(&ty.tokens())),
+            .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty)),
         text(" "),
         field
             .declarators()
@@ -51,14 +52,14 @@ pub(crate) fn format_formal_parameter(parameter: &FormalParameter) -> Doc {
         modifier_prefix_from_parts(annotations, parameter.modifier_tokens().collect()),
         parameter
             .ty()
-            .map_or_else(jolt_fmt_ir::nil, |ty| format_token_sequence(&ty.tokens())),
+            .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty)),
         parameter
             .name()
             .map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned())),
         parameter
             .dimensions()
             .map_or_else(jolt_fmt_ir::nil, |dimensions| {
-                format_token_sequence(&dimensions.tokens())
+                format_array_dimensions(&dimensions)
             }),
         parameter.is_variable_arity(),
     )
@@ -75,14 +76,14 @@ pub(crate) fn format_record_component(component: &RecordComponent) -> Doc {
         modifier_prefix_from_parts(annotations, component.modifier_tokens().collect()),
         component
             .ty()
-            .map_or_else(jolt_fmt_ir::nil, |ty| format_token_sequence(&ty.tokens())),
+            .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty)),
         component
             .name()
             .map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned())),
         component
             .dimensions()
             .map_or_else(jolt_fmt_ir::nil, |dimensions| {
-                format_token_sequence(&dimensions.tokens())
+                format_array_dimensions(&dimensions)
             }),
         component.is_variable_arity(),
     )
@@ -115,7 +116,7 @@ fn local_variable_type(declaration: &LocalVariableDeclaration) -> Doc {
                 .var_token()
                 .map_or_else(jolt_fmt_ir::nil, |token| text(token.text().to_owned()))
         },
-        |ty| format_token_sequence(&ty.tokens()),
+        |ty| format_type(&ty),
     )
 }
 
@@ -141,7 +142,7 @@ fn format_variable_declarator(declarator: &VariableDeclarator) -> Doc {
         declarator
             .dimensions()
             .map_or_else(jolt_fmt_ir::nil, |dimensions| {
-                format_token_sequence(&dimensions.tokens())
+                format_array_dimensions(&dimensions)
             }),
         declarator
             .initializer()

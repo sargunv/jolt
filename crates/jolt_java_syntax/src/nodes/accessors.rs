@@ -3,34 +3,35 @@ use super::{
     AnnotationElementDeclaration, AnnotationElementList, AnnotationElementValue,
     AnnotationElementValuePair, AnnotationInterfaceBody, AnnotationInterfaceBodyMember,
     AnnotationInterfaceDeclaration, AnyJavaNode, ArgumentList, ArrayAccessExpression,
-    ArrayCreationExpression, ArrayDimensions, ArrayInitializer, ArrayType, AssertStatement,
-    AssignmentExpression, BasicForStatement, BinaryExpression, Block, BlockItem, BlockStatement,
-    BreakStatement, CastExpression, CatchClause, CatchParameter, CatchTypeList, ClassBody,
-    ClassBodyDeclaration, ClassBodyMember, ClassDeclaration, CompilationUnit,
-    ConditionalExpression, ConstructorBody, ConstructorDeclaration, ContinueStatement,
-    DefaultValue, DimExpression, DoStatement, EnhancedForStatement, EnumBody, EnumConstant,
-    EnumConstantList, EnumDeclaration, Expression, ExpressionStatement, ExtendsClause,
-    FieldAccessExpression, FieldDeclaration, FinallyClause, ForInitializer, ForStatement,
-    ForUpdate, FormalParameter, FormalParameterList, IfStatement, ImplementsClause,
-    ImportDeclaration, InstanceInitializer, InstanceofExpression, InterfaceBody,
-    InterfaceBodyMember, InterfaceDeclaration, JavaNode, JavaSyntaxKind, JavaSyntaxToken,
-    LabeledStatement, LambdaExpression, LambdaParameter, LambdaParameterList,
-    LocalClassOrInterfaceDeclaration, LocalVariableDeclaration, MethodDeclaration,
-    MethodInvocationExpression, MethodReferenceExpression, ModifierList, ModuleDeclaration,
-    ModuleDirective, ModuleDirectiveNode, NameSyntax, ObjectCreationExpression, PackageDeclaration,
-    ParenthesizedExpression, Pattern, PermitsClause, PostfixExpression, ProvidesDirective,
-    RecordBody, RecordComponent, RecordComponentList, RecordDeclaration, RequiresDirective,
-    Resource, ResourceList, ResourceSpecification, ReturnStatement, Statement,
-    StatementExpressionList, StaticInitializer, SwitchBlock, SwitchBlockEntry,
-    SwitchBlockStatementGroup, SwitchExpression, SwitchLabel, SwitchRule, SwitchStatement,
-    SynchronizedStatement, ThrowStatement, ThrowsClause, TryStatement, TryWithResourcesStatement,
-    Type, TypeArgument, TypeArgumentList, TypeDeclaration, TypeParameter, TypeParameterList,
-    UnaryExpression, UnionType, VariableAccess, VariableDeclarator, VariableDeclaratorList,
-    VariableInitializer, VariableInitializerValue, WhileStatement, YieldStatement, child,
-    child_family, child_token, child_token_in, children, children_family, children_tokens_matching,
-    nth_child_family, nth_child_token, starts_after_blank_line, tokens,
+    ArrayCreationExpression, ArrayDimension, ArrayDimensions, ArrayInitializer, ArrayType,
+    AssertStatement, AssignmentExpression, BasicForStatement, BinaryExpression, Block, BlockItem,
+    BlockStatement, BreakStatement, CastExpression, CatchClause, CatchParameter, CatchTypeList,
+    ClassBody, ClassBodyDeclaration, ClassBodyMember, ClassDeclaration, ClassType,
+    ClassTypeSegment, CompilationUnit, ConditionalExpression, ConstructorBody,
+    ConstructorDeclaration, ContinueStatement, DefaultValue, DimExpression, DoStatement,
+    EnhancedForStatement, EnumBody, EnumConstant, EnumConstantList, EnumDeclaration, Expression,
+    ExpressionStatement, ExtendsClause, FieldAccessExpression, FieldDeclaration, FinallyClause,
+    ForInitializer, ForStatement, ForUpdate, FormalParameter, FormalParameterList, IfStatement,
+    ImplementsClause, ImportDeclaration, InstanceInitializer, InstanceofExpression, InterfaceBody,
+    InterfaceBodyMember, InterfaceDeclaration, IntersectionType, JavaFamily, JavaNode,
+    JavaSyntaxKind, JavaSyntaxToken, LabeledStatement, LambdaExpression, LambdaParameter,
+    LambdaParameterList, LocalClassOrInterfaceDeclaration, LocalVariableDeclaration,
+    MethodDeclaration, MethodInvocationExpression, MethodReferenceExpression, ModifierList,
+    ModuleDeclaration, ModuleDirective, ModuleDirectiveNode, NameSegment, NameSyntax,
+    ObjectCreationExpression, PackageDeclaration, ParenthesizedExpression, Pattern, PermitsClause,
+    PostfixExpression, PrimitiveType, ProvidesDirective, RecordBody, RecordComponent,
+    RecordComponentList, RecordDeclaration, RequiresDirective, Resource, ResourceList,
+    ResourceSpecification, ReturnStatement, Statement, StatementExpressionList, StaticInitializer,
+    SwitchBlock, SwitchBlockEntry, SwitchBlockStatementGroup, SwitchExpression, SwitchLabel,
+    SwitchRule, SwitchStatement, SynchronizedStatement, ThrowStatement, ThrowsClause, TryStatement,
+    TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList, TypeBoundList,
+    TypeDeclaration, TypeParameter, TypeParameterList, UnaryExpression, UnionType, VariableAccess,
+    VariableDeclarator, VariableDeclaratorList, VariableInitializer, VariableInitializerValue,
+    VoidType, WhileStatement, WildcardType, YieldStatement, child, child_family, child_token,
+    child_token_in, children, children_family, children_tokens_matching, nth_child_family,
+    nth_child_token, starts_after_blank_line, tokens,
 };
-use jolt_syntax::TriviaKind;
+use jolt_syntax::{SyntaxElement, TriviaKind};
 
 impl CompilationUnit {
     #[must_use]
@@ -124,6 +125,30 @@ impl PackageDeclaration {
 impl NameSyntax {
     pub fn segments(&self) -> impl Iterator<Item = JavaSyntaxToken> + '_ {
         children_tokens_matching(self.syntax(), |kind| kind == JavaSyntaxKind::Identifier)
+    }
+
+    pub fn segments_with_annotations(&self) -> impl Iterator<Item = NameSegment> {
+        let mut segments = Vec::new();
+        let mut annotations = Vec::new();
+
+        for element in self.syntax().children_with_tokens() {
+            match element {
+                SyntaxElement::Node(node) => {
+                    if let Some(annotation) = Annotation::cast(node) {
+                        annotations.push(annotation);
+                    }
+                }
+                SyntaxElement::Token(syntax) if syntax.kind() == JavaSyntaxKind::Identifier => {
+                    segments.push(NameSegment {
+                        annotations: std::mem::take(&mut annotations),
+                        identifier: JavaSyntaxToken { syntax },
+                    });
+                }
+                SyntaxElement::Token(_) => {}
+            }
+        }
+
+        segments.into_iter()
     }
 
     #[must_use]
@@ -288,6 +313,127 @@ impl ModifierList {
 impl TypeParameterList {
     pub fn parameters(&self) -> impl Iterator<Item = TypeParameter> + '_ {
         children(&self.syntax)
+    }
+}
+
+impl TypeParameter {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation> + '_ {
+        children(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn name(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Identifier)
+    }
+
+    #[must_use]
+    pub fn bounds(&self) -> Option<TypeBoundList> {
+        child(&self.syntax)
+    }
+}
+
+impl TypeBoundList {
+    pub fn bounds(&self) -> impl Iterator<Item = Type> + '_ {
+        children_family(&self.syntax)
+    }
+}
+
+impl PrimitiveType {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation> + '_ {
+        children(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token_in(
+            &self.syntax,
+            &[
+                JavaSyntaxKind::BooleanKw,
+                JavaSyntaxKind::ByteKw,
+                JavaSyntaxKind::CharKw,
+                JavaSyntaxKind::DoubleKw,
+                JavaSyntaxKind::FloatKw,
+                JavaSyntaxKind::IntKw,
+                JavaSyntaxKind::LongKw,
+                JavaSyntaxKind::ShortKw,
+            ],
+        )
+    }
+}
+
+impl VoidType {
+    #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::VoidKw)
+    }
+}
+
+impl ClassType {
+    pub fn segments(&self) -> impl Iterator<Item = ClassTypeSegment> {
+        let mut segments = Vec::new();
+        let mut annotations = Vec::new();
+        let mut current: Option<ClassTypeSegment> = None;
+
+        for element in self.syntax.children_with_tokens() {
+            let SyntaxElement::Node(node) = element else {
+                continue;
+            };
+
+            if let Some(annotation) = Annotation::cast(node.clone()) {
+                annotations.push(annotation);
+                continue;
+            }
+
+            if let Some(name) = NameSyntax::cast(node.clone()) {
+                if let Some(segment) = current.take() {
+                    segments.push(segment);
+                }
+                current = Some(ClassTypeSegment {
+                    annotations: std::mem::take(&mut annotations),
+                    name,
+                    type_arguments: None,
+                });
+                continue;
+            }
+
+            if let Some(type_arguments) = TypeArgumentList::cast(node)
+                && let Some(segment) = current.as_mut()
+            {
+                segment.type_arguments = Some(type_arguments);
+            }
+        }
+
+        if let Some(segment) = current {
+            segments.push(segment);
+        }
+
+        segments.into_iter()
+    }
+}
+
+impl TypeArgument {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation> + '_ {
+        children(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn ty(&self) -> Option<Type> {
+        child_family(&self.syntax)
+    }
+}
+
+impl WildcardType {
+    #[must_use]
+    pub fn bound_keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token_in(
+            &self.syntax,
+            &[JavaSyntaxKind::ExtendsKw, JavaSyntaxKind::SuperKw],
+        )
+    }
+
+    #[must_use]
+    pub fn bound(&self) -> Option<Type> {
+        child_family(&self.syntax)
     }
 }
 
@@ -831,8 +977,31 @@ impl ArrayAccessExpression {
 
 impl ArrayType {
     #[must_use]
+    pub fn element_type(&self) -> Option<Type> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
     pub fn dimensions(&self) -> Option<ArrayDimensions> {
         child(&self.syntax)
+    }
+}
+
+impl ArrayDimensions {
+    pub fn dimensions(&self) -> impl Iterator<Item = ArrayDimension> + '_ {
+        children(&self.syntax)
+    }
+}
+
+impl ArrayDimension {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation> + '_ {
+        children(&self.syntax)
+    }
+}
+
+impl IntersectionType {
+    pub fn types(&self) -> impl Iterator<Item = Type> + '_ {
+        children_family(&self.syntax)
     }
 }
 

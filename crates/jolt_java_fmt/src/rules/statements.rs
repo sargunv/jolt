@@ -20,6 +20,7 @@ use crate::helpers::modifiers::modifier_prefix_from_parts;
 use crate::helpers::operators::binary_chain;
 use crate::rules::declarations::format_type_declaration;
 use crate::rules::expressions::format_expression;
+use crate::rules::types::format_type;
 use crate::rules::variables::format_local_variable_declaration;
 
 pub(crate) fn format_block(block: &Block) -> Doc {
@@ -556,7 +557,7 @@ fn format_catch_type_list(
 }
 
 fn format_catch_type(ty: &Type) -> Doc {
-    format_token_sequence(&ty.tokens())
+    format_type(ty)
 }
 
 fn format_finally_clause(clause: &FinallyClause) -> Doc {

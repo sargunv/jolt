@@ -59,6 +59,27 @@ pub(crate) fn tokens_end_with_forced_line(tokens: &[JavaSyntaxToken]) -> bool {
         .is_some_and(|token| token.trailing_comments().iter().any(comment_forces_line))
 }
 
+pub(crate) fn format_leading_comments(token: &JavaSyntaxToken) -> Doc {
+    let mut docs = Vec::new();
+    for comment in token.leading_comments() {
+        docs.push(format_comment(&comment));
+        docs.push(hard_line());
+    }
+    concat(docs)
+}
+
+pub(crate) fn format_trailing_comments(token: &JavaSyntaxToken) -> Doc {
+    let mut docs = Vec::new();
+    for comment in token.trailing_comments() {
+        docs.push(text(" "));
+        docs.push(format_comment(&comment));
+        if comment_forces_line(&comment) {
+            docs.push(hard_line());
+        }
+    }
+    concat(docs)
+}
+
 pub(crate) fn format_comment(comment: &JavaComment) -> Doc {
     match comment.kind() {
         JavaCommentKind::Doc => format_comment_lines(normalize_star_block_comment(comment.text())),

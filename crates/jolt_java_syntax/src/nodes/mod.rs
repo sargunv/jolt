@@ -702,6 +702,19 @@ pub enum AnnotationArgument {
     Pair(AnnotationElementValuePair),
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ClassTypeSegment {
+    pub annotations: Vec<Annotation>,
+    pub name: NameSyntax,
+    pub type_arguments: Option<TypeArgumentList>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct NameSegment {
+    pub annotations: Vec<Annotation>,
+    pub identifier: JavaSyntaxToken,
+}
+
 impl AnnotationArgument {
     fn cast(syntax: JavaSyntaxNode) -> Option<Self> {
         match syntax.kind() {
