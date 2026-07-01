@@ -1,9 +1,10 @@
 use jolt_fmt_ir::{Doc, concat, group, literal_text, text};
 use jolt_java_syntax::{
-    ArgumentList, ArrayAccessExpression, AssignmentExpression, BinaryExpression,
-    ConditionalExpression, Expression, FieldAccessExpression, LambdaExpression, LambdaParameter,
+    ArgumentList, ArrayAccessExpression, ArrayCreationExpression, ArrayInitializer,
+    AssignmentExpression, BinaryExpression, CastExpression, ConditionalExpression, DimExpression,
+    Expression, FieldAccessExpression, InstanceofExpression, LambdaExpression, LambdaParameter,
     MethodInvocationExpression, ObjectCreationExpression, ParenthesizedExpression,
-    PostfixExpression, UnaryExpression,
+    PostfixExpression, UnaryExpression, VariableInitializerValue,
 };
 
 use crate::rules::statements::format_block;
@@ -25,10 +26,12 @@ pub(crate) fn format_expression(expression: &Expression) -> Doc {
         | Expression::SuperExpression(_)
         | Expression::ClassLiteralExpression(_)
         | Expression::MethodReferenceExpression(_)
-        | Expression::ArrayCreationExpression(_)
-        | Expression::InstanceofExpression(_)
-        | Expression::CastExpression(_)
         | Expression::SwitchExpression(_) => source_doc(&expression.source_text()),
+        Expression::ArrayCreationExpression(expression) => {
+            format_array_creation_expression(expression)
+        }
+        Expression::InstanceofExpression(expression) => format_instanceof_expression(expression),
+        Expression::CastExpression(expression) => format_cast_expression(expression),
         Expression::FieldAccessExpression(expression) => format_field_access_expression(expression),
         Expression::ArrayAccessExpression(expression) => format_array_access_expression(expression),
         Expression::MethodInvocationExpression(expression) => {
@@ -188,6 +191,157 @@ fn format_object_creation_expression(expression: &ObjectCreationExpression) -> D
             concat([text(" "), source_doc(&body.source_text())])
         }),
     ]))
+}
+
+fn format_array_creation_expression(expression: &ArrayCreationExpression) -> Doc {
+    group(concat([
+        text("new "),
+        expression.ty().map_or_else(jolt_fmt_ir::nil, |ty| {
+            text(ty.source_text().trim().to_owned())
+        }),
+        concat(
+            expression
+                .dimensions()
+                .map(|dimension| format_dim_expression(&dimension)),
+        ),
+        expression
+            .initializer()
+            .map_or_else(jolt_fmt_ir::nil, |initializer| {
+                concat([text(" "), format_array_initializer(&initializer)])
+            }),
+    ]))
+}
+
+fn format_dim_expression(dimension: &DimExpression) -> Doc {
+    concat([
+        text("["),
+        dimension
+            .expression()
+            .map_or_else(jolt_fmt_ir::nil, |expression| {
+                format_expression(&expression)
+            }),
+        text("]"),
+    ])
+}
+
+fn format_array_initializer(initializer: &ArrayInitializer) -> Doc {
+    let values = initializer
+        .values()
+        .map(format_variable_initializer_value)
+        .collect::<Vec<_>>();
+
+    if values.is_empty() {
+        return text("{}");
+    }
+
+    concat([text("{"), jolt_fmt_ir::join(text(", "), values), text("}")])
+}
+
+fn format_variable_initializer_value(value: VariableInitializerValue) -> Doc {
+    match value {
+        VariableInitializerValue::LiteralExpression(expression) => {
+            format_expression(&expression.into())
+        }
+        VariableInitializerValue::NameExpression(expression) => {
+            format_expression(&expression.into())
+        }
+        VariableInitializerValue::ThisExpression(expression) => {
+            format_expression(&expression.into())
+        }
+        VariableInitializerValue::SuperExpression(expression) => {
+            format_expression(&expression.into())
+        }
+        VariableInitializerValue::ParenthesizedExpression(expression) => {
+            format_expression(&expression.into())
+        }
+        VariableInitializerValue::ClassLiteralExpression(expression) => {
+            format_expression(&expression.into())
+        }
+        VariableInitializerValue::FieldAccessExpression(expression) => {
+            format_expression(&expression.into())
+        }
+        VariableInitializerValue::ArrayAccessExpression(expression) => {
+            format_expression(&expression.into())
+        }
+        VariableInitializerValue::MethodInvocationExpression(expression) => {
+            format_expression(&expression.into())
+        }
+        VariableInitializerValue::MethodReferenceExpression(expression) => {
+            format_expression(&expression.into())
+        }
+        VariableInitializerValue::ObjectCreationExpression(expression) => {
+            format_expression(&expression.into())
+        }
+        VariableInitializerValue::ArrayCreationExpression(expression) => {
+            format_expression(&expression.into())
+        }
+        VariableInitializerValue::AssignmentExpression(expression) => {
+            format_expression(&expression.into())
+        }
+        VariableInitializerValue::ConditionalExpression(expression) => {
+            format_expression(&expression.into())
+        }
+        VariableInitializerValue::InstanceofExpression(expression) => {
+            format_expression(&expression.into())
+        }
+        VariableInitializerValue::BinaryExpression(expression) => {
+            format_expression(&expression.into())
+        }
+        VariableInitializerValue::UnaryExpression(expression) => {
+            format_expression(&expression.into())
+        }
+        VariableInitializerValue::PostfixExpression(expression) => {
+            format_expression(&expression.into())
+        }
+        VariableInitializerValue::CastExpression(expression) => {
+            format_expression(&expression.into())
+        }
+        VariableInitializerValue::LambdaExpression(expression) => {
+            format_expression(&expression.into())
+        }
+        VariableInitializerValue::SwitchExpression(expression) => {
+            format_expression(&expression.into())
+        }
+        VariableInitializerValue::ArrayInitializer(initializer) => {
+            format_array_initializer(&initializer)
+        }
+    }
+}
+
+fn format_cast_expression(expression: &CastExpression) -> Doc {
+    concat([
+        text("("),
+        expression.ty().map_or_else(jolt_fmt_ir::nil, |ty| {
+            text(ty.source_text().trim().to_owned())
+        }),
+        text(") "),
+        expression
+            .expression()
+            .map_or_else(jolt_fmt_ir::nil, |expression| {
+                format_expression(&expression)
+            }),
+    ])
+}
+
+fn format_instanceof_expression(expression: &InstanceofExpression) -> Doc {
+    concat([
+        expression
+            .expression()
+            .map_or_else(jolt_fmt_ir::nil, |expression| {
+                format_expression(&expression)
+            }),
+        text(" instanceof "),
+        expression.ty().map_or_else(
+            || {
+                expression
+                    .pattern()
+                    .map_or_else(jolt_fmt_ir::nil, |pattern| {
+                        text(pattern.source_text().trim().to_owned())
+                    })
+            },
+            |ty| text(ty.source_text().trim().to_owned()),
+        ),
+    ])
 }
 
 fn format_method_invocation_callee(expression: &MethodInvocationExpression) -> Doc {

@@ -10,21 +10,21 @@ use super::{
     EnumDeclaration, Expression, ExpressionStatement, ExtendsClause, FieldAccessExpression,
     FieldDeclaration, FinallyClause, ForInitializer, ForStatement, ForUpdate, FormalParameter,
     FormalParameterList, IfStatement, ImplementsClause, ImportDeclaration, InstanceInitializer,
-    InterfaceBody, InterfaceBodyMember, InterfaceDeclaration, JavaNode, JavaSyntaxKind,
-    JavaSyntaxToken, LabeledStatement, LambdaExpression, LambdaParameter, LambdaParameterList,
-    LocalVariableDeclaration, MethodDeclaration, MethodInvocationExpression, ModifierList,
-    ModuleDeclaration, ModuleDirective, ModuleDirectiveNode, NameSyntax, ObjectCreationExpression,
-    PackageDeclaration, ParenthesizedExpression, PermitsClause, PostfixExpression,
-    ProvidesDirective, RecordBody, RecordComponent, RecordComponentList, RecordDeclaration,
-    RequiresDirective, Resource, ResourceList, ResourceSpecification, ReturnStatement, Statement,
-    StatementExpressionList, StaticInitializer, SwitchBlock, SwitchBlockEntry,
-    SwitchBlockStatementGroup, SwitchExpression, SwitchLabel, SwitchRule, SwitchStatement,
-    SynchronizedStatement, ThrowStatement, ThrowsClause, TryStatement, TryWithResourcesStatement,
-    Type, TypeArgumentList, TypeDeclaration, TypeParameter, TypeParameterList, UnaryExpression,
-    VariableAccess, VariableDeclarator, VariableDeclaratorList, VariableInitializer,
-    VariableInitializerValue, WhileStatement, YieldStatement, child, child_family, child_token,
-    child_token_in, children, children_family, children_tokens_matching, nth_child_family,
-    nth_child_token,
+    InstanceofExpression, InterfaceBody, InterfaceBodyMember, InterfaceDeclaration, JavaNode,
+    JavaSyntaxKind, JavaSyntaxToken, LabeledStatement, LambdaExpression, LambdaParameter,
+    LambdaParameterList, LocalVariableDeclaration, MethodDeclaration, MethodInvocationExpression,
+    ModifierList, ModuleDeclaration, ModuleDirective, ModuleDirectiveNode, NameSyntax,
+    ObjectCreationExpression, PackageDeclaration, ParenthesizedExpression, Pattern, PermitsClause,
+    PostfixExpression, ProvidesDirective, RecordBody, RecordComponent, RecordComponentList,
+    RecordDeclaration, RequiresDirective, Resource, ResourceList, ResourceSpecification,
+    ReturnStatement, Statement, StatementExpressionList, StaticInitializer, SwitchBlock,
+    SwitchBlockEntry, SwitchBlockStatementGroup, SwitchExpression, SwitchLabel, SwitchRule,
+    SwitchStatement, SynchronizedStatement, ThrowStatement, ThrowsClause, TryStatement,
+    TryWithResourcesStatement, Type, TypeArgumentList, TypeDeclaration, TypeParameter,
+    TypeParameterList, UnaryExpression, VariableAccess, VariableDeclarator, VariableDeclaratorList,
+    VariableInitializer, VariableInitializerValue, WhileStatement, YieldStatement, child,
+    child_family, child_token, child_token_in, children, children_family, children_tokens_matching,
+    nth_child_family, nth_child_token,
 };
 use jolt_syntax::TriviaKind;
 
@@ -743,6 +743,23 @@ impl CastExpression {
     }
 }
 
+impl InstanceofExpression {
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn ty(&self) -> Option<Type> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn pattern(&self) -> Option<Pattern> {
+        child_family(&self.syntax)
+    }
+}
+
 impl ObjectCreationExpression {
     #[must_use]
     pub fn qualifier(&self) -> Option<Expression> {
@@ -778,6 +795,19 @@ impl ArrayCreationExpression {
     #[must_use]
     pub fn initializer(&self) -> Option<ArrayInitializer> {
         child(&self.syntax)
+    }
+}
+
+impl DimExpression {
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression> {
+        child_family(&self.syntax)
+    }
+}
+
+impl ArrayInitializer {
+    pub fn values(&self) -> impl Iterator<Item = VariableInitializerValue> + '_ {
+        children_family(&self.syntax)
     }
 }
 
