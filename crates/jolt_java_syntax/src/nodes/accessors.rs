@@ -1207,6 +1207,16 @@ impl CompactConstructorDeclaration {
 
 impl ConstructorBody {
     #[must_use]
+    pub fn open_brace(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LBrace)
+    }
+
+    #[must_use]
+    pub fn close_brace(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RBrace)
+    }
+
+    #[must_use]
     pub fn invocation(&self) -> Option<ConstructorInvocation> {
         child(&self.syntax)
     }

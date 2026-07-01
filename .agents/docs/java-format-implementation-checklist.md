@@ -93,10 +93,14 @@ Status legend:
   delimiter-dangling comments; broader moved-construct dangling placement is
   still in progress. Generic construct-leading comment formatting and removed
   token comment preservation are shared helpers, along with star-block and
-  token-has-comment classification. Type-declaration leading comments now read
-  through `CommentMap`.
+  token-has-comment classification. Construct-leading comments for type
+  declarations, formal parameters, record components, receiver parameters,
+  type/permits header entries, module target lists, constructors, methods, and
+  constructor invocations now read through `CommentMap`.
 - `[~]` Comment placement is explicit for moved constructs; leading comments on
-  type declarations are preserved before modifier/annotation formatting.
+  type declarations, callable declarations, parameters/components, constructor
+  invocations, and broken header/list entries are preserved through
+  formatter-owned comment classification.
 - `[x]` Sortable import and module directive comments are barriers for v1.
 
 ## Helper Organization

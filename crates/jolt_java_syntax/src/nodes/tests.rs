@@ -986,13 +986,13 @@ fn method_declarations_expose_names_and_parameter_lists() {
 #[test]
 fn method_declarations_expose_return_type_annotations() {
     let syntax = parse_clean(
-        r#"
+        r"
                 class Methods {
                     public <T> @Nonnull T name(T value) {
                         return value;
                     }
                 }
-            "#,
+            ",
     );
 
     let method = descendants::<MethodDeclaration>(&syntax)
@@ -2195,7 +2195,15 @@ fn declaration_accessors_expose_formatter_facing_structure() {
             .collect::<Vec<_>>(),
         ["Exception"]
     );
-    assert!(constructor.body().is_some());
+    let constructor_body = constructor.body().expect("constructor body");
+    assert_eq!(
+        constructor_body.open_brace().expect("open brace").text(),
+        "{"
+    );
+    assert_eq!(
+        constructor_body.close_brace().expect("close brace").text(),
+        "}"
+    );
 
     let method = descendants::<MethodDeclaration>(&syntax)
         .into_iter()

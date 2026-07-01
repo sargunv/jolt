@@ -237,7 +237,7 @@ impl FormattedModuleDirective {
             .expect("clean module directive should expose a directive role");
         let primary_name = module_directive_primary_name(&role);
         let kind_order = module_directive_kind_order(&role);
-        let doc = format_module_directive_doc(directive, &role);
+        let doc = format_module_directive_doc(directive, &role, formatter);
 
         let tokens = directive.tokens();
         Self {
@@ -272,7 +272,11 @@ impl FormattedModuleDirective {
     }
 }
 
-fn format_module_directive_doc(directive: &ModuleDirective, role: &ModuleDirectiveRole) -> Doc {
+fn format_module_directive_doc(
+    directive: &ModuleDirective,
+    role: &ModuleDirectiveRole,
+    formatter: &JavaFormatter<'_>,
+) -> Doc {
     match (directive, role) {
         (
             ModuleDirective::RequiresDirective(_),
@@ -301,6 +305,7 @@ fn format_module_directive_doc(directive: &ModuleDirective, role: &ModuleDirecti
             package,
             "to",
             exports.target_entries().collect(),
+            formatter,
         ),
         (ModuleDirective::OpensDirective(opens), ModuleDirectiveRole::Opens { package, .. }) => {
             format_module_name_list_directive(
@@ -308,6 +313,7 @@ fn format_module_directive_doc(directive: &ModuleDirective, role: &ModuleDirecti
                 package,
                 "to",
                 opens.target_entries().collect(),
+                formatter,
             )
         }
         (ModuleDirective::UsesDirective(_), ModuleDirectiveRole::Uses { service }) => {
@@ -321,6 +327,7 @@ fn format_module_directive_doc(directive: &ModuleDirective, role: &ModuleDirecti
             service,
             "with",
             provides.implementation_entries().collect(),
+            formatter,
         ),
         _ => unreachable!("module directive role should match directive variant"),
     }
@@ -340,6 +347,7 @@ fn format_module_name_list_directive(
     subject: &NameSyntax,
     connective: &'static str,
     entries: Vec<ModuleNameListEntry>,
+    formatter: &JavaFormatter<'_>,
 ) -> Doc {
     if entries.is_empty() {
         return concat([text(keyword), text(" "), format_name(subject), text(";")]);
@@ -351,21 +359,24 @@ fn format_module_name_list_directive(
         format_name(subject),
         text(" "),
         text(connective),
-        format_module_name_list(entries),
+        format_module_name_list(entries, formatter),
         text(";"),
     ])
 }
 
-fn format_module_name_list(entries: Vec<ModuleNameListEntry>) -> Doc {
+fn format_module_name_list(
+    entries: Vec<ModuleNameListEntry>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc {
     let should_break = entries.iter().any(|entry| {
-        name_has_leading_comments(&entry.name)
+        name_has_leading_comments(&entry.name, formatter)
             || entry.comma.as_ref().is_some_and(token_has_comments)
     });
 
     if should_break {
         return jolt_fmt_ir::indent(concat([
             hard_line(),
-            format_module_name_entries_broken(entries),
+            format_module_name_entries_broken(entries, formatter),
         ]));
     }
 
@@ -385,13 +396,16 @@ fn format_module_name_entries_inline(entries: Vec<ModuleNameListEntry>) -> Doc {
     concat(docs)
 }
 
-fn format_module_name_entries_broken(entries: Vec<ModuleNameListEntry>) -> Doc {
+fn format_module_name_entries_broken(
+    entries: Vec<ModuleNameListEntry>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc {
     let mut docs = Vec::new();
     let entries_len = entries.len();
 
     for (index, entry) in entries.into_iter().enumerate() {
         docs.push(concat([
-            format_construct_leading_comments(&entry.name.tokens()),
+            format_construct_leading_comments(formatter.comments(), &entry.name.tokens()),
             format_name(&entry.name),
         ]));
         if let Some(comma) = entry.comma {
@@ -426,10 +440,10 @@ fn format_module_name_separator_broken(comma: &JavaSyntaxToken) -> Doc {
     ])
 }
 
-fn name_has_leading_comments(name: &NameSyntax) -> bool {
-    name.tokens()
-        .first()
-        .is_some_and(|token| !token.leading_comments().is_empty())
+fn name_has_leading_comments(name: &NameSyntax, formatter: &JavaFormatter<'_>) -> bool {
+    formatter
+        .comments()
+        .has_leading_comment_for_tokens(&name.tokens())
 }
 
 fn module_directive_primary_name(role: &ModuleDirectiveRole) -> String {

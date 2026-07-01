@@ -81,7 +81,7 @@ fn format_class_declaration(class: &ClassDeclaration, formatter: &JavaFormatter<
             format_type_parameter_list(class.type_parameters(), formatter),
             format_extends_clause(class.extends_clause(), formatter),
             format_implements_clause(class.implements_clause(), formatter),
-            format_permits_clause(class.permits_clause()),
+            format_permits_clause(class.permits_clause(), formatter),
         ]),
         class
             .body()
@@ -104,7 +104,7 @@ fn format_interface_declaration(
                 .map_or_else(jolt_fmt_ir::nil, |name| format_token_text(name.text())),
             format_type_parameter_list(interface.type_parameters(), formatter),
             format_extends_clause(interface.extends_clause(), formatter),
-            format_permits_clause(interface.permits_clause()),
+            format_permits_clause(interface.permits_clause(), formatter),
         ]),
         interface
             .body()
@@ -820,7 +820,7 @@ fn format_implements_clause(
     )
 }
 
-fn format_permits_clause(clause: Option<PermitsClause>) -> Doc {
+fn format_permits_clause(clause: Option<PermitsClause>, formatter: &JavaFormatter<'_>) -> Doc {
     let Some(clause) = clause else {
         return jolt_fmt_ir::nil();
     };
@@ -829,6 +829,7 @@ fn format_permits_clause(clause: Option<PermitsClause>) -> Doc {
         keyword.as_ref(),
         "permits",
         clause.entries().collect::<Vec<_>>(),
+        formatter,
     )
 }
 
@@ -844,7 +845,7 @@ fn format_type_header_clause(
 
     let should_break = header_keyword_forces_line(keyword)
         || entries.iter().any(|entry| {
-            type_has_leading_comments(&entry.ty)
+            type_has_leading_comments(&entry.ty, formatter)
                 || entry.comma.as_ref().is_some_and(token_has_comments)
         });
 
@@ -871,6 +872,7 @@ fn format_permits_header_clause(
     keyword: Option<&JavaSyntaxToken>,
     fallback: &'static str,
     entries: Vec<PermitsClauseEntry>,
+    formatter: &JavaFormatter<'_>,
 ) -> Doc {
     if entries.is_empty() {
         return jolt_fmt_ir::nil();
@@ -878,7 +880,7 @@ fn format_permits_header_clause(
 
     let should_break = header_keyword_forces_line(keyword)
         || entries.iter().any(|entry| {
-            name_has_leading_comments(&entry.name)
+            name_has_leading_comments(&entry.name, formatter)
                 || entry.comma.as_ref().is_some_and(token_has_comments)
         });
 
@@ -888,7 +890,7 @@ fn format_permits_header_clause(
             format_header_clause_keyword(keyword, fallback),
             jolt_fmt_ir::indent(concat([
                 format_header_clause_keyword_break(keyword),
-                format_permits_clause_entries_broken(entries),
+                format_permits_clause_entries_broken(entries, formatter),
             ])),
         ]));
     }
@@ -951,7 +953,7 @@ fn format_type_clause_entries_broken(
 
     for (index, entry) in entries.into_iter().enumerate() {
         docs.push(concat([
-            format_construct_leading_comments(&entry.ty.tokens()),
+            format_construct_leading_comments(formatter.comments(), &entry.ty.tokens()),
             format_type_without_leading_comments(&entry.ty, formatter),
         ]));
         if let Some(comma) = entry.comma {
@@ -977,13 +979,16 @@ fn format_permits_clause_entries_inline(entries: Vec<PermitsClauseEntry>) -> Doc
     concat(docs)
 }
 
-fn format_permits_clause_entries_broken(entries: Vec<PermitsClauseEntry>) -> Doc {
+fn format_permits_clause_entries_broken(
+    entries: Vec<PermitsClauseEntry>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc {
     let mut docs = Vec::new();
     let entries_len = entries.len();
 
     for (index, entry) in entries.into_iter().enumerate() {
         docs.push(concat([
-            format_construct_leading_comments(&entry.name.tokens()),
+            format_construct_leading_comments(formatter.comments(), &entry.name.tokens()),
             format_name(&entry.name),
         ]));
         if let Some(comma) = entry.comma {
@@ -1018,16 +1023,19 @@ fn format_header_clause_separator_broken(comma: &JavaSyntaxToken) -> Doc {
     ])
 }
 
-fn type_has_leading_comments(ty: &Type) -> bool {
-    ty.tokens()
-        .first()
-        .is_some_and(|token| !token.leading_comments().is_empty())
+fn type_has_leading_comments(ty: &Type, formatter: &JavaFormatter<'_>) -> bool {
+    formatter
+        .comments()
+        .has_leading_comment_for_tokens(&ty.tokens())
 }
 
-fn name_has_leading_comments(name: &jolt_java_syntax::NameSyntax) -> bool {
-    name.tokens()
-        .first()
-        .is_some_and(|token| !token.leading_comments().is_empty())
+fn name_has_leading_comments(
+    name: &jolt_java_syntax::NameSyntax,
+    formatter: &JavaFormatter<'_>,
+) -> bool {
+    formatter
+        .comments()
+        .has_leading_comment_for_tokens(&name.tokens())
 }
 
 fn join_docs(docs: Vec<Doc>, separator: &Doc) -> Doc {
@@ -1227,7 +1235,7 @@ fn format_constructor_declaration(
         return format_token_sequence(&constructor.tokens());
     };
     let prefix = concat([
-        format_construct_leading_comments(&constructor.tokens()),
+        format_construct_leading_comments(formatter.comments(), &constructor.tokens()),
         format_modifier_prefix(constructor.modifiers(), formatter),
     ]);
     let throws = constructor.throws_clause();
@@ -1277,7 +1285,7 @@ fn format_method_declaration(method: &MethodDeclaration, formatter: &JavaFormatt
     };
     let modifiers = format_typed_modifier_prefix(method.modifiers(), formatter);
     let prefix = concat([
-        format_construct_leading_comments(&method.tokens()),
+        format_construct_leading_comments(formatter.comments(), &method.tokens()),
         modifiers.declaration_prefix,
     ]);
     let throws = method.throws_clause();
@@ -1476,6 +1484,9 @@ fn format_constructor_body(
     let ignored_ranges = formatter_ignore_ranges(&body.source_text());
     let ignored_runs = formatter_ignore_runs(&ignored_ranges, &element_ranges);
     let mut items = Vec::new();
+    items.extend(format_constructor_body_open_dangling_comments(
+        body.open_brace(),
+    ));
     let mut ignored_index = 0;
     let mut skip_index = 0;
 
@@ -1511,8 +1522,25 @@ fn format_constructor_body(
         items.push(BodyItem::new(formatter_ignore_run_doc(run), false));
         ignored_index += 1;
     }
+    items.extend(format_constructor_body_close_dangling_comments(
+        body.close_brace(),
+    ));
 
     (!items.is_empty()).then(|| join_body_items(items))
+}
+
+fn format_constructor_body_open_dangling_comments(
+    open: Option<JavaSyntaxToken>,
+) -> Option<BodyItem> {
+    let comments = non_formatter_control_comments(open?.trailing_comments());
+    (!comments.is_empty()).then(|| BodyItem::new(format_dangling_comments(comments), false))
+}
+
+fn format_constructor_body_close_dangling_comments(
+    close: Option<JavaSyntaxToken>,
+) -> Option<BodyItem> {
+    let comments = non_formatter_control_comments(close?.leading_comments());
+    (!comments.is_empty()).then(|| BodyItem::new(format_dangling_comments(comments), false))
 }
 
 fn constructor_body_elements(
@@ -1556,7 +1584,7 @@ fn format_constructor_invocation(
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
     concat([
-        format_construct_leading_comments(&invocation.tokens()),
+        format_construct_leading_comments(formatter.comments(), &invocation.tokens()),
         format_constructor_invocation_qualifier(invocation, formatter),
         invocation
             .type_arguments()

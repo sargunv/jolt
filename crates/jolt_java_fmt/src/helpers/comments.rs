@@ -1,6 +1,7 @@
 use jolt_fmt_ir::{Doc, concat, hard_line, literal_text, text};
 use jolt_java_syntax::{JavaComment, JavaCommentKind, JavaSyntaxKind, JavaSyntaxToken, TriviaKind};
 
+use crate::comments::CommentMap;
 use crate::helpers::formatter_ignore::is_formatter_control_marker;
 
 pub(crate) fn format_token_sequence(tokens: &[JavaSyntaxToken]) -> Doc {
@@ -57,10 +58,11 @@ pub(crate) fn token_has_comments(token: &JavaSyntaxToken) -> bool {
     !token.leading_comments().is_empty() || !token.trailing_comments().is_empty()
 }
 
-pub(crate) fn format_construct_leading_comments(tokens: &[JavaSyntaxToken]) -> Doc {
-    tokens
-        .first()
-        .map_or_else(jolt_fmt_ir::nil, format_leading_comments)
+pub(crate) fn format_construct_leading_comments(
+    comments: &CommentMap,
+    tokens: &[JavaSyntaxToken],
+) -> Doc {
+    format_leading_comment_list(comments.leading_comments_for_tokens(tokens))
 }
 
 pub(crate) fn format_leading_comment_list(comments: &[JavaComment]) -> Doc {

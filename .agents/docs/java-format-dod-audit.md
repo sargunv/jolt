@@ -22,7 +22,7 @@ Evidence:
 - `crates/jolt_java_fmt/tests/style_fixtures.rs` discovers every `*.input.java`
   fixture under `crates/jolt_java_fmt/tests/style`.
 - The latest verification passed `style_rule_fixtures_match_expected_output`.
-- Current fixture count: 62 style input fixtures.
+- Current fixture count: 67 style input fixtures.
 
 ### Every Style-Guide Rule Has One Or More Focused Tests
 
@@ -32,6 +32,10 @@ Evidence:
 
 - Focused style fixtures exist across comments, declarations, expressions,
   imports, modules, program structure, and statements.
+- Moved/normalized construct-leading comments are pinned for top-level type
+  declarations by `declarations/type-leading-comments`, parameters/components by
+  `declarations/parameter-and-component-comments`, and callable members plus
+  constructor invocations by `declarations/member-leading-comments`.
 
 Remaining work:
 

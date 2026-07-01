@@ -73,7 +73,7 @@ pub(crate) fn format_formal_parameter(
 ) -> Doc {
     format_named_typed_declaration(
         concat([
-            format_construct_leading_comments(&parameter.tokens()),
+            format_construct_leading_comments(formatter.comments(), &parameter.tokens()),
             inline_modifier_prefix_from_docs(
                 parameter
                     .prefix_annotations()
@@ -107,7 +107,7 @@ pub(crate) fn format_record_component(
 ) -> Doc {
     format_named_typed_declaration(
         concat([
-            format_construct_leading_comments(&component.tokens()),
+            format_construct_leading_comments(formatter.comments(), &component.tokens()),
             inline_modifier_prefix_from_docs(
                 component
                     .prefix_annotations()
@@ -140,7 +140,7 @@ pub(crate) fn format_receiver_parameter(
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
     concat([
-        format_construct_leading_comments(&parameter.tokens()),
+        format_construct_leading_comments(formatter.comments(), &parameter.tokens()),
         inline_modifier_prefix_from_docs(
             parameter
                 .annotations()
