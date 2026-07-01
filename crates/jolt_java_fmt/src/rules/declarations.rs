@@ -11,11 +11,14 @@ use crate::helpers::comments::{
     format_leading_comments, format_token_sequence, format_trailing_comments,
     tokens_end_with_forced_line, tokens_have_comments,
 };
+use crate::helpers::declarations::{declaration_with_body, declaration_without_body};
 use crate::rules::annotations::format_annotation_element_value;
 use crate::rules::expressions::format_argument_list;
 use crate::rules::modifiers::{format_modifier_prefix, format_modifier_prefix_from_parts};
 use crate::rules::names::format_name;
-use crate::rules::statements::{format_block, format_block_items};
+use crate::rules::statements::{
+    format_block, format_block_body, format_block_items, format_block_items_body,
+};
 use crate::rules::types::{format_array_dimensions, format_type, format_type_parameter_list};
 use crate::rules::variables::{
     format_field_declaration, format_formal_parameter, format_record_component,
@@ -181,12 +184,7 @@ fn format_header_with_body(
     header_tail: Doc,
     body: Option<Doc>,
 ) -> Doc {
-    concat([
-        format_modifier_prefix(modifiers),
-        header_tail,
-        text(" "),
-        braced_body(body),
-    ])
+    declaration_with_body(format_modifier_prefix(modifiers), header_tail, body)
 }
 
 fn format_enum_body_contents(constants: Vec<Doc>, members: &[ClassBodyMember]) -> Option<Doc> {
@@ -325,7 +323,7 @@ fn format_type_clause(keyword: &'static str, items: Option<Vec<Doc>>) -> Doc {
     }
 
     concat([
-        text(" "),
+        jolt_fmt_ir::indent(line()),
         text(keyword),
         text(" "),
         jolt_fmt_ir::join(text(", "), items),
@@ -551,30 +549,32 @@ fn format_constructor_declaration(constructor: &jolt_java_syntax::ConstructorDec
             ),
         ]);
     }
-    concat([
-        group(concat([
-            format_modifier_prefix(constructor.modifiers()),
-            format_type_parameter_list(constructor.type_parameters()),
-            text(name.text().to_owned()),
-            format_parameters(constructor.parameters()),
-            format_throws_clause(constructor.throws_clause()),
-        ])),
-        format_constructor_body(constructor.body()),
-    ])
+    let prefix = format_modifier_prefix(constructor.modifiers());
+    let header = concat([
+        format_type_parameter_list(constructor.type_parameters()),
+        text(name.text().to_owned()),
+        format_parameters(constructor.parameters()),
+        format_throws_clause(constructor.throws_clause()),
+    ]);
+
+    match constructor.body() {
+        Some(body) => declaration_with_body(prefix, header, format_constructor_body(&body)),
+        None => declaration_without_body(prefix, header),
+    }
 }
 
 fn format_compact_constructor_declaration(
     constructor: &jolt_java_syntax::CompactConstructorDeclaration,
 ) -> Doc {
-    concat([
-        group(concat([
-            format_modifier_prefix(constructor.modifiers()),
-            constructor
-                .name()
-                .map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned())),
-        ])),
-        format_constructor_body(constructor.body()),
-    ])
+    let prefix = format_modifier_prefix(constructor.modifiers());
+    let header = constructor
+        .name()
+        .map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned()));
+
+    match constructor.body() {
+        Some(body) => declaration_with_body(prefix, header, format_constructor_body(&body)),
+        None => declaration_without_body(prefix, header),
+    }
 }
 
 fn format_method_declaration(method: &MethodDeclaration) -> Doc {
@@ -591,21 +591,23 @@ fn format_method_declaration(method: &MethodDeclaration) -> Doc {
             ),
         ]);
     }
-    concat([
-        group(concat([
-            format_modifier_prefix(method.modifiers()),
-            format_type_parameter_list(method.type_parameters()),
-            method
-                .return_type()
-                .map_or_else(jolt_fmt_ir::nil, |return_type| {
-                    concat([format_type(&return_type), text(" ")])
-                }),
-            text(name.text().to_owned()),
-            format_parameters(method.parameters()),
-            format_throws_clause(method.throws_clause()),
-        ])),
-        format_method_body(method.body()),
-    ])
+    let prefix = format_modifier_prefix(method.modifiers());
+    let header = concat([
+        format_type_parameter_list(method.type_parameters()),
+        method
+            .return_type()
+            .map_or_else(jolt_fmt_ir::nil, |return_type| {
+                concat([format_type(&return_type), text(" ")])
+            }),
+        text(name.text().to_owned()),
+        format_parameters(method.parameters()),
+        format_throws_clause(method.throws_clause()),
+    ]);
+
+    match method.body() {
+        Some(body) => declaration_with_body(prefix, header, format_block_body(&body)),
+        None => declaration_without_body(prefix, header),
+    }
 }
 
 fn format_annotation_element_declaration(element: &AnnotationElementDeclaration) -> Doc {
@@ -693,8 +695,8 @@ fn format_throws_clause(throws: Option<jolt_java_syntax::ThrowsClause>) -> Doc {
     jolt_fmt_ir::indent(concat(docs))
 }
 
-fn format_constructor_body(body: Option<jolt_java_syntax::ConstructorBody>) -> Doc {
-    format_constructor_body_after_header(body, false)
+fn format_constructor_body(body: &jolt_java_syntax::ConstructorBody) -> Option<Doc> {
+    format_block_items_body(body.items())
 }
 
 fn format_constructor_body_after_header(
@@ -714,10 +716,6 @@ fn format_constructor_body_after_header(
             ])
         },
     )
-}
-
-fn format_method_body(body: Option<jolt_java_syntax::Block>) -> Doc {
-    format_method_body_after_header(body, false)
 }
 
 fn format_method_body_after_header(

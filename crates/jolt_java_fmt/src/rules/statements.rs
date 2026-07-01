@@ -10,8 +10,7 @@ use jolt_java_syntax::{
 };
 
 use crate::helpers::blocks::{
-    BodyItem, braced_block, braced_body, braced_body_items, empty_block, join_body_items,
-    join_hard_lines,
+    BodyItem, braced_block, braced_body, empty_block, join_body_items, join_hard_lines,
 };
 use crate::helpers::comments::{
     comment_forces_line, format_comment, format_token_sequence, tokens_have_comments,
@@ -27,12 +26,22 @@ use crate::rules::types::format_type;
 use crate::rules::variables::format_local_variable_declaration;
 
 pub(crate) fn format_block(block: &Block) -> Doc {
-    format_block_items(block.items())
+    braced_body(format_block_body(block))
 }
 
 pub(crate) fn format_block_items<'a>(items: impl Iterator<Item = BlockItem> + 'a) -> Doc {
+    braced_body(format_block_items_body(items))
+}
+
+pub(crate) fn format_block_body(block: &Block) -> Option<Doc> {
+    format_block_items_body(block.items())
+}
+
+pub(crate) fn format_block_items_body<'a>(
+    items: impl Iterator<Item = BlockItem> + 'a,
+) -> Option<Doc> {
     let items = items.filter_map(format_block_item).collect::<Vec<_>>();
-    braced_body_items(items)
+    (!items.is_empty()).then(|| join_body_items(items))
 }
 
 fn format_block_item(item: BlockItem) -> Option<BodyItem> {

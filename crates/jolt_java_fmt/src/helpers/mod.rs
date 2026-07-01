@@ -1,6 +1,7 @@
 pub(crate) mod blocks;
 pub(crate) mod chains;
 pub(crate) mod comments;
+pub(crate) mod declarations;
 pub(crate) mod lists;
 pub(crate) mod modifiers;
 pub(crate) mod names;

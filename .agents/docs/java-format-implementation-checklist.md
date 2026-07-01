@@ -93,7 +93,7 @@ Status legend:
 - `[x]` `parenthesized_list`
 - `[x]` `angle_bracket_list`
 - `[x]` `braced_block`
-- `[ ]` `declaration_header`
+- `[x]` `declaration_header`
 - `[~]` `member_body`
 - `[x]` `modifier_list`
 - `[x]` `annotation_group`
@@ -153,9 +153,9 @@ Status legend:
 
 - `[x]` Modifier sorting.
 - `[~]` Declaration/type-use annotation placement.
-- `[~]` Class/interface/record/enum/annotation headers.
+- `[x]` Class/interface/record/enum/annotation headers.
 - `[x]` Structural type declaration `extends`/`implements`/`permits` clauses.
-- `[ ]` Broken-header brace placement.
+- `[x]` Broken-header brace placement.
 - `[~]` Body member category padding.
 - `[~]` Parameter and record-component lists.
 - `[x]` Varargs formal parameters and record components.

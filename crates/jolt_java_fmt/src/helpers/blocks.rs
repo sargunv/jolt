@@ -18,13 +18,12 @@ pub(crate) fn braced_block(items: Vec<Doc>) -> Doc {
     braced_body((!items.is_empty()).then(|| join_hard_lines(items)))
 }
 
-pub(crate) fn braced_body_items(items: Vec<BodyItem>) -> Doc {
-    braced_body((!items.is_empty()).then(|| join_body_items(items)))
+pub(crate) fn braced_body(body: Option<Doc>) -> Doc {
+    concat([text("{"), braced_body_tail(body)])
 }
 
-pub(crate) fn braced_body(body: Option<Doc>) -> Doc {
+pub(crate) fn braced_body_tail(body: Option<Doc>) -> Doc {
     concat([
-        text("{"),
         body.map_or_else(hard_line, |body| {
             concat([
                 jolt_fmt_ir::indent(concat([hard_line(), body])),
