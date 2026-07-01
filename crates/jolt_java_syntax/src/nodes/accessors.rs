@@ -1286,6 +1286,11 @@ impl FieldAccessExpression {
 
 impl MethodReferenceExpression {
     #[must_use]
+    pub fn double_colon(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::DoubleColon)
+    }
+
+    #[must_use]
     pub fn receiver_expression(&self) -> Option<Expression> {
         child_family(&self.syntax)
     }
@@ -1308,6 +1313,11 @@ impl MethodReferenceExpression {
     #[must_use]
     pub fn is_constructor_reference(&self) -> bool {
         child_token(&self.syntax, JavaSyntaxKind::NewKw).is_some()
+    }
+
+    #[must_use]
+    pub fn new_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::NewKw)
     }
 
     #[must_use]

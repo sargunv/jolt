@@ -1217,6 +1217,7 @@ fn expression_and_statement_accessors_expose_layout_roles() {
                     void test(int a, int b, int c, boolean ready) {
                         int value = (a + b) * -c;
                         value += ready ? call(1, 2) : new int[] { 3 };
+                        java.util.function.Supplier<Expressions> supplier = Expressions::new;
                         builder.add(a).add(b).build();
                         this.field = builder.value;
                         for (int i = 0; i < 3; i++) value += i;
@@ -1304,6 +1305,23 @@ fn expression_and_statement_accessors_expose_layout_roles() {
             .arguments()
             .count(),
         2
+    );
+
+    let method_reference = descendants::<MethodReferenceExpression>(&syntax)
+        .into_iter()
+        .next()
+        .expect("method reference");
+    assert_eq!(
+        method_reference
+            .double_colon()
+            .expect("double colon")
+            .kind(),
+        JavaSyntaxKind::DoubleColon
+    );
+    assert!(method_reference.is_constructor_reference());
+    assert_eq!(
+        method_reference.new_token().expect("new token").kind(),
+        JavaSyntaxKind::NewKw
     );
 
     let chain_invocation = descendants::<MethodInvocationExpression>(&syntax)

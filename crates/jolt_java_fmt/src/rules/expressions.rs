@@ -12,9 +12,9 @@ use jolt_java_syntax::{
 
 use crate::helpers::chains::member_chain;
 use crate::helpers::comments::{
-    format_comment, format_leading_comments, format_token_sequence, format_token_text,
-    format_token_with_comments, format_trailing_comments,
-    format_trailing_comments_before_line_break, tokens_have_comments, trailing_comments_force_line,
+    format_comment, format_leading_comments, format_token_text, format_token_with_comments,
+    format_trailing_comments, format_trailing_comments_before_line_break, tokens_have_comments,
+    trailing_comments_force_line,
 };
 use crate::helpers::lists::braced_initializer_list;
 use crate::helpers::modifiers::inline_modifier_prefix_from_docs;
@@ -254,27 +254,47 @@ fn format_field_access_expression(expression: &FieldAccessExpression) -> Doc {
 }
 
 fn format_method_reference_expression(expression: &MethodReferenceExpression) -> Doc {
-    let tokens = expression.tokens();
-    if tokens_have_comments(&tokens) {
-        return format_token_sequence(&tokens);
-    }
-
     group(concat([
         format_method_reference_receiver(expression),
-        text("::"),
+        format_method_reference_separator(expression),
         expression
             .type_arguments()
             .map_or_else(jolt_fmt_ir::nil, |arguments| {
                 format_type_argument_list(&arguments)
             }),
         if expression.is_constructor_reference() {
-            text("new")
+            expression
+                .new_token()
+                .map_or_else(|| text("new"), |token| format_token_with_comments(&token))
         } else {
             expression
                 .target_name()
-                .map_or_else(jolt_fmt_ir::nil, |target| text(target.text().to_owned()))
+                .map_or_else(jolt_fmt_ir::nil, |target| {
+                    format_token_with_comments(&target)
+                })
         },
     ]))
+}
+
+fn format_method_reference_separator(expression: &MethodReferenceExpression) -> Doc {
+    expression.double_colon().map_or_else(
+        || text("::"),
+        |separator| {
+            let has_trailing_comments = !separator.trailing_comments().is_empty();
+            concat([
+                format_leading_comments(&separator),
+                text("::"),
+                format_trailing_comments_before_line_break(&separator),
+                if trailing_comments_force_line(&separator) {
+                    hard_line()
+                } else if has_trailing_comments {
+                    text(" ")
+                } else {
+                    jolt_fmt_ir::nil()
+                },
+            ])
+        },
+    )
 }
 
 fn format_method_reference_receiver(expression: &MethodReferenceExpression) -> Doc {

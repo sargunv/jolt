@@ -11,6 +11,9 @@ class Example extends Base {
     var generic = target::<String>id;
     var typeGeneric = Example::<String>staticId;
     var constructorGeneric = java.util.ArrayList<String>::<String>new;
+    var commentedTarget = value::/* target */length;
+    var commentedConstructor = Example::new /* constructor */;
+    var commentedSeparator = Example::/* constructor */new;
   }
 
   <T> T id(T value) {
