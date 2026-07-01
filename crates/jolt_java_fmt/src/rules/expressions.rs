@@ -113,8 +113,11 @@ fn format_name_expression(expression: &NameExpression, leading_comments: Leading
 }
 
 fn format_this_expression(expression: &ThisExpression, leading_comments: LeadingComments) -> Doc {
+    let dot = expression.dot_token();
+
     format_qualified_keyword_expression(
         expression.qualifier(),
+        dot.as_ref(),
         expression.keyword().map_or_else(
             || text("this"),
             |token| format_leaf_token(&token, leading_comments),
@@ -123,8 +126,11 @@ fn format_this_expression(expression: &ThisExpression, leading_comments: Leading
 }
 
 fn format_super_expression(expression: &SuperExpression, leading_comments: LeadingComments) -> Doc {
+    let dot = expression.dot_token();
+
     format_qualified_keyword_expression(
         expression.qualifier(),
+        dot.as_ref(),
         expression.keyword().map_or_else(
             || text("super"),
             |token| format_leaf_token(&token, leading_comments),
@@ -132,9 +138,17 @@ fn format_super_expression(expression: &SuperExpression, leading_comments: Leadi
     )
 }
 
-fn format_qualified_keyword_expression(qualifier: Option<Expression>, keyword: Doc) -> Doc {
+fn format_qualified_keyword_expression(
+    qualifier: Option<Expression>,
+    dot: Option<&JavaSyntaxToken>,
+    keyword: Doc,
+) -> Doc {
     match qualifier {
-        Some(qualifier) => concat([format_expression(&qualifier), text("."), keyword]),
+        Some(qualifier) => concat([
+            format_expression(&qualifier),
+            format_member_dot(dot),
+            keyword,
+        ]),
         None => keyword,
     }
 }
@@ -352,17 +366,16 @@ fn format_field_access_expression(expression: &FieldAccessExpression) -> Doc {
     let Expression::FieldAccessExpression(expression) = expression else {
         return jolt_fmt_ir::nil();
     };
+    let dot = expression.dot_token();
 
     group(concat([
         expression
             .receiver()
             .map_or_else(jolt_fmt_ir::nil, |receiver| format_expression(&receiver)),
-        text("."),
-        text(
-            expression
-                .field_name()
-                .map_or_else(String::new, |name| name.text().to_owned()),
-        ),
+        format_member_dot(dot.as_ref()),
+        expression
+            .field_name()
+            .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name)),
         expression
             .type_arguments()
             .map_or_else(jolt_fmt_ir::nil, |arguments| {
@@ -962,11 +975,15 @@ fn format_method_invocation_callee(
     leading_comments: LeadingComments,
 ) -> Doc {
     if let Some(name) = expression.direct_method_name() {
+        let dot = expression.dot_token();
         return concat([
             expression
                 .qualifier()
                 .map_or_else(jolt_fmt_ir::nil, |qualifier| {
-                    concat([format_expression(&qualifier), text(".")])
+                    concat([
+                        format_expression(&qualifier),
+                        format_member_dot(dot.as_ref()),
+                    ])
                 }),
             expression
                 .type_arguments()
@@ -1313,30 +1330,56 @@ fn format_expression_leading_comments(expression: &Expression) -> Doc {
 
 fn format_member_chain_suffix(suffix: &MemberChainSuffix) -> Doc {
     match suffix {
-        MemberChainSuffix::FieldAccess(access) => concat([
-            text("."),
-            access
-                .field_name()
-                .map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned())),
-            access
-                .type_arguments()
-                .map_or_else(jolt_fmt_ir::nil, |arguments| {
-                    format_type_argument_list(&arguments)
-                }),
-        ]),
-        MemberChainSuffix::MethodInvocation(invocation) => concat([
-            text("."),
-            invocation
-                .type_arguments()
-                .map_or_else(jolt_fmt_ir::nil, |arguments| {
-                    format_type_argument_list(&arguments)
-                }),
-            invocation
-                .direct_method_name()
-                .map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned())),
-            format_argument_list(invocation.arguments()),
-        ]),
+        MemberChainSuffix::FieldAccess(access) => {
+            let dot = access.dot_token();
+            concat([
+                format_member_dot(dot.as_ref()),
+                access
+                    .field_name()
+                    .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name)),
+                access
+                    .type_arguments()
+                    .map_or_else(jolt_fmt_ir::nil, |arguments| {
+                        format_type_argument_list(&arguments)
+                    }),
+            ])
+        }
+        MemberChainSuffix::MethodInvocation(invocation) => {
+            let dot = invocation.dot_token();
+            concat([
+                format_member_dot(dot.as_ref()),
+                invocation
+                    .type_arguments()
+                    .map_or_else(jolt_fmt_ir::nil, |arguments| {
+                        format_type_argument_list(&arguments)
+                    }),
+                invocation
+                    .direct_method_name()
+                    .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name)),
+                format_argument_list(invocation.arguments()),
+            ])
+        }
     }
+}
+
+fn format_member_dot(dot: Option<&JavaSyntaxToken>) -> Doc {
+    dot.map_or_else(
+        || text("."),
+        |dot| {
+            concat([
+                format_leading_comments(dot),
+                text("."),
+                format_trailing_comments_before_line_break(dot),
+                if trailing_comments_force_line(dot) {
+                    hard_line()
+                } else if dot.trailing_comments().is_empty() {
+                    jolt_fmt_ir::nil()
+                } else {
+                    text(" ")
+                },
+            ])
+        },
+    )
 }
 
 const fn is_simple_member_chain_root(expression: &Expression) -> bool {

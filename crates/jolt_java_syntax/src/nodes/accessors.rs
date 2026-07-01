@@ -1538,6 +1538,11 @@ impl ThisExpression {
     }
 
     #[must_use]
+    pub fn dot_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Dot)
+    }
+
+    #[must_use]
     pub fn keyword(&self) -> Option<JavaSyntaxToken> {
         child_token(&self.syntax, JavaSyntaxKind::ThisKw)
     }
@@ -1547,6 +1552,11 @@ impl SuperExpression {
     #[must_use]
     pub fn qualifier(&self) -> Option<Expression> {
         child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn dot_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Dot)
     }
 
     #[must_use]
@@ -1886,6 +1896,11 @@ impl MethodInvocationExpression {
     }
 
     #[must_use]
+    pub fn dot_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Dot)
+    }
+
+    #[must_use]
     pub fn direct_method_name(&self) -> Option<JavaSyntaxToken> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
     }
@@ -2021,6 +2036,11 @@ impl FieldAccessExpression {
     #[must_use]
     pub fn receiver(&self) -> Option<Expression> {
         child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn dot_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Dot)
     }
 
     #[must_use]

@@ -2095,10 +2095,14 @@ fn expression_and_statement_accessors_expose_layout_roles() {
                         Object casted = (/* cast */ Object) this;
                         boolean matched = this instanceof /* match */ Object;
                         Object fresh = new /* object */ Object();
+                        Object qualifiedThis = Expressions./* this dot */this;
+                        Expressions./* super dot */super.toString();
                         value += ready ? call(1, 2) : new int[] { 3 };
                         java.util.function.Supplier<Expressions> supplier = Expressions::new;
                         builder.add(a).add(b).build();
+                        builder./* call dot */add(a);
                         this.field = builder.value;
+                        this.field = builder./* field dot */value;
                         for (value = 0, a = 0; value < 3; value++, a++) value += a;
                         for (int i = 0; i < 3; i++) value += i;
                         for (String item : names()) call(item);
@@ -2285,6 +2289,32 @@ fn expression_and_statement_accessors_expose_layout_roles() {
         "/* object */"
     );
 
+    let qualified_this = descendants::<ThisExpression>(&syntax)
+        .into_iter()
+        .find(|expression| expression.source_text().contains("this dot"))
+        .expect("qualified this expression");
+    assert_eq!(
+        qualified_this
+            .dot_token()
+            .expect("dot token")
+            .trailing_comments()[0]
+            .text(),
+        "/* this dot */"
+    );
+
+    let qualified_super = descendants::<SuperExpression>(&syntax)
+        .into_iter()
+        .find(|expression| expression.source_text().contains("super dot"))
+        .expect("qualified super expression");
+    assert_eq!(
+        qualified_super
+            .dot_token()
+            .expect("dot token")
+            .trailing_comments()[0]
+            .text(),
+        "/* super dot */"
+    );
+
     let invocation = descendants::<MethodInvocationExpression>(&syntax)
         .into_iter()
         .find(|invocation| invocation.source_text().trim() == "call(1, 2)")
@@ -2347,6 +2377,19 @@ fn expression_and_statement_accessors_expose_layout_roles() {
         ]
     ));
 
+    let dotted_invocation = descendants::<MethodInvocationExpression>(&syntax)
+        .into_iter()
+        .find(|invocation| invocation.source_text().contains("call dot"))
+        .expect("dotted invocation");
+    assert_eq!(
+        dotted_invocation
+            .dot_token()
+            .expect("dot token")
+            .trailing_comments()[0]
+            .text(),
+        "/* call dot */"
+    );
+
     let field_chain = descendants::<FieldAccessExpression>(&syntax)
         .into_iter()
         .find(|access| access.source_text().trim() == "builder.value")
@@ -2359,6 +2402,19 @@ fn expression_and_statement_accessors_expose_layout_roles() {
         field_chain.suffixes(),
         [MemberChainSuffix::FieldAccess(_)]
     ));
+
+    let dotted_field = descendants::<FieldAccessExpression>(&syntax)
+        .into_iter()
+        .find(|access| access.source_text().contains("field dot"))
+        .expect("dotted field access");
+    assert_eq!(
+        dotted_field
+            .dot_token()
+            .expect("dot token")
+            .trailing_comments()[0]
+            .text(),
+        "/* field dot */"
+    );
 
     let basic_for = descendants::<ForStatement>(&syntax)
         .into_iter()

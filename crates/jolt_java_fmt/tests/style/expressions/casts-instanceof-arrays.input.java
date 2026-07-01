@@ -15,6 +15,6 @@ Object literals() {
 return String[][].class == int.class ? void.class : this.getClass();
 }
 Object qualified(Inner inner) {
-return Example.this == inner.superValue ? super.toString() : this.toString();
+return Example./* this */this == inner.superValue ? Example./* super */super.toString() : this.toString();
 }
 }
