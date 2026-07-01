@@ -5,6 +5,8 @@ use jolt_java_syntax::{
     MethodDeclaration, ModifierList, RecordDeclaration, TypeDeclaration,
 };
 
+use crate::rules::statements::format_block;
+
 pub(crate) fn format_type_declaration(declaration: &TypeDeclaration) -> Doc {
     match declaration {
         TypeDeclaration::ClassDeclaration(class) => format_class_declaration(class),
@@ -459,7 +461,7 @@ fn format_method_declaration(method: &MethodDeclaration) -> Doc {
             format_parameters(method.parameters()),
             format_throws_clause(method.throws_clause()),
         ])),
-        format_empty_executable_body(method.body().map(|body| body.source_text())),
+        format_method_body(method.body()),
     ])
 }
 
@@ -520,4 +522,11 @@ fn format_empty_executable_body(body: Option<String>) -> Doc {
     } else {
         concat([text(" "), source_doc(&body)])
     }
+}
+
+fn format_method_body(body: Option<jolt_java_syntax::Block>) -> Doc {
+    body.map_or_else(
+        || text(";"),
+        |body| concat([text(" "), format_block(&body)]),
+    )
 }

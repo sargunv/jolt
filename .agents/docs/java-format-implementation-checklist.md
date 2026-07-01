@@ -50,7 +50,7 @@ Status legend:
 - `[x]` Add focused rule fixture runner.
 - `[~]` Add program/import/module/name/comment fixtures.
 - `[~]` Add declaration/type/parameter fixtures.
-- `[ ]` Add statement/block/switch/try fixtures.
+- `[~]` Add statement/block/switch/try fixtures.
 - `[ ]` Add expression/operator/call/chain/lambda fixtures.
 - `[x]` Assert every rule fixture formats successfully.
 - `[x]` Assert every rule fixture equals expected output.
@@ -66,7 +66,7 @@ Status legend:
 - `[~]` Module directive kind/name/target/comment roles.
 - `[~]` Modifier keyword and annotation roles.
 - `[~]` Declaration headers and bodies.
-- `[ ]` Statement body kind.
+- `[~]` Statement body kind.
 - `[ ]` Switch labels/rules/guards.
 - `[ ]` For init/condition/update.
 - `[ ]` Try resources and optional trailing semicolon.
@@ -90,7 +90,7 @@ Status legend:
 - `[ ]` `semicolon_list`
 - `[~]` `parenthesized_list`
 - `[ ]` `angle_bracket_list`
-- `[ ]` `braced_block`
+- `[~]` `braced_block`
 - `[ ]` `declaration_header`
 - `[~]` `member_body`
 - `[~]` `modifier_list`
@@ -160,10 +160,10 @@ Status legend:
 
 ### 7. Statement Layer
 
-- `[ ]` Blocks and braced bodies.
+- `[~]` Blocks and braced bodies.
 - `[ ]` Labels.
-- `[ ]` `if`/`else`.
-- `[ ]` Loops and broken `for` headers.
+- `[~]` `if`/`else`.
+- `[~]` Loops and broken `for` headers.
 - `[ ]` Switch labels/rules/guards.
 - `[ ]` `return`/`throw`/`yield`.
 - `[ ]` Try/catch/finally/resources.
