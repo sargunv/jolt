@@ -710,6 +710,15 @@ pub enum AnnotationArgument {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ImportKind {
+    SingleType(NameSyntax),
+    TypeOnDemand(NameSyntax),
+    SingleStatic(NameSyntax),
+    StaticOnDemand(NameSyntax),
+    SingleModule(NameSyntax),
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum StatementBody {
     Block(Block),
     Empty(EmptyStatement),

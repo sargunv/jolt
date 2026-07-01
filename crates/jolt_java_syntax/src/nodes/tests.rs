@@ -241,6 +241,7 @@ fn import_declarations_expose_structured_names() {
                 import java.util.*;
                 import static java.util.Collections.emptyList;
                 import static java.util.Collections.*;
+                import module.foo.Bar;
                 import module java.base;
 
                 class Imports {}
@@ -268,6 +269,7 @@ fn import_declarations_expose_structured_names() {
                 JavaSyntaxKind::QualifiedName,
                 "java.util.Collections".to_owned()
             ),
+            (JavaSyntaxKind::QualifiedName, "module.foo.Bar".to_owned()),
             (JavaSyntaxKind::QualifiedName, "java.base".to_owned()),
         ]
     );
@@ -296,7 +298,39 @@ fn import_declarations_expose_structured_names() {
                 "java.util.Collections.emptyList".to_owned()
             ),
             (true, true, false, "java.util.Collections.*".to_owned()),
+            (false, false, false, "module.foo.Bar".to_owned()),
             (false, false, true, "java.base".to_owned()),
+        ]
+    );
+
+    let import_kinds = syntax
+        .imports()
+        .map(|import| {
+            import
+                .import_kind()
+                .map(|kind| match kind {
+                    ImportKind::SingleType(name) => ("single-type", name.compact_text()),
+                    ImportKind::TypeOnDemand(name) => ("type-on-demand", name.compact_text()),
+                    ImportKind::SingleStatic(name) => ("single-static", name.compact_text()),
+                    ImportKind::StaticOnDemand(name) => ("static-on-demand", name.compact_text()),
+                    ImportKind::SingleModule(name) => ("single-module", name.compact_text()),
+                })
+                .expect("import kind")
+        })
+        .collect::<Vec<_>>();
+
+    assert_eq!(
+        import_kinds,
+        [
+            ("single-type", "java.util.List".to_owned()),
+            ("type-on-demand", "java.util".to_owned()),
+            (
+                "single-static",
+                "java.util.Collections.emptyList".to_owned()
+            ),
+            ("static-on-demand", "java.util.Collections".to_owned()),
+            ("single-type", "module.foo.Bar".to_owned()),
+            ("single-module", "java.base".to_owned()),
         ]
     );
 }

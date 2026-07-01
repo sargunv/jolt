@@ -1,7 +1,7 @@
 use jolt_fmt_ir::{Doc, concat, empty_line, hard_line, literal_text, text};
 use jolt_java_syntax::{
-    CompilationUnit, ImportDeclaration, JavaSyntaxKind, JavaSyntaxToken, ModuleDeclaration,
-    ModuleDirective, PackageDeclaration,
+    CompilationUnit, ImportDeclaration, ImportKind, ModuleDeclaration, ModuleDirective,
+    PackageDeclaration,
 };
 
 use crate::rules::annotations::format_annotation;
@@ -230,11 +230,14 @@ struct FormattedImport {
 
 impl FormattedImport {
     fn from_declaration(import: &ImportDeclaration) -> Self {
-        let (path, path_doc) = format_import_path(import);
+        let kind = import
+            .import_kind()
+            .expect("clean import declaration should expose an import kind");
+        let (is_module, is_static, path, path_doc) = format_import_kind(kind);
         Self {
             leading_comments: import.leading_comment_texts(),
-            is_module: import.is_module(),
-            is_static: import.is_static(),
+            is_module,
+            is_static,
             path,
             path_doc,
         }
@@ -274,20 +277,31 @@ impl FormattedImport {
     }
 }
 
-fn format_import_path(import: &ImportDeclaration) -> (String, Doc) {
-    let Some(name) = import.name() else {
-        let path = compact_import_path_from_tokens(import.tokens());
-        return (path.clone(), text(path));
-    };
-
-    let mut path = name_key(&name);
-    let mut path_doc = format_name(&name);
-    if import.is_star() {
-        path.push_str(".*");
-        path_doc = concat([path_doc, text(".*")]);
+fn format_import_kind(kind: ImportKind) -> (bool, bool, String, Doc) {
+    match kind {
+        ImportKind::SingleType(name) => {
+            let path = name_key(&name);
+            (false, false, path, format_name(&name))
+        }
+        ImportKind::TypeOnDemand(name) => {
+            let mut path = name_key(&name);
+            path.push_str(".*");
+            (false, false, path, concat([format_name(&name), text(".*")]))
+        }
+        ImportKind::SingleStatic(name) => {
+            let path = name_key(&name);
+            (false, true, path, format_name(&name))
+        }
+        ImportKind::StaticOnDemand(name) => {
+            let mut path = name_key(&name);
+            path.push_str(".*");
+            (false, true, path, concat([format_name(&name), text(".*")]))
+        }
+        ImportKind::SingleModule(name) => {
+            let path = name_key(&name);
+            (true, false, path, format_name(&name))
+        }
     }
-
-    (path, path_doc)
 }
 
 #[derive(Clone, Copy, Eq, Ord, PartialEq, PartialOrd)]
@@ -433,27 +447,6 @@ fn format_named_targets_directive(keyword: &str, names: &[FormattedName], separa
         ),
         text(";"),
     ])
-}
-
-fn compact_import_path_from_tokens(tokens: Vec<JavaSyntaxToken>) -> String {
-    let mut path = String::new();
-    let mut skipped_module_contextual_keyword = false;
-
-    for token in tokens {
-        match token.kind() {
-            JavaSyntaxKind::Identifier
-                if !skipped_module_contextual_keyword && token.text() == "module" =>
-            {
-                skipped_module_contextual_keyword = true;
-            }
-            JavaSyntaxKind::Identifier | JavaSyntaxKind::Dot | JavaSyntaxKind::Star => {
-                path.push_str(token.text());
-            }
-            _ => {}
-        }
-    }
-
-    path
 }
 
 const fn module_directive_kind_order(directive: &ModuleDirective) -> ModuleDirectiveKindOrder {

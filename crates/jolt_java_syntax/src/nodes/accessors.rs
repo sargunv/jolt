@@ -13,7 +13,7 @@ use super::{
     DoStatement, EnhancedForStatement, EnumBody, EnumConstant, EnumConstantList, EnumDeclaration,
     Expression, ExpressionStatement, ExtendsClause, FieldAccessExpression, FieldDeclaration,
     FinallyClause, ForInitializer, ForStatement, ForUpdate, FormalParameter, FormalParameterList,
-    Guard, IfStatement, ImplementsClause, ImportDeclaration, InstanceInitializer,
+    Guard, IfStatement, ImplementsClause, ImportDeclaration, ImportKind, InstanceInitializer,
     InstanceofExpression, InterfaceBody, InterfaceBodyMember, InterfaceDeclaration,
     IntersectionType, JavaFamily, JavaNode, JavaSyntaxKind, JavaSyntaxToken, LabeledStatement,
     LambdaExpression, LambdaParameter, LambdaParameterList, LiteralExpression,
@@ -74,6 +74,18 @@ impl CompilationUnit {
 
 impl ImportDeclaration {
     #[must_use]
+    pub fn import_kind(&self) -> Option<ImportKind> {
+        let name = self.name()?;
+        match (self.is_module(), self.is_static(), self.is_star()) {
+            (true, _, _) => Some(ImportKind::SingleModule(name)),
+            (false, true, true) => Some(ImportKind::StaticOnDemand(name)),
+            (false, true, false) => Some(ImportKind::SingleStatic(name)),
+            (false, false, true) => Some(ImportKind::TypeOnDemand(name)),
+            (false, false, false) => Some(ImportKind::SingleType(name)),
+        }
+    }
+
+    #[must_use]
     pub fn name(&self) -> Option<NameSyntax> {
         child_family(&self.syntax)
     }
@@ -90,16 +102,22 @@ impl ImportDeclaration {
 
     #[must_use]
     pub fn is_module(&self) -> bool {
-        self.contextual_keyword("module").is_some()
+        let name_start = self.name().map(|name| name.text_range().start());
+        self.contextual_keyword("module").is_some_and(|token| {
+            name_start.is_some_and(|name_start| token.token_text_range().end() <= name_start)
+        })
     }
 
     #[must_use]
     pub fn import_path(&self) -> Option<String> {
-        let mut path = self.name()?.compact_text();
-        if self.is_star() {
-            path.push_str(".*");
-        }
-        Some(path)
+        self.import_kind().map(|kind| match kind {
+            ImportKind::SingleType(name)
+            | ImportKind::SingleStatic(name)
+            | ImportKind::SingleModule(name) => name.compact_text(),
+            ImportKind::TypeOnDemand(name) | ImportKind::StaticOnDemand(name) => {
+                format!("{}.*", name.compact_text())
+            }
+        })
     }
 
     #[must_use]

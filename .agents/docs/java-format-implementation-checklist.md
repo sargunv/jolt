@@ -62,7 +62,7 @@ Status legend:
 ## Accessor Discipline
 
 - `[ ]` Compilation-unit item order.
-- `[~]` Import static/star/name/comment roles.
+- `[x]` Import static/star/name/comment roles.
 - `[~]` Module directive kind/name/target/comment roles.
 - `[x]` Modifier keyword and annotation roles.
 - `[~]` Declaration headers and bodies.
