@@ -400,7 +400,7 @@ fn format_method_invocation_callee(expression: &MethodInvocationExpression) -> D
         .map_or_else(jolt_fmt_ir::nil, |name| format_expression(&name))
 }
 
-fn format_argument_list(arguments: Option<ArgumentList>) -> Doc {
+pub(crate) fn format_argument_list(arguments: Option<ArgumentList>) -> Doc {
     let Some(arguments) = arguments else {
         return text("()");
     };

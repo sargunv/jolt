@@ -157,6 +157,7 @@ Status legend:
 - `[x]` Varargs formal parameters and record components.
 - `[~]` `throws`.
 - `[~]` Enum constants and trailing comma policy.
+- `[x]` Enum constants with annotations, arguments, and class bodies.
 - `[x]` Annotation interface elements and default values.
 - `[~]` Type-body empty statement removal.
 

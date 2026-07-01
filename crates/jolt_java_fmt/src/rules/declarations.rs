@@ -1,17 +1,19 @@
 use jolt_fmt_ir::{Doc, concat, group, hard_line, line, soft_line, text};
 use jolt_java_syntax::{
     AnnotationElementDeclaration, AnnotationInterfaceBodyMember, AnnotationInterfaceDeclaration,
-    ClassBodyMember, ClassDeclaration, EnumDeclaration, FormalParameterList, InterfaceDeclaration,
-    JavaSyntaxKind, JavaSyntaxToken, MethodDeclaration, ModifierList, RecordDeclaration,
-    TypeDeclaration,
+    ClassBodyMember, ClassDeclaration, EnumConstant, EnumDeclaration, FormalParameterList,
+    InterfaceDeclaration, JavaSyntaxKind, JavaSyntaxToken, MethodDeclaration, ModifierList,
+    RecordDeclaration, TypeDeclaration,
 };
 
 use crate::helpers::blocks::{braced_body, empty_block};
 use crate::helpers::comments::{
-    format_token_sequence, tokens_end_with_forced_line, tokens_have_comments,
+    comment_forces_line, format_comment, format_token_sequence, tokens_end_with_forced_line,
+    tokens_have_comments,
 };
-use crate::helpers::modifiers::modifier_prefix;
+use crate::helpers::modifiers::{modifier_prefix, modifier_prefix_from_parts};
 use crate::rules::annotations::format_annotation_element_value;
+use crate::rules::expressions::format_argument_list;
 use crate::rules::statements::format_block;
 use crate::rules::variables::{
     format_field_declaration, format_formal_parameter, format_record_component,
@@ -114,7 +116,7 @@ fn format_enum_declaration(enum_: &EnumDeclaration) -> Doc {
         .map(|constants| {
             constants
                 .constants()
-                .map(|constant| format_token_sequence(&constant.tokens()))
+                .map(|constant| format_enum_constant(&constant))
                 .collect::<Vec<_>>()
         })
         .unwrap_or_default();
@@ -156,16 +158,19 @@ fn format_type_with_body(
     header_tail: Doc,
     members: &[ClassBodyMember],
 ) -> Doc {
+    format_header_with_body(modifiers, header_tail, format_class_body(members))
+}
+
+fn format_class_body(members: &[ClassBodyMember]) -> Option<Doc> {
     let effective_members = effective_members(members);
-    let body = (!effective_members.is_empty()).then(|| {
+    (!effective_members.is_empty()).then(|| {
         join_member_docs(
             effective_members
                 .into_iter()
                 .map(|member| FormattedMember::from_member(&member))
                 .collect(),
         )
-    });
-    format_header_with_body(modifiers, header_tail, body)
+    })
 }
 
 fn format_header_with_body(
@@ -223,6 +228,50 @@ fn format_enum_body_contents(constants: Vec<Doc>, members: &[ClassBodyMember]) -
         (None, Some(members)) => Some(concat([text(";"), jolt_fmt_ir::empty_line(), members])),
         (None, None) => None,
     }
+}
+
+fn format_enum_constant(constant: &EnumConstant) -> Doc {
+    let tokens = constant.tokens();
+    let Some(name) = constant.name() else {
+        return format_token_sequence(&tokens);
+    };
+
+    concat([
+        modifier_prefix_from_parts(constant.annotations().collect(), Vec::new()),
+        format_leading_comments(&name),
+        text(name.text().to_owned()),
+        format_trailing_comments(&name),
+        constant
+            .arguments()
+            .map_or_else(jolt_fmt_ir::nil, |arguments| {
+                format_argument_list(Some(arguments))
+            }),
+        constant.body().map_or_else(jolt_fmt_ir::nil, |body| {
+            let members = body.members().collect::<Vec<_>>();
+            concat([text(" "), braced_body(format_class_body(&members))])
+        }),
+    ])
+}
+
+fn format_leading_comments(token: &JavaSyntaxToken) -> Doc {
+    let mut docs = Vec::new();
+    for comment in token.leading_comments() {
+        docs.push(format_comment(&comment));
+        docs.push(hard_line());
+    }
+    concat(docs)
+}
+
+fn format_trailing_comments(token: &JavaSyntaxToken) -> Doc {
+    let mut docs = Vec::new();
+    for comment in token.trailing_comments() {
+        docs.push(text(" "));
+        docs.push(format_comment(&comment));
+        if comment_forces_line(&comment) {
+            docs.push(hard_line());
+        }
+    }
+    concat(docs)
 }
 
 fn effective_members(members: &[ClassBodyMember]) -> Vec<ClassBodyMember> {

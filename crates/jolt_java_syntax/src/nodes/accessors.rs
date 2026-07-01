@@ -444,6 +444,10 @@ impl EnumConstantList {
 }
 
 impl EnumConstant {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation> + '_ {
+        children(&self.syntax)
+    }
+
     #[must_use]
     pub fn name(&self) -> Option<JavaSyntaxToken> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
