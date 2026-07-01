@@ -10,4 +10,16 @@ class Example {
       cleanup();
     }
   }
+
+  int recoverLong() {
+    try {
+      risky();
+    } catch (
+      com.example.recovery.FirstVeryLongRecoverableException
+      | com.example.recovery.SecondVeryLongRecoverableException
+      | com.example.recovery.ThirdVeryLongRecoverableException ex
+    ) {
+      return 2;
+    }
+  }
 }

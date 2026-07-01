@@ -21,10 +21,10 @@ use super::{
     SwitchBlockEntry, SwitchBlockStatementGroup, SwitchExpression, SwitchLabel, SwitchRule,
     SwitchStatement, SynchronizedStatement, ThrowStatement, ThrowsClause, TryStatement,
     TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList, TypeDeclaration,
-    TypeParameter, TypeParameterList, UnaryExpression, VariableAccess, VariableDeclarator,
-    VariableDeclaratorList, VariableInitializer, VariableInitializerValue, WhileStatement,
-    YieldStatement, child, child_family, child_token, child_token_in, children, children_family,
-    children_tokens_matching, nth_child_family, nth_child_token, tokens,
+    TypeParameter, TypeParameterList, UnaryExpression, UnionType, VariableAccess,
+    VariableDeclarator, VariableDeclaratorList, VariableInitializer, VariableInitializerValue,
+    WhileStatement, YieldStatement, child, child_family, child_token, child_token_in, children,
+    children_family, children_tokens_matching, nth_child_family, nth_child_token, tokens,
 };
 use jolt_syntax::TriviaKind;
 
@@ -1096,6 +1096,14 @@ impl CatchClause {
 }
 
 impl CatchParameter {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation> + '_ {
+        children(&self.syntax)
+    }
+
+    pub fn modifier_tokens(&self) -> impl Iterator<Item = JavaSyntaxToken> + '_ {
+        children_tokens_matching(&self.syntax, is_modifier_token)
+    }
+
     #[must_use]
     pub fn types(&self) -> Option<CatchTypeList> {
         child(&self.syntax)
@@ -1107,6 +1115,23 @@ impl CatchParameter {
             &self.syntax,
             &[JavaSyntaxKind::Identifier, JavaSyntaxKind::UnderscoreKw],
         )
+    }
+}
+
+impl CatchTypeList {
+    pub fn types(&self) -> impl Iterator<Item = Type> + '_ {
+        child::<UnionType>(&self.syntax)
+            .map_or_else(
+                || children_family(&self.syntax).collect(),
+                |union| union.types().collect::<Vec<_>>(),
+            )
+            .into_iter()
+    }
+}
+
+impl UnionType {
+    pub fn types(&self) -> impl Iterator<Item = Type> + '_ {
+        children_family(&self.syntax)
     }
 }
 

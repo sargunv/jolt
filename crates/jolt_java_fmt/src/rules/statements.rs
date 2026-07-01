@@ -1,17 +1,19 @@
 use jolt_fmt_ir::{Doc, concat, group, hard_line, indent, soft_line, text};
 use jolt_java_syntax::{
-    AssertStatement, BasicForStatement, Block, BlockItem, CatchClause, DoStatement,
-    EnhancedForStatement, Expression, ExpressionStatement, FinallyClause, ForInitializer,
-    ForStatement, ForUpdate, IfStatement, LabeledStatement, Resource, ReturnStatement, Statement,
-    StatementExpressionList, SwitchBlock, SwitchBlockEntry, SwitchBlockStatementGroup, SwitchRule,
-    SwitchStatement, SynchronizedStatement, ThrowStatement, TryStatement,
-    TryWithResourcesStatement, WhileStatement, YieldStatement,
+    AssertStatement, BasicForStatement, Block, BlockItem, CatchClause, CatchParameter,
+    CatchTypeList, DoStatement, EnhancedForStatement, Expression, ExpressionStatement,
+    FinallyClause, ForInitializer, ForStatement, ForUpdate, IfStatement, LabeledStatement,
+    Resource, ReturnStatement, Statement, StatementExpressionList, SwitchBlock, SwitchBlockEntry,
+    SwitchBlockStatementGroup, SwitchRule, SwitchStatement, SynchronizedStatement, ThrowStatement,
+    TryStatement, TryWithResourcesStatement, Type, WhileStatement, YieldStatement,
 };
 
 use crate::helpers::comments::{
     comment_forces_line, format_comment, format_token_sequence, tokens_have_comments,
 };
 use crate::helpers::lists::semicolon_list;
+use crate::helpers::modifiers::modifier_prefix_from_parts;
+use crate::helpers::operators::binary_chain;
 use crate::rules::expressions::format_expression;
 use crate::rules::variables::format_local_variable_declaration;
 
@@ -501,17 +503,72 @@ fn format_catch_clauses<'a>(clauses: impl Iterator<Item = CatchClause> + 'a) -> 
 
 fn format_catch_clause(clause: &CatchClause) -> Doc {
     concat([
-        text(" catch ("),
+        text(" catch "),
         clause
             .parameter()
             .map_or_else(jolt_fmt_ir::nil, |parameter| {
-                format_token_sequence(&parameter.tokens())
+                format_parenthesized_catch_parameter(&parameter)
             }),
-        text(") "),
+        text(" "),
         clause
             .body()
             .map_or_else(empty_block_doc, |body| format_block(&body)),
     ])
+}
+
+fn format_parenthesized_catch_parameter(parameter: &CatchParameter) -> Doc {
+    group(concat([
+        text("("),
+        indent(concat([soft_line(), format_catch_parameter(parameter)])),
+        soft_line(),
+        text(")"),
+    ]))
+}
+
+fn format_catch_parameter(parameter: &CatchParameter) -> Doc {
+    let tokens = parameter.tokens();
+    let annotations = parameter.annotations().collect::<Vec<_>>();
+    if tokens_have_comments(&tokens) || !annotations.is_empty() {
+        return format_token_sequence(&tokens);
+    }
+
+    concat([
+        modifier_prefix_from_parts(annotations, parameter.modifier_tokens().collect()),
+        parameter.types().map_or_else(jolt_fmt_ir::nil, |types| {
+            format_catch_type_list(&types, parameter.name())
+        }),
+    ])
+}
+
+fn format_catch_type_list(
+    types: &CatchTypeList,
+    name: Option<jolt_java_syntax::JavaSyntaxToken>,
+) -> Doc {
+    let mut types = types
+        .types()
+        .map(|ty| format_catch_type(&ty))
+        .collect::<Vec<_>>();
+    let name = name.map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned()));
+
+    let Some(last_type) = types.pop() else {
+        return name;
+    };
+    let last = concat([last_type, text(" "), name]);
+    if types.is_empty() {
+        return last;
+    }
+
+    let first = types.remove(0);
+    let rest = types
+        .into_iter()
+        .chain(std::iter::once(last))
+        .map(|ty| ("|".to_owned(), ty))
+        .collect();
+    binary_chain(first, rest)
+}
+
+fn format_catch_type(ty: &Type) -> Doc {
+    format_token_sequence(&ty.tokens())
 }
 
 fn format_finally_clause(clause: &FinallyClause) -> Doc {
