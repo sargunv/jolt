@@ -11,9 +11,9 @@ use crate::helpers::comments::{
     format_leading_comments, format_token_sequence, format_trailing_comments,
     tokens_end_with_forced_line, tokens_have_comments,
 };
-use crate::helpers::modifiers::{modifier_prefix, modifier_prefix_from_parts};
 use crate::rules::annotations::format_annotation_element_value;
 use crate::rules::expressions::format_argument_list;
+use crate::rules::modifiers::{format_modifier_prefix, format_modifier_prefix_from_parts};
 use crate::rules::names::format_name;
 use crate::rules::statements::{format_block, format_block_items};
 use crate::rules::types::{format_array_dimensions, format_type, format_type_parameter_list};
@@ -182,7 +182,7 @@ fn format_header_with_body(
     body: Option<Doc>,
 ) -> Doc {
     concat([
-        modifier_prefix(modifiers),
+        format_modifier_prefix(modifiers),
         header_tail,
         text(" "),
         braced_body(body),
@@ -240,7 +240,7 @@ fn format_enum_constant(constant: &EnumConstant) -> Doc {
     };
 
     concat([
-        modifier_prefix_from_parts(constant.annotations().collect(), Vec::new()),
+        format_modifier_prefix_from_parts(constant.annotations().collect(), Vec::new()),
         format_leading_comments(&name),
         text(name.text().to_owned()),
         format_trailing_comments(&name),
@@ -553,7 +553,7 @@ fn format_constructor_declaration(constructor: &jolt_java_syntax::ConstructorDec
     }
     concat([
         group(concat([
-            modifier_prefix(constructor.modifiers()),
+            format_modifier_prefix(constructor.modifiers()),
             format_type_parameter_list(constructor.type_parameters()),
             text(name.text().to_owned()),
             format_parameters(constructor.parameters()),
@@ -568,7 +568,7 @@ fn format_compact_constructor_declaration(
 ) -> Doc {
     concat([
         group(concat([
-            modifier_prefix(constructor.modifiers()),
+            format_modifier_prefix(constructor.modifiers()),
             constructor
                 .name()
                 .map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned())),
@@ -593,7 +593,7 @@ fn format_method_declaration(method: &MethodDeclaration) -> Doc {
     }
     concat([
         group(concat([
-            modifier_prefix(method.modifiers()),
+            format_modifier_prefix(method.modifiers()),
             format_type_parameter_list(method.type_parameters()),
             method
                 .return_type()
@@ -615,7 +615,7 @@ fn format_annotation_element_declaration(element: &AnnotationElementDeclaration)
 
     concat([
         group(concat([
-            modifier_prefix(element.modifiers()),
+            format_modifier_prefix(element.modifiers()),
             element
                 .ty()
                 .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty)),

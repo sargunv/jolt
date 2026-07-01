@@ -1,31 +1,5 @@
 use jolt_fmt_ir::{Doc, concat, hard_line, text};
-use jolt_java_syntax::{Annotation, JavaSyntaxKind, JavaSyntaxToken, ModifierList};
-
-use crate::helpers::comments::format_token_sequence;
-
-pub(crate) fn modifier_prefix(modifiers: Option<ModifierList>) -> Doc {
-    let Some(modifiers) = modifiers else {
-        return jolt_fmt_ir::nil();
-    };
-
-    modifier_prefix_from_parts(
-        modifiers.annotations().collect(),
-        modifiers.modifier_tokens().collect(),
-    )
-}
-
-pub(crate) fn modifier_prefix_from_parts(
-    annotations: Vec<Annotation>,
-    modifier_tokens: Vec<JavaSyntaxToken>,
-) -> Doc {
-    modifier_prefix_from_docs(
-        annotations
-            .into_iter()
-            .map(|annotation| format_token_sequence(&annotation.tokens()))
-            .collect(),
-        modifier_tokens,
-    )
-}
+use jolt_java_syntax::{JavaSyntaxKind, JavaSyntaxToken};
 
 pub(crate) fn modifier_prefix_from_docs(
     annotation_docs: Vec<Doc>,

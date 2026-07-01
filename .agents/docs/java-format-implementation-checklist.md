@@ -64,7 +64,7 @@ Status legend:
 - `[ ]` Compilation-unit item order.
 - `[~]` Import static/star/name/comment roles.
 - `[~]` Module directive kind/name/target/comment roles.
-- `[~]` Modifier keyword and annotation roles.
+- `[x]` Modifier keyword and annotation roles.
 - `[~]` Declaration headers and bodies.
 - `[x]` Constructor body accessors.
 - `[~]` Statement body kind.
@@ -96,7 +96,7 @@ Status legend:
 - `[ ]` `declaration_header`
 - `[~]` `member_body`
 - `[x]` `modifier_list`
-- `[ ]` `annotation_group`
+- `[x]` `annotation_group`
 - `[ ]` `assignment_rhs`
 - `[x]` `binary_chain`
 - `[x]` `ternary_expression`
@@ -151,7 +151,7 @@ Status legend:
 
 ### 6. Declaration Layer
 
-- `[~]` Modifier sorting.
+- `[x]` Modifier sorting.
 - `[~]` Declaration/type-use annotation placement.
 - `[~]` Class/interface/record/enum/annotation headers.
 - `[x]` Structural type declaration `extends`/`implements`/`permits` clauses.

@@ -5,16 +5,15 @@ use jolt_java_syntax::{
 };
 
 use crate::helpers::comments::{format_token_sequence, tokens_have_comments};
-use crate::helpers::modifiers::{
-    inline_modifier_prefix_from_docs, modifier_prefix, modifier_prefix_from_parts,
-};
+use crate::helpers::modifiers::inline_modifier_prefix_from_docs;
 use crate::rules::annotations::format_annotation;
 use crate::rules::expressions::format_variable_initializer_value;
+use crate::rules::modifiers::{format_modifier_prefix, format_modifier_prefix_from_parts};
 use crate::rules::types::{format_array_dimensions, format_type};
 
 pub(crate) fn format_field_declaration(field: &FieldDeclaration) -> Doc {
     concat([
-        modifier_prefix(field.modifiers()),
+        format_modifier_prefix(field.modifiers()),
         field
             .ty()
             .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty)),
@@ -30,7 +29,7 @@ pub(crate) fn format_field_declaration(field: &FieldDeclaration) -> Doc {
 
 pub(crate) fn format_local_variable_declaration(declaration: &LocalVariableDeclaration) -> Doc {
     concat([
-        modifier_prefix_from_parts(
+        format_modifier_prefix_from_parts(
             declaration.annotations().collect(),
             declaration.modifier_tokens().collect(),
         ),
