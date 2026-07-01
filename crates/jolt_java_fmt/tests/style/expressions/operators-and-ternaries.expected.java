@@ -9,6 +9,24 @@ class Example {
     return ready ? /* yes */ true : /* no */ false;
   }
 
+  boolean returned() {
+    return user.isActive()
+      && account.hasPermission("write")
+      && featureFlags.enabled()
+      && auditPolicy.allows(user);
+  }
+
+  void guarded() {
+    if (
+      user.isActive()
+      && account.hasPermission("write")
+      && featureFlags.enabled()
+      && auditPolicy.allows(user)
+    ) {
+      run();
+    }
+  }
+
   void assign(
     boolean left,
     boolean right,

@@ -310,7 +310,7 @@ fn format_condition_open_spacing(open: Option<&JavaSyntaxToken>) -> Doc {
     };
 
     if open.trailing_comments().is_empty() {
-        return jolt_fmt_ir::nil();
+        return soft_line();
     }
 
     concat([
@@ -331,7 +331,7 @@ fn format_condition_close_paren(close: Option<&JavaSyntaxToken>) -> Doc {
         if close_has_leading_comments {
             line()
         } else {
-            jolt_fmt_ir::nil()
+            soft_line()
         },
         close.map_or_else(
             || text(")"),
@@ -445,7 +445,7 @@ fn format_basic_for_statement(statement: &BasicForStatement) -> Doc {
             format_condition_open_paren(open.as_ref()),
             format_condition_open_spacing(open.as_ref()),
             text(";;"),
-            format_condition_close_paren(close.as_ref()),
+            format_inline_close_paren(close.as_ref()),
         ])
     } else {
         group(concat([
@@ -504,6 +504,38 @@ fn format_for_header_open_spacing(open: Option<&JavaSyntaxToken>) -> Doc {
     } else {
         soft_line()
     }
+}
+
+fn format_inline_close_paren(close: Option<&JavaSyntaxToken>) -> Doc {
+    let close_has_leading_comments =
+        close.is_some_and(|token| !token.leading_comments().is_empty());
+
+    concat([
+        if close_has_leading_comments {
+            line()
+        } else {
+            jolt_fmt_ir::nil()
+        },
+        close.map_or_else(
+            || text(")"),
+            |close| {
+                concat([
+                    if close_has_leading_comments {
+                        format_leading_comments(close)
+                    } else {
+                        jolt_fmt_ir::nil()
+                    },
+                    text(")"),
+                    format_trailing_comments_before_line_break(close),
+                    if trailing_comments_force_line(close) {
+                        hard_line()
+                    } else {
+                        jolt_fmt_ir::nil()
+                    },
+                ])
+            },
+        ),
+    ])
 }
 
 fn format_for_header_close_paren(close: Option<&JavaSyntaxToken>) -> Doc {

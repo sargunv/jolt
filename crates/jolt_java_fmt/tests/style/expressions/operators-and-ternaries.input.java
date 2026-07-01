@@ -5,6 +5,12 @@ return (/* allowed */ user.isActive()&&account.hasPermission("write"))?true:fals
 boolean commented(boolean ready) {
 return ready?/* yes */true:/* no */false;
 }
+boolean returned() {
+return user.isActive() && account.hasPermission("write") && featureFlags.enabled() && auditPolicy.allows(user);
+}
+void guarded() {
+if (user.isActive() && account.hasPermission("write") && featureFlags.enabled() && auditPolicy.allows(user)) run();
+}
 void assign(boolean left, boolean right, User user, Account account, FeatureFlags featureFlags, AuditPolicy auditPolicy) {
 allowed=left&&right;
 allowed=left&&/* both */right;

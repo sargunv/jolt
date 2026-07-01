@@ -137,7 +137,7 @@ Status legend:
 - `[~]` Broken closing delimiter on its own line.
 - `[~]` Trailing separator policies.
 - `[x]` Body blank-line capping.
-- `[~]` Leading-operator chains with flat continuation alignment.
+- `[x]` Leading-operator chains with flat continuation alignment.
 - `[x]` Break-all argument lists.
 - `[x]` Ruff-shaped member-chain heads.
 
@@ -194,8 +194,8 @@ Status legend:
 
 - `[x]` Parenthesized expressions.
 - `[x]` Method references.
-- `[~]` Binary/operator chains.
-- `[~]` Ternaries.
+- `[x]` Binary/operator chains.
+- `[x]` Ternaries.
 - `[x]` Assignments.
 - `[~]` Calls and break-all argument lists.
 - `[x]` Member chains.
