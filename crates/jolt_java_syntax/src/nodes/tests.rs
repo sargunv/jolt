@@ -887,6 +887,41 @@ fn import_declarations_expose_structured_names() {
 }
 
 #[test]
+fn qualified_name_segments_expose_separator_dots() {
+    let syntax = parse_clean(
+        r"
+                import z /* dot */ . Z;
+
+                class Imports {}
+            ",
+    );
+
+    let name = syntax
+        .imports()
+        .next()
+        .and_then(|import| import.name())
+        .expect("import name");
+    let segments = name.segments_with_annotations().collect::<Vec<_>>();
+
+    assert_eq!(segments.len(), 2);
+    assert_eq!(segments[0].identifier.text(), "z");
+    assert!(segments[0].dot_before.is_none());
+    assert_eq!(
+        segments[0].identifier.trailing_comments()[0].text(),
+        "/* dot */"
+    );
+    assert_eq!(
+        segments[1]
+            .dot_before
+            .as_ref()
+            .expect("second segment separator")
+            .text(),
+        "."
+    );
+    assert_eq!(segments[1].identifier.text(), "Z");
+}
+
+#[test]
 fn type_declarations_expose_names_and_bodies() {
     let syntax = parse_clean(
         r"

@@ -181,6 +181,7 @@ impl NameSyntax {
     pub fn segments_with_annotations(&self) -> impl Iterator<Item = NameSegment> {
         let mut segments = Vec::new();
         let mut annotations = Vec::new();
+        let mut dot_before = None;
 
         for element in self.syntax().children_with_tokens() {
             match element {
@@ -189,9 +190,13 @@ impl NameSyntax {
                         annotations.push(annotation);
                     }
                 }
+                SyntaxElement::Token(syntax) if syntax.kind() == JavaSyntaxKind::Dot => {
+                    dot_before = Some(JavaSyntaxToken { syntax });
+                }
                 SyntaxElement::Token(syntax) if syntax.kind() == JavaSyntaxKind::Identifier => {
                     segments.push(NameSegment {
                         annotations: std::mem::take(&mut annotations),
+                        dot_before: dot_before.take(),
                         identifier: JavaSyntaxToken { syntax },
                     });
                 }

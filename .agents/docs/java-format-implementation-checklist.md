@@ -29,10 +29,10 @@ Status legend:
 - `[x]` `jolt_fmt_ir` owns language-agnostic documents and rendering.
 - `[~]` `jolt_fmt_core` owns public options, diagnostics, and language wiring.
 - `[~]` Java formatter rules avoid raw syntax structure when stable accessors
-  should exist; formatter-ignore token range math is helper-owned, typed
-  modifier annotation splits use syntax accessors, and formatter context is
-  threaded through declaration, statement, expression, type, variable, modifier,
-  annotation, and pattern rule layers.
+  should exist; formatter-ignore token range math is helper-owned, qualified
+  name separator dots/comments and typed modifier annotation splits use syntax
+  accessors, and formatter context is threaded through declaration, statement,
+  expression, type, variable, modifier, annotation, and pattern rule layers.
 
 ## Proposed Module Shape
 
@@ -163,7 +163,8 @@ Status legend:
 - `[x]` Import sorting with comment barriers.
 - `[x]` Module directive sorting/grouping.
 - `[x]` Redundant top-level semicolon removal.
-- `[x]` Qualified names.
+- `[x]` Qualified names, including block comments around dots and line-comment
+  forced leading-dot continuation.
 - `[x]` Literal/token leaves.
 
 ### 6. Declaration Layer
@@ -204,7 +205,7 @@ Status legend:
 - `[x]` Loops and broken `for` headers.
 - `[x]` Switch labels/rules/guards.
 - `[x]` Structural `case` labels, `default`, `case null, default`, and switch
-  guards.
+  guards; single-block colon switch groups keep the block with the label.
 - `[x]` `return`/`throw`/`yield`.
 - `[x]` Try/catch/finally/resources.
 - `[x]` Structural try-with-resources declarations and variable accesses.
@@ -239,6 +240,7 @@ Status legend:
 - `[x]` Star-block comment normalization.
 - `[x]` `@formatter:off/on` raw range preservation across top-level, module
   directive, type-member, constructor-body, and block-statement sequences.
+- `[x]` Unsupported branded ignore spellings are treated as ordinary comments.
 - `[x]` Text-block internal preservation.
 - `[x]` Imported-corpus comment/idempotence tests.
 

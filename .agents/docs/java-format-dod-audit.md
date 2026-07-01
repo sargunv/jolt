@@ -22,7 +22,7 @@ Evidence:
 - `crates/jolt_java_fmt/tests/style_fixtures.rs` discovers every `*.input.java`
   fixture under `crates/jolt_java_fmt/tests/style`.
 - The latest verification passed `style_rule_fixtures_match_expected_output`.
-- Current fixture count: 67 style input fixtures.
+- Current fixture count: 69 style input fixtures.
 
 ### Every Style-Guide Rule Has One Or More Focused Tests
 
@@ -36,6 +36,12 @@ Evidence:
   declarations by `declarations/type-leading-comments`, parameters/components by
   `declarations/parameter-and-component-comments`, and callable members plus
   constructor invocations by `declarations/member-leading-comments`.
+- Switch colon groups whose only body is a block are pinned by
+  `statements/switch-groups-and-rules`.
+- Qualified-name dot comments and line-comment forced leading-dot layout are
+  pinned by `program/qualified-name-comments`.
+- Unsupported branded ignore spellings are pinned as ordinary comments by
+  `program/unsupported-branded-ignore`.
 
 Remaining work:
 

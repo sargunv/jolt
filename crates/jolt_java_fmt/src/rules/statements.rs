@@ -826,9 +826,15 @@ fn format_switch_statement_group(
         .labels()
         .map(|label| concat([format_switch_label(&label, formatter), text(":")]))
         .collect::<Vec<_>>();
-    let items = group
-        .block_statements()
-        .filter_map(|statement| format_block_statement_item(&statement, formatter))
+    let statements = group.block_statements().collect::<Vec<_>>();
+
+    if let Some(doc) = format_single_block_switch_statement_group(&labels, &statements, formatter) {
+        return doc;
+    }
+
+    let items = statements
+        .iter()
+        .filter_map(|statement| format_block_statement_item(statement, formatter))
         .collect::<Vec<_>>();
 
     concat([
@@ -839,6 +845,26 @@ fn format_switch_statement_group(
             jolt_fmt_ir::indent(concat([hard_line(), join_body_items(items)]))
         },
     ])
+}
+
+fn format_single_block_switch_statement_group(
+    labels: &[Doc],
+    statements: &[BlockStatement],
+    formatter: &JavaFormatter<'_>,
+) -> Option<Doc> {
+    if labels.len() != 1 || statements.len() != 1 || statements[0].starts_after_blank_line() {
+        return None;
+    }
+
+    let BlockItem::Block(block) = statements[0].item()? else {
+        return None;
+    };
+
+    Some(concat([
+        labels.first()?.clone(),
+        text(" "),
+        format_block(&block, formatter),
+    ]))
 }
 
 fn format_switch_rule(rule: &SwitchRule, formatter: &JavaFormatter<'_>) -> Doc {

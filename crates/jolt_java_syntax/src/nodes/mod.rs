@@ -988,6 +988,7 @@ pub struct ClassTypeSegment {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct NameSegment {
     pub annotations: Vec<Annotation>,
+    pub dot_before: Option<JavaSyntaxToken>,
     pub identifier: JavaSyntaxToken,
 }
 
