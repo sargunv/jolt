@@ -15,6 +15,7 @@ use crate::helpers::modifiers::inline_modifier_prefix_from_docs;
 use crate::helpers::operators::{assignment_expression, binary_chain, ternary_expression};
 use crate::rules::annotations::format_annotation;
 use crate::rules::declarations::format_anonymous_class_body;
+use crate::rules::patterns::format_pattern;
 use crate::rules::statements::{format_block, format_switch_block};
 use crate::rules::types::{format_array_dimensions, format_type, format_type_argument_list};
 
@@ -381,9 +382,7 @@ fn format_instanceof_expression(expression: &InstanceofExpression) -> Doc {
             || {
                 expression
                     .pattern()
-                    .map_or_else(jolt_fmt_ir::nil, |pattern| {
-                        format_token_sequence(&pattern.tokens())
-                    })
+                    .map_or_else(jolt_fmt_ir::nil, |pattern| format_pattern(&pattern))
             },
             |ty| format_type(&ty),
         ),

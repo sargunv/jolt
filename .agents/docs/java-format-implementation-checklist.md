@@ -70,6 +70,7 @@ Status legend:
 - `[x]` Switch labels/rules/guards.
 - `[x]` For init/condition/update.
 - `[x]` Try resources and optional trailing semicolon.
+- `[x]` Pattern roles for type, record, component, and match-all patterns.
 - `[ ]` Expression parent roles.
 - `[ ]` Member-chain linearization.
 - `[~]` Lambda parameter classification.
@@ -173,8 +174,11 @@ Status legend:
 - `[x]` Local class/interface declarations.
 - `[x]` Loops and broken `for` headers.
 - `[x]` Switch labels/rules/guards.
+- `[x]` Structural `case` labels, `default`, `case null, default`, and switch
+  guards.
 - `[~]` `return`/`throw`/`yield`.
 - `[x]` Try/catch/finally/resources.
+- `[x]` Structural try-with-resources declarations and variable accesses.
 - `[x]` Inline catch-parameter annotations and modifiers.
 - `[x]` `assert`/`break`/`continue`.
 
@@ -191,6 +195,8 @@ Status legend:
 - `[x]` Untyped, `var`, typed, annotated, final, and varargs lambda parameters.
 - `[~]` Arrays/initializers.
 - `[~]` Casts, `instanceof`, patterns, object creation, and type arguments.
+- `[x]` Type, record, component, and match-all patterns in `instanceof` and
+  switch labels.
 - `[x]` Anonymous class bodies in object creation expressions.
 - `[x]` Constructor type arguments in object creation expressions.
 

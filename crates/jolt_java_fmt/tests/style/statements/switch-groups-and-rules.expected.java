@@ -12,4 +12,11 @@ class Example {
       default -> throw new IllegalArgumentException();
     }
   }
+
+  int classify(Object value) {
+    return switch (value) {
+      case null, default -> 0;
+      case Pair(int left, int right) -> left + right;
+    };
+  }
 }

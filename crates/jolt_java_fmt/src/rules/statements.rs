@@ -4,8 +4,9 @@ use jolt_java_syntax::{
     CatchTypeList, DoStatement, EnhancedForStatement, Expression, ExpressionStatement,
     FinallyClause, ForInitializer, ForStatement, ForUpdate, IfStatement, LabeledStatement,
     Resource, ReturnStatement, Statement, StatementExpressionList, SwitchBlock, SwitchBlockEntry,
-    SwitchBlockStatementGroup, SwitchRule, SwitchStatement, SynchronizedStatement, ThrowStatement,
-    TryStatement, TryWithResourcesStatement, Type, WhileStatement, YieldStatement,
+    SwitchBlockStatementGroup, SwitchLabel, SwitchLabelCaseItem, SwitchRule, SwitchStatement,
+    SynchronizedStatement, ThrowStatement, TryStatement, TryWithResourcesStatement, Type,
+    WhileStatement, YieldStatement,
 };
 
 use crate::helpers::blocks::{
@@ -15,12 +16,13 @@ use crate::helpers::blocks::{
 use crate::helpers::comments::{
     comment_forces_line, format_comment, format_token_sequence, tokens_have_comments,
 };
-use crate::helpers::lists::semicolon_list;
+use crate::helpers::lists::{TrailingSeparator, comma_list, semicolon_list};
 use crate::helpers::modifiers::inline_modifier_prefix_from_docs;
 use crate::helpers::operators::binary_chain;
 use crate::rules::annotations::format_annotation;
 use crate::rules::declarations::format_type_declaration;
 use crate::rules::expressions::format_expression;
+use crate::rules::patterns::format_pattern;
 use crate::rules::types::format_type;
 use crate::rules::variables::format_local_variable_declaration;
 
@@ -351,7 +353,7 @@ pub(crate) fn format_switch_block(block: &SwitchBlock) -> Doc {
 fn format_switch_statement_group(group: &SwitchBlockStatementGroup) -> Doc {
     let labels = group
         .labels()
-        .map(|label| concat([format_token_sequence(&label.tokens()), text(":")]))
+        .map(|label| concat([format_switch_label(&label), text(":")]))
         .collect::<Vec<_>>();
     let items = group
         .items()
@@ -369,9 +371,9 @@ fn format_switch_statement_group(group: &SwitchBlockStatementGroup) -> Doc {
 }
 
 fn format_switch_rule(rule: &SwitchRule) -> Doc {
-    let label = rule.label().map_or_else(jolt_fmt_ir::nil, |label| {
-        format_token_sequence(&label.tokens())
-    });
+    let label = rule
+        .label()
+        .map_or_else(jolt_fmt_ir::nil, |label| format_switch_label(&label));
 
     concat([
         label,
@@ -399,6 +401,46 @@ fn format_switch_rule_arrow(rule: &SwitchRule) -> Doc {
     }
     docs.push(if forced_line { hard_line() } else { text(" ") });
     concat(docs)
+}
+
+fn format_switch_label(label: &SwitchLabel) -> Doc {
+    if label.is_default_label() {
+        return text("default");
+    }
+
+    let items = label
+        .case_items()
+        .map(format_switch_label_case_item)
+        .collect::<Vec<_>>();
+
+    concat([
+        text("case "),
+        group(indent(comma_list(items, TrailingSeparator::Never))),
+        label.guard().map_or_else(jolt_fmt_ir::nil, |guard| {
+            concat([
+                text(" when "),
+                guard
+                    .expression()
+                    .map_or_else(jolt_fmt_ir::nil, |expression| {
+                        format_expression(&expression)
+                    }),
+            ])
+        }),
+    ])
+}
+
+fn format_switch_label_case_item(item: SwitchLabelCaseItem) -> Doc {
+    match item {
+        SwitchLabelCaseItem::Constant(constant) => constant
+            .expression()
+            .map_or_else(jolt_fmt_ir::nil, |expression| {
+                format_expression(&expression)
+            }),
+        SwitchLabelCaseItem::Pattern(pattern) => pattern
+            .pattern()
+            .map_or_else(jolt_fmt_ir::nil, |pattern| format_pattern(&pattern)),
+        SwitchLabelCaseItem::Default(_) => text("default"),
+    }
 }
 
 fn format_switch_rule_body(rule: &SwitchRule) -> Doc {
@@ -484,7 +526,7 @@ fn format_resource(resource: &Resource) -> Doc {
             });
     }
 
-    format_token_sequence(&resource.tokens())
+    jolt_fmt_ir::nil()
 }
 
 fn format_catch_clauses<'a>(clauses: impl Iterator<Item = CatchClause> + 'a) -> Doc {

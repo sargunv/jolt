@@ -12,6 +12,16 @@ class Example {
     }
   }
 
+  void annotated() throws Exception {
+    try (
+      @Nonnull
+      AutoCloseable declared = open();
+      this.existing
+    ) {
+      use(declared);
+    }
+  }
+
   AutoCloseable open() {
     return null;
   }

@@ -697,6 +697,13 @@ java_cst! {
 mod accessors;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub enum SwitchLabelCaseItem {
+    Constant(CaseConstant),
+    Pattern(CasePattern),
+    Default(JavaSyntaxToken),
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum AnnotationArgument {
     Value(AnnotationElementValue),
     Pair(AnnotationElementValuePair),
