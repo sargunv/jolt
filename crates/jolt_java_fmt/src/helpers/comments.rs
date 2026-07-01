@@ -1,6 +1,8 @@
 use jolt_fmt_ir::{Doc, concat, hard_line, literal_text, text};
 use jolt_java_syntax::{JavaComment, JavaCommentKind, JavaSyntaxKind, JavaSyntaxToken, TriviaKind};
 
+use crate::helpers::formatter_ignore::is_formatter_control_marker;
+
 pub(crate) fn format_token_sequence(tokens: &[JavaSyntaxToken]) -> Doc {
     let mut docs = Vec::new();
     let mut previous_kind = None;
@@ -51,6 +53,33 @@ pub(crate) fn tokens_have_comments(tokens: &[JavaSyntaxToken]) -> bool {
     tokens
         .iter()
         .any(|token| !token.leading_comments().is_empty() || !token.trailing_comments().is_empty())
+}
+
+pub(crate) fn format_construct_leading_comments(tokens: &[JavaSyntaxToken]) -> Doc {
+    tokens
+        .first()
+        .map_or_else(jolt_fmt_ir::nil, format_leading_comments)
+}
+
+pub(crate) fn non_formatter_control_comments(comments: Vec<JavaComment>) -> Vec<JavaComment> {
+    comments
+        .into_iter()
+        .filter(|comment| !is_formatter_control_marker(comment.text()))
+        .collect()
+}
+
+pub(crate) fn format_removed_token_comments(tokens: &[JavaSyntaxToken]) -> Option<Doc> {
+    let comments = tokens
+        .iter()
+        .flat_map(|token| {
+            let mut comments = token.leading_comments();
+            comments.extend(token.trailing_comments());
+            comments
+        })
+        .collect();
+    let comments = non_formatter_control_comments(comments);
+
+    (!comments.is_empty()).then(|| format_dangling_comments(comments))
 }
 
 pub(crate) fn format_leading_comments(token: &JavaSyntaxToken) -> Doc {

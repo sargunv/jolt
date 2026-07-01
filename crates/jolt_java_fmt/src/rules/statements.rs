@@ -16,12 +16,13 @@ use crate::helpers::blocks::{
 };
 use crate::helpers::comments::{
     comment_forces_line, format_comment, format_dangling_comments, format_leading_comments,
-    format_token_text, format_token_with_comments, format_trailing_comments,
-    format_trailing_comments_before_line_break, trailing_comments_force_line,
+    format_removed_token_comments, format_token_text, format_token_with_comments,
+    format_trailing_comments, format_trailing_comments_before_line_break,
+    non_formatter_control_comments, trailing_comments_force_line,
 };
 use crate::helpers::formatter_ignore::{
     FormatterIgnoreRange, formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
-    is_formatter_control_marker, relative_token_range,
+    relative_token_range,
 };
 use crate::helpers::lists::semicolon_list;
 use crate::rules::annotations::format_annotation;
@@ -154,17 +155,7 @@ fn format_block_item_doc(item: BlockItem, semicolon: Option<JavaSyntaxToken>) ->
 }
 
 fn format_removed_empty_statement(statement: &jolt_java_syntax::EmptyStatement) -> Option<Doc> {
-    let mut comments = Vec::new();
-    for token in statement.tokens() {
-        comments.extend(token.leading_comments());
-        comments.extend(token.trailing_comments());
-    }
-
-    let comments = comments
-        .into_iter()
-        .filter(|comment| !is_formatter_control_marker(comment.text()))
-        .collect::<Vec<JavaComment>>();
-    (!comments.is_empty()).then(|| format_dangling_comments(comments))
+    format_removed_token_comments(&statement.tokens())
 }
 
 fn block_formatter_ignore_ranges(block: &Block) -> Vec<FormatterIgnoreRange> {
@@ -1231,12 +1222,13 @@ fn join_resource_lines(resources: Vec<FormattedResource>, trailing_comments: &[D
 }
 
 fn format_removed_resource_separator_comments(separator: &JavaSyntaxToken) -> Option<Doc> {
-    let comments = separator
-        .leading_comments()
-        .into_iter()
-        .chain(separator.trailing_comments())
-        .filter(|comment| !is_formatter_control_marker(comment.text()))
-        .collect::<Vec<_>>();
+    let comments = non_formatter_control_comments(
+        separator
+            .leading_comments()
+            .into_iter()
+            .chain(separator.trailing_comments())
+            .collect(),
+    );
     (!comments.is_empty()).then(|| format_dangling_comments(comments))
 }
 

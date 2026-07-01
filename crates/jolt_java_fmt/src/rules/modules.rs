@@ -9,8 +9,8 @@ use jolt_java_syntax::{
 use crate::context::JavaFormatter;
 use crate::helpers::blocks::{join_empty_lines, join_hard_lines};
 use crate::helpers::comments::{
-    comment_forces_line, format_comment, format_leading_comments,
-    format_trailing_comments_before_line_break,
+    comment_forces_line, format_comment, format_construct_leading_comments,
+    format_leading_comments, format_trailing_comments_before_line_break,
 };
 use crate::helpers::formatter_ignore::{
     formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs, relative_token_range,
@@ -427,12 +427,6 @@ fn format_module_name_separator_broken(comma: &JavaSyntaxToken) -> Doc {
             jolt_fmt_ir::line()
         },
     ])
-}
-
-fn format_construct_leading_comments(tokens: &[JavaSyntaxToken]) -> Doc {
-    tokens
-        .first()
-        .map_or_else(jolt_fmt_ir::nil, format_leading_comments)
 }
 
 fn separator_token_has_comments(token: &JavaSyntaxToken) -> bool {

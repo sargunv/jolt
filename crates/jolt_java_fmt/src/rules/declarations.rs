@@ -13,9 +13,10 @@ use jolt_java_syntax::{
 
 use crate::helpers::blocks::{BodyItem, braced_body, join_body_items};
 use crate::helpers::comments::{
-    comment_forces_line, format_comment, format_dangling_comments, format_leading_comments,
+    comment_forces_line, format_comment, format_construct_leading_comments,
+    format_dangling_comments, format_leading_comments, format_removed_token_comments,
     format_token_sequence, format_token_text, format_trailing_comments,
-    format_trailing_comments_before_line_break,
+    format_trailing_comments_before_line_break, non_formatter_control_comments,
 };
 use crate::helpers::declarations::{declaration_with_body, declaration_without_body};
 use crate::helpers::formatter_ignore::{
@@ -648,17 +649,7 @@ fn is_printable_annotation_member(member: &AnnotationInterfaceBodyMember) -> boo
 }
 
 fn format_removed_empty_declaration(tokens: &[JavaSyntaxToken]) -> Option<Doc> {
-    let comments = tokens
-        .iter()
-        .flat_map(|token| {
-            let mut comments = token.leading_comments();
-            comments.extend(token.trailing_comments());
-            comments
-        })
-        .filter(|comment| !is_formatter_control_marker(comment.text()))
-        .collect::<Vec<_>>();
-
-    (!comments.is_empty()).then(|| format_dangling_comments(comments))
+    format_removed_token_comments(tokens)
 }
 
 fn format_body_open_dangling_comments(open: Option<JavaSyntaxToken>) -> Option<FormattedMember> {
@@ -669,15 +660,6 @@ fn format_body_open_dangling_comments(open: Option<JavaSyntaxToken>) -> Option<F
 fn format_body_close_dangling_comments(close: Option<JavaSyntaxToken>) -> Option<FormattedMember> {
     let comments = non_formatter_control_comments(close?.leading_comments());
     (!comments.is_empty()).then(|| FormattedMember::comment(format_dangling_comments(comments)))
-}
-
-fn non_formatter_control_comments(
-    comments: Vec<jolt_java_syntax::JavaComment>,
-) -> Vec<jolt_java_syntax::JavaComment> {
-    comments
-        .into_iter()
-        .filter(|comment| !is_formatter_control_marker(comment.text()))
-        .collect()
 }
 
 fn format_empty_enum_constant_list_comments(
@@ -1343,12 +1325,6 @@ fn format_parameters(parameters: Option<FormalParameterList>) -> Doc {
             })
             .collect(),
     )
-}
-
-fn format_construct_leading_comments(tokens: &[jolt_java_syntax::JavaSyntaxToken]) -> Doc {
-    tokens
-        .first()
-        .map_or_else(jolt_fmt_ir::nil, format_leading_comments)
 }
 
 fn callable_declaration_with_body(prefix: Doc, header: Doc, body: Option<Doc>) -> Doc {

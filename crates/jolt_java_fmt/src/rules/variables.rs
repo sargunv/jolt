@@ -6,8 +6,8 @@ use jolt_java_syntax::{
 };
 
 use crate::helpers::comments::{
-    format_leading_comments, format_token_text, format_token_with_comments,
-    format_trailing_comments,
+    format_construct_leading_comments, format_leading_comments, format_token_text,
+    format_token_with_comments, format_trailing_comments,
 };
 use crate::helpers::modifiers::inline_modifier_prefix_from_docs;
 use crate::rules::annotations::format_annotation;
@@ -157,13 +157,6 @@ pub(crate) fn format_receiver_parameter(parameter: &ReceiverParameter) -> Doc {
             |this_token| format_token_with_comments(&this_token),
         ),
     ])
-}
-
-fn format_construct_leading_comments(tokens: &[jolt_java_syntax::JavaSyntaxToken]) -> Doc {
-    tokens.first().map_or_else(
-        jolt_fmt_ir::nil,
-        crate::helpers::comments::format_leading_comments,
-    )
 }
 
 fn format_named_typed_declaration(
