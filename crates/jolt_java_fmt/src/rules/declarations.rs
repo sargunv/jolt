@@ -3,13 +3,13 @@ use std::ops::Range;
 use jolt_fmt_ir::{Doc, concat, group, hard_line, line, soft_line, text};
 use jolt_java_syntax::{
     AnnotationElementDeclaration, AnnotationInterfaceBodyMember, AnnotationInterfaceDeclaration,
-    ClassBody, ClassBodyMember, ClassDeclaration, EnumConstant, EnumDeclaration, ExtendsClause,
-    FormalParameterList, ImplementsClause, InterfaceBody, InterfaceBodyMember,
-    InterfaceDeclaration, JavaSyntaxKind, MethodDeclaration, ModifierList, PermitsClause,
-    RecordBody, RecordDeclaration, Type, TypeDeclaration,
+    BlockStatement, ClassBody, ClassBodyMember, ClassDeclaration, ConstructorInvocation,
+    EnumConstant, EnumDeclaration, ExtendsClause, FormalParameterList, ImplementsClause,
+    InterfaceBody, InterfaceBodyMember, InterfaceDeclaration, JavaSyntaxKind, MethodDeclaration,
+    ModifierList, PermitsClause, RecordBody, RecordDeclaration, Type, TypeDeclaration,
 };
 
-use crate::helpers::blocks::braced_body;
+use crate::helpers::blocks::{BodyItem, braced_body, join_body_items};
 use crate::helpers::comments::{
     format_leading_comments, format_token_sequence, format_trailing_comments,
 };
@@ -18,12 +18,12 @@ use crate::helpers::formatter_ignore::{
     formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
 };
 use crate::rules::annotations::format_annotation_element_value;
-use crate::rules::expressions::format_argument_list;
+use crate::rules::expressions::{format_argument_list, format_expression};
 use crate::rules::modifiers::{format_modifier_prefix, format_modifier_prefix_from_parts};
 use crate::rules::names::format_name;
-use crate::rules::statements::{format_block, format_block_body, format_block_items_body};
+use crate::rules::statements::{format_block, format_block_body, format_block_item};
 use crate::rules::types::{
-    format_array_dimensions, format_type, format_type_parameter_list,
+    format_array_dimensions, format_type, format_type_argument_list, format_type_parameter_list,
     format_type_without_leading_comments,
 };
 use crate::rules::variables::{
@@ -1019,5 +1019,131 @@ fn format_throws_clause(throws: Option<jolt_java_syntax::ThrowsClause>) -> Doc {
 }
 
 fn format_constructor_body(body: &jolt_java_syntax::ConstructorBody) -> Option<Doc> {
-    format_block_items_body(body.items())
+    let elements = constructor_body_elements(body);
+    let element_ranges = elements
+        .iter()
+        .map(|element| {
+            constructor_body_element_token_range(element, body.text_range().start().get())
+        })
+        .collect::<Vec<_>>();
+    let ignored_ranges = formatter_ignore_ranges(&body.source_text());
+    let ignored_runs = formatter_ignore_runs(&ignored_ranges, &element_ranges);
+    let mut items = Vec::new();
+    let mut ignored_index = 0;
+    let mut skip_index = 0;
+
+    for (element_index, element) in elements.iter().enumerate() {
+        while ignored_index < ignored_runs.len()
+            && ignored_runs[ignored_index].insert_index == element_index
+        {
+            let run = &ignored_runs[ignored_index];
+            items.push(BodyItem::new(formatter_ignore_run_doc(run), false));
+            ignored_index += 1;
+        }
+
+        while skip_index < ignored_runs.len() && ignored_runs[skip_index].skip_end <= element_index
+        {
+            skip_index += 1;
+        }
+
+        if skip_index < ignored_runs.len() && ignored_runs[skip_index].skips(element_index) {
+            continue;
+        }
+
+        let Some(mut item) = format_constructor_body_element(element) else {
+            continue;
+        };
+        if skip_index > 0 && ignored_runs[skip_index - 1].skip_end == element_index {
+            item = item.without_blank_line_before();
+        }
+        items.push(item);
+    }
+
+    while ignored_index < ignored_runs.len() {
+        let run = &ignored_runs[ignored_index];
+        items.push(BodyItem::new(formatter_ignore_run_doc(run), false));
+        ignored_index += 1;
+    }
+
+    (!items.is_empty()).then(|| join_body_items(items))
+}
+
+fn constructor_body_elements(
+    body: &jolt_java_syntax::ConstructorBody,
+) -> Vec<ConstructorBodyElement> {
+    body.invocation()
+        .into_iter()
+        .map(ConstructorBodyElement::Invocation)
+        .chain(
+            body.block_statements()
+                .map(ConstructorBodyElement::BlockStatement),
+        )
+        .collect()
+}
+
+fn constructor_body_element_token_range(
+    element: &ConstructorBodyElement,
+    body_start: usize,
+) -> Option<Range<usize>> {
+    let tokens = element.tokens();
+    let first = tokens.first()?;
+    let last = tokens.last()?;
+    Some(
+        first.token_text_range().start().get() - body_start
+            ..last.token_text_range().end().get() - body_start,
+    )
+}
+
+fn format_constructor_body_element(element: &ConstructorBodyElement) -> Option<BodyItem> {
+    match element {
+        ConstructorBodyElement::Invocation(invocation) => Some(BodyItem::new(
+            format_constructor_invocation(invocation),
+            invocation.starts_after_blank_line(),
+        )),
+        ConstructorBodyElement::BlockStatement(statement) => {
+            statement.item().and_then(format_block_item)
+        }
+    }
+}
+
+fn format_constructor_invocation(invocation: &ConstructorInvocation) -> Doc {
+    concat([
+        format_construct_leading_comments(&invocation.tokens()),
+        format_constructor_invocation_qualifier(invocation),
+        invocation
+            .type_arguments()
+            .map_or_else(jolt_fmt_ir::nil, |arguments| {
+                format_type_argument_list(&arguments)
+            }),
+        invocation
+            .target()
+            .map_or_else(jolt_fmt_ir::nil, |target| text(target.text().to_owned())),
+        format_argument_list(invocation.arguments()),
+        text(";"),
+    ])
+}
+
+fn format_constructor_invocation_qualifier(invocation: &ConstructorInvocation) -> Doc {
+    if let Some(name) = invocation.qualifier_name() {
+        return concat([format_name(&name), text(".")]);
+    }
+    invocation
+        .qualifier_expression()
+        .map_or_else(jolt_fmt_ir::nil, |expression| {
+            concat([format_expression(&expression), text(".")])
+        })
+}
+
+enum ConstructorBodyElement {
+    Invocation(ConstructorInvocation),
+    BlockStatement(BlockStatement),
+}
+
+impl ConstructorBodyElement {
+    fn tokens(&self) -> Vec<jolt_java_syntax::JavaSyntaxToken> {
+        match self {
+            Self::Invocation(invocation) => invocation.tokens(),
+            Self::BlockStatement(statement) => statement.tokens(),
+        }
+    }
 }

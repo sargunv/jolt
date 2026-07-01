@@ -1,0 +1,12 @@
+class Example {
+  Example() {
+    // @formatter:off
+    this( 1,2 );
+    int raw=1+2;
+    // @formatter:on
+    int after = 3;
+  }
+
+  Example(int a, int b) {
+  }
+}

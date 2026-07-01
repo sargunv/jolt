@@ -9,15 +9,15 @@ use super::{
     CastExpression, CatchClause, CatchParameter, CatchTypeList, ClassBody, ClassBodyDeclaration,
     ClassBodyMember, ClassDeclaration, ClassLiteralExpression, ClassType, ClassTypeSegment,
     CompactConstructorDeclaration, CompilationUnit, CompilationUnitItem, ComponentPattern,
-    ConditionalExpression, ConstructorBody, ConstructorDeclaration, ContinueStatement,
-    DefaultValue, DimExpression, DoStatement, EmptyDeclaration, EnhancedForStatement, EnumBody,
-    EnumConstant, EnumConstantList, EnumDeclaration, ExportsDirective, Expression,
-    ExpressionStatement, ExtendsClause, FieldAccessExpression, FieldDeclaration, FinallyClause,
-    ForInitializer, ForStatement, ForUpdate, FormalParameter, FormalParameterList, Guard,
-    IfStatement, ImplementsClause, ImportDeclaration, ImportKind, InstanceInitializer,
-    InstanceofExpression, InterfaceBody, InterfaceBodyMember, InterfaceDeclaration,
-    IntersectionType, JavaFamily, JavaNode, JavaSyntaxKind, JavaSyntaxToken, LabeledStatement,
-    LambdaExpression, LambdaParameter, LambdaParameterList, LiteralExpression,
+    ConditionalExpression, ConstructorBody, ConstructorDeclaration, ConstructorInvocation,
+    ContinueStatement, DefaultValue, DimExpression, DoStatement, EmptyDeclaration,
+    EnhancedForStatement, EnumBody, EnumConstant, EnumConstantList, EnumDeclaration,
+    ExportsDirective, Expression, ExpressionStatement, ExtendsClause, FieldAccessExpression,
+    FieldDeclaration, FinallyClause, ForInitializer, ForStatement, ForUpdate, FormalParameter,
+    FormalParameterList, Guard, IfStatement, ImplementsClause, ImportDeclaration, ImportKind,
+    InstanceInitializer, InstanceofExpression, InterfaceBody, InterfaceBodyMember,
+    InterfaceDeclaration, IntersectionType, JavaFamily, JavaNode, JavaSyntaxKind, JavaSyntaxToken,
+    LabeledStatement, LambdaExpression, LambdaParameter, LambdaParameterList, LiteralExpression,
     LocalClassOrInterfaceDeclaration, LocalVariableDeclaration, MatchAllPattern, MemberChain,
     MemberChainSuffix, MethodDeclaration, MethodInvocationExpression, MethodReferenceExpression,
     ModifierList, ModuleDeclaration, ModuleDirective, ModuleDirectiveNode, ModuleDirectiveRole,
@@ -841,8 +841,52 @@ impl CompactConstructorDeclaration {
 }
 
 impl ConstructorBody {
+    #[must_use]
+    pub fn invocation(&self) -> Option<ConstructorInvocation> {
+        child(&self.syntax)
+    }
+
+    pub fn block_statements(&self) -> impl Iterator<Item = BlockStatement> + '_ {
+        children(&self.syntax)
+    }
+
     pub fn items(&self) -> impl Iterator<Item = BlockItem> + '_ {
         children::<BlockStatement>(&self.syntax).filter_map(|node| node.item())
+    }
+}
+
+impl ConstructorInvocation {
+    #[must_use]
+    pub fn starts_after_blank_line(&self) -> bool {
+        starts_after_blank_line(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn qualifier_name(&self) -> Option<NameSyntax> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn qualifier_expression(&self) -> Option<Expression> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn type_arguments(&self) -> Option<TypeArgumentList> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn target(&self) -> Option<JavaSyntaxToken> {
+        child_token_in(
+            &self.syntax,
+            &[JavaSyntaxKind::ThisKw, JavaSyntaxKind::SuperKw],
+        )
+    }
+
+    #[must_use]
+    pub fn arguments(&self) -> Option<ArgumentList> {
+        child(&self.syntax)
     }
 }
 

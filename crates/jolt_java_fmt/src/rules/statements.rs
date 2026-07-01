@@ -37,13 +37,6 @@ pub(crate) fn format_block_body(block: &Block) -> Option<Doc> {
     format_block_statements_body(block)
 }
 
-pub(crate) fn format_block_items_body<'a>(
-    items: impl Iterator<Item = BlockItem> + 'a,
-) -> Option<Doc> {
-    let items = items.filter_map(format_block_item).collect::<Vec<_>>();
-    (!items.is_empty()).then(|| join_body_items(items))
-}
-
 fn format_block_statements_body(block: &Block) -> Option<Doc> {
     let statements = block.block_statements().collect::<Vec<_>>();
     let block_start = block.text_range().start().get();
@@ -102,7 +95,7 @@ fn format_block_statement_items(
     items
 }
 
-fn format_block_item(item: BlockItem) -> Option<BodyItem> {
+pub(crate) fn format_block_item(item: BlockItem) -> Option<BodyItem> {
     let starts_after_blank_line = item.starts_after_blank_line();
     let doc = match item {
         BlockItem::EmptyStatement(_) => None,
