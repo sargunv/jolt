@@ -252,7 +252,7 @@ Status legend:
 ## Definition Of Done Audit
 
 - `[x]` All style-guide rule fixtures pass.
-- `[~]` Every style-guide rule has one or more focused tests.
+- `[x]` Every style-guide rule has one or more focused tests.
 - `[x]` Formatting expected fixtures is idempotent.
 - `[x]` Imported Java fixture inputs format without formatter panics.
 - `[x]` Formatted imported fixtures parse.

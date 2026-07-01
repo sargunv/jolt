@@ -1,0 +1,5 @@
+class First {
+}
+
+class Second {
+}

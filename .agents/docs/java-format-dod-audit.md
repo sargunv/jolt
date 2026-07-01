@@ -22,16 +22,43 @@ Evidence:
 - `crates/jolt_java_fmt/tests/style_fixtures.rs` discovers every `*.input.java`
   fixture under `crates/jolt_java_fmt/tests/style`.
 - The latest verification passed `style_rule_fixtures_match_expected_output`.
-- Current fixture count: 70 style input fixtures.
+- Current fixture count: 74 style input fixtures.
 
 ### Every Style-Guide Rule Has One Or More Focused Tests
 
-Status: incomplete audit.
+Status: proven for the current style-guide documents.
 
 Evidence:
 
-- Focused style fixtures exist across comments, declarations, expressions,
-  imports, modules, program structure, and statements.
+- Focused style fixtures exist across every style-guide domain: comments,
+  declarations, expressions, imports, modules, program structure, and
+  statements.
+- Empty/comment-only file handling and final-newline behavior are pinned by
+  `program/empty-file`, `program/comment-only-file`, and
+  `program/final-newline`.
+- Program section spacing, redundant top-level semicolon removal, and top-level
+  blank-line collapse are pinned by `program/package-import-spacing`,
+  `program/removes-top-level-semicolons`, and `program/top-level-blank-lines`.
+- Package annotations and package-name normalization are pinned by
+  `program/package-import-spacing` and `program/qualified-names`.
+- Qualified-name dot tightening, block comments around dots, and line-comment
+  forced leading-dot layout are pinned by `program/qualified-names`,
+  `program/qualified-name-comments`, and `modules/qualified-names`.
+- Star-block normalization, unsupported branded ignore comments, formatter
+  ignore ranges, text-block preservation, and string/character literal
+  preservation are pinned by `comments/star-blocks`,
+  `program/unsupported-branded-ignore`, the `formatter-ignore-*` fixtures, and
+  `expressions/literals-and-text-blocks`.
+- Formatter ignore ranges are covered for block-statement sequences by
+  `statements/formatter-ignore-block`, constructor-body sequences by
+  `declarations/formatter-ignore-constructor-body`, class-member sequences by
+  `declarations/formatter-ignore-members`, interface-member sequences by
+  `declarations/formatter-ignore-interface-members`, annotation-interface member
+  sequences by `declarations/formatter-ignore-annotation-interface-members`,
+  top-level end-of-file sequences by `program/formatter-ignore-top-level`,
+  top-level next-item boundaries by
+  `program/formatter-ignore-top-level-next-item`, and module directive ranges by
+  `modules/formatter-ignore-directives`.
 - Moved/normalized construct-leading comments are pinned for top-level type
   declarations by `declarations/type-leading-comments`, parameters/components by
   `declarations/parameter-and-component-comments`, and callable members plus
@@ -46,29 +73,37 @@ Evidence:
 - Module directive ordering, grouping, canonical `requires` modifier ordering,
   target-list breaking, and ordinary comment barriers are pinned by
   `modules/directive-ordering`, `modules/name-list-comments`, and
-  `modules/comment-barrier`.
+  `modules/comment-barrier`; case-sensitive module-name comparison is pinned by
+  `modules/case-sensitive-sorting`.
+- Import ordering, normal/static grouping, module-import handling, star segment
+  ordering, case-sensitive comparison, and comment barriers are pinned by
+  `imports/normal-and-static-groups`, `imports/star-import-sorting`,
+  `imports/case-sensitive-sorting`, and `imports/comment-barrier`.
+- Declaration headers, clause ordering, broken-header brace placement,
+  parameters/components, receiver parameters, varargs annotations, `throws`,
+  constructors, compact record constructors, enum constants, annotation
+  interface members/defaults, type parameters/arguments, wildcards, annotated
+  dimensions, and empty type-body statement removal are pinned by the
+  declaration fixtures under `declarations/`.
+- Body blank-line preservation/capping, same-kind method separation, empty
+  blocks, comments-only blocks, local type declarations, unbraced-body
+  normalization, empty statement removal, labels, loops, `for` headers, switch
+  labels/rules/guards, jump/assert statements, try/catch/finally chains, and
+  try-with-resources resource lists are pinned by the statement fixtures under
+  `statements/`.
 - Complex-receiver member chains and blank-line normalization in member chains
   are pinned by `expressions/member-chains`; blank-line normalization in
   argument lists is pinned by `expressions/calls-and-arguments`.
 - Empty expression/list array initializers and non-empty initializer list
   formatting are pinned by `expressions/array-access-and-creation`.
-- Unsupported branded ignore spellings are pinned as ordinary comments by
-  `program/unsupported-branded-ignore`.
-
-Remaining work:
-
-- Cross-check each rule bullet in the style-guide documents against at least one
-  fixture case before marking this proven.
-- Formatter ignore ranges are covered for block-statement sequences by
-  `statements/formatter-ignore-block`, constructor-body sequences by
-  `declarations/formatter-ignore-constructor-body`, class-member sequences by
-  `declarations/formatter-ignore-members`, interface-member sequences by
-  `declarations/formatter-ignore-interface-members`, and annotation-interface
-  member sequences by
-  `declarations/formatter-ignore-annotation-interface-members`, top-level
-  end-of-file sequences by `program/formatter-ignore-top-level`, and top-level
-  next-item boundaries by `program/formatter-ignore-top-level-next-item`. Module
-  directive ranges are covered by `modules/formatter-ignore-directives`.
+- Parentheses preservation, binary/operator chains, ternaries, assignments,
+  calls/arguments, member chains, lambdas, method references, casts,
+  `instanceof`, patterns, object creation, anonymous class bodies, constructor
+  type arguments, array access/creation, and class literals are pinned by the
+  expression fixtures under `expressions/`.
+- Java template expressions remain outside the initial formatter scope by style
+  policy; parser-accepted syntax must still be formatted by a real rule, and the
+  imported-corpus harness rejects formatter diagnostics for accepted inputs.
 
 ### Formatting Expected Fixtures Is Idempotent
 
