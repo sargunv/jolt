@@ -211,9 +211,11 @@ Status legend:
 - `[~]` Leading/trailing/dangling comment classification.
 - `[ ]` Comment placement for moved constructs.
 - `[x]` Star-block comment normalization.
-- `[~]` `@formatter:off/on` raw range preservation: block-statement and
-  class-like member sequences preserve ignored line contents while formatting
-  surrounding items; remaining body kinds still need the same sequence pattern.
+- `[~]` `@formatter:off/on` raw range preservation: block-statement, class-like
+  member, interface-member, and annotation-interface-member sequences preserve
+  ignored line contents while formatting surrounding items; constructor bodies
+  still need the same sequence pattern after explicit constructor invocation
+  formatting is implemented.
 - `[x]` Text-block internal preservation.
 - `[x]` Imported-corpus comment/idempotence tests.
 
