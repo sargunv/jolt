@@ -11,25 +11,26 @@ use super::{
     CompactConstructorDeclaration, CompilationUnit, ComponentPattern, ConditionalExpression,
     ConstructorBody, ConstructorDeclaration, ContinueStatement, DefaultValue, DimExpression,
     DoStatement, EnhancedForStatement, EnumBody, EnumConstant, EnumConstantList, EnumDeclaration,
-    Expression, ExpressionStatement, ExtendsClause, FieldAccessExpression, FieldDeclaration,
-    FinallyClause, ForInitializer, ForStatement, ForUpdate, FormalParameter, FormalParameterList,
-    Guard, IfStatement, ImplementsClause, ImportDeclaration, ImportKind, InstanceInitializer,
-    InstanceofExpression, InterfaceBody, InterfaceBodyMember, InterfaceDeclaration,
-    IntersectionType, JavaFamily, JavaNode, JavaSyntaxKind, JavaSyntaxToken, LabeledStatement,
-    LambdaExpression, LambdaParameter, LambdaParameterList, LiteralExpression,
+    ExportsDirective, Expression, ExpressionStatement, ExtendsClause, FieldAccessExpression,
+    FieldDeclaration, FinallyClause, ForInitializer, ForStatement, ForUpdate, FormalParameter,
+    FormalParameterList, Guard, IfStatement, ImplementsClause, ImportDeclaration, ImportKind,
+    InstanceInitializer, InstanceofExpression, InterfaceBody, InterfaceBodyMember,
+    InterfaceDeclaration, IntersectionType, JavaFamily, JavaNode, JavaSyntaxKind, JavaSyntaxToken,
+    LabeledStatement, LambdaExpression, LambdaParameter, LambdaParameterList, LiteralExpression,
     LocalClassOrInterfaceDeclaration, LocalVariableDeclaration, MatchAllPattern, MemberChain,
     MemberChainSuffix, MethodDeclaration, MethodInvocationExpression, MethodReferenceExpression,
-    ModifierList, ModuleDeclaration, ModuleDirective, ModuleDirectiveNode, NameExpression,
-    NameSegment, NameSyntax, ObjectCreationExpression, PackageDeclaration, ParenthesizedExpression,
-    Pattern, PermitsClause, PostfixExpression, PrimitiveType, ProvidesDirective, RecordBody,
-    RecordComponent, RecordComponentList, RecordDeclaration, RecordPattern, RequiresDirective,
-    Resource, ResourceList, ResourceSpecification, ReturnStatement, Statement, StatementBody,
-    StatementExpressionList, StaticInitializer, SuperExpression, SwitchBlock, SwitchBlockEntry,
-    SwitchBlockStatementGroup, SwitchExpression, SwitchLabel, SwitchLabelCaseItem, SwitchRule,
-    SwitchStatement, SynchronizedStatement, ThisExpression, ThrowStatement, ThrowsClause,
-    TryStatement, TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList, TypeBoundList,
+    ModifierList, ModuleDeclaration, ModuleDirective, ModuleDirectiveNode, ModuleDirectiveRole,
+    NameExpression, NameSegment, NameSyntax, ObjectCreationExpression, OpensDirective,
+    PackageDeclaration, ParenthesizedExpression, Pattern, PermitsClause, PostfixExpression,
+    PrimitiveType, ProvidesDirective, RecordBody, RecordComponent, RecordComponentList,
+    RecordDeclaration, RecordPattern, RequiresDirective, Resource, ResourceList,
+    ResourceSpecification, ReturnStatement, Statement, StatementBody, StatementExpressionList,
+    StaticInitializer, SuperExpression, SwitchBlock, SwitchBlockEntry, SwitchBlockStatementGroup,
+    SwitchExpression, SwitchLabel, SwitchLabelCaseItem, SwitchRule, SwitchStatement,
+    SynchronizedStatement, ThisExpression, ThrowStatement, ThrowsClause, TryStatement,
+    TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList, TypeBoundList,
     TypeDeclaration, TypeParameter, TypeParameterList, TypePattern, UnaryExpression, UnionType,
-    VariableAccess, VariableDeclarator, VariableDeclaratorList, VariableInitializer,
+    UsesDirective, VariableAccess, VariableDeclarator, VariableDeclaratorList, VariableInitializer,
     VariableInitializerValue, VoidType, WhileStatement, WildcardBound, WildcardType,
     YieldStatement, child, child_family, child_token, child_token_in, children, children_family,
     children_tokens_matching, nth_child_family, nth_child_token, starts_after_blank_line, tokens,
@@ -2155,6 +2156,17 @@ impl ModuleDirectiveNode {
 }
 
 impl ModuleDirective {
+    #[must_use]
+    pub fn directive_role(&self) -> Option<ModuleDirectiveRole> {
+        match self {
+            Self::RequiresDirective(directive) => directive.directive_role(),
+            Self::ExportsDirective(directive) => directive.directive_role(),
+            Self::OpensDirective(directive) => directive.directive_role(),
+            Self::UsesDirective(directive) => directive.directive_role(),
+            Self::ProvidesDirective(directive) => directive.directive_role(),
+        }
+    }
+
     pub fn names(&self) -> impl Iterator<Item = NameSyntax> + '_ {
         children_family(self.syntax())
     }
@@ -2177,6 +2189,20 @@ impl ModuleDirective {
 
 impl RequiresDirective {
     #[must_use]
+    pub fn directive_role(&self) -> Option<ModuleDirectiveRole> {
+        Some(ModuleDirectiveRole::Requires {
+            module: self.module_name()?,
+            is_static: self.has_static_modifier(),
+            is_transitive: self.has_transitive_modifier(),
+        })
+    }
+
+    #[must_use]
+    pub fn module_name(&self) -> Option<NameSyntax> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
     pub fn has_static_modifier(&self) -> bool {
         child_token(&self.syntax, JavaSyntaxKind::StaticKw).is_some()
     }
@@ -2192,7 +2218,59 @@ impl RequiresDirective {
     }
 }
 
+impl ExportsDirective {
+    #[must_use]
+    pub fn directive_role(&self) -> Option<ModuleDirectiveRole> {
+        let mut names = self.names();
+        Some(ModuleDirectiveRole::Exports {
+            package: names.next()?,
+            targets: names.collect(),
+        })
+    }
+
+    pub fn names(&self) -> impl Iterator<Item = NameSyntax> + '_ {
+        children_family(&self.syntax)
+    }
+}
+
+impl OpensDirective {
+    #[must_use]
+    pub fn directive_role(&self) -> Option<ModuleDirectiveRole> {
+        let mut names = self.names();
+        Some(ModuleDirectiveRole::Opens {
+            package: names.next()?,
+            targets: names.collect(),
+        })
+    }
+
+    pub fn names(&self) -> impl Iterator<Item = NameSyntax> + '_ {
+        children_family(&self.syntax)
+    }
+}
+
+impl UsesDirective {
+    #[must_use]
+    pub fn directive_role(&self) -> Option<ModuleDirectiveRole> {
+        Some(ModuleDirectiveRole::Uses {
+            service: self.service_name()?,
+        })
+    }
+
+    #[must_use]
+    pub fn service_name(&self) -> Option<NameSyntax> {
+        child_family(&self.syntax)
+    }
+}
+
 impl ProvidesDirective {
+    #[must_use]
+    pub fn directive_role(&self) -> Option<ModuleDirectiveRole> {
+        Some(ModuleDirectiveRole::Provides {
+            service: self.service_name()?,
+            implementations: self.implementation_names().collect(),
+        })
+    }
+
     #[must_use]
     pub fn service_name(&self) -> Option<NameSyntax> {
         self.names().next()

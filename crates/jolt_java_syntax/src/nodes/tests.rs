@@ -183,6 +183,87 @@ fn module_declaration_directives_traverse_real_parser_output() {
 }
 
 #[test]
+fn module_directives_expose_structured_roles() {
+    let syntax = parse_clean(
+        r"
+                open module example.module {
+                    requires transitive static java.sql;
+                    exports example.api to friend.module;
+                    opens example.internal to friend.module;
+                    uses example.Service;
+                    provides example.Service with example.ServiceImpl;
+                }
+            ",
+    );
+    let module = syntax
+        .module_declaration()
+        .expect("module source should expose module declaration");
+    let directives = module.directives().collect::<Vec<_>>();
+    let directive_roles = directives
+        .iter()
+        .map(|directive| {
+            directive
+                .directive_role()
+                .map(|role| match role {
+                    ModuleDirectiveRole::Requires {
+                        module,
+                        is_static,
+                        is_transitive,
+                    } => format!(
+                        "requires:{}:{is_static}:{is_transitive}",
+                        module.compact_text()
+                    ),
+                    ModuleDirectiveRole::Exports { package, targets } => format!(
+                        "exports:{}:{}",
+                        package.compact_text(),
+                        targets
+                            .iter()
+                            .map(NameSyntax::compact_text)
+                            .collect::<Vec<_>>()
+                            .join(",")
+                    ),
+                    ModuleDirectiveRole::Opens { package, targets } => format!(
+                        "opens:{}:{}",
+                        package.compact_text(),
+                        targets
+                            .iter()
+                            .map(NameSyntax::compact_text)
+                            .collect::<Vec<_>>()
+                            .join(",")
+                    ),
+                    ModuleDirectiveRole::Uses { service } => {
+                        format!("uses:{}", service.compact_text())
+                    }
+                    ModuleDirectiveRole::Provides {
+                        service,
+                        implementations,
+                    } => format!(
+                        "provides:{}:{}",
+                        service.compact_text(),
+                        implementations
+                            .iter()
+                            .map(NameSyntax::compact_text)
+                            .collect::<Vec<_>>()
+                            .join(",")
+                    ),
+                })
+                .expect("module directive role")
+        })
+        .collect::<Vec<_>>();
+
+    assert_eq!(
+        directive_roles,
+        [
+            "requires:java.sql:true:true".to_owned(),
+            "exports:example.api:friend.module".to_owned(),
+            "opens:example.internal:friend.module".to_owned(),
+            "uses:example.Service".to_owned(),
+            "provides:example.Service:example.ServiceImpl".to_owned(),
+        ]
+    );
+}
+
+#[test]
 fn block_accessors_unwrap_parser_block_statement_items() {
     let parse = parse_compilation_unit(
         r"

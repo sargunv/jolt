@@ -1,7 +1,7 @@
 use jolt_fmt_ir::{Doc, concat, empty_line, hard_line, literal_text, text};
 use jolt_java_syntax::{
     CompilationUnit, ImportDeclaration, ImportKind, ModuleDeclaration, ModuleDirective,
-    PackageDeclaration,
+    ModuleDirectiveRole, PackageDeclaration,
 };
 
 use crate::rules::annotations::format_annotation;
@@ -322,60 +322,48 @@ struct FormattedModuleDirective {
 
 impl FormattedModuleDirective {
     fn from_directive(directive: &ModuleDirective) -> Self {
-        let names = directive
-            .names()
-            .map(|name| FormattedName::from_name(&name))
-            .collect::<Vec<_>>();
-        let primary_name = names
-            .first()
-            .map_or_else(String::new, |name| name.key.clone());
-        let kind_order = module_directive_kind_order(directive);
-        let doc = match directive {
-            ModuleDirective::RequiresDirective(requires) => {
+        let role = directive
+            .directive_role()
+            .expect("clean module directive should expose a directive role");
+        let primary_name = module_directive_primary_name(&role);
+        let kind_order = module_directive_kind_order(&role);
+        let doc = match role {
+            ModuleDirectiveRole::Requires {
+                module,
+                is_static,
+                is_transitive,
+            } => {
                 let mut parts = vec![text("requires ")];
-                if requires.has_static_modifier() {
+                if is_static {
                     parts.push(text("static "));
                 }
-                if requires.has_transitive_modifier() {
+                if is_transitive {
                     parts.push(text("transitive "));
                 }
-                parts.push(
-                    names
-                        .first()
-                        .map_or_else(jolt_fmt_ir::nil, |name| name.doc.clone()),
-                );
+                parts.push(format_name(&module));
                 parts.push(text(";"));
                 concat(parts)
             }
-            ModuleDirective::ExportsDirective(_) => {
-                format_named_targets_directive("exports", &names, " to ")
+            ModuleDirectiveRole::Exports { package, targets } => {
+                format_named_targets_directive("exports", &package, targets, " to ")
             }
-            ModuleDirective::OpensDirective(_) => {
-                format_named_targets_directive("opens", &names, " to ")
+            ModuleDirectiveRole::Opens { package, targets } => {
+                format_named_targets_directive("opens", &package, targets, " to ")
             }
-            ModuleDirective::UsesDirective(_) => concat([
-                text("uses "),
-                names
-                    .first()
-                    .map_or_else(jolt_fmt_ir::nil, |name| name.doc.clone()),
-                text(";"),
-            ]),
-            ModuleDirective::ProvidesDirective(provides) => {
-                let service = provides.service_name().map_or_else(
-                    || {
-                        names
-                            .first()
-                            .map_or_else(jolt_fmt_ir::nil, |name| name.doc.clone())
-                    },
-                    |name| format_name(&name),
-                );
-                let implementations = provides
-                    .implementation_names()
+            ModuleDirectiveRole::Uses { service } => {
+                concat([text("uses "), format_name(&service), text(";")])
+            }
+            ModuleDirectiveRole::Provides {
+                service,
+                implementations,
+            } => {
+                let implementations = implementations
+                    .into_iter()
                     .map(|name| format_name(&name))
                     .collect::<Vec<_>>();
                 concat([
                     text("provides "),
-                    service,
+                    format_name(&service),
                     text(" with "),
                     join_docs(implementations, &text(", ")),
                     text(";"),
@@ -409,29 +397,17 @@ impl FormattedModuleDirective {
     }
 }
 
-struct FormattedName {
-    key: String,
-    doc: Doc,
-}
-
-impl FormattedName {
-    fn from_name(name: &jolt_java_syntax::NameSyntax) -> Self {
-        Self {
-            key: name_key(name),
-            doc: format_name(name),
-        }
-    }
-}
-
-fn format_named_targets_directive(keyword: &str, names: &[FormattedName], separator: &str) -> Doc {
-    let Some(subject) = names.first() else {
-        return text(format!("{keyword};"));
-    };
-    if names.len() == 1 {
+fn format_named_targets_directive(
+    keyword: &str,
+    subject: &jolt_java_syntax::NameSyntax,
+    targets: Vec<jolt_java_syntax::NameSyntax>,
+    separator: &str,
+) -> Doc {
+    if targets.is_empty() {
         return concat([
             text(keyword.to_owned()),
             text(" "),
-            subject.doc.clone(),
+            format_name(subject),
             text(";"),
         ]);
     }
@@ -439,22 +415,33 @@ fn format_named_targets_directive(keyword: &str, names: &[FormattedName], separa
     concat([
         text(keyword.to_owned()),
         text(" "),
-        subject.doc.clone(),
+        format_name(subject),
         text(separator.to_owned()),
         join_docs(
-            names[1..].iter().map(|name| name.doc.clone()).collect(),
+            targets.into_iter().map(|name| format_name(&name)).collect(),
             &text(", "),
         ),
         text(";"),
     ])
 }
 
-const fn module_directive_kind_order(directive: &ModuleDirective) -> ModuleDirectiveKindOrder {
-    match directive {
-        ModuleDirective::RequiresDirective(_) => ModuleDirectiveKindOrder::Requires,
-        ModuleDirective::ExportsDirective(_) => ModuleDirectiveKindOrder::Exports,
-        ModuleDirective::OpensDirective(_) => ModuleDirectiveKindOrder::Opens,
-        ModuleDirective::UsesDirective(_) => ModuleDirectiveKindOrder::Uses,
-        ModuleDirective::ProvidesDirective(_) => ModuleDirectiveKindOrder::Provides,
+fn module_directive_primary_name(role: &ModuleDirectiveRole) -> String {
+    match role {
+        ModuleDirectiveRole::Requires { module, .. } => name_key(module),
+        ModuleDirectiveRole::Exports { package, .. }
+        | ModuleDirectiveRole::Opens { package, .. } => name_key(package),
+        ModuleDirectiveRole::Uses { service } | ModuleDirectiveRole::Provides { service, .. } => {
+            name_key(service)
+        }
+    }
+}
+
+const fn module_directive_kind_order(role: &ModuleDirectiveRole) -> ModuleDirectiveKindOrder {
+    match role {
+        ModuleDirectiveRole::Requires { .. } => ModuleDirectiveKindOrder::Requires,
+        ModuleDirectiveRole::Exports { .. } => ModuleDirectiveKindOrder::Exports,
+        ModuleDirectiveRole::Opens { .. } => ModuleDirectiveKindOrder::Opens,
+        ModuleDirectiveRole::Uses { .. } => ModuleDirectiveKindOrder::Uses,
+        ModuleDirectiveRole::Provides { .. } => ModuleDirectiveKindOrder::Provides,
     }
 }

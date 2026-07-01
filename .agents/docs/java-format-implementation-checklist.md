@@ -63,7 +63,7 @@ Status legend:
 
 - `[ ]` Compilation-unit item order.
 - `[x]` Import static/star/name/comment roles.
-- `[~]` Module directive kind/name/target/comment roles.
+- `[x]` Module directive kind/name/target/comment roles.
 - `[x]` Modifier keyword and annotation roles.
 - `[~]` Declaration headers and bodies.
 - `[x]` Constructor body accessors.

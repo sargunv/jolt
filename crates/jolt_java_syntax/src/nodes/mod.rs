@@ -719,6 +719,30 @@ pub enum ImportKind {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ModuleDirectiveRole {
+    Requires {
+        module: NameSyntax,
+        is_static: bool,
+        is_transitive: bool,
+    },
+    Exports {
+        package: NameSyntax,
+        targets: Vec<NameSyntax>,
+    },
+    Opens {
+        package: NameSyntax,
+        targets: Vec<NameSyntax>,
+    },
+    Uses {
+        service: NameSyntax,
+    },
+    Provides {
+        service: NameSyntax,
+        implementations: Vec<NameSyntax>,
+    },
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum StatementBody {
     Block(Block),
     Empty(EmptyStatement),
