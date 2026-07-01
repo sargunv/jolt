@@ -22,6 +22,10 @@ use crate::helpers::formatter_ignore::{
     is_formatter_control_marker,
 };
 use crate::helpers::lists::{CommaListItem, parenthesized_list};
+use crate::helpers::member_body::{
+    MemberBodyCategory as MemberCategory, MemberBodyItem as FormattedMember,
+    join_member_body as join_member_docs,
+};
 use crate::rules::annotations::format_annotation_element_value;
 use crate::rules::expressions::{format_argument_list, format_expression};
 use crate::rules::modifiers::{
@@ -1021,51 +1025,6 @@ fn name_has_leading_comments(name: &jolt_java_syntax::NameSyntax) -> bool {
         .is_some_and(|token| !token.leading_comments().is_empty())
 }
 
-fn join_member_docs(members: Vec<FormattedMember>) -> Doc {
-    let mut joined = Vec::new();
-    let mut previous_category = None;
-    let mut previous_was_neutral = false;
-
-    for member in members {
-        if !joined.is_empty() {
-            joined.push(member_separator(
-                previous_category,
-                member.category,
-                member.starts_after_blank_line,
-                previous_was_neutral,
-            ));
-        }
-        previous_was_neutral = member.category.is_none();
-        if let Some(category) = member.category {
-            previous_category = Some(category);
-        }
-        joined.push(member.doc);
-    }
-
-    concat(joined)
-}
-
-fn member_separator(
-    previous_category: Option<MemberCategory>,
-    current_category: Option<MemberCategory>,
-    starts_after_blank_line: bool,
-    previous_was_neutral: bool,
-) -> Doc {
-    if previous_was_neutral {
-        return hard_line();
-    }
-    if starts_after_blank_line {
-        return jolt_fmt_ir::empty_line();
-    }
-
-    match (previous_category, current_category) {
-        (Some(MemberCategory::Field), Some(MemberCategory::Field))
-        | (None, Some(_))
-        | (_, None) => hard_line(),
-        _ => jolt_fmt_ir::empty_line(),
-    }
-}
-
 fn join_docs(docs: Vec<Doc>, separator: &Doc) -> Doc {
     let mut joined = Vec::new();
     for doc in docs {
@@ -1077,45 +1036,7 @@ fn join_docs(docs: Vec<Doc>, separator: &Doc) -> Doc {
     concat(joined)
 }
 
-#[derive(Clone, Copy, Eq, PartialEq)]
-enum MemberCategory {
-    Field,
-    Constructor,
-    Method,
-    Initializer,
-    Type,
-}
-
-struct FormattedMember {
-    category: Option<MemberCategory>,
-    starts_after_blank_line: bool,
-    doc: Doc,
-}
-
 impl FormattedMember {
-    fn comment(doc: Doc) -> Self {
-        Self {
-            category: None,
-            starts_after_blank_line: false,
-            doc,
-        }
-    }
-
-    fn ignored(doc: Doc, category: MemberCategory) -> Self {
-        Self {
-            category: Some(category),
-            starts_after_blank_line: false,
-            doc,
-        }
-    }
-
-    fn without_blank_line_before(self) -> Self {
-        Self {
-            starts_after_blank_line: false,
-            ..self
-        }
-    }
-
     fn from_member(member: &ClassBodyMember) -> Self {
         let starts_after_blank_line = member.starts_after_blank_line();
         match member {

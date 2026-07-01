@@ -100,7 +100,7 @@ Status legend:
 - `[x]` `angle_bracket_list`
 - `[x]` `braced_block`
 - `[x]` `declaration_header`
-- `[~]` `member_body`
+- `[x]` `member_body`
 - `[x]` `modifier_list`
 - `[x]` `annotation_group`
 - `[x]` `assignment_rhs`
