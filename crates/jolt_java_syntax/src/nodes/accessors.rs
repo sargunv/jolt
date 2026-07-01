@@ -121,12 +121,16 @@ impl PackageDeclaration {
 }
 
 impl NameSyntax {
+    pub fn segments(&self) -> impl Iterator<Item = JavaSyntaxToken> + '_ {
+        children_tokens_matching(self.syntax(), |kind| kind == JavaSyntaxKind::Identifier)
+    }
+
     #[must_use]
     pub fn compact_text(&self) -> String {
-        self.tokens()
-            .into_iter()
+        self.segments()
             .map(|token| token.text().to_owned())
-            .collect()
+            .collect::<Vec<_>>()
+            .join(".")
     }
 }
 

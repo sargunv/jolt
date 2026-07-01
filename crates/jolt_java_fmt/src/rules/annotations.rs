@@ -6,13 +6,14 @@ use jolt_java_syntax::{
 
 use crate::helpers::lists::{braced_initializer_list, parenthesized_list};
 use crate::rules::expressions::format_expression;
+use crate::rules::names::format_name;
 
 pub(crate) fn format_annotation(annotation: &Annotation) -> Doc {
     concat([
         text("@"),
         annotation
             .name()
-            .map_or_else(jolt_fmt_ir::nil, |name| text(name.compact_text())),
+            .map_or_else(jolt_fmt_ir::nil, |name| format_name(&name)),
         annotation
             .arguments()
             .map_or_else(jolt_fmt_ir::nil, |arguments| {

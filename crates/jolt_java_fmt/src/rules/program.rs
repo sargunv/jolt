@@ -6,6 +6,7 @@ use jolt_java_syntax::{
 
 use crate::helpers::comments::format_token_sequence;
 use crate::rules::declarations::format_type_declaration;
+use crate::rules::names::{format_name, name_key};
 
 pub(crate) fn format_compilation_unit(unit: &CompilationUnit) -> Doc {
     let mut sections = Vec::new();
@@ -45,7 +46,7 @@ fn format_package_declaration(package: &PackageDeclaration) -> Doc {
     let Some(name) = package.name() else {
         return format_token_sequence(&package.tokens());
     };
-    concat([text("package "), text(name_text(&name)), text(";")])
+    concat([text("package "), format_name(&name), text(";")])
 }
 
 fn format_imports(imports: Vec<ImportDeclaration>) -> Option<Doc> {
@@ -120,7 +121,7 @@ fn format_module_declaration(module: &ModuleDeclaration) -> Doc {
         } else {
             text("module ")
         },
-        text(name_text(&name)),
+        format_name(&name),
         text(" {"),
         indent_module_body(format_module_directives(module.directives().collect())),
         hard_line(),
@@ -213,17 +214,18 @@ struct FormattedImport {
     is_module: bool,
     is_static: bool,
     path: String,
+    path_doc: Doc,
 }
 
 impl FormattedImport {
     fn from_declaration(import: &ImportDeclaration) -> Self {
+        let (path, path_doc) = format_import_path(import);
         Self {
             leading_comments: import.leading_comment_texts(),
             is_module: import.is_module(),
             is_static: import.is_static(),
-            path: import
-                .import_path()
-                .unwrap_or_else(|| compact_import_path_from_tokens(import.tokens())),
+            path,
+            path_doc,
         }
     }
 
@@ -240,7 +242,7 @@ impl FormattedImport {
             } else {
                 jolt_fmt_ir::nil()
             },
-            text(self.path),
+            self.path_doc,
             text(";"),
         ]);
 
@@ -259,6 +261,22 @@ impl FormattedImport {
             ])
         }
     }
+}
+
+fn format_import_path(import: &ImportDeclaration) -> (String, Doc) {
+    let Some(name) = import.name() else {
+        let path = compact_import_path_from_tokens(import.tokens());
+        return (path.clone(), text(path));
+    };
+
+    let mut path = name_key(&name);
+    let mut path_doc = format_name(&name);
+    if import.is_star() {
+        path.push_str(".*");
+        path_doc = concat([path_doc, text(".*")]);
+    }
+
+    (path, path_doc)
 }
 
 #[derive(Clone, Copy, Eq, Ord, PartialEq, PartialOrd)]
@@ -281,9 +299,11 @@ impl FormattedModuleDirective {
     fn from_directive(directive: &ModuleDirective) -> Self {
         let names = directive
             .names()
-            .map(|name| name_text(&name))
+            .map(|name| FormattedName::from_name(&name))
             .collect::<Vec<_>>();
-        let primary_name = names.first().cloned().unwrap_or_default();
+        let primary_name = names
+            .first()
+            .map_or_else(String::new, |name| name.key.clone());
         let kind_order = module_directive_kind_order(directive);
         let doc = match directive {
             ModuleDirective::RequiresDirective(requires) => {
@@ -294,7 +314,11 @@ impl FormattedModuleDirective {
                 if requires.has_transitive_modifier() {
                     parts.push(text("transitive "));
                 }
-                parts.push(text(primary_name.clone()));
+                parts.push(
+                    names
+                        .first()
+                        .map_or_else(jolt_fmt_ir::nil, |name| name.doc.clone()),
+                );
                 parts.push(text(";"));
                 concat(parts)
             }
@@ -304,22 +328,31 @@ impl FormattedModuleDirective {
             ModuleDirective::OpensDirective(_) => {
                 format_named_targets_directive("opens", &names, " to ")
             }
-            ModuleDirective::UsesDirective(_) => {
-                concat([text("uses "), text(primary_name.clone()), text(";")])
-            }
+            ModuleDirective::UsesDirective(_) => concat([
+                text("uses "),
+                names
+                    .first()
+                    .map_or_else(jolt_fmt_ir::nil, |name| name.doc.clone()),
+                text(";"),
+            ]),
             ModuleDirective::ProvidesDirective(provides) => {
-                let service = provides
-                    .service_name()
-                    .map_or_else(|| primary_name.clone(), |name| name_text(&name));
+                let service = provides.service_name().map_or_else(
+                    || {
+                        names
+                            .first()
+                            .map_or_else(jolt_fmt_ir::nil, |name| name.doc.clone())
+                    },
+                    |name| format_name(&name),
+                );
                 let implementations = provides
                     .implementation_names()
-                    .map(|name| name_text(&name))
+                    .map(|name| format_name(&name))
                     .collect::<Vec<_>>();
                 concat([
                     text("provides "),
-                    text(service),
+                    service,
                     text(" with "),
-                    join_docs(implementations.into_iter().map(text).collect(), &text(", ")),
+                    join_docs(implementations, &text(", ")),
                     text(";"),
                 ])
             }
@@ -351,7 +384,21 @@ impl FormattedModuleDirective {
     }
 }
 
-fn format_named_targets_directive(keyword: &str, names: &[String], separator: &str) -> Doc {
+struct FormattedName {
+    key: String,
+    doc: Doc,
+}
+
+impl FormattedName {
+    fn from_name(name: &jolt_java_syntax::NameSyntax) -> Self {
+        Self {
+            key: name_key(name),
+            doc: format_name(name),
+        }
+    }
+}
+
+fn format_named_targets_directive(keyword: &str, names: &[FormattedName], separator: &str) -> Doc {
     let Some(subject) = names.first() else {
         return text(format!("{keyword};"));
     };
@@ -359,7 +406,7 @@ fn format_named_targets_directive(keyword: &str, names: &[String], separator: &s
         return concat([
             text(keyword.to_owned()),
             text(" "),
-            text(subject.clone()),
+            subject.doc.clone(),
             text(";"),
         ]);
     }
@@ -367,15 +414,14 @@ fn format_named_targets_directive(keyword: &str, names: &[String], separator: &s
     concat([
         text(keyword.to_owned()),
         text(" "),
-        text(subject.clone()),
+        subject.doc.clone(),
         text(separator.to_owned()),
-        join_docs(names[1..].iter().cloned().map(text).collect(), &text(", ")),
+        join_docs(
+            names[1..].iter().map(|name| name.doc.clone()).collect(),
+            &text(", "),
+        ),
         text(";"),
     ])
-}
-
-fn name_text(name: &jolt_java_syntax::NameSyntax) -> String {
-    name.compact_text()
 }
 
 fn compact_import_path_from_tokens(tokens: Vec<JavaSyntaxToken>) -> String {

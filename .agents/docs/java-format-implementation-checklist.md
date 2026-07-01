@@ -100,7 +100,7 @@ Status legend:
 - `[x]` `ternary_expression`
 - `[x]` `argument_list`
 - `[x]` `member_chain`
-- `[ ]` `qualified_name`
+- `[x]` `qualified_name`
 - `[~]` `line_comment`
 - `[~]` `block_comment`
 - `[x]` `star_block_comment`
@@ -143,7 +143,7 @@ Status legend:
 - `[~]` Import sorting with comment barriers.
 - `[~]` Module directive sorting/grouping.
 - `[x]` Redundant top-level semicolon removal.
-- `[~]` Qualified names.
+- `[x]` Qualified names.
 - `[~]` Literal/token leaves.
 
 ### 6. Declaration Layer
