@@ -19,7 +19,7 @@ dependencyLocking {
 }
 
 application {
-  mainClass.set("dev.sargunv.jolt.oracles.FormatterHarness")
+  mainClass.set("dev.sargunv.jolt.fixtures.FormatterHarness")
   // google-java-format and palantir-java-format use javac internals on the classpath;
   // Java 25 keeps those packages encapsulated unless the harness exports them.
   applicationDefaultJvmArgs = listOf(

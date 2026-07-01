@@ -21,11 +21,11 @@ run = "cargo test --workspace"
 [tasks.fix]
 run = "hk fix --all"
 
-[tasks.import-oracles]
-description = "Import oracle inputs and materialize expected formatter outputs"
+[tasks.import-fixtures]
+description = "Import formatter fixture inputs and advisory reference outputs"
 run = [
-  "python tools/oracles/import_oracles.py",
-  "gradle -q --project-dir tools/oracles/formatter-harness run --args \"$PWD/.oracles/fixtures\"",
+  "python tools/fixtures/import_fixtures.py",
+  "gradle -q --project-dir tools/fixtures/formatter-harness run --args \"$PWD/.fixtures/fixtures\"",
 ]
 
 [hooks]

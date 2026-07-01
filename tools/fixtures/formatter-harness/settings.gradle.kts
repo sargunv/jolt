@@ -12,4 +12,4 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "jolt-oracle-formatter-harness"
+rootProject.name = "jolt-fixture-formatter-harness"

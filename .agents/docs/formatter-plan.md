@@ -10,10 +10,10 @@ throwaway CLI tool. It should be the first durable piece of Jolt's source
 tooling substrate: a reusable, wasm-compatible formatting engine with a native
 CLI wrapper and a dprint plugin wrapper.
 
-The formatter should be opinionated, profile-driven, and compatibility-oriented.
-It should not introduce a new formatting style language, expose arbitrary
-formatting knobs, or invite users to assemble their own style from dozens of
-settings.
+The formatter should be opinionated, deterministic, and small enough to reason
+about. It should not chase byte-for-byte compatibility with upstream formatters,
+introduce a new formatting style language, or invite users to assemble their own
+style from dozens of settings.
 
 ## Scope
 
@@ -22,16 +22,12 @@ settings.
 - A reusable formatter engine for Java and Kotlin source text.
 - A native CLI wrapper for users who do not use dprint.
 - A dprint plugin compiled to `wasm32-unknown-unknown`.
-- Java formatting profiles compatible with:
-  - Google Java Format.
-  - Google Java Format AOSP mode.
-  - Palantir Java Format.
-- Kotlin formatting profiles compatible with:
-  - ktfmt's default/Meta style.
-  - ktfmt's Google style.
-  - ktfmt's Kotlin language style.
-- An oracle test harness that imports upstream formatter fixtures and
-  materializes expected outputs.
+- One Jolt-owned Java formatting policy, informed by established ecosystem
+  formatters but not compatible with them by contract.
+- One Jolt-owned Kotlin formatting policy, informed by established ecosystem
+  formatters but not compatible with them by contract.
+- A fixture harness that imports upstream formatter inputs for broad real-world
+  coverage.
 - A shared document IR and renderer used by both Java and Kotlin layout
   builders.
 - Formatter-native syntax infrastructure: lexer, parser, lossless CST, trivia,
@@ -77,27 +73,24 @@ terminals, process spawning, Gradle, Maven, or editor state.
 
 ## Command and Configuration Surface
 
-One formatting invocation may contain both Java and Kotlin files, so profile
-options must be language-scoped.
+One formatting invocation may contain both Java and Kotlin files. The public
+configuration surface should stay intentionally small.
 
 ```bash
 jolt fmt
 jolt fmt --check
 
-jolt fmt --java-profile google
-jolt fmt --java-profile aosp
-jolt fmt --java-profile palantir
-
-jolt fmt --kotlin-profile meta
-jolt fmt --kotlin-profile google
-jolt fmt --kotlin-profile kotlinlang
+jolt fmt --line-width 80
+jolt fmt --indent-width 2
+jolt fmt --tabs
 ```
 
 Tentative defaults:
 
 ```text
-java-profile   = google
-kotlin-profile = meta
+line-width   = 80
+indent-width = 2
+tabs         = false
 ```
 
 The dprint plugin should expose equivalent configuration:
@@ -105,13 +98,13 @@ The dprint plugin should expose equivalent configuration:
 ```json
 {
   "plugins": ["https://example.invalid/jolt_fmt.wasm"],
-  "jolt": { "javaProfile": "google", "kotlinProfile": "meta" }
+  "jolt": { "lineWidth": 80, "indentWidth": 2, "useTabs": false }
 }
 ```
 
-Profiles configure Jolt's internal formatter behavior. They are not oracle
-definitions. Oracle suites are test harness concepts that compare one Jolt
-profile configuration against one upstream formatter's output.
+These options are basic rendering constraints, not style presets. Java and
+Kotlin share the same public option shape unless a future language-specific
+option proves unavoidable.
 
 ## File Discovery
 
@@ -193,7 +186,7 @@ Language-specific:
   - syntax kinds
   - language-specific CST wrappers
   - CST-to-document layout builder
-  - profile behavior
+  - language-specific layout policy
 
 Shared:
   - source text utilities
@@ -379,7 +372,7 @@ supported Java grammar by default, but keep recovery lossless and permissive
 enough that older source-level conflicts, such as identifiers that later became
 keywords or restricted identifiers, still produce a useful tree and diagnostics.
 Do not add `--source` or `--release` style parser configuration until formatter
-write-safety or compatibility behavior genuinely requires source-level policy.
+write-safety genuinely requires source-level policy.
 
 ### Parser event stream
 
@@ -438,46 +431,28 @@ LineSuffixBoundary
 Fill
 BestFitting
 Labelled groups
-Profile-sensitive conditional groups
 ```
 
 The first implementation should stay small. Add IR features only when real
 Java/Kotlin formatting cases require them.
 
-## Formatting Profiles
+## Formatter Options
 
-Profiles should be small product-level choices.
+Jolt should expose basic rendering constraints, not named compatibility modes.
 
-They should configure internal whitespace and line-breaking behavior, but should
-not expose arbitrary style options.
-
-Tentative profile enums:
-
-```rust
-pub enum JavaProfile {
-    Google,
-    Aosp,
-    Palantir,
-}
-
-pub enum KotlinProfile {
-    Meta,
-    Google,
-    Kotlinlang,
-}
-```
-
-A single formatter invocation may use both a Java profile and a Kotlin profile.
+Initial options:
 
 ```rust
 pub struct FormatOptions {
-    pub java_profile: JavaProfile,
-    pub kotlin_profile: KotlinProfile,
+    pub line_width: u16,
+    pub indent_width: u8,
+    pub use_tabs: bool,
 }
 ```
 
-The formatter should not treat profiles as external executable choices. External
-executables are only used by the oracle harness.
+The formatter may gain additional knobs only when they are small, language
+agnostic where possible, and needed by real users. Do not add options to emulate
+Google Java Format, AOSP, Palantir Java Format, or ktfmt modes.
 
 ## Imports Boundary
 
@@ -487,8 +462,8 @@ Import cleanup is not formatting.
 
 `jolt fmt` may:
 
-- sort imports according to the active profile,
-- normalize blank lines between import groups according to the active profile.
+- sort imports according to Jolt's policy,
+- normalize blank lines between import groups according to Jolt's policy.
 
 `jolt fmt` must not:
 
@@ -496,9 +471,9 @@ Import cleanup is not formatting.
 - add missing imports,
 - rename symbols,
 - perform semantic refactors,
-- expand or collapse wildcard imports unless that behavior is strictly part of
-  the selected profile's formatting behavior and can be reproduced safely
-  without project resolution.
+- expand or collapse wildcard imports unless that behavior is part of Jolt's
+  documented formatting policy and can be reproduced safely without project
+  resolution.
 
 A future `jolt imports` command can perform semantic or project-aware import
 cleanup.
@@ -570,11 +545,11 @@ crates/
 
   jolt_java_fmt/
     Java CST -> document layout builder
-    Google/AOSP/Palantir profile behavior
+    Jolt Java layout policy
 
   jolt_kotlin_fmt/
     Kotlin CST -> document layout builder
-    ktfmt meta, google, and kotlinlang profile behavior
+    Jolt Kotlin layout policy
 
   jolt_fmt_core/
     public format API
@@ -589,8 +564,8 @@ crates/
     wasm dprint plugin
 
 tools/
-  oracles/
-    native-only oracle fixture import/update helpers invoked by mise
+  fixtures/
+    native-only fixture import/update helpers invoked by mise
 ```
 
 The exact crate boundaries can change, but the concern boundaries should remain
@@ -629,77 +604,69 @@ The plugin should not contain separate formatting behavior.
 The dprint plugin is the reason wasm compatibility must be a hard local build
 target from the beginning.
 
-## Oracle Fixtures and Import
+## Fixture Import
 
-Oracle import tooling is native-only. It can spawn JVM tools, clone upstream
+Fixture import tooling is native-only. It can spawn JVM tools, clone upstream
 repositories, and perform filesystem-heavy fixture import work.
 
-The engine and dprint plugin must not depend on oracle machinery.
+The engine and dprint plugin must not depend on fixture import machinery.
 
-### Oracle suites
+### Fixture suites
 
-Initial oracle suites:
+Initial imported fixture suites:
 
 ```text
 google-java-format:
   upstream fixtures: google-java-format fixtures
-  profiles:
-    google:
-      upstream executable: google-java-format --skip-removing-unused-imports
-      Jolt config: java-profile = google
-    aosp:
-      upstream executable: google-java-format --aosp --skip-removing-unused-imports
-      Jolt config: java-profile = aosp
 
 palantir-java-format:
   upstream fixtures: palantir-java-format fixtures
-  profiles:
-    palantir:
-      upstream executable: palantir-java-format --palantir --skip-removing-unused-imports
-      Jolt config: java-profile = palantir
+
+prettier-java:
+  upstream fixtures: prettier-java unit-test fixtures
+  notes: mixed full-file and snippet/edge-case formatter inputs
 
 ktfmt:
   upstream fixtures: ktfmt fixtures
-  profiles:
-    meta:
-      upstream executable: ktfmt
-      Jolt config: kotlin-profile = meta
-    google:
-      upstream executable: ktfmt --google-style
-      Jolt config: kotlin-profile = google
-    kotlinlang:
-      upstream executable: ktfmt --kotlinlang-style
-      Jolt config: kotlin-profile = kotlinlang
 ```
 
 ### Fixture import
 
-Oracle output should be materialized during an explicit import/update step.
+Fixture input import should happen during an explicit import/update step.
+Materialized upstream outputs may be kept as reference artifacts, but they are
+not pass/fail expectations for Jolt.
 
 ```text
-mise run import-oracles
+mise run import-fixtures
   -> checkout pinned upstream formatter repos
   -> collect fixture inputs
-  -> write inputs into Jolt's oracle fixture directory
-  -> materialize expected output for each supported profile
+  -> write inputs into Jolt's fixture directory
+  -> optionally materialize upstream outputs for advisory reports
 ```
 
 Ordinary test runs should not spawn upstream formatters.
 
 ```text
 cargo test -p jolt_java_fmt
-  -> read materialized Java oracle input and expected output
+  -> read materialized Java fixture inputs
   -> run Jolt formatter in-process
-  -> compare output
+  -> assert deterministic output and idempotence
+  -> optionally report advisory diffs against upstream reference outputs
 ```
 
-No hash cache is necessary for the initial design. Oracle import is a deliberate
-update operation, and normal tests are pure and fast.
+No hash cache is necessary for the initial design. Fixture import is a
+deliberate update operation, and normal tests are pure and fast.
+
+Not every imported fixture suite has the same validity contract. The Google Java
+Format and Palantir Java Format inputs are parser-clean Java source corpora
+except for explicitly listed invalid upstream cases. Prettier Java unit fixtures
+are broader formatter examples and may include snippets or intentionally invalid
+edge cases; use them for formatter/reference coverage, not strict
+compilation-unit parser gates.
 
 ### Owned tests
 
-Jolt should not invent broad formatter fixtures for upstream-compatible
-profiles.
+Jolt should use imported upstream fixture inputs for broad coverage.
 
 Owned tests should focus on Jolt-owned behavior:
 
@@ -709,34 +676,31 @@ Owned tests should focus on Jolt-owned behavior:
 - engine API behavior,
 - wasm build viability,
 - invalid syntax diagnostics,
-- narrow regression cases not covered by upstream fixtures.
-
-If Jolt invents its own formatting profile later, that profile should get its
-own fixture suite.
+- narrow regression cases not covered by imported fixture inputs.
 
 ## Formatter Implementation Plan
 
-The formatter is Jolt's first product. The implementation should start by making
-the Java compatibility target visible, then build complete Java layers in order.
-It should not start with an abstract formatter substrate detached from upstream
-fixtures, and it should not build a narrow vertical path that only handles
-convenient Java files.
+The formatter is Jolt's first product. The implementation should start from real
+Java fixture inputs, then build complete Java layers in order. It should not
+start with an abstract formatter substrate detached from real source files, and
+it should not build a narrow vertical path that only handles convenient Java
+files.
 
 The first end-to-end product target is Java. The architecture should preserve
 the planned multi-language shape, but Java should be implemented through the
-engine, native CLI, dprint wrapper, and Java profiles before Kotlin
+engine, native CLI, dprint wrapper, and Jolt Java layout policy before Kotlin
 implementation work begins.
 
 Tests should live with the implementation they exercise:
 
-- Java formatter oracle comparisons live in `jolt_java_fmt`.
+- Java formatter fixture coverage and idempotence tests live in `jolt_java_fmt`.
 - Core API behavior lives in `jolt_fmt_core`.
 - CLI behavior lives in `jolt_fmt_cli`.
 - dprint behavior lives in `jolt_fmt_dprint`.
-- Oracle import/update tooling is invoked through mise and is not a formatter
+- Fixture import/update tooling is invoked through mise and is not a formatter
   test crate.
 
-### Milestone 1: workspace, mise tasks, and Java oracle import
+### Milestone 1: workspace, mise tasks, and Java fixture import
 
 Status: complete.
 
@@ -746,26 +710,24 @@ fixtures.
 Add:
 
 - Rust workspace skeleton,
-- mise tasks for oracle import/update,
-- native-only oracle import helpers under `tools/oracles`,
-- Java oracle fixture directory layout,
-- oracle metadata format,
+- mise tasks for fixture import/update,
+- native-only fixture import helpers under `tools/fixtures`,
+- Java fixture directory layout,
+- fixture metadata format,
 - pinned upstream source metadata for Google Java Format,
 - pinned upstream source metadata for Palantir Java Format,
-- materialized Java input and expected output fixtures for
-  `java-profile = google`,
-- materialized Java expected output fixtures for `java-profile = aosp`,
-- materialized Java input and expected output fixtures for
-  `java-profile = palantir`.
+- pinned upstream source metadata for Prettier Java,
+- materialized Java input fixtures,
+- optional upstream formatter outputs for advisory reports.
 
 The import operation is explicit:
 
 ```bash
-mise run import-oracles
+mise run import-fixtures
 ```
 
-This milestone answers the first implementation question: which Java files and
-formatter outputs are Jolt trying to match?
+This milestone answers the first implementation question: which Java files must
+Jolt parse, preserve, and format deterministically?
 
 ### Milestone 2: core formatter contract
 
@@ -780,8 +742,6 @@ Add crates and types for:
 - `jolt_fmt_core`,
 - `Language`,
 - `FormatOptions`,
-- `JavaProfile`,
-- `KotlinProfile`,
 - `FormatResult`,
 - `Diagnostic`,
 - `format_source`.
@@ -831,7 +791,7 @@ explicit policy once Jolt can prove the output is non-destructive.
 Status: complete.
 
 Build the Java lexer against every valid Java source file in the imported Java
-oracle corpus.
+fixture corpus.
 
 Add:
 
@@ -843,7 +803,7 @@ Add:
 - leading and trailing trivia,
 - token text ranges,
 - lexer diagnostics,
-- token stream round-trip tests over all imported Java oracle inputs.
+- token stream round-trip tests over all imported Java fixture inputs.
 
 This layer should operate correctly on the full imported Java corpus before
 parser work depends on it. The goal is not formatting yet. The goal is that Jolt
@@ -863,9 +823,9 @@ Add:
 - green tree storage,
 - red tree traversal wrappers,
 - Java parser event stream,
-- Java grammar coverage for valid source in the imported oracle corpus,
+- Java grammar coverage for valid source in the imported fixture corpus,
 - error nodes and parser diagnostics,
-- parse tests over all imported Java oracle inputs.
+- parse tests over all imported Java fixture inputs.
 
 This milestone should not be a minimal parser for a formatter demo. The parser
 layer should handle the valid Java source Jolt has imported before the Java
@@ -916,26 +876,25 @@ The IR should stay small, but it should be designed and tested as a shared layer
 for Java and Kotlin formatting. Add new IR features only when the existing
 algebra cannot express required formatter layouts.
 
-### Milestone 8: Google Java Format layout builder
+### Milestone 8: Jolt Java layout builder
 
 Status: pending.
 
-Implement the first Java formatter profile on top of the completed lexer,
-parser, CST, document IR, and renderer.
+Implement Jolt's Java formatter on top of the completed lexer, parser, CST,
+document IR, and renderer.
 
 Add:
 
 - `jolt_java_fmt`,
 - Java CST-to-document layout builder,
-- `java-profile = google`,
 - Java wiring in `format_source`,
-- oracle comparisons in `jolt_java_fmt` against materialized Google Java Format
-  outputs,
-- idempotence checks for passing oracle cases.
+- fixture-input coverage in `jolt_java_fmt`,
+- idempotence checks for all successfully formatted fixture inputs,
+- deterministic-output checks for repeated formatting runs.
 
-The comparison target is the full materialized Google Java Format corpus.
-Compatibility should be reported as fixture counts and percentages while
-implementation converges.
+The coverage target is the full imported Java input corpus. Advisory reports may
+compare Jolt output against upstream formatter outputs, but those diffs are not
+pass/fail compatibility gates.
 
 ### Milestone 9: Java comments and trivia hardening
 
@@ -955,7 +914,7 @@ Add:
 - narrowed regression fixtures for cases not present upstream.
 
 Owned regression fixtures are appropriate here because they cover Jolt-owned
-safety behavior or gaps in upstream fixtures, not broad style compatibility.
+safety behavior or gaps in imported fixture inputs.
 
 Parse-error no-write behavior belongs to the shared diagnostics/failure-policy
 milestone. This milestone may add Java-specific regression cases that exercise
@@ -966,7 +925,7 @@ diagnostic model.
 
 Status: pending.
 
-Add the CLI after the Java engine can format real oracle inputs through
+Add the CLI after the Java engine can format real fixture inputs through
 `format_source`.
 
 Add:
@@ -976,7 +935,9 @@ Add:
 - stdin/stdout,
 - `--check`,
 - `--write`,
-- `--java-profile`,
+- `--line-width`,
+- `--indent-width`,
+- `--tabs`,
 - include/exclude handling,
 - default `**/*.java` discovery for the Java phase,
 - `.gitignore` and `.ignore` handling,
@@ -998,53 +959,20 @@ Add:
 - wasm plugin build through the local check path,
 - dprint plugin config mapping,
 - Java extension registration,
-- dprint invocation tests over Java files from the committed oracle corpus.
+- dprint invocation tests over Java files from the committed fixture corpus.
 
 This milestone proves the dprint wrapper is thin. The plugin should not get a
 separate layout builder or option model.
 
-### Milestone 12: AOSP Java profile
+### Milestone 12: Java formatter hardening
 
 Status: pending.
 
-Add the second Google Java Format-compatible profile using the same fixture
-inputs.
+Cut across the Java product surface after the Java formatter has meaningful
+fixture coverage.
 
 Add:
 
-- `java-profile = aosp`,
-- AOSP oracle materialization from Google Java Format with `--aosp`,
-- profile-sensitive indentation and wrapping differences,
-- compatibility reporting separate from `java-profile = google`.
-
-This milestone should validate that profiles configure internal behavior rather
-than swapping external formatter executables.
-
-### Milestone 13: Palantir Java profile
-
-Status: pending.
-
-Add the third Java profile after the Google-shaped Java engine is mature.
-
-Add:
-
-- `java-profile = palantir`,
-- profile behavior needed for Palantir compatibility,
-- separate Palantir compatibility reporting.
-
-Any Palantir-specific behavior should be isolated as profile policy, not parser
-forks.
-
-### Milestone 14: Java formatter hardening
-
-Status: pending.
-
-Cut across the Java product surface after the three Java profiles have
-meaningful compatibility data.
-
-Add:
-
-- release-mode compatibility thresholds,
 - stable diagnostics wording,
 - check/write exit code guarantees,
 - documented parse-error and no-write behavior,
@@ -1053,47 +981,53 @@ Add:
 - formatter README or user docs.
 
 This milestone turns the accumulated work into the first coherent Java formatter
-product. Kotlin should start after this by repeating the same fixture-first,
-layer-complete process with ktfmt fixtures, then expanding CLI discovery and
-options to Kotlin files.
+product.
 
-## Compatibility Goals
+### Milestone 13: Kotlin formatter
 
-The formatter should be judged by oracle compatibility, not subjective style
-quality.
+Status: pending.
 
-Early Java target:
+Start Kotlin after the Java formatter, shared renderer, CLI, and dprint wrapper
+have proven the Jolt-owned formatter contract.
+
+Add:
+
+- Kotlin fixture input import,
+- Kotlin lexer and parser coverage over imported inputs,
+- `jolt_kotlin_fmt`,
+- Kotlin CST-to-document layout builder,
+- Kotlin wiring in `format_source`,
+- CLI and dprint extension coverage for `.kt` and `.kts`.
+
+Kotlin should repeat the same fixture-first, layer-complete process with ktfmt
+inputs without treating ktfmt outputs as pass/fail expectations.
+
+## Formatting Goals
+
+The formatter should be judged by Jolt's own contract, not byte-for-byte
+compatibility with upstream formatter outputs.
+
+Required for parser-clean Java inputs:
 
 ```text
-java-profile = google
-  -> high compatibility with materialized google-java-format fixtures
-  -> idempotent on all passing cases
-  -> no parse failures on valid fixture inputs
+deterministic output across repeated runs
+idempotence after one formatting pass
+stable, documented layout policy
+bounded, predictable rendering behavior
+no parse failures on valid fixture inputs
 ```
 
-Eventually:
+Required for the shared renderer:
 
 ```text
-java-profile = google
-  -> compatible with Google Java Format fixture output
-
-java-profile = aosp
-  -> compatible with Google Java Format AOSP fixture output
-
-java-profile = palantir
-  -> compatible with Palantir Java Format fixture output
-
-kotlin-profile = meta
-  -> compatible with ktfmt default/Meta fixture output
-
-kotlin-profile = google
-  -> compatible with ktfmt Google style fixture output
-
-kotlin-profile = kotlinlang
-  -> compatible with ktfmt Kotlin language style fixture output
+small document algebra
+linear or otherwise explicitly bounded rendering passes
+no compatibility-only primitives unless Jolt's own layout policy needs them
 ```
 
-Compatibility should be reported as a measurable percentage during development.
+Advisory reports may summarize diffs against Google Java Format, Palantir Java
+Format, Prettier Java, or ktfmt outputs to help humans evaluate Jolt's style.
+Those reports are not release gates.
 
 ## Failure Behavior
 
@@ -1131,12 +1065,10 @@ Do not add formatter suppression comments to the initial Java formatter.
 Modern formatter ecosystems do have precedent for this feature: Ruff supports
 formatter pragmas, Biome supports formatter ignore comments, and Oxfmt supports
 inline formatter ignore comments. That makes suppression comments a legitimate
-future escape hatch, but not something Jolt should invent before Java oracle
-compatibility works.
+future escape hatch, but not something Jolt should invent before the Java
+formatter contract is stable.
 
-For Java profiles, suppression comments should only be added later as explicit
-Jolt behavior, not as part of Google Java Format, AOSP, or Palantir
-compatibility unless an upstream oracle requires it.
+Suppression comments should only be added later as explicit Jolt behavior.
 
 ## Shared Syntax Boundary
 
@@ -1160,8 +1092,7 @@ Language-specific:
 - grammar and parser recovery rules,
 - language-specific CST wrappers,
 - comment attachment policy where language syntax requires it,
-- formatter layout builders,
-- profile behavior.
+- formatter layout builders.
 
 The rule is: Java should prove the generic storage APIs, but Kotlin should not
 inherit Java's grammar model. When Kotlin needs a different shape, keep that
@@ -1185,14 +1116,15 @@ filesystem-free.
 Java and Kotlin need separate syntax frontends and layout builders, but they
 should share the document IR and renderer.
 
-### Let oracles guide compatibility
+### Let fixtures guide coverage
 
-For upstream-compatible profiles, imported upstream fixtures and materialized
-upstream outputs are the source of truth.
+Imported upstream fixture inputs are broad coverage. Materialized upstream
+outputs are advisory references, not Jolt's formatting contract.
 
 ### Avoid style configuration sprawl
 
-Expose profiles, not knobs.
+Expose a few basic rendering options, not named compatibility modes or a style
+language.
 
 ### Keep formatting layout-only
 
@@ -1220,10 +1152,11 @@ Architecture and formatter references:
 - dprint Wasm plugin development:
   https://github.com/dprint/dprint/blob/main/docs/wasm-plugin-development.md
 
-Oracle references:
+Formatter references:
 
 - Google Java Format: https://github.com/google/google-java-format
 - Palantir Java Format: https://github.com/palantir/palantir-java-format
+- Prettier Java: https://github.com/jhipster/prettier-java
 - ktfmt: https://github.com/facebook/ktfmt
 
 ## Resolved Decisions
@@ -1231,7 +1164,7 @@ Oracle references:
 - Initial Java formatter: no formatter suppression comments.
 - Parse errors: no writes by default; recoverable-error formatting can be added
   later behind an explicit policy.
-- Kotlin profiles: expose `meta` for ktfmt's default style, `google` for ktfmt's
-  Google style, and `kotlinlang` for ktfmt's Kotlin language style.
+- Formatter configuration: expose basic rendering options, not named
+  compatibility modes.
 - Syntax sharing: share storage, traversal, events, diagnostics, and text
   utilities; keep grammar, CST wrappers, and layout builders language-specific.

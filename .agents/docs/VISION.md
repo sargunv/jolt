@@ -354,7 +354,7 @@ project the user actually has.
 
 The manifest belongs at the center of the product. It is the user-authored
 source of truth for ordinary project structure, dependencies, targets,
-toolchains, formatting profile, update policy, packaging intent, and publication
+toolchains, formatter options, update policy, packaging intent, and publication
 intent.
 
 The manifest should be shaped for JVM, KMP, Android, and native-adjacent
@@ -661,14 +661,14 @@ toolchains.
 
 Formatting is layout only.
 
-Jolt should expose profiles, not arbitrary style configuration. Supported
-profiles may include Google Java Format, AOSP, Palantir Java Format, and ktfmt.
+Jolt should expose a small set of formatter options, such as line width and
+indentation. It should not expose named compatibility modes.
 
 The engine may be flexible internally, but the product surface should remain
 small.
 
-The formatter may sort imports according to the active profile. It must not
-rename symbols or perform semantic refactors.
+The formatter may sort imports according to Jolt's documented policy. It must
+not rename symbols or perform semantic refactors.
 
 ### Import principles
 

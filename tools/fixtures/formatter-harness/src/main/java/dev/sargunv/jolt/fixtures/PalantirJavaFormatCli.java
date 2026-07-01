@@ -1,4 +1,4 @@
-package dev.sargunv.jolt.oracles;
+package dev.sargunv.jolt.fixtures;
 
 import com.palantir.javaformat.java.Main;
 import java.io.ByteArrayInputStream;

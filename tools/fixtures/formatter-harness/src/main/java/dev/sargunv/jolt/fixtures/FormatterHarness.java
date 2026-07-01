@@ -1,4 +1,4 @@
-package dev.sargunv.jolt.oracles;
+package dev.sargunv.jolt.fixtures;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -9,29 +9,29 @@ import java.util.List;
 
 public final class FormatterHarness {
     @FunctionalInterface
-    private interface FormatterProfile {
+    private interface FormatterReference {
         String format(String input, String filename) throws Exception;
     }
 
-    private record Profile(String name, FormatterProfile formatter) {}
+    private record Reference(String name, FormatterReference formatter) {}
 
-    private record Suite(String name, List<Profile> profiles) {}
+    private record Suite(String name, List<Reference> references) {}
 
-    private record SkippedFixture(String profileName, Path inputPath, Exception exception) {}
+    private record SkippedFixture(String referenceName, Path inputPath, Exception exception) {}
 
     private static final List<Suite> SUITES = List.of(
             new Suite(
                     "google-java-format",
                     List.of(
-                            new Profile(
+                            new Reference(
                                     "google",
                                     (input, filename) -> GoogleJavaFormatCli.format(
-                                            GoogleJavaFormatCli.Profile.GOOGLE, input, filename)),
-                            new Profile(
+                                            GoogleJavaFormatCli.ReferenceMode.GOOGLE, input, filename)),
+                            new Reference(
                                     "aosp",
                                     (input, filename) -> GoogleJavaFormatCli.format(
-                                            GoogleJavaFormatCli.Profile.AOSP, input, filename)))),
-            new Suite("palantir-java-format", List.of(new Profile("palantir", PalantirJavaFormatCli::format))));
+                                            GoogleJavaFormatCli.ReferenceMode.AOSP, input, filename)))),
+            new Suite("palantir-java-format", List.of(new Reference("palantir", PalantirJavaFormatCli::format))));
 
     private FormatterHarness() {}
 
@@ -49,32 +49,32 @@ public final class FormatterHarness {
             }
             var inputPaths = fixtureInputs(inputDir);
             System.err.println("materializing " + suite.name() + " outputs from " + inputPaths.size() + " input fixture(s)");
-            for (var profile : suite.profiles()) {
-                var profileName = suite.name() + "/" + profile.name();
+            for (var reference : suite.references()) {
+                var referenceName = suite.name() + "/" + reference.name();
                 var written = 0;
                 var skipped = 0;
                 for (var inputPath : inputPaths) {
                     var outputPath = fixturesRoot
                             .resolve(suite.name())
-                            .resolve(profile.name())
+                            .resolve(reference.name())
                             .resolve(inputPath.getFileName());
                     try {
-                        materialize(profile, inputPath, outputPath);
+                        materialize(reference, inputPath, outputPath);
                         written++;
                     } catch (Exception exception) {
-                        skippedFixtures.add(new SkippedFixture(profileName, inputPath, exception));
+                        skippedFixtures.add(new SkippedFixture(referenceName, inputPath, exception));
                         skipped++;
                     }
                 }
-                System.err.println("materialized " + written + " " + profileName + " output fixture(s)"
+                System.err.println("materialized " + written + " " + referenceName + " output fixture(s)"
                         + skippedSuffix(skipped));
             }
         }
         if (!skippedFixtures.isEmpty()) {
-            System.err.println("skipped " + skippedFixtures.size() + " oracle fixture(s):");
+            System.err.println("skipped " + skippedFixtures.size() + " fixture(s):");
             for (var skippedFixture : skippedFixtures) {
                 System.err.println(
-                        "- " + skippedFixture.profileName() + " " + skippedFixture.inputPath() + ": "
+                        "- " + skippedFixture.referenceName() + " " + skippedFixture.inputPath() + ": "
                                 + diagnostic(skippedFixture.exception()));
             }
         }
@@ -100,9 +100,9 @@ public final class FormatterHarness {
         }
     }
 
-    private static void materialize(Profile profile, Path inputPath, Path outputPath) throws Exception {
+    private static void materialize(Reference reference, Path inputPath, Path outputPath) throws Exception {
         var input = Files.readString(inputPath, StandardCharsets.UTF_8);
-        var output = profile.formatter().format(input, inputPath.getFileName().toString());
+        var output = reference.formatter().format(input, inputPath.getFileName().toString());
         var parent = outputPath.getParent();
         if (parent != null) {
             Files.createDirectories(parent);

@@ -14,51 +14,46 @@ pub enum Language {
     Kotlin,
 }
 
-/// Java formatter compatibility profile.
-#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
-pub enum JavaProfile {
-    /// Compatibility target for Google Java Format.
-    #[default]
-    Google,
-    /// Compatibility target for Google Java Format AOSP mode.
-    Aosp,
-    /// Compatibility target for Palantir Java Format.
-    Palantir,
-}
-
-/// Kotlin formatter compatibility profile.
-#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
-pub enum KotlinProfile {
-    /// Compatibility target for ktfmt default/Meta style.
-    #[default]
-    Meta,
-    /// Compatibility target for ktfmt Google style.
-    Google,
-    /// Compatibility target for ktfmt Kotlin language style.
-    KotlinLang,
-}
-
 /// Formatter options shared by CLI, dprint, tests, and direct engine callers.
-#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct FormatOptions {
-    /// Java profile used when formatting Java source.
-    pub java_profile: JavaProfile,
-    /// Kotlin profile used when formatting Kotlin source.
-    pub kotlin_profile: KotlinProfile,
+    /// Preferred maximum rendered line width.
+    pub line_width: u16,
+    /// Number of spaces per indentation level when `use_tabs` is false.
+    pub indent_width: u8,
+    /// Whether indentation should use tabs instead of spaces.
+    pub use_tabs: bool,
+}
+
+impl Default for FormatOptions {
+    fn default() -> Self {
+        Self {
+            line_width: 80,
+            indent_width: 2,
+            use_tabs: false,
+        }
+    }
 }
 
 impl FormatOptions {
-    /// Returns options with a different Java profile.
+    /// Returns options with a different line width.
     #[must_use]
-    pub const fn with_java_profile(mut self, java_profile: JavaProfile) -> Self {
-        self.java_profile = java_profile;
+    pub const fn with_line_width(mut self, line_width: u16) -> Self {
+        self.line_width = line_width;
         self
     }
 
-    /// Returns options with a different Kotlin profile.
+    /// Returns options with a different indentation width.
     #[must_use]
-    pub const fn with_kotlin_profile(mut self, kotlin_profile: KotlinProfile) -> Self {
-        self.kotlin_profile = kotlin_profile;
+    pub const fn with_indent_width(mut self, indent_width: u8) -> Self {
+        self.indent_width = indent_width;
+        self
+    }
+
+    /// Returns options with tab indentation enabled or disabled.
+    #[must_use]
+    pub const fn with_tabs(mut self, use_tabs: bool) -> Self {
+        self.use_tabs = use_tabs;
         self
     }
 }

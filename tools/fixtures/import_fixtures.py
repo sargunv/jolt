@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Import formatter oracle inputs."""
+"""Import formatter fixture inputs and advisory references."""
 
 import shutil
 import subprocess
@@ -10,8 +10,8 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-OUTPUT = ROOT / ".oracles"
-PINS = ROOT / "tools" / "oracles" / "oracle-pins.toml"
+OUTPUT = ROOT / ".fixtures"
+PINS = ROOT / "tools" / "fixtures" / "fixture-pins.toml"
 
 
 @dataclass(frozen=True)
@@ -19,6 +19,12 @@ class JavaSuite:
     repo: str
     suite: str
     input_dir: str
+    input_glob: str
+    input_name: str = "{stem}.java"
+    reference_dir: str | None = None
+    reference_glob: str | None = None
+    reference_name: str = "{stem}.java"
+    preserve_relative_parent: bool = False
 
 
 @dataclass(frozen=True)
@@ -33,6 +39,7 @@ JAVA_SUITES = (
         repo="google/google-java-format",
         suite="google-java-format",
         input_dir="core/src/test/resources/com/google/googlejavaformat/java/testdata",
+        input_glob="*.input",
     ),
     JavaSuite(
         repo="palantir/palantir-java-format",
@@ -40,6 +47,18 @@ JAVA_SUITES = (
         input_dir=(
             "palantir-java-format/src/test/resources/com/palantir/javaformat/java/testdata"
         ),
+        input_glob="*.input",
+    ),
+    JavaSuite(
+        repo="jhipster/prettier-java",
+        suite="prettier-java",
+        input_dir="test/unit-test",
+        input_glob="**/_input.java",
+        input_name="{parent}.java",
+        reference_dir="prettier",
+        reference_glob="**/_output.java",
+        reference_name="{parent}.java",
+        preserve_relative_parent=True,
     ),
 )
 
@@ -69,13 +88,12 @@ def main() -> int:
             raise RuntimeError(
                 f"missing upstream fixture directory: {source_dir}"
             )
+        input_root = fixtures_root / suite.suite / "input"
+        clear_dir(input_root)
         suite_count = 0
-        for input_path in sorted(source_dir.glob("*.input")):
-            materialized_input = (
-                fixtures_root
-                / suite.suite
-                / "input"
-                / f"{input_path.stem}.java"
+        for input_path in sorted(source_dir.glob(suite.input_glob)):
+            materialized_input = input_root / materialized_path(
+                suite, source_dir, suite.input_name, input_path
             )
             materialized_input.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(input_path, materialized_input)
@@ -83,8 +101,40 @@ def main() -> int:
             suite_count += 1
         log(f"imported {suite_count} {suite.suite} input fixture(s)")
 
-    print(f"imported {fixture_count} oracle inputs under {output_root}")
+        if suite.reference_dir and suite.reference_glob:
+            reference_root = fixtures_root / suite.suite / suite.reference_dir
+            clear_dir(reference_root)
+            reference_count = 0
+            for reference_path in sorted(source_dir.glob(suite.reference_glob)):
+                materialized_reference = reference_root / materialized_path(
+                    suite, source_dir, suite.reference_name, reference_path
+                )
+                materialized_reference.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(reference_path, materialized_reference)
+                reference_count += 1
+            log(
+                f"imported {reference_count} {suite.suite} advisory reference fixture(s)"
+            )
+
+    print(f"imported {fixture_count} fixture inputs under {output_root}")
     return 0
+
+
+def clear_dir(path: Path) -> None:
+    if path.exists():
+        log(f"clearing {path}")
+        shutil.rmtree(path)
+    path.mkdir(parents=True, exist_ok=True)
+
+
+def materialized_path(
+    suite: JavaSuite, source_dir: Path, template: str, path: Path
+) -> Path:
+    name = template.format(stem=path.stem, parent=path.parent.name, name=path.name)
+    if not suite.preserve_relative_parent:
+        return Path(name)
+    relative_parent = path.parent.relative_to(source_dir)
+    return relative_parent / name
 
 
 def load_pins() -> dict[str, RepoPin]:

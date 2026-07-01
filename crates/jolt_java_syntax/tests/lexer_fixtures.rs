@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 use jolt_java_syntax::{JavaLexer, JavaSyntaxKind, LexerDiagnostic, Token};
 
 #[test]
-fn oracle_java_inputs_lex_without_loss() {
+fn fixture_java_inputs_lex_without_loss() {
     let google_summary = assert_corpus("google-java-format", 209);
     let palantir_summary = assert_corpus("palantir-java-format", 226);
 
@@ -71,7 +71,7 @@ fn lex(source: &str) -> Lexed {
 fn fixture_root(suite: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../..")
-        .join(".oracles/fixtures")
+        .join(".fixtures/fixtures")
         .join(suite)
         .join("input")
 }

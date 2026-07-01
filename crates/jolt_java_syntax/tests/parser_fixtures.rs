@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 use jolt_java_syntax::{DiagnosticStage, JavaParse, JavaSyntaxKind, parse_compilation_unit};
 
 #[test]
-fn oracle_java_inputs_parse_without_loss() {
+fn fixture_java_inputs_parse_without_loss() {
     let google_summary = assert_corpus("google-java-format", 209);
     let palantir_summary = assert_corpus("palantir-java-format", 226);
 
@@ -65,7 +65,7 @@ fn assert_corpus(suite: &str, expected_files: usize) -> CorpusSummary {
 
 fn allows_syntax_diagnostics(path: &Path) -> bool {
     // Upstream formatter corpora include a few invalid Java inputs that still
-    // need lossless parsing for formatting compatibility.
+    // need lossless parsing for fixture coverage.
     path.file_name().is_some_and(|file_name| {
         matches!(
             file_name.to_str(),
@@ -77,7 +77,7 @@ fn allows_syntax_diagnostics(path: &Path) -> bool {
 fn fixture_root(suite: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../..")
-        .join(".oracles/fixtures")
+        .join(".fixtures/fixtures")
         .join(suite)
         .join("input")
 }
