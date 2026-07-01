@@ -176,10 +176,10 @@ Status legend:
 - `[~]` Ternaries.
 - `[~]` Assignments.
 - `[~]` Calls and break-all argument lists.
-- `[ ]` Member chains.
+- `[~]` Member chains.
 - `[~]` Lambdas.
-- `[ ]` Arrays/initializers.
-- `[ ]` Casts, `instanceof`, patterns, object creation, and type arguments.
+- `[~]` Arrays/initializers.
+- `[~]` Casts, `instanceof`, patterns, object creation, and type arguments.
 
 ### 9. Comments And Ignore Hardening
 

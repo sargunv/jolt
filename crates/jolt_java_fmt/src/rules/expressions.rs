@@ -1,7 +1,8 @@
 use jolt_fmt_ir::{Doc, concat, group, literal_text, text};
 use jolt_java_syntax::{
-    ArgumentList, AssignmentExpression, BinaryExpression, ConditionalExpression, Expression,
-    LambdaExpression, LambdaParameter, MethodInvocationExpression, ParenthesizedExpression,
+    ArgumentList, ArrayAccessExpression, AssignmentExpression, BinaryExpression,
+    ConditionalExpression, Expression, FieldAccessExpression, LambdaExpression, LambdaParameter,
+    MethodInvocationExpression, ObjectCreationExpression, ParenthesizedExpression,
     PostfixExpression, UnaryExpression,
 };
 
@@ -23,16 +24,18 @@ pub(crate) fn format_expression(expression: &Expression) -> Doc {
         | Expression::ThisExpression(_)
         | Expression::SuperExpression(_)
         | Expression::ClassLiteralExpression(_)
-        | Expression::FieldAccessExpression(_)
-        | Expression::ArrayAccessExpression(_)
         | Expression::MethodReferenceExpression(_)
-        | Expression::ObjectCreationExpression(_)
         | Expression::ArrayCreationExpression(_)
         | Expression::InstanceofExpression(_)
         | Expression::CastExpression(_)
         | Expression::SwitchExpression(_) => source_doc(&expression.source_text()),
+        Expression::FieldAccessExpression(expression) => format_field_access_expression(expression),
+        Expression::ArrayAccessExpression(expression) => format_array_access_expression(expression),
         Expression::MethodInvocationExpression(expression) => {
             format_method_invocation_expression(expression)
+        }
+        Expression::ObjectCreationExpression(expression) => {
+            format_object_creation_expression(expression)
         }
     }
 }
@@ -139,6 +142,51 @@ fn format_method_invocation_expression(expression: &MethodInvocationExpression) 
     group(concat([
         format_method_invocation_callee(expression),
         format_argument_list(expression.arguments()),
+    ]))
+}
+
+fn format_field_access_expression(expression: &FieldAccessExpression) -> Doc {
+    group(concat([
+        expression
+            .receiver()
+            .map_or_else(jolt_fmt_ir::nil, |receiver| format_expression(&receiver)),
+        text("."),
+        text(
+            expression
+                .field_name()
+                .map_or_else(String::new, |name| name.text().to_owned()),
+        ),
+    ]))
+}
+
+fn format_array_access_expression(expression: &ArrayAccessExpression) -> Doc {
+    group(concat([
+        expression
+            .array()
+            .map_or_else(jolt_fmt_ir::nil, |array| format_expression(&array)),
+        text("["),
+        expression
+            .index()
+            .map_or_else(jolt_fmt_ir::nil, |index| format_expression(&index)),
+        text("]"),
+    ]))
+}
+
+fn format_object_creation_expression(expression: &ObjectCreationExpression) -> Doc {
+    group(concat([
+        expression
+            .qualifier()
+            .map_or_else(jolt_fmt_ir::nil, |qualifier| {
+                concat([format_expression(&qualifier), text(".")])
+            }),
+        text("new "),
+        expression.ty().map_or_else(jolt_fmt_ir::nil, |ty| {
+            text(ty.source_text().trim().to_owned())
+        }),
+        format_argument_list(expression.arguments()),
+        expression.body().map_or_else(jolt_fmt_ir::nil, |body| {
+            concat([text(" "), source_doc(&body.source_text())])
+        }),
     ]))
 }
 

@@ -1,17 +1,17 @@
 use super::{
     Annotation, AnnotationArgumentList, AnnotationElementList, AnnotationInterfaceBody,
     AnnotationInterfaceBodyMember, AnnotationInterfaceDeclaration, AnyJavaNode, ArgumentList,
-    ArrayCreationExpression, ArrayDimensions, ArrayInitializer, ArrayType, AssertStatement,
-    AssignmentExpression, BasicForStatement, BinaryExpression, Block, BlockItem, BlockStatement,
-    BreakStatement, CastExpression, CatchClause, CatchParameter, CatchTypeList, ClassBody,
-    ClassBodyDeclaration, ClassBodyMember, ClassDeclaration, CompilationUnit,
+    ArrayAccessExpression, ArrayCreationExpression, ArrayDimensions, ArrayInitializer, ArrayType,
+    AssertStatement, AssignmentExpression, BasicForStatement, BinaryExpression, Block, BlockItem,
+    BlockStatement, BreakStatement, CastExpression, CatchClause, CatchParameter, CatchTypeList,
+    ClassBody, ClassBodyDeclaration, ClassBodyMember, ClassDeclaration, CompilationUnit,
     ConditionalExpression, ConstructorBody, ConstructorDeclaration, ContinueStatement,
     DimExpression, DoStatement, EnhancedForStatement, EnumBody, EnumConstant, EnumConstantList,
-    EnumDeclaration, Expression, ExpressionStatement, ExtendsClause, FieldDeclaration,
-    FinallyClause, ForInitializer, ForStatement, ForUpdate, FormalParameter, FormalParameterList,
-    IfStatement, ImplementsClause, ImportDeclaration, InstanceInitializer, InterfaceBody,
-    InterfaceBodyMember, InterfaceDeclaration, JavaNode, JavaSyntaxKind, JavaSyntaxToken,
-    LabeledStatement, LambdaExpression, LambdaParameter, LambdaParameterList,
+    EnumDeclaration, Expression, ExpressionStatement, ExtendsClause, FieldAccessExpression,
+    FieldDeclaration, FinallyClause, ForInitializer, ForStatement, ForUpdate, FormalParameter,
+    FormalParameterList, IfStatement, ImplementsClause, ImportDeclaration, InstanceInitializer,
+    InterfaceBody, InterfaceBodyMember, InterfaceDeclaration, JavaNode, JavaSyntaxKind,
+    JavaSyntaxToken, LabeledStatement, LambdaExpression, LambdaParameter, LambdaParameterList,
     LocalVariableDeclaration, MethodDeclaration, MethodInvocationExpression, ModifierList,
     ModuleDeclaration, ModuleDirective, ModuleDirectiveNode, NameSyntax, ObjectCreationExpression,
     PackageDeclaration, ParenthesizedExpression, PermitsClause, PostfixExpression,
@@ -598,6 +598,30 @@ impl ArgumentList {
     }
 }
 
+impl FieldAccessExpression {
+    #[must_use]
+    pub fn receiver(&self) -> Option<Expression> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn field_name(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Identifier)
+    }
+}
+
+impl ArrayAccessExpression {
+    #[must_use]
+    pub fn array(&self) -> Option<Expression> {
+        nth_child_family(&self.syntax, 0)
+    }
+
+    #[must_use]
+    pub fn index(&self) -> Option<Expression> {
+        nth_child_family(&self.syntax, 1)
+    }
+}
+
 impl ArrayType {
     #[must_use]
     pub fn dimensions(&self) -> Option<ArrayDimensions> {
@@ -720,6 +744,11 @@ impl CastExpression {
 }
 
 impl ObjectCreationExpression {
+    #[must_use]
+    pub fn qualifier(&self) -> Option<Expression> {
+        child_family(&self.syntax)
+    }
+
     #[must_use]
     pub fn ty(&self) -> Option<Type> {
         child_family(&self.syntax)
