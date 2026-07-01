@@ -7,6 +7,7 @@ It is an audit snapshot, not a replacement for the implementation checklist.
 ## Evidence Commands
 
 - `cargo fmt --check`
+- `cargo test -p jolt_fmt_ir`
 - `cargo clippy -p jolt_java_fmt -p jolt_java_syntax --all-targets -- -D warnings`
 - `cargo test -p jolt_java_fmt -p jolt_java_syntax`
 
@@ -97,6 +98,18 @@ Evidence:
   recovery shapes with missing required names.
 - Raw token-sequence declaration branches remain only for recovery trees that
   the public formatter does not lay out.
+
+### Shared Renderer Fit Probes Are Bounded
+
+Status: proven for the current document algebra.
+
+Evidence:
+
+- `fit_checks_use_nested_current_group_state` covers group fit probes pushing
+  the measured group as the current flat group.
+- `deeply_nested_fitting_groups_render_without_exploration` covers deep nested
+  group fitting without nested group exploration.
+- `cargo test -p jolt_fmt_ir` covers the shared renderer algebra.
 
 ### Formatting Choices Are Traceable To The Style Guide Or Spec
 

@@ -221,7 +221,7 @@ impl Renderer {
 
     fn group_fits(&self, group: &Group) -> Result<bool, RenderError> {
         let mut checker = FitChecker::from_renderer(self)?;
-        checker.fits_doc(&group.contents, Mode::Flat)
+        checker.fit_group_flat(group)
     }
 
     fn render_fill(&mut self, entries: &[FillEntry], mode: Mode) -> Result<(), RenderError> {
@@ -554,15 +554,20 @@ impl FitChecker {
         if group.should_break {
             return Ok(false);
         }
-        let mut nested = self.clone();
-        if !nested.fits_doc(&group.contents, Mode::Flat)? {
-            return Ok(false);
-        }
-        *self = nested;
+        self.fit_group_flat(group)
+    }
+
+    fn fit_group_flat(&mut self, group: &Group) -> Result<bool, RenderError> {
         if let Some(id) = group.id {
             self.group_modes.insert(id, false);
         }
-        Ok(true)
+        self.group_stack.push(GroupFrame {
+            id: group.id,
+            is_broken: false,
+        });
+        let result = self.fits_doc(&group.contents, Mode::Flat);
+        self.group_stack.pop();
+        result
     }
 
     fn fit_fill(&mut self, entries: &[FillEntry], mode: Mode) -> Result<bool, RenderError> {

@@ -153,6 +153,27 @@ fn indent_if_break_uses_labelled_group() {
 }
 
 #[test]
+fn fit_checks_use_nested_current_group_state() {
+    let doc = force_group(group(concat([
+        text("["),
+        if_break(text("expanded"), text("flat")),
+        text("]"),
+    ])));
+
+    assert_eq!(render_text(&doc, 6), "[flat]");
+}
+
+#[test]
+fn deeply_nested_fitting_groups_render_without_exploration() {
+    let mut doc = concat([text("x"), line(), text("y")]);
+    for _ in 0..1_500 {
+        doc = group(doc);
+    }
+
+    assert_eq!(render_text(&doc, 80), "x y");
+}
+
+#[test]
 fn fill_packs_independently() {
     let doc = fill(
         [

@@ -18,7 +18,9 @@ Status legend:
 - `[~]` Start with tests that pin style-guide behavior.
 - `[~]` Add missing CST accessors before printer workarounds.
 - `[~]` Add reusable layout helpers before full rule implementation.
-- `[ ]` Keep rendering bounded and linear.
+- `[x]` Keep rendering bounded and linear: group fit probes push the measured
+  group as flat, treat nested groups as flat contents unless forced, and are
+  covered by deep-nesting/current-group renderer tests.
 
 ## Target Layering
 
