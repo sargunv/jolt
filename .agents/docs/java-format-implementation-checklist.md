@@ -35,7 +35,7 @@ Status legend:
 
 - `[x]` Add `context.rs`.
 - `[x]` Add `format.rs`.
-- `[~]` Add `rules/` modules.
+- `[x]` Add `rules/` modules.
 - `[x]` Add `helpers/` modules.
 - `[ ]` Preserve dependency direction: rules -> helpers -> IR and rules ->
   syntax accessors.
@@ -44,7 +44,7 @@ Status legend:
 
 - `[x]` Define the rule dispatch API.
 - `[x]` Define `JavaFormatter` context.
-- `[ ]` Implement representative declaration-style rules with named helpers.
+- `[x]` Implement representative declaration-style rules with named helpers.
 - `[ ]` Keep rules free of output string assembly.
 
 ## Test Strategy

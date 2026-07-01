@@ -1,7 +1,10 @@
 pub(crate) mod annotations;
+pub(crate) mod comments;
 pub(crate) mod declarations;
 pub(crate) mod expressions;
+pub(crate) mod imports;
 pub(crate) mod modifiers;
+pub(crate) mod modules;
 pub(crate) mod names;
 pub(crate) mod patterns;
 pub(crate) mod program;

@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, concat, hard_line, text};
+use jolt_fmt_ir::{Doc, concat, empty_line, hard_line, text};
 
 pub(crate) struct BodyItem {
     doc: Doc,
@@ -46,10 +46,18 @@ pub(crate) fn empty_block() -> Doc {
 }
 
 pub(crate) fn join_hard_lines(docs: Vec<Doc>) -> Doc {
+    join_docs(docs, &hard_line())
+}
+
+pub(crate) fn join_empty_lines(docs: Vec<Doc>) -> Doc {
+    join_docs(docs, &empty_line())
+}
+
+fn join_docs(docs: Vec<Doc>, separator: &Doc) -> Doc {
     let mut joined = Vec::new();
     for doc in docs {
         if !joined.is_empty() {
-            joined.push(hard_line());
+            joined.push(separator.clone());
         }
         joined.push(doc);
     }
