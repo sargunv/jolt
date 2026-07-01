@@ -175,7 +175,7 @@ Status legend:
 - `[~]` Binary/operator chains.
 - `[~]` Ternaries.
 - `[~]` Assignments.
-- `[ ]` Calls and break-all argument lists.
+- `[~]` Calls and break-all argument lists.
 - `[ ]` Member chains.
 - `[~]` Lambdas.
 - `[ ]` Arrays/initializers.

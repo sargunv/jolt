@@ -20,10 +20,11 @@ use super::{
     StatementExpressionList, StaticInitializer, SwitchBlock, SwitchBlockEntry,
     SwitchBlockStatementGroup, SwitchExpression, SwitchLabel, SwitchRule, SwitchStatement,
     SynchronizedStatement, ThrowStatement, ThrowsClause, TryStatement, TryWithResourcesStatement,
-    Type, TypeDeclaration, TypeParameter, TypeParameterList, UnaryExpression, VariableAccess,
-    VariableDeclarator, VariableDeclaratorList, VariableInitializer, VariableInitializerValue,
-    WhileStatement, YieldStatement, child, child_family, child_token, child_token_in, children,
-    children_family, children_tokens_matching, nth_child_family, nth_child_token,
+    Type, TypeArgumentList, TypeDeclaration, TypeParameter, TypeParameterList, UnaryExpression,
+    VariableAccess, VariableDeclarator, VariableDeclaratorList, VariableInitializer,
+    VariableInitializerValue, WhileStatement, YieldStatement, child, child_family, child_token,
+    child_token_in, children, children_family, children_tokens_matching, nth_child_family,
+    nth_child_token,
 };
 use jolt_syntax::TriviaKind;
 
@@ -561,6 +562,30 @@ impl IfStatement {
 }
 
 impl MethodInvocationExpression {
+    #[must_use]
+    pub fn qualifier(&self) -> Option<Expression> {
+        self.direct_method_name()
+            .and_then(|_| child_family(&self.syntax))
+    }
+
+    #[must_use]
+    pub fn direct_method_name(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Identifier)
+    }
+
+    #[must_use]
+    pub fn simple_name_expression(&self) -> Option<Expression> {
+        self.direct_method_name()
+            .is_none()
+            .then(|| child_family(&self.syntax))
+            .flatten()
+    }
+
+    #[must_use]
+    pub fn type_arguments(&self) -> Option<TypeArgumentList> {
+        child(&self.syntax)
+    }
+
     #[must_use]
     pub fn arguments(&self) -> Option<ArgumentList> {
         child(&self.syntax)

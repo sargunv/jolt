@@ -1,7 +1,8 @@
 use jolt_fmt_ir::{Doc, concat, group, literal_text, text};
 use jolt_java_syntax::{
-    AssignmentExpression, BinaryExpression, ConditionalExpression, Expression, LambdaExpression,
-    LambdaParameter, ParenthesizedExpression, PostfixExpression, UnaryExpression,
+    ArgumentList, AssignmentExpression, BinaryExpression, ConditionalExpression, Expression,
+    LambdaExpression, LambdaParameter, MethodInvocationExpression, ParenthesizedExpression,
+    PostfixExpression, UnaryExpression,
 };
 
 use crate::rules::statements::format_block;
@@ -24,13 +25,15 @@ pub(crate) fn format_expression(expression: &Expression) -> Doc {
         | Expression::ClassLiteralExpression(_)
         | Expression::FieldAccessExpression(_)
         | Expression::ArrayAccessExpression(_)
-        | Expression::MethodInvocationExpression(_)
         | Expression::MethodReferenceExpression(_)
         | Expression::ObjectCreationExpression(_)
         | Expression::ArrayCreationExpression(_)
         | Expression::InstanceofExpression(_)
         | Expression::CastExpression(_)
         | Expression::SwitchExpression(_) => source_doc(&expression.source_text()),
+        Expression::MethodInvocationExpression(expression) => {
+            format_method_invocation_expression(expression)
+        }
     }
 }
 
@@ -129,6 +132,55 @@ fn format_postfix_expression(expression: &PostfixExpression) -> Doc {
                 .operator()
                 .map_or_else(String::new, |operator| operator.text().to_owned()),
         ),
+    ])
+}
+
+fn format_method_invocation_expression(expression: &MethodInvocationExpression) -> Doc {
+    group(concat([
+        format_method_invocation_callee(expression),
+        format_argument_list(expression.arguments()),
+    ]))
+}
+
+fn format_method_invocation_callee(expression: &MethodInvocationExpression) -> Doc {
+    if let Some(name) = expression.direct_method_name() {
+        return concat([
+            expression
+                .qualifier()
+                .map_or_else(jolt_fmt_ir::nil, |qualifier| {
+                    concat([format_expression(&qualifier), text(".")])
+                }),
+            expression
+                .type_arguments()
+                .map_or_else(jolt_fmt_ir::nil, |arguments| {
+                    text(arguments.source_text().trim().to_owned())
+                }),
+            text(name.text().to_owned()),
+        ]);
+    }
+
+    expression
+        .simple_name_expression()
+        .map_or_else(jolt_fmt_ir::nil, |name| format_expression(&name))
+}
+
+fn format_argument_list(arguments: Option<ArgumentList>) -> Doc {
+    let Some(arguments) = arguments else {
+        return text("()");
+    };
+    let arguments = arguments
+        .arguments()
+        .map(|argument| format_expression(&argument))
+        .collect::<Vec<_>>();
+
+    if arguments.is_empty() {
+        return text("()");
+    }
+
+    concat([
+        text("("),
+        jolt_fmt_ir::join(text(", "), arguments),
+        text(")"),
     ])
 }
 
