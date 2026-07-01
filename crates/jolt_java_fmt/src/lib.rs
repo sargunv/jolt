@@ -1,5 +1,6 @@
 //! Java formatter implementation for Jolt.
 
+mod comments;
 mod context;
 mod format;
 mod helpers;

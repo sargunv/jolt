@@ -1,10 +1,11 @@
-use jolt_fmt_ir::{Doc, concat, empty_line, hard_line, literal_text, text};
+use jolt_fmt_ir::{Doc, concat, empty_line, hard_line, text};
 use jolt_java_syntax::{
     CompilationUnit, CompilationUnitItem, ImportDeclaration, ImportKind, ModuleDeclaration,
     ModuleDirective, ModuleDirectiveRole, PackageDeclaration,
 };
 
 use crate::context::{FormatRule, JavaFormatter};
+use crate::helpers::comments::format_comment;
 use crate::rules::annotations::format_annotation;
 use crate::rules::declarations::format_type_declaration;
 use crate::rules::names::{format_name, name_key};
@@ -12,12 +13,12 @@ use crate::rules::names::{format_name, name_key};
 pub(crate) struct ProgramRule;
 
 impl FormatRule<CompilationUnit> for ProgramRule {
-    fn fmt(&self, unit: &CompilationUnit, _formatter: &mut JavaFormatter<'_>) -> Doc {
-        format_compilation_unit(unit)
+    fn fmt(&self, unit: &CompilationUnit, formatter: &mut JavaFormatter<'_>) -> Doc {
+        format_compilation_unit(unit, formatter)
     }
 }
 
-fn format_compilation_unit(unit: &CompilationUnit) -> Doc {
+fn format_compilation_unit(unit: &CompilationUnit, formatter: &mut JavaFormatter<'_>) -> Doc {
     let mut sections = Vec::new();
     let mut package = None;
     let mut imports = Vec::new();
@@ -38,13 +39,13 @@ fn format_compilation_unit(unit: &CompilationUnit) -> Doc {
         sections.push(format_package_declaration(&package));
     }
 
-    let imports = format_imports(imports);
+    let imports = format_imports(imports, formatter);
     if let Some(imports) = imports {
         sections.push(imports);
     }
 
     if let Some(module) = module {
-        sections.push(format_module_declaration(&module));
+        sections.push(format_module_declaration(&module, formatter));
     }
 
     let types = types
@@ -85,7 +86,7 @@ fn format_package_declaration(package: &PackageDeclaration) -> Doc {
     }
 }
 
-fn format_imports(imports: Vec<ImportDeclaration>) -> Option<Doc> {
+fn format_imports(imports: Vec<ImportDeclaration>, formatter: &JavaFormatter<'_>) -> Option<Doc> {
     if imports.is_empty() {
         return None;
     }
@@ -94,12 +95,13 @@ fn format_imports(imports: Vec<ImportDeclaration>) -> Option<Doc> {
     let mut current_run = Vec::new();
 
     for import in imports {
-        if import.has_leading_comment() && !current_run.is_empty() {
+        let tokens = import.tokens();
+        if formatter.comments().has_leading_comment_for_tokens(&tokens) && !current_run.is_empty() {
             runs.push(current_run);
             current_run = Vec::new();
         }
-        let formatted = FormattedImport::from_declaration(&import);
-        current_run.push(formatted);
+        let import_entry = FormattedImport::from_declaration(&import, formatter);
+        current_run.push(import_entry);
     }
     if !current_run.is_empty() {
         runs.push(current_run);
@@ -146,7 +148,7 @@ fn format_import_run(imports: Vec<FormattedImport>) -> Doc {
     join_empty_lines(groups)
 }
 
-fn format_module_declaration(module: &ModuleDeclaration) -> Doc {
+fn format_module_declaration(module: &ModuleDeclaration, formatter: &JavaFormatter<'_>) -> Doc {
     concat([
         if module.is_open() {
             text("open module ")
@@ -157,7 +159,10 @@ fn format_module_declaration(module: &ModuleDeclaration) -> Doc {
             .name()
             .map_or_else(jolt_fmt_ir::nil, |name| format_name(&name)),
         text(" {"),
-        indent_module_body(format_module_directives(module.directives().collect())),
+        indent_module_body(format_module_directives(
+            module.directives().collect(),
+            formatter,
+        )),
         hard_line(),
         text("}"),
     ])
@@ -169,7 +174,10 @@ fn indent_module_body(directives: Option<Doc>) -> Doc {
     })
 }
 
-fn format_module_directives(directives: Vec<ModuleDirective>) -> Option<Doc> {
+fn format_module_directives(
+    directives: Vec<ModuleDirective>,
+    formatter: &JavaFormatter<'_>,
+) -> Option<Doc> {
     if directives.is_empty() {
         return None;
     }
@@ -178,11 +186,14 @@ fn format_module_directives(directives: Vec<ModuleDirective>) -> Option<Doc> {
     let mut current_run = Vec::new();
 
     for directive in directives {
-        if directive.has_leading_comment() && !current_run.is_empty() {
+        let tokens = directive.tokens();
+        if formatter.comments().has_leading_comment_for_tokens(&tokens) && !current_run.is_empty() {
             runs.push(current_run);
             current_run = Vec::new();
         }
-        current_run.push(FormattedModuleDirective::from_directive(&directive));
+        current_run.push(FormattedModuleDirective::from_directive(
+            &directive, formatter,
+        ));
     }
     if !current_run.is_empty() {
         runs.push(current_run);
@@ -220,10 +231,6 @@ fn format_module_directive_run(directives: Vec<FormattedModuleDirective>) -> Doc
     join_empty_lines(groups)
 }
 
-fn comment_doc(comment: &str) -> Doc {
-    literal_text(comment.trim().to_owned())
-}
-
 fn join_empty_lines(docs: Vec<Doc>) -> Doc {
     join_docs(docs, &empty_line())
 }
@@ -244,7 +251,8 @@ fn join_docs(docs: Vec<Doc>, separator: &Doc) -> Doc {
 }
 
 struct FormattedImport {
-    leading_comments: Vec<String>,
+    leading_comments: Vec<jolt_java_syntax::JavaComment>,
+    trailing_comments: Vec<jolt_java_syntax::JavaComment>,
     is_module: bool,
     is_static: bool,
     path: String,
@@ -252,13 +260,21 @@ struct FormattedImport {
 }
 
 impl FormattedImport {
-    fn from_declaration(import: &ImportDeclaration) -> Self {
+    fn from_declaration(import: &ImportDeclaration, formatter: &JavaFormatter<'_>) -> Self {
         let kind = import
             .import_kind()
             .expect("clean import declaration should expose an import kind");
         let (is_module, is_static, path, path_doc) = format_import_kind(kind);
+        let tokens = import.tokens();
         Self {
-            leading_comments: import.leading_comment_texts(),
+            leading_comments: formatter
+                .comments()
+                .leading_comments_for_tokens(&tokens)
+                .to_vec(),
+            trailing_comments: formatter
+                .comments()
+                .trailing_comments_for_tokens(&tokens)
+                .to_vec(),
             is_module,
             is_static,
             path,
@@ -281,18 +297,14 @@ impl FormattedImport {
             },
             self.path_doc,
             text(";"),
+            format_inline_trailing_comments(&self.trailing_comments),
         ]);
 
         if self.leading_comments.is_empty() {
             import
         } else {
             concat([
-                join_hard_lines(
-                    self.leading_comments
-                        .iter()
-                        .map(|comment| comment_doc(comment))
-                        .collect(),
-                ),
+                join_hard_lines(self.leading_comments.iter().map(format_comment).collect()),
                 hard_line(),
                 import,
             ])
@@ -337,14 +349,15 @@ enum ModuleDirectiveKindOrder {
 }
 
 struct FormattedModuleDirective {
-    leading_comments: Vec<String>,
+    leading_comments: Vec<jolt_java_syntax::JavaComment>,
+    trailing_comments: Vec<jolt_java_syntax::JavaComment>,
     kind_order: ModuleDirectiveKindOrder,
     primary_name: String,
     doc: Doc,
 }
 
 impl FormattedModuleDirective {
-    fn from_directive(directive: &ModuleDirective) -> Self {
+    fn from_directive(directive: &ModuleDirective, formatter: &JavaFormatter<'_>) -> Self {
         let role = directive
             .directive_role()
             .expect("clean module directive should expose a directive role");
@@ -394,8 +407,16 @@ impl FormattedModuleDirective {
             }
         };
 
+        let tokens = directive.tokens();
         Self {
-            leading_comments: directive.leading_comment_texts(),
+            leading_comments: formatter
+                .comments()
+                .leading_comments_for_tokens(&tokens)
+                .to_vec(),
+            trailing_comments: formatter
+                .comments()
+                .trailing_comments_for_tokens(&tokens)
+                .to_vec(),
             kind_order,
             primary_name,
             doc,
@@ -403,21 +424,29 @@ impl FormattedModuleDirective {
     }
 
     fn into_doc(self) -> Doc {
+        let doc = concat([
+            self.doc,
+            format_inline_trailing_comments(&self.trailing_comments),
+        ]);
         if self.leading_comments.is_empty() {
-            self.doc
+            doc
         } else {
             concat([
-                join_hard_lines(
-                    self.leading_comments
-                        .iter()
-                        .map(|comment| comment_doc(comment))
-                        .collect(),
-                ),
+                join_hard_lines(self.leading_comments.iter().map(format_comment).collect()),
                 hard_line(),
-                self.doc,
+                doc,
             ])
         }
     }
+}
+
+fn format_inline_trailing_comments(comments: &[jolt_java_syntax::JavaComment]) -> Doc {
+    concat(
+        comments
+            .iter()
+            .map(|comment| concat([text(" "), format_comment(comment)]))
+            .collect::<Vec<_>>(),
+    )
 }
 
 fn format_named_targets_directive(

@@ -79,12 +79,12 @@ Status legend:
 
 ## Comment And Trivia Model
 
-- `[~]` Syntax-owned raw comments, token/source spans, and trivia positions are
+- `[x]` Syntax-owned raw comments, token/source spans, and trivia positions are
   exposed enough for formatting.
-- `[ ]` Formatter-owned `CommentMap` classifies leading, trailing, and dangling
+- `[~]` Formatter-owned `CommentMap` classifies leading, trailing, and dangling
   comments.
-- `[ ]` Comment placement is explicit for moved constructs.
-- `[ ]` Sortable import and module directive comments are barriers for v1.
+- `[~]` Comment placement is explicit for moved constructs.
+- `[x]` Sortable import and module directive comments are barriers for v1.
 
 ## Helper Organization
 
@@ -143,8 +143,8 @@ Status legend:
 - `[x]` Final newline.
 - `[x]` Package declarations.
 - `[x]` Package annotations.
-- `[~]` Import sorting with comment barriers.
-- `[~]` Module directive sorting/grouping.
+- `[x]` Import sorting with comment barriers.
+- `[x]` Module directive sorting/grouping.
 - `[x]` Redundant top-level semicolon removal.
 - `[x]` Qualified names.
 - `[~]` Literal/token leaves.
@@ -208,7 +208,7 @@ Status legend:
 
 ### 9. Comments And Ignore Hardening
 
-- `[ ]` Leading/trailing/dangling comment classification.
+- `[~]` Leading/trailing/dangling comment classification.
 - `[ ]` Comment placement for moved constructs.
 - `[x]` Star-block comment normalization.
 - `[ ]` `@formatter:off/on` raw range preservation.

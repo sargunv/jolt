@@ -1,4 +1,5 @@
 use jolt_syntax::RawSyntaxKind;
+use jolt_text::{TextRange, TextSize};
 
 use super::*;
 use crate::{SyntaxOutcome, parse_compilation_unit};
@@ -107,6 +108,35 @@ fn compilation_unit_accessors_traverse_real_parser_output() {
             JavaSyntaxKind::ClassDeclaration,
             JavaSyntaxKind::InterfaceDeclaration
         ]
+    );
+}
+
+#[test]
+fn token_comments_expose_source_ranges() {
+    let syntax = parse_clean("class A {\n  // leading\n  int x; /* trailing */\n}\n");
+    let field = descendants::<FieldDeclaration>(&syntax)
+        .into_iter()
+        .next()
+        .expect("field declaration");
+    let int_token = field.tokens().into_iter().next().expect("field type token");
+    let semicolon = field
+        .tokens()
+        .into_iter()
+        .find(|token| token.kind() == JavaSyntaxKind::Semicolon)
+        .expect("field semicolon");
+
+    let leading = int_token.leading_comments();
+    assert_eq!(leading[0].text(), "// leading");
+    assert_eq!(
+        leading[0].text_range(),
+        TextRange::new(TextSize::new(12), TextSize::new(22))
+    );
+
+    let trailing = semicolon.trailing_comments();
+    assert_eq!(trailing[0].text(), "/* trailing */");
+    assert_eq!(
+        trailing[0].text_range(),
+        TextRange::new(TextSize::new(32), TextSize::new(46))
     );
 }
 

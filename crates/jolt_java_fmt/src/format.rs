@@ -71,7 +71,7 @@ pub fn format_source(source: &str, options: &JavaFormatOptions) -> JavaFormatRes
         };
     };
 
-    let mut formatter = JavaFormatter::new(options);
+    let mut formatter = JavaFormatter::new(options, &syntax);
     let doc = formatter.format_compilation_unit(&syntax);
     match render(&doc, formatter.render_options()) {
         Ok(rendered) => JavaFormatResult {

@@ -15,6 +15,7 @@ type JavaRawSyntaxToken = SyntaxToken<JavaLanguage>;
 pub struct JavaComment {
     kind: JavaCommentKind,
     text: String,
+    text_range: TextRange,
 }
 
 impl JavaComment {
@@ -28,6 +29,12 @@ impl JavaComment {
     #[must_use]
     pub fn text(&self) -> &str {
         &self.text
+    }
+
+    /// Returns the raw source range covered by the comment.
+    #[must_use]
+    pub const fn text_range(&self) -> TextRange {
+        self.text_range
     }
 }
 
@@ -71,13 +78,13 @@ impl JavaSyntaxToken {
     /// Returns comments attached before this token.
     #[must_use]
     pub fn leading_comments(&self) -> Vec<JavaComment> {
-        comments_from_trivia(self.syntax.leading())
+        comments_from_trivia(self.syntax.leading(), self.syntax.offset())
     }
 
     /// Returns comments attached after this token.
     #[must_use]
     pub fn trailing_comments(&self) -> Vec<JavaComment> {
-        comments_from_trivia(self.syntax.trailing())
+        comments_from_trivia(self.syntax.trailing(), self.syntax.token_text_range().end())
     }
 
     /// Returns true when the token's leading trivia contains an intentional
@@ -94,10 +101,16 @@ impl fmt::Debug for JavaSyntaxToken {
     }
 }
 
-fn comments_from_trivia(trivia: &[jolt_syntax::GreenTrivia]) -> Vec<JavaComment> {
+fn comments_from_trivia(
+    trivia: &[jolt_syntax::GreenTrivia],
+    start: jolt_text::TextSize,
+) -> Vec<JavaComment> {
+    let mut offset = start;
     trivia
         .iter()
         .filter_map(|trivia| {
+            let text_range = TextRange::new(offset, offset + trivia.text_len());
+            offset = text_range.end();
             let kind = match trivia.kind() {
                 SyntaxTriviaKind::LineComment => JavaCommentKind::Line,
                 SyntaxTriviaKind::BlockComment => JavaCommentKind::Block,
@@ -111,6 +124,7 @@ fn comments_from_trivia(trivia: &[jolt_syntax::GreenTrivia]) -> Vec<JavaComment>
             Some(JavaComment {
                 kind,
                 text: trivia.text().to_owned(),
+                text_range,
             })
         })
         .collect()

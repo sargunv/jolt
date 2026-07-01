@@ -1,6 +1,7 @@
 use jolt_fmt_ir::{Doc, IndentStyle, LineEnding, RenderOptions, TextWidth};
 use jolt_java_syntax::CompilationUnit;
 
+use crate::comments::CommentMap;
 use crate::format::JavaFormatOptions;
 use crate::rules::program::ProgramRule;
 
@@ -10,11 +11,15 @@ pub(crate) trait FormatRule<N> {
 
 pub(crate) struct JavaFormatter<'a> {
     options: &'a JavaFormatOptions,
+    comments: CommentMap,
 }
 
 impl<'a> JavaFormatter<'a> {
-    pub(crate) const fn new(options: &'a JavaFormatOptions) -> Self {
-        Self { options }
+    pub(crate) fn new(options: &'a JavaFormatOptions, unit: &CompilationUnit) -> Self {
+        Self {
+            options,
+            comments: CommentMap::from_compilation_unit(unit),
+        }
     }
 
     pub(crate) fn format_compilation_unit(&mut self, unit: &CompilationUnit) -> Doc {
@@ -32,5 +37,9 @@ impl<'a> JavaFormatter<'a> {
             },
             line_ending: LineEnding::Lf,
         }
+    }
+
+    pub(crate) const fn comments(&self) -> &CommentMap {
+        &self.comments
     }
 }
