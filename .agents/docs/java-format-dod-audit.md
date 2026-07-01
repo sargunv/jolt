@@ -21,7 +21,7 @@ Evidence:
 - `crates/jolt_java_fmt/tests/style_fixtures.rs` discovers every `*.input.java`
   fixture under `crates/jolt_java_fmt/tests/style`.
 - The latest verification passed `style_rule_fixtures_match_expected_output`.
-- Current fixture count: 53 style input fixtures.
+- Current fixture count: 54 style input fixtures.
 
 ### Every Style-Guide Rule Has One Or More Focused Tests
 
@@ -37,8 +37,9 @@ Remaining work:
 - Cross-check each rule bullet in the style-guide documents against at least one
   fixture case before marking this proven.
 - Formatter ignore ranges are covered for block-statement sequences by
-  `statements/formatter-ignore-block`; declaration/member body ignore ranges
-  still need equivalent coverage before the general rule is proven.
+  `statements/formatter-ignore-block` and class-member sequences by
+  `declarations/formatter-ignore-members`; remaining body kinds still need
+  equivalent coverage before the general rule is proven.
 
 ### Formatting Expected Fixtures Is Idempotent
 

@@ -1,13 +1,13 @@
-use jolt_fmt_ir::{Doc, concat, group, hard_line, indent, line, literal_text, soft_line, text};
+use jolt_fmt_ir::{Doc, concat, group, hard_line, indent, line, soft_line, text};
 use jolt_java_syntax::{
     AssertStatement, BasicForStatement, Block, BlockItem, BlockStatement, CatchClause,
     CatchParameter, CatchTypeList, DoStatement, EnhancedForStatement, Expression,
     ExpressionStatement, FinallyClause, ForInitializer, ForStatement, ForUpdate, IfStatement,
-    JavaLexer, JavaSyntaxKind, JavaSyntaxToken, LabeledStatement, Resource, ReturnStatement,
-    Statement, StatementBody, StatementExpressionEntry, StatementExpressionList, SwitchBlock,
-    SwitchBlockEntry, SwitchBlockStatementGroup, SwitchLabel, SwitchLabelCaseItem, SwitchRule,
-    SwitchStatement, SynchronizedStatement, ThrowStatement, TriviaKind, TryStatement,
-    TryWithResourcesStatement, Type, WhileStatement, YieldStatement,
+    JavaSyntaxToken, LabeledStatement, Resource, ReturnStatement, Statement, StatementBody,
+    StatementExpressionEntry, StatementExpressionList, SwitchBlock, SwitchBlockEntry,
+    SwitchBlockStatementGroup, SwitchLabel, SwitchLabelCaseItem, SwitchRule, SwitchStatement,
+    SynchronizedStatement, ThrowStatement, TryStatement, TryWithResourcesStatement, Type,
+    WhileStatement, YieldStatement,
 };
 use std::ops::Range;
 
@@ -17,6 +17,9 @@ use crate::helpers::blocks::{
 use crate::helpers::comments::{
     comment_forces_line, format_comment, format_leading_comments, format_token_with_comments,
     format_trailing_comments_before_line_break, trailing_comments_force_line,
+};
+use crate::helpers::formatter_ignore::{
+    FormatterIgnoreRange, formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
 };
 use crate::helpers::lists::{TrailingSeparator, comma_list, semicolon_list};
 use crate::rules::annotations::format_annotation;
@@ -44,7 +47,7 @@ pub(crate) fn format_block_items_body<'a>(
 fn format_block_statements_body(block: &Block) -> Option<Doc> {
     let statements = block.block_statements().collect::<Vec<_>>();
     let block_start = block.text_range().start().get();
-    let ignored_ranges = formatter_ignore_ranges(block);
+    let ignored_ranges = block_formatter_ignore_ranges(block);
     let items = format_block_statement_items(&statements, block_start, &ignored_ranges);
     (!items.is_empty()).then(|| join_body_items(items))
 }
@@ -58,10 +61,7 @@ fn format_block_statement_items(
         .iter()
         .map(|statement| block_statement_token_range(statement, block_start))
         .collect::<Vec<_>>();
-    let ignored_runs = ignored_ranges
-        .iter()
-        .map(|range| ignored_run(range, &statement_ranges))
-        .collect::<Vec<_>>();
+    let ignored_runs = formatter_ignore_runs(ignored_ranges, &statement_ranges);
 
     let mut items = Vec::new();
     let mut ignored_index = 0;
@@ -71,7 +71,7 @@ fn format_block_statement_items(
             && ignored_runs[ignored_index].insert_index == statement_index
         {
             let run = &ignored_runs[ignored_index];
-            items.push(BodyItem::new(formatter_ignore_range_doc(&run.range), false));
+            items.push(BodyItem::new(formatter_ignore_run_doc(run), false));
             ignored_index += 1;
         }
 
@@ -95,7 +95,7 @@ fn format_block_statement_items(
 
     while ignored_index < ignored_runs.len() {
         let run = &ignored_runs[ignored_index];
-        items.push(BodyItem::new(formatter_ignore_range_doc(&run.range), false));
+        items.push(BodyItem::new(formatter_ignore_run_doc(run), false));
         ignored_index += 1;
     }
 
@@ -136,101 +136,8 @@ fn format_block_item(item: BlockItem) -> Option<BodyItem> {
     Some(BodyItem::new(doc, starts_after_blank_line))
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
-struct FormatterIgnoreRange {
-    raw_text: String,
-    interior: Range<usize>,
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-struct FormatterIgnoreRun {
-    range: FormatterIgnoreRange,
-    insert_index: usize,
-    skip_start: usize,
-    skip_end: usize,
-}
-
-impl FormatterIgnoreRun {
-    fn skips(&self, statement_index: usize) -> bool {
-        (self.skip_start..self.skip_end).contains(&statement_index)
-    }
-}
-
-fn formatter_ignore_ranges(block: &Block) -> Vec<FormatterIgnoreRange> {
-    let source = block.source_text();
-    let mut lexer = JavaLexer::new(&source);
-    let mut off_comment_start = None;
-    let mut ranges = Vec::new();
-
-    loop {
-        let token = lexer.next_token();
-        for trivia in token.leading.iter().chain(token.trailing.iter()) {
-            if !matches!(
-                trivia.kind,
-                TriviaKind::LineComment | TriviaKind::BlockComment | TriviaKind::JavadocComment
-            ) {
-                continue;
-            }
-
-            let comment_text = &source[trivia.range.start().get()..trivia.range.end().get()];
-            if is_formatter_off_marker(comment_text) {
-                off_comment_start = Some(line_start(&source, trivia.range.start().get()));
-            } else if is_formatter_on_marker(comment_text)
-                && let Some(start) = off_comment_start.take()
-            {
-                let end = line_start(&source, trivia.range.start().get());
-                if start < end {
-                    ranges.push(FormatterIgnoreRange {
-                        raw_text: strip_trailing_line_ending(&source[start..end]).to_owned(),
-                        interior: start..end,
-                    });
-                }
-            }
-        }
-
-        if token.kind == JavaSyntaxKind::Eof {
-            break;
-        }
-    }
-
-    ranges
-}
-
-fn ignored_run(
-    range: &FormatterIgnoreRange,
-    statement_ranges: &[Option<Range<usize>>],
-) -> FormatterIgnoreRun {
-    let skipped = statement_ranges
-        .iter()
-        .enumerate()
-        .filter_map(|(index, statement_range)| {
-            let statement_range = statement_range.as_ref()?;
-            range
-                .interior
-                .contains(&statement_range.start)
-                .then_some(index)
-        })
-        .collect::<Vec<_>>();
-
-    let insert_index = skipped.first().copied().unwrap_or_else(|| {
-        statement_ranges
-            .iter()
-            .position(|statement_range| {
-                statement_range
-                    .as_ref()
-                    .is_some_and(|statement_range| range.interior.start < statement_range.start)
-            })
-            .unwrap_or(statement_ranges.len())
-    });
-    let skip_start = skipped.first().copied().unwrap_or(insert_index);
-    let skip_end = skipped.last().map_or(skip_start, |last| last + 1);
-
-    FormatterIgnoreRun {
-        range: range.clone(),
-        insert_index,
-        skip_start,
-        skip_end,
-    }
+fn block_formatter_ignore_ranges(block: &Block) -> Vec<FormatterIgnoreRange> {
+    formatter_ignore_ranges(&block.source_text())
 }
 
 fn block_statement_token_range(
@@ -244,60 +151,6 @@ fn block_statement_token_range(
         first.token_text_range().start().get() - block_start
             ..last.token_text_range().end().get() - block_start,
     )
-}
-
-fn formatter_ignore_range_doc(range: &FormatterIgnoreRange) -> Doc {
-    let lines = strip_first_line_indent(&range.raw_text)
-        .split('\n')
-        .map(|line| literal_text(line.to_owned()))
-        .collect::<Vec<_>>();
-    join_hard_lines(lines)
-}
-
-fn strip_first_line_indent(text: &str) -> String {
-    let normalized = text.replace("\r\n", "\n").replace('\r', "\n");
-    let Some(first_line) = normalized.lines().find(|line| !line.trim().is_empty()) else {
-        return normalized;
-    };
-    let indent = leading_indent(first_line);
-    if indent.is_empty() {
-        return normalized;
-    }
-
-    normalized
-        .split('\n')
-        .map(|line| line.strip_prefix(indent).unwrap_or(line))
-        .collect::<Vec<_>>()
-        .join("\n")
-}
-
-fn leading_indent(line: &str) -> &str {
-    let indent_end = line
-        .char_indices()
-        .find_map(|(index, character)| (!matches!(character, ' ' | '\t')).then_some(index))
-        .unwrap_or(line.len());
-    &line[..indent_end]
-}
-
-fn strip_trailing_line_ending(text: &str) -> &str {
-    text.strip_suffix("\r\n")
-        .or_else(|| text.strip_suffix('\n'))
-        .or_else(|| text.strip_suffix('\r'))
-        .unwrap_or(text)
-}
-
-fn line_start(source: &str, offset: usize) -> usize {
-    source[..offset]
-        .rfind(['\n', '\r'])
-        .map_or(0, |newline| newline + 1)
-}
-
-fn is_formatter_off_marker(comment: &str) -> bool {
-    comment.contains("@formatter:off")
-}
-
-fn is_formatter_on_marker(comment: &str) -> bool {
-    comment.contains("@formatter:on")
 }
 
 fn format_statement(statement: &Statement) -> Doc {

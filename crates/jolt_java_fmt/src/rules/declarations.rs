@@ -1,9 +1,11 @@
+use std::ops::Range;
+
 use jolt_fmt_ir::{Doc, concat, group, hard_line, line, soft_line, text};
 use jolt_java_syntax::{
     AnnotationElementDeclaration, AnnotationInterfaceBodyMember, AnnotationInterfaceDeclaration,
     ClassBody, ClassBodyMember, ClassDeclaration, EnumConstant, EnumDeclaration, ExtendsClause,
     FormalParameterList, ImplementsClause, InterfaceDeclaration, JavaSyntaxKind, MethodDeclaration,
-    ModifierList, PermitsClause, RecordDeclaration, Type, TypeDeclaration,
+    ModifierList, PermitsClause, RecordBody, RecordDeclaration, Type, TypeDeclaration,
 };
 
 use crate::helpers::blocks::braced_body;
@@ -11,6 +13,9 @@ use crate::helpers::comments::{
     format_leading_comments, format_token_sequence, format_trailing_comments,
 };
 use crate::helpers::declarations::{declaration_with_body, declaration_without_body};
+use crate::helpers::formatter_ignore::{
+    formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
+};
 use crate::rules::annotations::format_annotation_element_value;
 use crate::rules::expressions::format_argument_list;
 use crate::rules::modifiers::{format_modifier_prefix, format_modifier_prefix_from_parts};
@@ -37,17 +42,11 @@ pub(crate) fn format_type_declaration(declaration: &TypeDeclaration) -> Doc {
 }
 
 pub(crate) fn format_anonymous_class_body(body: &ClassBody) -> Doc {
-    let members = body.members().collect::<Vec<_>>();
-    braced_body(format_class_body(&members))
+    braced_body(format_class_body(body))
 }
 
 fn format_class_declaration(class: &ClassDeclaration) -> Doc {
-    let members = class
-        .body()
-        .map(|body| body.members().collect::<Vec<_>>())
-        .unwrap_or_default();
-
-    format_type_with_body(
+    format_header_with_body(
         class.modifiers(),
         concat([
             text("class "),
@@ -59,7 +58,7 @@ fn format_class_declaration(class: &ClassDeclaration) -> Doc {
             format_implements_clause(class.implements_clause()),
             format_permits_clause(class.permits_clause()),
         ]),
-        &members,
+        class.body().and_then(|body| format_class_body(&body)),
     )
 }
 
@@ -73,7 +72,7 @@ fn format_interface_declaration(interface: &InterfaceDeclaration) -> Doc {
         })
         .unwrap_or_default();
 
-    format_type_with_body(
+    format_header_with_body(
         interface.modifiers(),
         concat([
             text("interface "),
@@ -84,17 +83,12 @@ fn format_interface_declaration(interface: &InterfaceDeclaration) -> Doc {
             format_extends_clause(interface.extends_clause()),
             format_permits_clause(interface.permits_clause()),
         ]),
-        &members,
+        format_class_members(&members),
     )
 }
 
 fn format_record_declaration(record: &RecordDeclaration) -> Doc {
-    let members = record
-        .body()
-        .map(|body| body.members().collect::<Vec<_>>())
-        .unwrap_or_default();
-
-    format_type_with_body(
+    format_header_with_body(
         record.modifiers(),
         group(concat([
             text("record "),
@@ -105,7 +99,7 @@ fn format_record_declaration(record: &RecordDeclaration) -> Doc {
             format_record_components(record.components()),
             format_implements_clause(record.implements_clause()),
         ])),
-        &members,
+        record.body().and_then(|body| format_record_body(&body)),
     )
 }
 
@@ -120,11 +114,9 @@ fn format_enum_declaration(enum_: &EnumDeclaration) -> Doc {
                 .collect::<Vec<_>>()
         })
         .unwrap_or_default();
-    let members = enum_
+    let body_doc = enum_
         .body()
-        .map(|body| body.members().collect::<Vec<_>>())
-        .unwrap_or_default();
-    let body_doc = format_enum_body_contents(constants, &members);
+        .and_then(|body| format_enum_body_contents(constants, &body));
 
     format_header_with_body(
         enum_.modifiers(),
@@ -159,15 +151,25 @@ fn format_annotation_interface_declaration(annotation: &AnnotationInterfaceDecla
     )
 }
 
-fn format_type_with_body(
-    modifiers: Option<ModifierList>,
-    header_tail: Doc,
-    members: &[ClassBodyMember],
-) -> Doc {
-    format_header_with_body(modifiers, header_tail, format_class_body(members))
+fn format_class_body(body: &ClassBody) -> Option<Doc> {
+    let members = body.members().collect::<Vec<_>>();
+    format_class_member_body(
+        &body.source_text(),
+        body.text_range().start().get(),
+        &members,
+    )
 }
 
-fn format_class_body(members: &[ClassBodyMember]) -> Option<Doc> {
+fn format_record_body(body: &RecordBody) -> Option<Doc> {
+    let members = body.members().collect::<Vec<_>>();
+    format_class_member_body(
+        &body.source_text(),
+        body.text_range().start().get(),
+        &members,
+    )
+}
+
+fn format_class_members(members: &[ClassBodyMember]) -> Option<Doc> {
     let effective_members = effective_members(members);
     (!effective_members.is_empty()).then(|| {
         join_member_docs(
@@ -179,6 +181,80 @@ fn format_class_body(members: &[ClassBodyMember]) -> Option<Doc> {
     })
 }
 
+fn format_class_member_body(
+    source: &str,
+    body_start: usize,
+    members: &[ClassBodyMember],
+) -> Option<Doc> {
+    let effective_members = effective_members(members);
+    let ignored_ranges = formatter_ignore_ranges(source);
+    let member_ranges = effective_members
+        .iter()
+        .map(|member| class_member_token_range(member, body_start))
+        .collect::<Vec<_>>();
+    let ignored_runs = formatter_ignore_runs(&ignored_ranges, &member_ranges);
+    let mut formatted = Vec::new();
+    let mut ignored_index = 0;
+    let mut skip_index = 0;
+
+    for (member_index, member) in effective_members.iter().enumerate() {
+        while ignored_index < ignored_runs.len()
+            && ignored_runs[ignored_index].insert_index == member_index
+        {
+            let run = &ignored_runs[ignored_index];
+            formatted.push(FormattedMember::ignored(
+                formatter_ignore_run_doc(run),
+                ignored_member_category(run, &effective_members),
+            ));
+            ignored_index += 1;
+        }
+
+        while skip_index < ignored_runs.len() && ignored_runs[skip_index].skip_end <= member_index {
+            skip_index += 1;
+        }
+
+        if skip_index < ignored_runs.len() && ignored_runs[skip_index].skips(member_index) {
+            continue;
+        }
+
+        let mut formatted_member = FormattedMember::from_member(member);
+        if skip_index > 0 && ignored_runs[skip_index - 1].skip_end == member_index {
+            formatted_member = formatted_member.without_blank_line_before();
+        }
+        formatted.push(formatted_member);
+    }
+
+    while ignored_index < ignored_runs.len() {
+        let run = &ignored_runs[ignored_index];
+        formatted.push(FormattedMember::ignored(
+            formatter_ignore_run_doc(run),
+            ignored_member_category(run, &effective_members),
+        ));
+        ignored_index += 1;
+    }
+
+    (!formatted.is_empty()).then(|| join_member_docs(formatted))
+}
+
+fn class_member_token_range(member: &ClassBodyMember, body_start: usize) -> Option<Range<usize>> {
+    let tokens = member.tokens();
+    let first = tokens.first()?;
+    let last = tokens.last()?;
+    Some(
+        first.token_text_range().start().get() - body_start
+            ..last.token_text_range().end().get() - body_start,
+    )
+}
+
+fn ignored_member_category(
+    run: &crate::helpers::formatter_ignore::FormatterIgnoreRun,
+    members: &[ClassBodyMember],
+) -> MemberCategory {
+    members
+        .get(run.skip_start)
+        .map_or(MemberCategory::Type, member_category)
+}
+
 fn format_header_with_body(
     modifiers: Option<ModifierList>,
     header_tail: Doc,
@@ -187,8 +263,12 @@ fn format_header_with_body(
     declaration_with_body(format_modifier_prefix(modifiers), header_tail, body)
 }
 
-fn format_enum_body_contents(constants: Vec<Doc>, members: &[ClassBodyMember]) -> Option<Doc> {
-    let effective_members = effective_members(members);
+fn format_enum_body_contents(
+    constants: Vec<Doc>,
+    body: &jolt_java_syntax::EnumBody,
+) -> Option<Doc> {
+    let members = body.members().collect::<Vec<_>>();
+    let effective_members = effective_members(&members);
     if constants.is_empty() && effective_members.is_empty() {
         return None;
     }
@@ -212,14 +292,11 @@ fn format_enum_body_contents(constants: Vec<Doc>, members: &[ClassBodyMember]) -
         )
     });
 
-    let members_doc = (!effective_members.is_empty()).then(|| {
-        join_member_docs(
-            effective_members
-                .into_iter()
-                .map(|member| FormattedMember::from_member(&member))
-                .collect(),
-        )
-    });
+    let members_doc = format_class_member_body(
+        &body.source_text(),
+        body.text_range().start().get(),
+        &members,
+    );
 
     match (constants_doc, members_doc) {
         (Some(constants), Some(members)) => {
@@ -248,8 +325,7 @@ fn format_enum_constant(constant: &EnumConstant) -> Doc {
                 format_argument_list(Some(arguments))
             }),
         constant.body().map_or_else(jolt_fmt_ir::nil, |body| {
-            let members = body.members().collect::<Vec<_>>();
-            concat([text(" "), braced_body(format_class_body(&members))])
+            concat([text(" "), braced_body(format_class_body(&body))])
         }),
     ])
 }
@@ -260,6 +336,24 @@ fn effective_members(members: &[ClassBodyMember]) -> Vec<ClassBodyMember> {
         .filter(|member| member.kind() != JavaSyntaxKind::EmptyDeclaration)
         .cloned()
         .collect()
+}
+
+fn member_category(member: &ClassBodyMember) -> MemberCategory {
+    match member {
+        ClassBodyMember::FieldDeclaration(_) => MemberCategory::Field,
+        ClassBodyMember::ConstructorDeclaration(_)
+        | ClassBodyMember::CompactConstructorDeclaration(_) => MemberCategory::Constructor,
+        ClassBodyMember::MethodDeclaration(_) => MemberCategory::Method,
+        ClassBodyMember::StaticInitializer(_) | ClassBodyMember::InstanceInitializer(_) => {
+            MemberCategory::Initializer
+        }
+        ClassBodyMember::ClassDeclaration(_)
+        | ClassBodyMember::RecordDeclaration(_)
+        | ClassBodyMember::EnumDeclaration(_)
+        | ClassBodyMember::InterfaceDeclaration(_)
+        | ClassBodyMember::AnnotationInterfaceDeclaration(_)
+        | ClassBodyMember::EmptyDeclaration(_) => MemberCategory::Type,
+    }
 }
 
 fn format_record_components(components: Option<jolt_java_syntax::RecordComponentList>) -> Doc {
@@ -436,6 +530,21 @@ struct FormattedMember {
 }
 
 impl FormattedMember {
+    fn ignored(doc: Doc, category: MemberCategory) -> Self {
+        Self {
+            category,
+            starts_after_blank_line: false,
+            doc,
+        }
+    }
+
+    fn without_blank_line_before(self) -> Self {
+        Self {
+            starts_after_blank_line: false,
+            ..self
+        }
+    }
+
     fn from_member(member: &ClassBodyMember) -> Self {
         let starts_after_blank_line = member.starts_after_blank_line();
         match member {
