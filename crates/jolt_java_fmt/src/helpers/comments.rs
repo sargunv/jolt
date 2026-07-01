@@ -74,6 +74,26 @@ pub(crate) fn format_trailing_comments(token: &JavaSyntaxToken) -> Doc {
     concat(docs)
 }
 
+pub(crate) fn format_trailing_comments_before_line_break(token: &JavaSyntaxToken) -> Doc {
+    let comments = token.trailing_comments();
+    let mut docs = Vec::new();
+    let comments_len = comments.len();
+
+    for (index, comment) in comments.into_iter().enumerate() {
+        docs.push(text(" "));
+        docs.push(format_comment(&comment));
+        if index + 1 < comments_len && comment_forces_line(&comment) {
+            docs.push(hard_line());
+        }
+    }
+
+    concat(docs)
+}
+
+pub(crate) fn trailing_comments_force_line(token: &JavaSyntaxToken) -> bool {
+    token.trailing_comments().iter().any(comment_forces_line)
+}
+
 pub(crate) fn format_token_with_comments(token: &JavaSyntaxToken) -> Doc {
     concat([
         format_leading_comments(token),

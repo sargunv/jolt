@@ -1,20 +1,22 @@
-use jolt_fmt_ir::{Doc, concat, group, text};
+use jolt_fmt_ir::{Doc, concat, force_group, group, hard_line, indent, line, soft_line, text};
 use jolt_java_syntax::{
-    ArgumentList, ArrayAccessExpression, ArrayCreationExpression, ArrayInitializer,
-    AssignmentExpression, BinaryExpression, CastExpression, ClassLiteralExpression,
-    ConditionalExpression, DimExpression, Expression, FieldAccessExpression, InstanceofExpression,
-    LambdaExpression, LambdaParameter, LiteralExpression, MemberChain, MemberChainSuffix,
-    MethodInvocationExpression, MethodReferenceExpression, NameExpression,
-    ObjectCreationExpression, ParenthesizedExpression, PostfixExpression, SuperExpression,
-    SwitchExpression, ThisExpression, UnaryExpression, VariableInitializerValue,
+    ArgumentList, ArgumentListEntry, ArrayAccessExpression, ArrayCreationExpression,
+    ArrayInitializer, AssignmentExpression, BinaryExpression, CastExpression,
+    ClassLiteralExpression, ConditionalExpression, DimExpression, Expression,
+    FieldAccessExpression, InstanceofExpression, JavaComment, JavaSyntaxToken, LambdaExpression,
+    LambdaParameter, LiteralExpression, MemberChain, MemberChainSuffix, MethodInvocationExpression,
+    MethodReferenceExpression, NameExpression, ObjectCreationExpression, ParenthesizedExpression,
+    PostfixExpression, SuperExpression, SwitchExpression, ThisExpression, UnaryExpression,
+    VariableInitializerValue,
 };
 
 use crate::helpers::chains::member_chain;
 use crate::helpers::comments::{
-    format_leading_comments, format_token_sequence, format_token_text, format_token_with_comments,
-    format_trailing_comments, tokens_have_comments,
+    format_comment, format_leading_comments, format_token_sequence, format_token_text,
+    format_token_with_comments, format_trailing_comments,
+    format_trailing_comments_before_line_break, tokens_have_comments, trailing_comments_force_line,
 };
-use crate::helpers::lists::{braced_initializer_list, parenthesized_list};
+use crate::helpers::lists::braced_initializer_list;
 use crate::helpers::modifiers::inline_modifier_prefix_from_docs;
 use crate::helpers::operators::{assignment_expression, binary_chain, ternary_expression};
 use crate::rules::annotations::format_annotation;
@@ -505,16 +507,168 @@ pub(crate) fn format_argument_list(arguments: Option<ArgumentList>) -> Doc {
     let Some(arguments) = arguments else {
         return text("()");
     };
-    let tokens = arguments.tokens();
-    if tokens_have_comments(&tokens) {
-        return format_token_sequence(&tokens);
+    let entries = arguments.entries().collect::<Vec<_>>();
+    if entries.is_empty() {
+        return format_empty_argument_list(&arguments);
     }
-    let arguments = arguments
-        .arguments()
-        .map(|argument| format_expression(&argument))
-        .collect::<Vec<_>>();
 
-    parenthesized_list(arguments)
+    group(concat([
+        format_argument_list_open(&arguments),
+        indent(concat([
+            format_open_argument_list_spacing(&arguments),
+            format_argument_list_entries(entries),
+        ])),
+        format_argument_list_close_with_spacing(&arguments),
+    ]))
+}
+
+fn format_empty_argument_list(arguments: &ArgumentList) -> Doc {
+    if !argument_list_has_dangling_comments(arguments) {
+        return concat([
+            format_argument_list_open(arguments),
+            format_argument_list_close_delimiter(arguments),
+        ]);
+    }
+
+    force_group(concat([
+        format_argument_list_open(arguments),
+        indent(concat([
+            hard_line(),
+            format_argument_list_dangling_comments(arguments),
+        ])),
+        hard_line(),
+        format_argument_list_close_delimiter_without_leading(arguments),
+    ]))
+}
+
+fn argument_list_has_dangling_comments(arguments: &ArgumentList) -> bool {
+    arguments
+        .open_paren()
+        .is_some_and(|token| !token.trailing_comments().is_empty())
+        || arguments
+            .close_paren()
+            .is_some_and(|token| !token.leading_comments().is_empty())
+}
+
+fn format_argument_list_open(arguments: &ArgumentList) -> Doc {
+    arguments.open_paren().map_or_else(
+        || text("("),
+        |open| concat([format_leading_comments(&open), text("(")]),
+    )
+}
+
+fn format_open_argument_list_spacing(arguments: &ArgumentList) -> Doc {
+    let Some(open) = arguments.open_paren() else {
+        return soft_line();
+    };
+
+    if open.trailing_comments().is_empty() {
+        return soft_line();
+    }
+
+    concat([
+        format_trailing_comments_before_line_break(&open),
+        if trailing_comments_force_line(&open) {
+            hard_line()
+        } else {
+            soft_line()
+        },
+    ])
+}
+
+fn format_argument_list_entries(entries: Vec<ArgumentListEntry>) -> Doc {
+    let mut docs = Vec::new();
+    let entries_len = entries.len();
+
+    for (index, entry) in entries.into_iter().enumerate() {
+        docs.push(format_expression(&entry.argument));
+        if let Some(comma) = entry.comma {
+            docs.push(format_argument_separator(&comma));
+        } else if index + 1 < entries_len {
+            docs.push(line());
+        }
+    }
+
+    concat(docs)
+}
+
+fn format_argument_separator(comma: &JavaSyntaxToken) -> Doc {
+    concat([
+        format_leading_comments(comma),
+        text(","),
+        format_trailing_comments_before_line_break(comma),
+        if trailing_comments_force_line(comma) {
+            hard_line()
+        } else {
+            line()
+        },
+    ])
+}
+
+fn format_argument_list_close_with_spacing(arguments: &ArgumentList) -> Doc {
+    let close_has_leading_comments = arguments
+        .close_paren()
+        .as_ref()
+        .is_some_and(|token| !token.leading_comments().is_empty());
+
+    concat([
+        if close_has_leading_comments {
+            line()
+        } else {
+            soft_line()
+        },
+        format_argument_list_close_delimiter(arguments),
+    ])
+}
+
+fn format_argument_list_close_delimiter(arguments: &ArgumentList) -> Doc {
+    let close = arguments.close_paren();
+    let close_has_leading_comments = close
+        .as_ref()
+        .is_some_and(|token| !token.leading_comments().is_empty());
+    close.map_or_else(
+        || text(")"),
+        |close| {
+            concat([
+                if close_has_leading_comments {
+                    format_leading_comments(&close)
+                } else {
+                    jolt_fmt_ir::nil()
+                },
+                text(")"),
+                format_trailing_comments(&close),
+            ])
+        },
+    )
+}
+
+fn format_argument_list_close_delimiter_without_leading(arguments: &ArgumentList) -> Doc {
+    arguments.close_paren().map_or_else(
+        || text(")"),
+        |close| concat([text(")"), format_trailing_comments(&close)]),
+    )
+}
+
+fn format_argument_list_dangling_comments(arguments: &ArgumentList) -> Doc {
+    let mut docs = Vec::new();
+
+    if let Some(open) = arguments.open_paren() {
+        push_dangling_comments(&mut docs, open.trailing_comments());
+    }
+    if let Some(close) = arguments.close_paren() {
+        push_dangling_comments(&mut docs, close.leading_comments());
+    }
+
+    concat(docs)
+}
+
+fn push_dangling_comments(docs: &mut Vec<Doc>, comments: Vec<JavaComment>) {
+    for comment in comments {
+        if !docs.is_empty() {
+            docs.push(hard_line());
+        }
+        docs.push(format_comment(&comment));
+    }
 }
 
 fn format_lambda_expression(expression: &LambdaExpression) -> Doc {

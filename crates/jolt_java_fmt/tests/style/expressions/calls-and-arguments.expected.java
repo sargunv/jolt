@@ -8,5 +8,14 @@ class Example {
       account.permissions().primaryRole(),
       settings.region().identifier()
     );
+    log(
+      /* nothing */
+    );
+    log(user /* selected */);
+    log(user, /* account */ account);
+    log(
+      user, // selected
+      account
+    );
   }
 }

@@ -859,10 +859,25 @@ fn method_invocations_expose_argument_lists() {
         .find(|invocation| invocation.source_text().trim().ends_with(".baz()"))
         .expect("expected chained baz invocation");
 
+    let foo_arguments = foo.arguments().expect("foo arguments");
+    assert_eq!(foo_arguments.source_text(), "(1, bar())");
     assert_eq!(
-        foo.arguments().expect("foo arguments").source_text(),
-        "(1, bar())"
+        foo_arguments.open_paren().expect("foo open paren").kind(),
+        JavaSyntaxKind::LParen
     );
+    assert_eq!(
+        foo_arguments.close_paren().expect("foo close paren").kind(),
+        JavaSyntaxKind::RParen
+    );
+    let entries = foo_arguments.entries().collect::<Vec<_>>();
+    assert_eq!(entries.len(), 2);
+    assert_eq!(entries[0].argument.source_text(), "1");
+    assert_eq!(
+        entries[0].comma.as_ref().expect("first comma").kind(),
+        JavaSyntaxKind::Comma
+    );
+    assert_eq!(entries[1].argument.source_text(), "bar()");
+    assert!(entries[1].comma.is_none());
     assert_eq!(bar.arguments().expect("bar arguments").source_text(), "()");
     assert_eq!(baz.arguments().expect("baz arguments").source_text(), "()");
 }

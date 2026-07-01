@@ -2,12 +2,12 @@ use super::{
     Annotation, AnnotationArgument, AnnotationArgumentList, AnnotationArrayInitializer,
     AnnotationElementDeclaration, AnnotationElementList, AnnotationElementValue,
     AnnotationElementValuePair, AnnotationInterfaceBody, AnnotationInterfaceBodyMember,
-    AnnotationInterfaceDeclaration, AnyJavaNode, ArgumentList, ArrayAccessExpression,
-    ArrayCreationExpression, ArrayDimension, ArrayDimensions, ArrayInitializer, ArrayType,
-    AssertStatement, AssignmentExpression, BasicForStatement, BinaryExpression, Block, BlockItem,
-    BlockStatement, BreakStatement, CaseConstant, CasePattern, CastExpression, CatchClause,
-    CatchParameter, CatchTypeList, ClassBody, ClassBodyDeclaration, ClassBodyMember,
-    ClassDeclaration, ClassLiteralExpression, ClassType, ClassTypeSegment,
+    AnnotationInterfaceDeclaration, AnyJavaNode, ArgumentList, ArgumentListEntry,
+    ArrayAccessExpression, ArrayCreationExpression, ArrayDimension, ArrayDimensions,
+    ArrayInitializer, ArrayType, AssertStatement, AssignmentExpression, BasicForStatement,
+    BinaryExpression, Block, BlockItem, BlockStatement, BreakStatement, CaseConstant, CasePattern,
+    CastExpression, CatchClause, CatchParameter, CatchTypeList, ClassBody, ClassBodyDeclaration,
+    ClassBodyMember, ClassDeclaration, ClassLiteralExpression, ClassType, ClassTypeSegment,
     CompactConstructorDeclaration, CompilationUnit, CompilationUnitItem, ComponentPattern,
     ConditionalExpression, ConstructorBody, ConstructorDeclaration, ContinueStatement,
     DefaultValue, DimExpression, DoStatement, EmptyDeclaration, EnhancedForStatement, EnumBody,
@@ -1208,8 +1208,56 @@ impl MethodInvocationExpression {
 }
 
 impl ArgumentList {
+    #[must_use]
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RParen)
+    }
+
     pub fn arguments(&self) -> impl Iterator<Item = Expression> + '_ {
         children_family(&self.syntax)
+    }
+
+    pub fn entries(&self) -> impl Iterator<Item = ArgumentListEntry> {
+        let mut entries = Vec::new();
+        let mut pending_argument = None;
+
+        for element in self.syntax.children_with_tokens() {
+            match element {
+                SyntaxElement::Node(node) => {
+                    if let Some(argument) = Expression::cast(node)
+                        && let Some(previous) = pending_argument.replace(argument)
+                    {
+                        entries.push(ArgumentListEntry {
+                            argument: previous,
+                            comma: None,
+                        });
+                    }
+                }
+                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
+                    if let Some(argument) = pending_argument.take() {
+                        entries.push(ArgumentListEntry {
+                            argument,
+                            comma: Some(JavaSyntaxToken { syntax: token }),
+                        });
+                    }
+                }
+                SyntaxElement::Token(_) => {}
+            }
+        }
+
+        if let Some(argument) = pending_argument {
+            entries.push(ArgumentListEntry {
+                argument,
+                comma: None,
+            });
+        }
+
+        entries.into_iter()
     }
 }
 

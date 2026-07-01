@@ -803,6 +803,12 @@ pub enum MemberChainSuffix {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ArgumentListEntry {
+    pub argument: Expression,
+    pub comma: Option<JavaSyntaxToken>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ClassTypeSegment {
     pub annotations: Vec<Annotation>,
     pub name: NameSyntax,
