@@ -34,7 +34,7 @@ Status legend:
 - `[ ]` Add `context.rs`.
 - `[x]` Add `format.rs`.
 - `[~]` Add `rules/` modules.
-- `[ ]` Add `helpers/` modules.
+- `[x]` Add `helpers/` modules.
 - `[ ]` Preserve dependency direction: rules -> helpers -> IR and rules ->
   syntax accessors.
 
@@ -56,8 +56,8 @@ Status legend:
 - `[x]` Assert every rule fixture equals expected output.
 - `[x]` Assert formatting expected fixtures is unchanged.
 - `[x]` Assert repeated formatting is deterministic.
-- `[ ]` Add imported-corpus formatter idempotence tests.
-- `[ ]` Keep upstream outputs as references only, not pass/fail truth.
+- `[x]` Add imported-corpus formatter idempotence tests.
+- `[x]` Keep upstream outputs as references only, not pass/fail truth.
 
 ## Accessor Discipline
 
@@ -77,7 +77,7 @@ Status legend:
 
 ## Comment And Trivia Model
 
-- `[ ]` Syntax-owned raw comments, token/source spans, and trivia positions are
+- `[~]` Syntax-owned raw comments, token/source spans, and trivia positions are
   exposed enough for formatting.
 - `[ ]` Formatter-owned `CommentMap` classifies leading, trailing, and dangling
   comments.
@@ -101,8 +101,8 @@ Status legend:
 - `[ ]` `argument_list`
 - `[ ]` `member_chain`
 - `[ ]` `qualified_name`
-- `[ ]` `line_comment`
-- `[ ]` `block_comment`
+- `[~]` `line_comment`
+- `[~]` `block_comment`
 - `[ ]` `star_block_comment`
 
 ## Rule Implementation Order
@@ -143,8 +143,8 @@ Status legend:
 - `[~]` Import sorting with comment barriers.
 - `[~]` Module directive sorting/grouping.
 - `[x]` Redundant top-level semicolon removal.
-- `[ ]` Qualified names.
-- `[ ]` Literal/token leaves.
+- `[~]` Qualified names.
+- `[~]` Literal/token leaves.
 
 ### 6. Declaration Layer
 
@@ -188,17 +188,17 @@ Status legend:
 - `[ ]` Star-block comment normalization.
 - `[ ]` `@formatter:off/on` raw range preservation.
 - `[ ]` Text-block internal preservation.
-- `[ ]` Imported-corpus comment/idempotence tests.
+- `[x]` Imported-corpus comment/idempotence tests.
 
 ## Definition Of Done Audit
 
 - `[ ]` All style-guide rule fixtures pass.
 - `[ ]` Every style-guide rule has one or more focused tests.
 - `[ ]` Formatting expected fixtures is idempotent.
-- `[ ]` Imported Java fixture inputs format without formatter panics.
-- `[ ]` Formatted imported fixtures parse.
-- `[ ]` Repeated formatting is deterministic.
-- `[ ]` No parser-accepted syntax reaches an unimplemented formatter fallback.
+- `[x]` Imported Java fixture inputs format without formatter panics.
+- `[x]` Formatted imported fixtures parse.
+- `[x]` Repeated formatting is deterministic.
+- `[~]` No parser-accepted syntax reaches an unimplemented formatter fallback.
 - `[ ]` Code review can trace every formatting choice to the style guide or
   spec.
 - `[ ]` Audit report links each definition-of-done item to tests, fixtures, or

@@ -1185,12 +1185,13 @@ fn rejects_non_ascii_numeric_lookalikes() {
 }
 
 #[test]
-fn accepts_integer_literals_at_jls_range_boundaries() {
+fn accepts_integer_literals_without_semantic_range_checks() {
     // Spec: JLS 3.10.1 Integer Literals.
-    // The decimal `2147483648` and `9223372036854775808L` forms are valid only
-    // as unary-minus operands; this context-free lexer admits the boundary and
-    // leaves that context rule to later phases.
-    let source = "2147483647 2147483648 0xffff_ffff 9223372036854775807L 9223372036854775808L 0xffff_ffff_ffff_ffffL";
+    // Literal range is a semantic/compile-time rule. The formatter lexer keeps
+    // oversized but syntactically valid literals parseable.
+    let source = "2147483647 2147483648 2147483649 0xffff_ffff 0x1_0000_0000 \
+                  9223372036854775807L 9223372036854775808L 9223372036854775809L \
+                  0xffff_ffff_ffff_ffffL 0x1_0000_0000_0000_0000L";
     let lexed = lex(source);
     assert_eq!(lexed.diagnostics, vec![]);
     assert_eq!(
@@ -1202,16 +1203,23 @@ fn accepts_integer_literals_at_jls_range_boundaries() {
             JavaSyntaxKind::IntegerLiteral,
             JavaSyntaxKind::IntegerLiteral,
             JavaSyntaxKind::IntegerLiteral,
+            JavaSyntaxKind::IntegerLiteral,
+            JavaSyntaxKind::IntegerLiteral,
+            JavaSyntaxKind::IntegerLiteral,
+            JavaSyntaxKind::IntegerLiteral,
         ]
     );
 }
 
 #[test]
-fn accepts_binary_and_octal_integer_literals_at_jls_width_boundaries() {
+fn accepts_binary_and_octal_integer_literals_without_semantic_width_checks() {
     // Spec: JLS 3.10.1 Integer Literals.
     let source = "0b11111111111111111111111111111111 037777777777 \
+                  0b111111111111111111111111111111111 040000000000 \
                   0b1111111111111111111111111111111111111111111111111111111111111111L \
-                  01777777777777777777777L";
+                  01777777777777777777777L \
+                  0b11111111111111111111111111111111111111111111111111111111111111111L \
+                  02000000000000000000000L";
     let lexed = lex(source);
     assert_eq!(lexed.diagnostics, vec![]);
     assert_eq!(
@@ -1221,38 +1229,10 @@ fn accepts_binary_and_octal_integer_literals_at_jls_width_boundaries() {
             JavaSyntaxKind::IntegerLiteral,
             JavaSyntaxKind::IntegerLiteral,
             JavaSyntaxKind::IntegerLiteral,
-        ]
-    );
-}
-
-#[test]
-fn diagnoses_integer_literals_outside_jls_ranges() {
-    // Spec: JLS 3.10.1 Integer Literals.
-    assert_eq!(
-        diagnostic_codes("2147483649 0x1_0000_0000 9223372036854775809L 0x1_0000_0000_0000_0000L",),
-        vec![
-            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
-            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
-            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
-            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
-        ]
-    );
-}
-
-#[test]
-fn diagnoses_binary_and_octal_integer_literals_outside_jls_widths() {
-    // Spec: JLS 3.10.1 Integer Literals.
-    assert_eq!(
-        diagnostic_codes(
-            "0b111111111111111111111111111111111 040000000000 \
-             0b11111111111111111111111111111111111111111111111111111111111111111L \
-             02000000000000000000000L",
-        ),
-        vec![
-            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
-            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
-            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
-            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
+            JavaSyntaxKind::IntegerLiteral,
+            JavaSyntaxKind::IntegerLiteral,
+            JavaSyntaxKind::IntegerLiteral,
+            JavaSyntaxKind::IntegerLiteral,
         ]
     );
 }
@@ -1319,14 +1299,19 @@ fn recognizes_hexadecimal_floating_point_literal_forms() {
 }
 
 #[test]
-fn accepts_floating_point_literals_at_jls_range_boundaries() {
+fn accepts_floating_point_literals_without_semantic_range_checks() {
     // Spec: JLS 3.10.2 Floating-Point Literals.
-    let source = "3.4028235e38f 1.4e-45f 1.7976931348623157e308 4.9e-324";
+    let source = "3.4028235e38f 1.4e-45f 1.7976931348623157e308 4.9e-324 \
+                  3.5e38f 1e-46f 1e309 1e-325";
     let lexed = lex(source);
     assert_eq!(lexed.diagnostics, vec![]);
     assert_eq!(
         real_tokens(source),
         vec![
+            JavaSyntaxKind::FloatingPointLiteral,
+            JavaSyntaxKind::FloatingPointLiteral,
+            JavaSyntaxKind::FloatingPointLiteral,
+            JavaSyntaxKind::FloatingPointLiteral,
             JavaSyntaxKind::FloatingPointLiteral,
             JavaSyntaxKind::FloatingPointLiteral,
             JavaSyntaxKind::FloatingPointLiteral,
@@ -1336,14 +1321,19 @@ fn accepts_floating_point_literals_at_jls_range_boundaries() {
 }
 
 #[test]
-fn accepts_hexadecimal_floating_point_literals_at_jls_range_boundaries() {
+fn accepts_hexadecimal_floating_point_literals_without_semantic_range_checks() {
     // Spec: JLS 3.10.2 Floating-Point Literals.
-    let source = "0x1.fffffeP+127f 0x1.0P-149f 0x1.f_ffff_ffff_ffffP+1023 0x1.0P-1074";
+    let source = "0x1.fffffeP+127f 0x1.0P-149f 0x1.f_ffff_ffff_ffffP+1023 \
+                  0x1.0P-1074 0x1.0p128f 0x1.0p-150f 0x1.0p1024 0x1.0p-1075";
     let lexed = lex(source);
     assert_eq!(lexed.diagnostics, vec![]);
     assert_eq!(
         real_tokens(source),
         vec![
+            JavaSyntaxKind::FloatingPointLiteral,
+            JavaSyntaxKind::FloatingPointLiteral,
+            JavaSyntaxKind::FloatingPointLiteral,
+            JavaSyntaxKind::FloatingPointLiteral,
             JavaSyntaxKind::FloatingPointLiteral,
             JavaSyntaxKind::FloatingPointLiteral,
             JavaSyntaxKind::FloatingPointLiteral,
@@ -1363,34 +1353,6 @@ fn accepts_alternate_hexadecimal_minimum_floating_point_literals() {
         vec![
             JavaSyntaxKind::FloatingPointLiteral,
             JavaSyntaxKind::FloatingPointLiteral,
-        ]
-    );
-}
-
-#[test]
-fn diagnoses_floating_point_literals_outside_jls_ranges() {
-    // Spec: JLS 3.10.2 Floating-Point Literals.
-    assert_eq!(
-        diagnostic_codes("3.5e38f 1e-46f 1e309 1e-325"),
-        vec![
-            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
-            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
-            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
-            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
-        ]
-    );
-}
-
-#[test]
-fn diagnoses_hexadecimal_floating_point_literals_outside_jls_ranges() {
-    // Spec: JLS 3.10.2 Floating-Point Literals.
-    assert_eq!(
-        diagnostic_codes("0x1.0p128f 0x1.0p-150f 0x1.0p1024 0x1.0p-1075"),
-        vec![
-            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
-            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
-            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
-            JavaLexDiagnosticCode::InvalidNumericLiteral.id(),
         ]
     );
 }

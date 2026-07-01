@@ -9,7 +9,13 @@ class Example {
     }
     return 1;
   }
+
   int choose(int value) {
-    return switch (value) { case 1 -> 1; default -> { yield 2; } };
+    return switch (value) {
+      case 1 -> 1;
+      default -> {
+        yield 2;
+      }
+    };
   }
 }

@@ -1,6 +1,5 @@
 ---
 source: crates/jolt_java_syntax/src/parser/tests.rs
-assertion_line: 2458
 expression: "&parse"
 ---
 syntax:
@@ -66,10 +65,44 @@ CompilationUnit
                         LParen "(" @ 189..190
                         RParen ")" @ 190..191
                     Semicolon ";" @ 191..192
-                  RBrace "}" @ 213..214 leading=[Newline "\n", Whitespace "                    "]
-            RBrace "}" @ 231..232 leading=[Newline "\n", Whitespace "                "]
-      RBrace "}" @ 245..246 leading=[Newline "\n", Whitespace "            "]
-  Eof "" @ 255..255 leading=[Newline "\n", Whitespace "        "]
+                  SwitchRule
+                    SwitchLabel
+                      CaseKw "case" @ 217..221 leading=[Newline "\n", Whitespace "                        "] trailing=[Whitespace " "]
+                      CasePattern
+                        TypePattern
+                          LocalVariableDeclaration
+                            ClassType
+                              Name
+                                Identifier "String" @ 222..228 trailing=[Whitespace " "]
+                            VariableDeclaratorList
+                              VariableDeclarator
+                                Identifier "s" @ 229..230 trailing=[Whitespace " "]
+                      Guard
+                        Identifier "when" @ 231..235 trailing=[Whitespace " "]
+                        LParen "(" @ 236..237
+                        MethodInvocationExpression
+                          NameExpression
+                            Identifier "s" @ 237..238
+                          Dot "." @ 238..239
+                          Identifier "isBlank" @ 239..246
+                          ArgumentList
+                            LParen "(" @ 246..247
+                            RParen ")" @ 247..248
+                        RParen ")" @ 248..249 trailing=[Whitespace " "]
+                    Arrow "->" @ 250..252 trailing=[Whitespace " "]
+                    MethodInvocationExpression
+                      NameExpression
+                        Identifier "s" @ 253..254
+                      Dot "." @ 254..255
+                      Identifier "trim" @ 255..259
+                      ArgumentList
+                        LParen "(" @ 259..260
+                        RParen ")" @ 260..261
+                    Semicolon ";" @ 261..262
+                  RBrace "}" @ 283..284 leading=[Newline "\n", Whitespace "                    "]
+            RBrace "}" @ 301..302 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 315..316 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 325..325 leading=[Newline "\n", Whitespace "        "]
 
 outcome: Clean
 

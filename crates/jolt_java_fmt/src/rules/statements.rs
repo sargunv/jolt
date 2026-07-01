@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, concat, hard_line, literal_text, text};
+use jolt_fmt_ir::{Doc, concat, hard_line, text};
 use jolt_java_syntax::{
     AssertStatement, BasicForStatement, Block, BlockItem, CatchClause, DoStatement,
     EnhancedForStatement, Expression, ExpressionStatement, FinallyClause, ForInitializer,
@@ -8,7 +8,10 @@ use jolt_java_syntax::{
     TryWithResourcesStatement, WhileStatement, YieldStatement,
 };
 
-use crate::rules::expressions::{expression_source_text, format_expression};
+use crate::helpers::comments::{
+    comment_forces_line, format_comment, format_token_sequence, tokens_have_comments,
+};
+use crate::rules::expressions::format_expression;
 
 pub(crate) fn format_block(block: &Block) -> Doc {
     let items = block
@@ -31,11 +34,11 @@ fn format_block_item(item: BlockItem) -> Option<Doc> {
     match item {
         BlockItem::EmptyStatement(_) => None,
         BlockItem::LocalVariableDeclaration(declaration) => Some(concat([
-            text(declaration.source_text().trim().to_owned()),
+            format_token_sequence(&declaration.tokens()),
             text(";"),
         ])),
         BlockItem::LocalClassOrInterfaceDeclaration(declaration) => {
-            Some(source_doc(&declaration.source_text()))
+            Some(format_token_sequence(&declaration.tokens()))
         }
         BlockItem::Block(block) => Some(format_block(&block)),
         BlockItem::LabeledStatement(statement) => Some(format_statement(&statement.into())),
@@ -182,85 +185,83 @@ fn format_for_statement(statement: &ForStatement) -> Doc {
         return format_enhanced_for_statement(&enhanced);
     }
 
-    source_doc(&statement.source_text())
+    format_token_sequence(&statement.tokens())
 }
 
 fn format_basic_for_statement(statement: &BasicForStatement) -> Doc {
     let initializer = statement
         .initializer()
-        .map_or_else(String::new, |initializer| {
-            format_for_initializer_text(&initializer)
-        });
+        .map(|initializer| format_for_initializer(&initializer));
     let condition = statement
         .condition()
-        .map_or_else(String::new, |condition| expression_source_text(&condition));
-    let update = statement
-        .update()
-        .map_or_else(String::new, |update| format_for_update_text(&update));
+        .map(|condition| format_expression(&condition));
+    let update = statement.update().map(|update| format_for_update(&update));
 
     concat([
         text("for ("),
-        text(initializer),
+        initializer.unwrap_or_else(jolt_fmt_ir::nil),
         text(";"),
-        format_for_segment_after_semicolon(&condition),
+        format_for_segment_after_semicolon(condition.as_ref()),
         text(";"),
-        format_for_segment_after_semicolon(&update),
+        format_for_segment_after_semicolon(update.as_ref()),
         text(") "),
         statement_body_as_block(statement.body()),
     ])
 }
 
 fn format_enhanced_for_statement(statement: &EnhancedForStatement) -> Doc {
-    let variable = statement.variable().map_or_else(String::new, |variable| {
-        variable.source_text().trim().to_owned()
-    });
-    let iterable = statement
-        .iterable()
-        .map_or_else(String::new, |iterable| expression_source_text(&iterable));
-
     concat([
         text("for ("),
-        text(variable),
+        statement
+            .variable()
+            .map_or_else(jolt_fmt_ir::nil, |variable| {
+                format_token_sequence(&variable.tokens())
+            }),
         text(" : "),
-        text(iterable),
+        statement
+            .iterable()
+            .map_or_else(jolt_fmt_ir::nil, |iterable| format_expression(&iterable)),
         text(") "),
         statement_body_as_block(statement.body()),
     ])
 }
 
-fn format_for_initializer_text(initializer: &ForInitializer) -> String {
+fn format_for_initializer(initializer: &ForInitializer) -> Doc {
     if let Some(declaration) = initializer.local_variable_declaration() {
-        return declaration.source_text().trim().to_owned();
+        return format_token_sequence(&declaration.tokens());
     }
     initializer
         .expressions()
-        .map_or_else(String::new, |expressions| {
-            format_statement_expression_list_text(&expressions)
+        .map_or_else(jolt_fmt_ir::nil, |expressions| {
+            format_statement_expression_list(&expressions)
         })
 }
 
-fn format_for_update_text(update: &ForUpdate) -> String {
+fn format_for_update(update: &ForUpdate) -> Doc {
     update
         .expressions()
-        .map_or_else(String::new, |expressions| {
-            format_statement_expression_list_text(&expressions)
+        .map_or_else(jolt_fmt_ir::nil, |expressions| {
+            format_statement_expression_list(&expressions)
         })
 }
 
-fn format_statement_expression_list_text(expressions: &StatementExpressionList) -> String {
-    expressions
-        .expressions()
-        .map(|expression| expression_source_text(&expression))
-        .collect::<Vec<_>>()
-        .join(", ")
+fn format_statement_expression_list(expressions: &StatementExpressionList) -> Doc {
+    let tokens = expressions.tokens();
+    if tokens_have_comments(&tokens) {
+        return format_token_sequence(&tokens);
+    }
+    jolt_fmt_ir::join(
+        text(", "),
+        expressions
+            .expressions()
+            .map(|expression| format_expression(&expression)),
+    )
 }
 
-fn format_for_segment_after_semicolon(segment: &str) -> Doc {
-    if segment.is_empty() {
-        jolt_fmt_ir::nil()
-    } else {
-        concat([text(" "), text(segment.to_owned())])
-    }
+fn format_for_segment_after_semicolon(segment: Option<&Doc>) -> Doc {
+    segment
+        .cloned()
+        .map_or_else(jolt_fmt_ir::nil, |segment| concat([text(" "), segment]))
 }
 
 fn format_return_statement(statement: &ReturnStatement) -> Doc {
@@ -324,7 +325,7 @@ fn format_switch_statement(statement: &SwitchStatement) -> Doc {
     ])
 }
 
-fn format_switch_block(block: &SwitchBlock) -> Doc {
+pub(crate) fn format_switch_block(block: &SwitchBlock) -> Doc {
     let entries = block
         .entries()
         .map(|entry| match entry {
@@ -348,7 +349,7 @@ fn format_switch_block(block: &SwitchBlock) -> Doc {
 fn format_switch_statement_group(group: &SwitchBlockStatementGroup) -> Doc {
     let labels = group
         .labels()
-        .map(|label| concat([text(label.source_text().trim().to_owned()), text(":")]))
+        .map(|label| concat([format_token_sequence(&label.tokens()), text(":")]))
         .collect::<Vec<_>>();
     let items = group
         .items()
@@ -366,11 +367,36 @@ fn format_switch_statement_group(group: &SwitchBlockStatementGroup) -> Doc {
 }
 
 fn format_switch_rule(rule: &SwitchRule) -> Doc {
-    let label = rule
-        .label()
-        .map_or_else(String::new, |label| label.source_text().trim().to_owned());
+    let label = rule.label().map_or_else(jolt_fmt_ir::nil, |label| {
+        format_token_sequence(&label.tokens())
+    });
 
-    concat([text(label), text(" -> "), format_switch_rule_body(rule)])
+    concat([
+        label,
+        format_switch_rule_arrow(rule),
+        format_switch_rule_body(rule),
+    ])
+}
+
+fn format_switch_rule_arrow(rule: &SwitchRule) -> Doc {
+    let Some(arrow) = rule.arrow() else {
+        return text(" -> ");
+    };
+
+    let trailing_comments = arrow.trailing_comments();
+    if trailing_comments.is_empty() {
+        return text(" -> ");
+    }
+
+    let mut docs = vec![text(" ->")];
+    let mut forced_line = false;
+    for comment in trailing_comments {
+        docs.push(text(" "));
+        forced_line |= comment_forces_line(&comment);
+        docs.push(format_comment(&comment));
+    }
+    docs.push(if forced_line { hard_line() } else { text(" ") });
+    concat(docs)
 }
 
 fn format_switch_rule_body(rule: &SwitchRule) -> Doc {
@@ -446,15 +472,17 @@ fn format_resource_specification(statement: &TryWithResourcesStatement) -> Doc {
 
 fn format_resource(resource: &Resource) -> Doc {
     if let Some(declaration) = resource.declaration() {
-        return text(declaration.source_text().trim().to_owned());
+        return format_token_sequence(&declaration.tokens());
     }
     if let Some(access) = resource.variable_access() {
-        return text(access.expression().map_or_else(String::new, |expression| {
-            expression_source_text(&expression)
-        }));
+        return access
+            .expression()
+            .map_or_else(jolt_fmt_ir::nil, |expression| {
+                format_expression(&expression)
+            });
     }
 
-    source_doc(&resource.source_text())
+    format_token_sequence(&resource.tokens())
 }
 
 fn format_catch_clauses<'a>(clauses: impl Iterator<Item = CatchClause> + 'a) -> Doc {
@@ -464,9 +492,11 @@ fn format_catch_clauses<'a>(clauses: impl Iterator<Item = CatchClause> + 'a) -> 
 fn format_catch_clause(clause: &CatchClause) -> Doc {
     concat([
         text(" catch ("),
-        text(clause.parameter().map_or_else(String::new, |parameter| {
-            parameter.source_text().trim().to_owned()
-        })),
+        clause
+            .parameter()
+            .map_or_else(jolt_fmt_ir::nil, |parameter| {
+                format_token_sequence(&parameter.tokens())
+            }),
         text(") "),
         clause
             .body()
@@ -517,10 +547,6 @@ fn join_hard_lines(docs: Vec<Doc>) -> Doc {
         joined.push(doc);
     }
     concat(joined)
-}
-
-fn source_doc(source: &str) -> Doc {
-    literal_text(source.trim().to_owned())
 }
 
 fn empty_block_doc() -> Doc {

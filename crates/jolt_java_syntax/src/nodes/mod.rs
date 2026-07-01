@@ -1,12 +1,46 @@
 use std::fmt;
 
-use jolt_syntax::{SyntaxElement, SyntaxNode, SyntaxToken, green_text};
+use jolt_syntax::{
+    SyntaxElement, SyntaxNode, SyntaxToken, TriviaKind as SyntaxTriviaKind, green_text,
+};
 use jolt_text::TextRange;
 
 use crate::{JavaSyntaxKind, language::JavaLanguage};
 
 pub(crate) type JavaSyntaxNode = SyntaxNode<JavaLanguage>;
 type JavaRawSyntaxToken = SyntaxToken<JavaLanguage>;
+
+/// A comment attached as token trivia in the Java syntax tree.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct JavaComment {
+    kind: JavaCommentKind,
+    text: String,
+}
+
+impl JavaComment {
+    /// Returns the comment kind.
+    #[must_use]
+    pub const fn kind(&self) -> JavaCommentKind {
+        self.kind
+    }
+
+    /// Returns the raw comment text.
+    #[must_use]
+    pub fn text(&self) -> &str {
+        &self.text
+    }
+}
+
+/// A Java comment kind exposed from syntax trivia.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum JavaCommentKind {
+    /// A `//` line comment.
+    Line,
+    /// A non-Javadoc block comment.
+    Block,
+    /// A Javadoc comment.
+    Doc,
+}
 
 #[derive(Clone, Eq, PartialEq)]
 pub struct JavaSyntaxToken {
@@ -33,12 +67,46 @@ impl JavaSyntaxToken {
     pub fn token_text_range(&self) -> TextRange {
         self.syntax.token_text_range()
     }
+
+    /// Returns comments attached before this token.
+    #[must_use]
+    pub fn leading_comments(&self) -> Vec<JavaComment> {
+        comments_from_trivia(self.syntax.leading())
+    }
+
+    /// Returns comments attached after this token.
+    #[must_use]
+    pub fn trailing_comments(&self) -> Vec<JavaComment> {
+        comments_from_trivia(self.syntax.trailing())
+    }
 }
 
 impl fmt::Debug for JavaSyntaxToken {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.syntax.fmt(f)
     }
+}
+
+fn comments_from_trivia(trivia: &[jolt_syntax::GreenTrivia]) -> Vec<JavaComment> {
+    trivia
+        .iter()
+        .filter_map(|trivia| {
+            let kind = match trivia.kind() {
+                SyntaxTriviaKind::LineComment => JavaCommentKind::Line,
+                SyntaxTriviaKind::BlockComment => JavaCommentKind::Block,
+                SyntaxTriviaKind::DocComment => JavaCommentKind::Doc,
+                SyntaxTriviaKind::Whitespace
+                | SyntaxTriviaKind::Newline
+                | SyntaxTriviaKind::Ignored => {
+                    return None;
+                }
+            };
+            Some(JavaComment {
+                kind,
+                text: trivia.text().to_owned(),
+            })
+        })
+        .collect()
 }
 
 mod private {
@@ -92,6 +160,11 @@ macro_rules! java_cst {
                     green_text(self.syntax.green())
                 }
 
+                #[must_use]
+                pub fn tokens(&self) -> Vec<JavaSyntaxToken> {
+                    tokens(&self.syntax)
+                }
+
             }
 
             impl private::Sealed for $node {}
@@ -134,6 +207,11 @@ macro_rules! java_cst {
             #[must_use]
             pub fn source_text(&self) -> String {
                 green_text(self.syntax().green())
+            }
+
+            #[must_use]
+            pub fn tokens(&self) -> Vec<JavaSyntaxToken> {
+                tokens(self.syntax())
             }
 
             pub(crate) fn cast(syntax: JavaSyntaxNode) -> Option<Self> {
@@ -187,6 +265,11 @@ macro_rules! java_cst {
                 #[must_use]
                 pub fn source_text(&self) -> String {
                     green_text(self.syntax().green())
+                }
+
+                #[must_use]
+                pub fn tokens(&self) -> Vec<JavaSyntaxToken> {
+                    tokens(self.syntax())
                 }
 
                 pub(crate) fn syntax(&self) -> &JavaSyntaxNode {
@@ -613,6 +696,21 @@ fn child<N: JavaNode>(syntax: &JavaSyntaxNode) -> Option<N> {
 
 fn children<'a, N: JavaNode + 'a>(syntax: &'a JavaSyntaxNode) -> impl Iterator<Item = N> + 'a {
     syntax.children().filter_map(N::cast)
+}
+
+fn tokens(syntax: &JavaSyntaxNode) -> Vec<JavaSyntaxToken> {
+    let mut tokens = Vec::new();
+    collect_tokens(syntax, &mut tokens);
+    tokens
+}
+
+fn collect_tokens(syntax: &JavaSyntaxNode, tokens: &mut Vec<JavaSyntaxToken>) {
+    for element in syntax.children_with_tokens() {
+        match element {
+            SyntaxElement::Node(node) => collect_tokens(&node, tokens),
+            SyntaxElement::Token(syntax) => tokens.push(JavaSyntaxToken { syntax }),
+        }
+    }
 }
 
 fn child_family<F: JavaFamily>(syntax: &JavaSyntaxNode) -> Option<F> {

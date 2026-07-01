@@ -1,8 +1,10 @@
 use jolt_fmt_ir::{Doc, concat, empty_line, hard_line, literal_text, text};
 use jolt_java_syntax::{
-    CompilationUnit, ImportDeclaration, ModuleDeclaration, ModuleDirective, PackageDeclaration,
+    CompilationUnit, ImportDeclaration, JavaSyntaxKind, JavaSyntaxToken, ModuleDeclaration,
+    ModuleDirective, PackageDeclaration,
 };
 
+use crate::helpers::comments::format_token_sequence;
 use crate::rules::declarations::format_type_declaration;
 
 pub(crate) fn format_compilation_unit(unit: &CompilationUnit) -> Doc {
@@ -41,7 +43,7 @@ pub(crate) fn format_compilation_unit(unit: &CompilationUnit) -> Doc {
 
 fn format_package_declaration(package: &PackageDeclaration) -> Doc {
     let Some(name) = package.name() else {
-        return source_doc(&package.source_text());
+        return format_token_sequence(&package.tokens());
     };
     concat([text("package "), text(name_text(&name)), text(";")])
 }
@@ -109,7 +111,7 @@ fn format_import_run(imports: Vec<FormattedImport>) -> Doc {
 
 fn format_module_declaration(module: &ModuleDeclaration) -> Doc {
     let Some(name) = module.name() else {
-        return source_doc(&module.source_text());
+        return format_token_sequence(&module.tokens());
     };
 
     concat([
@@ -183,8 +185,8 @@ fn format_module_directive_run(directives: Vec<FormattedModuleDirective>) -> Doc
     join_empty_lines(groups)
 }
 
-fn source_doc(source: &str) -> Doc {
-    literal_text(source.trim().to_owned())
+fn comment_doc(comment: &str) -> Doc {
+    literal_text(comment.trim().to_owned())
 }
 
 fn join_empty_lines(docs: Vec<Doc>) -> Doc {
@@ -221,7 +223,7 @@ impl FormattedImport {
             is_static: import.is_static(),
             path: import
                 .import_path()
-                .unwrap_or_else(|| import.source_text().trim().to_owned()),
+                .unwrap_or_else(|| compact_import_path_from_tokens(import.tokens())),
         }
     }
 
@@ -246,7 +248,12 @@ impl FormattedImport {
             import
         } else {
             concat([
-                join_hard_lines(self.leading_comments.into_iter().map(text).collect()),
+                join_hard_lines(
+                    self.leading_comments
+                        .iter()
+                        .map(|comment| comment_doc(comment))
+                        .collect(),
+                ),
                 hard_line(),
                 import,
             ])
@@ -331,7 +338,12 @@ impl FormattedModuleDirective {
             self.doc
         } else {
             concat([
-                join_hard_lines(self.leading_comments.into_iter().map(text).collect()),
+                join_hard_lines(
+                    self.leading_comments
+                        .iter()
+                        .map(|comment| comment_doc(comment))
+                        .collect(),
+                ),
                 hard_line(),
                 self.doc,
             ])
@@ -363,7 +375,28 @@ fn format_named_targets_directive(keyword: &str, names: &[String], separator: &s
 }
 
 fn name_text(name: &jolt_java_syntax::NameSyntax) -> String {
-    name.source_text().trim().to_owned()
+    name.compact_text()
+}
+
+fn compact_import_path_from_tokens(tokens: Vec<JavaSyntaxToken>) -> String {
+    let mut path = String::new();
+    let mut skipped_module_contextual_keyword = false;
+
+    for token in tokens {
+        match token.kind() {
+            JavaSyntaxKind::Identifier
+                if !skipped_module_contextual_keyword && token.text() == "module" =>
+            {
+                skipped_module_contextual_keyword = true;
+            }
+            JavaSyntaxKind::Identifier | JavaSyntaxKind::Dot | JavaSyntaxKind::Star => {
+                path.push_str(token.text());
+            }
+            _ => {}
+        }
+    }
+
+    path
 }
 
 const fn module_directive_kind_order(directive: &ModuleDirective) -> ModuleDirectiveKindOrder {

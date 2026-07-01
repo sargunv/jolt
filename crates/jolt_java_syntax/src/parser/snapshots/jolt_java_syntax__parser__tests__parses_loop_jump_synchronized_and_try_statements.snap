@@ -1,6 +1,5 @@
 ---
 source: crates/jolt_java_syntax/src/parser/tests.rs
-assertion_line: 2458
 expression: "&parse"
 ---
 syntax:
@@ -127,142 +126,167 @@ CompilationUnit
                     LBrace "{" @ 307..308
                     RBrace "}" @ 308..309
             BlockStatement
+              ForStatement
+                EnhancedForStatement
+                  ForKw "for" @ 330..333 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                  LParen "(" @ 334..335
+                  LocalVariableDeclaration
+                    ClassType
+                      Name
+                        Identifier "SomeClass" @ 335..344
+                      TypeArgumentList
+                        Lt "<" @ 344..345
+                        TypeArgument
+                          WildcardType
+                            Question "?" @ 345..346
+                        Gt ">" @ 346..347 trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "value" @ 348..353 trailing=[Whitespace " "]
+                  Colon ":" @ 354..355 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "values" @ 356..362
+                  RParen ")" @ 362..363 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 364..365
+                    RBrace "}" @ 365..366
+            BlockStatement
               SynchronizedStatement
-                SynchronizedKw "synchronized" @ 330..342 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
-                LParen "(" @ 343..344
+                SynchronizedKw "synchronized" @ 387..399 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                LParen "(" @ 400..401
                 ThisExpression
-                  ThisKw "this" @ 344..348
-                RParen ")" @ 348..349 trailing=[Whitespace " "]
+                  ThisKw "this" @ 401..405
+                RParen ")" @ 405..406 trailing=[Whitespace " "]
                 Block
-                  LBrace "{" @ 350..351
-                  RBrace "}" @ 351..352
+                  LBrace "{" @ 407..408
+                  RBrace "}" @ 408..409
             BlockStatement
               TryStatement
-                TryKw "try" @ 373..376 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                TryKw "try" @ 430..433 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
                 Block
-                  LBrace "{" @ 377..378
+                  LBrace "{" @ 434..435
                   BlockStatement
                     ThrowStatement
-                      ThrowKw "throw" @ 403..408 leading=[Newline "\n", Whitespace "                        "] trailing=[Whitespace " "]
+                      ThrowKw "throw" @ 460..465 leading=[Newline "\n", Whitespace "                        "] trailing=[Whitespace " "]
                       ObjectCreationExpression
-                        NewKw "new" @ 409..412 trailing=[Whitespace " "]
+                        NewKw "new" @ 466..469 trailing=[Whitespace " "]
                         ClassType
                           Name
-                            Identifier "Exception" @ 413..422
+                            Identifier "Exception" @ 470..479
                         ArgumentList
-                          LParen "(" @ 422..423
-                          RParen ")" @ 423..424
-                      Semicolon ";" @ 424..425
-                  RBrace "}" @ 446..447 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                          LParen "(" @ 479..480
+                          RParen ")" @ 480..481
+                      Semicolon ";" @ 481..482
+                  RBrace "}" @ 503..504 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
                 CatchClause
-                  CatchKw "catch" @ 448..453 trailing=[Whitespace " "]
-                  LParen "(" @ 454..455
+                  CatchKw "catch" @ 505..510 trailing=[Whitespace " "]
+                  LParen "(" @ 511..512
                   CatchParameter
                     CatchTypeList
                       UnionType
                         ClassType
                           QualifiedName
-                            Identifier "java" @ 455..459
-                            Dot "." @ 459..460
-                            Identifier "io" @ 460..462
-                            Dot "." @ 462..463
-                            Identifier "IOException" @ 463..474 trailing=[Whitespace " "]
-                        Bar "|" @ 475..476 trailing=[Whitespace " "]
+                            Identifier "java" @ 512..516
+                            Dot "." @ 516..517
+                            Identifier "io" @ 517..519
+                            Dot "." @ 519..520
+                            Identifier "IOException" @ 520..531 trailing=[Whitespace " "]
+                        Bar "|" @ 532..533 trailing=[Whitespace " "]
                         ClassType
                           Name
-                            Identifier "RuntimeException" @ 477..493 trailing=[Whitespace " "]
-                    Identifier "ex" @ 494..496
-                  RParen ")" @ 496..497 trailing=[Whitespace " "]
+                            Identifier "RuntimeException" @ 534..550 trailing=[Whitespace " "]
+                    Identifier "ex" @ 551..553
+                  RParen ")" @ 553..554 trailing=[Whitespace " "]
                   Block
-                    LBrace "{" @ 498..499
+                    LBrace "{" @ 555..556
                     BlockStatement
                       ReturnStatement
-                        ReturnKw "return" @ 524..530 leading=[Newline "\n", Whitespace "                        "] trailing=[Whitespace " "]
+                        ReturnKw "return" @ 581..587 leading=[Newline "\n", Whitespace "                        "] trailing=[Whitespace " "]
                         LiteralExpression
-                          IntegerLiteral "1" @ 531..532
-                        Semicolon ";" @ 532..533
-                    RBrace "}" @ 554..555 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                          IntegerLiteral "1" @ 588..589
+                        Semicolon ";" @ 589..590
+                    RBrace "}" @ 611..612 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
                 FinallyClause
-                  FinallyKw "finally" @ 556..563 trailing=[Whitespace " "]
+                  FinallyKw "finally" @ 613..620 trailing=[Whitespace " "]
                   Block
-                    LBrace "{" @ 564..565
+                    LBrace "{" @ 621..622
                     BlockStatement
                       ExpressionStatement
                         MethodInvocationExpression
                           NameExpression
-                            Identifier "values" @ 590..596 leading=[Newline "\n", Whitespace "                        "]
-                          Dot "." @ 596..597
-                          Identifier "clear" @ 597..602
+                            Identifier "values" @ 647..653 leading=[Newline "\n", Whitespace "                        "]
+                          Dot "." @ 653..654
+                          Identifier "clear" @ 654..659
                           ArgumentList
-                            LParen "(" @ 602..603
-                            RParen ")" @ 603..604
-                        Semicolon ";" @ 604..605
-                    RBrace "}" @ 626..627 leading=[Newline "\n", Whitespace "                    "]
+                            LParen "(" @ 659..660
+                            RParen ")" @ 660..661
+                        Semicolon ";" @ 661..662
+                    RBrace "}" @ 683..684 leading=[Newline "\n", Whitespace "                    "]
             BlockStatement
               TryStatement
                 TryWithResourcesStatement
-                  TryKw "try" @ 648..651 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                  TryKw "try" @ 705..708 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
                   ResourceSpecification
-                    LParen "(" @ 652..653
+                    LParen "(" @ 709..710
                     ResourceList
                       Resource
                         LocalVariableDeclaration
-                          Identifier "var" @ 653..656 trailing=[Whitespace " "]
+                          Identifier "var" @ 710..713 trailing=[Whitespace " "]
                           VariableDeclaratorList
                             VariableDeclarator
-                              Identifier "ignored" @ 657..664 trailing=[Whitespace " "]
-                              Assign "=" @ 665..666 trailing=[Whitespace " "]
+                              Identifier "ignored" @ 714..721 trailing=[Whitespace " "]
+                              Assign "=" @ 722..723 trailing=[Whitespace " "]
                               VariableInitializer
                                 MethodInvocationExpression
                                   NameExpression
-                                    Identifier "open" @ 667..671
+                                    Identifier "open" @ 724..728
                                   ArgumentList
-                                    LParen "(" @ 671..672
-                                    RParen ")" @ 672..673
-                      Semicolon ";" @ 673..674 trailing=[Whitespace " "]
+                                    LParen "(" @ 728..729
+                                    RParen ")" @ 729..730
+                      Semicolon ";" @ 730..731 trailing=[Whitespace " "]
                       Resource
                         VariableAccess
                           NameExpression
-                            Identifier "existing" @ 675..683
-                    RParen ")" @ 683..684 trailing=[Whitespace " "]
+                            Identifier "existing" @ 732..740
+                    RParen ")" @ 740..741 trailing=[Whitespace " "]
                   Block
-                    LBrace "{" @ 685..686
-                    RBrace "}" @ 686..687
+                    LBrace "{" @ 742..743
+                    RBrace "}" @ 743..744
             BlockStatement
               ReturnStatement
-                ReturnKw "return" @ 708..714 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                ReturnKw "return" @ 765..771 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
                 LiteralExpression
-                  IntegerLiteral "0" @ 715..716
-                Semicolon ";" @ 716..717
-            RBrace "}" @ 734..735 leading=[Newline "\n", Whitespace "                "]
+                  IntegerLiteral "0" @ 772..773
+                Semicolon ";" @ 773..774
+            RBrace "}" @ 791..792 leading=[Newline "\n", Whitespace "                "]
       ClassBodyDeclaration
         MethodDeclaration
           ClassType
             Name
-              Identifier "AutoCloseable" @ 753..766 leading=[Newline "\n", Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
-          Identifier "open" @ 767..771
-          LParen "(" @ 771..772
-          RParen ")" @ 772..773 trailing=[Whitespace " "]
+              Identifier "AutoCloseable" @ 810..823 leading=[Newline "\n", Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "open" @ 824..828
+          LParen "(" @ 828..829
+          RParen ")" @ 829..830 trailing=[Whitespace " "]
           Block
-            LBrace "{" @ 774..775 trailing=[Whitespace " "]
+            LBrace "{" @ 831..832 trailing=[Whitespace " "]
             BlockStatement
               ReturnStatement
-                ReturnKw "return" @ 776..782 trailing=[Whitespace " "]
+                ReturnKw "return" @ 833..839 trailing=[Whitespace " "]
                 LiteralExpression
-                  NullLiteral "null" @ 783..787
-                Semicolon ";" @ 787..788 trailing=[Whitespace " "]
-            RBrace "}" @ 789..790
+                  NullLiteral "null" @ 840..844
+                Semicolon ";" @ 844..845 trailing=[Whitespace " "]
+            RBrace "}" @ 846..847
       ClassBodyDeclaration
         FieldDeclaration
           ClassType
             Name
-              Identifier "AutoCloseable" @ 807..820 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+              Identifier "AutoCloseable" @ 864..877 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
           VariableDeclaratorList
             VariableDeclarator
-              Identifier "existing" @ 821..829
-          Semicolon ";" @ 829..830
-      RBrace "}" @ 843..844 leading=[Newline "\n", Whitespace "            "]
-  Eof "" @ 853..853 leading=[Newline "\n", Whitespace "        "]
+              Identifier "existing" @ 878..886
+          Semicolon ";" @ 886..887
+      RBrace "}" @ 900..901 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 910..910 leading=[Newline "\n", Whitespace "        "]
 
 outcome: Clean
 

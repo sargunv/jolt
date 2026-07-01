@@ -24,7 +24,7 @@ use super::{
     TypeParameterList, UnaryExpression, VariableAccess, VariableDeclarator, VariableDeclaratorList,
     VariableInitializer, VariableInitializerValue, WhileStatement, YieldStatement, child,
     child_family, child_token, child_token_in, children, children_family, children_tokens_matching,
-    nth_child_family, nth_child_token,
+    nth_child_family, nth_child_token, tokens,
 };
 use jolt_syntax::TriviaKind;
 
@@ -87,7 +87,7 @@ impl ImportDeclaration {
 
     #[must_use]
     pub fn import_path(&self) -> Option<String> {
-        let mut path = self.name()?.source_text();
+        let mut path = self.name()?.compact_text();
         if self.is_star() {
             path.push_str(".*");
         }
@@ -114,6 +114,16 @@ impl PackageDeclaration {
     #[must_use]
     pub fn name(&self) -> Option<NameSyntax> {
         child_family(&self.syntax)
+    }
+}
+
+impl NameSyntax {
+    #[must_use]
+    pub fn compact_text(&self) -> String {
+        self.tokens()
+            .into_iter()
+            .map(|token| token.text().to_owned())
+            .collect()
     }
 }
 
@@ -422,6 +432,25 @@ impl MethodDeclaration {
     pub fn body(&self) -> Option<Block> {
         child(&self.syntax)
     }
+
+    #[must_use]
+    pub fn header_tokens(&self) -> Vec<JavaSyntaxToken> {
+        let header_end = self
+            .body()
+            .map_or_else(|| self.text_range().end(), |body| body.text_range().start());
+        let mut header_tokens = tokens(&self.syntax)
+            .into_iter()
+            .filter(|token| token.token_text_range().start() < header_end)
+            .collect::<Vec<_>>();
+        if self.body().is_none()
+            && header_tokens
+                .last()
+                .is_some_and(|token| token.kind() == JavaSyntaxKind::Semicolon)
+        {
+            header_tokens.pop();
+        }
+        header_tokens
+    }
 }
 
 impl ConstructorDeclaration {
@@ -453,6 +482,17 @@ impl ConstructorDeclaration {
     #[must_use]
     pub fn body(&self) -> Option<ConstructorBody> {
         child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn header_tokens(&self) -> Vec<JavaSyntaxToken> {
+        let header_end = self
+            .body()
+            .map_or_else(|| self.text_range().end(), |body| body.text_range().start());
+        tokens(&self.syntax)
+            .into_iter()
+            .filter(|token| token.token_text_range().start() < header_end)
+            .collect()
     }
 }
 
@@ -1197,6 +1237,11 @@ impl SwitchRule {
     #[must_use]
     pub fn label(&self) -> Option<SwitchLabel> {
         child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn arrow(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Arrow)
     }
 
     #[must_use]

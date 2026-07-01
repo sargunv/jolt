@@ -686,7 +686,6 @@ impl<'source> Scanner<'source> {
 
         self.validate_numeric_literal(start_pos, start, kind);
         self.validate_octal_literal(start_pos, start, kind);
-        self.validate_numeric_literal_range(start_pos, start, kind);
         kind
     }
 
@@ -921,28 +920,6 @@ impl<'source> Scanner<'source> {
         }
     }
 
-    fn validate_numeric_literal_range(
-        &mut self,
-        start_pos: usize,
-        start: TextSize,
-        kind: JavaSyntaxKind,
-    ) {
-        let text = self.logical_text(start_pos, self.pos);
-        match kind {
-            JavaSyntaxKind::IntegerLiteral
-                if integer_literal_exceeds_jls_range(&text).unwrap_or(false) =>
-            {
-                self.invalid_numeric_literal(start);
-            }
-            JavaSyntaxKind::FloatingPointLiteral
-                if floating_literal_exceeds_jls_range(&text).unwrap_or(false) =>
-            {
-                self.invalid_numeric_literal(start);
-            }
-            _ => {}
-        }
-    }
-
     fn invalid_numeric_literal(&mut self, start: TextSize) {
         self.diagnostics.push(lexer_diagnostic(
             JavaLexDiagnosticCode::InvalidNumericLiteral,
@@ -1174,136 +1151,4 @@ fn exponent_is_missing_digits(text: &str, kind: JavaSyntaxKind) -> bool {
     }
 
     false
-}
-
-fn integer_literal_exceeds_jls_range(text: &str) -> Option<bool> {
-    let clean = text.replace('_', "");
-    let is_long = clean.ends_with(['l', 'L']);
-    let body = clean.trim_end_matches(['l', 'L']);
-    let (digits, radix, max) =
-        if let Some(hex) = body.strip_prefix("0x").or_else(|| body.strip_prefix("0X")) {
-            (
-                hex,
-                16,
-                if is_long {
-                    u128::from(u64::MAX)
-                } else {
-                    u128::from(u32::MAX)
-                },
-            )
-        } else if let Some(binary) = body.strip_prefix("0b").or_else(|| body.strip_prefix("0B")) {
-            (
-                binary,
-                2,
-                if is_long {
-                    u128::from(u64::MAX)
-                } else {
-                    u128::from(u32::MAX)
-                },
-            )
-        } else if body.starts_with('0') && body.len() > 1 {
-            (
-                body,
-                8,
-                if is_long {
-                    u128::from(u64::MAX)
-                } else {
-                    u128::from(u32::MAX)
-                },
-            )
-        } else {
-            (
-                body,
-                10,
-                // JLS 3.10.1 permits the largest two's-complement magnitude
-                // only as the operand of unary minus. The lexer is
-                // context-free, so it admits that boundary and leaves the
-                // operand rule to later phases.
-                if is_long {
-                    9_223_372_036_854_775_808u128
-                } else {
-                    2_147_483_648u128
-                },
-            )
-        };
-
-    if digits.is_empty()
-        || !digits.chars().any(|ch| ch.is_digit(radix))
-        || !digits.chars().all(|ch| ch.is_digit(radix))
-    {
-        return None;
-    }
-
-    match u128::from_str_radix(digits, radix) {
-        Ok(value) => Some(value > max),
-        Err(_) => Some(true),
-    }
-}
-
-#[expect(
-    clippy::cast_possible_truncation,
-    reason = "JLS float range checks require testing whether the literal rounds to f32 infinity or zero"
-)]
-fn floating_literal_exceeds_jls_range(text: &str) -> Option<bool> {
-    let clean = text.replace('_', "");
-    let is_float = clean.ends_with(['f', 'F']);
-    let body = clean.trim_end_matches(['f', 'F', 'd', 'D']);
-    let has_nonzero_significand = floating_significand_has_nonzero_digit(body);
-    let value = if body.starts_with("0x") || body.starts_with("0X") {
-        parse_hex_float_literal(body)?
-    } else {
-        body.parse::<f64>().ok()?
-    };
-
-    if is_float {
-        let value = value as f32;
-        Some(value.is_infinite() || (has_nonzero_significand && value == 0.0))
-    } else {
-        Some(value.is_infinite() || (has_nonzero_significand && value == 0.0))
-    }
-}
-
-fn floating_significand_has_nonzero_digit(text: &str) -> bool {
-    let significand = if text.starts_with("0x") || text.starts_with("0X") {
-        text.split_once(['p', 'P'])
-            .map_or(text, |(significand, _)| significand)
-    } else {
-        text.split_once(['e', 'E'])
-            .map_or(text, |(significand, _)| significand)
-    };
-    significand
-        .chars()
-        .any(|ch| ch.is_ascii_hexdigit() && ch != '0')
-}
-
-fn parse_hex_float_literal(text: &str) -> Option<f64> {
-    let body = text
-        .strip_prefix("0x")
-        .or_else(|| text.strip_prefix("0X"))?;
-    let (significand, exponent) = body.split_once(['p', 'P'])?;
-    let exponent_digits = exponent.strip_prefix(['+', '-']).unwrap_or(exponent);
-    if exponent_digits.is_empty() || !exponent_digits.chars().all(|ch| ch.is_ascii_digit()) {
-        return None;
-    }
-    let exponent = exponent.parse::<i32>().unwrap_or_else(|_| {
-        if exponent.starts_with('-') {
-            i32::MIN
-        } else {
-            i32::MAX
-        }
-    });
-    let (whole, fraction) = significand.split_once('.').unwrap_or((significand, ""));
-
-    let mut value = 0.0f64;
-    for digit in whole.chars().filter_map(|ch| ch.to_digit(16)) {
-        value = value.mul_add(16.0, f64::from(digit));
-    }
-
-    let mut place = 1.0 / 16.0;
-    for digit in fraction.chars().filter_map(|ch| ch.to_digit(16)) {
-        value += f64::from(digit) * place;
-        place /= 16.0;
-    }
-
-    Some(value * f64::exp2(f64::from(exponent)))
 }

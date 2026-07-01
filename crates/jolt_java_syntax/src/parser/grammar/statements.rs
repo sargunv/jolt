@@ -655,7 +655,14 @@ impl Parser<'_> {
     pub(super) fn parse_guard(&mut self) {
         let guard = self.start();
         self.expect_contextual("when", "expected `when`");
-        self.parse_expression_until(&[JavaSyntaxKind::Colon, JavaSyntaxKind::Arrow]);
+        if self.starts_parenthesized_lambda_expression() {
+            self.parse_parenthesized_expression(
+                "expected `(` before switch guard",
+                "expected `)` after switch guard",
+            );
+        } else {
+            self.parse_expression_until(&[JavaSyntaxKind::Colon, JavaSyntaxKind::Arrow]);
+        }
         self.complete(guard, JavaSyntaxKind::Guard);
     }
 

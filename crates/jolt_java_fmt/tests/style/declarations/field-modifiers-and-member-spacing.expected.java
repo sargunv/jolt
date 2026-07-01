@@ -7,4 +7,7 @@ class User {
 
   public void run() {
   }
+
+  public void stop() {
+  }
 }

@@ -11,6 +11,7 @@ class Example {
       cleanup();
     }
   }
+
   AutoCloseable open() {
     return null;
   }

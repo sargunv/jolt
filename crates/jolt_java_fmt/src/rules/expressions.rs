@@ -1,13 +1,14 @@
-use jolt_fmt_ir::{Doc, concat, group, literal_text, text};
+use jolt_fmt_ir::{Doc, concat, group, text};
 use jolt_java_syntax::{
     ArgumentList, ArrayAccessExpression, ArrayCreationExpression, ArrayInitializer,
     AssignmentExpression, BinaryExpression, CastExpression, ConditionalExpression, DimExpression,
     Expression, FieldAccessExpression, InstanceofExpression, LambdaExpression, LambdaParameter,
     MethodInvocationExpression, ObjectCreationExpression, ParenthesizedExpression,
-    PostfixExpression, UnaryExpression, VariableInitializerValue,
+    PostfixExpression, SwitchExpression, UnaryExpression, VariableInitializerValue,
 };
 
-use crate::rules::statements::format_block;
+use crate::helpers::comments::{format_token_sequence, tokens_have_comments};
+use crate::rules::statements::{format_block, format_switch_block};
 
 pub(crate) fn format_expression(expression: &Expression) -> Doc {
     match expression {
@@ -25,8 +26,8 @@ pub(crate) fn format_expression(expression: &Expression) -> Doc {
         | Expression::ThisExpression(_)
         | Expression::SuperExpression(_)
         | Expression::ClassLiteralExpression(_)
-        | Expression::MethodReferenceExpression(_)
-        | Expression::SwitchExpression(_) => source_doc(&expression.source_text()),
+        | Expression::MethodReferenceExpression(_) => format_token_sequence(&expression.tokens()),
+        Expression::SwitchExpression(expression) => format_switch_expression(expression),
         Expression::ArrayCreationExpression(expression) => {
             format_array_creation_expression(expression)
         }
@@ -41,10 +42,6 @@ pub(crate) fn format_expression(expression: &Expression) -> Doc {
             format_object_creation_expression(expression)
         }
     }
-}
-
-pub(crate) fn expression_source_text(expression: &Expression) -> String {
-    expression.source_text().trim().to_owned()
 }
 
 fn format_parenthesized_expression(expression: &ParenthesizedExpression) -> Doc {
@@ -183,12 +180,12 @@ fn format_object_creation_expression(expression: &ObjectCreationExpression) -> D
                 concat([format_expression(&qualifier), text(".")])
             }),
         text("new "),
-        expression.ty().map_or_else(jolt_fmt_ir::nil, |ty| {
-            text(ty.source_text().trim().to_owned())
-        }),
+        expression
+            .ty()
+            .map_or_else(jolt_fmt_ir::nil, |ty| format_token_sequence(&ty.tokens())),
         format_argument_list(expression.arguments()),
         expression.body().map_or_else(jolt_fmt_ir::nil, |body| {
-            concat([text(" "), source_doc(&body.source_text())])
+            concat([text(" "), format_token_sequence(&body.tokens())])
         }),
     ]))
 }
@@ -196,9 +193,9 @@ fn format_object_creation_expression(expression: &ObjectCreationExpression) -> D
 fn format_array_creation_expression(expression: &ArrayCreationExpression) -> Doc {
     group(concat([
         text("new "),
-        expression.ty().map_or_else(jolt_fmt_ir::nil, |ty| {
-            text(ty.source_text().trim().to_owned())
-        }),
+        expression
+            .ty()
+            .map_or_else(jolt_fmt_ir::nil, |ty| format_token_sequence(&ty.tokens())),
         concat(
             expression
                 .dimensions()
@@ -311,9 +308,9 @@ fn format_variable_initializer_value(value: VariableInitializerValue) -> Doc {
 fn format_cast_expression(expression: &CastExpression) -> Doc {
     concat([
         text("("),
-        expression.ty().map_or_else(jolt_fmt_ir::nil, |ty| {
-            text(ty.source_text().trim().to_owned())
-        }),
+        expression
+            .ty()
+            .map_or_else(jolt_fmt_ir::nil, |ty| format_token_sequence(&ty.tokens())),
         text(") "),
         expression
             .expression()
@@ -336,10 +333,10 @@ fn format_instanceof_expression(expression: &InstanceofExpression) -> Doc {
                 expression
                     .pattern()
                     .map_or_else(jolt_fmt_ir::nil, |pattern| {
-                        text(pattern.source_text().trim().to_owned())
+                        format_token_sequence(&pattern.tokens())
                     })
             },
-            |ty| text(ty.source_text().trim().to_owned()),
+            |ty| format_token_sequence(&ty.tokens()),
         ),
     ])
 }
@@ -355,7 +352,7 @@ fn format_method_invocation_callee(expression: &MethodInvocationExpression) -> D
             expression
                 .type_arguments()
                 .map_or_else(jolt_fmt_ir::nil, |arguments| {
-                    text(arguments.source_text().trim().to_owned())
+                    format_token_sequence(&arguments.tokens())
                 }),
             text(name.text().to_owned()),
         ]);
@@ -370,6 +367,10 @@ fn format_argument_list(arguments: Option<ArgumentList>) -> Doc {
     let Some(arguments) = arguments else {
         return text("()");
     };
+    let tokens = arguments.tokens();
+    if tokens_have_comments(&tokens) {
+        return format_token_sequence(&tokens);
+    }
     let arguments = arguments
         .arguments()
         .map(|argument| format_expression(&argument))
@@ -433,9 +434,22 @@ fn format_lambda_parameters(expression: &LambdaExpression) -> Doc {
             text(", "),
             parameters
                 .into_iter()
-                .map(|parameter| text(parameter.source_text().trim().to_owned())),
+                .map(|parameter| format_token_sequence(&parameter.tokens())),
         ),
         text(")"),
+    ])
+}
+
+fn format_switch_expression(expression: &SwitchExpression) -> Doc {
+    concat([
+        text("switch ("),
+        expression
+            .selector()
+            .map_or_else(jolt_fmt_ir::nil, |selector| format_expression(&selector)),
+        text(") "),
+        expression
+            .block()
+            .map_or_else(|| text("{}"), |block| format_switch_block(&block)),
     ])
 }
 
@@ -444,8 +458,4 @@ fn is_simple_untyped_lambda_parameter(parameter: &LambdaParameter) -> bool {
         && parameter
             .name()
             .is_some_and(|name| parameter.source_text().trim() == name.text())
-}
-
-fn source_doc(source: &str) -> Doc {
-    literal_text(source.trim().to_owned())
 }

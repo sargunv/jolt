@@ -169,7 +169,8 @@ impl Parser<'_> {
         matches!(
             lookahead.kind(),
             JavaSyntaxKind::ClassKw | JavaSyntaxKind::InterfaceKw | JavaSyntaxKind::EnumKw
-        ) || lookahead.at_contextual("record")
+        ) || (lookahead.at_contextual("record")
+            && lookahead.nth_kind(1) == JavaSyntaxKind::Identifier)
             || (lookahead.at(JavaSyntaxKind::At)
                 && lookahead.nth_kind(1) == JavaSyntaxKind::InterfaceKw)
     }

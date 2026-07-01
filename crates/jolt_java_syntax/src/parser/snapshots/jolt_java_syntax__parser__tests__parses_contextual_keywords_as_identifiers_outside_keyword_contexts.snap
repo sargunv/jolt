@@ -1,6 +1,5 @@
 ---
 source: crates/jolt_java_syntax/src/parser/tests.rs
-assertion_line: 2458
 expression: "&parse"
 ---
 syntax:
@@ -176,18 +175,27 @@ CompilationUnit
               Semicolon ";" @ 603..604
             BlockStatement
               ExpressionStatement
+                AssignmentExpression
+                  NameExpression
+                    Identifier "record" @ 625..631 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                  Assign "=" @ 632..633 trailing=[Whitespace " "]
+                  LiteralExpression
+                    StringLiteral "\"name\"" @ 634..640
+                Semicolon ";" @ 640..641
+            BlockStatement
+              ExpressionStatement
                 MethodInvocationExpression
                   ThisExpression
-                    ThisKw "this" @ 625..629 leading=[Newline "\n", Whitespace "                    "]
-                  Dot "." @ 629..630
-                  Identifier "requires" @ 630..638
+                    ThisKw "this" @ 662..666 leading=[Newline "\n", Whitespace "                    "]
+                  Dot "." @ 666..667
+                  Identifier "requires" @ 667..675
                   ArgumentList
-                    LParen "(" @ 638..639
-                    RParen ")" @ 639..640
-                Semicolon ";" @ 640..641
-            RBrace "}" @ 658..659 leading=[Newline "\n", Whitespace "                "]
-      RBrace "}" @ 672..673 leading=[Newline "\n", Whitespace "            "]
-  Eof "" @ 682..682 leading=[Newline "\n", Whitespace "        "]
+                    LParen "(" @ 675..676
+                    RParen ")" @ 676..677
+                Semicolon ";" @ 677..678
+            RBrace "}" @ 695..696 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 709..710 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 719..719 leading=[Newline "\n", Whitespace "        "]
 
 outcome: Clean
 

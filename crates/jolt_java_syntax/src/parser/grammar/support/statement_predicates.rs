@@ -25,7 +25,8 @@ impl Parser<'_> {
         matches!(
             lookahead.kind(),
             JavaSyntaxKind::ClassKw | JavaSyntaxKind::InterfaceKw | JavaSyntaxKind::EnumKw
-        ) || lookahead.at_contextual("record")
+        ) || (lookahead.at_contextual("record")
+            && lookahead.nth_kind(1) == JavaSyntaxKind::Identifier)
             || (lookahead.at(JavaSyntaxKind::At)
                 && lookahead.nth_kind(1) == JavaSyntaxKind::InterfaceKw)
     }
@@ -126,6 +127,7 @@ impl Parser<'_> {
 
         index += 1;
         let mut conditional_depth = 0usize;
+        let mut angle_depth = 0usize;
         while self.kind_at(index) != JavaSyntaxKind::Eof {
             if let Some(next) = self.skip_balanced_delimiter_at(index) {
                 index = next;
@@ -133,11 +135,19 @@ impl Parser<'_> {
             }
 
             match self.kind_at(index) {
-                JavaSyntaxKind::Question => conditional_depth += 1,
-                JavaSyntaxKind::Colon if conditional_depth > 0 => {
+                JavaSyntaxKind::Lt => angle_depth += 1,
+                JavaSyntaxKind::Gt if angle_depth > 0 => angle_depth -= 1,
+                JavaSyntaxKind::RShift if angle_depth > 0 => {
+                    angle_depth = angle_depth.saturating_sub(2);
+                }
+                JavaSyntaxKind::UnsignedRShift if angle_depth > 0 => {
+                    angle_depth = angle_depth.saturating_sub(3);
+                }
+                JavaSyntaxKind::Question if angle_depth == 0 => conditional_depth += 1,
+                JavaSyntaxKind::Colon if angle_depth == 0 && conditional_depth > 0 => {
                     conditional_depth -= 1;
                 }
-                JavaSyntaxKind::Colon => return true,
+                JavaSyntaxKind::Colon if angle_depth == 0 => return true,
                 JavaSyntaxKind::Semicolon | JavaSyntaxKind::RParen | JavaSyntaxKind::RBracket => {
                     return false;
                 }

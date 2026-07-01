@@ -1191,6 +1191,7 @@ fn switch_case_pattern_label_items_are_structured_with_guards() {
                 void method(Object value) {
                     switch (value) {
                         case String s when s.isEmpty() -> s.trim();
+                        case String s when (s.isBlank()) -> s.trim();
                     }
                 }
             }
@@ -1263,6 +1264,7 @@ fn parses_loop_jump_synchronized_and_try_statements() {
                     do { break; } while (false);
                     for (int i = 0; i < 10; i++) {}
                     for (String value : values) {}
+                    for (SomeClass<?> value : values) {}
                     synchronized (this) {}
                     try {
                         throw new Exception();
@@ -2127,7 +2129,7 @@ fn parses_contextual_keywords_as_identifiers_outside_keyword_contexts() {
     // `when` outside a switch guard.
     assert_parse_snapshot(
         "parses_contextual_keywords_as_identifiers_outside_keyword_contexts",
-        r"
+        r#"
             class ContextualKeywordIdentifiers {
                 int module;
                 int open;
@@ -2149,10 +2151,11 @@ fn parses_contextual_keywords_as_identifiers_outside_keyword_contexts() {
                 void requires() {}
                 void method() {
                     int when = this.when;
+                    record = "name";
                     this.requires();
                 }
             }
-        ",
+        "#,
     );
 }
 
