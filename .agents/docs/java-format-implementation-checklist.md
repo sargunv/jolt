@@ -90,7 +90,7 @@ Status legend:
 - `[x]` `semicolon_list`
 - `[x]` `parenthesized_list`
 - `[x]` `angle_bracket_list`
-- `[~]` `braced_block`
+- `[x]` `braced_block`
 - `[ ]` `declaration_header`
 - `[~]` `member_body`
 - `[x]` `modifier_list`

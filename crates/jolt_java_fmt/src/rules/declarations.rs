@@ -5,6 +5,7 @@ use jolt_java_syntax::{
     JavaSyntaxToken, MethodDeclaration, ModifierList, RecordDeclaration, TypeDeclaration,
 };
 
+use crate::helpers::blocks::{braced_body, empty_block};
 use crate::helpers::comments::{
     format_token_sequence, tokens_end_with_forced_line, tokens_have_comments,
 };
@@ -170,19 +171,11 @@ fn format_header_with_body(
     header_tail: Doc,
     body: Option<Doc>,
 ) -> Doc {
-    let header = concat([modifier_prefix(modifiers), header_tail, text(" {")]);
     concat([
-        header,
-        body.map_or_else(
-            || concat([hard_line(), text("}")]),
-            |body| {
-                concat([
-                    jolt_fmt_ir::indent(concat([hard_line(), body])),
-                    hard_line(),
-                    text("}"),
-                ])
-            },
-        ),
+        modifier_prefix(modifiers),
+        header_tail,
+        text(" "),
+        braced_body(body),
     ])
 }
 
@@ -543,9 +536,7 @@ fn format_empty_executable_body_after_header(
             } else {
                 text(" ")
             },
-            text("{"),
-            hard_line(),
-            text("}"),
+            empty_block(),
         ])
     } else {
         concat([

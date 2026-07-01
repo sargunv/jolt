@@ -8,6 +8,7 @@ use jolt_java_syntax::{
     TryStatement, TryWithResourcesStatement, Type, WhileStatement, YieldStatement,
 };
 
+use crate::helpers::blocks::{braced_block, braced_body, empty_block, join_hard_lines};
 use crate::helpers::comments::{
     comment_forces_line, format_comment, format_token_sequence, tokens_have_comments,
 };
@@ -22,16 +23,7 @@ pub(crate) fn format_block(block: &Block) -> Doc {
         .items()
         .filter_map(format_block_item)
         .collect::<Vec<_>>();
-    if items.is_empty() {
-        return concat([text("{"), hard_line(), text("}")]);
-    }
-
-    concat([
-        text("{"),
-        jolt_fmt_ir::indent(concat([hard_line(), join_hard_lines(items)])),
-        hard_line(),
-        text("}"),
-    ])
+    braced_block(items)
 }
 
 fn format_block_item(item: BlockItem) -> Option<Doc> {
@@ -69,7 +61,7 @@ fn format_block_item(item: BlockItem) -> Option<Doc> {
 fn format_statement(statement: &Statement) -> Doc {
     match statement {
         Statement::Block(block) => format_block(block),
-        Statement::EmptyStatement(_) => concat([text("{"), hard_line(), text("}")]),
+        Statement::EmptyStatement(_) => empty_block(),
         Statement::LabeledStatement(statement) => format_labeled_statement(statement),
         Statement::ExpressionStatement(statement) => format_expression_statement(statement),
         Statement::IfStatement(statement) => format_if_statement(statement),
@@ -317,10 +309,9 @@ fn format_synchronized_statement(statement: &SynchronizedStatement) -> Doc {
                 format_expression(&expression)
             }),
         text(") "),
-        statement.body().map_or_else(
-            || concat([text("{"), hard_line(), text("}")]),
-            |body| format_block(&body),
-        ),
+        statement
+            .body()
+            .map_or_else(empty_block, |body| format_block(&body)),
     ])
 }
 
@@ -333,7 +324,7 @@ fn format_switch_statement(statement: &SwitchStatement) -> Doc {
         text(") "),
         statement
             .block()
-            .map_or_else(empty_block_doc, |block| format_switch_block(&block)),
+            .map_or_else(empty_block, |block| format_switch_block(&block)),
     ])
 }
 
@@ -347,15 +338,10 @@ pub(crate) fn format_switch_block(block: &SwitchBlock) -> Doc {
         .collect::<Vec<_>>();
 
     if entries.is_empty() {
-        return empty_block_doc();
+        return empty_block();
     }
 
-    concat([
-        text("{"),
-        jolt_fmt_ir::indent(concat([hard_line(), join_hard_lines(entries)])),
-        hard_line(),
-        text("}"),
-    ])
+    braced_body(Some(join_hard_lines(entries)))
 }
 
 fn format_switch_statement_group(group: &SwitchBlockStatementGroup) -> Doc {
@@ -434,7 +420,7 @@ fn format_try_statement(statement: &TryStatement) -> Doc {
         text("try "),
         statement
             .body()
-            .map_or_else(empty_block_doc, |body| format_block(&body)),
+            .map_or_else(empty_block, |body| format_block(&body)),
         format_catch_clauses(statement.catch_clauses()),
         statement
             .finally_clause()
@@ -451,7 +437,7 @@ fn format_try_with_resources_statement(statement: &TryWithResourcesStatement) ->
         text(") "),
         statement
             .body()
-            .map_or_else(empty_block_doc, |body| format_block(&body)),
+            .map_or_else(empty_block, |body| format_block(&body)),
         format_catch_clauses(statement.catch_clauses()),
         statement
             .finally_clause()
@@ -512,7 +498,7 @@ fn format_catch_clause(clause: &CatchClause) -> Doc {
         text(" "),
         clause
             .body()
-            .map_or_else(empty_block_doc, |body| format_block(&body)),
+            .map_or_else(empty_block, |body| format_block(&body)),
     ])
 }
 
@@ -576,7 +562,7 @@ fn format_finally_clause(clause: &FinallyClause) -> Doc {
         text(" finally "),
         clause
             .body()
-            .map_or_else(empty_block_doc, |body| format_block(&body)),
+            .map_or_else(empty_block, |body| format_block(&body)),
     ])
 }
 
@@ -595,27 +581,7 @@ fn join_resource_lines(docs: Vec<Doc>) -> Doc {
 fn statement_body_as_block(statement: Option<Statement>) -> Doc {
     match statement {
         Some(Statement::Block(block)) => format_block(&block),
-        Some(Statement::EmptyStatement(_)) | None => empty_block_doc(),
-        Some(statement) => concat([
-            text("{"),
-            jolt_fmt_ir::indent(concat([hard_line(), format_statement(&statement)])),
-            hard_line(),
-            text("}"),
-        ]),
+        Some(Statement::EmptyStatement(_)) | None => empty_block(),
+        Some(statement) => braced_body(Some(format_statement(&statement))),
     }
-}
-
-fn join_hard_lines(docs: Vec<Doc>) -> Doc {
-    let mut joined = Vec::new();
-    for doc in docs {
-        if !joined.is_empty() {
-            joined.push(hard_line());
-        }
-        joined.push(doc);
-    }
-    concat(joined)
-}
-
-fn empty_block_doc() -> Doc {
-    concat([text("{"), hard_line(), text("}")])
 }
