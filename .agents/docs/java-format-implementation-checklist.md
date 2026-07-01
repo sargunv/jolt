@@ -29,8 +29,10 @@ Status legend:
 - `[x]` `jolt_fmt_ir` owns language-agnostic documents and rendering.
 - `[~]` `jolt_fmt_core` owns public options, diagnostics, and language wiring.
 - `[~]` Java formatter rules avoid raw syntax structure when stable accessors
-  should exist; formatter-ignore token range math is helper-owned, and typed
-  modifier annotation splits use syntax accessors.
+  should exist; formatter-ignore token range math is helper-owned, typed
+  modifier annotation splits use syntax accessors, and formatter context is
+  threaded through declaration, statement, expression, type, variable, modifier,
+  annotation, and pattern rule layers.
 
 ## Proposed Module Shape
 
@@ -91,7 +93,8 @@ Status legend:
   delimiter-dangling comments; broader moved-construct dangling placement is
   still in progress. Generic construct-leading comment formatting and removed
   token comment preservation are shared helpers, along with star-block and
-  token-has-comment classification.
+  token-has-comment classification. Type-declaration leading comments now read
+  through `CommentMap`.
 - `[~]` Comment placement is explicit for moved constructs; leading comments on
   type declarations are preserved before modifier/annotation formatting.
 - `[x]` Sortable import and module directive comments are barriers for v1.

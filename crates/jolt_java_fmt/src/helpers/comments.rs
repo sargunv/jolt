@@ -63,6 +63,15 @@ pub(crate) fn format_construct_leading_comments(tokens: &[JavaSyntaxToken]) -> D
         .map_or_else(jolt_fmt_ir::nil, format_leading_comments)
 }
 
+pub(crate) fn format_leading_comment_list(comments: &[JavaComment]) -> Doc {
+    let mut docs = Vec::new();
+    for comment in comments {
+        docs.push(format_comment(comment));
+        docs.push(hard_line());
+    }
+    concat(docs)
+}
+
 pub(crate) fn non_formatter_control_comments(comments: Vec<JavaComment>) -> Vec<JavaComment> {
     comments
         .into_iter()

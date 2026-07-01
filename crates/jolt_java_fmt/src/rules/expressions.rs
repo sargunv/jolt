@@ -9,6 +9,7 @@ use jolt_java_syntax::{
     SuperExpression, SwitchExpression, ThisExpression, UnaryExpression, VariableInitializerValue,
 };
 
+use crate::context::JavaFormatter;
 use crate::helpers::chains::member_chain;
 use crate::helpers::comments::{
     comment_forces_line, format_leading_comments, format_token_text, format_token_with_comments,
@@ -24,57 +25,76 @@ use crate::rules::annotations::format_annotation;
 use crate::rules::declarations::format_anonymous_class_body;
 use crate::rules::patterns::format_pattern;
 use crate::rules::statements::{format_block, format_switch_block};
-use crate::rules::types::{format_array_dimensions, format_type, format_type_argument_list};
+use crate::rules::types::{
+    format_array_dimensions, format_type, format_type_argument_list, format_void_type,
+};
 
-pub(crate) fn format_expression(expression: &Expression) -> Doc {
-    format_expression_with_leading_comments(expression, LeadingComments::Preserve)
+pub(crate) fn format_expression(expression: &Expression, formatter: &JavaFormatter<'_>) -> Doc {
+    format_expression_with_leading_comments(expression, LeadingComments::Preserve, formatter)
 }
 
 fn format_expression_with_leading_comments(
     expression: &Expression,
     leading_comments: LeadingComments,
+    formatter: &JavaFormatter<'_>,
 ) -> Doc {
     match expression {
         Expression::ParenthesizedExpression(expression) => {
-            format_parenthesized_expression(expression)
+            format_parenthesized_expression(expression, formatter)
         }
-        Expression::AssignmentExpression(expression) => format_assignment_expression(expression),
-        Expression::ConditionalExpression(expression) => format_conditional_expression(expression),
-        Expression::BinaryExpression(expression) => format_binary_expression(expression),
-        Expression::UnaryExpression(expression) => format_unary_expression(expression),
-        Expression::PostfixExpression(expression) => format_postfix_expression(expression),
-        Expression::LambdaExpression(expression) => format_lambda_expression(expression),
+        Expression::AssignmentExpression(expression) => {
+            format_assignment_expression(expression, formatter)
+        }
+        Expression::ConditionalExpression(expression) => {
+            format_conditional_expression(expression, formatter)
+        }
+        Expression::BinaryExpression(expression) => format_binary_expression(expression, formatter),
+        Expression::UnaryExpression(expression) => format_unary_expression(expression, formatter),
+        Expression::PostfixExpression(expression) => {
+            format_postfix_expression(expression, formatter)
+        }
+        Expression::LambdaExpression(expression) => format_lambda_expression(expression, formatter),
         Expression::LiteralExpression(expression) => {
             format_literal_expression(expression, leading_comments)
         }
         Expression::NameExpression(expression) => {
-            format_name_expression(expression, leading_comments)
+            format_name_expression(expression, leading_comments, formatter)
         }
         Expression::ThisExpression(expression) => {
-            format_this_expression(expression, leading_comments)
+            format_this_expression(expression, leading_comments, formatter)
         }
         Expression::SuperExpression(expression) => {
-            format_super_expression(expression, leading_comments)
+            format_super_expression(expression, leading_comments, formatter)
         }
         Expression::ClassLiteralExpression(expression) => {
-            format_class_literal_expression(expression)
+            format_class_literal_expression(expression, formatter)
         }
         Expression::MethodReferenceExpression(expression) => {
-            format_method_reference_expression(expression)
+            format_method_reference_expression(expression, formatter)
         }
-        Expression::SwitchExpression(expression) => format_switch_expression(expression),
+        Expression::SwitchExpression(expression) => format_switch_expression(expression, formatter),
         Expression::ArrayCreationExpression(expression) => {
-            format_array_creation_expression(expression)
+            format_array_creation_expression(expression, formatter)
         }
-        Expression::InstanceofExpression(expression) => format_instanceof_expression(expression),
-        Expression::CastExpression(expression) => format_cast_expression(expression),
-        Expression::FieldAccessExpression(expression) => format_field_access_expression(expression),
-        Expression::ArrayAccessExpression(expression) => format_array_access_expression(expression),
+        Expression::InstanceofExpression(expression) => {
+            format_instanceof_expression(expression, formatter)
+        }
+        Expression::CastExpression(expression) => format_cast_expression(expression, formatter),
+        Expression::FieldAccessExpression(expression) => {
+            format_field_access_expression(expression, formatter)
+        }
+        Expression::ArrayAccessExpression(expression) => {
+            format_array_access_expression(expression, formatter)
+        }
         Expression::MethodInvocationExpression(expression) => {
-            format_method_invocation_expression_with_leading_comments(expression, leading_comments)
+            format_method_invocation_expression_with_leading_comments(
+                expression,
+                leading_comments,
+                formatter,
+            )
         }
         Expression::ObjectCreationExpression(expression) => {
-            format_object_creation_expression(expression)
+            format_object_creation_expression(expression, formatter)
         }
     }
 }
@@ -96,10 +116,14 @@ fn format_literal_expression(
         })
 }
 
-fn format_name_expression(expression: &NameExpression, leading_comments: LeadingComments) -> Doc {
+fn format_name_expression(
+    expression: &NameExpression,
+    leading_comments: LeadingComments,
+    formatter: &JavaFormatter<'_>,
+) -> Doc {
     let annotations = expression
         .annotations()
-        .map(|annotation| format_annotation(&annotation))
+        .map(|annotation| format_annotation(&annotation, formatter))
         .collect::<Vec<_>>();
     let name = expression.name().map_or_else(jolt_fmt_ir::nil, |name| {
         format_leaf_token(&name, leading_comments)
@@ -112,7 +136,11 @@ fn format_name_expression(expression: &NameExpression, leading_comments: Leading
     }
 }
 
-fn format_this_expression(expression: &ThisExpression, leading_comments: LeadingComments) -> Doc {
+fn format_this_expression(
+    expression: &ThisExpression,
+    leading_comments: LeadingComments,
+    formatter: &JavaFormatter<'_>,
+) -> Doc {
     let dot = expression.dot_token();
 
     format_qualified_keyword_expression(
@@ -122,10 +150,15 @@ fn format_this_expression(expression: &ThisExpression, leading_comments: Leading
             || text("this"),
             |token| format_leaf_token(&token, leading_comments),
         ),
+        formatter,
     )
 }
 
-fn format_super_expression(expression: &SuperExpression, leading_comments: LeadingComments) -> Doc {
+fn format_super_expression(
+    expression: &SuperExpression,
+    leading_comments: LeadingComments,
+    formatter: &JavaFormatter<'_>,
+) -> Doc {
     let dot = expression.dot_token();
 
     format_qualified_keyword_expression(
@@ -135,6 +168,7 @@ fn format_super_expression(expression: &SuperExpression, leading_comments: Leadi
             || text("super"),
             |token| format_leaf_token(&token, leading_comments),
         ),
+        formatter,
     )
 }
 
@@ -142,10 +176,11 @@ fn format_qualified_keyword_expression(
     qualifier: Option<Expression>,
     dot: Option<&JavaSyntaxToken>,
     keyword: Doc,
+    formatter: &JavaFormatter<'_>,
 ) -> Doc {
     match qualifier {
         Some(qualifier) => concat([
-            format_expression(&qualifier),
+            format_expression(&qualifier, formatter),
             format_member_dot(dot),
             keyword,
         ]),
@@ -167,7 +202,10 @@ fn format_leaf_token(
     ])
 }
 
-fn format_class_literal_expression(expression: &ClassLiteralExpression) -> Doc {
+fn format_class_literal_expression(
+    expression: &ClassLiteralExpression,
+    formatter: &JavaFormatter<'_>,
+) -> Doc {
     let target = expression.target_expression().map_or_else(
         || {
             expression.void_type().map_or_else(
@@ -178,10 +216,10 @@ fn format_class_literal_expression(expression: &ClassLiteralExpression) -> Doc {
                             format_leaf_token(&keyword, LeadingComments::Preserve)
                         })
                 },
-                |ty| crate::rules::types::format_void_type(&ty),
+                |ty| format_void_type(&ty),
             )
         },
-        |target| format_expression(&target),
+        |target| format_expression(&target, formatter),
     );
 
     concat([
@@ -189,13 +227,16 @@ fn format_class_literal_expression(expression: &ClassLiteralExpression) -> Doc {
         expression
             .dimensions()
             .map_or_else(jolt_fmt_ir::nil, |dimensions| {
-                format_array_dimensions(&dimensions)
+                format_array_dimensions(&dimensions, formatter)
             }),
         text(".class"),
     ])
 }
 
-fn format_parenthesized_expression(expression: &ParenthesizedExpression) -> Doc {
+fn format_parenthesized_expression(
+    expression: &ParenthesizedExpression,
+    formatter: &JavaFormatter<'_>,
+) -> Doc {
     group(concat([
         format_parenthesized_expression_open(expression),
         indent(concat([
@@ -203,7 +244,7 @@ fn format_parenthesized_expression(expression: &ParenthesizedExpression) -> Doc 
             expression
                 .expression()
                 .map_or_else(jolt_fmt_ir::nil, |expression| {
-                    format_expression(&expression)
+                    format_expression(&expression, formatter)
                 }),
         ])),
         format_parenthesized_expression_close_with_spacing(expression),
@@ -265,34 +306,42 @@ fn format_parenthesized_expression_close_with_spacing(expression: &Parenthesized
     ])
 }
 
-fn format_assignment_expression(expression: &AssignmentExpression) -> Doc {
+fn format_assignment_expression(
+    expression: &AssignmentExpression,
+    formatter: &JavaFormatter<'_>,
+) -> Doc {
     assignment_expression(
         expression
             .left()
-            .map_or_else(jolt_fmt_ir::nil, |left| format_expression(&left)),
+            .map_or_else(jolt_fmt_ir::nil, |left| format_expression(&left, formatter)),
         expression
             .operator()
             .map_or_else(jolt_fmt_ir::nil, |operator| {
                 format_token_with_comments(&operator)
             }),
-        expression
-            .right()
-            .map_or_else(jolt_fmt_ir::nil, |right| format_expression(&right)),
+        expression.right().map_or_else(jolt_fmt_ir::nil, |right| {
+            format_expression(&right, formatter)
+        }),
     )
 }
 
-fn format_conditional_expression(expression: &ConditionalExpression) -> Doc {
+fn format_conditional_expression(
+    expression: &ConditionalExpression,
+    formatter: &JavaFormatter<'_>,
+) -> Doc {
     ternary_expression(
         expression
             .condition()
-            .map_or_else(jolt_fmt_ir::nil, |condition| format_expression(&condition)),
+            .map_or_else(jolt_fmt_ir::nil, |condition| {
+                format_expression(&condition, formatter)
+            }),
         expression
             .question_token()
             .map_or_else(|| text("?"), |token| format_token_with_comments(&token)),
         expression
             .true_expression()
             .map_or_else(jolt_fmt_ir::nil, |expression| {
-                format_expression(&expression)
+                format_expression(&expression, formatter)
             }),
         expression
             .colon_token()
@@ -300,17 +349,17 @@ fn format_conditional_expression(expression: &ConditionalExpression) -> Doc {
         expression
             .false_expression()
             .map_or_else(jolt_fmt_ir::nil, |expression| {
-                format_expression(&expression)
+                format_expression(&expression, formatter)
             }),
     )
 }
 
-fn format_binary_expression(expression: &BinaryExpression) -> Doc {
-    let (first, rest) = flatten_binary_expression(expression);
-    binary_chain(format_expression(&first), rest)
+fn format_binary_expression(expression: &BinaryExpression, formatter: &JavaFormatter<'_>) -> Doc {
+    let (first, rest) = flatten_binary_expression(expression, formatter);
+    binary_chain(format_expression(&first, formatter), rest)
 }
 
-fn format_unary_expression(expression: &UnaryExpression) -> Doc {
+fn format_unary_expression(expression: &UnaryExpression, formatter: &JavaFormatter<'_>) -> Doc {
     concat([
         expression
             .operator()
@@ -319,15 +368,19 @@ fn format_unary_expression(expression: &UnaryExpression) -> Doc {
             }),
         expression
             .operand()
-            .map_or_else(jolt_fmt_ir::nil, |operand| format_expression(&operand)),
+            .map_or_else(jolt_fmt_ir::nil, |operand| {
+                format_expression(&operand, formatter)
+            }),
     ])
 }
 
-fn format_postfix_expression(expression: &PostfixExpression) -> Doc {
+fn format_postfix_expression(expression: &PostfixExpression, formatter: &JavaFormatter<'_>) -> Doc {
     concat([
         expression
             .operand()
-            .map_or_else(jolt_fmt_ir::nil, |operand| format_expression(&operand)),
+            .map_or_else(jolt_fmt_ir::nil, |operand| {
+                format_expression(&operand, formatter)
+            }),
         expression
             .operator()
             .map_or_else(jolt_fmt_ir::nil, |operator| {
@@ -339,30 +392,34 @@ fn format_postfix_expression(expression: &PostfixExpression) -> Doc {
 fn format_method_invocation_expression_with_leading_comments(
     expression: &MethodInvocationExpression,
     leading_comments: LeadingComments,
+    formatter: &JavaFormatter<'_>,
 ) -> Doc {
     let expression = Expression::from(expression.clone());
     let parent_role = expression.parent_role();
     if !is_member_chain_child(&expression)
         && let Some(chain) = expression.member_chain()
     {
-        return format_member_chain(&chain);
+        return format_member_chain(&chain, formatter);
     }
     let Expression::MethodInvocationExpression(expression) = expression else {
         return jolt_fmt_ir::nil();
     };
 
     group(concat([
-        format_method_invocation_callee(&expression, leading_comments),
-        format_argument_list_for_parent_role(expression.arguments(), parent_role),
+        format_method_invocation_callee(&expression, leading_comments, formatter),
+        format_argument_list_for_parent_role(expression.arguments(), parent_role, formatter),
     ]))
 }
 
-fn format_field_access_expression(expression: &FieldAccessExpression) -> Doc {
+fn format_field_access_expression(
+    expression: &FieldAccessExpression,
+    formatter: &JavaFormatter<'_>,
+) -> Doc {
     let expression = Expression::from(expression.clone());
     if !is_member_chain_child(&expression)
         && let Some(chain) = expression.member_chain()
     {
-        return format_member_chain(&chain);
+        return format_member_chain(&chain, formatter);
     }
     let Expression::FieldAccessExpression(expression) = expression else {
         return jolt_fmt_ir::nil();
@@ -372,7 +429,9 @@ fn format_field_access_expression(expression: &FieldAccessExpression) -> Doc {
     group(concat([
         expression
             .receiver()
-            .map_or_else(jolt_fmt_ir::nil, |receiver| format_expression(&receiver)),
+            .map_or_else(jolt_fmt_ir::nil, |receiver| {
+                format_expression(&receiver, formatter)
+            }),
         format_member_dot(dot.as_ref()),
         expression
             .field_name()
@@ -380,19 +439,22 @@ fn format_field_access_expression(expression: &FieldAccessExpression) -> Doc {
         expression
             .type_arguments()
             .map_or_else(jolt_fmt_ir::nil, |arguments| {
-                format_type_argument_list(&arguments)
+                format_type_argument_list(&arguments, formatter)
             }),
     ]))
 }
 
-fn format_method_reference_expression(expression: &MethodReferenceExpression) -> Doc {
+fn format_method_reference_expression(
+    expression: &MethodReferenceExpression,
+    formatter: &JavaFormatter<'_>,
+) -> Doc {
     group(concat([
-        format_method_reference_receiver(expression),
+        format_method_reference_receiver(expression, formatter),
         format_method_reference_separator(expression),
         expression
             .type_arguments()
             .map_or_else(jolt_fmt_ir::nil, |arguments| {
-                format_type_argument_list(&arguments)
+                format_type_argument_list(&arguments, formatter)
             }),
         if expression.is_constructor_reference() {
             expression
@@ -429,87 +491,100 @@ fn format_method_reference_separator(expression: &MethodReferenceExpression) -> 
     )
 }
 
-fn format_method_reference_receiver(expression: &MethodReferenceExpression) -> Doc {
+fn format_method_reference_receiver(
+    expression: &MethodReferenceExpression,
+    formatter: &JavaFormatter<'_>,
+) -> Doc {
     if let Some(receiver) = expression.receiver_expression() {
         return concat([
-            format_expression(&receiver),
+            format_expression(&receiver, formatter),
             expression
                 .receiver_dimensions()
                 .map_or_else(jolt_fmt_ir::nil, |dimensions| {
-                    format_array_dimensions(&dimensions)
+                    format_array_dimensions(&dimensions, formatter)
                 }),
         ]);
     }
 
     expression
         .receiver_type()
-        .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty))
+        .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty, formatter))
 }
 
-fn format_array_access_expression(expression: &ArrayAccessExpression) -> Doc {
+fn format_array_access_expression(
+    expression: &ArrayAccessExpression,
+    formatter: &JavaFormatter<'_>,
+) -> Doc {
     let open_bracket = expression.open_bracket();
     let close_bracket = expression.close_bracket();
 
     group(concat([
-        expression
-            .array()
-            .map_or_else(jolt_fmt_ir::nil, |array| format_expression(&array)),
+        expression.array().map_or_else(jolt_fmt_ir::nil, |array| {
+            format_expression(&array, formatter)
+        }),
         format_bracketed_expression(
             open_bracket.as_ref(),
-            expression
-                .index()
-                .map_or_else(jolt_fmt_ir::nil, |index| format_expression(&index)),
+            expression.index().map_or_else(jolt_fmt_ir::nil, |index| {
+                format_expression(&index, formatter)
+            }),
             close_bracket.as_ref(),
         ),
     ]))
 }
 
-fn format_object_creation_expression(expression: &ObjectCreationExpression) -> Doc {
+fn format_object_creation_expression(
+    expression: &ObjectCreationExpression,
+    formatter: &JavaFormatter<'_>,
+) -> Doc {
     group(concat([
         expression
             .qualifier()
             .map_or_else(jolt_fmt_ir::nil, |qualifier| {
-                concat([format_expression(&qualifier), text(".")])
+                concat([format_expression(&qualifier, formatter), text(".")])
             }),
         format_creation_new_keyword(expression.new_token().as_ref()),
         expression
             .constructor_type_arguments()
             .map_or_else(jolt_fmt_ir::nil, |arguments| {
-                concat([format_type_argument_list(&arguments), text(" ")])
+                concat([format_type_argument_list(&arguments, formatter), text(" ")])
             }),
         expression
             .ty()
-            .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty)),
+            .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty, formatter)),
         format_argument_list_for_parent_role(
             expression.arguments(),
             Expression::from(expression.clone()).parent_role(),
+            formatter,
         ),
         expression.body().map_or_else(jolt_fmt_ir::nil, |body| {
             concat([
                 text(" "),
-                jolt_fmt_ir::dedent(format_anonymous_class_body(&body)),
+                jolt_fmt_ir::dedent(format_anonymous_class_body(&body, formatter)),
             ])
         }),
     ]))
 }
 
-fn format_array_creation_expression(expression: &ArrayCreationExpression) -> Doc {
+fn format_array_creation_expression(
+    expression: &ArrayCreationExpression,
+    formatter: &JavaFormatter<'_>,
+) -> Doc {
     group(concat([
         format_creation_new_keyword(expression.new_token().as_ref()),
         expression
             .ty()
-            .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty)),
+            .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty, formatter)),
         concat(
             expression
                 .dimensions()
-                .map(|dimension| format_dim_expression(&dimension)),
+                .map(|dimension| format_dim_expression(&dimension, formatter)),
         ),
         expression
             .initializer()
             .map_or_else(jolt_fmt_ir::nil, |initializer| {
                 concat([
                     text(" "),
-                    jolt_fmt_ir::dedent(format_array_initializer(&initializer)),
+                    jolt_fmt_ir::dedent(format_array_initializer(&initializer, formatter)),
                 ])
             }),
     ]))
@@ -533,7 +608,7 @@ fn format_creation_new_keyword(keyword: Option<&JavaSyntaxToken>) -> Doc {
     )
 }
 
-fn format_dim_expression(dimension: &DimExpression) -> Doc {
+fn format_dim_expression(dimension: &DimExpression, formatter: &JavaFormatter<'_>) -> Doc {
     let open_bracket = dimension.open_bracket();
     let close_bracket = dimension.close_bracket();
 
@@ -542,7 +617,7 @@ fn format_dim_expression(dimension: &DimExpression) -> Doc {
         dimension
             .expression()
             .map_or_else(jolt_fmt_ir::nil, |expression| {
-                format_expression(&expression)
+                format_expression(&expression, formatter)
             }),
         close_bracket.as_ref(),
     )
@@ -613,7 +688,7 @@ fn format_close_bracket_with_spacing(close: Option<&JavaSyntaxToken>) -> Doc {
     ])
 }
 
-fn format_array_initializer(initializer: &ArrayInitializer) -> Doc {
+fn format_array_initializer(initializer: &ArrayInitializer, formatter: &JavaFormatter<'_>) -> Doc {
     let open = initializer.open_brace();
     let close = initializer.close_brace();
     braced_comma_list_with_trailing_separator(
@@ -622,85 +697,88 @@ fn format_array_initializer(initializer: &ArrayInitializer) -> Doc {
         initializer
             .entries()
             .map(|entry| CommaListItem {
-                doc: format_variable_initializer_value(entry.value),
+                doc: format_variable_initializer_value(entry.value, formatter),
                 comma: entry.comma,
             })
             .collect(),
     )
 }
 
-pub(crate) fn format_variable_initializer_value(value: VariableInitializerValue) -> Doc {
+pub(crate) fn format_variable_initializer_value(
+    value: VariableInitializerValue,
+    formatter: &JavaFormatter<'_>,
+) -> Doc {
     match value {
         VariableInitializerValue::LiteralExpression(expression) => {
-            format_expression(&expression.into())
+            format_expression(&expression.into(), formatter)
         }
         VariableInitializerValue::NameExpression(expression) => {
-            format_expression(&expression.into())
+            format_expression(&expression.into(), formatter)
         }
         VariableInitializerValue::ThisExpression(expression) => {
-            format_expression(&expression.into())
+            format_expression(&expression.into(), formatter)
         }
         VariableInitializerValue::SuperExpression(expression) => {
-            format_expression(&expression.into())
+            format_expression(&expression.into(), formatter)
         }
         VariableInitializerValue::ParenthesizedExpression(expression) => {
-            format_expression(&expression.into())
+            format_expression(&expression.into(), formatter)
         }
         VariableInitializerValue::ClassLiteralExpression(expression) => {
-            format_expression(&expression.into())
+            format_expression(&expression.into(), formatter)
         }
         VariableInitializerValue::FieldAccessExpression(expression) => {
-            format_expression(&expression.into())
+            format_expression(&expression.into(), formatter)
         }
         VariableInitializerValue::ArrayAccessExpression(expression) => {
-            format_expression(&expression.into())
+            format_expression(&expression.into(), formatter)
         }
         VariableInitializerValue::MethodInvocationExpression(expression) => {
-            format_expression(&expression.into())
+            format_expression(&expression.into(), formatter)
         }
         VariableInitializerValue::MethodReferenceExpression(expression) => {
-            format_expression(&expression.into())
+            format_expression(&expression.into(), formatter)
         }
         VariableInitializerValue::ObjectCreationExpression(expression) => {
-            format_expression(&expression.into())
+            format_expression(&expression.into(), formatter)
         }
         VariableInitializerValue::ArrayCreationExpression(expression) => {
-            format_expression(&expression.into())
+            format_expression(&expression.into(), formatter)
         }
         VariableInitializerValue::AssignmentExpression(expression) => {
-            format_expression(&expression.into())
+            format_expression(&expression.into(), formatter)
         }
         VariableInitializerValue::ConditionalExpression(expression) => {
-            format_expression(&expression.into())
+            format_expression(&expression.into(), formatter)
         }
         VariableInitializerValue::InstanceofExpression(expression) => {
-            format_expression(&expression.into())
+            format_expression(&expression.into(), formatter)
         }
         VariableInitializerValue::BinaryExpression(expression) => {
-            format_expression(&expression.into())
+            format_expression(&expression.into(), formatter)
         }
         VariableInitializerValue::UnaryExpression(expression) => {
-            format_expression(&expression.into())
+            format_expression(&expression.into(), formatter)
         }
         VariableInitializerValue::PostfixExpression(expression) => {
-            format_expression(&expression.into())
+            format_expression(&expression.into(), formatter)
         }
         VariableInitializerValue::CastExpression(expression) => {
-            format_expression(&expression.into())
+            format_expression(&expression.into(), formatter)
         }
         VariableInitializerValue::LambdaExpression(expression) => {
-            format_expression(&expression.into())
+            format_expression(&expression.into(), formatter)
         }
         VariableInitializerValue::SwitchExpression(expression) => {
-            format_expression(&expression.into())
+            format_expression(&expression.into(), formatter)
         }
         VariableInitializerValue::ArrayInitializer(initializer) => {
-            format_array_initializer(&initializer)
+            format_array_initializer(&initializer, formatter)
         }
     }
 }
 
-fn format_cast_expression(expression: &CastExpression) -> Doc {
+fn format_cast_expression(expression: &CastExpression, formatter: &JavaFormatter<'_>) -> Doc {
     let open_paren = expression.open_paren();
     let close_paren = expression.close_paren();
 
@@ -709,7 +787,7 @@ fn format_cast_expression(expression: &CastExpression) -> Doc {
         format_cast_open_paren_spacing(open_paren.as_ref()),
         expression
             .ty()
-            .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty)),
+            .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty, formatter)),
         format_cast_close_paren(close_paren.as_ref()),
         if close_paren
             .as_ref()
@@ -722,7 +800,7 @@ fn format_cast_expression(expression: &CastExpression) -> Doc {
         expression
             .expression()
             .map_or_else(jolt_fmt_ir::nil, |expression| {
-                format_expression(&expression)
+                format_expression(&expression, formatter)
             }),
     ])
 }
@@ -780,12 +858,15 @@ fn format_cast_close_paren(close: Option<&JavaSyntaxToken>) -> Doc {
     ])
 }
 
-fn format_instanceof_expression(expression: &InstanceofExpression) -> Doc {
+fn format_instanceof_expression(
+    expression: &InstanceofExpression,
+    formatter: &JavaFormatter<'_>,
+) -> Doc {
     concat([
         expression
             .expression()
             .map_or_else(jolt_fmt_ir::nil, |expression| {
-                format_expression(&expression)
+                format_expression(&expression, formatter)
             }),
         text(" "),
         expression.instanceof_token().map_or_else(
@@ -796,9 +877,11 @@ fn format_instanceof_expression(expression: &InstanceofExpression) -> Doc {
             || {
                 expression
                     .pattern()
-                    .map_or_else(jolt_fmt_ir::nil, |pattern| format_pattern(&pattern))
+                    .map_or_else(jolt_fmt_ir::nil, |pattern| {
+                        format_pattern(&pattern, formatter)
+                    })
             },
-            |ty| format_type(&ty),
+            |ty| format_type(&ty, formatter),
         ),
     ])
 }
@@ -819,6 +902,7 @@ fn format_instanceof_operator(operator: &JavaSyntaxToken) -> Doc {
 fn format_method_invocation_callee(
     expression: &MethodInvocationExpression,
     leading_comments: LeadingComments,
+    formatter: &JavaFormatter<'_>,
 ) -> Doc {
     if let Some(name) = expression.direct_method_name() {
         let dot = expression.dot_token();
@@ -827,14 +911,14 @@ fn format_method_invocation_callee(
                 .qualifier()
                 .map_or_else(jolt_fmt_ir::nil, |qualifier| {
                     concat([
-                        format_expression(&qualifier),
+                        format_expression(&qualifier, formatter),
                         format_member_dot(dot.as_ref()),
                     ])
                 }),
             expression
                 .type_arguments()
                 .map_or_else(jolt_fmt_ir::nil, |arguments| {
-                    format_type_argument_list(&arguments)
+                    format_type_argument_list(&arguments, formatter)
                 }),
             format_leaf_token(&name, leading_comments),
         ]);
@@ -843,11 +927,14 @@ fn format_method_invocation_callee(
     expression
         .simple_name_expression()
         .map_or_else(jolt_fmt_ir::nil, |name| {
-            format_expression_with_leading_comments(&name, leading_comments)
+            format_expression_with_leading_comments(&name, leading_comments, formatter)
         })
 }
 
-pub(crate) fn format_argument_list(arguments: Option<ArgumentList>) -> Doc {
+pub(crate) fn format_argument_list(
+    arguments: Option<ArgumentList>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc {
     let Some(arguments) = arguments else {
         return text("()");
     };
@@ -859,7 +946,7 @@ pub(crate) fn format_argument_list(arguments: Option<ArgumentList>) -> Doc {
         arguments
             .entries()
             .map(|entry| CommaListItem {
-                doc: format_expression(&entry.argument),
+                doc: format_expression(&entry.argument, formatter),
                 comma: entry.comma,
             })
             .collect(),
@@ -869,8 +956,9 @@ pub(crate) fn format_argument_list(arguments: Option<ArgumentList>) -> Doc {
 fn format_argument_list_for_parent_role(
     arguments: Option<ArgumentList>,
     parent_role: Option<ExpressionParentRole>,
+    formatter: &JavaFormatter<'_>,
 ) -> Doc {
-    let arguments = format_argument_list(arguments);
+    let arguments = format_argument_list(arguments, formatter);
     if parent_role_has_continuation_indent(parent_role) {
         jolt_fmt_ir::dedent(arguments)
     } else {
@@ -891,19 +979,19 @@ const fn parent_role_has_continuation_indent(parent_role: Option<ExpressionParen
     )
 }
 
-fn format_lambda_expression(expression: &LambdaExpression) -> Doc {
+fn format_lambda_expression(expression: &LambdaExpression, formatter: &JavaFormatter<'_>) -> Doc {
     concat([
-        format_lambda_parameters(expression),
+        format_lambda_parameters(expression, formatter),
         format_lambda_arrow(expression),
         expression.expression_body().map_or_else(
             || {
                 expression
                     .block_body()
                     .map_or_else(jolt_fmt_ir::nil, |block| {
-                        jolt_fmt_ir::dedent(format_block(&block))
+                        jolt_fmt_ir::dedent(format_block(&block, formatter))
                     })
             },
-            |body| format_expression(&body),
+            |body| format_expression(&body, formatter),
         ),
     ])
 }
@@ -929,13 +1017,13 @@ fn format_lambda_arrow(expression: &LambdaExpression) -> Doc {
     ])
 }
 
-fn format_lambda_parameters(expression: &LambdaExpression) -> Doc {
+fn format_lambda_parameters(expression: &LambdaExpression, formatter: &JavaFormatter<'_>) -> Doc {
     if let Some(parameter) = expression.concise_parameter()
         && is_simple_untyped_lambda_parameter(&parameter)
     {
         let tokens = parameter.tokens();
         if tokens_have_comments(&tokens) {
-            return format_lambda_parameter(&parameter);
+            return format_lambda_parameter(&parameter, formatter);
         }
         return parameter
             .name()
@@ -952,7 +1040,7 @@ fn format_lambda_parameters(expression: &LambdaExpression) -> Doc {
     {
         let tokens = parameter.tokens();
         if tokens_have_comments(&tokens) {
-            return format_lambda_parameter(parameter);
+            return format_lambda_parameter(parameter, formatter);
         }
         return parameter
             .name()
@@ -965,22 +1053,25 @@ fn format_lambda_parameters(expression: &LambdaExpression) -> Doc {
             text(", "),
             parameters
                 .into_iter()
-                .map(|parameter| format_lambda_parameter(&parameter)),
+                .map(|parameter| format_lambda_parameter(&parameter, formatter)),
         ),
         text(")"),
     ])
 }
 
-fn format_switch_expression(expression: &SwitchExpression) -> Doc {
+fn format_switch_expression(expression: &SwitchExpression, formatter: &JavaFormatter<'_>) -> Doc {
     concat([
         text("switch ("),
         expression
             .selector()
-            .map_or_else(jolt_fmt_ir::nil, |selector| format_expression(&selector)),
+            .map_or_else(jolt_fmt_ir::nil, |selector| {
+                format_expression(&selector, formatter)
+            }),
         text(") "),
-        expression
-            .block()
-            .map_or_else(|| text("{}"), |block| format_switch_block(&block)),
+        expression.block().map_or_else(
+            || text("{}"),
+            |block| format_switch_block(&block, formatter),
+        ),
     ])
 }
 
@@ -993,10 +1084,10 @@ fn is_simple_untyped_lambda_parameter(parameter: &LambdaParameter) -> bool {
         && parameter.modifier_tokens().next().is_none()
 }
 
-fn format_lambda_parameter(parameter: &LambdaParameter) -> Doc {
+fn format_lambda_parameter(parameter: &LambdaParameter, formatter: &JavaFormatter<'_>) -> Doc {
     let prefix_annotations = parameter
         .prefix_annotations()
-        .map(|annotation| format_annotation(&annotation))
+        .map(|annotation| format_annotation(&annotation, formatter))
         .collect::<Vec<_>>();
     let modifier_tokens = parameter.modifier_tokens().collect::<Vec<_>>();
     let has_inline_prefix = !prefix_annotations.is_empty() || !modifier_tokens.is_empty();
@@ -1006,11 +1097,11 @@ fn format_lambda_parameter(parameter: &LambdaParameter) -> Doc {
     let has_type_prefix = ty.is_some() || var_token.is_some();
     let varargs_annotations = parameter
         .varargs_annotations()
-        .map(|annotation| format_annotation(&annotation))
+        .map(|annotation| format_annotation(&annotation, formatter))
         .collect::<Vec<_>>();
     let ty = ty.map_or_else(
         || var_token.map_or_else(jolt_fmt_ir::nil, |token| format_token_text(token.text())),
-        |ty| format_type(&ty),
+        |ty| format_type(&ty, formatter),
     );
     let name = parameter
         .name()
@@ -1043,7 +1134,7 @@ fn format_lambda_parameter(parameter: &LambdaParameter) -> Doc {
     ])
 }
 
-fn format_member_chain(chain: &MemberChain) -> Doc {
+fn format_member_chain(chain: &MemberChain, formatter: &JavaFormatter<'_>) -> Doc {
     let keep_first_suffix_with_root = is_simple_member_chain_root(chain.root());
     concat([
         format_expression_leading_comments(chain.root()),
@@ -1051,11 +1142,12 @@ fn format_member_chain(chain: &MemberChain) -> Doc {
             format_expression_with_leading_comments(
                 chain.root(),
                 LeadingComments::SuppressFirstToken,
+                formatter,
             ),
             chain
                 .suffixes()
                 .iter()
-                .map(format_member_chain_suffix)
+                .map(|suffix| format_member_chain_suffix(suffix, formatter))
                 .collect(),
             keep_first_suffix_with_root,
         ),
@@ -1069,7 +1161,7 @@ fn format_expression_leading_comments(expression: &Expression) -> Doc {
         .map_or_else(jolt_fmt_ir::nil, format_leading_comments)
 }
 
-fn format_member_chain_suffix(suffix: &MemberChainSuffix) -> Doc {
+fn format_member_chain_suffix(suffix: &MemberChainSuffix, formatter: &JavaFormatter<'_>) -> Doc {
     match suffix {
         MemberChainSuffix::FieldAccess(access) => {
             let dot = access.dot_token();
@@ -1081,7 +1173,7 @@ fn format_member_chain_suffix(suffix: &MemberChainSuffix) -> Doc {
                 access
                     .type_arguments()
                     .map_or_else(jolt_fmt_ir::nil, |arguments| {
-                        format_type_argument_list(&arguments)
+                        format_type_argument_list(&arguments, formatter)
                     }),
             ])
         }
@@ -1092,12 +1184,12 @@ fn format_member_chain_suffix(suffix: &MemberChainSuffix) -> Doc {
                 invocation
                     .type_arguments()
                     .map_or_else(jolt_fmt_ir::nil, |arguments| {
-                        format_type_argument_list(&arguments)
+                        format_type_argument_list(&arguments, formatter)
                     }),
                 invocation
                     .direct_method_name()
                     .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name)),
-                format_argument_list(invocation.arguments()),
+                format_argument_list(invocation.arguments(), formatter),
             ])
         }
     }
@@ -1143,7 +1235,10 @@ fn is_member_chain_child(expression: &Expression) -> bool {
     )
 }
 
-fn flatten_binary_expression(expression: &BinaryExpression) -> (Expression, Vec<(Doc, Doc)>) {
+fn flatten_binary_expression(
+    expression: &BinaryExpression,
+    formatter: &JavaFormatter<'_>,
+) -> (Expression, Vec<(Doc, Doc)>) {
     let Some(operator) = expression.operator() else {
         return (
             expression
@@ -1151,7 +1246,7 @@ fn flatten_binary_expression(expression: &BinaryExpression) -> (Expression, Vec<
                 .unwrap_or_else(|| Expression::from(expression.clone())),
             expression
                 .right()
-                .map(|right| (jolt_fmt_ir::nil(), format_expression(&right)))
+                .map(|right| (jolt_fmt_ir::nil(), format_expression(&right, formatter)))
                 .into_iter()
                 .collect(),
         );
@@ -1164,9 +1259,9 @@ fn flatten_binary_expression(expression: &BinaryExpression) -> (Expression, Vec<
                 .unwrap_or_else(|| Expression::from(expression.clone())),
             vec![(
                 format_token_with_comments(&operator),
-                expression
-                    .right()
-                    .map_or_else(jolt_fmt_ir::nil, |right| format_expression(&right)),
+                expression.right().map_or_else(jolt_fmt_ir::nil, |right| {
+                    format_expression(&right, formatter)
+                }),
             )],
         );
     }
@@ -1181,7 +1276,7 @@ fn flatten_binary_expression(expression: &BinaryExpression) -> (Expression, Vec<
                 .map(|right| {
                     (
                         format_token_with_comments(&operator),
-                        format_expression(&right),
+                        format_expression(&right, formatter),
                     )
                 })
                 .into_iter()
@@ -1196,7 +1291,7 @@ fn flatten_binary_expression(expression: &BinaryExpression) -> (Expression, Vec<
         .map(|operand| {
             (
                 format_token_with_comments(&operator),
-                format_expression(&operand),
+                format_expression(&operand, formatter),
             )
         })
         .collect();

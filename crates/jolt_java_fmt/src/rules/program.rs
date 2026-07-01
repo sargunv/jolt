@@ -65,7 +65,7 @@ fn format_compilation_unit_items(
     }
 
     if let Some(package) = package {
-        sections.push(format_package_declaration(&package));
+        sections.push(format_package_declaration(&package, formatter));
     }
 
     let imports = format_imports(imports, formatter);
@@ -79,7 +79,7 @@ fn format_compilation_unit_items(
 
     let types = types
         .into_iter()
-        .map(|declaration| format_type_declaration(&declaration))
+        .map(|declaration| format_type_declaration(&declaration, formatter))
         .collect::<Vec<_>>();
     if !types.is_empty() {
         sections.push(join_empty_lines(types));
@@ -185,10 +185,10 @@ fn compilation_unit_item_token_range(item: &CompilationUnitItem) -> Option<Range
     token_range(&tokens)
 }
 
-fn format_package_declaration(package: &PackageDeclaration) -> Doc {
+fn format_package_declaration(package: &PackageDeclaration, formatter: &JavaFormatter<'_>) -> Doc {
     let annotations = package
         .annotations()
-        .map(|annotation| format_annotation(&annotation))
+        .map(|annotation| format_annotation(&annotation, formatter))
         .collect::<Vec<_>>();
     let declaration = concat([
         text("package "),
