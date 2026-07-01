@@ -34,6 +34,8 @@ style from dozens of settings.
   and language-specific CST wrappers.
 
 The Java policy is documented in [`java-format-style.md`](java-format-style.md).
+The implementation approach is documented in
+[`java-format-implementation-spec.md`](java-format-implementation-spec.md).
 
 ### Out of scope for the first product
 
@@ -921,7 +923,8 @@ Implement Jolt's Java formatter on top of the completed lexer, parser, CST,
 document IR, and renderer.
 
 The implementation target is the Jolt style guide in
-[`java-format-style.md`](java-format-style.md).
+[`java-format-style.md`](java-format-style.md). Build it according to
+[`java-format-implementation-spec.md`](java-format-implementation-spec.md).
 
 Add:
 
