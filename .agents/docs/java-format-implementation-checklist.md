@@ -97,7 +97,7 @@ Status legend:
 - `[~]` `member_body`
 - `[x]` `modifier_list`
 - `[x]` `annotation_group`
-- `[ ]` `assignment_rhs`
+- `[x]` `assignment_rhs`
 - `[x]` `binary_chain`
 - `[x]` `ternary_expression`
 - `[x]` `argument_list`
@@ -193,7 +193,7 @@ Status legend:
 - `[x]` Method references.
 - `[~]` Binary/operator chains.
 - `[~]` Ternaries.
-- `[~]` Assignments.
+- `[x]` Assignments.
 - `[~]` Calls and break-all argument lists.
 - `[~]` Member chains.
 - `[~]` Lambdas.

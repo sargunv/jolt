@@ -5,8 +5,12 @@ pub(crate) fn assignment_expression(left: Doc, operator: String, right: Doc) -> 
         left,
         text(" "),
         text(operator),
-        indent(concat([line(), right])),
+        assignment_rhs(right),
     ]))
+}
+
+pub(crate) fn assignment_rhs(right: Doc) -> Doc {
+    indent(concat([line(), right]))
 }
 
 pub(crate) fn binary_chain(first: Doc, rest: Vec<(String, Doc)>) -> Doc {

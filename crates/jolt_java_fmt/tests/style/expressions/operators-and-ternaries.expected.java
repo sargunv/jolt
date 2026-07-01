@@ -3,8 +3,21 @@ class Example {
     return (user.isActive() && account.hasPermission("write")) ? true : false;
   }
 
-  void assign(boolean left, boolean right) {
+  void assign(
+    boolean left,
+    boolean right,
+    User user,
+    Account account,
+    FeatureFlags featureFlags,
+    AuditPolicy auditPolicy
+  )
+  {
     allowed = left && right;
     count += 1;
+    allowed =
+      user.isActive()
+      && account.hasPermission("write")
+      && featureFlags.enabled()
+      && auditPolicy.allows(user);
   }
 }
