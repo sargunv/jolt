@@ -164,7 +164,7 @@ Status legend:
 - `[x]` Varargs formal parameters and record components.
 - `[x]` Inline formal-parameter and record-component annotations, including
   varargs type-use annotations before `...`.
-- `[~]` `throws`.
+- `[x]` `throws`.
 - `[x]` Structural constructor bodies.
 - `[x]` Compact record constructors.
 - `[~]` Enum constants and trailing comma policy.
