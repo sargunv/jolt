@@ -597,6 +597,12 @@ java_cst! {
 
 mod accessors;
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum SwitchBlockEntry {
+    StatementGroup(SwitchBlockStatementGroup),
+    Rule(SwitchRule),
+}
+
 pub(crate) fn cast_compilation_unit(syntax: JavaSyntaxNode) -> Option<CompilationUnit> {
     <CompilationUnit as JavaNode>::cast(syntax)
 }

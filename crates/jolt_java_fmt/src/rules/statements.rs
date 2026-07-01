@@ -3,7 +3,8 @@ use jolt_java_syntax::{
     AssertStatement, BasicForStatement, Block, BlockItem, CatchClause, DoStatement,
     EnhancedForStatement, Expression, ExpressionStatement, FinallyClause, ForInitializer,
     ForStatement, ForUpdate, IfStatement, LabeledStatement, Resource, ReturnStatement, Statement,
-    StatementExpressionList, SynchronizedStatement, ThrowStatement, TryStatement,
+    StatementExpressionList, SwitchBlock, SwitchBlockEntry, SwitchBlockStatementGroup, SwitchRule,
+    SwitchStatement, SynchronizedStatement, ThrowStatement, TryStatement,
     TryWithResourcesStatement, WhileStatement, YieldStatement,
 };
 
@@ -64,6 +65,7 @@ fn format_statement(statement: &Statement) -> Doc {
         Statement::ExpressionStatement(statement) => format_expression_statement(statement),
         Statement::IfStatement(statement) => format_if_statement(statement),
         Statement::AssertStatement(statement) => format_assert_statement(statement),
+        Statement::SwitchStatement(statement) => format_switch_statement(statement),
         Statement::WhileStatement(statement) => format_while_statement(statement),
         Statement::DoStatement(statement) => format_do_statement(statement),
         Statement::ForStatement(statement) => format_for_statement(statement),
@@ -79,7 +81,6 @@ fn format_statement(statement: &Statement) -> Doc {
         Statement::TryWithResourcesStatement(statement) => {
             format_try_with_resources_statement(statement)
         }
-        Statement::SwitchStatement(statement) => source_doc(&statement.source_text()),
     }
 }
 
@@ -310,6 +311,84 @@ fn format_synchronized_statement(statement: &SynchronizedStatement) -> Doc {
             |body| format_block(&body),
         ),
     ])
+}
+
+fn format_switch_statement(statement: &SwitchStatement) -> Doc {
+    concat([
+        text("switch ("),
+        text(
+            statement
+                .selector()
+                .map_or_else(String::new, |selector| expression_text(&selector)),
+        ),
+        text(") "),
+        statement
+            .block()
+            .map_or_else(empty_block_doc, |block| format_switch_block(&block)),
+    ])
+}
+
+fn format_switch_block(block: &SwitchBlock) -> Doc {
+    let entries = block
+        .entries()
+        .map(|entry| match entry {
+            SwitchBlockEntry::StatementGroup(group) => format_switch_statement_group(&group),
+            SwitchBlockEntry::Rule(rule) => format_switch_rule(&rule),
+        })
+        .collect::<Vec<_>>();
+
+    if entries.is_empty() {
+        return empty_block_doc();
+    }
+
+    concat([
+        text("{"),
+        jolt_fmt_ir::indent(concat([hard_line(), join_hard_lines(entries)])),
+        hard_line(),
+        text("}"),
+    ])
+}
+
+fn format_switch_statement_group(group: &SwitchBlockStatementGroup) -> Doc {
+    let labels = group
+        .labels()
+        .map(|label| concat([text(label.source_text().trim().to_owned()), text(":")]))
+        .collect::<Vec<_>>();
+    let items = group
+        .items()
+        .filter_map(format_block_item)
+        .collect::<Vec<_>>();
+
+    concat([
+        join_hard_lines(labels),
+        if items.is_empty() {
+            jolt_fmt_ir::nil()
+        } else {
+            jolt_fmt_ir::indent(concat([hard_line(), join_hard_lines(items)]))
+        },
+    ])
+}
+
+fn format_switch_rule(rule: &SwitchRule) -> Doc {
+    let label = rule
+        .label()
+        .map_or_else(String::new, |label| label.source_text().trim().to_owned());
+
+    concat([text(label), text(" -> "), format_switch_rule_body(rule)])
+}
+
+fn format_switch_rule_body(rule: &SwitchRule) -> Doc {
+    if let Some(block) = rule.block() {
+        return format_block(&block);
+    }
+    if let Some(statement) = rule.throw_statement() {
+        return format_throw_statement(&statement);
+    }
+    if let Some(expression) = rule.expression() {
+        return concat([text(expression_text(&expression)), text(";")]);
+    }
+
+    jolt_fmt_ir::nil()
 }
 
 fn format_try_statement(statement: &TryStatement) -> Doc {

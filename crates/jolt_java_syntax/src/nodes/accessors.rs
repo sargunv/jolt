@@ -10,20 +10,20 @@ use super::{
     EnumDeclaration, Expression, ExpressionStatement, ExtendsClause, FieldDeclaration,
     FinallyClause, ForInitializer, ForStatement, ForUpdate, FormalParameter, FormalParameterList,
     IfStatement, ImplementsClause, ImportDeclaration, InstanceInitializer, InterfaceBody,
-    InterfaceBodyMember, InterfaceDeclaration, JavaSyntaxKind, JavaSyntaxToken, LabeledStatement,
-    LambdaExpression, LambdaParameter, LambdaParameterList, LocalVariableDeclaration,
-    MethodDeclaration, MethodInvocationExpression, ModifierList, ModuleDeclaration,
-    ModuleDirective, ModuleDirectiveNode, NameSyntax, ObjectCreationExpression, PackageDeclaration,
-    ParenthesizedExpression, PermitsClause, PostfixExpression, ProvidesDirective, RecordBody,
-    RecordComponent, RecordComponentList, RecordDeclaration, RequiresDirective, Resource,
-    ResourceList, ResourceSpecification, ReturnStatement, Statement, StatementExpressionList,
-    StaticInitializer, SwitchBlock, SwitchBlockStatementGroup, SwitchExpression, SwitchRule,
-    SwitchStatement, SynchronizedStatement, ThrowStatement, ThrowsClause, TryStatement,
-    TryWithResourcesStatement, Type, TypeDeclaration, TypeParameter, TypeParameterList,
-    UnaryExpression, VariableAccess, VariableDeclarator, VariableDeclaratorList,
-    VariableInitializer, VariableInitializerValue, WhileStatement, YieldStatement, child,
-    child_family, child_token, child_token_in, children, children_family, children_tokens_matching,
-    nth_child_family, nth_child_token,
+    InterfaceBodyMember, InterfaceDeclaration, JavaNode, JavaSyntaxKind, JavaSyntaxToken,
+    LabeledStatement, LambdaExpression, LambdaParameter, LambdaParameterList,
+    LocalVariableDeclaration, MethodDeclaration, MethodInvocationExpression, ModifierList,
+    ModuleDeclaration, ModuleDirective, ModuleDirectiveNode, NameSyntax, ObjectCreationExpression,
+    PackageDeclaration, ParenthesizedExpression, PermitsClause, PostfixExpression,
+    ProvidesDirective, RecordBody, RecordComponent, RecordComponentList, RecordDeclaration,
+    RequiresDirective, Resource, ResourceList, ResourceSpecification, ReturnStatement, Statement,
+    StatementExpressionList, StaticInitializer, SwitchBlock, SwitchBlockEntry,
+    SwitchBlockStatementGroup, SwitchExpression, SwitchLabel, SwitchRule, SwitchStatement,
+    SynchronizedStatement, ThrowStatement, ThrowsClause, TryStatement, TryWithResourcesStatement,
+    Type, TypeDeclaration, TypeParameter, TypeParameterList, UnaryExpression, VariableAccess,
+    VariableDeclarator, VariableDeclaratorList, VariableInitializer, VariableInitializerValue,
+    WhileStatement, YieldStatement, child, child_family, child_token, child_token_in, children,
+    children_family, children_tokens_matching, nth_child_family, nth_child_token,
 };
 use jolt_syntax::TriviaKind;
 
@@ -1076,12 +1076,53 @@ impl SwitchExpression {
 }
 
 impl SwitchBlock {
+    pub fn entries(&self) -> impl Iterator<Item = SwitchBlockEntry> + '_ {
+        self.syntax.children().filter_map(|syntax| {
+            if let Some(group) = SwitchBlockStatementGroup::cast(syntax.clone()) {
+                return Some(SwitchBlockEntry::StatementGroup(group));
+            }
+            SwitchRule::cast(syntax).map(SwitchBlockEntry::Rule)
+        })
+    }
+
     pub fn statement_groups(&self) -> impl Iterator<Item = SwitchBlockStatementGroup> + '_ {
         children(&self.syntax)
     }
 
     pub fn rules(&self) -> impl Iterator<Item = SwitchRule> + '_ {
         children(&self.syntax)
+    }
+}
+
+impl SwitchBlockStatementGroup {
+    pub fn labels(&self) -> impl Iterator<Item = SwitchLabel> + '_ {
+        children(&self.syntax)
+    }
+
+    pub fn items(&self) -> impl Iterator<Item = BlockItem> + '_ {
+        children::<BlockStatement>(&self.syntax).filter_map(|statement| statement.item())
+    }
+}
+
+impl SwitchRule {
+    #[must_use]
+    pub fn label(&self) -> Option<SwitchLabel> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn block(&self) -> Option<Block> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn throw_statement(&self) -> Option<ThrowStatement> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression> {
+        child_family(&self.syntax)
     }
 }
 

@@ -67,7 +67,7 @@ Status legend:
 - `[~]` Modifier keyword and annotation roles.
 - `[~]` Declaration headers and bodies.
 - `[~]` Statement body kind.
-- `[ ]` Switch labels/rules/guards.
+- `[x]` Switch labels/rules/guards.
 - `[x]` For init/condition/update.
 - `[x]` Try resources and optional trailing semicolon.
 - `[ ]` Expression parent roles.
@@ -164,7 +164,7 @@ Status legend:
 - `[x]` Labels.
 - `[~]` `if`/`else`.
 - `[~]` Loops and broken `for` headers.
-- `[ ]` Switch labels/rules/guards.
+- `[x]` Switch labels/rules/guards.
 - `[~]` `return`/`throw`/`yield`.
 - `[x]` Try/catch/finally/resources.
 - `[x]` `assert`/`break`/`continue`.
