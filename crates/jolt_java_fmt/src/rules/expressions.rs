@@ -3,10 +3,10 @@ use jolt_java_syntax::{
     ArgumentList, ArrayAccessExpression, ArrayCreationExpression, ArrayInitializer,
     AssignmentExpression, BinaryExpression, CastExpression, ClassLiteralExpression,
     ConditionalExpression, DimExpression, Expression, FieldAccessExpression, InstanceofExpression,
-    LambdaExpression, LambdaParameter, LiteralExpression, MethodInvocationExpression,
-    MethodReferenceExpression, NameExpression, ObjectCreationExpression, ParenthesizedExpression,
-    PostfixExpression, SuperExpression, SwitchExpression, ThisExpression, UnaryExpression,
-    VariableInitializerValue,
+    LambdaExpression, LambdaParameter, LiteralExpression, MemberChain, MemberChainSuffix,
+    MethodInvocationExpression, MethodReferenceExpression, NameExpression,
+    ObjectCreationExpression, ParenthesizedExpression, PostfixExpression, SuperExpression,
+    SwitchExpression, ThisExpression, UnaryExpression, VariableInitializerValue,
 };
 
 use crate::helpers::chains::member_chain;
@@ -218,8 +218,8 @@ fn format_postfix_expression(expression: &PostfixExpression) -> Doc {
 }
 
 fn format_method_invocation_expression(expression: &MethodInvocationExpression) -> Doc {
-    if let Some(chain) = collect_member_chain(&Expression::from(expression.clone())) {
-        return format_member_chain(chain);
+    if let Some(chain) = Expression::from(expression.clone()).member_chain() {
+        return format_member_chain(&chain);
     }
 
     group(concat([
@@ -229,8 +229,8 @@ fn format_method_invocation_expression(expression: &MethodInvocationExpression) 
 }
 
 fn format_field_access_expression(expression: &FieldAccessExpression) -> Doc {
-    if let Some(chain) = collect_member_chain(&Expression::from(expression.clone())) {
-        return format_member_chain(chain);
+    if let Some(chain) = Expression::from(expression.clone()).member_chain() {
+        return format_member_chain(&chain);
     }
 
     group(concat([
@@ -647,67 +647,45 @@ fn format_lambda_parameter(parameter: &LambdaParameter) -> Doc {
     ])
 }
 
-struct MemberChainParts {
-    root: Expression,
-    suffixes: Vec<Doc>,
-}
-
-fn collect_member_chain(expression: &Expression) -> Option<MemberChainParts> {
-    match expression {
-        Expression::MethodInvocationExpression(invocation) => {
-            let name = invocation.direct_method_name()?;
-            let qualifier = invocation.qualifier()?;
-            let suffix = concat([
-                text("."),
-                invocation
-                    .type_arguments()
-                    .map_or_else(jolt_fmt_ir::nil, |arguments| {
-                        format_type_argument_list(&arguments)
-                    }),
-                text(name.text().to_owned()),
-                format_argument_list(invocation.arguments()),
-            ]);
-            Some(append_chain_suffix(qualifier, suffix))
-        }
-        Expression::FieldAccessExpression(access) => {
-            let receiver = access.receiver()?;
-            let name = access.field_name()?;
-            Some(append_chain_suffix(
-                receiver,
-                concat([
-                    text("."),
-                    text(name.text().to_owned()),
-                    access
-                        .type_arguments()
-                        .map_or_else(jolt_fmt_ir::nil, |arguments| {
-                            format_type_argument_list(&arguments)
-                        }),
-                ]),
-            ))
-        }
-        _ => None,
-    }
-}
-
-fn append_chain_suffix(receiver: Expression, suffix: Doc) -> MemberChainParts {
-    if let Some(mut chain) = collect_member_chain(&receiver) {
-        chain.suffixes.push(suffix);
-        return chain;
-    }
-
-    MemberChainParts {
-        root: receiver,
-        suffixes: vec![suffix],
-    }
-}
-
-fn format_member_chain(chain: MemberChainParts) -> Doc {
-    let keep_first_suffix_with_root = is_simple_member_chain_root(&chain.root);
+fn format_member_chain(chain: &MemberChain) -> Doc {
+    let keep_first_suffix_with_root = is_simple_member_chain_root(chain.root());
     member_chain(
-        format_expression(&chain.root),
-        chain.suffixes,
+        format_expression(chain.root()),
+        chain
+            .suffixes()
+            .iter()
+            .map(format_member_chain_suffix)
+            .collect(),
         keep_first_suffix_with_root,
     )
+}
+
+fn format_member_chain_suffix(suffix: &MemberChainSuffix) -> Doc {
+    match suffix {
+        MemberChainSuffix::FieldAccess(access) => concat([
+            text("."),
+            access
+                .field_name()
+                .map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned())),
+            access
+                .type_arguments()
+                .map_or_else(jolt_fmt_ir::nil, |arguments| {
+                    format_type_argument_list(&arguments)
+                }),
+        ]),
+        MemberChainSuffix::MethodInvocation(invocation) => concat([
+            text("."),
+            invocation
+                .type_arguments()
+                .map_or_else(jolt_fmt_ir::nil, |arguments| {
+                    format_type_argument_list(&arguments)
+                }),
+            invocation
+                .direct_method_name()
+                .map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned())),
+            format_argument_list(invocation.arguments()),
+        ]),
+    }
 }
 
 const fn is_simple_member_chain_root(expression: &Expression) -> bool {

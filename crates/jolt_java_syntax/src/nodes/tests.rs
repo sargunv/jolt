@@ -814,6 +814,8 @@ fn expression_and_statement_accessors_expose_layout_roles() {
                     void test(int a, int b, int c, boolean ready) {
                         int value = (a + b) * -c;
                         value += ready ? call(1, 2) : new int[] { 3 };
+                        builder.add(a).add(b).build();
+                        this.field = builder.value;
                         for (int i = 0; i < 3; i++) value += i;
                         for (String item : names()) call(item);
                         while (ready) value++;
@@ -900,6 +902,37 @@ fn expression_and_statement_accessors_expose_layout_roles() {
             .count(),
         2
     );
+
+    let chain_invocation = descendants::<MethodInvocationExpression>(&syntax)
+        .into_iter()
+        .find(|invocation| invocation.source_text().trim() == "builder.add(a).add(b).build()")
+        .expect("chain invocation");
+    let chain = Expression::from(chain_invocation)
+        .member_chain()
+        .expect("member chain");
+    assert_eq!(chain.root().source_text().trim(), "builder");
+    assert_eq!(chain.suffixes().len(), 3);
+    assert!(matches!(
+        chain.suffixes(),
+        [
+            MemberChainSuffix::MethodInvocation(_),
+            MemberChainSuffix::MethodInvocation(_),
+            MemberChainSuffix::MethodInvocation(_),
+        ]
+    ));
+
+    let field_chain = descendants::<FieldAccessExpression>(&syntax)
+        .into_iter()
+        .find(|access| access.source_text().trim() == "builder.value")
+        .expect("field chain");
+    let field_chain = Expression::from(field_chain)
+        .member_chain()
+        .expect("field member chain");
+    assert_eq!(field_chain.root().source_text().trim(), "builder");
+    assert!(matches!(
+        field_chain.suffixes(),
+        [MemberChainSuffix::FieldAccess(_)]
+    ));
 
     let basic_for = descendants::<ForStatement>(&syntax)
         .into_iter()

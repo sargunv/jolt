@@ -710,6 +710,30 @@ pub enum AnnotationArgument {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct MemberChain {
+    root: Expression,
+    suffixes: Vec<MemberChainSuffix>,
+}
+
+impl MemberChain {
+    #[must_use]
+    pub fn root(&self) -> &Expression {
+        &self.root
+    }
+
+    #[must_use]
+    pub fn suffixes(&self) -> &[MemberChainSuffix] {
+        &self.suffixes
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum MemberChainSuffix {
+    FieldAccess(FieldAccessExpression),
+    MethodInvocation(MethodInvocationExpression),
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ClassTypeSegment {
     pub annotations: Vec<Annotation>,
     pub name: NameSyntax,

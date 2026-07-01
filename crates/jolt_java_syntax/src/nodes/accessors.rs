@@ -17,17 +17,17 @@ use super::{
     InstanceofExpression, InterfaceBody, InterfaceBodyMember, InterfaceDeclaration,
     IntersectionType, JavaFamily, JavaNode, JavaSyntaxKind, JavaSyntaxToken, LabeledStatement,
     LambdaExpression, LambdaParameter, LambdaParameterList, LiteralExpression,
-    LocalClassOrInterfaceDeclaration, LocalVariableDeclaration, MatchAllPattern, MethodDeclaration,
-    MethodInvocationExpression, MethodReferenceExpression, ModifierList, ModuleDeclaration,
-    ModuleDirective, ModuleDirectiveNode, NameExpression, NameSegment, NameSyntax,
-    ObjectCreationExpression, PackageDeclaration, ParenthesizedExpression, Pattern, PermitsClause,
-    PostfixExpression, PrimitiveType, ProvidesDirective, RecordBody, RecordComponent,
-    RecordComponentList, RecordDeclaration, RecordPattern, RequiresDirective, Resource,
-    ResourceList, ResourceSpecification, ReturnStatement, Statement, StatementExpressionList,
-    StaticInitializer, SuperExpression, SwitchBlock, SwitchBlockEntry, SwitchBlockStatementGroup,
-    SwitchExpression, SwitchLabel, SwitchLabelCaseItem, SwitchRule, SwitchStatement,
-    SynchronizedStatement, ThisExpression, ThrowStatement, ThrowsClause, TryStatement,
-    TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList, TypeBoundList,
+    LocalClassOrInterfaceDeclaration, LocalVariableDeclaration, MatchAllPattern, MemberChain,
+    MemberChainSuffix, MethodDeclaration, MethodInvocationExpression, MethodReferenceExpression,
+    ModifierList, ModuleDeclaration, ModuleDirective, ModuleDirectiveNode, NameExpression,
+    NameSegment, NameSyntax, ObjectCreationExpression, PackageDeclaration, ParenthesizedExpression,
+    Pattern, PermitsClause, PostfixExpression, PrimitiveType, ProvidesDirective, RecordBody,
+    RecordComponent, RecordComponentList, RecordDeclaration, RecordPattern, RequiresDirective,
+    Resource, ResourceList, ResourceSpecification, ReturnStatement, Statement,
+    StatementExpressionList, StaticInitializer, SuperExpression, SwitchBlock, SwitchBlockEntry,
+    SwitchBlockStatementGroup, SwitchExpression, SwitchLabel, SwitchLabelCaseItem, SwitchRule,
+    SwitchStatement, SynchronizedStatement, ThisExpression, ThrowStatement, ThrowsClause,
+    TryStatement, TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList, TypeBoundList,
     TypeDeclaration, TypeParameter, TypeParameterList, TypePattern, UnaryExpression, UnionType,
     VariableAccess, VariableDeclarator, VariableDeclaratorList, VariableInitializer,
     VariableInitializerValue, VoidType, WhileStatement, WildcardType, YieldStatement, child,
@@ -1010,6 +1010,46 @@ impl ClassLiteralExpression {
     #[must_use]
     pub fn dimensions(&self) -> Option<ArrayDimensions> {
         child(&self.syntax)
+    }
+}
+
+impl Expression {
+    #[must_use]
+    pub fn member_chain(&self) -> Option<MemberChain> {
+        collect_member_chain(self)
+    }
+}
+
+fn collect_member_chain(expression: &Expression) -> Option<MemberChain> {
+    match expression {
+        Expression::FieldAccessExpression(access) => {
+            let receiver = access.receiver()?;
+            Some(append_member_chain_suffix(
+                receiver,
+                MemberChainSuffix::FieldAccess(access.clone()),
+            ))
+        }
+        Expression::MethodInvocationExpression(invocation) => {
+            invocation.direct_method_name()?;
+            let qualifier = invocation.qualifier()?;
+            Some(append_member_chain_suffix(
+                qualifier,
+                MemberChainSuffix::MethodInvocation(invocation.clone()),
+            ))
+        }
+        _ => None,
+    }
+}
+
+fn append_member_chain_suffix(receiver: Expression, suffix: MemberChainSuffix) -> MemberChain {
+    if let Some(mut chain) = collect_member_chain(&receiver) {
+        chain.suffixes.push(suffix);
+        return chain;
+    }
+
+    MemberChain {
+        root: receiver,
+        suffixes: vec![suffix],
     }
 }
 

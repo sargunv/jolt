@@ -73,7 +73,7 @@ Status legend:
 - `[x]` Try resources and optional trailing semicolon.
 - `[x]` Pattern roles for type, record, component, and match-all patterns.
 - `[ ]` Expression parent roles.
-- `[ ]` Member-chain linearization.
+- `[x]` Member-chain linearization.
 - `[~]` Lambda parameter classification.
 - `[ ]` Wildcard and unnamed `_` roles.
 
@@ -136,7 +136,7 @@ Status legend:
 - `[x]` Body blank-line capping.
 - `[~]` Leading-operator chains with flat continuation alignment.
 - `[x]` Break-all argument lists.
-- `[~]` Ruff-shaped member-chain heads.
+- `[x]` Ruff-shaped member-chain heads.
 
 ### 5. Program Layer
 
@@ -195,7 +195,7 @@ Status legend:
 - `[~]` Ternaries.
 - `[x]` Assignments.
 - `[~]` Calls and break-all argument lists.
-- `[~]` Member chains.
+- `[x]` Member chains.
 - `[~]` Lambdas.
 - `[x]` Literal, name, `this`, `super`, and class-literal expression leaves.
 - `[x]` Untyped, `var`, typed, annotated, final, and varargs lambda parameters.
