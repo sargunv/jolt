@@ -1,6 +1,6 @@
 class Example {
   void run(Object value) {
-    switch (value) {
+    switch ( /* selector */ value) {
       case 1:
       case 2:
         handleNumber();

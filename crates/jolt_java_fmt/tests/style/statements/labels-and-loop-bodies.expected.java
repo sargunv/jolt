@@ -1,7 +1,7 @@
 class Example {
   void run(java.util.List<String> values) {
     retry /* label */:
-    for (String value : values) {
+    for ( /* each */ String value : values) {
       if (skip(value)) {
         continue retry /* again */;
       }
@@ -10,14 +10,14 @@ class Example {
       }
       process(value);
     }
-    while (ready()) {
+    while ( /* while */ ready()) {
     }
     do {
       processNext();
-    } while (hasNext());
-    for (;;) {
+    } while ( /* done */ hasNext());
+    for ( /* forever */ ;;) {
     }
-    synchronized (this) {
+    synchronized ( /* lock */ this) {
       check();
     }
   }

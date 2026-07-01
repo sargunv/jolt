@@ -2774,6 +2774,16 @@ impl WhileStatement {
     }
 
     #[must_use]
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RParen)
+    }
+
+    #[must_use]
     pub fn condition(&self) -> Option<Expression> {
         child_family(&self.syntax)
     }
@@ -2801,6 +2811,16 @@ impl DoStatement {
     }
 
     #[must_use]
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RParen)
+    }
+
+    #[must_use]
     pub fn body(&self) -> Option<Statement> {
         child_family(&self.syntax)
     }
@@ -2825,6 +2845,16 @@ impl SynchronizedStatement {
     #[must_use]
     pub fn keyword(&self) -> Option<JavaSyntaxToken> {
         child_token(&self.syntax, JavaSyntaxKind::SynchronizedKw)
+    }
+
+    #[must_use]
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RParen)
     }
 
     #[must_use]
@@ -3021,6 +3051,11 @@ impl FinallyClause {
 
 impl ResourceSpecification {
     #[must_use]
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LParen)
+    }
+
+    #[must_use]
     pub fn list(&self) -> Option<ResourceList> {
         child(&self.syntax)
     }
@@ -3118,6 +3153,16 @@ impl BasicForStatement {
     }
 
     #[must_use]
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RParen)
+    }
+
+    #[must_use]
     pub fn initializer(&self) -> Option<ForInitializer> {
         child(&self.syntax)
     }
@@ -3147,6 +3192,16 @@ impl EnhancedForStatement {
     #[must_use]
     pub fn keyword(&self) -> Option<JavaSyntaxToken> {
         child_token(&self.syntax, JavaSyntaxKind::ForKw)
+    }
+
+    #[must_use]
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RParen)
     }
 
     #[must_use]
@@ -3237,6 +3292,16 @@ impl SwitchStatement {
     #[must_use]
     pub fn keyword(&self) -> Option<JavaSyntaxToken> {
         child_token(&self.syntax, JavaSyntaxKind::SwitchKw)
+    }
+
+    #[must_use]
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RParen)
     }
 
     #[must_use]

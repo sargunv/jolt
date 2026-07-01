@@ -661,7 +661,7 @@ fn resource_lists_expose_entries_with_semicolons() {
         r"
                 class Accessors {
                     void run() throws Exception {
-                        try (
+                        try (/* resources */
                             var declared = open(); // declared
                             existing; // optional trailing
                         ) {
@@ -677,6 +677,14 @@ fn resource_lists_expose_entries_with_semicolons() {
     let list = specification.list().expect("resource list");
     let entries = list.entries().collect::<Vec<_>>();
 
+    assert_eq!(
+        specification
+            .open_paren()
+            .expect("resource open paren")
+            .trailing_comments()[0]
+            .text(),
+        "/* resources */"
+    );
     assert_eq!(entries.len(), 2);
     assert!(entries[0].resource.declaration().is_some());
     assert_eq!(
@@ -1037,10 +1045,12 @@ fn statement_body_accessors_expose_body_kind() {
                         if (ready) {
                             run();
                         } else;
-                        while (ready);
-                        do run(); while (ready);
-                        for (;;);
-                        for (String name : names()) run(name);
+                        while (/* while */ ready);
+                        do run(); while (/* do */ ready);
+                        for (/* for */;;);
+                        for (/* each */ String name : names()) run(name);
+                        synchronized (/* sync */ this) { run(); }
+                        switch (/* switch */ 1) { default -> run(); }
                     }
                 }
             ",
@@ -1086,6 +1096,21 @@ fn statement_body_accessors_expose_body_kind() {
         while_statement.keyword().expect("while keyword").kind(),
         JavaSyntaxKind::WhileKw
     );
+    assert_eq!(
+        while_statement
+            .open_paren()
+            .expect("while open paren")
+            .trailing_comments()[0]
+            .text(),
+        "/* while */"
+    );
+    assert_eq!(
+        while_statement
+            .close_paren()
+            .expect("while close paren")
+            .text(),
+        ")"
+    );
     assert!(matches!(
         while_statement.statement_body(),
         Some(StatementBody::Empty(_))
@@ -1106,6 +1131,18 @@ fn statement_body_accessors_expose_body_kind() {
             .kind(),
         JavaSyntaxKind::WhileKw
     );
+    assert_eq!(
+        do_statement
+            .open_paren()
+            .expect("do open paren")
+            .trailing_comments()[0]
+            .text(),
+        "/* do */"
+    );
+    assert_eq!(
+        do_statement.close_paren().expect("do close paren").text(),
+        ")"
+    );
     assert!(matches!(
         do_statement.statement_body(),
         Some(StatementBody::Unbraced(Statement::ExpressionStatement(_)))
@@ -1122,6 +1159,21 @@ fn statement_body_accessors_expose_body_kind() {
         basic_for.keyword().expect("basic for keyword").kind(),
         JavaSyntaxKind::ForKw
     );
+    assert_eq!(
+        basic_for
+            .open_paren()
+            .expect("basic for open paren")
+            .trailing_comments()[0]
+            .text(),
+        "/* for */"
+    );
+    assert_eq!(
+        basic_for
+            .close_paren()
+            .expect("basic for close paren")
+            .text(),
+        ")"
+    );
     assert!(matches!(
         basic_for.statement_body(),
         Some(StatementBody::Empty(_))
@@ -1135,10 +1187,62 @@ fn statement_body_accessors_expose_body_kind() {
         enhanced_for.keyword().expect("enhanced for keyword").kind(),
         JavaSyntaxKind::ForKw
     );
+    assert_eq!(
+        enhanced_for
+            .open_paren()
+            .expect("enhanced for open paren")
+            .trailing_comments()[0]
+            .text(),
+        "/* each */"
+    );
+    assert_eq!(
+        enhanced_for
+            .close_paren()
+            .expect("enhanced for close paren")
+            .text(),
+        ")"
+    );
     assert!(matches!(
         enhanced_for.statement_body(),
         Some(StatementBody::Unbraced(Statement::ExpressionStatement(_)))
     ));
+
+    let synchronized = descendants::<SynchronizedStatement>(&syntax)
+        .into_iter()
+        .next()
+        .expect("synchronized statement");
+    assert_eq!(
+        synchronized
+            .open_paren()
+            .expect("synchronized open paren")
+            .trailing_comments()[0]
+            .text(),
+        "/* sync */"
+    );
+    assert_eq!(
+        synchronized
+            .close_paren()
+            .expect("synchronized close paren")
+            .text(),
+        ")"
+    );
+
+    let switch = descendants::<SwitchStatement>(&syntax)
+        .into_iter()
+        .next()
+        .expect("switch statement");
+    assert_eq!(
+        switch
+            .open_paren()
+            .expect("switch open paren")
+            .trailing_comments()[0]
+            .text(),
+        "/* switch */"
+    );
+    assert_eq!(
+        switch.close_paren().expect("switch close paren").text(),
+        ")"
+    );
 }
 
 #[test]

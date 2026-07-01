@@ -247,12 +247,20 @@ fn format_expression_statement(statement: &ExpressionStatement) -> Doc {
 
 fn format_if_statement(statement: &IfStatement) -> Doc {
     let then_body = statement_body_as_block(statement.then_body());
+    let open = statement.open_paren();
+    let close = statement.close_paren();
 
     concat([
         format_statement_keyword(statement.keyword(), "if"),
         text(" "),
-        format_if_condition(statement),
-        format_if_condition_body_separator(statement),
+        format_parenthesized_statement_expression(
+            open.as_ref(),
+            statement
+                .condition()
+                .map_or_else(jolt_fmt_ir::nil, |condition| format_expression(&condition)),
+            close.as_ref(),
+        ),
+        format_statement_header_body_separator(close.as_ref()),
         then_body,
         statement
             .else_body()
@@ -272,31 +280,15 @@ fn format_if_statement(statement: &IfStatement) -> Doc {
     ])
 }
 
-fn format_if_condition_body_separator(statement: &IfStatement) -> Doc {
-    if statement
-        .close_paren()
-        .as_ref()
-        .is_some_and(trailing_comments_force_line)
-    {
-        jolt_fmt_ir::nil()
-    } else {
-        text(" ")
-    }
-}
-
-fn format_if_condition(statement: &IfStatement) -> Doc {
-    let open = statement.open_paren();
-    let close = statement.close_paren();
-
+fn format_parenthesized_statement_expression(
+    open: Option<&JavaSyntaxToken>,
+    expression: Doc,
+    close: Option<&JavaSyntaxToken>,
+) -> Doc {
     group(concat([
-        format_condition_open_paren(open.as_ref()),
-        indent(concat([
-            format_condition_open_spacing(open.as_ref()),
-            statement
-                .condition()
-                .map_or_else(jolt_fmt_ir::nil, |condition| format_expression(&condition)),
-        ])),
-        format_condition_close_paren(close.as_ref()),
+        format_condition_open_paren(open),
+        indent(concat([format_condition_open_spacing(open), expression])),
+        format_condition_close_paren(close),
     ]))
 }
 
@@ -358,6 +350,14 @@ fn format_condition_close_paren(close: Option<&JavaSyntaxToken>) -> Doc {
     ])
 }
 
+fn format_statement_header_body_separator(close: Option<&JavaSyntaxToken>) -> Doc {
+    if close.is_some_and(trailing_comments_force_line) {
+        jolt_fmt_ir::nil()
+    } else {
+        text(" ")
+    }
+}
+
 fn format_assert_statement(statement: &AssertStatement) -> Doc {
     concat([
         format_statement_keyword(statement.keyword(), "assert"),
@@ -373,30 +373,40 @@ fn format_assert_statement(statement: &AssertStatement) -> Doc {
 }
 
 fn format_while_statement(statement: &WhileStatement) -> Doc {
-    let condition = statement
-        .condition()
-        .map_or_else(jolt_fmt_ir::nil, |condition| format_expression(&condition));
+    let open = statement.open_paren();
+    let close = statement.close_paren();
     concat([
         format_statement_keyword(statement.keyword(), "while"),
-        text(" ("),
-        condition,
-        text(") "),
+        text(" "),
+        format_parenthesized_statement_expression(
+            open.as_ref(),
+            statement
+                .condition()
+                .map_or_else(jolt_fmt_ir::nil, |condition| format_expression(&condition)),
+            close.as_ref(),
+        ),
+        format_statement_header_body_separator(close.as_ref()),
         statement_body_as_block(statement.statement_body()),
     ])
 }
 
 fn format_do_statement(statement: &DoStatement) -> Doc {
+    let open = statement.open_paren();
+    let close = statement.close_paren();
     concat([
         format_statement_keyword(statement.keyword(), "do"),
         text(" "),
         statement_body_as_block(statement.statement_body()),
         text(" "),
         format_statement_keyword(statement.while_keyword(), "while"),
-        text(" ("),
-        statement
-            .condition()
-            .map_or_else(jolt_fmt_ir::nil, |condition| format_expression(&condition)),
-        text(")"),
+        text(" "),
+        format_parenthesized_statement_expression(
+            open.as_ref(),
+            statement
+                .condition()
+                .map_or_else(jolt_fmt_ir::nil, |condition| format_expression(&condition)),
+            close.as_ref(),
+        ),
         format_statement_semicolon(statement.semicolon()),
     ])
 }
@@ -413,6 +423,8 @@ fn format_for_statement(statement: &ForStatement) -> Doc {
 }
 
 fn format_basic_for_statement(statement: &BasicForStatement) -> Doc {
+    let open = statement.open_paren();
+    let close = statement.close_paren();
     let initializer = statement
         .initializer()
         .map(|initializer| format_for_initializer(&initializer));
@@ -424,49 +436,100 @@ fn format_basic_for_statement(statement: &BasicForStatement) -> Doc {
     let header = if is_empty_header {
         concat([
             format_statement_keyword(statement.keyword(), "for"),
-            text(" ("),
+            text(" "),
+            format_condition_open_paren(open.as_ref()),
+            format_condition_open_spacing(open.as_ref()),
             text(";;"),
-            text(")"),
+            format_condition_close_paren(close.as_ref()),
         ])
     } else {
         group(concat([
             format_statement_keyword(statement.keyword(), "for"),
-            text(" ("),
+            text(" "),
+            format_condition_open_paren(open.as_ref()),
             indent(concat([
-                soft_line(),
+                format_for_header_open_spacing(open.as_ref()),
                 semicolon_list(vec![
                     initializer.unwrap_or_else(jolt_fmt_ir::nil),
                     condition.unwrap_or_else(jolt_fmt_ir::nil),
                     update.unwrap_or_else(jolt_fmt_ir::nil),
                 ]),
             ])),
-            soft_line(),
-            text(")"),
+            format_for_header_close_paren(close.as_ref()),
         ]))
     };
 
     concat([
         header,
-        text(" "),
+        format_statement_header_body_separator(close.as_ref()),
         statement_body_as_block(statement.statement_body()),
     ])
 }
 
 fn format_enhanced_for_statement(statement: &EnhancedForStatement) -> Doc {
+    let open = statement.open_paren();
+    let close = statement.close_paren();
     concat([
         format_statement_keyword(statement.keyword(), "for"),
-        text(" ("),
-        statement
-            .variable()
-            .map_or_else(jolt_fmt_ir::nil, |variable| {
-                format_local_variable_declaration(&variable)
-            }),
-        text(" : "),
-        statement
-            .iterable()
-            .map_or_else(jolt_fmt_ir::nil, |iterable| format_expression(&iterable)),
-        text(") "),
+        text(" "),
+        group(concat([
+            format_condition_open_paren(open.as_ref()),
+            indent(concat([
+                format_for_header_open_spacing(open.as_ref()),
+                statement
+                    .variable()
+                    .map_or_else(jolt_fmt_ir::nil, |variable| {
+                        format_local_variable_declaration(&variable)
+                    }),
+                text(" : "),
+                statement
+                    .iterable()
+                    .map_or_else(jolt_fmt_ir::nil, |iterable| format_expression(&iterable)),
+            ])),
+            format_for_header_close_paren(close.as_ref()),
+        ])),
+        format_statement_header_body_separator(close.as_ref()),
         statement_body_as_block(statement.statement_body()),
+    ])
+}
+
+fn format_for_header_open_spacing(open: Option<&JavaSyntaxToken>) -> Doc {
+    if open.is_some_and(|open| !open.trailing_comments().is_empty()) {
+        format_condition_open_spacing(open)
+    } else {
+        soft_line()
+    }
+}
+
+fn format_for_header_close_paren(close: Option<&JavaSyntaxToken>) -> Doc {
+    let close_has_leading_comments =
+        close.is_some_and(|token| !token.leading_comments().is_empty());
+
+    concat([
+        if close_has_leading_comments {
+            line()
+        } else {
+            soft_line()
+        },
+        close.map_or_else(
+            || text(")"),
+            |close| {
+                concat([
+                    if close_has_leading_comments {
+                        format_leading_comments(close)
+                    } else {
+                        jolt_fmt_ir::nil()
+                    },
+                    text(")"),
+                    format_trailing_comments_before_line_break(close),
+                    if trailing_comments_force_line(close) {
+                        hard_line()
+                    } else {
+                        jolt_fmt_ir::nil()
+                    },
+                ])
+            },
+        ),
     ])
 }
 
@@ -607,15 +670,21 @@ fn format_jump_statement(
 }
 
 fn format_synchronized_statement(statement: &SynchronizedStatement) -> Doc {
+    let open = statement.open_paren();
+    let close = statement.close_paren();
     concat([
         format_statement_keyword(statement.keyword(), "synchronized"),
-        text(" ("),
-        statement
-            .expression()
-            .map_or_else(jolt_fmt_ir::nil, |expression| {
-                format_expression(&expression)
-            }),
-        text(") "),
+        text(" "),
+        format_parenthesized_statement_expression(
+            open.as_ref(),
+            statement
+                .expression()
+                .map_or_else(jolt_fmt_ir::nil, |expression| {
+                    format_expression(&expression)
+                }),
+            close.as_ref(),
+        ),
+        format_statement_header_body_separator(close.as_ref()),
         statement
             .body()
             .map_or_else(empty_block, |body| format_block(&body)),
@@ -623,13 +692,19 @@ fn format_synchronized_statement(statement: &SynchronizedStatement) -> Doc {
 }
 
 fn format_switch_statement(statement: &SwitchStatement) -> Doc {
+    let open = statement.open_paren();
+    let close = statement.close_paren();
     concat([
         format_statement_keyword(statement.keyword(), "switch"),
-        text(" ("),
-        statement
-            .selector()
-            .map_or_else(jolt_fmt_ir::nil, |selector| format_expression(&selector)),
-        text(") "),
+        text(" "),
+        format_parenthesized_statement_expression(
+            open.as_ref(),
+            statement
+                .selector()
+                .map_or_else(jolt_fmt_ir::nil, |selector| format_expression(&selector)),
+            close.as_ref(),
+        ),
+        format_statement_header_body_separator(close.as_ref()),
         statement
             .block()
             .map_or_else(empty_block, |block| format_switch_block(&block)),
@@ -844,11 +919,16 @@ fn format_try_statement(statement: &TryStatement) -> Doc {
 }
 
 fn format_try_with_resources_statement(statement: &TryWithResourcesStatement) -> Doc {
+    let close_paren = statement
+        .resources()
+        .as_ref()
+        .and_then(jolt_java_syntax::ResourceSpecification::close_paren);
+
     concat([
         format_statement_keyword(statement.keyword(), "try"),
-        text(" ("),
+        text(" "),
         format_resource_specification(statement),
-        text(") "),
+        format_statement_header_body_separator(close_paren.as_ref()),
         statement
             .body()
             .map_or_else(empty_block, |body| format_block(&body)),
@@ -863,6 +943,9 @@ fn format_try_with_resources_statement(statement: &TryWithResourcesStatement) ->
 
 fn format_resource_specification(statement: &TryWithResourcesStatement) -> Doc {
     let specification = statement.resources();
+    let open_paren = specification
+        .as_ref()
+        .and_then(jolt_java_syntax::ResourceSpecification::open_paren);
     let trailing_separator = specification
         .as_ref()
         .and_then(jolt_java_syntax::ResourceSpecification::trailing_semicolon);
@@ -872,9 +955,6 @@ fn format_resource_specification(statement: &TryWithResourcesStatement) -> Doc {
     let close_paren = specification
         .as_ref()
         .and_then(jolt_java_syntax::ResourceSpecification::close_paren);
-    let close_comments = close_paren
-        .as_ref()
-        .and_then(format_resource_close_dangling_comments);
     let resources = specification
         .as_ref()
         .and_then(jolt_java_syntax::ResourceSpecification::list)
@@ -886,20 +966,65 @@ fn format_resource_specification(statement: &TryWithResourcesStatement) -> Doc {
         .unwrap_or_default();
 
     if resources.is_empty() {
-        return jolt_fmt_ir::nil();
+        return concat([
+            format_condition_open_paren(open_paren.as_ref()),
+            format_resource_close_paren(close_paren.as_ref()),
+        ]);
     }
 
-    let trailing_comments = [removed_trailing_separator_comments, close_comments]
+    let trailing_comments = [removed_trailing_separator_comments]
         .into_iter()
         .flatten()
         .collect::<Vec<_>>();
 
     concat([
+        format_condition_open_paren(open_paren.as_ref()),
         jolt_fmt_ir::indent(concat([
-            hard_line(),
+            format_resource_open_spacing(open_paren.as_ref()),
             join_resource_lines(resources, &trailing_comments),
         ])),
-        hard_line(),
+        format_resource_close_paren(close_paren.as_ref()),
+    ])
+}
+
+fn format_resource_open_spacing(open: Option<&JavaSyntaxToken>) -> Doc {
+    open.map_or_else(hard_line, |open| {
+        if open.trailing_comments().is_empty() {
+            hard_line()
+        } else {
+            concat([
+                format_trailing_comments_before_line_break(open),
+                hard_line(),
+            ])
+        }
+    })
+}
+
+fn format_resource_close_paren(close: Option<&JavaSyntaxToken>) -> Doc {
+    let Some(close) = close else {
+        return concat([hard_line(), text(")")]);
+    };
+
+    let leading_comments = close.leading_comments();
+    concat([
+        if leading_comments.is_empty() {
+            hard_line()
+        } else {
+            concat([
+                jolt_fmt_ir::indent(concat([
+                    hard_line(),
+                    format_dangling_comments(leading_comments),
+                ])),
+                hard_line(),
+            ])
+        },
+        text(")"),
+        format_trailing_comments_before_line_break(close),
+        if trailing_comments_force_line(close) {
+            hard_line()
+        } else {
+            jolt_fmt_ir::nil()
+        },
     ])
 }
 
@@ -1080,16 +1205,6 @@ fn format_removed_resource_separator_comments(separator: &JavaSyntaxToken) -> Op
         .chain(separator.trailing_comments())
         .filter(|comment| !is_formatter_control_marker(comment.text()))
         .collect::<Vec<_>>();
-    (!comments.is_empty()).then(|| format_dangling_comments(comments))
-}
-
-fn format_resource_close_dangling_comments(close: &JavaSyntaxToken) -> Option<Doc> {
-    let comments = close
-        .leading_comments()
-        .into_iter()
-        .filter(|comment| !is_formatter_control_marker(comment.text()))
-        .collect::<Vec<_>>();
-
     (!comments.is_empty()).then(|| format_dangling_comments(comments))
 }
 
