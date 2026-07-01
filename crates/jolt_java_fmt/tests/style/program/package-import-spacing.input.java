@@ -1,4 +1,4 @@
-package   com.example.demo;
+@Beta @Generated("tool") package   com.example.demo;
 import z.Zed;
 import a.Alpha;
 class A {}

@@ -141,6 +141,7 @@ Status legend:
 
 - `[x]` Final newline.
 - `[x]` Package declarations.
+- `[x]` Package annotations.
 - `[~]` Import sorting with comment barriers.
 - `[~]` Module directive sorting/grouping.
 - `[x]` Redundant top-level semicolon removal.

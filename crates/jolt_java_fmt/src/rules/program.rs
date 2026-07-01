@@ -4,7 +4,7 @@ use jolt_java_syntax::{
     ModuleDirective, PackageDeclaration,
 };
 
-use crate::helpers::comments::format_token_sequence;
+use crate::rules::annotations::format_annotation;
 use crate::rules::declarations::format_type_declaration;
 use crate::rules::names::{format_name, name_key};
 
@@ -43,10 +43,23 @@ pub(crate) fn format_compilation_unit(unit: &CompilationUnit) -> Doc {
 }
 
 fn format_package_declaration(package: &PackageDeclaration) -> Doc {
-    let Some(name) = package.name() else {
-        return format_token_sequence(&package.tokens());
-    };
-    concat([text("package "), format_name(&name), text(";")])
+    let annotations = package
+        .annotations()
+        .map(|annotation| format_annotation(&annotation))
+        .collect::<Vec<_>>();
+    let declaration = concat([
+        text("package "),
+        package
+            .name()
+            .map_or_else(jolt_fmt_ir::nil, |name| format_name(&name)),
+        text(";"),
+    ]);
+
+    if annotations.is_empty() {
+        declaration
+    } else {
+        concat([join_hard_lines(annotations), hard_line(), declaration])
+    }
 }
 
 fn format_imports(imports: Vec<ImportDeclaration>) -> Option<Doc> {
@@ -111,17 +124,15 @@ fn format_import_run(imports: Vec<FormattedImport>) -> Doc {
 }
 
 fn format_module_declaration(module: &ModuleDeclaration) -> Doc {
-    let Some(name) = module.name() else {
-        return format_token_sequence(&module.tokens());
-    };
-
     concat([
         if module.is_open() {
             text("open module ")
         } else {
             text("module ")
         },
-        format_name(&name),
+        module
+            .name()
+            .map_or_else(jolt_fmt_ir::nil, |name| format_name(&name)),
         text(" {"),
         indent_module_body(format_module_directives(module.directives().collect())),
         hard_line(),

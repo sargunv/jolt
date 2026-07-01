@@ -119,6 +119,10 @@ impl ImportDeclaration {
 }
 
 impl PackageDeclaration {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation> + '_ {
+        children(&self.syntax)
+    }
+
     #[must_use]
     pub fn name(&self) -> Option<NameSyntax> {
         child_family(&self.syntax)
