@@ -19,6 +19,63 @@ fn text_and_concat_render() {
 }
 
 #[test]
+fn doc_clone_shares_subtree_pointers() {
+    let shared = text("shared");
+    let doc = concat([shared.clone(), text(" tail")]);
+    let cloned = doc.clone();
+
+    assert_eq!(doc, cloned);
+    assert_eq!(doc.cache_ptr(), cloned.cache_ptr());
+}
+
+#[test]
+fn best_fitting_variants_share_cloned_subtrees() {
+    use crate::document::DocKind;
+
+    let shared = text("shared");
+    let flat = concat([shared.clone(), text(" flat")]);
+    let broken = concat([shared.clone(), hard_line(), text(" broken")]);
+    let doc = best_fitting(flat, [broken]);
+
+    let DocKind::BestFitting(variants) = doc.kind() else {
+        panic!("expected best fitting document");
+    };
+    let DocKind::Concat(flat_children) = variants[0].kind() else {
+        panic!("expected flat concat");
+    };
+    let DocKind::Concat(broken_children) = variants[1].kind() else {
+        panic!("expected broken concat");
+    };
+
+    assert_eq!(flat_children[0].cache_ptr(), broken_children[0].cache_ptr());
+    assert_eq!(flat_children[0].cache_ptr(), shared.cache_ptr());
+}
+
+#[test]
+fn cloned_doc_renders_identically() {
+    let doc = group(best_fitting(
+        concat([text("alpha"), line(), text("beta")]),
+        [concat([text("alpha"), hard_line(), text("beta")])],
+    ));
+    let cloned = doc.clone();
+
+    assert_eq!(doc, cloned);
+    assert_eq!(
+        render(&doc, RenderOptions::default()).expect("original should render"),
+        render(&cloned, RenderOptions::default()).expect("clone should render"),
+    );
+}
+
+#[test]
+fn structurally_equal_docs_may_differ_by_pointer() {
+    let left = concat([text("a"), text("b")]);
+    let right = concat([text("a"), text("b")]);
+
+    assert_eq!(left, right);
+    assert_ne!(left.cache_ptr(), right.cache_ptr());
+}
+
+#[test]
 fn text_rejects_line_terminators() {
     let err = render(&text("a\nb"), RenderOptions::default()).expect_err("invalid text");
     assert_eq!(err, RenderError::InvalidText { context: "Text" });
@@ -52,6 +109,202 @@ fn marked_break_fit_constraint_rejects_late_marker() {
     )
     .expect("marker exists");
     assert_eq!(render_text(&doc, 80), "receiver\n.call()");
+}
+
+#[test]
+fn break_level_flat_and_broken_prefix_differ() {
+    let doc = break_level(
+        [text("a"), text("b")],
+        [level_break_with_prefix(
+            LevelBreakMode::Unified,
+            flat_text("."),
+            text("."),
+            0,
+        )],
+    )
+    .expect("valid break level");
+    assert_eq!(render_text(&doc, 80), "a.b");
+    assert_eq!(render_text(&doc, 2), "a\n.b");
+}
+
+#[test]
+fn break_level_independent_dot_prefix_breaks_with_dot() {
+    let doc = group(indent(
+        break_level(
+            [text("receiver"), text("method()"), text("tail")],
+            [
+                level_break_with_prefix(LevelBreakMode::Independent, flat_text("."), text("."), 0),
+                level_break_with_prefix(LevelBreakMode::Independent, flat_text("."), text("."), 0),
+            ],
+        )
+        .expect("valid break level"),
+    ));
+    assert_eq!(render_text(&doc, 80), "receiver.method().tail");
+    assert_eq!(render_text(&doc, 25), "receiver.method().tail");
+    assert_eq!(render_text(&doc, 17), "receiver.method()\n  .tail");
+    assert_eq!(render_text(&doc, 16), "receiver\n  .method().tail");
+}
+
+#[test]
+fn break_level_fits_on_one_line() {
+    let doc = break_level(
+        [text("alpha"), text("beta"), text("gamma")],
+        [
+            level_break(LevelBreakMode::Unified, FlatLine::Space, 0),
+            level_break(LevelBreakMode::Unified, FlatLine::Space, 0),
+        ],
+    )
+    .expect("valid break level");
+    assert_eq!(render_text(&doc, 80), "alpha beta gamma");
+}
+
+#[test]
+fn break_level_unified_breaks_together() {
+    let doc = break_level(
+        [text("alpha"), text("beta"), text("gamma")],
+        [
+            level_break(LevelBreakMode::Unified, FlatLine::Space, 0),
+            level_break(LevelBreakMode::Unified, FlatLine::Space, 0),
+        ],
+    )
+    .expect("valid break level");
+    assert_eq!(render_text(&doc, 10), "alpha\nbeta\ngamma");
+}
+
+#[test]
+fn break_level_independent_breaks_when_next_segment_does_not_fit() {
+    let doc = break_level(
+        [text("aaa"), text("bbb"), text("c")],
+        [
+            level_break(LevelBreakMode::Independent, FlatLine::Space, 0),
+            level_break(LevelBreakMode::Independent, FlatLine::Space, 0),
+        ],
+    )
+    .expect("valid break level");
+    assert_eq!(render_text(&doc, 80), "aaa bbb c");
+    assert_eq!(render_text(&doc, 7), "aaa bbb\nc");
+    assert_eq!(render_text(&doc, 4), "aaa\nbbb\nc");
+}
+
+#[test]
+fn break_level_forced_break_always_breaks() {
+    let doc = break_level(
+        [text("a"), text("b")],
+        [level_break(LevelBreakMode::Forced, FlatLine::Space, 0)],
+    )
+    .expect("valid break level");
+    assert_eq!(render_text(&doc, 80), "a\nb");
+}
+
+#[test]
+fn nested_break_level_stays_flat_when_parent_breaks() {
+    let inner = break_level(
+        [text("bb"), text("cc")],
+        [level_break(LevelBreakMode::Unified, FlatLine::Space, 0)],
+    )
+    .expect("valid break level");
+    let doc = break_level(
+        [text("aaa"), inner, text("zzz")],
+        [
+            level_break(LevelBreakMode::Unified, FlatLine::Space, 0),
+            level_break(LevelBreakMode::Unified, FlatLine::Space, 0),
+        ],
+    )
+    .expect("valid break level");
+
+    assert_eq!(render_text(&doc, 80), "aaa bb cc zzz");
+    assert_eq!(render_text(&doc, 10), "aaa\nbb cc\nzzz");
+}
+
+#[test]
+fn break_level_plus_indent_applies_in_broken_layout() {
+    let doc = break_level_with_indent(
+        1,
+        [text("aaaa"), text("bbbb")],
+        [level_break(LevelBreakMode::Unified, FlatLine::Space, 0)],
+    )
+    .expect("valid break level");
+
+    assert_eq!(render_text(&doc, 80), "aaaa bbbb");
+    assert_eq!(render_text(&doc, 6), "aaaa\n  bbbb");
+}
+
+#[test]
+fn nested_break_level_fit_matches_render_in_broken_group() {
+    let inner = break_level(
+        [text("bb"), text("cc")],
+        [level_break(LevelBreakMode::Unified, FlatLine::Space, 0)],
+    )
+    .expect("valid break level");
+    let doc = force_group(
+        break_level(
+            [text("aaa"), inner, text("zzz")],
+            [
+                level_break(LevelBreakMode::Unified, FlatLine::Space, 0),
+                level_break(LevelBreakMode::Unified, FlatLine::Space, 0),
+            ],
+        )
+        .expect("valid break level"),
+    );
+
+    assert_eq!(render_text(&doc, 10), "aaa\nbb cc\nzzz");
+}
+
+#[test]
+fn nested_break_levels_reuse_shared_flat_width_cache() {
+    let shared = text("shared");
+    let inner = break_level(
+        [shared.clone(), text("tail")],
+        [level_break(LevelBreakMode::Unified, FlatLine::Space, 0)],
+    )
+    .expect("valid inner level");
+    let doc = break_level(
+        [inner.clone(), inner.clone()],
+        [level_break(LevelBreakMode::Unified, FlatLine::Empty, 0)],
+    )
+    .expect("valid outer level");
+    let rendered = render(
+        &doc,
+        RenderOptions {
+            line_width: TextWidth::new(80),
+            ..RenderOptions::default()
+        },
+    )
+    .expect("document should render");
+    assert!(rendered.stats.flat_width_cache_hits >= 1);
+}
+
+#[test]
+fn fit_cache_reuses_marked_subtree_across_different_prior_markers() {
+    let chain_marker = BreakMarkerId(1);
+    let shared_chain = group_with_fit(
+        GroupFit::MarkedBreak {
+            marker: chain_marker,
+            max_column_before_last_marked_break: TextWidth::new(10),
+        },
+        concat([
+            text("obj"),
+            marked_break(chain_marker, FlatLine::Empty, 0),
+            text(".method()"),
+        ]),
+    )
+    .expect("marker exists");
+
+    let doc = best_fitting(
+        concat([
+            text("pre"),
+            marked_break(BreakMarkerId(2), FlatLine::Empty, 0),
+            shared_chain.clone(),
+        ]),
+        [concat([
+            text("pre"),
+            marked_break(BreakMarkerId(3), FlatLine::Empty, 0),
+            shared_chain,
+        ])],
+    );
+
+    assert_eq!(render_text(&doc, 80), "preobj.method()");
+    assert_eq!(render_text(&doc, 14), "pre\nobj.method()");
 }
 
 #[test]
@@ -470,6 +723,8 @@ fn render_stats_report_lines_groups_and_suffixes() {
             group_count: 2,
             expanded_group_count: 2,
             line_suffix_count: 1,
+            break_level_count: 0,
+            flat_width_cache_hits: 0,
         }
     );
 }

@@ -5,11 +5,23 @@ use super::{
     concat, format_annotation, format_token, java_lists, reject_unhandled_comments_before_start,
     take_inline_leading_block_comment_docs_in_range, text,
 };
-use jolt_fmt_ir::{best_fitting, group, indent_by, join, line};
+use jolt_fmt_ir::{group, indent_by, join, line};
 
 pub(super) fn format_type(ty: &Type, context: &mut JavaFormatContext<'_>) -> FormatResult<Doc> {
     let parts = ty.layout_parts();
     format_type_layout_parts(&parts, context)
+}
+
+pub(super) fn format_callable_leading_return_type(
+    ty: &Type,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    let parts = ty.layout_parts();
+    format_type_layout_sequence(
+        &parts,
+        TypeArgumentListSlot::CallableLeadingReturnType,
+        context,
+    )
 }
 
 pub(super) fn format_type_clause_type(
@@ -71,6 +83,7 @@ pub(super) fn format_type_layout_parts(
 enum TypeArgumentListSlot {
     Default,
     NestedGeneric,
+    CallableLeadingReturnType,
     TypeClause { has_multiple_clause_types: bool },
 }
 
@@ -138,6 +151,11 @@ fn format_type_layout_sequence(
                         }
                         TypeArgumentListSlot::NestedGeneric => {
                             format_nested_type_argument_parts(arguments, list_range, context)?
+                        }
+                        TypeArgumentListSlot::CallableLeadingReturnType => {
+                            format_callable_leading_return_type_argument_parts(
+                                arguments, list_range, context,
+                            )?
                         }
                         TypeArgumentListSlot::TypeClause {
                             has_multiple_clause_types,
@@ -271,6 +289,22 @@ fn format_nested_type_argument_parts(
         })
         .collect::<FormatResult<Vec<_>>>()?;
     java_lists::nested_type_argument_list(arguments, list_range, context)
+}
+
+fn format_callable_leading_return_type_argument_parts(
+    parts: &[TypeLayoutPart],
+    list_range: TextRange,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    if context
+        .policy()
+        .callable_leading_return_type_type_argument_indent_levels()
+        == context.policy().type_argument_indent_levels()
+    {
+        format_type_argument_parts(parts, list_range, context)
+    } else {
+        format_nested_type_argument_parts(parts, list_range, context)
+    }
 }
 
 fn format_type_clause_type_argument_parts(
@@ -459,20 +493,7 @@ fn format_type_argument_layout_sequence(
             return format_flat_type_layout_sequence(parts, context);
         }
 
-        if type_layout_part_range(parts)
-            .is_some_and(|range| context.unhandled_comment_trivia_in_range(range).is_some())
-        {
-            return format_type_layout_sequence(
-                parts,
-                TypeArgumentListSlot::NestedGeneric,
-                context,
-            );
-        }
-
-        let flat = format_flat_type_layout_sequence(parts, context)?;
-        let broken =
-            format_type_layout_sequence(parts, TypeArgumentListSlot::NestedGeneric, context)?;
-        return Ok(best_fitting(flat, [broken]));
+        return format_type_layout_sequence(parts, TypeArgumentListSlot::NestedGeneric, context);
     };
 
     let prefix = format_flat_type_layout_sequence(

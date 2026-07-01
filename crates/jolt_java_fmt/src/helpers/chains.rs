@@ -1,6 +1,6 @@
 use jolt_fmt_ir::{
-    Doc, best_fitting, concat, fill, fill_entry, group, hard_line, if_group_breaks, indent_by,
-    soft_line, text,
+    Doc, LevelBreak, LevelBreakMode, break_level_with_indent, concat, flat_text, group, hard_line,
+    if_group_breaks, indent_by, level_break_with_prefix, soft_line, text,
 };
 
 use crate::analyzers::chains::{
@@ -30,28 +30,6 @@ pub(crate) fn explicit_type_argument_invocation_selector(
                 concat([hard_line(), name.clone(), arguments.clone()]),
             ),
             concat([name, arguments]),
-        ),
-    ])
-}
-
-pub(crate) fn explicit_type_argument_invocation_selector_head(
-    type_arguments: Option<Doc>,
-    name: Doc,
-    policy: JavaFormatPolicy,
-) -> Doc {
-    let Some(type_arguments) = type_arguments else {
-        return name;
-    };
-
-    concat([
-        type_arguments,
-        if_group_breaks(
-            SELECTOR_TYPE_ARGUMENTS_GROUP_ID,
-            indent_by(
-                policy.type_argument_indent_levels(),
-                concat([hard_line(), name.clone()]),
-            ),
-            name,
         ),
     ])
 }
@@ -97,13 +75,8 @@ pub(crate) fn selector_chain(chain: Chain, policy: JavaFormatPolicy, role: Chain
         return commented_selector_chain(base, base_trailing_comments, members, policy);
     }
 
-    let flat_chain =
-        concat(std::iter::once(base.clone()).chain(members.iter().map(prefixed_member_doc)));
-
     if is_gjf_log_statement_chain(&metadata.base, &members) {
-        let broken_chain =
-            gjf_log_statement_chain(base, base_trailing_comments, members, &metadata, policy);
-        return chain_layout_preference(flat_chain, broken_chain, role, policy, Some(&metadata));
+        return gjf_log_statement_chain(base, base_trailing_comments, members, &metadata, policy);
     }
 
     if matches!(metadata.base.kind, ChainBaseKind::PrimaryExpression)
@@ -114,23 +87,21 @@ pub(crate) fn selector_chain(chain: Chain, policy: JavaFormatPolicy, role: Chain
             .first()
             .is_some_and(|member| member.has_type_arguments)
     {
-        let broken_chain = visit_regular_dot_chain_after_primary_receiver(base, members, policy);
-        return chain_layout_preference(flat_chain, broken_chain, role, policy, Some(&metadata));
+        return visit_regular_dot_chain_after_primary_receiver(base, members, policy);
     }
 
     if groups.all_fields(members.len()) {
         if is_nested_argument_role(role) {
-            return field_selector_chain(base, members, policy, role);
+            return field_selector_chain(base, members, policy);
         }
         let min_length = policy.selector_chain_min_receiver_length_before_break();
-        let broken_chain = field_dot_fill_selector_segments(
+        return field_regular_dot_selector_segments(
             base,
             members,
             metadata.base.source_width,
             min_length,
             policy,
         );
-        return chain_layout_preference(flat_chain, broken_chain, role, policy, Some(&metadata));
     }
 
     let leading_type_argument_call_len = groups.leading_type_argument_call_len();
@@ -139,152 +110,322 @@ pub(crate) fn selector_chain(chain: Chain, policy: JavaFormatPolicy, role: Chain
         && metadata.base.source_width >= policy.selector_chain_long_receiver_width()
         && breaks_long_simple_receiver_call_head(&metadata, &members, policy)
     {
-        let broken_chain = break_before_first_selector_chain(
+        return break_before_first_selector_chain(
             base,
             members,
             true,
             policy.continuation_indent_levels(),
         );
-        return chain_layout_preference(flat_chain, broken_chain, role, policy, Some(&metadata));
     }
 
     if leading_type_argument_call_len > 0 {
-        let broken_chain = explicit_type_argument_selector_chain(
+        if keeps_this_super_explicit_type_argument_selector(&metadata.base, policy) {
+            return this_super_explicit_type_argument_selector_chain(base, members, policy);
+        }
+        return explicit_type_argument_selector_chain(
             base,
             members,
             &metadata.base,
             leading_type_argument_call_len,
             policy,
         );
-        return chain_layout_preference(flat_chain, broken_chain, role, policy, Some(&metadata));
     }
 
     if keeps_nested_argument_call_head(&groups, &metadata, policy, role) {
-        let broken_chain = selector_chain_with_cohesive_head(base, members, 1, policy, false);
-        return chain_layout_preference(flat_chain, broken_chain, role, policy, Some(&metadata));
+        return selector_chain_with_cohesive_head(
+            base,
+            members,
+            1,
+            policy,
+            false,
+            LevelBreakMode::Independent,
+        );
     }
 
     if keeps_simple_receiver_call_run_head(&groups, &metadata, &members, policy, role) {
-        let broken_chain =
-            simple_receiver_call_run_chain(base, members, metadata.base.source_width, policy);
-        return chain_layout_preference(flat_chain, broken_chain, role, policy, Some(&metadata));
+        return simple_receiver_call_run_chain(base, members, metadata.base.source_width, policy);
     }
 
     if keeps_tiny_simple_receiver_call_head(&groups, &metadata, policy, role) {
-        let broken_chain = selector_chain_with_cohesive_head(
+        return selector_chain_with_cohesive_head(
             base,
             members,
             1,
             policy,
             matches!(role, ChainRole::Default),
+            LevelBreakMode::Independent,
         );
-        return chain_layout_preference(flat_chain, broken_chain, role, policy, Some(&metadata));
-    }
-
-    let coalesced_prefix_len = single_invocation_coalesced_prefix_len(&members);
-    if coalesced_prefix_len > 0 {
-        let call_index = coalesced_prefix_len - 1;
-        let broken_chain = selector_chain_with_single_invocation_field_prefix(
-            base,
-            members,
-            call_index,
-            metadata.base.source_width,
-            metadata.base.forces_break_before_first_selector,
-            policy,
-        );
-        if metadata.base.forces_break_before_first_selector {
-            return broken_chain;
-        }
-        return chain_layout_preference(flat_chain, broken_chain, role, policy, Some(&metadata));
-    }
-
-    if let Some(stream_end) =
-        crate::analyzers::chains::stream_suffix_prefix_member_end_index(&members)
-        && stream_end + 1 < members.len()
-    {
-        let broken_chain =
-            selector_chain_with_cohesive_head(base, members, stream_end + 1, policy, false);
-        return chain_layout_preference(flat_chain, broken_chain, role, policy, Some(&metadata));
     }
 
     if metadata.base.forces_break_before_first_selector {
-        let broken_chain = break_before_first_selector_chain(
+        return break_before_first_selector_chain(
             base,
             members,
             false,
             policy.selector_chain_primary_selector_indent_levels(metadata.base.kind),
         );
-        return chain_layout_preference(flat_chain, broken_chain, role, policy, Some(&metadata));
     }
 
-    if let Some(type_prefix_end) = crate::analyzers::type_names::type_name_prefix_member_end_index(
-        metadata.base.simple_name.as_deref(),
-        &members,
-    ) && type_prefix_end + 1 < members.len()
-        && !members
-            .get(type_prefix_end)
-            .is_some_and(ChainMember::is_call)
-    {
-        let broken_chain = selector_chain_with_prefix_group_at_min_length(
-            base,
-            members,
-            type_prefix_end,
-            metadata.base.source_width,
-            policy.max_line_length(),
-            policy,
-        );
-        return chain_layout_preference(flat_chain, broken_chain, role, policy, Some(&metadata));
+    if let Some(prefix_end) = classified_prefix_member_end_index(&metadata.base, &members) {
+        let fill_mode = prefix_fill_mode(&members);
+        return visit_dot_with_prefix(base, members, prefix_end, fill_mode, policy, &metadata.base);
     }
 
-    if let Some(prefix_end) = classified_prefix_member_end_index(&metadata.base, &members)
-        && prefix_end + 1 < members.len()
-        && members.get(prefix_end).is_some_and(ChainMember::is_call)
-    {
-        let broken_chain = selector_chain_with_prefix_group(
-            base,
-            members,
-            prefix_end,
-            metadata.base.source_width,
-            policy,
-        );
-        return chain_layout_preference(flat_chain, broken_chain, role, policy, Some(&metadata));
-    }
-
-    if metadata.call_count >= 10 || breaks_before_first_selector(&metadata, &members, policy, role)
-    {
-        let broken_chain = break_before_first_selector_chain(
+    if breaks_before_first_selector(&metadata, &members, policy, role) {
+        return break_before_first_selector_chain(
             base,
             members,
             true,
             policy.continuation_indent_levels(),
         );
-        return chain_layout_preference(flat_chain, broken_chain, role, policy, Some(&metadata));
     }
 
-    let broken_chain = visit_regular_dot_chain(base, members, policy, &metadata.base);
-    chain_layout_preference(flat_chain, broken_chain, role, policy, Some(&metadata))
+    visit_regular_dot_chain(base, members, policy, &metadata.base)
 }
-/// Nested chain arguments are embedded in outer chain member docs. Avoid
-/// `best_fitting` there: each fit trial walks the full subtree and deeply
-/// nested call trees (e.g. `B24909927.java`) blow up exponentially.
-fn chain_layout_preference(
-    flat: Doc,
-    broken: Doc,
-    role: ChainRole,
+
+fn keeps_this_super_explicit_type_argument_selector(
+    base: &BaseMetadata,
     policy: JavaFormatPolicy,
-    metadata: Option<&ChainMetadata>,
+) -> bool {
+    (base.is_qualified_this_super_prefix
+        || matches!(base.simple_name.as_deref(), Some("this" | "super")))
+        && base.source_width <= policy.selector_chain_long_receiver_width()
+}
+
+fn this_super_explicit_type_argument_selector_chain(
+    base: Doc,
+    mut members: Vec<ChainMember>,
+    policy: JavaFormatPolicy,
 ) -> Doc {
-    match role {
-        ChainRole::NestedArgument => broken,
-        ChainRole::NestedArgumentFit
-            if metadata.is_some_and(|metadata| {
-                metadata.total_call_count > policy.nested_argument_selector_chain_fit_call_limit()
-            }) =>
-        {
-            broken
-        }
-        _ => best_fitting(flat, [broken]),
+    let Some(first) = members.first().cloned() else {
+        return group(base);
+    };
+    members.remove(0);
+    let base = concat([base, text("."), member_chain_segment(&first)]);
+    if members.is_empty() {
+        return group(base);
     }
+    prefix_dot_break_level_chain(
+        base,
+        &members.iter().map(member_chain_segment).collect::<Vec<_>>(),
+        0,
+        LevelBreakMode::Unified,
+        policy.continuation_indent_levels(),
+    )
+}
+
+fn dot_level_break(mode: LevelBreakMode) -> LevelBreak {
+    level_break_with_prefix(mode, flat_text("."), text("."), 0)
+}
+
+fn member_regular_dot_segment(member: &ChainMember) -> Doc {
+    member.doc.clone()
+}
+
+/// google-java-format `visitRegularDot`: optional dot breaks once accumulated
+/// receiver length exceeds `min_length`.
+fn regular_dot_min_length_chain(
+    base: Doc,
+    members: &[ChainMember],
+    initial_length: usize,
+    min_length: usize,
+    indent_levels: u16,
+    tail_break_mode: LevelBreakMode,
+) -> Doc {
+    group(regular_dot_min_length_chain_doc(
+        base,
+        members,
+        initial_length,
+        min_length,
+        indent_levels,
+        tail_break_mode,
+    ))
+}
+
+/// Emits a flat prefix while `length <= min_length`, then a unified dot level
+/// for the tail. Matches GJF inserting `breakOp(UNIFIED)` only once the running
+/// receiver length exceeds `indentMultiplier * 4`.
+fn regular_dot_min_length_chain_doc(
+    base: Doc,
+    members: &[ChainMember],
+    mut length: usize,
+    min_length: usize,
+    indent_levels: u16,
+    tail_break_mode: LevelBreakMode,
+) -> Doc {
+    if members.is_empty() {
+        return base;
+    }
+
+    let mut flat_parts: Vec<Doc> = vec![base];
+    let mut tail: Vec<Doc> = Vec::new();
+
+    for member in members {
+        let doc = member_regular_dot_segment(member);
+        if tail.is_empty() {
+            if length > min_length {
+                tail.push(doc);
+            } else {
+                flat_parts.push(text("."));
+                flat_parts.push(doc);
+            }
+            length = length.saturating_add(1);
+        } else {
+            tail.push(doc);
+        }
+        length = length.saturating_add(member.source_width);
+    }
+
+    let flat = concat(flat_parts);
+    if tail.is_empty() {
+        return flat;
+    }
+
+    let mut segments = vec![flat];
+    segments.extend(tail.iter().cloned());
+
+    let breaks = vec![dot_level_break(tail_break_mode); tail.len()];
+    break_level_with_indent(indent_levels as i16, segments, breaks)
+        .expect("valid regular dot min-length chain")
+}
+
+/// google-java-format `visitDotWithPrefix`: outer plusFour, prefix dots through
+/// `prefix_end` use `prefix_fill_mode`, trailing dots use unified breaks.
+fn visit_dot_with_prefix(
+    base: Doc,
+    members: Vec<ChainMember>,
+    prefix_end: usize,
+    prefix_fill_mode: LevelBreakMode,
+    policy: JavaFormatPolicy,
+    base_metadata: &BaseMetadata,
+) -> Doc {
+    let single_invocation_terminal =
+        single_invocation_coalesced_prefix_len(base_metadata, &members) == members.len();
+    let prefix_end = head_len_with_array_access_suffix(&members, prefix_end + 1) - 1;
+    let trailing_dereferences = prefix_end + 1 < members.len();
+
+    let leading_field_prefix_len = members
+        .iter()
+        .take(members.len().saturating_sub(1))
+        .filter(|member| matches!(member.kind, ChainMemberKind::Field))
+        .count();
+    let terminal_call_can_own_args = single_invocation_terminal
+        && members.get(prefix_end).is_some_and(ChainMember::is_call)
+        && !trailing_dereferences
+        && (leading_field_prefix_len <= 1
+            || prefix_source_width(&members[..prefix_end])
+                <= policy.selector_chain_long_receiver_width());
+    if terminal_call_can_own_args || (single_invocation_terminal && leading_field_prefix_len <= 1) {
+        let mut parts: Vec<Doc> = vec![base];
+        for member in &members {
+            parts.push(text("."));
+            parts.push(member_regular_dot_segment(member));
+        }
+        return group(concat(parts));
+    }
+
+    if single_invocation_terminal && !trailing_dereferences {
+        return regular_dot_min_length_chain(
+            base,
+            &members,
+            base_metadata.source_width,
+            policy.selector_chain_min_receiver_length_before_break(),
+            policy.continuation_indent_levels(),
+            LevelBreakMode::Unified,
+        );
+    }
+
+    let member_segments: Vec<Doc> = members
+        .iter()
+        .enumerate()
+        .map(|(index, member)| {
+            if single_invocation_terminal
+                && index == prefix_end
+                && member.is_call()
+                && !trailing_dereferences
+            {
+                member_regular_dot_segment(member)
+            } else {
+                member_chain_segment(member)
+            }
+        })
+        .collect();
+    prefix_dot_break_level_chain(
+        base,
+        &member_segments,
+        prefix_end,
+        prefix_fill_mode,
+        policy.continuation_indent_levels(),
+    )
+}
+
+fn prefix_source_width(members: &[ChainMember]) -> usize {
+    members.iter().fold(0usize, |width, member| {
+        width.saturating_add(member.source_width.saturating_add(1))
+    })
+}
+
+fn member_chain_segment(member: &ChainMember) -> Doc {
+    member
+        .doc_after_chain_break
+        .clone()
+        .unwrap_or_else(|| member.doc.clone())
+}
+
+fn prefix_fill_mode(members: &[ChainMember]) -> LevelBreakMode {
+    if crate::analyzers::chains::stream_suffix_prefix_member_end_index(members).is_some() {
+        LevelBreakMode::Unified
+    } else {
+        LevelBreakMode::Independent
+    }
+}
+
+/// google-java-format `visitDotWithPrefix`: prefix dots use `prefix_fill_mode`,
+/// trailing selector dots use unified breaks.
+fn prefix_dot_break_level_chain(
+    base: Doc,
+    member_segments: &[Doc],
+    prefix_end: usize,
+    prefix_fill_mode: LevelBreakMode,
+    indent_levels: u16,
+) -> Doc {
+    if member_segments.is_empty() {
+        return group(base);
+    }
+
+    let segments: Vec<Doc> = std::iter::once(base.clone())
+        .chain(member_segments.iter().cloned())
+        .collect();
+    let breaks: Vec<LevelBreak> = (0..member_segments.len())
+        .map(|index| {
+            dot_level_break(if index <= prefix_end {
+                prefix_fill_mode
+            } else {
+                LevelBreakMode::Unified
+            })
+        })
+        .collect();
+    group(
+        break_level_with_indent(indent_levels as i16, segments, breaks)
+            .expect("valid prefix dot break level chain"),
+    )
+}
+
+/// Field/call-only chains on the hot expression path: one level with dot breaks.
+fn field_call_dot_break_level_chain(
+    base: Doc,
+    members: &[ChainMember],
+    mode: LevelBreakMode,
+    indent_levels: u16,
+) -> Doc {
+    let member_segments: Vec<Doc> = members.iter().map(|member| member.doc.clone()).collect();
+    prefix_dot_break_level_chain(
+        base,
+        &member_segments,
+        members.len().saturating_sub(1),
+        mode,
+        indent_levels,
+    )
 }
 
 fn is_nested_argument_role(role: ChainRole) -> bool {
@@ -371,12 +512,13 @@ fn simple_receiver_call_run_chain(
     base_width: usize,
     policy: JavaFormatPolicy,
 ) -> Doc {
-    regular_dot_line_limit_call_run_chain(
+    regular_dot_min_length_chain(
         base,
-        members,
+        &members,
         base_width,
-        policy.max_line_length(),
-        policy,
+        policy.selector_chain_min_receiver_length_before_break(),
+        policy.continuation_indent_levels(),
+        LevelBreakMode::Unified,
     )
 }
 
@@ -399,36 +541,26 @@ fn explicit_type_argument_selector_chain(
         leading_type_argument_call_len,
         policy,
         false,
+        LevelBreakMode::Independent,
     );
 
     if base_metadata.is_qualified_this_super_prefix
-        && policy.selector_chain_breaks_qualified_this_super_before_explicit_type_arguments()
+        || matches!(base_metadata.simple_name.as_deref(), Some("this" | "super"))
+        || !breaks_type_argument_head
+        || !policy.selector_chain_breaks_before_first_selector()
     {
-        return break_before_first_selector_chain(
-            base,
-            members,
-            false,
-            policy.continuation_indent_levels(),
-        );
-    }
-
-    if !breaks_type_argument_head || !policy.selector_chain_breaks_before_first_selector() {
         return cohesive;
     }
 
-    let break_before_selector = break_before_first_selector_chain(
-        base,
-        members,
-        false,
-        policy.continuation_indent_levels(),
-    );
-    best_fitting(cohesive, [break_before_selector])
+    // The explicit type-argument head alone exceeds the line width, so the
+    // cohesive layout cannot fit flat; break before the first selector.
+    break_before_first_selector_chain(base, members, false, policy.continuation_indent_levels())
 }
 
 fn gjf_log_statement_chain(
     base: Doc,
     base_trailing_comments: Vec<Doc>,
-    mut members: Vec<ChainMember>,
+    members: Vec<ChainMember>,
     metadata: &ChainMetadata,
     policy: JavaFormatPolicy,
 ) -> Doc {
@@ -436,79 +568,46 @@ fn gjf_log_statement_chain(
         return commented_selector_chain(base, base_trailing_comments, members, policy);
     }
 
-    let Some(last) = members.pop() else {
-        return base;
-    };
-
-    let prefix_width = members
-        .iter()
-        .fold(metadata.base.source_width, |width, member| {
-            width + 1 + member.selector_head_width
-        })
-        + 1
-        + last.selector_head_width;
-    let prefix_flat = concat(
-        std::iter::once(base.clone())
-            .chain(members.iter().map(prefixed_member_doc))
-            .chain(std::iter::once(concat([
-                text("."),
-                last.selector_head_doc.clone(),
-            ]))),
-    );
-    if prefix_width <= policy.max_line_length() {
-        return concat([prefix_flat, last.selector_suffix_doc]);
-    }
-
-    let mut prefix_members = members;
-    prefix_members.push(selector_head_member(last.clone()));
-    let prefix_broken = regular_dot_line_limit_call_run_chain(
-        base,
-        prefix_members,
-        metadata.base.source_width,
-        policy.max_line_length(),
-        policy,
-    );
-    concat([prefix_broken, last.selector_suffix_doc])
-}
-
-fn selector_head_member(mut member: ChainMember) -> ChainMember {
-    member.doc = member.selector_head_doc.clone();
-    member.doc_after_chain_break = None;
-    member.doc_as_receiver_head_after_chain_break = None;
-    member.selector_suffix_doc = text("");
-    member.source_width = member.selector_head_width;
-    member
+    let _ = metadata;
+    field_call_dot_break_level_chain(
+        append_trailing_comments(base, base_trailing_comments),
+        &members,
+        LevelBreakMode::Independent,
+        policy.continuation_indent_levels(),
+    )
 }
 
 fn selector_chain_with_cohesive_head(
     base: Doc,
-    mut members: Vec<ChainMember>,
+    members: Vec<ChainMember>,
     head_len: usize,
     policy: JavaFormatPolicy,
     use_receiver_head_docs: bool,
+    prefix_fill_mode: LevelBreakMode,
 ) -> Doc {
     let head_len = head_len_with_array_access_suffix(&members, head_len);
-    let tail = members.split_off(head_len);
-    let has_tail = !tail.is_empty();
-    let head_member_count = members.len();
-    let head = concat(
-        std::iter::once(base).chain(members.into_iter().enumerate().map(|(index, member)| {
-            if use_receiver_head_docs && has_tail && index + 1 == head_member_count {
-                member_doc_as_receiver_head(member)
+    let has_tail = head_len < members.len();
+    let member_segments: Vec<Doc> = members
+        .iter()
+        .enumerate()
+        .map(|(index, member)| {
+            if use_receiver_head_docs && has_tail && index + 1 == head_len {
+                member
+                    .doc_as_receiver_head_after_chain_break
+                    .clone()
+                    .unwrap_or_else(|| member.doc.clone())
             } else {
-                member_doc(member)
+                member_chain_segment(member)
             }
-        })),
-    );
-
-    if tail.is_empty() {
-        return head;
-    }
-
-    group(concat([
-        head,
-        continuation_indent(concat(member_docs_after_line(soft_line(), tail)), policy),
-    ]))
+        })
+        .collect();
+    prefix_dot_break_level_chain(
+        base,
+        &member_segments,
+        head_len.saturating_sub(1),
+        prefix_fill_mode,
+        policy.continuation_indent_levels(),
+    )
 }
 
 fn breaks_before_first_selector(
@@ -526,6 +625,10 @@ fn breaks_before_first_selector(
     }
 
     if !policy.selector_chain_breaks_before_first_selector_for_role(role) {
+        return false;
+    }
+
+    if matches!(metadata.base.kind, ChainBaseKind::ObjectCreation) {
         return false;
     }
 
@@ -577,313 +680,21 @@ fn breaks_long_simple_receiver_call_head(
             || metadata.first_member_head_width >= policy.selector_chain_long_receiver_width())
 }
 
-fn selector_chain_with_single_invocation_field_prefix(
-    base: Doc,
-    mut members: Vec<ChainMember>,
-    call_index: usize,
-    base_width: usize,
-    use_receiver_head_call: bool,
-    policy: JavaFormatPolicy,
-) -> Doc {
-    let call_index = head_len_with_array_access_suffix(&members, call_index);
-    let tail = members.split_off(call_index + 1);
-    let call_member = members
-        .pop()
-        .expect("call member checked by coalesced prefix");
-    let field_members = members;
-    let min_length = policy.selector_chain_min_receiver_length_before_break();
-    let call = if use_receiver_head_call {
-        member_doc_as_receiver_head(call_member)
-    } else {
-        member_doc(call_member)
-    };
-    let receiver = if field_members.is_empty() {
-        base
-    } else {
-        field_dot_fill_selector_segments(base, field_members, base_width, min_length, policy)
-    };
-    let head = concat([receiver, call]);
-
-    if tail.is_empty() {
-        return group(head);
-    }
-
-    group(concat([
-        head,
-        continuation_indent(concat(member_docs_after_line(soft_line(), tail)), policy),
-    ]))
-}
-
-fn selector_chain_with_prefix_group(
+fn field_regular_dot_selector_segments(
     base: Doc,
     members: Vec<ChainMember>,
-    prefix_end: usize,
     base_width: usize,
+    min_length: usize,
     policy: JavaFormatPolicy,
 ) -> Doc {
-    selector_chain_with_prefix_group_at_min_length(
+    regular_dot_min_length_chain(
         base,
-        members,
-        prefix_end,
+        &members,
         base_width,
-        policy.selector_chain_min_receiver_length_before_break(),
-        policy,
+        min_length,
+        policy.continuation_indent_levels(),
+        LevelBreakMode::Independent,
     )
-}
-
-fn selector_chain_with_prefix_group_at_min_length(
-    base: Doc,
-    mut members: Vec<ChainMember>,
-    prefix_end: usize,
-    base_width: usize,
-    min_length: usize,
-    policy: JavaFormatPolicy,
-) -> Doc {
-    let prefix_end = head_len_with_array_access_suffix(&members, prefix_end + 1) - 1;
-    let tail = members.split_off(prefix_end + 1);
-    let prefix = dot_fill_prefix_segments(base, members, base_width, min_length, policy);
-
-    if tail.is_empty() {
-        return prefix;
-    }
-
-    group(concat([
-        prefix,
-        continuation_indent(concat(member_docs_after_line(soft_line(), tail)), policy),
-    ]))
-}
-
-fn dot_fill_prefix_segments(
-    base: Doc,
-    members: Vec<ChainMember>,
-    base_width: usize,
-    min_length: usize,
-    policy: JavaFormatPolicy,
-) -> Doc {
-    dot_fill_terminal_call_prefix_segment(base, members, base_width, min_length, policy)
-        .unwrap_or_else(|(base, members)| {
-            dot_fill_selector_segments(base, members, base_width, min_length, policy)
-        })
-}
-
-fn dot_fill_terminal_call_prefix_segment(
-    base: Doc,
-    mut members: Vec<ChainMember>,
-    base_width: usize,
-    min_length: usize,
-    policy: JavaFormatPolicy,
-) -> Result<Doc, (Doc, Vec<ChainMember>)> {
-    let Some(last) = members.pop() else {
-        return Err((base, members));
-    };
-    if !last.is_call() {
-        members.push(last);
-        return Err((base, members));
-    }
-    let Some(previous) = members.last_mut() else {
-        members.push(last);
-        return Err((base, members));
-    };
-    if !matches!(previous.kind, ChainMemberKind::Field) {
-        members.push(last);
-        return Err((base, members));
-    }
-
-    previous.doc = concat([
-        previous.doc.clone(),
-        text("."),
-        last.selector_head_doc.clone(),
-    ]);
-    previous.doc_as_receiver_head_after_chain_break = last
-        .doc_as_receiver_head_after_chain_break
-        .clone()
-        .map(|doc| concat([previous.doc.clone(), text("."), doc]));
-    previous.doc_after_chain_break = last
-        .doc_after_chain_break
-        .clone()
-        .map(|doc| concat([previous.doc.clone(), text("."), doc]));
-    previous.source_width += 1 + last.selector_head_width;
-    previous.selector_head_width += 1 + last.selector_head_width;
-    previous.kind = ChainMemberKind::Call {
-        argument_count: match last.kind {
-            ChainMemberKind::Call { argument_count } => argument_count,
-            _ => 0,
-        },
-    };
-    previous.has_type_arguments |= last.has_type_arguments;
-    previous.simple_name = last.simple_name.clone();
-
-    Ok(concat([
-        dot_fill_selector_segments(base, members, base_width, min_length, policy),
-        continuation_indent(last.selector_suffix_doc, policy),
-    ]))
-}
-
-fn dot_fill_selector_segments(
-    base: Doc,
-    members: Vec<ChainMember>,
-    mut accumulated_width: usize,
-    min_length: usize,
-    policy: JavaFormatPolicy,
-) -> Doc {
-    if members.is_empty() {
-        return base;
-    }
-
-    if members.len() == 1 {
-        let member = members.into_iter().next().expect("one prefix member");
-        let break_before_dot = accumulated_width > min_length;
-        return if break_before_dot {
-            group(concat([
-                base,
-                continuation_indent(concat([soft_line(), member_doc(member)]), policy),
-            ]))
-        } else {
-            concat([base, member_doc(member)])
-        };
-    }
-
-    let mut segments = members
-        .into_iter()
-        .map(|member| (member.source_width, member.doc))
-        .collect::<Vec<_>>();
-    let (last_width, last) = segments
-        .pop()
-        .expect("multiple prefix members checked above");
-    let entries = std::iter::once((accumulated_width, base))
-        .chain(segments)
-        .map(|(width, segment)| {
-            let separator = if accumulated_width > min_length {
-                concat([soft_line(), text(".")])
-            } else {
-                text(".")
-            };
-            accumulated_width += width + 1;
-            fill_entry(segment, separator)
-        });
-    let _ = last_width;
-
-    group(continuation_indent(fill(entries, last), policy))
-}
-
-fn regular_dot_line_limit_call_run_chain(
-    base: Doc,
-    mut members: Vec<ChainMember>,
-    base_width: usize,
-    max_width: usize,
-    policy: JavaFormatPolicy,
-) -> Doc {
-    if members.is_empty() {
-        return group(base);
-    }
-
-    if members.len() == 1 {
-        let member = members.into_iter().next().expect("one selector member");
-        let separator = regular_dot_line_limit_separator(
-            base_width,
-            selector_member_head_width(&member),
-            max_width,
-        );
-        return group(concat([
-            base,
-            continuation_indent(concat([separator, member.doc]), policy),
-        ]));
-    }
-
-    let last = members.pop().expect("non-empty members checked above");
-    let mut length = base_width;
-    let mut entries = Vec::with_capacity(members.len() + 1);
-    let first_width = selector_member_head_width(
-        members
-            .first()
-            .expect("member remains after popping last selector"),
-    );
-    let (separator, next_length) =
-        regular_dot_line_limit_separator_and_width(length, first_width, max_width);
-    length = next_length;
-    entries.push(fill_entry(base, separator));
-
-    for member in members {
-        let next_width = selector_member_head_width(&member);
-        let (separator, next_length) =
-            regular_dot_line_limit_separator_and_width(length, next_width, max_width);
-        length = next_length;
-        entries.push(fill_entry(member.doc, separator));
-    }
-
-    group(continuation_indent(fill(entries, last.doc), policy))
-}
-
-fn regular_dot_line_limit_separator(
-    accumulated_width: usize,
-    next_width: usize,
-    max_width: usize,
-) -> Doc {
-    regular_dot_line_limit_separator_and_width(accumulated_width, next_width, max_width).0
-}
-
-fn regular_dot_line_limit_separator_and_width(
-    accumulated_width: usize,
-    next_width: usize,
-    max_width: usize,
-) -> (Doc, usize) {
-    let next_line_width = accumulated_width + 1 + next_width;
-    if next_line_width > max_width {
-        (concat([soft_line(), text(".")]), 1 + next_width)
-    } else {
-        (text("."), next_line_width)
-    }
-}
-
-fn selector_member_head_width(member: &ChainMember) -> usize {
-    member.selector_head_width
-}
-
-fn field_dot_fill_selector_segments(
-    base: Doc,
-    members: Vec<ChainMember>,
-    mut accumulated_width: usize,
-    min_length: usize,
-    policy: JavaFormatPolicy,
-) -> Doc {
-    if members.is_empty() {
-        return base;
-    }
-
-    if members.len() == 1 {
-        let member = members.into_iter().next().expect("one field member");
-        let break_before_dot = accumulated_width > min_length;
-        return if break_before_dot {
-            group(concat([
-                base,
-                continuation_indent(concat([soft_line(), member_doc(member)]), policy),
-            ]))
-        } else {
-            concat([base, member_doc(member)])
-        };
-    }
-
-    let mut segments = members
-        .into_iter()
-        .map(|member| (member.source_width, member.doc))
-        .collect::<Vec<_>>();
-    let (last_width, last) = segments
-        .pop()
-        .expect("multiple field members checked above");
-    let entries = std::iter::once((accumulated_width, base))
-        .chain(segments)
-        .map(|(width, segment)| {
-            let separator = if accumulated_width > min_length {
-                concat([soft_line(), text(".")])
-            } else {
-                text(".")
-            };
-            accumulated_width += width + 1;
-            fill_entry(segment, separator)
-        });
-    let _ = last_width;
-
-    group(continuation_indent(fill(entries, last), policy))
 }
 
 /// google-java-format's primary-expression receiver path opens an indented
@@ -902,6 +713,8 @@ fn visit_regular_dot_chain_after_primary_receiver(
         return group(base);
     }
 
+    let min_length = policy.selector_chain_min_receiver_length_before_break();
+
     if let Some(first) = members.first()
         && fits_fill_first_argument(first, &members[1..])
     {
@@ -912,70 +725,33 @@ fn visit_regular_dot_chain_after_primary_receiver(
             return group(continuation_indent(head, policy));
         }
         return group(continuation_indent(
-            regular_dot_fill_from_head(head, members, 0, policy),
+            regular_dot_min_length_chain_doc(
+                head,
+                &members,
+                0,
+                min_length,
+                0,
+                LevelBreakMode::Unified,
+            ),
             policy,
         ));
     }
 
     group(continuation_indent(
-        regular_dot_fill_after_needed_dot(base, members, policy),
+        concat([
+            base,
+            soft_line(),
+            regular_dot_min_length_chain_doc(
+                text(""),
+                &members,
+                min_length,
+                min_length,
+                0,
+                LevelBreakMode::Unified,
+            ),
+        ]),
         policy,
     ))
-}
-
-fn regular_dot_fill_after_needed_dot(
-    base: Doc,
-    mut members: Vec<ChainMember>,
-    policy: JavaFormatPolicy,
-) -> Doc {
-    let first = members.remove(0);
-    let first_width = first.source_width;
-    let head = concat([base, soft_line(), member_doc(first)]);
-    regular_dot_fill_from_head(
-        head,
-        members,
-        policy
-            .selector_chain_min_receiver_length_before_break()
-            .saturating_add(1)
-            .saturating_add(first_width),
-        policy,
-    )
-}
-
-fn regular_dot_fill_from_head(
-    head: Doc,
-    members: Vec<ChainMember>,
-    mut accumulated_width: usize,
-    policy: JavaFormatPolicy,
-) -> Doc {
-    if members.is_empty() {
-        return head;
-    }
-
-    let min_length = policy.selector_chain_min_receiver_length_before_break();
-    let mut segments = members
-        .into_iter()
-        .map(|member| {
-            let doc = member.doc_after_chain_break.unwrap_or(member.doc);
-            (member.source_width, doc)
-        })
-        .collect::<Vec<_>>();
-    let (_last_width, last) = segments
-        .pop()
-        .expect("non-empty tail checked by regular dot caller");
-    let entries = std::iter::once((0, head))
-        .chain(segments)
-        .map(|(width, segment)| {
-            accumulated_width = accumulated_width.saturating_add(1).saturating_add(width);
-            let separator = if accumulated_width > min_length {
-                concat([soft_line(), text(".")])
-            } else {
-                text(".")
-            };
-            fill_entry(segment, separator)
-        });
-
-    fill(entries, last)
 }
 
 /// google-java-format `visitRegularDot` fallback when no prefix/cohesive route applies.
@@ -990,6 +766,7 @@ fn visit_regular_dot_chain(
     }
 
     if let Some(first) = members.first()
+        && !matches!(base_metadata.kind, ChainBaseKind::ObjectCreation)
         && fits_fill_first_argument(first, &members[1..])
     {
         let first = members.remove(0);
@@ -1000,22 +777,54 @@ fn visit_regular_dot_chain(
         }
         return group(concat([
             merged_base,
-            continuation_indent(concat(member_docs_after_line(soft_line(), members)), policy),
+            continuation_indent(
+                regular_dot_min_length_chain_doc(
+                    text(""),
+                    &members,
+                    policy.selector_chain_min_receiver_length_before_break(),
+                    policy.selector_chain_min_receiver_length_before_break(),
+                    0,
+                    LevelBreakMode::Unified,
+                ),
+                policy,
+            ),
         ]));
     }
 
-    let _ = base_metadata;
-    let first_member = members.remove(0);
-    let base =
-        append_leading_array_accesses(concat([base, member_doc(first_member)]), &mut members);
-    if members.is_empty() {
-        return group(base);
+    let base = append_leading_array_accesses(base, &mut members);
+    let min_length = policy.selector_chain_min_receiver_length_before_break();
+
+    if matches!(base_metadata.kind, ChainBaseKind::ObjectCreation) {
+        if members.is_empty() {
+            return group(base);
+        }
+        return group(concat([
+            base,
+            continuation_indent(
+                concat([
+                    soft_line(),
+                    regular_dot_min_length_chain_doc(
+                        text(""),
+                        &members,
+                        min_length,
+                        min_length,
+                        0,
+                        LevelBreakMode::Unified,
+                    ),
+                ]),
+                policy,
+            ),
+        ]));
     }
 
-    group(concat([
+    regular_dot_min_length_chain(
         base,
-        continuation_indent(concat(member_docs_after_line(soft_line(), members)), policy),
-    ]))
+        &members,
+        base_metadata.source_width,
+        min_length,
+        policy.continuation_indent_levels(),
+        LevelBreakMode::Unified,
+    )
 }
 
 fn fits_fill_first_argument(first: &ChainMember, trailing: &[ChainMember]) -> bool {
@@ -1097,32 +906,13 @@ fn append_leading_array_accesses(mut base: Doc, members: &mut Vec<ChainMember>) 
     base
 }
 
-fn field_selector_chain(
-    base: Doc,
-    members: Vec<ChainMember>,
-    policy: JavaFormatPolicy,
-    role: ChainRole,
-) -> Doc {
-    let mut segments = members
-        .into_iter()
-        .map(|member| member.doc)
-        .collect::<Vec<_>>();
-    let last = segments.pop().expect("non-empty members checked above");
-    if segments.is_empty() {
-        let flat = concat([base.clone(), text("."), last.clone()]);
-        let broken = group(concat([
-            base,
-            continuation_indent(concat([soft_line(), text("."), last]), policy),
-        ]));
-        return chain_layout_preference(flat, broken, role, policy, None);
-    }
-
-    let entries = std::iter::once(base)
-        .chain(segments)
-        .map(|segment| fill_entry(segment, concat([soft_line(), text(".")])));
-
-    let _ = role;
-    group(continuation_indent(fill(entries, last), policy))
+fn field_selector_chain(base: Doc, members: Vec<ChainMember>, policy: JavaFormatPolicy) -> Doc {
+    field_call_dot_break_level_chain(
+        base,
+        &members,
+        LevelBreakMode::Independent,
+        policy.continuation_indent_levels(),
+    )
 }
 
 fn has_trailing_comments(base_trailing_comments: &[Doc], members: &[ChainMember]) -> bool {
@@ -1146,25 +936,8 @@ fn append_trailing_comments(doc: Doc, comments: Vec<Doc>) -> Doc {
     )
 }
 
-fn prefixed_member_doc(member: &ChainMember) -> Doc {
-    match member.kind {
-        ChainMemberKind::Field | ChainMemberKind::Call { .. } => {
-            concat([text("."), member.doc.clone()])
-        }
-        ChainMemberKind::ArrayAccess => member.doc.clone(),
-    }
-}
-
 fn member_doc(member: ChainMember) -> Doc {
     member_doc_with_kind(member.kind, member.doc)
-}
-
-fn member_doc_as_receiver_head(member: ChainMember) -> Doc {
-    let kind = member.kind;
-    let doc = member
-        .doc_as_receiver_head_after_chain_break
-        .unwrap_or(member.doc);
-    member_doc_with_kind(kind, doc)
 }
 
 fn member_doc_with_kind(kind: ChainMemberKind, doc: Doc) -> Doc {

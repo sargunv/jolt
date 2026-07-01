@@ -14,12 +14,12 @@ use crate::analyzers::binary::{self as binary_analysis, BinarySide};
 use crate::analyzers::chains::{BaseMetadata, Chain, ChainMember, ChainRole};
 use crate::analyzers::expressions::ExpressionLayout;
 use crate::context::JavaCommentBucket;
+use crate::helpers::callables as java_callables;
 use crate::helpers::chains as java_chains;
 use crate::helpers::expressions as java_expressions;
 use crate::helpers::lambdas as java_lambdas;
 use crate::helpers::literals as java_literals;
 use crate::helpers::switches as java_switches;
-use crate::policy::JavaFormatPolicy;
 use jolt_diagnostics::TextRange;
 use jolt_fmt_ir::{group, indent_by, soft_line};
 
@@ -494,11 +494,6 @@ pub(super) fn collect_method_invocation_chain(
         } else {
             None
         };
-        let selector_head = java_chains::explicit_type_argument_invocation_selector_head(
-            type_arguments.clone(),
-            text(name.text()),
-            context.policy(),
-        );
         let member = java_chains::explicit_type_argument_invocation_selector(
             type_arguments,
             text(name.text()),
@@ -523,8 +518,6 @@ pub(super) fn collect_method_invocation_chain(
             });
         chain.push(ChainMember::call(
             member,
-            selector_head,
-            arguments,
             Some(member_after_chain_break),
             member_as_receiver_head_after_chain_break,
             selector_width,
@@ -1046,7 +1039,7 @@ fn format_argument_list_with_continuation_indent(
                 let range = argument
                     .code_text_range()
                     .expect("parser-clean argument expression should have a code range");
-                let shape = argument_list_item_shape(&argument, context.policy());
+                let shape = java_callables::argument_list_item_shape(&argument, context.policy());
                 let has_inline_comments = context
                     .has_comment_in_bucket(range, JavaCommentBucket::InlineLeadingBlock)
                     || context.has_comment_in_bucket(range, JavaCommentBucket::InlineTrailingBlock);
@@ -1065,84 +1058,12 @@ fn format_argument_list_with_continuation_indent(
                 .with_tabular_entry(tabular_entry))
             })
             .collect::<FormatResult<Vec<_>>>()?;
-    java_lists::argument_list_with_continuation_indent(
+    java_callables::argument_list_with_continuation_indent(
         arguments,
         list_range,
         is_format_method,
         continuation_indent_levels,
         context,
-    )
-}
-
-fn argument_list_item_shape(
-    argument: &Expression,
-    policy: JavaFormatPolicy,
-) -> java_lists::ListItemShape {
-    match argument {
-        Expression::LiteralExpression(_)
-        | Expression::NameExpression(_)
-        | Expression::ThisExpression(_)
-        | Expression::SuperExpression(_)
-        | Expression::ClassLiteralExpression(_) => java_lists::ListItemShape::Simple,
-        Expression::FieldAccessExpression(_) => java_lists::ListItemShape::SelectorChain,
-        Expression::MethodInvocationExpression(invocation) => {
-            method_invocation_argument_shape(invocation, policy)
-        }
-        Expression::ObjectCreationExpression(creation) => {
-            if creation.body().is_some() {
-                java_lists::ListItemShape::AnonymousObjectCreationUnit
-            } else {
-                java_lists::ListItemShape::NestedArgumentUnit
-            }
-        }
-        _ => java_lists::ListItemShape::Complex,
-    }
-}
-
-fn method_invocation_argument_shape(
-    invocation: &jolt_java_syntax::MethodInvocationExpression,
-    policy: JavaFormatPolicy,
-) -> java_lists::ListItemShape {
-    let Some(receiver) = invocation.receiver() else {
-        return java_lists::ListItemShape::Call;
-    };
-
-    if is_single_unit_invocation_receiver(&receiver) {
-        if qualified_invocation_head_width(invocation, &receiver)
-            >= policy.argument_list_single_nested_invocation_head_min_width()
-        {
-            java_lists::ListItemShape::WideHeadNestedArgumentUnit
-        } else {
-            java_lists::ListItemShape::Call
-        }
-    } else {
-        java_lists::ListItemShape::SelectorChain
-    }
-}
-
-fn qualified_invocation_head_width(
-    invocation: &jolt_java_syntax::MethodInvocationExpression,
-    receiver: &Expression,
-) -> usize {
-    let receiver_width = node_width(receiver.code_text_range());
-    let name_width = invocation
-        .name()
-        .map(|name| name.text().chars().count())
-        .unwrap_or_default();
-    let type_arguments_width = invocation
-        .type_arguments()
-        .map(|arguments| text_range_width(arguments.text_range()))
-        .unwrap_or_default();
-    receiver_width + 1 + type_arguments_width + name_width + 1
-}
-
-fn is_single_unit_invocation_receiver(receiver: &Expression) -> bool {
-    matches!(
-        receiver,
-        Expression::NameExpression(_)
-            | Expression::ThisExpression(_)
-            | Expression::SuperExpression(_)
-            | Expression::ClassLiteralExpression(_)
     )
 }
 
@@ -1154,7 +1075,7 @@ pub(super) fn format_argument(
         .code_text_range()
         .expect("parser-clean argument expression should have a code range");
     let comments = take_inline_leading_block_comment_docs(context, code_range);
-    let role = nested_argument_chain_role(context);
+    let role = java_callables::nested_argument_chain_role(context);
     let expression = context.in_nested_argument_scope(|context| {
         format_expression_with_chain_role(argument, context, role)
     })?;
@@ -1170,18 +1091,6 @@ pub(super) fn format_argument(
     }
 
     Ok(wrap::space_separated(parts))
-}
-
-fn nested_argument_chain_role(context: &JavaFormatContext<'_>) -> ChainRole {
-    if context.nested_argument_depth()
-        < context
-            .policy()
-            .nested_argument_selector_chain_fit_depth_limit()
-    {
-        ChainRole::NestedArgumentFit
-    } else {
-        ChainRole::NestedArgument
-    }
 }
 
 pub(super) fn format_cast_expression(

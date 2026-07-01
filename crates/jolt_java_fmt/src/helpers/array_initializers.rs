@@ -1,7 +1,8 @@
 use jolt_fmt_ir::TextWidth;
 use jolt_fmt_ir::{
-    Doc, best_fitting, concat, fill, fill_entry, group, hard_line_without_break_parent, indent,
-    indent_by, line, soft_line, text, text_with_width,
+    Doc, FlatLine, LevelBreakMode, break_level, break_level_with_indent, concat, fill, fill_entry,
+    flat_text, group, hard_line_without_break_parent, indent, indent_by, level_break, line,
+    soft_line, text, text_with_width,
 };
 use jolt_java_syntax::VariableInitializerValue;
 
@@ -64,10 +65,7 @@ pub(crate) fn braced_initializer_block(
             } else if short_items {
                 filled_braced_block(docs, tight_fit)
             } else {
-                best_fitting(
-                    filled_braced_block(docs.clone(), tight_fit),
-                    [one_per_line_braced_block(docs)],
-                )
+                unified_break_braced_block(docs, tight_fit)
             }
         }
     }
@@ -281,24 +279,41 @@ fn filled_braced_block(docs: Vec<Doc>, tight_fit: bool) -> Doc {
     ]))
 }
 
-fn one_per_line_braced_block(docs: Vec<Doc>) -> Doc {
+/// Long non-tabular items: inline comma layout when the level fits, else one per line.
+fn unified_break_braced_block(docs: Vec<Doc>, tight_fit: bool) -> Doc {
     if docs.is_empty() {
         return text("{}");
     }
 
-    let last = docs.last().cloned().expect("non-empty docs checked above");
-    let mut body = docs
-        .iter()
-        .take(docs.len() - 1)
-        .cloned()
-        .flat_map(|item| [item, text(","), hard_line_without_break_parent()])
-        .collect::<Vec<_>>();
-    body.push(last);
+    let fit_guard = if tight_fit {
+        text_with_width("", TextWidth::new(1))
+    } else {
+        text("")
+    };
+    let list = braced_list_comma_level(docs);
 
-    concat([
-        text("{"),
-        indent(concat([hard_line_without_break_parent(), concat(body)])),
-        hard_line_without_break_parent(),
-        text("}"),
-    ])
+    break_level_with_indent(
+        1,
+        [text("{"), concat([fit_guard, list]), text("}")],
+        [
+            level_break(LevelBreakMode::Unified, FlatLine::Empty, 0),
+            level_break(LevelBreakMode::Unified, FlatLine::Empty, 0),
+        ],
+    )
+    .expect("valid braced initializer break level")
+}
+
+fn braced_list_comma_level(mut docs: Vec<Doc>) -> Doc {
+    let last = docs.pop().expect("non-empty docs checked above");
+    if docs.is_empty() {
+        return last;
+    }
+
+    let comma_items = docs
+        .into_iter()
+        .map(|item| concat([item, text(",")]))
+        .collect::<Vec<_>>();
+    let breaks = vec![level_break(LevelBreakMode::Unified, flat_text(" "), 0); comma_items.len()];
+    break_level(comma_items.into_iter().chain(std::iter::once(last)), breaks)
+        .expect("valid braced initializer comma level")
 }

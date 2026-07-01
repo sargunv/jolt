@@ -1,5 +1,5 @@
 use jolt_diagnostics::TextRange;
-use jolt_fmt_ir::{Doc, text};
+use jolt_fmt_ir::Doc;
 
 #[derive(Clone)]
 pub(crate) struct Chain {
@@ -225,8 +225,6 @@ pub(crate) struct ChainMember {
     pub(crate) doc: Doc,
     pub(crate) doc_after_chain_break: Option<Doc>,
     pub(crate) doc_as_receiver_head_after_chain_break: Option<Doc>,
-    pub(crate) selector_head_doc: Doc,
-    pub(crate) selector_suffix_doc: Doc,
     pub(crate) trailing_comments: Vec<Doc>,
     pub(crate) source_width: usize,
     pub(crate) selector_head_width: usize,
@@ -238,11 +236,9 @@ impl ChainMember {
     pub(crate) fn field(doc: Doc, source_width: usize, simple_name: Option<String>) -> Self {
         Self {
             kind: ChainMemberKind::Field,
-            selector_head_doc: doc.clone(),
             doc,
             doc_after_chain_break: None,
             doc_as_receiver_head_after_chain_break: None,
-            selector_suffix_doc: text(""),
             trailing_comments: Vec::new(),
             source_width,
             selector_head_width: source_width,
@@ -253,8 +249,6 @@ impl ChainMember {
 
     pub(crate) fn call(
         doc: Doc,
-        selector_head_doc: Doc,
-        selector_suffix_doc: Doc,
         doc_after_chain_break: Option<Doc>,
         doc_as_receiver_head_after_chain_break: Option<Doc>,
         source_width: usize,
@@ -265,11 +259,9 @@ impl ChainMember {
     ) -> Self {
         Self {
             kind: ChainMemberKind::Call { argument_count },
-            selector_head_doc,
             doc,
             doc_after_chain_break,
             doc_as_receiver_head_after_chain_break,
-            selector_suffix_doc,
             trailing_comments: Vec::new(),
             source_width,
             selector_head_width,
@@ -281,11 +273,9 @@ impl ChainMember {
     pub(crate) fn array_access(doc: Doc, source_width: usize) -> Self {
         Self {
             kind: ChainMemberKind::ArrayAccess,
-            selector_head_doc: doc.clone(),
             doc,
             doc_after_chain_break: None,
             doc_as_receiver_head_after_chain_break: None,
-            selector_suffix_doc: text(""),
             trailing_comments: Vec::new(),
             source_width,
             selector_head_width: source_width,
@@ -333,14 +323,6 @@ impl ChainGroups {
         })
     }
 
-    pub(crate) fn field_prefix_len(&self) -> usize {
-        self.groups
-            .first()
-            .filter(|group| group.kind == ChainGroupKind::FieldRun)
-            .map(|group| group.len)
-            .unwrap_or_default()
-    }
-
     pub(crate) fn leading_type_argument_call_len(&self) -> usize {
         self.groups
             .first()
@@ -362,9 +344,16 @@ impl ChainGroups {
 /// When a chain contains exactly one call, google-java-format may treat a
 /// leading field run plus that call as a single syntactic unit (e.g.
 /// `System.err.println(...)` stays flat).
-pub(crate) fn single_invocation_coalesced_prefix_len(members: &[ChainMember]) -> usize {
-    let call_count = members.iter().filter(|member| member.is_call()).count();
-    if call_count != 1 {
+pub(crate) fn single_invocation_coalesced_prefix_len(
+    base: &BaseMetadata,
+    members: &[ChainMember],
+) -> usize {
+    let member_call_count = members.iter().filter(|member| member.is_call()).count();
+    if member_call_count != 1 {
+        return 0;
+    }
+
+    if base.call_count + member_call_count != 1 {
         return 0;
     }
 
@@ -372,11 +361,15 @@ pub(crate) fn single_invocation_coalesced_prefix_len(members: &[ChainMember]) ->
         .iter()
         .position(ChainMember::is_call)
         .expect("single call checked above");
-    if call_index == 0 {
+    if call_index + 1 != members.len() {
         return 0;
     }
 
-    call_index + 1
+    if call_index > 0 || members.len() == 1 {
+        return members.len();
+    }
+
+    0
 }
 
 /// When a chain ends in `.stream()`, `.parallelStream()`, or `.toBuilder()`,
@@ -444,7 +437,7 @@ pub(crate) fn classified_prefix_member_end_index(
         members,
     );
 
-    let coalesced = single_invocation_coalesced_prefix_len(members);
+    let coalesced = single_invocation_coalesced_prefix_len(base, members);
     if coalesced > 0 && coalesced == members.len() {
         prefix_end = Some(prefix_end.map_or(coalesced - 1, |end| end.max(coalesced - 1)));
     }

@@ -10,23 +10,23 @@ parse blocked: 0
 missing-rule blocked: 0
 other blocked: 0
 formatted: 208
-exact matches: 124
-exact-match percentage: 59.61%
-mismatching formatted files: 84
-aggregate diff size: 732
-largest per-file diff: B24909927.java (205)
+exact matches: 113
+exact-match percentage: 54.32%
+mismatching formatted files: 95
+aggregate diff size: 786
+largest per-file diff: B20701054.java (98)
 
 worst mismatches:
-  B24909927.java: 205
-  B20128760.java: 44
-  M.java: 39
+  B20701054.java: 98
+  B21954779.java: 57
+  M.java: 47
+  B20128760.java: 40
   LiteralReflow.java: 34
-  B26207047.java: 18
+  B25787055.java: 25
+  E.java: 24
+  B22873322.java: 19
   B26293162.java: 18
-  E.java: 18
   B21331232.java: 17
-  B20701054.java: 16
-  B25787055.java: 15
 
 top missing-rule blockers:
   0: <none>

@@ -1,6 +1,6 @@
 use unicode_width::UnicodeWidthChar;
 
-#[derive(Clone, Copy, Debug, Default, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct TextWidth(u32);
 
 impl TextWidth {
@@ -31,6 +31,14 @@ impl From<u32> for TextWidth {
 
 pub(crate) fn add_width(lhs: TextWidth, rhs: TextWidth) -> TextWidth {
     TextWidth::new(lhs.get().saturating_add(rhs.get()))
+}
+
+pub(crate) fn fits_at_column(
+    column: TextWidth,
+    content_width: TextWidth,
+    line_width: TextWidth,
+) -> bool {
+    add_width(column, content_width).get() <= line_width.get()
 }
 
 pub(crate) fn display_width(text: &str) -> TextWidth {

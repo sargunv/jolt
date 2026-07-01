@@ -11,9 +11,9 @@ use super::{
     format_annotation, format_annotation_doc, format_annotation_doc_list,
     format_annotation_element_value, format_annotation_list, format_argument_list,
     format_array_dimensions, format_block, format_block_with_opening_comments,
-    format_constructor_body_with_opening_comments, format_modifier_list, format_name, format_token,
-    format_type, format_variable_declarator_list, java_lists, join,
-    reject_unhandled_comments_before_end, reject_unhandled_comments_before_start,
+    format_callable_leading_return_type, format_constructor_body_with_opening_comments,
+    format_modifier_list, format_name, format_token, format_type, format_variable_declarator_list,
+    java_lists, join, reject_unhandled_comments_before_end, reject_unhandled_comments_before_start,
     reject_unhandled_comments_in_range, take_adjacent_trailing_block_comment_docs,
     take_block_comment_docs_in_range_as_inline, take_dangling_comment_docs,
     take_inline_leading_block_comment_docs_in_range, take_inline_trailing_block_comment_docs,
@@ -27,7 +27,7 @@ use super::{
 pub(super) use crate::helpers::bodies::{TypeBodyLayout, braced_type_body};
 use crate::helpers::{annotations as java_annotations, bodies, callables, type_declarations};
 use jolt_diagnostics::TextRange;
-use jolt_fmt_ir::hard_line;
+use jolt_fmt_ir::{FlatLine, LevelBreakMode, break_level, hard_line, level_break};
 
 pub(super) fn format_type_declaration(
     declaration: &TypeDeclaration,
@@ -1226,7 +1226,7 @@ pub(super) fn format_method_declaration(
         .result_annotations()
         .map(|annotation| format_annotation(&annotation, context, "type-use"))
         .collect::<FormatResult<Vec<_>>>()?;
-    return_type_parts.push(format_type(&return_type, context)?);
+    return_type_parts.push(format_callable_leading_return_type(&return_type, context)?);
     if let Some(dimensions) = method.dimensions() {
         return_type_parts.push(format_array_dimensions(&dimensions, context)?);
     }
@@ -2104,26 +2104,14 @@ pub(super) fn format_record_component(
         return Ok(component);
     }
 
-    let inline = wrap::space_separated(
-        split
-            .declaration_annotations
-            .iter()
-            .cloned()
-            .map(java_annotations::AnnotationDoc::into_doc)
-            .chain(std::iter::once(component.clone())),
-    );
-    let vertical = concat([
-        join(
-            hard_line(),
-            split
-                .declaration_annotations
-                .into_iter()
-                .map(java_annotations::AnnotationDoc::into_doc),
-        ),
-        hard_line(),
-        component,
-    ]);
-    Ok(jolt_fmt_ir::best_fitting(inline, [vertical]))
+    let mut segments = split
+        .declaration_annotations
+        .into_iter()
+        .map(java_annotations::AnnotationDoc::into_doc)
+        .collect::<Vec<_>>();
+    segments.push(component);
+    let breaks = vec![level_break(LevelBreakMode::Unified, FlatLine::Space, 0); segments.len() - 1];
+    Ok(break_level(segments, breaks).expect("valid annotated record component level"))
 }
 
 pub(super) fn format_throws_clause(

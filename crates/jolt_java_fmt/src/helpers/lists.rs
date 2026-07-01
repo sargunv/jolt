@@ -1,7 +1,8 @@
 use jolt_diagnostics::TextRange;
 use jolt_fmt_ir::{
-    Doc, GroupId, best_fitting, concat, fill, fill_entry, group, group_id, hard_line,
-    hard_line_without_break_parent, indent, indent_by, join, line, soft_line, text,
+    Doc, FlatLine, GroupId, LevelBreakMode, break_level, break_level_with_indent, concat, fill,
+    fill_entry, flat_text, group, group_id, hard_line, hard_line_without_break_parent, indent,
+    indent_by, join, level_break, line, soft_line, text,
 };
 
 use crate::analyzers::array_initializers::TabularEntry;
@@ -317,12 +318,11 @@ fn type_argument_list_with_indent(
         ));
     }
 
-    Ok(delimited_comma_list_with_comments(
-        "<",
-        ">",
-        indent_levels,
-        items,
-    ))
+    if items.has_structural_comments() {
+        return Ok(comment_delimited_comma_list("<", ">", indent_levels, items));
+    }
+
+    Ok(gjf_type_argument_list(indent_levels, items.into_docs()))
 }
 
 pub(crate) fn selector_type_argument_list_variants(
@@ -361,7 +361,25 @@ fn selector_type_argument_list_doc(items: FormattedList, indent_levels: u16) -> 
         );
     }
 
-    selector_head_type_argument_list(indent_levels, items.into_docs())
+    group_id(
+        SELECTOR_TYPE_ARGUMENTS_GROUP_ID,
+        selector_type_argument_list_without_open_break(indent_levels, items.into_docs()),
+    )
+}
+
+fn selector_type_argument_list_without_open_break(indent_levels: u16, mut docs: Vec<Doc>) -> Doc {
+    if docs.is_empty() {
+        return text("<>");
+    }
+
+    let last = docs.pop().expect("non-empty selector type arguments");
+    let entries = docs
+        .into_iter()
+        .map(|doc| fill_entry(doc, concat([text(","), line()])));
+    group(concat([
+        text("<"),
+        indent_by(indent_levels, fill(entries, concat([last, text(">")]))),
+    ]))
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -587,28 +605,7 @@ fn resource_specification_with_comments(
         return group(concat([text("("), resource, trailing, text(")")]));
     }
 
-    let flat = semicolon_delimited_list_flat("(", ")", docs.clone(), has_trailing_semicolon);
-    let broken = semicolon_delimited_list("(", ")", indent_levels, docs, has_trailing_semicolon);
-    best_fitting(flat, [broken])
-}
-
-fn semicolon_delimited_list_flat(
-    open: &'static str,
-    close: &'static str,
-    items: Vec<Doc>,
-    has_trailing_semicolon: bool,
-) -> Doc {
-    let trailing = if has_trailing_semicolon {
-        text("; ")
-    } else {
-        text("")
-    };
-    group(concat([
-        text(open),
-        join(text("; "), items),
-        trailing,
-        text(close),
-    ]))
+    semicolon_delimited_list("(", ")", indent_levels, docs, has_trailing_semicolon)
 }
 
 fn semicolon_delimited_list(
@@ -622,50 +619,29 @@ fn semicolon_delimited_list(
         return text(format!("{open}{close}"));
     }
 
-    let first = items.remove(0);
-    let rest = items
-        .into_iter()
-        .flat_map(|item| [text(";"), line(), item])
-        .collect::<Vec<_>>();
+    let last = items.pop().expect("non-empty items checked above");
     let trailing = if has_trailing_semicolon {
         text("; ")
     } else {
         text("")
     };
+    let last_with_close = concat([last, trailing, text(close)]);
+
+    if items.is_empty() {
+        return group(concat([text(open), last_with_close]));
+    }
+
+    let entries = items
+        .into_iter()
+        .map(|item| fill_entry(item, concat([text(";"), line()])));
 
     group(concat([
         text(open),
-        first,
-        indent_by(indent_levels, concat(rest)),
-        trailing,
-        text(close),
+        indent_by(
+            indent_levels,
+            concat([soft_line(), fill(entries, last_with_close)]),
+        ),
     ]))
-}
-
-pub(crate) fn braced_comma_list(
-    items: impl IntoIterator<Item = ListItem>,
-    list_range: TextRange,
-    one_per_line: bool,
-    has_trailing_comma: bool,
-    context: &mut JavaFormatContext<'_>,
-) -> FormatResult<Doc> {
-    let items = format_list_items(
-        items,
-        list_range,
-        ListCommentMode::Delimited {
-            open: "{",
-            open_range: None,
-        },
-        ',',
-        0,
-        false,
-        context,
-    )?;
-    Ok(braced_comma_list_with_comments(
-        items,
-        one_per_line,
-        has_trailing_comma,
-    ))
 }
 
 #[derive(Clone, Copy)]
@@ -965,10 +941,12 @@ fn argument_list_with_policy(
 
     if has_policy_comments {
         if has_policy_inline_comments && !items.has_structural_comments() {
-            let flat = separated::delimited_comma_list_flat(open, close, docs.clone());
-            let broken =
-                separated::delimited_comma_list_one_per_line(open, close, indent_levels, docs);
-            return Ok(best_fitting(flat, [broken]));
+            return Ok(separated::delimited_comma_list_one_per_line(
+                open,
+                close,
+                indent_levels,
+                docs,
+            ));
         }
 
         return Ok(delimited_comma_list_with_comments(
@@ -980,218 +958,123 @@ fn argument_list_with_policy(
     }
 
     if is_format_method && items.items.len() >= 2 {
+        let rest_fill_mode = if argument_items_use_fill_layout(&items.items[1..], policy, context) {
+            LevelBreakMode::Independent
+        } else {
+            LevelBreakMode::Unified
+        };
         return Ok(format_method_argument_list(
             open,
             close,
             indent_levels,
             docs,
+            rest_fill_mode,
         ));
     }
 
-    if let Some(doc) =
-        single_nested_argument_unit_list(open, close, indent_levels, policy, &items, &docs)
-    {
-        return Ok(doc);
-    }
-
-    let all_short = argument_items_use_fill_layout(&items.items, policy, context);
-    let flat = separated::delimited_comma_list_flat(open, close, docs.clone());
-    let broken = if all_short {
-        separated::delimited_comma_list(open, close, indent_levels, docs)
-    } else if indent_levels == policy.continuation_indent_levels() {
-        delimited_comma_list_unified(open, close, indent_levels, docs)
+    let fill_mode = if argument_items_use_fill_layout(&items.items, policy, context) {
+        LevelBreakMode::Independent
     } else {
-        separated::delimited_comma_list_one_per_line(open, close, indent_levels, docs)
+        LevelBreakMode::Unified
     };
-    Ok(best_fitting(flat, [broken]))
+    Ok(gjf_argument_list(
+        open,
+        close,
+        indent_levels,
+        docs,
+        fill_mode,
+    ))
 }
 
-fn delimited_comma_list_unified(
+/// google-java-format `addArguments` else branch: open, `(`, break, `argList`, `)`.
+fn gjf_argument_list(
     open: &'static str,
     close: &'static str,
     indent_levels: u16,
-    items: Vec<Doc>,
+    docs: Vec<Doc>,
+    fill_mode: LevelBreakMode,
 ) -> Doc {
-    if items.is_empty() {
+    if docs.is_empty() {
         return text(format!("{open}{close}"));
     }
 
-    group(concat([
-        text(open),
-        indent_by(
-            indent_levels,
-            concat([
-                soft_line(),
-                group(concat([
-                    join(concat([text(","), line()]), items),
-                    text(close),
-                ])),
-            ]),
-        ),
-    ]))
+    let inner = gjf_delimited_comma_list_body(docs, close, fill_mode);
+    break_level_with_indent(
+        indent_levels as i16,
+        [text(open), inner],
+        [level_break(LevelBreakMode::Unified, FlatLine::Empty, 0)],
+    )
+    .expect("valid GJF argument list level")
 }
 
-fn single_nested_argument_unit_list(
-    open: &'static str,
+/// google-java-format `visitParameterizedType`: `<`, break, zero-indent arg list, `>`.
+fn gjf_type_argument_list(indent_levels: u16, docs: Vec<Doc>) -> Doc {
+    if docs.is_empty() {
+        return text("<>");
+    }
+
+    let inner = gjf_delimited_comma_list_body(docs, ">", LevelBreakMode::Independent);
+    break_level_with_indent(
+        indent_levels as i16,
+        [text("<"), inner],
+        [level_break(LevelBreakMode::Unified, FlatLine::Empty, 0)],
+    )
+    .expect("valid GJF type argument list level")
+}
+
+/// google-java-format `argList` at zero indent; trailing `close` sits on the last segment.
+fn gjf_delimited_comma_list_body(
+    mut docs: Vec<Doc>,
     close: &'static str,
-    indent_levels: u16,
-    policy: JavaFormatPolicy,
-    items: &FormattedList,
-    docs: &[Doc],
-) -> Option<Doc> {
-    let [item] = items.items.as_slice() else {
-        return None;
-    };
-    if item.has_comments
-        || !matches!(
-            item.shape,
-            ListItemShape::AnonymousObjectCreationUnit
-                | ListItemShape::NestedArgumentUnit
-                | ListItemShape::WideHeadNestedArgumentUnit
-        )
-    {
-        return None;
+    fill_mode: LevelBreakMode,
+) -> Doc {
+    let last = docs.pop().expect("non-empty argList");
+    let last_with_close = concat([last, text(close)]);
+
+    if docs.is_empty() {
+        return last_with_close;
     }
 
-    let argument = docs
-        .first()
-        .expect("single formatted argument should have one doc")
-        .clone();
-    let flat = separated::delimited_comma_list_flat(open, close, docs.iter().cloned());
-    let mut broken = Vec::new();
-    let under_receiver_head =
-        policy.argument_list_contains_single_nested_unit_under_receiver_head(indent_levels);
-
-    if under_receiver_head
-        && matches!(
-            item.shape,
-            ListItemShape::AnonymousObjectCreationUnit | ListItemShape::WideHeadNestedArgumentUnit
-        )
-        && item.source_width >= policy.argument_list_single_nested_unit_min_width()
-    {
-        broken.push(group(concat([
-            text(open),
-            indent_by(policy.continuation_indent_levels(), argument.clone()),
-            text(close),
-        ])));
-    }
-
-    if !under_receiver_head
-        && matches!(item.shape, ListItemShape::AnonymousObjectCreationUnit)
-        && item.source_width >= policy.argument_list_single_anonymous_object_creation_min_width()
-    {
-        return Some(group(concat([
-            text(open),
-            indent_by(indent_levels, concat([hard_line(), argument])),
-            text(close),
-        ])));
-    } else if under_receiver_head
-        && !matches!(
-            item.shape,
-            ListItemShape::AnonymousObjectCreationUnit | ListItemShape::WideHeadNestedArgumentUnit
-        )
-        && item.source_width >= policy.argument_list_single_nested_unit_min_width()
-    {
-        broken.push(group(concat([
-            text(open),
-            indent_by(indent_levels, argument),
-            text(close),
-        ])));
-    }
-
-    if broken.is_empty() {
-        None
-    } else {
-        Some(best_fitting(flat, broken))
-    }
+    let comma_items = docs
+        .into_iter()
+        .map(|doc| concat([doc, text(",")]))
+        .collect::<Vec<_>>();
+    let breaks = vec![level_break(fill_mode, flat_text(" "), 0); comma_items.len()];
+    break_level(
+        comma_items
+            .into_iter()
+            .chain(std::iter::once(last_with_close)),
+        breaks,
+    )
+    .expect("valid argList comma breaks")
 }
 
-/// google-java-format `isFormatMethod`: format string on its own continuation
-/// line, remaining arguments filled (not one-per-line).
+/// google-java-format `isFormatMethod`: format string, then unified `argList` for the rest.
 fn format_method_argument_list(
     open: &'static str,
     close: &'static str,
     indent_levels: u16,
     mut docs: Vec<Doc>,
+    rest_fill_mode: LevelBreakMode,
 ) -> Doc {
     let first = docs.remove(0);
-    let flat = separated::delimited_comma_list_flat(
-        open,
-        close,
-        std::iter::once(first.clone()).chain(docs.clone()),
-    );
-    let broken = format_method_argument_list_broken(open, close, indent_levels, first, docs);
-    best_fitting(flat, [broken])
-}
+    let inner = if docs.is_empty() {
+        concat([first, text(close)])
+    } else {
+        let rest = gjf_delimited_comma_list_body(docs, close, rest_fill_mode);
+        break_level(
+            [concat([first, text(",")]), rest],
+            [level_break(LevelBreakMode::Unified, FlatLine::Space, 0)],
+        )
+        .expect("valid format-method argument breaks")
+    };
 
-fn format_method_argument_list_broken(
-    open: &'static str,
-    close: &'static str,
-    indent_levels: u16,
-    first: Doc,
-    rest: Vec<Doc>,
-) -> Doc {
-    if rest.is_empty() {
-        return group(concat([
-            text(open),
-            indent_by(
-                indent_levels,
-                concat([soft_line(), concat([first, text(close)])]),
-            ),
-        ]));
-    }
-
-    if rest.len() != 2 {
-        return group(concat([
-            text(open),
-            indent_by(
-                indent_levels,
-                concat([
-                    soft_line(),
-                    format_method_argument_list_broken_after_first(close, first, rest),
-                ]),
-            ),
-        ]));
-    }
-
-    let first_with_rest = concat([
-        first.clone(),
-        text(", "),
-        rest[0].clone(),
-        text(", "),
-        rest[1].clone(),
-        text(close),
-    ]);
-    let after_first = format_method_argument_list_broken_after_first(close, first, rest);
-
-    group(concat([
-        text(open),
-        indent_by(
-            indent_levels,
-            concat([soft_line(), best_fitting(first_with_rest, [after_first])]),
-        ),
-    ]))
-}
-
-fn format_method_argument_list_broken_after_first(
-    close: &'static str,
-    first: Doc,
-    rest: Vec<Doc>,
-) -> Doc {
-    let mut rest = rest;
-    let last = rest
-        .pop()
-        .expect("format method argument list has at least two items");
-    let entries = rest
-        .into_iter()
-        .map(|item| fill_entry(item, concat([text(","), line()])));
-
-    concat([
-        first,
-        text(","),
-        line(),
-        fill(entries, concat([last, text(close)])),
-    ])
+    break_level_with_indent(
+        indent_levels as i16,
+        [text(open), inner],
+        [level_break(LevelBreakMode::Unified, FlatLine::Empty, 0)],
+    )
+    .expect("valid GJF format-method argument list level")
 }
 
 fn argument_items_use_fill_layout(
@@ -1252,29 +1135,6 @@ fn delimited_comma_list_with_comments(
     }
 
     comment_delimited_comma_list(open, close, indent_levels, list)
-}
-
-fn selector_head_type_argument_list(
-    indent_levels: u16,
-    items: impl IntoIterator<Item = Doc>,
-) -> Doc {
-    let mut items = items.into_iter().collect::<Vec<_>>();
-    if items.is_empty() {
-        return text("<>");
-    }
-
-    let last = items.pop().expect("non-empty items checked above");
-    let entries = items
-        .into_iter()
-        .map(|item| fill_entry(item, concat([text(","), line()])));
-
-    group_id(
-        SELECTOR_TYPE_ARGUMENTS_GROUP_ID,
-        concat([
-            text("<"),
-            indent_by(indent_levels, fill(entries, concat([last, text(">")]))),
-        ]),
-    )
 }
 
 fn delimited_comma_list_one_per_line_with_comments(
@@ -1549,68 +1409,6 @@ fn open_with_comments(open: &'static str, comments: Vec<Doc>) -> Doc {
     } else {
         concat([text(open), text(" "), join(text(" "), comments)])
     }
-}
-
-fn braced_comma_list_with_comments(
-    list: FormattedList,
-    one_per_line: bool,
-    has_trailing_comma: bool,
-) -> Doc {
-    if !list.has_structural_comments() {
-        let mut docs = list.into_docs();
-        if has_trailing_comma && let Some(last) = docs.last_mut() {
-            *last = concat([last.clone(), text(",")]);
-        }
-        if one_per_line {
-            return braced_comma_block_one_per_line(docs);
-        }
-        return braced_comma_block(docs);
-    }
-
-    comment_braced_comma_list(list, has_trailing_comma)
-}
-
-fn braced_comma_block(items: impl IntoIterator<Item = Doc>) -> Doc {
-    let mut items = items.into_iter().collect::<Vec<_>>();
-    if items.is_empty() {
-        return text("{}");
-    }
-
-    let last = items.pop().expect("non-empty items checked above");
-    let entries = items
-        .into_iter()
-        .map(|item| fill_entry(item, concat([text(","), line()])));
-
-    concat([
-        text("{"),
-        indent(concat([
-            hard_line_without_break_parent(),
-            fill(entries, last),
-        ])),
-        hard_line_without_break_parent(),
-        text("}"),
-    ])
-}
-
-fn braced_comma_block_one_per_line(items: impl IntoIterator<Item = Doc>) -> Doc {
-    let mut items = items.into_iter().collect::<Vec<_>>();
-    if items.is_empty() {
-        return text("{}");
-    }
-
-    let last = items.pop().expect("non-empty items checked above");
-    let mut body = items
-        .into_iter()
-        .flat_map(|item| [item, text(","), hard_line_without_break_parent()])
-        .collect::<Vec<_>>();
-    body.push(last);
-
-    concat([
-        text("{"),
-        indent(concat([hard_line_without_break_parent(), concat(body)])),
-        hard_line_without_break_parent(),
-        text("}"),
-    ])
 }
 
 pub(crate) fn format_braced_list_items(

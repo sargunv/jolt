@@ -1,5 +1,6 @@
 use jolt_fmt_ir::{
-    Doc, best_fitting, concat, group, hard_line, indent_by, join, line, soft_line, text,
+    Doc, FlatLine, LevelBreakMode, break_level_with_indent, concat, group, hard_line, indent_by,
+    join, level_break, line, soft_line, text,
 };
 
 use crate::helpers::{expressions as java_expressions, lists as java_lists, separated};
@@ -342,11 +343,6 @@ pub(crate) fn annotated_parameter(
         .into_iter()
         .map(AnnotationDoc::into_doc)
         .collect::<Vec<_>>();
-    let mut inline_parts = annotation_docs.clone();
-    inline_parts.extend(modifiers.clone());
-    inline_parts.push(ty.clone());
-    inline_parts.push(name.clone());
-    let inline = join(text(" "), inline_parts);
 
     if annotation_docs.is_empty() {
         if policy.annotated_parameter_groups_type_and_name() {
@@ -355,7 +351,10 @@ pub(crate) fn annotated_parameter(
             let head = join(text(" "), head_parts);
             return group(concat([head, indent_by(2, concat([line(), name]))]));
         }
-        return inline;
+        let mut inline_parts = modifiers;
+        inline_parts.push(ty);
+        inline_parts.push(name);
+        return join(text(" "), inline_parts);
     }
 
     let mut head_parts = annotation_docs;
@@ -366,8 +365,12 @@ pub(crate) fn annotated_parameter(
     } else {
         concat([ty, text(" "), name])
     };
-    let vertical = concat([head, indent_by(2, concat([hard_line(), type_and_name]))]);
-    best_fitting(inline, [vertical])
+    break_level_with_indent(
+        2,
+        [head, type_and_name],
+        [level_break(LevelBreakMode::Unified, FlatLine::Space, 0)],
+    )
+    .expect("valid annotated parameter break level")
 }
 
 pub(crate) fn annotated_parameter_with_name_continuation(

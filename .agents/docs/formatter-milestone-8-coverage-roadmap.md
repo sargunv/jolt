@@ -98,6 +98,15 @@ Recent migrations that are now landed and should not be treated as future work:
 - `helpers/callables.rs` owns callable header/tail policy.
 - `helpers/array_initializers.rs` owns initializer layout selection.
 - `analyzers/binary.rs` owns same-precedence binary flattening.
+- `jolt_fmt_ir::Doc` is structurally shared, so cloning document subtrees for
+  alternative layouts is no longer a recursive deep clone.
+- The renderer has shared fit memoization across cloned fit checkers.
+- `jolt_fmt_ir` has a language-neutral GJF-style level primitive with level-wide
+  broken indent plus `UNIFIED`, `INDEPENDENT`, and `FORCED` breaks.
+- Java formatter hot expression helpers now emit level/break trees for method
+  invocation arguments, selector chains, lambdas, callable heads, annotations,
+  array initializers, and nested generic type arguments instead of broad
+  flat-vs-broken `best_fitting` alternatives.
 - Direct `JavaFormatProfile` checks are centralized in `policy.rs`,
   `options.rs`, context defaults, and tests.
 
@@ -106,8 +115,9 @@ Still true:
 - `rules/declarations.rs` and `rules/expressions.rs` are the largest rule
   modules and still contain policy-shaped assembly that should move behind
   helper APIs.
-- `helpers/chains.rs` is correctly the chain policy center, but it carries many
-  local width/fit heuristics because global break selection is not solved.
+- `helpers/chains.rs` is correctly the chain policy center, but it still carries
+  many local width/fit heuristics that should be recast as explicit GJF
+  level/open/break construction.
 - Comment debt is explicit: unowned comments are rejected or tested as debt, not
   silently ignored.
 - Raw source is still legitimate at token/literal preservation boundaries, but
@@ -155,9 +165,19 @@ Retired or demoted buckets from older roadmap versions:
       continuation wiring, formal-parameter plumbing, before-name comment
       layout, and record component annotation inline-vs-vertical selection.
 
-- [ ] Replace local nested `best_fitting` heuristics with a broader break
-      selection architecture or cached fit strategy. Current hotfixes avoid
-      exponential fit behavior but do not model GJF/PJF's global break choices.
+- [x] Remove broad Java `best_fitting` layout alternatives. The Java formatter
+      no longer calls `best_fitting`; method invocation arguments, format-method
+      arguments, selector chains, expression lambdas, callable heads, annotated
+      parameters, array initializers, type arguments, record components, and
+      resource lists now use one-tree level/group/fill layouts.
+
+- [ ] Continue replacing local width accounting with faithful GJF
+      open/level/break construction. Remaining debt is not broad `best_fitting`,
+      and selector-chain line-limit/dot-fill helpers have been replaced by level
+      construction. Remaining width-policy debt is now mostly
+      declaration/local-variable head accounting, list fill classification
+      metadata, and Palantir last-dot behavior. Renderer fit caching is a
+      temporary optimization, not the final algorithm.
 
 - [ ] Audit raw-comment emission in list helpers. Token spelling and literal
       spelling may preserve source text; arbitrary comment rendering should
@@ -257,8 +277,9 @@ Current mismatch shape:
 - Google still has residual format-method and long-rest-argument packing gaps.
 - Palantir often wants nested single-call arguments and assertion chains flatter
   than Jolt emits.
-- List helpers still rely on nested `best_fitting` decisions that interact badly
-  with chains and assignment layout.
+- List helpers now emit GJF-shaped `addArguments` / `argList` levels for normal
+  method invocation arguments. Remaining list gaps are policy/comment/tabular
+  edges, not broad flat-vs-broken argument-list selection.
 
 ### 4. Declaration Headers and Initializers
 
@@ -377,11 +398,11 @@ Current mismatch shape:
 
 ## Global Break Selection Debt
 
-Jolt helpers eagerly format child slots into `Doc` values and then compose them.
-Many helpers build complete flat and broken subtrees and wrap them in
-`best_fitting(flat, [broken])`. If those subtrees already contain nested
-`BestFitting` nodes, the renderer's fit pass re-walks increasingly large trees.
-Deeply nested call and chain fixtures can become exponential.
+Historically, Jolt helpers eagerly formatted child slots into `Doc` values, then
+built complete flat and broken subtrees wrapped in
+`best_fitting(flat, [broken])`. If those subtrees already contained nested
+`BestFitting` nodes, break selection had to explore increasingly large trees.
+Deeply nested call and chain fixtures could become pathological.
 
 GJF uses a different shape:
 
@@ -396,23 +417,31 @@ breaks. Palantir extends the same level/break model with break behaviours and
 last-level breakability; it still does not build arbitrary parallel finished
 layouts for large subtrees.
 
-The current Jolt chain hotfix skips `best_fitting` for some nested argument
-chains. That is a performance guard, not the final policy. The same issue
-affects chains, lists, array initializers, assignments, declaration headers,
-binary/conditional chains, and Palantir last-dot policy.
+The current Jolt IR now structurally shares `Doc` subtrees, memoizes fit checks,
+and has a language-neutral `break_level_with_indent` primitive for GJF/PJF-style
+levels: one level, a level-wide broken indent, and breaks with `UNIFIED`,
+`INDEPENDENT`, or `FORCED` modes. Java helpers no longer call `best_fitting`;
+the former all-short depth gate has been removed, and shallow and deep method
+invocation argument lists share the same GJF-shaped `addArguments` / `argList`
+construction.
+
+The remaining issue affects chains, declaration headers, binary/conditional
+chains, and Palantir last-dot policy: some helpers still carry local width
+accounting or specialized fill policies instead of being direct translations of
+GJF/PJF open/level/break construction.
 
 Current timing evidence from the generated report indexes in debug builds:
 
 | Profile  | Total profile time | `B24909927.java` format time | Report time |
 | -------- | ------------------ | ---------------------------- | ----------- |
-| Google   | ~22.95s            | ~22.45s                      | ~0.001s     |
-| AOSP     | ~22.89s            | ~22.39s                      | ~0.001s     |
-| Palantir | ~22.74s            | ~21.90s                      | ~0.002s     |
+| Google   | ~4.27s             | ~4.27s                       | ~0.002s     |
+| AOSP     | ~4.20s             | ~4.19s                       | ~0.006s     |
+| Palantir | ~4.11s             | ~4.08s                       | ~0.029s     |
 
-The old ~2s full-suite expectation is still plausible for the rest of the
-workspace: formatter unit tests, syntax unit tests, and syntax fixture tests are
-sub-second. The oracle suite is slow because one deeply nested formatter fixture
-dominates CPU time. Treat this as architecture debt, not report-generation
+The old ~2s full-suite expectation is closer but still not restored. Formatter
+unit tests, syntax unit tests, and syntax fixture tests remain sub-second. The
+oracle suite is still slow because one deeply nested formatter fixture dominates
+CPU time. Treat the remaining ~4s as architecture debt, not report-generation
 overhead.
 
 Do not exclude `B24909927.java` as a normal tactic. Temporarily skipping it
@@ -423,13 +452,13 @@ make progress and unrelated work is completely stalled.
 
 Target direction:
 
-- Treat `best_fitting` in `jolt_java_fmt` as architecture debt. Do not add new
-  broad Java uses. Existing uses must either be proven tiny/bounded or migrated
-  to `group`, `fill`, `line`, `if_break`, and `marked_break`.
+- Treat broad `best_fitting` in `jolt_java_fmt` as banned architecture debt.
+  Current code has no Java uses; do not reintroduce them.
 - Prefer optional breaks and groups over nested subtree trials.
 - Defer or contextualize nested slot formatting when parent width matters.
-- Consider renderer fit caching or a GJF-style op stream if several helpers need
-  the same primitive.
+- Renderer structural sharing, fit caching, and the GJF-style level primitive
+  are landed. Prefer migrating remaining helper-local width policies to that
+  primitive rather than adding new thresholds.
 - Treat Palantir last-dot and partial-inlineability as evidence for general
   break-state support, not Java-specific logic in `jolt_fmt_ir`.
 
@@ -443,9 +472,12 @@ says they fit.
 Prefer one substantial work unit per session. Pick a gap by policy mechanism,
 not by fixture name.
 
-1. Global break-selection performance: make `B24909927.java` non-pathological in
-   debug builds while preserving real formatting and report coverage. Start by
-   removing broad nested `best_fitting` use from chains and argument lists.
+1. Global break-selection performance: finish making `B24909927.java`
+   non-pathological in debug builds while preserving real formatting and report
+   coverage. The IR level primitive and Java `best_fitting` removal are landed;
+   chain/list/type/callable hot paths now emit level construction; next verify
+   runtime and replace remaining declaration/list-classification width policy
+   with faithful GJF/PJF mechanisms where applicable.
 2. Shared selector-chain policy: move Google/AOSP top chain fixtures together
    without regressing Palantir catastrophically.
 3. Palantir chain breakability: model last-dot/partial-inline behavior instead

@@ -1,10 +1,15 @@
 use jolt_diagnostics::TextRange;
-use jolt_fmt_ir::{Doc, best_fitting, concat, group, hard_line, indent_by, join, line, text};
+use jolt_fmt_ir::{
+    Doc, FlatLine, LevelBreakMode, break_level_with_indent, concat, group, hard_line, indent_by,
+    join, level_break, line, text,
+};
+use jolt_java_syntax::{Expression, MethodInvocationExpression};
 
+use crate::analyzers::chains::ChainRole;
 use crate::context::JavaFormatContext;
 use crate::diagnostics::FormatResult;
 use crate::helpers::expressions as java_expressions;
-use crate::helpers::lists::{self as java_lists, ListItem};
+use crate::helpers::lists::{self as java_lists, ListItem, ListItemShape};
 use crate::policy::JavaFormatPolicy;
 
 pub(crate) struct CallableHeader {
@@ -211,6 +216,113 @@ pub(crate) fn throws_clause(
     java_lists::keyword_prefixed_clause_list("throws", types, list_range, ownership_range, context)
 }
 
+pub(crate) fn argument_list_with_continuation_indent(
+    items: impl IntoIterator<Item = ListItem>,
+    list_range: TextRange,
+    is_format_method: bool,
+    continuation_indent_levels: u16,
+    context: &mut JavaFormatContext<'_>,
+) -> FormatResult<Doc> {
+    java_lists::argument_list_with_continuation_indent(
+        items,
+        list_range,
+        is_format_method,
+        continuation_indent_levels,
+        context,
+    )
+}
+
+pub(crate) fn nested_argument_chain_role(context: &JavaFormatContext<'_>) -> ChainRole {
+    if context.nested_argument_depth()
+        < context
+            .policy()
+            .nested_argument_selector_chain_fit_depth_limit()
+    {
+        ChainRole::NestedArgumentFit
+    } else {
+        ChainRole::NestedArgument
+    }
+}
+
+pub(crate) fn argument_list_item_shape(
+    argument: &Expression,
+    policy: JavaFormatPolicy,
+) -> ListItemShape {
+    match argument {
+        Expression::LiteralExpression(_)
+        | Expression::NameExpression(_)
+        | Expression::ThisExpression(_)
+        | Expression::SuperExpression(_)
+        | Expression::ClassLiteralExpression(_) => ListItemShape::Simple,
+        Expression::FieldAccessExpression(_) => ListItemShape::SelectorChain,
+        Expression::MethodInvocationExpression(invocation) => {
+            method_invocation_argument_shape(invocation, policy)
+        }
+        Expression::ObjectCreationExpression(creation) => {
+            if creation.body().is_some() {
+                ListItemShape::AnonymousObjectCreationUnit
+            } else {
+                ListItemShape::NestedArgumentUnit
+            }
+        }
+        Expression::LambdaExpression(_) => ListItemShape::Complex,
+        _ => ListItemShape::Complex,
+    }
+}
+
+fn method_invocation_argument_shape(
+    invocation: &MethodInvocationExpression,
+    policy: JavaFormatPolicy,
+) -> ListItemShape {
+    let Some(receiver) = invocation.receiver() else {
+        return ListItemShape::Call;
+    };
+
+    if is_single_unit_invocation_receiver(&receiver) {
+        if qualified_invocation_head_source_width(invocation, &receiver)
+            >= policy.argument_list_single_nested_invocation_head_min_width()
+        {
+            ListItemShape::WideHeadNestedArgumentUnit
+        } else {
+            ListItemShape::Call
+        }
+    } else {
+        ListItemShape::SelectorChain
+    }
+}
+
+fn qualified_invocation_head_source_width(
+    invocation: &MethodInvocationExpression,
+    receiver: &Expression,
+) -> usize {
+    let receiver_width = source_text_width(receiver.code_text_range());
+    let name_width = invocation
+        .name()
+        .map(|name| name.text().chars().count())
+        .unwrap_or_default();
+    let type_arguments_width = invocation
+        .type_arguments()
+        .map(|arguments| source_text_width(Some(arguments.text_range())))
+        .unwrap_or_default();
+    receiver_width + 1 + type_arguments_width + name_width + 1
+}
+
+fn is_single_unit_invocation_receiver(receiver: &Expression) -> bool {
+    matches!(
+        receiver,
+        Expression::NameExpression(_)
+            | Expression::ThisExpression(_)
+            | Expression::SuperExpression(_)
+            | Expression::ClassLiteralExpression(_)
+    )
+}
+
+fn source_text_width(range: Option<TextRange>) -> usize {
+    range
+        .map(|range| range.end().get().saturating_sub(range.start().get()))
+        .unwrap_or_default()
+}
+
 fn callable_block_declaration(
     header: Doc,
     header_trailing_comments: Vec<Doc>,
@@ -406,13 +518,12 @@ fn callable_name_with_leading_type(
     policy: JavaFormatPolicy,
 ) -> Doc {
     let name_and_tail = callable_tail(name_and_parameters, tail, policy);
-    best_fitting(
-        concat([leading_type.clone(), text(" "), name_and_tail.clone()]),
-        [concat([
-            leading_type,
-            continuation_indent(policy, concat([line(), name_and_tail])),
-        ])],
+    break_level_with_indent(
+        policy.continuation_indent_levels() as i16,
+        [leading_type, name_and_tail],
+        [level_break(LevelBreakMode::Unified, FlatLine::Space, 0)],
     )
+    .expect("valid callable leading-type break level")
 }
 
 fn callable_tail(head: Doc, tail: Option<Doc>, policy: JavaFormatPolicy) -> Doc {

@@ -149,6 +149,19 @@ impl JavaFormatPolicy {
         self.type_argument_indent_levels()
     }
 
+    /// Callable headers scan return types inside the header's zero-indent scope
+    /// while generic lists still break vertically. Google/AOSP therefore step
+    /// outer return-type `<...>` bodies by one continuation level instead of the
+    /// wider field/local generic-list indent.
+    pub(crate) const fn callable_leading_return_type_type_argument_indent_levels(self) -> u16 {
+        match self.profile {
+            JavaFormatProfile::Google | JavaFormatProfile::Aosp => {
+                self.continuation_indent_levels()
+            }
+            JavaFormatProfile::Palantir => self.type_argument_indent_levels(),
+        }
+    }
+
     /// Google/AOSP declaration headers keep short generic leading types with
     /// the name, but once the leading type itself is too wide to fit as a header
     /// unit the name moves to the plus-four continuation line.
@@ -293,15 +306,6 @@ impl JavaFormatPolicy {
         }
     }
 
-    pub(crate) const fn selector_chain_breaks_qualified_this_super_before_explicit_type_arguments(
-        self,
-    ) -> bool {
-        matches!(
-            self.profile,
-            JavaFormatProfile::Google | JavaFormatProfile::Aosp
-        )
-    }
-
     pub(crate) const fn array_access_index_indent_levels(self) -> u16 {
         match self.profile {
             JavaFormatProfile::Google | JavaFormatProfile::Aosp => {
@@ -329,13 +333,8 @@ impl JavaFormatPolicy {
         }
 
         match role {
-            ChainRole::Default => matches!(base_kind, ChainBaseKind::ObjectCreation),
-            ChainRole::LambdaBody => {
-                matches!(
-                    base_kind,
-                    ChainBaseKind::Call | ChainBaseKind::ObjectCreation
-                )
-            }
+            ChainRole::Default => false,
+            ChainRole::LambdaBody => matches!(base_kind, ChainBaseKind::Call),
             ChainRole::NestedArgument | ChainRole::NestedArgumentFit => false,
         }
     }
@@ -377,49 +376,11 @@ impl JavaFormatPolicy {
         }
     }
 
-    /// When a single nested call/object argument is wider than a normally
-    /// broken continuation line, let the nested expression own the break before
-    /// falling back to one-argument-per-line shape.
-    pub(crate) const fn argument_list_single_nested_unit_min_width(self) -> usize {
-        match self.profile {
-            JavaFormatProfile::Google | JavaFormatProfile::Aosp => self
-                .max_line_length
-                .saturating_sub(self.continuation_indent_columns() * 2 + 1),
-            JavaFormatProfile::Palantir => usize::MAX,
-        }
-    }
-
-    /// Empty anonymous object creations used as a lone argument are kept as one
-    /// syntactic unit, but Google/AOSP break the enclosing call before that
-    /// unit once the line is at the margin (for example `bind(new Key<...>() {})`).
-    pub(crate) const fn argument_list_single_anonymous_object_creation_min_width(self) -> usize {
-        match self.profile {
-            JavaFormatProfile::Google | JavaFormatProfile::Aosp => self
-                .max_line_length
-                .saturating_sub(self.continuation_indent_columns() * 2 + 4),
-            JavaFormatProfile::Palantir => usize::MAX,
-        }
-    }
-
     pub(crate) const fn argument_list_single_nested_invocation_head_min_width(self) -> usize {
         match self.profile {
             JavaFormatProfile::Google | JavaFormatProfile::Aosp => 24,
             JavaFormatProfile::Palantir => usize::MAX,
         }
-    }
-
-    /// Receiver-head calls use a wider indent when the outer argument list
-    /// itself breaks. If the single nested argument stays attached to the call
-    /// head but breaks internally, Google/AOSP do not leak that extra receiver
-    /// indent into the nested continuation lines.
-    pub(crate) const fn argument_list_contains_single_nested_unit_under_receiver_head(
-        self,
-        indent_levels: u16,
-    ) -> bool {
-        matches!(
-            self.profile,
-            JavaFormatProfile::Google | JavaFormatProfile::Aosp
-        ) && indent_levels == self.selector_chain_receiver_argument_indent_levels()
     }
 
     /// Parameter-commented arguments stay flat when the whole call fits, but
@@ -431,17 +392,8 @@ impl JavaFormatPolicy {
         )
     }
 
-    /// Nested selector-chain arguments need a flat candidate so surrounding
-    /// argument-list fill can keep compact call arguments together. Keep the
-    /// limit low to avoid recursive `best_fitting` blowups in deeply nested
-    /// call trees.
-    pub(crate) const fn nested_argument_selector_chain_fit_call_limit(self) -> usize {
-        match self.profile {
-            JavaFormatProfile::Google | JavaFormatProfile::Aosp => 2,
-            JavaFormatProfile::Palantir => 0,
-        }
-    }
-
+    /// The first nested argument layer may keep receiver/call heads cohesive;
+    /// deeper nested arguments are emitted in the fully broken nested role.
     pub(crate) const fn nested_argument_selector_chain_fit_depth_limit(self) -> usize {
         match self.profile {
             JavaFormatProfile::Google | JavaFormatProfile::Aosp => 1,

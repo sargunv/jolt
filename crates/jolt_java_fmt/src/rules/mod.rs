@@ -82,8 +82,8 @@ use statements::{
 };
 use tokens::{format_multiline_token, format_token};
 use types::{
-    format_selector_type_argument_list_variants, format_type, format_type_argument_list,
-    format_type_layout_parts,
+    format_callable_leading_return_type, format_selector_type_argument_list_variants, format_type,
+    format_type_argument_list, format_type_layout_parts,
 };
 
 pub(crate) use compilation_unit::format_compilation_unit;

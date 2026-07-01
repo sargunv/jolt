@@ -1,11 +1,13 @@
+use std::sync::Arc;
+
 use crate::render::RenderError;
 use crate::validation::{contains_marker, validate_literal_text};
 use crate::width::{TextWidth, display_width, literal_line_widths};
 
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct GroupId(pub u32);
 
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct BreakMarkerId(pub u32);
 
 /// Opaque formatter document node.
@@ -16,13 +18,29 @@ pub struct BreakMarkerId(pub u32);
 /// ```compile_fail
 /// let _ = jolt_fmt_ir::Doc::BestFitting(Vec::new());
 /// ```
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Doc(DocKind);
+#[derive(Clone, Debug)]
+pub struct Doc(Arc<DocKind>);
 
 impl Doc {
-    pub(crate) const fn kind(&self) -> &DocKind {
-        &self.0
+    pub(crate) fn kind(&self) -> &DocKind {
+        self.0.as_ref()
     }
+
+    pub(crate) fn cache_ptr(&self) -> *const DocKind {
+        Arc::as_ptr(&self.0)
+    }
+}
+
+impl PartialEq for Doc {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.as_ref() == other.0.as_ref()
+    }
+}
+
+impl Eq for Doc {}
+
+fn make_doc(kind: DocKind) -> Doc {
+    Doc(Arc::new(kind))
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -41,7 +59,50 @@ pub(crate) enum DocKind {
     LineSuffix(Box<Doc>),
     LineSuffixBoundary,
     BestFitting(Vec<Doc>),
+    BreakLevel(BreakLevel),
     BreakParent,
+}
+
+/// Controls how a break point behaves when its enclosing [`break_level`] does not
+/// fit on one line.
+///
+/// Semantics mirror google-java-format `FillMode`:
+/// - [`Unified`](Self::Unified) corresponds to `breakOp` / unified breaks.
+/// - [`Independent`](Self::Independent) corresponds to `breakToFill` / fill breaks.
+/// - [`Forced`](Self::Forced) corresponds to forced breaks and makes the level
+///   unable to fit on one line.
+///
+/// When a level fits on one line, all breaks use their flat spellings regardless
+/// of mode. Nested levels still perform their own one-line fit check at the
+/// current column even if an outer level is broken.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LevelBreakMode {
+    /// When the level breaks, this break breaks too.
+    Unified,
+    /// Break only when the following segment does not fit on the current line.
+    Independent,
+    /// Always break.
+    Forced,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct LevelBreak {
+    pub mode: LevelBreakMode,
+    pub flat: FlatLine,
+    /// Text emitted on the broken side of the break, after newline/indent.
+    ///
+    /// GJF encodes this token in the following segment; this field models that
+    /// spelling without duplicating segment content in flat layout.
+    pub broken_prefix: Doc,
+    pub indent_delta: i16,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(crate) struct BreakLevel {
+    /// Extra indent applied to the whole level when it does not fit on one line.
+    pub plus_indent: i16,
+    pub segments: Vec<Doc>,
+    pub breaks: Vec<LevelBreak>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -136,20 +197,20 @@ pub(crate) struct IndentIfBreak {
 }
 
 #[must_use]
-pub const fn nil() -> Doc {
-    Doc(DocKind::Nil)
+pub fn nil() -> Doc {
+    make_doc(DocKind::Nil)
 }
 
 #[must_use]
 pub fn text(value: impl Into<Box<str>>) -> Doc {
     let text = value.into();
     let width = display_width(&text);
-    Doc(DocKind::Text(Text { text, width }))
+    make_doc(DocKind::Text(Text { text, width }))
 }
 
 #[must_use]
 pub fn text_with_width(value: impl Into<Box<str>>, width: TextWidth) -> Doc {
-    Doc(DocKind::Text(Text {
+    make_doc(DocKind::Text(Text {
         text: value.into(),
         width,
     }))
@@ -159,7 +220,7 @@ pub fn text_with_width(value: impl Into<Box<str>>, width: TextWidth) -> Doc {
 pub fn literal_text(value: impl Into<Box<str>>) -> Doc {
     let text = value.into();
     let line_widths = literal_line_widths(&text);
-    Doc(DocKind::LiteralText(LiteralText { text, line_widths }))
+    make_doc(DocKind::LiteralText(LiteralText { text, line_widths }))
 }
 
 #[must_use]
@@ -169,7 +230,7 @@ pub fn literal_text_with_width(value: impl Into<Box<str>>, width: TextWidth) -> 
     if let Some(final_width) = line_widths.last_mut() {
         *final_width = width;
     }
-    Doc(DocKind::LiteralText(LiteralText {
+    make_doc(DocKind::LiteralText(LiteralText {
         text,
         line_widths: line_widths.into_boxed_slice(),
     }))
@@ -190,12 +251,12 @@ pub fn literal_text_with_line_widths(
         line_widths: line_widths.into_iter().collect(),
     };
     validate_literal_text(&literal)?;
-    Ok(Doc(DocKind::LiteralText(literal)))
+    Ok(make_doc(DocKind::LiteralText(literal)))
 }
 
 #[must_use]
 pub fn concat(docs: impl IntoIterator<Item = Doc>) -> Doc {
-    Doc(DocKind::Concat(docs.into_iter().collect()))
+    make_doc(DocKind::Concat(docs.into_iter().collect()))
 }
 
 #[allow(clippy::needless_pass_by_value)]
@@ -208,12 +269,12 @@ pub fn join(separator: Doc, docs: impl IntoIterator<Item = Doc>) -> Doc {
         }
         joined.push(doc);
     }
-    Doc(DocKind::Concat(joined))
+    make_doc(DocKind::Concat(joined))
 }
 
 #[must_use]
 pub fn group(doc: Doc) -> Doc {
-    Doc(DocKind::Group(Group {
+    make_doc(DocKind::Group(Group {
         id: None,
         should_break: false,
         fit: GroupFit::LineWidth,
@@ -223,7 +284,7 @@ pub fn group(doc: Doc) -> Doc {
 
 #[must_use]
 pub fn group_id(id: GroupId, doc: Doc) -> Doc {
-    Doc(DocKind::Group(Group {
+    make_doc(DocKind::Group(Group {
         id: Some(id),
         should_break: false,
         fit: GroupFit::LineWidth,
@@ -233,7 +294,7 @@ pub fn group_id(id: GroupId, doc: Doc) -> Doc {
 
 #[must_use]
 pub fn force_group(doc: Doc) -> Doc {
-    Doc(DocKind::Group(Group {
+    make_doc(DocKind::Group(Group {
         id: None,
         should_break: true,
         fit: GroupFit::LineWidth,
@@ -243,7 +304,7 @@ pub fn force_group(doc: Doc) -> Doc {
 
 #[must_use]
 pub fn force_group_id(id: GroupId, doc: Doc) -> Doc {
-    Doc(DocKind::Group(Group {
+    make_doc(DocKind::Group(Group {
         id: Some(id),
         should_break: true,
         fit: GroupFit::LineWidth,
@@ -263,7 +324,7 @@ pub fn group_with_fit(fit: GroupFit, doc: Doc) -> Result<Doc, RenderError> {
     {
         return Err(RenderError::MissingBreakMarker(marker));
     }
-    Ok(Doc(DocKind::Group(Group {
+    Ok(make_doc(DocKind::Group(Group {
         id: None,
         should_break: false,
         fit,
@@ -278,7 +339,7 @@ pub fn fill(entries: impl IntoIterator<Item = FillEntry>, final_content: Doc) ->
         content: final_content,
         separator: None,
     });
-    Doc(DocKind::Fill(entries))
+    make_doc(DocKind::Fill(entries))
 }
 
 #[must_use]
@@ -296,7 +357,7 @@ pub fn indent(doc: Doc) -> Doc {
 
 #[must_use]
 pub fn indent_by(levels: u16, doc: Doc) -> Doc {
-    Doc(DocKind::Indent(Indent {
+    make_doc(DocKind::Indent(Indent {
         levels,
         contents: Box::new(doc),
     }))
@@ -304,15 +365,15 @@ pub fn indent_by(levels: u16, doc: Doc) -> Doc {
 
 #[must_use]
 pub fn align(spaces: u16, doc: Doc) -> Doc {
-    Doc(DocKind::Align(Align {
+    make_doc(DocKind::Align(Align {
         spaces,
         contents: Box::new(doc),
     }))
 }
 
 #[must_use]
-pub const fn line() -> Doc {
-    Doc(DocKind::Line(Line {
+pub fn line() -> Doc {
+    make_doc(DocKind::Line(Line {
         mode: LineMode::SoftOrSpace,
         flat: FlatLine::Space,
         indent_delta: 0,
@@ -322,8 +383,8 @@ pub const fn line() -> Doc {
 }
 
 #[must_use]
-pub const fn soft_line() -> Doc {
-    Doc(DocKind::Line(Line {
+pub fn soft_line() -> Doc {
+    make_doc(DocKind::Line(Line {
         mode: LineMode::Soft,
         flat: FlatLine::Empty,
         indent_delta: 0,
@@ -333,8 +394,8 @@ pub const fn soft_line() -> Doc {
 }
 
 #[must_use]
-pub const fn hard_line() -> Doc {
-    Doc(DocKind::Line(Line {
+pub fn hard_line() -> Doc {
+    make_doc(DocKind::Line(Line {
         mode: LineMode::Hard,
         flat: FlatLine::Empty,
         indent_delta: 0,
@@ -344,8 +405,8 @@ pub const fn hard_line() -> Doc {
 }
 
 #[must_use]
-pub const fn empty_line() -> Doc {
-    Doc(DocKind::Line(Line {
+pub fn empty_line() -> Doc {
+    make_doc(DocKind::Line(Line {
         mode: LineMode::Empty,
         flat: FlatLine::Empty,
         indent_delta: 0,
@@ -356,7 +417,7 @@ pub const fn empty_line() -> Doc {
 
 #[must_use]
 pub fn break_(flat: FlatLine, indent_delta: i16) -> Doc {
-    Doc(DocKind::Line(Line {
+    make_doc(DocKind::Line(Line {
         mode: LineMode::Soft,
         flat,
         indent_delta,
@@ -367,7 +428,7 @@ pub fn break_(flat: FlatLine, indent_delta: i16) -> Doc {
 
 #[must_use]
 pub fn hard_line_without_break_parent() -> Doc {
-    Doc(DocKind::Line(Line {
+    make_doc(DocKind::Line(Line {
         mode: LineMode::Hard,
         flat: FlatLine::Empty,
         indent_delta: 0,
@@ -378,7 +439,7 @@ pub fn hard_line_without_break_parent() -> Doc {
 
 #[must_use]
 pub fn marked_break(marker: BreakMarkerId, flat: FlatLine, indent_delta: i16) -> Doc {
-    Doc(DocKind::Line(Line {
+    make_doc(DocKind::Line(Line {
         mode: LineMode::Soft,
         flat,
         indent_delta,
@@ -389,7 +450,7 @@ pub fn marked_break(marker: BreakMarkerId, flat: FlatLine, indent_delta: i16) ->
 
 #[must_use]
 pub fn if_break(breaks: Doc, flat: Doc) -> Doc {
-    Doc(DocKind::IfBreak(IfBreak {
+    make_doc(DocKind::IfBreak(IfBreak {
         group_id: None,
         breaks: Box::new(breaks),
         flat: Box::new(flat),
@@ -398,7 +459,7 @@ pub fn if_break(breaks: Doc, flat: Doc) -> Doc {
 
 #[must_use]
 pub fn if_group_breaks(id: GroupId, breaks: Doc, flat: Doc) -> Doc {
-    Doc(DocKind::IfBreak(IfBreak {
+    make_doc(DocKind::IfBreak(IfBreak {
         group_id: Some(id),
         breaks: Box::new(breaks),
         flat: Box::new(flat),
@@ -407,7 +468,7 @@ pub fn if_group_breaks(id: GroupId, breaks: Doc, flat: Doc) -> Doc {
 
 #[must_use]
 pub fn indent_if_break(id: GroupId, doc: Doc) -> Doc {
-    Doc(DocKind::IndentIfBreak(IndentIfBreak {
+    make_doc(DocKind::IndentIfBreak(IndentIfBreak {
         group_id: id,
         contents: Box::new(doc),
         negate: false,
@@ -416,12 +477,12 @@ pub fn indent_if_break(id: GroupId, doc: Doc) -> Doc {
 
 #[must_use]
 pub fn line_suffix(doc: Doc) -> Doc {
-    Doc(DocKind::LineSuffix(Box::new(doc)))
+    make_doc(DocKind::LineSuffix(Box::new(doc)))
 }
 
 #[must_use]
-pub const fn line_suffix_boundary() -> Doc {
-    Doc(DocKind::LineSuffixBoundary)
+pub fn line_suffix_boundary() -> Doc {
+    make_doc(DocKind::LineSuffixBoundary)
 }
 
 /// Chooses the first variant that fits, falling back to the final variant in
@@ -438,12 +499,90 @@ pub const fn line_suffix_boundary() -> Doc {
 pub fn best_fitting(first: Doc, rest: impl IntoIterator<Item = Doc>) -> Doc {
     let mut docs = vec![first];
     docs.extend(rest);
-    Doc(DocKind::BestFitting(docs))
+    make_doc(DocKind::BestFitting(docs))
 }
 
 #[must_use]
-pub const fn break_parent() -> Doc {
-    Doc(DocKind::BreakParent)
+pub fn break_parent() -> Doc {
+    make_doc(DocKind::BreakParent)
+}
+
+/// Creates a break point for use inside [`break_level`].
+#[must_use]
+pub fn level_break(mode: LevelBreakMode, flat: FlatLine, indent_delta: i16) -> LevelBreak {
+    level_break_with_prefix(mode, flat, nil(), indent_delta)
+}
+
+/// Creates a break point with distinct flat and broken-side spellings.
+#[must_use]
+pub fn level_break_with_prefix(
+    mode: LevelBreakMode,
+    flat: FlatLine,
+    broken_prefix: Doc,
+    indent_delta: i16,
+) -> LevelBreak {
+    LevelBreak {
+        mode,
+        flat,
+        broken_prefix,
+        indent_delta,
+    }
+}
+
+/// Creates a level whose segments are separated by optional break points.
+///
+/// When the level does not fit on one line, `plus_indent` is added to the
+/// current indent for break layout. Per-break [`LevelBreak::indent_delta`] is
+/// applied on top when that break is taken.
+///
+/// `breaks.len()` must equal `segments.len().saturating_sub(1)`.
+///
+/// # Errors
+///
+/// Returns [`RenderError::MalformedBreakLevel`] when the segment and break
+/// counts are inconsistent.
+pub fn break_level_with_indent(
+    plus_indent: i16,
+    segments: impl IntoIterator<Item = Doc>,
+    breaks: impl IntoIterator<Item = LevelBreak>,
+) -> Result<Doc, RenderError> {
+    let segments: Vec<_> = segments.into_iter().collect();
+    let breaks: Vec<_> = breaks.into_iter().collect();
+    validate_break_level_shape(&segments, &breaks)?;
+    Ok(make_doc(DocKind::BreakLevel(BreakLevel {
+        plus_indent,
+        segments,
+        breaks,
+    })))
+}
+
+/// Creates a level with no extra broken-side indent.
+///
+/// Shorthand for [`break_level_with_indent`] with `plus_indent` set to zero.
+///
+/// # Errors
+///
+/// Returns [`RenderError::MalformedBreakLevel`] when the segment and break
+/// counts are inconsistent.
+pub fn break_level(
+    segments: impl IntoIterator<Item = Doc>,
+    breaks: impl IntoIterator<Item = LevelBreak>,
+) -> Result<Doc, RenderError> {
+    break_level_with_indent(0, segments, breaks)
+}
+
+fn validate_break_level_shape(segments: &[Doc], breaks: &[LevelBreak]) -> Result<(), RenderError> {
+    if segments.is_empty() {
+        return Err(RenderError::MalformedBreakLevel {
+            reason: "level must contain at least one segment",
+        });
+    }
+    if breaks.len() + 1 != segments.len() {
+        return Err(RenderError::MalformedBreakLevel {
+            reason: "break count must be one less than segment count",
+        });
+    }
+    Ok(())
 }
 
 #[must_use]

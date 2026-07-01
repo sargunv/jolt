@@ -16,6 +16,28 @@ pub(crate) fn validate_doc(doc: &Doc) -> Result<(), RenderError> {
             }
             Ok(())
         }
+        DocKind::BreakLevel(level) => {
+            if level.segments.is_empty() {
+                return Err(RenderError::MalformedBreakLevel {
+                    reason: "level must contain at least one segment",
+                });
+            }
+            if level.breaks.len() + 1 != level.segments.len() {
+                return Err(RenderError::MalformedBreakLevel {
+                    reason: "break count must be one less than segment count",
+                });
+            }
+            for segment in &level.segments {
+                validate_doc(segment)?;
+            }
+            for break_ in &level.breaks {
+                if let FlatLine::Text(text, _) = &break_.flat {
+                    validate_text(text, "FlatLine::Text")?;
+                }
+                validate_doc(&break_.broken_prefix)?;
+            }
+            Ok(())
+        }
         DocKind::Group(group) => {
             if let GroupFit::MarkedBreak { marker, .. } = group.fit
                 && !contains_marker(&group.contents, marker)
@@ -141,6 +163,15 @@ fn validate_line_suffix_doc(doc: &Doc, mode: Mode) -> Result<(), RenderError> {
             }
             validate_line_suffix_doc(fallback, Mode::Break)
         }
+        DocKind::BreakLevel(level) => {
+            for segment in &level.segments {
+                validate_line_suffix_doc(segment, mode)?;
+            }
+            for break_ in &level.breaks {
+                validate_line_suffix_doc(&break_.broken_prefix, mode)?;
+            }
+            Ok(())
+        }
     }
 }
 
@@ -182,6 +213,16 @@ pub(crate) fn contains_marker(doc: &Doc, marker: crate::document::BreakMarkerId)
             contains_marker(&indent_if_break.contents, marker)
         }
         DocKind::LineSuffix(doc) => contains_marker(doc, marker),
+        DocKind::BreakLevel(level) => {
+            level
+                .segments
+                .iter()
+                .any(|segment| contains_marker(segment, marker))
+                || level
+                    .breaks
+                    .iter()
+                    .any(|break_| contains_marker(&break_.broken_prefix, marker))
+        }
         DocKind::Nil
         | DocKind::Text(_)
         | DocKind::LiteralText(_)

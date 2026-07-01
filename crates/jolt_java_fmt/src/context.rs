@@ -1,7 +1,9 @@
 use jolt_diagnostics::TextRange;
 use jolt_java_syntax::{JavaLexer, JavaSyntaxKind, Trivia, TriviaKind};
 
-use crate::options::{JavaFormatOptions, JavaFormatProfile};
+use crate::options::JavaFormatOptions;
+#[cfg(test)]
+use crate::options::JavaFormatProfile;
 use crate::policy::JavaFormatPolicy;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -18,6 +20,7 @@ impl<'source> JavaFormatContext<'source> {
         Self::with_profile(source, JavaFormatProfile::Google)
     }
 
+    #[cfg(test)]
     pub(crate) fn with_profile(source: &'source str, profile: JavaFormatProfile) -> Self {
         Self::with_options(source, JavaFormatOptions::for_profile(profile))
     }

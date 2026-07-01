@@ -195,6 +195,9 @@ Prompt must include:
 - What not to do (no fixture heuristics, no fallback exits, no new redundant
   tests, no new broad `best_fitting`)
 
+Expect the agent worker to not return any output while it works; silence does
+NOT mean the agent is stalled.
+
 Use direct edits only for small surgical fixes, review corrections, or cases
 where the work is too subtle to delegate safely. Still follow the same plan and
 invariants.

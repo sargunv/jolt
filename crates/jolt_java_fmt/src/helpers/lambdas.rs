@@ -1,5 +1,7 @@
 use jolt_diagnostics::TextRange;
-use jolt_fmt_ir::{Doc, best_fitting, concat, group, hard_line, indent_by, join, text};
+use jolt_fmt_ir::{
+    Doc, break_level_with_indent, concat, group, hard_line, indent_by, join, line, text,
+};
 use jolt_java_syntax::{BinaryExpression, Expression};
 
 use crate::comments::{
@@ -75,16 +77,14 @@ fn expression_lambda(parameters: Doc, body: Doc, policy: JavaFormatPolicy) -> Do
         return concat([parameters, text(" -> "), body]);
     }
 
-    let flat = concat([parameters.clone(), text(" -> "), body.clone()]);
-    let broken = concat([
+    group(concat([
         parameters,
         text(" ->"),
         indent_by(
             policy.lambda_expression_body_indent_levels(),
-            concat([hard_line(), body]),
+            concat([line(), body]),
         ),
-    ]);
-    best_fitting(flat, [broken])
+    ]))
 }
 
 fn block_lambda(parameters: Doc, body: Doc) -> Doc {
@@ -167,11 +167,16 @@ fn single_parenthesized_parameter(
             ),
             text(")"),
         ]),
-        (None, true) => concat([
-            text("("),
-            indent_by(context.policy().continuation_indent_levels(), parameter),
-            text(")"),
-        ]),
+        (None, true) => {
+            // google-java-format: open(plusFour), `(`, parameter, `)`, close.
+            let indent_levels = context.policy().continuation_indent_levels();
+            break_level_with_indent(
+                indent_levels as i16,
+                [concat([text("("), parameter, text(")")])],
+                [],
+            )
+            .expect("valid single parenthesized lambda parameter level")
+        }
     };
 
     reject_unhandled_comments_in_range(
