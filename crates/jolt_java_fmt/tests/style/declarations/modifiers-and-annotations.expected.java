@@ -7,6 +7,8 @@
 public final class User {
   @FieldAnno(name = "id", values = {1, 2})
   private final String id;
+  @FieldOnly
+  String unqualified;
 
   public @Nonnull String name() {
     return id;
@@ -15,5 +17,10 @@ public final class User {
   @Action
   @Checked
   public @Nullable void reset() {
+  }
+
+  @Override
+  String raw() {
+    return id;
   }
 }

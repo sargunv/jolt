@@ -10,6 +10,12 @@ This document defines Jolt's Java declaration style.
 - Declaration annotations and type-use annotations are distinct accessor roles.
 - Declaration annotations print one per line.
 - Type-use annotations remain inline with the annotated type.
+- When source syntax does not distinguish an annotation's semantic target, Jolt
+  uses a deterministic syntactic rule for typed declarations: annotations before
+  the first modifier keyword are declaration annotations; annotations after a
+  modifier keyword or after method type parameters are type-use annotations; if
+  there is no modifier keyword, annotations before the type are declaration
+  annotations.
 
 ```java
 @Deprecated
@@ -18,6 +24,11 @@ public final class User {
 }
 
 public @Nonnull String name;
+
+@Override
+String displayName() {
+  return name;
+}
 ```
 
 ## Type Declarations

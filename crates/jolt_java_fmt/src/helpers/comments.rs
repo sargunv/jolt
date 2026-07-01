@@ -115,25 +115,21 @@ pub(crate) fn format_token_with_comments(token: &JavaSyntaxToken) -> Doc {
 
 pub(crate) fn format_comment(comment: &JavaComment) -> Doc {
     match comment.kind() {
-        JavaCommentKind::Doc => format_comment_lines(normalize_star_block_comment(comment.text())),
+        JavaCommentKind::Line => format_line_comment(comment.text()),
         JavaCommentKind::Block if is_star_block_comment(comment.text()) => {
-            format_comment_lines(normalize_star_block_comment(comment.text()))
+            format_star_block_comment(comment.text())
         }
-        JavaCommentKind::Line | JavaCommentKind::Block => {
-            format_comment_lines(preserve_comment_lines(comment.text()))
-        }
+        JavaCommentKind::Block => format_block_comment(comment.text()),
+        JavaCommentKind::Doc => format_star_block_comment(comment.text()),
     }
 }
 
 pub(crate) fn format_raw_comment(kind: TriviaKind, text: &str) -> Doc {
     match kind {
-        TriviaKind::JavadocComment => format_comment_lines(normalize_star_block_comment(text)),
-        TriviaKind::BlockComment if is_star_block_comment(text) => {
-            format_comment_lines(normalize_star_block_comment(text))
-        }
-        TriviaKind::LineComment | TriviaKind::BlockComment => {
-            format_comment_lines(preserve_comment_lines(text))
-        }
+        TriviaKind::LineComment => format_line_comment(text),
+        TriviaKind::BlockComment if is_star_block_comment(text) => format_star_block_comment(text),
+        TriviaKind::BlockComment => format_block_comment(text),
+        TriviaKind::JavadocComment => format_star_block_comment(text),
         TriviaKind::Whitespace | TriviaKind::Newline | TriviaKind::Ignored => jolt_fmt_ir::nil(),
     }
 }
@@ -159,6 +155,18 @@ fn format_comment_lines(lines: Vec<String>) -> Doc {
         docs.push(text(line));
     }
     concat(docs)
+}
+
+fn format_line_comment(comment: &str) -> Doc {
+    format_comment_lines(preserve_comment_lines(comment))
+}
+
+fn format_block_comment(comment: &str) -> Doc {
+    format_comment_lines(preserve_comment_lines(comment))
+}
+
+fn format_star_block_comment(comment: &str) -> Doc {
+    format_comment_lines(normalize_star_block_comment(comment))
 }
 
 fn preserve_comment_lines(comment: &str) -> Vec<String> {

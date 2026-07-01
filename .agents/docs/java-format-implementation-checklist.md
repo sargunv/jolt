@@ -50,9 +50,9 @@ Status legend:
 ## Test Strategy
 
 - `[x]` Add focused rule fixture runner.
-- `[~]` Add program/import/module/name/comment fixtures.
+- `[x]` Add program/import/module/name/comment fixtures.
 - `[x]` Add declaration/type/parameter fixtures.
-- `[~]` Add statement/block/switch/try fixtures.
+- `[x]` Add statement/block/switch/try fixtures.
 - `[x]` Add expression/operator/call/chain/lambda fixtures.
 - `[x]` Assert every rule fixture formats successfully.
 - `[x]` Assert every rule fixture equals expected output.
@@ -67,7 +67,7 @@ Status legend:
 - `[x]` Import static/star/name/comment roles.
 - `[x]` Module directive kind/name/target/comment roles.
 - `[x]` Modifier keyword and annotation roles.
-- `[~]` Declaration headers and bodies.
+- `[x]` Declaration headers and bodies.
 - `[x]` Formal parameter lists expose receiver-parameter entries.
 - `[x]` Typed modifier lists expose declaration annotations separately from
   post-modifier type-use annotations.
@@ -109,8 +109,8 @@ Status legend:
 - `[x]` `argument_list`
 - `[x]` `member_chain`
 - `[x]` `qualified_name`
-- `[~]` `line_comment`
-- `[~]` `block_comment`
+- `[x]` `line_comment`
+- `[x]` `block_comment`
 - `[x]` `star_block_comment`
 
 ## Rule Implementation Order
@@ -129,7 +129,7 @@ Status legend:
 - `[x]` Add input/expected fixture runner.
 - `[x]` Add idempotence assertions.
 - `[x]` Add determinism assertions.
-- `[~]` Add style-guide fixture files.
+- `[x]` Add style-guide fixture files.
 
 ### 3. Accessor Pass
 
@@ -158,12 +158,12 @@ Status legend:
 ### 6. Declaration Layer
 
 - `[x]` Modifier sorting.
-- `[~]` Declaration/type-use annotation placement.
+- `[x]` Declaration/type-use annotation placement.
 - `[x]` Post-modifier field and method return type-use annotations remain inline
   with the type.
 - `[x]` Method return annotations after type parameters remain inline with the
   return type.
-- `[ ]` Ambiguous no-modifier typed-declaration annotations need final
+- `[x]` Ambiguous no-modifier typed-declaration annotations have final
   style/accessor policy.
 - `[x]` Class/interface/record/enum/annotation headers.
 - `[x]` Structural type declaration `extends`/`implements`/`permits` clauses.
