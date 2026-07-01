@@ -131,12 +131,25 @@ fn comments_from_trivia(
 }
 
 fn trivia_has_blank_line(trivia: &[jolt_syntax::GreenTrivia]) -> bool {
-    trivia
-        .iter()
-        .filter(|trivia| trivia.kind() == SyntaxTriviaKind::Newline)
-        .take(2)
-        .count()
-        >= 2
+    let mut line_breaks_since_content = 0;
+    for trivia in trivia {
+        match trivia.kind() {
+            SyntaxTriviaKind::Newline => {
+                line_breaks_since_content += 1;
+                if line_breaks_since_content >= 2 {
+                    return true;
+                }
+            }
+            SyntaxTriviaKind::Whitespace | SyntaxTriviaKind::Ignored => {}
+            SyntaxTriviaKind::LineComment
+            | SyntaxTriviaKind::BlockComment
+            | SyntaxTriviaKind::DocComment => {
+                line_breaks_since_content = 0;
+            }
+        }
+    }
+
+    false
 }
 
 mod private {

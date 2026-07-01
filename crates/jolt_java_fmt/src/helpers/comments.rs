@@ -90,6 +90,17 @@ pub(crate) fn format_trailing_comments_before_line_break(token: &JavaSyntaxToken
     concat(docs)
 }
 
+pub(crate) fn format_dangling_comments(comments: impl IntoIterator<Item = JavaComment>) -> Doc {
+    let mut docs = Vec::new();
+    for comment in comments {
+        if !docs.is_empty() {
+            docs.push(hard_line());
+        }
+        docs.push(format_comment(&comment));
+    }
+    concat(docs)
+}
+
 pub(crate) fn trailing_comments_force_line(token: &JavaSyntaxToken) -> bool {
     token.trailing_comments().iter().any(comment_forces_line)
 }

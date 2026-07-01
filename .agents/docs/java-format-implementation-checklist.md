@@ -176,7 +176,7 @@ Status legend:
 
 ### 7. Statement Layer
 
-- `[~]` Blocks and braced bodies.
+- `[x]` Blocks and braced bodies.
 - `[x]` Labels.
 - `[~]` `if`/`else`.
 - `[x]` Local class/interface declarations.

@@ -15,8 +15,9 @@ use crate::helpers::blocks::{
     BodyItem, braced_block, braced_body, empty_block, join_body_items, join_hard_lines,
 };
 use crate::helpers::comments::{
-    comment_forces_line, format_comment, format_leading_comments, format_token_with_comments,
-    format_trailing_comments_before_line_break, trailing_comments_force_line,
+    comment_forces_line, format_comment, format_dangling_comments, format_leading_comments,
+    format_token_with_comments, format_trailing_comments_before_line_break,
+    trailing_comments_force_line,
 };
 use crate::helpers::formatter_ignore::{
     FormatterIgnoreRange, formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
@@ -41,8 +42,25 @@ fn format_block_statements_body(block: &Block) -> Option<Doc> {
     let statements = block.block_statements().collect::<Vec<_>>();
     let block_start = block.text_range().start().get();
     let ignored_ranges = block_formatter_ignore_ranges(block);
-    let items = format_block_statement_items(&statements, block_start, &ignored_ranges);
+    let mut items = Vec::new();
+    items.extend(format_block_open_dangling_comments(block));
+    items.extend(format_block_statement_items(
+        &statements,
+        block_start,
+        &ignored_ranges,
+    ));
+    items.extend(format_block_close_dangling_comments(block));
     (!items.is_empty()).then(|| join_body_items(items))
+}
+
+fn format_block_open_dangling_comments(block: &Block) -> Option<BodyItem> {
+    let comments = block.open_brace()?.trailing_comments();
+    (!comments.is_empty()).then(|| BodyItem::new(format_dangling_comments(comments), false))
+}
+
+fn format_block_close_dangling_comments(block: &Block) -> Option<BodyItem> {
+    let comments = block.close_brace()?.leading_comments();
+    (!comments.is_empty()).then(|| BodyItem::new(format_dangling_comments(comments), false))
 }
 
 fn format_block_statement_items(
@@ -158,10 +176,12 @@ fn format_statement(statement: &Statement) -> Doc {
         Statement::WhileStatement(statement) => format_while_statement(statement),
         Statement::DoStatement(statement) => format_do_statement(statement),
         Statement::ForStatement(statement) => format_for_statement(statement),
-        Statement::BreakStatement(statement) => format_jump_statement("break", statement.label()),
+        Statement::BreakStatement(statement) => {
+            format_jump_statement(statement.keyword(), "break", statement.label())
+        }
         Statement::YieldStatement(statement) => format_yield_statement(statement),
         Statement::ContinueStatement(statement) => {
-            format_jump_statement("continue", statement.label())
+            format_jump_statement(statement.keyword(), "continue", statement.label())
         }
         Statement::ReturnStatement(statement) => format_return_statement(statement),
         Statement::ThrowStatement(statement) => format_throw_statement(statement),
@@ -176,10 +196,10 @@ fn format_statement(statement: &Statement) -> Doc {
 fn format_labeled_statement(statement: &LabeledStatement) -> Doc {
     let label = statement
         .label()
-        .map_or_else(String::new, |label| label.text().to_owned());
+        .map_or_else(jolt_fmt_ir::nil, |label| format_token_with_comments(&label));
 
     concat([
-        text(label),
+        label,
         text(":"),
         hard_line(),
         statement
@@ -206,7 +226,8 @@ fn format_if_statement(statement: &IfStatement) -> Doc {
     let then_body = statement_body_as_block(statement.then_body());
 
     concat([
-        text("if ("),
+        format_statement_keyword(statement.keyword(), "if"),
+        text(" ("),
         condition,
         text(") "),
         then_body,
@@ -214,7 +235,9 @@ fn format_if_statement(statement: &IfStatement) -> Doc {
             .else_body()
             .map_or_else(jolt_fmt_ir::nil, |else_body| {
                 concat([
-                    text(" else "),
+                    text(" "),
+                    format_statement_keyword(statement.else_keyword(), "else"),
+                    text(" "),
                     match else_body {
                         StatementBody::Unbraced(Statement::IfStatement(else_if)) => {
                             format_if_statement(&else_if)
@@ -228,7 +251,8 @@ fn format_if_statement(statement: &IfStatement) -> Doc {
 
 fn format_assert_statement(statement: &AssertStatement) -> Doc {
     concat([
-        text("assert "),
+        format_statement_keyword(statement.keyword(), "assert"),
+        text(" "),
         statement
             .condition()
             .map_or_else(jolt_fmt_ir::nil, |condition| format_expression(&condition)),
@@ -244,7 +268,8 @@ fn format_while_statement(statement: &WhileStatement) -> Doc {
         .condition()
         .map_or_else(jolt_fmt_ir::nil, |condition| format_expression(&condition));
     concat([
-        text("while ("),
+        format_statement_keyword(statement.keyword(), "while"),
+        text(" ("),
         condition,
         text(") "),
         statement_body_as_block(statement.statement_body()),
@@ -253,9 +278,12 @@ fn format_while_statement(statement: &WhileStatement) -> Doc {
 
 fn format_do_statement(statement: &DoStatement) -> Doc {
     concat([
-        text("do "),
+        format_statement_keyword(statement.keyword(), "do"),
+        text(" "),
         statement_body_as_block(statement.statement_body()),
-        text(" while ("),
+        text(" "),
+        format_statement_keyword(statement.while_keyword(), "while"),
+        text(" ("),
         statement
             .condition()
             .map_or_else(jolt_fmt_ir::nil, |condition| format_expression(&condition)),
@@ -284,10 +312,16 @@ fn format_basic_for_statement(statement: &BasicForStatement) -> Doc {
     let update = statement.update().map(|update| format_for_update(&update));
     let is_empty_header = initializer.is_none() && condition.is_none() && update.is_none();
     let header = if is_empty_header {
-        concat([text("for ("), text(";;"), text(")")])
+        concat([
+            format_statement_keyword(statement.keyword(), "for"),
+            text(" ("),
+            text(";;"),
+            text(")"),
+        ])
     } else {
         group(concat([
-            text("for ("),
+            format_statement_keyword(statement.keyword(), "for"),
+            text(" ("),
             indent(concat([
                 soft_line(),
                 semicolon_list(vec![
@@ -310,7 +344,8 @@ fn format_basic_for_statement(statement: &BasicForStatement) -> Doc {
 
 fn format_enhanced_for_statement(statement: &EnhancedForStatement) -> Doc {
     concat([
-        text("for ("),
+        format_statement_keyword(statement.keyword(), "for"),
+        text(" ("),
         statement
             .variable()
             .map_or_else(jolt_fmt_ir::nil, |variable| {
@@ -378,20 +413,24 @@ fn format_statement_expression_separator(comma: &JavaSyntaxToken) -> Doc {
 }
 
 fn format_return_statement(statement: &ReturnStatement) -> Doc {
-    format_keyword_expression_statement("return", statement.expression())
+    format_keyword_expression_statement(statement.keyword(), "return", statement.expression())
 }
 
 fn format_throw_statement(statement: &ThrowStatement) -> Doc {
-    format_keyword_expression_statement("throw", statement.expression())
+    format_keyword_expression_statement(statement.keyword(), "throw", statement.expression())
 }
 
 fn format_yield_statement(statement: &YieldStatement) -> Doc {
-    format_keyword_expression_statement("yield", statement.expression())
+    format_keyword_expression_statement(statement.keyword(), "yield", statement.expression())
 }
 
-fn format_keyword_expression_statement(keyword: &str, expression: Option<Expression>) -> Doc {
+fn format_keyword_expression_statement(
+    keyword: Option<JavaSyntaxToken>,
+    fallback: &str,
+    expression: Option<Expression>,
+) -> Doc {
     concat([
-        text(keyword.to_owned()),
+        format_statement_keyword(keyword, fallback),
         expression.map_or_else(jolt_fmt_ir::nil, |expression| {
             let expression_doc = concat([text(" "), format_expression(&expression)]);
             if matches!(expression, Expression::SwitchExpression(_)) {
@@ -404,11 +443,15 @@ fn format_keyword_expression_statement(keyword: &str, expression: Option<Express
     ])
 }
 
-fn format_jump_statement(keyword: &str, label: Option<jolt_java_syntax::JavaSyntaxToken>) -> Doc {
+fn format_jump_statement(
+    keyword: Option<JavaSyntaxToken>,
+    fallback: &str,
+    label: Option<JavaSyntaxToken>,
+) -> Doc {
     concat([
-        text(keyword.to_owned()),
+        format_statement_keyword(keyword, fallback),
         label.map_or_else(jolt_fmt_ir::nil, |label| {
-            concat([text(" "), text(label.text().to_owned())])
+            concat([text(" "), format_token_with_comments(&label)])
         }),
         text(";"),
     ])
@@ -416,7 +459,8 @@ fn format_jump_statement(keyword: &str, label: Option<jolt_java_syntax::JavaSynt
 
 fn format_synchronized_statement(statement: &SynchronizedStatement) -> Doc {
     concat([
-        text("synchronized ("),
+        format_statement_keyword(statement.keyword(), "synchronized"),
+        text(" ("),
         statement
             .expression()
             .map_or_else(jolt_fmt_ir::nil, |expression| {
@@ -431,7 +475,8 @@ fn format_synchronized_statement(statement: &SynchronizedStatement) -> Doc {
 
 fn format_switch_statement(statement: &SwitchStatement) -> Doc {
     concat([
-        text("switch ("),
+        format_statement_keyword(statement.keyword(), "switch"),
+        text(" ("),
         statement
             .selector()
             .map_or_else(jolt_fmt_ir::nil, |selector| format_expression(&selector)),
@@ -567,7 +612,8 @@ fn format_try_statement(statement: &TryStatement) -> Doc {
     }
 
     concat([
-        text("try "),
+        format_statement_keyword(statement.keyword(), "try"),
+        text(" "),
         statement
             .body()
             .map_or_else(empty_block, |body| format_block(&body)),
@@ -582,7 +628,8 @@ fn format_try_statement(statement: &TryStatement) -> Doc {
 
 fn format_try_with_resources_statement(statement: &TryWithResourcesStatement) -> Doc {
     concat([
-        text("try ("),
+        format_statement_keyword(statement.keyword(), "try"),
+        text(" ("),
         format_resource_specification(statement),
         text(") "),
         statement
@@ -639,7 +686,9 @@ fn format_catch_clauses<'a>(clauses: impl Iterator<Item = CatchClause> + 'a) -> 
 
 fn format_catch_clause(clause: &CatchClause) -> Doc {
     concat([
-        text(" catch "),
+        text(" "),
+        format_statement_keyword(clause.keyword(), "catch"),
+        text(" "),
         clause
             .parameter()
             .map_or_else(jolt_fmt_ir::nil, |parameter| {
@@ -745,7 +794,9 @@ fn format_catch_type(ty: &Type) -> Doc {
 
 fn format_finally_clause(clause: &FinallyClause) -> Doc {
     concat([
-        text(" finally "),
+        text(" "),
+        format_statement_keyword(clause.keyword(), "finally"),
+        text(" "),
         clause
             .body()
             .map_or_else(empty_block, |body| format_block(&body)),
@@ -770,4 +821,11 @@ fn statement_body_as_block(body: Option<StatementBody>) -> Doc {
         Some(StatementBody::Empty(_)) | None => empty_block(),
         Some(StatementBody::Unbraced(statement)) => braced_body(Some(format_statement(&statement))),
     }
+}
+
+fn format_statement_keyword(keyword: Option<JavaSyntaxToken>, fallback: &str) -> Doc {
+    keyword.map_or_else(
+        || text(fallback.to_owned()),
+        |keyword| format_token_with_comments(&keyword),
+    )
 }

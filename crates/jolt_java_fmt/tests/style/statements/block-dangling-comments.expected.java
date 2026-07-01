@@ -1,0 +1,30 @@
+class Example {
+  void run() {
+    // headline
+  }
+
+  void nested(boolean ready) {
+    if (ready) {
+      /* keep */
+    } else {
+      /* else */
+    }
+  }
+
+  void tail() {
+    call();
+    /* tail */
+  }
+
+  void keyword(boolean ready) {
+    do /* loop */ {
+      // before assert
+      assert ready;
+    } while (ready);
+  }
+
+  void chain() {
+    // keep with chain
+    System.out.println("x");
+  }
+}

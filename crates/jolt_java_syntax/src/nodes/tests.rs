@@ -141,6 +141,36 @@ fn token_comments_expose_source_ranges() {
 }
 
 #[test]
+fn leading_comments_do_not_count_as_blank_lines() {
+    let syntax = parse_clean(
+        r"
+                class A {
+                  void run() {
+                    first();
+                    // keep with second
+                    second();
+
+                    // separated from third
+                    third();
+                  }
+                }
+            ",
+    );
+    let statements = descendants::<BlockStatement>(&syntax);
+    let second = statements
+        .iter()
+        .find(|statement| statement.source_text().contains("second"))
+        .expect("second statement");
+    let third = statements
+        .iter()
+        .find(|statement| statement.source_text().contains("third"))
+        .expect("third statement");
+
+    assert!(!second.starts_after_blank_line());
+    assert!(third.starts_after_blank_line());
+}
+
+#[test]
 fn variable_declarator_lists_expose_entries_with_commas() {
     let syntax = parse_clean("class A { int first /* a */, /* b */ second = 2, third; }\n");
     let list = descendants::<VariableDeclaratorList>(&syntax)
@@ -680,6 +710,7 @@ fn if_statements_expose_condition_then_and_else_children() {
 }
 
 #[test]
+#[allow(clippy::too_many_lines)]
 fn statement_body_accessors_expose_body_kind() {
     let syntax = parse_clean(
         r"
@@ -701,10 +732,29 @@ fn statement_body_accessors_expose_body_kind() {
         .into_iter()
         .next()
         .expect("if statement");
+    assert_eq!(
+        if_statement.keyword().expect("if keyword").kind(),
+        JavaSyntaxKind::IfKw
+    );
+    assert_eq!(
+        if_statement.else_keyword().expect("else keyword").kind(),
+        JavaSyntaxKind::ElseKw
+    );
     assert!(matches!(
         if_statement.then_body(),
         Some(StatementBody::Block(_))
     ));
+    let Some(StatementBody::Block(then_block)) = if_statement.then_body() else {
+        panic!("expected then block");
+    };
+    assert_eq!(
+        then_block.open_brace().expect("block open brace").kind(),
+        JavaSyntaxKind::LBrace
+    );
+    assert_eq!(
+        then_block.close_brace().expect("block close brace").kind(),
+        JavaSyntaxKind::RBrace
+    );
     assert!(matches!(
         if_statement.else_body(),
         Some(StatementBody::Empty(_))
@@ -714,6 +764,10 @@ fn statement_body_accessors_expose_body_kind() {
         .into_iter()
         .next()
         .expect("while statement");
+    assert_eq!(
+        while_statement.keyword().expect("while keyword").kind(),
+        JavaSyntaxKind::WhileKw
+    );
     assert!(matches!(
         while_statement.statement_body(),
         Some(StatementBody::Empty(_))
@@ -723,6 +777,17 @@ fn statement_body_accessors_expose_body_kind() {
         .into_iter()
         .next()
         .expect("do statement");
+    assert_eq!(
+        do_statement.keyword().expect("do keyword").kind(),
+        JavaSyntaxKind::DoKw
+    );
+    assert_eq!(
+        do_statement
+            .while_keyword()
+            .expect("do-while keyword")
+            .kind(),
+        JavaSyntaxKind::WhileKw
+    );
     assert!(matches!(
         do_statement.statement_body(),
         Some(StatementBody::Unbraced(Statement::ExpressionStatement(_)))
@@ -735,6 +800,10 @@ fn statement_body_accessors_expose_body_kind() {
             basic.initializer().is_none() && basic.condition().is_none() && basic.update().is_none()
         })
         .expect("basic for statement");
+    assert_eq!(
+        basic_for.keyword().expect("basic for keyword").kind(),
+        JavaSyntaxKind::ForKw
+    );
     assert!(matches!(
         basic_for.statement_body(),
         Some(StatementBody::Empty(_))
@@ -744,6 +813,10 @@ fn statement_body_accessors_expose_body_kind() {
         .into_iter()
         .find_map(|for_statement| for_statement.enhanced())
         .expect("enhanced for statement");
+    assert_eq!(
+        enhanced_for.keyword().expect("enhanced for keyword").kind(),
+        JavaSyntaxKind::ForKw
+    );
     assert!(matches!(
         enhanced_for.statement_body(),
         Some(StatementBody::Unbraced(Statement::ExpressionStatement(_)))

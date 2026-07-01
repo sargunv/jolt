@@ -26,6 +26,13 @@ use crate::rules::statements::{format_block, format_switch_block};
 use crate::rules::types::{format_array_dimensions, format_type, format_type_argument_list};
 
 pub(crate) fn format_expression(expression: &Expression) -> Doc {
+    format_expression_with_leading_comments(expression, LeadingComments::Preserve)
+}
+
+fn format_expression_with_leading_comments(
+    expression: &Expression,
+    leading_comments: LeadingComments,
+) -> Doc {
     match expression {
         Expression::ParenthesizedExpression(expression) => {
             format_parenthesized_expression(expression)
@@ -36,10 +43,18 @@ pub(crate) fn format_expression(expression: &Expression) -> Doc {
         Expression::UnaryExpression(expression) => format_unary_expression(expression),
         Expression::PostfixExpression(expression) => format_postfix_expression(expression),
         Expression::LambdaExpression(expression) => format_lambda_expression(expression),
-        Expression::LiteralExpression(expression) => format_literal_expression(expression),
-        Expression::NameExpression(expression) => format_name_expression(expression),
-        Expression::ThisExpression(expression) => format_this_expression(expression),
-        Expression::SuperExpression(expression) => format_super_expression(expression),
+        Expression::LiteralExpression(expression) => {
+            format_literal_expression(expression, leading_comments)
+        }
+        Expression::NameExpression(expression) => {
+            format_name_expression(expression, leading_comments)
+        }
+        Expression::ThisExpression(expression) => {
+            format_this_expression(expression, leading_comments)
+        }
+        Expression::SuperExpression(expression) => {
+            format_super_expression(expression, leading_comments)
+        }
         Expression::ClassLiteralExpression(expression) => {
             format_class_literal_expression(expression)
         }
@@ -55,7 +70,7 @@ pub(crate) fn format_expression(expression: &Expression) -> Doc {
         Expression::FieldAccessExpression(expression) => format_field_access_expression(expression),
         Expression::ArrayAccessExpression(expression) => format_array_access_expression(expression),
         Expression::MethodInvocationExpression(expression) => {
-            format_method_invocation_expression(expression)
+            format_method_invocation_expression_with_leading_comments(expression, leading_comments)
         }
         Expression::ObjectCreationExpression(expression) => {
             format_object_creation_expression(expression)
@@ -63,20 +78,31 @@ pub(crate) fn format_expression(expression: &Expression) -> Doc {
     }
 }
 
-fn format_literal_expression(expression: &LiteralExpression) -> Doc {
-    expression
-        .literal_token()
-        .map_or_else(jolt_fmt_ir::nil, |token| format_leaf_token(&token))
+#[derive(Clone, Copy, Eq, PartialEq)]
+enum LeadingComments {
+    Preserve,
+    SuppressFirstToken,
 }
 
-fn format_name_expression(expression: &NameExpression) -> Doc {
+fn format_literal_expression(
+    expression: &LiteralExpression,
+    leading_comments: LeadingComments,
+) -> Doc {
+    expression
+        .literal_token()
+        .map_or_else(jolt_fmt_ir::nil, |token| {
+            format_leaf_token(&token, leading_comments)
+        })
+}
+
+fn format_name_expression(expression: &NameExpression, leading_comments: LeadingComments) -> Doc {
     let annotations = expression
         .annotations()
         .map(|annotation| format_annotation(&annotation))
         .collect::<Vec<_>>();
-    let name = expression
-        .name()
-        .map_or_else(jolt_fmt_ir::nil, |name| format_leaf_token(&name));
+    let name = expression.name().map_or_else(jolt_fmt_ir::nil, |name| {
+        format_leaf_token(&name, leading_comments)
+    });
 
     if annotations.is_empty() {
         name
@@ -85,21 +111,23 @@ fn format_name_expression(expression: &NameExpression) -> Doc {
     }
 }
 
-fn format_this_expression(expression: &ThisExpression) -> Doc {
+fn format_this_expression(expression: &ThisExpression, leading_comments: LeadingComments) -> Doc {
     format_qualified_keyword_expression(
         expression.qualifier(),
-        expression
-            .keyword()
-            .map_or_else(|| text("this"), |token| format_leaf_token(&token)),
+        expression.keyword().map_or_else(
+            || text("this"),
+            |token| format_leaf_token(&token, leading_comments),
+        ),
     )
 }
 
-fn format_super_expression(expression: &SuperExpression) -> Doc {
+fn format_super_expression(expression: &SuperExpression, leading_comments: LeadingComments) -> Doc {
     format_qualified_keyword_expression(
         expression.qualifier(),
-        expression
-            .keyword()
-            .map_or_else(|| text("super"), |token| format_leaf_token(&token)),
+        expression.keyword().map_or_else(
+            || text("super"),
+            |token| format_leaf_token(&token, leading_comments),
+        ),
     )
 }
 
@@ -110,9 +138,15 @@ fn format_qualified_keyword_expression(qualifier: Option<Expression>, keyword: D
     }
 }
 
-fn format_leaf_token(token: &jolt_java_syntax::JavaSyntaxToken) -> Doc {
+fn format_leaf_token(
+    token: &jolt_java_syntax::JavaSyntaxToken,
+    leading_comments: LeadingComments,
+) -> Doc {
     concat([
-        format_leading_comments(token),
+        match leading_comments {
+            LeadingComments::Preserve => format_leading_comments(token),
+            LeadingComments::SuppressFirstToken => jolt_fmt_ir::nil(),
+        },
         format_token_text(token.text()),
         format_trailing_comments(token),
     ])
@@ -125,7 +159,9 @@ fn format_class_literal_expression(expression: &ClassLiteralExpression) -> Doc {
                 || {
                     expression
                         .primitive_keyword()
-                        .map_or_else(jolt_fmt_ir::nil, |keyword| format_leaf_token(&keyword))
+                        .map_or_else(jolt_fmt_ir::nil, |keyword| {
+                            format_leaf_token(&keyword, LeadingComments::Preserve)
+                        })
                 },
                 |ty| crate::rules::types::format_void_type(&ty),
             )
@@ -227,7 +263,10 @@ fn format_postfix_expression(expression: &PostfixExpression) -> Doc {
     ])
 }
 
-fn format_method_invocation_expression(expression: &MethodInvocationExpression) -> Doc {
+fn format_method_invocation_expression_with_leading_comments(
+    expression: &MethodInvocationExpression,
+    leading_comments: LeadingComments,
+) -> Doc {
     let expression = Expression::from(expression.clone());
     if !is_member_chain_child(&expression)
         && let Some(chain) = expression.member_chain()
@@ -239,7 +278,7 @@ fn format_method_invocation_expression(expression: &MethodInvocationExpression) 
     };
 
     group(concat([
-        format_method_invocation_callee(&expression),
+        format_method_invocation_callee(&expression, leading_comments),
         format_argument_list(expression.arguments()),
     ]))
 }
@@ -521,7 +560,10 @@ fn format_instanceof_expression(expression: &InstanceofExpression) -> Doc {
     ])
 }
 
-fn format_method_invocation_callee(expression: &MethodInvocationExpression) -> Doc {
+fn format_method_invocation_callee(
+    expression: &MethodInvocationExpression,
+    leading_comments: LeadingComments,
+) -> Doc {
     if let Some(name) = expression.direct_method_name() {
         return concat([
             expression
@@ -534,13 +576,15 @@ fn format_method_invocation_callee(expression: &MethodInvocationExpression) -> D
                 .map_or_else(jolt_fmt_ir::nil, |arguments| {
                     format_type_argument_list(&arguments)
                 }),
-            text(name.text().to_owned()),
+            format_leaf_token(&name, leading_comments),
         ]);
     }
 
     expression
         .simple_name_expression()
-        .map_or_else(jolt_fmt_ir::nil, |name| format_expression(&name))
+        .map_or_else(jolt_fmt_ir::nil, |name| {
+            format_expression_with_leading_comments(&name, leading_comments)
+        })
 }
 
 pub(crate) fn format_argument_list(arguments: Option<ArgumentList>) -> Doc {
@@ -846,15 +890,28 @@ fn format_lambda_parameter(parameter: &LambdaParameter) -> Doc {
 
 fn format_member_chain(chain: &MemberChain) -> Doc {
     let keep_first_suffix_with_root = is_simple_member_chain_root(chain.root());
-    member_chain(
-        format_expression(chain.root()),
-        chain
-            .suffixes()
-            .iter()
-            .map(format_member_chain_suffix)
-            .collect(),
-        keep_first_suffix_with_root,
-    )
+    concat([
+        format_expression_leading_comments(chain.root()),
+        member_chain(
+            format_expression_with_leading_comments(
+                chain.root(),
+                LeadingComments::SuppressFirstToken,
+            ),
+            chain
+                .suffixes()
+                .iter()
+                .map(format_member_chain_suffix)
+                .collect(),
+            keep_first_suffix_with_root,
+        ),
+    ])
+}
+
+fn format_expression_leading_comments(expression: &Expression) -> Doc {
+    expression
+        .tokens()
+        .first()
+        .map_or_else(jolt_fmt_ir::nil, format_leading_comments)
 }
 
 fn format_member_chain_suffix(suffix: &MemberChainSuffix) -> Doc {

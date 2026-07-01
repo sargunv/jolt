@@ -1,9 +1,12 @@
 class Example {
   void run(java.util.List<String> values) {
-    retry:
+    retry /* label */:
     for (String value : values) {
+      if (skip(value)) {
+        continue retry /* again */;
+      }
       if (stop(value)) {
-        break retry;
+        break retry /* target */;
       }
       process(value);
     }

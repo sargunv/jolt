@@ -1068,6 +1068,16 @@ impl LocalVariableDeclaration {
 
 impl IfStatement {
     #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::IfKw)
+    }
+
+    #[must_use]
+    pub fn else_keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::ElseKw)
+    }
+
+    #[must_use]
     pub fn condition(&self) -> Option<Expression> {
         child_family(&self.syntax)
     }
@@ -2004,6 +2014,11 @@ impl LabeledStatement {
 
 impl AssertStatement {
     #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::AssertKw)
+    }
+
+    #[must_use]
     pub fn condition(&self) -> Option<Expression> {
         nth_child_family(&self.syntax, 0)
     }
@@ -2016,12 +2031,22 @@ impl AssertStatement {
 
 impl BreakStatement {
     #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::BreakKw)
+    }
+
+    #[must_use]
     pub fn label(&self) -> Option<JavaSyntaxToken> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
     }
 }
 
 impl ContinueStatement {
+    #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::ContinueKw)
+    }
+
     #[must_use]
     pub fn label(&self) -> Option<JavaSyntaxToken> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
@@ -2030,12 +2055,22 @@ impl ContinueStatement {
 
 impl ReturnStatement {
     #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::ReturnKw)
+    }
+
+    #[must_use]
     pub fn expression(&self) -> Option<Expression> {
         child_family(&self.syntax)
     }
 }
 
 impl ThrowStatement {
+    #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::ThrowKw)
+    }
+
     #[must_use]
     pub fn expression(&self) -> Option<Expression> {
         child_family(&self.syntax)
@@ -2044,12 +2079,23 @@ impl ThrowStatement {
 
 impl YieldStatement {
     #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        children_tokens_matching(&self.syntax, |kind| kind == JavaSyntaxKind::Identifier)
+            .find(|token| token.text() == "yield")
+    }
+
+    #[must_use]
     pub fn expression(&self) -> Option<Expression> {
         child_family(&self.syntax)
     }
 }
 
 impl WhileStatement {
+    #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::WhileKw)
+    }
+
     #[must_use]
     pub fn condition(&self) -> Option<Expression> {
         child_family(&self.syntax)
@@ -2068,6 +2114,16 @@ impl WhileStatement {
 
 impl DoStatement {
     #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::DoKw)
+    }
+
+    #[must_use]
+    pub fn while_keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::WhileKw)
+    }
+
+    #[must_use]
     pub fn body(&self) -> Option<Statement> {
         child_family(&self.syntax)
     }
@@ -2085,6 +2141,11 @@ impl DoStatement {
 
 impl SynchronizedStatement {
     #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::SynchronizedKw)
+    }
+
+    #[must_use]
     pub fn expression(&self) -> Option<Expression> {
         child_family(&self.syntax)
     }
@@ -2096,6 +2157,11 @@ impl SynchronizedStatement {
 }
 
 impl TryStatement {
+    #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::TryKw)
+    }
+
     #[must_use]
     pub fn resources_statement(&self) -> Option<TryWithResourcesStatement> {
         child(&self.syntax)
@@ -2118,6 +2184,11 @@ impl TryStatement {
 
 impl TryWithResourcesStatement {
     #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::TryKw)
+    }
+
+    #[must_use]
     pub fn resources(&self) -> Option<ResourceSpecification> {
         child(&self.syntax)
     }
@@ -2138,6 +2209,11 @@ impl TryWithResourcesStatement {
 }
 
 impl CatchClause {
+    #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::CatchKw)
+    }
+
     #[must_use]
     pub fn parameter(&self) -> Option<CatchParameter> {
         child(&self.syntax)
@@ -2251,6 +2327,11 @@ impl UnionType {
 
 impl FinallyClause {
     #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::FinallyKw)
+    }
+
+    #[must_use]
     pub fn body(&self) -> Option<Block> {
         child(&self.syntax)
     }
@@ -2302,6 +2383,11 @@ impl ForStatement {
 
 impl BasicForStatement {
     #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::ForKw)
+    }
+
+    #[must_use]
     pub fn initializer(&self) -> Option<ForInitializer> {
         child(&self.syntax)
     }
@@ -2328,6 +2414,11 @@ impl BasicForStatement {
 }
 
 impl EnhancedForStatement {
+    #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::ForKw)
+    }
+
     #[must_use]
     pub fn variable(&self) -> Option<LocalVariableDeclaration> {
         child(&self.syntax)
@@ -2413,6 +2504,11 @@ impl StatementExpressionList {
 }
 
 impl SwitchStatement {
+    #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::SwitchKw)
+    }
+
     #[must_use]
     pub fn selector(&self) -> Option<Expression> {
         child_family(&self.syntax)
@@ -2798,6 +2894,16 @@ impl ProvidesDirective {
 }
 
 impl Block {
+    #[must_use]
+    pub fn open_brace(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LBrace)
+    }
+
+    #[must_use]
+    pub fn close_brace(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RBrace)
+    }
+
     pub fn block_statements(&self) -> impl Iterator<Item = BlockStatement> + '_ {
         children(&self.syntax)
     }
