@@ -791,6 +791,12 @@ pub enum ModuleDirectiveRole {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ModuleNameListEntry {
+    pub name: NameSyntax,
+    pub comma: Option<JavaSyntaxToken>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum StatementBody {
     Block(Block),
     Empty(EmptyStatement),

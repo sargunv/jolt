@@ -3,11 +3,15 @@ use std::ops::Range;
 use jolt_fmt_ir::{Doc, concat, empty_line, hard_line, text};
 use jolt_java_syntax::{
     CompilationUnit, CompilationUnitItem, ImportDeclaration, ImportKind, JavaLexer, JavaSyntaxKind,
-    ModuleDeclaration, ModuleDirective, ModuleDirectiveRole, PackageDeclaration, TriviaKind,
+    JavaSyntaxToken, ModuleDeclaration, ModuleDirective, ModuleDirectiveRole, ModuleNameListEntry,
+    NameSyntax, PackageDeclaration, TriviaKind,
 };
 
 use crate::context::{FormatRule, JavaFormatter};
-use crate::helpers::comments::{format_comment, format_raw_comment};
+use crate::helpers::comments::{
+    comment_forces_line, format_comment, format_leading_comments, format_raw_comment,
+    format_trailing_comments_before_line_break,
+};
 use crate::helpers::formatter_ignore::{
     formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
 };
@@ -626,49 +630,7 @@ impl FormattedModuleDirective {
             .expect("clean module directive should expose a directive role");
         let primary_name = module_directive_primary_name(&role);
         let kind_order = module_directive_kind_order(&role);
-        let doc = match role {
-            ModuleDirectiveRole::Requires {
-                module,
-                is_static,
-                is_transitive,
-            } => {
-                let mut parts = vec![text("requires ")];
-                if is_static {
-                    parts.push(text("static "));
-                }
-                if is_transitive {
-                    parts.push(text("transitive "));
-                }
-                parts.push(format_name(&module));
-                parts.push(text(";"));
-                concat(parts)
-            }
-            ModuleDirectiveRole::Exports { package, targets } => {
-                format_named_targets_directive("exports", &package, targets, " to ")
-            }
-            ModuleDirectiveRole::Opens { package, targets } => {
-                format_named_targets_directive("opens", &package, targets, " to ")
-            }
-            ModuleDirectiveRole::Uses { service } => {
-                concat([text("uses "), format_name(&service), text(";")])
-            }
-            ModuleDirectiveRole::Provides {
-                service,
-                implementations,
-            } => {
-                let implementations = implementations
-                    .into_iter()
-                    .map(|name| format_name(&name))
-                    .collect::<Vec<_>>();
-                concat([
-                    text("provides "),
-                    format_name(&service),
-                    text(" with "),
-                    join_docs(implementations, &text(", ")),
-                    text(";"),
-                ])
-            }
-        };
+        let doc = format_module_directive_doc(directive, &role);
 
         let tokens = directive.tokens();
         Self {
@@ -703,6 +665,60 @@ impl FormattedModuleDirective {
     }
 }
 
+fn format_module_directive_doc(directive: &ModuleDirective, role: &ModuleDirectiveRole) -> Doc {
+    match (directive, role) {
+        (
+            ModuleDirective::RequiresDirective(_),
+            ModuleDirectiveRole::Requires {
+                module,
+                is_static,
+                is_transitive,
+            },
+        ) => {
+            let mut parts = vec![text("requires ")];
+            if *is_static {
+                parts.push(text("static "));
+            }
+            if *is_transitive {
+                parts.push(text("transitive "));
+            }
+            parts.push(format_name(module));
+            parts.push(text(";"));
+            concat(parts)
+        }
+        (
+            ModuleDirective::ExportsDirective(exports),
+            ModuleDirectiveRole::Exports { package, .. },
+        ) => format_module_name_list_directive(
+            "exports",
+            package,
+            "to",
+            exports.target_entries().collect(),
+        ),
+        (ModuleDirective::OpensDirective(opens), ModuleDirectiveRole::Opens { package, .. }) => {
+            format_module_name_list_directive(
+                "opens",
+                package,
+                "to",
+                opens.target_entries().collect(),
+            )
+        }
+        (ModuleDirective::UsesDirective(_), ModuleDirectiveRole::Uses { service }) => {
+            concat([text("uses "), format_name(service), text(";")])
+        }
+        (
+            ModuleDirective::ProvidesDirective(provides),
+            ModuleDirectiveRole::Provides { service, .. },
+        ) => format_module_name_list_directive(
+            "provides",
+            service,
+            "with",
+            provides.implementation_entries().collect(),
+        ),
+        _ => unreachable!("module directive role should match directive variant"),
+    }
+}
+
 fn format_inline_trailing_comments(comments: &[jolt_java_syntax::JavaComment]) -> Doc {
     concat(
         comments
@@ -712,13 +728,13 @@ fn format_inline_trailing_comments(comments: &[jolt_java_syntax::JavaComment]) -
     )
 }
 
-fn format_named_targets_directive(
+fn format_module_name_list_directive(
     keyword: &str,
-    subject: &jolt_java_syntax::NameSyntax,
-    targets: Vec<jolt_java_syntax::NameSyntax>,
-    separator: &str,
+    subject: &NameSyntax,
+    connective: &str,
+    entries: Vec<ModuleNameListEntry>,
 ) -> Doc {
-    if targets.is_empty() {
+    if entries.is_empty() {
         return concat([
             text(keyword.to_owned()),
             text(" "),
@@ -731,13 +747,100 @@ fn format_named_targets_directive(
         text(keyword.to_owned()),
         text(" "),
         format_name(subject),
-        text(separator.to_owned()),
-        join_docs(
-            targets.into_iter().map(|name| format_name(&name)).collect(),
-            &text(", "),
-        ),
+        text(" "),
+        text(connective.to_owned()),
+        format_module_name_list(entries),
         text(";"),
     ])
+}
+
+fn format_module_name_list(entries: Vec<ModuleNameListEntry>) -> Doc {
+    let should_break = entries.iter().any(|entry| {
+        name_has_leading_comments(&entry.name)
+            || entry
+                .comma
+                .as_ref()
+                .is_some_and(separator_token_has_comments)
+    });
+
+    if should_break {
+        return jolt_fmt_ir::indent(concat([
+            hard_line(),
+            format_module_name_entries_broken(entries),
+        ]));
+    }
+
+    concat([text(" "), format_module_name_entries_inline(entries)])
+}
+
+fn format_module_name_entries_inline(entries: Vec<ModuleNameListEntry>) -> Doc {
+    let mut docs = Vec::new();
+
+    for entry in entries {
+        docs.push(format_name(&entry.name));
+        if let Some(comma) = entry.comma {
+            docs.push(format_module_name_separator_inline(&comma));
+        }
+    }
+
+    concat(docs)
+}
+
+fn format_module_name_entries_broken(entries: Vec<ModuleNameListEntry>) -> Doc {
+    let mut docs = Vec::new();
+    let entries_len = entries.len();
+
+    for (index, entry) in entries.into_iter().enumerate() {
+        docs.push(concat([
+            format_construct_leading_comments(&entry.name.tokens()),
+            format_name(&entry.name),
+        ]));
+        if let Some(comma) = entry.comma {
+            docs.push(format_module_name_separator_broken(&comma));
+        } else if index + 1 < entries_len {
+            docs.push(hard_line());
+        }
+    }
+
+    concat(docs)
+}
+
+fn format_module_name_separator_inline(comma: &JavaSyntaxToken) -> Doc {
+    concat([
+        format_leading_comments(comma),
+        text(","),
+        format_trailing_comments_before_line_break(comma),
+        text(" "),
+    ])
+}
+
+fn format_module_name_separator_broken(comma: &JavaSyntaxToken) -> Doc {
+    concat([
+        format_leading_comments(comma),
+        text(","),
+        format_trailing_comments_before_line_break(comma),
+        if comma.trailing_comments().iter().any(comment_forces_line) {
+            hard_line()
+        } else {
+            jolt_fmt_ir::line()
+        },
+    ])
+}
+
+fn format_construct_leading_comments(tokens: &[JavaSyntaxToken]) -> Doc {
+    tokens
+        .first()
+        .map_or_else(jolt_fmt_ir::nil, format_leading_comments)
+}
+
+fn separator_token_has_comments(token: &JavaSyntaxToken) -> bool {
+    !token.leading_comments().is_empty() || !token.trailing_comments().is_empty()
+}
+
+fn name_has_leading_comments(name: &NameSyntax) -> bool {
+    name.tokens()
+        .first()
+        .is_some_and(|token| !token.leading_comments().is_empty())
 }
 
 fn module_directive_primary_name(role: &ModuleDirectiveRole) -> String {

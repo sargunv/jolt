@@ -22,8 +22,8 @@ use super::{
     LambdaParameterList, LiteralExpression, LocalClassOrInterfaceDeclaration,
     LocalVariableDeclaration, MatchAllPattern, MemberChain, MemberChainSuffix, MethodDeclaration,
     MethodInvocationExpression, MethodReferenceExpression, ModifierList, ModuleDeclaration,
-    ModuleDirective, ModuleDirectiveNode, ModuleDirectiveRole, NameExpression, NameSegment,
-    NameSyntax, ObjectCreationExpression, OpensDirective, PackageDeclaration,
+    ModuleDirective, ModuleDirectiveNode, ModuleDirectiveRole, ModuleNameListEntry, NameExpression,
+    NameSegment, NameSyntax, ObjectCreationExpression, OpensDirective, PackageDeclaration,
     ParenthesizedExpression, Pattern, PermitsClause, PermitsClauseEntry, PostfixExpression,
     PrimitiveType, ProvidesDirective, RecordBody, RecordComponent, RecordComponentList,
     RecordComponentListEntry, RecordDeclaration, RecordPattern, RequiresDirective, Resource,
@@ -3467,6 +3467,10 @@ impl ExportsDirective {
     pub fn names(&self) -> impl Iterator<Item = NameSyntax> + '_ {
         children_family(&self.syntax)
     }
+
+    pub fn target_entries(&self) -> impl Iterator<Item = ModuleNameListEntry> {
+        module_name_entries_after_contextual_keyword(&self.syntax, "to")
+    }
 }
 
 impl OpensDirective {
@@ -3481,6 +3485,10 @@ impl OpensDirective {
 
     pub fn names(&self) -> impl Iterator<Item = NameSyntax> + '_ {
         children_family(&self.syntax)
+    }
+
+    pub fn target_entries(&self) -> impl Iterator<Item = ModuleNameListEntry> {
+        module_name_entries_after_contextual_keyword(&self.syntax, "to")
     }
 }
 
@@ -3514,6 +3522,10 @@ impl ProvidesDirective {
 
     pub fn implementation_names(&self) -> impl Iterator<Item = NameSyntax> + '_ {
         self.names().skip(1)
+    }
+
+    pub fn implementation_entries(&self) -> impl Iterator<Item = ModuleNameListEntry> {
+        module_name_entries_after_contextual_keyword(&self.syntax, "with")
     }
 
     fn names(&self) -> impl Iterator<Item = NameSyntax> + '_ {
@@ -3628,6 +3640,52 @@ fn type_clause_entries(syntax: &super::JavaSyntaxNode) -> std::vec::IntoIter<Typ
 
     if let Some(ty) = pending_type {
         entries.push(TypeClauseEntry { ty, comma: None });
+    }
+
+    entries.into_iter()
+}
+
+fn module_name_entries_after_contextual_keyword(
+    syntax: &super::JavaSyntaxNode,
+    keyword_text: &str,
+) -> std::vec::IntoIter<ModuleNameListEntry> {
+    let mut entries = Vec::new();
+    let mut after_keyword = false;
+    let mut pending_name = None;
+
+    for element in syntax.children_with_tokens() {
+        match element {
+            SyntaxElement::Token(token)
+                if token.kind() == JavaSyntaxKind::Identifier && token.text() == keyword_text =>
+            {
+                after_keyword = true;
+                pending_name = None;
+            }
+            _ if !after_keyword => {}
+            SyntaxElement::Node(node) => {
+                if let Some(name) = NameSyntax::cast(node)
+                    && let Some(previous) = pending_name.replace(name)
+                {
+                    entries.push(ModuleNameListEntry {
+                        name: previous,
+                        comma: None,
+                    });
+                }
+            }
+            SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
+                if let Some(name) = pending_name.take() {
+                    entries.push(ModuleNameListEntry {
+                        name,
+                        comma: Some(JavaSyntaxToken { syntax: token }),
+                    });
+                }
+            }
+            SyntaxElement::Token(_) => {}
+        }
+    }
+
+    if let Some(name) = pending_name {
+        entries.push(ModuleNameListEntry { name, comma: None });
     }
 
     entries.into_iter()

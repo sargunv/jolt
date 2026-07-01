@@ -427,6 +427,68 @@ fn module_directives_expose_structured_roles() {
 }
 
 #[test]
+fn module_directive_name_lists_expose_entries_with_commas() {
+    let syntax = parse_clean(
+        r"
+                module example.module {
+                    exports example.api to friend.one, // first export
+                        friend.two;
+                    opens example.internal to friend.three, // first open
+                        friend.four;
+                    provides example.Service with example.ImplOne, // first impl
+                        example.ImplTwo;
+                }
+            ",
+    );
+    let module = syntax
+        .module_declaration()
+        .expect("module source should expose module declaration");
+    let directives = module.directives().collect::<Vec<_>>();
+
+    let ModuleDirective::ExportsDirective(exports) = &directives[0] else {
+        panic!("expected exports directive");
+    };
+    let export_targets = exports.target_entries().collect::<Vec<_>>();
+    assert_eq!(export_targets.len(), 2);
+    assert_eq!(export_targets[0].name.source_text().trim(), "friend.one");
+    assert_eq!(
+        semicolon_trailing_comment(export_targets[0].comma.clone()),
+        "// first export"
+    );
+    assert_eq!(export_targets[1].name.source_text().trim(), "friend.two");
+
+    let ModuleDirective::OpensDirective(opens) = &directives[1] else {
+        panic!("expected opens directive");
+    };
+    let open_targets = opens.target_entries().collect::<Vec<_>>();
+    assert_eq!(open_targets.len(), 2);
+    assert_eq!(open_targets[0].name.source_text().trim(), "friend.three");
+    assert_eq!(
+        semicolon_trailing_comment(open_targets[0].comma.clone()),
+        "// first open"
+    );
+    assert_eq!(open_targets[1].name.source_text().trim(), "friend.four");
+
+    let ModuleDirective::ProvidesDirective(provides) = &directives[2] else {
+        panic!("expected provides directive");
+    };
+    let implementations = provides.implementation_entries().collect::<Vec<_>>();
+    assert_eq!(implementations.len(), 2);
+    assert_eq!(
+        implementations[0].name.source_text().trim(),
+        "example.ImplOne"
+    );
+    assert_eq!(
+        semicolon_trailing_comment(implementations[0].comma.clone()),
+        "// first impl"
+    );
+    assert_eq!(
+        implementations[1].name.source_text().trim(),
+        "example.ImplTwo"
+    );
+}
+
+#[test]
 fn block_accessors_unwrap_parser_block_statement_items() {
     let parse = parse_compilation_unit(
         r"
