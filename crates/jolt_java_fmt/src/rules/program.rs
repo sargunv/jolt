@@ -307,10 +307,7 @@ fn format_module_declaration(module: &ModuleDeclaration, formatter: &JavaFormatt
             .name()
             .map_or_else(jolt_fmt_ir::nil, |name| format_name(&name)),
         text(" {"),
-        indent_module_body(format_module_directives(
-            module.directives().collect(),
-            formatter,
-        )),
+        indent_module_body(format_module_directives(module, formatter)),
         hard_line(),
         text("}"),
     ])
@@ -323,13 +320,120 @@ fn indent_module_body(directives: Option<Doc>) -> Doc {
 }
 
 fn format_module_directives(
-    directives: Vec<ModuleDirective>,
+    module: &ModuleDeclaration,
     formatter: &JavaFormatter<'_>,
 ) -> Option<Doc> {
+    let directives = module.directives().collect::<Vec<_>>();
     if directives.is_empty() {
         return None;
     }
 
+    let ignored_ranges = formatter_ignore_ranges(&module.source_text());
+    let directive_ranges = directives
+        .iter()
+        .map(|directive| module_directive_token_range(directive, module.text_range().start().get()))
+        .collect::<Vec<_>>();
+    let ignored_runs = formatter_ignore_runs(&ignored_ranges, &directive_ranges);
+    if !ignored_runs.is_empty() {
+        return Some(format_module_directives_with_ignored(
+            directives,
+            &ignored_runs,
+            formatter,
+        ));
+    }
+
+    Some(format_module_directive_segments(directives, formatter))
+}
+
+fn format_module_directives_with_ignored(
+    directives: Vec<ModuleDirective>,
+    ignored_runs: &[crate::helpers::formatter_ignore::FormatterIgnoreRun],
+    formatter: &JavaFormatter<'_>,
+) -> Doc {
+    let mut sections = Vec::new();
+    let mut segment = Vec::new();
+    let mut ignored_index = 0;
+    let mut skip_index = 0;
+
+    for (directive_index, directive) in directives.into_iter().enumerate() {
+        while ignored_index < ignored_runs.len()
+            && ignored_runs[ignored_index].insert_index == directive_index
+        {
+            push_module_directive_segment(&mut sections, &mut segment, formatter);
+            let run = &ignored_runs[ignored_index];
+            sections.push(ModuleDirectiveSection {
+                doc: formatter_ignore_run_doc(run),
+                hard_line_after: !run.include_on_marker,
+            });
+            ignored_index += 1;
+        }
+
+        while skip_index < ignored_runs.len()
+            && ignored_runs[skip_index].skip_end <= directive_index
+        {
+            skip_index += 1;
+        }
+
+        if skip_index < ignored_runs.len() && ignored_runs[skip_index].skips(directive_index) {
+            continue;
+        }
+
+        segment.push(directive);
+    }
+
+    push_module_directive_segment(&mut sections, &mut segment, formatter);
+    while ignored_index < ignored_runs.len() {
+        let run = &ignored_runs[ignored_index];
+        sections.push(ModuleDirectiveSection {
+            doc: formatter_ignore_run_doc(run),
+            hard_line_after: !run.include_on_marker,
+        });
+        ignored_index += 1;
+    }
+
+    join_module_directive_sections(sections)
+}
+
+fn push_module_directive_segment(
+    sections: &mut Vec<ModuleDirectiveSection>,
+    segment: &mut Vec<ModuleDirective>,
+    formatter: &JavaFormatter<'_>,
+) {
+    if segment.is_empty() {
+        return;
+    }
+    sections.push(ModuleDirectiveSection {
+        doc: format_module_directive_segments(std::mem::take(segment), formatter),
+        hard_line_after: false,
+    });
+}
+
+fn join_module_directive_sections(sections: Vec<ModuleDirectiveSection>) -> Doc {
+    let mut joined = Vec::new();
+    let mut previous_hard_line_after = false;
+    for section in sections {
+        if !joined.is_empty() {
+            joined.push(if previous_hard_line_after {
+                hard_line()
+            } else {
+                empty_line()
+            });
+        }
+        joined.push(section.doc);
+        previous_hard_line_after = section.hard_line_after;
+    }
+    concat(joined)
+}
+
+struct ModuleDirectiveSection {
+    doc: Doc,
+    hard_line_after: bool,
+}
+
+fn format_module_directive_segments(
+    directives: Vec<ModuleDirective>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc {
     let mut runs: Vec<Vec<FormattedModuleDirective>> = Vec::new();
     let mut current_run = Vec::new();
 
@@ -347,9 +451,20 @@ fn format_module_directives(
         runs.push(current_run);
     }
 
-    Some(join_empty_lines(
-        runs.into_iter().map(format_module_directive_run).collect(),
-    ))
+    join_empty_lines(runs.into_iter().map(format_module_directive_run).collect())
+}
+
+fn module_directive_token_range(
+    directive: &ModuleDirective,
+    module_start: usize,
+) -> Option<Range<usize>> {
+    let tokens = directive.tokens();
+    let first = tokens.first()?;
+    let last = tokens.last()?;
+    Some(
+        first.token_text_range().start().get() - module_start
+            ..last.token_text_range().end().get() - module_start,
+    )
 }
 
 fn format_module_directive_run(directives: Vec<FormattedModuleDirective>) -> Doc {
