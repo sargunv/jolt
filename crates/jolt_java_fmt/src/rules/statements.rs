@@ -18,6 +18,7 @@ use crate::helpers::comments::{
 use crate::helpers::lists::semicolon_list;
 use crate::helpers::modifiers::modifier_prefix_from_parts;
 use crate::helpers::operators::binary_chain;
+use crate::rules::declarations::format_type_declaration;
 use crate::rules::expressions::format_expression;
 use crate::rules::variables::format_local_variable_declaration;
 
@@ -37,9 +38,9 @@ fn format_block_item(item: BlockItem) -> Option<BodyItem> {
             format_local_variable_declaration(&declaration),
             text(";"),
         ])),
-        BlockItem::LocalClassOrInterfaceDeclaration(declaration) => {
-            Some(format_token_sequence(&declaration.tokens()))
-        }
+        BlockItem::LocalClassOrInterfaceDeclaration(declaration) => declaration
+            .declaration()
+            .map(|declaration| format_type_declaration(&declaration)),
         BlockItem::Block(block) => Some(format_block(&block)),
         BlockItem::LabeledStatement(statement) => Some(format_statement(&statement.into())),
         BlockItem::ExpressionStatement(statement) => Some(format_statement(&statement.into())),

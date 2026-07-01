@@ -15,11 +15,12 @@ use super::{
     ImportDeclaration, InstanceInitializer, InstanceofExpression, InterfaceBody,
     InterfaceBodyMember, InterfaceDeclaration, JavaNode, JavaSyntaxKind, JavaSyntaxToken,
     LabeledStatement, LambdaExpression, LambdaParameter, LambdaParameterList,
-    LocalVariableDeclaration, MethodDeclaration, MethodInvocationExpression, ModifierList,
-    ModuleDeclaration, ModuleDirective, ModuleDirectiveNode, NameSyntax, ObjectCreationExpression,
-    PackageDeclaration, ParenthesizedExpression, Pattern, PermitsClause, PostfixExpression,
-    ProvidesDirective, RecordBody, RecordComponent, RecordComponentList, RecordDeclaration,
-    RequiresDirective, Resource, ResourceList, ResourceSpecification, ReturnStatement, Statement,
+    LocalClassOrInterfaceDeclaration, LocalVariableDeclaration, MethodDeclaration,
+    MethodInvocationExpression, ModifierList, ModuleDeclaration, ModuleDirective,
+    ModuleDirectiveNode, NameSyntax, ObjectCreationExpression, PackageDeclaration,
+    ParenthesizedExpression, Pattern, PermitsClause, PostfixExpression, ProvidesDirective,
+    RecordBody, RecordComponent, RecordComponentList, RecordDeclaration, RequiresDirective,
+    Resource, ResourceList, ResourceSpecification, ReturnStatement, Statement,
     StatementExpressionList, StaticInitializer, SwitchBlock, SwitchBlockEntry,
     SwitchBlockStatementGroup, SwitchExpression, SwitchLabel, SwitchRule, SwitchStatement,
     SynchronizedStatement, ThrowStatement, ThrowsClause, TryStatement, TryWithResourcesStatement,
@@ -463,6 +464,13 @@ impl BlockItem {
     #[must_use]
     pub fn starts_after_blank_line(&self) -> bool {
         starts_after_blank_line(self.syntax())
+    }
+}
+
+impl LocalClassOrInterfaceDeclaration {
+    #[must_use]
+    pub fn declaration(&self) -> Option<TypeDeclaration> {
+        child_family(&self.syntax)
     }
 }
 

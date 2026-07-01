@@ -164,6 +164,7 @@ Status legend:
 - `[~]` Blocks and braced bodies.
 - `[x]` Labels.
 - `[~]` `if`/`else`.
+- `[x]` Local class/interface declarations.
 - `[x]` Loops and broken `for` headers.
 - `[x]` Switch labels/rules/guards.
 - `[~]` `return`/`throw`/`yield`.
