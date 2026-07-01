@@ -442,6 +442,74 @@ fn if_statements_expose_condition_then_and_else_children() {
 }
 
 #[test]
+fn statement_body_accessors_expose_body_kind() {
+    let syntax = parse_clean(
+        r"
+                class Bodies {
+                    void body(boolean ready) {
+                        if (ready) {
+                            run();
+                        } else;
+                        while (ready);
+                        do run(); while (ready);
+                        for (;;);
+                        for (String name : names()) run(name);
+                    }
+                }
+            ",
+    );
+
+    let if_statement = descendants::<IfStatement>(&syntax)
+        .into_iter()
+        .next()
+        .expect("if statement");
+    assert!(matches!(
+        if_statement.then_body(),
+        Some(StatementBody::Block(_))
+    ));
+    assert!(matches!(
+        if_statement.else_body(),
+        Some(StatementBody::Empty(_))
+    ));
+
+    let while_statement = descendants::<WhileStatement>(&syntax)
+        .into_iter()
+        .next()
+        .expect("while statement");
+    assert!(matches!(
+        while_statement.statement_body(),
+        Some(StatementBody::Empty(_))
+    ));
+
+    let do_statement = descendants::<DoStatement>(&syntax)
+        .into_iter()
+        .next()
+        .expect("do statement");
+    assert!(matches!(
+        do_statement.statement_body(),
+        Some(StatementBody::Unbraced(Statement::ExpressionStatement(_)))
+    ));
+
+    let basic_for = descendants::<ForStatement>(&syntax)
+        .into_iter()
+        .find_map(|for_statement| for_statement.basic())
+        .expect("basic for statement");
+    assert!(matches!(
+        basic_for.statement_body(),
+        Some(StatementBody::Empty(_))
+    ));
+
+    let enhanced_for = descendants::<ForStatement>(&syntax)
+        .into_iter()
+        .find_map(|for_statement| for_statement.enhanced())
+        .expect("enhanced for statement");
+    assert!(matches!(
+        enhanced_for.statement_body(),
+        Some(StatementBody::Unbraced(Statement::ExpressionStatement(_)))
+    ));
+}
+
+#[test]
 fn method_invocations_expose_argument_lists() {
     let syntax = parse_clean(
         r"

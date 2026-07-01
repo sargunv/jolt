@@ -3,10 +3,10 @@ use jolt_java_syntax::{
     AssertStatement, BasicForStatement, Block, BlockItem, CatchClause, CatchParameter,
     CatchTypeList, DoStatement, EnhancedForStatement, Expression, ExpressionStatement,
     FinallyClause, ForInitializer, ForStatement, ForUpdate, IfStatement, LabeledStatement,
-    Resource, ReturnStatement, Statement, StatementExpressionList, SwitchBlock, SwitchBlockEntry,
-    SwitchBlockStatementGroup, SwitchLabel, SwitchLabelCaseItem, SwitchRule, SwitchStatement,
-    SynchronizedStatement, ThrowStatement, TryStatement, TryWithResourcesStatement, Type,
-    WhileStatement, YieldStatement,
+    Resource, ReturnStatement, Statement, StatementBody, StatementExpressionList, SwitchBlock,
+    SwitchBlockEntry, SwitchBlockStatementGroup, SwitchLabel, SwitchLabelCaseItem, SwitchRule,
+    SwitchStatement, SynchronizedStatement, ThrowStatement, TryStatement,
+    TryWithResourcesStatement, Type, WhileStatement, YieldStatement,
 };
 
 use crate::helpers::blocks::{
@@ -135,7 +135,7 @@ fn format_if_statement(statement: &IfStatement) -> Doc {
     let condition = statement
         .condition()
         .map_or_else(jolt_fmt_ir::nil, |condition| format_expression(&condition));
-    let then_body = statement_body_as_block(statement.then_statement());
+    let then_body = statement_body_as_block(statement.then_body());
 
     concat([
         text("if ("),
@@ -143,13 +143,15 @@ fn format_if_statement(statement: &IfStatement) -> Doc {
         text(") "),
         then_body,
         statement
-            .else_statement()
-            .map_or_else(jolt_fmt_ir::nil, |else_statement| {
+            .else_body()
+            .map_or_else(jolt_fmt_ir::nil, |else_body| {
                 concat([
                     text(" else "),
-                    match else_statement {
-                        Statement::IfStatement(else_if) => format_if_statement(&else_if),
-                        _ => statement_body_as_block(Some(else_statement)),
+                    match else_body {
+                        StatementBody::Unbraced(Statement::IfStatement(else_if)) => {
+                            format_if_statement(&else_if)
+                        }
+                        body => statement_body_as_block(Some(body)),
                     },
                 ])
             }),
@@ -177,14 +179,14 @@ fn format_while_statement(statement: &WhileStatement) -> Doc {
         text("while ("),
         condition,
         text(") "),
-        statement_body_as_block(statement.body()),
+        statement_body_as_block(statement.statement_body()),
     ])
 }
 
 fn format_do_statement(statement: &DoStatement) -> Doc {
     concat([
         text("do "),
-        statement_body_as_block(statement.body()),
+        statement_body_as_block(statement.statement_body()),
         text(" while ("),
         statement
             .condition()
@@ -231,7 +233,11 @@ fn format_basic_for_statement(statement: &BasicForStatement) -> Doc {
         ]))
     };
 
-    concat([header, text(" "), statement_body_as_block(statement.body())])
+    concat([
+        header,
+        text(" "),
+        statement_body_as_block(statement.statement_body()),
+    ])
 }
 
 fn format_enhanced_for_statement(statement: &EnhancedForStatement) -> Doc {
@@ -247,7 +253,7 @@ fn format_enhanced_for_statement(statement: &EnhancedForStatement) -> Doc {
             .iterable()
             .map_or_else(jolt_fmt_ir::nil, |iterable| format_expression(&iterable)),
         text(") "),
-        statement_body_as_block(statement.body()),
+        statement_body_as_block(statement.statement_body()),
     ])
 }
 
@@ -639,10 +645,10 @@ fn join_resource_lines(docs: Vec<Doc>) -> Doc {
     concat(joined)
 }
 
-fn statement_body_as_block(statement: Option<Statement>) -> Doc {
-    match statement {
-        Some(Statement::Block(block)) => format_block(&block),
-        Some(Statement::EmptyStatement(_)) | None => empty_block(),
-        Some(statement) => braced_body(Some(format_statement(&statement))),
+fn statement_body_as_block(body: Option<StatementBody>) -> Doc {
+    match body {
+        Some(StatementBody::Block(block)) => format_block(&block),
+        Some(StatementBody::Empty(_)) | None => empty_block(),
+        Some(StatementBody::Unbraced(statement)) => braced_body(Some(format_statement(&statement))),
     }
 }

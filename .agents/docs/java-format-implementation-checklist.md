@@ -67,7 +67,7 @@ Status legend:
 - `[x]` Modifier keyword and annotation roles.
 - `[~]` Declaration headers and bodies.
 - `[x]` Constructor body accessors.
-- `[~]` Statement body kind.
+- `[x]` Statement body kind.
 - `[x]` Switch labels/rules/guards.
 - `[x]` For init/condition/update.
 - `[x]` Try resources and optional trailing semicolon.

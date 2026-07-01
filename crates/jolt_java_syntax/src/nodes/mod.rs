@@ -710,6 +710,13 @@ pub enum AnnotationArgument {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub enum StatementBody {
+    Block(Block),
+    Empty(EmptyStatement),
+    Unbraced(Statement),
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MemberChain {
     root: Expression,
     suffixes: Vec<MemberChainSuffix>,

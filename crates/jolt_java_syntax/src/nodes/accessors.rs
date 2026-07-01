@@ -23,7 +23,7 @@ use super::{
     NameSegment, NameSyntax, ObjectCreationExpression, PackageDeclaration, ParenthesizedExpression,
     Pattern, PermitsClause, PostfixExpression, PrimitiveType, ProvidesDirective, RecordBody,
     RecordComponent, RecordComponentList, RecordDeclaration, RecordPattern, RequiresDirective,
-    Resource, ResourceList, ResourceSpecification, ReturnStatement, Statement,
+    Resource, ResourceList, ResourceSpecification, ReturnStatement, Statement, StatementBody,
     StatementExpressionList, StaticInitializer, SuperExpression, SwitchBlock, SwitchBlockEntry,
     SwitchBlockStatementGroup, SwitchExpression, SwitchLabel, SwitchLabelCaseItem, SwitchRule,
     SwitchStatement, SynchronizedStatement, ThisExpression, ThrowStatement, ThrowsClause,
@@ -930,8 +930,28 @@ impl IfStatement {
     }
 
     #[must_use]
+    pub fn then_body(&self) -> Option<StatementBody> {
+        self.then_statement().map(StatementBody::from)
+    }
+
+    #[must_use]
     pub fn else_statement(&self) -> Option<Statement> {
         nth_child_family(&self.syntax, 1)
+    }
+
+    #[must_use]
+    pub fn else_body(&self) -> Option<StatementBody> {
+        self.else_statement().map(StatementBody::from)
+    }
+}
+
+impl From<Statement> for StatementBody {
+    fn from(statement: Statement) -> Self {
+        match statement {
+            Statement::Block(block) => Self::Block(block),
+            Statement::EmptyStatement(empty) => Self::Empty(empty),
+            statement => Self::Unbraced(statement),
+        }
     }
 }
 
@@ -1568,12 +1588,22 @@ impl WhileStatement {
     pub fn body(&self) -> Option<Statement> {
         child_family(&self.syntax)
     }
+
+    #[must_use]
+    pub fn statement_body(&self) -> Option<StatementBody> {
+        self.body().map(StatementBody::from)
+    }
 }
 
 impl DoStatement {
     #[must_use]
     pub fn body(&self) -> Option<Statement> {
         child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn statement_body(&self) -> Option<StatementBody> {
+        self.body().map(StatementBody::from)
     }
 
     #[must_use]
@@ -1759,6 +1789,11 @@ impl BasicForStatement {
     pub fn body(&self) -> Option<Statement> {
         child_family(&self.syntax)
     }
+
+    #[must_use]
+    pub fn statement_body(&self) -> Option<StatementBody> {
+        self.body().map(StatementBody::from)
+    }
 }
 
 impl EnhancedForStatement {
@@ -1775,6 +1810,11 @@ impl EnhancedForStatement {
     #[must_use]
     pub fn body(&self) -> Option<Statement> {
         child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn statement_body(&self) -> Option<StatementBody> {
+        self.body().map(StatementBody::from)
     }
 }
 
