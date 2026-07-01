@@ -8,7 +8,10 @@ use jolt_java_syntax::{
     TryStatement, TryWithResourcesStatement, Type, WhileStatement, YieldStatement,
 };
 
-use crate::helpers::blocks::{braced_block, braced_body, empty_block, join_hard_lines};
+use crate::helpers::blocks::{
+    BodyItem, braced_block, braced_body, braced_body_items, empty_block, join_body_items,
+    join_hard_lines,
+};
 use crate::helpers::comments::{
     comment_forces_line, format_comment, format_token_sequence, tokens_have_comments,
 };
@@ -23,11 +26,12 @@ pub(crate) fn format_block(block: &Block) -> Doc {
         .items()
         .filter_map(format_block_item)
         .collect::<Vec<_>>();
-    braced_block(items)
+    braced_body_items(items)
 }
 
-fn format_block_item(item: BlockItem) -> Option<Doc> {
-    match item {
+fn format_block_item(item: BlockItem) -> Option<BodyItem> {
+    let starts_after_blank_line = item.starts_after_blank_line();
+    let doc = match item {
         BlockItem::EmptyStatement(_) => None,
         BlockItem::LocalVariableDeclaration(declaration) => Some(concat([
             format_local_variable_declaration(&declaration),
@@ -55,7 +59,8 @@ fn format_block_item(item: BlockItem) -> Option<Doc> {
         BlockItem::TryWithResourcesStatement(statement) => {
             Some(format_statement(&statement.into()))
         }
-    }
+    }?;
+    Some(BodyItem::new(doc, starts_after_blank_line))
 }
 
 fn format_statement(statement: &Statement) -> Doc {
@@ -337,11 +342,7 @@ pub(crate) fn format_switch_block(block: &SwitchBlock) -> Doc {
         })
         .collect::<Vec<_>>();
 
-    if entries.is_empty() {
-        return empty_block();
-    }
-
-    braced_body(Some(join_hard_lines(entries)))
+    braced_block(entries)
 }
 
 fn format_switch_statement_group(group: &SwitchBlockStatementGroup) -> Doc {
@@ -359,7 +360,7 @@ fn format_switch_statement_group(group: &SwitchBlockStatementGroup) -> Doc {
         if items.is_empty() {
             jolt_fmt_ir::nil()
         } else {
-            jolt_fmt_ir::indent(concat([hard_line(), join_hard_lines(items)]))
+            jolt_fmt_ir::indent(concat([hard_line(), join_body_items(items)]))
         },
     ])
 }

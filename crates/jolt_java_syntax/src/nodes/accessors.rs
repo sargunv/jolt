@@ -27,7 +27,7 @@ use super::{
     UnaryExpression, UnionType, VariableAccess, VariableDeclarator, VariableDeclaratorList,
     VariableInitializer, VariableInitializerValue, WhileStatement, YieldStatement, child,
     child_family, child_token, child_token_in, children, children_family, children_tokens_matching,
-    nth_child_family, nth_child_token, tokens,
+    nth_child_family, nth_child_token, starts_after_blank_line, tokens,
 };
 use jolt_syntax::TriviaKind;
 
@@ -328,6 +328,13 @@ impl ClassBody {
     }
 }
 
+impl ClassBodyMember {
+    #[must_use]
+    pub fn starts_after_blank_line(&self) -> bool {
+        starts_after_blank_line(self.syntax())
+    }
+}
+
 impl RecordBody {
     pub fn members(&self) -> impl Iterator<Item = ClassBodyMember> + '_ {
         children::<ClassBodyDeclaration>(&self.syntax).filter_map(|node| node.member())
@@ -347,12 +354,26 @@ impl InterfaceBody {
     }
 }
 
+impl InterfaceBodyMember {
+    #[must_use]
+    pub fn starts_after_blank_line(&self) -> bool {
+        starts_after_blank_line(self.syntax())
+    }
+}
+
 impl AnnotationInterfaceBody {
     pub fn members(&self) -> impl Iterator<Item = AnnotationInterfaceBodyMember> {
         child::<AnnotationElementList>(&self.syntax)
             .map(|list| list.members().collect::<Vec<_>>())
             .unwrap_or_default()
             .into_iter()
+    }
+}
+
+impl AnnotationInterfaceBodyMember {
+    #[must_use]
+    pub fn starts_after_blank_line(&self) -> bool {
+        starts_after_blank_line(self.syntax())
     }
 }
 
@@ -431,6 +452,13 @@ impl EnumConstant {
     #[must_use]
     pub fn body(&self) -> Option<ClassBody> {
         child(&self.syntax)
+    }
+}
+
+impl BlockItem {
+    #[must_use]
+    pub fn starts_after_blank_line(&self) -> bool {
+        starts_after_blank_line(self.syntax())
     }
 }
 

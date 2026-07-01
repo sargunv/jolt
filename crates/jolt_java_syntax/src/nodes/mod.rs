@@ -79,6 +79,13 @@ impl JavaSyntaxToken {
     pub fn trailing_comments(&self) -> Vec<JavaComment> {
         comments_from_trivia(self.syntax.trailing())
     }
+
+    /// Returns true when the token's leading trivia contains an intentional
+    /// blank line.
+    #[must_use]
+    pub fn has_leading_blank_line(&self) -> bool {
+        trivia_has_blank_line(self.syntax.leading())
+    }
 }
 
 impl fmt::Debug for JavaSyntaxToken {
@@ -107,6 +114,15 @@ fn comments_from_trivia(trivia: &[jolt_syntax::GreenTrivia]) -> Vec<JavaComment>
             })
         })
         .collect()
+}
+
+fn trivia_has_blank_line(trivia: &[jolt_syntax::GreenTrivia]) -> bool {
+    trivia
+        .iter()
+        .filter(|trivia| trivia.kind() == SyntaxTriviaKind::Newline)
+        .take(2)
+        .count()
+        >= 2
 }
 
 mod private {
@@ -722,6 +738,12 @@ fn tokens(syntax: &JavaSyntaxNode) -> Vec<JavaSyntaxToken> {
     let mut tokens = Vec::new();
     collect_tokens(syntax, &mut tokens);
     tokens
+}
+
+fn starts_after_blank_line(syntax: &JavaSyntaxNode) -> bool {
+    tokens(syntax)
+        .first()
+        .is_some_and(JavaSyntaxToken::has_leading_blank_line)
 }
 
 fn collect_tokens(syntax: &JavaSyntaxNode, tokens: &mut Vec<JavaSyntaxToken>) {

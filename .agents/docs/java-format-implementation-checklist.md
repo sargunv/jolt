@@ -131,7 +131,7 @@ Status legend:
 
 - `[~]` Broken closing delimiter on its own line.
 - `[~]` Trailing separator policies.
-- `[ ]` Body blank-line capping.
+- `[x]` Body blank-line capping.
 - `[~]` Leading-operator chains with flat continuation alignment.
 - `[x]` Break-all argument lists.
 - `[~]` Ruff-shaped member-chain heads.

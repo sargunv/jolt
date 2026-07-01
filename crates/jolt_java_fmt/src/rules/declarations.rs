@@ -265,12 +265,13 @@ fn join_member_docs(members: Vec<FormattedMember>) -> Doc {
 
     for member in members {
         if !joined.is_empty() {
-            if previous_category == Some(MemberCategory::Field)
-                && member.category == MemberCategory::Field
+            if member.starts_after_blank_line
+                || previous_category != Some(MemberCategory::Field)
+                || member.category != MemberCategory::Field
             {
-                joined.push(hard_line());
-            } else {
                 joined.push(jolt_fmt_ir::empty_line());
+            } else {
+                joined.push(hard_line());
             }
         }
         previous_category = Some(member.category);
@@ -333,26 +334,32 @@ enum MemberCategory {
 
 struct FormattedMember {
     category: MemberCategory,
+    starts_after_blank_line: bool,
     doc: Doc,
 }
 
 impl FormattedMember {
     fn from_member(member: &ClassBodyMember) -> Self {
+        let starts_after_blank_line = member.starts_after_blank_line();
         match member {
             ClassBodyMember::FieldDeclaration(field) => Self {
                 category: MemberCategory::Field,
+                starts_after_blank_line,
                 doc: format_field_declaration(field),
             },
             ClassBodyMember::ConstructorDeclaration(constructor) => Self {
                 category: MemberCategory::Constructor,
+                starts_after_blank_line,
                 doc: format_constructor_declaration(constructor),
             },
             ClassBodyMember::MethodDeclaration(method) => Self {
                 category: MemberCategory::Method,
+                starts_after_blank_line,
                 doc: format_method_declaration(method),
             },
             ClassBodyMember::StaticInitializer(member) => Self {
                 category: MemberCategory::Initializer,
+                starts_after_blank_line,
                 doc: concat([
                     text("static "),
                     member
@@ -362,53 +369,65 @@ impl FormattedMember {
             },
             ClassBodyMember::InstanceInitializer(member) => Self {
                 category: MemberCategory::Initializer,
+                starts_after_blank_line,
                 doc: member
                     .body()
                     .map_or_else(jolt_fmt_ir::nil, |body| format_block(&body)),
             },
             ClassBodyMember::ClassDeclaration(class) => Self {
                 category: MemberCategory::Type,
+                starts_after_blank_line,
                 doc: format_class_declaration(class),
             },
             ClassBodyMember::RecordDeclaration(record) => Self {
                 category: MemberCategory::Type,
+                starts_after_blank_line,
                 doc: format_record_declaration(record),
             },
             ClassBodyMember::EnumDeclaration(enum_) => Self {
                 category: MemberCategory::Type,
+                starts_after_blank_line,
                 doc: format_enum_declaration(enum_),
             },
             ClassBodyMember::InterfaceDeclaration(interface) => Self {
                 category: MemberCategory::Type,
+                starts_after_blank_line,
                 doc: format_interface_declaration(interface),
             },
             ClassBodyMember::AnnotationInterfaceDeclaration(annotation) => Self {
                 category: MemberCategory::Type,
+                starts_after_blank_line,
                 doc: format_annotation_interface_declaration(annotation),
             },
             _ => Self {
                 category: MemberCategory::Type,
+                starts_after_blank_line,
                 doc: format_token_sequence(&member.tokens()),
             },
         }
     }
 
     fn from_annotation_member(member: &AnnotationInterfaceBodyMember) -> Self {
+        let starts_after_blank_line = member.starts_after_blank_line();
         match member {
             AnnotationInterfaceBodyMember::FieldDeclaration(field) => Self {
                 category: MemberCategory::Field,
+                starts_after_blank_line,
                 doc: format_field_declaration(field),
             },
             AnnotationInterfaceBodyMember::MethodDeclaration(method) => Self {
                 category: MemberCategory::Method,
+                starts_after_blank_line,
                 doc: format_method_declaration(method),
             },
             AnnotationInterfaceBodyMember::AnnotationElementDeclaration(member) => Self {
                 category: MemberCategory::Method,
+                starts_after_blank_line,
                 doc: format_annotation_element_declaration(member),
             },
             _ => Self {
                 category: MemberCategory::Type,
+                starts_after_blank_line,
                 doc: format_token_sequence(&member.tokens()),
             },
         }
