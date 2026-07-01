@@ -1252,6 +1252,52 @@ fn wildcard_and_unnamed_accessors_expose_roles() {
 }
 
 #[test]
+fn record_patterns_expose_component_entries_with_commas_and_parens() {
+    let syntax = parse_clean(
+        r"
+                record Pair(int left, int right) {
+                }
+
+                class Patterns {
+                    int read(Object value) {
+                        return switch (value) {
+                            case Pair(/* open */ int left, // left
+                                _) -> left;
+                            default -> 0;
+                        };
+                    }
+                }
+            ",
+    );
+    let pattern = descendants::<RecordPattern>(&syntax)
+        .into_iter()
+        .next()
+        .expect("record pattern");
+
+    assert_eq!(
+        pattern
+            .open_paren()
+            .expect("pattern open paren")
+            .trailing_comments()[0]
+            .text(),
+        "/* open */"
+    );
+    assert_eq!(
+        pattern.close_paren().expect("pattern close paren").text(),
+        ")"
+    );
+
+    let entries = pattern.entries().collect::<Vec<_>>();
+    assert_eq!(entries.len(), 2);
+    assert_eq!(entries[0].component.source_text().trim(), "int left");
+    assert_eq!(
+        semicolon_trailing_comment(entries[0].comma.clone()),
+        "// left"
+    );
+    assert_eq!(entries[1].component.source_text().trim(), "_");
+}
+
+#[test]
 fn method_invocations_expose_argument_lists() {
     let syntax = parse_clean(
         r"

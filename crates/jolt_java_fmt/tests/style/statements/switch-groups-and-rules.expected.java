@@ -17,7 +17,10 @@ class Example {
     return switch (value) {
       case null, // null arm
         default -> 0;
-      case Pair(int left, _) -> left;
+      case Pair(
+          int left, // left
+          _
+        ) -> left;
     };
   }
 }

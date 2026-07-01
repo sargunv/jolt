@@ -91,9 +91,9 @@ Status legend:
 
 ## Helper Organization
 
-- `[~]` `comma_list`
+- `[ ]` `comma_list`
 - `[x]` `semicolon_list`
-- `[x]` `parenthesized_list`
+- `[ ]` `parenthesized_list`
 - `[x]` `angle_bracket_list`
 - `[x]` `braced_block`
 - `[x]` `declaration_header`

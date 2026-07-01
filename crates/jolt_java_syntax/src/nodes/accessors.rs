@@ -27,19 +27,20 @@ use super::{
     OpensDirective, PackageDeclaration, ParenthesizedExpression, Pattern, PermitsClause,
     PermitsClauseEntry, PostfixExpression, PrimitiveType, ProvidesDirective, RecordBody,
     RecordComponent, RecordComponentList, RecordComponentListEntry, RecordDeclaration,
-    RecordPattern, RequiresDirective, Resource, ResourceList, ResourceListEntry,
-    ResourceSpecification, ReturnStatement, Statement, StatementBody, StatementExpressionEntry,
-    StatementExpressionList, StaticInitializer, SuperExpression, SwitchBlock, SwitchBlockEntry,
-    SwitchBlockStatementGroup, SwitchExpression, SwitchLabel, SwitchLabelCaseEntry,
-    SwitchLabelCaseItem, SwitchRule, SwitchStatement, SynchronizedStatement, ThisExpression,
-    ThrowStatement, ThrowsClause, ThrowsClauseEntry, TryStatement, TryWithResourcesStatement, Type,
-    TypeArgument, TypeArgumentList, TypeArgumentListEntry, TypeBoundList, TypeClauseEntry,
-    TypeDeclaration, TypeParameter, TypeParameterList, TypeParameterListEntry, TypePattern,
-    UnaryExpression, UnionType, UnionTypeEntry, UsesDirective, VariableAccess, VariableDeclarator,
-    VariableDeclaratorEntry, VariableDeclaratorList, VariableInitializer, VariableInitializerValue,
-    VoidType, WhileStatement, WildcardBound, WildcardType, YieldStatement, child, child_family,
-    child_token, child_token_in, children, children_family, children_tokens_matching,
-    nth_child_family, nth_child_token, starts_after_blank_line, tokens,
+    RecordPattern, RecordPatternComponentEntry, RequiresDirective, Resource, ResourceList,
+    ResourceListEntry, ResourceSpecification, ReturnStatement, Statement, StatementBody,
+    StatementExpressionEntry, StatementExpressionList, StaticInitializer, SuperExpression,
+    SwitchBlock, SwitchBlockEntry, SwitchBlockStatementGroup, SwitchExpression, SwitchLabel,
+    SwitchLabelCaseEntry, SwitchLabelCaseItem, SwitchRule, SwitchStatement, SynchronizedStatement,
+    ThisExpression, ThrowStatement, ThrowsClause, ThrowsClauseEntry, TryStatement,
+    TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList, TypeArgumentListEntry,
+    TypeBoundList, TypeClauseEntry, TypeDeclaration, TypeParameter, TypeParameterList,
+    TypeParameterListEntry, TypePattern, UnaryExpression, UnionType, UnionTypeEntry, UsesDirective,
+    VariableAccess, VariableDeclarator, VariableDeclaratorEntry, VariableDeclaratorList,
+    VariableInitializer, VariableInitializerValue, VoidType, WhileStatement, WildcardBound,
+    WildcardType, YieldStatement, child, child_family, child_token, child_token_in, children,
+    children_family, children_tokens_matching, nth_child_family, nth_child_token,
+    starts_after_blank_line, tokens,
 };
 use jolt_syntax::{SyntaxElement, TriviaKind};
 
@@ -3339,8 +3340,56 @@ impl RecordPattern {
         child_family(&self.syntax)
     }
 
+    #[must_use]
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RParen)
+    }
+
     pub fn components(&self) -> impl Iterator<Item = ComponentPattern> + '_ {
         children(&self.syntax)
+    }
+
+    pub fn entries(&self) -> impl Iterator<Item = RecordPatternComponentEntry> {
+        let mut entries = Vec::new();
+        let mut pending_component = None;
+
+        for element in self.syntax.children_with_tokens() {
+            match element {
+                SyntaxElement::Node(node) => {
+                    if let Some(component) = ComponentPattern::cast(node)
+                        && let Some(previous) = pending_component.replace(component)
+                    {
+                        entries.push(RecordPatternComponentEntry {
+                            component: previous,
+                            comma: None,
+                        });
+                    }
+                }
+                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
+                    if let Some(component) = pending_component.take() {
+                        entries.push(RecordPatternComponentEntry {
+                            component,
+                            comma: Some(JavaSyntaxToken { syntax: token }),
+                        });
+                    }
+                }
+                SyntaxElement::Token(_) => {}
+            }
+        }
+
+        if let Some(component) = pending_component {
+            entries.push(RecordPatternComponentEntry {
+                component,
+                comma: None,
+            });
+        }
+
+        entries.into_iter()
     }
 }
 

@@ -943,6 +943,12 @@ pub struct RecordComponentListEntry {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RecordPatternComponentEntry {
+    pub component: ComponentPattern,
+    pub comma: Option<JavaSyntaxToken>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ThrowsClauseEntry {
     pub exception: Type,
     pub comma: Option<JavaSyntaxToken>,
