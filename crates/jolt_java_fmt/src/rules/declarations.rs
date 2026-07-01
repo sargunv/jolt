@@ -503,10 +503,35 @@ impl FormattedMember {
                 starts_after_blank_line,
                 doc: format_annotation_element_declaration(member),
             },
-            _ => Self {
+            AnnotationInterfaceBodyMember::ClassDeclaration(class) => Self {
                 category: MemberCategory::Type,
                 starts_after_blank_line,
-                doc: format_token_sequence(&member.tokens()),
+                doc: format_class_declaration(class),
+            },
+            AnnotationInterfaceBodyMember::RecordDeclaration(record) => Self {
+                category: MemberCategory::Type,
+                starts_after_blank_line,
+                doc: format_record_declaration(record),
+            },
+            AnnotationInterfaceBodyMember::EnumDeclaration(enum_) => Self {
+                category: MemberCategory::Type,
+                starts_after_blank_line,
+                doc: format_enum_declaration(enum_),
+            },
+            AnnotationInterfaceBodyMember::InterfaceDeclaration(interface) => Self {
+                category: MemberCategory::Type,
+                starts_after_blank_line,
+                doc: format_interface_declaration(interface),
+            },
+            AnnotationInterfaceBodyMember::AnnotationInterfaceDeclaration(annotation) => Self {
+                category: MemberCategory::Type,
+                starts_after_blank_line,
+                doc: format_annotation_interface_declaration(annotation),
+            },
+            AnnotationInterfaceBodyMember::EmptyDeclaration(_) => Self {
+                category: MemberCategory::Type,
+                starts_after_blank_line,
+                doc: jolt_fmt_ir::nil(),
             },
         }
     }

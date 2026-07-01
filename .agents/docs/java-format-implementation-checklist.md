@@ -167,6 +167,7 @@ Status legend:
 - `[~]` Enum constants and trailing comma policy.
 - `[x]` Enum constants with annotations, arguments, and class bodies.
 - `[x]` Annotation interface elements and default values.
+- `[x]` Annotation-interface nested type members.
 - `[x]` Type parameters, type arguments, wildcards, and annotated dimensions.
 - `[~]` Type-body empty statement removal.
 
