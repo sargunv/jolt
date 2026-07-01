@@ -1470,3 +1470,220 @@ fn expression_and_statement_accessors_expose_layout_roles() {
     );
     assert!(synchronized.body().is_some());
 }
+
+#[test]
+#[allow(clippy::too_many_lines)]
+fn expressions_expose_parent_layout_roles() {
+    let syntax = parse_clean(
+        r"
+                class ParentRoles {
+                    Object field;
+
+                    Object method(boolean ready, Object value, Object[] array, int index) {
+                        Object local = ready ? array[index] : call(value);
+                        if (value instanceof String s) {
+                            return this.field;
+                        }
+                        while (ready) {
+                            value = builder.add(value);
+                        }
+                        for (; ready; value = next()) {
+                            synchronized (this) {
+                                throw fail();
+                            }
+                        }
+                        return (Object) array[index];
+                    }
+                }
+            ",
+    );
+
+    let initializer = descendants::<VariableInitializer>(&syntax)
+        .into_iter()
+        .find(|initializer| initializer.source_text().contains('?'))
+        .expect("conditional initializer");
+    let conditional = initializer
+        .value()
+        .and_then(|value| Expression::cast(value.syntax().clone()))
+        .expect("initializer expression");
+    assert_eq!(
+        conditional.parent_role(),
+        Some(ExpressionParentRole::VariableInitializer)
+    );
+
+    let conditional = match conditional {
+        Expression::ConditionalExpression(conditional) => conditional,
+        other => panic!("expected conditional expression, got {:?}", other.kind()),
+    };
+    assert_eq!(
+        conditional
+            .condition()
+            .expect("conditional condition")
+            .parent_role(),
+        Some(ExpressionParentRole::ConditionalCondition)
+    );
+    assert_eq!(
+        conditional
+            .true_expression()
+            .expect("true expression")
+            .parent_role(),
+        Some(ExpressionParentRole::ConditionalTrueExpression)
+    );
+    assert_eq!(
+        conditional
+            .false_expression()
+            .expect("false expression")
+            .parent_role(),
+        Some(ExpressionParentRole::ConditionalFalseExpression)
+    );
+
+    let array_access = descendants::<ArrayAccessExpression>(&syntax)
+        .into_iter()
+        .find(|access| access.source_text().trim() == "array[index]")
+        .expect("array access");
+    assert_eq!(
+        array_access.array().expect("array").parent_role(),
+        Some(ExpressionParentRole::ArrayAccessArray)
+    );
+    assert_eq!(
+        array_access.index().expect("index").parent_role(),
+        Some(ExpressionParentRole::ArrayAccessIndex)
+    );
+
+    let call = descendants::<MethodInvocationExpression>(&syntax)
+        .into_iter()
+        .find(|invocation| invocation.source_text().trim() == "call(value)")
+        .expect("call expression");
+    let argument = call
+        .arguments()
+        .expect("arguments")
+        .arguments()
+        .next()
+        .expect("argument");
+    assert_eq!(argument.parent_role(), Some(ExpressionParentRole::Argument));
+
+    let if_statement = descendants::<IfStatement>(&syntax)
+        .into_iter()
+        .next()
+        .expect("if statement");
+    let instanceof = if_statement.condition().expect("if condition");
+    assert_eq!(
+        instanceof.parent_role(),
+        Some(ExpressionParentRole::IfCondition)
+    );
+    let instanceof = match instanceof {
+        Expression::InstanceofExpression(instanceof) => instanceof,
+        other => panic!("expected instanceof expression, got {:?}", other.kind()),
+    };
+    assert_eq!(
+        instanceof
+            .expression()
+            .expect("instanceof operand")
+            .parent_role(),
+        Some(ExpressionParentRole::InstanceofOperand)
+    );
+
+    let field_access = descendants::<FieldAccessExpression>(&syntax)
+        .into_iter()
+        .find(|access| access.source_text().trim() == "this.field")
+        .expect("field access");
+    assert_eq!(
+        field_access
+            .receiver()
+            .expect("field receiver")
+            .parent_role(),
+        Some(ExpressionParentRole::FieldAccessReceiver)
+    );
+
+    let while_statement = descendants::<WhileStatement>(&syntax)
+        .into_iter()
+        .next()
+        .expect("while statement");
+    assert_eq!(
+        while_statement
+            .condition()
+            .expect("while condition")
+            .parent_role(),
+        Some(ExpressionParentRole::WhileCondition)
+    );
+
+    let assignment = descendants::<AssignmentExpression>(&syntax)
+        .into_iter()
+        .find(|assignment| assignment.source_text().contains("builder.add"))
+        .expect("assignment expression");
+    assert_eq!(
+        assignment.left().expect("assignment lhs").parent_role(),
+        Some(ExpressionParentRole::AssignmentLeft)
+    );
+    assert_eq!(
+        assignment.right().expect("assignment rhs").parent_role(),
+        Some(ExpressionParentRole::AssignmentRight)
+    );
+
+    let builder_call = descendants::<MethodInvocationExpression>(&syntax)
+        .into_iter()
+        .find(|invocation| invocation.source_text().trim() == "builder.add(value)")
+        .expect("builder call");
+    assert_eq!(
+        builder_call
+            .qualifier()
+            .expect("method qualifier")
+            .parent_role(),
+        Some(ExpressionParentRole::MethodInvocationQualifier)
+    );
+
+    let basic_for = descendants::<ForStatement>(&syntax)
+        .into_iter()
+        .filter_map(|for_statement| for_statement.basic())
+        .find(|basic| basic.update().is_some())
+        .expect("basic for");
+    assert_eq!(
+        basic_for.condition().expect("for condition").parent_role(),
+        Some(ExpressionParentRole::BasicForCondition)
+    );
+
+    let synchronized = descendants::<SynchronizedStatement>(&syntax)
+        .into_iter()
+        .next()
+        .expect("synchronized statement");
+    assert_eq!(
+        synchronized
+            .expression()
+            .expect("sync expression")
+            .parent_role(),
+        Some(ExpressionParentRole::SynchronizedExpression)
+    );
+
+    let throw_statement = descendants::<ThrowStatement>(&syntax)
+        .into_iter()
+        .next()
+        .expect("throw statement");
+    assert_eq!(
+        throw_statement
+            .expression()
+            .expect("throw value")
+            .parent_role(),
+        Some(ExpressionParentRole::ThrowValue)
+    );
+
+    let cast = descendants::<CastExpression>(&syntax)
+        .into_iter()
+        .next()
+        .expect("cast expression");
+    assert_eq!(
+        cast.expression().expect("cast operand").parent_role(),
+        Some(ExpressionParentRole::CastOperand)
+    );
+
+    let return_statement = descendants::<ReturnStatement>(&syntax)
+        .into_iter()
+        .find(|statement| statement.source_text().contains("(Object)"))
+        .expect("return statement");
+    assert_eq!(
+        return_statement
+            .expression()
+            .expect("return value")
+            .parent_role(),
+        Some(ExpressionParentRole::ReturnValue)
+    );
+}

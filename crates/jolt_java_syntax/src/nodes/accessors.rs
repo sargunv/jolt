@@ -12,24 +12,25 @@ use super::{
     ConditionalExpression, ConstructorBody, ConstructorDeclaration, ConstructorInvocation,
     ContinueStatement, DefaultValue, DimExpression, DoStatement, EmptyDeclaration,
     EnhancedForStatement, EnumBody, EnumConstant, EnumConstantList, EnumDeclaration,
-    ExportsDirective, Expression, ExpressionStatement, ExtendsClause, FieldAccessExpression,
-    FieldDeclaration, FinallyClause, ForInitializer, ForStatement, ForUpdate, FormalParameter,
-    FormalParameterList, Guard, IfStatement, ImplementsClause, ImportDeclaration, ImportKind,
-    InstanceInitializer, InstanceofExpression, InterfaceBody, InterfaceBodyMember,
-    InterfaceDeclaration, IntersectionType, JavaFamily, JavaNode, JavaSyntaxKind, JavaSyntaxToken,
-    LabeledStatement, LambdaExpression, LambdaParameter, LambdaParameterList, LiteralExpression,
-    LocalClassOrInterfaceDeclaration, LocalVariableDeclaration, MatchAllPattern, MemberChain,
-    MemberChainSuffix, MethodDeclaration, MethodInvocationExpression, MethodReferenceExpression,
-    ModifierList, ModuleDeclaration, ModuleDirective, ModuleDirectiveNode, ModuleDirectiveRole,
-    NameExpression, NameSegment, NameSyntax, ObjectCreationExpression, OpensDirective,
-    PackageDeclaration, ParenthesizedExpression, Pattern, PermitsClause, PostfixExpression,
-    PrimitiveType, ProvidesDirective, RecordBody, RecordComponent, RecordComponentList,
-    RecordDeclaration, RecordPattern, RequiresDirective, Resource, ResourceList,
-    ResourceSpecification, ReturnStatement, Statement, StatementBody, StatementExpressionEntry,
-    StatementExpressionList, StaticInitializer, SuperExpression, SwitchBlock, SwitchBlockEntry,
-    SwitchBlockStatementGroup, SwitchExpression, SwitchLabel, SwitchLabelCaseItem, SwitchRule,
-    SwitchStatement, SynchronizedStatement, ThisExpression, ThrowStatement, ThrowsClause,
-    TryStatement, TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList, TypeBoundList,
+    ExportsDirective, Expression, ExpressionParentRole, ExpressionStatement, ExtendsClause,
+    FieldAccessExpression, FieldDeclaration, FinallyClause, ForInitializer, ForStatement,
+    ForUpdate, FormalParameter, FormalParameterList, Guard, IfStatement, ImplementsClause,
+    ImportDeclaration, ImportKind, InstanceInitializer, InstanceofExpression, InterfaceBody,
+    InterfaceBodyMember, InterfaceDeclaration, IntersectionType, JavaFamily, JavaNode,
+    JavaSyntaxKind, JavaSyntaxToken, LabeledStatement, LambdaExpression, LambdaParameter,
+    LambdaParameterList, LiteralExpression, LocalClassOrInterfaceDeclaration,
+    LocalVariableDeclaration, MatchAllPattern, MemberChain, MemberChainSuffix, MethodDeclaration,
+    MethodInvocationExpression, MethodReferenceExpression, ModifierList, ModuleDeclaration,
+    ModuleDirective, ModuleDirectiveNode, ModuleDirectiveRole, NameExpression, NameSegment,
+    NameSyntax, ObjectCreationExpression, OpensDirective, PackageDeclaration,
+    ParenthesizedExpression, Pattern, PermitsClause, PostfixExpression, PrimitiveType,
+    ProvidesDirective, RecordBody, RecordComponent, RecordComponentList, RecordDeclaration,
+    RecordPattern, RequiresDirective, Resource, ResourceList, ResourceSpecification,
+    ReturnStatement, Statement, StatementBody, StatementExpressionEntry, StatementExpressionList,
+    StaticInitializer, SuperExpression, SwitchBlock, SwitchBlockEntry, SwitchBlockStatementGroup,
+    SwitchExpression, SwitchLabel, SwitchLabelCaseItem, SwitchRule, SwitchStatement,
+    SynchronizedStatement, ThisExpression, ThrowStatement, ThrowsClause, TryStatement,
+    TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList, TypeBoundList,
     TypeDeclaration, TypeParameter, TypeParameterList, TypePattern, UnaryExpression, UnionType,
     UnionTypeEntry, UsesDirective, VariableAccess, VariableDeclarator, VariableDeclaratorEntry,
     VariableDeclaratorList, VariableInitializer, VariableInitializerValue, VoidType,
@@ -1184,6 +1185,255 @@ impl Expression {
     #[must_use]
     pub fn member_chain(&self) -> Option<MemberChain> {
         collect_member_chain(self)
+    }
+
+    #[must_use]
+    pub fn parent_role(&self) -> Option<ExpressionParentRole> {
+        let parent = self.syntax().parent()?;
+        let parent = AnyJavaNode::cast(parent)?;
+
+        expression_parent_role(self, parent.clone()).or_else(|| statement_parent_role(self, parent))
+    }
+}
+
+fn expression_parent_role(
+    expression: &Expression,
+    parent: AnyJavaNode,
+) -> Option<ExpressionParentRole> {
+    operator_parent_role(expression, parent.clone())
+        .or_else(|| access_parent_role(expression, parent))
+}
+
+fn operator_parent_role(
+    expression: &Expression,
+    parent: AnyJavaNode,
+) -> Option<ExpressionParentRole> {
+    match parent {
+        AnyJavaNode::ParenthesizedExpression(parent) => parent
+            .expression()
+            .is_same_expression(expression)
+            .then_some(ExpressionParentRole::ParenthesizedExpression),
+        AnyJavaNode::AssignmentExpression(parent) => role_for_binary_children(
+            expression,
+            parent.left(),
+            ExpressionParentRole::AssignmentLeft,
+            parent.right(),
+            ExpressionParentRole::AssignmentRight,
+        ),
+        AnyJavaNode::ConditionalExpression(parent) => {
+            if parent.condition().is_same_expression(expression) {
+                Some(ExpressionParentRole::ConditionalCondition)
+            } else if parent.true_expression().is_same_expression(expression) {
+                Some(ExpressionParentRole::ConditionalTrueExpression)
+            } else {
+                parent
+                    .false_expression()
+                    .is_same_expression(expression)
+                    .then_some(ExpressionParentRole::ConditionalFalseExpression)
+            }
+        }
+        AnyJavaNode::BinaryExpression(parent) => role_for_binary_children(
+            expression,
+            parent.left(),
+            ExpressionParentRole::BinaryLeft,
+            parent.right(),
+            ExpressionParentRole::BinaryRight,
+        ),
+        AnyJavaNode::UnaryExpression(parent) => parent
+            .operand()
+            .is_same_expression(expression)
+            .then_some(ExpressionParentRole::UnaryOperand),
+        AnyJavaNode::PostfixExpression(parent) => parent
+            .operand()
+            .is_same_expression(expression)
+            .then_some(ExpressionParentRole::PostfixOperand),
+        AnyJavaNode::CastExpression(parent) => parent
+            .expression()
+            .is_same_expression(expression)
+            .then_some(ExpressionParentRole::CastOperand),
+        AnyJavaNode::InstanceofExpression(parent) => parent
+            .expression()
+            .is_same_expression(expression)
+            .then_some(ExpressionParentRole::InstanceofOperand),
+        _ => None,
+    }
+}
+
+fn access_parent_role(
+    expression: &Expression,
+    parent: AnyJavaNode,
+) -> Option<ExpressionParentRole> {
+    match parent {
+        AnyJavaNode::FieldAccessExpression(parent) => parent
+            .receiver()
+            .is_same_expression(expression)
+            .then_some(ExpressionParentRole::FieldAccessReceiver),
+        AnyJavaNode::MethodInvocationExpression(parent) => method_invocation_parent_role(
+            expression,
+            parent.qualifier(),
+            parent.simple_name_expression(),
+        ),
+        AnyJavaNode::MethodReferenceExpression(parent) => parent
+            .receiver_expression()
+            .is_same_expression(expression)
+            .then_some(ExpressionParentRole::MethodReferenceReceiver),
+        AnyJavaNode::ArrayAccessExpression(parent) => role_for_binary_children(
+            expression,
+            parent.array(),
+            ExpressionParentRole::ArrayAccessArray,
+            parent.index(),
+            ExpressionParentRole::ArrayAccessIndex,
+        ),
+        AnyJavaNode::ObjectCreationExpression(parent) => parent
+            .qualifier()
+            .is_same_expression(expression)
+            .then_some(ExpressionParentRole::ObjectCreationQualifier),
+        AnyJavaNode::DimExpression(parent) => parent
+            .expression()
+            .is_same_expression(expression)
+            .then_some(ExpressionParentRole::ArrayCreationDimension),
+        AnyJavaNode::ClassLiteralExpression(parent) => parent
+            .target_expression()
+            .is_same_expression(expression)
+            .then_some(ExpressionParentRole::ClassLiteralTarget),
+        AnyJavaNode::LambdaExpression(parent) => parent
+            .expression_body()
+            .is_same_expression(expression)
+            .then_some(ExpressionParentRole::LambdaBody),
+        AnyJavaNode::SwitchExpression(parent) => parent
+            .selector()
+            .is_same_expression(expression)
+            .then_some(ExpressionParentRole::SwitchExpressionSelector),
+        AnyJavaNode::ArgumentList(parent) => parent
+            .arguments()
+            .any(|argument| expression_is_same(&argument, expression))
+            .then_some(ExpressionParentRole::Argument),
+        AnyJavaNode::AnnotationElementValue(parent) => parent
+            .expression()
+            .is_same_expression(expression)
+            .then_some(ExpressionParentRole::AnnotationElementValue),
+        AnyJavaNode::VariableInitializer(parent) => parent
+            .value()
+            .and_then(|_| child_family(&parent.syntax))
+            .is_same_expression(expression)
+            .then_some(ExpressionParentRole::VariableInitializer),
+        _ => None,
+    }
+}
+
+fn statement_parent_role(
+    expression: &Expression,
+    parent: AnyJavaNode,
+) -> Option<ExpressionParentRole> {
+    match parent {
+        AnyJavaNode::ExpressionStatement(parent) => parent
+            .expression()
+            .is_same_expression(expression)
+            .then_some(ExpressionParentRole::ExpressionStatement),
+        AnyJavaNode::IfStatement(parent) => parent
+            .condition()
+            .is_same_expression(expression)
+            .then_some(ExpressionParentRole::IfCondition),
+        AnyJavaNode::WhileStatement(parent) => parent
+            .condition()
+            .is_same_expression(expression)
+            .then_some(ExpressionParentRole::WhileCondition),
+        AnyJavaNode::DoStatement(parent) => parent
+            .condition()
+            .is_same_expression(expression)
+            .then_some(ExpressionParentRole::DoCondition),
+        AnyJavaNode::BasicForStatement(parent) => parent
+            .condition()
+            .is_same_expression(expression)
+            .then_some(ExpressionParentRole::BasicForCondition),
+        AnyJavaNode::EnhancedForStatement(parent) => parent
+            .iterable()
+            .is_same_expression(expression)
+            .then_some(ExpressionParentRole::EnhancedForIterable),
+        AnyJavaNode::SynchronizedStatement(parent) => parent
+            .expression()
+            .is_same_expression(expression)
+            .then_some(ExpressionParentRole::SynchronizedExpression),
+        AnyJavaNode::AssertStatement(parent) => {
+            if parent.condition().is_same_expression(expression) {
+                Some(ExpressionParentRole::AssertCondition)
+            } else {
+                parent
+                    .detail()
+                    .is_same_expression(expression)
+                    .then_some(ExpressionParentRole::AssertDetail)
+            }
+        }
+        AnyJavaNode::ReturnStatement(parent) => parent
+            .expression()
+            .is_same_expression(expression)
+            .then_some(ExpressionParentRole::ReturnValue),
+        AnyJavaNode::ThrowStatement(parent) => parent
+            .expression()
+            .is_same_expression(expression)
+            .then_some(ExpressionParentRole::ThrowValue),
+        AnyJavaNode::YieldStatement(parent) => parent
+            .expression()
+            .is_same_expression(expression)
+            .then_some(ExpressionParentRole::YieldValue),
+        AnyJavaNode::SwitchStatement(parent) => parent
+            .selector()
+            .is_same_expression(expression)
+            .then_some(ExpressionParentRole::SwitchStatementSelector),
+        _ => None,
+    }
+}
+
+fn method_invocation_parent_role(
+    expression: &Expression,
+    qualifier: Option<Expression>,
+    callee: Option<Expression>,
+) -> Option<ExpressionParentRole> {
+    if qualifier
+        .into_iter()
+        .any(|qualifier| expression_is_same(&qualifier, expression))
+    {
+        Some(ExpressionParentRole::MethodInvocationQualifier)
+    } else {
+        callee
+            .into_iter()
+            .any(|callee| expression_is_same(&callee, expression))
+            .then_some(ExpressionParentRole::MethodInvocationCallee)
+    }
+}
+
+trait OptionalExpressionExt {
+    fn is_same_expression(&self, target: &Expression) -> bool;
+}
+
+impl OptionalExpressionExt for Option<Expression> {
+    fn is_same_expression(&self, target: &Expression) -> bool {
+        self.as_ref()
+            .is_some_and(|expression| expression_is_same(expression, target))
+    }
+}
+
+fn expression_is_same(expression: &Expression, target: &Expression) -> bool {
+    expression.kind() == target.kind() && expression.text_range() == target.text_range()
+}
+
+fn role_for_binary_children(
+    target: &Expression,
+    left: Option<Expression>,
+    left_role: ExpressionParentRole,
+    right: Option<Expression>,
+    right_role: ExpressionParentRole,
+) -> Option<ExpressionParentRole> {
+    if left
+        .into_iter()
+        .any(|expression| expression_is_same(&expression, target))
+    {
+        Some(left_role)
+    } else {
+        right
+            .into_iter()
+            .any(|expression| expression_is_same(&expression, target))
+            .then_some(right_role)
     }
 }
 

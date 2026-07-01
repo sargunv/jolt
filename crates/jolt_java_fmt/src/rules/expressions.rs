@@ -2,7 +2,7 @@ use jolt_fmt_ir::{Doc, concat, force_group, group, hard_line, indent, line, soft
 use jolt_java_syntax::{
     ArgumentList, ArgumentListEntry, ArrayAccessExpression, ArrayCreationExpression,
     ArrayInitializer, AssignmentExpression, BinaryExpression, CastExpression,
-    ClassLiteralExpression, ConditionalExpression, DimExpression, Expression,
+    ClassLiteralExpression, ConditionalExpression, DimExpression, Expression, ExpressionParentRole,
     FieldAccessExpression, InstanceofExpression, JavaComment, JavaSyntaxToken, LambdaExpression,
     LambdaParameter, LiteralExpression, MemberChain, MemberChainSuffix, MethodInvocationExpression,
     MethodReferenceExpression, NameExpression, ObjectCreationExpression, ParenthesizedExpression,
@@ -220,20 +220,32 @@ fn format_postfix_expression(expression: &PostfixExpression) -> Doc {
 }
 
 fn format_method_invocation_expression(expression: &MethodInvocationExpression) -> Doc {
-    if let Some(chain) = Expression::from(expression.clone()).member_chain() {
+    let expression = Expression::from(expression.clone());
+    if !is_member_chain_child(&expression)
+        && let Some(chain) = expression.member_chain()
+    {
         return format_member_chain(&chain);
     }
+    let Expression::MethodInvocationExpression(expression) = expression else {
+        return jolt_fmt_ir::nil();
+    };
 
     group(concat([
-        format_method_invocation_callee(expression),
+        format_method_invocation_callee(&expression),
         format_argument_list(expression.arguments()),
     ]))
 }
 
 fn format_field_access_expression(expression: &FieldAccessExpression) -> Doc {
-    if let Some(chain) = Expression::from(expression.clone()).member_chain() {
+    let expression = Expression::from(expression.clone());
+    if !is_member_chain_child(&expression)
+        && let Some(chain) = expression.member_chain()
+    {
         return format_member_chain(&chain);
     }
+    let Expression::FieldAccessExpression(expression) = expression else {
+        return jolt_fmt_ir::nil();
+    };
 
     group(concat([
         expression
@@ -872,6 +884,16 @@ const fn is_simple_member_chain_root(expression: &Expression) -> bool {
             | Expression::ThisExpression(_)
             | Expression::SuperExpression(_)
             | Expression::ClassLiteralExpression(_)
+    )
+}
+
+fn is_member_chain_child(expression: &Expression) -> bool {
+    matches!(
+        expression.parent_role(),
+        Some(
+            ExpressionParentRole::FieldAccessReceiver
+                | ExpressionParentRole::MethodInvocationQualifier
+        )
     )
 }
 

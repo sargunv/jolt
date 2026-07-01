@@ -74,7 +74,7 @@ Status legend:
 - `[x]` For init/condition/update.
 - `[x]` Try resources and optional trailing semicolon.
 - `[x]` Pattern roles for type, record, component, and match-all patterns.
-- `[ ]` Expression parent roles.
+- `[x]` Expression parent roles.
 - `[x]` Member-chain linearization.
 - `[~]` Lambda parameter classification.
 - `[x]` Wildcard and unnamed `_` roles.
