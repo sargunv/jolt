@@ -5,7 +5,10 @@ use jolt_java_syntax::{
 };
 
 use crate::helpers::comments::{format_token_sequence, tokens_have_comments};
-use crate::helpers::modifiers::{modifier_prefix, modifier_prefix_from_parts};
+use crate::helpers::modifiers::{
+    inline_modifier_prefix_from_docs, modifier_prefix, modifier_prefix_from_parts,
+};
+use crate::rules::annotations::format_annotation;
 use crate::rules::expressions::format_variable_initializer_value;
 use crate::rules::types::{format_array_dimensions, format_type};
 
@@ -43,16 +46,25 @@ pub(crate) fn format_local_variable_declaration(declaration: &LocalVariableDecla
 
 pub(crate) fn format_formal_parameter(parameter: &FormalParameter) -> Doc {
     let tokens = parameter.tokens();
-    let annotations = parameter.annotations().collect::<Vec<_>>();
-    if tokens_have_comments(&tokens) || !annotations.is_empty() {
+    if tokens_have_comments(&tokens) {
         return format_token_sequence(&tokens);
     }
 
     format_named_typed_declaration(
-        modifier_prefix_from_parts(annotations, parameter.modifier_tokens().collect()),
+        inline_modifier_prefix_from_docs(
+            parameter
+                .prefix_annotations()
+                .map(|annotation| format_annotation(&annotation))
+                .collect(),
+            parameter.modifier_tokens().collect(),
+        ),
         parameter
             .ty()
             .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty)),
+        parameter
+            .varargs_annotations()
+            .map(|annotation| format_annotation(&annotation))
+            .collect(),
         parameter
             .name()
             .map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned())),
@@ -67,16 +79,25 @@ pub(crate) fn format_formal_parameter(parameter: &FormalParameter) -> Doc {
 
 pub(crate) fn format_record_component(component: &RecordComponent) -> Doc {
     let tokens = component.tokens();
-    let annotations = component.annotations().collect::<Vec<_>>();
-    if tokens_have_comments(&tokens) || !annotations.is_empty() {
+    if tokens_have_comments(&tokens) {
         return format_token_sequence(&tokens);
     }
 
     format_named_typed_declaration(
-        modifier_prefix_from_parts(annotations, component.modifier_tokens().collect()),
+        inline_modifier_prefix_from_docs(
+            component
+                .prefix_annotations()
+                .map(|annotation| format_annotation(&annotation))
+                .collect(),
+            component.modifier_tokens().collect(),
+        ),
         component
             .ty()
             .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty)),
+        component
+            .varargs_annotations()
+            .map(|annotation| format_annotation(&annotation))
+            .collect(),
         component
             .name()
             .map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned())),
@@ -92,6 +113,7 @@ pub(crate) fn format_record_component(component: &RecordComponent) -> Doc {
 fn format_named_typed_declaration(
     modifiers: Doc,
     ty: Doc,
+    varargs_annotations: Vec<Doc>,
     name: Doc,
     dimensions: Doc,
     is_variable_arity: bool,
@@ -100,7 +122,15 @@ fn format_named_typed_declaration(
         modifiers,
         ty,
         if is_variable_arity {
-            text("... ")
+            if varargs_annotations.is_empty() {
+                text("... ")
+            } else {
+                concat([
+                    text(" "),
+                    inline_modifier_prefix_from_docs(varargs_annotations, Vec::new()),
+                    text("... "),
+                ])
+            }
         } else {
             text(" ")
         },

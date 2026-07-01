@@ -16,8 +16,9 @@ use crate::helpers::comments::{
     comment_forces_line, format_comment, format_token_sequence, tokens_have_comments,
 };
 use crate::helpers::lists::semicolon_list;
-use crate::helpers::modifiers::modifier_prefix_from_parts;
+use crate::helpers::modifiers::inline_modifier_prefix_from_docs;
 use crate::helpers::operators::binary_chain;
+use crate::rules::annotations::format_annotation;
 use crate::rules::declarations::format_type_declaration;
 use crate::rules::expressions::format_expression;
 use crate::rules::types::format_type;
@@ -516,13 +517,18 @@ fn format_parenthesized_catch_parameter(parameter: &CatchParameter) -> Doc {
 
 fn format_catch_parameter(parameter: &CatchParameter) -> Doc {
     let tokens = parameter.tokens();
-    let annotations = parameter.annotations().collect::<Vec<_>>();
-    if tokens_have_comments(&tokens) || !annotations.is_empty() {
+    if tokens_have_comments(&tokens) {
         return format_token_sequence(&tokens);
     }
 
     concat([
-        modifier_prefix_from_parts(annotations, parameter.modifier_tokens().collect()),
+        inline_modifier_prefix_from_docs(
+            parameter
+                .annotations()
+                .map(|annotation| format_annotation(&annotation))
+                .collect(),
+            parameter.modifier_tokens().collect(),
+        ),
         parameter.types().map_or_else(jolt_fmt_ir::nil, |types| {
             format_catch_type_list(&types, parameter.name())
         }),

@@ -18,11 +18,24 @@ pub(crate) fn modifier_prefix_from_parts(
     annotations: Vec<Annotation>,
     modifier_tokens: Vec<JavaSyntaxToken>,
 ) -> Doc {
+    modifier_prefix_from_docs(
+        annotations
+            .into_iter()
+            .map(|annotation| format_token_sequence(&annotation.tokens()))
+            .collect(),
+        modifier_tokens,
+    )
+}
+
+pub(crate) fn modifier_prefix_from_docs(
+    annotation_docs: Vec<Doc>,
+    modifier_tokens: Vec<JavaSyntaxToken>,
+) -> Doc {
     let modifier_tokens = sorted_modifier_tokens(modifier_tokens);
 
     let mut docs = Vec::new();
-    for annotation in annotations {
-        docs.push(format_token_sequence(&annotation.tokens()));
+    for annotation in annotation_docs {
+        docs.push(annotation);
         docs.push(hard_line());
     }
     if !modifier_tokens.is_empty() {
@@ -36,6 +49,25 @@ pub(crate) fn modifier_prefix_from_parts(
     }
 
     concat(docs)
+}
+
+pub(crate) fn inline_modifier_prefix_from_docs(
+    annotation_docs: Vec<Doc>,
+    modifier_tokens: Vec<JavaSyntaxToken>,
+) -> Doc {
+    let modifier_tokens = sorted_modifier_tokens(modifier_tokens);
+    let mut docs = annotation_docs;
+    docs.extend(
+        modifier_tokens
+            .into_iter()
+            .map(|token| text(token.text().to_owned())),
+    );
+
+    if docs.is_empty() {
+        jolt_fmt_ir::nil()
+    } else {
+        concat([jolt_fmt_ir::join(text(" "), docs), text(" ")])
+    }
 }
 
 fn sorted_modifier_tokens(mut tokens: Vec<JavaSyntaxToken>) -> Vec<JavaSyntaxToken> {

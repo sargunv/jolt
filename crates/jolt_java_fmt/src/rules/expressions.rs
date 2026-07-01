@@ -11,7 +11,9 @@ use jolt_java_syntax::{
 use crate::helpers::chains::member_chain;
 use crate::helpers::comments::{format_token_sequence, tokens_have_comments};
 use crate::helpers::lists::{braced_initializer_list, parenthesized_list};
+use crate::helpers::modifiers::inline_modifier_prefix_from_docs;
 use crate::helpers::operators::{assignment_expression, binary_chain, ternary_expression};
+use crate::rules::annotations::format_annotation;
 use crate::rules::declarations::format_anonymous_class_body;
 use crate::rules::statements::{format_block, format_switch_block};
 use crate::rules::types::{format_array_dimensions, format_type, format_type_argument_list};
@@ -493,7 +495,12 @@ fn format_switch_expression(expression: &SwitchExpression) -> Doc {
 }
 
 fn is_simple_untyped_lambda_parameter(parameter: &LambdaParameter) -> bool {
-    parameter.ty().is_none() && parameter.var_token().is_none() && !parameter.is_variable_arity()
+    parameter.ty().is_none()
+        && parameter.var_token().is_none()
+        && !parameter.is_variable_arity()
+        && parameter.prefix_annotations().next().is_none()
+        && parameter.varargs_annotations().next().is_none()
+        && parameter.modifier_tokens().next().is_none()
 }
 
 fn format_lambda_parameter(parameter: &LambdaParameter) -> Doc {
@@ -502,9 +509,20 @@ fn format_lambda_parameter(parameter: &LambdaParameter) -> Doc {
         return format_token_sequence(&tokens);
     }
 
+    let prefix_annotations = parameter
+        .prefix_annotations()
+        .map(|annotation| format_annotation(&annotation))
+        .collect::<Vec<_>>();
+    let modifier_tokens = parameter.modifier_tokens().collect::<Vec<_>>();
+    let has_inline_prefix = !prefix_annotations.is_empty() || !modifier_tokens.is_empty();
+    let prefix = inline_modifier_prefix_from_docs(prefix_annotations, modifier_tokens);
     let ty = parameter.ty();
     let var_token = parameter.var_token();
-    let has_prefix = ty.is_some() || var_token.is_some();
+    let has_type_prefix = ty.is_some() || var_token.is_some();
+    let varargs_annotations = parameter
+        .varargs_annotations()
+        .map(|annotation| format_annotation(&annotation))
+        .collect::<Vec<_>>();
     let ty = ty.map_or_else(
         || var_token.map_or_else(jolt_fmt_ir::nil, |token| text(token.text().to_owned())),
         |ty| format_type(&ty),
@@ -513,14 +531,26 @@ fn format_lambda_parameter(parameter: &LambdaParameter) -> Doc {
         .name()
         .map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned()));
 
-    if !has_prefix {
+    if !has_inline_prefix && !has_type_prefix {
         return name;
+    }
+    if !has_type_prefix {
+        return concat([prefix, name]);
     }
 
     concat([
+        prefix,
         ty,
         if parameter.is_variable_arity() {
-            text("... ")
+            if varargs_annotations.is_empty() {
+                text("... ")
+            } else {
+                concat([
+                    text(" "),
+                    inline_modifier_prefix_from_docs(varargs_annotations, Vec::new()),
+                    text("... "),
+                ])
+            }
         } else {
             text(" ")
         },

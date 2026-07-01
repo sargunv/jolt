@@ -14,4 +14,13 @@ return (left,right) -> left + right;
 java.util.function.Function<String[], Integer> lengths() {
 return (String... values) -> values.length;
 }
+java.util.function.Function<User, User> annotatedMapper() {
+return (@Nonnull User user) -> user;
+}
+java.util.function.Function<User, User> finalMapper() {
+return (final User user) -> user;
+}
+java.util.function.Function<String[], Integer> annotatedLengths() {
+return (String @Marker ... values) -> values.length;
+}
 }

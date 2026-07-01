@@ -466,6 +466,14 @@ impl RecordComponent {
         children(&self.syntax)
     }
 
+    pub fn prefix_annotations(&self) -> impl Iterator<Item = Annotation> {
+        annotations_before_type(&self.syntax, self.ty())
+    }
+
+    pub fn varargs_annotations(&self) -> impl Iterator<Item = Annotation> {
+        annotations_between_type_and_token(&self.syntax, self.ty(), JavaSyntaxKind::Ellipsis)
+    }
+
     pub fn modifier_tokens(&self) -> impl Iterator<Item = JavaSyntaxToken> + '_ {
         children_tokens_matching(&self.syntax, is_modifier_token)
     }
@@ -787,6 +795,14 @@ impl FormalParameterList {
 impl FormalParameter {
     pub fn annotations(&self) -> impl Iterator<Item = Annotation> + '_ {
         children(&self.syntax)
+    }
+
+    pub fn prefix_annotations(&self) -> impl Iterator<Item = Annotation> {
+        annotations_before_type(&self.syntax, self.ty())
+    }
+
+    pub fn varargs_annotations(&self) -> impl Iterator<Item = Annotation> {
+        annotations_between_type_and_token(&self.syntax, self.ty(), JavaSyntaxKind::Ellipsis)
     }
 
     pub fn modifier_tokens(&self) -> impl Iterator<Item = JavaSyntaxToken> + '_ {
@@ -1288,6 +1304,18 @@ impl LambdaParameterList {
 }
 
 impl LambdaParameter {
+    pub fn prefix_annotations(&self) -> impl Iterator<Item = Annotation> {
+        annotations_before_type(&self.syntax, self.ty())
+    }
+
+    pub fn varargs_annotations(&self) -> impl Iterator<Item = Annotation> {
+        annotations_between_type_and_token(&self.syntax, self.ty(), JavaSyntaxKind::Ellipsis)
+    }
+
+    pub fn modifier_tokens(&self) -> impl Iterator<Item = JavaSyntaxToken> + '_ {
+        children_tokens_matching(&self.syntax, is_modifier_token)
+    }
+
     #[must_use]
     pub fn var_token(&self) -> Option<JavaSyntaxToken> {
         children_tokens_matching(&self.syntax, |kind| kind == JavaSyntaxKind::Identifier)
@@ -1894,4 +1922,39 @@ fn node_leading_comment_texts(syntax: &super::JavaSyntaxNode) -> Vec<String> {
                 .collect()
         })
         .unwrap_or_default()
+}
+
+fn annotations_before_type(
+    syntax: &super::JavaSyntaxNode,
+    ty: Option<Type>,
+) -> std::vec::IntoIter<Annotation> {
+    let Some(ty) = ty else {
+        return children::<Annotation>(syntax)
+            .collect::<Vec<_>>()
+            .into_iter();
+    };
+    let type_start = ty.text_range().start();
+    children::<Annotation>(syntax)
+        .filter(|annotation| annotation.text_range().start() < type_start)
+        .collect::<Vec<_>>()
+        .into_iter()
+}
+
+fn annotations_between_type_and_token(
+    syntax: &super::JavaSyntaxNode,
+    ty: Option<Type>,
+    token_kind: JavaSyntaxKind,
+) -> std::vec::IntoIter<Annotation> {
+    let (Some(ty), Some(token)) = (ty, child_token(syntax, token_kind)) else {
+        return Vec::new().into_iter();
+    };
+    let type_end = ty.text_range().end();
+    let token_start = token.token_text_range().start();
+    children::<Annotation>(syntax)
+        .filter(|annotation| {
+            let start = annotation.text_range().start();
+            start >= type_end && start < token_start
+        })
+        .collect::<Vec<_>>()
+        .into_iter()
 }

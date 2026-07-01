@@ -5,4 +5,7 @@ try { risky(); } catch (java.io.IOException | RuntimeException ex) { return 1; }
 int recoverLong() {
 try { risky(); } catch (com.example.recovery.FirstVeryLongRecoverableException | com.example.recovery.SecondVeryLongRecoverableException | com.example.recovery.ThirdVeryLongRecoverableException ex) { return 2; }
 }
+int recoverAnnotated() {
+try { risky(); } catch (@Nonnull final Exception ex) { return 3; }
+}
 }

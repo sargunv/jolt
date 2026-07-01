@@ -156,6 +156,8 @@ Status legend:
 - `[~]` Body member category padding.
 - `[~]` Parameter and record-component lists.
 - `[x]` Varargs formal parameters and record components.
+- `[x]` Inline formal-parameter and record-component annotations, including
+  varargs type-use annotations before `...`.
 - `[~]` `throws`.
 - `[~]` Enum constants and trailing comma policy.
 - `[x]` Enum constants with annotations, arguments, and class bodies.
@@ -173,6 +175,7 @@ Status legend:
 - `[x]` Switch labels/rules/guards.
 - `[~]` `return`/`throw`/`yield`.
 - `[x]` Try/catch/finally/resources.
+- `[x]` Inline catch-parameter annotations and modifiers.
 - `[x]` `assert`/`break`/`continue`.
 
 ### 8. Expression Layer
@@ -185,7 +188,7 @@ Status legend:
 - `[~]` Calls and break-all argument lists.
 - `[~]` Member chains.
 - `[~]` Lambdas.
-- `[x]` Untyped, `var`, typed, and varargs lambda parameters.
+- `[x]` Untyped, `var`, typed, annotated, final, and varargs lambda parameters.
 - `[~]` Arrays/initializers.
 - `[~]` Casts, `instanceof`, patterns, object creation, and type arguments.
 - `[x]` Anonymous class bodies in object creation expressions.

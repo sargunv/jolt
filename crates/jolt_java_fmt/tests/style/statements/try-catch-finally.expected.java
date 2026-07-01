@@ -22,4 +22,12 @@ class Example {
       return 2;
     }
   }
+
+  int recoverAnnotated() {
+    try {
+      risky();
+    } catch (@Nonnull final Exception ex) {
+      return 3;
+    }
+  }
 }
