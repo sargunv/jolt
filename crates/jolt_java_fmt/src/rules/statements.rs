@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, concat, hard_line, text};
+use jolt_fmt_ir::{Doc, concat, group, hard_line, indent, soft_line, text};
 use jolt_java_syntax::{
     AssertStatement, BasicForStatement, Block, BlockItem, CatchClause, DoStatement,
     EnhancedForStatement, Expression, ExpressionStatement, FinallyClause, ForInitializer,
@@ -11,6 +11,7 @@ use jolt_java_syntax::{
 use crate::helpers::comments::{
     comment_forces_line, format_comment, format_token_sequence, tokens_have_comments,
 };
+use crate::helpers::lists::semicolon_list;
 use crate::rules::expressions::format_expression;
 
 pub(crate) fn format_block(block: &Block) -> Doc {
@@ -196,17 +197,26 @@ fn format_basic_for_statement(statement: &BasicForStatement) -> Doc {
         .condition()
         .map(|condition| format_expression(&condition));
     let update = statement.update().map(|update| format_for_update(&update));
+    let is_empty_header = initializer.is_none() && condition.is_none() && update.is_none();
+    let header = if is_empty_header {
+        concat([text("for ("), text(";;"), text(")")])
+    } else {
+        group(concat([
+            text("for ("),
+            indent(concat([
+                soft_line(),
+                semicolon_list(vec![
+                    initializer.unwrap_or_else(jolt_fmt_ir::nil),
+                    condition.unwrap_or_else(jolt_fmt_ir::nil),
+                    update.unwrap_or_else(jolt_fmt_ir::nil),
+                ]),
+            ])),
+            soft_line(),
+            text(")"),
+        ]))
+    };
 
-    concat([
-        text("for ("),
-        initializer.unwrap_or_else(jolt_fmt_ir::nil),
-        text(";"),
-        format_for_segment_after_semicolon(condition.as_ref()),
-        text(";"),
-        format_for_segment_after_semicolon(update.as_ref()),
-        text(") "),
-        statement_body_as_block(statement.body()),
-    ])
+    concat([header, text(" "), statement_body_as_block(statement.body())])
 }
 
 fn format_enhanced_for_statement(statement: &EnhancedForStatement) -> Doc {
@@ -258,12 +268,6 @@ fn format_statement_expression_list(expressions: &StatementExpressionList) -> Do
     )
 }
 
-fn format_for_segment_after_semicolon(segment: Option<&Doc>) -> Doc {
-    segment
-        .cloned()
-        .map_or_else(jolt_fmt_ir::nil, |segment| concat([text(" "), segment]))
-}
-
 fn format_return_statement(statement: &ReturnStatement) -> Doc {
     format_keyword_expression_statement("return", statement.expression())
 }
@@ -280,7 +284,12 @@ fn format_keyword_expression_statement(keyword: &str, expression: Option<Express
     concat([
         text(keyword.to_owned()),
         expression.map_or_else(jolt_fmt_ir::nil, |expression| {
-            concat([text(" "), format_expression(&expression)])
+            let expression_doc = concat([text(" "), format_expression(&expression)]);
+            if matches!(expression, Expression::SwitchExpression(_)) {
+                expression_doc
+            } else {
+                indent(expression_doc)
+            }
         }),
         text(";"),
     ])

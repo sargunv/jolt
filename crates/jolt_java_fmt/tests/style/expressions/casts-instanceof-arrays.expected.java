@@ -1,6 +1,7 @@
 class Example {
   boolean matches(Object value) {
-    return (String) value instanceof String text || value instanceof java.util.List<?>;
+    return (String) value instanceof String text
+      || value instanceof java.util.List<?>;
   }
 
   int[] values(int size, int count) {

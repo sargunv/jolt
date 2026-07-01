@@ -9,5 +9,12 @@ class Example {
     for (; ready(); tick()) {
       run();
     }
+    for (
+      int index = startIndex, limit = computeLimit(input);
+      index < limit && shouldContinue(index);
+      index++, processed++
+    ) {
+      run(index);
+    }
   }
 }

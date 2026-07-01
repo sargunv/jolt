@@ -20,11 +20,11 @@ use super::{
     ReturnStatement, Statement, StatementExpressionList, StaticInitializer, SwitchBlock,
     SwitchBlockEntry, SwitchBlockStatementGroup, SwitchExpression, SwitchLabel, SwitchRule,
     SwitchStatement, SynchronizedStatement, ThrowStatement, ThrowsClause, TryStatement,
-    TryWithResourcesStatement, Type, TypeArgumentList, TypeDeclaration, TypeParameter,
-    TypeParameterList, UnaryExpression, VariableAccess, VariableDeclarator, VariableDeclaratorList,
-    VariableInitializer, VariableInitializerValue, WhileStatement, YieldStatement, child,
-    child_family, child_token, child_token_in, children, children_family, children_tokens_matching,
-    nth_child_family, nth_child_token, tokens,
+    TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList, TypeDeclaration,
+    TypeParameter, TypeParameterList, UnaryExpression, VariableAccess, VariableDeclarator,
+    VariableDeclaratorList, VariableInitializer, VariableInitializerValue, WhileStatement,
+    YieldStatement, child, child_family, child_token, child_token_in, children, children_family,
+    children_tokens_matching, nth_child_family, nth_child_token, tokens,
 };
 use jolt_syntax::TriviaKind;
 
@@ -635,6 +635,12 @@ impl MethodInvocationExpression {
 impl ArgumentList {
     pub fn arguments(&self) -> impl Iterator<Item = Expression> + '_ {
         children_family(&self.syntax)
+    }
+}
+
+impl TypeArgumentList {
+    pub fn arguments(&self) -> impl Iterator<Item = TypeArgument> + '_ {
+        children(&self.syntax)
     }
 }
 

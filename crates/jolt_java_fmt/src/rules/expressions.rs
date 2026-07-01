@@ -4,10 +4,14 @@ use jolt_java_syntax::{
     AssignmentExpression, BinaryExpression, CastExpression, ConditionalExpression, DimExpression,
     Expression, FieldAccessExpression, InstanceofExpression, LambdaExpression, LambdaParameter,
     MethodInvocationExpression, ObjectCreationExpression, ParenthesizedExpression,
-    PostfixExpression, SwitchExpression, UnaryExpression, VariableInitializerValue,
+    PostfixExpression, SwitchExpression, TypeArgumentList, UnaryExpression,
+    VariableInitializerValue,
 };
 
+use crate::helpers::chains::member_chain;
 use crate::helpers::comments::{format_token_sequence, tokens_have_comments};
+use crate::helpers::lists::{angle_bracket_list, braced_initializer_list, parenthesized_list};
+use crate::helpers::operators::{assignment_expression, binary_chain, ternary_expression};
 use crate::rules::statements::{format_block, format_switch_block};
 
 pub(crate) fn format_expression(expression: &Expression) -> Doc {
@@ -57,59 +61,40 @@ fn format_parenthesized_expression(expression: &ParenthesizedExpression) -> Doc 
 }
 
 fn format_assignment_expression(expression: &AssignmentExpression) -> Doc {
-    group(concat([
+    assignment_expression(
         expression
             .left()
             .map_or_else(jolt_fmt_ir::nil, |left| format_expression(&left)),
-        text(" "),
-        text(
-            expression
-                .operator()
-                .map_or_else(String::new, |operator| operator.text().to_owned()),
-        ),
-        text(" "),
+        expression
+            .operator()
+            .map_or_else(String::new, |operator| operator.text().to_owned()),
         expression
             .right()
             .map_or_else(jolt_fmt_ir::nil, |right| format_expression(&right)),
-    ]))
+    )
 }
 
 fn format_conditional_expression(expression: &ConditionalExpression) -> Doc {
-    group(concat([
+    ternary_expression(
         expression
             .condition()
             .map_or_else(jolt_fmt_ir::nil, |condition| format_expression(&condition)),
-        text(" ? "),
         expression
             .true_expression()
             .map_or_else(jolt_fmt_ir::nil, |expression| {
                 format_expression(&expression)
             }),
-        text(" : "),
         expression
             .false_expression()
             .map_or_else(jolt_fmt_ir::nil, |expression| {
                 format_expression(&expression)
             }),
-    ]))
+    )
 }
 
 fn format_binary_expression(expression: &BinaryExpression) -> Doc {
-    group(concat([
-        expression
-            .left()
-            .map_or_else(jolt_fmt_ir::nil, |left| format_expression(&left)),
-        text(" "),
-        text(
-            expression
-                .operator()
-                .map_or_else(String::new, |operator| operator.text().to_owned()),
-        ),
-        text(" "),
-        expression
-            .right()
-            .map_or_else(jolt_fmt_ir::nil, |right| format_expression(&right)),
-    ]))
+    let (first, rest) = flatten_binary_expression(expression);
+    binary_chain(format_expression(&first), rest)
 }
 
 fn format_unary_expression(expression: &UnaryExpression) -> Doc {
@@ -139,6 +124,10 @@ fn format_postfix_expression(expression: &PostfixExpression) -> Doc {
 }
 
 fn format_method_invocation_expression(expression: &MethodInvocationExpression) -> Doc {
+    if let Some(chain) = collect_member_chain(&Expression::from(expression.clone())) {
+        return format_member_chain(chain);
+    }
+
     group(concat([
         format_method_invocation_callee(expression),
         format_argument_list(expression.arguments()),
@@ -146,6 +135,10 @@ fn format_method_invocation_expression(expression: &MethodInvocationExpression) 
 }
 
 fn format_field_access_expression(expression: &FieldAccessExpression) -> Doc {
+    if let Some(chain) = collect_member_chain(&Expression::from(expression.clone())) {
+        return format_member_chain(chain);
+    }
+
     group(concat([
         expression
             .receiver()
@@ -227,11 +220,7 @@ fn format_array_initializer(initializer: &ArrayInitializer) -> Doc {
         .map(format_variable_initializer_value)
         .collect::<Vec<_>>();
 
-    if values.is_empty() {
-        return text("{}");
-    }
-
-    concat([text("{"), jolt_fmt_ir::join(text(", "), values), text("}")])
+    braced_initializer_list(values)
 }
 
 fn format_variable_initializer_value(value: VariableInitializerValue) -> Doc {
@@ -352,7 +341,7 @@ fn format_method_invocation_callee(expression: &MethodInvocationExpression) -> D
             expression
                 .type_arguments()
                 .map_or_else(jolt_fmt_ir::nil, |arguments| {
-                    format_token_sequence(&arguments.tokens())
+                    format_type_argument_list(&arguments)
                 }),
             text(name.text().to_owned()),
         ]);
@@ -376,15 +365,7 @@ fn format_argument_list(arguments: Option<ArgumentList>) -> Doc {
         .map(|argument| format_expression(&argument))
         .collect::<Vec<_>>();
 
-    if arguments.is_empty() {
-        return text("()");
-    }
-
-    concat([
-        text("("),
-        jolt_fmt_ir::join(text(", "), arguments),
-        text(")"),
-    ])
+    parenthesized_list(arguments)
 }
 
 fn format_lambda_expression(expression: &LambdaExpression) -> Doc {
@@ -458,4 +439,144 @@ fn is_simple_untyped_lambda_parameter(parameter: &LambdaParameter) -> bool {
         && parameter
             .name()
             .is_some_and(|name| parameter.source_text().trim() == name.text())
+}
+
+struct MemberChainParts {
+    root: Expression,
+    suffixes: Vec<Doc>,
+}
+
+fn collect_member_chain(expression: &Expression) -> Option<MemberChainParts> {
+    match expression {
+        Expression::MethodInvocationExpression(invocation) => {
+            let name = invocation.direct_method_name()?;
+            let qualifier = invocation.qualifier()?;
+            let suffix = concat([
+                text("."),
+                invocation
+                    .type_arguments()
+                    .map_or_else(jolt_fmt_ir::nil, |arguments| {
+                        format_type_argument_list(&arguments)
+                    }),
+                text(name.text().to_owned()),
+                format_argument_list(invocation.arguments()),
+            ]);
+            Some(append_chain_suffix(qualifier, suffix))
+        }
+        Expression::FieldAccessExpression(access) => {
+            let receiver = access.receiver()?;
+            let name = access.field_name()?;
+            Some(append_chain_suffix(
+                receiver,
+                concat([text("."), text(name.text().to_owned())]),
+            ))
+        }
+        _ => None,
+    }
+}
+
+fn append_chain_suffix(receiver: Expression, suffix: Doc) -> MemberChainParts {
+    if let Some(mut chain) = collect_member_chain(&receiver) {
+        chain.suffixes.push(suffix);
+        return chain;
+    }
+
+    MemberChainParts {
+        root: receiver,
+        suffixes: vec![suffix],
+    }
+}
+
+fn format_member_chain(chain: MemberChainParts) -> Doc {
+    let keep_first_suffix_with_root = is_simple_member_chain_root(&chain.root);
+    member_chain(
+        format_expression(&chain.root),
+        chain.suffixes,
+        keep_first_suffix_with_root,
+    )
+}
+
+const fn is_simple_member_chain_root(expression: &Expression) -> bool {
+    matches!(
+        expression,
+        Expression::NameExpression(_)
+            | Expression::ThisExpression(_)
+            | Expression::SuperExpression(_)
+            | Expression::ClassLiteralExpression(_)
+    )
+}
+
+fn flatten_binary_expression(expression: &BinaryExpression) -> (Expression, Vec<(String, Doc)>) {
+    let operator = expression
+        .operator()
+        .map_or_else(String::new, |operator| operator.text().to_owned());
+    if !is_flattenable_binary_operator(&operator) {
+        return (
+            expression
+                .left()
+                .unwrap_or_else(|| Expression::from(expression.clone())),
+            vec![(
+                operator,
+                expression
+                    .right()
+                    .map_or_else(jolt_fmt_ir::nil, |right| format_expression(&right)),
+            )],
+        );
+    }
+
+    let mut operands = Vec::new();
+    collect_binary_operands(
+        &Expression::from(expression.clone()),
+        &operator,
+        &mut operands,
+    );
+    let mut operands = operands.into_iter();
+    let first = operands
+        .next()
+        .unwrap_or_else(|| Expression::from(expression.clone()));
+    let rest = operands
+        .map(|operand| (operator.clone(), format_expression(&operand)))
+        .collect();
+
+    (first, rest)
+}
+
+fn collect_binary_operands(
+    expression: &Expression,
+    operator: &str,
+    operands: &mut Vec<Expression>,
+) {
+    if let Expression::BinaryExpression(binary) = expression
+        && binary
+            .operator()
+            .is_some_and(|token| token.text() == operator)
+    {
+        if let Some(left) = binary.left() {
+            collect_binary_operands(&left, operator, operands);
+        }
+        if let Some(right) = binary.right() {
+            collect_binary_operands(&right, operator, operands);
+        }
+        return;
+    }
+
+    operands.push(expression.clone());
+}
+
+const fn is_flattenable_binary_operator(operator: &str) -> bool {
+    matches!(operator.as_bytes(), b"&&" | b"||")
+}
+
+fn format_type_argument_list(arguments: &TypeArgumentList) -> Doc {
+    let tokens = arguments.tokens();
+    if tokens_have_comments(&tokens) {
+        return format_token_sequence(&tokens);
+    }
+
+    let arguments = arguments
+        .arguments()
+        .map(|argument| format_token_sequence(&argument.tokens()))
+        .collect::<Vec<_>>();
+
+    angle_bracket_list(arguments)
 }

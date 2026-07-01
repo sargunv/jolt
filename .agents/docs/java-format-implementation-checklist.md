@@ -17,7 +17,7 @@ Status legend:
 - `[~]` Build layer by layer rather than proof-grade vertical slices.
 - `[~]` Start with tests that pin style-guide behavior.
 - `[~]` Add missing CST accessors before printer workarounds.
-- `[ ]` Add reusable layout helpers before full rule implementation.
+- `[~]` Add reusable layout helpers before full rule implementation.
 - `[ ]` Keep rendering bounded and linear.
 
 ## Target Layering
@@ -51,7 +51,7 @@ Status legend:
 - `[~]` Add program/import/module/name/comment fixtures.
 - `[~]` Add declaration/type/parameter fixtures.
 - `[~]` Add statement/block/switch/try fixtures.
-- `[ ]` Add expression/operator/call/chain/lambda fixtures.
+- `[x]` Add expression/operator/call/chain/lambda fixtures.
 - `[x]` Assert every rule fixture formats successfully.
 - `[x]` Assert every rule fixture equals expected output.
 - `[x]` Assert formatting expected fixtures is unchanged.
@@ -87,19 +87,19 @@ Status legend:
 ## Helper Organization
 
 - `[~]` `comma_list`
-- `[ ]` `semicolon_list`
-- `[~]` `parenthesized_list`
-- `[ ]` `angle_bracket_list`
+- `[x]` `semicolon_list`
+- `[x]` `parenthesized_list`
+- `[x]` `angle_bracket_list`
 - `[~]` `braced_block`
 - `[ ]` `declaration_header`
 - `[~]` `member_body`
 - `[~]` `modifier_list`
 - `[ ]` `annotation_group`
 - `[ ]` `assignment_rhs`
-- `[ ]` `binary_chain`
-- `[ ]` `ternary_expression`
-- `[ ]` `argument_list`
-- `[ ]` `member_chain`
+- `[x]` `binary_chain`
+- `[x]` `ternary_expression`
+- `[x]` `argument_list`
+- `[x]` `member_chain`
 - `[ ]` `qualified_name`
 - `[~]` `line_comment`
 - `[~]` `block_comment`
@@ -129,12 +129,12 @@ Status legend:
 
 ### 4. Low-Level Helpers
 
-- `[ ]` Broken closing delimiter on its own line.
-- `[ ]` Trailing separator policies.
+- `[~]` Broken closing delimiter on its own line.
+- `[~]` Trailing separator policies.
 - `[ ]` Body blank-line capping.
 - `[ ]` Leading-operator chains with flat continuation alignment.
-- `[ ]` Break-all argument lists.
-- `[ ]` Ruff-shaped member-chain heads.
+- `[x]` Break-all argument lists.
+- `[~]` Ruff-shaped member-chain heads.
 
 ### 5. Program Layer
 
@@ -163,7 +163,7 @@ Status legend:
 - `[~]` Blocks and braced bodies.
 - `[x]` Labels.
 - `[~]` `if`/`else`.
-- `[~]` Loops and broken `for` headers.
+- `[x]` Loops and broken `for` headers.
 - `[x]` Switch labels/rules/guards.
 - `[~]` `return`/`throw`/`yield`.
 - `[x]` Try/catch/finally/resources.
