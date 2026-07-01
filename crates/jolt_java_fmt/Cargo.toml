@@ -6,5 +6,10 @@ license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 
+[dependencies]
+jolt_diagnostics = { path = "../jolt_diagnostics" }
+jolt_fmt_ir = { path = "../jolt_fmt_ir" }
+jolt_java_syntax = { path = "../jolt_java_syntax" }
+
 [lints]
 workspace = true

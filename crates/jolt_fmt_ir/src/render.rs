@@ -371,7 +371,9 @@ impl Renderer {
         let base_width = effective_levels * u32::from(self.options.indent_width);
         match self.options.indent_style {
             IndentStyle::Space => {
-                let width = (i64::from(base_width) + i64::from(self.align_spaces)).max(0) as u32;
+                let width = saturating_nonnegative_u32(
+                    i64::from(base_width) + i64::from(self.align_spaces),
+                );
                 push_repeated(&mut self.output, ' ', width);
                 self.column = TextWidth::new(width);
             }
@@ -382,8 +384,9 @@ impl Renderer {
                     push_repeated(&mut self.output, ' ', spaces);
                     self.column = TextWidth::new(base_width + spaces);
                 } else {
-                    let width =
-                        (i64::from(base_width) + i64::from(self.align_spaces)).max(0) as u32;
+                    let width = saturating_nonnegative_u32(
+                        i64::from(base_width) + i64::from(self.align_spaces),
+                    );
                     let tab_width = u32::from(self.options.indent_width);
                     let tabs = width / tab_width;
                     let spaces = width % tab_width;
@@ -434,6 +437,10 @@ impl Renderer {
         self.column = add_width(self.column, width);
         self.max_column = self.max_column.max(self.column);
     }
+}
+
+fn saturating_nonnegative_u32(value: i64) -> u32 {
+    u32::try_from(value.max(0)).unwrap_or(u32::MAX)
 }
 
 impl LineEnding {

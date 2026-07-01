@@ -135,6 +135,7 @@ fn module_declaration_directives_traverse_real_parser_output() {
         .directives()
         .map(|directive| directive.kind())
         .collect::<Vec<_>>();
+    let directives = module.directives().collect::<Vec<_>>();
     assert_eq!(
         directive_kinds,
         [
@@ -143,6 +144,40 @@ fn module_declaration_directives_traverse_real_parser_output() {
             JavaSyntaxKind::OpensDirective,
             JavaSyntaxKind::UsesDirective,
             JavaSyntaxKind::ProvidesDirective,
+        ]
+    );
+    assert!(module.is_open());
+    assert_eq!(
+        module.name().expect("module name").source_text().trim(),
+        "example.module"
+    );
+
+    let ModuleDirective::RequiresDirective(requires) = &directives[0] else {
+        panic!("expected requires directive");
+    };
+    assert!(requires.has_static_modifier());
+    assert!(requires.has_transitive_modifier());
+
+    let directive_names = directives
+        .iter()
+        .map(|directive| {
+            directive
+                .names()
+                .map(|name| name.source_text().trim().to_owned())
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(
+        directive_names,
+        [
+            vec!["java.sql".to_owned()],
+            vec!["example.api".to_owned(), "friend.module".to_owned()],
+            vec!["example.internal".to_owned(), "friend.module".to_owned()],
+            vec!["example.Service".to_owned()],
+            vec![
+                "example.Service".to_owned(),
+                "example.ServiceImpl".to_owned()
+            ],
         ]
     );
 }
@@ -234,6 +269,34 @@ fn import_declarations_expose_structured_names() {
                 "java.util.Collections".to_owned()
             ),
             (JavaSyntaxKind::QualifiedName, "java.base".to_owned()),
+        ]
+    );
+
+    let import_roles = syntax
+        .imports()
+        .map(|import| {
+            (
+                import.is_static(),
+                import.is_star(),
+                import.is_module(),
+                import.import_path().expect("import path"),
+            )
+        })
+        .collect::<Vec<_>>();
+
+    assert_eq!(
+        import_roles,
+        [
+            (false, false, false, "java.util.List".to_owned()),
+            (false, true, false, "java.util.*".to_owned()),
+            (
+                true,
+                false,
+                false,
+                "java.util.Collections.emptyList".to_owned()
+            ),
+            (true, true, false, "java.util.Collections.*".to_owned()),
+            (false, false, true, "java.base".to_owned()),
         ]
     );
 }
@@ -484,6 +547,7 @@ fn annotations_expose_argument_lists() {
 }
 
 #[test]
+#[allow(clippy::too_many_lines)]
 fn declaration_accessors_expose_formatter_facing_structure() {
     let syntax = parse_clean(
         r#"
@@ -724,9 +788,10 @@ fn interface_and_annotation_body_accessors_expose_members() {
 }
 
 #[test]
+#[allow(clippy::too_many_lines)]
 fn expression_and_statement_accessors_expose_layout_roles() {
     let syntax = parse_clean(
-        r#"
+        r"
                 class Expressions {
                     void test(int a, int b, int c, boolean ready) {
                         int value = (a + b) * -c;
@@ -739,7 +804,7 @@ fn expression_and_statement_accessors_expose_layout_roles() {
                         return;
                     }
                 }
-            "#,
+            ",
     );
 
     let assignment = descendants::<AssignmentExpression>(&syntax)
@@ -790,7 +855,7 @@ fn expression_and_statement_accessors_expose_layout_roles() {
 
     let binary = descendants::<BinaryExpression>(&syntax)
         .into_iter()
-        .find(|binary| binary.source_text().contains("*"))
+        .find(|binary| binary.source_text().contains('*'))
         .expect("binary expression");
     assert_eq!(
         binary.operator().expect("binary operator").kind(),

@@ -251,6 +251,11 @@ pub fn indent(doc: Doc) -> Doc {
     indent_by(1, doc)
 }
 
+/// Creates a document indented by `levels` indentation levels.
+///
+/// # Panics
+///
+/// Panics if `levels` does not fit in the renderer's signed indentation delta.
 #[must_use]
 pub fn indent_by(levels: u16, doc: Doc) -> Doc {
     Doc(DocKind::Indent(Indent {
@@ -264,6 +269,11 @@ pub fn dedent(doc: Doc) -> Doc {
     dedent_by(1, doc)
 }
 
+/// Creates a document dedented by `levels` indentation levels.
+///
+/// # Panics
+///
+/// Panics if `levels` does not fit in the renderer's signed indentation delta.
 #[must_use]
 pub fn dedent_by(levels: u16, doc: Doc) -> Doc {
     Doc(DocKind::Indent(Indent {

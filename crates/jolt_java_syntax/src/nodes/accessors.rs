@@ -12,15 +12,17 @@ use super::{
     JavaSyntaxToken, LambdaExpression, LambdaParameter, LambdaParameterList,
     LocalVariableDeclaration, MethodDeclaration, MethodInvocationExpression, ModifierList,
     ModuleDeclaration, ModuleDirective, ModuleDirectiveNode, NameSyntax, ObjectCreationExpression,
-    PackageDeclaration, ParenthesizedExpression, PermitsClause, PostfixExpression, RecordBody,
-    RecordComponent, RecordComponentList, RecordDeclaration, ReturnStatement, Statement,
-    StatementExpressionList, StaticInitializer, SwitchBlock, SwitchBlockStatementGroup,
-    SwitchExpression, SwitchRule, SwitchStatement, SynchronizedStatement, ThrowStatement,
-    ThrowsClause, Type, TypeDeclaration, TypeParameter, TypeParameterList, UnaryExpression,
-    VariableDeclarator, VariableDeclaratorList, VariableInitializer, VariableInitializerValue,
-    WhileStatement, YieldStatement, child, child_family, child_token, child_token_in, children,
-    children_family, children_tokens_matching, nth_child_family, nth_child_token,
+    PackageDeclaration, ParenthesizedExpression, PermitsClause, PostfixExpression,
+    ProvidesDirective, RecordBody, RecordComponent, RecordComponentList, RecordDeclaration,
+    RequiresDirective, ReturnStatement, Statement, StatementExpressionList, StaticInitializer,
+    SwitchBlock, SwitchBlockStatementGroup, SwitchExpression, SwitchRule, SwitchStatement,
+    SynchronizedStatement, ThrowStatement, ThrowsClause, Type, TypeDeclaration, TypeParameter,
+    TypeParameterList, UnaryExpression, VariableDeclarator, VariableDeclaratorList,
+    VariableInitializer, VariableInitializerValue, WhileStatement, YieldStatement, child,
+    child_family, child_token, child_token_in, children, children_family, children_tokens_matching,
+    nth_child_family, nth_child_token,
 };
+use jolt_syntax::TriviaKind;
 
 impl CompilationUnit {
     #[must_use]
@@ -59,6 +61,52 @@ impl CompilationUnit {
 }
 
 impl ImportDeclaration {
+    #[must_use]
+    pub fn name(&self) -> Option<NameSyntax> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn is_static(&self) -> bool {
+        child_token(&self.syntax, JavaSyntaxKind::StaticKw).is_some()
+    }
+
+    #[must_use]
+    pub fn is_star(&self) -> bool {
+        child_token(&self.syntax, JavaSyntaxKind::Star).is_some()
+    }
+
+    #[must_use]
+    pub fn is_module(&self) -> bool {
+        self.contextual_keyword("module").is_some()
+    }
+
+    #[must_use]
+    pub fn import_path(&self) -> Option<String> {
+        let mut path = self.name()?.source_text();
+        if self.is_star() {
+            path.push_str(".*");
+        }
+        Some(path)
+    }
+
+    #[must_use]
+    pub fn has_leading_comment(&self) -> bool {
+        node_has_leading_comment(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn leading_comment_texts(&self) -> Vec<String> {
+        node_leading_comment_texts(&self.syntax)
+    }
+
+    fn contextual_keyword(&self, text: &str) -> Option<JavaSyntaxToken> {
+        children_tokens_matching(&self.syntax, |kind| kind == JavaSyntaxKind::Identifier)
+            .find(|token| token.text() == text)
+    }
+}
+
+impl PackageDeclaration {
     #[must_use]
     pub fn name(&self) -> Option<NameSyntax> {
         child_family(&self.syntax)
@@ -939,8 +987,23 @@ const BINARY_OPERATORS: &[JavaSyntaxKind] = &[
 ];
 
 impl ModuleDeclaration {
+    #[must_use]
+    pub fn is_open(&self) -> bool {
+        self.contextual_keyword("open").is_some()
+    }
+
+    #[must_use]
+    pub fn name(&self) -> Option<NameSyntax> {
+        child_family(&self.syntax)
+    }
+
     pub fn directives(&self) -> impl Iterator<Item = ModuleDirective> + '_ {
         children::<ModuleDirectiveNode>(&self.syntax).filter_map(|node| node.directive())
+    }
+
+    fn contextual_keyword(&self, text: &str) -> Option<JavaSyntaxToken> {
+        children_tokens_matching(&self.syntax, |kind| kind == JavaSyntaxKind::Identifier)
+            .find(|token| token.text() == text)
     }
 }
 
@@ -948,6 +1011,59 @@ impl ModuleDirectiveNode {
     #[must_use]
     pub fn directive(&self) -> Option<ModuleDirective> {
         child_family(&self.syntax)
+    }
+}
+
+impl ModuleDirective {
+    pub fn names(&self) -> impl Iterator<Item = NameSyntax> + '_ {
+        children_family(self.syntax())
+    }
+
+    #[must_use]
+    pub fn primary_name(&self) -> Option<NameSyntax> {
+        self.names().next()
+    }
+
+    #[must_use]
+    pub fn has_leading_comment(&self) -> bool {
+        node_has_leading_comment(self.syntax())
+    }
+
+    #[must_use]
+    pub fn leading_comment_texts(&self) -> Vec<String> {
+        node_leading_comment_texts(self.syntax())
+    }
+}
+
+impl RequiresDirective {
+    #[must_use]
+    pub fn has_static_modifier(&self) -> bool {
+        child_token(&self.syntax, JavaSyntaxKind::StaticKw).is_some()
+    }
+
+    #[must_use]
+    pub fn has_transitive_modifier(&self) -> bool {
+        self.contextual_keyword("transitive").is_some()
+    }
+
+    fn contextual_keyword(&self, text: &str) -> Option<JavaSyntaxToken> {
+        children_tokens_matching(&self.syntax, |kind| kind == JavaSyntaxKind::Identifier)
+            .find(|token| token.text() == text)
+    }
+}
+
+impl ProvidesDirective {
+    #[must_use]
+    pub fn service_name(&self) -> Option<NameSyntax> {
+        self.names().next()
+    }
+
+    pub fn implementation_names(&self) -> impl Iterator<Item = NameSyntax> + '_ {
+        self.names().skip(1)
+    }
+
+    fn names(&self) -> impl Iterator<Item = NameSyntax> + '_ {
+        children_family(&self.syntax)
     }
 }
 
@@ -971,4 +1087,34 @@ impl BlockStatement {
     pub fn statement(&self) -> Option<Statement> {
         child_family(&self.syntax)
     }
+}
+
+fn node_has_leading_comment(syntax: &super::JavaSyntaxNode) -> bool {
+    syntax.first_token().is_some_and(|token| {
+        token.leading().iter().any(|trivia| {
+            matches!(
+                trivia.kind(),
+                TriviaKind::LineComment | TriviaKind::BlockComment | TriviaKind::DocComment
+            )
+        })
+    })
+}
+
+fn node_leading_comment_texts(syntax: &super::JavaSyntaxNode) -> Vec<String> {
+    syntax
+        .first_token()
+        .map(|token| {
+            token
+                .leading()
+                .iter()
+                .filter(|trivia| {
+                    matches!(
+                        trivia.kind(),
+                        TriviaKind::LineComment | TriviaKind::BlockComment | TriviaKind::DocComment
+                    )
+                })
+                .map(|trivia| trivia.text().trim().to_owned())
+                .collect()
+        })
+        .unwrap_or_default()
 }

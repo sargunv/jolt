@@ -35,7 +35,9 @@ style from dozens of settings.
 
 The Java policy is documented in [`java-format-style.md`](java-format-style.md).
 The implementation approach is documented in
-[`java-format-implementation-spec.md`](java-format-implementation-spec.md).
+[`java-format-implementation-spec.md`](java-format-implementation-spec.md), with
+progress and permanent intentional deviations tracked in
+[`java-format-implementation-checklist.md`](java-format-implementation-checklist.md).
 
 ### Out of scope for the first product
 
@@ -924,7 +926,10 @@ document IR, and renderer.
 
 The implementation target is the Jolt style guide in
 [`java-format-style.md`](java-format-style.md). Build it according to
-[`java-format-implementation-spec.md`](java-format-implementation-spec.md).
+[`java-format-implementation-spec.md`](java-format-implementation-spec.md) and
+keep
+[`java-format-implementation-checklist.md`](java-format-implementation-checklist.md)
+up to date as implementation lands.
 
 Add:
 

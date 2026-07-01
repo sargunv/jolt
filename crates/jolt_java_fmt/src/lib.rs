@@ -1,4 +1,6 @@
 //! Java formatter implementation for Jolt.
 
-/// Placeholder exported item for the initial workspace skeleton.
-pub const CRATE_NAME: &str = "jolt_java_fmt";
+mod format;
+mod rules;
+
+pub use format::{JavaFormatOptions, JavaFormatResult, format_source};

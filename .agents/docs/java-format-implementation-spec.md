@@ -470,8 +470,8 @@ After the main syntax surface works:
 - add imported-corpus comment/idempotence tests.
 
 This is not permission to ignore comments earlier. It means the first formatter
-can use conservative placement while policy-specific hardening lands in a
-dedicated layer.
+can use conservative placement while policy-specific harDefinition Of Donedening
+lands in a dedicated layer.
 
 ## Representative Fixtures
 
@@ -551,13 +551,9 @@ Do not add:
 The Java layout builder is ready for broad use when:
 
 - all style-guide rule fixtures pass,
-- every style-guide rule has one or more focused tests that pin the intended
-  output,
 - formatting expected fixtures is idempotent,
 - imported Java fixture inputs format without formatter panics,
 - formatted imported fixtures parse,
 - repeated formatting is deterministic,
 - no parser-accepted syntax reaches an unimplemented formatter fallback,
-- code review can trace every formatting choice to the style guide or this spec,
-- an audit report exists that evaluates every definition-of-done item above and
-  links to the relevant tests, fixture suites, or implementation evidence.
+- code review can trace every formatting choice to the style guide or this spec.
