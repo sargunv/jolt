@@ -433,15 +433,20 @@ fn format_method_reference_receiver(expression: &MethodReferenceExpression) -> D
 }
 
 fn format_array_access_expression(expression: &ArrayAccessExpression) -> Doc {
+    let open_bracket = expression.open_bracket();
+    let close_bracket = expression.close_bracket();
+
     group(concat([
         expression
             .array()
             .map_or_else(jolt_fmt_ir::nil, |array| format_expression(&array)),
-        text("["),
-        expression
-            .index()
-            .map_or_else(jolt_fmt_ir::nil, |index| format_expression(&index)),
-        text("]"),
+        format_bracketed_expression(
+            open_bracket.as_ref(),
+            expression
+                .index()
+                .map_or_else(jolt_fmt_ir::nil, |index| format_expression(&index)),
+            close_bracket.as_ref(),
+        ),
     ]))
 }
 
@@ -494,14 +499,82 @@ fn format_array_creation_expression(expression: &ArrayCreationExpression) -> Doc
 }
 
 fn format_dim_expression(dimension: &DimExpression) -> Doc {
-    concat([
-        text("["),
+    let open_bracket = dimension.open_bracket();
+    let close_bracket = dimension.close_bracket();
+
+    format_bracketed_expression(
+        open_bracket.as_ref(),
         dimension
             .expression()
             .map_or_else(jolt_fmt_ir::nil, |expression| {
                 format_expression(&expression)
             }),
-        text("]"),
+        close_bracket.as_ref(),
+    )
+}
+
+fn format_bracketed_expression(
+    open: Option<&JavaSyntaxToken>,
+    expression: Doc,
+    close: Option<&JavaSyntaxToken>,
+) -> Doc {
+    group(concat([
+        format_open_bracket(open),
+        indent(concat([format_open_bracket_spacing(open), expression])),
+        format_close_bracket_with_spacing(close),
+    ]))
+}
+
+fn format_open_bracket(open: Option<&JavaSyntaxToken>) -> Doc {
+    open.map_or_else(
+        || text("["),
+        |open| concat([format_leading_comments(open), text("[")]),
+    )
+}
+
+fn format_open_bracket_spacing(open: Option<&JavaSyntaxToken>) -> Doc {
+    let Some(open) = open else {
+        return jolt_fmt_ir::nil();
+    };
+
+    if open.trailing_comments().is_empty() {
+        return jolt_fmt_ir::nil();
+    }
+
+    concat([
+        format_trailing_comments_before_line_break(open),
+        if open.trailing_comments().iter().any(comment_forces_line) {
+            hard_line()
+        } else {
+            text(" ")
+        },
+    ])
+}
+
+fn format_close_bracket_with_spacing(close: Option<&JavaSyntaxToken>) -> Doc {
+    let close_has_leading_comments =
+        close.is_some_and(|token| !token.leading_comments().is_empty());
+
+    concat([
+        if close_has_leading_comments {
+            line()
+        } else {
+            jolt_fmt_ir::nil()
+        },
+        close.map_or_else(
+            || text("]"),
+            |close| {
+                concat([
+                    if close_has_leading_comments {
+                        format_leading_comments(close)
+                    } else {
+                        jolt_fmt_ir::nil()
+                    },
+                    text("]"),
+                    format_trailing_comments(close),
+                ])
+            },
+        ),
     ])
 }
 

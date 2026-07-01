@@ -3,8 +3,16 @@ class Example {
     return values[index];
   }
 
+  Object pickCommented(Object[] values, int index) {
+    return values[ /* index */ index] /* after */;
+  }
+
   Object create(Object first, Object second) {
     return new Outer<String>().new Inner(first, second);
+  }
+
+  int[] sized(int count) {
+    return new int[ /* size */ count] /* sized */;
   }
 
   int[] numbers() {

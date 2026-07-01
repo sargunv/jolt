@@ -2087,9 +2087,11 @@ fn expression_and_statement_accessors_expose_layout_roles() {
     let syntax = parse_clean(
         r"
                 class Expressions {
-                    void test(int a, int b, int c, boolean ready) {
+                    void test(int a, int b, int c, int[] values, boolean ready) {
                         int value = (a + b) * -c;
                         int grouped = (/* grouped */ a);
+                        int element = values[/* index */ a];
+                        int[] sized = new int[/* size */ c];
                         value += ready ? call(1, 2) : new int[] { 3 };
                         java.util.function.Supplier<Expressions> supplier = Expressions::new;
                         builder.add(a).add(b).build();
@@ -2192,6 +2194,43 @@ fn expression_and_statement_accessors_expose_layout_roles() {
     assert_eq!(
         parenthesized.close_paren().expect("close paren").text(),
         ")"
+    );
+
+    let array_access = descendants::<ArrayAccessExpression>(&syntax)
+        .into_iter()
+        .find(|expression| expression.source_text().contains("index"))
+        .expect("array access expression");
+    assert_eq!(
+        array_access
+            .open_bracket()
+            .expect("open bracket")
+            .trailing_comments()[0]
+            .text(),
+        "/* index */"
+    );
+    assert_eq!(
+        array_access.close_bracket().expect("close bracket").text(),
+        "]"
+    );
+
+    let dim_expression = descendants::<DimExpression>(&syntax)
+        .into_iter()
+        .find(|expression| expression.source_text().contains("size"))
+        .expect("dim expression");
+    assert_eq!(
+        dim_expression
+            .open_bracket()
+            .expect("open bracket")
+            .trailing_comments()[0]
+            .text(),
+        "/* size */"
+    );
+    assert_eq!(
+        dim_expression
+            .close_bracket()
+            .expect("close bracket")
+            .text(),
+        "]"
     );
 
     let invocation = descendants::<MethodInvocationExpression>(&syntax)

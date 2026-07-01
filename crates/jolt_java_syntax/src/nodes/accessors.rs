@@ -2078,6 +2078,16 @@ impl MethodReferenceExpression {
 
 impl ArrayAccessExpression {
     #[must_use]
+    pub fn open_bracket(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LBracket)
+    }
+
+    #[must_use]
+    pub fn close_bracket(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RBracket)
+    }
+
+    #[must_use]
     pub fn array(&self) -> Option<Expression> {
         nth_child_family(&self.syntax, 0)
     }
@@ -2428,6 +2438,16 @@ impl ArrayCreationExpression {
 }
 
 impl DimExpression {
+    #[must_use]
+    pub fn open_bracket(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LBracket)
+    }
+
+    #[must_use]
+    pub fn close_bracket(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RBracket)
+    }
+
     #[must_use]
     pub fn expression(&self) -> Option<Expression> {
         child_family(&self.syntax)
