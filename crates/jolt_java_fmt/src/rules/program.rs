@@ -1,11 +1,11 @@
 use jolt_fmt_ir::{Doc, concat, empty_line, hard_line, text};
 use jolt_java_syntax::{
-    CompilationUnit, CompilationUnitItem, ImportDeclaration, ImportKind, ModuleDeclaration,
-    ModuleDirective, ModuleDirectiveRole, PackageDeclaration,
+    CompilationUnit, CompilationUnitItem, ImportDeclaration, ImportKind, JavaLexer, JavaSyntaxKind,
+    ModuleDeclaration, ModuleDirective, ModuleDirectiveRole, PackageDeclaration, TriviaKind,
 };
 
 use crate::context::{FormatRule, JavaFormatter};
-use crate::helpers::comments::format_comment;
+use crate::helpers::comments::{format_comment, format_raw_comment};
 use crate::rules::annotations::format_annotation;
 use crate::rules::declarations::format_type_declaration;
 use crate::rules::names::{format_name, name_key};
@@ -56,14 +56,40 @@ fn format_compilation_unit(unit: &CompilationUnit, formatter: &mut JavaFormatter
         sections.push(join_empty_lines(types));
     }
 
-    concat([
-        if sections.is_empty() {
-            jolt_fmt_ir::nil()
-        } else {
-            join_empty_lines(sections)
-        },
-        hard_line(),
-    ])
+    let contents = if sections.is_empty() {
+        format_comment_only_compilation_unit(unit)
+    } else {
+        join_empty_lines(sections)
+    };
+
+    concat([contents, hard_line()])
+}
+
+fn format_comment_only_compilation_unit(unit: &CompilationUnit) -> Doc {
+    let source = unit.source_text();
+    let mut lexer = JavaLexer::new(&source);
+    let token = lexer.next_token();
+    if token.kind != JavaSyntaxKind::Eof {
+        return jolt_fmt_ir::nil();
+    }
+
+    join_hard_lines(
+        token
+            .leading
+            .into_iter()
+            .filter(|trivia| {
+                matches!(
+                    trivia.kind,
+                    TriviaKind::LineComment | TriviaKind::BlockComment | TriviaKind::JavadocComment
+                )
+            })
+            .map(|trivia| {
+                let range = trivia.range;
+                let text = &source[range.start().get()..range.end().get()];
+                format_raw_comment(trivia.kind, text)
+            })
+            .collect(),
+    )
 }
 
 fn format_package_declaration(package: &PackageDeclaration) -> Doc {

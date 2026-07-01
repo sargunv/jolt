@@ -147,7 +147,7 @@ Status legend:
 - `[x]` Module directive sorting/grouping.
 - `[x]` Redundant top-level semicolon removal.
 - `[x]` Qualified names.
-- `[~]` Literal/token leaves.
+- `[x]` Literal/token leaves.
 
 ### 6. Declaration Layer
 
@@ -212,7 +212,7 @@ Status legend:
 - `[ ]` Comment placement for moved constructs.
 - `[x]` Star-block comment normalization.
 - `[ ]` `@formatter:off/on` raw range preservation.
-- `[ ]` Text-block internal preservation.
+- `[x]` Text-block internal preservation.
 - `[x]` Imported-corpus comment/idempotence tests.
 
 ## Definition Of Done Audit

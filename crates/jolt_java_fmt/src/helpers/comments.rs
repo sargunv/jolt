@@ -1,5 +1,5 @@
 use jolt_fmt_ir::{Doc, concat, hard_line, literal_text, text};
-use jolt_java_syntax::{JavaComment, JavaCommentKind, JavaSyntaxKind, JavaSyntaxToken};
+use jolt_java_syntax::{JavaComment, JavaCommentKind, JavaSyntaxKind, JavaSyntaxToken, TriviaKind};
 
 pub(crate) fn format_token_sequence(tokens: &[JavaSyntaxToken]) -> Doc {
     let mut docs = Vec::new();
@@ -111,6 +111,19 @@ pub(crate) fn format_comment(comment: &JavaComment) -> Doc {
         JavaCommentKind::Line | JavaCommentKind::Block => {
             format_comment_lines(preserve_comment_lines(comment.text()))
         }
+    }
+}
+
+pub(crate) fn format_raw_comment(kind: TriviaKind, text: &str) -> Doc {
+    match kind {
+        TriviaKind::JavadocComment => format_comment_lines(normalize_star_block_comment(text)),
+        TriviaKind::BlockComment if is_star_block_comment(text) => {
+            format_comment_lines(normalize_star_block_comment(text))
+        }
+        TriviaKind::LineComment | TriviaKind::BlockComment => {
+            format_comment_lines(preserve_comment_lines(text))
+        }
+        TriviaKind::Whitespace | TriviaKind::Newline | TriviaKind::Ignored => jolt_fmt_ir::nil(),
     }
 }
 

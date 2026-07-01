@@ -21,7 +21,7 @@ Evidence:
 - `crates/jolt_java_fmt/tests/style_fixtures.rs` discovers every `*.input.java`
   fixture under `crates/jolt_java_fmt/tests/style`.
 - The latest verification passed `style_rule_fixtures_match_expected_output`.
-- Current fixture count: 50 style input fixtures.
+- Current fixture count: 52 style input fixtures.
 
 ### Every Style-Guide Rule Has One Or More Focused Tests
 
@@ -36,6 +36,7 @@ Remaining work:
 
 - Cross-check each rule bullet in the style-guide documents against at least one
   fixture case before marking this proven.
+- Formatter ignore ranges remain an uncovered style-guide rule.
 
 ### Formatting Expected Fixtures Is Idempotent
 
