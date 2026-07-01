@@ -7,6 +7,9 @@ class Args {
 
   void annotated(@Nonnull String name, String @Marker ... labels) {
   }
+
+  void unnamed(Object _) {
+  }
 }
 
 record Values(String name, int... flags) {

@@ -717,6 +717,12 @@ pub enum StatementBody {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub enum WildcardBound {
+    Extends(Type),
+    Super(Type),
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MemberChain {
     root: Expression,
     suffixes: Vec<MemberChainSuffix>,

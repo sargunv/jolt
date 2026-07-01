@@ -23,4 +23,7 @@ return (final User user) -> user;
 java.util.function.Function<String[], Integer> annotatedLengths() {
 return (String @Marker ... values) -> values.length;
 }
+java.util.function.IntUnaryOperator unnamed() {
+return (_) -> 0;
+}
 }

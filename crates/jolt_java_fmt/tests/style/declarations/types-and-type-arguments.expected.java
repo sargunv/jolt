@@ -3,4 +3,7 @@ class Types<@Marker T extends Number & Comparable<T>> {
 
   void use(java.util.Map<String, ? super T> value) {
   }
+
+  void read(java.util.List<? extends Number> numbers) {
+  }
 }

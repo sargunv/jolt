@@ -2,7 +2,7 @@ use jolt_fmt_ir::{Doc, concat, group, text};
 use jolt_java_syntax::{
     Annotation, ArrayDimension, ArrayDimensions, ClassType, IntersectionType, NameSyntax,
     PrimitiveType, Type, TypeArgument, TypeArgumentList, TypeBoundList, TypeParameter,
-    TypeParameterList, UnionType, VoidType, WildcardType,
+    TypeParameterList, UnionType, VoidType, WildcardBound, WildcardType,
 };
 
 use crate::helpers::comments::{format_leading_comments, format_trailing_comments};
@@ -154,14 +154,12 @@ fn format_type_argument(argument: &TypeArgument) -> Doc {
 fn format_wildcard_type(ty: &WildcardType) -> Doc {
     concat([
         text("?"),
-        ty.bound_keyword().map_or_else(jolt_fmt_ir::nil, |keyword| {
-            concat([
-                text(" "),
-                text(keyword.text().to_owned()),
-                ty.bound().map_or_else(jolt_fmt_ir::nil, |bound| {
-                    concat([text(" "), format_type(&bound)])
-                }),
-            ])
+        ty.bound_clause().map_or_else(jolt_fmt_ir::nil, |bound| {
+            let (keyword, bound) = match bound {
+                WildcardBound::Extends(bound) => ("extends", bound),
+                WildcardBound::Super(bound) => ("super", bound),
+            };
+            concat([text(" "), text(keyword), text(" "), format_type(&bound)])
         }),
     ])
 }

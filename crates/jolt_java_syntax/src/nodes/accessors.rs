@@ -30,9 +30,9 @@ use super::{
     TryStatement, TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList, TypeBoundList,
     TypeDeclaration, TypeParameter, TypeParameterList, TypePattern, UnaryExpression, UnionType,
     VariableAccess, VariableDeclarator, VariableDeclaratorList, VariableInitializer,
-    VariableInitializerValue, VoidType, WhileStatement, WildcardType, YieldStatement, child,
-    child_family, child_token, child_token_in, children, children_family, children_tokens_matching,
-    nth_child_family, nth_child_token, starts_after_blank_line, tokens,
+    VariableInitializerValue, VoidType, WhileStatement, WildcardBound, WildcardType,
+    YieldStatement, child, child_family, child_token, child_token_in, children, children_family,
+    children_tokens_matching, nth_child_family, nth_child_token, starts_after_blank_line, tokens,
 };
 use jolt_syntax::{SyntaxElement, TriviaKind};
 
@@ -449,6 +449,17 @@ impl TypeArgument {
 
 impl WildcardType {
     #[must_use]
+    pub fn bound_clause(&self) -> Option<WildcardBound> {
+        let keyword = self.bound_keyword()?;
+        let bound = self.bound()?;
+        match keyword.kind() {
+            JavaSyntaxKind::ExtendsKw => Some(WildcardBound::Extends(bound)),
+            JavaSyntaxKind::SuperKw => Some(WildcardBound::Super(bound)),
+            _ => None,
+        }
+    }
+
+    #[must_use]
     pub fn bound_keyword(&self) -> Option<JavaSyntaxToken> {
         child_token_in(
             &self.syntax,
@@ -851,7 +862,16 @@ impl FormalParameter {
 
     #[must_use]
     pub fn name(&self) -> Option<JavaSyntaxToken> {
-        child_token(&self.syntax, JavaSyntaxKind::Identifier)
+        child_token_in(
+            &self.syntax,
+            &[JavaSyntaxKind::Identifier, JavaSyntaxKind::UnderscoreKw],
+        )
+    }
+
+    #[must_use]
+    pub fn is_unnamed(&self) -> bool {
+        self.name()
+            .is_some_and(|name| name.kind() == JavaSyntaxKind::UnderscoreKw)
     }
 
     #[must_use]
@@ -873,6 +893,12 @@ impl VariableDeclarator {
             &self.syntax,
             &[JavaSyntaxKind::Identifier, JavaSyntaxKind::UnderscoreKw],
         )
+    }
+
+    #[must_use]
+    pub fn is_unnamed(&self) -> bool {
+        self.name()
+            .is_some_and(|name| name.kind() == JavaSyntaxKind::UnderscoreKw)
     }
 
     #[must_use]
@@ -1510,6 +1536,12 @@ impl LambdaParameter {
         })
         .last()
     }
+
+    #[must_use]
+    pub fn is_unnamed(&self) -> bool {
+        self.name()
+            .is_some_and(|name| name.kind() == JavaSyntaxKind::UnderscoreKw)
+    }
 }
 
 impl ExpressionStatement {
@@ -1698,6 +1730,12 @@ impl CatchParameter {
             &self.syntax,
             &[JavaSyntaxKind::Identifier, JavaSyntaxKind::UnderscoreKw],
         )
+    }
+
+    #[must_use]
+    pub fn is_unnamed(&self) -> bool {
+        self.name()
+            .is_some_and(|name| name.kind() == JavaSyntaxKind::UnderscoreKw)
     }
 }
 
@@ -2006,6 +2044,11 @@ impl MatchAllPattern {
     #[must_use]
     pub fn underscore(&self) -> Option<JavaSyntaxToken> {
         child_token(&self.syntax, JavaSyntaxKind::UnderscoreKw)
+    }
+
+    #[must_use]
+    pub fn is_unnamed(&self) -> bool {
+        self.underscore().is_some()
     }
 }
 

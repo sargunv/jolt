@@ -75,7 +75,7 @@ Status legend:
 - `[ ]` Expression parent roles.
 - `[x]` Member-chain linearization.
 - `[~]` Lambda parameter classification.
-- `[ ]` Wildcard and unnamed `_` roles.
+- `[x]` Wildcard and unnamed `_` roles.
 
 ## Comment And Trivia Model
 

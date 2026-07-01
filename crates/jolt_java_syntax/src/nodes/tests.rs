@@ -510,6 +510,88 @@ fn statement_body_accessors_expose_body_kind() {
 }
 
 #[test]
+fn wildcard_and_unnamed_accessors_expose_roles() {
+    let syntax = parse_clean(
+        r"
+                record Pair(Object left, Object right) {
+                }
+
+                class Roles {
+                    AutoCloseable open() {
+                        return null;
+                    }
+
+                    void method(Object _, Object value) throws Exception {
+                        var _ = value;
+                        java.util.List<? extends Number> upper = null;
+                        java.util.List<? super Integer> lower = null;
+                        try (AutoCloseable _ = open()) {
+                        } catch (Exception _) {
+                        }
+                        java.util.function.IntUnaryOperator zero = (int _) -> 0;
+                        if (value instanceof Pair(Object left, _)) {
+                        }
+                    }
+                }
+            ",
+    );
+
+    let unnamed_formal = descendants::<FormalParameter>(&syntax)
+        .into_iter()
+        .find(|parameter| parameter.source_text().trim() == "Object _")
+        .expect("unnamed formal parameter");
+    assert_eq!(unnamed_formal.name().expect("formal name").text(), "_");
+    assert!(unnamed_formal.is_unnamed());
+
+    let unnamed_declarators = descendants::<VariableDeclarator>(&syntax)
+        .into_iter()
+        .filter(VariableDeclarator::is_unnamed)
+        .collect::<Vec<_>>();
+    assert_eq!(unnamed_declarators.len(), 2);
+    assert!(
+        unnamed_declarators.iter().all(|declarator| declarator
+            .name()
+            .expect("declarator name")
+            .text()
+            == "_")
+    );
+
+    let catch_parameter = descendants::<CatchParameter>(&syntax)
+        .into_iter()
+        .next()
+        .expect("catch parameter");
+    assert_eq!(catch_parameter.name().expect("catch name").text(), "_");
+    assert!(catch_parameter.is_unnamed());
+
+    let lambda_parameter = descendants::<LambdaParameter>(&syntax)
+        .into_iter()
+        .next()
+        .expect("lambda parameter");
+    assert_eq!(lambda_parameter.name().expect("lambda name").text(), "_");
+    assert!(lambda_parameter.is_unnamed());
+
+    let wildcard_bounds = descendants::<WildcardType>(&syntax)
+        .into_iter()
+        .filter_map(|wildcard| wildcard.bound_clause())
+        .collect::<Vec<_>>();
+    assert!(matches!(
+        wildcard_bounds.as_slice(),
+        [
+            WildcardBound::Extends(extends_bound),
+            WildcardBound::Super(super_bound),
+        ] if extends_bound.source_text().trim() == "Number"
+            && super_bound.source_text().trim() == "Integer"
+    ));
+
+    let match_all = descendants::<MatchAllPattern>(&syntax)
+        .into_iter()
+        .next()
+        .expect("match-all pattern");
+    assert_eq!(match_all.underscore().expect("match-all token").text(), "_");
+    assert!(match_all.is_unnamed());
+}
+
+#[test]
 fn method_invocations_expose_argument_lists() {
     let syntax = parse_clean(
         r"
