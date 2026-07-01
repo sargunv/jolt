@@ -16,8 +16,8 @@ use super::{
     InterfaceBodyMember, InterfaceDeclaration, JavaNode, JavaSyntaxKind, JavaSyntaxToken,
     LabeledStatement, LambdaExpression, LambdaParameter, LambdaParameterList,
     LocalClassOrInterfaceDeclaration, LocalVariableDeclaration, MethodDeclaration,
-    MethodInvocationExpression, ModifierList, ModuleDeclaration, ModuleDirective,
-    ModuleDirectiveNode, NameSyntax, ObjectCreationExpression, PackageDeclaration,
+    MethodInvocationExpression, MethodReferenceExpression, ModifierList, ModuleDeclaration,
+    ModuleDirective, ModuleDirectiveNode, NameSyntax, ObjectCreationExpression, PackageDeclaration,
     ParenthesizedExpression, Pattern, PermitsClause, PostfixExpression, ProvidesDirective,
     RecordBody, RecordComponent, RecordComponentList, RecordDeclaration, RequiresDirective,
     Resource, ResourceList, ResourceSpecification, ReturnStatement, Statement,
@@ -773,6 +773,43 @@ impl FieldAccessExpression {
     #[must_use]
     pub fn field_name(&self) -> Option<JavaSyntaxToken> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
+    }
+
+    #[must_use]
+    pub fn type_arguments(&self) -> Option<TypeArgumentList> {
+        child(&self.syntax)
+    }
+}
+
+impl MethodReferenceExpression {
+    #[must_use]
+    pub fn receiver_expression(&self) -> Option<Expression> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn receiver_type(&self) -> Option<Type> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn receiver_dimensions(&self) -> Option<ArrayDimensions> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn type_arguments(&self) -> Option<TypeArgumentList> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn is_constructor_reference(&self) -> bool {
+        child_token(&self.syntax, JavaSyntaxKind::NewKw).is_some()
+    }
+
+    #[must_use]
+    pub fn target_name(&self) -> Option<JavaSyntaxToken> {
+        children_tokens_matching(&self.syntax, |kind| kind == JavaSyntaxKind::Identifier).last()
     }
 }
 

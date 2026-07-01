@@ -3,9 +3,9 @@ use jolt_java_syntax::{
     ArgumentList, ArrayAccessExpression, ArrayCreationExpression, ArrayInitializer,
     AssignmentExpression, BinaryExpression, CastExpression, ConditionalExpression, DimExpression,
     Expression, FieldAccessExpression, InstanceofExpression, LambdaExpression, LambdaParameter,
-    MethodInvocationExpression, ObjectCreationExpression, ParenthesizedExpression,
-    PostfixExpression, SwitchExpression, TypeArgumentList, UnaryExpression,
-    VariableInitializerValue,
+    MethodInvocationExpression, MethodReferenceExpression, ObjectCreationExpression,
+    ParenthesizedExpression, PostfixExpression, SwitchExpression, TypeArgumentList,
+    UnaryExpression, VariableInitializerValue,
 };
 
 use crate::helpers::chains::member_chain;
@@ -29,8 +29,10 @@ pub(crate) fn format_expression(expression: &Expression) -> Doc {
         | Expression::NameExpression(_)
         | Expression::ThisExpression(_)
         | Expression::SuperExpression(_)
-        | Expression::ClassLiteralExpression(_)
-        | Expression::MethodReferenceExpression(_) => format_token_sequence(&expression.tokens()),
+        | Expression::ClassLiteralExpression(_) => format_token_sequence(&expression.tokens()),
+        Expression::MethodReferenceExpression(expression) => {
+            format_method_reference_expression(expression)
+        }
         Expression::SwitchExpression(expression) => format_switch_expression(expression),
         Expression::ArrayCreationExpression(expression) => {
             format_array_creation_expression(expression)
@@ -149,7 +151,53 @@ fn format_field_access_expression(expression: &FieldAccessExpression) -> Doc {
                 .field_name()
                 .map_or_else(String::new, |name| name.text().to_owned()),
         ),
+        expression
+            .type_arguments()
+            .map_or_else(jolt_fmt_ir::nil, |arguments| {
+                format_type_argument_list(&arguments)
+            }),
     ]))
+}
+
+fn format_method_reference_expression(expression: &MethodReferenceExpression) -> Doc {
+    let tokens = expression.tokens();
+    if tokens_have_comments(&tokens) {
+        return format_token_sequence(&tokens);
+    }
+
+    group(concat([
+        format_method_reference_receiver(expression),
+        text("::"),
+        expression
+            .type_arguments()
+            .map_or_else(jolt_fmt_ir::nil, |arguments| {
+                format_type_argument_list(&arguments)
+            }),
+        if expression.is_constructor_reference() {
+            text("new")
+        } else {
+            expression
+                .target_name()
+                .map_or_else(jolt_fmt_ir::nil, |target| text(target.text().to_owned()))
+        },
+    ]))
+}
+
+fn format_method_reference_receiver(expression: &MethodReferenceExpression) -> Doc {
+    if let Some(receiver) = expression.receiver_expression() {
+        return concat([
+            format_expression(&receiver),
+            expression
+                .receiver_dimensions()
+                .map_or_else(jolt_fmt_ir::nil, |dimensions| {
+                    format_token_sequence(&dimensions.tokens())
+                }),
+        ]);
+    }
+
+    expression
+        .receiver_type()
+        .map_or_else(jolt_fmt_ir::nil, |ty| format_token_sequence(&ty.tokens()))
 }
 
 fn format_array_access_expression(expression: &ArrayAccessExpression) -> Doc {
@@ -497,7 +545,15 @@ fn collect_member_chain(expression: &Expression) -> Option<MemberChainParts> {
             let name = access.field_name()?;
             Some(append_chain_suffix(
                 receiver,
-                concat([text("."), text(name.text().to_owned())]),
+                concat([
+                    text("."),
+                    text(name.text().to_owned()),
+                    access
+                        .type_arguments()
+                        .map_or_else(jolt_fmt_ir::nil, |arguments| {
+                            format_type_argument_list(&arguments)
+                        }),
+                ]),
             ))
         }
         _ => None,

@@ -175,6 +175,7 @@ Status legend:
 ### 8. Expression Layer
 
 - `[~]` Parenthesized expressions.
+- `[x]` Method references.
 - `[~]` Binary/operator chains.
 - `[~]` Ternaries.
 - `[~]` Assignments.
