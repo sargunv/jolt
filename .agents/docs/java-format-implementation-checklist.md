@@ -162,7 +162,7 @@ Status legend:
 - `[x]` Package declarations.
 - `[x]` Package annotations.
 - `[x]` Import sorting with comment barriers.
-- `[x]` Module directive sorting/grouping.
+- `[x]` Module directive sorting/grouping with comment barriers.
 - `[x]` Redundant top-level semicolon removal.
 - `[x]` Qualified names, including block comments around dots and line-comment
   forced leading-dot continuation.

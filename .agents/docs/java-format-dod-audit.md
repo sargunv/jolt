@@ -22,7 +22,7 @@ Evidence:
 - `crates/jolt_java_fmt/tests/style_fixtures.rs` discovers every `*.input.java`
   fixture under `crates/jolt_java_fmt/tests/style`.
 - The latest verification passed `style_rule_fixtures_match_expected_output`.
-- Current fixture count: 69 style input fixtures.
+- Current fixture count: 70 style input fixtures.
 
 ### Every Style-Guide Rule Has One Or More Focused Tests
 
@@ -43,6 +43,10 @@ Evidence:
   `statements/switch-groups-and-rules`.
 - Qualified-name dot comments and line-comment forced leading-dot layout are
   pinned by `program/qualified-name-comments`.
+- Module directive ordering, grouping, canonical `requires` modifier ordering,
+  target-list breaking, and ordinary comment barriers are pinned by
+  `modules/directive-ordering`, `modules/name-list-comments`, and
+  `modules/comment-barrier`.
 - Complex-receiver member chains and blank-line normalization in member chains
   are pinned by `expressions/member-chains`; blank-line normalization in
   argument lists is pinned by `expressions/calls-and-arguments`.
