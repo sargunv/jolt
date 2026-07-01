@@ -932,8 +932,14 @@ pub struct TypeParameterListEntry {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct FormalParameterListEntry {
-    pub parameter: FormalParameter,
+    pub item: FormalParameterListItem,
     pub comma: Option<JavaSyntaxToken>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum FormalParameterListItem {
+    ReceiverParameter(ReceiverParameter),
+    FormalParameter(FormalParameter),
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]

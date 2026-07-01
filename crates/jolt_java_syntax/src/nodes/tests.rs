@@ -984,6 +984,65 @@ fn method_declarations_expose_names_and_parameter_lists() {
 }
 
 #[test]
+fn method_declarations_expose_return_type_annotations() {
+    let syntax = parse_clean(
+        r#"
+                class Methods {
+                    public <T> @Nonnull T name(T value) {
+                        return value;
+                    }
+                }
+            "#,
+    );
+
+    let method = descendants::<MethodDeclaration>(&syntax)
+        .into_iter()
+        .next()
+        .expect("method declaration");
+    assert_eq!(method.return_type_annotations().count(), 1);
+    assert_eq!(
+        method
+            .return_type()
+            .expect("method return type")
+            .source_text()
+            .trim(),
+        "T"
+    );
+}
+
+#[test]
+fn modifier_lists_split_declaration_and_post_modifier_type_annotations() {
+    let syntax = parse_clean(
+        r"
+                class Fields {
+                    @Decl public @Type String value;
+                }
+            ",
+    );
+
+    let field = descendants::<FieldDeclaration>(&syntax)
+        .into_iter()
+        .next()
+        .expect("field declaration");
+    let modifiers = field.modifiers().expect("field modifiers");
+
+    assert_eq!(
+        modifiers
+            .declaration_annotations()
+            .map(|annotation| annotation.source_text().trim().to_owned())
+            .collect::<Vec<_>>(),
+        ["@Decl"]
+    );
+    assert_eq!(
+        modifiers
+            .type_use_annotations_after_modifiers()
+            .map(|annotation| annotation.source_text().trim().to_owned())
+            .collect::<Vec<_>>(),
+        ["@Type"]
+    );
+}
+
+#[test]
 fn if_statements_expose_condition_then_and_else_children() {
     let syntax = parse_clean(
         r"
@@ -1538,6 +1597,50 @@ fn declaration_parameter_lists_expose_entries_with_commas_and_parens() {
             .leading_comments()[0]
             .text(),
         "// before parameter close"
+    );
+}
+
+#[test]
+fn formal_parameter_lists_expose_receiver_parameter_entries() {
+    let syntax = parse_clean(
+        r"
+                class ReceiverOuter {
+                    class ReceiverInner {
+                        void bind(@Readonly ReceiverOuter ReceiverOuter.this, String value) {
+                        }
+                    }
+                }
+            ",
+    );
+
+    let parameters = descendants::<FormalParameterList>(&syntax)
+        .into_iter()
+        .next()
+        .expect("formal parameter list");
+    let entries = parameters.entries().collect::<Vec<_>>();
+    assert_eq!(entries.len(), 2);
+
+    let FormalParameterListItem::ReceiverParameter(receiver) = &entries[0].item else {
+        panic!("expected receiver parameter entry");
+    };
+    assert_eq!(receiver.annotations().count(), 1);
+    assert_eq!(
+        receiver.ty().expect("receiver type").source_text().trim(),
+        "ReceiverOuter"
+    );
+    assert_eq!(
+        receiver.qualifier().expect("receiver qualifier").text(),
+        "ReceiverOuter"
+    );
+    assert_eq!(receiver.dot().expect("receiver dot").text(), ".");
+    assert_eq!(receiver.this_token().expect("receiver this").text(), "this");
+
+    let FormalParameterListItem::FormalParameter(parameter) = &entries[1].item else {
+        panic!("expected formal parameter entry");
+    };
+    assert_eq!(
+        parameter.name().expect("formal parameter name").text(),
+        "value"
     );
 }
 

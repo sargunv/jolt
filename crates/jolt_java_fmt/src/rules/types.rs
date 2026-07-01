@@ -617,7 +617,7 @@ fn format_array_dimension(dimension: &ArrayDimension) -> Doc {
     ])
 }
 
-fn format_inline_annotations(annotations: Vec<Annotation>) -> Doc {
+pub(crate) fn format_inline_annotations(annotations: Vec<Annotation>) -> Doc {
     if annotations.is_empty() {
         return jolt_fmt_ir::nil();
     }

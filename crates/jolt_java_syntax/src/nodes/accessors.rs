@@ -15,32 +15,32 @@ use super::{
     EnhancedForStatement, EnumBody, EnumConstant, EnumConstantList, EnumConstantListEntry,
     EnumDeclaration, ExportsDirective, Expression, ExpressionParentRole, ExpressionStatement,
     ExtendsClause, FieldAccessExpression, FieldDeclaration, FinallyClause, ForInitializer,
-    ForStatement, ForUpdate, FormalParameter, FormalParameterList, FormalParameterListEntry, Guard,
-    IfStatement, ImplementsClause, ImportDeclaration, ImportKind, InstanceInitializer,
-    InstanceofExpression, InterfaceBody, InterfaceBodyMember, InterfaceDeclaration,
-    IntersectionType, IntersectionTypeEntry, JavaFamily, JavaNode, JavaSyntaxKind, JavaSyntaxToken,
-    LabeledStatement, LambdaExpression, LambdaParameter, LambdaParameterList, LiteralExpression,
-    LocalClassOrInterfaceDeclaration, LocalVariableDeclaration, MatchAllPattern, MemberChain,
-    MemberChainSuffix, MethodDeclaration, MethodInvocationExpression, MethodReferenceExpression,
-    ModifierList, ModuleDeclaration, ModuleDirective, ModuleDirectiveNode, ModuleDirectiveRole,
-    ModuleNameListEntry, NameExpression, NameSegment, NameSyntax, ObjectCreationExpression,
-    OpensDirective, PackageDeclaration, ParenthesizedExpression, Pattern, PermitsClause,
-    PermitsClauseEntry, PostfixExpression, PrimitiveType, ProvidesDirective, RecordBody,
-    RecordComponent, RecordComponentList, RecordComponentListEntry, RecordDeclaration,
-    RecordPattern, RecordPatternComponentEntry, RequiresDirective, Resource, ResourceList,
-    ResourceListEntry, ResourceSpecification, ReturnStatement, Statement, StatementBody,
-    StatementExpressionEntry, StatementExpressionList, StaticInitializer, SuperExpression,
-    SwitchBlock, SwitchBlockEntry, SwitchBlockStatementGroup, SwitchExpression, SwitchLabel,
-    SwitchLabelCaseEntry, SwitchLabelCaseItem, SwitchRule, SwitchStatement, SynchronizedStatement,
-    ThisExpression, ThrowStatement, ThrowsClause, ThrowsClauseEntry, TryStatement,
-    TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList, TypeArgumentListEntry,
-    TypeBoundList, TypeClauseEntry, TypeDeclaration, TypeParameter, TypeParameterList,
-    TypeParameterListEntry, TypePattern, UnaryExpression, UnionType, UnionTypeEntry, UsesDirective,
-    VariableAccess, VariableDeclarator, VariableDeclaratorEntry, VariableDeclaratorList,
-    VariableInitializer, VariableInitializerValue, VoidType, WhileStatement, WildcardBound,
-    WildcardType, YieldStatement, child, child_family, child_token, child_token_in, children,
-    children_family, children_tokens_matching, nth_child_family, nth_child_token,
-    starts_after_blank_line, tokens,
+    ForStatement, ForUpdate, FormalParameter, FormalParameterList, FormalParameterListEntry,
+    FormalParameterListItem, Guard, IfStatement, ImplementsClause, ImportDeclaration, ImportKind,
+    InstanceInitializer, InstanceofExpression, InterfaceBody, InterfaceBodyMember,
+    InterfaceDeclaration, IntersectionType, IntersectionTypeEntry, JavaFamily, JavaNode,
+    JavaSyntaxKind, JavaSyntaxToken, LabeledStatement, LambdaExpression, LambdaParameter,
+    LambdaParameterList, LiteralExpression, LocalClassOrInterfaceDeclaration,
+    LocalVariableDeclaration, MatchAllPattern, MemberChain, MemberChainSuffix, MethodDeclaration,
+    MethodInvocationExpression, MethodReferenceExpression, ModifierList, ModuleDeclaration,
+    ModuleDirective, ModuleDirectiveNode, ModuleDirectiveRole, ModuleNameListEntry, NameExpression,
+    NameSegment, NameSyntax, ObjectCreationExpression, OpensDirective, PackageDeclaration,
+    ParenthesizedExpression, Pattern, PermitsClause, PermitsClauseEntry, PostfixExpression,
+    PrimitiveType, ProvidesDirective, ReceiverParameter, RecordBody, RecordComponent,
+    RecordComponentList, RecordComponentListEntry, RecordDeclaration, RecordPattern,
+    RecordPatternComponentEntry, RequiresDirective, Resource, ResourceList, ResourceListEntry,
+    ResourceSpecification, ReturnStatement, Statement, StatementBody, StatementExpressionEntry,
+    StatementExpressionList, StaticInitializer, SuperExpression, SwitchBlock, SwitchBlockEntry,
+    SwitchBlockStatementGroup, SwitchExpression, SwitchLabel, SwitchLabelCaseEntry,
+    SwitchLabelCaseItem, SwitchRule, SwitchStatement, SynchronizedStatement, ThisExpression,
+    ThrowStatement, ThrowsClause, ThrowsClauseEntry, TryStatement, TryWithResourcesStatement, Type,
+    TypeArgument, TypeArgumentList, TypeArgumentListEntry, TypeBoundList, TypeClauseEntry,
+    TypeDeclaration, TypeParameter, TypeParameterList, TypeParameterListEntry, TypePattern,
+    UnaryExpression, UnionType, UnionTypeEntry, UsesDirective, VariableAccess, VariableDeclarator,
+    VariableDeclaratorEntry, VariableDeclaratorList, VariableInitializer, VariableInitializerValue,
+    VoidType, WhileStatement, WildcardBound, WildcardType, YieldStatement, child, child_family,
+    child_token, child_token_in, children, children_family, children_tokens_matching,
+    nth_child_family, nth_child_token, starts_after_blank_line, tokens,
 };
 use jolt_syntax::{SyntaxElement, TriviaKind};
 
@@ -432,6 +432,28 @@ impl AnnotationInterfaceDeclaration {
 impl ModifierList {
     pub fn annotations(&self) -> impl Iterator<Item = Annotation> + '_ {
         children(&self.syntax)
+    }
+
+    pub fn declaration_annotations(&self) -> impl Iterator<Item = Annotation> + '_ {
+        let first_modifier_start = self
+            .modifier_tokens()
+            .map(|token| token.token_text_range().start())
+            .min();
+
+        self.annotations().filter(move |annotation| {
+            first_modifier_start.is_none_or(|start| annotation.text_range().start() < start)
+        })
+    }
+
+    pub fn type_use_annotations_after_modifiers(&self) -> impl Iterator<Item = Annotation> + '_ {
+        let first_modifier_start = self
+            .modifier_tokens()
+            .map(|token| token.token_text_range().start())
+            .min();
+
+        self.annotations().filter(move |annotation| {
+            first_modifier_start.is_some_and(|start| annotation.text_range().start() > start)
+        })
     }
 
     pub fn modifier_tokens(&self) -> impl Iterator<Item = JavaSyntaxToken> + '_ {
@@ -1074,6 +1096,10 @@ impl MethodDeclaration {
         child_family(&self.syntax)
     }
 
+    pub fn return_type_annotations(&self) -> impl Iterator<Item = Annotation> {
+        annotations_before_type(&self.syntax, self.return_type())
+    }
+
     #[must_use]
     pub fn name(&self) -> Option<JavaSyntaxToken> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
@@ -1316,24 +1342,31 @@ impl FormalParameterList {
 
     pub fn entries(&self) -> impl Iterator<Item = FormalParameterListEntry> {
         let mut entries = Vec::new();
-        let mut pending_parameter = None;
+        let mut pending_item = None;
 
         for element in self.syntax.children_with_tokens() {
             match element {
                 SyntaxElement::Node(node) => {
-                    if let Some(parameter) = FormalParameter::cast(node)
-                        && let Some(previous) = pending_parameter.replace(parameter)
+                    let item = ReceiverParameter::cast(node.clone())
+                        .map(FormalParameterListItem::ReceiverParameter)
+                        .or_else(|| {
+                            FormalParameter::cast(node)
+                                .map(FormalParameterListItem::FormalParameter)
+                        });
+
+                    if let Some(item) = item
+                        && let Some(previous) = pending_item.replace(item)
                     {
                         entries.push(FormalParameterListEntry {
-                            parameter: previous,
+                            item: previous,
                             comma: None,
                         });
                     }
                 }
                 SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
-                    if let Some(parameter) = pending_parameter.take() {
+                    if let Some(item) = pending_item.take() {
                         entries.push(FormalParameterListEntry {
-                            parameter,
+                            item,
                             comma: Some(JavaSyntaxToken { syntax: token }),
                         });
                     }
@@ -1342,11 +1375,8 @@ impl FormalParameterList {
             }
         }
 
-        if let Some(parameter) = pending_parameter {
-            entries.push(FormalParameterListEntry {
-                parameter,
-                comma: None,
-            });
+        if let Some(item) = pending_item {
+            entries.push(FormalParameterListEntry { item, comma: None });
         }
 
         entries.into_iter()
@@ -2595,6 +2625,32 @@ impl ArrayInitializer {
         }
 
         entries.into_iter()
+    }
+}
+
+impl ReceiverParameter {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation> + '_ {
+        children(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn ty(&self) -> Option<Type> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn qualifier(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Identifier)
+    }
+
+    #[must_use]
+    pub fn dot(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Dot)
+    }
+
+    #[must_use]
+    pub fn this_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::ThisKw)
     }
 }
 

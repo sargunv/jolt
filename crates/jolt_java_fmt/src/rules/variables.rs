@@ -1,7 +1,8 @@
 use jolt_fmt_ir::{Doc, concat, group, indent, line, text};
 use jolt_java_syntax::{
-    FieldDeclaration, FormalParameter, LocalVariableDeclaration, RecordComponent,
-    VariableDeclarator, VariableDeclaratorEntry, VariableDeclaratorList, VariableInitializer,
+    FieldDeclaration, FormalParameter, LocalVariableDeclaration, ReceiverParameter,
+    RecordComponent, VariableDeclarator, VariableDeclaratorEntry, VariableDeclaratorList,
+    VariableInitializer,
 };
 
 use crate::helpers::comments::{
@@ -10,15 +11,20 @@ use crate::helpers::comments::{
 use crate::helpers::modifiers::inline_modifier_prefix_from_docs;
 use crate::rules::annotations::format_annotation;
 use crate::rules::expressions::format_variable_initializer_value;
-use crate::rules::modifiers::{format_modifier_prefix, format_modifier_prefix_from_parts};
+use crate::rules::modifiers::{
+    format_typed_modifier_prefix, format_typed_modifier_prefix_from_parts,
+};
 use crate::rules::statements::format_statement_semicolon;
 use crate::rules::types::{
     format_array_dimensions, format_type, format_type_without_leading_comments,
 };
 
 pub(crate) fn format_field_declaration(field: &FieldDeclaration) -> Doc {
+    let modifiers = format_typed_modifier_prefix(field.modifiers());
+
     concat([
-        format_modifier_prefix(field.modifiers()),
+        modifiers.declaration_prefix,
+        modifiers.type_use_prefix,
         field
             .ty()
             .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty)),
@@ -33,11 +39,14 @@ pub(crate) fn format_field_declaration(field: &FieldDeclaration) -> Doc {
 }
 
 pub(crate) fn format_local_variable_declaration(declaration: &LocalVariableDeclaration) -> Doc {
+    let modifiers = format_typed_modifier_prefix_from_parts(
+        declaration.annotations().collect(),
+        declaration.modifier_tokens().collect(),
+    );
+
     concat([
-        format_modifier_prefix_from_parts(
-            declaration.annotations().collect(),
-            declaration.modifier_tokens().collect(),
-        ),
+        modifiers.declaration_prefix,
+        modifiers.type_use_prefix,
         local_variable_type(declaration),
         text(" "),
         declaration
@@ -108,6 +117,44 @@ pub(crate) fn format_record_component(component: &RecordComponent) -> Doc {
             }),
         component.is_variable_arity(),
     )
+}
+
+pub(crate) fn format_receiver_parameter(parameter: &ReceiverParameter) -> Doc {
+    concat([
+        format_construct_leading_comments(&parameter.tokens()),
+        inline_modifier_prefix_from_docs(
+            parameter
+                .annotations()
+                .map(|annotation| format_annotation(&annotation))
+                .collect(),
+            Vec::new(),
+        ),
+        parameter.ty().map_or_else(jolt_fmt_ir::nil, |ty| {
+            format_type_without_leading_comments(&ty)
+        }),
+        text(" "),
+        parameter
+            .qualifier()
+            .map_or_else(jolt_fmt_ir::nil, |qualifier| {
+                concat([
+                    format_token_with_comments(&qualifier),
+                    parameter.dot().map_or_else(
+                        || text("."),
+                        |dot| {
+                            concat([
+                                format_leading_comments(&dot),
+                                text("."),
+                                format_trailing_comments(&dot),
+                            ])
+                        },
+                    ),
+                ])
+            }),
+        parameter.this_token().map_or_else(
+            || text("this"),
+            |this_token| format_token_with_comments(&this_token),
+        ),
+    ])
 }
 
 fn format_construct_leading_comments(tokens: &[jolt_java_syntax::JavaSyntaxToken]) -> Doc {

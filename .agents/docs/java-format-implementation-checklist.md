@@ -68,6 +68,9 @@ Status legend:
 - `[x]` Module directive kind/name/target/comment roles.
 - `[x]` Modifier keyword and annotation roles.
 - `[~]` Declaration headers and bodies.
+- `[x]` Formal parameter lists expose receiver-parameter entries.
+- `[x]` Typed modifier lists expose declaration annotations separately from
+  post-modifier type-use annotations.
 - `[x]` Constructor body accessors.
 - `[x]` Statement body kind.
 - `[x]` Switch labels/rules/guards.
@@ -156,11 +159,18 @@ Status legend:
 
 - `[x]` Modifier sorting.
 - `[~]` Declaration/type-use annotation placement.
+- `[x]` Post-modifier field and method return type-use annotations remain inline
+  with the type.
+- `[x]` Method return annotations after type parameters remain inline with the
+  return type.
+- `[ ]` Ambiguous no-modifier typed-declaration annotations need final
+  style/accessor policy.
 - `[x]` Class/interface/record/enum/annotation headers.
 - `[x]` Structural type declaration `extends`/`implements`/`permits` clauses.
 - `[x]` Broken-header brace placement.
 - `[x]` Body member category padding.
 - `[x]` Parameter and record-component lists.
+- `[x]` Receiver parameters in method and constructor parameter lists.
 - `[x]` Varargs formal parameters and record components.
 - `[x]` Inline formal-parameter and record-component annotations, including
   varargs type-use annotations before `...`.

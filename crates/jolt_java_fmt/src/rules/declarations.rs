@@ -24,17 +24,20 @@ use crate::helpers::formatter_ignore::{
 use crate::helpers::lists::{CommaListItem, parenthesized_list};
 use crate::rules::annotations::format_annotation_element_value;
 use crate::rules::expressions::{format_argument_list, format_expression};
-use crate::rules::modifiers::{format_modifier_prefix, format_modifier_prefix_from_parts};
+use crate::rules::modifiers::{
+    format_modifier_prefix, format_modifier_prefix_from_parts, format_typed_modifier_prefix,
+};
 use crate::rules::names::format_name;
 use crate::rules::statements::{
     format_block, format_block_body, format_block_statement_item, format_statement_semicolon,
 };
 use crate::rules::types::{
-    format_array_dimensions, format_type, format_type_argument_list, format_type_parameter_list,
-    format_type_without_leading_comments,
+    format_array_dimensions, format_inline_annotations, format_type, format_type_argument_list,
+    format_type_parameter_list, format_type_without_leading_comments,
 };
 use crate::rules::variables::{
-    format_field_declaration, format_formal_parameter, format_record_component,
+    format_field_declaration, format_formal_parameter, format_receiver_parameter,
+    format_record_component,
 };
 
 pub(crate) fn format_type_declaration(declaration: &TypeDeclaration) -> Doc {
@@ -1335,9 +1338,10 @@ fn format_method_declaration(method: &MethodDeclaration) -> Doc {
     let Some(name) = method.name() else {
         return format_token_sequence(&method.tokens());
     };
+    let modifiers = format_typed_modifier_prefix(method.modifiers());
     let prefix = concat([
         format_construct_leading_comments(&method.tokens()),
-        format_modifier_prefix(method.modifiers()),
+        modifiers.declaration_prefix,
     ]);
     let throws = method.throws_clause();
     let has_throws = throws
@@ -1345,6 +1349,8 @@ fn format_method_declaration(method: &MethodDeclaration) -> Doc {
         .is_some_and(|throws| throws.exceptions().next().is_some());
     let header = concat([
         format_type_parameter_list(method.type_parameters()),
+        modifiers.type_use_prefix,
+        format_inline_annotations(method.return_type_annotations().collect()),
         method
             .return_type()
             .map_or_else(jolt_fmt_ir::nil, |return_type| {
@@ -1418,7 +1424,14 @@ fn format_parameters(parameters: Option<FormalParameterList>) -> Doc {
         parameters
             .entries()
             .map(|entry| CommaListItem {
-                doc: format_formal_parameter(&entry.parameter),
+                doc: match entry.item {
+                    jolt_java_syntax::FormalParameterListItem::ReceiverParameter(parameter) => {
+                        format_receiver_parameter(&parameter)
+                    }
+                    jolt_java_syntax::FormalParameterListItem::FormalParameter(parameter) => {
+                        format_formal_parameter(&parameter)
+                    }
+                },
                 comma: entry.comma,
             })
             .collect(),
