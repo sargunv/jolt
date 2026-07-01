@@ -1206,6 +1206,78 @@ fn method_invocations_expose_argument_lists() {
 }
 
 #[test]
+fn declaration_parameter_lists_expose_entries_with_commas_and_parens() {
+    let syntax = parse_clean(
+        r"
+                record Person(/* components */ String name, // name
+                    int age
+                    // before component close
+                ) {
+                    void run(/* params */ String name, // name
+                        int count
+                        // before parameter close
+                    ) {
+                    }
+                }
+            ",
+    );
+
+    let components = descendants::<RecordComponentList>(&syntax)
+        .into_iter()
+        .next()
+        .expect("record component list");
+    let component_entries = components.entries().collect::<Vec<_>>();
+    assert_eq!(component_entries.len(), 2);
+    assert_eq!(
+        components
+            .open_paren()
+            .expect("component open paren")
+            .trailing_comments()[0]
+            .text(),
+        "/* components */"
+    );
+    assert_eq!(
+        semicolon_trailing_comment(component_entries[0].comma.clone()),
+        "// name"
+    );
+    assert_eq!(
+        components
+            .close_paren()
+            .expect("component close paren")
+            .leading_comments()[0]
+            .text(),
+        "// before component close"
+    );
+
+    let parameters = descendants::<FormalParameterList>(&syntax)
+        .into_iter()
+        .next()
+        .expect("formal parameter list");
+    let parameter_entries = parameters.entries().collect::<Vec<_>>();
+    assert_eq!(parameter_entries.len(), 2);
+    assert_eq!(
+        parameters
+            .open_paren()
+            .expect("parameter open paren")
+            .trailing_comments()[0]
+            .text(),
+        "/* params */"
+    );
+    assert_eq!(
+        semicolon_trailing_comment(parameter_entries[0].comma.clone()),
+        "// name"
+    );
+    assert_eq!(
+        parameters
+            .close_paren()
+            .expect("parameter close paren")
+            .leading_comments()[0]
+            .text(),
+        "// before parameter close"
+    );
+}
+
+#[test]
 fn catch_type_lists_expose_union_entries() {
     let syntax = parse_clean(
         r"

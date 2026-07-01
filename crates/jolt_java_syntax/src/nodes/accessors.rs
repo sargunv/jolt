@@ -15,18 +15,18 @@ use super::{
     EnhancedForStatement, EnumBody, EnumConstant, EnumConstantList, EnumDeclaration,
     ExportsDirective, Expression, ExpressionParentRole, ExpressionStatement, ExtendsClause,
     FieldAccessExpression, FieldDeclaration, FinallyClause, ForInitializer, ForStatement,
-    ForUpdate, FormalParameter, FormalParameterList, Guard, IfStatement, ImplementsClause,
-    ImportDeclaration, ImportKind, InstanceInitializer, InstanceofExpression, InterfaceBody,
-    InterfaceBodyMember, InterfaceDeclaration, IntersectionType, JavaFamily, JavaNode,
-    JavaSyntaxKind, JavaSyntaxToken, LabeledStatement, LambdaExpression, LambdaParameter,
+    ForUpdate, FormalParameter, FormalParameterList, FormalParameterListEntry, Guard, IfStatement,
+    ImplementsClause, ImportDeclaration, ImportKind, InstanceInitializer, InstanceofExpression,
+    InterfaceBody, InterfaceBodyMember, InterfaceDeclaration, IntersectionType, JavaFamily,
+    JavaNode, JavaSyntaxKind, JavaSyntaxToken, LabeledStatement, LambdaExpression, LambdaParameter,
     LambdaParameterList, LiteralExpression, LocalClassOrInterfaceDeclaration,
     LocalVariableDeclaration, MatchAllPattern, MemberChain, MemberChainSuffix, MethodDeclaration,
     MethodInvocationExpression, MethodReferenceExpression, ModifierList, ModuleDeclaration,
     ModuleDirective, ModuleDirectiveNode, ModuleDirectiveRole, NameExpression, NameSegment,
     NameSyntax, ObjectCreationExpression, OpensDirective, PackageDeclaration,
     ParenthesizedExpression, Pattern, PermitsClause, PostfixExpression, PrimitiveType,
-    ProvidesDirective, RecordBody, RecordComponent, RecordComponentList, RecordDeclaration,
-    RecordPattern, RequiresDirective, Resource, ResourceList, ResourceListEntry,
+    ProvidesDirective, RecordBody, RecordComponent, RecordComponentList, RecordComponentListEntry,
+    RecordDeclaration, RecordPattern, RequiresDirective, Resource, ResourceList, ResourceListEntry,
     ResourceSpecification, ReturnStatement, Statement, StatementBody, StatementExpressionEntry,
     StatementExpressionList, StaticInitializer, SuperExpression, SwitchBlock, SwitchBlockEntry,
     SwitchBlockStatementGroup, SwitchExpression, SwitchLabel, SwitchLabelCaseItem, SwitchRule,
@@ -564,8 +564,58 @@ impl WildcardType {
 }
 
 impl RecordComponentList {
+    #[must_use]
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LParen)
+            .or_else(|| previous_sibling_token(&self.syntax, JavaSyntaxKind::LParen))
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RParen)
+            .or_else(|| next_sibling_token(&self.syntax, JavaSyntaxKind::RParen))
+    }
+
     pub fn components(&self) -> impl Iterator<Item = RecordComponent> + '_ {
         children(&self.syntax)
+    }
+
+    pub fn entries(&self) -> impl Iterator<Item = RecordComponentListEntry> {
+        let mut entries = Vec::new();
+        let mut pending_component = None;
+
+        for element in self.syntax.children_with_tokens() {
+            match element {
+                SyntaxElement::Node(node) => {
+                    if let Some(component) = RecordComponent::cast(node)
+                        && let Some(previous) = pending_component.replace(component)
+                    {
+                        entries.push(RecordComponentListEntry {
+                            component: previous,
+                            comma: None,
+                        });
+                    }
+                }
+                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
+                    if let Some(component) = pending_component.take() {
+                        entries.push(RecordComponentListEntry {
+                            component,
+                            comma: Some(JavaSyntaxToken { syntax: token }),
+                        });
+                    }
+                }
+                SyntaxElement::Token(_) => {}
+            }
+        }
+
+        if let Some(component) = pending_component {
+            entries.push(RecordComponentListEntry {
+                component,
+                comma: None,
+            });
+        }
+
+        entries.into_iter()
     }
 }
 
@@ -1089,8 +1139,58 @@ impl InstanceInitializer {
 }
 
 impl FormalParameterList {
+    #[must_use]
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LParen)
+            .or_else(|| previous_sibling_token(&self.syntax, JavaSyntaxKind::LParen))
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RParen)
+            .or_else(|| next_sibling_token(&self.syntax, JavaSyntaxKind::RParen))
+    }
+
     pub fn parameters(&self) -> impl Iterator<Item = FormalParameter> + '_ {
         children(&self.syntax)
+    }
+
+    pub fn entries(&self) -> impl Iterator<Item = FormalParameterListEntry> {
+        let mut entries = Vec::new();
+        let mut pending_parameter = None;
+
+        for element in self.syntax.children_with_tokens() {
+            match element {
+                SyntaxElement::Node(node) => {
+                    if let Some(parameter) = FormalParameter::cast(node)
+                        && let Some(previous) = pending_parameter.replace(parameter)
+                    {
+                        entries.push(FormalParameterListEntry {
+                            parameter: previous,
+                            comma: None,
+                        });
+                    }
+                }
+                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
+                    if let Some(parameter) = pending_parameter.take() {
+                        entries.push(FormalParameterListEntry {
+                            parameter,
+                            comma: Some(JavaSyntaxToken { syntax: token }),
+                        });
+                    }
+                }
+                SyntaxElement::Token(_) => {}
+            }
+        }
+
+        if let Some(parameter) = pending_parameter {
+            entries.push(FormalParameterListEntry {
+                parameter,
+                comma: None,
+            });
+        }
+
+        entries.into_iter()
     }
 }
 
@@ -3372,6 +3472,26 @@ fn node_has_leading_comment(syntax: &super::JavaSyntaxNode) -> bool {
             )
         })
     })
+}
+
+fn previous_sibling_token(
+    syntax: &super::JavaSyntaxNode,
+    kind: JavaSyntaxKind,
+) -> Option<JavaSyntaxToken> {
+    match syntax.prev_sibling_or_token()? {
+        SyntaxElement::Token(syntax) if syntax.kind() == kind => Some(JavaSyntaxToken { syntax }),
+        _ => None,
+    }
+}
+
+fn next_sibling_token(
+    syntax: &super::JavaSyntaxNode,
+    kind: JavaSyntaxKind,
+) -> Option<JavaSyntaxToken> {
+    match syntax.next_sibling_or_token()? {
+        SyntaxElement::Token(syntax) if syntax.kind() == kind => Some(JavaSyntaxToken { syntax }),
+        _ => None,
+    }
 }
 
 fn node_leading_comment_texts(syntax: &super::JavaSyntaxNode) -> Vec<String> {
