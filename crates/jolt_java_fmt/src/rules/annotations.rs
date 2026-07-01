@@ -2,15 +2,16 @@ use jolt_fmt_ir::{
     Doc, concat, force_group, group, hard_line, if_break, indent, line, soft_line, text,
 };
 use jolt_java_syntax::{
-    Annotation, AnnotationArgument, AnnotationArgumentList, AnnotationArgumentListEntry,
-    AnnotationArrayInitializer, AnnotationArrayInitializerEntry, AnnotationElementValue,
-    AnnotationElementValuePair, JavaComment, JavaSyntaxToken,
+    Annotation, AnnotationArgument, AnnotationArgumentList, AnnotationArrayInitializer,
+    AnnotationArrayInitializerEntry, AnnotationElementValue, AnnotationElementValuePair,
+    JavaComment, JavaSyntaxToken,
 };
 
 use crate::helpers::comments::{
     comment_forces_line, format_comment, format_dangling_comments, format_leading_comments,
     format_trailing_comments, format_trailing_comments_before_line_break,
 };
+use crate::helpers::lists::{CommaListItem, parenthesized_list};
 use crate::rules::expressions::format_expression;
 use crate::rules::names::format_name;
 
@@ -43,19 +44,19 @@ pub(crate) fn format_annotation_element_value(value: &AnnotationElementValue) ->
 }
 
 fn format_annotation_argument_list(arguments: &AnnotationArgumentList) -> Doc {
-    let entries = arguments.entries().collect::<Vec<_>>();
-    if entries.is_empty() {
-        return format_empty_annotation_argument_list(arguments);
-    }
-
-    group(concat([
-        format_annotation_argument_list_open(arguments),
-        indent(concat([
-            format_open_annotation_argument_list_spacing(arguments),
-            format_annotation_argument_list_entries(entries),
-        ])),
-        format_annotation_argument_list_close_with_spacing(arguments),
-    ]))
+    let open = arguments.open_paren();
+    let close = arguments.close_paren();
+    parenthesized_list(
+        open.as_ref(),
+        close.as_ref(),
+        arguments
+            .entries()
+            .map(|entry| CommaListItem {
+                doc: format_annotation_argument(entry.argument),
+                comma: entry.comma,
+            })
+            .collect(),
+    )
 }
 
 fn format_annotation_argument(argument: AnnotationArgument) -> Doc {
@@ -74,148 +75,6 @@ fn format_annotation_element_value_pair(pair: &AnnotationElementValuePair) -> Do
             format_annotation_element_value(&value)
         }),
     ])
-}
-
-fn format_empty_annotation_argument_list(arguments: &AnnotationArgumentList) -> Doc {
-    if !annotation_argument_list_has_dangling_comments(arguments) {
-        return concat([
-            format_annotation_argument_list_open(arguments),
-            format_annotation_argument_list_close_delimiter(arguments),
-        ]);
-    }
-
-    force_group(concat([
-        format_annotation_argument_list_open(arguments),
-        indent(concat([
-            hard_line(),
-            format_annotation_argument_list_dangling_comments(arguments),
-        ])),
-        hard_line(),
-        format_annotation_argument_list_close_delimiter_without_leading(arguments),
-    ]))
-}
-
-fn annotation_argument_list_has_dangling_comments(arguments: &AnnotationArgumentList) -> bool {
-    arguments
-        .open_paren()
-        .is_some_and(|token| !token.trailing_comments().is_empty())
-        || arguments
-            .close_paren()
-            .is_some_and(|token| !token.leading_comments().is_empty())
-}
-
-fn format_annotation_argument_list_open(arguments: &AnnotationArgumentList) -> Doc {
-    arguments.open_paren().map_or_else(
-        || text("("),
-        |open| concat([format_leading_comments(&open), text("(")]),
-    )
-}
-
-fn format_open_annotation_argument_list_spacing(arguments: &AnnotationArgumentList) -> Doc {
-    let Some(open) = arguments.open_paren() else {
-        return soft_line();
-    };
-
-    if open.trailing_comments().is_empty() {
-        return soft_line();
-    }
-
-    concat([
-        format_trailing_comments_before_line_break(&open),
-        if open.trailing_comments().iter().any(comment_forces_line) {
-            hard_line()
-        } else {
-            soft_line()
-        },
-    ])
-}
-
-fn format_annotation_argument_list_entries(entries: Vec<AnnotationArgumentListEntry>) -> Doc {
-    let mut docs = Vec::new();
-    let entries_len = entries.len();
-
-    for (index, entry) in entries.into_iter().enumerate() {
-        docs.push(format_annotation_argument(entry.argument));
-        if let Some(comma) = entry.comma {
-            docs.push(format_annotation_argument_separator(&comma));
-        } else if index + 1 < entries_len {
-            docs.push(line());
-        }
-    }
-
-    concat(docs)
-}
-
-fn format_annotation_argument_separator(comma: &JavaSyntaxToken) -> Doc {
-    concat([
-        format_leading_comments(comma),
-        text(","),
-        format_trailing_comments_before_line_break(comma),
-        if comma.trailing_comments().iter().any(comment_forces_line) {
-            hard_line()
-        } else {
-            line()
-        },
-    ])
-}
-
-fn format_annotation_argument_list_close_with_spacing(arguments: &AnnotationArgumentList) -> Doc {
-    let close_has_leading_comments = arguments
-        .close_paren()
-        .as_ref()
-        .is_some_and(|token| !token.leading_comments().is_empty());
-
-    concat([
-        if close_has_leading_comments {
-            line()
-        } else {
-            soft_line()
-        },
-        format_annotation_argument_list_close_delimiter(arguments),
-    ])
-}
-
-fn format_annotation_argument_list_close_delimiter(arguments: &AnnotationArgumentList) -> Doc {
-    let close = arguments.close_paren();
-    let close_has_leading_comments = close
-        .as_ref()
-        .is_some_and(|token| !token.leading_comments().is_empty());
-    close.map_or_else(
-        || text(")"),
-        |close| {
-            concat([
-                if close_has_leading_comments {
-                    format_leading_comments(&close)
-                } else {
-                    jolt_fmt_ir::nil()
-                },
-                text(")"),
-                format_trailing_comments(&close),
-            ])
-        },
-    )
-}
-
-fn format_annotation_argument_list_close_delimiter_without_leading(
-    arguments: &AnnotationArgumentList,
-) -> Doc {
-    arguments.close_paren().map_or_else(
-        || text(")"),
-        |close| concat([text(")"), format_trailing_comments(&close)]),
-    )
-}
-
-fn format_annotation_argument_list_dangling_comments(arguments: &AnnotationArgumentList) -> Doc {
-    let mut docs = Vec::new();
-
-    if let Some(open) = arguments.open_paren() {
-        push_dangling_comments(&mut docs, open.trailing_comments());
-    }
-    if let Some(close) = arguments.close_paren() {
-        push_dangling_comments(&mut docs, close.leading_comments());
-    }
-
-    concat(docs)
 }
 
 fn format_annotation_array_initializer(initializer: &AnnotationArrayInitializer) -> Doc {

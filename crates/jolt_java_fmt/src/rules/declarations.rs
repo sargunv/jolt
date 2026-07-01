@@ -1,26 +1,26 @@
 use std::ops::Range;
 
-use jolt_fmt_ir::{Doc, concat, force_group, group, hard_line, line, soft_line, text};
+use jolt_fmt_ir::{Doc, concat, group, hard_line, line, text};
 use jolt_java_syntax::{
     AnnotationElementDeclaration, AnnotationInterfaceBodyMember, AnnotationInterfaceDeclaration,
     BlockStatement, ClassBody, ClassBodyMember, ClassDeclaration, ConstructorInvocation,
-    EnumConstant, EnumDeclaration, ExtendsClause, FormalParameterList, FormalParameterListEntry,
-    ImplementsClause, InterfaceBody, InterfaceBodyMember, InterfaceDeclaration, JavaComment,
-    JavaSyntaxToken, MethodDeclaration, ModifierList, PermitsClause, PermitsClauseEntry,
-    RecordBody, RecordComponentList, RecordComponentListEntry, RecordDeclaration, ThrowsClause,
-    ThrowsClauseEntry, Type, TypeClauseEntry, TypeDeclaration,
+    EnumConstant, EnumDeclaration, ExtendsClause, FormalParameterList, ImplementsClause,
+    InterfaceBody, InterfaceBodyMember, InterfaceDeclaration, JavaSyntaxToken, MethodDeclaration,
+    ModifierList, PermitsClause, PermitsClauseEntry, RecordBody, RecordComponentList,
+    RecordDeclaration, ThrowsClause, ThrowsClauseEntry, Type, TypeClauseEntry, TypeDeclaration,
 };
 
 use crate::helpers::blocks::{BodyItem, braced_body, join_body_items};
 use crate::helpers::comments::{
-    comment_forces_line, format_comment, format_dangling_comments, format_leading_comments,
-    format_token_sequence, format_trailing_comments, format_trailing_comments_before_line_break,
+    comment_forces_line, format_dangling_comments, format_leading_comments, format_token_sequence,
+    format_trailing_comments, format_trailing_comments_before_line_break,
 };
 use crate::helpers::declarations::{declaration_with_body, declaration_without_body};
 use crate::helpers::formatter_ignore::{
     formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
     is_formatter_control_marker,
 };
+use crate::helpers::lists::{CommaListItem, parenthesized_list};
 use crate::rules::annotations::format_annotation_element_value;
 use crate::rules::expressions::{format_argument_list, format_expression};
 use crate::rules::modifiers::{format_modifier_prefix, format_modifier_prefix_from_parts};
@@ -666,19 +666,19 @@ fn format_record_components(components: Option<RecordComponentList>) -> Doc {
     let Some(components) = components else {
         return text("()");
     };
-    let entries = components.entries().collect::<Vec<_>>();
-    if entries.is_empty() {
-        return format_empty_record_component_list(&components);
-    }
-
-    group(concat([
-        format_record_component_list_open(&components),
-        jolt_fmt_ir::indent(concat([
-            format_open_record_component_list_spacing(&components),
-            format_record_component_list_entries(entries),
-        ])),
-        format_record_component_list_close_with_spacing(&components),
-    ]))
+    let open = components.open_paren();
+    let close = components.close_paren();
+    parenthesized_list(
+        open.as_ref(),
+        close.as_ref(),
+        components
+            .entries()
+            .map(|entry| CommaListItem {
+                doc: format_record_component(&entry.component),
+                comma: entry.comma,
+            })
+            .collect(),
+    )
 }
 
 fn format_extends_clause(clause: Option<ExtendsClause>) -> Doc {
@@ -1310,299 +1310,19 @@ fn format_parameters(parameters: Option<FormalParameterList>) -> Doc {
     let Some(parameters) = parameters else {
         return text("()");
     };
-    let entries = parameters.entries().collect::<Vec<_>>();
-    if entries.is_empty() {
-        return format_empty_formal_parameter_list(&parameters);
-    }
-
-    group(concat([
-        format_formal_parameter_list_open(&parameters),
-        jolt_fmt_ir::indent(concat([
-            format_open_formal_parameter_list_spacing(&parameters),
-            format_formal_parameter_list_entries(entries),
-        ])),
-        format_formal_parameter_list_close_with_spacing(&parameters),
-    ]))
-}
-
-fn format_empty_record_component_list(components: &RecordComponentList) -> Doc {
-    if !record_component_list_has_dangling_comments(components) {
-        return concat([
-            format_record_component_list_open(components),
-            format_record_component_list_close_delimiter(components),
-        ]);
-    }
-
-    force_group(concat([
-        format_record_component_list_open(components),
-        jolt_fmt_ir::indent(concat([
-            hard_line(),
-            format_record_component_list_dangling_comments(components),
-        ])),
-        hard_line(),
-        format_record_component_list_close_delimiter_without_leading(components),
-    ]))
-}
-
-fn record_component_list_has_dangling_comments(components: &RecordComponentList) -> bool {
-    components
-        .open_paren()
-        .is_some_and(|token| !token.trailing_comments().is_empty())
-        || components
-            .close_paren()
-            .is_some_and(|token| !token.leading_comments().is_empty())
-}
-
-fn format_record_component_list_open(components: &RecordComponentList) -> Doc {
-    components.open_paren().map_or_else(
-        || text("("),
-        |open| concat([format_leading_comments(&open), text("(")]),
-    )
-}
-
-fn format_open_record_component_list_spacing(components: &RecordComponentList) -> Doc {
-    let Some(open) = components.open_paren() else {
-        return soft_line();
-    };
-
-    if open.trailing_comments().is_empty() {
-        return soft_line();
-    }
-
-    concat([
-        format_trailing_comments_before_line_break(&open),
-        if open.trailing_comments().iter().any(comment_forces_line) {
-            hard_line()
-        } else {
-            soft_line()
-        },
-    ])
-}
-
-fn format_record_component_list_entries(entries: Vec<RecordComponentListEntry>) -> Doc {
-    let mut docs = Vec::new();
-    let entries_len = entries.len();
-
-    for (index, entry) in entries.into_iter().enumerate() {
-        docs.push(format_record_component(&entry.component));
-        if let Some(comma) = entry.comma {
-            docs.push(format_declaration_list_separator(&comma));
-        } else if index + 1 < entries_len {
-            docs.push(line());
-        }
-    }
-
-    concat(docs)
-}
-
-fn format_record_component_list_close_with_spacing(components: &RecordComponentList) -> Doc {
-    let close_has_leading_comments = components
-        .close_paren()
-        .as_ref()
-        .is_some_and(|token| !token.leading_comments().is_empty());
-
-    concat([
-        if close_has_leading_comments {
-            line()
-        } else {
-            soft_line()
-        },
-        format_record_component_list_close_delimiter(components),
-    ])
-}
-
-fn format_record_component_list_close_delimiter(components: &RecordComponentList) -> Doc {
-    let close = components.close_paren();
-    let close_has_leading_comments = close
-        .as_ref()
-        .is_some_and(|token| !token.leading_comments().is_empty());
-    close.map_or_else(
-        || text(")"),
-        |close| {
-            concat([
-                if close_has_leading_comments {
-                    format_leading_comments(&close)
-                } else {
-                    jolt_fmt_ir::nil()
-                },
-                text(")"),
-                format_trailing_comments(&close),
-            ])
-        },
-    )
-}
-
-fn format_record_component_list_close_delimiter_without_leading(
-    components: &RecordComponentList,
-) -> Doc {
-    components.close_paren().map_or_else(
-        || text(")"),
-        |close| concat([text(")"), format_trailing_comments(&close)]),
-    )
-}
-
-fn format_record_component_list_dangling_comments(components: &RecordComponentList) -> Doc {
-    let mut docs = Vec::new();
-
-    if let Some(open) = components.open_paren() {
-        push_dangling_comments(&mut docs, open.trailing_comments());
-    }
-    if let Some(close) = components.close_paren() {
-        push_dangling_comments(&mut docs, close.leading_comments());
-    }
-
-    concat(docs)
-}
-
-fn format_empty_formal_parameter_list(parameters: &FormalParameterList) -> Doc {
-    if !formal_parameter_list_has_dangling_comments(parameters) {
-        return concat([
-            format_formal_parameter_list_open(parameters),
-            format_formal_parameter_list_close_delimiter(parameters),
-        ]);
-    }
-
-    force_group(concat([
-        format_formal_parameter_list_open(parameters),
-        jolt_fmt_ir::indent(concat([
-            hard_line(),
-            format_formal_parameter_list_dangling_comments(parameters),
-        ])),
-        hard_line(),
-        format_formal_parameter_list_close_delimiter_without_leading(parameters),
-    ]))
-}
-
-fn formal_parameter_list_has_dangling_comments(parameters: &FormalParameterList) -> bool {
-    parameters
-        .open_paren()
-        .is_some_and(|token| !token.trailing_comments().is_empty())
-        || parameters
-            .close_paren()
-            .is_some_and(|token| !token.leading_comments().is_empty())
-}
-
-fn format_formal_parameter_list_open(parameters: &FormalParameterList) -> Doc {
-    parameters.open_paren().map_or_else(
-        || text("("),
-        |open| concat([format_leading_comments(&open), text("(")]),
-    )
-}
-
-fn format_open_formal_parameter_list_spacing(parameters: &FormalParameterList) -> Doc {
-    let Some(open) = parameters.open_paren() else {
-        return soft_line();
-    };
-
-    if open.trailing_comments().is_empty() {
-        return soft_line();
-    }
-
-    concat([
-        format_trailing_comments_before_line_break(&open),
-        if open.trailing_comments().iter().any(comment_forces_line) {
-            hard_line()
-        } else {
-            soft_line()
-        },
-    ])
-}
-
-fn format_formal_parameter_list_entries(entries: Vec<FormalParameterListEntry>) -> Doc {
-    let mut docs = Vec::new();
-    let entries_len = entries.len();
-
-    for (index, entry) in entries.into_iter().enumerate() {
-        docs.push(format_formal_parameter(&entry.parameter));
-        if let Some(comma) = entry.comma {
-            docs.push(format_declaration_list_separator(&comma));
-        } else if index + 1 < entries_len {
-            docs.push(line());
-        }
-    }
-
-    concat(docs)
-}
-
-fn format_formal_parameter_list_close_with_spacing(parameters: &FormalParameterList) -> Doc {
-    let close_has_leading_comments = parameters
-        .close_paren()
-        .as_ref()
-        .is_some_and(|token| !token.leading_comments().is_empty());
-
-    concat([
-        if close_has_leading_comments {
-            line()
-        } else {
-            soft_line()
-        },
-        format_formal_parameter_list_close_delimiter(parameters),
-    ])
-}
-
-fn format_formal_parameter_list_close_delimiter(parameters: &FormalParameterList) -> Doc {
+    let open = parameters.open_paren();
     let close = parameters.close_paren();
-    let close_has_leading_comments = close
-        .as_ref()
-        .is_some_and(|token| !token.leading_comments().is_empty());
-    close.map_or_else(
-        || text(")"),
-        |close| {
-            concat([
-                if close_has_leading_comments {
-                    format_leading_comments(&close)
-                } else {
-                    jolt_fmt_ir::nil()
-                },
-                text(")"),
-                format_trailing_comments(&close),
-            ])
-        },
+    parenthesized_list(
+        open.as_ref(),
+        close.as_ref(),
+        parameters
+            .entries()
+            .map(|entry| CommaListItem {
+                doc: format_formal_parameter(&entry.parameter),
+                comma: entry.comma,
+            })
+            .collect(),
     )
-}
-
-fn format_formal_parameter_list_close_delimiter_without_leading(
-    parameters: &FormalParameterList,
-) -> Doc {
-    parameters.close_paren().map_or_else(
-        || text(")"),
-        |close| concat([text(")"), format_trailing_comments(&close)]),
-    )
-}
-
-fn format_formal_parameter_list_dangling_comments(parameters: &FormalParameterList) -> Doc {
-    let mut docs = Vec::new();
-
-    if let Some(open) = parameters.open_paren() {
-        push_dangling_comments(&mut docs, open.trailing_comments());
-    }
-    if let Some(close) = parameters.close_paren() {
-        push_dangling_comments(&mut docs, close.leading_comments());
-    }
-
-    concat(docs)
-}
-
-fn format_declaration_list_separator(comma: &JavaSyntaxToken) -> Doc {
-    concat([
-        format_leading_comments(comma),
-        text(","),
-        format_trailing_comments_before_line_break(comma),
-        if comma.trailing_comments().iter().any(comment_forces_line) {
-            hard_line()
-        } else {
-            line()
-        },
-    ])
-}
-
-fn push_dangling_comments(docs: &mut Vec<Doc>, comments: Vec<JavaComment>) {
-    for comment in comments {
-        if !docs.is_empty() {
-            docs.push(hard_line());
-        }
-        docs.push(format_comment(&comment));
-    }
 }
 
 fn format_construct_leading_comments(tokens: &[jolt_java_syntax::JavaSyntaxToken]) -> Doc {

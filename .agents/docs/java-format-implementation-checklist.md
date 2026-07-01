@@ -91,9 +91,9 @@ Status legend:
 
 ## Helper Organization
 
-- `[ ]` `comma_list`
+- `[x]` `comma_list`
 - `[x]` `semicolon_list`
-- `[ ]` `parenthesized_list`
+- `[x]` `parenthesized_list`
 - `[x]` `angle_bracket_list`
 - `[x]` `braced_block`
 - `[x]` `declaration_header`
@@ -160,7 +160,7 @@ Status legend:
 - `[x]` Structural type declaration `extends`/`implements`/`permits` clauses.
 - `[x]` Broken-header brace placement.
 - `[~]` Body member category padding.
-- `[~]` Parameter and record-component lists.
+- `[x]` Parameter and record-component lists.
 - `[x]` Varargs formal parameters and record components.
 - `[x]` Inline formal-parameter and record-component annotations, including
   varargs type-use annotations before `...`.
