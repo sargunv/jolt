@@ -221,12 +221,15 @@ Status legend:
 - `[x]` Binary/operator chains.
 - `[x]` Ternaries.
 - `[x]` Assignments.
-- `[x]` Calls and break-all argument lists.
-- `[x]` Member chains.
+- `[x]` Calls and break-all argument lists, including blank-line normalization
+  inside argument lists.
+- `[x]` Member chains, including complex-receiver continuation and blank-line
+  normalization inside chains.
 - `[x]` Lambdas.
 - `[x]` Literal, name, `this`, `super`, and class-literal expression leaves.
 - `[x]` Untyped, `var`, typed, annotated, final, and varargs lambda parameters.
-- `[x]` Arrays/initializers.
+- `[x]` Arrays/initializers, including compact empty expression/list
+  initializers.
 - `[x]` Casts, `instanceof`, patterns, object creation, and type arguments.
 - `[x]` Type, record, component, and match-all patterns in `instanceof` and
   switch labels.

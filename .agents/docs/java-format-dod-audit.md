@@ -43,6 +43,11 @@ Evidence:
   `statements/switch-groups-and-rules`.
 - Qualified-name dot comments and line-comment forced leading-dot layout are
   pinned by `program/qualified-name-comments`.
+- Complex-receiver member chains and blank-line normalization in member chains
+  are pinned by `expressions/member-chains`; blank-line normalization in
+  argument lists is pinned by `expressions/calls-and-arguments`.
+- Empty expression/list array initializers and non-empty initializer list
+  formatting are pinned by `expressions/array-access-and-creation`.
 - Unsupported branded ignore spellings are pinned as ordinary comments by
   `program/unsupported-branded-ignore`.
 

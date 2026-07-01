@@ -16,6 +16,11 @@ class Example {
       account.permissions().primaryRole(),
       settings.region().identifier()
     );
+    target.accept(
+      user.profile().displayName(),
+      account.permissions().primaryRole(),
+      settings.region().identifier()
+    );
     log(
       /* nothing */
     );

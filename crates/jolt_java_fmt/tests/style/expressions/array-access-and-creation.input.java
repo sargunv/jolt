@@ -14,6 +14,13 @@ return new /* array */ int[/* size */ count] /* sized */;
 int[] numbers() {
 return new int[] {1,2,3};
 }
+int[] emptyNumbers() {
+return new int[] {};
+}
+String[] emptyLocalLabels() {
+String[] labels = {};
+return labels;
+}
 int[] commentedNumbers() {
 return new int[] {/* start */ 1, // one
 2, /* two */ 3 /* three */, // trailing

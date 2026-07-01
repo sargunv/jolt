@@ -19,6 +19,15 @@ class Example {
     return new int[] {1, 2, 3};
   }
 
+  int[] emptyNumbers() {
+    return new int[] {};
+  }
+
+  String[] emptyLocalLabels() {
+    String[] labels = {};
+    return labels;
+  }
+
   int[] commentedNumbers() {
     return new int[] {
       /* start */
