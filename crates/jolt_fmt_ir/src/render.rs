@@ -170,6 +170,7 @@ struct Renderer {
     fit_cache: Rc<RefCell<HashMap<FitCacheKey, CachedFit>>>,
     flat_width_cache: Rc<RefCell<HashMap<*const DocKind, FlatWidthSummary>>>,
     flat_width_cache_hits: Rc<RefCell<u32>>,
+    level_break_indent_cache: Rc<RefCell<HashMap<*const DocKind, bool>>>,
 }
 
 impl Renderer {
@@ -192,6 +193,7 @@ impl Renderer {
             fit_cache: Rc::new(RefCell::new(HashMap::new())),
             flat_width_cache: Rc::new(RefCell::new(HashMap::new())),
             flat_width_cache_hits: Rc::new(RefCell::new(0)),
+            level_break_indent_cache: Rc::new(RefCell::new(HashMap::new())),
         }
     }
 
@@ -885,7 +887,6 @@ struct CachedFit {
     align_spaces: u32,
     group_modes: BTreeMap<GroupId, bool>,
     group_stack: Vec<GroupFrame>,
-    level_break_tags: BTreeMap<LevelBreakTag, bool>,
     trailing_flat_width: TextWidth,
     marker_additions: BTreeMap<BreakMarkerId, Vec<TextWidth>>,
 }
@@ -899,7 +900,6 @@ struct FitCacheKey {
     align_spaces: u32,
     group_modes: BTreeMap<GroupId, bool>,
     group_stack: Vec<GroupFrame>,
-    level_break_tags: BTreeMap<LevelBreakTag, bool>,
     trailing_flat_width: TextWidth,
 }
 
@@ -912,7 +912,6 @@ impl PartialEq for FitCacheKey {
             && self.align_spaces == other.align_spaces
             && self.group_modes == other.group_modes
             && self.group_stack == other.group_stack
-            && self.level_break_tags == other.level_break_tags
             && self.trailing_flat_width == other.trailing_flat_width
     }
 }
@@ -928,7 +927,6 @@ impl Hash for FitCacheKey {
         self.align_spaces.hash(state);
         self.group_modes.hash(state);
         self.group_stack.hash(state);
-        self.level_break_tags.hash(state);
         self.trailing_flat_width.get().hash(state);
     }
 }
@@ -943,7 +941,6 @@ impl FitCacheKey {
             align_spaces: checker.align_spaces,
             group_modes: checker.group_modes.clone(),
             group_stack: checker.group_stack.clone(),
-            level_break_tags: checker.level_break_tags.clone(),
             trailing_flat_width: checker.trailing_flat_width,
         }
     }
@@ -989,6 +986,7 @@ struct FitChecker {
     fit_cache: Rc<RefCell<HashMap<FitCacheKey, CachedFit>>>,
     flat_width_cache: Rc<RefCell<HashMap<*const DocKind, FlatWidthSummary>>>,
     flat_width_cache_hits: Rc<RefCell<u32>>,
+    level_break_indent_cache: Rc<RefCell<HashMap<*const DocKind, bool>>>,
 }
 
 impl FitChecker {
@@ -1013,6 +1011,7 @@ impl FitChecker {
             fit_cache: Rc::clone(&renderer.fit_cache),
             flat_width_cache: Rc::clone(&renderer.flat_width_cache),
             flat_width_cache_hits: Rc::clone(&renderer.flat_width_cache_hits),
+            level_break_indent_cache: Rc::clone(&renderer.level_break_indent_cache),
         };
         for suffix in &renderer.line_suffixes {
             if !checker.fit_doc(suffix, Mode::Flat)? {
@@ -1034,6 +1033,10 @@ impl FitChecker {
     }
 
     fn fit_doc(&mut self, doc: &Doc, mode: Mode) -> Result<bool, RenderError> {
+        if self.contains_indent_if_level_break(doc) {
+            return self.fit_doc_uncached(doc, mode);
+        }
+
         let cache_key = FitCacheKey::new(doc, mode, self);
         let cached = { self.fit_cache.borrow().get(&cache_key).cloned() };
         if let Some(cached) = cached {
@@ -1052,7 +1055,6 @@ impl FitChecker {
                 align_spaces: self.align_spaces,
                 group_modes: self.group_modes.clone(),
                 group_stack: self.group_stack.clone(),
-                level_break_tags: self.level_break_tags.clone(),
                 trailing_flat_width: self.trailing_flat_width,
                 marker_additions: marker_additions(&markers_before, &self.marker_columns),
             },
@@ -1066,9 +1068,12 @@ impl FitChecker {
         self.align_spaces = cached.align_spaces;
         self.group_modes = cached.group_modes.clone();
         self.group_stack = cached.group_stack.clone();
-        self.level_break_tags = cached.level_break_tags.clone();
         self.trailing_flat_width = cached.trailing_flat_width;
         apply_marker_additions(&mut self.marker_columns, &cached.marker_additions);
+    }
+
+    fn contains_indent_if_level_break(&self, doc: &Doc) -> bool {
+        contains_indent_if_level_break(doc, &self.level_break_indent_cache)
     }
 
     fn fit_doc_uncached(&mut self, doc: &Doc, mode: Mode) -> Result<bool, RenderError> {
@@ -1411,4 +1416,59 @@ impl FitChecker {
         self.column = add_width(self.column, width);
         self.column <= self.options.line_width
     }
+}
+
+fn contains_indent_if_level_break(
+    doc: &Doc,
+    cache: &Rc<RefCell<HashMap<*const DocKind, bool>>>,
+) -> bool {
+    let ptr = doc.cache_ptr();
+    if let Some(cached) = cache.borrow().get(&ptr).copied() {
+        return cached;
+    }
+
+    let contains = match doc.kind() {
+        DocKind::IndentIfLevelBreak(_) => true,
+        DocKind::Concat(docs) => docs
+            .iter()
+            .any(|doc| contains_indent_if_level_break(doc, cache)),
+        DocKind::Group(group) => contains_indent_if_level_break(&group.contents, cache),
+        DocKind::Fill(entries) => entries
+            .iter()
+            .any(|entry| contains_indent_if_level_break(&entry.content, cache)),
+        DocKind::Indent(indent) => contains_indent_if_level_break(&indent.contents, cache),
+        DocKind::Align(align) => contains_indent_if_level_break(&align.contents, cache),
+        DocKind::IfBreak(if_break) => {
+            contains_indent_if_level_break(&if_break.breaks, cache)
+                || contains_indent_if_level_break(&if_break.flat, cache)
+        }
+        DocKind::IndentIfBreak(indent_if_break) => {
+            contains_indent_if_level_break(&indent_if_break.contents, cache)
+        }
+        DocKind::TrailingFlatWidth(trailing) => {
+            contains_indent_if_level_break(&trailing.contents, cache)
+        }
+        DocKind::LineSuffix(doc) => contains_indent_if_level_break(doc, cache),
+        DocKind::BestFitting(docs) => docs
+            .iter()
+            .any(|doc| contains_indent_if_level_break(doc, cache)),
+        DocKind::BreakLevel(level) => {
+            level
+                .segments
+                .iter()
+                .any(|doc| contains_indent_if_level_break(doc, cache))
+                || level
+                    .breaks
+                    .iter()
+                    .any(|break_| contains_indent_if_level_break(&break_.broken_prefix, cache))
+        }
+        DocKind::Nil
+        | DocKind::Text(_)
+        | DocKind::LiteralText(_)
+        | DocKind::Line(_)
+        | DocKind::LineSuffixBoundary
+        | DocKind::BreakParent => false,
+    };
+    cache.borrow_mut().insert(ptr, contains);
+    contains
 }

@@ -1,4 +1,5 @@
 use jolt_diagnostics::TextRange;
+use jolt_fmt_ir::LevelBreakTag;
 use jolt_java_syntax::{JavaLexer, JavaSyntaxKind, Trivia, TriviaKind};
 
 use crate::options::JavaFormatOptions;
@@ -12,6 +13,7 @@ pub(crate) struct JavaFormatContext<'source> {
     policy: JavaFormatPolicy,
     comments: Vec<JavaCommentRecord>,
     nested_argument_depth: usize,
+    next_level_break_tag: u32,
 }
 
 impl<'source> JavaFormatContext<'source> {
@@ -74,11 +76,18 @@ impl<'source> JavaFormatContext<'source> {
             ),
             comments,
             nested_argument_depth: 0,
+            next_level_break_tag: 1,
         }
     }
 
     pub(crate) fn policy(&self) -> JavaFormatPolicy {
         self.policy
+    }
+
+    pub(crate) fn fresh_level_break_tag(&mut self) -> LevelBreakTag {
+        let tag = LevelBreakTag(self.next_level_break_tag);
+        self.next_level_break_tag = self.next_level_break_tag.saturating_add(1);
+        tag
     }
 
     pub(crate) fn nested_argument_depth(&self) -> usize {

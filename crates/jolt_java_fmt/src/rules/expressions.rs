@@ -207,7 +207,7 @@ pub(super) fn format_selector_chain(
     role: ChainRole,
 ) -> FormatResult<Doc> {
     let chain = collect_selector_chain(expression, context)?;
-    Ok(java_chains::selector_chain(chain, context.policy(), role))
+    Ok(java_chains::selector_chain(chain, context, role))
 }
 
 pub(super) fn collect_selector_chain(
@@ -487,6 +487,8 @@ pub(super) fn collect_method_invocation_chain(
             .unhandled_comment_trivia_in_range(arguments_node.text_range())
             .is_none();
         let arguments = format_argument_list(&arguments_node, context)?;
+        let selector_arguments =
+            format_argument_list_with_continuation_indent(&arguments_node, context, 0)?;
         let arguments_as_receiver_head = if can_build_receiver_head_arguments {
             Some(format_argument_list_with_continuation_indent(
                 &arguments_node,
@@ -537,7 +539,7 @@ pub(super) fn collect_method_invocation_chain(
             member_as_receiver_head_after_chain_break,
             member_head,
             Some(member_head_after_chain_break),
-            arguments.clone(),
+            selector_arguments,
             selector_width,
             selector_head_width,
             argument_count,
@@ -756,7 +758,7 @@ fn format_method_reference_type_qualifier(
 
     Ok(java_chains::selector_chain(
         chain,
-        context.policy(),
+        context,
         ChainRole::Default,
     ))
 }
@@ -1148,7 +1150,7 @@ pub(super) fn format_cast_expression(
     if let Some(chain) = peel_cast_operand_chain(cast, context)? {
         return Ok(java_chains::selector_chain(
             chain,
-            context.policy(),
+            context,
             ChainRole::Default,
         ));
     }

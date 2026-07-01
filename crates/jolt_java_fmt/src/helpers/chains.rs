@@ -1,6 +1,7 @@
 use jolt_fmt_ir::{
-    Doc, LevelBreak, LevelBreakMode, break_level_with_indent, concat, flat_text, group, hard_line,
-    if_group_breaks, indent_by, level_break_with_prefix, soft_line, text,
+    Doc, LevelBreak, LevelBreakMode, LevelBreakTag, break_level_with_indent, concat, flat_text,
+    group, hard_line, if_group_breaks, indent_by, indent_if_level_breaks, level_break_with_prefix,
+    soft_line, tagged_level_break_with_prefix, text,
 };
 
 use crate::analyzers::chains::{
@@ -8,6 +9,7 @@ use crate::analyzers::chains::{
     SimpleCallBase, classified_prefix_member_end_index, fits_fill_first_argument_simple_call_base,
     is_gjf_log_statement_chain, single_invocation_coalesced_prefix_len,
 };
+use crate::context::JavaFormatContext;
 use crate::helpers::lists::SELECTOR_TYPE_ARGUMENTS_GROUP_ID;
 use crate::policy::JavaFormatPolicy;
 
@@ -83,7 +85,12 @@ pub(crate) fn explicit_type_argument_invocation_selector_head_after_chain_break(
     ])
 }
 
-pub(crate) fn selector_chain(chain: Chain, policy: JavaFormatPolicy, role: ChainRole) -> Doc {
+pub(crate) fn selector_chain(
+    chain: Chain,
+    context: &mut JavaFormatContext<'_>,
+    role: ChainRole,
+) -> Doc {
+    let policy = context.policy();
     let groups = chain.groups();
     let Chain {
         base,
@@ -211,7 +218,15 @@ pub(crate) fn selector_chain(chain: Chain, policy: JavaFormatPolicy, role: Chain
 
     if let Some(prefix_end) = classified_prefix_member_end_index(&metadata.base, &members) {
         let fill_mode = prefix_fill_mode(&members);
-        return visit_dot_with_prefix(base, members, prefix_end, fill_mode, policy, &metadata.base);
+        return visit_dot_with_prefix(
+            base,
+            members,
+            prefix_end,
+            fill_mode,
+            policy,
+            &metadata.base,
+            context.fresh_level_break_tag(),
+        );
     }
 
     if breaks_before_first_selector(&metadata, &members, policy, role) {
@@ -254,11 +269,16 @@ fn this_super_explicit_type_argument_selector_chain(
         0,
         LevelBreakMode::Unified,
         policy.continuation_indent_levels(),
+        None,
     )
 }
 
 fn dot_level_break(mode: LevelBreakMode) -> LevelBreak {
     level_break_with_prefix(mode, flat_text("."), text("."), 0)
+}
+
+fn tagged_dot_level_break(tag: LevelBreakTag, mode: LevelBreakMode) -> LevelBreak {
+    tagged_level_break_with_prefix(tag, mode, flat_text("."), text("."), 0)
 }
 
 fn member_regular_dot_segment(member: &ChainMember) -> Doc {
@@ -304,7 +324,7 @@ fn regular_dot_min_length_chain_doc(
     let mut tail: Vec<Doc> = Vec::new();
 
     for member in members {
-        let doc = member_regular_dot_segment(member);
+        let doc = member_regular_dot_segment_with_fixed_arg_indent(member, indent_levels);
         if tail.is_empty() {
             if length > min_length {
                 tail.push(doc);
@@ -341,6 +361,7 @@ fn visit_dot_with_prefix(
     prefix_fill_mode: LevelBreakMode,
     policy: JavaFormatPolicy,
     base_metadata: &BaseMetadata,
+    name_tag: LevelBreakTag,
 ) -> Doc {
     let single_invocation_terminal =
         single_invocation_coalesced_prefix_len(base_metadata, &members) == members.len();
@@ -386,6 +407,7 @@ fn visit_dot_with_prefix(
         .iter()
         .enumerate()
         .map(|(index, member)| {
+            let trailing_dereferences_after_member = index + 1 < members.len();
             if trailing_dereferences
                 && type_static_prefix_end == Some(prefix_end)
                 && index == prefix_end
@@ -396,16 +418,34 @@ fn visit_dot_with_prefix(
                     .or_else(|| member.selector_head_doc.clone())
                 && let Some(arguments) = member.selector_arguments_doc.clone()
             {
-                return concat([head, arguments]);
+                return concat([
+                    head,
+                    selector_arguments_with_dot_indent(
+                        arguments,
+                        name_tag,
+                        trailing_dereferences_after_member,
+                        policy.continuation_indent_levels(),
+                    ),
+                ]);
             }
             if single_invocation_terminal
                 && index == prefix_end
                 && member.is_call()
                 && !trailing_dereferences
             {
-                member_regular_dot_segment(member)
+                member_regular_dot_segment_with_tag(
+                    member,
+                    name_tag,
+                    trailing_dereferences_after_member,
+                    policy.continuation_indent_levels(),
+                )
             } else {
-                member_chain_segment(member)
+                member_chain_segment_with_tag(
+                    member,
+                    name_tag,
+                    trailing_dereferences_after_member,
+                    policy.continuation_indent_levels(),
+                )
             }
         })
         .collect();
@@ -415,6 +455,7 @@ fn visit_dot_with_prefix(
         prefix_end,
         prefix_fill_mode,
         policy.continuation_indent_levels(),
+        Some(name_tag),
     )
 }
 
@@ -429,6 +470,91 @@ fn member_chain_segment(member: &ChainMember) -> Doc {
         .doc_after_chain_break
         .clone()
         .unwrap_or_else(|| member.doc.clone())
+}
+
+fn member_regular_dot_segment_with_fixed_arg_indent(
+    member: &ChainMember,
+    indent_levels: u16,
+) -> Doc {
+    let Some(arguments) = member.selector_arguments_doc.clone() else {
+        return member_regular_dot_segment(member);
+    };
+    let Some(head) = member.selector_head_doc.clone() else {
+        return member_regular_dot_segment(member);
+    };
+    concat([head, indent_by(indent_levels, arguments)])
+}
+
+fn member_regular_dot_segment_with_tag(
+    member: &ChainMember,
+    dot_tag: LevelBreakTag,
+    trailing_dereferences: bool,
+    indent_levels: u16,
+) -> Doc {
+    member_segment_with_tag(member, dot_tag, trailing_dereferences, indent_levels, false)
+}
+
+fn member_chain_segment_with_tag(
+    member: &ChainMember,
+    dot_tag: LevelBreakTag,
+    trailing_dereferences: bool,
+    indent_levels: u16,
+) -> Doc {
+    member_segment_with_tag(member, dot_tag, trailing_dereferences, indent_levels, true)
+}
+
+fn member_segment_with_tag(
+    member: &ChainMember,
+    dot_tag: LevelBreakTag,
+    trailing_dereferences: bool,
+    indent_levels: u16,
+    after_chain_break: bool,
+) -> Doc {
+    let Some(arguments) = member.selector_arguments_doc.clone() else {
+        return if after_chain_break {
+            member_chain_segment(member)
+        } else {
+            member_regular_dot_segment(member)
+        };
+    };
+    let head = if after_chain_break {
+        member
+            .selector_head_doc_after_chain_break
+            .clone()
+            .or_else(|| member.selector_head_doc.clone())
+    } else {
+        member.selector_head_doc.clone()
+    };
+    let Some(head) = head else {
+        return if after_chain_break {
+            member_chain_segment(member)
+        } else {
+            member_regular_dot_segment(member)
+        };
+    };
+    concat([
+        head,
+        selector_arguments_with_dot_indent(
+            arguments,
+            dot_tag,
+            trailing_dereferences,
+            indent_levels,
+        ),
+    ])
+}
+
+fn selector_arguments_with_dot_indent(
+    arguments: Doc,
+    dot_tag: LevelBreakTag,
+    trailing_dereferences: bool,
+    indent_levels: u16,
+) -> Doc {
+    let flat_indent = if trailing_dereferences {
+        indent_levels as i16
+    } else {
+        0
+    };
+    indent_if_level_breaks(dot_tag, indent_levels as i16, flat_indent, arguments)
 }
 
 fn prefix_fill_mode(members: &[ChainMember]) -> LevelBreakMode {
@@ -447,6 +573,7 @@ fn prefix_dot_break_level_chain(
     prefix_end: usize,
     prefix_fill_mode: LevelBreakMode,
     indent_levels: u16,
+    tag: Option<LevelBreakTag>,
 ) -> Doc {
     if member_segments.is_empty() {
         return group(base);
@@ -462,7 +589,11 @@ fn prefix_dot_break_level_chain(
             } else {
                 LevelBreakMode::Unified
             };
-            dot_level_break(mode)
+            if let Some(tag) = tag {
+                tagged_dot_level_break(tag, mode)
+            } else {
+                dot_level_break(mode)
+            }
         })
         .collect();
     group(
@@ -478,13 +609,17 @@ fn field_call_dot_break_level_chain(
     mode: LevelBreakMode,
     indent_levels: u16,
 ) -> Doc {
-    let member_segments: Vec<Doc> = members.iter().map(|member| member.doc.clone()).collect();
+    let member_segments: Vec<Doc> = members
+        .iter()
+        .map(|member| member_regular_dot_segment_with_fixed_arg_indent(member, indent_levels))
+        .collect();
     prefix_dot_break_level_chain(
         base,
         &member_segments,
         members.len().saturating_sub(1),
         mode,
         indent_levels,
+        None,
     )
 }
 
@@ -667,6 +802,7 @@ fn selector_chain_with_cohesive_head(
         head_len.saturating_sub(1),
         prefix_fill_mode,
         policy.continuation_indent_levels(),
+        None,
     )
 }
 
