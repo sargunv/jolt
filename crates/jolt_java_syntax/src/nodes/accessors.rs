@@ -12,14 +12,14 @@ use super::{
     CompactConstructorDeclaration, CompilationUnit, CompilationUnitItem, ComponentPattern,
     ConditionalExpression, ConstructorBody, ConstructorDeclaration, ConstructorInvocation,
     ContinueStatement, DefaultValue, DimExpression, DoStatement, EmptyDeclaration,
-    EnhancedForStatement, EnumBody, EnumConstant, EnumConstantList, EnumDeclaration,
-    ExportsDirective, Expression, ExpressionParentRole, ExpressionStatement, ExtendsClause,
-    FieldAccessExpression, FieldDeclaration, FinallyClause, ForInitializer, ForStatement,
-    ForUpdate, FormalParameter, FormalParameterList, FormalParameterListEntry, Guard, IfStatement,
-    ImplementsClause, ImportDeclaration, ImportKind, InstanceInitializer, InstanceofExpression,
-    InterfaceBody, InterfaceBodyMember, InterfaceDeclaration, IntersectionType,
-    IntersectionTypeEntry, JavaFamily, JavaNode, JavaSyntaxKind, JavaSyntaxToken, LabeledStatement,
-    LambdaExpression, LambdaParameter, LambdaParameterList, LiteralExpression,
+    EnhancedForStatement, EnumBody, EnumConstant, EnumConstantList, EnumConstantListEntry,
+    EnumDeclaration, ExportsDirective, Expression, ExpressionParentRole, ExpressionStatement,
+    ExtendsClause, FieldAccessExpression, FieldDeclaration, FinallyClause, ForInitializer,
+    ForStatement, ForUpdate, FormalParameter, FormalParameterList, FormalParameterListEntry, Guard,
+    IfStatement, ImplementsClause, ImportDeclaration, ImportKind, InstanceInitializer,
+    InstanceofExpression, InterfaceBody, InterfaceBodyMember, InterfaceDeclaration,
+    IntersectionType, IntersectionTypeEntry, JavaFamily, JavaNode, JavaSyntaxKind, JavaSyntaxToken,
+    LabeledStatement, LambdaExpression, LambdaParameter, LambdaParameterList, LiteralExpression,
     LocalClassOrInterfaceDeclaration, LocalVariableDeclaration, MatchAllPattern, MemberChain,
     MemberChainSuffix, MethodDeclaration, MethodInvocationExpression, MethodReferenceExpression,
     ModifierList, ModuleDeclaration, ModuleDirective, ModuleDirectiveNode, ModuleDirectiveRole,
@@ -960,6 +960,44 @@ impl EnumBody {
 impl EnumConstantList {
     pub fn constants(&self) -> impl Iterator<Item = EnumConstant> + '_ {
         children(&self.syntax)
+    }
+
+    pub fn entries(&self) -> impl Iterator<Item = EnumConstantListEntry> {
+        let mut entries = Vec::new();
+        let mut pending_constant = None;
+
+        for element in self.syntax.children_with_tokens() {
+            match element {
+                SyntaxElement::Node(node) => {
+                    if let Some(constant) = EnumConstant::cast(node)
+                        && let Some(previous) = pending_constant.replace(constant)
+                    {
+                        entries.push(EnumConstantListEntry {
+                            constant: previous,
+                            comma: None,
+                        });
+                    }
+                }
+                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
+                    if let Some(constant) = pending_constant.take() {
+                        entries.push(EnumConstantListEntry {
+                            constant,
+                            comma: Some(JavaSyntaxToken { syntax: token }),
+                        });
+                    }
+                }
+                SyntaxElement::Token(_) => {}
+            }
+        }
+
+        if let Some(constant) = pending_constant {
+            entries.push(EnumConstantListEntry {
+                constant,
+                comma: None,
+            });
+        }
+
+        entries.into_iter()
     }
 }
 

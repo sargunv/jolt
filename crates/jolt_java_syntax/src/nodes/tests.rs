@@ -1954,7 +1954,7 @@ fn declaration_accessors_expose_formatter_facing_structure() {
                 }
 
                 enum Choice {
-                    ONE(1) { void hook() {} },
+                    ONE(1) { void hook() {} }, // enum comma
                     TWO;
 
                     int code;
@@ -2121,13 +2121,27 @@ fn declaration_accessors_expose_formatter_facing_structure() {
         .expect("enum declaration");
     let enum_body = enum_.body().expect("enum body");
     let constants = enum_body.constants().expect("enum constants");
+    let constant_entries = constants.entries().collect::<Vec<_>>();
     assert_eq!(
-        constants
-            .constants()
-            .map(|constant| constant.name().expect("constant name").text().to_owned())
+        constant_entries
+            .iter()
+            .map(|entry| {
+                entry
+                    .constant
+                    .name()
+                    .expect("constant name")
+                    .text()
+                    .to_owned()
+            })
             .collect::<Vec<_>>(),
         ["ONE", "TWO"]
     );
+    assert_eq!(constant_entries.len(), 2);
+    assert_eq!(
+        semicolon_trailing_comment(constant_entries[0].comma.clone()),
+        "// enum comma"
+    );
+    assert!(constant_entries[1].comma.is_none());
     assert_eq!(enum_body.members().count(), 1);
 }
 

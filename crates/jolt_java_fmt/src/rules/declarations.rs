@@ -4,16 +4,17 @@ use jolt_fmt_ir::{Doc, concat, group, hard_line, line, text};
 use jolt_java_syntax::{
     AnnotationElementDeclaration, AnnotationInterfaceBodyMember, AnnotationInterfaceDeclaration,
     BlockStatement, ClassBody, ClassBodyMember, ClassDeclaration, ConstructorInvocation,
-    EnumConstant, EnumDeclaration, ExtendsClause, FormalParameterList, ImplementsClause,
-    InterfaceBody, InterfaceBodyMember, InterfaceDeclaration, JavaSyntaxToken, MethodDeclaration,
-    ModifierList, PermitsClause, PermitsClauseEntry, RecordBody, RecordComponentList,
-    RecordDeclaration, ThrowsClause, ThrowsClauseEntry, Type, TypeClauseEntry, TypeDeclaration,
+    EnumConstant, EnumConstantListEntry, EnumDeclaration, ExtendsClause, FormalParameterList,
+    ImplementsClause, InterfaceBody, InterfaceBodyMember, InterfaceDeclaration, JavaSyntaxToken,
+    MethodDeclaration, ModifierList, PermitsClause, PermitsClauseEntry, RecordBody,
+    RecordComponentList, RecordDeclaration, ThrowsClause, ThrowsClauseEntry, Type, TypeClauseEntry,
+    TypeDeclaration,
 };
 
 use crate::helpers::blocks::{BodyItem, braced_body, join_body_items};
 use crate::helpers::comments::{
-    comment_forces_line, format_dangling_comments, format_leading_comments, format_token_sequence,
-    format_trailing_comments, format_trailing_comments_before_line_break,
+    comment_forces_line, format_comment, format_dangling_comments, format_leading_comments,
+    format_token_sequence, format_trailing_comments, format_trailing_comments_before_line_break,
 };
 use crate::helpers::declarations::{declaration_with_body, declaration_without_body};
 use crate::helpers::formatter_ignore::{
@@ -112,8 +113,8 @@ fn format_enum_declaration(enum_: &EnumDeclaration) -> Doc {
         .and_then(|body| body.constants())
         .map(|constants| {
             constants
-                .constants()
-                .map(|constant| format_enum_constant(&constant))
+                .entries()
+                .map(format_enum_constant_entry)
                 .collect::<Vec<_>>()
         })
         .unwrap_or_default();
@@ -421,8 +422,13 @@ fn format_type_declaration_with_body(
     )
 }
 
+struct FormattedEnumConstant {
+    doc: Doc,
+    comma: Option<JavaSyntaxToken>,
+}
+
 fn format_enum_body_contents(
-    constants: Vec<Doc>,
+    constants: Vec<FormattedEnumConstant>,
     body: &jolt_java_syntax::EnumBody,
 ) -> Option<Doc> {
     let members = body.members().collect::<Vec<_>>();
@@ -447,25 +453,52 @@ fn format_enum_body_contents(
         return None;
     }
 
+    let mut moved_member_comments = Vec::new();
     let constants_doc = (!constants.is_empty()).then(|| {
         let constants_len = constants.len();
-        join_docs(
-            constants
-                .into_iter()
-                .enumerate()
-                .map(|(index, constant)| {
-                    let separator = if !has_body_declarations || index + 1 < constants_len {
-                        ","
-                    } else {
-                        ";"
-                    };
-                    concat([constant, text(separator)])
-                })
-                .collect(),
-            &hard_line(),
-        )
+        let mut pending_constant_comments = Vec::new();
+        let mut constant_lines = Vec::new();
+        for (index, entry) in constants.into_iter().enumerate() {
+            if !pending_constant_comments.is_empty() {
+                constant_lines.push(format_dangling_comments(std::mem::take(
+                    &mut pending_constant_comments,
+                )));
+            }
+
+            let is_last_constant = index + 1 == constants_len;
+            let separator = if !has_body_declarations || !is_last_constant {
+                ","
+            } else {
+                ";"
+            };
+            let moved_comments = entry.comma.as_ref().map_or_else(Vec::new, |comma| {
+                enum_separator_moved_comments(comma, has_body_declarations && is_last_constant)
+            });
+            if has_body_declarations && is_last_constant {
+                moved_member_comments.extend(moved_comments);
+            } else {
+                pending_constant_comments.extend(moved_comments);
+            }
+
+            constant_lines.push(concat([
+                entry.doc,
+                format_enum_constant_separator(
+                    entry.comma.as_ref(),
+                    separator,
+                    !has_body_declarations || !is_last_constant,
+                ),
+            ]));
+        }
+
+        if !pending_constant_comments.is_empty() {
+            constant_lines.push(format_dangling_comments(pending_constant_comments));
+        }
+
+        join_docs(constant_lines, &hard_line())
     });
 
+    let moved_member_comments = (!moved_member_comments.is_empty())
+        .then(|| format_dangling_comments(moved_member_comments));
     let members_doc = format_class_member_body(
         &body.source_text(),
         body.text_range().start().get(),
@@ -473,6 +506,11 @@ fn format_enum_body_contents(
         open_comments,
         close_comments,
     );
+    let members_doc = match (moved_member_comments, members_doc) {
+        (Some(comments), Some(members)) => Some(concat([comments, hard_line(), members])),
+        (Some(comments), None) => Some(comments),
+        (None, members) => members,
+    };
 
     match (constants_doc, members_doc) {
         (Some(constants), Some(members)) => {
@@ -485,6 +523,68 @@ fn format_enum_body_contents(
         (None, Some(members)) => Some(members),
         (None, None) => None,
     }
+}
+
+fn format_enum_constant_entry(entry: EnumConstantListEntry) -> FormattedEnumConstant {
+    FormattedEnumConstant {
+        doc: format_enum_constant(&entry.constant),
+        comma: entry.comma,
+    }
+}
+
+fn format_enum_constant_separator(
+    comma: Option<&JavaSyntaxToken>,
+    separator: &'static str,
+    include_trailing_comments: bool,
+) -> Doc {
+    comma.map_or_else(
+        || text(separator),
+        |comma| {
+            concat([
+                format_leading_comments(comma),
+                text(separator),
+                if include_trailing_comments {
+                    format_enum_separator_inline_trailing_comments(comma)
+                } else {
+                    jolt_fmt_ir::nil()
+                },
+            ])
+        },
+    )
+}
+
+fn format_enum_separator_inline_trailing_comments(comma: &JavaSyntaxToken) -> Doc {
+    let comments = comma
+        .trailing_comments()
+        .into_iter()
+        .filter(|comment| !enum_separator_comment_moves(comment))
+        .collect::<Vec<_>>();
+
+    let mut docs = Vec::new();
+    for comment in comments {
+        docs.push(text(" "));
+        docs.push(format_comment(&comment));
+    }
+    concat(docs)
+}
+
+fn enum_separator_moved_comments(
+    comma: &JavaSyntaxToken,
+    move_all_trailing_comments: bool,
+) -> Vec<jolt_java_syntax::JavaComment> {
+    comma
+        .trailing_comments()
+        .into_iter()
+        .filter(|comment| {
+            !is_formatter_control_marker(comment.text())
+                && (move_all_trailing_comments || enum_separator_comment_moves(comment))
+        })
+        .collect()
+}
+
+fn enum_separator_comment_moves(comment: &jolt_java_syntax::JavaComment) -> bool {
+    comment.kind() != jolt_java_syntax::JavaCommentKind::Line
+        && (comment_forces_line(comment) || comment.text().trim_start().starts_with("/**"))
 }
 
 fn format_enum_constant(constant: &EnumConstant) -> Doc {

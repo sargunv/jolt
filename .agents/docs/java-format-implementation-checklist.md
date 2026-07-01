@@ -167,7 +167,7 @@ Status legend:
 - `[x]` `throws`.
 - `[x]` Structural constructor bodies.
 - `[x]` Compact record constructors.
-- `[~]` Enum constants and trailing comma policy.
+- `[x]` Enum constants and trailing comma policy.
 - `[x]` Enum constants with annotations, arguments, and class bodies.
 - `[x]` Annotation interface elements and default values.
 - `[x]` Annotation-interface nested type members.
