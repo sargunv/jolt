@@ -283,6 +283,24 @@ impl InterfaceDeclaration {
     }
 }
 
+impl ExtendsClause {
+    pub fn types(&self) -> impl Iterator<Item = Type> + '_ {
+        children_family(&self.syntax)
+    }
+}
+
+impl ImplementsClause {
+    pub fn types(&self) -> impl Iterator<Item = Type> + '_ {
+        children_family(&self.syntax)
+    }
+}
+
+impl PermitsClause {
+    pub fn names(&self) -> impl Iterator<Item = NameSyntax> + '_ {
+        children_family(&self.syntax)
+    }
+}
+
 impl AnnotationInterfaceDeclaration {
     #[must_use]
     pub fn modifiers(&self) -> Option<ModifierList> {

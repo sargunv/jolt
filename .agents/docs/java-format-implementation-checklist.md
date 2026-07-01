@@ -151,6 +151,7 @@ Status legend:
 - `[~]` Modifier sorting.
 - `[~]` Declaration/type-use annotation placement.
 - `[~]` Class/interface/record/enum/annotation headers.
+- `[x]` Structural type declaration `extends`/`implements`/`permits` clauses.
 - `[ ]` Broken-header brace placement.
 - `[~]` Body member category padding.
 - `[~]` Parameter and record-component lists.

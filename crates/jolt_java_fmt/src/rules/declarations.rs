@@ -1,9 +1,9 @@
 use jolt_fmt_ir::{Doc, concat, group, hard_line, line, soft_line, text};
 use jolt_java_syntax::{
     AnnotationElementDeclaration, AnnotationInterfaceBodyMember, AnnotationInterfaceDeclaration,
-    ClassBody, ClassBodyMember, ClassDeclaration, EnumConstant, EnumDeclaration,
-    FormalParameterList, InterfaceDeclaration, JavaSyntaxKind, JavaSyntaxToken, MethodDeclaration,
-    ModifierList, RecordDeclaration, TypeDeclaration,
+    ClassBody, ClassBodyMember, ClassDeclaration, EnumConstant, EnumDeclaration, ExtendsClause,
+    FormalParameterList, ImplementsClause, InterfaceDeclaration, JavaSyntaxKind, JavaSyntaxToken,
+    MethodDeclaration, ModifierList, PermitsClause, RecordDeclaration, TypeDeclaration,
 };
 
 use crate::helpers::blocks::{braced_body, empty_block};
@@ -14,6 +14,7 @@ use crate::helpers::comments::{
 use crate::helpers::modifiers::{modifier_prefix, modifier_prefix_from_parts};
 use crate::rules::annotations::format_annotation_element_value;
 use crate::rules::expressions::format_argument_list;
+use crate::rules::names::format_name;
 use crate::rules::statements::format_block;
 use crate::rules::types::{format_array_dimensions, format_type, format_type_parameter_list};
 use crate::rules::variables::{
@@ -52,9 +53,9 @@ fn format_class_declaration(class: &ClassDeclaration) -> Doc {
             text("class "),
             text(name.text().to_owned()),
             format_type_parameter_list(class.type_parameters()),
-            optional_clause_tokens(class.extends_clause().map(|node| node.tokens())),
-            optional_clause_tokens(class.implements_clause().map(|node| node.tokens())),
-            optional_clause_tokens(class.permits_clause().map(|node| node.tokens())),
+            format_extends_clause(class.extends_clause()),
+            format_implements_clause(class.implements_clause()),
+            format_permits_clause(class.permits_clause()),
         ]),
         &members,
     )
@@ -79,8 +80,8 @@ fn format_interface_declaration(interface: &InterfaceDeclaration) -> Doc {
             text("interface "),
             text(name.text().to_owned()),
             format_type_parameter_list(interface.type_parameters()),
-            optional_clause_tokens(interface.extends_clause().map(|node| node.tokens())),
-            optional_clause_tokens(interface.permits_clause().map(|node| node.tokens())),
+            format_extends_clause(interface.extends_clause()),
+            format_permits_clause(interface.permits_clause()),
         ]),
         &members,
     )
@@ -102,7 +103,7 @@ fn format_record_declaration(record: &RecordDeclaration) -> Doc {
             text(name.text().to_owned()),
             format_type_parameter_list(record.type_parameters()),
             format_record_components(record.components()),
-            optional_clause_tokens(record.implements_clause().map(|node| node.tokens())),
+            format_implements_clause(record.implements_clause()),
         ])),
         &members,
     )
@@ -134,7 +135,7 @@ fn format_enum_declaration(enum_: &EnumDeclaration) -> Doc {
         concat([
             text("enum "),
             text(name.text().to_owned()),
-            optional_clause_tokens(enum_.implements_clause().map(|node| node.tokens())),
+            format_implements_clause(enum_.implements_clause()),
         ]),
         body_doc,
     )
@@ -267,12 +268,6 @@ fn effective_members(members: &[ClassBodyMember]) -> Vec<ClassBodyMember> {
         .collect()
 }
 
-fn optional_clause_tokens(tokens: Option<Vec<JavaSyntaxToken>>) -> Doc {
-    tokens.map_or_else(jolt_fmt_ir::nil, |tokens| {
-        concat([text(" "), format_token_sequence(&tokens)])
-    })
-}
-
 fn format_record_components(components: Option<jolt_java_syntax::RecordComponentList>) -> Doc {
     let Some(components) = components else {
         return text("()");
@@ -287,6 +282,58 @@ fn format_record_components(components: Option<jolt_java_syntax::RecordComponent
             .map(|component| format_record_component(&component))
             .collect(),
     )
+}
+
+fn format_extends_clause(clause: Option<ExtendsClause>) -> Doc {
+    format_type_clause(
+        "extends",
+        clause.map(|clause| {
+            clause
+                .types()
+                .map(|ty| format_type(&ty))
+                .collect::<Vec<_>>()
+        }),
+    )
+}
+
+fn format_implements_clause(clause: Option<ImplementsClause>) -> Doc {
+    format_type_clause(
+        "implements",
+        clause.map(|clause| {
+            clause
+                .types()
+                .map(|ty| format_type(&ty))
+                .collect::<Vec<_>>()
+        }),
+    )
+}
+
+fn format_permits_clause(clause: Option<PermitsClause>) -> Doc {
+    format_type_clause(
+        "permits",
+        clause.map(|clause| {
+            clause
+                .names()
+                .map(|name| format_name(&name))
+                .collect::<Vec<_>>()
+        }),
+    )
+}
+
+fn format_type_clause(keyword: &'static str, items: Option<Vec<Doc>>) -> Doc {
+    let Some(items) = items else {
+        return jolt_fmt_ir::nil();
+    };
+    if items.is_empty() {
+        return jolt_fmt_ir::nil();
+    }
+
+    concat([
+        text(" "),
+        text(keyword),
+        text(" "),
+        jolt_fmt_ir::join(text(", "), items),
+    ])
 }
 
 fn join_member_docs(members: Vec<FormattedMember>) -> Doc {
