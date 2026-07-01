@@ -345,7 +345,10 @@ fn format_array_creation_expression(expression: &ArrayCreationExpression) -> Doc
         expression
             .initializer()
             .map_or_else(jolt_fmt_ir::nil, |initializer| {
-                concat([text(" "), format_array_initializer(&initializer)])
+                concat([
+                    text(" "),
+                    jolt_fmt_ir::dedent(format_array_initializer(&initializer)),
+                ])
             }),
     ]))
 }

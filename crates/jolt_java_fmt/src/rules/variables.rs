@@ -183,13 +183,20 @@ fn format_variable_declarator(declarator: &VariableDeclarator) -> Doc {
 }
 
 fn format_variable_initializer(initializer: &VariableInitializer) -> Doc {
-    concat([
-        text(" ="),
-        indent(concat([
-            line(),
-            initializer.value().map_or_else(jolt_fmt_ir::nil, |value| {
-                format_variable_initializer_value(value)
-            }),
-        ])),
-    ])
+    let Some(value) = initializer.value() else {
+        return text(" =");
+    };
+
+    match value {
+        jolt_java_syntax::VariableInitializerValue::ArrayInitializer(initializer) => concat([
+            text(" = "),
+            format_variable_initializer_value(
+                jolt_java_syntax::VariableInitializerValue::ArrayInitializer(initializer),
+            ),
+        ]),
+        value => concat([
+            text(" ="),
+            indent(concat([line(), format_variable_initializer_value(value)])),
+        ]),
+    }
 }
