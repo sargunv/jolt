@@ -8,15 +8,16 @@ use super::{
     BlockStatement, BreakStatement, CaseConstant, CasePattern, CastExpression, CatchClause,
     CatchParameter, CatchTypeList, ClassBody, ClassBodyDeclaration, ClassBodyMember,
     ClassDeclaration, ClassLiteralExpression, ClassType, ClassTypeSegment,
-    CompactConstructorDeclaration, CompilationUnit, ComponentPattern, ConditionalExpression,
-    ConstructorBody, ConstructorDeclaration, ContinueStatement, DefaultValue, DimExpression,
-    DoStatement, EnhancedForStatement, EnumBody, EnumConstant, EnumConstantList, EnumDeclaration,
-    ExportsDirective, Expression, ExpressionStatement, ExtendsClause, FieldAccessExpression,
-    FieldDeclaration, FinallyClause, ForInitializer, ForStatement, ForUpdate, FormalParameter,
-    FormalParameterList, Guard, IfStatement, ImplementsClause, ImportDeclaration, ImportKind,
-    InstanceInitializer, InstanceofExpression, InterfaceBody, InterfaceBodyMember,
-    InterfaceDeclaration, IntersectionType, JavaFamily, JavaNode, JavaSyntaxKind, JavaSyntaxToken,
-    LabeledStatement, LambdaExpression, LambdaParameter, LambdaParameterList, LiteralExpression,
+    CompactConstructorDeclaration, CompilationUnit, CompilationUnitItem, ComponentPattern,
+    ConditionalExpression, ConstructorBody, ConstructorDeclaration, ContinueStatement,
+    DefaultValue, DimExpression, DoStatement, EmptyDeclaration, EnhancedForStatement, EnumBody,
+    EnumConstant, EnumConstantList, EnumDeclaration, ExportsDirective, Expression,
+    ExpressionStatement, ExtendsClause, FieldAccessExpression, FieldDeclaration, FinallyClause,
+    ForInitializer, ForStatement, ForUpdate, FormalParameter, FormalParameterList, Guard,
+    IfStatement, ImplementsClause, ImportDeclaration, ImportKind, InstanceInitializer,
+    InstanceofExpression, InterfaceBody, InterfaceBodyMember, InterfaceDeclaration,
+    IntersectionType, JavaFamily, JavaNode, JavaSyntaxKind, JavaSyntaxToken, LabeledStatement,
+    LambdaExpression, LambdaParameter, LambdaParameterList, LiteralExpression,
     LocalClassOrInterfaceDeclaration, LocalVariableDeclaration, MatchAllPattern, MemberChain,
     MemberChainSuffix, MethodDeclaration, MethodInvocationExpression, MethodReferenceExpression,
     ModifierList, ModuleDeclaration, ModuleDirective, ModuleDirectiveNode, ModuleDirectiveRole,
@@ -38,6 +39,24 @@ use super::{
 use jolt_syntax::{SyntaxElement, TriviaKind};
 
 impl CompilationUnit {
+    pub fn items(&self) -> impl Iterator<Item = CompilationUnitItem> + '_ {
+        self.syntax.children().filter_map(|syntax| {
+            if let Some(package) = PackageDeclaration::cast(syntax.clone()) {
+                return Some(CompilationUnitItem::Package(package));
+            }
+            if let Some(import) = ImportDeclaration::cast(syntax.clone()) {
+                return Some(CompilationUnitItem::Import(import));
+            }
+            if let Some(module) = ModuleDeclaration::cast(syntax.clone()) {
+                return Some(CompilationUnitItem::Module(module));
+            }
+            if let Some(declaration) = TypeDeclaration::cast(syntax.clone()) {
+                return Some(CompilationUnitItem::Type(declaration));
+            }
+            EmptyDeclaration::cast(syntax).map(CompilationUnitItem::EmptyDeclaration)
+        })
+    }
+
     #[must_use]
     pub fn package_declaration(&self) -> Option<PackageDeclaration> {
         child(&self.syntax)

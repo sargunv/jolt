@@ -61,7 +61,7 @@ Status legend:
 
 ## Accessor Discipline
 
-- `[ ]` Compilation-unit item order.
+- `[x]` Compilation-unit item order.
 - `[x]` Import static/star/name/comment roles.
 - `[x]` Module directive kind/name/target/comment roles.
 - `[x]` Modifier keyword and annotation roles.
@@ -127,7 +127,7 @@ Status legend:
 
 ### 3. Accessor Pass
 
-- `[ ]` Add all accessors listed under Accessor Discipline.
+- `[x]` Add all accessors listed under Accessor Discipline.
 
 ### 4. Low-Level Helpers
 

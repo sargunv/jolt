@@ -1,7 +1,7 @@
 use jolt_fmt_ir::{Doc, concat, empty_line, hard_line, literal_text, text};
 use jolt_java_syntax::{
-    CompilationUnit, ImportDeclaration, ImportKind, ModuleDeclaration, ModuleDirective,
-    ModuleDirectiveRole, PackageDeclaration,
+    CompilationUnit, CompilationUnitItem, ImportDeclaration, ImportKind, ModuleDeclaration,
+    ModuleDirective, ModuleDirectiveRole, PackageDeclaration,
 };
 
 use crate::rules::annotations::format_annotation;
@@ -10,22 +10,36 @@ use crate::rules::names::{format_name, name_key};
 
 pub(crate) fn format_compilation_unit(unit: &CompilationUnit) -> Doc {
     let mut sections = Vec::new();
+    let mut package = None;
+    let mut imports = Vec::new();
+    let mut module = None;
+    let mut types = Vec::new();
 
-    if let Some(package) = unit.package_declaration() {
+    for item in unit.items() {
+        match item {
+            CompilationUnitItem::Package(declaration) => package = Some(declaration),
+            CompilationUnitItem::Import(declaration) => imports.push(declaration),
+            CompilationUnitItem::Module(declaration) => module = Some(declaration),
+            CompilationUnitItem::Type(declaration) => types.push(declaration),
+            CompilationUnitItem::EmptyDeclaration(_) => {}
+        }
+    }
+
+    if let Some(package) = package {
         sections.push(format_package_declaration(&package));
     }
 
-    let imports = format_imports(unit.imports().collect());
+    let imports = format_imports(imports);
     if let Some(imports) = imports {
         sections.push(imports);
     }
 
-    if let Some(module) = unit.module_declaration() {
+    if let Some(module) = module {
         sections.push(format_module_declaration(&module));
     }
 
-    let types = unit
-        .type_declarations()
+    let types = types
+        .into_iter()
         .map(|declaration| format_type_declaration(&declaration))
         .collect::<Vec<_>>();
     if !types.is_empty() {

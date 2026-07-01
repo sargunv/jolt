@@ -111,6 +111,59 @@ fn compilation_unit_accessors_traverse_real_parser_output() {
 }
 
 #[test]
+fn compilation_unit_items_expose_ordered_top_level_roles() {
+    let syntax = parse_clean(
+        r"
+                package example.order;
+
+                import java.util.List;
+
+                ;
+                class A {}
+                ;
+                interface B {}
+            ",
+    );
+
+    let item_kinds = syntax
+        .items()
+        .map(|item| match item {
+            CompilationUnitItem::Package(package) => {
+                format!(
+                    "package:{}",
+                    package.name().expect("package name").compact_text()
+                )
+            }
+            CompilationUnitItem::Import(import) => {
+                format!("import:{}", import.import_path().expect("import path"))
+            }
+            CompilationUnitItem::Module(module) => {
+                format!(
+                    "module:{}",
+                    module.name().expect("module name").compact_text()
+                )
+            }
+            CompilationUnitItem::Type(declaration) => {
+                format!("type:{:?}", declaration.kind())
+            }
+            CompilationUnitItem::EmptyDeclaration(_) => "empty".to_owned(),
+        })
+        .collect::<Vec<_>>();
+
+    assert_eq!(
+        item_kinds,
+        [
+            "package:example.order".to_owned(),
+            "import:java.util.List".to_owned(),
+            "empty".to_owned(),
+            "type:ClassDeclaration".to_owned(),
+            "empty".to_owned(),
+            "type:InterfaceDeclaration".to_owned(),
+        ]
+    );
+}
+
+#[test]
 fn module_declaration_directives_traverse_real_parser_output() {
     let parse = parse_compilation_unit(
         r"

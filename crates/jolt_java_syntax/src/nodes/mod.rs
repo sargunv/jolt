@@ -710,6 +710,15 @@ pub enum AnnotationArgument {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub enum CompilationUnitItem {
+    Package(PackageDeclaration),
+    Import(ImportDeclaration),
+    Module(ModuleDeclaration),
+    Type(TypeDeclaration),
+    EmptyDeclaration(EmptyDeclaration),
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ImportKind {
     SingleType(NameSyntax),
     TypeOnDemand(NameSyntax),
