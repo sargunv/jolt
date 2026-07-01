@@ -163,7 +163,9 @@ fn format_assignment_expression(expression: &AssignmentExpression) -> Doc {
             .map_or_else(jolt_fmt_ir::nil, |left| format_expression(&left)),
         expression
             .operator()
-            .map_or_else(String::new, |operator| operator.text().to_owned()),
+            .map_or_else(jolt_fmt_ir::nil, |operator| {
+                format_token_with_comments(&operator)
+            }),
         expression
             .right()
             .map_or_else(jolt_fmt_ir::nil, |right| format_expression(&right)),
@@ -176,10 +178,16 @@ fn format_conditional_expression(expression: &ConditionalExpression) -> Doc {
             .condition()
             .map_or_else(jolt_fmt_ir::nil, |condition| format_expression(&condition)),
         expression
+            .question_token()
+            .map_or_else(|| text("?"), |token| format_token_with_comments(&token)),
+        expression
             .true_expression()
             .map_or_else(jolt_fmt_ir::nil, |expression| {
                 format_expression(&expression)
             }),
+        expression
+            .colon_token()
+            .map_or_else(|| text(":"), |token| format_token_with_comments(&token)),
         expression
             .false_expression()
             .map_or_else(jolt_fmt_ir::nil, |expression| {
@@ -195,11 +203,11 @@ fn format_binary_expression(expression: &BinaryExpression) -> Doc {
 
 fn format_unary_expression(expression: &UnaryExpression) -> Doc {
     concat([
-        text(
-            expression
-                .operator()
-                .map_or_else(String::new, |operator| operator.text().to_owned()),
-        ),
+        expression
+            .operator()
+            .map_or_else(jolt_fmt_ir::nil, |operator| {
+                format_token_with_comments(&operator)
+            }),
         expression
             .operand()
             .map_or_else(jolt_fmt_ir::nil, |operand| format_expression(&operand)),
@@ -211,11 +219,11 @@ fn format_postfix_expression(expression: &PostfixExpression) -> Doc {
         expression
             .operand()
             .map_or_else(jolt_fmt_ir::nil, |operand| format_expression(&operand)),
-        text(
-            expression
-                .operator()
-                .map_or_else(String::new, |operator| operator.text().to_owned()),
-        ),
+        expression
+            .operator()
+            .map_or_else(jolt_fmt_ir::nil, |operator| {
+                format_token_with_comments(&operator)
+            }),
     ])
 }
 
@@ -897,17 +905,27 @@ fn is_member_chain_child(expression: &Expression) -> bool {
     )
 }
 
-fn flatten_binary_expression(expression: &BinaryExpression) -> (Expression, Vec<(String, Doc)>) {
-    let operator = expression
-        .operator()
-        .map_or_else(String::new, |operator| operator.text().to_owned());
-    if !is_flattenable_binary_operator(&operator) {
+fn flatten_binary_expression(expression: &BinaryExpression) -> (Expression, Vec<(Doc, Doc)>) {
+    let Some(operator) = expression.operator() else {
+        return (
+            expression
+                .left()
+                .unwrap_or_else(|| Expression::from(expression.clone())),
+            expression
+                .right()
+                .map(|right| (jolt_fmt_ir::nil(), format_expression(&right)))
+                .into_iter()
+                .collect(),
+        );
+    };
+    let operator_text = operator.text().to_owned();
+    if !is_flattenable_binary_operator(&operator_text) {
         return (
             expression
                 .left()
                 .unwrap_or_else(|| Expression::from(expression.clone())),
             vec![(
-                operator,
+                format_token_with_comments(&operator),
                 expression
                     .right()
                     .map_or_else(jolt_fmt_ir::nil, |right| format_expression(&right)),
@@ -916,17 +934,33 @@ fn flatten_binary_expression(expression: &BinaryExpression) -> (Expression, Vec<
     }
 
     let mut operands = Vec::new();
-    collect_binary_operands(
-        &Expression::from(expression.clone()),
-        &operator,
-        &mut operands,
-    );
+    let root = Expression::from(expression.clone());
+    if binary_operator_comments_in_tree(&root, &operator_text) {
+        return (
+            expression.left().unwrap_or_else(|| root.clone()),
+            expression
+                .right()
+                .map(|right| {
+                    (
+                        format_token_with_comments(&operator),
+                        format_expression(&right),
+                    )
+                })
+                .into_iter()
+                .collect(),
+        );
+    }
+
+    collect_binary_operands(&root, &operator_text, &mut operands);
     let mut operands = operands.into_iter();
-    let first = operands
-        .next()
-        .unwrap_or_else(|| Expression::from(expression.clone()));
+    let first = operands.next().unwrap_or(root);
     let rest = operands
-        .map(|operand| (operator.clone(), format_expression(&operand)))
+        .map(|operand| {
+            (
+                format_token_with_comments(&operator),
+                format_expression(&operand),
+            )
+        })
         .collect();
 
     (first, rest)
@@ -952,6 +986,29 @@ fn collect_binary_operands(
     }
 
     operands.push(expression.clone());
+}
+
+fn binary_operator_comments_in_tree(expression: &Expression, operator: &str) -> bool {
+    if let Expression::BinaryExpression(binary) = expression
+        && binary
+            .operator()
+            .is_some_and(|token| token.text() == operator)
+    {
+        if binary
+            .operator()
+            .is_some_and(|token| tokens_have_comments(&[token]))
+        {
+            return true;
+        }
+        return binary
+            .left()
+            .is_some_and(|left| binary_operator_comments_in_tree(&left, operator))
+            || binary
+                .right()
+                .is_some_and(|right| binary_operator_comments_in_tree(&right, operator));
+    }
+
+    false
 }
 
 const fn is_flattenable_binary_operator(operator: &str) -> bool {

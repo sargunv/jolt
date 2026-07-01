@@ -1294,6 +1294,14 @@ fn expression_and_statement_accessors_expose_layout_roles() {
         .next()
         .expect("conditional expression");
     assert_eq!(
+        conditional.question_token().expect("question token").kind(),
+        JavaSyntaxKind::Question
+    );
+    assert_eq!(
+        conditional.colon_token().expect("colon token").kind(),
+        JavaSyntaxKind::Colon
+    );
+    assert_eq!(
         conditional
             .condition()
             .expect("condition")

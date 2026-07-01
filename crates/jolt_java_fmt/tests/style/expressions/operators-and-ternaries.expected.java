@@ -3,6 +3,10 @@ class Example {
     return (user.isActive() && account.hasPermission("write")) ? true : false;
   }
 
+  boolean commented(boolean ready) {
+    return ready ? /* yes */ true : /* no */ false;
+  }
+
   void assign(
     boolean left,
     boolean right,
@@ -12,7 +16,9 @@ class Example {
     AuditPolicy auditPolicy
   ) {
     allowed = left && right;
+    allowed = left && /* both */ right;
     count += 1;
+    count += /* increment */ 1;
     allowed =
       user.isActive()
       && account.hasPermission("write")

@@ -1,19 +1,14 @@
 use jolt_fmt_ir::{Doc, concat, group, indent, line, text};
 
-pub(crate) fn assignment_expression(left: Doc, operator: String, right: Doc) -> Doc {
-    group(concat([
-        left,
-        text(" "),
-        text(operator),
-        assignment_rhs(right),
-    ]))
+pub(crate) fn assignment_expression(left: Doc, operator: Doc, right: Doc) -> Doc {
+    group(concat([left, text(" "), operator, assignment_rhs(right)]))
 }
 
 pub(crate) fn assignment_rhs(right: Doc) -> Doc {
     indent(concat([line(), right]))
 }
 
-pub(crate) fn binary_chain(first: Doc, rest: Vec<(String, Doc)>) -> Doc {
+pub(crate) fn binary_chain(first: Doc, rest: Vec<(Doc, Doc)>) -> Doc {
     if rest.is_empty() {
         return first;
     }
@@ -22,19 +17,27 @@ pub(crate) fn binary_chain(first: Doc, rest: Vec<(String, Doc)>) -> Doc {
         first,
         concat(
             rest.into_iter()
-                .map(|(operator, operand)| concat([line(), text(operator), text(" "), operand])),
+                .map(|(operator, operand)| concat([line(), operator, text(" "), operand])),
         ),
     ]))
 }
 
-pub(crate) fn ternary_expression(condition: Doc, consequence: Doc, alternative: Doc) -> Doc {
+pub(crate) fn ternary_expression(
+    condition: Doc,
+    question: Doc,
+    consequence: Doc,
+    colon: Doc,
+    alternative: Doc,
+) -> Doc {
     group(concat([
         condition,
         line(),
-        text("? "),
+        question,
+        text(" "),
         consequence,
         line(),
-        text(": "),
+        colon,
+        text(" "),
         alternative,
     ]))
 }

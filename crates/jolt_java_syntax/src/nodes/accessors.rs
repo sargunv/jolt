@@ -1744,6 +1744,16 @@ impl AssignmentExpression {
 
 impl ConditionalExpression {
     #[must_use]
+    pub fn question_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Question)
+    }
+
+    #[must_use]
+    pub fn colon_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Colon)
+    }
+
+    #[must_use]
     pub fn condition(&self) -> Option<Expression> {
         nth_child_family(&self.syntax, 0)
     }
