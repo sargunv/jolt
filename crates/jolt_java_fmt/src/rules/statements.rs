@@ -29,10 +29,6 @@ pub(crate) fn format_block(block: &Block) -> Doc {
     braced_body(format_block_body(block))
 }
 
-pub(crate) fn format_block_items<'a>(items: impl Iterator<Item = BlockItem> + 'a) -> Doc {
-    braced_body(format_block_items_body(items))
-}
-
 pub(crate) fn format_block_body(block: &Block) -> Option<Doc> {
     format_block_items_body(block.items())
 }

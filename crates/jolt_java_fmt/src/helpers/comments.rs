@@ -53,12 +53,6 @@ pub(crate) fn tokens_have_comments(tokens: &[JavaSyntaxToken]) -> bool {
         .any(|token| !token.leading_comments().is_empty() || !token.trailing_comments().is_empty())
 }
 
-pub(crate) fn tokens_end_with_forced_line(tokens: &[JavaSyntaxToken]) -> bool {
-    tokens
-        .last()
-        .is_some_and(|token| token.trailing_comments().iter().any(comment_forces_line))
-}
-
 pub(crate) fn format_leading_comments(token: &JavaSyntaxToken) -> Doc {
     let mut docs = Vec::new();
     for comment in token.leading_comments() {
@@ -78,6 +72,14 @@ pub(crate) fn format_trailing_comments(token: &JavaSyntaxToken) -> Doc {
         }
     }
     concat(docs)
+}
+
+pub(crate) fn format_token_with_comments(token: &JavaSyntaxToken) -> Doc {
+    concat([
+        format_leading_comments(token),
+        format_token_text(token.text()),
+        format_trailing_comments(token),
+    ])
 }
 
 pub(crate) fn format_comment(comment: &JavaComment) -> Doc {

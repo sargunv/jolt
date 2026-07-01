@@ -49,7 +49,7 @@ Status legend:
 
 - `[x]` Add focused rule fixture runner.
 - `[~]` Add program/import/module/name/comment fixtures.
-- `[~]` Add declaration/type/parameter fixtures.
+- `[x]` Add declaration/type/parameter fixtures.
 - `[~]` Add statement/block/switch/try fixtures.
 - `[x]` Add expression/operator/call/chain/lambda fixtures.
 - `[x]` Assert every rule fixture formats successfully.
@@ -223,7 +223,10 @@ Status legend:
 - `[x]` Imported Java fixture inputs format without formatter panics.
 - `[x]` Formatted imported fixtures parse.
 - `[x]` Repeated formatting is deterministic.
-- `[~]` No parser-accepted syntax reaches an unimplemented formatter fallback.
+- `[~]` No parser-accepted syntax reaches an unimplemented formatter fallback
+  (declaration method/constructor header and record-component-list comment
+  fallbacks removed; expression, statement, and variable-declarator comment
+  fallbacks remain).
 - `[ ]` Code review can trace every formatting choice to the style guide or
   spec.
 - `[ ]` Audit report links each definition-of-done item to tests, fixtures, or

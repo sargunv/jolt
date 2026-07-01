@@ -5,18 +5,29 @@ use jolt_java_syntax::{
     TypeParameterList, UnionType, VoidType, WildcardBound, WildcardType,
 };
 
-use crate::helpers::comments::{format_leading_comments, format_trailing_comments};
+use crate::helpers::comments::{
+    format_leading_comments, format_token_with_comments, format_trailing_comments,
+};
 use crate::helpers::lists::angle_bracket_list;
 use crate::rules::annotations::format_annotation;
 
 pub(crate) fn format_type(ty: &Type) -> Doc {
+    format_type_with_leading_comments(ty, LeadingComments::Preserve)
+}
+
+pub(crate) fn format_type_without_leading_comments(ty: &Type) -> Doc {
+    format_type_with_leading_comments(ty, LeadingComments::SuppressFirstToken)
+}
+
+fn format_type_with_leading_comments(ty: &Type, leading_comments: LeadingComments) -> Doc {
     match ty {
-        Type::PrimitiveType(ty) => format_primitive_type(ty),
-        Type::VoidType(ty) => format_void_type(ty),
-        Type::ClassType(ty) => format_class_type(ty),
+        Type::PrimitiveType(ty) => format_primitive_type(ty, leading_comments),
+        Type::VoidType(ty) => format_void_type_with_leading_comments(ty, leading_comments),
+        Type::ClassType(ty) => format_class_type(ty, leading_comments),
         Type::ArrayType(ty) => concat([
-            ty.element_type()
-                .map_or_else(jolt_fmt_ir::nil, |element| format_type(&element)),
+            ty.element_type().map_or_else(jolt_fmt_ir::nil, |element| {
+                format_type_with_leading_comments(&element, leading_comments)
+            }),
             ty.dimensions().map_or_else(jolt_fmt_ir::nil, |dimensions| {
                 format_array_dimensions(&dimensions)
             }),
@@ -25,6 +36,12 @@ pub(crate) fn format_type(ty: &Type) -> Doc {
         Type::UnionType(ty) => format_union_type(ty),
         Type::WildcardType(ty) => format_wildcard_type(ty),
     }
+}
+
+#[derive(Clone, Copy)]
+enum LeadingComments {
+    Preserve,
+    SuppressFirstToken,
 }
 
 pub(crate) fn format_type_parameter_list(parameters: Option<TypeParameterList>) -> Doc {
@@ -55,12 +72,15 @@ pub(crate) fn format_array_dimensions(dimensions: &ArrayDimensions) -> Doc {
     )
 }
 
-fn format_primitive_type(ty: &PrimitiveType) -> Doc {
+fn format_primitive_type(ty: &PrimitiveType, leading_comments: LeadingComments) -> Doc {
     concat([
         format_inline_annotations(ty.annotations().collect()),
         ty.keyword().map_or_else(jolt_fmt_ir::nil, |keyword| {
             concat([
-                format_leading_comments(&keyword),
+                match leading_comments {
+                    LeadingComments::Preserve => format_leading_comments(&keyword),
+                    LeadingComments::SuppressFirstToken => jolt_fmt_ir::nil(),
+                },
                 text(keyword.text().to_owned()),
                 format_trailing_comments(&keyword),
             ])
@@ -69,26 +89,45 @@ fn format_primitive_type(ty: &PrimitiveType) -> Doc {
 }
 
 pub(crate) fn format_void_type(ty: &VoidType) -> Doc {
+    format_void_type_with_leading_comments(ty, LeadingComments::Preserve)
+}
+
+fn format_void_type_with_leading_comments(ty: &VoidType, leading_comments: LeadingComments) -> Doc {
     ty.keyword().map_or_else(jolt_fmt_ir::nil, |keyword| {
         concat([
-            format_leading_comments(&keyword),
+            match leading_comments {
+                LeadingComments::Preserve => format_leading_comments(&keyword),
+                LeadingComments::SuppressFirstToken => jolt_fmt_ir::nil(),
+            },
             text(keyword.text().to_owned()),
             format_trailing_comments(&keyword),
         ])
     })
 }
 
-fn format_class_type(ty: &ClassType) -> Doc {
+fn format_class_type(ty: &ClassType, leading_comments: LeadingComments) -> Doc {
     group(jolt_fmt_ir::join(
         text("."),
-        ty.segments().map(format_class_type_segment),
+        ty.segments().enumerate().map(|(index, segment)| {
+            format_class_type_segment(
+                segment,
+                if index == 0 {
+                    leading_comments
+                } else {
+                    LeadingComments::Preserve
+                },
+            )
+        }),
     ))
 }
 
-fn format_class_type_segment(segment: jolt_java_syntax::ClassTypeSegment) -> Doc {
+fn format_class_type_segment(
+    segment: jolt_java_syntax::ClassTypeSegment,
+    leading_comments: LeadingComments,
+) -> Doc {
     concat([
         format_inline_annotations(segment.annotations),
-        format_type_name(&segment.name),
+        format_type_name(&segment.name, leading_comments),
         segment
             .type_arguments
             .map_or_else(jolt_fmt_ir::nil, |arguments| {
@@ -97,15 +136,29 @@ fn format_class_type_segment(segment: jolt_java_syntax::ClassTypeSegment) -> Doc
     ])
 }
 
-fn format_type_name(name: &NameSyntax) -> Doc {
+fn format_type_name(name: &NameSyntax, leading_comments: LeadingComments) -> Doc {
     jolt_fmt_ir::join(
         text("."),
-        name.segments_with_annotations().map(|segment| {
-            concat([
-                format_inline_annotations(segment.annotations),
-                text(segment.identifier.text().to_owned()),
-            ])
-        }),
+        name.segments_with_annotations()
+            .enumerate()
+            .map(|(index, segment)| {
+                concat([
+                    format_inline_annotations(segment.annotations),
+                    if index == 0 {
+                        match leading_comments {
+                            LeadingComments::Preserve => {
+                                format_token_with_comments(&segment.identifier)
+                            }
+                            LeadingComments::SuppressFirstToken => concat([
+                                text(segment.identifier.text().to_owned()),
+                                format_trailing_comments(&segment.identifier),
+                            ]),
+                        }
+                    } else {
+                        format_token_with_comments(&segment.identifier)
+                    },
+                ])
+            }),
     )
 }
 

@@ -4,12 +4,16 @@ use jolt_java_syntax::{
     VariableDeclarator, VariableDeclaratorList, VariableInitializer,
 };
 
-use crate::helpers::comments::{format_token_sequence, tokens_have_comments};
+use crate::helpers::comments::{
+    format_token_sequence, format_token_with_comments, tokens_have_comments,
+};
 use crate::helpers::modifiers::inline_modifier_prefix_from_docs;
 use crate::rules::annotations::format_annotation;
 use crate::rules::expressions::format_variable_initializer_value;
 use crate::rules::modifiers::{format_modifier_prefix, format_modifier_prefix_from_parts};
-use crate::rules::types::{format_array_dimensions, format_type};
+use crate::rules::types::{
+    format_array_dimensions, format_type, format_type_without_leading_comments,
+};
 
 pub(crate) fn format_field_declaration(field: &FieldDeclaration) -> Doc {
     concat([
@@ -44,29 +48,27 @@ pub(crate) fn format_local_variable_declaration(declaration: &LocalVariableDecla
 }
 
 pub(crate) fn format_formal_parameter(parameter: &FormalParameter) -> Doc {
-    let tokens = parameter.tokens();
-    if tokens_have_comments(&tokens) {
-        return format_token_sequence(&tokens);
-    }
-
     format_named_typed_declaration(
-        inline_modifier_prefix_from_docs(
-            parameter
-                .prefix_annotations()
-                .map(|annotation| format_annotation(&annotation))
-                .collect(),
-            parameter.modifier_tokens().collect(),
-        ),
-        parameter
-            .ty()
-            .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty)),
+        concat([
+            format_construct_leading_comments(&parameter.tokens()),
+            inline_modifier_prefix_from_docs(
+                parameter
+                    .prefix_annotations()
+                    .map(|annotation| format_annotation(&annotation))
+                    .collect(),
+                parameter.modifier_tokens().collect(),
+            ),
+        ]),
+        parameter.ty().map_or_else(jolt_fmt_ir::nil, |ty| {
+            format_type_without_leading_comments(&ty)
+        }),
         parameter
             .varargs_annotations()
             .map(|annotation| format_annotation(&annotation))
             .collect(),
         parameter
             .name()
-            .map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned())),
+            .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name)),
         parameter
             .dimensions()
             .map_or_else(jolt_fmt_ir::nil, |dimensions| {
@@ -77,35 +79,40 @@ pub(crate) fn format_formal_parameter(parameter: &FormalParameter) -> Doc {
 }
 
 pub(crate) fn format_record_component(component: &RecordComponent) -> Doc {
-    let tokens = component.tokens();
-    if tokens_have_comments(&tokens) {
-        return format_token_sequence(&tokens);
-    }
-
     format_named_typed_declaration(
-        inline_modifier_prefix_from_docs(
-            component
-                .prefix_annotations()
-                .map(|annotation| format_annotation(&annotation))
-                .collect(),
-            component.modifier_tokens().collect(),
-        ),
-        component
-            .ty()
-            .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty)),
+        concat([
+            format_construct_leading_comments(&component.tokens()),
+            inline_modifier_prefix_from_docs(
+                component
+                    .prefix_annotations()
+                    .map(|annotation| format_annotation(&annotation))
+                    .collect(),
+                component.modifier_tokens().collect(),
+            ),
+        ]),
+        component.ty().map_or_else(jolt_fmt_ir::nil, |ty| {
+            format_type_without_leading_comments(&ty)
+        }),
         component
             .varargs_annotations()
             .map(|annotation| format_annotation(&annotation))
             .collect(),
         component
             .name()
-            .map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned())),
+            .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name)),
         component
             .dimensions()
             .map_or_else(jolt_fmt_ir::nil, |dimensions| {
                 format_array_dimensions(&dimensions)
             }),
         component.is_variable_arity(),
+    )
+}
+
+fn format_construct_leading_comments(tokens: &[jolt_java_syntax::JavaSyntaxToken]) -> Doc {
+    tokens.first().map_or_else(
+        jolt_fmt_ir::nil,
+        crate::helpers::comments::format_leading_comments,
     )
 }
 

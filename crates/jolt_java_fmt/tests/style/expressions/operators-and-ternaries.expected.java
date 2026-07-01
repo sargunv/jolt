@@ -10,8 +10,7 @@ class Example {
     Account account,
     FeatureFlags featureFlags,
     AuditPolicy auditPolicy
-  )
-  {
+  ) {
     allowed = left && right;
     count += 1;
     allowed =

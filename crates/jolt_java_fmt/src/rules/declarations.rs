@@ -3,23 +3,23 @@ use jolt_java_syntax::{
     AnnotationElementDeclaration, AnnotationInterfaceBodyMember, AnnotationInterfaceDeclaration,
     ClassBody, ClassBodyMember, ClassDeclaration, EnumConstant, EnumDeclaration, ExtendsClause,
     FormalParameterList, ImplementsClause, InterfaceDeclaration, JavaSyntaxKind, MethodDeclaration,
-    ModifierList, PermitsClause, RecordDeclaration, TypeDeclaration,
+    ModifierList, PermitsClause, RecordDeclaration, Type, TypeDeclaration,
 };
 
 use crate::helpers::blocks::braced_body;
 use crate::helpers::comments::{
     format_leading_comments, format_token_sequence, format_trailing_comments,
-    tokens_end_with_forced_line, tokens_have_comments,
 };
 use crate::helpers::declarations::{declaration_with_body, declaration_without_body};
 use crate::rules::annotations::format_annotation_element_value;
 use crate::rules::expressions::format_argument_list;
 use crate::rules::modifiers::{format_modifier_prefix, format_modifier_prefix_from_parts};
 use crate::rules::names::format_name;
-use crate::rules::statements::{
-    format_block, format_block_body, format_block_items, format_block_items_body,
+use crate::rules::statements::{format_block, format_block_body, format_block_items_body};
+use crate::rules::types::{
+    format_array_dimensions, format_type, format_type_parameter_list,
+    format_type_without_leading_comments,
 };
-use crate::rules::types::{format_array_dimensions, format_type, format_type_parameter_list};
 use crate::rules::variables::{
     format_field_declaration, format_formal_parameter, format_record_component,
 };
@@ -266,10 +266,6 @@ fn format_record_components(components: Option<jolt_java_syntax::RecordComponent
     let Some(components) = components else {
         return text("()");
     };
-    let tokens = components.tokens();
-    if tokens_have_comments(&tokens) {
-        return concat([text("("), format_token_sequence(&tokens), text(")")]);
-    }
     parenthesized_comma_list(
         components
             .components()
@@ -279,26 +275,16 @@ fn format_record_components(components: Option<jolt_java_syntax::RecordComponent
 }
 
 fn format_extends_clause(clause: Option<ExtendsClause>) -> Doc {
-    format_type_clause(
+    format_type_list_clause(
         "extends",
-        clause.map(|clause| {
-            clause
-                .types()
-                .map(|ty| format_type(&ty))
-                .collect::<Vec<_>>()
-        }),
+        clause.map(|clause| clause.types().collect::<Vec<_>>()),
     )
 }
 
 fn format_implements_clause(clause: Option<ImplementsClause>) -> Doc {
-    format_type_clause(
+    format_type_list_clause(
         "implements",
-        clause.map(|clause| {
-            clause
-                .types()
-                .map(|ty| format_type(&ty))
-                .collect::<Vec<_>>()
-        }),
+        clause.map(|clause| clause.types().collect::<Vec<_>>()),
     )
 }
 
@@ -311,6 +297,40 @@ fn format_permits_clause(clause: Option<PermitsClause>) -> Doc {
                 .map(|name| format_name(&name))
                 .collect::<Vec<_>>()
         }),
+    )
+}
+
+fn format_type_list_clause(keyword: &'static str, items: Option<Vec<Type>>) -> Doc {
+    let Some(items) = items else {
+        return jolt_fmt_ir::nil();
+    };
+    if items.is_empty() {
+        return jolt_fmt_ir::nil();
+    }
+
+    if items.iter().any(type_has_leading_comments) {
+        let items = items
+            .into_iter()
+            .map(|ty| {
+                concat([
+                    format_construct_leading_comments(&ty.tokens()),
+                    format_type_without_leading_comments(&ty),
+                ])
+            })
+            .collect::<Vec<_>>();
+        return concat([
+            jolt_fmt_ir::indent(line()),
+            text(keyword),
+            jolt_fmt_ir::indent(concat([
+                line(),
+                join_docs(items, &concat([text(","), line()])),
+            ])),
+        ]);
+    }
+
+    format_type_clause(
+        keyword,
+        Some(items.into_iter().map(|ty| format_type(&ty)).collect()),
     )
 }
 
@@ -328,6 +348,12 @@ fn format_type_clause(keyword: &'static str, items: Option<Vec<Doc>>) -> Doc {
         text(" "),
         jolt_fmt_ir::join(text(", "), items),
     ])
+}
+
+fn type_has_leading_comments(ty: &Type) -> bool {
+    ty.tokens()
+        .first()
+        .is_some_and(|token| !token.leading_comments().is_empty())
 }
 
 fn join_member_docs(members: Vec<FormattedMember>) -> Doc {
@@ -539,26 +565,28 @@ fn format_constructor_declaration(constructor: &jolt_java_syntax::ConstructorDec
     let Some(name) = constructor.name() else {
         return format_token_sequence(&constructor.tokens());
     };
-    let header_tokens = constructor.header_tokens();
-    if tokens_have_comments(&header_tokens) {
-        return concat([
-            group(format_token_sequence(&header_tokens)),
-            format_constructor_body_after_header(
-                constructor.body(),
-                tokens_end_with_forced_line(&header_tokens),
-            ),
-        ]);
-    }
-    let prefix = format_modifier_prefix(constructor.modifiers());
+    let prefix = concat([
+        format_construct_leading_comments(&constructor.tokens()),
+        format_modifier_prefix(constructor.modifiers()),
+    ]);
+    let throws = constructor.throws_clause();
+    let has_throws = throws
+        .as_ref()
+        .is_some_and(|throws| throws.exceptions().next().is_some());
     let header = concat([
         format_type_parameter_list(constructor.type_parameters()),
         text(name.text().to_owned()),
         format_parameters(constructor.parameters()),
-        format_throws_clause(constructor.throws_clause()),
+        format_throws_clause(throws),
     ]);
 
     match constructor.body() {
-        Some(body) => declaration_with_body(prefix, header, format_constructor_body(&body)),
+        Some(body) if has_throws => {
+            declaration_with_body(prefix, header, format_constructor_body(&body))
+        }
+        Some(body) => {
+            callable_declaration_with_body(prefix, header, format_constructor_body(&body))
+        }
         None => declaration_without_body(prefix, header),
     }
 }
@@ -581,31 +609,32 @@ fn format_method_declaration(method: &MethodDeclaration) -> Doc {
     let Some(name) = method.name() else {
         return format_token_sequence(&method.tokens());
     };
-    let header_tokens = method.header_tokens();
-    if tokens_have_comments(&header_tokens) {
-        return concat([
-            group(format_token_sequence(&header_tokens)),
-            format_method_body_after_header(
-                method.body(),
-                tokens_end_with_forced_line(&header_tokens),
-            ),
-        ]);
-    }
-    let prefix = format_modifier_prefix(method.modifiers());
+    let prefix = concat([
+        format_construct_leading_comments(&method.tokens()),
+        format_modifier_prefix(method.modifiers()),
+    ]);
+    let throws = method.throws_clause();
+    let has_throws = throws
+        .as_ref()
+        .is_some_and(|throws| throws.exceptions().next().is_some());
     let header = concat([
         format_type_parameter_list(method.type_parameters()),
         method
             .return_type()
             .map_or_else(jolt_fmt_ir::nil, |return_type| {
-                concat([format_type(&return_type), text(" ")])
+                concat([
+                    format_type_without_leading_comments(&return_type),
+                    text(" "),
+                ])
             }),
         text(name.text().to_owned()),
         format_parameters(method.parameters()),
-        format_throws_clause(method.throws_clause()),
+        format_throws_clause(throws),
     ]);
 
     match method.body() {
-        Some(body) => declaration_with_body(prefix, header, format_block_body(&body)),
+        Some(body) if has_throws => declaration_with_body(prefix, header, format_block_body(&body)),
+        Some(body) => callable_declaration_with_body(prefix, header, format_block_body(&body)),
         None => declaration_without_body(prefix, header),
     }
 }
@@ -659,12 +688,22 @@ fn format_parameters(parameters: Option<FormalParameterList>) -> Doc {
     )
 }
 
+fn format_construct_leading_comments(tokens: &[jolt_java_syntax::JavaSyntaxToken]) -> Doc {
+    tokens
+        .first()
+        .map_or_else(jolt_fmt_ir::nil, format_leading_comments)
+}
+
+fn callable_declaration_with_body(prefix: Doc, header: Doc, body: Option<Doc>) -> Doc {
+    concat([prefix, group(header), text(" "), braced_body(body)])
+}
+
 fn parenthesized_comma_list(items: Vec<Doc>) -> Doc {
     if items.is_empty() {
         return text("()");
     }
 
-    concat([
+    group(concat([
         text("("),
         jolt_fmt_ir::indent(concat([
             soft_line(),
@@ -672,7 +711,7 @@ fn parenthesized_comma_list(items: Vec<Doc>) -> Doc {
         ])),
         soft_line(),
         text(")"),
-    ])
+    ]))
 }
 
 fn format_throws_clause(throws: Option<jolt_java_syntax::ThrowsClause>) -> Doc {
@@ -697,42 +736,4 @@ fn format_throws_clause(throws: Option<jolt_java_syntax::ThrowsClause>) -> Doc {
 
 fn format_constructor_body(body: &jolt_java_syntax::ConstructorBody) -> Option<Doc> {
     format_block_items_body(body.items())
-}
-
-fn format_constructor_body_after_header(
-    body: Option<jolt_java_syntax::ConstructorBody>,
-    header_ends_with_line: bool,
-) -> Doc {
-    body.map_or_else(
-        || text(";"),
-        |body| {
-            concat([
-                if header_ends_with_line {
-                    jolt_fmt_ir::nil()
-                } else {
-                    text(" ")
-                },
-                format_block_items(body.items()),
-            ])
-        },
-    )
-}
-
-fn format_method_body_after_header(
-    body: Option<jolt_java_syntax::Block>,
-    header_ends_with_line: bool,
-) -> Doc {
-    body.map_or_else(
-        || text(";"),
-        |body| {
-            concat([
-                if header_ends_with_line {
-                    jolt_fmt_ir::nil()
-                } else {
-                    text(" ")
-                },
-                format_block(&body),
-            ])
-        },
-    )
 }
