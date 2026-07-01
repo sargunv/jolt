@@ -560,6 +560,40 @@ fn statement_accessors_expose_terminal_semicolons() {
 }
 
 #[test]
+fn declaration_accessors_expose_terminal_semicolons() {
+    let syntax = parse_clean(
+        r"
+                class Accessors {
+                    String field; // field
+                }
+
+                @interface Contract {
+                    String value(); // element
+                }
+
+                interface Api {
+                    void call(); // method
+                }
+            ",
+    );
+
+    assert_eq!(
+        semicolon_trailing_comment(descendants::<FieldDeclaration>(&syntax)[0].semicolon()),
+        "// field"
+    );
+    assert_eq!(
+        semicolon_trailing_comment(
+            descendants::<AnnotationElementDeclaration>(&syntax)[0].semicolon()
+        ),
+        "// element"
+    );
+    assert_eq!(
+        semicolon_trailing_comment(descendants::<MethodDeclaration>(&syntax)[0].semicolon()),
+        "// method"
+    );
+}
+
+#[test]
 fn resource_lists_expose_entries_with_semicolons() {
     let syntax = parse_clean(
         r"

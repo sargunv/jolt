@@ -1,5 +1,5 @@
 @interface Contract {
-  String value() default "x";
+  String value() default "x"; // value marker
 
   int[] flags() default {1, 2};
 
@@ -26,5 +26,5 @@
 @interface Nested {
   String name();
 
-  boolean enabled() default false;
+  boolean enabled() default false; // enabled marker
 }

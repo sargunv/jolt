@@ -1097,7 +1097,11 @@ fn format_method_declaration(method: &MethodDeclaration) -> Doc {
     match method.body() {
         Some(body) if has_throws => declaration_with_body(prefix, header, format_block_body(&body)),
         Some(body) => callable_declaration_with_body(prefix, header, format_block_body(&body)),
-        None => declaration_without_body(prefix, header),
+        None => concat([
+            prefix,
+            group(header),
+            format_statement_semicolon(method.semicolon()),
+        ]),
     }
 }
 
@@ -1122,7 +1126,7 @@ fn format_annotation_element_declaration(element: &AnnotationElementDeclaration)
                 }),
             format_annotation_element_default(element.default_value()),
         ])),
-        text(";"),
+        format_statement_semicolon(element.semicolon()),
     ])
 }
 

@@ -697,6 +697,11 @@ impl AnnotationElementDeclaration {
     pub fn default_value(&self) -> Option<DefaultValue> {
         child(&self.syntax)
     }
+
+    #[must_use]
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Semicolon)
+    }
 }
 
 impl DefaultValue {
@@ -792,6 +797,11 @@ impl FieldDeclaration {
     pub fn declarators(&self) -> Option<VariableDeclaratorList> {
         child(&self.syntax)
     }
+
+    #[must_use]
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Semicolon)
+    }
 }
 
 impl MethodDeclaration {
@@ -828,6 +838,11 @@ impl MethodDeclaration {
     #[must_use]
     pub fn body(&self) -> Option<Block> {
         child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 
     #[must_use]

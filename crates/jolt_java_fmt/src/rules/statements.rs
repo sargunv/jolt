@@ -3,10 +3,10 @@ use jolt_java_syntax::{
     AssertStatement, BasicForStatement, Block, BlockItem, BlockStatement, CatchClause,
     CatchParameter, CatchTypeList, DoStatement, EnhancedForStatement, Expression,
     ExpressionStatement, FinallyClause, ForInitializer, ForStatement, ForUpdate, IfStatement,
-    JavaComment, JavaSyntaxToken, LabeledStatement, Resource, ResourceListEntry, ReturnStatement,
-    Statement, StatementBody, StatementExpressionEntry, StatementExpressionList, SwitchBlock,
-    SwitchBlockEntry, SwitchBlockStatementGroup, SwitchLabel, SwitchLabelCaseItem, SwitchRule,
-    SwitchStatement, SynchronizedStatement, ThrowStatement, TryStatement,
+    JavaComment, JavaCommentKind, JavaSyntaxToken, LabeledStatement, Resource, ResourceListEntry,
+    ReturnStatement, Statement, StatementBody, StatementExpressionEntry, StatementExpressionList,
+    SwitchBlock, SwitchBlockEntry, SwitchBlockStatementGroup, SwitchLabel, SwitchLabelCaseItem,
+    SwitchRule, SwitchStatement, SynchronizedStatement, ThrowStatement, TryStatement,
     TryWithResourcesStatement, Type, WhileStatement, YieldStatement,
 };
 use std::ops::Range;
@@ -658,7 +658,7 @@ pub(crate) fn format_statement_semicolon(semicolon: Option<JavaSyntaxToken>) -> 
     concat([
         format_semicolon_leading_comments(&semicolon),
         text(";"),
-        format_trailing_comments_before_line_break(&semicolon),
+        format_terminator_trailing_comments(&semicolon),
     ])
 }
 
@@ -672,6 +672,23 @@ fn format_semicolon_leading_comments(semicolon: &JavaSyntaxToken) -> Doc {
         }
     }
     concat(docs)
+}
+
+fn format_terminator_trailing_comments(token: &JavaSyntaxToken) -> Doc {
+    let mut docs = Vec::new();
+    for comment in token.trailing_comments() {
+        if terminator_comment_starts_next_line(&comment) {
+            docs.push(hard_line());
+        } else {
+            docs.push(text(" "));
+        }
+        docs.push(format_comment(&comment));
+    }
+    concat(docs)
+}
+
+fn terminator_comment_starts_next_line(comment: &JavaComment) -> bool {
+    comment.kind() == JavaCommentKind::Doc || comment.text().trim_start().starts_with("/**")
 }
 
 fn format_try_statement(statement: &TryStatement) -> Doc {

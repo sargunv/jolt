@@ -7,7 +7,7 @@ class A {
 }
 interface Api {
   ; // keep interface marker
-  void call();
+  void call(); // call marker
 }
 @interface Marker {
   /* keep annotation marker */ ;

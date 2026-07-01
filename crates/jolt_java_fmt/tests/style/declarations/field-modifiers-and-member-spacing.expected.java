@@ -1,6 +1,6 @@
 class User {
-  private final String name;
-  public static int count;
+  private final String name; // user name
+  public static int count; // shared count
 
   User() {
   }

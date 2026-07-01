@@ -11,6 +11,7 @@ use crate::helpers::modifiers::inline_modifier_prefix_from_docs;
 use crate::rules::annotations::format_annotation;
 use crate::rules::expressions::format_variable_initializer_value;
 use crate::rules::modifiers::{format_modifier_prefix, format_modifier_prefix_from_parts};
+use crate::rules::statements::format_statement_semicolon;
 use crate::rules::types::{
     format_array_dimensions, format_type, format_type_without_leading_comments,
 };
@@ -27,7 +28,7 @@ pub(crate) fn format_field_declaration(field: &FieldDeclaration) -> Doc {
             .map_or_else(jolt_fmt_ir::nil, |declarators| {
                 format_variable_declarator_list(&declarators)
             }),
-        text(";"),
+        format_statement_semicolon(field.semicolon()),
     ])
 }
 
