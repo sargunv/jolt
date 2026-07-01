@@ -6,7 +6,7 @@ use jolt_java_syntax::{CompilationUnit, CompilationUnitItem, PackageDeclaration}
 use crate::context::{FormatRule, JavaFormatter};
 use crate::helpers::blocks::{join_empty_lines, join_hard_lines};
 use crate::helpers::formatter_ignore::{
-    formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
+    formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs, token_range,
 };
 use crate::rules::annotations::format_annotation;
 use crate::rules::comments::format_comment_only_compilation_unit;
@@ -182,9 +182,7 @@ fn compilation_unit_item_token_range(item: &CompilationUnitItem) -> Option<Range
         CompilationUnitItem::Type(item) => item.tokens(),
         CompilationUnitItem::EmptyDeclaration(item) => item.tokens(),
     };
-    let first = tokens.first()?;
-    let last = tokens.last()?;
-    Some(first.token_text_range().start().get()..last.token_text_range().end().get())
+    token_range(&tokens)
 }
 
 fn format_package_declaration(package: &PackageDeclaration) -> Doc {

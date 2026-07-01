@@ -1,7 +1,7 @@
 use std::ops::Range;
 
 use jolt_fmt_ir::{Doc, concat, hard_line, literal_text};
-use jolt_java_syntax::{JavaLexer, JavaSyntaxKind, TriviaKind};
+use jolt_java_syntax::{JavaLexer, JavaSyntaxKind, JavaSyntaxToken, TriviaKind};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct FormatterIgnoreRange {
@@ -93,6 +93,20 @@ pub(crate) fn formatter_ignore_run_doc(run: &FormatterIgnoreRun) -> Doc {
         docs.push(literal_text(line.to_owned()));
     }
     concat(docs)
+}
+
+pub(crate) fn token_range(tokens: &[JavaSyntaxToken]) -> Option<Range<usize>> {
+    let first = tokens.first()?;
+    let last = tokens.last()?;
+    Some(first.token_text_range().start().get()..last.token_text_range().end().get())
+}
+
+pub(crate) fn relative_token_range(
+    tokens: &[JavaSyntaxToken],
+    base_start: usize,
+) -> Option<Range<usize>> {
+    let range = token_range(tokens)?;
+    Some(range.start - base_start..range.end - base_start)
 }
 
 fn formatter_ignore_run(

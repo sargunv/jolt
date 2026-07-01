@@ -28,8 +28,9 @@ Status legend:
 - `[~]` `jolt_java_fmt` owns Java policy and CST-to-document layout.
 - `[x]` `jolt_fmt_ir` owns language-agnostic documents and rendering.
 - `[~]` `jolt_fmt_core` owns public options, diagnostics, and language wiring.
-- `[ ]` Java formatter rules avoid raw syntax structure when stable accessors
-  should exist.
+- `[~]` Java formatter rules avoid raw syntax structure when stable accessors
+  should exist; formatter-ignore token range math is helper-owned, and typed
+  modifier annotation splits use syntax accessors.
 
 ## Proposed Module Shape
 

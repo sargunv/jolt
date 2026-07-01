@@ -20,7 +20,7 @@ use crate::helpers::comments::{
 use crate::helpers::declarations::{declaration_with_body, declaration_without_body};
 use crate::helpers::formatter_ignore::{
     formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
-    is_formatter_control_marker,
+    is_formatter_control_marker, relative_token_range,
 };
 use crate::helpers::lists::{CommaListItem, parenthesized_list};
 use crate::helpers::member_body::{
@@ -353,12 +353,7 @@ fn format_class_member_body(
 
 fn class_member_token_range(member: &ClassBodyMember, body_start: usize) -> Option<Range<usize>> {
     let tokens = member.tokens();
-    let first = tokens.first()?;
-    let last = tokens.last()?;
-    Some(
-        first.token_text_range().start().get() - body_start
-            ..last.token_text_range().end().get() - body_start,
-    )
+    relative_token_range(&tokens, body_start)
 }
 
 fn interface_member_token_range(
@@ -366,12 +361,7 @@ fn interface_member_token_range(
     body_start: usize,
 ) -> Option<Range<usize>> {
     let tokens = member.tokens();
-    let first = tokens.first()?;
-    let last = tokens.last()?;
-    Some(
-        first.token_text_range().start().get() - body_start
-            ..last.token_text_range().end().get() - body_start,
-    )
+    relative_token_range(&tokens, body_start)
 }
 
 fn annotation_member_token_range(
@@ -379,12 +369,7 @@ fn annotation_member_token_range(
     body_start: usize,
 ) -> Option<Range<usize>> {
     let tokens = member.tokens();
-    let first = tokens.first()?;
-    let last = tokens.last()?;
-    Some(
-        first.token_text_range().start().get() - body_start
-            ..last.token_text_range().end().get() - body_start,
-    )
+    relative_token_range(&tokens, body_start)
 }
 
 fn ignored_member_category(
@@ -1508,12 +1493,7 @@ fn constructor_body_element_token_range(
     body_start: usize,
 ) -> Option<Range<usize>> {
     let tokens = element.tokens();
-    let first = tokens.first()?;
-    let last = tokens.last()?;
-    Some(
-        first.token_text_range().start().get() - body_start
-            ..last.token_text_range().end().get() - body_start,
-    )
+    relative_token_range(&tokens, body_start)
 }
 
 fn format_constructor_body_element(element: &ConstructorBodyElement) -> Option<BodyItem> {

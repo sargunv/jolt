@@ -28,31 +28,18 @@ pub(crate) fn format_typed_modifier_prefix(modifiers: Option<ModifierList>) -> T
         };
     };
 
-    format_typed_modifier_prefix_from_parts(
-        modifiers.annotations().collect(),
+    format_typed_modifier_prefix_from_split_parts(
+        modifiers.declaration_annotations().collect(),
+        modifiers.type_use_annotations_after_modifiers().collect(),
         modifiers.modifier_tokens().collect(),
     )
 }
 
-pub(crate) fn format_typed_modifier_prefix_from_parts(
-    annotations: Vec<Annotation>,
+pub(crate) fn format_typed_modifier_prefix_from_split_parts(
+    declaration_annotations: Vec<Annotation>,
+    type_use_annotations: Vec<Annotation>,
     modifier_tokens: Vec<JavaSyntaxToken>,
 ) -> TypedModifierPrefix {
-    let first_modifier_start = modifier_tokens
-        .iter()
-        .map(|token| token.token_text_range().start())
-        .min();
-    let mut declaration_annotations = Vec::new();
-    let mut type_use_annotations = Vec::new();
-
-    for annotation in annotations {
-        if first_modifier_start.is_some_and(|start| annotation.text_range().start() > start) {
-            type_use_annotations.push(annotation);
-        } else {
-            declaration_annotations.push(annotation);
-        }
-    }
-
     TypedModifierPrefix {
         declaration_prefix: format_modifier_prefix_from_parts(
             declaration_annotations,

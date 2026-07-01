@@ -13,7 +13,7 @@ use crate::helpers::comments::{
     format_trailing_comments_before_line_break,
 };
 use crate::helpers::formatter_ignore::{
-    formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
+    formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs, relative_token_range,
 };
 use crate::rules::names::{format_name, name_key};
 
@@ -183,12 +183,7 @@ fn module_directive_token_range(
     module_start: usize,
 ) -> Option<Range<usize>> {
     let tokens = directive.tokens();
-    let first = tokens.first()?;
-    let last = tokens.last()?;
-    Some(
-        first.token_text_range().start().get() - module_start
-            ..last.token_text_range().end().get() - module_start,
-    )
+    relative_token_range(&tokens, module_start)
 }
 
 fn format_module_directive_run(directives: Vec<FormattedModuleDirective>) -> Doc {

@@ -1043,6 +1043,39 @@ fn modifier_lists_split_declaration_and_post_modifier_type_annotations() {
 }
 
 #[test]
+fn local_variables_split_declaration_and_post_modifier_type_annotations() {
+    let syntax = parse_clean(
+        r"
+                class Locals {
+                    void run() {
+                        @Decl final @Type String value;
+                    }
+                }
+            ",
+    );
+
+    let local = descendants::<LocalVariableDeclaration>(&syntax)
+        .into_iter()
+        .next()
+        .expect("local variable declaration");
+
+    assert_eq!(
+        local
+            .declaration_annotations()
+            .map(|annotation| annotation.source_text().trim().to_owned())
+            .collect::<Vec<_>>(),
+        ["@Decl"]
+    );
+    assert_eq!(
+        local
+            .type_use_annotations_after_modifiers()
+            .map(|annotation| annotation.source_text().trim().to_owned())
+            .collect::<Vec<_>>(),
+        ["@Type"]
+    );
+}
+
+#[test]
 fn if_statements_expose_condition_then_and_else_children() {
     let syntax = parse_clean(
         r"

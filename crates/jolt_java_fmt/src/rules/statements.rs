@@ -21,7 +21,7 @@ use crate::helpers::comments::{
 };
 use crate::helpers::formatter_ignore::{
     FormatterIgnoreRange, formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
-    is_formatter_control_marker,
+    is_formatter_control_marker, relative_token_range,
 };
 use crate::helpers::lists::semicolon_list;
 use crate::rules::annotations::format_annotation;
@@ -176,12 +176,7 @@ fn block_statement_token_range(
     block_start: usize,
 ) -> Option<Range<usize>> {
     let tokens = statement.tokens();
-    let first = tokens.first()?;
-    let last = tokens.last()?;
-    Some(
-        first.token_text_range().start().get() - block_start
-            ..last.token_text_range().end().get() - block_start,
-    )
+    relative_token_range(&tokens, block_start)
 }
 
 fn format_statement(statement: &Statement) -> Doc {

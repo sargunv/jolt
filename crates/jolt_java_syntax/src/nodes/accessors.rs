@@ -1512,6 +1512,28 @@ impl LocalVariableDeclaration {
         children(&self.syntax)
     }
 
+    pub fn declaration_annotations(&self) -> impl Iterator<Item = Annotation> + '_ {
+        let first_modifier_start = self
+            .modifier_tokens()
+            .map(|token| token.token_text_range().start())
+            .min();
+
+        self.annotations().filter(move |annotation| {
+            first_modifier_start.is_none_or(|start| annotation.text_range().start() < start)
+        })
+    }
+
+    pub fn type_use_annotations_after_modifiers(&self) -> impl Iterator<Item = Annotation> + '_ {
+        let first_modifier_start = self
+            .modifier_tokens()
+            .map(|token| token.token_text_range().start())
+            .min();
+
+        self.annotations().filter(move |annotation| {
+            first_modifier_start.is_some_and(|start| annotation.text_range().start() > start)
+        })
+    }
+
     pub fn modifier_tokens(&self) -> impl Iterator<Item = JavaSyntaxToken> + '_ {
         children_tokens_matching(&self.syntax, is_modifier_token)
     }
