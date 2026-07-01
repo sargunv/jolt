@@ -24,3 +24,9 @@ public final class User {
     return id;
   }
 }
+
+public sealed strictfp class Base permits Open {
+}
+
+public non-sealed strictfp class Open extends Base {
+}

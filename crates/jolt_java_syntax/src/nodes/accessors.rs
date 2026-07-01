@@ -22,26 +22,28 @@ use super::{
     JavaSyntaxKind, JavaSyntaxToken, LabeledStatement, LambdaExpression, LambdaParameter,
     LambdaParameterList, LiteralExpression, LocalClassOrInterfaceDeclaration,
     LocalVariableDeclaration, MatchAllPattern, MemberChain, MemberChainSuffix, MethodDeclaration,
-    MethodInvocationExpression, MethodReferenceExpression, ModifierList, ModuleDeclaration,
-    ModuleDirective, ModuleDirectiveNode, ModuleDirectiveRole, ModuleNameListEntry, NameExpression,
-    NameSegment, NameSyntax, ObjectCreationExpression, OpensDirective, PackageDeclaration,
-    ParenthesizedExpression, Pattern, PermitsClause, PermitsClauseEntry, PostfixExpression,
-    PrimitiveType, ProvidesDirective, ReceiverParameter, RecordBody, RecordComponent,
-    RecordComponentList, RecordComponentListEntry, RecordDeclaration, RecordPattern,
-    RecordPatternComponentEntry, RequiresDirective, Resource, ResourceList, ResourceListEntry,
-    ResourceSpecification, ReturnStatement, Statement, StatementBody, StatementExpressionEntry,
-    StatementExpressionList, StaticInitializer, SuperExpression, SwitchBlock, SwitchBlockEntry,
-    SwitchBlockStatementGroup, SwitchExpression, SwitchLabel, SwitchLabelCaseEntry,
-    SwitchLabelCaseItem, SwitchRule, SwitchStatement, SynchronizedStatement, ThisExpression,
-    ThrowStatement, ThrowsClause, ThrowsClauseEntry, TryStatement, TryWithResourcesStatement, Type,
-    TypeArgument, TypeArgumentList, TypeArgumentListEntry, TypeBoundList, TypeClauseEntry,
-    TypeDeclaration, TypeParameter, TypeParameterList, TypeParameterListEntry, TypePattern,
-    UnaryExpression, UnionType, UnionTypeEntry, UsesDirective, VariableAccess, VariableDeclarator,
-    VariableDeclaratorEntry, VariableDeclaratorList, VariableInitializer, VariableInitializerValue,
-    VoidType, WhileStatement, WildcardBound, WildcardType, YieldStatement, child, child_family,
-    child_token, child_token_in, children, children_family, children_tokens_matching,
-    nth_child_family, nth_child_token, starts_after_blank_line, tokens,
+    MethodInvocationExpression, MethodReferenceExpression, ModifierEntry, ModifierList,
+    ModuleDeclaration, ModuleDirective, ModuleDirectiveNode, ModuleDirectiveRole,
+    ModuleNameListEntry, NameExpression, NameSegment, NameSyntax, ObjectCreationExpression,
+    OpensDirective, PackageDeclaration, ParenthesizedExpression, Pattern, PermitsClause,
+    PermitsClauseEntry, PostfixExpression, PrimitiveType, ProvidesDirective, ReceiverParameter,
+    RecordBody, RecordComponent, RecordComponentList, RecordComponentListEntry, RecordDeclaration,
+    RecordPattern, RecordPatternComponentEntry, RequiresDirective, Resource, ResourceList,
+    ResourceListEntry, ResourceSpecification, ReturnStatement, Statement, StatementBody,
+    StatementExpressionEntry, StatementExpressionList, StaticInitializer, SuperExpression,
+    SwitchBlock, SwitchBlockEntry, SwitchBlockStatementGroup, SwitchExpression, SwitchLabel,
+    SwitchLabelCaseEntry, SwitchLabelCaseItem, SwitchRule, SwitchStatement, SynchronizedStatement,
+    ThisExpression, ThrowStatement, ThrowsClause, ThrowsClauseEntry, TryStatement,
+    TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList, TypeArgumentListEntry,
+    TypeBoundList, TypeClauseEntry, TypeDeclaration, TypeParameter, TypeParameterList,
+    TypeParameterListEntry, TypePattern, UnaryExpression, UnionType, UnionTypeEntry, UsesDirective,
+    VariableAccess, VariableDeclarator, VariableDeclaratorEntry, VariableDeclaratorList,
+    VariableInitializer, VariableInitializerValue, VoidType, WhileStatement, WildcardBound,
+    WildcardType, YieldStatement, child, child_family, child_token, child_token_in, children,
+    children_family, children_tokens_matching, nth_child_family, nth_child_token,
+    starts_after_blank_line, tokens,
 };
+use crate::JavaSyntaxNode;
 use jolt_syntax::{SyntaxElement, TriviaKind};
 
 impl CompilationUnit {
@@ -441,8 +443,13 @@ impl ModifierList {
 
     pub fn declaration_annotations(&self) -> impl Iterator<Item = Annotation> + '_ {
         let first_modifier_start = self
-            .modifier_tokens()
-            .map(|token| token.token_text_range().start())
+            .modifier_entries()
+            .filter_map(|entry| {
+                entry
+                    .tokens
+                    .first()
+                    .map(|token| token.token_text_range().start())
+            })
             .min();
 
         self.annotations().filter(move |annotation| {
@@ -452,8 +459,13 @@ impl ModifierList {
 
     pub fn type_use_annotations_after_modifiers(&self) -> impl Iterator<Item = Annotation> + '_ {
         let first_modifier_start = self
-            .modifier_tokens()
-            .map(|token| token.token_text_range().start())
+            .modifier_entries()
+            .filter_map(|entry| {
+                entry
+                    .tokens
+                    .first()
+                    .map(|token| token.token_text_range().start())
+            })
             .min();
 
         self.annotations().filter(move |annotation| {
@@ -462,7 +474,12 @@ impl ModifierList {
     }
 
     pub fn modifier_tokens(&self) -> impl Iterator<Item = JavaSyntaxToken> + '_ {
-        children_tokens_matching(&self.syntax, is_modifier_token)
+        self.modifier_entries()
+            .flat_map(|entry| entry.tokens.into_iter())
+    }
+
+    pub fn modifier_entries(&self) -> impl Iterator<Item = ModifierEntry> + '_ {
+        modifier_entries(&self.syntax)
     }
 }
 
@@ -3714,6 +3731,48 @@ fn is_modifier_token(kind: JavaSyntaxKind) -> bool {
             | JavaSyntaxKind::StrictfpKw
             | JavaSyntaxKind::DefaultKw
     )
+}
+
+fn modifier_entries(syntax: &JavaSyntaxNode) -> impl Iterator<Item = ModifierEntry> {
+    let tokens = syntax
+        .children_with_tokens()
+        .filter_map(|element| match element {
+            SyntaxElement::Token(token) => Some(JavaSyntaxToken { syntax: token }),
+            SyntaxElement::Node(_) => None,
+        })
+        .collect::<Vec<_>>();
+
+    let mut entries = Vec::new();
+    let mut index = 0;
+    while index < tokens.len() {
+        if is_non_sealed_modifier_at(&tokens, index) {
+            entries.push(ModifierEntry {
+                tokens: tokens[index..index + 3].to_vec(),
+            });
+            index += 3;
+            continue;
+        }
+
+        let token = &tokens[index];
+        if is_modifier_token(token.kind()) || token.text() == "sealed" {
+            entries.push(ModifierEntry {
+                tokens: vec![token.clone()],
+            });
+        }
+        index += 1;
+    }
+
+    entries.into_iter()
+}
+
+fn is_non_sealed_modifier_at(tokens: &[JavaSyntaxToken], index: usize) -> bool {
+    tokens.get(index).is_some_and(|token| token.text() == "non")
+        && tokens
+            .get(index + 1)
+            .is_some_and(|token| token.kind() == JavaSyntaxKind::Minus)
+        && tokens
+            .get(index + 2)
+            .is_some_and(|token| token.text() == "sealed")
 }
 
 const ASSIGNMENT_OPERATORS: &[JavaSyntaxKind] = &[

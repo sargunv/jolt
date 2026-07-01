@@ -36,6 +36,8 @@ Evidence:
   declarations by `declarations/type-leading-comments`, parameters/components by
   `declarations/parameter-and-component-comments`, and callable members plus
   constructor invocations by `declarations/member-leading-comments`.
+- Canonical declaration modifier sorting, including contextual `sealed` and
+  `non-sealed`, is pinned by `declarations/modifiers-and-annotations`.
 - Switch colon groups whose only body is a block are pinned by
   `statements/switch-groups-and-rules`.
 - Qualified-name dot comments and line-comment forced leading-dot layout are

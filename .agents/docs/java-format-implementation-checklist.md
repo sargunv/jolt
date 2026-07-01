@@ -30,9 +30,10 @@ Status legend:
 - `[~]` `jolt_fmt_core` owns public options, diagnostics, and language wiring.
 - `[~]` Java formatter rules avoid raw syntax structure when stable accessors
   should exist; formatter-ignore token range math is helper-owned, qualified
-  name separator dots/comments and typed modifier annotation splits use syntax
-  accessors, and formatter context is threaded through declaration, statement,
-  expression, type, variable, modifier, annotation, and pattern rule layers.
+  name separator dots/comments, contextual modifier entries, and typed modifier
+  annotation splits use syntax accessors, and formatter context is threaded
+  through declaration, statement, expression, type, variable, modifier,
+  annotation, and pattern rule layers.
 
 ## Proposed Module Shape
 
@@ -169,7 +170,8 @@ Status legend:
 
 ### 6. Declaration Layer
 
-- `[x]` Modifier sorting.
+- `[x]` Modifier sorting, including contextual `sealed` and `non-sealed` type
+  modifiers.
 - `[x]` Declaration/type-use annotation placement.
 - `[x]` Post-modifier field and method return type-use annotations remain inline
   with the type.

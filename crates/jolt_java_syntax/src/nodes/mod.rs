@@ -993,6 +993,11 @@ pub struct NameSegment {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ModifierEntry {
+    pub tokens: Vec<JavaSyntaxToken>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct VariableDeclaratorEntry {
     pub declarator: VariableDeclarator,
     pub comma: Option<JavaSyntaxToken>,

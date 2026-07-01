@@ -1078,6 +1078,43 @@ fn modifier_lists_split_declaration_and_post_modifier_type_annotations() {
 }
 
 #[test]
+fn modifier_lists_expose_contextual_modifier_entries() {
+    let syntax = parse_clean(
+        r"
+                sealed class Base permits Open {}
+                non-sealed class Open extends Base {}
+            ",
+    );
+
+    let modifier_texts = syntax
+        .type_declarations()
+        .filter_map(|declaration| match declaration {
+            TypeDeclaration::ClassDeclaration(class) => Some(class),
+            _ => None,
+        })
+        .map(|class| {
+            class
+                .modifiers()
+                .expect("class modifiers")
+                .modifier_entries()
+                .map(|entry| {
+                    entry
+                        .tokens
+                        .iter()
+                        .map(JavaSyntaxToken::text)
+                        .collect::<String>()
+                })
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
+
+    assert_eq!(
+        modifier_texts,
+        [vec!["sealed".to_owned()], vec!["non-sealed".to_owned()]]
+    );
+}
+
+#[test]
 fn local_variables_split_declaration_and_post_modifier_type_annotations() {
     let syntax = parse_clean(
         r"

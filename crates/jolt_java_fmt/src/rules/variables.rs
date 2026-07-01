@@ -14,7 +14,7 @@ use crate::helpers::modifiers::inline_modifier_prefix_from_docs;
 use crate::rules::annotations::format_annotation;
 use crate::rules::expressions::format_variable_initializer_value;
 use crate::rules::modifiers::{
-    format_typed_modifier_prefix, format_typed_modifier_prefix_from_split_parts,
+    format_typed_modifier_prefix, format_typed_modifier_prefix_from_token_split_parts,
 };
 use crate::rules::statements::format_statement_semicolon;
 use crate::rules::types::{
@@ -47,7 +47,7 @@ pub(crate) fn format_local_variable_declaration(
     declaration: &LocalVariableDeclaration,
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
-    let modifiers = format_typed_modifier_prefix_from_split_parts(
+    let modifiers = format_typed_modifier_prefix_from_token_split_parts(
         declaration.declaration_annotations().collect(),
         declaration.type_use_annotations_after_modifiers().collect(),
         declaration.modifier_tokens().collect(),
