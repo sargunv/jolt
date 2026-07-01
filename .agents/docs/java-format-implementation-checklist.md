@@ -187,6 +187,8 @@ Status legend:
 - `[x]` Untyped, `var`, typed, and varargs lambda parameters.
 - `[~]` Arrays/initializers.
 - `[~]` Casts, `instanceof`, patterns, object creation, and type arguments.
+- `[x]` Anonymous class bodies in object creation expressions.
+- `[x]` Constructor type arguments in object creation expressions.
 
 ### 9. Comments And Ignore Hardening
 

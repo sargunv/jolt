@@ -1,9 +1,9 @@
 use jolt_fmt_ir::{Doc, concat, group, hard_line, line, soft_line, text};
 use jolt_java_syntax::{
     AnnotationElementDeclaration, AnnotationInterfaceBodyMember, AnnotationInterfaceDeclaration,
-    ClassBodyMember, ClassDeclaration, EnumConstant, EnumDeclaration, FormalParameterList,
-    InterfaceDeclaration, JavaSyntaxKind, JavaSyntaxToken, MethodDeclaration, ModifierList,
-    RecordDeclaration, TypeDeclaration,
+    ClassBody, ClassBodyMember, ClassDeclaration, EnumConstant, EnumDeclaration,
+    FormalParameterList, InterfaceDeclaration, JavaSyntaxKind, JavaSyntaxToken, MethodDeclaration,
+    ModifierList, RecordDeclaration, TypeDeclaration,
 };
 
 use crate::helpers::blocks::{braced_body, empty_block};
@@ -30,6 +30,11 @@ pub(crate) fn format_type_declaration(declaration: &TypeDeclaration) -> Doc {
             format_annotation_interface_declaration(annotation)
         }
     }
+}
+
+pub(crate) fn format_anonymous_class_body(body: &ClassBody) -> Doc {
+    let members = body.members().collect::<Vec<_>>();
+    braced_body(format_class_body(&members))
 }
 
 fn format_class_declaration(class: &ClassDeclaration) -> Doc {

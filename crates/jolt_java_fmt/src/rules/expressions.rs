@@ -12,6 +12,7 @@ use crate::helpers::chains::member_chain;
 use crate::helpers::comments::{format_token_sequence, tokens_have_comments};
 use crate::helpers::lists::{braced_initializer_list, parenthesized_list};
 use crate::helpers::operators::{assignment_expression, binary_chain, ternary_expression};
+use crate::rules::declarations::format_anonymous_class_body;
 use crate::rules::statements::{format_block, format_switch_block};
 use crate::rules::types::{format_array_dimensions, format_type, format_type_argument_list};
 
@@ -223,11 +224,19 @@ fn format_object_creation_expression(expression: &ObjectCreationExpression) -> D
             }),
         text("new "),
         expression
+            .constructor_type_arguments()
+            .map_or_else(jolt_fmt_ir::nil, |arguments| {
+                concat([format_type_argument_list(&arguments), text(" ")])
+            }),
+        expression
             .ty()
             .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty)),
         format_argument_list(expression.arguments()),
         expression.body().map_or_else(jolt_fmt_ir::nil, |body| {
-            concat([text(" "), format_token_sequence(&body.tokens())])
+            concat([
+                text(" "),
+                jolt_fmt_ir::dedent(format_anonymous_class_body(&body)),
+            ])
         }),
     ]))
 }

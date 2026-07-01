@@ -1192,6 +1192,11 @@ impl ObjectCreationExpression {
     }
 
     #[must_use]
+    pub fn constructor_type_arguments(&self) -> Option<TypeArgumentList> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
     pub fn ty(&self) -> Option<Type> {
         child_family(&self.syntax)
     }
