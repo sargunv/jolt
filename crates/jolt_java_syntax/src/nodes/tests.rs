@@ -1133,6 +1133,43 @@ fn statement_body_accessors_expose_body_kind() {
 }
 
 #[test]
+fn switch_label_case_entries_expose_commas() {
+    let syntax = parse_clean(
+        r"
+                class Example {
+                    int classify(Object value) {
+                        return switch (value) {
+                            case null, // null arm
+                                default -> 0;
+                            case String s -> 1;
+                        };
+                    }
+                }
+            ",
+    );
+    let label = descendants::<SwitchLabel>(&syntax)
+        .into_iter()
+        .find(|label| label.source_text().contains("default"))
+        .expect("case null, default label");
+
+    let entries = label.case_entries().collect::<Vec<_>>();
+    assert_eq!(entries.len(), 2);
+    assert_eq!(
+        match &entries[0].item {
+            SwitchLabelCaseItem::Constant(constant) => constant.source_text().trim().to_owned(),
+            _ => panic!("expected null constant"),
+        },
+        "null"
+    );
+    assert_eq!(
+        semicolon_trailing_comment(entries[0].comma.clone()),
+        "// null arm"
+    );
+    assert!(matches!(entries[1].item, SwitchLabelCaseItem::Default(_)));
+    assert!(entries[1].comma.is_none());
+}
+
+#[test]
 fn wildcard_and_unnamed_accessors_expose_roles() {
     let syntax = parse_clean(
         r"

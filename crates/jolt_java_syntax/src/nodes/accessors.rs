@@ -30,16 +30,16 @@ use super::{
     ResourceList, ResourceListEntry, ResourceSpecification, ReturnStatement, Statement,
     StatementBody, StatementExpressionEntry, StatementExpressionList, StaticInitializer,
     SuperExpression, SwitchBlock, SwitchBlockEntry, SwitchBlockStatementGroup, SwitchExpression,
-    SwitchLabel, SwitchLabelCaseItem, SwitchRule, SwitchStatement, SynchronizedStatement,
-    ThisExpression, ThrowStatement, ThrowsClause, ThrowsClauseEntry, TryStatement,
-    TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList, TypeArgumentListEntry,
-    TypeBoundList, TypeClauseEntry, TypeDeclaration, TypeParameter, TypeParameterList,
-    TypeParameterListEntry, TypePattern, UnaryExpression, UnionType, UnionTypeEntry, UsesDirective,
-    VariableAccess, VariableDeclarator, VariableDeclaratorEntry, VariableDeclaratorList,
-    VariableInitializer, VariableInitializerValue, VoidType, WhileStatement, WildcardBound,
-    WildcardType, YieldStatement, child, child_family, child_token, child_token_in, children,
-    children_family, children_tokens_matching, nth_child_family, nth_child_token,
-    starts_after_blank_line, tokens,
+    SwitchLabel, SwitchLabelCaseEntry, SwitchLabelCaseItem, SwitchRule, SwitchStatement,
+    SynchronizedStatement, ThisExpression, ThrowStatement, ThrowsClause, ThrowsClauseEntry,
+    TryStatement, TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList,
+    TypeArgumentListEntry, TypeBoundList, TypeClauseEntry, TypeDeclaration, TypeParameter,
+    TypeParameterList, TypeParameterListEntry, TypePattern, UnaryExpression, UnionType,
+    UnionTypeEntry, UsesDirective, VariableAccess, VariableDeclarator, VariableDeclaratorEntry,
+    VariableDeclaratorList, VariableInitializer, VariableInitializerValue, VoidType,
+    WhileStatement, WildcardBound, WildcardType, YieldStatement, child, child_family, child_token,
+    child_token_in, children, children_family, children_tokens_matching, nth_child_family,
+    nth_child_token, starts_after_blank_line, tokens,
 };
 use jolt_syntax::{SyntaxElement, TriviaKind};
 
@@ -3225,22 +3225,58 @@ impl SwitchLabel {
     }
 
     pub fn case_items(&self) -> impl Iterator<Item = SwitchLabelCaseItem> {
-        self.syntax
-            .children_with_tokens()
-            .filter_map(|element| match element {
-                SyntaxElement::Node(node) => CaseConstant::cast(node.clone())
-                    .map(SwitchLabelCaseItem::Constant)
-                    .or_else(|| CasePattern::cast(node).map(SwitchLabelCaseItem::Pattern)),
-                SyntaxElement::Token(syntax) if syntax.kind() == JavaSyntaxKind::DefaultKw => {
-                    Some(SwitchLabelCaseItem::Default(JavaSyntaxToken { syntax }))
-                }
-                SyntaxElement::Token(_) => None,
-            })
-            .filter(|item| {
-                !matches!(item, SwitchLabelCaseItem::Default(_)) || !self.is_default_label()
-            })
+        self.case_entries()
+            .map(|entry| entry.item)
             .collect::<Vec<_>>()
             .into_iter()
+    }
+
+    pub fn case_entries(&self) -> impl Iterator<Item = SwitchLabelCaseEntry> {
+        let mut entries = Vec::new();
+        let mut pending_item = None;
+
+        for element in self.syntax.children_with_tokens() {
+            match element {
+                SyntaxElement::Node(node) => {
+                    if let Some(item) = CaseConstant::cast(node.clone())
+                        .map(SwitchLabelCaseItem::Constant)
+                        .or_else(|| CasePattern::cast(node).map(SwitchLabelCaseItem::Pattern))
+                        && let Some(previous) = pending_item.replace(item)
+                    {
+                        entries.push(SwitchLabelCaseEntry {
+                            item: previous,
+                            comma: None,
+                        });
+                    }
+                }
+                SyntaxElement::Token(syntax) if syntax.kind() == JavaSyntaxKind::DefaultKw => {
+                    if !self.is_default_label()
+                        && let Some(previous) = pending_item
+                            .replace(SwitchLabelCaseItem::Default(JavaSyntaxToken { syntax }))
+                    {
+                        entries.push(SwitchLabelCaseEntry {
+                            item: previous,
+                            comma: None,
+                        });
+                    }
+                }
+                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
+                    if let Some(item) = pending_item.take() {
+                        entries.push(SwitchLabelCaseEntry {
+                            item,
+                            comma: Some(JavaSyntaxToken { syntax: token }),
+                        });
+                    }
+                }
+                SyntaxElement::Token(_) => {}
+            }
+        }
+
+        if let Some(item) = pending_item {
+            entries.push(SwitchLabelCaseEntry { item, comma: None });
+        }
+
+        entries.into_iter()
     }
 
     #[must_use]

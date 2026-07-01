@@ -5,9 +5,9 @@ use jolt_java_syntax::{
     ExpressionStatement, FinallyClause, ForInitializer, ForStatement, ForUpdate, IfStatement,
     JavaComment, JavaCommentKind, JavaSyntaxToken, LabeledStatement, Resource, ResourceListEntry,
     ReturnStatement, Statement, StatementBody, StatementExpressionEntry, StatementExpressionList,
-    SwitchBlock, SwitchBlockEntry, SwitchBlockStatementGroup, SwitchLabel, SwitchLabelCaseItem,
-    SwitchRule, SwitchStatement, SynchronizedStatement, ThrowStatement, TryStatement,
-    TryWithResourcesStatement, Type, WhileStatement, YieldStatement,
+    SwitchBlock, SwitchBlockEntry, SwitchBlockStatementGroup, SwitchLabel, SwitchLabelCaseEntry,
+    SwitchLabelCaseItem, SwitchRule, SwitchStatement, SynchronizedStatement, ThrowStatement,
+    TryStatement, TryWithResourcesStatement, Type, WhileStatement, YieldStatement,
 };
 use std::ops::Range;
 
@@ -23,7 +23,7 @@ use crate::helpers::formatter_ignore::{
     FormatterIgnoreRange, formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
     is_formatter_control_marker,
 };
-use crate::helpers::lists::{comma_list, semicolon_list};
+use crate::helpers::lists::semicolon_list;
 use crate::rules::annotations::format_annotation;
 use crate::rules::declarations::format_type_declaration;
 use crate::rules::expressions::format_expression;
@@ -601,14 +601,11 @@ fn format_switch_label(label: &SwitchLabel) -> Doc {
         return text("default");
     }
 
-    let items = label
-        .case_items()
-        .map(format_switch_label_case_item)
-        .collect::<Vec<_>>();
+    let entries = label.case_entries().collect::<Vec<_>>();
 
     concat([
         text("case "),
-        group(indent(comma_list(items))),
+        group(indent(format_switch_label_case_entries(entries))),
         label.guard().map_or_else(jolt_fmt_ir::nil, |guard| {
             concat([
                 text(" when "),
@@ -622,7 +619,20 @@ fn format_switch_label(label: &SwitchLabel) -> Doc {
     ])
 }
 
-fn format_switch_label_case_item(item: SwitchLabelCaseItem) -> Doc {
+fn format_switch_label_case_entries(entries: Vec<SwitchLabelCaseEntry>) -> Doc {
+    let mut docs = Vec::new();
+
+    for entry in entries {
+        docs.push(format_switch_label_case_item(&entry.item));
+        if let Some(comma) = entry.comma {
+            docs.push(format_switch_label_case_separator(&comma));
+        }
+    }
+
+    concat(docs)
+}
+
+fn format_switch_label_case_item(item: &SwitchLabelCaseItem) -> Doc {
     match item {
         SwitchLabelCaseItem::Constant(constant) => constant
             .expression()
@@ -632,8 +642,25 @@ fn format_switch_label_case_item(item: SwitchLabelCaseItem) -> Doc {
         SwitchLabelCaseItem::Pattern(pattern) => pattern
             .pattern()
             .map_or_else(jolt_fmt_ir::nil, |pattern| format_pattern(&pattern)),
-        SwitchLabelCaseItem::Default(_) => text("default"),
+        SwitchLabelCaseItem::Default(default) => concat([
+            format_leading_comments(default),
+            text("default"),
+            format_trailing_comments_before_line_break(default),
+        ]),
     }
+}
+
+fn format_switch_label_case_separator(comma: &JavaSyntaxToken) -> Doc {
+    concat([
+        format_leading_comments(comma),
+        text(","),
+        format_trailing_comments_before_line_break(comma),
+        if comma.trailing_comments().iter().any(comment_forces_line) {
+            hard_line()
+        } else {
+            line()
+        },
+    ])
 }
 
 fn format_switch_rule_body(rule: &SwitchRule) -> Doc {

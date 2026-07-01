@@ -15,7 +15,8 @@ class Example {
 
   int classify(Object value) {
     return switch (value) {
-      case null, default -> 0;
+      case null, // null arm
+        default -> 0;
       case Pair(int left, _) -> left;
     };
   }

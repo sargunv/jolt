@@ -731,6 +731,12 @@ pub enum SwitchLabelCaseItem {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SwitchLabelCaseEntry {
+    pub item: SwitchLabelCaseItem,
+    pub comma: Option<JavaSyntaxToken>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum AnnotationArgument {
     Value(AnnotationElementValue),
     Pair(AnnotationElementValuePair),
