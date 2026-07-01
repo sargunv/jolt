@@ -80,6 +80,10 @@ pub(crate) fn validate_doc(doc: &Doc) -> Result<(), RenderError> {
             validate_doc(&if_break.flat)
         }
         DocKind::IndentIfBreak(indent_if_break) => validate_doc(&indent_if_break.contents),
+        DocKind::IndentIfLevelBreak(indent_if_level_break) => {
+            validate_doc(&indent_if_level_break.contents)
+        }
+        DocKind::TrailingFlatWidth(trailing) => validate_doc(&trailing.contents),
         DocKind::LineSuffix(doc) => {
             validate_doc(doc)?;
             validate_line_suffix_doc(doc, Mode::Flat)
@@ -153,6 +157,10 @@ fn validate_line_suffix_doc(doc: &Doc, mode: Mode) -> Result<(), RenderError> {
         DocKind::IndentIfBreak(indent_if_break) => {
             validate_line_suffix_doc(&indent_if_break.contents, mode)
         }
+        DocKind::IndentIfLevelBreak(indent_if_level_break) => {
+            validate_line_suffix_doc(&indent_if_level_break.contents, mode)
+        }
+        DocKind::TrailingFlatWidth(trailing) => validate_line_suffix_doc(&trailing.contents, mode),
         DocKind::LineSuffix(doc) => validate_line_suffix_doc(doc, Mode::Flat),
         DocKind::BestFitting(docs) => {
             let Some((fallback, candidates)) = docs.split_last() else {
@@ -212,6 +220,10 @@ pub(crate) fn contains_marker(doc: &Doc, marker: crate::document::BreakMarkerId)
         DocKind::IndentIfBreak(indent_if_break) => {
             contains_marker(&indent_if_break.contents, marker)
         }
+        DocKind::IndentIfLevelBreak(indent_if_level_break) => {
+            contains_marker(&indent_if_level_break.contents, marker)
+        }
+        DocKind::TrailingFlatWidth(trailing) => contains_marker(&trailing.contents, marker),
         DocKind::LineSuffix(doc) => contains_marker(doc, marker),
         DocKind::BreakLevel(level) => {
             level

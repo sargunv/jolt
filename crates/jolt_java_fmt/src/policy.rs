@@ -37,11 +37,7 @@ impl JavaFormatPolicy {
     /// Minimum accumulated receiver length before breaking before a selector.
     /// Matches google-java-format's `indentationMultiplier * 4`.
     pub(crate) const fn selector_chain_min_receiver_length_before_break(self) -> usize {
-        match self.profile {
-            JavaFormatProfile::Google => 8,
-            JavaFormatProfile::Aosp => 16,
-            JavaFormatProfile::Palantir => usize::MAX,
-        }
+        self.indent_width as usize * 4
     }
 
     pub(crate) const fn type_argument_indent_levels(self) -> u16 {
@@ -52,31 +48,18 @@ impl JavaFormatPolicy {
     /// continuation. Google/AOSP step inner `<...>` bodies by one continuation
     /// level instead of repeating the top-level plus-four indent.
     pub(crate) const fn nested_type_argument_indent_levels(self) -> u16 {
-        match self.profile {
-            JavaFormatProfile::Google | JavaFormatProfile::Aosp => {
-                self.continuation_indent_levels()
-            }
-            JavaFormatProfile::Palantir => self.type_argument_indent_levels(),
-        }
+        self.continuation_indent_levels()
     }
 
     pub(crate) const fn type_arguments_break_nested_generic_items(self) -> bool {
-        matches!(
-            self.profile,
-            JavaFormatProfile::Google | JavaFormatProfile::Aosp
-        )
+        true
     }
 
     /// Selector invocation type arguments are emitted inside the selector chain
     /// continuation, so google-java-format's plusIndent maps to one Java
     /// continuation level here rather than the wider nested-type indent.
     pub(crate) const fn selector_type_argument_indent_levels(self) -> u16 {
-        match self.profile {
-            JavaFormatProfile::Google | JavaFormatProfile::Aosp => {
-                self.continuation_indent_levels()
-            }
-            JavaFormatProfile::Palantir => self.type_argument_indent_levels(),
-        }
+        self.continuation_indent_levels()
     }
 
     pub(crate) const fn selector_invocation_head_indent_levels(self) -> u16 {
@@ -139,10 +122,7 @@ impl JavaFormatPolicy {
     /// non-generic type header, allowing `static class Short` to stay flat while
     /// `static` breaks before an overlong `class VeryLongName...` header.
     pub(crate) const fn type_declaration_modifiers_fill_before_simple_header(self) -> bool {
-        matches!(
-            self.profile,
-            JavaFormatProfile::Google | JavaFormatProfile::Aosp
-        )
+        true
     }
 
     pub(crate) const fn callable_type_parameter_indent_levels(self) -> u16 {
@@ -154,12 +134,7 @@ impl JavaFormatPolicy {
     /// outer return-type `<...>` bodies by one continuation level instead of the
     /// wider field/local generic-list indent.
     pub(crate) const fn callable_leading_return_type_type_argument_indent_levels(self) -> u16 {
-        match self.profile {
-            JavaFormatProfile::Google | JavaFormatProfile::Aosp => {
-                self.continuation_indent_levels()
-            }
-            JavaFormatProfile::Palantir => self.type_argument_indent_levels(),
-        }
+        self.continuation_indent_levels()
     }
 
     /// Google/AOSP declaration headers keep short generic leading types with
@@ -171,41 +146,24 @@ impl JavaFormatPolicy {
         rendered_leading_type_source_width: usize,
         rendered_declaration_head_source_width: usize,
     ) -> bool {
-        match self.profile {
-            JavaFormatProfile::Google | JavaFormatProfile::Aosp => {
-                (has_type_arguments && rendered_leading_type_source_width > self.max_line_length)
-                    || rendered_declaration_head_source_width
-                        > self
-                            .max_line_length
-                            .saturating_sub(self.continuation_indent_columns())
-            }
-            JavaFormatProfile::Palantir => {
-                has_type_arguments
-                    || rendered_declaration_head_source_width
-                        > self
-                            .max_line_length
-                            .saturating_sub(self.continuation_indent_columns())
-            }
-        }
+        (has_type_arguments && rendered_leading_type_source_width > self.max_line_length)
+            || rendered_declaration_head_source_width
+                > self
+                    .max_line_length
+                    .saturating_sub(self.continuation_indent_columns())
     }
 
-    /// Field declarations use GJF's `declareOne` type/name break. Palantir
-    /// keeps long generic field headers flatter, so defer that profile until
-    /// the Palantir declaration policy is tackled directly.
+    /// Field declarations use GJF's `declareOne` type/name break.
     pub(crate) const fn field_leading_type_forces_name_break(
         self,
         rendered_leading_type_source_width: usize,
         rendered_declaration_head_source_width: usize,
     ) -> bool {
-        match self.profile {
-            JavaFormatProfile::Google | JavaFormatProfile::Aosp => self
-                .declaration_leading_type_forces_name_break(
-                    false,
-                    rendered_leading_type_source_width,
-                    rendered_declaration_head_source_width,
-                ),
-            JavaFormatProfile::Palantir => false,
-        }
+        self.declaration_leading_type_forces_name_break(
+            false,
+            rendered_leading_type_source_width,
+            rendered_declaration_head_source_width,
+        )
     }
 
     pub(crate) const fn switch_record_pattern_component_indent_levels(self) -> u16 {
@@ -216,20 +174,14 @@ impl JavaFormatPolicy {
     }
 
     pub(crate) const fn field_annotations_prefer_horizontal(self) -> bool {
-        matches!(
-            self.profile,
-            JavaFormatProfile::Google | JavaFormatProfile::Aosp
-        )
+        true
     }
 
     /// After vertical parameter annotations, Google/AOSP keep the type and name
     /// as a grouped pair; the name only moves to its own continuation line when
     /// the pair does not fit.
     pub(crate) const fn annotated_parameter_groups_type_and_name(self) -> bool {
-        matches!(
-            self.profile,
-            JavaFormatProfile::Google | JavaFormatProfile::Aosp
-        )
+        true
     }
 
     pub(crate) const fn separates_static_import_section(self) -> bool {
@@ -237,30 +189,23 @@ impl JavaFormatPolicy {
     }
 
     pub(crate) const fn selector_chain_breaks_before_first_selector(self) -> bool {
-        !matches!(self.profile, JavaFormatProfile::Palantir)
+        true
     }
 
     pub(crate) const fn selector_chain_breaks_before_first_selector_for_role(
         self,
         role: ChainRole,
     ) -> bool {
-        match (self.profile, role) {
-            (JavaFormatProfile::Palantir, _) => false,
-            _ => self.selector_chain_breaks_before_first_selector(),
-        }
+        let _ = role;
+        self.selector_chain_breaks_before_first_selector()
     }
 
     pub(crate) const fn selector_chain_preserves_nested_argument_head(
         self,
         role: ChainRole,
     ) -> bool {
-        matches!(
-            (self.profile, role),
-            (
-                JavaFormatProfile::Palantir,
-                ChainRole::NestedArgument | ChainRole::NestedArgumentFit
-            )
-        )
+        let _ = role;
+        false
     }
 
     /// Google/AOSP regular dot chains keep simple receiver + zero-arg call
@@ -269,19 +214,11 @@ impl JavaFormatPolicy {
         self,
         role: ChainRole,
     ) -> bool {
-        match (self.profile, role) {
-            (JavaFormatProfile::Google | JavaFormatProfile::Aosp, ChainRole::Default) => {
-                self.max_line_length >= 100
-            }
-            _ => false,
-        }
+        matches!(role, ChainRole::Default) && self.max_line_length >= 100
     }
 
     pub(crate) const fn selector_chain_simple_receiver_call_run_max_base_width(self) -> usize {
-        match self.profile {
-            JavaFormatProfile::Google | JavaFormatProfile::Aosp => 8,
-            JavaFormatProfile::Palantir => usize::MAX,
-        }
+        8
     }
 
     pub(crate) const fn selector_chain_primary_selector_indent_levels(
@@ -298,28 +235,15 @@ impl JavaFormatPolicy {
     }
 
     pub(crate) const fn selector_chain_receiver_argument_indent_levels(self) -> u16 {
-        match self.profile {
-            JavaFormatProfile::Google | JavaFormatProfile::Aosp => {
-                self.continuation_indent_levels() * 2
-            }
-            JavaFormatProfile::Palantir => self.continuation_indent_levels(),
-        }
+        self.continuation_indent_levels() * 2
     }
 
     pub(crate) const fn array_access_index_indent_levels(self) -> u16 {
-        match self.profile {
-            JavaFormatProfile::Google | JavaFormatProfile::Aosp => {
-                self.continuation_indent_levels()
-            }
-            JavaFormatProfile::Palantir => 0,
-        }
+        self.continuation_indent_levels()
     }
 
     pub(crate) const fn method_reference_type_qualifier_uses_selector_chain(self) -> bool {
-        matches!(
-            self.profile,
-            JavaFormatProfile::Google | JavaFormatProfile::Aosp
-        )
+        true
     }
 
     pub(crate) const fn selector_chain_role_breaks_before_first_selector(
@@ -340,17 +264,11 @@ impl JavaFormatPolicy {
     }
 
     pub(crate) const fn selector_chain_long_receiver_width(self) -> usize {
-        match self.profile {
-            JavaFormatProfile::Google | JavaFormatProfile::Aosp => 28,
-            JavaFormatProfile::Palantir => usize::MAX,
-        }
+        28
     }
 
     pub(crate) const fn normalizes_text_block_indentation(self) -> bool {
-        matches!(
-            self.profile,
-            JavaFormatProfile::Google | JavaFormatProfile::Aosp
-        )
+        true
     }
 
     pub(crate) const fn reflows_string_literals(self) -> bool {
@@ -370,35 +288,23 @@ impl JavaFormatPolicy {
     /// Google/AOSP stop filling larger short-item lists and let the broken
     /// continuation shape keep one argument per line.
     pub(crate) const fn argument_list_nested_fill_max_items(self) -> usize {
-        match self.profile {
-            JavaFormatProfile::Google | JavaFormatProfile::Aosp => 4,
-            JavaFormatProfile::Palantir => usize::MAX,
-        }
+        4
     }
 
     pub(crate) const fn argument_list_single_nested_invocation_head_min_width(self) -> usize {
-        match self.profile {
-            JavaFormatProfile::Google | JavaFormatProfile::Aosp => 24,
-            JavaFormatProfile::Palantir => usize::MAX,
-        }
+        24
     }
 
     /// Parameter-commented arguments stay flat when the whole call fits, but
     /// broken multi-argument calls use one item per line.
     pub(crate) const fn argument_list_breaks_inline_commented_items_one_per_line(self) -> bool {
-        matches!(
-            self.profile,
-            JavaFormatProfile::Google | JavaFormatProfile::Aosp
-        )
+        true
     }
 
     /// The first nested argument layer may keep receiver/call heads cohesive;
     /// deeper nested arguments are emitted in the fully broken nested role.
     pub(crate) const fn nested_argument_selector_chain_fit_depth_limit(self) -> usize {
-        match self.profile {
-            JavaFormatProfile::Google | JavaFormatProfile::Aosp => 1,
-            JavaFormatProfile::Palantir => 0,
-        }
+        1
     }
 
     /// Dense scalar array initializers in the Google/AOSP oracle prefer breaking
@@ -411,10 +317,7 @@ impl JavaFormatPolicy {
     /// when the body does not fit or owns leading comments the body starts on a
     /// continuation line after `->`.
     pub(crate) const fn lambda_expression_body_breaks_after_arrow(self) -> bool {
-        matches!(
-            self.profile,
-            JavaFormatProfile::Google | JavaFormatProfile::Aosp
-        )
+        true
     }
 
     pub(crate) const fn lambda_expression_body_indent_levels(self) -> u16 {
@@ -424,9 +327,6 @@ impl JavaFormatPolicy {
     /// Google/AOSP expression lambda bodies break long binary chains one
     /// operator per continuation line once the body moves after `->`.
     pub(crate) const fn lambda_body_binary_chain_breaks_one_per_line(self) -> bool {
-        matches!(
-            self.profile,
-            JavaFormatProfile::Google | JavaFormatProfile::Aosp
-        )
+        true
     }
 }

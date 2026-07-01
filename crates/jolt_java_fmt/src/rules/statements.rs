@@ -32,7 +32,7 @@ use crate::helpers::lists as java_lists;
 use crate::helpers::statements as java_statements;
 use crate::helpers::switches as java_switches;
 use jolt_diagnostics::TextRange;
-use jolt_fmt_ir::{group, indent_by, line};
+use jolt_fmt_ir::{TextWidth, group, indent_by, line};
 
 pub(super) fn format_block(
     block: &Block,
@@ -1690,8 +1690,19 @@ pub(super) fn format_expression_statement(
         .expression()
         .expect("parser-clean expression statement should have an expression");
 
-    Ok(java_statements::expression_statement(format_expression(
+    let expression_doc = format_expression(&expression, context)?;
+    if matches!(
         &expression,
-        context,
-    )?))
+        jolt_java_syntax::Expression::MethodInvocationExpression(invocation)
+            if invocation.receiver().is_none()
+    ) {
+        return Ok(
+            java_statements::expression_statement_with_trailing_fit_width(
+                expression_doc,
+                TextWidth::new(1),
+            ),
+        );
+    }
+
+    Ok(java_statements::expression_statement(expression_doc))
 }

@@ -1,12 +1,42 @@
 use jolt_diagnostics::TextRange;
 use jolt_fmt_ir::Doc;
 
+/// Metadata for an unqualified simple method invocation used as a selector-chain base.
+///
+/// Mirrors google-java-format `fillFirstArgument` predicates on the first chain item
+/// when that item is a bare `name(args)` receiver followed by selectors.
+#[derive(Clone)]
+pub(crate) struct SimpleCallBase {
+    pub(crate) name_doc: Doc,
+    pub(crate) fill_first_argument_arguments: Doc,
+    pub(crate) simple_name: String,
+    pub(crate) argument_count: usize,
+    pub(crate) has_type_arguments: bool,
+}
+
+impl SimpleCallBase {
+    pub(crate) fn fits_fill_first_argument(&self, has_trailing_members: bool) -> bool {
+        has_trailing_members
+            && self.argument_count == 1
+            && !self.has_type_arguments
+            && self.simple_name.len() <= 4
+    }
+}
+
+pub(crate) fn fits_fill_first_argument_simple_call_base(
+    simple_call: &SimpleCallBase,
+    members: &[ChainMember],
+) -> bool {
+    simple_call.fits_fill_first_argument(!members.is_empty())
+}
+
 #[derive(Clone)]
 pub(crate) struct Chain {
     pub(crate) base: Doc,
     pub(crate) base_trailing_comments: Vec<Doc>,
     pub(crate) members: Vec<ChainMember>,
     pub(crate) metadata: ChainMetadata,
+    pub(crate) simple_call_base: Option<SimpleCallBase>,
     tail_range: Option<TextRange>,
 }
 
@@ -22,6 +52,7 @@ impl Chain {
             base_trailing_comments: Vec::new(),
             members,
             metadata,
+            simple_call_base: None,
             tail_range: None,
         }
     }
@@ -58,11 +89,30 @@ impl Chain {
         Self::with_base_metadata(base, Vec::new(), BaseMetadata::call(source_width))
     }
 
-    pub(crate) fn object_creation_base(base: Doc, source_width: usize) -> Self {
+    pub(crate) fn simple_call_base(
+        base: Doc,
+        source_width: usize,
+        simple_call_base: SimpleCallBase,
+    ) -> Self {
+        Self {
+            base,
+            base_trailing_comments: Vec::new(),
+            members: Vec::new(),
+            metadata: ChainMetadata::from_parts(BaseMetadata::call(source_width), &[]),
+            simple_call_base: Some(simple_call_base),
+            tail_range: None,
+        }
+    }
+
+    pub(crate) fn object_creation_base(
+        base: Doc,
+        source_width: usize,
+        has_class_body: bool,
+    ) -> Self {
         Self::with_base_metadata(
             base,
             Vec::new(),
-            BaseMetadata::object_creation(source_width),
+            BaseMetadata::object_creation(source_width, has_class_body),
         )
     }
 
@@ -110,6 +160,7 @@ pub(crate) struct BaseMetadata {
     pub(crate) simple_name: Option<String>,
     pub(crate) forces_break_before_first_selector: bool,
     pub(crate) is_qualified_this_super_prefix: bool,
+    pub(crate) has_class_body: bool,
 }
 
 impl BaseMetadata {
@@ -122,6 +173,7 @@ impl BaseMetadata {
             simple_name,
             forces_break_before_first_selector: false,
             is_qualified_this_super_prefix: false,
+            has_class_body: false,
         }
     }
 
@@ -137,6 +189,7 @@ impl BaseMetadata {
             simple_name,
             forces_break_before_first_selector: false,
             is_qualified_this_super_prefix: true,
+            has_class_body: false,
         }
     }
 
@@ -149,6 +202,7 @@ impl BaseMetadata {
             simple_name: None,
             forces_break_before_first_selector: false,
             is_qualified_this_super_prefix: false,
+            has_class_body: false,
         }
     }
 
@@ -161,6 +215,7 @@ impl BaseMetadata {
             simple_name: None,
             forces_break_before_first_selector: true,
             is_qualified_this_super_prefix: false,
+            has_class_body: false,
         }
     }
 
@@ -173,6 +228,7 @@ impl BaseMetadata {
             simple_name: None,
             forces_break_before_first_selector: true,
             is_qualified_this_super_prefix: false,
+            has_class_body: false,
         }
     }
 
@@ -185,10 +241,11 @@ impl BaseMetadata {
             simple_name: None,
             forces_break_before_first_selector: false,
             is_qualified_this_super_prefix: false,
+            has_class_body: false,
         }
     }
 
-    pub(crate) const fn object_creation(source_width: usize) -> Self {
+    pub(crate) const fn object_creation(source_width: usize, has_class_body: bool) -> Self {
         Self {
             source_width,
             is_complex: false,
@@ -197,6 +254,7 @@ impl BaseMetadata {
             simple_name: None,
             forces_break_before_first_selector: false,
             is_qualified_this_super_prefix: false,
+            has_class_body,
         }
     }
 }
@@ -225,6 +283,9 @@ pub(crate) struct ChainMember {
     pub(crate) doc: Doc,
     pub(crate) doc_after_chain_break: Option<Doc>,
     pub(crate) doc_as_receiver_head_after_chain_break: Option<Doc>,
+    pub(crate) selector_head_doc: Option<Doc>,
+    pub(crate) selector_head_doc_after_chain_break: Option<Doc>,
+    pub(crate) selector_arguments_doc: Option<Doc>,
     pub(crate) trailing_comments: Vec<Doc>,
     pub(crate) source_width: usize,
     pub(crate) selector_head_width: usize,
@@ -239,6 +300,9 @@ impl ChainMember {
             doc,
             doc_after_chain_break: None,
             doc_as_receiver_head_after_chain_break: None,
+            selector_head_doc: None,
+            selector_head_doc_after_chain_break: None,
+            selector_arguments_doc: None,
             trailing_comments: Vec::new(),
             source_width,
             selector_head_width: source_width,
@@ -251,6 +315,9 @@ impl ChainMember {
         doc: Doc,
         doc_after_chain_break: Option<Doc>,
         doc_as_receiver_head_after_chain_break: Option<Doc>,
+        selector_head_doc: Doc,
+        selector_head_doc_after_chain_break: Option<Doc>,
+        selector_arguments_doc: Doc,
         source_width: usize,
         selector_head_width: usize,
         argument_count: usize,
@@ -262,6 +329,9 @@ impl ChainMember {
             doc,
             doc_after_chain_break,
             doc_as_receiver_head_after_chain_break,
+            selector_head_doc: Some(selector_head_doc),
+            selector_head_doc_after_chain_break,
+            selector_arguments_doc: Some(selector_arguments_doc),
             trailing_comments: Vec::new(),
             source_width,
             selector_head_width,
@@ -276,6 +346,9 @@ impl ChainMember {
             doc,
             doc_after_chain_break: None,
             doc_as_receiver_head_after_chain_break: None,
+            selector_head_doc: None,
+            selector_head_doc_after_chain_break: None,
+            selector_arguments_doc: None,
             trailing_comments: Vec::new(),
             source_width,
             selector_head_width: source_width,

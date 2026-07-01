@@ -1089,16 +1089,7 @@ fn argument_items_use_fill_layout(
     }
 
     items.iter().all(|item| {
-        !item.has_comments
-            && (item.source_width < policy.argument_list_max_item_length_for_filling()
-                || matches!(
-                    item.shape,
-                    ListItemShape::SelectorChain
-                        | ListItemShape::AnonymousObjectCreationUnit
-                        | ListItemShape::NestedArgumentUnit
-                        | ListItemShape::WideHeadNestedArgumentUnit
-                        | ListItemShape::Call
-                ))
+        !item.has_comments && item.source_width < policy.argument_list_max_item_length_for_filling()
     })
 }
 

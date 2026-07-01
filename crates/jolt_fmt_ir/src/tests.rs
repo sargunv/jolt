@@ -146,6 +146,39 @@ fn break_level_independent_dot_prefix_breaks_with_dot() {
 }
 
 #[test]
+fn indent_if_level_breaks_uses_specific_tag_state() {
+    let tag = LevelBreakTag(1);
+    let doc = break_level_with_indent(
+        1,
+        [
+            text("receiver"),
+            concat([
+                text("method"),
+                indent_if_level_breaks(tag, 1, 0, text("(argument)")),
+            ]),
+            text("tail"),
+        ],
+        [
+            tagged_level_break_with_prefix(
+                tag,
+                LevelBreakMode::Independent,
+                flat_text("."),
+                text("."),
+                0,
+            ),
+            level_break_with_prefix(LevelBreakMode::Unified, flat_text("."), text("."), 0),
+        ],
+    )
+    .expect("valid break level");
+
+    assert_eq!(render_text(&doc, 80), "receiver.method(argument).tail");
+    assert_eq!(
+        render_text(&doc, 20),
+        "receiver\n  .method(argument)\n  .tail"
+    );
+}
+
+#[test]
 fn break_level_fits_on_one_line() {
     let doc = break_level(
         [text("alpha"), text("beta"), text("gamma")],

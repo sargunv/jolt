@@ -7,10 +7,13 @@ use std::rc::Rc;
 
 use crate::document::{
     BreakLevel, BreakMarkerId, Doc, DocKind, FillEntry, FlatLine, Group, GroupFit, GroupId,
-    IfBreak, IndentIfBreak, LevelBreak, LevelBreakMode, Line, LineMode, LiteralText,
+    IfBreak, IndentIfBreak, IndentIfLevelBreak, LevelBreak, LevelBreakMode, LevelBreakTag, Line,
+    LineMode, LiteralText,
 };
 use crate::validation::validate_doc;
 use crate::width::{TextWidth, add_width, fits_at_column, has_line_terminator, push_repeated};
+
+const MAX_FLAT_WIDTH: TextWidth = TextWidth::new(1000);
 
 fn level_break_should_break(
     break_: &LevelBreak,
@@ -159,6 +162,8 @@ struct Renderer {
     align_spaces: u32,
     group_modes: BTreeMap<GroupId, bool>,
     group_stack: Vec<GroupFrame>,
+    level_break_tags: BTreeMap<LevelBreakTag, bool>,
+    trailing_flat_width: TextWidth,
     line_suffixes: Vec<Doc>,
     flushing_suffixes: bool,
     stats: RenderStats,
@@ -179,6 +184,8 @@ impl Renderer {
             align_spaces: 0,
             group_modes: BTreeMap::new(),
             group_stack: Vec::new(),
+            level_break_tags: BTreeMap::new(),
+            trailing_flat_width: TextWidth::ZERO,
             line_suffixes: Vec::new(),
             flushing_suffixes: false,
             stats: RenderStats::default(),
@@ -241,6 +248,16 @@ impl Renderer {
             DocKind::IndentIfBreak(indent_if_break) => {
                 self.render_indent_if_break(indent_if_break, mode)
             }
+            DocKind::IndentIfLevelBreak(indent_if_level_break) => {
+                self.render_indent_if_level_break(indent_if_level_break, mode)
+            }
+            DocKind::TrailingFlatWidth(trailing) => {
+                let saved = self.trailing_flat_width;
+                self.trailing_flat_width = add_width(self.trailing_flat_width, trailing.width);
+                let result = self.render_doc(&trailing.contents, mode);
+                self.trailing_flat_width = saved;
+                result
+            }
             DocKind::LineSuffix(doc) => {
                 self.stats.line_suffix_count += 1;
                 self.line_suffixes.push((**doc).clone());
@@ -256,12 +273,20 @@ impl Renderer {
         self.stats.break_level_count += 1;
         let computer = self.flat_width_computer();
         let level_width = computer.break_level_flat_width(level)?;
+        let saved_tags = self.level_break_tags.clone();
         // Each level decides flat vs broken from the current column, independent of
         // ancestor break mode (GJF `Level.computeBreaks` oneLine path).
-        if level_width.fits_on_line_from(self.column, self.options.line_width) {
-            return self.render_break_level_flat(level);
-        }
-        self.render_break_level_broken(level, &computer)
+        let result = if level_width.fits_on_line_from(
+            self.column,
+            self.trailing_flat_width,
+            self.options.line_width,
+        ) {
+            self.render_break_level_flat(level)
+        } else {
+            self.render_break_level_broken(level, &computer)
+        };
+        self.level_break_tags = saved_tags;
+        result
     }
 
     fn render_break_level_flat(&mut self, level: &BreakLevel) -> Result<(), RenderError> {
@@ -270,6 +295,7 @@ impl Renderer {
         };
         self.render_doc(first, Mode::Flat)?;
         for (break_, segment) in level.breaks.iter().zip(level.segments.iter().skip(1)) {
+            self.record_level_break_tag(break_, false);
             self.write_flat_line(&break_.flat);
             self.render_doc(segment, Mode::Flat)?;
         }
@@ -303,16 +329,21 @@ impl Renderer {
                 break_,
                 must_break,
                 self.column,
-                segment_width,
+                add_width(segment_width, self.trailing_flat_width),
                 self.options.line_width,
             );
+            self.record_level_break_tag(break_, should_break);
             if should_break {
                 self.write_newline(break_.indent_delta, 1)?;
                 self.render_doc(&break_.broken_prefix, Mode::Break)?;
             } else {
                 self.write_flat_line(&break_.flat);
             }
-            let enough_room = fits_at_column(self.column, segment_width, self.options.line_width);
+            let enough_room = fits_at_column(
+                self.column,
+                add_width(segment_width, self.trailing_flat_width),
+                self.options.line_width,
+            );
             self.render_doc(segment, Mode::Break)?;
             if !enough_room {
                 must_break = true;
@@ -347,6 +378,17 @@ impl Renderer {
     }
 
     fn group_fits(&self, group: &Group) -> Result<bool, RenderError> {
+        if matches!(group.fit, GroupFit::LineWidth) && self.line_suffixes.is_empty() {
+            let width = self.flat_width_computer().flat_width(&group.contents)?;
+            if !width.fits_on_line_from(
+                self.column,
+                self.trailing_flat_width,
+                self.options.line_width,
+            ) {
+                return Ok(false);
+            }
+        }
+
         let mut checker = FitChecker::from_renderer(self)?;
         let result = checker.fits_doc(&group.contents, Mode::Flat)?;
         if !result.fits {
@@ -431,6 +473,33 @@ impl Renderer {
             self.indent_levels -= 1;
         }
         result
+    }
+
+    fn render_indent_if_level_break(
+        &mut self,
+        indent_if_level_break: &IndentIfLevelBreak,
+        mode: Mode,
+    ) -> Result<(), RenderError> {
+        let is_broken = self
+            .level_break_tags
+            .get(&indent_if_level_break.tag)
+            .copied()
+            .unwrap_or(false);
+        let levels = if is_broken {
+            indent_if_level_break.if_broken_levels
+        } else {
+            indent_if_level_break.if_flat_levels
+        };
+        self.indent_levels += i32::from(levels);
+        let result = self.render_doc(&indent_if_level_break.contents, mode);
+        self.indent_levels -= i32::from(levels);
+        result
+    }
+
+    fn record_level_break_tag(&mut self, break_: &LevelBreak, is_broken: bool) {
+        if let Some(tag) = break_.tag {
+            self.level_break_tags.insert(tag, is_broken);
+        }
     }
 
     fn render_best_fitting(&mut self, docs: &[Doc]) -> Result<(), RenderError> {
@@ -613,8 +682,22 @@ impl FlatWidthSummary {
         }
     }
 
-    fn fits_on_line_from(self, column: TextWidth, line_width: TextWidth) -> bool {
-        self.fits && fits_at_column(column, self.width, line_width)
+    fn fits_on_line_from(
+        self,
+        column: TextWidth,
+        trailing_width: TextWidth,
+        line_width: TextWidth,
+    ) -> bool {
+        self.fits && fits_at_column(column, add_width(self.width, trailing_width), line_width)
+    }
+}
+
+fn add_flat_width(lhs: TextWidth, rhs: TextWidth) -> TextWidth {
+    let width = add_width(lhs, rhs);
+    if width > MAX_FLAT_WIDTH {
+        MAX_FLAT_WIDTH
+    } else {
+        width
     }
 }
 
@@ -661,13 +744,16 @@ impl FlatWidthComputer {
         let mut width = TextWidth::ZERO;
         for (index, segment) in level.segments.iter().enumerate() {
             if index > 0 {
-                width = add_width(width, flat_line_width(&level.breaks[index - 1].flat));
+                width = add_flat_width(width, flat_line_width(&level.breaks[index - 1].flat));
             }
             let segment_width = self.flat_width(segment)?;
             if !segment_width.fits {
                 return Ok(FlatWidthSummary::infinite());
             }
-            width = add_width(width, segment_width.width);
+            width = add_flat_width(width, segment_width.width);
+            if width >= MAX_FLAT_WIDTH {
+                return Ok(FlatWidthSummary::finite(MAX_FLAT_WIDTH));
+            }
         }
         Ok(FlatWidthSummary::finite(width))
     }
@@ -701,13 +787,19 @@ impl FlatWidthComputer {
                     if !content.fits {
                         return Ok(FlatWidthSummary::infinite());
                     }
-                    width = add_width(width, content.width);
+                    width = add_flat_width(width, content.width);
+                    if width >= MAX_FLAT_WIDTH {
+                        return Ok(FlatWidthSummary::finite(MAX_FLAT_WIDTH));
+                    }
                     if let Some(separator) = &entry.separator {
                         let separator_width = self.flat_width(separator)?;
                         if !separator_width.fits {
                             return Ok(FlatWidthSummary::infinite());
                         }
-                        width = add_width(width, separator_width.width);
+                        width = add_flat_width(width, separator_width.width);
+                        if width >= MAX_FLAT_WIDTH {
+                            return Ok(FlatWidthSummary::finite(MAX_FLAT_WIDTH));
+                        }
                     }
                 }
                 Ok(FlatWidthSummary::finite(width))
@@ -718,7 +810,7 @@ impl FlatWidthComputer {
                 if !inner.fits {
                     return Ok(FlatWidthSummary::infinite());
                 }
-                Ok(FlatWidthSummary::finite(add_width(
+                Ok(FlatWidthSummary::finite(add_flat_width(
                     inner.width,
                     TextWidth::new(u32::from(align.spaces)),
                 )))
@@ -726,6 +818,10 @@ impl FlatWidthComputer {
             DocKind::Line(line) => Ok(FlatWidthSummary::finite(flat_line_width(&line.flat))),
             DocKind::IfBreak(if_break) => self.flat_width(&if_break.flat),
             DocKind::IndentIfBreak(indent_if_break) => self.flat_width(&indent_if_break.contents),
+            DocKind::IndentIfLevelBreak(indent_if_level_break) => {
+                self.flat_width(&indent_if_level_break.contents)
+            }
+            DocKind::TrailingFlatWidth(trailing) => self.flat_width(&trailing.contents),
             DocKind::LineSuffix(doc) => self.flat_width(doc),
             DocKind::BestFitting(docs) => {
                 let Some((fallback, candidates)) = docs.split_last() else {
@@ -750,7 +846,10 @@ impl FlatWidthComputer {
             if !doc_width.fits {
                 return Ok(FlatWidthSummary::infinite());
             }
-            width = add_width(width, doc_width.width);
+            width = add_flat_width(width, doc_width.width);
+            if width >= MAX_FLAT_WIDTH {
+                return Ok(FlatWidthSummary::finite(MAX_FLAT_WIDTH));
+            }
         }
         Ok(FlatWidthSummary::finite(width))
     }
@@ -786,6 +885,8 @@ struct CachedFit {
     align_spaces: u32,
     group_modes: BTreeMap<GroupId, bool>,
     group_stack: Vec<GroupFrame>,
+    level_break_tags: BTreeMap<LevelBreakTag, bool>,
+    trailing_flat_width: TextWidth,
     marker_additions: BTreeMap<BreakMarkerId, Vec<TextWidth>>,
 }
 
@@ -798,6 +899,8 @@ struct FitCacheKey {
     align_spaces: u32,
     group_modes: BTreeMap<GroupId, bool>,
     group_stack: Vec<GroupFrame>,
+    level_break_tags: BTreeMap<LevelBreakTag, bool>,
+    trailing_flat_width: TextWidth,
 }
 
 impl PartialEq for FitCacheKey {
@@ -809,6 +912,8 @@ impl PartialEq for FitCacheKey {
             && self.align_spaces == other.align_spaces
             && self.group_modes == other.group_modes
             && self.group_stack == other.group_stack
+            && self.level_break_tags == other.level_break_tags
+            && self.trailing_flat_width == other.trailing_flat_width
     }
 }
 
@@ -823,6 +928,8 @@ impl Hash for FitCacheKey {
         self.align_spaces.hash(state);
         self.group_modes.hash(state);
         self.group_stack.hash(state);
+        self.level_break_tags.hash(state);
+        self.trailing_flat_width.get().hash(state);
     }
 }
 
@@ -836,6 +943,8 @@ impl FitCacheKey {
             align_spaces: checker.align_spaces,
             group_modes: checker.group_modes.clone(),
             group_stack: checker.group_stack.clone(),
+            level_break_tags: checker.level_break_tags.clone(),
+            trailing_flat_width: checker.trailing_flat_width,
         }
     }
 }
@@ -874,6 +983,8 @@ struct FitChecker {
     align_spaces: u32,
     group_modes: BTreeMap<GroupId, bool>,
     group_stack: Vec<GroupFrame>,
+    level_break_tags: BTreeMap<LevelBreakTag, bool>,
+    trailing_flat_width: TextWidth,
     marker_columns: BTreeMap<BreakMarkerId, Vec<TextWidth>>,
     fit_cache: Rc<RefCell<HashMap<FitCacheKey, CachedFit>>>,
     flat_width_cache: Rc<RefCell<HashMap<*const DocKind, FlatWidthSummary>>>,
@@ -896,6 +1007,8 @@ impl FitChecker {
             align_spaces: renderer.align_spaces,
             group_modes: renderer.group_modes.clone(),
             group_stack: renderer.group_stack.clone(),
+            level_break_tags: renderer.level_break_tags.clone(),
+            trailing_flat_width: renderer.trailing_flat_width,
             marker_columns: BTreeMap::new(),
             fit_cache: Rc::clone(&renderer.fit_cache),
             flat_width_cache: Rc::clone(&renderer.flat_width_cache),
@@ -939,6 +1052,8 @@ impl FitChecker {
                 align_spaces: self.align_spaces,
                 group_modes: self.group_modes.clone(),
                 group_stack: self.group_stack.clone(),
+                level_break_tags: self.level_break_tags.clone(),
+                trailing_flat_width: self.trailing_flat_width,
                 marker_additions: marker_additions(&markers_before, &self.marker_columns),
             },
         );
@@ -951,6 +1066,8 @@ impl FitChecker {
         self.align_spaces = cached.align_spaces;
         self.group_modes = cached.group_modes.clone();
         self.group_stack = cached.group_stack.clone();
+        self.level_break_tags = cached.level_break_tags.clone();
+        self.trailing_flat_width = cached.trailing_flat_width;
         apply_marker_additions(&mut self.marker_columns, &cached.marker_additions);
     }
 
@@ -1015,6 +1132,29 @@ impl FitChecker {
                 }
                 result
             }
+            DocKind::IndentIfLevelBreak(indent_if_level_break) => {
+                let is_broken = self
+                    .level_break_tags
+                    .get(&indent_if_level_break.tag)
+                    .copied()
+                    .unwrap_or(false);
+                let levels = if is_broken {
+                    indent_if_level_break.if_broken_levels
+                } else {
+                    indent_if_level_break.if_flat_levels
+                };
+                self.indent_levels += i32::from(levels);
+                let result = self.fit_doc(&indent_if_level_break.contents, mode);
+                self.indent_levels -= i32::from(levels);
+                result
+            }
+            DocKind::TrailingFlatWidth(trailing) => {
+                let saved = self.trailing_flat_width;
+                self.trailing_flat_width = add_width(self.trailing_flat_width, trailing.width);
+                let result = self.fit_doc(&trailing.contents, mode);
+                self.trailing_flat_width = saved;
+                result
+            }
             DocKind::LineSuffix(doc) => self.fit_doc(doc, Mode::Flat),
             DocKind::BestFitting(docs) => self.fit_best_fitting(docs),
             DocKind::BreakLevel(level) => self.fit_break_level(level, mode),
@@ -1024,15 +1164,23 @@ impl FitChecker {
     fn fit_break_level(&mut self, level: &BreakLevel, mode: Mode) -> Result<bool, RenderError> {
         let computer = self.flat_width_computer();
         let level_width = computer.break_level_flat_width(level)?;
+        let saved_tags = self.level_break_tags.clone();
         // Match `render_break_level`: every level makes its own one-line fit decision at
         // the current column, even when an ancestor is already in break mode.
-        if level_width.fits_on_line_from(self.column, self.options.line_width) {
-            return self.fit_break_level_flat(level);
-        }
-        match mode {
-            Mode::Flat => Ok(false),
-            Mode::Break => self.fit_break_level_broken(level, &computer),
-        }
+        let result = if level_width.fits_on_line_from(
+            self.column,
+            self.trailing_flat_width,
+            self.options.line_width,
+        ) {
+            self.fit_break_level_flat(level)
+        } else {
+            match mode {
+                Mode::Flat => Ok(false),
+                Mode::Break => self.fit_break_level_broken(level, &computer),
+            }
+        };
+        self.level_break_tags = saved_tags;
+        result
     }
 
     fn fit_break_level_flat(&mut self, level: &BreakLevel) -> Result<bool, RenderError> {
@@ -1043,6 +1191,7 @@ impl FitChecker {
             return Ok(false);
         }
         for (break_, segment) in level.breaks.iter().zip(level.segments.iter().skip(1)) {
+            self.record_level_break_tag(break_, false);
             if !self.fit_flat_line(&break_.flat) {
                 return Ok(false);
             }
@@ -1082,9 +1231,10 @@ impl FitChecker {
                 break_,
                 must_break,
                 self.column,
-                segment_width,
+                add_width(segment_width, self.trailing_flat_width),
                 self.options.line_width,
             );
+            self.record_level_break_tag(break_, should_break);
             if should_break {
                 if !self.fit_newline(break_.indent_delta) {
                     return Ok(false);
@@ -1095,7 +1245,11 @@ impl FitChecker {
             } else if !self.fit_flat_line(&break_.flat) {
                 return Ok(false);
             }
-            let enough_room = fits_at_column(self.column, segment_width, self.options.line_width);
+            let enough_room = fits_at_column(
+                self.column,
+                add_width(segment_width, self.trailing_flat_width),
+                self.options.line_width,
+            );
             if !self.fit_doc(segment, Mode::Break)? {
                 return Ok(false);
             }
@@ -1104,6 +1258,12 @@ impl FitChecker {
             }
         }
         Ok(true)
+    }
+
+    fn record_level_break_tag(&mut self, break_: &LevelBreak, is_broken: bool) {
+        if let Some(tag) = break_.tag {
+            self.level_break_tags.insert(tag, is_broken);
+        }
     }
 
     fn fit_newline(&mut self, indent_delta: i16) -> bool {
@@ -1120,6 +1280,16 @@ impl FitChecker {
     fn fit_group(&mut self, group: &Group) -> Result<bool, RenderError> {
         if group.should_break {
             return Ok(false);
+        }
+        if matches!(group.fit, GroupFit::LineWidth) && self.marker_columns.is_empty() {
+            let width = self.flat_width_computer().flat_width(&group.contents)?;
+            if !width.fits_on_line_from(
+                self.column,
+                self.trailing_flat_width,
+                self.options.line_width,
+            ) {
+                return Ok(false);
+            }
         }
         let mut nested = self.clone();
         let nested_result = nested.fits_doc(&group.contents, Mode::Flat)?;

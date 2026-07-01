@@ -13,20 +13,20 @@ formatted: 224
 exact matches: 92
 exact-match percentage: 41.07%
 mismatching formatted files: 132
-aggregate diff size: 3884
+aggregate diff size: 4138
 largest per-file diff: B24909927.java (984)
 
 worst mismatches:
   B24909927.java: 984
-  RSL.java: 336
-  M.java: 258
-  B20701054.java: 179
-  B20128760.java: 116
-  palantir-deeply-nested-calls.java: 114
-  A.java: 101
-  palantir-lambda-multiline-arg.java: 100
-  C.java: 64
-  B21954779.java: 60
+  RSL.java: 349
+  B20701054.java: 253
+  M.java: 204
+  palantir-deeply-nested-calls.java: 196
+  B20128760.java: 123
+  palantir-lambda-multiline-arg.java: 121
+  A.java: 106
+  C.java: 68
+  F.java: 64
 
 top missing-rule blockers:
   0: <none>

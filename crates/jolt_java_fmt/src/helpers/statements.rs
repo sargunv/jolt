@@ -1,4 +1,6 @@
-use jolt_fmt_ir::{Doc, concat, group, hard_line, indent_by, line, text};
+use jolt_fmt_ir::{
+    Doc, TextWidth, concat, group, hard_line, indent_by, line, text, with_trailing_flat_width,
+};
 
 use crate::helpers::expressions as java_expressions;
 use crate::policy::JavaFormatPolicy;
@@ -21,6 +23,16 @@ pub(crate) fn keyword_label_statement(keyword: &'static str, label: Option<Doc>)
 
 pub(crate) fn expression_statement(expression: Doc) -> Doc {
     group(concat([expression, text(";")]))
+}
+
+pub(crate) fn expression_statement_with_trailing_fit_width(
+    expression: Doc,
+    trailing_width: TextWidth,
+) -> Doc {
+    group(concat([
+        with_trailing_flat_width(trailing_width, expression),
+        text(";"),
+    ]))
 }
 
 pub(crate) fn if_statement(

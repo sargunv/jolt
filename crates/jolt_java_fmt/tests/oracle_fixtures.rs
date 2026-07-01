@@ -87,11 +87,19 @@ fn assert_profile(profile: Profile<'_>) -> OracleSummary {
     reset_report_dir(&report_root);
 
     let mut summary = OracleSummary::new(profile);
+    let fixture_filter = std::env::var("JOLT_ORACLE_FIXTURE").ok();
     for input_path in input_paths {
         let fixture_start = Instant::now();
         let relative = input_path
             .strip_prefix(&input_root)
             .expect("fixture should be under input root");
+        let relative_name = relative.to_string_lossy().replace('\\', "/");
+        if fixture_filter
+            .as_deref()
+            .is_some_and(|filter| relative_name != filter)
+        {
+            continue;
+        }
         let expected_path = expected_root.join(relative);
         assert!(
             expected_path.is_file(),
@@ -103,8 +111,6 @@ fn assert_profile(profile: Profile<'_>) -> OracleSummary {
             .unwrap_or_else(|error| panic!("failed to read {}: {error}", input_path.display()));
         let expected = fs::read_to_string(&expected_path)
             .unwrap_or_else(|error| panic!("failed to read {}: {error}", expected_path.display()));
-        let relative_name = relative.to_string_lossy().replace('\\', "/");
-
         if profile
             .invalid_upstream_fixtures
             .contains(&relative_name.as_str())

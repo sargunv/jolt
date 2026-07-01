@@ -11,7 +11,7 @@ use super::{
     take_trailing_line_comment_docs_in_range_as_own_line, text, wrap,
 };
 use crate::analyzers::binary::{self as binary_analysis, BinarySide};
-use crate::analyzers::chains::{BaseMetadata, Chain, ChainMember, ChainRole};
+use crate::analyzers::chains::{BaseMetadata, Chain, ChainMember, ChainRole, SimpleCallBase};
 use crate::analyzers::expressions::ExpressionLayout;
 use crate::context::JavaCommentBucket;
 use crate::helpers::callables as java_callables;
@@ -21,7 +21,7 @@ use crate::helpers::lambdas as java_lambdas;
 use crate::helpers::literals as java_literals;
 use crate::helpers::switches as java_switches;
 use jolt_diagnostics::TextRange;
-use jolt_fmt_ir::{group, indent_by, soft_line};
+use jolt_fmt_ir::{TextWidth, group, indent_by, soft_line, with_trailing_flat_width};
 
 pub(super) fn format_expression(
     expression: &Expression,
@@ -252,11 +252,15 @@ pub(super) fn collect_selector_chain(
             )
             .with_tail_range(super_expression.code_text_range()))
         }
-        Expression::ObjectCreationExpression(creation) => Ok(Chain::object_creation_base(
-            format_object_creation_expression(creation, context)?,
-            node_width(creation.code_text_range()),
-        )
-        .with_tail_range(creation.code_text_range())),
+        Expression::ObjectCreationExpression(creation) => {
+            let has_class_body = creation.body().is_some();
+            Ok(Chain::object_creation_base(
+                format_object_creation_expression(creation, context)?,
+                node_width(creation.code_text_range()),
+                has_class_body,
+            )
+            .with_tail_range(creation.code_text_range()))
+        }
         Expression::ArrayAccessExpression(array_access) => {
             collect_array_access_chain(array_access, context)
         }
@@ -495,9 +499,14 @@ pub(super) fn collect_method_invocation_chain(
             None
         };
         let member = java_chains::explicit_type_argument_invocation_selector(
-            type_arguments,
+            type_arguments.clone(),
             text(name.text()),
             arguments.clone(),
+            context.policy(),
+        );
+        let member_head = java_chains::explicit_type_argument_invocation_selector_head(
+            type_arguments,
+            text(name.text()),
             context.policy(),
         );
         let member_after_chain_break =
@@ -505,6 +514,12 @@ pub(super) fn collect_method_invocation_chain(
                 type_arguments_after_chain_break.clone(),
                 text(name.text()),
                 arguments.clone(),
+                context.policy(),
+            );
+        let member_head_after_chain_break =
+            java_chains::explicit_type_argument_invocation_selector_head_after_chain_break(
+                type_arguments_after_chain_break.clone(),
+                text(name.text()),
                 context.policy(),
             );
         let member_as_receiver_head_after_chain_break =
@@ -520,6 +535,9 @@ pub(super) fn collect_method_invocation_chain(
             member,
             Some(member_after_chain_break),
             member_as_receiver_head_after_chain_break,
+            member_head,
+            Some(member_head_after_chain_break),
+            arguments.clone(),
             selector_width,
             selector_head_width,
             argument_count,
@@ -548,15 +566,45 @@ fn collect_simple_method_invocation_chain(
     let name = invocation
         .simple_name()
         .expect("parser-clean simple method invocation should have a name");
+    let argument_count = arguments_node.arguments().count();
+    let has_type_arguments = invocation.type_arguments().is_some();
+    let simple_name = name.text().to_string();
+    let name_doc = text(simple_name.as_str());
     let arguments = format_argument_list_with_continuation_indent(
         &arguments_node,
         context,
         argument_indent_levels,
     )?;
-    Ok(Chain::call_base(
-        concat([text(name.text()), arguments]),
-        node_width(invocation.code_text_range()),
-    )
+    let simple_call_base = if argument_count == 1 && !has_type_arguments && simple_name.len() <= 4 {
+        let argument = arguments_node
+            .arguments()
+            .next()
+            .expect("parser-clean single-argument list should have an argument");
+        let argument = format_argument(&argument, context)?;
+        let argument = with_trailing_flat_width(TextWidth::new(1), argument);
+        let fill_first_argument_arguments = concat([text("("), argument, text(")")]);
+        Some(SimpleCallBase {
+            name_doc: name_doc.clone(),
+            fill_first_argument_arguments,
+            simple_name,
+            argument_count,
+            has_type_arguments,
+        })
+    } else {
+        None
+    };
+    Ok(if let Some(simple_call_base) = simple_call_base {
+        Chain::simple_call_base(
+            concat([name_doc, arguments]),
+            node_width(invocation.code_text_range()),
+            simple_call_base,
+        )
+    } else {
+        Chain::call_base(
+            concat([name_doc, arguments]),
+            node_width(invocation.code_text_range()),
+        )
+    }
     .with_tail_range(invocation.code_text_range()))
 }
 

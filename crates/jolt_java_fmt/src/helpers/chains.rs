@@ -5,8 +5,8 @@ use jolt_fmt_ir::{
 
 use crate::analyzers::chains::{
     BaseMetadata, Chain, ChainBaseKind, ChainMember, ChainMemberKind, ChainMetadata, ChainRole,
-    classified_prefix_member_end_index, is_gjf_log_statement_chain,
-    single_invocation_coalesced_prefix_len,
+    SimpleCallBase, classified_prefix_member_end_index, fits_fill_first_argument_simple_call_base,
+    is_gjf_log_statement_chain, single_invocation_coalesced_prefix_len,
 };
 use crate::helpers::lists::SELECTOR_TYPE_ARGUMENTS_GROUP_ID;
 use crate::policy::JavaFormatPolicy;
@@ -17,8 +17,19 @@ pub(crate) fn explicit_type_argument_invocation_selector(
     arguments: Doc,
     policy: JavaFormatPolicy,
 ) -> Doc {
+    concat([
+        explicit_type_argument_invocation_selector_head(type_arguments, name, policy),
+        arguments,
+    ])
+}
+
+pub(crate) fn explicit_type_argument_invocation_selector_head(
+    type_arguments: Option<Doc>,
+    name: Doc,
+    policy: JavaFormatPolicy,
+) -> Doc {
     let Some(type_arguments) = type_arguments else {
-        return concat([name, arguments]);
+        return name;
     };
 
     concat([
@@ -27,9 +38,9 @@ pub(crate) fn explicit_type_argument_invocation_selector(
             SELECTOR_TYPE_ARGUMENTS_GROUP_ID,
             indent_by(
                 policy.type_argument_indent_levels(),
-                concat([hard_line(), name.clone(), arguments.clone()]),
+                concat([hard_line(), name.clone()]),
             ),
-            concat([name, arguments]),
+            name,
         ),
     ])
 }
@@ -40,8 +51,23 @@ pub(crate) fn explicit_type_argument_invocation_selector_after_chain_break(
     arguments: Doc,
     policy: JavaFormatPolicy,
 ) -> Doc {
+    concat([
+        explicit_type_argument_invocation_selector_head_after_chain_break(
+            type_arguments,
+            name,
+            policy,
+        ),
+        arguments,
+    ])
+}
+
+pub(crate) fn explicit_type_argument_invocation_selector_head_after_chain_break(
+    type_arguments: Option<Doc>,
+    name: Doc,
+    policy: JavaFormatPolicy,
+) -> Doc {
     let Some(type_arguments) = type_arguments else {
-        return concat([name, arguments]);
+        return name;
     };
 
     concat([
@@ -50,9 +76,9 @@ pub(crate) fn explicit_type_argument_invocation_selector_after_chain_break(
             SELECTOR_TYPE_ARGUMENTS_GROUP_ID,
             indent_by(
                 policy.selector_invocation_head_indent_levels(),
-                concat([hard_line(), name.clone(), arguments.clone()]),
+                concat([hard_line(), name.clone()]),
             ),
-            concat([name, arguments]),
+            name,
         ),
     ])
 }
@@ -64,6 +90,7 @@ pub(crate) fn selector_chain(chain: Chain, policy: JavaFormatPolicy, role: Chain
         base_trailing_comments,
         members,
         metadata,
+        simple_call_base,
         ..
     } = chain;
 
@@ -77,6 +104,11 @@ pub(crate) fn selector_chain(chain: Chain, policy: JavaFormatPolicy, role: Chain
 
     if is_gjf_log_statement_chain(&metadata.base, &members) {
         return gjf_log_statement_chain(base, base_trailing_comments, members, &metadata, policy);
+    }
+
+    if matches!(metadata.base.kind, ChainBaseKind::ObjectCreation) && !metadata.base.has_class_body
+    {
+        return visit_regular_dot_chain_after_primary_receiver(base, members, policy);
     }
 
     if matches!(metadata.base.kind, ChainBaseKind::PrimaryExpression)
@@ -163,6 +195,17 @@ pub(crate) fn selector_chain(chain: Chain, policy: JavaFormatPolicy, role: Chain
             members,
             false,
             policy.selector_chain_primary_selector_indent_levels(metadata.base.kind),
+        );
+    }
+
+    if let Some(simple_call) = simple_call_base.as_ref()
+        && fits_fill_first_argument_simple_call_base(simple_call, &members)
+    {
+        return visit_regular_dot_chain_with_fill_first_argument_base(
+            simple_call,
+            members,
+            policy,
+            metadata.base.source_width,
         );
     }
 
@@ -335,10 +378,26 @@ fn visit_dot_with_prefix(
         );
     }
 
+    let type_static_prefix_end = crate::analyzers::type_names::type_name_prefix_member_end_index(
+        base_metadata.simple_name.as_deref(),
+        &members,
+    );
     let member_segments: Vec<Doc> = members
         .iter()
         .enumerate()
         .map(|(index, member)| {
+            if trailing_dereferences
+                && type_static_prefix_end == Some(prefix_end)
+                && index == prefix_end
+                && member.is_call()
+                && let Some(head) = member
+                    .selector_head_doc_after_chain_break
+                    .clone()
+                    .or_else(|| member.selector_head_doc.clone())
+                && let Some(arguments) = member.selector_arguments_doc.clone()
+            {
+                return concat([head, arguments]);
+            }
             if single_invocation_terminal
                 && index == prefix_end
                 && member.is_call()
@@ -398,11 +457,12 @@ fn prefix_dot_break_level_chain(
         .collect();
     let breaks: Vec<LevelBreak> = (0..member_segments.len())
         .map(|index| {
-            dot_level_break(if index <= prefix_end {
+            let mode = if index <= prefix_end {
                 prefix_fill_mode
             } else {
                 LevelBreakMode::Unified
-            })
+            };
+            dot_level_break(mode)
         })
         .collect();
     group(
@@ -713,45 +773,40 @@ fn visit_regular_dot_chain_after_primary_receiver(
         return group(base);
     }
 
-    let min_length = policy.selector_chain_min_receiver_length_before_break();
+    let segments: Vec<Doc> = std::iter::once(base)
+        .chain(members.iter().map(member_chain_segment))
+        .collect();
+    let breaks = vec![dot_level_break(LevelBreakMode::Unified); members.len()];
+    group(
+        break_level_with_indent(policy.continuation_indent_levels() as i16, segments, breaks)
+            .expect("valid primary receiver dot chain"),
+    )
+}
 
-    if let Some(first) = members.first()
-        && fits_fill_first_argument(first, &members[1..])
-    {
-        let first = members.remove(0);
-        let head = concat([base, soft_line(), member_doc(first)]);
-        let head = append_leading_array_accesses(head, &mut members);
-        if members.is_empty() {
-            return group(continuation_indent(head, policy));
-        }
-        return group(continuation_indent(
-            regular_dot_min_length_chain_doc(
-                head,
-                &members,
-                0,
-                min_length,
-                0,
-                LevelBreakMode::Unified,
-            ),
-            policy,
-        ));
+/// google-java-format `fillFirstArgument` for a simple call base followed by selectors.
+fn visit_regular_dot_chain_with_fill_first_argument_base(
+    simple_call: &SimpleCallBase,
+    mut members: Vec<ChainMember>,
+    policy: JavaFormatPolicy,
+    base_width: usize,
+) -> Doc {
+    let base = concat([
+        simple_call.name_doc.clone(),
+        simple_call.fill_first_argument_arguments.clone(),
+    ]);
+    let base = append_leading_array_accesses(base, &mut members);
+    if members.is_empty() {
+        return group(base);
     }
 
-    group(continuation_indent(
-        concat([
-            base,
-            soft_line(),
-            regular_dot_min_length_chain_doc(
-                text(""),
-                &members,
-                min_length,
-                min_length,
-                0,
-                LevelBreakMode::Unified,
-            ),
-        ]),
-        policy,
-    ))
+    regular_dot_min_length_chain(
+        base,
+        &members,
+        base_width,
+        policy.selector_chain_min_receiver_length_before_break(),
+        policy.continuation_indent_levels(),
+        LevelBreakMode::Unified,
+    )
 }
 
 /// google-java-format `visitRegularDot` fallback when no prefix/cohesive route applies.

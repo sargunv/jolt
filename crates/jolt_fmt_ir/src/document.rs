@@ -10,6 +10,9 @@ pub struct GroupId(pub u32);
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct BreakMarkerId(pub u32);
 
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct LevelBreakTag(pub u32);
+
 /// Opaque formatter document node.
 ///
 /// Build documents with the constructor functions in this crate rather than
@@ -56,6 +59,8 @@ pub(crate) enum DocKind {
     Line(Line),
     IfBreak(IfBreak),
     IndentIfBreak(IndentIfBreak),
+    IndentIfLevelBreak(IndentIfLevelBreak),
+    TrailingFlatWidth(TrailingFlatWidth),
     LineSuffix(Box<Doc>),
     LineSuffixBoundary,
     BestFitting(Vec<Doc>),
@@ -95,6 +100,7 @@ pub struct LevelBreak {
     /// spelling without duplicating segment content in flat layout.
     pub broken_prefix: Doc,
     pub indent_delta: i16,
+    pub tag: Option<LevelBreakTag>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -115,6 +121,12 @@ pub(crate) struct Text {
 pub(crate) struct LiteralText {
     pub(crate) text: Box<str>,
     pub(crate) line_widths: Box<[TextWidth]>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(crate) struct TrailingFlatWidth {
+    pub(crate) width: TextWidth,
+    pub(crate) contents: Box<Doc>,
 }
 
 impl LiteralText {
@@ -196,6 +208,14 @@ pub(crate) struct IndentIfBreak {
     pub(crate) negate: bool,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(crate) struct IndentIfLevelBreak {
+    pub(crate) tag: LevelBreakTag,
+    pub(crate) if_broken_levels: i16,
+    pub(crate) if_flat_levels: i16,
+    pub(crate) contents: Box<Doc>,
+}
+
 #[must_use]
 pub fn nil() -> Doc {
     make_doc(DocKind::Nil)
@@ -213,6 +233,14 @@ pub fn text_with_width(value: impl Into<Box<str>>, width: TextWidth) -> Doc {
     make_doc(DocKind::Text(Text {
         text: value.into(),
         width,
+    }))
+}
+
+#[must_use]
+pub fn with_trailing_flat_width(width: TextWidth, doc: Doc) -> Doc {
+    make_doc(DocKind::TrailingFlatWidth(TrailingFlatWidth {
+        width,
+        contents: Box::new(doc),
     }))
 }
 
@@ -476,6 +504,21 @@ pub fn indent_if_break(id: GroupId, doc: Doc) -> Doc {
 }
 
 #[must_use]
+pub fn indent_if_level_breaks(
+    tag: LevelBreakTag,
+    if_broken_levels: i16,
+    if_flat_levels: i16,
+    doc: Doc,
+) -> Doc {
+    make_doc(DocKind::IndentIfLevelBreak(IndentIfLevelBreak {
+        tag,
+        if_broken_levels,
+        if_flat_levels,
+        contents: Box::new(doc),
+    }))
+}
+
+#[must_use]
 pub fn line_suffix(doc: Doc) -> Doc {
     make_doc(DocKind::LineSuffix(Box::new(doc)))
 }
@@ -526,6 +569,24 @@ pub fn level_break_with_prefix(
         flat,
         broken_prefix,
         indent_delta,
+        tag: None,
+    }
+}
+
+#[must_use]
+pub fn tagged_level_break_with_prefix(
+    tag: LevelBreakTag,
+    mode: LevelBreakMode,
+    flat: FlatLine,
+    broken_prefix: Doc,
+    indent_delta: i16,
+) -> LevelBreak {
+    LevelBreak {
+        mode,
+        flat,
+        broken_prefix,
+        indent_delta,
+        tag: Some(tag),
     }
 }
 

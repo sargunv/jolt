@@ -10,21 +10,21 @@ parse blocked: 0
 missing-rule blocked: 0
 other blocked: 0
 formatted: 208
-exact matches: 113
-exact-match percentage: 54.32%
-mismatching formatted files: 95
-aggregate diff size: 786
+exact matches: 114
+exact-match percentage: 54.80%
+mismatching formatted files: 94
+aggregate diff size: 743
 largest per-file diff: B20701054.java (98)
 
 worst mismatches:
   B20701054.java: 98
-  B21954779.java: 57
-  M.java: 47
+  M.java: 42
   B20128760.java: 40
   LiteralReflow.java: 34
   B25787055.java: 25
   E.java: 24
-  B22873322.java: 19
+  B21954779.java: 21
+  B23749160.java: 21
   B26293162.java: 18
   B21331232.java: 17
 

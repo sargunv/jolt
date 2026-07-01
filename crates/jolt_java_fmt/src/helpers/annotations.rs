@@ -118,12 +118,9 @@ fn delimited_annotation_argument_list_one_per_line(items: Vec<Doc>, indent_level
         text("("),
         indent_by(
             indent_levels,
-            concat([
-                soft_line(),
-                join(concat([text(","), hard_line()]), items),
-                text(")"),
-            ]),
+            concat([soft_line(), join(concat([text(","), hard_line()]), items)]),
         ),
+        text(")"),
     ]))
 }
 
