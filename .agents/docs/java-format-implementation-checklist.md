@@ -172,7 +172,7 @@ Status legend:
 - `[x]` Annotation interface elements and default values.
 - `[x]` Annotation-interface nested type members.
 - `[x]` Type parameters, type arguments, wildcards, and annotated dimensions.
-- `[~]` Type-body empty statement removal.
+- `[x]` Type-body empty statement removal.
 
 ### 7. Statement Layer
 

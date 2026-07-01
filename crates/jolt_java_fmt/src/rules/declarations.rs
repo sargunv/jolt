@@ -5,17 +5,19 @@ use jolt_java_syntax::{
     AnnotationElementDeclaration, AnnotationInterfaceBodyMember, AnnotationInterfaceDeclaration,
     BlockStatement, ClassBody, ClassBodyMember, ClassDeclaration, ConstructorInvocation,
     EnumConstant, EnumDeclaration, ExtendsClause, FormalParameterList, ImplementsClause,
-    InterfaceBody, InterfaceBodyMember, InterfaceDeclaration, JavaSyntaxKind, MethodDeclaration,
+    InterfaceBody, InterfaceBodyMember, InterfaceDeclaration, JavaSyntaxToken, MethodDeclaration,
     ModifierList, PermitsClause, RecordBody, RecordDeclaration, Type, TypeDeclaration,
 };
 
 use crate::helpers::blocks::{BodyItem, braced_body, join_body_items};
 use crate::helpers::comments::{
-    format_leading_comments, format_token_sequence, format_trailing_comments,
+    format_dangling_comments, format_leading_comments, format_token_sequence,
+    format_trailing_comments,
 };
 use crate::helpers::declarations::{declaration_with_body, declaration_without_body};
 use crate::helpers::formatter_ignore::{
     formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
+    is_formatter_control_marker,
 };
 use crate::rules::annotations::format_annotation_element_value;
 use crate::rules::expressions::{format_argument_list, format_expression};
@@ -151,6 +153,8 @@ fn format_class_body(body: &ClassBody) -> Option<Doc> {
         &body.source_text(),
         body.text_range().start().get(),
         &members,
+        format_body_open_dangling_comments(body.open_brace()),
+        format_body_close_dangling_comments(body.close_brace()),
     )
 }
 
@@ -160,16 +164,14 @@ fn format_record_body(body: &RecordBody) -> Option<Doc> {
         &body.source_text(),
         body.text_range().start().get(),
         &members,
+        format_body_open_dangling_comments(body.open_brace()),
+        format_body_close_dangling_comments(body.close_brace()),
     )
 }
 
 fn format_interface_body(body: &InterfaceBody) -> Option<Doc> {
     let members = body.members().collect::<Vec<_>>();
-    let effective_members = members
-        .iter()
-        .filter(|member| member.kind() != JavaSyntaxKind::EmptyDeclaration)
-        .cloned()
-        .collect::<Vec<_>>();
+    let effective_members = printable_interface_members(&members);
     let member_ranges = effective_members
         .iter()
         .map(|member| interface_member_token_range(member, body.text_range().start().get()))
@@ -177,6 +179,7 @@ fn format_interface_body(body: &InterfaceBody) -> Option<Doc> {
     let ignored_ranges = formatter_ignore_ranges(&body.source_text());
     let ignored_runs = formatter_ignore_runs(&ignored_ranges, &member_ranges);
     let mut formatted = Vec::new();
+    formatted.extend(format_body_open_dangling_comments(body.open_brace()));
     let mut ignored_index = 0;
     let mut skip_index = 0;
 
@@ -215,6 +218,7 @@ fn format_interface_body(body: &InterfaceBody) -> Option<Doc> {
         ));
         ignored_index += 1;
     }
+    formatted.extend(format_body_close_dangling_comments(body.close_brace()));
 
     (!formatted.is_empty()).then(|| join_member_docs(formatted))
 }
@@ -222,10 +226,8 @@ fn format_interface_body(body: &InterfaceBody) -> Option<Doc> {
 fn format_annotation_interface_body(
     body: &jolt_java_syntax::AnnotationInterfaceBody,
 ) -> Option<Doc> {
-    let members = body
-        .members()
-        .filter(|member| member.kind() != JavaSyntaxKind::EmptyDeclaration)
-        .collect::<Vec<_>>();
+    let members = body.members().collect::<Vec<_>>();
+    let members = printable_annotation_members(&members);
     let member_ranges = members
         .iter()
         .map(|member| annotation_member_token_range(member, body.text_range().start().get()))
@@ -233,6 +235,7 @@ fn format_annotation_interface_body(
     let ignored_ranges = formatter_ignore_ranges(&body.source_text());
     let ignored_runs = formatter_ignore_runs(&ignored_ranges, &member_ranges);
     let mut formatted = Vec::new();
+    formatted.extend(format_body_open_dangling_comments(body.open_brace()));
     let mut ignored_index = 0;
     let mut skip_index = 0;
 
@@ -271,6 +274,7 @@ fn format_annotation_interface_body(
         ));
         ignored_index += 1;
     }
+    formatted.extend(format_body_close_dangling_comments(body.close_brace()));
 
     (!formatted.is_empty()).then(|| join_member_docs(formatted))
 }
@@ -279,6 +283,8 @@ fn format_class_member_body(
     source: &str,
     body_start: usize,
     members: &[ClassBodyMember],
+    open_dangling_comments: Option<FormattedMember>,
+    close_dangling_comments: Option<FormattedMember>,
 ) -> Option<Doc> {
     let effective_members = effective_members(members);
     let ignored_ranges = formatter_ignore_ranges(source);
@@ -288,6 +294,7 @@ fn format_class_member_body(
         .collect::<Vec<_>>();
     let ignored_runs = formatter_ignore_runs(&ignored_ranges, &member_ranges);
     let mut formatted = Vec::new();
+    formatted.extend(open_dangling_comments);
     let mut ignored_index = 0;
     let mut skip_index = 0;
 
@@ -326,6 +333,7 @@ fn format_class_member_body(
         ));
         ignored_index += 1;
     }
+    formatted.extend(close_dangling_comments);
 
     (!formatted.is_empty()).then(|| join_member_docs(formatted))
 }
@@ -414,8 +422,24 @@ fn format_enum_body_contents(
     body: &jolt_java_syntax::EnumBody,
 ) -> Option<Doc> {
     let members = body.members().collect::<Vec<_>>();
+    let enum_semicolons = body.semicolon_tokens().collect::<Vec<_>>();
     let effective_members = effective_members(&members);
-    if constants.is_empty() && effective_members.is_empty() {
+    let has_body_declarations = effective_members
+        .iter()
+        .any(|member| !matches!(member, ClassBodyMember::EmptyDeclaration(_)));
+    let open_comments = combine_comment_members(
+        combine_comment_members(
+            format_body_open_dangling_comments(body.open_brace()),
+            format_enum_body_semicolon_comments(&enum_semicolons),
+        ),
+        format_empty_enum_constant_list_comments(body.constants()),
+    );
+    let close_comments = format_body_close_dangling_comments(body.close_brace());
+    if constants.is_empty()
+        && effective_members.is_empty()
+        && open_comments.is_none()
+        && close_comments.is_none()
+    {
         return None;
     }
 
@@ -426,7 +450,7 @@ fn format_enum_body_contents(
                 .into_iter()
                 .enumerate()
                 .map(|(index, constant)| {
-                    let separator = if effective_members.is_empty() || index + 1 < constants_len {
+                    let separator = if !has_body_declarations || index + 1 < constants_len {
                         ","
                     } else {
                         ";"
@@ -442,6 +466,8 @@ fn format_enum_body_contents(
         &body.source_text(),
         body.text_range().start().get(),
         &members,
+        open_comments,
+        close_comments,
     );
 
     match (constants_doc, members_doc) {
@@ -449,7 +475,10 @@ fn format_enum_body_contents(
             Some(concat([constants, jolt_fmt_ir::empty_line(), members]))
         }
         (Some(constants), None) => Some(constants),
-        (None, Some(members)) => Some(concat([text(";"), jolt_fmt_ir::empty_line(), members])),
+        (None, Some(members)) if has_body_declarations => {
+            Some(concat([text(";"), jolt_fmt_ir::empty_line(), members]))
+        }
+        (None, Some(members)) => Some(members),
         (None, None) => None,
     }
 }
@@ -477,11 +506,111 @@ fn format_enum_constant(constant: &EnumConstant) -> Doc {
 }
 
 fn effective_members(members: &[ClassBodyMember]) -> Vec<ClassBodyMember> {
+    printable_class_members(members)
+}
+
+fn printable_class_members(members: &[ClassBodyMember]) -> Vec<ClassBodyMember> {
     members
         .iter()
-        .filter(|member| member.kind() != JavaSyntaxKind::EmptyDeclaration)
+        .filter(|member| is_printable_class_member(member))
         .cloned()
         .collect()
+}
+
+fn printable_interface_members(members: &[InterfaceBodyMember]) -> Vec<InterfaceBodyMember> {
+    members
+        .iter()
+        .filter(|member| is_printable_interface_member(member))
+        .cloned()
+        .collect()
+}
+
+fn printable_annotation_members(
+    members: &[AnnotationInterfaceBodyMember],
+) -> Vec<AnnotationInterfaceBodyMember> {
+    members
+        .iter()
+        .filter(|member| is_printable_annotation_member(member))
+        .cloned()
+        .collect()
+}
+
+fn is_printable_class_member(member: &ClassBodyMember) -> bool {
+    !matches!(member, ClassBodyMember::EmptyDeclaration(_))
+        || format_removed_empty_declaration(member.tokens().as_slice()).is_some()
+}
+
+fn is_printable_interface_member(member: &InterfaceBodyMember) -> bool {
+    !matches!(member, InterfaceBodyMember::EmptyDeclaration(_))
+        || format_removed_empty_declaration(member.tokens().as_slice()).is_some()
+}
+
+fn is_printable_annotation_member(member: &AnnotationInterfaceBodyMember) -> bool {
+    !matches!(member, AnnotationInterfaceBodyMember::EmptyDeclaration(_))
+        || format_removed_empty_declaration(member.tokens().as_slice()).is_some()
+}
+
+fn format_removed_empty_declaration(tokens: &[JavaSyntaxToken]) -> Option<Doc> {
+    let comments = tokens
+        .iter()
+        .flat_map(|token| {
+            let mut comments = token.leading_comments();
+            comments.extend(token.trailing_comments());
+            comments
+        })
+        .filter(|comment| !is_formatter_control_marker(comment.text()))
+        .collect::<Vec<_>>();
+
+    (!comments.is_empty()).then(|| format_dangling_comments(comments))
+}
+
+fn format_body_open_dangling_comments(open: Option<JavaSyntaxToken>) -> Option<FormattedMember> {
+    let comments = non_formatter_control_comments(open?.trailing_comments());
+    (!comments.is_empty()).then(|| FormattedMember::comment(format_dangling_comments(comments)))
+}
+
+fn format_body_close_dangling_comments(close: Option<JavaSyntaxToken>) -> Option<FormattedMember> {
+    let comments = non_formatter_control_comments(close?.leading_comments());
+    (!comments.is_empty()).then(|| FormattedMember::comment(format_dangling_comments(comments)))
+}
+
+fn non_formatter_control_comments(
+    comments: Vec<jolt_java_syntax::JavaComment>,
+) -> Vec<jolt_java_syntax::JavaComment> {
+    comments
+        .into_iter()
+        .filter(|comment| !is_formatter_control_marker(comment.text()))
+        .collect()
+}
+
+fn format_empty_enum_constant_list_comments(
+    constants: Option<jolt_java_syntax::EnumConstantList>,
+) -> Option<FormattedMember> {
+    let constants = constants?;
+    if constants.constants().next().is_some() {
+        return None;
+    }
+
+    format_removed_empty_declaration(constants.tokens().as_slice()).map(FormattedMember::comment)
+}
+
+fn format_enum_body_semicolon_comments(semicolons: &[JavaSyntaxToken]) -> Option<FormattedMember> {
+    format_removed_empty_declaration(semicolons).map(FormattedMember::comment)
+}
+
+fn combine_comment_members(
+    first: Option<FormattedMember>,
+    second: Option<FormattedMember>,
+) -> Option<FormattedMember> {
+    match (first, second) {
+        (Some(first), Some(second)) => Some(FormattedMember::comment(concat([
+            first.doc,
+            hard_line(),
+            second.doc,
+        ]))),
+        (Some(member), None) | (None, Some(member)) => Some(member),
+        (None, None) => None,
+    }
 }
 
 fn member_category(member: &ClassBodyMember) -> MemberCategory {
@@ -626,23 +755,46 @@ fn type_has_leading_comments(ty: &Type) -> bool {
 fn join_member_docs(members: Vec<FormattedMember>) -> Doc {
     let mut joined = Vec::new();
     let mut previous_category = None;
+    let mut previous_was_neutral = false;
 
     for member in members {
         if !joined.is_empty() {
-            if member.starts_after_blank_line
-                || previous_category != Some(MemberCategory::Field)
-                || member.category != MemberCategory::Field
-            {
-                joined.push(jolt_fmt_ir::empty_line());
-            } else {
-                joined.push(hard_line());
-            }
+            joined.push(member_separator(
+                previous_category,
+                member.category,
+                member.starts_after_blank_line,
+                previous_was_neutral,
+            ));
         }
-        previous_category = Some(member.category);
+        previous_was_neutral = member.category.is_none();
+        if let Some(category) = member.category {
+            previous_category = Some(category);
+        }
         joined.push(member.doc);
     }
 
     concat(joined)
+}
+
+fn member_separator(
+    previous_category: Option<MemberCategory>,
+    current_category: Option<MemberCategory>,
+    starts_after_blank_line: bool,
+    previous_was_neutral: bool,
+) -> Doc {
+    if previous_was_neutral {
+        return hard_line();
+    }
+    if starts_after_blank_line {
+        return jolt_fmt_ir::empty_line();
+    }
+
+    match (previous_category, current_category) {
+        (Some(MemberCategory::Field), Some(MemberCategory::Field))
+        | (None, Some(_))
+        | (_, None) => hard_line(),
+        _ => jolt_fmt_ir::empty_line(),
+    }
 }
 
 fn join_docs(docs: Vec<Doc>, separator: &Doc) -> Doc {
@@ -666,15 +818,23 @@ enum MemberCategory {
 }
 
 struct FormattedMember {
-    category: MemberCategory,
+    category: Option<MemberCategory>,
     starts_after_blank_line: bool,
     doc: Doc,
 }
 
 impl FormattedMember {
+    fn comment(doc: Doc) -> Self {
+        Self {
+            category: None,
+            starts_after_blank_line: false,
+            doc,
+        }
+    }
+
     fn ignored(doc: Doc, category: MemberCategory) -> Self {
         Self {
-            category,
+            category: Some(category),
             starts_after_blank_line: false,
             doc,
         }
@@ -691,27 +851,27 @@ impl FormattedMember {
         let starts_after_blank_line = member.starts_after_blank_line();
         match member {
             ClassBodyMember::FieldDeclaration(field) => Self {
-                category: MemberCategory::Field,
+                category: Some(MemberCategory::Field),
                 starts_after_blank_line,
                 doc: format_field_declaration(field),
             },
             ClassBodyMember::ConstructorDeclaration(constructor) => Self {
-                category: MemberCategory::Constructor,
+                category: Some(MemberCategory::Constructor),
                 starts_after_blank_line,
                 doc: format_constructor_declaration(constructor),
             },
             ClassBodyMember::CompactConstructorDeclaration(constructor) => Self {
-                category: MemberCategory::Constructor,
+                category: Some(MemberCategory::Constructor),
                 starts_after_blank_line,
                 doc: format_compact_constructor_declaration(constructor),
             },
             ClassBodyMember::MethodDeclaration(method) => Self {
-                category: MemberCategory::Method,
+                category: Some(MemberCategory::Method),
                 starts_after_blank_line,
                 doc: format_method_declaration(method),
             },
             ClassBodyMember::StaticInitializer(member) => Self {
-                category: MemberCategory::Initializer,
+                category: Some(MemberCategory::Initializer),
                 starts_after_blank_line,
                 doc: concat([
                     text("static "),
@@ -721,41 +881,42 @@ impl FormattedMember {
                 ]),
             },
             ClassBodyMember::InstanceInitializer(member) => Self {
-                category: MemberCategory::Initializer,
+                category: Some(MemberCategory::Initializer),
                 starts_after_blank_line,
                 doc: member
                     .body()
                     .map_or_else(jolt_fmt_ir::nil, |body| format_block(&body)),
             },
             ClassBodyMember::ClassDeclaration(class) => Self {
-                category: MemberCategory::Type,
+                category: Some(MemberCategory::Type),
                 starts_after_blank_line,
                 doc: format_class_declaration(class),
             },
             ClassBodyMember::RecordDeclaration(record) => Self {
-                category: MemberCategory::Type,
+                category: Some(MemberCategory::Type),
                 starts_after_blank_line,
                 doc: format_record_declaration(record),
             },
             ClassBodyMember::EnumDeclaration(enum_) => Self {
-                category: MemberCategory::Type,
+                category: Some(MemberCategory::Type),
                 starts_after_blank_line,
                 doc: format_enum_declaration(enum_),
             },
             ClassBodyMember::InterfaceDeclaration(interface) => Self {
-                category: MemberCategory::Type,
+                category: Some(MemberCategory::Type),
                 starts_after_blank_line,
                 doc: format_interface_declaration(interface),
             },
             ClassBodyMember::AnnotationInterfaceDeclaration(annotation) => Self {
-                category: MemberCategory::Type,
+                category: Some(MemberCategory::Type),
                 starts_after_blank_line,
                 doc: format_annotation_interface_declaration(annotation),
             },
             ClassBodyMember::EmptyDeclaration(_) => Self {
-                category: MemberCategory::Type,
+                category: None,
                 starts_after_blank_line,
-                doc: jolt_fmt_ir::nil(),
+                doc: format_removed_empty_declaration(member.tokens().as_slice())
+                    .unwrap_or_else(jolt_fmt_ir::nil),
             },
         }
     }
@@ -764,44 +925,45 @@ impl FormattedMember {
         let starts_after_blank_line = member.starts_after_blank_line();
         match member {
             InterfaceBodyMember::FieldDeclaration(field) => Self {
-                category: MemberCategory::Field,
+                category: Some(MemberCategory::Field),
                 starts_after_blank_line,
                 doc: format_field_declaration(field),
             },
             InterfaceBodyMember::MethodDeclaration(method) => Self {
-                category: MemberCategory::Method,
+                category: Some(MemberCategory::Method),
                 starts_after_blank_line,
                 doc: format_method_declaration(method),
             },
             InterfaceBodyMember::ClassDeclaration(class) => Self {
-                category: MemberCategory::Type,
+                category: Some(MemberCategory::Type),
                 starts_after_blank_line,
                 doc: format_class_declaration(class),
             },
             InterfaceBodyMember::RecordDeclaration(record) => Self {
-                category: MemberCategory::Type,
+                category: Some(MemberCategory::Type),
                 starts_after_blank_line,
                 doc: format_record_declaration(record),
             },
             InterfaceBodyMember::EnumDeclaration(enum_) => Self {
-                category: MemberCategory::Type,
+                category: Some(MemberCategory::Type),
                 starts_after_blank_line,
                 doc: format_enum_declaration(enum_),
             },
             InterfaceBodyMember::InterfaceDeclaration(interface) => Self {
-                category: MemberCategory::Type,
+                category: Some(MemberCategory::Type),
                 starts_after_blank_line,
                 doc: format_interface_declaration(interface),
             },
             InterfaceBodyMember::AnnotationInterfaceDeclaration(annotation) => Self {
-                category: MemberCategory::Type,
+                category: Some(MemberCategory::Type),
                 starts_after_blank_line,
                 doc: format_annotation_interface_declaration(annotation),
             },
             InterfaceBodyMember::EmptyDeclaration(_) => Self {
-                category: MemberCategory::Type,
+                category: None,
                 starts_after_blank_line,
-                doc: jolt_fmt_ir::nil(),
+                doc: format_removed_empty_declaration(member.tokens().as_slice())
+                    .unwrap_or_else(jolt_fmt_ir::nil),
             },
         }
     }
@@ -810,49 +972,50 @@ impl FormattedMember {
         let starts_after_blank_line = member.starts_after_blank_line();
         match member {
             AnnotationInterfaceBodyMember::FieldDeclaration(field) => Self {
-                category: MemberCategory::Field,
+                category: Some(MemberCategory::Field),
                 starts_after_blank_line,
                 doc: format_field_declaration(field),
             },
             AnnotationInterfaceBodyMember::MethodDeclaration(method) => Self {
-                category: MemberCategory::Method,
+                category: Some(MemberCategory::Method),
                 starts_after_blank_line,
                 doc: format_method_declaration(method),
             },
             AnnotationInterfaceBodyMember::AnnotationElementDeclaration(member) => Self {
-                category: MemberCategory::Method,
+                category: Some(MemberCategory::Method),
                 starts_after_blank_line,
                 doc: format_annotation_element_declaration(member),
             },
             AnnotationInterfaceBodyMember::ClassDeclaration(class) => Self {
-                category: MemberCategory::Type,
+                category: Some(MemberCategory::Type),
                 starts_after_blank_line,
                 doc: format_class_declaration(class),
             },
             AnnotationInterfaceBodyMember::RecordDeclaration(record) => Self {
-                category: MemberCategory::Type,
+                category: Some(MemberCategory::Type),
                 starts_after_blank_line,
                 doc: format_record_declaration(record),
             },
             AnnotationInterfaceBodyMember::EnumDeclaration(enum_) => Self {
-                category: MemberCategory::Type,
+                category: Some(MemberCategory::Type),
                 starts_after_blank_line,
                 doc: format_enum_declaration(enum_),
             },
             AnnotationInterfaceBodyMember::InterfaceDeclaration(interface) => Self {
-                category: MemberCategory::Type,
+                category: Some(MemberCategory::Type),
                 starts_after_blank_line,
                 doc: format_interface_declaration(interface),
             },
             AnnotationInterfaceBodyMember::AnnotationInterfaceDeclaration(annotation) => Self {
-                category: MemberCategory::Type,
+                category: Some(MemberCategory::Type),
                 starts_after_blank_line,
                 doc: format_annotation_interface_declaration(annotation),
             },
             AnnotationInterfaceBodyMember::EmptyDeclaration(_) => Self {
-                category: MemberCategory::Type,
+                category: None,
                 starts_after_blank_line,
-                doc: jolt_fmt_ir::nil(),
+                doc: format_removed_empty_declaration(member.tokens().as_slice())
+                    .unwrap_or_else(jolt_fmt_ir::nil),
             },
         }
     }

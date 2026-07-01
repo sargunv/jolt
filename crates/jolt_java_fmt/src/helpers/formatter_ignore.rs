@@ -186,3 +186,7 @@ fn is_formatter_off_marker(comment: &str) -> bool {
 fn is_formatter_on_marker(comment: &str) -> bool {
     comment.contains("@formatter:on")
 }
+
+pub(crate) fn is_formatter_control_marker(comment: &str) -> bool {
+    is_formatter_off_marker(comment) || is_formatter_on_marker(comment)
+}

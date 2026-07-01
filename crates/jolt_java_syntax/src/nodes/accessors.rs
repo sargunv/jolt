@@ -558,8 +558,23 @@ impl RecordComponent {
 }
 
 impl ClassBody {
+    #[must_use]
+    pub fn open_brace(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LBrace)
+    }
+
+    #[must_use]
+    pub fn close_brace(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RBrace)
+    }
+
     pub fn members(&self) -> impl Iterator<Item = ClassBodyMember> + '_ {
-        children::<ClassBodyDeclaration>(&self.syntax).filter_map(|node| node.member())
+        self.syntax.children().filter_map(|syntax| {
+            if let Some(declaration) = ClassBodyDeclaration::cast(syntax.clone()) {
+                return declaration.member();
+            }
+            ClassBodyMember::cast(syntax)
+        })
     }
 }
 
@@ -571,8 +586,23 @@ impl ClassBodyMember {
 }
 
 impl RecordBody {
+    #[must_use]
+    pub fn open_brace(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LBrace)
+    }
+
+    #[must_use]
+    pub fn close_brace(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RBrace)
+    }
+
     pub fn members(&self) -> impl Iterator<Item = ClassBodyMember> + '_ {
-        children::<ClassBodyDeclaration>(&self.syntax).filter_map(|node| node.member())
+        self.syntax.children().filter_map(|syntax| {
+            if let Some(declaration) = ClassBodyDeclaration::cast(syntax.clone()) {
+                return declaration.member();
+            }
+            ClassBodyMember::cast(syntax)
+        })
     }
 }
 
@@ -584,6 +614,16 @@ impl ClassBodyDeclaration {
 }
 
 impl InterfaceBody {
+    #[must_use]
+    pub fn open_brace(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LBrace)
+    }
+
+    #[must_use]
+    pub fn close_brace(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RBrace)
+    }
+
     pub fn members(&self) -> impl Iterator<Item = InterfaceBodyMember> + '_ {
         children_family(&self.syntax)
     }
@@ -597,6 +637,16 @@ impl InterfaceBodyMember {
 }
 
 impl AnnotationInterfaceBody {
+    #[must_use]
+    pub fn open_brace(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LBrace)
+    }
+
+    #[must_use]
+    pub fn close_brace(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RBrace)
+    }
+
     pub fn members(&self) -> impl Iterator<Item = AnnotationInterfaceBodyMember> {
         child::<AnnotationElementList>(&self.syntax)
             .map(|list| list.members().collect::<Vec<_>>())
@@ -658,12 +708,31 @@ impl DefaultValue {
 
 impl EnumBody {
     #[must_use]
+    pub fn open_brace(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LBrace)
+    }
+
+    #[must_use]
+    pub fn close_brace(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RBrace)
+    }
+
+    #[must_use]
     pub fn constants(&self) -> Option<EnumConstantList> {
         child(&self.syntax)
     }
 
     pub fn members(&self) -> impl Iterator<Item = ClassBodyMember> + '_ {
-        children::<ClassBodyDeclaration>(&self.syntax).filter_map(|node| node.member())
+        self.syntax.children().filter_map(|syntax| {
+            if let Some(declaration) = ClassBodyDeclaration::cast(syntax.clone()) {
+                return declaration.member();
+            }
+            ClassBodyMember::cast(syntax)
+        })
+    }
+
+    pub fn semicolon_tokens(&self) -> impl Iterator<Item = JavaSyntaxToken> + '_ {
+        children_tokens_matching(&self.syntax, |kind| kind == JavaSyntaxKind::Semicolon)
     }
 }
 

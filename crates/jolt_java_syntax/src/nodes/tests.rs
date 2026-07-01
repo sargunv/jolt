@@ -1065,6 +1065,7 @@ fn declaration_accessors_expose_formatter_facing_structure() {
         r#"
                 @Deprecated
                 public class Accessors<T> extends Base implements Runnable permits Other {
+                    ;
                     static {}
                     {}
                     int first = 1, second[];
@@ -1124,6 +1125,7 @@ fn declaration_accessors_expose_formatter_facing_structure() {
     assert_eq!(
         member_kinds,
         [
+            JavaSyntaxKind::EmptyDeclaration,
             JavaSyntaxKind::StaticInitializer,
             JavaSyntaxKind::InstanceInitializer,
             JavaSyntaxKind::FieldDeclaration,
