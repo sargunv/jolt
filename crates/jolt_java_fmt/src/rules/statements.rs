@@ -1,9 +1,10 @@
 use jolt_fmt_ir::{Doc, concat, hard_line, literal_text, text};
 use jolt_java_syntax::{
-    AssertStatement, BasicForStatement, Block, BlockItem, DoStatement, EnhancedForStatement,
-    Expression, ExpressionStatement, ForInitializer, ForStatement, ForUpdate, IfStatement,
-    LabeledStatement, ReturnStatement, Statement, StatementExpressionList, SynchronizedStatement,
-    ThrowStatement, WhileStatement, YieldStatement,
+    AssertStatement, BasicForStatement, Block, BlockItem, CatchClause, DoStatement,
+    EnhancedForStatement, Expression, ExpressionStatement, FinallyClause, ForInitializer,
+    ForStatement, ForUpdate, IfStatement, LabeledStatement, Resource, ReturnStatement, Statement,
+    StatementExpressionList, SynchronizedStatement, ThrowStatement, TryStatement,
+    TryWithResourcesStatement, WhileStatement, YieldStatement,
 };
 
 pub(crate) fn format_block(block: &Block) -> Doc {
@@ -74,7 +75,11 @@ fn format_statement(statement: &Statement) -> Doc {
         Statement::ReturnStatement(statement) => format_return_statement(statement),
         Statement::ThrowStatement(statement) => format_throw_statement(statement),
         Statement::SynchronizedStatement(statement) => format_synchronized_statement(statement),
-        _ => source_doc(&statement.source_text()),
+        Statement::TryStatement(statement) => format_try_statement(statement),
+        Statement::TryWithResourcesStatement(statement) => {
+            format_try_with_resources_statement(statement)
+        }
+        Statement::SwitchStatement(statement) => source_doc(&statement.source_text()),
     }
 }
 
@@ -307,10 +312,120 @@ fn format_synchronized_statement(statement: &SynchronizedStatement) -> Doc {
     ])
 }
 
+fn format_try_statement(statement: &TryStatement) -> Doc {
+    if let Some(resources_statement) = statement.resources_statement() {
+        return format_try_with_resources_statement(&resources_statement);
+    }
+
+    concat([
+        text("try "),
+        statement
+            .body()
+            .map_or_else(empty_block_doc, |body| format_block(&body)),
+        format_catch_clauses(statement.catch_clauses()),
+        statement
+            .finally_clause()
+            .map_or_else(jolt_fmt_ir::nil, |finally_clause| {
+                format_finally_clause(&finally_clause)
+            }),
+    ])
+}
+
+fn format_try_with_resources_statement(statement: &TryWithResourcesStatement) -> Doc {
+    concat([
+        text("try ("),
+        format_resource_specification(statement),
+        text(") "),
+        statement
+            .body()
+            .map_or_else(empty_block_doc, |body| format_block(&body)),
+        format_catch_clauses(statement.catch_clauses()),
+        statement
+            .finally_clause()
+            .map_or_else(jolt_fmt_ir::nil, |finally_clause| {
+                format_finally_clause(&finally_clause)
+            }),
+    ])
+}
+
+fn format_resource_specification(statement: &TryWithResourcesStatement) -> Doc {
+    let resources = statement
+        .resources()
+        .and_then(|specification| specification.list())
+        .map(|list| {
+            list.resources()
+                .map(|resource| format_resource(&resource))
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+
+    if resources.is_empty() {
+        return jolt_fmt_ir::nil();
+    }
+
+    concat([
+        jolt_fmt_ir::indent(concat([hard_line(), join_resource_lines(resources)])),
+        hard_line(),
+    ])
+}
+
+fn format_resource(resource: &Resource) -> Doc {
+    if let Some(declaration) = resource.declaration() {
+        return text(declaration.source_text().trim().to_owned());
+    }
+    if let Some(access) = resource.variable_access() {
+        return text(
+            access
+                .expression()
+                .map_or_else(String::new, |expression| expression_text(&expression)),
+        );
+    }
+
+    source_doc(&resource.source_text())
+}
+
+fn format_catch_clauses<'a>(clauses: impl Iterator<Item = CatchClause> + 'a) -> Doc {
+    concat(clauses.map(|clause| format_catch_clause(&clause)))
+}
+
+fn format_catch_clause(clause: &CatchClause) -> Doc {
+    concat([
+        text(" catch ("),
+        text(clause.parameter().map_or_else(String::new, |parameter| {
+            parameter.source_text().trim().to_owned()
+        })),
+        text(") "),
+        clause
+            .body()
+            .map_or_else(empty_block_doc, |body| format_block(&body)),
+    ])
+}
+
+fn format_finally_clause(clause: &FinallyClause) -> Doc {
+    concat([
+        text(" finally "),
+        clause
+            .body()
+            .map_or_else(empty_block_doc, |body| format_block(&body)),
+    ])
+}
+
+fn join_resource_lines(docs: Vec<Doc>) -> Doc {
+    let mut joined = Vec::new();
+    for (index, doc) in docs.into_iter().enumerate() {
+        if index > 0 {
+            joined.push(text(";"));
+            joined.push(hard_line());
+        }
+        joined.push(doc);
+    }
+    concat(joined)
+}
+
 fn statement_body_as_block(statement: Option<Statement>) -> Doc {
     match statement {
         Some(Statement::Block(block)) => format_block(&block),
-        Some(Statement::EmptyStatement(_)) | None => concat([text("{"), hard_line(), text("}")]),
+        Some(Statement::EmptyStatement(_)) | None => empty_block_doc(),
         Some(statement) => concat([
             text("{"),
             jolt_fmt_ir::indent(concat([hard_line(), format_statement(&statement)])),
@@ -333,6 +448,10 @@ fn join_hard_lines(docs: Vec<Doc>) -> Doc {
 
 fn source_doc(source: &str) -> Doc {
     literal_text(source.trim().to_owned())
+}
+
+fn empty_block_doc() -> Doc {
+    concat([text("{"), hard_line(), text("}")])
 }
 
 fn expression_text(expression: &Expression) -> String {

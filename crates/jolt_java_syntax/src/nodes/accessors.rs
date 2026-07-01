@@ -3,22 +3,24 @@ use super::{
     AnnotationInterfaceBodyMember, AnnotationInterfaceDeclaration, AnyJavaNode, ArgumentList,
     ArrayCreationExpression, ArrayDimensions, ArrayInitializer, ArrayType, AssertStatement,
     AssignmentExpression, BasicForStatement, BinaryExpression, Block, BlockItem, BlockStatement,
-    BreakStatement, CastExpression, ClassBody, ClassBodyDeclaration, ClassBodyMember,
-    ClassDeclaration, CompilationUnit, ConditionalExpression, ConstructorBody,
-    ConstructorDeclaration, ContinueStatement, DimExpression, DoStatement, EnhancedForStatement,
-    EnumBody, EnumConstant, EnumConstantList, EnumDeclaration, Expression, ExpressionStatement,
-    ExtendsClause, FieldDeclaration, ForInitializer, ForStatement, ForUpdate, FormalParameter,
-    FormalParameterList, IfStatement, ImplementsClause, ImportDeclaration, InstanceInitializer,
-    InterfaceBody, InterfaceBodyMember, InterfaceDeclaration, JavaSyntaxKind, JavaSyntaxToken,
-    LabeledStatement, LambdaExpression, LambdaParameter, LambdaParameterList,
-    LocalVariableDeclaration, MethodDeclaration, MethodInvocationExpression, ModifierList,
-    ModuleDeclaration, ModuleDirective, ModuleDirectiveNode, NameSyntax, ObjectCreationExpression,
-    PackageDeclaration, ParenthesizedExpression, PermitsClause, PostfixExpression,
-    ProvidesDirective, RecordBody, RecordComponent, RecordComponentList, RecordDeclaration,
-    RequiresDirective, ReturnStatement, Statement, StatementExpressionList, StaticInitializer,
-    SwitchBlock, SwitchBlockStatementGroup, SwitchExpression, SwitchRule, SwitchStatement,
-    SynchronizedStatement, ThrowStatement, ThrowsClause, Type, TypeDeclaration, TypeParameter,
-    TypeParameterList, UnaryExpression, VariableDeclarator, VariableDeclaratorList,
+    BreakStatement, CastExpression, CatchClause, CatchParameter, CatchTypeList, ClassBody,
+    ClassBodyDeclaration, ClassBodyMember, ClassDeclaration, CompilationUnit,
+    ConditionalExpression, ConstructorBody, ConstructorDeclaration, ContinueStatement,
+    DimExpression, DoStatement, EnhancedForStatement, EnumBody, EnumConstant, EnumConstantList,
+    EnumDeclaration, Expression, ExpressionStatement, ExtendsClause, FieldDeclaration,
+    FinallyClause, ForInitializer, ForStatement, ForUpdate, FormalParameter, FormalParameterList,
+    IfStatement, ImplementsClause, ImportDeclaration, InstanceInitializer, InterfaceBody,
+    InterfaceBodyMember, InterfaceDeclaration, JavaSyntaxKind, JavaSyntaxToken, LabeledStatement,
+    LambdaExpression, LambdaParameter, LambdaParameterList, LocalVariableDeclaration,
+    MethodDeclaration, MethodInvocationExpression, ModifierList, ModuleDeclaration,
+    ModuleDirective, ModuleDirectiveNode, NameSyntax, ObjectCreationExpression, PackageDeclaration,
+    ParenthesizedExpression, PermitsClause, PostfixExpression, ProvidesDirective, RecordBody,
+    RecordComponent, RecordComponentList, RecordDeclaration, RequiresDirective, Resource,
+    ResourceList, ResourceSpecification, ReturnStatement, Statement, StatementExpressionList,
+    StaticInitializer, SwitchBlock, SwitchBlockStatementGroup, SwitchExpression, SwitchRule,
+    SwitchStatement, SynchronizedStatement, ThrowStatement, ThrowsClause, TryStatement,
+    TryWithResourcesStatement, Type, TypeDeclaration, TypeParameter, TypeParameterList,
+    UnaryExpression, VariableAccess, VariableDeclarator, VariableDeclaratorList,
     VariableInitializer, VariableInitializerValue, WhileStatement, YieldStatement, child,
     child_family, child_token, child_token_in, children, children_family, children_tokens_matching,
     nth_child_family, nth_child_token,
@@ -862,6 +864,114 @@ impl SynchronizedStatement {
     #[must_use]
     pub fn body(&self) -> Option<Block> {
         child(&self.syntax)
+    }
+}
+
+impl TryStatement {
+    #[must_use]
+    pub fn resources_statement(&self) -> Option<TryWithResourcesStatement> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn body(&self) -> Option<Block> {
+        child(&self.syntax)
+    }
+
+    pub fn catch_clauses(&self) -> impl Iterator<Item = CatchClause> + '_ {
+        children(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn finally_clause(&self) -> Option<FinallyClause> {
+        child(&self.syntax)
+    }
+}
+
+impl TryWithResourcesStatement {
+    #[must_use]
+    pub fn resources(&self) -> Option<ResourceSpecification> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn body(&self) -> Option<Block> {
+        child(&self.syntax)
+    }
+
+    pub fn catch_clauses(&self) -> impl Iterator<Item = CatchClause> + '_ {
+        children(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn finally_clause(&self) -> Option<FinallyClause> {
+        child(&self.syntax)
+    }
+}
+
+impl CatchClause {
+    #[must_use]
+    pub fn parameter(&self) -> Option<CatchParameter> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn body(&self) -> Option<Block> {
+        child(&self.syntax)
+    }
+}
+
+impl CatchParameter {
+    #[must_use]
+    pub fn types(&self) -> Option<CatchTypeList> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn name(&self) -> Option<JavaSyntaxToken> {
+        child_token_in(
+            &self.syntax,
+            &[JavaSyntaxKind::Identifier, JavaSyntaxKind::UnderscoreKw],
+        )
+    }
+}
+
+impl FinallyClause {
+    #[must_use]
+    pub fn body(&self) -> Option<Block> {
+        child(&self.syntax)
+    }
+}
+
+impl ResourceSpecification {
+    #[must_use]
+    pub fn list(&self) -> Option<ResourceList> {
+        child(&self.syntax)
+    }
+}
+
+impl ResourceList {
+    pub fn resources(&self) -> impl Iterator<Item = Resource> + '_ {
+        children(&self.syntax)
+    }
+}
+
+impl Resource {
+    #[must_use]
+    pub fn declaration(&self) -> Option<LocalVariableDeclaration> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn variable_access(&self) -> Option<VariableAccess> {
+        child(&self.syntax)
+    }
+}
+
+impl VariableAccess {
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression> {
+        child_family(&self.syntax)
     }
 }
 

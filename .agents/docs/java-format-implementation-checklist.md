@@ -69,7 +69,7 @@ Status legend:
 - `[~]` Statement body kind.
 - `[ ]` Switch labels/rules/guards.
 - `[x]` For init/condition/update.
-- `[ ]` Try resources and optional trailing semicolon.
+- `[x]` Try resources and optional trailing semicolon.
 - `[ ]` Expression parent roles.
 - `[ ]` Member-chain linearization.
 - `[ ]` Lambda parameter classification.
@@ -166,7 +166,7 @@ Status legend:
 - `[~]` Loops and broken `for` headers.
 - `[ ]` Switch labels/rules/guards.
 - `[~]` `return`/`throw`/`yield`.
-- `[ ]` Try/catch/finally/resources.
+- `[x]` Try/catch/finally/resources.
 - `[x]` `assert`/`break`/`continue`.
 
 ### 8. Expression Layer
