@@ -23,7 +23,9 @@ use crate::rules::annotations::format_annotation_element_value;
 use crate::rules::expressions::{format_argument_list, format_expression};
 use crate::rules::modifiers::{format_modifier_prefix, format_modifier_prefix_from_parts};
 use crate::rules::names::format_name;
-use crate::rules::statements::{format_block, format_block_body, format_block_item};
+use crate::rules::statements::{
+    format_block, format_block_body, format_block_statement_item, format_statement_semicolon,
+};
 use crate::rules::types::{
     format_array_dimensions, format_type, format_type_argument_list, format_type_parameter_list,
     format_type_without_leading_comments,
@@ -1276,9 +1278,7 @@ fn format_constructor_body_element(element: &ConstructorBodyElement) -> Option<B
             format_constructor_invocation(invocation),
             invocation.starts_after_blank_line(),
         )),
-        ConstructorBodyElement::BlockStatement(statement) => {
-            statement.item().and_then(format_block_item)
-        }
+        ConstructorBodyElement::BlockStatement(statement) => format_block_statement_item(statement),
     }
 }
 
@@ -1295,7 +1295,7 @@ fn format_constructor_invocation(invocation: &ConstructorInvocation) -> Doc {
             .target()
             .map_or_else(jolt_fmt_ir::nil, |target| text(target.text().to_owned())),
         format_argument_list(invocation.arguments()),
-        text(";"),
+        format_statement_semicolon(invocation.semicolon()),
     ])
 }
 

@@ -212,7 +212,7 @@ Status legend:
 ### 9. Comments And Ignore Hardening
 
 - `[~]` Leading/trailing/dangling comment classification.
-- `[ ]` Comment placement for moved constructs.
+- `[~]` Comment placement for moved constructs.
 - `[x]` Star-block comment normalization.
 - `[x]` `@formatter:off/on` raw range preservation across top-level, module
   directive, type-member, constructor-body, and block-statement sequences.

@@ -958,6 +958,11 @@ impl ConstructorInvocation {
     pub fn arguments(&self) -> Option<ArgumentList> {
         child(&self.syntax)
     }
+
+    #[must_use]
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Semicolon)
+    }
 }
 
 impl ThrowsClause {
@@ -2067,6 +2072,11 @@ impl ExpressionStatement {
     pub fn expression(&self) -> Option<Expression> {
         child_family(&self.syntax)
     }
+
+    #[must_use]
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Semicolon)
+    }
 }
 
 impl LabeledStatement {
@@ -2096,6 +2106,11 @@ impl AssertStatement {
     pub fn detail(&self) -> Option<Expression> {
         nth_child_family(&self.syntax, 1)
     }
+
+    #[must_use]
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Semicolon)
+    }
 }
 
 impl BreakStatement {
@@ -2107,6 +2122,11 @@ impl BreakStatement {
     #[must_use]
     pub fn label(&self) -> Option<JavaSyntaxToken> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
+    }
+
+    #[must_use]
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 }
 
@@ -2120,6 +2140,11 @@ impl ContinueStatement {
     pub fn label(&self) -> Option<JavaSyntaxToken> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
     }
+
+    #[must_use]
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Semicolon)
+    }
 }
 
 impl ReturnStatement {
@@ -2131,6 +2156,11 @@ impl ReturnStatement {
     #[must_use]
     pub fn expression(&self) -> Option<Expression> {
         child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 }
 
@@ -2144,6 +2174,11 @@ impl ThrowStatement {
     pub fn expression(&self) -> Option<Expression> {
         child_family(&self.syntax)
     }
+
+    #[must_use]
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Semicolon)
+    }
 }
 
 impl YieldStatement {
@@ -2156,6 +2191,11 @@ impl YieldStatement {
     #[must_use]
     pub fn expression(&self) -> Option<Expression> {
         child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 }
 
@@ -2205,6 +2245,11 @@ impl DoStatement {
     #[must_use]
     pub fn condition(&self) -> Option<Expression> {
         child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 }
 
@@ -2621,6 +2666,10 @@ impl SwitchBlock {
 }
 
 impl SwitchBlockStatementGroup {
+    pub fn block_statements(&self) -> impl Iterator<Item = BlockStatement> + '_ {
+        children(&self.syntax)
+    }
+
     pub fn labels(&self) -> impl Iterator<Item = SwitchLabel> + '_ {
         children(&self.syntax)
     }
@@ -3000,6 +3049,11 @@ impl BlockStatement {
     #[must_use]
     pub fn statement(&self) -> Option<Statement> {
         child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 }
 

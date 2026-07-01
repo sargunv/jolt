@@ -21,6 +21,16 @@ fn descendants<N: JavaNode>(syntax: &CompilationUnit) -> Vec<N> {
     syntax.syntax.descendants().filter_map(N::cast).collect()
 }
 
+fn semicolon_trailing_comment(semicolon: Option<JavaSyntaxToken>) -> String {
+    semicolon
+        .expect("semicolon")
+        .trailing_comments()
+        .first()
+        .expect("semicolon trailing comment")
+        .text()
+        .to_owned()
+}
+
 #[test]
 fn every_java_node_kind_has_exactly_one_wrapper() {
     let expected = (u16::from(JavaSyntaxKind::ErrorNode)
@@ -464,6 +474,88 @@ fn block_accessors_unwrap_parser_block_statement_items() {
             JavaSyntaxKind::ExpressionStatement,
             JavaSyntaxKind::IfStatement,
         ]
+    );
+}
+
+#[test]
+fn statement_accessors_expose_terminal_semicolons() {
+    let syntax = parse_clean(
+        r"
+                class Accessors extends Base {
+                    Accessors() {
+                        super(); // constructor
+                        int local = 0; // local
+                        local++; // expression
+                        assert local > 0; // assert
+                        if (local == 0) return; // return
+                        if (local == 1) throw problem; // throw
+                        label: while (ready) {
+                            break label; // break
+                            continue label; // continue
+                        }
+                        do local++; while (ready); // do
+                    }
+
+                    int value(int input) {
+                        return switch (input) {
+                            default -> {
+                                yield input; // yield
+                            }
+                        };
+                    }
+                }
+            ",
+    );
+
+    let constructor_invocation = descendants::<ConstructorInvocation>(&syntax)
+        .into_iter()
+        .next()
+        .expect("constructor invocation");
+    assert_eq!(
+        semicolon_trailing_comment(constructor_invocation.semicolon()),
+        "// constructor"
+    );
+
+    let local_statement = descendants::<BlockStatement>(&syntax)
+        .into_iter()
+        .find(|statement| statement.source_text().contains("int local"))
+        .expect("local variable block statement");
+    assert_eq!(
+        semicolon_trailing_comment(local_statement.semicolon()),
+        "// local"
+    );
+
+    assert_eq!(
+        semicolon_trailing_comment(descendants::<ExpressionStatement>(&syntax)[0].semicolon()),
+        "// expression"
+    );
+    assert_eq!(
+        semicolon_trailing_comment(descendants::<AssertStatement>(&syntax)[0].semicolon()),
+        "// assert"
+    );
+    assert_eq!(
+        semicolon_trailing_comment(descendants::<ReturnStatement>(&syntax)[0].semicolon()),
+        "// return"
+    );
+    assert_eq!(
+        semicolon_trailing_comment(descendants::<ThrowStatement>(&syntax)[0].semicolon()),
+        "// throw"
+    );
+    assert_eq!(
+        semicolon_trailing_comment(descendants::<BreakStatement>(&syntax)[0].semicolon()),
+        "// break"
+    );
+    assert_eq!(
+        semicolon_trailing_comment(descendants::<ContinueStatement>(&syntax)[0].semicolon()),
+        "// continue"
+    );
+    assert_eq!(
+        semicolon_trailing_comment(descendants::<DoStatement>(&syntax)[0].semicolon()),
+        "// do"
+    );
+    assert_eq!(
+        semicolon_trailing_comment(descendants::<YieldStatement>(&syntax)[0].semicolon()),
+        "// yield"
     );
 }
 

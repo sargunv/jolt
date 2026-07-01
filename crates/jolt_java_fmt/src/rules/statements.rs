@@ -3,11 +3,11 @@ use jolt_java_syntax::{
     AssertStatement, BasicForStatement, Block, BlockItem, BlockStatement, CatchClause,
     CatchParameter, CatchTypeList, DoStatement, EnhancedForStatement, Expression,
     ExpressionStatement, FinallyClause, ForInitializer, ForStatement, ForUpdate, IfStatement,
-    JavaSyntaxToken, LabeledStatement, Resource, ReturnStatement, Statement, StatementBody,
-    StatementExpressionEntry, StatementExpressionList, SwitchBlock, SwitchBlockEntry,
-    SwitchBlockStatementGroup, SwitchLabel, SwitchLabelCaseItem, SwitchRule, SwitchStatement,
-    SynchronizedStatement, ThrowStatement, TryStatement, TryWithResourcesStatement, Type,
-    WhileStatement, YieldStatement,
+    JavaComment, JavaSyntaxToken, LabeledStatement, Resource, ReturnStatement, Statement,
+    StatementBody, StatementExpressionEntry, StatementExpressionList, SwitchBlock,
+    SwitchBlockEntry, SwitchBlockStatementGroup, SwitchLabel, SwitchLabelCaseItem, SwitchRule,
+    SwitchStatement, SynchronizedStatement, ThrowStatement, TryStatement,
+    TryWithResourcesStatement, Type, WhileStatement, YieldStatement,
 };
 use std::ops::Range;
 
@@ -21,6 +21,7 @@ use crate::helpers::comments::{
 };
 use crate::helpers::formatter_ignore::{
     FormatterIgnoreRange, formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
+    is_formatter_control_marker,
 };
 use crate::helpers::lists::{TrailingSeparator, comma_list, semicolon_list};
 use crate::rules::annotations::format_annotation;
@@ -96,7 +97,7 @@ fn format_block_statement_items(
             continue;
         }
 
-        if let Some(mut item) = statement.item().and_then(format_block_item) {
+        if let Some(mut item) = format_block_statement_item(statement) {
             if skip_index > 0 && ignored_runs[skip_index - 1].skip_end == statement_index {
                 item = item.without_blank_line_before();
             }
@@ -113,13 +114,18 @@ fn format_block_statement_items(
     items
 }
 
-pub(crate) fn format_block_item(item: BlockItem) -> Option<BodyItem> {
-    let starts_after_blank_line = item.starts_after_blank_line();
+pub(crate) fn format_block_statement_item(statement: &BlockStatement) -> Option<BodyItem> {
+    let starts_after_blank_line = statement.starts_after_blank_line();
+    let doc = format_block_item_doc(statement.item()?, statement.semicolon())?;
+    Some(BodyItem::new(doc, starts_after_blank_line))
+}
+
+fn format_block_item_doc(item: BlockItem, semicolon: Option<JavaSyntaxToken>) -> Option<Doc> {
     let doc = match item {
-        BlockItem::EmptyStatement(_) => None,
+        BlockItem::EmptyStatement(statement) => format_removed_empty_statement(&statement),
         BlockItem::LocalVariableDeclaration(declaration) => Some(concat([
             format_local_variable_declaration(&declaration),
-            text(";"),
+            format_statement_semicolon(semicolon),
         ])),
         BlockItem::LocalClassOrInterfaceDeclaration(declaration) => declaration
             .declaration()
@@ -144,7 +150,21 @@ pub(crate) fn format_block_item(item: BlockItem) -> Option<BodyItem> {
             Some(format_statement(&statement.into()))
         }
     }?;
-    Some(BodyItem::new(doc, starts_after_blank_line))
+    Some(doc)
+}
+
+fn format_removed_empty_statement(statement: &jolt_java_syntax::EmptyStatement) -> Option<Doc> {
+    let mut comments = Vec::new();
+    for token in statement.tokens() {
+        comments.extend(token.leading_comments());
+        comments.extend(token.trailing_comments());
+    }
+
+    let comments = comments
+        .into_iter()
+        .filter(|comment| !is_formatter_control_marker(comment.text()))
+        .collect::<Vec<JavaComment>>();
+    (!comments.is_empty()).then(|| format_dangling_comments(comments))
 }
 
 fn block_formatter_ignore_ranges(block: &Block) -> Vec<FormatterIgnoreRange> {
@@ -176,13 +196,19 @@ fn format_statement(statement: &Statement) -> Doc {
         Statement::WhileStatement(statement) => format_while_statement(statement),
         Statement::DoStatement(statement) => format_do_statement(statement),
         Statement::ForStatement(statement) => format_for_statement(statement),
-        Statement::BreakStatement(statement) => {
-            format_jump_statement(statement.keyword(), "break", statement.label())
-        }
+        Statement::BreakStatement(statement) => format_jump_statement(
+            statement.keyword(),
+            "break",
+            statement.label(),
+            statement.semicolon(),
+        ),
         Statement::YieldStatement(statement) => format_yield_statement(statement),
-        Statement::ContinueStatement(statement) => {
-            format_jump_statement(statement.keyword(), "continue", statement.label())
-        }
+        Statement::ContinueStatement(statement) => format_jump_statement(
+            statement.keyword(),
+            "continue",
+            statement.label(),
+            statement.semicolon(),
+        ),
         Statement::ReturnStatement(statement) => format_return_statement(statement),
         Statement::ThrowStatement(statement) => format_throw_statement(statement),
         Statement::SynchronizedStatement(statement) => format_synchronized_statement(statement),
@@ -215,7 +241,7 @@ fn format_expression_statement(statement: &ExpressionStatement) -> Doc {
             .map_or_else(jolt_fmt_ir::nil, |expression| {
                 format_expression(&expression)
             }),
-        text(";"),
+        format_statement_semicolon(statement.semicolon()),
     ])
 }
 
@@ -259,7 +285,7 @@ fn format_assert_statement(statement: &AssertStatement) -> Doc {
         statement.detail().map_or_else(jolt_fmt_ir::nil, |detail| {
             concat([text(" : "), format_expression(&detail)])
         }),
-        text(";"),
+        format_statement_semicolon(statement.semicolon()),
     ])
 }
 
@@ -287,7 +313,8 @@ fn format_do_statement(statement: &DoStatement) -> Doc {
         statement
             .condition()
             .map_or_else(jolt_fmt_ir::nil, |condition| format_expression(&condition)),
-        text(");"),
+        text(")"),
+        format_statement_semicolon(statement.semicolon()),
     ])
 }
 
@@ -413,21 +440,37 @@ fn format_statement_expression_separator(comma: &JavaSyntaxToken) -> Doc {
 }
 
 fn format_return_statement(statement: &ReturnStatement) -> Doc {
-    format_keyword_expression_statement(statement.keyword(), "return", statement.expression())
+    format_keyword_expression_statement(
+        statement.keyword(),
+        "return",
+        statement.expression(),
+        statement.semicolon(),
+    )
 }
 
 fn format_throw_statement(statement: &ThrowStatement) -> Doc {
-    format_keyword_expression_statement(statement.keyword(), "throw", statement.expression())
+    format_keyword_expression_statement(
+        statement.keyword(),
+        "throw",
+        statement.expression(),
+        statement.semicolon(),
+    )
 }
 
 fn format_yield_statement(statement: &YieldStatement) -> Doc {
-    format_keyword_expression_statement(statement.keyword(), "yield", statement.expression())
+    format_keyword_expression_statement(
+        statement.keyword(),
+        "yield",
+        statement.expression(),
+        statement.semicolon(),
+    )
 }
 
 fn format_keyword_expression_statement(
     keyword: Option<JavaSyntaxToken>,
     fallback: &str,
     expression: Option<Expression>,
+    semicolon: Option<JavaSyntaxToken>,
 ) -> Doc {
     concat([
         format_statement_keyword(keyword, fallback),
@@ -439,7 +482,7 @@ fn format_keyword_expression_statement(
                 indent(expression_doc)
             }
         }),
-        text(";"),
+        format_statement_semicolon(semicolon),
     ])
 }
 
@@ -447,13 +490,14 @@ fn format_jump_statement(
     keyword: Option<JavaSyntaxToken>,
     fallback: &str,
     label: Option<JavaSyntaxToken>,
+    semicolon: Option<JavaSyntaxToken>,
 ) -> Doc {
     concat([
         format_statement_keyword(keyword, fallback),
         label.map_or_else(jolt_fmt_ir::nil, |label| {
             concat([text(" "), format_token_with_comments(&label)])
         }),
-        text(";"),
+        format_statement_semicolon(semicolon),
     ])
 }
 
@@ -505,8 +549,8 @@ fn format_switch_statement_group(group: &SwitchBlockStatementGroup) -> Doc {
         .map(|label| concat([format_switch_label(&label), text(":")]))
         .collect::<Vec<_>>();
     let items = group
-        .items()
-        .filter_map(format_block_item)
+        .block_statements()
+        .filter_map(|statement| format_block_statement_item(&statement))
         .collect::<Vec<_>>();
 
     concat([
@@ -604,6 +648,30 @@ fn format_switch_rule_body(rule: &SwitchRule) -> Doc {
     }
 
     jolt_fmt_ir::nil()
+}
+
+pub(crate) fn format_statement_semicolon(semicolon: Option<JavaSyntaxToken>) -> Doc {
+    let Some(semicolon) = semicolon else {
+        return text(";");
+    };
+
+    concat([
+        format_semicolon_leading_comments(&semicolon),
+        text(";"),
+        format_trailing_comments_before_line_break(&semicolon),
+    ])
+}
+
+fn format_semicolon_leading_comments(semicolon: &JavaSyntaxToken) -> Doc {
+    let mut docs = Vec::new();
+    for comment in semicolon.leading_comments() {
+        docs.push(text(" "));
+        docs.push(format_comment(&comment));
+        if comment_forces_line(&comment) {
+            docs.push(hard_line());
+        }
+    }
+    concat(docs)
 }
 
 fn format_try_statement(statement: &TryStatement) -> Doc {
