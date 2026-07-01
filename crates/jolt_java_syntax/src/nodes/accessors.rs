@@ -452,6 +452,12 @@ impl ConstructorDeclaration {
     }
 }
 
+impl ThrowsClause {
+    pub fn exceptions(&self) -> impl Iterator<Item = Type> + '_ {
+        children_family(&self.syntax)
+    }
+}
+
 impl StaticInitializer {
     #[must_use]
     pub fn body(&self) -> Option<Block> {

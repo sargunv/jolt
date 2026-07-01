@@ -33,7 +33,7 @@ Status legend:
 
 - `[ ]` Add `context.rs`.
 - `[x]` Add `format.rs`.
-- `[ ]` Add `rules/` modules.
+- `[~]` Add `rules/` modules.
 - `[ ]` Add `helpers/` modules.
 - `[ ]` Preserve dependency direction: rules -> helpers -> IR and rules ->
   syntax accessors.
@@ -49,7 +49,7 @@ Status legend:
 
 - `[x]` Add focused rule fixture runner.
 - `[~]` Add program/import/module/name/comment fixtures.
-- `[ ]` Add declaration/type/parameter fixtures.
+- `[~]` Add declaration/type/parameter fixtures.
 - `[ ]` Add statement/block/switch/try fixtures.
 - `[ ]` Add expression/operator/call/chain/lambda fixtures.
 - `[x]` Assert every rule fixture formats successfully.
@@ -64,8 +64,8 @@ Status legend:
 - `[ ]` Compilation-unit item order.
 - `[~]` Import static/star/name/comment roles.
 - `[~]` Module directive kind/name/target/comment roles.
-- `[ ]` Modifier keyword and annotation roles.
-- `[ ]` Declaration headers and bodies.
+- `[~]` Modifier keyword and annotation roles.
+- `[~]` Declaration headers and bodies.
 - `[ ]` Statement body kind.
 - `[ ]` Switch labels/rules/guards.
 - `[ ]` For init/condition/update.
@@ -86,14 +86,14 @@ Status legend:
 
 ## Helper Organization
 
-- `[ ]` `comma_list`
+- `[~]` `comma_list`
 - `[ ]` `semicolon_list`
-- `[ ]` `parenthesized_list`
+- `[~]` `parenthesized_list`
 - `[ ]` `angle_bracket_list`
 - `[ ]` `braced_block`
 - `[ ]` `declaration_header`
-- `[ ]` `member_body`
-- `[ ]` `modifier_list`
+- `[~]` `member_body`
+- `[~]` `modifier_list`
 - `[ ]` `annotation_group`
 - `[ ]` `assignment_rhs`
 - `[ ]` `binary_chain`
@@ -148,15 +148,15 @@ Status legend:
 
 ### 6. Declaration Layer
 
-- `[ ]` Modifier sorting.
-- `[ ]` Declaration/type-use annotation placement.
+- `[~]` Modifier sorting.
+- `[~]` Declaration/type-use annotation placement.
 - `[~]` Class/interface/record/enum/annotation headers.
 - `[ ]` Broken-header brace placement.
-- `[ ]` Body member category padding.
-- `[ ]` Parameter and record-component lists.
-- `[ ]` `throws`.
-- `[ ]` Enum constants and trailing comma policy.
-- `[ ]` Type-body empty statement removal.
+- `[~]` Body member category padding.
+- `[~]` Parameter and record-component lists.
+- `[~]` `throws`.
+- `[~]` Enum constants and trailing comma policy.
+- `[~]` Type-body empty statement removal.
 
 ### 7. Statement Layer
 

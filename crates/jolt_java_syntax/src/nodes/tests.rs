@@ -655,6 +655,15 @@ fn declaration_accessors_expose_formatter_facing_structure() {
         1
     );
     assert!(constructor.throws_clause().is_some());
+    assert_eq!(
+        constructor
+            .throws_clause()
+            .expect("constructor throws")
+            .exceptions()
+            .map(|exception| exception.source_text().trim().to_owned())
+            .collect::<Vec<_>>(),
+        ["Exception"]
+    );
     assert!(constructor.body().is_some());
 
     let method = descendants::<MethodDeclaration>(&syntax)
@@ -678,6 +687,15 @@ fn declaration_accessors_expose_formatter_facing_structure() {
         1
     );
     assert!(method.throws_clause().is_some());
+    assert_eq!(
+        method
+            .throws_clause()
+            .expect("method throws")
+            .exceptions()
+            .map(|exception| exception.source_text().trim().to_owned())
+            .collect::<Vec<_>>(),
+        ["Exception"]
+    );
     assert!(method.body().is_some());
 
     let record = syntax

@@ -1,8 +1,9 @@
 use jolt_fmt_ir::{Doc, concat, empty_line, hard_line, literal_text, text};
 use jolt_java_syntax::{
-    ClassDeclaration, CompilationUnit, ImportDeclaration, ModuleDeclaration, ModuleDirective,
-    PackageDeclaration, TypeDeclaration,
+    CompilationUnit, ImportDeclaration, ModuleDeclaration, ModuleDirective, PackageDeclaration,
 };
+
+use crate::rules::declarations::format_type_declaration;
 
 pub(crate) fn format_compilation_unit(unit: &CompilationUnit) -> Doc {
     let mut sections = Vec::new();
@@ -25,7 +26,7 @@ pub(crate) fn format_compilation_unit(unit: &CompilationUnit) -> Doc {
         .map(|declaration| format_type_declaration(&declaration))
         .collect::<Vec<_>>();
     if !types.is_empty() {
-        sections.push(join_hard_lines(types));
+        sections.push(join_empty_lines(types));
     }
 
     concat([
@@ -180,35 +181,6 @@ fn format_module_directive_run(directives: Vec<FormattedModuleDirective>) -> Doc
     }
 
     join_empty_lines(groups)
-}
-
-fn format_type_declaration(declaration: &TypeDeclaration) -> Doc {
-    match declaration {
-        TypeDeclaration::ClassDeclaration(class) => format_class_declaration(class),
-        _ => source_doc(&declaration.source_text()),
-    }
-}
-
-fn format_class_declaration(class: &ClassDeclaration) -> Doc {
-    let Some(name) = class.name() else {
-        return source_doc(&class.source_text());
-    };
-
-    let Some(body) = class.body() else {
-        return source_doc(&class.source_text());
-    };
-
-    if body.members().next().is_some() {
-        return source_doc(&class.source_text());
-    }
-
-    concat([
-        text("class "),
-        text(name.text().to_owned()),
-        text(" {"),
-        hard_line(),
-        text("}"),
-    ])
 }
 
 fn source_doc(source: &str) -> Doc {
