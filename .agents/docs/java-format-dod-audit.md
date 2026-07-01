@@ -21,7 +21,7 @@ Evidence:
 - `crates/jolt_java_fmt/tests/style_fixtures.rs` discovers every `*.input.java`
   fixture under `crates/jolt_java_fmt/tests/style`.
 - The latest verification passed `style_rule_fixtures_match_expected_output`.
-- Current fixture count: 58 style input fixtures.
+- Current fixture count: 61 style input fixtures.
 
 ### Every Style-Guide Rule Has One Or More Focused Tests
 
@@ -42,9 +42,11 @@ Remaining work:
   `declarations/formatter-ignore-members`, interface-member sequences by
   `declarations/formatter-ignore-interface-members`, and annotation-interface
   member sequences by
-  `declarations/formatter-ignore-annotation-interface-members`.
-  Program/top-level and directive ignore ranges still need a deliberate audit
-  before the general rule is proven.
+  `declarations/formatter-ignore-annotation-interface-members`, top-level
+  end-of-file sequences by `program/formatter-ignore-top-level`, and top-level
+  next-item boundaries by `program/formatter-ignore-top-level-next-item`.
+  Directive ranges still need a deliberate audit before the general rule is
+  proven.
 
 ### Formatting Expected Fixtures Is Idempotent
 

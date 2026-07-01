@@ -47,7 +47,8 @@ pub(crate) fn format_anonymous_class_body(body: &ClassBody) -> Doc {
 }
 
 fn format_class_declaration(class: &ClassDeclaration) -> Doc {
-    format_header_with_body(
+    format_type_declaration_with_body(
+        &class.tokens(),
         class.modifiers(),
         concat([
             text("class "),
@@ -64,7 +65,8 @@ fn format_class_declaration(class: &ClassDeclaration) -> Doc {
 }
 
 fn format_interface_declaration(interface: &InterfaceDeclaration) -> Doc {
-    format_header_with_body(
+    format_type_declaration_with_body(
+        &interface.tokens(),
         interface.modifiers(),
         concat([
             text("interface "),
@@ -82,7 +84,8 @@ fn format_interface_declaration(interface: &InterfaceDeclaration) -> Doc {
 }
 
 fn format_record_declaration(record: &RecordDeclaration) -> Doc {
-    format_header_with_body(
+    format_type_declaration_with_body(
+        &record.tokens(),
         record.modifiers(),
         group(concat([
             text("record "),
@@ -112,7 +115,8 @@ fn format_enum_declaration(enum_: &EnumDeclaration) -> Doc {
         .body()
         .and_then(|body| format_enum_body_contents(constants, &body));
 
-    format_header_with_body(
+    format_type_declaration_with_body(
+        &enum_.tokens(),
         enum_.modifiers(),
         concat([
             text("enum "),
@@ -126,7 +130,8 @@ fn format_enum_declaration(enum_: &EnumDeclaration) -> Doc {
 }
 
 fn format_annotation_interface_declaration(annotation: &AnnotationInterfaceDeclaration) -> Doc {
-    format_header_with_body(
+    format_type_declaration_with_body(
+        &annotation.tokens(),
         annotation.modifiers(),
         concat([
             text("@interface "),
@@ -388,12 +393,20 @@ fn ignored_annotation_member_category(
         .map_or(MemberCategory::Type, annotation_member_category)
 }
 
-fn format_header_with_body(
+fn format_type_declaration_with_body(
+    tokens: &[jolt_java_syntax::JavaSyntaxToken],
     modifiers: Option<ModifierList>,
     header_tail: Doc,
     body: Option<Doc>,
 ) -> Doc {
-    declaration_with_body(format_modifier_prefix(modifiers), header_tail, body)
+    declaration_with_body(
+        concat([
+            format_construct_leading_comments(tokens),
+            format_modifier_prefix(modifiers),
+        ]),
+        header_tail,
+        body,
+    )
 }
 
 fn format_enum_body_contents(

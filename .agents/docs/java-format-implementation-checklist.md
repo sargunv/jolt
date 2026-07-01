@@ -83,7 +83,8 @@ Status legend:
   exposed enough for formatting.
 - `[~]` Formatter-owned `CommentMap` classifies leading, trailing, and dangling
   comments.
-- `[~]` Comment placement is explicit for moved constructs.
+- `[~]` Comment placement is explicit for moved constructs; leading comments on
+  type declarations are preserved before modifier/annotation formatting.
 - `[x]` Sortable import and module directive comments are barriers for v1.
 
 ## Helper Organization
@@ -212,10 +213,10 @@ Status legend:
 - `[ ]` Comment placement for moved constructs.
 - `[x]` Star-block comment normalization.
 - `[~]` `@formatter:off/on` raw range preservation: block-statement,
-  constructor-body, class-like member, interface-member, and
-  annotation-interface-member sequences preserve ignored line contents while
-  formatting surrounding items; program/top-level and directive ranges still
-  need a deliberate coverage audit before the general rule is complete.
+  constructor-body, class-like member, interface-member,
+  annotation-interface-member, and top-level sequences preserve ignored line
+  contents while formatting surrounding items; directive ranges still need a
+  deliberate coverage audit before the general rule is complete.
 - `[x]` Text-block internal preservation.
 - `[x]` Imported-corpus comment/idempotence tests.
 
