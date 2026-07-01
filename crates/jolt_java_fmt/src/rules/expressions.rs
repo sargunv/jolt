@@ -415,7 +415,7 @@ fn format_lambda_parameters(expression: &LambdaExpression) -> Doc {
             text(", "),
             parameters
                 .into_iter()
-                .map(|parameter| format_token_sequence(&parameter.tokens())),
+                .map(|parameter| format_lambda_parameter(&parameter)),
         ),
         text(")"),
     ])
@@ -435,10 +435,39 @@ fn format_switch_expression(expression: &SwitchExpression) -> Doc {
 }
 
 fn is_simple_untyped_lambda_parameter(parameter: &LambdaParameter) -> bool {
-    parameter.ty().is_none()
-        && parameter
-            .name()
-            .is_some_and(|name| parameter.source_text().trim() == name.text())
+    parameter.ty().is_none() && parameter.var_token().is_none() && !parameter.is_variable_arity()
+}
+
+fn format_lambda_parameter(parameter: &LambdaParameter) -> Doc {
+    let tokens = parameter.tokens();
+    if tokens_have_comments(&tokens) {
+        return format_token_sequence(&tokens);
+    }
+
+    let ty = parameter.ty();
+    let var_token = parameter.var_token();
+    let has_prefix = ty.is_some() || var_token.is_some();
+    let ty = ty.map_or_else(
+        || var_token.map_or_else(jolt_fmt_ir::nil, |token| text(token.text().to_owned())),
+        |ty| format_token_sequence(&ty.tokens()),
+    );
+    let name = parameter
+        .name()
+        .map_or_else(jolt_fmt_ir::nil, |name| text(name.text().to_owned()));
+
+    if !has_prefix {
+        return name;
+    }
+
+    concat([
+        ty,
+        if parameter.is_variable_arity() {
+            text("... ")
+        } else {
+            text(" ")
+        },
+        name,
+    ])
 }
 
 struct MemberChainParts {

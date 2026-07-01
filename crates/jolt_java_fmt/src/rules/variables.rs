@@ -43,7 +43,7 @@ pub(crate) fn format_local_variable_declaration(declaration: &LocalVariableDecla
 pub(crate) fn format_formal_parameter(parameter: &FormalParameter) -> Doc {
     let tokens = parameter.tokens();
     let annotations = parameter.annotations().collect::<Vec<_>>();
-    if tokens_have_comments(&tokens) || parameter.is_variable_arity() || !annotations.is_empty() {
+    if tokens_have_comments(&tokens) || !annotations.is_empty() {
         return format_token_sequence(&tokens);
     }
 
@@ -60,13 +60,14 @@ pub(crate) fn format_formal_parameter(parameter: &FormalParameter) -> Doc {
             .map_or_else(jolt_fmt_ir::nil, |dimensions| {
                 format_token_sequence(&dimensions.tokens())
             }),
+        parameter.is_variable_arity(),
     )
 }
 
 pub(crate) fn format_record_component(component: &RecordComponent) -> Doc {
     let tokens = component.tokens();
     let annotations = component.annotations().collect::<Vec<_>>();
-    if tokens_have_comments(&tokens) || component.is_variable_arity() || !annotations.is_empty() {
+    if tokens_have_comments(&tokens) || !annotations.is_empty() {
         return format_token_sequence(&tokens);
     }
 
@@ -83,11 +84,28 @@ pub(crate) fn format_record_component(component: &RecordComponent) -> Doc {
             .map_or_else(jolt_fmt_ir::nil, |dimensions| {
                 format_token_sequence(&dimensions.tokens())
             }),
+        component.is_variable_arity(),
     )
 }
 
-fn format_named_typed_declaration(modifiers: Doc, ty: Doc, name: Doc, dimensions: Doc) -> Doc {
-    concat([modifiers, ty, text(" "), name, dimensions])
+fn format_named_typed_declaration(
+    modifiers: Doc,
+    ty: Doc,
+    name: Doc,
+    dimensions: Doc,
+    is_variable_arity: bool,
+) -> Doc {
+    concat([
+        modifiers,
+        ty,
+        if is_variable_arity {
+            text("... ")
+        } else {
+            text(" ")
+        },
+        name,
+        dimensions,
+    ])
 }
 
 fn local_variable_type(declaration: &LocalVariableDeclaration) -> Doc {

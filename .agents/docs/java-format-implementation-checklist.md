@@ -154,6 +154,7 @@ Status legend:
 - `[ ]` Broken-header brace placement.
 - `[~]` Body member category padding.
 - `[~]` Parameter and record-component lists.
+- `[x]` Varargs formal parameters and record components.
 - `[~]` `throws`.
 - `[~]` Enum constants and trailing comma policy.
 - `[x]` Annotation interface elements and default values.
@@ -180,6 +181,7 @@ Status legend:
 - `[~]` Calls and break-all argument lists.
 - `[~]` Member chains.
 - `[~]` Lambdas.
+- `[x]` Untyped, `var`, typed, and varargs lambda parameters.
 - `[~]` Arrays/initializers.
 - `[~]` Casts, `instanceof`, patterns, object creation, and type arguments.
 

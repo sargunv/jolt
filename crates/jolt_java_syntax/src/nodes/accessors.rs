@@ -1056,16 +1056,30 @@ impl LambdaParameterList {
 
 impl LambdaParameter {
     #[must_use]
+    pub fn var_token(&self) -> Option<JavaSyntaxToken> {
+        children_tokens_matching(&self.syntax, |kind| kind == JavaSyntaxKind::Identifier)
+            .find(|token| token.text() == "var")
+    }
+
+    #[must_use]
+    pub fn is_variable_arity(&self) -> bool {
+        child_token(&self.syntax, JavaSyntaxKind::Ellipsis).is_some()
+    }
+
+    #[must_use]
     pub fn ty(&self) -> Option<Type> {
         child_family(&self.syntax)
     }
 
     #[must_use]
     pub fn name(&self) -> Option<JavaSyntaxToken> {
-        child_token_in(
-            &self.syntax,
-            &[JavaSyntaxKind::Identifier, JavaSyntaxKind::UnderscoreKw],
-        )
+        children_tokens_matching(&self.syntax, |kind| {
+            matches!(
+                kind,
+                JavaSyntaxKind::Identifier | JavaSyntaxKind::UnderscoreKw
+            )
+        })
+        .last()
     }
 }
 
