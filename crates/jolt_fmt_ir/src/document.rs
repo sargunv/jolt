@@ -1,21 +1,14 @@
 use crate::render::RenderError;
-use crate::validation::{contains_marker, validate_literal_text};
+use crate::validation::validate_literal_text;
 use crate::width::{TextWidth, display_width, literal_line_widths};
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct GroupId(pub u32);
 
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
-pub struct BreakMarkerId(pub u32);
-
 /// Opaque formatter document node.
 ///
 /// Build documents with the constructor functions in this crate rather than
 /// assembling IR variants directly.
-///
-/// ```compile_fail
-/// let _ = jolt_fmt_ir::Doc::BestFitting(Vec::new());
-/// ```
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Doc(DocKind);
 
@@ -40,7 +33,6 @@ pub(crate) enum DocKind {
     IndentIfBreak(IndentIfBreak),
     LineSuffix(Box<Doc>),
     LineSuffixBoundary,
-    BestFitting(Vec<Doc>),
     BreakParent,
 }
 
@@ -66,17 +58,7 @@ impl LiteralText {
 pub(crate) struct Group {
     pub(crate) id: Option<GroupId>,
     pub(crate) should_break: bool,
-    pub(crate) fit: GroupFit,
     pub(crate) contents: Box<Doc>,
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum GroupFit {
-    LineWidth,
-    MarkedBreak {
-        marker: BreakMarkerId,
-        max_column_before_last_marked_break: TextWidth,
-    },
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -87,13 +69,13 @@ pub struct FillEntry {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct Indent {
-    pub(crate) levels: u16,
+    pub(crate) levels: i16,
     pub(crate) contents: Box<Doc>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct Align {
-    pub(crate) spaces: u16,
+    pub(crate) spaces: i16,
     pub(crate) contents: Box<Doc>,
 }
 
@@ -103,7 +85,6 @@ pub(crate) struct Line {
     pub(crate) flat: FlatLine,
     pub(crate) indent_delta: i16,
     pub(crate) propagate_break: bool,
-    pub(crate) marker: Option<BreakMarkerId>,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -216,7 +197,6 @@ pub fn group(doc: Doc) -> Doc {
     Doc(DocKind::Group(Group {
         id: None,
         should_break: false,
-        fit: GroupFit::LineWidth,
         contents: Box::new(doc),
     }))
 }
@@ -226,7 +206,6 @@ pub fn group_id(id: GroupId, doc: Doc) -> Doc {
     Doc(DocKind::Group(Group {
         id: Some(id),
         should_break: false,
-        fit: GroupFit::LineWidth,
         contents: Box::new(doc),
     }))
 }
@@ -236,7 +215,6 @@ pub fn force_group(doc: Doc) -> Doc {
     Doc(DocKind::Group(Group {
         id: None,
         should_break: true,
-        fit: GroupFit::LineWidth,
         contents: Box::new(doc),
     }))
 }
@@ -246,29 +224,8 @@ pub fn force_group_id(id: GroupId, doc: Doc) -> Doc {
     Doc(DocKind::Group(Group {
         id: Some(id),
         should_break: true,
-        fit: GroupFit::LineWidth,
         contents: Box::new(doc),
     }))
-}
-
-/// Creates a group with a custom fit constraint.
-///
-/// # Errors
-///
-/// Returns [`RenderError::MissingBreakMarker`] when a marked-break fit
-/// references a marker that does not appear inside the group contents.
-pub fn group_with_fit(fit: GroupFit, doc: Doc) -> Result<Doc, RenderError> {
-    if let GroupFit::MarkedBreak { marker, .. } = fit
-        && !contains_marker(&doc, marker)
-    {
-        return Err(RenderError::MissingBreakMarker(marker));
-    }
-    Ok(Doc(DocKind::Group(Group {
-        id: None,
-        should_break: false,
-        fit,
-        contents: Box::new(doc),
-    })))
 }
 
 #[must_use]
@@ -297,13 +254,26 @@ pub fn indent(doc: Doc) -> Doc {
 #[must_use]
 pub fn indent_by(levels: u16, doc: Doc) -> Doc {
     Doc(DocKind::Indent(Indent {
-        levels,
+        levels: i16::try_from(levels).expect("indent level count fits i16"),
         contents: Box::new(doc),
     }))
 }
 
 #[must_use]
-pub fn align(spaces: u16, doc: Doc) -> Doc {
+pub fn dedent(doc: Doc) -> Doc {
+    dedent_by(1, doc)
+}
+
+#[must_use]
+pub fn dedent_by(levels: u16, doc: Doc) -> Doc {
+    Doc(DocKind::Indent(Indent {
+        levels: -i16::try_from(levels).expect("dedent level count fits i16"),
+        contents: Box::new(doc),
+    }))
+}
+
+#[must_use]
+pub fn align(spaces: i16, doc: Doc) -> Doc {
     Doc(DocKind::Align(Align {
         spaces,
         contents: Box::new(doc),
@@ -317,7 +287,6 @@ pub const fn line() -> Doc {
         flat: FlatLine::Space,
         indent_delta: 0,
         propagate_break: false,
-        marker: None,
     }))
 }
 
@@ -328,7 +297,6 @@ pub const fn soft_line() -> Doc {
         flat: FlatLine::Empty,
         indent_delta: 0,
         propagate_break: false,
-        marker: None,
     }))
 }
 
@@ -339,7 +307,6 @@ pub const fn hard_line() -> Doc {
         flat: FlatLine::Empty,
         indent_delta: 0,
         propagate_break: true,
-        marker: None,
     }))
 }
 
@@ -350,7 +317,6 @@ pub const fn empty_line() -> Doc {
         flat: FlatLine::Empty,
         indent_delta: 0,
         propagate_break: true,
-        marker: None,
     }))
 }
 
@@ -361,7 +327,6 @@ pub fn break_(flat: FlatLine, indent_delta: i16) -> Doc {
         flat,
         indent_delta,
         propagate_break: false,
-        marker: None,
     }))
 }
 
@@ -372,18 +337,6 @@ pub fn hard_line_without_break_parent() -> Doc {
         flat: FlatLine::Empty,
         indent_delta: 0,
         propagate_break: false,
-        marker: None,
-    }))
-}
-
-#[must_use]
-pub fn marked_break(marker: BreakMarkerId, flat: FlatLine, indent_delta: i16) -> Doc {
-    Doc(DocKind::Line(Line {
-        mode: LineMode::Soft,
-        flat,
-        indent_delta,
-        propagate_break: false,
-        marker: Some(marker),
     }))
 }
 
@@ -422,23 +375,6 @@ pub fn line_suffix(doc: Doc) -> Doc {
 #[must_use]
 pub const fn line_suffix_boundary() -> Doc {
     Doc(DocKind::LineSuffixBoundary)
-}
-
-/// Chooses the first variant that fits, falling back to the final variant in
-/// break mode.
-///
-/// At least one variant is required.
-///
-/// ```compile_fail
-/// use jolt_fmt_ir::best_fitting;
-///
-/// let _ = best_fitting([]);
-/// ```
-#[must_use]
-pub fn best_fitting(first: Doc, rest: impl IntoIterator<Item = Doc>) -> Doc {
-    let mut docs = vec![first];
-    docs.extend(rest);
-    Doc(DocKind::BestFitting(docs))
 }
 
 #[must_use]

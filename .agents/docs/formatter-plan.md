@@ -33,6 +33,8 @@ style from dozens of settings.
 - Formatter-native syntax infrastructure: lexer, parser, lossless CST, trivia,
   and language-specific CST wrappers.
 
+The Java policy is documented in [`java-format-style.md`](java-format-style.md).
+
 ### Out of scope for the first product
 
 - Gradle integration.
@@ -47,7 +49,8 @@ style from dozens of settings.
 - Build execution.
 - IDE/LSP integration.
 - Arbitrary user-defined formatting configuration.
-- Formatter suppression comments for the initial Java formatter.
+- Branded formatter suppression comments or compatibility-specific ignore
+  spellings.
 
 ## Product Shape
 
@@ -397,44 +400,78 @@ its final kind.
 ## Formatter IR
 
 The shared formatter middle should be a Wadler/Prettier/Biome-style document
-algebra.
+algebra with Ruff/Oxc-style performance discipline.
 
 Language layout builders should not render strings directly. They should convert
 the lossless CST into a common document IR. The document IR is a layout program,
 not a second token stream with trivia. The renderer then decides where groups
 fit, where lines break, and how indentation is applied.
 
-Minimum IR:
+The IR should be close enough to Prettier Java's document model that useful
+policy ideas translate naturally: groups, soft lines, hard lines, indentation,
+alignment, conditional break content, line suffixes for trailing comments, and
+literal text for text blocks. It should not inherit Prettier's willingness to
+make arbitrary nested layout choices.
+
+Core IR:
 
 ```rust
 enum Document {
     Nil,
     Text(String),
+    LiteralText(String),
     Line,
     SoftLine,
     HardLine,
+    EmptyLine,
     Concat(Vec<Document>),
     Group(Box<Document>),
-    Indent(Box<Document>),
+    ForceGroup(Box<Document>),
+    Indent {
+        levels: i16,
+        contents: Box<Document>,
+    },
+    Align {
+        spaces: i16,
+        contents: Box<Document>,
+    },
     IfBreak {
+        group_id: Option<GroupId>,
         breaks: Box<Document>,
         flat: Box<Document>,
     },
+    IndentIfBreak {
+        group_id: GroupId,
+        contents: Box<Document>,
+    },
+    LineSuffix(Box<Document>),
+    LineSuffixBoundary,
+    Fill(Vec<FillEntry>),
+    BreakParent,
 }
 ```
 
-Likely later additions:
+`Indent` should be level-based and signed. Public builders should expose
+`indent`, `indent_by`, `dedent`, and `dedent_by` so layout code reads by intent
+and remains independent of the configured indent width. `Align` is the
+fixed-space adjustment primitive for local expression layout, such as ternary
+branches that align relative to `?` or `:`.
 
-```text
-LineSuffix
-LineSuffixBoundary
-Fill
-BestFitting
-Labelled groups
-```
+Do not add a `BestFitting` or conditional-group primitive until a real Java or
+Kotlin layout case proves that ordinary groups cannot express the policy. Some
+formatters use best-fitting choices for language-specific syntax, such as
+optional parentheses in newline-sensitive languages. Java statements are not
+newline-sensitive in that way, so the first Jolt formatter should avoid this
+surface entirely.
 
-The first implementation should stay small. Add IR features only when real
-Java/Kotlin formatting cases require them.
+Do not add marker-column fit constraints, group-specific width accounting hooks,
+or other compatibility-only fit rules. Selector chains, argument lists,
+declaration headers, and comments should be expressed with ordinary groups,
+lines, indentation, and line suffixes.
+
+The renderer should be deterministic and linear in the selected document path,
+with explicitly bounded fit checks for groups and fill. Adding a primitive
+requires documenting its cost model and the Java/Kotlin policy that needs it.
 
 ## Formatter Options
 
@@ -883,6 +920,9 @@ Status: pending.
 Implement Jolt's Java formatter on top of the completed lexer, parser, CST,
 document IR, and renderer.
 
+The implementation target is the Jolt style guide in
+[`java-format-style.md`](java-format-style.md).
+
 Add:
 
 - `jolt_java_fmt`,
@@ -1022,6 +1062,7 @@ Required for the shared renderer:
 ```text
 small document algebra
 linear or otherwise explicitly bounded rendering passes
+no best-fitting or conditional-group primitive without a proven Java/Kotlin need
 no compatibility-only primitives unless Jolt's own layout policy needs them
 ```
 

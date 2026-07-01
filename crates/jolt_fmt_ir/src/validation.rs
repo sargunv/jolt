@@ -1,4 +1,4 @@
-use crate::document::{Doc, DocKind, FlatLine, GroupFit, Line, LineMode, LiteralText};
+use crate::document::{Doc, DocKind, FlatLine, Line, LineMode, LiteralText};
 use crate::render::{Mode, RenderError};
 use crate::width::{has_line_terminator, literal_line_count};
 
@@ -7,23 +7,13 @@ pub(crate) fn validate_doc(doc: &Doc) -> Result<(), RenderError> {
         DocKind::Nil | DocKind::LineSuffixBoundary | DocKind::BreakParent => Ok(()),
         DocKind::LiteralText(text) => validate_literal_text(text),
         DocKind::Text(text) => validate_text(&text.text, "Text"),
-        DocKind::Concat(docs) | DocKind::BestFitting(docs) => {
-            if matches!(doc.kind(), DocKind::BestFitting(_)) && docs.is_empty() {
-                return Err(RenderError::EmptyBestFitting);
-            }
+        DocKind::Concat(docs) => {
             for doc in docs {
                 validate_doc(doc)?;
             }
             Ok(())
         }
-        DocKind::Group(group) => {
-            if let GroupFit::MarkedBreak { marker, .. } = group.fit
-                && !contains_marker(&group.contents, marker)
-            {
-                return Err(RenderError::MissingBreakMarker(marker));
-            }
-            validate_doc(&group.contents)
-        }
+        DocKind::Group(group) => validate_doc(&group.contents),
         DocKind::Fill(entries) => {
             for (index, entry) in entries.iter().enumerate() {
                 if index + 1 == entries.len() && entry.separator.is_some() {
@@ -132,15 +122,6 @@ fn validate_line_suffix_doc(doc: &Doc, mode: Mode) -> Result<(), RenderError> {
             validate_line_suffix_doc(&indent_if_break.contents, mode)
         }
         DocKind::LineSuffix(doc) => validate_line_suffix_doc(doc, Mode::Flat),
-        DocKind::BestFitting(docs) => {
-            let Some((fallback, candidates)) = docs.split_last() else {
-                return Err(RenderError::EmptyBestFitting);
-            };
-            for candidate in candidates {
-                validate_line_suffix_doc(candidate, Mode::Flat)?;
-            }
-            validate_line_suffix_doc(fallback, Mode::Break)
-        }
     }
 }
 
@@ -156,36 +137,5 @@ fn validate_line_suffix_line(line: &Line, mode: Mode) -> Result<(), RenderError>
         (Mode::Break, _) => Err(RenderError::InvalidLineSuffix {
             reason: "line break",
         }),
-    }
-}
-
-pub(crate) fn contains_marker(doc: &Doc, marker: crate::document::BreakMarkerId) -> bool {
-    match doc.kind() {
-        DocKind::Line(line) => line.marker == Some(marker),
-        DocKind::Concat(docs) | DocKind::BestFitting(docs) => {
-            docs.iter().any(|doc| contains_marker(doc, marker))
-        }
-        DocKind::Group(group) => contains_marker(&group.contents, marker),
-        DocKind::Fill(entries) => entries.iter().any(|entry| {
-            contains_marker(&entry.content, marker)
-                || entry
-                    .separator
-                    .as_ref()
-                    .is_some_and(|separator| contains_marker(separator, marker))
-        }),
-        DocKind::Indent(indent) => contains_marker(&indent.contents, marker),
-        DocKind::Align(align) => contains_marker(&align.contents, marker),
-        DocKind::IfBreak(if_break) => {
-            contains_marker(&if_break.breaks, marker) || contains_marker(&if_break.flat, marker)
-        }
-        DocKind::IndentIfBreak(indent_if_break) => {
-            contains_marker(&indent_if_break.contents, marker)
-        }
-        DocKind::LineSuffix(doc) => contains_marker(doc, marker),
-        DocKind::Nil
-        | DocKind::Text(_)
-        | DocKind::LiteralText(_)
-        | DocKind::LineSuffixBoundary
-        | DocKind::BreakParent => false,
     }
 }

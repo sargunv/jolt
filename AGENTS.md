@@ -26,3 +26,6 @@ Run `mise tasks ls --all` for the full task list.
   misconfiguration; do not silently skip them.
 - Do not add convenience APIs unless they carry real behavior needed by current
   code.
+- Formatter rendering must stay linear or explicitly bounded; do not add
+  unbounded layout search, best-fitting, or conditional-group behavior without a
+  documented finite cost model and proven Java/Kotlin need.

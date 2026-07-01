@@ -1,15 +1,18 @@
 use super::*;
 
+fn test_options(width: u32) -> RenderOptions {
+    RenderOptions {
+        line_width: TextWidth::new(width),
+        indent_width: 2,
+        indent_style: IndentStyle::Space,
+        line_ending: LineEnding::Lf,
+    }
+}
+
 fn render_text(doc: &Doc, width: u32) -> String {
-    render(
-        doc,
-        RenderOptions {
-            line_width: TextWidth::new(width),
-            ..RenderOptions::default()
-        },
-    )
-    .expect("document should render")
-    .text
+    render(doc, test_options(width))
+        .expect("document should render")
+        .text
 }
 
 #[test]
@@ -20,7 +23,7 @@ fn text_and_concat_render() {
 
 #[test]
 fn text_rejects_line_terminators() {
-    let err = render(&text("a\nb"), RenderOptions::default()).expect_err("invalid text");
+    let err = render(&text("a\nb"), test_options(80)).expect_err("invalid text");
     assert_eq!(err, RenderError::InvalidText { context: "Text" });
 }
 
@@ -34,37 +37,6 @@ fn group_fits_on_one_line() {
 fn group_expands_when_width_is_exceeded() {
     let doc = group(concat([text("long"), line(), text("tail")]));
     assert_eq!(render_text(&doc, 6), "long\ntail");
-}
-
-#[test]
-fn marked_break_fit_constraint_rejects_late_marker() {
-    let marker = BreakMarkerId(1);
-    let doc = group_with_fit(
-        GroupFit::MarkedBreak {
-            marker,
-            max_column_before_last_marked_break: TextWidth::new(4),
-        },
-        concat([
-            text("receiver"),
-            marked_break(marker, FlatLine::Empty, 0),
-            text(".call()"),
-        ]),
-    )
-    .expect("marker exists");
-    assert_eq!(render_text(&doc, 80), "receiver\n.call()");
-}
-
-#[test]
-fn marked_break_missing_marker_is_invalid() {
-    let err = group_with_fit(
-        GroupFit::MarkedBreak {
-            marker: BreakMarkerId(1),
-            max_column_before_last_marked_break: TextWidth::new(10),
-        },
-        text("x"),
-    )
-    .expect_err("missing marker");
-    assert_eq!(err, RenderError::MissingBreakMarker(BreakMarkerId(1)));
 }
 
 #[test]
@@ -131,6 +103,15 @@ fn alignment_spaces_apply_after_breaks() {
 }
 
 #[test]
+fn dedent_removes_one_indent_level_after_breaks() {
+    let doc = force_group(indent(concat([
+        text("a"),
+        dedent(concat([line(), text("b"), line(), text("c")])),
+    ])));
+    assert_eq!(render_text(&doc, 80), "a\nb\nc");
+}
+
+#[test]
 fn if_break_uses_current_group() {
     let doc = group(concat([
         text("["),
@@ -184,44 +165,13 @@ fn fill_packs_independently() {
 }
 
 #[test]
-fn best_fitting_chooses_first_fitting_variant() {
-    let doc = best_fitting(
-        concat([text("alpha"), line(), text("beta")]),
-        [concat([text("alpha"), hard_line(), text("beta")])],
-    );
-    assert_eq!(render_text(&doc, 20), "alpha beta");
-    assert_eq!(render_text(&doc, 8), "alpha\nbeta");
-}
-
-#[test]
-fn best_fitting_uses_expanded_fallback() {
-    let doc = best_fitting(
-        text_with_width("flat", TextWidth::new(20)),
-        [concat([text("a"), line(), text("b")])],
-    );
-    assert_eq!(render_text(&doc, 4), "a\nb");
-}
-
-#[test]
-fn unselected_best_fitting_breaks_do_not_expand_parent_group() {
-    let doc = group(best_fitting(
-        text("short"),
-        [concat([text("short"), hard_line(), text("fallback")])],
-    ));
-    let rendered = render(&doc, RenderOptions::default()).expect("document should render");
-
-    assert_eq!(rendered.text, "short");
-    assert_eq!(rendered.stats.expanded_group_count, 0);
-}
-
-#[test]
 fn unselected_if_break_branch_does_not_expand_parent_group() {
     let doc = group(concat([
         text("["),
         if_break(concat([hard_line(), text("broken")]), text("flat")),
         text("]"),
     ]));
-    let rendered = render(&doc, RenderOptions::default()).expect("document should render");
+    let rendered = render(&doc, test_options(80)).expect("document should render");
 
     assert_eq!(rendered.text, "[flat]");
     assert_eq!(rendered.stats.expanded_group_count, 0);
@@ -261,7 +211,7 @@ fn nested_line_suffixes_flush_on_the_same_boundary() {
 fn line_suffix_rejects_newline_producing_content() {
     let err = render(
         &line_suffix(concat([text(" // outer"), hard_line(), text("after")])),
-        RenderOptions::default(),
+        test_options(80),
     )
     .expect_err("line suffixes must not create line breaks");
 
@@ -283,7 +233,7 @@ fn literal_text_preserves_newlines_and_updates_column() {
 fn literal_text_updates_max_column_for_intermediate_lines() {
     let rendered = render(
         &concat([text("prefix"), literal_text("wide\nx")]),
-        RenderOptions::default(),
+        test_options(80),
     )
     .expect("document should render");
 
@@ -295,7 +245,7 @@ fn literal_text_updates_max_column_for_intermediate_lines() {
 fn literal_text_resets_base_column_after_each_embedded_newline() {
     let rendered = render(
         &concat([text("0123456789"), literal_text("a\nbbbbbbbb\nc")]),
-        RenderOptions::default(),
+        test_options(80),
     )
     .expect("document should render");
 
@@ -318,7 +268,7 @@ fn explicit_literal_line_widths_update_intermediate_columns() {
     let rendered = render(
         &literal_text_with_line_widths("prefix\nsuffix", [TextWidth::new(30), TextWidth::new(6)])
             .expect("line widths match"),
-        RenderOptions::default(),
+        test_options(80),
     )
     .expect("document should render");
 
@@ -353,7 +303,7 @@ fn non_propagating_hard_line_does_not_mark_group_broken() {
         hard_line_without_break_parent(),
         if_break(text("broken"), text("flat")),
     ]));
-    let rendered = render(&doc, RenderOptions::default()).expect("document should render");
+    let rendered = render(&doc, test_options(80)).expect("document should render");
 
     assert_eq!(rendered.text, "a\nflat");
     assert_eq!(rendered.stats.expanded_group_count, 0);
@@ -393,7 +343,7 @@ fn explicit_java_width_can_override_unicode_width() {
 fn flat_line_text_rejects_line_terminators() {
     let err = render(
         &group(concat([text("a"), break_(flat_text(" \n"), 0), text("b")])),
-        RenderOptions::default(),
+        test_options(80),
     )
     .expect_err("invalid flat text");
     assert_eq!(
@@ -406,11 +356,8 @@ fn flat_line_text_rejects_line_terminators() {
 
 #[test]
 fn indent_if_break_rejects_unknown_group_id() {
-    let err = render(
-        &indent_if_break(GroupId(99), text("x")),
-        RenderOptions::default(),
-    )
-    .expect_err("unknown group");
+    let err = render(&indent_if_break(GroupId(99), text("x")), test_options(80))
+        .expect_err("unknown group");
     assert_eq!(err, RenderError::UnknownGroupId(GroupId(99)));
 }
 
@@ -437,16 +384,6 @@ fn pending_line_suffix_if_break_uses_actual_group_state_for_fitting() {
 }
 
 #[test]
-fn pending_line_suffix_best_fitting_uses_selected_variant_for_fitting() {
-    let doc = concat([
-        line_suffix(best_fitting(text("x"), [text("yyyy")])),
-        group(concat([text("ab"), line(), text("cd")])),
-    ]);
-
-    assert_eq!(render_text(&doc, 6), "ab cdx");
-}
-
-#[test]
 fn render_stats_report_lines_groups_and_suffixes() {
     let rendered = render(
         &concat([
@@ -454,10 +391,7 @@ fn render_stats_report_lines_groups_and_suffixes() {
             line_suffix(text(" // suffix")),
             group(concat([text("c"), line(), text("d")])),
         ]),
-        RenderOptions {
-            line_width: TextWidth::new(2),
-            ..RenderOptions::default()
-        },
+        test_options(2),
     )
     .expect("document should render");
 
@@ -494,21 +428,13 @@ mod java_shapes {
 
     #[test]
     fn chained_method_calls() {
-        let marker = BreakMarkerId(2);
-        let doc = group_with_fit(
-            GroupFit::MarkedBreak {
-                marker,
-                max_column_before_last_marked_break: TextWidth::new(10),
-            },
-            indent(concat([
-                text("builder"),
-                marked_break(marker, FlatLine::Empty, 0),
-                text(".setName(name)"),
-                marked_break(marker, FlatLine::Empty, 0),
-                text(".build()"),
-            ])),
-        )
-        .expect("marker exists");
+        let doc = force_group(indent(concat([
+            text("builder"),
+            break_(FlatLine::Empty, 0),
+            text(".setName(name)"),
+            break_(FlatLine::Empty, 0),
+            text(".build()"),
+        ])));
         assert_eq!(
             render_text(&doc, 120),
             "builder\n  .setName(name)\n  .build()"

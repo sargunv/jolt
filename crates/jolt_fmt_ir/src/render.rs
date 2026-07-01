@@ -3,8 +3,8 @@ use std::error::Error;
 use std::fmt;
 
 use crate::document::{
-    BreakMarkerId, Doc, DocKind, FillEntry, FlatLine, Group, GroupFit, GroupId, IfBreak,
-    IndentIfBreak, Line, LineMode, LiteralText,
+    Doc, DocKind, FillEntry, FlatLine, Group, GroupId, IfBreak, IndentIfBreak, Line, LineMode,
+    LiteralText,
 };
 use crate::validation::validate_doc;
 use crate::width::{TextWidth, add_width, has_line_terminator, push_repeated};
@@ -29,17 +29,6 @@ pub struct RenderOptions {
     pub line_ending: LineEnding,
 }
 
-impl Default for RenderOptions {
-    fn default() -> Self {
-        Self {
-            line_width: TextWidth::new(100),
-            indent_width: 2,
-            indent_style: IndentStyle::Space,
-            line_ending: LineEnding::Lf,
-        }
-    }
-}
-
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct Rendered {
     pub text: String,
@@ -60,11 +49,9 @@ pub enum RenderError {
     InvalidText { context: &'static str },
     InvalidLiteralWidths { expected: usize, actual: usize },
     InvalidLineSuffix { reason: &'static str },
-    EmptyBestFitting,
     MalformedFill { index: usize, reason: &'static str },
     UnknownGroupId(GroupId),
     NoCurrentGroup,
-    MissingBreakMarker(BreakMarkerId),
 }
 
 impl fmt::Display for RenderError {
@@ -83,15 +70,11 @@ impl fmt::Display for RenderError {
                     "line suffix must stay on the current line: {reason}"
                 )
             }
-            Self::EmptyBestFitting => {
-                formatter.write_str("best-fitting document must not be empty")
-            }
             Self::MalformedFill { index, reason } => {
                 write!(formatter, "malformed fill entry at index {index}: {reason}")
             }
             Self::UnknownGroupId(id) => write!(formatter, "unknown group id {}", id.0),
             Self::NoCurrentGroup => formatter.write_str("if_break requires a current group"),
-            Self::MissingBreakMarker(id) => write!(formatter, "missing break marker {}", id.0),
         }
     }
 }
@@ -131,7 +114,7 @@ struct Renderer {
     column: TextWidth,
     max_column: TextWidth,
     indent_levels: i32,
-    align_spaces: u32,
+    align_spaces: i32,
     group_modes: BTreeMap<GroupId, bool>,
     group_stack: Vec<GroupFrame>,
     line_suffixes: Vec<Doc>,
@@ -192,9 +175,9 @@ impl Renderer {
                 result
             }
             DocKind::Align(align) => {
-                self.align_spaces += u32::from(align.spaces);
+                self.align_spaces += i32::from(align.spaces);
                 let result = self.render_doc(&align.contents, mode);
-                self.align_spaces -= u32::from(align.spaces);
+                self.align_spaces -= i32::from(align.spaces);
                 result
             }
             DocKind::Line(line) => self.render_line(line, mode),
@@ -208,7 +191,6 @@ impl Renderer {
                 Ok(())
             }
             DocKind::LineSuffixBoundary => self.flush_line_suffixes(),
-            DocKind::BestFitting(docs) => self.render_best_fitting(docs),
         }
     }
 
@@ -239,23 +221,7 @@ impl Renderer {
 
     fn group_fits(&self, group: &Group) -> Result<bool, RenderError> {
         let mut checker = FitChecker::from_renderer(self)?;
-        let result = checker.fits_doc(&group.contents, Mode::Flat)?;
-        if !result.fits {
-            return Ok(false);
-        }
-        match group.fit {
-            GroupFit::LineWidth => Ok(true),
-            GroupFit::MarkedBreak {
-                marker,
-                max_column_before_last_marked_break,
-            } => result
-                .marker_columns
-                .get(&marker)
-                .and_then(|columns| columns.last().copied())
-                .map_or(Err(RenderError::MissingBreakMarker(marker)), |column| {
-                    Ok(column <= max_column_before_last_marked_break)
-                }),
-        }
+        checker.fits_doc(&group.contents, Mode::Flat)
     }
 
     fn render_fill(&mut self, entries: &[FillEntry], mode: Mode) -> Result<(), RenderError> {
@@ -274,7 +240,7 @@ impl Renderer {
         let mut checker = FitChecker::from_renderer(self)?;
         let docs = [separator, next_content];
         for doc in docs {
-            if !checker.fits_doc(doc, Mode::Flat)?.fits {
+            if !checker.fits_doc(doc, Mode::Flat)? {
                 return Ok(false);
             }
         }
@@ -282,9 +248,6 @@ impl Renderer {
     }
 
     fn render_line(&mut self, line: &Line, mode: Mode) -> Result<(), RenderError> {
-        if line.marker.is_some() {
-            // Markers affect only fitting. Rendering still follows the line mode.
-        }
         match (mode, line.mode) {
             (_, LineMode::Hard) => self.write_newline(line.indent_delta, 1),
             (_, LineMode::Empty) => self.write_newline(line.indent_delta, 2),
@@ -322,21 +285,6 @@ impl Renderer {
             self.indent_levels -= 1;
         }
         result
-    }
-
-    fn render_best_fitting(&mut self, docs: &[Doc]) -> Result<(), RenderError> {
-        for doc in docs.iter().take(docs.len().saturating_sub(1)) {
-            if self.doc_fits(doc)? {
-                return self.render_doc(doc, Mode::Flat);
-            }
-        }
-        let fallback = docs.last().ok_or(RenderError::EmptyBestFitting)?;
-        self.render_doc(fallback, Mode::Break)
-    }
-
-    fn doc_fits(&self, doc: &Doc) -> Result<bool, RenderError> {
-        let mut checker = FitChecker::from_renderer(self)?;
-        checker.fits_doc(doc, Mode::Flat).map(|result| result.fits)
     }
 
     fn group_break_state(&self, group_id: Option<GroupId>) -> Result<bool, RenderError> {
@@ -420,20 +368,31 @@ impl Renderer {
         let effective_levels = (self.indent_levels + i32::from(indent_delta))
             .max(0)
             .cast_unsigned();
+        let base_width = effective_levels * u32::from(self.options.indent_width);
         match self.options.indent_style {
             IndentStyle::Space => {
-                let width = effective_levels * u32::from(self.options.indent_width);
+                let width = (i64::from(base_width) + i64::from(self.align_spaces)).max(0) as u32;
                 push_repeated(&mut self.output, ' ', width);
                 self.column = TextWidth::new(width);
             }
             IndentStyle::Tab => {
-                push_repeated(&mut self.output, '\t', effective_levels);
-                self.column =
-                    TextWidth::new(effective_levels * u32::from(self.options.indent_width));
+                if self.align_spaces >= 0 {
+                    push_repeated(&mut self.output, '\t', effective_levels);
+                    let spaces = self.align_spaces.cast_unsigned();
+                    push_repeated(&mut self.output, ' ', spaces);
+                    self.column = TextWidth::new(base_width + spaces);
+                } else {
+                    let width =
+                        (i64::from(base_width) + i64::from(self.align_spaces)).max(0) as u32;
+                    let tab_width = u32::from(self.options.indent_width);
+                    let tabs = width / tab_width;
+                    let spaces = width % tab_width;
+                    push_repeated(&mut self.output, '\t', tabs);
+                    push_repeated(&mut self.output, ' ', spaces);
+                    self.column = TextWidth::new(width);
+                }
             }
         }
-        push_repeated(&mut self.output, ' ', self.align_spaces);
-        self.column = add_width(self.column, TextWidth::new(self.align_spaces));
         self.max_column = self.max_column.max(self.column);
     }
 
@@ -487,36 +446,13 @@ impl LineEnding {
 }
 
 #[derive(Clone, Debug)]
-struct FitResult {
-    fits: bool,
-    marker_columns: BTreeMap<BreakMarkerId, Vec<TextWidth>>,
-}
-
-impl FitResult {
-    fn yes(marker_columns: BTreeMap<BreakMarkerId, Vec<TextWidth>>) -> Self {
-        Self {
-            fits: true,
-            marker_columns,
-        }
-    }
-
-    fn no(marker_columns: BTreeMap<BreakMarkerId, Vec<TextWidth>>) -> Self {
-        Self {
-            fits: false,
-            marker_columns,
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
 struct FitChecker {
     options: RenderOptions,
     column: TextWidth,
     indent_levels: i32,
-    align_spaces: u32,
+    align_spaces: i32,
     group_modes: BTreeMap<GroupId, bool>,
     group_stack: Vec<GroupFrame>,
-    marker_columns: BTreeMap<BreakMarkerId, Vec<TextWidth>>,
 }
 
 impl FitChecker {
@@ -528,7 +464,6 @@ impl FitChecker {
             align_spaces: renderer.align_spaces,
             group_modes: renderer.group_modes.clone(),
             group_stack: renderer.group_stack.clone(),
-            marker_columns: BTreeMap::new(),
         };
         for suffix in &renderer.line_suffixes {
             if !checker.fit_doc(suffix, Mode::Flat)? {
@@ -539,14 +474,8 @@ impl FitChecker {
         Ok(checker)
     }
 
-    fn fits_doc(&mut self, doc: &Doc, mode: Mode) -> Result<FitResult, RenderError> {
-        let fits = self.fit_doc(doc, mode)? && self.column <= self.options.line_width;
-        let marker_columns = self.marker_columns.clone();
-        Ok(if fits {
-            FitResult::yes(marker_columns)
-        } else {
-            FitResult::no(marker_columns)
-        })
+    fn fits_doc(&mut self, doc: &Doc, mode: Mode) -> Result<bool, RenderError> {
+        Ok(self.fit_doc(doc, mode)? && self.column <= self.options.line_width)
     }
 
     fn fit_doc(&mut self, doc: &Doc, mode: Mode) -> Result<bool, RenderError> {
@@ -579,9 +508,9 @@ impl FitChecker {
                 result
             }
             DocKind::Align(align) => {
-                self.align_spaces += u32::from(align.spaces);
+                self.align_spaces += i32::from(align.spaces);
                 let result = self.fit_doc(&align.contents, mode);
-                self.align_spaces -= u32::from(align.spaces);
+                self.align_spaces -= i32::from(align.spaces);
                 result
             }
             DocKind::Line(line) => Ok(self.fit_line(line, mode)),
@@ -611,7 +540,6 @@ impl FitChecker {
                 result
             }
             DocKind::LineSuffix(doc) => self.fit_doc(doc, Mode::Flat),
-            DocKind::BestFitting(docs) => self.fit_best_fitting(docs),
         }
     }
 
@@ -620,38 +548,14 @@ impl FitChecker {
             return Ok(false);
         }
         let mut nested = self.clone();
-        let nested_result = nested.fits_doc(&group.contents, Mode::Flat)?;
-        if !nested_result.fits {
+        if !nested.fits_doc(&group.contents, Mode::Flat)? {
             return Ok(false);
         }
-        match group.fit {
-            GroupFit::LineWidth => {
-                *self = nested;
-                if let Some(id) = group.id {
-                    self.group_modes.insert(id, false);
-                }
-                Ok(true)
-            }
-            GroupFit::MarkedBreak {
-                marker,
-                max_column_before_last_marked_break,
-            } => {
-                let last_marker_column = nested_result
-                    .marker_columns
-                    .get(&marker)
-                    .and_then(|columns| columns.last().copied())
-                    .ok_or(RenderError::MissingBreakMarker(marker))?;
-                if last_marker_column <= max_column_before_last_marked_break {
-                    *self = nested;
-                    if let Some(id) = group.id {
-                        self.group_modes.insert(id, false);
-                    }
-                    Ok(true)
-                } else {
-                    Ok(false)
-                }
-            }
+        *self = nested;
+        if let Some(id) = group.id {
+            self.group_modes.insert(id, false);
         }
+        Ok(true)
     }
 
     fn fit_fill(&mut self, entries: &[FillEntry], mode: Mode) -> Result<bool, RenderError> {
@@ -680,12 +584,6 @@ impl FitChecker {
     }
 
     fn fit_line(&mut self, line: &Line, mode: Mode) -> bool {
-        if let Some(marker) = line.marker {
-            self.marker_columns
-                .entry(marker)
-                .or_default()
-                .push(self.column);
-        }
         match (mode, line.mode) {
             (Mode::Flat, LineMode::Soft | LineMode::SoftOrSpace) => self.fit_flat_line(&line.flat),
             (_, LineMode::Hard | LineMode::Empty) if !line.propagate_break => true,
@@ -700,22 +598,6 @@ impl FitChecker {
             FlatLine::Space => self.add_width(TextWidth::new(1)),
             FlatLine::Text(_, width) => self.add_width(*width),
         }
-    }
-
-    fn fit_best_fitting(&mut self, docs: &[Doc]) -> Result<bool, RenderError> {
-        let Some((fallback, candidates)) = docs.split_last() else {
-            return Err(RenderError::EmptyBestFitting);
-        };
-        for doc in candidates {
-            let mut candidate = self.clone();
-            if candidate.fit_doc(doc, Mode::Flat)?
-                && candidate.column <= candidate.options.line_width
-            {
-                *self = candidate;
-                return Ok(true);
-            }
-        }
-        self.fit_doc(fallback, Mode::Break)
     }
 
     fn group_break_state(&self, group_id: Option<GroupId>) -> Result<bool, RenderError> {
