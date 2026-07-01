@@ -1,30 +1,33 @@
 use super::{
-    Annotation, AnnotationArgumentList, AnnotationElementList, AnnotationInterfaceBody,
-    AnnotationInterfaceBodyMember, AnnotationInterfaceDeclaration, AnyJavaNode, ArgumentList,
-    ArrayAccessExpression, ArrayCreationExpression, ArrayDimensions, ArrayInitializer, ArrayType,
-    AssertStatement, AssignmentExpression, BasicForStatement, BinaryExpression, Block, BlockItem,
-    BlockStatement, BreakStatement, CastExpression, CatchClause, CatchParameter, CatchTypeList,
-    ClassBody, ClassBodyDeclaration, ClassBodyMember, ClassDeclaration, CompilationUnit,
+    Annotation, AnnotationArgument, AnnotationArgumentList, AnnotationArrayInitializer,
+    AnnotationElementDeclaration, AnnotationElementList, AnnotationElementValue,
+    AnnotationElementValuePair, AnnotationInterfaceBody, AnnotationInterfaceBodyMember,
+    AnnotationInterfaceDeclaration, AnyJavaNode, ArgumentList, ArrayAccessExpression,
+    ArrayCreationExpression, ArrayDimensions, ArrayInitializer, ArrayType, AssertStatement,
+    AssignmentExpression, BasicForStatement, BinaryExpression, Block, BlockItem, BlockStatement,
+    BreakStatement, CastExpression, CatchClause, CatchParameter, CatchTypeList, ClassBody,
+    ClassBodyDeclaration, ClassBodyMember, ClassDeclaration, CompilationUnit,
     ConditionalExpression, ConstructorBody, ConstructorDeclaration, ContinueStatement,
-    DimExpression, DoStatement, EnhancedForStatement, EnumBody, EnumConstant, EnumConstantList,
-    EnumDeclaration, Expression, ExpressionStatement, ExtendsClause, FieldAccessExpression,
-    FieldDeclaration, FinallyClause, ForInitializer, ForStatement, ForUpdate, FormalParameter,
-    FormalParameterList, IfStatement, ImplementsClause, ImportDeclaration, InstanceInitializer,
-    InstanceofExpression, InterfaceBody, InterfaceBodyMember, InterfaceDeclaration, JavaNode,
-    JavaSyntaxKind, JavaSyntaxToken, LabeledStatement, LambdaExpression, LambdaParameter,
-    LambdaParameterList, LocalVariableDeclaration, MethodDeclaration, MethodInvocationExpression,
-    ModifierList, ModuleDeclaration, ModuleDirective, ModuleDirectiveNode, NameSyntax,
-    ObjectCreationExpression, PackageDeclaration, ParenthesizedExpression, Pattern, PermitsClause,
-    PostfixExpression, ProvidesDirective, RecordBody, RecordComponent, RecordComponentList,
-    RecordDeclaration, RequiresDirective, Resource, ResourceList, ResourceSpecification,
-    ReturnStatement, Statement, StatementExpressionList, StaticInitializer, SwitchBlock,
-    SwitchBlockEntry, SwitchBlockStatementGroup, SwitchExpression, SwitchLabel, SwitchRule,
-    SwitchStatement, SynchronizedStatement, ThrowStatement, ThrowsClause, TryStatement,
-    TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList, TypeDeclaration,
-    TypeParameter, TypeParameterList, UnaryExpression, UnionType, VariableAccess,
-    VariableDeclarator, VariableDeclaratorList, VariableInitializer, VariableInitializerValue,
-    WhileStatement, YieldStatement, child, child_family, child_token, child_token_in, children,
-    children_family, children_tokens_matching, nth_child_family, nth_child_token, tokens,
+    DefaultValue, DimExpression, DoStatement, EnhancedForStatement, EnumBody, EnumConstant,
+    EnumConstantList, EnumDeclaration, Expression, ExpressionStatement, ExtendsClause,
+    FieldAccessExpression, FieldDeclaration, FinallyClause, ForInitializer, ForStatement,
+    ForUpdate, FormalParameter, FormalParameterList, IfStatement, ImplementsClause,
+    ImportDeclaration, InstanceInitializer, InstanceofExpression, InterfaceBody,
+    InterfaceBodyMember, InterfaceDeclaration, JavaNode, JavaSyntaxKind, JavaSyntaxToken,
+    LabeledStatement, LambdaExpression, LambdaParameter, LambdaParameterList,
+    LocalVariableDeclaration, MethodDeclaration, MethodInvocationExpression, ModifierList,
+    ModuleDeclaration, ModuleDirective, ModuleDirectiveNode, NameSyntax, ObjectCreationExpression,
+    PackageDeclaration, ParenthesizedExpression, Pattern, PermitsClause, PostfixExpression,
+    ProvidesDirective, RecordBody, RecordComponent, RecordComponentList, RecordDeclaration,
+    RequiresDirective, Resource, ResourceList, ResourceSpecification, ReturnStatement, Statement,
+    StatementExpressionList, StaticInitializer, SwitchBlock, SwitchBlockEntry,
+    SwitchBlockStatementGroup, SwitchExpression, SwitchLabel, SwitchRule, SwitchStatement,
+    SynchronizedStatement, ThrowStatement, ThrowsClause, TryStatement, TryWithResourcesStatement,
+    Type, TypeArgument, TypeArgumentList, TypeDeclaration, TypeParameter, TypeParameterList,
+    UnaryExpression, UnionType, VariableAccess, VariableDeclarator, VariableDeclaratorList,
+    VariableInitializer, VariableInitializerValue, WhileStatement, YieldStatement, child,
+    child_family, child_token, child_token_in, children, children_family, children_tokens_matching,
+    nth_child_family, nth_child_token, tokens,
 };
 use jolt_syntax::TriviaKind;
 
@@ -356,6 +359,44 @@ impl AnnotationInterfaceBody {
 impl AnnotationElementList {
     pub fn members(&self) -> impl Iterator<Item = AnnotationInterfaceBodyMember> + '_ {
         children_family(&self.syntax)
+    }
+
+    pub fn arguments(&self) -> impl Iterator<Item = AnnotationArgument> + '_ {
+        self.syntax.children().filter_map(AnnotationArgument::cast)
+    }
+}
+
+impl AnnotationElementDeclaration {
+    #[must_use]
+    pub fn modifiers(&self) -> Option<ModifierList> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn ty(&self) -> Option<Type> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn name(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Identifier)
+    }
+
+    #[must_use]
+    pub fn dimensions(&self) -> Option<ArrayDimensions> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn default_value(&self) -> Option<DefaultValue> {
+        child(&self.syntax)
+    }
+}
+
+impl DefaultValue {
+    #[must_use]
+    pub fn value(&self) -> Option<AnnotationElementValue> {
+        child(&self.syntax)
     }
 }
 
@@ -716,8 +757,57 @@ impl ArrayType {
 
 impl Annotation {
     #[must_use]
+    pub fn name(&self) -> Option<NameSyntax> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
     pub fn arguments(&self) -> Option<AnnotationArgumentList> {
         child(&self.syntax)
+    }
+}
+
+impl AnnotationArgumentList {
+    pub fn arguments(&self) -> impl Iterator<Item = AnnotationArgument> {
+        child::<AnnotationElementList>(&self.syntax)
+            .map(|list| list.arguments().collect::<Vec<_>>())
+            .unwrap_or_default()
+            .into_iter()
+    }
+}
+
+impl AnnotationElementValuePair {
+    #[must_use]
+    pub fn name(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Identifier)
+    }
+
+    #[must_use]
+    pub fn value(&self) -> Option<AnnotationElementValue> {
+        child(&self.syntax)
+    }
+}
+
+impl AnnotationElementValue {
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn annotation(&self) -> Option<Annotation> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn array_initializer(&self) -> Option<AnnotationArrayInitializer> {
+        child(&self.syntax)
+    }
+}
+
+impl AnnotationArrayInitializer {
+    pub fn values(&self) -> impl Iterator<Item = AnnotationElementValue> + '_ {
+        children(&self.syntax)
     }
 }
 

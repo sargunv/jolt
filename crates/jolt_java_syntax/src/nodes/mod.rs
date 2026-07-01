@@ -681,6 +681,26 @@ java_cst! {
 mod accessors;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub enum AnnotationArgument {
+    Value(AnnotationElementValue),
+    Pair(AnnotationElementValuePair),
+}
+
+impl AnnotationArgument {
+    fn cast(syntax: JavaSyntaxNode) -> Option<Self> {
+        match syntax.kind() {
+            JavaSyntaxKind::AnnotationElementValue => {
+                AnnotationElementValue::cast(syntax).map(Self::Value)
+            }
+            JavaSyntaxKind::AnnotationElementValuePair => {
+                AnnotationElementValuePair::cast(syntax).map(Self::Pair)
+            }
+            _ => None,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum SwitchBlockEntry {
     StatementGroup(SwitchBlockStatementGroup),
     Rule(SwitchRule),

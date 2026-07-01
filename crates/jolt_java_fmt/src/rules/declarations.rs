@@ -1,8 +1,9 @@
 use jolt_fmt_ir::{Doc, concat, group, hard_line, line, soft_line, text};
 use jolt_java_syntax::{
-    AnnotationInterfaceBodyMember, AnnotationInterfaceDeclaration, ClassBodyMember,
-    ClassDeclaration, EnumDeclaration, FormalParameterList, InterfaceDeclaration, JavaSyntaxKind,
-    JavaSyntaxToken, MethodDeclaration, ModifierList, RecordDeclaration, TypeDeclaration,
+    AnnotationElementDeclaration, AnnotationInterfaceBodyMember, AnnotationInterfaceDeclaration,
+    ClassBodyMember, ClassDeclaration, EnumDeclaration, FormalParameterList, InterfaceDeclaration,
+    JavaSyntaxKind, JavaSyntaxToken, MethodDeclaration, ModifierList, RecordDeclaration,
+    TypeDeclaration,
 };
 
 use crate::helpers::blocks::{braced_body, empty_block};
@@ -10,6 +11,7 @@ use crate::helpers::comments::{
     format_token_sequence, tokens_end_with_forced_line, tokens_have_comments,
 };
 use crate::helpers::modifiers::modifier_prefix;
+use crate::rules::annotations::format_annotation_element_value;
 use crate::rules::statements::format_block;
 use crate::rules::variables::{
     format_field_declaration, format_formal_parameter, format_record_component,
@@ -403,7 +405,7 @@ impl FormattedMember {
             },
             AnnotationInterfaceBodyMember::AnnotationElementDeclaration(member) => Self {
                 category: MemberCategory::Method,
-                doc: format_token_sequence(&member.tokens()),
+                doc: format_annotation_element_declaration(member),
             },
             _ => Self {
                 category: MemberCategory::Type,
@@ -468,6 +470,43 @@ fn format_method_declaration(method: &MethodDeclaration) -> Doc {
         ])),
         format_method_body(method.body()),
     ])
+}
+
+fn format_annotation_element_declaration(element: &AnnotationElementDeclaration) -> Doc {
+    let Some(name) = element.name() else {
+        return format_token_sequence(&element.tokens());
+    };
+
+    concat([
+        group(concat([
+            modifier_prefix(element.modifiers()),
+            element
+                .ty()
+                .map_or_else(jolt_fmt_ir::nil, |ty| format_token_sequence(&ty.tokens())),
+            text(" "),
+            text(name.text().to_owned()),
+            text("()"),
+            element
+                .dimensions()
+                .map_or_else(jolt_fmt_ir::nil, |dimensions| {
+                    format_token_sequence(&dimensions.tokens())
+                }),
+            format_annotation_element_default(element.default_value()),
+        ])),
+        text(";"),
+    ])
+}
+
+fn format_annotation_element_default(default: Option<jolt_java_syntax::DefaultValue>) -> Doc {
+    default.map_or_else(jolt_fmt_ir::nil, |default| {
+        concat([
+            line(),
+            text("default "),
+            default.value().map_or_else(jolt_fmt_ir::nil, |value| {
+                format_annotation_element_value(&value)
+            }),
+        ])
+    })
 }
 
 fn format_parameters(parameters: Option<FormalParameterList>) -> Doc {

@@ -156,6 +156,7 @@ Status legend:
 - `[~]` Parameter and record-component lists.
 - `[~]` `throws`.
 - `[~]` Enum constants and trailing comma policy.
+- `[x]` Annotation interface elements and default values.
 - `[~]` Type-body empty statement removal.
 
 ### 7. Statement Layer
