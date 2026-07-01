@@ -192,6 +192,7 @@ Status legend:
 - `[~]` Calls and break-all argument lists.
 - `[~]` Member chains.
 - `[~]` Lambdas.
+- `[x]` Literal, name, `this`, `super`, and class-literal expression leaves.
 - `[x]` Untyped, `var`, typed, annotated, final, and varargs lambda parameters.
 - `[~]` Arrays/initializers.
 - `[~]` Casts, `instanceof`, patterns, object creation, and type arguments.

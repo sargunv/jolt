@@ -7,27 +7,28 @@ use super::{
     AssertStatement, AssignmentExpression, BasicForStatement, BinaryExpression, Block, BlockItem,
     BlockStatement, BreakStatement, CaseConstant, CasePattern, CastExpression, CatchClause,
     CatchParameter, CatchTypeList, ClassBody, ClassBodyDeclaration, ClassBodyMember,
-    ClassDeclaration, ClassType, ClassTypeSegment, CompilationUnit, ComponentPattern,
-    ConditionalExpression, ConstructorBody, ConstructorDeclaration, ContinueStatement,
-    DefaultValue, DimExpression, DoStatement, EnhancedForStatement, EnumBody, EnumConstant,
-    EnumConstantList, EnumDeclaration, Expression, ExpressionStatement, ExtendsClause,
-    FieldAccessExpression, FieldDeclaration, FinallyClause, ForInitializer, ForStatement,
-    ForUpdate, FormalParameter, FormalParameterList, Guard, IfStatement, ImplementsClause,
-    ImportDeclaration, InstanceInitializer, InstanceofExpression, InterfaceBody,
+    ClassDeclaration, ClassLiteralExpression, ClassType, ClassTypeSegment, CompilationUnit,
+    ComponentPattern, ConditionalExpression, ConstructorBody, ConstructorDeclaration,
+    ContinueStatement, DefaultValue, DimExpression, DoStatement, EnhancedForStatement, EnumBody,
+    EnumConstant, EnumConstantList, EnumDeclaration, Expression, ExpressionStatement,
+    ExtendsClause, FieldAccessExpression, FieldDeclaration, FinallyClause, ForInitializer,
+    ForStatement, ForUpdate, FormalParameter, FormalParameterList, Guard, IfStatement,
+    ImplementsClause, ImportDeclaration, InstanceInitializer, InstanceofExpression, InterfaceBody,
     InterfaceBodyMember, InterfaceDeclaration, IntersectionType, JavaFamily, JavaNode,
     JavaSyntaxKind, JavaSyntaxToken, LabeledStatement, LambdaExpression, LambdaParameter,
-    LambdaParameterList, LocalClassOrInterfaceDeclaration, LocalVariableDeclaration,
-    MatchAllPattern, MethodDeclaration, MethodInvocationExpression, MethodReferenceExpression,
-    ModifierList, ModuleDeclaration, ModuleDirective, ModuleDirectiveNode, NameSegment, NameSyntax,
-    ObjectCreationExpression, PackageDeclaration, ParenthesizedExpression, Pattern, PermitsClause,
-    PostfixExpression, PrimitiveType, ProvidesDirective, RecordBody, RecordComponent,
-    RecordComponentList, RecordDeclaration, RecordPattern, RequiresDirective, Resource,
-    ResourceList, ResourceSpecification, ReturnStatement, Statement, StatementExpressionList,
-    StaticInitializer, SwitchBlock, SwitchBlockEntry, SwitchBlockStatementGroup, SwitchExpression,
+    LambdaParameterList, LiteralExpression, LocalClassOrInterfaceDeclaration,
+    LocalVariableDeclaration, MatchAllPattern, MethodDeclaration, MethodInvocationExpression,
+    MethodReferenceExpression, ModifierList, ModuleDeclaration, ModuleDirective,
+    ModuleDirectiveNode, NameExpression, NameSegment, NameSyntax, ObjectCreationExpression,
+    PackageDeclaration, ParenthesizedExpression, Pattern, PermitsClause, PostfixExpression,
+    PrimitiveType, ProvidesDirective, RecordBody, RecordComponent, RecordComponentList,
+    RecordDeclaration, RecordPattern, RequiresDirective, Resource, ResourceList,
+    ResourceSpecification, ReturnStatement, Statement, StatementExpressionList, StaticInitializer,
+    SuperExpression, SwitchBlock, SwitchBlockEntry, SwitchBlockStatementGroup, SwitchExpression,
     SwitchLabel, SwitchLabelCaseItem, SwitchRule, SwitchStatement, SynchronizedStatement,
-    ThrowStatement, ThrowsClause, TryStatement, TryWithResourcesStatement, Type, TypeArgument,
-    TypeArgumentList, TypeBoundList, TypeDeclaration, TypeParameter, TypeParameterList,
-    TypePattern, UnaryExpression, UnionType, VariableAccess, VariableDeclarator,
+    ThisExpression, ThrowStatement, ThrowsClause, TryStatement, TryWithResourcesStatement, Type,
+    TypeArgument, TypeArgumentList, TypeBoundList, TypeDeclaration, TypeParameter,
+    TypeParameterList, TypePattern, UnaryExpression, UnionType, VariableAccess, VariableDeclarator,
     VariableDeclaratorList, VariableInitializer, VariableInitializerValue, VoidType,
     WhileStatement, WildcardType, YieldStatement, child, child_family, child_token, child_token_in,
     children, children_family, children_tokens_matching, nth_child_family, nth_child_token,
@@ -904,6 +905,84 @@ impl IfStatement {
     #[must_use]
     pub fn else_statement(&self) -> Option<Statement> {
         nth_child_family(&self.syntax, 1)
+    }
+}
+
+impl LiteralExpression {
+    #[must_use]
+    pub fn literal_token(&self) -> Option<JavaSyntaxToken> {
+        self.syntax
+            .first_token()
+            .map(|syntax| JavaSyntaxToken { syntax })
+    }
+}
+
+impl NameExpression {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation> + '_ {
+        children(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn name(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Identifier)
+    }
+}
+
+impl ThisExpression {
+    #[must_use]
+    pub fn qualifier(&self) -> Option<Expression> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::ThisKw)
+    }
+}
+
+impl SuperExpression {
+    #[must_use]
+    pub fn qualifier(&self) -> Option<Expression> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::SuperKw)
+    }
+}
+
+impl ClassLiteralExpression {
+    #[must_use]
+    pub fn target_expression(&self) -> Option<Expression> {
+        child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn void_type(&self) -> Option<VoidType> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn primitive_keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token_in(
+            &self.syntax,
+            &[
+                JavaSyntaxKind::BooleanKw,
+                JavaSyntaxKind::ByteKw,
+                JavaSyntaxKind::CharKw,
+                JavaSyntaxKind::DoubleKw,
+                JavaSyntaxKind::FloatKw,
+                JavaSyntaxKind::IntKw,
+                JavaSyntaxKind::LongKw,
+                JavaSyntaxKind::ShortKw,
+            ],
+        )
+    }
+
+    #[must_use]
+    pub fn dimensions(&self) -> Option<ArrayDimensions> {
+        child(&self.syntax)
     }
 }
 

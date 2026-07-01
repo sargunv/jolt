@@ -92,7 +92,7 @@ pub(crate) fn format_comment(comment: &JavaComment) -> Doc {
     }
 }
 
-fn format_token_text(token_text: &str) -> Doc {
+pub(crate) fn format_token_text(token_text: &str) -> Doc {
     if token_text.contains(['\n', '\r']) {
         literal_text(token_text.to_owned())
     } else {

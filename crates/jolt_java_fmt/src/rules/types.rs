@@ -68,7 +68,7 @@ fn format_primitive_type(ty: &PrimitiveType) -> Doc {
     ])
 }
 
-fn format_void_type(ty: &VoidType) -> Doc {
+pub(crate) fn format_void_type(ty: &VoidType) -> Doc {
     ty.keyword().map_or_else(jolt_fmt_ir::nil, |keyword| {
         concat([
             format_leading_comments(&keyword),

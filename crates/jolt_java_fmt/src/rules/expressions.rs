@@ -1,15 +1,19 @@
 use jolt_fmt_ir::{Doc, concat, group, text};
 use jolt_java_syntax::{
     ArgumentList, ArrayAccessExpression, ArrayCreationExpression, ArrayInitializer,
-    AssignmentExpression, BinaryExpression, CastExpression, ConditionalExpression, DimExpression,
-    Expression, FieldAccessExpression, InstanceofExpression, LambdaExpression, LambdaParameter,
-    MethodInvocationExpression, MethodReferenceExpression, ObjectCreationExpression,
-    ParenthesizedExpression, PostfixExpression, SwitchExpression, UnaryExpression,
+    AssignmentExpression, BinaryExpression, CastExpression, ClassLiteralExpression,
+    ConditionalExpression, DimExpression, Expression, FieldAccessExpression, InstanceofExpression,
+    LambdaExpression, LambdaParameter, LiteralExpression, MethodInvocationExpression,
+    MethodReferenceExpression, NameExpression, ObjectCreationExpression, ParenthesizedExpression,
+    PostfixExpression, SuperExpression, SwitchExpression, ThisExpression, UnaryExpression,
     VariableInitializerValue,
 };
 
 use crate::helpers::chains::member_chain;
-use crate::helpers::comments::{format_token_sequence, tokens_have_comments};
+use crate::helpers::comments::{
+    format_leading_comments, format_token_sequence, format_token_text, format_trailing_comments,
+    tokens_have_comments,
+};
 use crate::helpers::lists::{braced_initializer_list, parenthesized_list};
 use crate::helpers::modifiers::inline_modifier_prefix_from_docs;
 use crate::helpers::operators::{assignment_expression, binary_chain, ternary_expression};
@@ -30,11 +34,13 @@ pub(crate) fn format_expression(expression: &Expression) -> Doc {
         Expression::UnaryExpression(expression) => format_unary_expression(expression),
         Expression::PostfixExpression(expression) => format_postfix_expression(expression),
         Expression::LambdaExpression(expression) => format_lambda_expression(expression),
-        Expression::LiteralExpression(_)
-        | Expression::NameExpression(_)
-        | Expression::ThisExpression(_)
-        | Expression::SuperExpression(_)
-        | Expression::ClassLiteralExpression(_) => format_token_sequence(&expression.tokens()),
+        Expression::LiteralExpression(expression) => format_literal_expression(expression),
+        Expression::NameExpression(expression) => format_name_expression(expression),
+        Expression::ThisExpression(expression) => format_this_expression(expression),
+        Expression::SuperExpression(expression) => format_super_expression(expression),
+        Expression::ClassLiteralExpression(expression) => {
+            format_class_literal_expression(expression)
+        }
         Expression::MethodReferenceExpression(expression) => {
             format_method_reference_expression(expression)
         }
@@ -53,6 +59,87 @@ pub(crate) fn format_expression(expression: &Expression) -> Doc {
             format_object_creation_expression(expression)
         }
     }
+}
+
+fn format_literal_expression(expression: &LiteralExpression) -> Doc {
+    expression
+        .literal_token()
+        .map_or_else(jolt_fmt_ir::nil, |token| format_leaf_token(&token))
+}
+
+fn format_name_expression(expression: &NameExpression) -> Doc {
+    let annotations = expression
+        .annotations()
+        .map(|annotation| format_annotation(&annotation))
+        .collect::<Vec<_>>();
+    let name = expression
+        .name()
+        .map_or_else(jolt_fmt_ir::nil, |name| format_leaf_token(&name));
+
+    if annotations.is_empty() {
+        name
+    } else {
+        concat([jolt_fmt_ir::join(text(" "), annotations), text(" "), name])
+    }
+}
+
+fn format_this_expression(expression: &ThisExpression) -> Doc {
+    format_qualified_keyword_expression(
+        expression.qualifier(),
+        expression
+            .keyword()
+            .map_or_else(|| text("this"), |token| format_leaf_token(&token)),
+    )
+}
+
+fn format_super_expression(expression: &SuperExpression) -> Doc {
+    format_qualified_keyword_expression(
+        expression.qualifier(),
+        expression
+            .keyword()
+            .map_or_else(|| text("super"), |token| format_leaf_token(&token)),
+    )
+}
+
+fn format_qualified_keyword_expression(qualifier: Option<Expression>, keyword: Doc) -> Doc {
+    match qualifier {
+        Some(qualifier) => concat([format_expression(&qualifier), text("."), keyword]),
+        None => keyword,
+    }
+}
+
+fn format_leaf_token(token: &jolt_java_syntax::JavaSyntaxToken) -> Doc {
+    concat([
+        format_leading_comments(token),
+        format_token_text(token.text()),
+        format_trailing_comments(token),
+    ])
+}
+
+fn format_class_literal_expression(expression: &ClassLiteralExpression) -> Doc {
+    let target = expression.target_expression().map_or_else(
+        || {
+            expression.void_type().map_or_else(
+                || {
+                    expression
+                        .primitive_keyword()
+                        .map_or_else(jolt_fmt_ir::nil, |keyword| format_leaf_token(&keyword))
+                },
+                |ty| crate::rules::types::format_void_type(&ty),
+            )
+        },
+        |target| format_expression(&target),
+    );
+
+    concat([
+        target,
+        expression
+            .dimensions()
+            .map_or_else(jolt_fmt_ir::nil, |dimensions| {
+                format_array_dimensions(&dimensions)
+            }),
+        text(".class"),
+    ])
 }
 
 fn format_parenthesized_expression(expression: &ParenthesizedExpression) -> Doc {
