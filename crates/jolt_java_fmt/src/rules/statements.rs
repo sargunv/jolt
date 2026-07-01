@@ -246,16 +246,13 @@ fn format_expression_statement(statement: &ExpressionStatement) -> Doc {
 }
 
 fn format_if_statement(statement: &IfStatement) -> Doc {
-    let condition = statement
-        .condition()
-        .map_or_else(jolt_fmt_ir::nil, |condition| format_expression(&condition));
     let then_body = statement_body_as_block(statement.then_body());
 
     concat([
         format_statement_keyword(statement.keyword(), "if"),
-        text(" ("),
-        condition,
-        text(") "),
+        text(" "),
+        format_if_condition(statement),
+        format_if_condition_body_separator(statement),
         then_body,
         statement
             .else_body()
@@ -272,6 +269,92 @@ fn format_if_statement(statement: &IfStatement) -> Doc {
                     },
                 ])
             }),
+    ])
+}
+
+fn format_if_condition_body_separator(statement: &IfStatement) -> Doc {
+    if statement
+        .close_paren()
+        .as_ref()
+        .is_some_and(trailing_comments_force_line)
+    {
+        jolt_fmt_ir::nil()
+    } else {
+        text(" ")
+    }
+}
+
+fn format_if_condition(statement: &IfStatement) -> Doc {
+    let open = statement.open_paren();
+    let close = statement.close_paren();
+
+    group(concat([
+        format_condition_open_paren(open.as_ref()),
+        indent(concat([
+            format_condition_open_spacing(open.as_ref()),
+            statement
+                .condition()
+                .map_or_else(jolt_fmt_ir::nil, |condition| format_expression(&condition)),
+        ])),
+        format_condition_close_paren(close.as_ref()),
+    ]))
+}
+
+fn format_condition_open_paren(open: Option<&JavaSyntaxToken>) -> Doc {
+    open.map_or_else(
+        || text("("),
+        |open| concat([format_leading_comments(open), text("(")]),
+    )
+}
+
+fn format_condition_open_spacing(open: Option<&JavaSyntaxToken>) -> Doc {
+    let Some(open) = open else {
+        return jolt_fmt_ir::nil();
+    };
+
+    if open.trailing_comments().is_empty() {
+        return jolt_fmt_ir::nil();
+    }
+
+    concat([
+        format_trailing_comments_before_line_break(open),
+        if trailing_comments_force_line(open) {
+            hard_line()
+        } else {
+            text(" ")
+        },
+    ])
+}
+
+fn format_condition_close_paren(close: Option<&JavaSyntaxToken>) -> Doc {
+    let close_has_leading_comments =
+        close.is_some_and(|token| !token.leading_comments().is_empty());
+
+    concat([
+        if close_has_leading_comments {
+            line()
+        } else {
+            jolt_fmt_ir::nil()
+        },
+        close.map_or_else(
+            || text(")"),
+            |close| {
+                concat([
+                    if close_has_leading_comments {
+                        format_leading_comments(close)
+                    } else {
+                        jolt_fmt_ir::nil()
+                    },
+                    text(")"),
+                    format_trailing_comments_before_line_break(close),
+                    if trailing_comments_force_line(close) {
+                        hard_line()
+                    } else {
+                        jolt_fmt_ir::nil()
+                    },
+                ])
+            },
+        ),
     ])
 }
 

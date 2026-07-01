@@ -1,10 +1,10 @@
 class Example {
   void run() {
-    if (ready) {
+    if ( /* guard */ ready) {
       run();
     } else if (waiting) {
       pause();
-    } else {
+    } else /* fallback */ {
       stop();
     }
   }

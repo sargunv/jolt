@@ -981,7 +981,7 @@ fn if_statements_expose_condition_then_and_else_children() {
         r"
                 class Branches {
                     void branch(boolean ready) {
-                        if (ready && check()) {
+                        if (/* condition */ ready && check()) {
                             run();
                         } else if (!ready) {
                             return;
@@ -998,6 +998,15 @@ fn if_statements_expose_condition_then_and_else_children() {
         ifs[0].condition().expect("outer condition").source_text(),
         "ready && check()"
     );
+    assert_eq!(
+        ifs[0]
+            .open_paren()
+            .expect("outer open paren")
+            .trailing_comments()[0]
+            .text(),
+        "/* condition */"
+    );
+    assert_eq!(ifs[0].close_paren().expect("outer close paren").text(), ")");
     assert_eq!(
         ifs[0].then_statement().expect("outer then").kind(),
         JavaSyntaxKind::Block
