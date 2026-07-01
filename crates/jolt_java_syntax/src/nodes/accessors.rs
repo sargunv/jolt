@@ -290,6 +290,19 @@ impl RecordComponentList {
 }
 
 impl RecordComponent {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation> + '_ {
+        children(&self.syntax)
+    }
+
+    pub fn modifier_tokens(&self) -> impl Iterator<Item = JavaSyntaxToken> + '_ {
+        children_tokens_matching(&self.syntax, is_modifier_token)
+    }
+
+    #[must_use]
+    pub fn is_variable_arity(&self) -> bool {
+        child_token(&self.syntax, JavaSyntaxKind::Ellipsis).is_some()
+    }
+
     #[must_use]
     pub fn ty(&self) -> Option<Type> {
         child_family(&self.syntax)
@@ -523,6 +536,19 @@ impl FormalParameterList {
 }
 
 impl FormalParameter {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation> + '_ {
+        children(&self.syntax)
+    }
+
+    pub fn modifier_tokens(&self) -> impl Iterator<Item = JavaSyntaxToken> + '_ {
+        children_tokens_matching(&self.syntax, is_modifier_token)
+    }
+
+    #[must_use]
+    pub fn is_variable_arity(&self) -> bool {
+        child_token(&self.syntax, JavaSyntaxKind::Ellipsis).is_some()
+    }
+
     #[must_use]
     pub fn ty(&self) -> Option<Type> {
         child_family(&self.syntax)
@@ -573,6 +599,19 @@ impl VariableInitializer {
 }
 
 impl LocalVariableDeclaration {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation> + '_ {
+        children(&self.syntax)
+    }
+
+    pub fn modifier_tokens(&self) -> impl Iterator<Item = JavaSyntaxToken> + '_ {
+        children_tokens_matching(&self.syntax, is_modifier_token)
+    }
+
+    #[must_use]
+    pub fn var_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Identifier).filter(|token| token.text() == "var")
+    }
+
     #[must_use]
     pub fn ty(&self) -> Option<Type> {
         child_family(&self.syntax)

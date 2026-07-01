@@ -93,7 +93,7 @@ Status legend:
 - `[~]` `braced_block`
 - `[ ]` `declaration_header`
 - `[~]` `member_body`
-- `[~]` `modifier_list`
+- `[x]` `modifier_list`
 - `[ ]` `annotation_group`
 - `[ ]` `assignment_rhs`
 - `[x]` `binary_chain`

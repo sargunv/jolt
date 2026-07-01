@@ -13,6 +13,7 @@ use crate::helpers::comments::{
 };
 use crate::helpers::lists::semicolon_list;
 use crate::rules::expressions::format_expression;
+use crate::rules::variables::format_local_variable_declaration;
 
 pub(crate) fn format_block(block: &Block) -> Doc {
     let items = block
@@ -35,7 +36,7 @@ fn format_block_item(item: BlockItem) -> Option<Doc> {
     match item {
         BlockItem::EmptyStatement(_) => None,
         BlockItem::LocalVariableDeclaration(declaration) => Some(concat([
-            format_token_sequence(&declaration.tokens()),
+            format_local_variable_declaration(&declaration),
             text(";"),
         ])),
         BlockItem::LocalClassOrInterfaceDeclaration(declaration) => {
@@ -225,7 +226,7 @@ fn format_enhanced_for_statement(statement: &EnhancedForStatement) -> Doc {
         statement
             .variable()
             .map_or_else(jolt_fmt_ir::nil, |variable| {
-                format_token_sequence(&variable.tokens())
+                format_local_variable_declaration(&variable)
             }),
         text(" : "),
         statement
@@ -238,7 +239,7 @@ fn format_enhanced_for_statement(statement: &EnhancedForStatement) -> Doc {
 
 fn format_for_initializer(initializer: &ForInitializer) -> Doc {
     if let Some(declaration) = initializer.local_variable_declaration() {
-        return format_token_sequence(&declaration.tokens());
+        return format_local_variable_declaration(&declaration);
     }
     initializer
         .expressions()
@@ -481,7 +482,7 @@ fn format_resource_specification(statement: &TryWithResourcesStatement) -> Doc {
 
 fn format_resource(resource: &Resource) -> Doc {
     if let Some(declaration) = resource.declaration() {
-        return format_token_sequence(&declaration.tokens());
+        return format_local_variable_declaration(&declaration);
     }
     if let Some(access) = resource.variable_access() {
         return access

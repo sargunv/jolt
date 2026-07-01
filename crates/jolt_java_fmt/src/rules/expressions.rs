@@ -223,7 +223,7 @@ fn format_array_initializer(initializer: &ArrayInitializer) -> Doc {
     braced_initializer_list(values)
 }
 
-fn format_variable_initializer_value(value: VariableInitializerValue) -> Doc {
+pub(crate) fn format_variable_initializer_value(value: VariableInitializerValue) -> Doc {
     match value {
         VariableInitializerValue::LiteralExpression(expression) => {
             format_expression(&expression.into())

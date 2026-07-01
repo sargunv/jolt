@@ -1,15 +1,18 @@
 use jolt_fmt_ir::{Doc, concat, group, hard_line, line, soft_line, text};
 use jolt_java_syntax::{
     AnnotationInterfaceBodyMember, AnnotationInterfaceDeclaration, ClassBodyMember,
-    ClassDeclaration, EnumDeclaration, FieldDeclaration, FormalParameterList, InterfaceDeclaration,
-    JavaSyntaxKind, JavaSyntaxToken, MethodDeclaration, ModifierList, RecordDeclaration,
-    TypeDeclaration,
+    ClassDeclaration, EnumDeclaration, FormalParameterList, InterfaceDeclaration, JavaSyntaxKind,
+    JavaSyntaxToken, MethodDeclaration, ModifierList, RecordDeclaration, TypeDeclaration,
 };
 
 use crate::helpers::comments::{
     format_token_sequence, tokens_end_with_forced_line, tokens_have_comments,
 };
+use crate::helpers::modifiers::modifier_prefix;
 use crate::rules::statements::format_block;
+use crate::rules::variables::{
+    format_field_declaration, format_formal_parameter, format_record_component,
+};
 
 pub(crate) fn format_type_declaration(declaration: &TypeDeclaration) -> Doc {
     match declaration {
@@ -167,7 +170,7 @@ fn format_header_with_body(
     header_tail: Doc,
     body: Option<Doc>,
 ) -> Doc {
-    let header = concat([format_modifier_prefix(modifiers), header_tail, text(" {")]);
+    let header = concat([modifier_prefix(modifiers), header_tail, text(" {")]);
     concat([
         header,
         body.map_or_else(
@@ -227,55 +230,6 @@ fn format_enum_body_contents(constants: Vec<Doc>, members: &[ClassBodyMember]) -
     }
 }
 
-fn format_modifier_prefix(modifiers: Option<ModifierList>) -> Doc {
-    let Some(modifiers) = modifiers else {
-        return jolt_fmt_ir::nil();
-    };
-
-    let annotations = modifiers.annotations().collect::<Vec<_>>();
-    let modifier_tokens = sorted_modifier_tokens(modifiers.modifier_tokens().collect());
-
-    let mut docs = Vec::new();
-    for annotation in annotations {
-        docs.push(format_token_sequence(&annotation.tokens()));
-        docs.push(hard_line());
-    }
-    if !modifier_tokens.is_empty() {
-        docs.push(jolt_fmt_ir::join(
-            text(" "),
-            modifier_tokens
-                .into_iter()
-                .map(|token| text(token.text().to_owned())),
-        ));
-        docs.push(text(" "));
-    }
-
-    concat(docs)
-}
-
-fn sorted_modifier_tokens(mut tokens: Vec<JavaSyntaxToken>) -> Vec<JavaSyntaxToken> {
-    tokens.sort_by_key(|token| modifier_order(token.kind()));
-    tokens
-}
-
-const fn modifier_order(kind: JavaSyntaxKind) -> u8 {
-    match kind {
-        JavaSyntaxKind::PublicKw => 0,
-        JavaSyntaxKind::ProtectedKw => 1,
-        JavaSyntaxKind::PrivateKw => 2,
-        JavaSyntaxKind::AbstractKw => 3,
-        JavaSyntaxKind::DefaultKw => 4,
-        JavaSyntaxKind::StaticKw => 5,
-        JavaSyntaxKind::FinalKw => 6,
-        JavaSyntaxKind::TransientKw => 7,
-        JavaSyntaxKind::VolatileKw => 8,
-        JavaSyntaxKind::SynchronizedKw => 9,
-        JavaSyntaxKind::NativeKw => 10,
-        JavaSyntaxKind::StrictfpKw => 13,
-        _ => u8::MAX,
-    }
-}
-
 fn effective_members(members: &[ClassBodyMember]) -> Vec<ClassBodyMember> {
     members
         .iter()
@@ -305,7 +259,7 @@ fn format_record_components(components: Option<jolt_java_syntax::RecordComponent
     parenthesized_comma_list(
         components
             .components()
-            .map(|component| format_token_sequence(&component.tokens()))
+            .map(|component| format_record_component(&component))
             .collect(),
     )
 }
@@ -466,23 +420,6 @@ impl FormattedMember {
     }
 }
 
-fn format_field_declaration(field: &FieldDeclaration) -> Doc {
-    concat([
-        format_modifier_prefix(field.modifiers()),
-        field.ty().map_or_else(
-            || format_token_sequence(&field.tokens()),
-            |ty| format_token_sequence(&ty.tokens()),
-        ),
-        text(" "),
-        field
-            .declarators()
-            .map_or_else(jolt_fmt_ir::nil, |declarators| {
-                format_token_sequence(&declarators.tokens())
-            }),
-        text(";"),
-    ])
-}
-
 fn format_constructor_declaration(constructor: &jolt_java_syntax::ConstructorDeclaration) -> Doc {
     let Some(name) = constructor.name() else {
         return format_token_sequence(&constructor.tokens());
@@ -499,7 +436,7 @@ fn format_constructor_declaration(constructor: &jolt_java_syntax::ConstructorDec
     }
     concat([
         group(concat([
-            format_modifier_prefix(constructor.modifiers()),
+            modifier_prefix(constructor.modifiers()),
             optional_tokens(constructor.type_parameters().map(|node| node.tokens())),
             text(name.text().to_owned()),
             format_parameters(constructor.parameters()),
@@ -525,7 +462,7 @@ fn format_method_declaration(method: &MethodDeclaration) -> Doc {
     }
     concat([
         group(concat([
-            format_modifier_prefix(method.modifiers()),
+            modifier_prefix(method.modifiers()),
             optional_tokens(method.type_parameters().map(|node| node.tokens())),
             method
                 .return_type()
@@ -547,7 +484,7 @@ fn format_parameters(parameters: Option<FormalParameterList>) -> Doc {
     parenthesized_comma_list(
         parameters
             .parameters()
-            .map(|parameter| format_token_sequence(&parameter.tokens()))
+            .map(|parameter| format_formal_parameter(&parameter))
             .collect(),
     )
 }
