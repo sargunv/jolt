@@ -1278,6 +1278,44 @@ fn declaration_parameter_lists_expose_entries_with_commas_and_parens() {
 }
 
 #[test]
+fn throws_clauses_expose_entries_with_commas_and_keyword() {
+    let syntax = parse_clean(
+        r"
+                class Accessors {
+                    void run() throws /* checked */ IOException, // io
+                        TimeoutException {
+                    }
+                }
+            ",
+    );
+    let throws = descendants::<ThrowsClause>(&syntax)
+        .into_iter()
+        .next()
+        .expect("throws clause");
+    let entries = throws.entries().collect::<Vec<_>>();
+
+    assert_eq!(
+        throws
+            .keyword()
+            .expect("throws keyword")
+            .trailing_comments()[0]
+            .text(),
+        "/* checked */"
+    );
+    assert_eq!(entries.len(), 2);
+    assert_eq!(entries[0].exception.source_text().trim(), "IOException");
+    assert_eq!(
+        semicolon_trailing_comment(entries[0].comma.clone()),
+        "// io"
+    );
+    assert_eq!(
+        entries[1].exception.source_text().trim(),
+        "TimeoutException"
+    );
+    assert!(entries[1].comma.is_none());
+}
+
+#[test]
 fn catch_type_lists_expose_union_entries() {
     let syntax = parse_clean(
         r"

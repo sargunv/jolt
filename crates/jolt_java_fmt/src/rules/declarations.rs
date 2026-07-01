@@ -7,7 +7,8 @@ use jolt_java_syntax::{
     EnumConstant, EnumDeclaration, ExtendsClause, FormalParameterList, FormalParameterListEntry,
     ImplementsClause, InterfaceBody, InterfaceBodyMember, InterfaceDeclaration, JavaComment,
     JavaSyntaxToken, MethodDeclaration, ModifierList, PermitsClause, RecordBody,
-    RecordComponentList, RecordComponentListEntry, RecordDeclaration, Type, TypeDeclaration,
+    RecordComponentList, RecordComponentListEntry, RecordDeclaration, ThrowsClause,
+    ThrowsClauseEntry, Type, TypeDeclaration,
 };
 
 use crate::helpers::blocks::{BodyItem, braced_body, join_body_items};
@@ -1459,24 +1460,74 @@ fn callable_declaration_with_body(prefix: Doc, header: Doc, body: Option<Doc>) -
     concat([prefix, group(header), text(" "), braced_body(body)])
 }
 
-fn format_throws_clause(throws: Option<jolt_java_syntax::ThrowsClause>) -> Doc {
+fn format_throws_clause(throws: Option<ThrowsClause>) -> Doc {
     let Some(throws) = throws else {
         return jolt_fmt_ir::nil();
     };
-    let exceptions = throws
-        .exceptions()
-        .map(|exception| format_type(&exception))
-        .collect::<Vec<_>>();
-    if exceptions.is_empty() {
+    let entries = throws.entries().collect::<Vec<_>>();
+    if entries.is_empty() {
         return jolt_fmt_ir::nil();
     }
 
-    let docs = vec![
+    jolt_fmt_ir::indent(concat([
         line(),
-        text("throws "),
-        join_docs(exceptions, &concat([text(","), line()])),
-    ];
-    jolt_fmt_ir::indent(concat(docs))
+        format_throws_keyword(&throws),
+        format_throws_keyword_spacing(&throws),
+        format_throws_entries(entries),
+    ]))
+}
+
+fn format_throws_keyword(throws: &ThrowsClause) -> Doc {
+    throws.keyword().map_or_else(
+        || text("throws"),
+        |keyword| {
+            concat([
+                format_leading_comments(&keyword),
+                text("throws"),
+                format_trailing_comments_before_line_break(&keyword),
+            ])
+        },
+    )
+}
+
+fn format_throws_keyword_spacing(throws: &ThrowsClause) -> Doc {
+    if throws
+        .keyword()
+        .is_some_and(|keyword| keyword.trailing_comments().iter().any(comment_forces_line))
+    {
+        hard_line()
+    } else {
+        text(" ")
+    }
+}
+
+fn format_throws_entries(entries: Vec<ThrowsClauseEntry>) -> Doc {
+    let mut docs = Vec::new();
+    let entries_len = entries.len();
+
+    for (index, entry) in entries.into_iter().enumerate() {
+        docs.push(format_type(&entry.exception));
+        if let Some(comma) = entry.comma {
+            docs.push(format_throws_separator(&comma));
+        } else if index + 1 < entries_len {
+            docs.push(line());
+        }
+    }
+
+    concat(docs)
+}
+
+fn format_throws_separator(comma: &JavaSyntaxToken) -> Doc {
+    concat([
+        format_leading_comments(comma),
+        text(","),
+        format_trailing_comments_before_line_break(comma),
+        if comma.trailing_comments().iter().any(comment_forces_line) {
+            hard_line()
+        } else {
+            line()
+        },
+    ])
 }
 
 fn format_constructor_body(body: &jolt_java_syntax::ConstructorBody) -> Option<Doc> {

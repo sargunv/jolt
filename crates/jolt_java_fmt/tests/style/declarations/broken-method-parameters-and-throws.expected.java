@@ -4,7 +4,7 @@ class Runner {
     ExecutionContext executionContext,
     RetryPolicy retryPolicy
   )
-    throws IOException,
+    throws /* checked */ IOException, // io
     TimeoutException {
   }
 }
