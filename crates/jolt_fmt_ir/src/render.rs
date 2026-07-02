@@ -3,8 +3,7 @@ use std::error::Error;
 use std::fmt;
 
 use crate::document::{
-    Doc, DocKind, FillEntry, FlatLine, Group, GroupId, IfBreak, IndentIfBreak, Line, LineMode,
-    LiteralText,
+    Doc, DocKind, FillEntry, FlatLine, Group, GroupId, Line, LineMode, LiteralText,
 };
 use crate::validation::validate_doc;
 use crate::width::{TextWidth, add_width, has_line_terminator, push_repeated};
@@ -107,6 +106,14 @@ struct GroupFrame {
     is_broken: bool,
 }
 
+#[derive(Clone, Copy, Debug)]
+enum PrintCommand<'a> {
+    Doc(&'a Doc, Mode),
+    EndIndent(i16),
+    EndAlign(i16),
+    EndGroup,
+}
+
 struct Renderer {
     options: RenderOptions,
     output: String,
@@ -119,6 +126,7 @@ struct Renderer {
     group_stack: Vec<GroupFrame>,
     line_suffixes: Vec<Doc>,
     flushing_suffixes: bool,
+    measured_group_fits: bool,
     stats: RenderStats,
 }
 
@@ -136,6 +144,7 @@ impl Renderer {
             group_stack: Vec::new(),
             line_suffixes: Vec::new(),
             flushing_suffixes: false,
+            measured_group_fits: false,
             stats: RenderStats::default(),
         }
     }
@@ -150,6 +159,34 @@ impl Renderer {
     }
 
     fn render_doc(&mut self, doc: &Doc, mode: Mode) -> Result<(), RenderError> {
+        let mut stack = vec![PrintCommand::Doc(doc, mode)];
+        self.render_commands(&mut stack)
+    }
+
+    fn render_commands(&mut self, stack: &mut Vec<PrintCommand<'_>>) -> Result<(), RenderError> {
+        while let Some(command) = stack.pop() {
+            match command {
+                PrintCommand::Doc(doc, mode) => self.render_command_doc(doc, mode, stack)?,
+                PrintCommand::EndIndent(levels) => {
+                    self.indent_levels -= i32::from(levels);
+                }
+                PrintCommand::EndAlign(spaces) => {
+                    self.align_spaces -= i32::from(spaces);
+                }
+                PrintCommand::EndGroup => {
+                    self.group_stack.pop();
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn render_command_doc<'a>(
+        &mut self,
+        doc: &'a Doc,
+        mode: Mode,
+        stack: &mut Vec<PrintCommand<'a>>,
+    ) -> Result<(), RenderError> {
         match doc.kind() {
             DocKind::Nil | DocKind::BreakParent => Ok(()),
             DocKind::Text(text) => {
@@ -161,29 +198,47 @@ impl Renderer {
                 Ok(())
             }
             DocKind::Concat(docs) => {
-                for doc in docs {
-                    self.render_doc(doc, mode)?;
+                for doc in docs.iter().rev() {
+                    stack.push(PrintCommand::Doc(doc, mode));
                 }
                 Ok(())
             }
-            DocKind::Group(group) => self.render_group(group),
+            DocKind::Group(group) => self.render_group(group, mode, stack),
             DocKind::Fill(entries) => self.render_fill(entries, mode),
             DocKind::Indent(indent) => {
                 self.indent_levels += i32::from(indent.levels);
-                let result = self.render_doc(&indent.contents, mode);
-                self.indent_levels -= i32::from(indent.levels);
-                result
+                stack.push(PrintCommand::EndIndent(indent.levels));
+                stack.push(PrintCommand::Doc(&indent.contents, mode));
+                Ok(())
             }
             DocKind::Align(align) => {
                 self.align_spaces += i32::from(align.spaces);
-                let result = self.render_doc(&align.contents, mode);
-                self.align_spaces -= i32::from(align.spaces);
-                result
+                stack.push(PrintCommand::EndAlign(align.spaces));
+                stack.push(PrintCommand::Doc(&align.contents, mode));
+                Ok(())
             }
             DocKind::Line(line) => self.render_line(line, mode),
-            DocKind::IfBreak(if_break) => self.render_if_break(if_break, mode),
+            DocKind::IfBreak(if_break) => {
+                let is_broken = self.group_break_state(if_break.group_id)?;
+                stack.push(PrintCommand::Doc(
+                    if is_broken {
+                        &if_break.breaks
+                    } else {
+                        &if_break.flat
+                    },
+                    mode,
+                ));
+                Ok(())
+            }
             DocKind::IndentIfBreak(indent_if_break) => {
-                self.render_indent_if_break(indent_if_break, mode)
+                let is_broken = self.group_break_state(Some(indent_if_break.group_id))?;
+                let should_indent = is_broken != indent_if_break.negate;
+                if should_indent {
+                    self.indent_levels += 1;
+                    stack.push(PrintCommand::EndIndent(1));
+                }
+                stack.push(PrintCommand::Doc(&indent_if_break.contents, mode));
+                Ok(())
             }
             DocKind::LineSuffix(doc) => {
                 self.stats.line_suffix_count += 1;
@@ -194,11 +249,22 @@ impl Renderer {
         }
     }
 
-    fn render_group(&mut self, group: &Group) -> Result<(), RenderError> {
+    fn render_group<'a>(
+        &mut self,
+        group: &'a Group,
+        mode: Mode,
+        stack: &mut Vec<PrintCommand<'a>>,
+    ) -> Result<(), RenderError> {
         let is_broken = if group.should_break {
             true
+        } else if mode == Mode::Flat && self.measured_group_fits {
+            false
         } else {
-            !self.group_fits(group)?
+            let fits = self.group_fits(group, stack)?;
+            if fits {
+                self.measured_group_fits = true;
+            }
+            !fits
         };
         self.stats.group_count += 1;
         if is_broken {
@@ -211,17 +277,21 @@ impl Renderer {
             id: group.id,
             is_broken,
         });
-        let result = self.render_doc(
+        stack.push(PrintCommand::EndGroup);
+        stack.push(PrintCommand::Doc(
             &group.contents,
             if is_broken { Mode::Break } else { Mode::Flat },
-        );
-        self.group_stack.pop();
-        result
+        ));
+        Ok(())
     }
 
-    fn group_fits(&self, group: &Group) -> Result<bool, RenderError> {
-        let mut checker = FitChecker::from_renderer(self)?;
-        checker.fit_group_flat(group)
+    fn group_fits<'a>(
+        &self,
+        group: &'a Group,
+        stack: &[PrintCommand<'a>],
+    ) -> Result<bool, RenderError> {
+        let mut checker = FitChecker::from_renderer(self);
+        checker.fit_group_flat_with_stack(group, stack)
     }
 
     fn render_fill(&mut self, entries: &[FillEntry], mode: Mode) -> Result<(), RenderError> {
@@ -237,7 +307,7 @@ impl Renderer {
     }
 
     fn fill_pair_fits(&self, separator: &Doc, next_content: &Doc) -> Result<bool, RenderError> {
-        let mut checker = FitChecker::from_renderer(self)?;
+        let mut checker = FitChecker::from_renderer(self);
         let docs = [separator, next_content];
         for doc in docs {
             if !checker.fits_doc(doc, Mode::Flat)? {
@@ -259,32 +329,6 @@ impl Renderer {
                 self.write_newline(line.indent_delta, 1)
             }
         }
-    }
-
-    fn render_if_break(&mut self, if_break: &IfBreak, mode: Mode) -> Result<(), RenderError> {
-        let is_broken = self.group_break_state(if_break.group_id)?;
-        if is_broken {
-            self.render_doc(&if_break.breaks, mode)
-        } else {
-            self.render_doc(&if_break.flat, mode)
-        }
-    }
-
-    fn render_indent_if_break(
-        &mut self,
-        indent_if_break: &IndentIfBreak,
-        mode: Mode,
-    ) -> Result<(), RenderError> {
-        let is_broken = self.group_break_state(Some(indent_if_break.group_id))?;
-        let should_indent = is_broken != indent_if_break.negate;
-        if should_indent {
-            self.indent_levels += 1;
-        }
-        let result = self.render_doc(&indent_if_break.contents, mode);
-        if should_indent {
-            self.indent_levels -= 1;
-        }
-        result
     }
 
     fn group_break_state(&self, group_id: Option<GroupId>) -> Result<bool, RenderError> {
@@ -341,6 +385,7 @@ impl Renderer {
             self.line += u32::try_from(line_index).expect("literal line count fits u32");
             self.column = final_width;
             self.max_column = self.max_column.max(self.column);
+            self.measured_group_fits = false;
         }
     }
 
@@ -359,6 +404,7 @@ impl Renderer {
             self.output.push_str(self.options.line_ending.as_str());
             self.line += 1;
             self.column = TextWidth::ZERO;
+            self.measured_group_fits = false;
         }
         self.write_indent(indent_delta);
         Ok(())
@@ -460,77 +506,117 @@ struct FitChecker {
     align_spaces: i32,
     group_modes: BTreeMap<GroupId, bool>,
     group_stack: Vec<GroupFrame>,
+    line_suffixes: Vec<Doc>,
 }
 
 impl FitChecker {
-    fn from_renderer(renderer: &Renderer) -> Result<Self, RenderError> {
-        let mut checker = Self {
+    fn from_renderer(renderer: &Renderer) -> Self {
+        Self {
             options: renderer.options,
             column: renderer.column,
             indent_levels: renderer.indent_levels,
             align_spaces: renderer.align_spaces,
             group_modes: renderer.group_modes.clone(),
             group_stack: renderer.group_stack.clone(),
-        };
-        for suffix in &renderer.line_suffixes {
-            if !checker.fit_doc(suffix, Mode::Flat)? {
-                checker.column = add_width(checker.options.line_width, TextWidth::new(1));
-                break;
-            }
+            line_suffixes: renderer.line_suffixes.clone(),
         }
-        Ok(checker)
     }
 
     fn fits_doc(&mut self, doc: &Doc, mode: Mode) -> Result<bool, RenderError> {
-        Ok(self.fit_doc(doc, mode)? && self.column <= self.options.line_width)
+        let mut stack = vec![PrintCommand::Doc(doc, mode)];
+        self.fits_stack(&mut stack)
     }
 
-    fn fit_doc(&mut self, doc: &Doc, mode: Mode) -> Result<bool, RenderError> {
-        match doc.kind() {
-            DocKind::Nil | DocKind::LineSuffixBoundary | DocKind::BreakParent => {
-                Ok(!matches!(doc.kind(), DocKind::BreakParent))
+    fn fits_stack(&mut self, stack: &mut Vec<PrintCommand<'_>>) -> Result<bool, RenderError> {
+        while let Some(command) = stack.pop() {
+            match self.fit_command(command, stack)? {
+                FitResult::Continue => {}
+                FitResult::Done => return Ok(true),
+                FitResult::No => return Ok(false),
             }
-            DocKind::Text(text) => Ok(self.add_width(text.width)),
+        }
+
+        Ok(self.flush_line_suffixes()? && self.column <= self.options.line_width)
+    }
+
+    fn fit_command<'a>(
+        &mut self,
+        command: PrintCommand<'a>,
+        stack: &mut Vec<PrintCommand<'a>>,
+    ) -> Result<FitResult, RenderError> {
+        match command {
+            PrintCommand::Doc(doc, mode) => self.fit_doc(doc, mode, stack),
+            PrintCommand::EndIndent(levels) => {
+                self.indent_levels -= i32::from(levels);
+                Ok(FitResult::Continue)
+            }
+            PrintCommand::EndAlign(spaces) => {
+                self.align_spaces -= i32::from(spaces);
+                Ok(FitResult::Continue)
+            }
+            PrintCommand::EndGroup => {
+                self.group_stack.pop();
+                Ok(FitResult::Continue)
+            }
+        }
+    }
+
+    fn fit_doc<'a>(
+        &mut self,
+        doc: &'a Doc,
+        mode: Mode,
+        stack: &mut Vec<PrintCommand<'a>>,
+    ) -> Result<FitResult, RenderError> {
+        match doc.kind() {
+            DocKind::Nil => Ok(FitResult::Continue),
+            DocKind::BreakParent => Ok(FitResult::No),
+            DocKind::LineSuffixBoundary => {
+                if self.flush_line_suffixes()? {
+                    Ok(FitResult::Continue)
+                } else {
+                    Ok(FitResult::No)
+                }
+            }
+            DocKind::Text(text) => Ok(self.width_result(text.width)),
             DocKind::LiteralText(text) => {
                 if has_line_terminator(&text.text) {
-                    Ok(false)
+                    Ok(FitResult::No)
                 } else {
-                    Ok(self.add_width(text.final_width()))
+                    Ok(self.width_result(text.final_width()))
                 }
             }
             DocKind::Concat(docs) => {
-                for doc in docs {
-                    if !self.fit_doc(doc, mode)? {
-                        return Ok(false);
-                    }
+                for doc in docs.iter().rev() {
+                    stack.push(PrintCommand::Doc(doc, mode));
                 }
-                Ok(true)
+                Ok(FitResult::Continue)
             }
-            DocKind::Group(group) => self.fit_group(group),
-            DocKind::Fill(entries) => self.fit_fill(entries, mode),
+            DocKind::Group(group) => Ok(self.fit_group(group, mode, stack)),
+            DocKind::Fill(entries) => self.fit_fill(entries, mode, stack),
             DocKind::Indent(indent) => {
                 self.indent_levels += i32::from(indent.levels);
-                let result = self.fit_doc(&indent.contents, mode);
-                self.indent_levels -= i32::from(indent.levels);
-                result
+                stack.push(PrintCommand::EndIndent(indent.levels));
+                stack.push(PrintCommand::Doc(&indent.contents, mode));
+                Ok(FitResult::Continue)
             }
             DocKind::Align(align) => {
                 self.align_spaces += i32::from(align.spaces);
-                let result = self.fit_doc(&align.contents, mode);
-                self.align_spaces -= i32::from(align.spaces);
-                result
+                stack.push(PrintCommand::EndAlign(align.spaces));
+                stack.push(PrintCommand::Doc(&align.contents, mode));
+                Ok(FitResult::Continue)
             }
-            DocKind::Line(line) => Ok(self.fit_line(line, mode)),
+            DocKind::Line(line) => self.fit_line(line, mode),
             DocKind::IfBreak(if_break) => {
                 let is_broken = self.group_break_state(if_break.group_id).unwrap_or(false);
-                self.fit_doc(
+                stack.push(PrintCommand::Doc(
                     if is_broken {
                         &if_break.breaks
                     } else {
                         &if_break.flat
                     },
                     mode,
-                )
+                ));
+                Ok(FitResult::Continue)
             }
             DocKind::IndentIfBreak(indent_if_break) => {
                 let is_broken = self
@@ -539,25 +625,48 @@ impl FitChecker {
                 let should_indent = is_broken != indent_if_break.negate;
                 if should_indent {
                     self.indent_levels += 1;
+                    stack.push(PrintCommand::EndIndent(1));
                 }
-                let result = self.fit_doc(&indent_if_break.contents, mode);
-                if should_indent {
-                    self.indent_levels -= 1;
-                }
-                result
+                stack.push(PrintCommand::Doc(&indent_if_break.contents, mode));
+                Ok(FitResult::Continue)
             }
-            DocKind::LineSuffix(doc) => self.fit_doc(doc, Mode::Flat),
+            DocKind::LineSuffix(doc) => {
+                self.line_suffixes.push((**doc).clone());
+                Ok(FitResult::Continue)
+            }
         }
     }
 
-    fn fit_group(&mut self, group: &Group) -> Result<bool, RenderError> {
-        if group.should_break {
-            return Ok(false);
+    fn fit_group<'a>(
+        &mut self,
+        group: &'a Group,
+        mode: Mode,
+        stack: &mut Vec<PrintCommand<'a>>,
+    ) -> FitResult {
+        if mode == Mode::Flat && group.should_break {
+            return FitResult::No;
         }
-        self.fit_group_flat(group)
+        let is_broken = mode == Mode::Break || group.should_break;
+        if let Some(id) = group.id {
+            self.group_modes.insert(id, is_broken);
+        }
+        self.group_stack.push(GroupFrame {
+            id: group.id,
+            is_broken,
+        });
+        stack.push(PrintCommand::EndGroup);
+        stack.push(PrintCommand::Doc(
+            &group.contents,
+            if is_broken { Mode::Break } else { Mode::Flat },
+        ));
+        FitResult::Continue
     }
 
-    fn fit_group_flat(&mut self, group: &Group) -> Result<bool, RenderError> {
+    fn fit_group_flat_with_stack<'a>(
+        &mut self,
+        group: &'a Group,
+        stack: &[PrintCommand<'a>],
+    ) -> Result<bool, RenderError> {
         if let Some(id) = group.id {
             self.group_modes.insert(id, false);
         }
@@ -565,51 +674,81 @@ impl FitChecker {
             id: group.id,
             is_broken: false,
         });
-        let result = self.fits_doc(&group.contents, Mode::Flat);
-        self.group_stack.pop();
-        result
+        let mut fit_stack = stack.to_vec();
+        fit_stack.push(PrintCommand::EndGroup);
+        fit_stack.push(PrintCommand::Doc(&group.contents, Mode::Flat));
+        self.fits_stack(&mut fit_stack)
     }
 
-    fn fit_fill(&mut self, entries: &[FillEntry], mode: Mode) -> Result<bool, RenderError> {
-        for (index, entry) in entries.iter().enumerate() {
-            if !self.fit_doc(&entry.content, mode)? {
-                return Ok(false);
-            }
-            let Some(separator) = &entry.separator else {
-                continue;
-            };
-            let mut pair = self.clone();
-            let next_fits = if let Some(next) = entries.get(index + 1) {
-                pair.fit_doc(separator, Mode::Flat)?
-                    && pair.fit_doc(&next.content, Mode::Flat)?
-                    && pair.column <= pair.options.line_width
-            } else {
-                false
-            };
-            if next_fits {
-                *self = pair;
-            } else if !self.fit_doc(separator, Mode::Break)? {
-                return Ok(false);
-            }
+    fn fit_fill<'a>(
+        &mut self,
+        entries: &'a [FillEntry],
+        mode: Mode,
+        stack: &mut Vec<PrintCommand<'a>>,
+    ) -> Result<FitResult, RenderError> {
+        if entries.is_empty() {
+            return Ok(FitResult::Continue);
         }
-        Ok(true)
+
+        for (index, entry) in entries.iter().enumerate().rev() {
+            if let Some(separator) = &entry.separator {
+                let separator_mode = if let Some(next) = entries.get(index + 1) {
+                    let mut pair = self.clone();
+                    if pair.fits_doc(separator, Mode::Flat)?
+                        && pair.fits_doc(&next.content, Mode::Flat)?
+                    {
+                        Mode::Flat
+                    } else {
+                        Mode::Break
+                    }
+                } else {
+                    Mode::Break
+                };
+                stack.push(PrintCommand::Doc(separator, separator_mode));
+            }
+            stack.push(PrintCommand::Doc(&entry.content, mode));
+        }
+        Ok(FitResult::Continue)
     }
 
-    fn fit_line(&mut self, line: &Line, mode: Mode) -> bool {
+    fn fit_line(&mut self, line: &Line, mode: Mode) -> Result<FitResult, RenderError> {
         match (mode, line.mode) {
-            (Mode::Flat, LineMode::Soft | LineMode::SoftOrSpace) => self.fit_flat_line(&line.flat),
-            (_, LineMode::Hard | LineMode::Empty) if !line.propagate_break => true,
-            (_, LineMode::Hard | LineMode::Empty)
-            | (Mode::Break, LineMode::Soft | LineMode::SoftOrSpace) => false,
+            (Mode::Flat, LineMode::Soft | LineMode::SoftOrSpace) => {
+                Ok(self.fit_flat_line(&line.flat))
+            }
+            (Mode::Flat, LineMode::Hard | LineMode::Empty) if line.propagate_break => {
+                Ok(FitResult::No)
+            }
+            (Mode::Flat, LineMode::Hard | LineMode::Empty) | (Mode::Break, _) => {
+                if self.flush_line_suffixes()? && self.column <= self.options.line_width {
+                    Ok(FitResult::Done)
+                } else {
+                    Ok(FitResult::No)
+                }
+            }
         }
     }
 
-    fn fit_flat_line(&mut self, flat: &FlatLine) -> bool {
+    fn fit_flat_line(&mut self, flat: &FlatLine) -> FitResult {
         match flat {
-            FlatLine::Empty => true,
-            FlatLine::Space => self.add_width(TextWidth::new(1)),
-            FlatLine::Text(_, width) => self.add_width(*width),
+            FlatLine::Empty => FitResult::Continue,
+            FlatLine::Space => self.width_result(TextWidth::new(1)),
+            FlatLine::Text(_, width) => self.width_result(*width),
         }
+    }
+
+    fn flush_line_suffixes(&mut self) -> Result<bool, RenderError> {
+        while !self.line_suffixes.is_empty() {
+            let suffixes = std::mem::take(&mut self.line_suffixes);
+            for suffix in &suffixes {
+                let mut stack = vec![PrintCommand::Doc(suffix, Mode::Flat)];
+                if !self.fits_stack(&mut stack)? {
+                    return Ok(false);
+                }
+            }
+        }
+
+        Ok(self.column <= self.options.line_width)
     }
 
     fn group_break_state(&self, group_id: Option<GroupId>) -> Result<bool, RenderError> {
@@ -629,8 +768,19 @@ impl FitChecker {
         }
     }
 
-    fn add_width(&mut self, width: TextWidth) -> bool {
+    fn width_result(&mut self, width: TextWidth) -> FitResult {
         self.column = add_width(self.column, width);
-        self.column <= self.options.line_width
+        if self.column <= self.options.line_width {
+            FitResult::Continue
+        } else {
+            FitResult::No
+        }
     }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum FitResult {
+    Continue,
+    Done,
+    No,
 }

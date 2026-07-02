@@ -40,6 +40,46 @@ fn group_expands_when_width_is_exceeded() {
 }
 
 #[test]
+fn group_fit_includes_following_same_line_text() {
+    let doc = concat([group(concat([text("ab"), line(), text("cd")])), text(";")]);
+
+    assert_eq!(render_text(&doc, 5), "ab\ncd;");
+}
+
+#[test]
+fn group_fit_stops_at_following_line_boundary() {
+    let doc = concat([
+        group(concat([text("ab"), line(), text("cd")])),
+        hard_line(),
+        text("after"),
+    ]);
+
+    assert_eq!(render_text(&doc, 5), "ab cd\nafter");
+}
+
+#[test]
+fn nested_group_remeasures_on_continuation_line_after_boundary_break() {
+    let doc = concat([
+        group(concat([
+            text("lhs ="),
+            indent(concat([
+                line(),
+                group(concat([
+                    text("condition"),
+                    line(),
+                    text("? true"),
+                    line(),
+                    text(": false"),
+                ])),
+            ])),
+        ])),
+        text(";"),
+    ]);
+
+    assert_eq!(render_text(&doc, 30), "lhs =\n  condition ? true : false;");
+}
+
+#[test]
 fn nested_groups_remeasure_after_hard_lines() {
     let doc = group(concat([
         text("a"),
@@ -390,6 +430,16 @@ fn pending_line_suffix_width_affects_group_fitting() {
     ]);
 
     assert_eq!(render_text(&doc, 7), "abxxx\ncd");
+}
+
+#[test]
+fn future_line_suffix_width_affects_group_fitting() {
+    let doc = concat([
+        group(concat([text("ab"), line(), text("cd")])),
+        line_suffix(text("x")),
+    ]);
+
+    assert_eq!(render_text(&doc, 5), "ab\ncdx");
 }
 
 #[test]
