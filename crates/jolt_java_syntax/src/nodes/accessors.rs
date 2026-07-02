@@ -3316,6 +3316,16 @@ impl BasicForStatement {
     }
 
     #[must_use]
+    pub fn first_semicolon(&self) -> Option<JavaSyntaxToken> {
+        nth_child_token(&self.syntax, JavaSyntaxKind::Semicolon, 0)
+    }
+
+    #[must_use]
+    pub fn second_semicolon(&self) -> Option<JavaSyntaxToken> {
+        nth_child_token(&self.syntax, JavaSyntaxKind::Semicolon, 1)
+    }
+
+    #[must_use]
     pub fn initializer(&self) -> Option<ForInitializer> {
         child(&self.syntax)
     }

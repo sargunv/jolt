@@ -3,8 +3,8 @@ use super::{
     BasicForStatement, DoStatement, Doc, EnhancedForStatement, ForInitializer, ForStatement,
     ForUpdate, IfStatement, JavaFormatter, JavaSyntaxToken, Statement, StatementBody,
     StatementExpressionEntry, StatementExpressionList, SynchronizedStatement, WhileStatement,
-    concat, empty_block, format_block, format_expression, format_leading_comments,
-    format_local_variable_declaration, format_statement_semicolon,
+    comment_forces_line, concat, empty_block, format_block, format_comment, format_expression,
+    format_leading_comments, format_local_variable_declaration, format_statement_semicolon,
     format_trailing_comments_before_line_break, group, hard_line, indent, line, semicolon_list,
     soft_line, statement_body_as_block, statement_body_as_block_with_trailing_comments,
     statement_body_trailing_comments_force_line, text, trailing_comments_force_line,
@@ -205,8 +205,9 @@ fn format_basic_for_statement(statement: &BasicForStatement, formatter: &JavaFor
             format_statement_keyword(statement.keyword(), "for"),
             text(" "),
             format_condition_open_paren(open.as_ref()),
-            format_condition_open_spacing(open.as_ref()),
-            text(";;"),
+            format_inline_open_paren_spacing(open.as_ref()),
+            format_for_header_semicolon(statement.first_semicolon()),
+            format_for_header_semicolon(statement.second_semicolon()),
             format_inline_close_paren(close.as_ref()),
         ])
     } else {
@@ -303,6 +304,54 @@ fn format_inline_close_paren(close: Option<&JavaSyntaxToken>) -> Doc {
             },
         ),
     ])
+}
+
+fn format_inline_open_paren_spacing(open: Option<&JavaSyntaxToken>) -> Doc {
+    let Some(open) = open else {
+        return jolt_fmt_ir::nil();
+    };
+
+    if open.trailing_comments().is_empty() {
+        return jolt_fmt_ir::nil();
+    }
+
+    concat([
+        format_trailing_comments_before_line_break(open),
+        if trailing_comments_force_line(open) {
+            hard_line()
+        } else {
+            text(" ")
+        },
+    ])
+}
+
+fn format_for_header_semicolon(semicolon: Option<JavaSyntaxToken>) -> Doc {
+    let Some(semicolon) = semicolon else {
+        return text(";");
+    };
+
+    concat([
+        format_for_header_semicolon_leading_comments(&semicolon),
+        text(";"),
+        format_trailing_comments_before_line_break(&semicolon),
+        if trailing_comments_force_line(&semicolon) {
+            hard_line()
+        } else {
+            jolt_fmt_ir::nil()
+        },
+    ])
+}
+
+fn format_for_header_semicolon_leading_comments(semicolon: &JavaSyntaxToken) -> Doc {
+    let mut docs = Vec::new();
+    for comment in semicolon.leading_comments() {
+        docs.push(text(" "));
+        docs.push(format_comment(&comment));
+        if comment_forces_line(&comment) {
+            docs.push(hard_line());
+        }
+    }
+    concat(docs)
 }
 
 fn format_for_header_close_paren(close: Option<&JavaSyntaxToken>) -> Doc {

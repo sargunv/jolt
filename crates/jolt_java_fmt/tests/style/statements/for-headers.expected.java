@@ -27,5 +27,15 @@ class Example {
     for (;;) {
       run();
     }
+    for ( /* keep going */ ;;) {
+      run();
+    }
+    for ( // keep going
+    ;;) {
+      run();
+    }
+    for (;; /* close */) {
+      run();
+    }
   }
 }

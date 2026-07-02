@@ -137,27 +137,6 @@ Why this needs a formatter decision:
 - The formatter needs to identify stable dotted-name prefixes without losing
   comments around dots or changing method-chain behavior.
 
-## Empty Basic For Headers
-
-Status: failing style fixture; formatter backlog.
-
-Current fixture:
-
-- `crates/jolt_java_fmt/tests/style/statements/for-headers.input.java`
-
-Observed gap:
-
-- `for (;;) { ... }` currently breaks as a multiline header with the semicolons
-  misindented, even though the empty basic-for header should always fit as
-  `for (;;) {`.
-
-Why this needs a formatter decision:
-
-- Empty `for` headers are a special compact form: there are no initializer,
-  condition, or update groups to justify multiline layout.
-- This should be fixed without weakening multiline handling for non-empty `for`
-  headers with comments or long clauses.
-
 ## Mixed-Precedence Binary Expressions
 
 Status: formatter backlog.

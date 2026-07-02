@@ -14,38 +14,30 @@ public class EmptyStament {
   }
 
   public void simpleForWithEmptyStatement() {
-    for (
-    ;;) {
+    for (;;) {
     }
 
-    for (
-    ;;) /*test*/ {
+    for (;;) /*test*/ {
     }
 
-    for (
-    ;;) {
+    for (;;) {
     }
 
-    for (
-    ;;) /*test*/ {
+    for (;;) /*test*/ {
     }
   }
 
   public void simpleForWithEmptyStatement() {
-    for (
-    ;;) {
+    for (;;) {
     }
 
-    for (
-    ;;) /*test*/ {
+    for (;;) /*test*/ {
     }
 
-    for (
-    ;;) {
+    for (;;) {
     }
 
-    for (
-    ;;) /*test*/ {
+    for (;;) /*test*/ {
     }
   }
 
