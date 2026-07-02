@@ -1,0 +1,165 @@
+use super::{
+    BlockStatement, BodyItem, ConstructorInvocation, Doc, JavaFormatter, JavaSyntaxToken, Range,
+    concat, format_argument_list, format_block_statement_item, format_construct_leading_comments,
+    format_dangling_comments, format_expression, format_name, format_statement_semicolon,
+    format_token_text, format_type_argument_list, formatter_ignore_ranges,
+    formatter_ignore_run_doc, formatter_ignore_runs, join_body_items,
+    non_formatter_control_comments, relative_token_range, text,
+};
+
+pub(super) fn format_constructor_body(
+    body: &jolt_java_syntax::ConstructorBody,
+    formatter: &JavaFormatter<'_>,
+) -> Option<Doc> {
+    let elements = constructor_body_elements(body);
+    let element_ranges = elements
+        .iter()
+        .map(|element| {
+            constructor_body_element_token_range(element, body.text_range().start().get())
+        })
+        .collect::<Vec<_>>();
+    let ignored_ranges = formatter_ignore_ranges(&body.source_text());
+    let ignored_runs = formatter_ignore_runs(&ignored_ranges, &element_ranges);
+    let mut items = Vec::new();
+    items.extend(format_constructor_body_open_dangling_comments(
+        body.open_brace(),
+    ));
+    let mut ignored_index = 0;
+    let mut skip_index = 0;
+
+    for (element_index, element) in elements.iter().enumerate() {
+        while ignored_index < ignored_runs.len()
+            && ignored_runs[ignored_index].insert_index == element_index
+        {
+            let run = &ignored_runs[ignored_index];
+            items.push(BodyItem::new(formatter_ignore_run_doc(run), false));
+            ignored_index += 1;
+        }
+
+        while skip_index < ignored_runs.len() && ignored_runs[skip_index].skip_end <= element_index
+        {
+            skip_index += 1;
+        }
+
+        if skip_index < ignored_runs.len() && ignored_runs[skip_index].skips(element_index) {
+            continue;
+        }
+
+        let Some(mut item) = format_constructor_body_element(element, formatter) else {
+            continue;
+        };
+        if skip_index > 0 && ignored_runs[skip_index - 1].skip_end == element_index {
+            item = item.without_blank_line_before();
+        }
+        items.push(item);
+    }
+
+    while ignored_index < ignored_runs.len() {
+        let run = &ignored_runs[ignored_index];
+        items.push(BodyItem::new(formatter_ignore_run_doc(run), false));
+        ignored_index += 1;
+    }
+    items.extend(format_constructor_body_close_dangling_comments(
+        body.close_brace(),
+    ));
+
+    (!items.is_empty()).then(|| join_body_items(items))
+}
+
+fn format_constructor_body_open_dangling_comments(
+    open: Option<JavaSyntaxToken>,
+) -> Option<BodyItem> {
+    let comments = non_formatter_control_comments(open?.trailing_comments());
+    (!comments.is_empty()).then(|| BodyItem::new(format_dangling_comments(comments), false))
+}
+
+fn format_constructor_body_close_dangling_comments(
+    close: Option<JavaSyntaxToken>,
+) -> Option<BodyItem> {
+    let comments = non_formatter_control_comments(close?.leading_comments());
+    (!comments.is_empty()).then(|| BodyItem::new(format_dangling_comments(comments), false))
+}
+
+fn constructor_body_elements(
+    body: &jolt_java_syntax::ConstructorBody,
+) -> Vec<ConstructorBodyElement> {
+    body.invocation()
+        .into_iter()
+        .map(ConstructorBodyElement::Invocation)
+        .chain(
+            body.block_statements()
+                .map(ConstructorBodyElement::BlockStatement),
+        )
+        .collect()
+}
+
+fn constructor_body_element_token_range(
+    element: &ConstructorBodyElement,
+    body_start: usize,
+) -> Option<Range<usize>> {
+    let tokens = element.tokens();
+    relative_token_range(&tokens, body_start)
+}
+
+fn format_constructor_body_element(
+    element: &ConstructorBodyElement,
+    formatter: &JavaFormatter<'_>,
+) -> Option<BodyItem> {
+    match element {
+        ConstructorBodyElement::Invocation(invocation) => Some(BodyItem::new(
+            format_constructor_invocation(invocation, formatter),
+            invocation.starts_after_blank_line(),
+        )),
+        ConstructorBodyElement::BlockStatement(statement) => {
+            format_block_statement_item(statement, formatter)
+        }
+    }
+}
+
+fn format_constructor_invocation(
+    invocation: &ConstructorInvocation,
+    formatter: &JavaFormatter<'_>,
+) -> Doc {
+    concat([
+        format_construct_leading_comments(formatter.comments(), &invocation.tokens()),
+        format_constructor_invocation_qualifier(invocation, formatter),
+        invocation
+            .type_arguments()
+            .map_or_else(jolt_fmt_ir::nil, |arguments| {
+                format_type_argument_list(&arguments, formatter)
+            }),
+        invocation
+            .target()
+            .map_or_else(jolt_fmt_ir::nil, |target| format_token_text(target.text())),
+        format_argument_list(invocation.arguments(), formatter),
+        format_statement_semicolon(invocation.semicolon()),
+    ])
+}
+
+fn format_constructor_invocation_qualifier(
+    invocation: &ConstructorInvocation,
+    formatter: &JavaFormatter<'_>,
+) -> Doc {
+    if let Some(name) = invocation.qualifier_name() {
+        return concat([format_name(&name), text(".")]);
+    }
+    invocation
+        .qualifier_expression()
+        .map_or_else(jolt_fmt_ir::nil, |expression| {
+            concat([format_expression(&expression, formatter), text(".")])
+        })
+}
+
+enum ConstructorBodyElement {
+    Invocation(ConstructorInvocation),
+    BlockStatement(BlockStatement),
+}
+
+impl ConstructorBodyElement {
+    fn tokens(&self) -> Vec<jolt_java_syntax::JavaSyntaxToken> {
+        match self {
+            Self::Invocation(invocation) => invocation.tokens(),
+            Self::BlockStatement(statement) => statement.tokens(),
+        }
+    }
+}
