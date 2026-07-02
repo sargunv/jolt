@@ -1534,6 +1534,11 @@ impl VariableDeclarator {
 
 impl VariableInitializer {
     #[must_use]
+    pub fn operator(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Assign)
+    }
+
+    #[must_use]
     pub fn value(&self) -> Option<VariableInitializerValue> {
         child_family(&self.syntax)
     }

@@ -1,15 +1,14 @@
 use super::{
     AnnotationInterfaceDeclaration, ClassDeclaration, CommaListItem, Doc, EnumDeclaration,
     ExtendsClause, ImplementsClause, InterfaceDeclaration, JavaFormatter, JavaSyntaxToken,
-    ModifierList, PermitsClause, PermitsClauseEntry, RecordComponentList, RecordDeclaration, Type,
+    ModifierList, PermitsClause, PermitsClauseEntry, RecordComponentList, RecordDeclaration,
     TypeClauseEntry, comment_forces_line, concat, declaration_with_body,
     format_annotation_interface_body, format_class_body, format_construct_leading_comments,
     format_enum_body_contents, format_enum_constant_entry, format_interface_body,
     format_leading_comment_list, format_leading_comments, format_modifier_prefix, format_name,
     format_record_body, format_record_component, format_token_text,
-    format_trailing_comments_before_line_break, format_type, format_type_parameter_list,
+    format_trailing_comments_before_line_break, format_type_parameter_list,
     format_type_without_leading_comments, group, hard_line, line, parenthesized_list, text,
-    token_has_comments,
 };
 
 pub(super) fn format_class_declaration(
@@ -226,28 +225,13 @@ fn format_type_header_clause(
         return jolt_fmt_ir::nil();
     }
 
-    let should_break = header_keyword_forces_line(keyword)
-        || entries.iter().any(|entry| {
-            type_has_leading_comments(&entry.ty, formatter)
-                || entry.comma.as_ref().is_some_and(token_has_comments)
-        });
-
-    if should_break {
-        return jolt_fmt_ir::indent(concat([
-            line(),
-            format_header_clause_keyword(keyword, fallback),
-            jolt_fmt_ir::indent(concat([
-                format_header_clause_keyword_break(keyword),
-                format_type_clause_entries_broken(entries, formatter),
-            ])),
-        ]));
-    }
-
     jolt_fmt_ir::indent(concat([
         line(),
         format_header_clause_keyword(keyword, fallback),
-        text(" "),
-        format_type_clause_entries_inline(entries, formatter),
+        jolt_fmt_ir::indent(group(concat([
+            format_header_clause_keyword_break(keyword),
+            format_type_clause_entries_broken(entries, formatter),
+        ]))),
     ]))
 }
 
@@ -261,28 +245,13 @@ fn format_permits_header_clause(
         return jolt_fmt_ir::nil();
     }
 
-    let should_break = header_keyword_forces_line(keyword)
-        || entries.iter().any(|entry| {
-            name_has_leading_comments(&entry.name, formatter)
-                || entry.comma.as_ref().is_some_and(token_has_comments)
-        });
-
-    if should_break {
-        return jolt_fmt_ir::indent(concat([
-            line(),
-            format_header_clause_keyword(keyword, fallback),
-            jolt_fmt_ir::indent(concat([
-                format_header_clause_keyword_break(keyword),
-                format_permits_clause_entries_broken(entries, formatter),
-            ])),
-        ]));
-    }
-
     jolt_fmt_ir::indent(concat([
         line(),
         format_header_clause_keyword(keyword, fallback),
-        text(" "),
-        format_permits_clause_entries_inline(entries),
+        jolt_fmt_ir::indent(group(concat([
+            format_header_clause_keyword_break(keyword),
+            format_permits_clause_entries_broken(entries, formatter),
+        ]))),
     ]))
 }
 
@@ -311,22 +280,6 @@ fn header_keyword_forces_line(keyword: Option<&JavaSyntaxToken>) -> bool {
     keyword.is_some_and(|keyword| keyword.trailing_comments().iter().any(comment_forces_line))
 }
 
-fn format_type_clause_entries_inline(
-    entries: Vec<TypeClauseEntry>,
-    formatter: &JavaFormatter<'_>,
-) -> Doc {
-    let mut docs = Vec::new();
-
-    for entry in entries {
-        docs.push(format_type(&entry.ty, formatter));
-        if let Some(comma) = entry.comma {
-            docs.push(format_header_clause_separator_inline(&comma));
-        }
-    }
-
-    concat(docs)
-}
-
 fn format_type_clause_entries_broken(
     entries: Vec<TypeClauseEntry>,
     formatter: &JavaFormatter<'_>,
@@ -343,19 +296,6 @@ fn format_type_clause_entries_broken(
             docs.push(format_header_clause_separator_broken(&comma));
         } else if index + 1 < entries_len {
             docs.push(line());
-        }
-    }
-
-    concat(docs)
-}
-
-fn format_permits_clause_entries_inline(entries: Vec<PermitsClauseEntry>) -> Doc {
-    let mut docs = Vec::new();
-
-    for entry in entries {
-        docs.push(format_name(&entry.name));
-        if let Some(comma) = entry.comma {
-            docs.push(format_header_clause_separator_inline(&comma));
         }
     }
 
@@ -384,15 +324,6 @@ fn format_permits_clause_entries_broken(
     concat(docs)
 }
 
-fn format_header_clause_separator_inline(comma: &JavaSyntaxToken) -> Doc {
-    concat([
-        format_leading_comments(comma),
-        text(","),
-        format_trailing_comments_before_line_break(comma),
-        text(" "),
-    ])
-}
-
 fn format_header_clause_separator_broken(comma: &JavaSyntaxToken) -> Doc {
     concat([
         format_leading_comments(comma),
@@ -404,19 +335,4 @@ fn format_header_clause_separator_broken(comma: &JavaSyntaxToken) -> Doc {
             line()
         },
     ])
-}
-
-fn type_has_leading_comments(ty: &Type, formatter: &JavaFormatter<'_>) -> bool {
-    formatter
-        .comments()
-        .has_leading_comment_for_tokens(&ty.tokens())
-}
-
-fn name_has_leading_comments(
-    name: &jolt_java_syntax::NameSyntax,
-    formatter: &JavaFormatter<'_>,
-) -> bool {
-    formatter
-        .comments()
-        .has_leading_comment_for_tokens(&name.tokens())
 }

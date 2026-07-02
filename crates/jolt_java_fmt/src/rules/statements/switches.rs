@@ -104,11 +104,54 @@ fn format_switch_rule(rule: &SwitchRule, formatter: &JavaFormatter<'_>) -> Doc {
         format_switch_label(&label, formatter)
     });
 
+    if let Some(expression) = rule.expression() {
+        return concat([
+            label,
+            group(concat([
+                format_switch_rule_arrow_head(rule),
+                indent(concat([
+                    format_switch_rule_arrow_body_separator(rule),
+                    format_expression(&expression, formatter),
+                    text(";"),
+                ])),
+            ])),
+        ]);
+    }
+
     concat([
         label,
         format_switch_rule_arrow(rule),
         format_switch_rule_body(rule, formatter),
     ])
+}
+
+fn format_switch_rule_arrow_head(rule: &SwitchRule) -> Doc {
+    let Some(arrow) = rule.arrow() else {
+        return text(" ->");
+    };
+
+    let trailing_comments = arrow.trailing_comments();
+    if trailing_comments.is_empty() {
+        return text(" ->");
+    }
+
+    let mut docs = vec![text(" ->")];
+    for comment in trailing_comments {
+        docs.push(text(" "));
+        docs.push(format_comment(&comment));
+    }
+    concat(docs)
+}
+
+fn format_switch_rule_arrow_body_separator(rule: &SwitchRule) -> Doc {
+    if rule
+        .arrow()
+        .is_some_and(|arrow| arrow.trailing_comments().iter().any(comment_forces_line))
+    {
+        hard_line()
+    } else {
+        line()
+    }
 }
 
 fn format_switch_rule_arrow(rule: &SwitchRule) -> Doc {

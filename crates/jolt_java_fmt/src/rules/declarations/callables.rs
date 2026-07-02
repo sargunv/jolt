@@ -88,6 +88,11 @@ pub(super) fn format_method_declaration(
         .is_some_and(|throws| throws.exceptions().next().is_some());
     let type_parameters = method.type_parameters();
     let has_type_parameters = type_parameters.is_some();
+    let parameters = method.parameters();
+    let name_and_parameters = concat([
+        format_token_text(name.text()),
+        format_parameters(parameters.clone(), formatter),
+    ]);
     let header = concat([
         format_type_parameter_list(type_parameters, formatter),
         if has_type_parameters {
@@ -100,13 +105,10 @@ pub(super) fn format_method_declaration(
         method
             .return_type()
             .map_or_else(jolt_fmt_ir::nil, |return_type| {
-                concat([
-                    format_type_without_leading_comments(&return_type, formatter),
-                    text(" "),
-                ])
+                format_type_without_leading_comments(&return_type, formatter)
             }),
-        format_token_text(name.text()),
-        format_parameters(method.parameters(), formatter),
+        text(" "),
+        name_and_parameters,
         format_throws_clause(throws, formatter),
     ]);
 

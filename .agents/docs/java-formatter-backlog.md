@@ -5,37 +5,6 @@ formatter corpus fixtures but are not yet settled Jolt style contracts. Entries
 here should graduate into style-guide rules and focused fixtures only after the
 formatting policy is decided.
 
-## Missing Split Points for Long Declarations and Arrow Expressions
-
-Status: failing style fixtures; formatter backlog.
-
-Current fixtures:
-
-- `crates/jolt_java_fmt/tests/style/declarations/long-array-dimensions.input.java`
-- `crates/jolt_java_fmt/tests/style/declarations/long-variable-declarator.input.java`
-- `crates/jolt_java_fmt/tests/style/declarations/type-header-clauses.input.java`
-- `crates/jolt_java_fmt/tests/style/statements/switch-rule-arrow-break.input.java`
-
-Observed gaps:
-
-- Long field and local declarations keep the type/modifiers and declarator name
-  on one line even when the complete declaration exceeds the line width.
-- Long array dimensions on types and declarators are not considered a useful
-  split point.
-- Single long `implements` or `permits` clauses stay after the keyword instead
-  of moving to the next indented line; long combined clauses also stay packed.
-- Long switch rule expressions stay on the `default ->` line instead of breaking
-  after the arrow.
-
-Why this needs a formatter decision:
-
-- These cases need additional syntactic split points in declarations, type
-  clauses, array dimensions, and switch-rule arrows.
-- The style-guide change appears to prefer early, semantically meaningful break
-  points over keeping a long construct packed until it overflows.
-- The renderer should stay linear or explicitly bounded; any improved fitting
-  must avoid unbounded best-fit search.
-
 ## Expression Chain Fit Boundaries
 
 Status: failing style fixtures; formatter backlog.

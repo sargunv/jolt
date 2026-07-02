@@ -215,7 +215,13 @@ record Aaaaaaaaaa<
   Ffffffffff,
   Gggggggggg
 >(Hhhhhhhhhh Hhhhhhhhhh)
-  implements Iiiiiiiiii, Jjjjjjjjjj, Kkkkkkkkkk, Llllllllll, Mmmmmmmmmm, Nnnnnnnnnn {
+  implements
+    Iiiiiiiiii,
+    Jjjjjjjjjj,
+    Kkkkkkkkkk,
+    Llllllllll,
+    Mmmmmmmmmm,
+    Nnnnnnnnnn {
   void a() {
   }
 }

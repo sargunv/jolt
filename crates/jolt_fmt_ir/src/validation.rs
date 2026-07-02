@@ -3,56 +3,59 @@ use crate::render::{Mode, RenderError};
 use crate::width::{has_line_terminator, literal_line_count};
 
 pub(crate) fn validate_doc(doc: &Doc) -> Result<(), RenderError> {
-    match doc.kind() {
-        DocKind::Nil | DocKind::LineSuffixBoundary | DocKind::BreakParent => Ok(()),
-        DocKind::LiteralText(text) => validate_literal_text(text),
-        DocKind::Text(text) => validate_text(&text.text, "Text"),
-        DocKind::Concat(docs) => {
-            for doc in docs {
-                validate_doc(doc)?;
-            }
-            Ok(())
-        }
-        DocKind::Group(group) => validate_doc(&group.contents),
-        DocKind::Fill(entries) => {
-            for (index, entry) in entries.iter().enumerate() {
-                if index + 1 == entries.len() && entry.separator.is_some() {
-                    return Err(RenderError::MalformedFill {
-                        index,
-                        reason: "last fill entry must not have a separator",
-                    });
-                }
-                if index + 1 < entries.len() && entry.separator.is_none() {
-                    return Err(RenderError::MalformedFill {
-                        index,
-                        reason: "non-final fill entry must have a separator",
-                    });
-                }
-                validate_doc(&entry.content)?;
-                if let Some(separator) = &entry.separator {
-                    validate_doc(separator)?;
+    let mut stack = vec![doc];
+    while let Some(doc) = stack.pop() {
+        match doc.kind() {
+            DocKind::Nil | DocKind::LineSuffixBoundary | DocKind::BreakParent => {}
+            DocKind::LiteralText(text) => validate_literal_text(text)?,
+            DocKind::Text(text) => validate_text(&text.text, "Text")?,
+            DocKind::Concat(docs) => {
+                for doc in docs {
+                    stack.push(doc);
                 }
             }
-            Ok(())
-        }
-        DocKind::Indent(indent) => validate_doc(&indent.contents),
-        DocKind::Align(align) => validate_doc(&align.contents),
-        DocKind::Line(line) => {
-            if let FlatLine::Text(text, _) = &line.flat {
-                validate_text(text, "FlatLine::Text")?;
+            DocKind::Group(group) => stack.push(&group.contents),
+            DocKind::Fill(entries) => {
+                for (index, entry) in entries.iter().enumerate() {
+                    if index + 1 == entries.len() && entry.separator.is_some() {
+                        return Err(RenderError::MalformedFill {
+                            index,
+                            reason: "last fill entry must not have a separator",
+                        });
+                    }
+                    if index + 1 < entries.len() && entry.separator.is_none() {
+                        return Err(RenderError::MalformedFill {
+                            index,
+                            reason: "non-final fill entry must have a separator",
+                        });
+                    }
+                    stack.push(&entry.content);
+                    if let Some(separator) = &entry.separator {
+                        stack.push(separator);
+                    }
+                }
             }
-            Ok(())
-        }
-        DocKind::IfBreak(if_break) => {
-            validate_doc(&if_break.breaks)?;
-            validate_doc(&if_break.flat)
-        }
-        DocKind::IndentIfBreak(indent_if_break) => validate_doc(&indent_if_break.contents),
-        DocKind::LineSuffix(doc) => {
-            validate_doc(doc)?;
-            validate_line_suffix_doc(doc, Mode::Flat)
+            DocKind::Indent(indent) => stack.push(&indent.contents),
+            DocKind::Align(align) => stack.push(&align.contents),
+            DocKind::Line(line) => {
+                if let FlatLine::Text(text, _) = &line.flat {
+                    validate_text(text, "FlatLine::Text")?;
+                }
+            }
+            DocKind::IfBreak(if_break) => {
+                stack.push(&if_break.breaks);
+                stack.push(&if_break.flat);
+            }
+            DocKind::IndentIfBreak(indent_if_break) => {
+                stack.push(&indent_if_break.contents);
+            }
+            DocKind::LineSuffix(doc) => {
+                stack.push(doc);
+                validate_line_suffix_doc(doc, Mode::Flat)?;
+            }
         }
     }
+    Ok(())
 }
 
 fn validate_text(text: &str, context: &'static str) -> Result<(), RenderError> {

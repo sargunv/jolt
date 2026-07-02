@@ -54,13 +54,8 @@ class Aaaaaaaaaa<Bbbbbbbbbb, Cccccccccc>
 }
 
 class Aaaaaaaaaa<Bbbbbbbbbb, Cccccccccc>
-  extends Dddddddddd<
-    Eeeeeeeeee,
-    Ffffffffff,
-    Gggggggggg,
-    Hhhhhhhhhh,
-    Iiiiiiiiii
-  > {
+  extends
+    Dddddddddd<Eeeeeeeeee, Ffffffffff, Gggggggggg, Hhhhhhhhhh, Iiiiiiiiii> {
   void a() {
   }
 }
@@ -111,15 +106,23 @@ class Aaaaaaaaaa<
   Ffffffffff,
   Gggggggggg
 >
-  extends Hhhhhhhhhh<
-    Iiiiiiiiii,
-    Jjjjjjjjjj,
-    Kkkkkkkkkk,
-    Llllllllll,
-    Mmmmmmmmmm,
-    Nnnnnnnnnn
-  >
-  implements Oooooooooo, Pppppppppp, Qqqqqqqqqq, Rrrrrrrrrr, Ssssssssss, Tttttttttt, Uuuuuuuuuu {
+  extends
+    Hhhhhhhhhh<
+      Iiiiiiiiii,
+      Jjjjjjjjjj,
+      Kkkkkkkkkk,
+      Llllllllll,
+      Mmmmmmmmmm,
+      Nnnnnnnnnn
+    >
+  implements
+    Oooooooooo,
+    Pppppppppp,
+    Qqqqqqqqqq,
+    Rrrrrrrrrr,
+    Ssssssssss,
+    Tttttttttt,
+    Uuuuuuuuuu {
   void a() {
   }
 }
@@ -132,13 +135,21 @@ class Aaaaaaaaaa<
   Ffffffffff,
   Gggggggggg
 >
-  extends Hhhhhhhhhh<
-    Iiiiiiiiii,
-    Jjjjjjjjjj,
-    Kkkkkkkkkk,
-    Llllllllll,
-    Mmmmmmmmmm,
-    Nnnnnnnnnn
-  >
-  implements Oooooooooo, Pppppppppp, Qqqqqqqqqq, Rrrrrrrrrr, Ssssssssss, Tttttttttt, Uuuuuuuuuu {
+  extends
+    Hhhhhhhhhh<
+      Iiiiiiiiii,
+      Jjjjjjjjjj,
+      Kkkkkkkkkk,
+      Llllllllll,
+      Mmmmmmmmmm,
+      Nnnnnnnnnn
+    >
+  implements
+    Oooooooooo,
+    Pppppppppp,
+    Qqqqqqqqqq,
+    Rrrrrrrrrr,
+    Ssssssssss,
+    Tttttttttt,
+    Uuuuuuuuuu {
 }

@@ -12,9 +12,10 @@ class Array {
   Class<?> aaaaaaaaaaaaaaaa =
     new Aaaaaaaaaaaaaaaa[] { new Aaaaaaaaaaaaaaaa() }.getClass();
 
-  String[] DATA = {
-    // nothing yet
-  };
+  String[] DATA =
+    {
+      // nothing yet
+    };
 
   Weather currentWeather =
     enumValues[(currentWeather.ordinal() + 1) % enumValues.length];

@@ -7,7 +7,7 @@ use jolt_java_syntax::{
     EnumConstant, EnumConstantListEntry, EnumDeclaration, ExtendsClause, FormalParameterList,
     ImplementsClause, InterfaceBody, InterfaceBodyMember, InterfaceDeclaration, JavaSyntaxToken,
     MethodDeclaration, ModifierList, PermitsClause, PermitsClauseEntry, RecordBody,
-    RecordComponentList, RecordDeclaration, ThrowsClause, ThrowsClauseEntry, Type, TypeClauseEntry,
+    RecordComponentList, RecordDeclaration, ThrowsClause, ThrowsClauseEntry, TypeClauseEntry,
     TypeDeclaration,
 };
 
@@ -18,7 +18,7 @@ use crate::helpers::comments::{
     format_dangling_comments, format_leading_comment_list, format_leading_comments,
     format_removed_token_comments, format_token_sequence, format_token_text,
     format_trailing_comments, format_trailing_comments_before_line_break,
-    non_formatter_control_comments, token_has_comments,
+    non_formatter_control_comments,
 };
 use crate::helpers::declarations::{declaration_with_body, declaration_without_body};
 use crate::helpers::formatter_ignore::{

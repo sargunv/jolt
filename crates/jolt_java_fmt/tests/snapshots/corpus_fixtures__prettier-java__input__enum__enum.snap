@@ -187,12 +187,24 @@ enum Aaaaaaaaaa
 }
 
 enum Aaaaaaaaaa
-  implements Bbbbbbbbbb, Cccccccccc, Dddddddddd, Eeeeeeeeee, Ffffffffff, Gggggggggg {
+  implements
+    Bbbbbbbbbb,
+    Cccccccccc,
+    Dddddddddd,
+    Eeeeeeeeee,
+    Ffffffffff,
+    Gggggggggg {
   A,
 }
 
 enum Aaaaaaaaaa
-  implements Bbbbbbbbbb, Cccccccccc, Dddddddddd, Eeeeeeeeee, Ffffffffff, Gggggggggg {
+  implements
+    Bbbbbbbbbb,
+    Cccccccccc,
+    Dddddddddd,
+    Eeeeeeeeee,
+    Ffffffffff,
+    Gggggggggg {
 }
 
 @A

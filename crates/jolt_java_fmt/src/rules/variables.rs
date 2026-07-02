@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, concat, group, indent, line, text};
+use jolt_fmt_ir::{Doc, concat, group, hard_line, indent, line, text};
 use jolt_java_syntax::{
     FieldDeclaration, FormalParameter, LocalVariableDeclaration, ReceiverParameter,
     RecordComponent, VariableDeclarator, VariableDeclaratorEntry, VariableDeclaratorList,
@@ -7,8 +7,8 @@ use jolt_java_syntax::{
 
 use crate::context::JavaFormatter;
 use crate::helpers::comments::{
-    format_construct_leading_comments, format_leading_comments, format_token_text,
-    format_token_with_comments, format_trailing_comments,
+    comment_forces_line, format_construct_leading_comments, format_leading_comments,
+    format_token_text, format_token_with_comments, format_trailing_comments,
 };
 use crate::helpers::modifiers::inline_modifier_prefix_from_docs;
 use crate::rules::annotations::format_annotation;
@@ -26,13 +26,27 @@ pub(crate) fn format_field_declaration(
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
     let modifiers = format_typed_modifier_prefix(field.modifiers(), formatter);
+    let ty = field
+        .ty()
+        .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty, formatter));
+
+    if let Some(declarators) = field.declarators()
+        && let Some(declarator) = single_declarator(&declarators)
+    {
+        return concat([
+            format_single_variable_declaration(
+                concat([modifiers.declaration_prefix, modifiers.type_use_prefix, ty]),
+                &declarator,
+                formatter,
+            ),
+            format_statement_semicolon(field.semicolon()),
+        ]);
+    }
 
     concat([
         modifiers.declaration_prefix,
         modifiers.type_use_prefix,
-        field
-            .ty()
-            .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty, formatter)),
+        ty,
         text(" "),
         field
             .declarators()
@@ -53,11 +67,22 @@ pub(crate) fn format_local_variable_declaration(
         declaration.modifier_tokens().collect(),
         formatter,
     );
+    let ty = local_variable_type(declaration, formatter);
+
+    if let Some(declarators) = declaration.declarators()
+        && let Some(declarator) = single_declarator(&declarators)
+    {
+        return format_single_variable_declaration(
+            concat([modifiers.declaration_prefix, modifiers.type_use_prefix, ty]),
+            &declarator,
+            formatter,
+        );
+    }
 
     concat([
         modifiers.declaration_prefix,
         modifiers.type_use_prefix,
-        local_variable_type(declaration, formatter),
+        ty,
         text(" "),
         declaration
             .declarators()
@@ -184,25 +209,35 @@ fn format_named_typed_declaration(
     dimensions: Doc,
     is_variable_arity: bool,
 ) -> Doc {
-    concat([
-        modifiers,
-        ty,
+    let has_varargs_annotations = !varargs_annotations.is_empty();
+    let name = concat([
         if is_variable_arity {
-            if varargs_annotations.is_empty() {
-                text("... ")
-            } else {
+            if has_varargs_annotations {
                 concat([
-                    text(" "),
                     inline_modifier_prefix_from_docs(varargs_annotations, Vec::new()),
-                    text("... "),
+                    text("..."),
                 ])
+            } else {
+                text("...")
             }
         } else {
+            jolt_fmt_ir::nil()
+        },
+        if is_variable_arity {
             text(" ")
+        } else {
+            jolt_fmt_ir::nil()
         },
         name,
         dimensions,
-    ])
+    ]);
+    let type_name_separator = if is_variable_arity && !has_varargs_annotations {
+        jolt_fmt_ir::nil()
+    } else {
+        text(" ")
+    };
+
+    concat([modifiers, ty, type_name_separator, name])
 }
 
 fn local_variable_type(
@@ -231,6 +266,36 @@ fn format_variable_declarator_list(
     ))
 }
 
+fn single_declarator(declarators: &VariableDeclaratorList) -> Option<VariableDeclarator> {
+    let mut entries = declarators.entries();
+    let entry = entries.next()?;
+    if entries.next().is_some() || entry.comma.is_some() {
+        return None;
+    }
+
+    Some(entry.declarator)
+}
+
+fn format_single_variable_declaration(
+    typed_prefix: Doc,
+    declarator: &VariableDeclarator,
+    formatter: &JavaFormatter<'_>,
+) -> Doc {
+    let name = format_variable_declarator_name_and_dimensions(declarator, formatter);
+    let Some(initializer) = declarator.initializer() else {
+        return concat([typed_prefix, text(" "), name]);
+    };
+
+    concat([
+        typed_prefix,
+        text(" "),
+        group(concat([
+            name,
+            format_variable_initializer_split(&initializer, formatter),
+        ])),
+    ])
+}
+
 fn format_variable_declarator_entry(
     entry: VariableDeclaratorEntry,
     formatter: &JavaFormatter<'_>,
@@ -253,6 +318,20 @@ fn format_variable_declarator(
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
     group(concat([
+        format_variable_declarator_name_and_dimensions(declarator, formatter),
+        declarator
+            .initializer()
+            .map_or_else(jolt_fmt_ir::nil, |initializer| {
+                format_variable_initializer_split(&initializer, formatter)
+            }),
+    ]))
+}
+
+fn format_variable_declarator_name_and_dimensions(
+    declarator: &VariableDeclarator,
+    formatter: &JavaFormatter<'_>,
+) -> Doc {
+    concat([
         declarator
             .name()
             .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name)),
@@ -261,15 +340,10 @@ fn format_variable_declarator(
             .map_or_else(jolt_fmt_ir::nil, |dimensions| {
                 format_array_dimensions(&dimensions, formatter)
             }),
-        declarator
-            .initializer()
-            .map_or_else(jolt_fmt_ir::nil, |initializer| {
-                format_variable_initializer(&initializer, formatter)
-            }),
-    ]))
+    ])
 }
 
-fn format_variable_initializer(
+fn format_variable_initializer_split(
     initializer: &VariableInitializer,
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
@@ -277,20 +351,47 @@ fn format_variable_initializer(
         return text(" =");
     };
 
-    match value {
-        jolt_java_syntax::VariableInitializerValue::ArrayInitializer(initializer) => concat([
-            text(" = "),
-            format_variable_initializer_value(
-                jolt_java_syntax::VariableInitializerValue::ArrayInitializer(initializer),
-                formatter,
-            ),
-        ]),
-        value => concat([
-            text(" ="),
-            indent(concat([
-                line(),
-                format_variable_initializer_value(value, formatter),
-            ])),
-        ]),
+    concat([
+        text(" "),
+        format_variable_initializer_operator(initializer),
+        indent(concat([
+            format_variable_initializer_value_separator(initializer, &value),
+            format_variable_initializer_value(value, formatter),
+        ])),
+    ])
+}
+
+fn format_variable_initializer_operator(initializer: &VariableInitializer) -> Doc {
+    initializer.operator().map_or_else(
+        || text("="),
+        |operator| format_token_with_comments(&operator),
+    )
+}
+
+fn format_variable_initializer_value_separator(
+    initializer: &VariableInitializer,
+    value: &jolt_java_syntax::VariableInitializerValue,
+) -> Doc {
+    if initializer_operator_trailing_comments_force_line(initializer) {
+        jolt_fmt_ir::nil()
+    } else if initializer_value_has_leading_comments(value) {
+        hard_line()
+    } else {
+        line()
     }
+}
+
+fn initializer_operator_trailing_comments_force_line(initializer: &VariableInitializer) -> bool {
+    initializer
+        .operator()
+        .is_some_and(|operator| operator.trailing_comments().iter().any(comment_forces_line))
+}
+
+fn initializer_value_has_leading_comments(
+    value: &jolt_java_syntax::VariableInitializerValue,
+) -> bool {
+    value
+        .tokens()
+        .first()
+        .is_some_and(|token| !token.leading_comments().is_empty())
 }

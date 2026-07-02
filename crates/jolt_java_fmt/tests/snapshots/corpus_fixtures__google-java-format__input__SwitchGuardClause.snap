@@ -66,8 +66,8 @@ class SwitchGuardClause {
           int eight,
           int variableWithVeryVeryVeryVeryVeryVeryVeryVeryVeryLongName
         ) when variableWithVeryVeryVeryVeryVeryVeryVeryVeryVeryLongName.methodWithVeryVeryVeryVeryLongNameReturnThis()
-        .methodWithVeryVeryVeryVeryLongNameReturnBoolean() -> System.err
-        .println();
+        .methodWithVeryVeryVeryVeryLongNameReturnBoolean() ->
+        System.err.println();
       default -> {
       }
     }

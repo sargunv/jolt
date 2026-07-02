@@ -16,7 +16,15 @@ public interface Interfaces
 }
 
 public interface Interfaces
-  extends Interface1, Interface2, Interface3, Interface4, Interface5, Interface6, Interface7, Interface8 {
+  extends
+    Interface1,
+    Interface2,
+    Interface3,
+    Interface4,
+    Interface5,
+    Interface6,
+    Interface7,
+    Interface8 {
   boolean isAvailable(Object propertyId);
 
   public static final Method METHOD = SomeStatic.findMethod();
@@ -89,13 +97,8 @@ class Aaaaaaaaaa<Bbbbbbbbbb, Cccccccccc>
 }
 
 class Aaaaaaaaaa<Bbbbbbbbbb, Cccccccccc>
-  extends Dddddddddd<
-    Eeeeeeeeee,
-    Ffffffffff,
-    Gggggggggg,
-    Hhhhhhhhhh,
-    Iiiiiiiiii
-  > {
+  extends
+    Dddddddddd<Eeeeeeeeee, Ffffffffff, Gggggggggg, Hhhhhhhhhh, Iiiiiiiiii> {
   void a() {
   }
 }
@@ -134,15 +137,23 @@ sealed class Aaaaaaaaaa<
   Ffffffffff,
   Gggggggggg
 >
-  extends Hhhhhhhhhh<
-    Iiiiiiiiii,
-    Jjjjjjjjjj,
-    Kkkkkkkkkk,
-    Llllllllll,
-    Mmmmmmmmmm,
-    Nnnnnnnnnn
-  >
-  permits Oooooooooo, Pppppppppp, Qqqqqqqqqq, Rrrrrrrrrr, Ssssssssss, Tttttttttt, Uuuuuuuuuu {
+  extends
+    Hhhhhhhhhh<
+      Iiiiiiiiii,
+      Jjjjjjjjjj,
+      Kkkkkkkkkk,
+      Llllllllll,
+      Mmmmmmmmmm,
+      Nnnnnnnnnn
+    >
+  permits
+    Oooooooooo,
+    Pppppppppp,
+    Qqqqqqqqqq,
+    Rrrrrrrrrr,
+    Ssssssssss,
+    Tttttttttt,
+    Uuuuuuuuuu {
   void a() {
   }
 }
@@ -155,13 +166,21 @@ sealed class Aaaaaaaaaa<
   Ffffffffff,
   Gggggggggg
 >
-  extends Hhhhhhhhhh<
-    Iiiiiiiiii,
-    Jjjjjjjjjj,
-    Kkkkkkkkkk,
-    Llllllllll,
-    Mmmmmmmmmm,
-    Nnnnnnnnnn
-  >
-  permits Oooooooooo, Pppppppppp, Qqqqqqqqqq, Rrrrrrrrrr, Ssssssssss, Tttttttttt, Uuuuuuuuuu {
+  extends
+    Hhhhhhhhhh<
+      Iiiiiiiiii,
+      Jjjjjjjjjj,
+      Kkkkkkkkkk,
+      Llllllllll,
+      Mmmmmmmmmm,
+      Nnnnnnnnnn
+    >
+  permits
+    Oooooooooo,
+    Pppppppppp,
+    Qqqqqqqqqq,
+    Rrrrrrrrrr,
+    Ssssssssss,
+    Tttttttttt,
+    Uuuuuuuuuu {
 }

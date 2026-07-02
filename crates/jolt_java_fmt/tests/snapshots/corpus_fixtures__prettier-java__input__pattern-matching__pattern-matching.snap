@@ -36,8 +36,8 @@ class T {
       }
       case Buyer titi when this.bestPriceaaaaaaaazzzzzaaaaaaaaaq
         > b.bestPrice -> true;
-      case Buyer titi when this.bestPriceaaaaaazzzaaaaaaaaaq
-        > b.bestPrice -> true;
+      case Buyer titi when this.bestPriceaaaaaazzzaaaaaaaaaq > b.bestPrice ->
+        true;
       case Buyer b when this.bestPrice > b.bestPrice
         && this.bestPrice > b.bestPrice
         && this.bestPrice > b.bestPrice
@@ -98,12 +98,13 @@ class T {
           LongTypeName longVariableName,
           LongTypeName longVariableName
         ) when this.longVariableName > longVariableName
-        && this.longVariableName > longVariableName -> longMethodName(
-        longVariableName,
-        longVariableName,
-        longVariableName,
-        longVariableName
-      );
+        && this.longVariableName > longVariableName ->
+        longMethodName(
+          longVariableName,
+          longVariableName,
+          longVariableName,
+          longVariableName
+        );
       case Outer.Inner(String s) -> {
       }
       case final String s -> s;
