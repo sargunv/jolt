@@ -25,4 +25,20 @@ class Example {
       settings.region().identifier()
     );
   }
+
+  void schedule(boolean visible) {
+    mCropView.postDelayed(
+      new Runnable() {
+        @Override
+        public void run() {
+          if (!visible) {
+            changeWallpaperFlags(visible);
+          } else {
+            mCropView.setVisibility(View.INVISIBLE);
+          }
+        }
+      },
+      FLAG_POST_DELAY_MILLIS
+    );
+  }
 }

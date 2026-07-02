@@ -1,4 +1,4 @@
-use super::calls::format_argument_list_for_parent_role;
+use super::calls::{format_argument_list_for_parent_role, parent_role_has_continuation_indent};
 use super::{
     ArrayAccessExpression, ArrayCreationExpression, ArrayInitializer, CommaListItem, DimExpression,
     Doc, Expression, JavaFormatter, JavaSyntaxToken, ObjectCreationExpression,
@@ -33,6 +33,7 @@ pub(super) fn format_object_creation_expression(
     expression: &ObjectCreationExpression,
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
+    let parent_role = Expression::from(expression.clone()).parent_role();
     group(concat([
         expression
             .qualifier()
@@ -48,16 +49,15 @@ pub(super) fn format_object_creation_expression(
         expression
             .ty()
             .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty, formatter)),
-        format_argument_list_for_parent_role(
-            expression.arguments(),
-            Expression::from(expression.clone()).parent_role(),
-            formatter,
-        ),
+        format_argument_list_for_parent_role(expression.arguments(), parent_role, formatter),
         expression.body().map_or_else(jolt_fmt_ir::nil, |body| {
-            concat([
-                text(" "),
-                jolt_fmt_ir::dedent(format_anonymous_class_body(&body, formatter)),
-            ])
+            let body = format_anonymous_class_body(&body, formatter);
+            let body = if parent_role_has_continuation_indent(parent_role) {
+                jolt_fmt_ir::dedent(body)
+            } else {
+                body
+            };
+            concat([text(" "), body])
         }),
     ]))
 }

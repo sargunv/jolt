@@ -26,8 +26,15 @@ pub(super) fn format_constructor_declaration(
     let has_throws = throws
         .as_ref()
         .is_some_and(|throws| throws.exceptions().next().is_some());
+    let type_parameters = constructor.type_parameters();
+    let has_type_parameters = type_parameters.is_some();
     let header = concat([
-        format_type_parameter_list(constructor.type_parameters(), formatter),
+        format_type_parameter_list(type_parameters, formatter),
+        if has_type_parameters {
+            text(" ")
+        } else {
+            jolt_fmt_ir::nil()
+        },
         format_token_text(name.text()),
         format_parameters(constructor.parameters(), formatter),
         format_throws_clause(throws, formatter),
@@ -79,8 +86,15 @@ pub(super) fn format_method_declaration(
     let has_throws = throws
         .as_ref()
         .is_some_and(|throws| throws.exceptions().next().is_some());
+    let type_parameters = method.type_parameters();
+    let has_type_parameters = type_parameters.is_some();
     let header = concat([
-        format_type_parameter_list(method.type_parameters(), formatter),
+        format_type_parameter_list(type_parameters, formatter),
+        if has_type_parameters {
+            text(" ")
+        } else {
+            jolt_fmt_ir::nil()
+        },
         modifiers.type_use_prefix,
         format_inline_annotations(method.return_type_annotations().collect(), formatter),
         method

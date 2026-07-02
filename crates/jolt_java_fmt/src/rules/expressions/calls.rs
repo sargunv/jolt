@@ -129,7 +129,9 @@ pub(super) fn format_argument_list_for_parent_role(
     }
 }
 
-const fn parent_role_has_continuation_indent(parent_role: Option<ExpressionParentRole>) -> bool {
+pub(super) const fn parent_role_has_continuation_indent(
+    parent_role: Option<ExpressionParentRole>,
+) -> bool {
     matches!(
         parent_role,
         Some(

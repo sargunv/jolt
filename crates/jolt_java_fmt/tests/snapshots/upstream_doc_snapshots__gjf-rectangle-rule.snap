@@ -71,15 +71,15 @@ class GoogleJavaFormatRectangleRuleSnippets {
     void block07() {
         mCropView.postDelayed(
             new Runnable() {
-            @Override
-            public void run() {
-                if (!visible) {
-                    changeWallpaperFlags(visible);
-                } else {
-                    mCropView.setVisibility(View.INVISIBLE);
+                @Override
+                public void run() {
+                    if (!visible) {
+                        changeWallpaperFlags(visible);
+                    } else {
+                        mCropView.setVisibility(View.INVISIBLE);
+                    }
                 }
-            }
-        },
+            },
             FLAG_POST_DELAY_MILLIS
         );
     }
@@ -87,21 +87,21 @@ class GoogleJavaFormatRectangleRuleSnippets {
     void block08() {
         mCropView.postDelayed(
             new Runnable() {
-            @Override
-            public void run() {
-                if (!visible) {
-                    changeWallpaperFlags(visible);
-                } else {
-                    mCropView.setVisibility(View.INVISIBLE);
+                @Override
+                public void run() {
+                    if (!visible) {
+                        changeWallpaperFlags(visible);
+                    } else {
+                        mCropView.setVisibility(View.INVISIBLE);
+                    }
                 }
-            }
-        },
+            },
             FLAG_POST_DELAY_MILLIS
         );
     }
 
     static class Block09DeclarationInput {
-        public static <W extends BoundedWindow>StateTag<
+        public static <W extends BoundedWindow> StateTag<
             Object,
             WatermarkHoldState<W>
         > watermarkStateInternal(
@@ -116,7 +116,7 @@ class GoogleJavaFormatRectangleRuleSnippets {
     }
 
     static class Block10DeclarationOutput {
-        public static <W extends BoundedWindow>StateTag<
+        public static <W extends BoundedWindow> StateTag<
             Object,
             WatermarkHoldState<W>
         > watermarkStateInternal(

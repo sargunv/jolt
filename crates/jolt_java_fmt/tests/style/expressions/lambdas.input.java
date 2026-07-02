@@ -44,4 +44,7 @@ return (User user /* selected */) -> user.name();
 java.util.function.Function<String[], Integer> commentedLengths() {
 return (String... values /* all */) -> values.length;
 }
+void configure(Project project) {
+project.getPluginManager().withPlugin("maven-publish", plugin -> { project.getExtensions().getByType(PublishingExtension.class).getPublications().withType(MavenPublication.class).configureEach(publication -> publication.versionMapping(mapping -> { mapping.allVariants(VariantVersionMappingStrategy::fromResolutionResult); })); });
+}
 }

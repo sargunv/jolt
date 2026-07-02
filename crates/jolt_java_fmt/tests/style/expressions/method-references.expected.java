@@ -16,11 +16,11 @@ class Example extends Base {
     var commentedSeparator = Example:: /* constructor */ new;
   }
 
-  <T>T id(T value) {
+  <T> T id(T value) {
     return value;
   }
 
-  static <T>T staticId(T value) {
+  static <T> T staticId(T value) {
     return value;
   }
 }

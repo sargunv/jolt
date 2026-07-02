@@ -45,4 +45,14 @@ class Example {
       && featureFlags.enabled()
       && auditPolicy.allows(user);
   }
+
+  float estimate(float currentEstimate, Measurement observedMeasurement) {
+    currentEstimate =
+      (
+        currentEstimate
+        + observedMeasurement.reallyLongValue() / currentEstimate
+      )
+      / 2.0f;
+    return currentEstimate;
+  }
 }

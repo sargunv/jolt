@@ -18,4 +18,8 @@ count+=1;
 count+=/* increment */1;
 allowed = user.isActive() && account.hasPermission("write") && featureFlags.enabled() && auditPolicy.allows(user);
 }
+float estimate(float currentEstimate, Measurement observedMeasurement) {
+currentEstimate = (currentEstimate + observedMeasurement.reallyLongValue() / currentEstimate) / 2.0f;
+return currentEstimate;
+}
 }
