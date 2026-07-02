@@ -11,5 +11,8 @@ jolt_diagnostics = { path = "../jolt_diagnostics" }
 jolt_fmt_ir = { path = "../jolt_fmt_ir" }
 jolt_java_syntax = { path = "../jolt_java_syntax" }
 
+[dev-dependencies]
+insta = "1.48"
+
 [lints]
 workspace = true

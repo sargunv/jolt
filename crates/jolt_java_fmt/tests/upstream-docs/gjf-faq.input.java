@@ -1,0 +1,132 @@
+// Origin: https://github.com/google/google-java-format/wiki/FAQ
+class GoogleJavaFormatFaqSnippets {
+int block01() {
+return 1 - 2 + 3
+        - 4
+    + 5;
+}
+
+int block02() {
+return 1 - 2 + 3
+    - 4 + 5;
+}
+
+void block03() {
+currentEstimate = (currentEstimate + argument / currentEstimate) / 2.0f;
+}
+
+void block04() {
+currentEstimate =
+    (currentEstimate + argument / currentEstimate) / 2.0f;
+}
+
+void block05() {
+currentEstimate =
+    (currentEstimate + argument / currentEstimate)
+        / 2.0f;
+}
+
+void block06() {
+currentEstimate =
+    (currentEstimate
+            + argument / currentEstimate)
+        / 2.0f;
+}
+
+void block07() {
+currentEstimate =
+    (currentEstimate
+            + argument
+                / currentEstimate)
+        / 2.0f;
+}
+
+void block08() {
+currentEstimate = ( // This is a line comment.
+    currentEstimate + argument / currentEstimate) / 2.0f;
+}
+
+void block09() {
+currentEstimate =
+    ( // This is a line comment.
+        currentEstimate + argument / currentEstimate)
+        / 2.0f;
+}
+
+void block10() {
+Function<T1, T2> function = new Function<>() { T2 apply(T1 x) {
+  otherFunction(
+      x); // Long comment.
+    }
+  };
+}
+
+void block11() {
+Function<T1, T2> function =
+    new Function<>() {
+      T2 apply(T1 x) {
+          otherFunction(
+                x); // Long comment.
+        }
+      };
+}
+
+void block12() {
+Function<T1, T2> function =
+    new Function<>() {
+      T2 apply(T1 x) {
+          otherFunction(
+      x); // Long comment.
+    }
+  };
+}
+
+interface Block13DeclarationInput {
+public Customer createCustomerLink(
+    Long externalEntityId,
+    String externalEntityIdStr,
+    @Required EntityNamespaceSubtype initiator,
+    @Required EntityNamespaceSubtype externalEntitySubtype,
+    Customer.ChangeEvent creationEvent,
+    Customer.ChangeEvent lastModificationEvent)
+    throws ApiException;
+}
+
+interface Block14DeclarationOutput {
+public Customer createCustomerLink(
+      Long externalEntityId,
+      String externalEntityIdStr,
+      @Required EntityNamespaceSubtype initiator,
+      @Required EntityNamespaceSubtype externalEntitySubtype,
+      Customer.ChangeEvent creationEvent,
+      Customer.ChangeEvent lastModificationEvent)
+    throws ApiException;
+}
+
+void block15() {
+    when(remoteApi.findOrCreate(
+            FOO_METADATA,
+            Optional.<TheProto>absent(),
+            AssignReserved.YES,
+            AttachData.YES))
+        .thenReturn(OPERATION);
+}
+
+void block16() {
+    when(
+            remoteApi.findOrCreate(
+                FOO_METADATA,
+                Optional.<TheProto>absent(),
+                AssignReserved.YES,
+                AttachData.YES))
+        .thenReturn(OPERATION);
+}
+
+/**
+ * Tests for {@link Foo}.
+ */
+static class Block17JavadocInput {}
+
+/** Tests for {@link Foo}. */
+static class Block18JavadocOutput {}
+}

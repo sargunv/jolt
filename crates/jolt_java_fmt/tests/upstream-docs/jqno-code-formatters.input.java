@@ -1,0 +1,157 @@
+// Origin: https://jqno.nl/post/2024/08/24/why-are-there-no-decent-code-formatters-for-java/
+class JqnoCodeFormattersArticleSnippets {
+void block01() {
+ExpectedException
+    .when(() -> EqualsVerifier.forClass(Foo.class).suppress(Warning.NONFINAL_FIELDS)
+    .withPrefabValues(List.class, Arrays.asList(1, 2, 3).stream().map(i -> i + 1).toList(),
+    Arrays.asList(1, 2, 3).stream().map(i -> i + 2).toList()).verify()).assertFailure()
+    .assertMessageContains("something");
+}
+
+void block02() {
+EqualsVerifier.simple().forClass(Foo.class).verify();
+}
+
+void block03() {
+EqualsVerifier
+        .simple()
+        .forClass(Foo.class)
+        .verify();
+}
+
+void block04() {
+EqualsVerifier.simple()
+        .forClass(Foo.class).verify();
+}
+
+void block05() {
+ExpectedException.when(
+                () ->
+                        EqualsVerifier.forClass(Foo.class).suppress(Warning.NONFINAL_FIELDS)
+                                .withPrefabValues(
+                                        List.class,
+                                        Arrays.asList(1, 2, 3).stream().map(i -> i + 1)
+                                                .toList(),
+                                        Arrays.asList(1, 2, 3).stream()
+                                                .map(i -> i + 2).toList())
+                                .verify())
+        .assertFailure()
+        .assertMessageContains("something");
+}
+
+void block06() {
+ExpectedException.when(
+        () ->
+            EqualsVerifier.forClass(Foo.class)
+                .suppress(Warning.NONFINAL_FIELDS)
+                .withPrefabValues(
+                    List.class,
+                    Arrays.asList(1, 2, 3).stream().map(i -> i + 1).toList(),
+                    Arrays.asList(1, 2, 3).stream().map(i -> i + 2).toList())
+                .verify())
+    .assertFailure()
+    .assertMessageContains("something");
+}
+
+void block07() {
+ExpectedException.when(
+                () ->
+                        EqualsVerifier.forClass(Foo.class)
+                                .suppress(Warning.NONFINAL_FIELDS)
+                                .withPrefabValues(
+                                        List.class,
+                                        Arrays.asList(1, 2, 3).stream()
+                                                .map(i -> i + 1)
+                                                .toList(),
+                                        Arrays.asList(1, 2, 3).stream()
+                                                .map(i -> i + 2)
+                                                .toList())
+                                .verify())
+        .assertFailure()
+        .assertMessageContains("something");
+}
+
+void block08() {
+ExpectedException
+    .when(() ->
+        EqualsVerifier
+            .forClass(Foo.class)
+            .suppress(Warning.NONFINAL_FIELDS)
+            .withPrefabValues(
+                List.class,
+                Arrays.asList(1, 2, 3).stream().map(i -> i + 1).toList(),
+                Arrays.asList(1, 2, 3).stream().map(i -> i + 2).toList()
+            )
+            .verify()
+    )
+    .assertFailure()
+    .assertMessageContains("something");
+}
+
+void block09() {
+ExpectedException.when(
+    () ->
+        EqualsVerifier.forClass(Foo.class)
+            .suppress(Warning.NONFINAL_FIELDS)
+            .withPrefabValues(
+                List.class,
+                Arrays.asList(1, 2, 3).stream().map(i -> i + 1).toList(),
+                Arrays.asList(1, 2, 3).stream().map(i -> i + 2).toList()
+            )
+            .verify()
+)
+    .assertFailure()
+    .assertMessageContains("something");
+}
+
+void block10() {
+ExpectedException
+    .when(() -> EqualsVerifier.forClass(Foo.class).suppress(Warning.NONFINAL_FIELDS)
+        .withPrefabValues(List.class, Arrays.asList(1, 2, 3).stream().map(i -> i + 1).toList(),
+            Arrays.asList(1, 2, 3).stream().map(i -> i + 2).toList())
+        .verify())
+    .assertFailure().assertMessageContains("something");
+}
+
+void block11() {
+ExpectedException
+  .when(() -> EqualsVerifier
+      .forClass(Foo.class)
+      .suppress(Warning.NONFINAL_FIELDS)
+      .withPrefabValues(List.class,
+          Arrays.asList(1, 2, 3).stream().map(i -> i + 1).toList(),
+          Arrays.asList(1, 2, 3).stream().map(i -> i + 2).toList())
+      .verify())
+  .assertFailure()
+  .assertMessageContains("something");
+}
+
+void block12() {
+ExpectedException.when(() -> EqualsVerifier.forClass(Foo.class)
+                .suppress(Warning.NONFINAL_FIELDS)
+                .withPrefabValues(
+                        List.class,
+                        Arrays.asList(1, 2, 3).stream().map(i -> i + 1).toList(),
+                        Arrays.asList(1, 2, 3).stream().map(i -> i + 2).toList())
+                .verify())
+        .assertFailure()
+        .assertMessageContains("something");
+}
+
+void block13() {
+ExpectedException
+    .when(() ->
+        EqualsVerifier
+            .forClass(Foo.class)
+            .suppress(Warning.NONFINAL_FIELDS)
+            .withPrefabValues(
+                List.class,
+                Arrays.asList(1, 2, 3).stream().map(i -> i + 1).toList(),
+                Arrays.asList(1, 2, 3).stream().map(i -> i + 2).toList()
+            )
+            .verify()
+    )
+    .assertFailure()
+    .assertMessageContains("something");
+}
+}

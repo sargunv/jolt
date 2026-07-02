@@ -127,6 +127,7 @@ dependencies = [
 name = "jolt_java_fmt"
 version = "0.0.0"
 dependencies = [
+ "insta",
  "jolt_diagnostics",
  "jolt_fmt_ir",
  "jolt_java_syntax",
