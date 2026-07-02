@@ -24,7 +24,10 @@ public abstract class Return {
   }
 
   Object returnSomethingWhichBreak() {
-    return oneVariable + secondVariable + thirdVariable + fourthVariable
+    return oneVariable
+      + secondVariable
+      + thirdVariable
+      + fourthVariable
       + fifthVariable
       + sixthVariable
       + seventhVariable;
@@ -32,7 +35,10 @@ public abstract class Return {
 
   Object returnSomethingWhichBreakAndAlreadyInParenthesis() {
     return (
-      oneVariable + secondVariable + thirdVariable + fourthVariable
+      oneVariable
+        + secondVariable
+        + thirdVariable
+        + fourthVariable
         + fifthVariable
         + sixthVariable
         + seventhVariable

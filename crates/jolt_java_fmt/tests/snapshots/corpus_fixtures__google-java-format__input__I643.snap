@@ -9,7 +9,8 @@ public class Foo {
 
   public static int fn(int x) {
     switch (x) {
-      case VERBOSE_WORDY_AND_LENGTHY_ONE | VERBOSE_WORDY_AND_LENGTHY_TWO
+      case VERBOSE_WORDY_AND_LENGTHY_ONE
+          | VERBOSE_WORDY_AND_LENGTHY_TWO
           | VERBOSE_WORDY_AND_LENGTHY_FOUR:
         return 0;
       default:

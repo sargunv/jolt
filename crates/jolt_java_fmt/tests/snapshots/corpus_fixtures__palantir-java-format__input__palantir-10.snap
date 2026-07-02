@@ -5,7 +5,10 @@ expression: formatted
 class Palantir10 {
   // We preserve input newlines for this long string concatenation (more than 2 lines)
   @SqlUpdate(
-    "CREATE TABLE things " + "(id VARCHAR(" + MAX_LENGTH + ") NOT NULL, "
+    "CREATE TABLE things "
+      + "(id VARCHAR("
+      + MAX_LENGTH
+      + ") NOT NULL, "
       + "title VARCHAR("
       + MAX_LENGTH
       + ")  NOT NULL, "
@@ -28,7 +31,9 @@ class Palantir10 {
     // This causes an NPE if we're not careful when getting the last token of the binary expression
     if (!partialDataSourceType.equals(dataSourceType)) {
       throw new ClientException(
-        "You may not use a " + partialDataSourceType + " partial in a "
+        "You may not use a "
+          + partialDataSourceType
+          + " partial in a "
           + dataSourceType
           + " query. Caused by partial \""
           + partialName
