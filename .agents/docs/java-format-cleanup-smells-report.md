@@ -37,26 +37,6 @@ Cleanup checklist:
 - [ ] When a recovery branch becomes reachable for clean syntax, fix the parser
       or add missing CST accessors and real formatter rules instead.
 
-## Formatter Ignore Range Math
-
-Formatter ignore support necessarily preserves raw source slices, but its range
-mapping is one of the few formatter helpers that operates directly on source
-offsets and token ranges.
-
-That is the right ownership boundary for this feature, but it is more fragile
-than ordinary CST-to-document rules.
-
-Cleanup checklist:
-
-- [ ] Add focused tests for adjacent ignored ranges.
-- [ ] Add focused tests for ignore ranges ending at EOF.
-- [ ] Add focused tests for ignore ranges surrounded by comments that are not
-      formatter control comments.
-- [ ] Add CRLF fixtures for ignored ranges.
-- [ ] Add tests for ignored ranges inside nested blocks and member bodies.
-- [ ] Keep all ignore range math inside `helpers/formatter_ignore.rs` or typed
-      accessors; do not spread offset calculations into ordinary rules.
-
 ## Comment Placement Surface Area
 
 The comment model is explicit and formatter-owned, which matches the spec.

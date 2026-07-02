@@ -32,32 +32,52 @@ pub(crate) fn formatter_ignore_ranges(source: &str) -> Vec<FormatterIgnoreRange>
 
     loop {
         let token = lexer.next_token();
-        for trivia in token.leading.iter().chain(token.trailing.iter()) {
-            if !matches!(
-                trivia.kind,
-                TriviaKind::LineComment | TriviaKind::BlockComment | TriviaKind::JavadocComment
-            ) {
-                continue;
-            }
-
-            let comment_text = &source[trivia.range.start().get()..trivia.range.end().get()];
-            if is_formatter_off_marker(comment_text) {
-                off_comment_start = Some(line_start(source, trivia.range.start().get()));
-            } else if is_formatter_on_marker(comment_text)
-                && let Some(start) = off_comment_start.take()
-            {
-                let end = line_start(source, trivia.range.start().get());
-                if start < end {
-                    ranges.push(FormatterIgnoreRange {
-                        raw_text: strip_trailing_line_ending(&source[start..end]).to_owned(),
-                        raw_text_with_on: strip_trailing_line_ending(
-                            &source[start..line_end(source, trivia.range.end().get())],
-                        )
-                        .to_owned(),
-                        interior: start..end,
-                    });
+        let mut visit_trivia =
+            |trivia: &jolt_java_syntax::Trivia, leading_comment_start: &mut Option<usize>| {
+                if !matches!(
+                    trivia.kind,
+                    TriviaKind::LineComment | TriviaKind::BlockComment | TriviaKind::JavadocComment
+                ) {
+                    return;
                 }
-            }
+
+                let comment_text = &source[trivia.range.start().get()..trivia.range.end().get()];
+                if is_formatter_off_marker(comment_text) {
+                    off_comment_start = Some(
+                        leading_comment_start
+                            .take()
+                            .unwrap_or_else(|| line_start(source, trivia.range.start().get())),
+                    );
+                } else if is_formatter_on_marker(comment_text)
+                    && let Some(start) = off_comment_start.take()
+                {
+                    let end = line_start(source, trivia.range.start().get());
+                    if start < end {
+                        ranges.push(FormatterIgnoreRange {
+                            raw_text: strip_trailing_line_ending(&source[start..end]).to_owned(),
+                            raw_text_with_on: strip_trailing_line_ending(
+                                &source[start..line_end(source, trivia.range.end().get())],
+                            )
+                            .to_owned(),
+                            interior: start..end,
+                        });
+                    }
+                } else if off_comment_start.is_none()
+                    && leading_comment_start.is_none()
+                    && comment_starts_own_line(source, trivia.range.start().get())
+                {
+                    *leading_comment_start = Some(line_start(source, trivia.range.start().get()));
+                }
+            };
+
+        let mut leading_comment_start = None;
+        for trivia in &token.leading {
+            visit_trivia(trivia, &mut leading_comment_start);
+        }
+
+        let mut trailing_comment_start = None;
+        for trivia in &token.trailing {
+            visit_trivia(trivia, &mut trailing_comment_start);
         }
 
         if token.kind == JavaSyntaxKind::Eof {
@@ -72,11 +92,19 @@ pub(crate) fn formatter_ignore_runs(
     ranges: &[FormatterIgnoreRange],
     item_ranges: &[Option<Range<usize>>],
 ) -> Vec<FormatterIgnoreRun> {
-    ranges
+    let mut runs = ranges
         .iter()
         .map(|range| formatter_ignore_run(range, item_ranges))
         .filter(|run| run.skip_start < run.skip_end)
-        .collect()
+        .collect::<Vec<_>>();
+
+    for index in 0..runs.len().saturating_sub(1) {
+        if !runs[index].include_on_marker && runs[index + 1].insert_index == runs[index].skip_end {
+            runs[index].include_on_marker = true;
+        }
+    }
+
+    runs
 }
 
 pub(crate) fn formatter_ignore_run_doc(run: &FormatterIgnoreRun) -> Doc {
@@ -179,6 +207,10 @@ fn strip_trailing_line_ending(text: &str) -> &str {
         .or_else(|| text.strip_suffix('\n'))
         .or_else(|| text.strip_suffix('\r'))
         .unwrap_or(text)
+}
+
+fn comment_starts_own_line(source: &str, offset: usize) -> bool {
+    source[line_start(source, offset)..offset].trim().is_empty()
 }
 
 fn line_start(source: &str, offset: usize) -> usize {
