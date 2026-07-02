@@ -5,10 +5,10 @@ use super::{
     format_annotation_element_value, format_array_dimensions, format_block_body,
     format_construct_leading_comments, format_constructor_body, format_formal_parameter,
     format_inline_annotations, format_leading_comments, format_modifier_prefix,
-    format_receiver_parameter, format_statement_semicolon, format_token_text,
-    format_trailing_comments_before_line_break, format_type, format_type_parameter_list,
-    format_type_without_leading_comments, format_typed_modifier_prefix, group, hard_line, line,
-    parenthesized_list, text,
+    format_receiver_parameter, format_separator_with_comments, format_statement_semicolon,
+    format_token_text, format_trailing_comments_before_line_break, format_type,
+    format_type_parameter_list, format_type_without_leading_comments, format_typed_modifier_prefix,
+    group, hard_line, line, parenthesized_list, text,
 };
 
 pub(super) fn format_constructor_declaration(
@@ -267,23 +267,10 @@ fn format_throws_entry_separator(
     entries_len: usize,
 ) -> Doc {
     if let Some(comma) = comma {
-        format_throws_separator(&comma)
+        format_separator_with_comments(&comma, ",", line())
     } else if index + 1 < entries_len {
         line()
     } else {
         jolt_fmt_ir::nil()
     }
-}
-
-fn format_throws_separator(comma: &JavaSyntaxToken) -> Doc {
-    concat([
-        format_leading_comments(comma),
-        text(","),
-        format_trailing_comments_before_line_break(comma),
-        if comma.trailing_comments().iter().any(comment_forces_line) {
-            hard_line()
-        } else {
-            line()
-        },
-    ])
 }

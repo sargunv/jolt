@@ -17,8 +17,8 @@ use crate::helpers::blocks::{
 };
 use crate::helpers::comments::{
     comment_forces_line, comment_is_star_block, format_comment, format_dangling_comments,
-    format_leading_comments, format_removed_token_comments, format_token_text,
-    format_token_with_comments, format_trailing_comments,
+    format_leading_comments, format_removed_token_comments, format_separator_with_comments,
+    format_token_text, format_token_with_comments, format_trailing_comments,
     format_trailing_comments_before_line_break, non_formatter_control_comments,
     trailing_comments_force_line,
 };

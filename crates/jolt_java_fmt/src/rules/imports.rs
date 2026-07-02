@@ -3,7 +3,9 @@ use jolt_java_syntax::{ImportDeclaration, ImportKind};
 
 use crate::context::JavaFormatter;
 use crate::helpers::blocks::{join_empty_lines, join_hard_lines};
-use crate::helpers::comments::format_comment;
+use crate::helpers::comments::{
+    format_comment, format_inline_trailing_comment_list, split_leading_comment_barrier_runs,
+};
 use crate::rules::names::{format_name, name_key};
 
 pub(crate) fn format_imports(
@@ -14,24 +16,21 @@ pub(crate) fn format_imports(
         return None;
     }
 
-    let mut runs: Vec<Vec<FormattedImport>> = Vec::new();
-    let mut current_run = Vec::new();
-
-    for import in imports {
+    let runs = split_leading_comment_barrier_runs(imports, |import| {
         let tokens = import.tokens();
-        if formatter.comments().has_leading_comment_for_tokens(&tokens) && !current_run.is_empty() {
-            runs.push(current_run);
-            current_run = Vec::new();
-        }
-        let import_entry = FormattedImport::from_declaration(&import, formatter);
-        current_run.push(import_entry);
-    }
-    if !current_run.is_empty() {
-        runs.push(current_run);
-    }
+        formatter.comments().has_leading_comment_for_tokens(&tokens)
+    });
 
     Some(join_empty_lines(
-        runs.into_iter().map(format_import_run).collect(),
+        runs.into_iter()
+            .map(|run| {
+                format_import_run(
+                    run.into_iter()
+                        .map(|import| FormattedImport::from_declaration(&import, formatter))
+                        .collect(),
+                )
+            })
+            .collect(),
     ))
 }
 
@@ -118,7 +117,7 @@ impl FormattedImport {
             },
             self.path_doc,
             text(";"),
-            format_inline_trailing_comments(&self.trailing_comments),
+            format_inline_trailing_comment_list(&self.trailing_comments),
         ]);
 
         if self.leading_comments.is_empty() {
@@ -158,13 +157,4 @@ fn format_import_kind(kind: ImportKind) -> (bool, bool, String, Doc) {
             (true, false, path, format_name(&name))
         }
     }
-}
-
-fn format_inline_trailing_comments(comments: &[jolt_java_syntax::JavaComment]) -> Doc {
-    concat(
-        comments
-            .iter()
-            .map(|comment| concat([text(" "), format_comment(comment)]))
-            .collect::<Vec<_>>(),
-    )
 }

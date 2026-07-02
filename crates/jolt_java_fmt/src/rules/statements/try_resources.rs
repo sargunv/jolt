@@ -4,7 +4,7 @@ use super::{
     CatchClause, CatchParameter, CatchTypeList, Doc, FinallyClause, JavaFormatter, JavaSyntaxToken,
     Resource, ResourceListEntry, TryStatement, TryWithResourcesStatement, Type, concat,
     empty_block, format_annotation, format_block, format_dangling_comments, format_expression,
-    format_leading_comments, format_local_variable_declaration, format_statement_semicolon,
+    format_local_variable_declaration, format_separator_with_comments, format_statement_semicolon,
     format_token_with_comments, format_trailing_comments_before_line_break, format_type, group,
     hard_line, indent, line, non_formatter_control_comments, soft_line, text,
     trailing_comments_force_line,
@@ -282,18 +282,7 @@ fn format_catch_type_separator(separator: Option<&JavaSyntaxToken>) -> Doc {
         line(),
         separator.map_or_else(
             || text("| "),
-            |separator| {
-                concat([
-                    format_leading_comments(separator),
-                    text("|"),
-                    format_trailing_comments_before_line_break(separator),
-                    if trailing_comments_force_line(separator) {
-                        hard_line()
-                    } else {
-                        text(" ")
-                    },
-                ])
-            },
+            |separator| format_separator_with_comments(separator, "|", text(" ")),
         ),
     ])
 }

@@ -4,10 +4,11 @@ use super::{
     ForUpdate, IfStatement, JavaFormatter, JavaSyntaxToken, Statement, StatementBody,
     StatementExpressionEntry, StatementExpressionList, SynchronizedStatement, WhileStatement,
     comment_forces_line, concat, empty_block, format_block, format_comment, format_expression,
-    format_leading_comments, format_local_variable_declaration, format_statement_semicolon,
-    format_trailing_comments_before_line_break, group, hard_line, indent, line, semicolon_list,
-    soft_line, statement_body_as_block, statement_body_as_block_with_trailing_comments,
-    statement_body_trailing_comments_force_line, text, trailing_comments_force_line,
+    format_leading_comments, format_local_variable_declaration, format_separator_with_comments,
+    format_statement_semicolon, format_trailing_comments_before_line_break, group, hard_line,
+    indent, line, semicolon_list, soft_line, statement_body_as_block,
+    statement_body_as_block_with_trailing_comments, statement_body_trailing_comments_force_line,
+    text, trailing_comments_force_line,
 };
 
 pub(super) fn format_if_statement(statement: &IfStatement, formatter: &JavaFormatter<'_>) -> Doc {
@@ -422,26 +423,13 @@ fn format_statement_expression_entries(
     for (index, entry) in entries.into_iter().enumerate() {
         docs.push(format_expression(&entry.expression, formatter));
         if let Some(comma) = entry.comma {
-            docs.push(format_statement_expression_separator(&comma));
+            docs.push(format_separator_with_comments(&comma, ",", text(" ")));
         } else if index + 1 < entries_len {
             docs.push(line());
         }
     }
 
     concat(docs)
-}
-
-fn format_statement_expression_separator(comma: &JavaSyntaxToken) -> Doc {
-    concat([
-        format_leading_comments(comma),
-        text(","),
-        format_trailing_comments_before_line_break(comma),
-        if trailing_comments_force_line(comma) {
-            hard_line()
-        } else {
-            text(" ")
-        },
-    ])
 }
 
 pub(super) fn format_synchronized_statement(

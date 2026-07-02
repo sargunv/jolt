@@ -6,7 +6,7 @@ use super::{
     format_annotation_interface_body, format_class_body, format_construct_leading_comments,
     format_enum_body_contents, format_enum_constant_entry, format_interface_body,
     format_leading_comment_list, format_leading_comments, format_modifier_prefix, format_name,
-    format_record_body, format_record_component, format_token_text,
+    format_record_body, format_record_component, format_separator_with_comments, format_token_text,
     format_trailing_comments_before_line_break, format_type_parameter_list,
     format_type_without_leading_comments, group, hard_line, line, parenthesized_list, text,
 };
@@ -293,7 +293,7 @@ fn format_type_clause_entries_broken(
             format_type_without_leading_comments(&entry.ty, formatter),
         ]));
         if let Some(comma) = entry.comma {
-            docs.push(format_header_clause_separator_broken(&comma));
+            docs.push(format_separator_with_comments(&comma, ",", line()));
         } else if index + 1 < entries_len {
             docs.push(line());
         }
@@ -315,24 +315,11 @@ fn format_permits_clause_entries_broken(
             format_name(&entry.name),
         ]));
         if let Some(comma) = entry.comma {
-            docs.push(format_header_clause_separator_broken(&comma));
+            docs.push(format_separator_with_comments(&comma, ",", line()));
         } else if index + 1 < entries_len {
             docs.push(line());
         }
     }
 
     concat(docs)
-}
-
-fn format_header_clause_separator_broken(comma: &JavaSyntaxToken) -> Doc {
-    concat([
-        format_leading_comments(comma),
-        text(","),
-        format_trailing_comments_before_line_break(comma),
-        if comma.trailing_comments().iter().any(comment_forces_line) {
-            hard_line()
-        } else {
-            line()
-        },
-    ])
 }

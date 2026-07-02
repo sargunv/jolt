@@ -23,6 +23,16 @@ class Example {
     }
   }
 
+  void blockCommented() throws Exception {
+    try (
+      var declared = open();
+      existing
+      /* trailing resource semicolon */
+    ) {
+      use(declared);
+    }
+  }
+
   AutoCloseable open() {
     return null;
   }

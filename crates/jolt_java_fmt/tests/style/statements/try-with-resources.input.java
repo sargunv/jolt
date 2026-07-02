@@ -7,6 +7,9 @@ existing; // trailing resource semicolon
 void annotated() throws Exception {
 try (@Nonnull AutoCloseable declared = open(); this.existing) { use(declared); }
 }
+void blockCommented() throws Exception {
+try (var declared = open(); existing; /* trailing resource semicolon */) { use(declared); }
+}
 AutoCloseable open() { return null; }
 AutoCloseable existing;
 }

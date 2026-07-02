@@ -86,6 +86,32 @@ pub(crate) fn format_trailing_comments_before_line_break(token: &JavaSyntaxToken
     concat(docs)
 }
 
+pub(crate) fn format_inline_trailing_comment_list(comments: &[JavaComment]) -> Doc {
+    concat(
+        comments
+            .iter()
+            .map(|comment| concat([text(" "), format_comment(comment)]))
+            .collect::<Vec<_>>(),
+    )
+}
+
+pub(crate) fn format_separator_with_comments(
+    token: &JavaSyntaxToken,
+    separator: &'static str,
+    unforced_break: Doc,
+) -> Doc {
+    concat([
+        format_leading_comments(token),
+        text(separator),
+        format_trailing_comments_before_line_break(token),
+        if trailing_comments_force_line(token) {
+            hard_line()
+        } else {
+            unforced_break
+        },
+    ])
+}
+
 pub(crate) fn format_dangling_comments(comments: impl IntoIterator<Item = JavaComment>) -> Doc {
     let mut docs = Vec::new();
     for comment in comments {
@@ -144,6 +170,27 @@ pub(crate) fn comment_forces_line(comment: &JavaComment) -> bool {
 
 pub(crate) fn comment_is_star_block(comment: &JavaComment) -> bool {
     comment.kind() == JavaCommentKind::Doc || is_star_block_comment(comment.text())
+}
+
+pub(crate) fn split_leading_comment_barrier_runs<T>(
+    items: Vec<T>,
+    mut has_leading_comments: impl FnMut(&T) -> bool,
+) -> Vec<Vec<T>> {
+    let mut runs = Vec::new();
+    let mut current_run = Vec::new();
+
+    for item in items {
+        if has_leading_comments(&item) && !current_run.is_empty() {
+            runs.push(current_run);
+            current_run = Vec::new();
+        }
+        current_run.push(item);
+    }
+    if !current_run.is_empty() {
+        runs.push(current_run);
+    }
+
+    runs
 }
 
 fn format_comment_lines(lines: Vec<String>) -> Doc {

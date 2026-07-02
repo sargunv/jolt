@@ -10,3 +10,10 @@ enum WithMembers {
   // before members
   int code;
 }
+
+enum WithBlockMembers {
+  RED;
+
+  /* before members */
+  int code;
+}

@@ -3,12 +3,13 @@ use super::control_flow::{
 };
 use super::simple::format_statement_keyword;
 use super::{
-    BlockItem, BlockStatement, Doc, JavaFormatter, JavaSyntaxToken, SwitchBlock, SwitchBlockEntry,
+    BlockItem, BlockStatement, Doc, JavaFormatter, SwitchBlock, SwitchBlockEntry,
     SwitchBlockStatementGroup, SwitchLabel, SwitchLabelCaseEntry, SwitchLabelCaseItem, SwitchRule,
     SwitchStatement, braced_block, comment_forces_line, concat, empty_block, format_block,
     format_block_statement_item, format_comment, format_expression, format_leading_comments,
-    format_pattern, format_throw_statement, format_trailing_comments_before_line_break, group,
-    hard_line, indent, join_body_items, join_hard_lines, line, text,
+    format_pattern, format_separator_with_comments, format_throw_statement,
+    format_trailing_comments_before_line_break, group, hard_line, indent, join_body_items,
+    join_hard_lines, line, text,
 };
 
 pub(super) fn format_switch_statement(
@@ -207,7 +208,7 @@ fn format_switch_label_case_entries(
     for entry in entries {
         docs.push(format_switch_label_case_item(&entry.item, formatter));
         if let Some(comma) = entry.comma {
-            docs.push(format_switch_label_case_separator(&comma));
+            docs.push(format_separator_with_comments(&comma, ",", line()));
         }
     }
 
@@ -232,19 +233,6 @@ fn format_switch_label_case_item(item: &SwitchLabelCaseItem, formatter: &JavaFor
             format_trailing_comments_before_line_break(default),
         ]),
     }
-}
-
-fn format_switch_label_case_separator(comma: &JavaSyntaxToken) -> Doc {
-    concat([
-        format_leading_comments(comma),
-        text(","),
-        format_trailing_comments_before_line_break(comma),
-        if comma.trailing_comments().iter().any(comment_forces_line) {
-            hard_line()
-        } else {
-            line()
-        },
-    ])
 }
 
 fn format_switch_rule_body(rule: &SwitchRule, formatter: &JavaFormatter<'_>) -> Doc {

@@ -5,8 +5,9 @@ use jolt_java_syntax::JavaSyntaxToken;
 
 use crate::comments::CommentMap;
 use crate::helpers::comments::{
-    format_dangling_comments, format_leading_comments, format_trailing_comments,
-    format_trailing_comments_before_line_break, trailing_comments_force_line,
+    format_dangling_comments, format_leading_comments, format_separator_with_comments,
+    format_trailing_comments, format_trailing_comments_before_line_break,
+    trailing_comments_force_line,
 };
 
 pub(crate) struct CommaListItem {
@@ -21,7 +22,7 @@ pub(crate) fn comma_list(items: Vec<CommaListItem>) -> Doc {
     for (index, item) in items.into_iter().enumerate() {
         docs.push(item.doc);
         if let Some(comma) = item.comma {
-            docs.push(comma_separator(&comma));
+            docs.push(format_separator_with_comments(&comma, ",", line()));
         } else if index + 1 < items_len {
             docs.push(line());
         }
@@ -152,19 +153,6 @@ fn format_open_spacing(open: Option<&JavaSyntaxToken>) -> Doc {
             hard_line()
         } else {
             soft_line()
-        },
-    ])
-}
-
-fn comma_separator(comma: &JavaSyntaxToken) -> Doc {
-    concat([
-        format_leading_comments(comma),
-        text(","),
-        format_trailing_comments_before_line_break(comma),
-        if trailing_comments_force_line(comma) {
-            hard_line()
-        } else {
-            line()
         },
     ])
 }

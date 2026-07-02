@@ -2,15 +2,14 @@ use std::ops::Range;
 
 use jolt_fmt_ir::{Doc, concat, empty_line, hard_line, text};
 use jolt_java_syntax::{
-    JavaSyntaxToken, ModuleDeclaration, ModuleDirective, ModuleDirectiveRole, ModuleNameListEntry,
-    NameSyntax,
+    ModuleDeclaration, ModuleDirective, ModuleDirectiveRole, ModuleNameListEntry, NameSyntax,
 };
 
 use crate::context::JavaFormatter;
 use crate::helpers::blocks::{join_empty_lines, join_hard_lines};
 use crate::helpers::comments::{
-    comment_forces_line, format_comment, format_construct_leading_comments,
-    format_leading_comments, format_trailing_comments_before_line_break, token_has_comments,
+    format_comment, format_construct_leading_comments, format_inline_trailing_comment_list,
+    format_separator_with_comments, split_leading_comment_barrier_runs, token_has_comments,
 };
 use crate::helpers::formatter_ignore::{
     formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs, relative_token_range,
@@ -158,24 +157,24 @@ fn format_module_directive_segments(
     directives: Vec<ModuleDirective>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
-    let mut runs: Vec<Vec<FormattedModuleDirective>> = Vec::new();
-    let mut current_run = Vec::new();
-
-    for directive in directives {
+    let runs = split_leading_comment_barrier_runs(directives, |directive| {
         let tokens = directive.tokens();
-        if formatter.comments().has_leading_comment_for_tokens(&tokens) && !current_run.is_empty() {
-            runs.push(current_run);
-            current_run = Vec::new();
-        }
-        current_run.push(FormattedModuleDirective::from_directive(
-            &directive, formatter,
-        ));
-    }
-    if !current_run.is_empty() {
-        runs.push(current_run);
-    }
+        formatter.comments().has_leading_comment_for_tokens(&tokens)
+    });
 
-    join_empty_lines(runs.into_iter().map(format_module_directive_run).collect())
+    join_empty_lines(
+        runs.into_iter()
+            .map(|run| {
+                format_module_directive_run(
+                    run.into_iter()
+                        .map(|directive| {
+                            FormattedModuleDirective::from_directive(&directive, formatter)
+                        })
+                        .collect(),
+                )
+            })
+            .collect(),
+    )
 }
 
 fn module_directive_token_range(
@@ -258,7 +257,7 @@ impl FormattedModuleDirective {
     fn into_doc(self) -> Doc {
         let doc = concat([
             self.doc,
-            format_inline_trailing_comments(&self.trailing_comments),
+            format_inline_trailing_comment_list(&self.trailing_comments),
         ]);
         if self.leading_comments.is_empty() {
             doc
@@ -333,15 +332,6 @@ fn format_module_directive_doc(
     }
 }
 
-fn format_inline_trailing_comments(comments: &[jolt_java_syntax::JavaComment]) -> Doc {
-    concat(
-        comments
-            .iter()
-            .map(|comment| concat([text(" "), format_comment(comment)]))
-            .collect::<Vec<_>>(),
-    )
-}
-
 fn format_module_name_list_directive(
     keyword: &'static str,
     subject: &NameSyntax,
@@ -389,7 +379,7 @@ fn format_module_name_entries_inline(entries: Vec<ModuleNameListEntry>) -> Doc {
     for entry in entries {
         docs.push(format_name(&entry.name));
         if let Some(comma) = entry.comma {
-            docs.push(format_module_name_separator_inline(&comma));
+            docs.push(format_separator_with_comments(&comma, ",", text(" ")));
         }
     }
 
@@ -409,35 +399,17 @@ fn format_module_name_entries_broken(
             format_name(&entry.name),
         ]));
         if let Some(comma) = entry.comma {
-            docs.push(format_module_name_separator_broken(&comma));
+            docs.push(format_separator_with_comments(
+                &comma,
+                ",",
+                jolt_fmt_ir::line(),
+            ));
         } else if index + 1 < entries_len {
             docs.push(hard_line());
         }
     }
 
     concat(docs)
-}
-
-fn format_module_name_separator_inline(comma: &JavaSyntaxToken) -> Doc {
-    concat([
-        format_leading_comments(comma),
-        text(","),
-        format_trailing_comments_before_line_break(comma),
-        text(" "),
-    ])
-}
-
-fn format_module_name_separator_broken(comma: &JavaSyntaxToken) -> Doc {
-    concat([
-        format_leading_comments(comma),
-        text(","),
-        format_trailing_comments_before_line_break(comma),
-        if comma.trailing_comments().iter().any(comment_forces_line) {
-            hard_line()
-        } else {
-            jolt_fmt_ir::line()
-        },
-    ])
 }
 
 fn name_has_leading_comments(name: &NameSyntax, formatter: &JavaFormatter<'_>) -> bool {

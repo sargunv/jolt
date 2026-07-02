@@ -984,21 +984,27 @@ diagnostic model.
 Status: pending.
 
 Add the CLI after the Java engine can format real fixture inputs through
-`format_source`.
+`format_source`. The detailed CLI/config behavior is specified in
+[`formatter-milestone-10-cli-spec.md`](formatter-milestone-10-cli-spec.md).
 
 Add:
 
 - `jolt_fmt_cli`,
 - `jolt fmt`,
 - stdin/stdout,
+- default write mode for filesystem inputs,
 - `--check`,
-- `--write`,
 - `--line-width`,
 - `--indent-width`,
 - `--tabs`,
+- `--spaces`,
+- `--config`,
+- `--no-config`,
+- config loading with Figment,
 - include/exclude handling,
 - default `**/*.java` discovery for the Java phase,
-- `.gitignore` and `.ignore` handling,
+- `jolt.toml` and `.config/jolt.toml` discovery,
+- `.gitignore` and `.ignore` handling through the `ignore` crate,
 - owned CLI tests.
 
 The CLI should only call `jolt_fmt_core`. It should not implement formatting
