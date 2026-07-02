@@ -37,7 +37,7 @@ class GoogleJavaFormatFaqSnippets {
             ( // This is a line comment.
                 currentEstimate + argument / currentEstimate
             )
-            / 2.0f;
+                / 2.0f;
     }
 
     void block09() {
@@ -45,34 +45,34 @@ class GoogleJavaFormatFaqSnippets {
             ( // This is a line comment.
                 currentEstimate + argument / currentEstimate
             )
-            / 2.0f;
+                / 2.0f;
     }
 
     void block10() {
         Function<T1, T2> function =
             new Function<>() {
-            T2 apply(T1 x) {
-                otherFunction(x); // Long comment.
-            }
-        };
+                T2 apply(T1 x) {
+                    otherFunction(x); // Long comment.
+                }
+            };
     }
 
     void block11() {
         Function<T1, T2> function =
             new Function<>() {
-            T2 apply(T1 x) {
-                otherFunction(x); // Long comment.
-            }
-        };
+                T2 apply(T1 x) {
+                    otherFunction(x); // Long comment.
+                }
+            };
     }
 
     void block12() {
         Function<T1, T2> function =
             new Function<>() {
-            T2 apply(T1 x) {
-                otherFunction(x); // Long comment.
-            }
-        };
+                T2 apply(T1 x) {
+                    otherFunction(x); // Long comment.
+                }
+            };
     }
 
     interface Block13DeclarationInput {

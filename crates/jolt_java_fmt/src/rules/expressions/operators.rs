@@ -3,7 +3,7 @@ use super::{
     PostfixExpression, UnaryExpression, assignment_expression, binary_chain, concat,
     format_expression, format_token_with_comments, ternary_expression, text,
 };
-use jolt_java_syntax::JavaSyntaxToken;
+use jolt_java_syntax::{ExpressionParentRole, JavaSyntaxToken};
 
 pub(super) fn format_assignment_expression(
     expression: &AssignmentExpression,
@@ -50,6 +50,7 @@ pub(super) fn format_conditional_expression(
             .map_or_else(jolt_fmt_ir::nil, |expression| {
                 format_expression(&expression, formatter)
             }),
+        should_force_conditional_break(expression),
     )
 }
 
@@ -57,8 +58,15 @@ pub(super) fn format_binary_expression(
     expression: &BinaryExpression,
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
+    let parent_operator = expression
+        .operator()
+        .map(|operator| operator.text().to_owned());
     let (first, rest) = flatten_binary_expression(expression, formatter);
-    binary_chain(format_expression(&first, formatter), rest)
+    let first = parent_operator.as_deref().map_or_else(
+        || format_expression(&first, formatter),
+        |operator| format_binary_operand(&first, operator, formatter),
+    );
+    binary_chain(first, rest)
 }
 
 pub(super) fn format_unary_expression(
@@ -113,15 +121,10 @@ fn flatten_binary_expression(
                 .collect(),
         );
     };
-    let operator_text = operator.text();
-    if !is_flattenable_binary_operator(operator_text) {
-        return unflattened_binary_expression(expression, formatter, operator);
-    }
-
     let root = Expression::from(expression.clone());
     let mut operands = Vec::new();
     let mut operators = Vec::new();
-    collect_binary_chain(&root, operator_text, &mut operands, &mut operators);
+    collect_binary_chain(&root, &mut operands, &mut operators);
     if operators.len() + 1 != operands.len() {
         return unflattened_binary_expression(expression, formatter, operator);
     }
@@ -134,12 +137,30 @@ fn flatten_binary_expression(
         .map(|(operator, operand)| {
             (
                 format_token_with_comments(&operator),
-                format_expression(&operand, formatter),
+                format_binary_operand(&operand, operator.text(), formatter),
             )
         })
         .collect();
 
     (first, rest)
+}
+
+fn format_binary_operand(
+    expression: &Expression,
+    parent_operator: &str,
+    formatter: &JavaFormatter<'_>,
+) -> Doc {
+    let doc = format_expression(expression, formatter);
+    if should_parenthesize_binary_operand(expression, parent_operator) {
+        jolt_fmt_ir::group(concat([
+            text("("),
+            jolt_fmt_ir::indent(concat([jolt_fmt_ir::soft_line(), doc])),
+            jolt_fmt_ir::soft_line(),
+            text(")"),
+        ]))
+    } else {
+        doc
+    }
 }
 
 fn unflattened_binary_expression(
@@ -162,50 +183,141 @@ fn unflattened_binary_expression(
 
 fn collect_binary_chain(
     expression: &Expression,
-    operator: &str,
     operands: &mut Vec<Expression>,
     operators: &mut Vec<JavaSyntaxToken>,
 ) {
-    if let Expression::BinaryExpression(binary) = expression
-        && let Some(binary_operator) = binary.operator()
-        && binary_operator.text() == operator
-    {
-        if let Some(left) = binary.left() {
-            collect_binary_chain(&left, operator, operands, operators);
-        }
-        operators.push(binary_operator);
-        if let Some(right) = binary.right() {
-            collect_binary_chain(&right, operator, operands, operators);
-        }
+    let Some(binary) = binary_for_chain(expression) else {
+        operands.push(expression.clone());
+        return;
+    };
+    let Some(operator) = binary.operator() else {
+        operands.push(expression.clone());
+        return;
+    };
+
+    if let Some(left) = binary.left() {
+        collect_binary_left(&left, operator.text(), operands, operators);
+    }
+    operators.push(operator);
+    if let Some(right) = binary.right() {
+        operands.push(right);
+    }
+}
+
+fn collect_binary_left(
+    expression: &Expression,
+    parent_operator: &str,
+    operands: &mut Vec<Expression>,
+    operators: &mut Vec<JavaSyntaxToken>,
+) {
+    let Some(binary) = binary_for_chain(expression) else {
+        operands.push(expression.clone());
+        return;
+    };
+    let Some(operator) = binary.operator() else {
+        operands.push(expression.clone());
+        return;
+    };
+
+    if !should_flatten_binary(parent_operator, operator.text()) {
+        operands.push(expression.clone());
         return;
     }
 
-    operands.push(expression.clone());
+    collect_binary_chain(&Expression::from(binary), operands, operators);
 }
 
-const fn is_flattenable_binary_operator(operator: &str) -> bool {
-    // Same-operator chains parse left-associatively in Java, so flattening only
-    // removes redundant CST nesting while preserving token order and grouping.
+fn binary_for_chain(expression: &Expression) -> Option<BinaryExpression> {
+    match expression {
+        Expression::BinaryExpression(binary) => Some(binary.clone()),
+        Expression::ParenthesizedExpression(parenthesized)
+            if parenthesized
+                .open_paren()
+                .is_none_or(|token| !token_has_comments(&token))
+                && parenthesized
+                    .close_paren()
+                    .is_none_or(|token| !token_has_comments(&token)) =>
+        {
+            match parenthesized.expression() {
+                Some(Expression::BinaryExpression(binary)) => Some(binary),
+                _ => None,
+            }
+        }
+        _ => None,
+    }
+}
+
+fn token_has_comments(token: &JavaSyntaxToken) -> bool {
+    !token.leading_comments().is_empty() || !token.trailing_comments().is_empty()
+}
+
+fn should_force_conditional_break(expression: &ConditionalExpression) -> bool {
     matches!(
-        operator.as_bytes(),
-        b"||"
-            | b"&&"
-            | b"|"
-            | b"^"
-            | b"&"
-            | b"=="
-            | b"!="
-            | b"<"
-            | b">"
-            | b"<="
-            | b">="
-            | b"<<"
-            | b">>"
-            | b">>>"
-            | b"+"
-            | b"-"
-            | b"*"
-            | b"/"
-            | b"%"
+        Expression::from(expression.clone()).parent_role(),
+        Some(
+            ExpressionParentRole::ConditionalCondition
+                | ExpressionParentRole::ConditionalTrueExpression
+                | ExpressionParentRole::ConditionalFalseExpression
+        )
     )
+}
+
+fn should_flatten_binary(parent_operator: &str, child_operator: &str) -> bool {
+    let Some(parent_precedence) = binary_operator_precedence(parent_operator) else {
+        return false;
+    };
+    let Some(child_precedence) = binary_operator_precedence(child_operator) else {
+        return false;
+    };
+    if parent_precedence != child_precedence {
+        return false;
+    }
+
+    if is_shift_operator(parent_operator) && is_shift_operator(child_operator) {
+        return false;
+    }
+
+    if is_multiplicative_operator(parent_operator) && is_multiplicative_operator(child_operator) {
+        return parent_operator == child_operator
+            && parent_operator != "%"
+            && child_operator != "%";
+    }
+
+    true
+}
+
+fn should_parenthesize_binary_operand(expression: &Expression, parent_operator: &str) -> bool {
+    if !is_bitwise_or_shift_operator(parent_operator) {
+        return false;
+    }
+
+    matches!(expression, Expression::BinaryExpression(_))
+}
+
+fn binary_operator_precedence(operator: &str) -> Option<u8> {
+    Some(match operator {
+        "||" => 1,
+        "&&" => 2,
+        "|" => 3,
+        "^" => 4,
+        "&" => 5,
+        "==" | "!=" => 6,
+        "<" | ">" | "<=" | ">=" => 7,
+        "<<" | ">>" | ">>>" => 8,
+        "+" | "-" => 9,
+        "*" | "/" | "%" => 10,
+        _ => return None,
+    })
+}
+
+fn is_shift_operator(operator: &str) -> bool {
+    matches!(operator, "<<" | ">>" | ">>>")
+}
+
+fn is_bitwise_or_shift_operator(operator: &str) -> bool {
+    matches!(operator, "|" | "^" | "&" | "<<" | ">>" | ">>>")
+}
+
+fn is_multiplicative_operator(operator: &str) -> bool {
+    matches!(operator, "*" | "/" | "%")
 }

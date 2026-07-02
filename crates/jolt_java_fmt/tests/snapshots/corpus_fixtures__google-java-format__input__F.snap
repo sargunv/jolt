@@ -15,8 +15,20 @@ class F {
   F f = null;
   Object field0 =
     true
-      ? true ? true ? null : null : true ? null : null
-      : true ? true ? null : null : true ? null : null;
+      ? true
+        ? true
+          ? null
+          : null
+        : true
+          ? null
+          : null
+      : true
+        ? true
+          ? null
+          : null
+        : true
+          ? null
+          : null;
 
   Pair<
     Pair<Pair<Integer, Integer>, Pair<Integer, Integer>>,
@@ -27,8 +39,20 @@ class F {
     Pair<Pair<Integer, Integer>, Pair<Integer, Integer>>
   > field2 =
     true
-      ? true ? true ? null : null : true ? null : null
-      : true ? true ? null : null : true ? null : null;
+      ? true
+        ? true
+          ? null
+          : null
+        : true
+          ? null
+          : null
+      : true
+        ? true
+          ? null
+          : null
+        : true
+          ? null
+          : null;
 
   @MarkerAnnotation
   Pair<
@@ -36,8 +60,20 @@ class F {
     Pair<Pair<Integer, Integer>, Pair<Integer, Integer>>
   > field3 =
     true
-      ? true ? true ? null : null : true ? null : null
-      : true ? true ? null : null : true ? null : null;
+      ? true
+        ? true
+          ? null
+          : null
+        : true
+          ? null
+          : null
+      : true
+        ? true
+          ? null
+          : null
+        : true
+          ? null
+          : null;
 
   void f() {
     for (

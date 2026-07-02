@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, concat, group, indent, line, text};
+use jolt_fmt_ir::{Doc, concat, force_group, group, indent, line, text};
 
 pub(crate) fn assignment_expression(left: Doc, operator: Doc, right: Doc) -> Doc {
     group(concat([left, text(" "), operator, assignment_rhs(right)]))
@@ -27,8 +27,9 @@ pub(crate) fn ternary_expression(
     consequence: Doc,
     colon: Doc,
     alternative: Doc,
+    force_break: bool,
 ) -> Doc {
-    group(concat([
+    let doc = concat([
         condition,
         indent(concat([
             line(),
@@ -40,5 +41,11 @@ pub(crate) fn ternary_expression(
             text(" "),
             alternative,
         ])),
-    ]))
+    ]);
+
+    if force_break {
+        force_group(doc)
+    } else {
+        group(doc)
+    }
 }
