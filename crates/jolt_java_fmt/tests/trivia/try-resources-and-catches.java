@@ -1,0 +1,22 @@
+class TryTrivia {
+  void run() throws Exception {
+    try ( /* JOLT-TRIVIA:try-open */
+        Resource first = open() /* JOLT-TRIVIA:resource-first */;
+        Resource second = open() /* JOLT-TRIVIA:resource-second */) {
+      first.close();
+    } catch ( /* JOLT-TRIVIA:catch-open */ java.io.IOException
+        | /* JOLT-TRIVIA:catch-union */ IllegalStateException ex /* JOLT-TRIVIA:catch-param */) {
+      throw ex;
+    } finally /* JOLT-TRIVIA:finally-tail */ {
+      cleanup();
+    }
+  }
+
+  Resource open() {
+    return null;
+  }
+
+  void cleanup() {}
+}
+
+interface Resource extends AutoCloseable {}

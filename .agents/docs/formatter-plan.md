@@ -38,6 +38,8 @@ The implementation approach is documented in
 [`java-format-implementation-spec.md`](java-format-implementation-spec.md), with
 progress and permanent intentional deviations tracked in
 [`java-format-implementation-checklist.md`](java-format-implementation-checklist.md).
+The Java trivia-preservation policy and migration checklist are documented in
+[`java-trivia-formatting-pattern.md`](java-trivia-formatting-pattern.md).
 
 ### Out of scope for the first product
 
@@ -961,6 +963,25 @@ Status: pending.
 Tighten the parts most likely to cause destructive output after the main layout
 builder exists.
 
+Hardening should proceed in three passes:
+
+1. Add marker-preservation regression fixtures before changing formatter
+   behavior. These fixtures should place unique comment markers in strange but
+   valid Java positions and assert that formatting never drops them. They should
+   not require exact final placement.
+2. Use the failures to classify trivia loss by source shape: token text emitted
+   through plain `text()`, comments attached to removed or synthesized tokens,
+   comments on delimiters, comments on reordered constructs, and comments inside
+   raw-preserved ranges.
+3. Introduce the durable formatter API that makes trivia-aware token emission
+   the default path, then promote representative cases into exact input/expected
+   style fixtures once placement policy is intentional.
+
+The durable API and migration checklist are specified in
+[`java-trivia-formatting-pattern.md`](java-trivia-formatting-pattern.md). Follow
+that pattern instead of adding one-off `text()` plus comment handling at
+individual rule sites.
+
 Add:
 
 - license headers,
@@ -973,6 +994,19 @@ Add:
 
 Owned regression fixtures are appropriate here because they cover Jolt-owned
 safety behavior or gaps in imported fixture inputs.
+
+Regression fixture expectations:
+
+- each fixture must parse as valid Java,
+- every `JOLT-TRIVIA:*` marker present in the source must be present in the
+  formatted output,
+- formatter diagnostics are failures,
+- formatted output must parse cleanly,
+- formatting the formatted output must be idempotent once no marker was lost.
+
+Exact comment placement belongs in style fixtures after the marker tests expose
+the destructive cases and the formatter has a trivia-aware token rendering
+contract.
 
 Parse-error no-write behavior belongs to the shared diagnostics/failure-policy
 milestone. This milestone may add Java-specific regression cases that exercise

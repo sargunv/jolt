@@ -1,0 +1,38 @@
+class SymbolCrevices
+    extends java /* JOLT-TRIVIA:extends-fqn-1 */ . lang /* JOLT-TRIVIA:extends-fqn-2 */ . Object
+    implements java /* JOLT-TRIVIA:implements-fqn-1 */ . io /* JOLT-TRIVIA:implements-fqn-2 */ . Serializable {
+  java /* JOLT-TRIVIA:field-type-fqn-1 */ . util /* JOLT-TRIVIA:field-type-fqn-2 */ . Map<
+          String /* JOLT-TRIVIA:generic-before-comma */,
+          java /* JOLT-TRIVIA:nested-fqn-1 */ . util /* JOLT-TRIVIA:nested-fqn-2 */ . List<
+              ? /* JOLT-TRIVIA:wildcard-before-extends */ extends Number /* JOLT-TRIVIA:wildcard-bound */>>
+      /* JOLT-TRIVIA:between-type-and-name */ values /* JOLT-TRIVIA:between-name-and-semi */;
+
+  int /* JOLT-TRIVIA:primitive-type-name */ count /* JOLT-TRIVIA:var-before-equals */ =
+      1 /* JOLT-TRIVIA:var-before-comma */,
+      other /* JOLT-TRIVIA:second-var-before-semi */;
+
+  SymbolCrevices /* JOLT-TRIVIA:ctor-name-before-paren */ () {
+    this /* JOLT-TRIVIA:this-before-dot */ . count = 1 /* JOLT-TRIVIA:assignment-before-semi */;
+  }
+
+  void method /* JOLT-TRIVIA:method-name-before-paren */ (
+      java /* JOLT-TRIVIA:param-fqn-1 */ . lang /* JOLT-TRIVIA:param-fqn-2 */ . String
+          /* JOLT-TRIVIA:param-type-name */ name /* JOLT-TRIVIA:param-name-before-comma */,
+      int... /* JOLT-TRIVIA:varargs-before-name */ numbers /* JOLT-TRIVIA:param-name-before-close */)
+      throws java /* JOLT-TRIVIA:throws-fqn-1 */ . io /* JOLT-TRIVIA:throws-fqn-2 */ . IOException
+          /* JOLT-TRIVIA:throws-before-body */ {
+    ; /* JOLT-TRIVIA:empty-statement-after-semi */
+    helper /* JOLT-TRIVIA:call-name-before-paren */ (
+        name /* JOLT-TRIVIA:call-arg-before-comma */,
+        numbers /* JOLT-TRIVIA:call-arg-before-close */) /* JOLT-TRIVIA:call-before-semi */;
+    int[] array =
+        new int /* JOLT-TRIVIA:new-array-type-before-dim */ [
+            /* JOLT-TRIVIA:new-array-open-bracket */ /* JOLT-TRIVIA:new-array-before-close */]
+            /* JOLT-TRIVIA:new-array-before-init */ {
+              1 /* JOLT-TRIVIA:initializer-before-comma */,
+              2 /* JOLT-TRIVIA:initializer-before-close */
+            } /* JOLT-TRIVIA:array-before-semi */;
+  }
+
+  void helper(String name, int... numbers) {}
+}

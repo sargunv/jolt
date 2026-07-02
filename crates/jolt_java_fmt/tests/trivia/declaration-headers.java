@@ -1,0 +1,18 @@
+@Deprecated /* JOLT-TRIVIA:after-annotation */
+public /* JOLT-TRIVIA:after-public */ final class DeclarationHeaders
+    <T /* JOLT-TRIVIA:type-param */ extends Number /* JOLT-TRIVIA:type-bound */>
+    extends Base /* JOLT-TRIVIA:after-extends */
+    implements Runnable /* JOLT-TRIVIA:after-implements */ {
+  /** JOLT-TRIVIA:field-doc */
+  private /* JOLT-TRIVIA:field-modifier */ String name /* JOLT-TRIVIA:field-name */ = "x";
+
+  DeclarationHeaders(
+      /* JOLT-TRIVIA:ctor-param-leading */ String name /* JOLT-TRIVIA:ctor-param-trailing */) {
+    this.name = name;
+  }
+
+  @Override
+  public void run() {}
+}
+
+class Base {}

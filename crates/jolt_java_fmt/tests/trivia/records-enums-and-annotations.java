@@ -1,0 +1,22 @@
+/** JOLT-TRIVIA:record-doc */
+record Box(
+    /* JOLT-TRIVIA:record-open */ String name /* JOLT-TRIVIA:record-name */,
+    int count /* JOLT-TRIVIA:record-count */) {
+  Box /* JOLT-TRIVIA:compact-constructor-name */ {
+    count = count + 1;
+  }
+}
+
+enum Mode {
+  /** JOLT-TRIVIA:enum-a-doc */
+  A /* JOLT-TRIVIA:enum-a-tail */,
+  B( /* JOLT-TRIVIA:enum-b-open */ "b" /* JOLT-TRIVIA:enum-b-arg */) /* JOLT-TRIVIA:enum-b-tail */;
+
+  Mode() {}
+
+  Mode(String value) {}
+}
+
+@interface Flag {
+  String value() default /* JOLT-TRIVIA:annotation-default */ "on";
+}

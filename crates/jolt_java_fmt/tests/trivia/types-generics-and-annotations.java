@@ -1,0 +1,19 @@
+@Flag( /* JOLT-TRIVIA:annotation-open */ value = "type" /* JOLT-TRIVIA:annotation-value */)
+class TypeTrivia<
+    T /* JOLT-TRIVIA:type-param-name */ extends Comparable<
+            /* JOLT-TRIVIA:nested-type-arg-leading */ T /* JOLT-TRIVIA:nested-type-arg-trailing */>
+        & java.io.Serializable /* JOLT-TRIVIA:second-bound */> {
+  java.util.Map<
+          /* JOLT-TRIVIA:map-key-leading */ String /* JOLT-TRIVIA:map-key-trailing */,
+          java.util.List<Integer /* JOLT-TRIVIA:list-arg-trailing */> /* JOLT-TRIVIA:map-value-trailing */>
+      values;
+
+  <U /* JOLT-TRIVIA:method-type-param */> U convert(U value)
+      throws /* JOLT-TRIVIA:throws-leading */ java.io.IOException /* JOLT-TRIVIA:throws-trailing */ {
+    return value;
+  }
+}
+
+@interface Flag {
+  String value();
+}
