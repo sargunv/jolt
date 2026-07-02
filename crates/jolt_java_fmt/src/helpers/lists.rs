@@ -55,20 +55,21 @@ pub(crate) fn braced_comma_list_with_trailing_separator(
         return empty_delimited_list("{", "}", open, close);
     }
 
-    let has_dangling_comments = has_dangling_delimiter_comments(open, close);
-    let doc = group(concat([
+    let should_break = has_dangling_delimiter_comments(open, close)
+        || items.last().is_some_and(|item| item.comma.is_some());
+    let doc = concat([
         format_open_delimiter(open, "{"),
         indent(concat([
             format_braced_open_spacing(open),
             comma_list_with_trailing_separator(items),
         ])),
         format_braced_close_with_spacing(close, "}"),
-    ]));
+    ]);
 
-    if has_dangling_comments {
+    if should_break {
         force_group(doc)
     } else {
-        doc
+        group(doc)
     }
 }
 
@@ -218,7 +219,7 @@ fn format_braced_open_spacing(open: Option<&JavaSyntaxToken>) -> Doc {
 
     let comments = open.trailing_comments();
     if comments.is_empty() {
-        return soft_line();
+        return line();
     }
 
     concat([hard_line(), format_dangling_comments(comments), hard_line()])
@@ -228,17 +229,7 @@ fn format_braced_close_with_spacing(
     close: Option<&JavaSyntaxToken>,
     fallback: &'static str,
 ) -> Doc {
-    let close_has_leading_comments =
-        close.is_some_and(|token| !token.leading_comments().is_empty());
-
-    concat([
-        if close_has_leading_comments {
-            line()
-        } else {
-            soft_line()
-        },
-        format_close_delimiter(close, fallback),
-    ])
+    concat([line(), format_close_delimiter(close, fallback)])
 }
 
 fn format_close_with_spacing(close: Option<&JavaSyntaxToken>, fallback: &'static str) -> Doc {

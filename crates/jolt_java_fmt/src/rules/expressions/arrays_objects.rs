@@ -1,11 +1,12 @@
 use super::calls::{format_argument_list_for_parent_role, parent_role_has_continuation_indent};
 use super::{
     ArrayAccessExpression, ArrayCreationExpression, ArrayInitializer, CommaListItem, DimExpression,
-    Doc, Expression, JavaFormatter, JavaSyntaxToken, ObjectCreationExpression,
-    VariableInitializerValue, braced_comma_list_with_trailing_separator, comment_forces_line,
-    concat, format_anonymous_class_body, format_expression, format_leading_comments,
-    format_trailing_comments, format_trailing_comments_before_line_break, format_type,
-    format_type_argument_list, group, hard_line, indent, line, text, trailing_comments_force_line,
+    Doc, Expression, ExpressionParentRole, JavaFormatter, JavaSyntaxToken,
+    ObjectCreationExpression, VariableInitializerValue, braced_comma_list_with_trailing_separator,
+    comment_forces_line, concat, format_anonymous_class_body, format_expression,
+    format_leading_comments, format_trailing_comments, format_trailing_comments_before_line_break,
+    format_type, format_type_argument_list, group, hard_line, indent, line, text,
+    trailing_comments_force_line,
 };
 
 pub(super) fn format_array_access_expression(
@@ -66,6 +67,7 @@ pub(super) fn format_array_creation_expression(
     expression: &ArrayCreationExpression,
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
+    let parent_role = Expression::from(expression.clone()).parent_role();
     group(concat([
         format_creation_new_keyword(expression.new_token().as_ref()),
         expression
@@ -79,12 +81,30 @@ pub(super) fn format_array_creation_expression(
         expression
             .initializer()
             .map_or_else(jolt_fmt_ir::nil, |initializer| {
-                concat([
-                    text(" "),
-                    jolt_fmt_ir::dedent(format_array_initializer(&initializer, formatter)),
-                ])
+                let initializer = format_array_initializer(&initializer, formatter);
+                let initializer =
+                    if array_initializer_has_surrounding_continuation_indent(parent_role) {
+                        jolt_fmt_ir::dedent(initializer)
+                    } else {
+                        initializer
+                    };
+                concat([text(" "), initializer])
             }),
     ]))
+}
+
+fn array_initializer_has_surrounding_continuation_indent(
+    parent_role: Option<ExpressionParentRole>,
+) -> bool {
+    matches!(
+        parent_role,
+        Some(
+            ExpressionParentRole::AssignmentRight
+                | ExpressionParentRole::ReturnValue
+                | ExpressionParentRole::ThrowValue
+                | ExpressionParentRole::YieldValue
+        )
+    )
 }
 
 fn format_creation_new_keyword(keyword: Option<&JavaSyntaxToken>) -> Doc {

@@ -82,35 +82,6 @@ Why this needs a formatter decision:
 - The renderer should stay linear or explicitly bounded; any improved fitting
   must avoid unbounded best-fit search.
 
-## Array Initializer Compact and Broken Forms
-
-Status: failing style fixtures; formatter backlog.
-
-Current fixtures:
-
-- `crates/jolt_java_fmt/tests/style/declarations/modifiers-and-annotations.input.java`
-- `crates/jolt_java_fmt/tests/style/expressions/array-access-and-creation.input.java`
-- `crates/jolt_java_fmt/tests/style/expressions/casts-instanceof-arrays.input.java`
-- `crates/jolt_java_fmt/tests/style/expressions/long-array-initializer.input.java`
-
-Observed gaps:
-
-- Compact non-empty array initializers currently print without interior spaces,
-  for example `{1, 2}` instead of `{ 1, 2 }`.
-- Array initializers inside annotations have the same spacing issue.
-- Long array initializers attached to a declaration can remain compact on the
-  continuation line, including trailing comma placement, instead of expanding
-  one element per line.
-
-Why this needs a formatter decision:
-
-- Empty array initializers already stay compact as `{}`; non-empty compact
-  initializers need a separate spacing rule.
-- Long initializer breaking depends on both the initializer width and the
-  surrounding declaration or assignment boundary.
-- Annotation element arrays and expression arrays should share the same brace
-  and element-list policy unless the style guide explicitly splits them.
-
 ## Dotted Identifier Runs and Member-Chain Break Shape
 
 Status: failing style fixtures; formatter backlog.

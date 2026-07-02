@@ -11,7 +11,11 @@ public class B20567842 {
   };
 
   // force block style, but not one-per-line for trailing ',':
-  int[] x = {a.b, true ? 1 : 2, CONST,};
+  int[] x = {
+    a.b,
+    true ? 1 : 2,
+    CONST,
+  };
 
   // don't format one-per-line here:
   int[] x = {

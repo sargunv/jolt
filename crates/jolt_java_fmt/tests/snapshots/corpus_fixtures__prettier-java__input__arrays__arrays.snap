@@ -10,7 +10,7 @@ class Array {
   Class<?> aaaaaaaaaaaaaaaa =
     new Aaaaaaaaaaaaaaaa[1111111111111111111].getClass();
   Class<?> aaaaaaaaaaaaaaaa =
-    new Aaaaaaaaaaaaaaaa[] {new Aaaaaaaaaaaaaaaa()}.getClass();
+    new Aaaaaaaaaaaaaaaa[] { new Aaaaaaaaaaaaaaaa() }.getClass();
 
   String[] DATA = {
     // nothing yet

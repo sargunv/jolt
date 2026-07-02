@@ -16,7 +16,7 @@ expression: formatted
 @Module(
   library = true,
   complete = false,
-  injects = {ClassInfoTracker.class, JslayoutMetaProto.class}
+  injects = { ClassInfoTracker.class, JslayoutMetaProto.class }
 )
 @Module(
   library = true,
@@ -39,8 +39,11 @@ expression: formatted
     JslayoutMeta.class,
   }
 )
-@Module(injects = {One.class, Two.class}, includes = {Three.class, Four.class})
-@Module(library = true, complete = false, numbers = {1, 2, 3})
+@Module(
+  injects = { One.class, Two.class },
+  includes = { Three.class, Four.class }
+)
+@Module(library = true, complete = false, numbers = { 1, 2, 3 })
 @Module(
   library = true,
   complete = false,
@@ -110,7 +113,7 @@ expression: formatted
   }
 )
 @Module(
-  {ClassInfoTracker.class, JslayoutMetaProto.class, JslayoutMetaProto.class}
+  { ClassInfoTracker.class, JslayoutMetaProto.class, JslayoutMetaProto.class }
 )
 @Module(
   {
