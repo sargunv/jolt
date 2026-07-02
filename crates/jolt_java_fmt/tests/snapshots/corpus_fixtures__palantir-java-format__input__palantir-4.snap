@@ -1,0 +1,20 @@
+---
+source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
+expression: formatted
+---
+class Palantir4 {
+  void foo() {
+    if (useAddedColumnsSetDesription) {
+      resultSet =
+        spark.sparkSetCreator()
+          .resolve(
+            initialSetResolver,
+            new LoremIpsumLongClassNameWithDescription(
+              initialSet,
+              list,
+              Optional.empty()
+            )
+          );
+    }
+  }
+}

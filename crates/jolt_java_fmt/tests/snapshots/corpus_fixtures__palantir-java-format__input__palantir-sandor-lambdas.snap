@@ -1,0 +1,27 @@
+---
+source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
+expression: formatted
+---
+public class Foo {
+  public static void main(String[] args) {
+    List<StoredLinkedDatasetCategory> storedCategories =
+      linkedDatasets.getCategories()
+        .stream()
+        .map(
+          storedCategory -> StoredLinkedDatasetCategory.of(
+            storedCategory.getName(),
+            storedCategory.getDatasets()
+              .stream()
+              .map(
+                ds -> StoredDatasetAndBranch.of(
+                  ds.getDatasetRid(),
+                  ds.getBranchName()
+                )
+              )
+              .collect(Collectors.toList())
+          )
+        )
+        .collect(Collectors.toList());
+    int otherVar = 5;
+  }
+}

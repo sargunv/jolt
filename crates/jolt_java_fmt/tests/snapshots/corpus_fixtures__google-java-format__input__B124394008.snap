@@ -1,0 +1,13 @@
+---
+source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
+expression: formatted
+---
+class B124394008 {
+  {
+    LocalReviewProto.Builder newReview =
+      readProfileResponse.flatMap(authorExtractor::extract)
+        .map(luReviewsExtractor::toLocalReviewProto)
+        .orElse(LocalReviewProto.getDefaultInstance())
+        .toBuilder();
+  }
+}

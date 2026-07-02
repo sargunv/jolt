@@ -1,0 +1,7 @@
+---
+source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
+expression: formatted
+---
+@Redacted(Redacted.REDACTED + "/redacted", redacted = Redacted.class)
+class B38352414 {
+}

@@ -1,0 +1,9 @@
+---
+source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
+expression: formatted
+---
+public record Record(@NotNull Object o) {
+  public Record {
+    this.o = o;
+  }
+}

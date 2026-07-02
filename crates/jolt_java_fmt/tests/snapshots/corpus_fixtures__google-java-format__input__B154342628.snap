@@ -1,0 +1,12 @@
+---
+source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
+expression: formatted
+---
+class B154342628 {
+  void f() {
+    var var = 42;
+    return writtenVariables.stream()
+        .filter(() -> deletedVariableIds.contains(var.getId()))
+        .collect(toImmutableList());
+  }
+}

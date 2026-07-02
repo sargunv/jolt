@@ -1,0 +1,23 @@
+---
+source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
+expression: formatted
+---
+enum TrailingComment {
+  /**
+   * foo
+   */
+  FOO,
+  /**
+   * bar
+   */
+  BAR;
+
+  /**
+   * a
+   */
+  Object a;
+  /**
+   * b
+   */
+  Object b;
+}

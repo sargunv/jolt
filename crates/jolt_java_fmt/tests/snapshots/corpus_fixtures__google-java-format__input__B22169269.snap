@@ -1,0 +1,19 @@
+---
+source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
+expression: formatted
+---
+class B22169269 {
+  {
+    try {
+    } catch (
+      ClassNotFoundException
+      | NoSuchMethodException
+      | InvocationTargetException
+      | IllegalAccessException e
+    ) {
+    }
+    try {
+    } catch (ClassNotFoundException | NoSuchMethodException e) {
+    }
+  }
+}

@@ -1,0 +1,7 @@
+---
+source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
+expression: formatted
+---
+class B28774859 {
+  java.util.Map.Entry e;
+}

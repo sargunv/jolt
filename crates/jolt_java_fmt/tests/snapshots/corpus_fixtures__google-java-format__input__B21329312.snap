@@ -1,0 +1,13 @@
+---
+source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
+expression: formatted
+---
+public class B21329312 {
+  boolean test() {
+    return wasEdited
+      || didContactsChange
+      || medicalInfoManager.getTemporaryProfilePicture() != null
+      || inMemoryAccessMedicalProfileAboveKeyguard
+      != originalAccessMedicalProfileAboveKeyguard;
+  }
+}

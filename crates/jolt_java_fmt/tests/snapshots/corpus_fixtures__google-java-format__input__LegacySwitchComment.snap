@@ -1,0 +1,19 @@
+---
+source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
+expression: formatted
+---
+class T {
+  int test(String v) {
+    switch (v) {
+      case "zero":
+        return 0;
+      case "one":
+        // this is a line comment about "one"
+        return 1;
+      case "two":
+        return 2;
+      default:
+        return -1;
+    }
+  }
+}

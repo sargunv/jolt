@@ -1,0 +1,14 @@
+---
+source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
+expression: formatted
+---
+package com.helloworld;
+
+class Foo {
+  void foo() {
+    var bar =
+      """
+        bar\
+         bar""";
+  }
+}

@@ -1,0 +1,8 @@
+---
+source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
+expression: formatted
+---
+class Test2 {
+  void f(Test2... xs) {
+  }
+}

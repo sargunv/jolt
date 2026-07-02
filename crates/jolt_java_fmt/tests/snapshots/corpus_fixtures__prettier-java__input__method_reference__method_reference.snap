@@ -1,0 +1,21 @@
+---
+source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
+expression: formatted
+---
+public class MethodReference {
+  public void referenceToAStaticMethod() {
+    call(ContainingClass::staticMethodName);
+  }
+
+  public referenceToAConstructor() {
+    call(ClassName::new);
+  }
+
+  public referenceToAnInstanceMethodOfAnArbitraryObjectOfAParticularType() {
+    call(ContainingType::methodName);
+  }
+
+  public referenceToAnInstanceMethodOfAParticularObject() {
+    call(containingObject::instanceMethodName);
+  }
+}

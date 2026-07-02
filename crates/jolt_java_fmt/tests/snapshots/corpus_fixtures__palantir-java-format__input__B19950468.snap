@@ -1,0 +1,9 @@
+---
+source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
+expression: formatted
+---
+class B19950468 {
+  int code() {
+  }
+  // comment
+}

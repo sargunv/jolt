@@ -1,0 +1,12 @@
+---
+source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
+expression: formatted
+---
+class T {
+  int f(Object x) {
+    if (x instanceof final Integer i) {
+      return i;
+    }
+    return -1;
+  }
+}

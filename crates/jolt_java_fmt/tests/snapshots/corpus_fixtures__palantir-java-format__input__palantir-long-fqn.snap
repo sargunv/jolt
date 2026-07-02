@@ -1,0 +1,13 @@
+---
+source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
+expression: formatted
+---
+class PalantirLongFqn {
+  public PalantirLongFqn() {
+    org.gradle.api.internal.artifacts.configurations.ConflictResolution conflictResolution =
+      (
+        (org.gradle.api.internal.artifacts.configurations.ResolutionStrategyInternal) conf.getResolutionStrategy()
+      )
+        .getConflictResolution();
+  }
+}

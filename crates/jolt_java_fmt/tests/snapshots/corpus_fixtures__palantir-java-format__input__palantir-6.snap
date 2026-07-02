@@ -1,0 +1,13 @@
+---
+source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
+expression: formatted
+---
+class Palantir6 {
+  void foo() {
+    Optional<Dataset<Row>> maybeCached =
+      OptionalUtils.orElseGetOptional(
+        Optional.ofNullable(localRowsCache.getIfPresent(setDescription)),
+        () -> Optional.ofNullable(datasetCache.getIfPresent(setDescription))
+      );
+  }
+}

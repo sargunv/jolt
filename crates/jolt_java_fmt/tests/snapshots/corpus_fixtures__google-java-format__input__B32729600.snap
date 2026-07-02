@@ -1,0 +1,12 @@
+---
+source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
+expression: formatted
+---
+class B32729600 {
+  {
+    f(
+      () -> {
+      }
+    );
+  }
+}

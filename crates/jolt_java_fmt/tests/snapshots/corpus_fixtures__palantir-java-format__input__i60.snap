@@ -1,0 +1,11 @@
+---
+source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
+expression: formatted
+---
+import org.checkerframework.checker.nullness.qual.*;
+
+public class FullyQualified {
+  public void format1(java.lang.String a1, java.lang.@Nullable Object... a2) {
+    // body
+  }
+}

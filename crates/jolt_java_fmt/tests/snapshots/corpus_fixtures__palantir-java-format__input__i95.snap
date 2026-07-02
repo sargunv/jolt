@@ -1,0 +1,8 @@
+---
+source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
+expression: formatted
+---
+class I95 {
+  public void format2(Object @Nullable ... a2) {
+  }
+}

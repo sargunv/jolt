@@ -1,0 +1,13 @@
+---
+source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
+expression: formatted
+---
+class Test {
+  {
+    f(
+      rrr.kkkkk.uuuuuuuu,
+      rrr.iiiiii.ggggggggggggggggg,
+      xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    );
+  }
+}

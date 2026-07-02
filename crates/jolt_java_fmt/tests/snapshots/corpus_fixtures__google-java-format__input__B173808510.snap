@@ -1,0 +1,11 @@
+---
+source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
+expression: formatted
+---
+class B173808510 {
+  @FlagSpec(
+    name = "myFlag",
+    help = "areallyreallyreallyreallyreallyreallyreallyreallyreallyreallyreallyreallyloongword word1 word2"
+  )
+  Flag<Integer> dummy = null;
+}

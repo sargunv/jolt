@@ -1,0 +1,150 @@
+---
+source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
+expression: formatted
+---
+class LabeledStatements {
+  void commentsLabeledStatementLineComment() {
+    loop:
+    // comment1
+    for (int num : arr) {
+    }
+
+    loop:
+    // comment1
+    // comment2
+    for (int num : arr) {
+    }
+
+    // Label statement
+    loop:
+    // comment1
+    // comment2
+    for (int num : arr) {
+    }
+
+    loop:
+    // comment1
+    // comment2
+    for (int num : arr) {
+    }
+
+    loop:
+    // comment1
+    for (int num : arr) {
+    }
+
+    loop:
+    for (int num : arr) {
+    }
+
+    loop:
+    for (int num : arr) {
+    }
+  }
+
+  void commentsLabeledStatementBlockComment() {
+    loop:
+    /* comment1 */
+    for (int num : arr) {
+    }
+
+    loop:
+    /* comment1 */
+    /* comment2 */
+    for (int num : arr) {
+    }
+
+    /* Label statement */
+    loop:
+    /* comment1 */
+    /* comment2 */
+    for (int num : arr) {
+    }
+
+    loop:
+    /* comment1 */
+    /* comment2 */
+    for (int num : arr) {
+    }
+
+    loop:
+    /* comment1 */
+    for (int num : arr) {
+    }
+
+    loop:
+    for (int num : arr) {
+    }
+
+    loop:
+    for (int num : arr) {
+    }
+  }
+
+  void commentsLabeledStatementMixedComment() {
+    loop:
+    /* comment1 */
+    for (int num : arr) {
+    }
+
+    loop:
+    // comment1
+    for (int num : arr) {
+    }
+
+    loop:
+    // comment1
+    // comment2
+    for (int num : arr) {
+    }
+
+    loop:
+    /* comment1 */
+    // comment2
+    for (int num : arr) {
+    }
+
+    loop:
+    // comment1
+    /* comment2 */
+    for (int num : arr) {
+    }
+
+    loop:
+    // comment1
+    /* comment2 */
+    for (int num : arr) {
+    }
+
+    loop:
+    /* comment1 */
+    /* comment2 */
+    for (int num : arr) {
+    }
+
+    loop:
+    /* comment1 */
+    // comment2
+    for (int num : arr) {
+    }
+
+    loop:
+    // comment1
+    /* comment2 */
+    for (int num : arr) {
+    }
+
+    oop:
+    /* comment1 */
+    // comment2
+    for (int num : arr) {
+    }
+  }
+
+  void labeledBlockStatement() {
+    label:
+    {
+      example();
+    }
+  }
+}

@@ -1,0 +1,64 @@
+---
+source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
+expression: formatted
+---
+/**
+ * This<br>              
+ * is<br>              
+ * a<br>              
+ * train.              
+ */
+class TheTrain {
+  public static final Object THE_TRAIN = null;
+
+  /**
+   * BLOCK COMMENT
+   */
+  int x;
+
+  /*               .
+  BLOCK COMMENT    .
+  
+  */
+  int y;
+
+  /*    .
+  BLOCK COMMENT   .
+  
+  */
+  int z;
+
+  /*      .
+  BLOCK COMMENT     .
+  
+  */
+  int z;
+
+  /**
+   * This is almost javadoc.
+   */
+  int z;
+
+  /**
+   * This is (was) malformed javadoc.
+   * <pre>
+   * System.err.println
+   * </pre>
+   */
+  int z;
+
+  private Object f;
+
+  /*-{
+  System.err.println("asd");
+  }-*/
+  private native Object f() /*-{
+  System.err.println("asd");
+  }-*/
+  ;
+
+  private native Object f() /*-{
+  System.err.println("asd");
+  }-*/
+  ;
+}

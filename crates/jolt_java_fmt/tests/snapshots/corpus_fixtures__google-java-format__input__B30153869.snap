@@ -1,0 +1,29 @@
+---
+source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
+expression: formatted
+---
+/**
+ * one
+ *
+ * <ol>
+ * <li>two
+ * </ol>
+ *
+ * <p>
+ * <li>four
+ */
+class T {
+  /**
+   * One
+   *
+   * <ul>
+   * <li>a
+   * <ul>
+   * <li>b
+   * <li>c
+   * </ul>
+   * <li>e
+   * </ul>
+   */
+  int x;
+}

@@ -67,6 +67,8 @@ fn assert_corpus(suite: &str, expected_files: usize) {
             .formatted_source
             .as_deref()
             .unwrap_or_else(|| panic!("formatter produced no output for {}", path.display()));
+        insta::assert_snapshot!(snapshot_name(&path), formatted);
+
         let formatted_parse = parse_compilation_unit(formatted);
         assert!(
             formatted_parse.diagnostics().is_empty(),
@@ -160,6 +162,19 @@ fn allows_syntax_diagnostics(path: &Path) -> bool {
     ]
     .iter()
     .any(|suffix| path.ends_with(suffix))
+}
+
+fn snapshot_name(path: &Path) -> String {
+    let fixture_root = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../..")
+        .join(".fixtures/fixtures");
+    path.strip_prefix(&fixture_root)
+        .unwrap_or(path)
+        .with_extension("")
+        .components()
+        .map(|component| component.as_os_str().to_string_lossy())
+        .collect::<Vec<_>>()
+        .join("__")
 }
 
 fn fixture_root(suite: &str) -> PathBuf {

@@ -1,0 +1,12 @@
+---
+source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
+expression: formatted
+---
+class B29705613 {
+  /**
+   * This tag isn't closed: {@link Foo
+   *
+   * <p>A paragraph
+   */
+  int x;
+}

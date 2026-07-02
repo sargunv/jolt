@@ -1,0 +1,11 @@
+---
+source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
+expression: formatted
+---
+class ForMany {
+  {
+    A a;
+    for (b = B; c != C; d = D) {
+    }
+  }
+}

@@ -1,0 +1,8 @@
+---
+source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
+expression: formatted
+---
+class B183431894 {
+  int a = --1;
+  int d = ++1;
+}

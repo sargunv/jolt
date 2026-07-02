@@ -1,0 +1,13 @@
+---
+source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
+expression: formatted
+---
+class B72507902 {
+  private static class Xxxxxxxxxxxxxxxxxxxx
+    extends Xxxxxxxxxxx<
+      Pair<xxxxxxxxxxxxxxxxxxx, Xxxxxxxxxx<Xxxxxxxxx>>,
+      Xxxxxxxxxxxxxxxxxxxx,
+      List<Xxxxxxxxx>
+    > {
+  }
+}
