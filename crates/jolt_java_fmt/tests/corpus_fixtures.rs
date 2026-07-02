@@ -41,6 +41,14 @@ fn assert_corpus(suite: &str, expected_files: usize) {
 
         if allows_syntax_diagnostics(&path) {
             assert!(
+                first.diagnostics.iter().any(|diagnostic| matches!(
+                    diagnostic.stage,
+                    DiagnosticStage::Lexer | DiagnosticStage::Parser
+                )),
+                "allowlisted syntax diagnostic fixture parsed cleanly and should be removed from the allowlist: {}",
+                path.display()
+            );
+            assert!(
                 first.formatted_source.is_none(),
                 "invalid syntax fixture should not produce formatted output in {}",
                 path.display()
@@ -105,27 +113,49 @@ fn assert_corpus(suite: &str, expected_files: usize) {
 
 fn allows_syntax_diagnostics(path: &Path) -> bool {
     [
+        // Intentionally invalid upstream Java: explicit constructor
+        // invocations appear outside their valid constructor-body position.
         "google-java-format/input/B26952926.java",
         "palantir-java-format/input/B26952926.java",
         "palantir-java-format/input/palantir-expression-lambda-2.java",
+
+        // Prettier expression-focused fixtures contain standalone expressions
+        // that are not Java statement expressions.
         "prettier-java/input/binary_expressions/operator-position-end/operator-position-end.java",
         "prettier-java/input/binary_expressions/operator-position-start/operator-position-start.java",
         "prettier-java/input/comments/expression/expression.java",
         "prettier-java/input/conditional-expression/spaces/spaces.java",
         "prettier-java/input/conditional-expression/tabs/tabs.java",
-        "prettier-java/input/constructors/constructors.java",
         "prettier-java/input/expressions/expressions.java",
+        "prettier-java/input/member_chain/member_chain.java",
+        "prettier-java/input/try_catch/try_catch.java",
+
+        // Unsupported Java 22-preview syntax, finalized in Java 25: flexible
+        // constructor bodies allow statements before explicit constructor
+        // invocations.
+        "prettier-java/input/constructors/constructors.java",
+
+        // Parser backlog plus fixture fragments: these lambda fixtures mix
+        // standalone lambda snippets with Java 14 switch-rule lambda results;
+        // one case also uses a Java 21 pattern-switch guard.
         "prettier-java/input/lambda/arrow-parens-always/arrow-parens-always.java",
         "prettier-java/input/lambda/arrow-parens-avoid/arrow-parens-avoid.java",
-        "prettier-java/input/member_chain/member_chain.java",
+
+        // Intentionally invalid upstream Java: extra semicolons split the
+        // import section before later import declarations.
         "prettier-java/input/package_and_imports/classWithMixedImports/classWithMixedImports.java",
         "prettier-java/input/package_and_imports/classWithOnlyNonStaticImports/classWithOnlyNonStaticImports.java",
         "prettier-java/input/package_and_imports/classWithOnlyStaticImports/classWithOnlyStaticImports.java",
         "prettier-java/input/package_and_imports/moduleWithMixedImports/moduleWithMixedImports.java",
         "prettier-java/input/package_and_imports/moduleWithOnlyNonStaticImports/moduleWithOnlyNonStaticImports.java",
         "prettier-java/input/package_and_imports/moduleWithOnlyStaticImports/moduleWithOnlyStaticImports.java",
+
+        // Unsupported Java 21/22-preview syntax: string templates are not
+        // tokenized or parsed by the Java syntax crate yet.
         "prettier-java/input/template-expression/template-expression.java",
-        "prettier-java/input/try_catch/try_catch.java",
+
+        // Intentionally invalid upstream Java: unqualified `yield` method
+        // invocations are rejected by the Java grammar.
         "prettier-java/input/yield-statement/yield-statement.java",
     ]
     .iter()

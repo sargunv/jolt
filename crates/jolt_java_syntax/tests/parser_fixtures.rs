@@ -50,7 +50,13 @@ fn assert_corpus(suite: &str, expected_files: usize) -> CorpusSummary {
 
         summary.record(&parse);
 
-        if !allows_syntax_diagnostics(&path) {
+        if allows_syntax_diagnostics(&path) {
+            assert!(
+                !parse.diagnostics().is_empty(),
+                "allowlisted syntax diagnostic fixture parsed cleanly and should be removed from the allowlist: {}",
+                path.display()
+            );
+        } else {
             assert!(
                 parse.diagnostics().is_empty(),
                 "syntax diagnostic(s) in {}: {:#?}",
@@ -64,8 +70,8 @@ fn assert_corpus(suite: &str, expected_files: usize) -> CorpusSummary {
 }
 
 fn allows_syntax_diagnostics(path: &Path) -> bool {
-    // Upstream formatter corpora include a few invalid Java inputs that still
-    // need lossless parsing for fixture coverage.
+    // Intentionally invalid upstream Java: these fixtures place explicit
+    // constructor invocations outside their valid constructor-body position.
     path.file_name().is_some_and(|file_name| {
         matches!(
             file_name.to_str(),

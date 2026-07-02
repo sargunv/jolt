@@ -1,0 +1,185 @@
+# Java Parser Backlog
+
+This document records valid or preview Java syntax that appears in imported
+formatter corpus fixtures but currently produces Jolt parser or lexer
+diagnostics. It intentionally excludes upstream inputs that are invalid Java and
+formatter fixture fragments that are not complete Java compilation-unit syntax.
+
+Each entry includes the smallest useful sample, fixture pointers, and the
+specification source that should guide parser work.
+
+## Java 14 Switch-Rule Lambda Results
+
+Status: parser backlog.
+
+Current fixtures:
+
+- `.fixtures/fixtures/prettier-java/input/lambda/arrow-parens-always/arrow-parens-always.java`
+- `.fixtures/fixtures/prettier-java/input/lambda/arrow-parens-avoid/arrow-parens-avoid.java`
+
+Sample:
+
+```java
+import java.util.function.Function;
+
+class Example {
+  Function<Integer, Integer> fn(Object value) {
+    return switch (value) {
+      case Integer base -> x -> x + base;
+      default -> x -> x;
+    };
+  }
+}
+```
+
+Why this is valid:
+
+- Switch expressions and switch rules are final in Java 14.
+- A switch rule expression can be an expression, and a lambda expression is an
+  expression when a target type is available.
+
+Implementation note:
+
+The parser should treat the expression after a switch-rule `->` as a full
+expression, including a lambda expression. This requires keeping the switch-rule
+arrow distinct from a lambda arrow in the rule expression.
+
+Spec links:
+
+- JEP 361, Switch Expressions: <https://openjdk.org/jeps/361>
+- JLS 14.11.1, Switch Blocks:
+  <https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.11.1>
+- JLS 15.27, Lambda Expressions:
+  <https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.27>
+- JLS 15.28, Switch Expressions:
+  <https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.28>
+
+## Java 21 Pattern-Switch Guards With Lambda Results
+
+Status: parser backlog.
+
+Current fixtures:
+
+- `.fixtures/fixtures/prettier-java/input/lambda/arrow-parens-always/arrow-parens-always.java`
+- `.fixtures/fixtures/prettier-java/input/lambda/arrow-parens-avoid/arrow-parens-avoid.java`
+
+Sample:
+
+```java
+import java.util.function.Function;
+
+class Example {
+  Function<Integer, Integer> fn(Object value) {
+    return switch (value) {
+      case Boolean enabled when enabled -> x -> x + 1;
+      default -> x -> x;
+    };
+  }
+}
+```
+
+Why this is valid:
+
+- Pattern matching for `switch`, including guarded case labels, is final in
+  Java 21.
+- The same Java 14 switch-rule expression handling applies after the guarded
+  label.
+
+Implementation note:
+
+The parser should accept guarded pattern case labels before parsing the
+switch-rule expression. The rule expression can then be a target-typed lambda.
+
+Spec links:
+
+- JEP 441, Pattern Matching for switch: <https://openjdk.org/jeps/441>
+- JLS 14.11.1, Switch Blocks:
+  <https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.11.1>
+- JLS 14.30, Patterns:
+  <https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.30>
+- JLS 15.27, Lambda Expressions:
+  <https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.27>
+
+## Flexible Constructor Bodies
+
+Status: unsupported Java version syntax.
+
+Current fixture:
+
+- `.fixtures/fixtures/prettier-java/input/constructors/constructors.java`
+
+Sample:
+
+```java
+class Base {
+  Base(int value) {}
+}
+
+class Derived extends Base {
+  Derived(String text) {
+    int value = Integer.parseInt(text);
+    super(value);
+  }
+}
+```
+
+Why this is valid:
+
+- This syntax was previewed in Java 22 as statements before `super(...)`.
+- The feature was finalized as flexible constructor bodies in Java 25.
+
+Implementation note:
+
+The parser currently reports `java.parse.misplaced_constructor_invocation` when
+an explicit constructor invocation is not the first constructor-body statement.
+Supporting this feature requires parsing constructor bodies as a prologue,
+explicit constructor invocation, and epilogue, while leaving semantic
+restrictions to later analysis.
+
+Spec links:
+
+- JEP 447, Statements before super(...) (Preview):
+  <https://openjdk.org/jeps/447>
+- JEP 513, Flexible Constructor Bodies: <https://openjdk.org/jeps/513>
+- Java 22 preview JLS, Statements Before super(...):
+  <https://docs.oracle.com/javase/specs/jls/se22/preview/specs/statements-before-super-jls.html>
+- JLS 8.8.7, Constructor Body:
+  <https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.8.7>
+
+## String Templates
+
+Status: unsupported preview syntax.
+
+Current fixture:
+
+- `.fixtures/fixtures/prettier-java/input/template-expression/template-expression.java`
+
+Sample:
+
+```java
+class Example {
+  String greeting(String name) {
+    return STR."Hello \{name}";
+  }
+}
+```
+
+Why this is valid:
+
+- String templates were previewed in Java 21 and re-previewed in Java 22.
+- The feature was withdrawn after Java 22, so this is preview-only syntax rather
+  than a current final Java feature.
+
+Implementation note:
+
+The lexer currently sees template embedded-expression markers such as `\{` as
+ordinary string escape content and reports lexer diagnostics before parsing can
+recover. Supporting this feature starts in the lexer with template tokens and
+continues in the parser with embedded expression handling.
+
+Spec links:
+
+- JEP 430, String Templates (Preview): <https://openjdk.org/jeps/430>
+- JEP 459, String Templates (Second Preview): <https://openjdk.org/jeps/459>
+- Java 22 preview JLS, String Templates:
+  <https://docs.oracle.com/javase/specs/jls/se22/preview/specs/string-templates-jls.html>

@@ -80,15 +80,13 @@ coverage problems disappear from review.
 
 Cleanup checklist:
 
-- [ ] Add comments grouping allowlisted paths by reason, such as intentionally
+- [x] Add comments grouping allowlisted paths by reason, such as intentionally
       invalid upstream Java, fixture fragment, unsupported Java version syntax,
       or parser backlog.
-- [ ] For any parser backlog entry, link or record the syntax feature that would
-      remove it.
-- [ ] Fail the test when an allowlisted fixture starts parsing cleanly but still
+- [x] For any parser backlog entry, link or record the syntax feature that would
+      remove it. See `.agents/docs/java-parser-backlog.md`.
+- [x] Fail the test when an allowlisted fixture starts parsing cleanly but still
       remains on the allowlist.
-- [ ] Periodically audit the allowlist after fixture refreshes.
-- [ ] Keep upstream expected outputs out of pass/fail logic.
 
 ## Formatter Ignore Range Math
 
