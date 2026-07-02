@@ -46,13 +46,9 @@ class Example {
       && auditPolicy.allows(user);
   }
 
-  float estimate(float currentEstimate, Measurement observedMeasurement) {
+  float estimate(float currentEstimate) {
     currentEstimate =
-      (
-        currentEstimate
-        + observedMeasurement.reallyLongValue() / currentEstimate
-      )
-      / 2.0f;
+      (currentEstimate + xxxxxxxxxxxxx / currentEstimate) / 2.0f;
     return currentEstimate;
   }
 }
