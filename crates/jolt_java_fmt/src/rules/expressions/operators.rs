@@ -1,8 +1,9 @@
 use super::{
     AssignmentExpression, BinaryExpression, ConditionalExpression, Doc, Expression, JavaFormatter,
     PostfixExpression, UnaryExpression, assignment_expression, binary_chain, concat,
-    format_expression, format_token_with_comments, ternary_expression, text, token_has_comments,
+    format_expression, format_token_with_comments, ternary_expression, text,
 };
+use jolt_java_syntax::JavaSyntaxToken;
 
 pub(super) fn format_assignment_expression(
     expression: &AssignmentExpression,
@@ -114,42 +115,23 @@ fn flatten_binary_expression(
     };
     let operator_text = operator.text();
     if !is_flattenable_binary_operator(operator_text) {
-        return (
-            expression
-                .left()
-                .unwrap_or_else(|| Expression::from(expression.clone())),
-            vec![(
-                format_token_with_comments(&operator),
-                expression.right().map_or_else(jolt_fmt_ir::nil, |right| {
-                    format_expression(&right, formatter)
-                }),
-            )],
-        );
+        return unflattened_binary_expression(expression, formatter, operator);
     }
 
-    let mut operands = Vec::new();
     let root = Expression::from(expression.clone());
-    if binary_operator_comments_in_tree(&root, operator_text) {
-        return (
-            expression.left().unwrap_or_else(|| root.clone()),
-            expression
-                .right()
-                .map(|right| {
-                    (
-                        format_token_with_comments(&operator),
-                        format_expression(&right, formatter),
-                    )
-                })
-                .into_iter()
-                .collect(),
-        );
+    let mut operands = Vec::new();
+    let mut operators = Vec::new();
+    collect_binary_chain(&root, operator_text, &mut operands, &mut operators);
+    if operators.len() + 1 != operands.len() {
+        return unflattened_binary_expression(expression, formatter, operator);
     }
 
-    collect_binary_operands(&root, operator_text, &mut operands);
     let mut operands = operands.into_iter();
     let first = operands.next().unwrap_or(root);
-    let rest = operands
-        .map(|operand| {
+    let rest = operators
+        .into_iter()
+        .zip(operands)
+        .map(|(operator, operand)| {
             (
                 format_token_with_comments(&operator),
                 format_expression(&operand, formatter),
@@ -160,21 +142,40 @@ fn flatten_binary_expression(
     (first, rest)
 }
 
-fn collect_binary_operands(
+fn unflattened_binary_expression(
+    expression: &BinaryExpression,
+    formatter: &JavaFormatter<'_>,
+    operator: JavaSyntaxToken,
+) -> (Expression, Vec<(Doc, Doc)>) {
+    (
+        expression
+            .left()
+            .unwrap_or_else(|| Expression::from(expression.clone())),
+        vec![(
+            format_token_with_comments(&operator),
+            expression.right().map_or_else(jolt_fmt_ir::nil, |right| {
+                format_expression(&right, formatter)
+            }),
+        )],
+    )
+}
+
+fn collect_binary_chain(
     expression: &Expression,
     operator: &str,
     operands: &mut Vec<Expression>,
+    operators: &mut Vec<JavaSyntaxToken>,
 ) {
     if let Expression::BinaryExpression(binary) = expression
-        && binary
-            .operator()
-            .is_some_and(|token| token.text() == operator)
+        && let Some(binary_operator) = binary.operator()
+        && binary_operator.text() == operator
     {
         if let Some(left) = binary.left() {
-            collect_binary_operands(&left, operator, operands);
+            collect_binary_chain(&left, operator, operands, operators);
         }
+        operators.push(binary_operator);
         if let Some(right) = binary.right() {
-            collect_binary_operands(&right, operator, operands);
+            collect_binary_chain(&right, operator, operands, operators);
         }
         return;
     }
@@ -182,29 +183,29 @@ fn collect_binary_operands(
     operands.push(expression.clone());
 }
 
-fn binary_operator_comments_in_tree(expression: &Expression, operator: &str) -> bool {
-    if let Expression::BinaryExpression(binary) = expression
-        && binary
-            .operator()
-            .is_some_and(|token| token.text() == operator)
-    {
-        if binary
-            .operator()
-            .is_some_and(|token| token_has_comments(&token))
-        {
-            return true;
-        }
-        return binary
-            .left()
-            .is_some_and(|left| binary_operator_comments_in_tree(&left, operator))
-            || binary
-                .right()
-                .is_some_and(|right| binary_operator_comments_in_tree(&right, operator));
-    }
-
-    false
-}
-
 const fn is_flattenable_binary_operator(operator: &str) -> bool {
-    matches!(operator.as_bytes(), b"&&" | b"||")
+    // Same-operator chains parse left-associatively in Java, so flattening only
+    // removes redundant CST nesting while preserving token order and grouping.
+    matches!(
+        operator.as_bytes(),
+        b"||"
+            | b"&&"
+            | b"|"
+            | b"^"
+            | b"&"
+            | b"=="
+            | b"!="
+            | b"<"
+            | b">"
+            | b"<="
+            | b">="
+            | b"<<"
+            | b">>"
+            | b">>>"
+            | b"+"
+            | b"-"
+            | b"*"
+            | b"/"
+            | b"%"
+    )
 }

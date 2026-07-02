@@ -13,8 +13,8 @@ use crate::context::JavaFormatter;
 use crate::helpers::chains::member_chain;
 use crate::helpers::comments::{
     comment_forces_line, format_leading_comments, format_token_text, format_token_with_comments,
-    format_trailing_comments, format_trailing_comments_before_line_break, token_has_comments,
-    tokens_have_comments, trailing_comments_force_line,
+    format_trailing_comments, format_trailing_comments_before_line_break, tokens_have_comments,
+    trailing_comments_force_line,
 };
 use crate::helpers::lists::{
     CommaListItem, braced_comma_list_with_trailing_separator, parenthesized_list,
