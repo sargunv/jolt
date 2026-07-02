@@ -7,8 +7,8 @@ use super::{
     ClassBodyMember, Doc, EnumConstant, EnumConstantListEntry, JavaFormatter, JavaSyntaxToken,
     braced_body, comment_forces_line, comment_is_star_block, concat, format_argument_list,
     format_class_body, format_comment, format_dangling_comments, format_leading_comments,
-    format_modifier_prefix_from_parts, format_token_sequence, format_token_text,
-    format_trailing_comments, hard_line, is_formatter_control_marker, text,
+    format_modifier_prefix_from_parts, format_token_text, format_trailing_comments, hard_line,
+    is_formatter_control_marker, text,
 };
 
 pub(super) struct FormattedEnumConstant {
@@ -182,16 +182,15 @@ fn enum_separator_comment_moves(comment: &jolt_java_syntax::JavaComment) -> bool
 }
 
 fn format_enum_constant(constant: &EnumConstant, formatter: &JavaFormatter<'_>) -> Doc {
-    let tokens = constant.tokens();
-    let Some(name) = constant.name() else {
-        return format_token_sequence(&tokens);
-    };
-
     concat([
         format_modifier_prefix_from_parts(constant.annotations().collect(), Vec::new(), formatter),
-        format_leading_comments(&name),
-        format_token_text(name.text()),
-        format_trailing_comments(&name),
+        constant.name().map_or_else(jolt_fmt_ir::nil, |name| {
+            concat([
+                format_leading_comments(&name),
+                format_token_text(name.text()),
+                format_trailing_comments(&name),
+            ])
+        }),
         constant
             .arguments()
             .map_or_else(jolt_fmt_ir::nil, |arguments| {

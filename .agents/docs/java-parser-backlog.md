@@ -4,6 +4,8 @@ This document records valid or preview Java syntax that appears in imported
 formatter corpus fixtures but currently produces Jolt parser or lexer
 diagnostics. It intentionally excludes upstream inputs that are invalid Java and
 formatter fixture fragments that are not complete Java compilation-unit syntax.
+It also records explicit parser recovery audits when formatter behavior depends
+on useful CST shapes for incomplete edit-time syntax.
 
 Each entry includes the smallest useful sample, fixture pointers, and the
 specification source that should guide parser work.
@@ -183,3 +185,45 @@ Spec links:
 - JEP 459, String Templates (Second Preview): <https://openjdk.org/jeps/459>
 - Java 22 preview JLS, String Templates:
   <https://docs.oracle.com/javase/specs/jls/se22/preview/specs/string-templates-jls.html>
+
+## Recoverable Parse Opportunity Audit
+
+Status: parser recovery audit.
+
+Current trigger:
+
+- Formatter cleanup for declaration nodes with missing required names made the
+  straightforward constructor, method, annotation element, and enum constant
+  holes recover as structural CST nodes instead of opaque error-node fragments.
+
+Sample:
+
+```java
+class Example {
+  <T>() {}
+  void () {}
+}
+
+@interface AnnotationExample {
+  int ();
+}
+
+enum EnumExample { , }
+```
+
+Why this matters:
+
+- The public formatter may still refuse to write recovered parses by default.
+- The lower-level formatter rules should nevertheless receive useful CST shapes
+  when the parser can confidently recognize the surrounding construct.
+- Auto-format while typing and future explicit recovered-formatting modes depend
+  on parser recovery producing structured holes instead of broad skipped
+  regions.
+
+Audit note:
+
+Search declaration, statement, type, pattern, and expression branch predicates
+for lookahead that rejects an otherwise recognizable construct only because one
+required child is missing. For each narrow and unambiguous edit-time shape,
+prefer entering the normal parser production and letting `expect_*` emit the
+diagnostic over wrapping the whole fragment in an `ErrorNode`.

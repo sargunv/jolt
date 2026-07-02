@@ -540,6 +540,25 @@ fn recovers_from_invalid_void_field() {
 }
 
 #[test]
+fn recovers_missing_declaration_names() {
+    assert_parse_snapshot(
+        "recovers_missing_declaration_names",
+        r"
+            class MissingDeclarationNames {
+                <T>() {}
+                void () {}
+            }
+
+            @interface MissingAnnotationElementName {
+                int ();
+            }
+
+            enum MissingEnumConstantName { , }
+        ",
+    );
+}
+
+#[test]
 fn parses_enum_declaration_constants_and_body_declarations() {
     // Spec: JLS 19 EnumDeclaration, EnumBody, EnumConstantList,
     // EnumConstant, and EnumBodyDeclarations.

@@ -15,28 +15,6 @@ The implementation direction still looks sound:
   search.
 - The formatter has no known permanent intentional deviations.
 
-## Recovery Token-Sequence Branches
-
-Some declaration formatting functions still contain token-sequence recovery
-branches for malformed syntax shapes with missing required names. The public
-formatter blocks non-clean parses before layout, so these are not normal
-parser-accepted fallback exits today.
-
-This is acceptable as a recovery guard, but it is easy for future code to
-misread these branches as a sanctioned formatting fallback.
-
-Cleanup checklist:
-
-- [ ] Rename the helper or wrapper path so recovery-only token formatting is
-      visibly not a normal formatting rule.
-- [ ] Add a focused invariant test that clean public formatting never reaches
-      recovery token-sequence declaration branches.
-- [ ] Keep the existing `declaration_recovery_nodes_do_not_reach_layout` test,
-      but make the recovery-only contract more direct.
-- [ ] Do not add new token-sequence formatting branches for parser-clean syntax.
-- [ ] When a recovery branch becomes reachable for clean syntax, fix the parser
-      or add missing CST accessors and real formatter rules instead.
-
 ## Comment Placement Surface Area
 
 The comment model is explicit and formatter-owned, which matches the spec.

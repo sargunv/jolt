@@ -5,19 +5,16 @@ use super::{
     format_annotation_element_value, format_array_dimensions, format_block_body,
     format_construct_leading_comments, format_constructor_body, format_formal_parameter,
     format_inline_annotations, format_leading_comments, format_modifier_prefix,
-    format_receiver_parameter, format_statement_semicolon, format_token_sequence,
-    format_token_text, format_trailing_comments_before_line_break, format_type,
-    format_type_parameter_list, format_type_without_leading_comments, format_typed_modifier_prefix,
-    group, hard_line, line, parenthesized_list, text,
+    format_receiver_parameter, format_statement_semicolon, format_token_text,
+    format_trailing_comments_before_line_break, format_type, format_type_parameter_list,
+    format_type_without_leading_comments, format_typed_modifier_prefix, group, hard_line, line,
+    parenthesized_list, text,
 };
 
 pub(super) fn format_constructor_declaration(
     constructor: &jolt_java_syntax::ConstructorDeclaration,
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
-    let Some(name) = constructor.name() else {
-        return format_token_sequence(&constructor.tokens());
-    };
     let prefix = concat([
         format_construct_leading_comments(formatter.comments(), &constructor.tokens()),
         format_modifier_prefix(constructor.modifiers(), formatter),
@@ -35,7 +32,9 @@ pub(super) fn format_constructor_declaration(
         } else {
             jolt_fmt_ir::nil()
         },
-        format_token_text(name.text()),
+        constructor
+            .name()
+            .map_or_else(jolt_fmt_ir::nil, |name| format_token_text(name.text())),
         format_parameters(constructor.parameters(), formatter),
         format_throws_clause(throws, formatter),
     ]);
@@ -74,9 +73,6 @@ pub(super) fn format_method_declaration(
     method: &MethodDeclaration,
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
-    let Some(name) = method.name() else {
-        return format_token_sequence(&method.tokens());
-    };
     let modifiers = format_typed_modifier_prefix(method.modifiers(), formatter);
     let prefix = concat([
         format_construct_leading_comments(formatter.comments(), &method.tokens()),
@@ -90,7 +86,9 @@ pub(super) fn format_method_declaration(
     let has_type_parameters = type_parameters.is_some();
     let parameters = method.parameters();
     let name_and_parameters = concat([
-        format_token_text(name.text()),
+        method
+            .name()
+            .map_or_else(jolt_fmt_ir::nil, |name| format_token_text(name.text())),
         format_parameters(parameters.clone(), formatter),
     ]);
     let header = concat([
@@ -131,10 +129,6 @@ pub(super) fn format_annotation_element_declaration(
     element: &AnnotationElementDeclaration,
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
-    let Some(name) = element.name() else {
-        return format_token_sequence(&element.tokens());
-    };
-
     concat([
         group(concat([
             format_modifier_prefix(element.modifiers(), formatter),
@@ -142,7 +136,9 @@ pub(super) fn format_annotation_element_declaration(
                 .ty()
                 .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty, formatter)),
             text(" "),
-            format_token_text(name.text()),
+            element
+                .name()
+                .map_or_else(jolt_fmt_ir::nil, |name| format_token_text(name.text())),
             text("()"),
             element
                 .dimensions()

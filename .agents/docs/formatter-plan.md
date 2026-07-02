@@ -363,9 +363,16 @@ Initial formatting should require a fully valid parse. If parsing recovers from
 syntax errors, the formatter should refuse to rewrite the file and report the
 parse diagnostics instead of trying to format around malformed structure.
 
-Partial formatting of recovered trees is a later capability, not the first
-contract. When added, it should preserve malformed subtrees or source ranges
-byte-for-byte before formatting surrounding valid regions. Do not add
+That write-safety policy belongs at the public formatter boundary. Below that
+boundary, formatter rules should produce the most sensible `Doc` for the CST
+shape they are given, without revalidating Java. If a recovered tree contains a
+recognizable construct with a missing child, format the construct structurally
+and treat the missing child as a hole rather than falling back to raw token
+replay.
+
+Partial formatting of recovered trees is a later public capability, not the
+first write contract. When added, its policy should decide which recovered
+ranges may be rewritten, preserved, or surfaced as diagnostics. Do not add
 missing-token nodes, richer skipped-region nodes, or recovery-node APIs until
 that partial-formatting policy needs them.
 
@@ -825,7 +832,10 @@ by default.
 ```
 
 Formatting with recovered syntax outcomes can be designed later behind an
-explicit policy once Jolt can prove the output is non-destructive.
+explicit policy once Jolt can prove the output is non-destructive. Formatter
+rules should still be total over the CST nodes they accept so this future policy
+can reuse the normal layout rules instead of depending on raw-token recovery
+branches.
 
 ### Milestone 4: Java lexer over the full Java corpus
 
@@ -1097,11 +1107,13 @@ Later, Jolt can choose to format through recovered lexer/parser outcomes behind
 an explicit policy.
 
 Formatting with recovered syntax is in scope as a later capability, but not as
-the default write behavior. Biome exposes this as an explicit `formatWithErrors`
-option, and Oxc's parser architecture treats recovery as important for
-formatters and linters. Jolt should first build lexer/parser recovery for
-diagnostics and tree construction, model recovered versus aborted syntax
-outcomes, then only allow formatting through recovered outcomes behind an
+the default write behavior. The rule layer should nevertheless format recovered
+CST shapes structurally when the construct is recognizable; the public policy
+decides whether that output is written. Biome exposes this as an explicit
+`formatWithErrors` option, and Oxc's parser architecture treats recovery as
+important for formatters and linters. Jolt should first build lexer/parser
+recovery for diagnostics and tree construction, model recovered versus aborted
+syntax outcomes, then only allow formatting through recovered outcomes behind an
 explicit policy once it can prove the output is non-destructive.
 
 The shared diagnostic model needed for this policy is defined early in

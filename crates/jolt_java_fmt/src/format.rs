@@ -162,4 +162,38 @@ mod tests {
             );
         }
     }
+
+    #[test]
+    fn declaration_recovery_nodes_format_structurally_below_public_gate() {
+        for (source, expected) in [
+            ("enum E { , }", "enum E {\n  ,\n}\n"),
+            ("class C { <T>() {} }", "class C {\n  <T> () {\n  }\n}\n"),
+            ("class C { void () {} }", "class C {\n  void () {\n  }\n}\n"),
+            ("@interface A { int (); }", "@interface A {\n  int ();\n}\n"),
+        ] {
+            assert_eq!(
+                format_recovered_source_for_test(source),
+                expected,
+                "{source}"
+            );
+        }
+    }
+
+    fn format_recovered_source_for_test(source: &str) -> String {
+        let parse = parse_compilation_unit(source);
+        let (syntax, diagnostics, outcome) = parse.into_parts();
+        assert_eq!(
+            outcome,
+            SyntaxOutcome::Recovered,
+            "{source}: {diagnostics:#?}"
+        );
+        let syntax = syntax.expect("recovered parse should still produce syntax");
+
+        let options = JavaFormatOptions::default();
+        let mut formatter = JavaFormatter::new(&options, &syntax);
+        let doc = formatter.format_compilation_unit(&syntax);
+        render(&doc, formatter.render_options())
+            .expect("recovered declaration layout should render")
+            .text
+    }
 }

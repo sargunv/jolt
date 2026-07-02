@@ -16,7 +16,10 @@ lockfile = true
 run = "hk check --all"
 
 [tasks.test]
-run = "cargo test --workspace"
+run = "INSTA_UPDATE=no cargo test --workspace"
+
+[tasks."test:update"]
+run = "INSTA_UPDATE=always cargo test --workspace"
 
 [tasks.fix]
 run = "hk fix --all"

@@ -1,54 +1,8 @@
 use jolt_fmt_ir::{Doc, concat, hard_line, literal_text, text};
-use jolt_java_syntax::{JavaComment, JavaCommentKind, JavaSyntaxKind, JavaSyntaxToken, TriviaKind};
+use jolt_java_syntax::{JavaComment, JavaCommentKind, JavaSyntaxToken, TriviaKind};
 
 use crate::comments::CommentMap;
 use crate::helpers::formatter_ignore::is_formatter_control_marker;
-
-pub(crate) fn format_token_sequence(tokens: &[JavaSyntaxToken]) -> Doc {
-    let mut docs = Vec::new();
-    let mut previous_kind = None;
-    let mut after_forced_break = false;
-
-    for token in tokens {
-        for comment in token.leading_comments() {
-            if !docs.is_empty() && !after_forced_break {
-                docs.push(hard_line());
-            }
-            docs.push(format_comment(&comment));
-            docs.push(hard_line());
-            previous_kind = None;
-            after_forced_break = true;
-        }
-
-        if !after_forced_break
-            && previous_kind.is_some_and(|previous| needs_space(previous, token.kind()))
-        {
-            docs.push(text(" "));
-        }
-
-        docs.push(format_token_text(token.text()));
-        after_forced_break = false;
-
-        let mut forced_break_after_token = false;
-        for comment in token.trailing_comments() {
-            docs.push(text(" "));
-            docs.push(format_comment(&comment));
-            if comment_forces_line(&comment) {
-                docs.push(hard_line());
-                forced_break_after_token = true;
-            }
-        }
-
-        if forced_break_after_token {
-            previous_kind = None;
-            after_forced_break = true;
-        } else {
-            previous_kind = Some(token.kind());
-        }
-    }
-
-    concat(docs)
-}
 
 pub(crate) fn tokens_have_comments(tokens: &[JavaSyntaxToken]) -> bool {
     tokens.iter().any(token_has_comments)
@@ -271,64 +225,5 @@ fn normalize_star_block_body_line(line: &str) -> String {
     line.trim_start().strip_prefix('*').map_or_else(
         || line.trim().to_owned(),
         |line| line.trim_start().to_owned(),
-    )
-}
-
-fn needs_space(previous: JavaSyntaxKind, current: JavaSyntaxKind) -> bool {
-    if suppresses_space_before(current) || suppresses_space_after(previous) {
-        return false;
-    }
-
-    if current == JavaSyntaxKind::LParen
-        && matches!(
-            previous,
-            JavaSyntaxKind::Identifier
-                | JavaSyntaxKind::ThisKw
-                | JavaSyntaxKind::SuperKw
-                | JavaSyntaxKind::Gt
-                | JavaSyntaxKind::RBracket
-        )
-    {
-        return false;
-    }
-
-    if current == JavaSyntaxKind::LBracket {
-        return false;
-    }
-
-    if previous == JavaSyntaxKind::Comma || previous == JavaSyntaxKind::Semicolon {
-        return true;
-    }
-
-    true
-}
-
-const fn suppresses_space_before(kind: JavaSyntaxKind) -> bool {
-    matches!(
-        kind,
-        JavaSyntaxKind::RParen
-            | JavaSyntaxKind::RBracket
-            | JavaSyntaxKind::RBrace
-            | JavaSyntaxKind::Comma
-            | JavaSyntaxKind::Semicolon
-            | JavaSyntaxKind::Dot
-            | JavaSyntaxKind::DoubleColon
-            | JavaSyntaxKind::Colon
-            | JavaSyntaxKind::Ellipsis
-            | JavaSyntaxKind::Lt
-            | JavaSyntaxKind::Gt
-    )
-}
-
-const fn suppresses_space_after(kind: JavaSyntaxKind) -> bool {
-    matches!(
-        kind,
-        JavaSyntaxKind::LParen
-            | JavaSyntaxKind::LBracket
-            | JavaSyntaxKind::LBrace
-            | JavaSyntaxKind::Dot
-            | JavaSyntaxKind::DoubleColon
-            | JavaSyntaxKind::At
-            | JavaSyntaxKind::Lt
     )
 }

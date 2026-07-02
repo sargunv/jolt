@@ -20,11 +20,13 @@ impl Parser<'_> {
             lookahead.skip_type_parameters();
         }
 
-        (matches!(type_name, Some(name) if lookahead.text() == Some(name))
-            || (lookahead.at_name_segment()
-                && lookahead.nth_kind(1) == JavaSyntaxKind::LParen
-                && self.member_header_ends_with_block()))
-            && lookahead.nth_kind(1) == JavaSyntaxKind::LParen
+        if lookahead.at(JavaSyntaxKind::LParen) && self.member_header_ends_with_block() {
+            return true;
+        }
+
+        lookahead.nth_kind(1) == JavaSyntaxKind::LParen
+            && (matches!(type_name, Some(name) if lookahead.text() == Some(name))
+                || (lookahead.at_name_segment() && self.member_header_ends_with_block()))
     }
 
     pub(in crate::parser::grammar) fn starts_compact_constructor(
@@ -46,8 +48,10 @@ impl Parser<'_> {
         }
 
         if lookahead.at(JavaSyntaxKind::VoidKw) {
-            return lookahead.nth_kind(1) == JavaSyntaxKind::Identifier
-                && lookahead.nth_kind(2) == JavaSyntaxKind::LParen;
+            return matches!(
+                (lookahead.nth_kind(1), lookahead.nth_kind(2)),
+                (JavaSyntaxKind::Identifier, JavaSyntaxKind::LParen) | (JavaSyntaxKind::LParen, _)
+            );
         }
 
         if !lookahead.at_type_start() {
@@ -55,7 +59,8 @@ impl Parser<'_> {
         }
 
         lookahead.skip_type();
-        lookahead.at_name_segment() && lookahead.nth_kind(1) == JavaSyntaxKind::LParen
+        lookahead.at(JavaSyntaxKind::LParen)
+            || (lookahead.at_name_segment() && lookahead.nth_kind(1) == JavaSyntaxKind::LParen)
     }
 
     pub(in crate::parser::grammar) fn starts_annotation_element(&self) -> bool {
@@ -66,9 +71,10 @@ impl Parser<'_> {
         }
 
         lookahead.skip_type();
-        lookahead.at_name_segment()
-            && lookahead.nth_kind(1) == JavaSyntaxKind::LParen
-            && lookahead.nth_kind(2) == JavaSyntaxKind::RParen
+        (lookahead.at(JavaSyntaxKind::LParen) && lookahead.nth_kind(1) == JavaSyntaxKind::RParen)
+            || (lookahead.at_name_segment()
+                && lookahead.nth_kind(1) == JavaSyntaxKind::LParen
+                && lookahead.nth_kind(2) == JavaSyntaxKind::RParen)
     }
 
     pub(in crate::parser::grammar) fn starts_constructor_invocation_statement(&self) -> bool {

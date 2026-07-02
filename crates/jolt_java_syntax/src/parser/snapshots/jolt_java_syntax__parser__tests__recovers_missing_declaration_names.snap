@@ -1,0 +1,65 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "MissingDeclarationNames" @ 19..42 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 43..44
+      ClassBodyDeclaration
+        ConstructorDeclaration
+          TypeParameterList
+            Lt "<" @ 61..62 leading=[Newline "\n", Whitespace "                "]
+            TypeParameter
+              Identifier "T" @ 62..63
+            Gt ">" @ 63..64
+          LParen "(" @ 64..65
+          RParen ")" @ 65..66 trailing=[Whitespace " "]
+          ConstructorBody
+            LBrace "{" @ 67..68
+            RBrace "}" @ 68..69
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 86..90 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          LParen "(" @ 91..92
+          RParen ")" @ 92..93 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 94..95
+            RBrace "}" @ 95..96
+      RBrace "}" @ 109..110 leading=[Newline "\n", Whitespace "            "]
+  AnnotationInterfaceDeclaration
+    At "@" @ 124..125 leading=[Newline "\n", Newline "\n", Whitespace "            "]
+    InterfaceKw "interface" @ 125..134 trailing=[Whitespace " "]
+    Identifier "MissingAnnotationElementName" @ 135..163 trailing=[Whitespace " "]
+    AnnotationInterfaceBody
+      LBrace "{" @ 164..165
+      AnnotationElementList
+        AnnotationElementDeclaration
+          PrimitiveType
+            IntKw "int" @ 182..185 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          LParen "(" @ 186..187
+          RParen ")" @ 187..188
+          Semicolon ";" @ 188..189
+      RBrace "}" @ 202..203 leading=[Newline "\n", Whitespace "            "]
+  EnumDeclaration
+    EnumKw "enum" @ 217..221 leading=[Newline "\n", Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "MissingEnumConstantName" @ 222..245 trailing=[Whitespace " "]
+    EnumBody
+      LBrace "{" @ 246..247 trailing=[Whitespace " "]
+      EnumConstantList
+        EnumConstant
+        Comma "," @ 248..249 trailing=[Whitespace " "]
+      RBrace "}" @ 250..251
+  Eof "" @ 260..260 leading=[Newline "\n", Whitespace "        "]
+
+outcome: Recovered
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=64..65 message="expected constructor name"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=91..92 message="expected method name"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=186..187 message="expected annotation element name"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=248..249 message="expected enum constant name"
