@@ -8,7 +8,7 @@ class Test {
   void m() {
     if (
       !metadata.ignoreOutputTransformations()
-      && Producers.isListenableFutureMapKey(outputKey)
+        && Producers.isListenableFutureMapKey(outputKey)
     ) {
       ImmutableList<ProducerNode<?>> nodes =
         createMapNodes((ProducerNode) node);
@@ -16,7 +16,7 @@ class Test {
       return nodes;
     } else if (
       !metadata.ignoreOutputTransformations()
-      && Producers.isListenableFutureListKey(outputKey)
+        && Producers.isListenableFutureListKey(outputKey)
     ) {
       ImmutableList<ProducerNode<?>> nodes =
         createListNodes((ProducerNode) node);

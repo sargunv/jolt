@@ -132,14 +132,14 @@ class PalantirDeeplyNestedCalls {
     WidgetTimeRange timeRange
   ) {
     return myCustomService.get()
-        .fetchData(authHeader, FooMyCustomClass.of(thingRids, timeRange))
-        .entrySet()
-        .stream()
-        .collect(
-          Collectors.toMap(
-            Map.Entry::getKey,
-            entry -> entry.getValue().getMetrics()
-          )
-        );
+      .fetchData(authHeader, FooMyCustomClass.of(thingRids, timeRange))
+      .entrySet()
+      .stream()
+      .collect(
+        Collectors.toMap(
+          Map.Entry::getKey,
+          entry -> entry.getValue().getMetrics()
+        )
+      );
   }
 }

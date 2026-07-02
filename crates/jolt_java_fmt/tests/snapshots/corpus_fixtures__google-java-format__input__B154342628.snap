@@ -6,7 +6,7 @@ class B154342628 {
   void f() {
     var var = 42;
     return writtenVariables.stream()
-        .filter(() -> deletedVariableIds.contains(var.getId()))
-        .collect(toImmutableList());
+      .filter(() -> deletedVariableIds.contains(var.getId()))
+      .collect(toImmutableList());
   }
 }

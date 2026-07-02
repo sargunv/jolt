@@ -9,7 +9,7 @@ private class Yellow<B> extends Red<B>.Orange {
 
   Class<?> getClassB() {
     return new TypeToken<B>(getClass()) {
-      }
-        .getRawType();
+    }
+      .getRawType();
   }
 }

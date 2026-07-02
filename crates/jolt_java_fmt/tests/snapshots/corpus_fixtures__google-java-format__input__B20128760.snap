@@ -6,8 +6,8 @@ class B20128760 {
   void f() {
     x =
       xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx(
-      xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-    );
+        xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+      );
 
     XxxxxxxxxXxx.<Xxxxxx, Xxxxxx>xxxxxxx()
       .xxx(XxxxxxxxxXxxXxxx.Xxxxx.XXXXX, "Xxxxx xxxxxxxxx xxxxx")
@@ -26,7 +26,7 @@ class B20128760 {
             Xxxxx.xxxXxxxxXxxx(
               new XxxxXx(
                 xxxxxxxxx1.xxxXxxxXx().xxxXxxxx()
-                + xxxxxxxxx2.xxxXxxxXx().xxxXxxxx()
+                  + xxxxxxxxx2.xxxXxxxXx().xxxXxxxx()
               )
             )
           )

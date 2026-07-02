@@ -5,10 +5,10 @@ expression: formatted
 public class Foo {
   static String foo(Optional<String> optional) {
     return optional.orElseGet(
-        (String) () -> {
-          throw new NotFoundException();
-        }
-      );
+      (String) () -> {
+        throw new NotFoundException();
+      }
+    );
   }
 
   static String bar(Optional<String> optional) {
@@ -17,10 +17,10 @@ public class Foo {
 
   static String baz(Optional<String> optional) {
     return optional.orElseGet(
-        (String) () -> bar(
-          Optional.of("some thing that is very very very looooooong")
-        )
-          .get()
-      );
+      (String) () -> bar(
+        Optional.of("some thing that is very very very looooooong")
+      )
+        .get()
+    );
   }
 }

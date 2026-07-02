@@ -67,11 +67,11 @@ public class Variables {
 
   private Interface anonymousClassVariable =
     new Interface() {
-    @Override
-    void doSomething() {
-      System.out.println("do something");
-    }
-  };
+      @Override
+      void doSomething() {
+        System.out.println("do something");
+      }
+    };
 
   public void variableMethod(final int finalVariable) {
     int localVariable = 456;
@@ -170,16 +170,16 @@ public class Variables {
   public void breakMultipleMethods() {
     boolean willDrop =
       predictDropResponse.getSendResult().isIgnorableFailure()
-      || predictDropResponse.getSendResult().isFatalError();
+        || predictDropResponse.getSendResult().isFatalError();
     boolean willDrop =
       predictDropResponse.getSendResult().isIgnorableFailure
-      || predictDropResponse.getSendResult().isFatalError;
+        || predictDropResponse.getSendResult().isFatalError;
     boolean willDrop =
       predictDropResponsegetSendResultisIgnorableFailure
-      || predictDropResponsegetSendResultisFatalError;
+        || predictDropResponsegetSendResultisFatalError;
     boolean willDrop =
       predictDropResponse.getSendResult().isIgnorableFailure()
-      || predictDropResponsegetSendResultisFatalError;
+        || predictDropResponsegetSendResultisFatalError;
   }
 
   public void breakAfterEquals() {
@@ -231,8 +231,8 @@ public class Variables {
 
     Object aParticularlyLongAndObnoxiousNameForIllustrativePurposes =
       anotherVeryLongNameForIllustrativePurposes != null
-      ? anotherVeryLongNameForIllustrativePurposes
-      : new Object();
+        ? anotherVeryLongNameForIllustrativePurposes
+        : new Object();
   }
 
   public <
@@ -329,8 +329,8 @@ public class Variables {
       // there is a random comment on this line up here
       // and then there is a separate comment on this line down here
       new HashMap<>(
-      someRandomMethodThatReturnsTheInitialMapThatWeWantToMutate()
-    );
+        someRandomMethodThatReturnsTheInitialMapThatWeWantToMutate()
+      );
   }
 
   void assignment() {
@@ -349,27 +349,27 @@ public class Variables {
     aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa =
       bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb =
         ccccccccccccccccccccccccccccccccccccccc
-        + ddddddddddddddddddddddddddddddddd;
+          + ddddddddddddddddddddddddddddddddd;
 
     foo =
       new Foo(
-      "aaaaaaaaaaaaaaaaaaaa",
-      "bbbbbbbbbbbbbbbbbbbb",
-      "cccccccccccccccccccc",
-      "dddddddddddddddddddd",
-      "eeeeeeeeeeeeeeeeeeee",
-      "ffffffffffffffffffff"
-    );
+        "aaaaaaaaaaaaaaaaaaaa",
+        "bbbbbbbbbbbbbbbbbbbb",
+        "cccccccccccccccccccc",
+        "dddddddddddddddddddd",
+        "eeeeeeeeeeeeeeeeeeee",
+        "ffffffffffffffffffff"
+      );
 
     final Foo bar =
       new Foo(
-      "aaaaaaaaaaaaaaaaaaaa",
-      "bbbbbbbbbbbbbbbbbbbb",
-      "cccccccccccccccccccc",
-      "dddddddddddddddddddd",
-      "eeeeeeeeeeeeeeeeeeee",
-      "ffffffffffffffffffff"
-    );
+        "aaaaaaaaaaaaaaaaaaaa",
+        "bbbbbbbbbbbbbbbbbbbb",
+        "cccccccccccccccccccc",
+        "dddddddddddddddddddd",
+        "eeeeeeeeeeeeeeeeeeee",
+        "ffffffffffffffffffff"
+      );
 
     int a, b, c = 1;
   }

@@ -8,6 +8,6 @@ public class B21329312 {
       || didContactsChange
       || medicalInfoManager.getTemporaryProfilePicture() != null
       || inMemoryAccessMedicalProfileAboveKeyguard
-      != originalAccessMedicalProfileAboveKeyguard;
+        != originalAccessMedicalProfileAboveKeyguard;
   }
 }

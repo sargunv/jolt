@@ -25,7 +25,7 @@ class I880 {
       false;
       case 1 -> "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
         .length()
-      == 0;
+        == 0;
       default -> // otherwise
       true;
     };

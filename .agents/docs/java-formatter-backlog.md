@@ -5,7 +5,7 @@ formatter corpus fixtures but are not yet settled Jolt style contracts. Entries
 here should graduate into style-guide rules and focused fixtures only after the
 formatting policy is decided.
 
-## Continuation Indentation for Broken Declaration and Expression Groups
+## Continuation Indentation for Broken Declaration Groups
 
 Status: failing style fixtures; formatter backlog.
 
@@ -15,9 +15,6 @@ Current fixtures:
 - `crates/jolt_java_fmt/tests/style/declarations/throws-continuation.input.java`
 - `crates/jolt_java_fmt/tests/style/declarations/type-parameter-bounds.input.java`
 - `crates/jolt_java_fmt/tests/style/declarations/types-and-type-arguments.input.java`
-- `crates/jolt_java_fmt/tests/style/expressions/operators-and-ternaries.input.java`
-- `crates/jolt_java_fmt/tests/style/expressions/unary-parenthesized-operators.input.java`
-- `crates/jolt_java_fmt/tests/style/expressions/member-chains.input.java`
 
 Observed gaps:
 
@@ -28,21 +25,16 @@ Observed gaps:
 - Broken type-parameter bounds currently print `&` clauses at the same
   indentation as the `extends` line; expected output indents each continued
   bound under the bound list.
-- Broken binary and ternary groups inside assignments, `if` conditions, and
-  parenthesized unary operands currently lose the extra continuation indentation
-  required after the surrounding construct has already broken.
-- Member chains following `return` currently get an extra two spaces compared to
-  expression-statement chains.
 
 Why this needs a formatter decision:
 
-- These are all indentation policy gaps rather than parse or trivia-loss bugs.
+- These are declaration-list indentation policy gaps rather than parse or
+  trivia-loss bugs.
 - The expected style distinguishes top-level continuation under a construct from
-  sibling alignment within the group, especially after `throws`, `extends`, `&`,
-  `&&`, `?`, `:`, and `.` tokens.
+  sibling alignment within the group, especially after `throws`, `extends`, and
+  `&` tokens.
 - Implementing this likely needs a consistent way to pass surrounding break
-  context into list, operator, and chain renderers without ad hoc per-node
-  offsets.
+  context into declaration list renderers without ad hoc per-node offsets.
 
 ## Fit Boundaries for Long Declarations and Arrow Expressions
 
@@ -82,14 +74,13 @@ Why this needs a formatter decision:
 - The renderer should stay linear or explicitly bounded; any improved fitting
   must avoid unbounded best-fit search.
 
-## Dotted Identifier Runs and Member-Chain Break Shape
+## Dotted Identifier Runs
 
 Status: failing style fixtures; formatter backlog.
 
 Current fixtures:
 
 - `crates/jolt_java_fmt/tests/style/expressions/dotted-identifier-runs.input.java`
-- `crates/jolt_java_fmt/tests/style/expressions/member-chains.input.java`
 
 Observed gaps:
 
@@ -98,8 +89,6 @@ Observed gaps:
   currently break at every dot.
 - Expected output keeps the package/type/constant run together and breaks only
   before the terminal method call when possible.
-- Return-statement member chains currently indent selectors more deeply than the
-  same chain used as an expression statement.
 
 Why this needs a formatter decision:
 

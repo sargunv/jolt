@@ -85,7 +85,7 @@ public record Game(
   ) Boolean bonusBuy,
   @JsonProperty("category") @JsonPropertyDescription(
     "Game's category. Allowed values: slots, roulette, card, "
-    + "casual, lottery, poker, craps, video_poker"
+      + "casual, lottery, poker, craps, video_poker"
   ) String category,
   @JsonProperty("hd") @JsonPropertyDescription("HD format games.") Boolean hd,
   @JsonProperty("new") @JsonPropertyDescription(
@@ -93,8 +93,8 @@ public record Game(
   ) Boolean assa,
   @JsonProperty("hit_rate") @JsonPropertyDescription(
     "Frequency of wins per 100 bets. The higher, the hit rate the lower the volatility "
-    + "rating, and vice versa. Positive value. For slots only. "
-    + "Match pattern: ^\\d{1,18}(\\.\\d{1,12})?$"
+      + "rating, and vice versa. Positive value. For slots only. "
+      + "Match pattern: ^\\d{1,18}(\\.\\d{1,12})?$"
   ) String hitRate,
   @JsonProperty("params") @JsonPropertyDescription(
     "Game's custom parameters."

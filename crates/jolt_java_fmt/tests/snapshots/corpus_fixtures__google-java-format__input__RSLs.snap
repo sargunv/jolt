@@ -93,23 +93,23 @@ bar
       """
         foo
         """
-      + """
+        + """
             bar
             """;
     String t =
       """
 foo
 """
-      + """
+        + """
 bar
 """;
     String u =
       stringVariableOne
-      + """
+        + """
             ...
             """
-      + stringVariableTwo
-      + """
+        + stringVariableTwo
+        + """
                     ...
                     """;
   }

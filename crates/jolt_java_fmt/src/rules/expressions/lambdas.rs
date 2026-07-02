@@ -1,17 +1,14 @@
 use super::{
-    Doc, Expression, JavaFormatter, LambdaExpression, LambdaParameter, comment_forces_line, concat,
+    Doc, JavaFormatter, LambdaExpression, LambdaParameter, comment_forces_line, concat,
     format_annotation, format_block, format_expression, format_leading_comments, format_token_text,
     format_token_with_comments, format_trailing_comments_before_line_break, format_type, hard_line,
     inline_modifier_prefix_from_docs, text, tokens_have_comments,
 };
 
-use super::calls::parent_role_has_continuation_indent;
-
 pub(super) fn format_lambda_expression(
     expression: &LambdaExpression,
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
-    let parent_role = Expression::from(expression.clone()).parent_role();
     concat([
         format_lambda_parameters(expression, formatter),
         format_lambda_arrow(expression),
@@ -19,14 +16,7 @@ pub(super) fn format_lambda_expression(
             || {
                 expression
                     .block_body()
-                    .map_or_else(jolt_fmt_ir::nil, |block| {
-                        let block = format_block(&block, formatter);
-                        if parent_role_has_continuation_indent(parent_role) {
-                            jolt_fmt_ir::dedent(block)
-                        } else {
-                            block
-                        }
-                    })
+                    .map_or_else(jolt_fmt_ir::nil, |block| format_block(&block, formatter))
             },
             |body| format_expression(&body, formatter),
         ),

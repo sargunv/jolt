@@ -27,8 +27,8 @@ class TryWtihResources {
     try (
       final BufferedWriter writer =
         new BufferedWriter(
-        new OutputStreamWriter(testFile, Charset.defaultCharset())
-      )
+          new OutputStreamWriter(testFile, Charset.defaultCharset())
+        )
     ) {
       writer.append("tom cruise\n").append("avatar\n");
       writer.flush();

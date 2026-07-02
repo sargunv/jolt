@@ -5,15 +5,15 @@ expression: formatted
 class PalantirLambdaBreakChain {
   void foo() {
     return hello.read(
-        txn -> {
+      txn -> {
+        doSomeWork();
+        doSomeMoreWork();
+      }
+    )
+      .chainedCall(
+        () -> {
           doSomeWork();
-          doSomeMoreWork();
         }
-      )
-        .chainedCall(
-          () -> {
-            doSomeWork();
-          }
-        );
+      );
   }
 }

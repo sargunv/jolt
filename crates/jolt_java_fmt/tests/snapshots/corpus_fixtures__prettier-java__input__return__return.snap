@@ -32,20 +32,20 @@ public abstract class Return {
 
   Object returnSomethingWhichBreakAndAlreadyInParenthesis() {
     return (
-        oneVariable + secondVariable + thirdVariable + fourthVariable
+      oneVariable + secondVariable + thirdVariable + fourthVariable
         + fifthVariable
         + sixthVariable
         + seventhVariable
-      );
+    );
   }
 
   boolean unaryParenthesized() {
     return !(
-        r.getLeft() > getRight()
+      r.getLeft() > getRight()
         || r.getRight() < getLeft()
         || r.getTop() > getBottom()
         || r.getBottom() < getTop()
-      );
+    );
   }
 
   // Bug fix #290

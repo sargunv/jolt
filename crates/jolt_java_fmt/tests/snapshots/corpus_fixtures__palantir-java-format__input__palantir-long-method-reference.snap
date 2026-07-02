@@ -14,8 +14,8 @@ class PalantirLongArrayInit {
             implementationUris
           );
           return implementationUris.stream()
-              .map(PalantirCodeStyleManager::toUrlUnchecked)
-              .toArray(URL[]::new);
+            .map(PalantirCodeStyleManager::toUrlUnchecked)
+            .toArray(URL[]::new);
         }
       )
         .orElse(null);

@@ -21,7 +21,7 @@ class B26207047 {
     );
     String.format(
       "%s                                                                           "
-      + "                                                                           ",
+        + "                                                                           ",
       xxxxxxxxxxxxxxxxxxxx,
       xxxxxxxxxxxxxxxxxxxx
     );
@@ -109,7 +109,7 @@ class B26207047 {
       );
     String.format(
       xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-      + "%s",
+        + "%s",
       xxxxxxxxxxxxxxxxxxxx,
       xxxxxxxxxxxxxxxxxxxx
     );

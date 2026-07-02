@@ -60,22 +60,22 @@ public class Foo {
           .execute(
             (Statement) argThat(
               statement -> statement instanceof Statement
-              && statement.toString().contains(tableName)
+                && statement.toString().contains(tableName)
             )
           )
       );
 
     return someService.runWithLock(
-        foo,
-        Set.of("Running bar"),
-        () -> getOperationLock(MyClass.DOWNLOAD)
-          .runWithLock(
-            MyClass.DOWNLOAD,
-            () -> {
-              return doStuff.builder().method1().method2().build();
-            }
-          )
-      );
+      foo,
+      Set.of("Running bar"),
+      () -> getOperationLock(MyClass.DOWNLOAD)
+        .runWithLock(
+          MyClass.DOWNLOAD,
+          () -> {
+            return doStuff.builder().method1().method2().build();
+          }
+        )
+    );
   }
 
   public static Value convertToFunctionValue(

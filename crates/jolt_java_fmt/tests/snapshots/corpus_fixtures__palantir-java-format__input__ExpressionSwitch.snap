@@ -49,9 +49,9 @@ class ExpressionSwitch {
 
   Supplier<Integer> lambda(int k) {
     return () -> switch (k) {
-        case 0 -> true;
-        default -> false;
-      };
+      case 0 -> true;
+      default -> false;
+    };
   }
 
   public void test1(int y) {

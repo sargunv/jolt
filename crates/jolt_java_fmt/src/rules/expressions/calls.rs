@@ -1,7 +1,7 @@
 use super::leaves::format_leaf_token;
 use super::{
-    ArgumentList, CommaListItem, Doc, Expression, ExpressionParentRole, FieldAccessExpression,
-    JavaFormatter, LeadingComments, MethodInvocationExpression, concat, format_expression,
+    ArgumentList, CommaListItem, Doc, Expression, FieldAccessExpression, JavaFormatter,
+    LeadingComments, MethodInvocationExpression, concat, format_expression,
     format_expression_with_leading_comments, format_member_chain, format_member_dot,
     format_token_with_comments, format_type_argument_list, group, is_member_chain_child,
     parenthesized_list, text,
@@ -13,7 +13,6 @@ pub(super) fn format_method_invocation_expression_with_leading_comments(
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
     let expression = Expression::from(expression.clone());
-    let parent_role = expression.parent_role();
     if !is_member_chain_child(&expression)
         && let Some(chain) = expression.member_chain()
     {
@@ -25,7 +24,7 @@ pub(super) fn format_method_invocation_expression_with_leading_comments(
 
     group(concat([
         format_method_invocation_callee(&expression, leading_comments, formatter),
-        format_argument_list_for_parent_role(expression.arguments(), parent_role, formatter),
+        format_argument_list(expression.arguments(), formatter),
     ]))
 }
 
@@ -113,33 +112,5 @@ pub(crate) fn format_argument_list(
                 comma: entry.comma,
             })
             .collect(),
-    )
-}
-
-pub(super) fn format_argument_list_for_parent_role(
-    arguments: Option<ArgumentList>,
-    parent_role: Option<ExpressionParentRole>,
-    formatter: &JavaFormatter<'_>,
-) -> Doc {
-    let arguments = format_argument_list(arguments, formatter);
-    if parent_role_has_continuation_indent(parent_role) {
-        jolt_fmt_ir::dedent(arguments)
-    } else {
-        arguments
-    }
-}
-
-pub(super) const fn parent_role_has_continuation_indent(
-    parent_role: Option<ExpressionParentRole>,
-) -> bool {
-    matches!(
-        parent_role,
-        Some(
-            ExpressionParentRole::AssignmentRight
-                | ExpressionParentRole::ReturnValue
-                | ExpressionParentRole::ThrowValue
-                | ExpressionParentRole::YieldValue
-                | ExpressionParentRole::VariableInitializer
-        )
     )
 }

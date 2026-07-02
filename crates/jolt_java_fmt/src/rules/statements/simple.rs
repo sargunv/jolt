@@ -106,18 +106,20 @@ fn format_keyword_expression_statement(
     concat([
         format_statement_keyword_head(keyword, fallback),
         expression.map_or_else(jolt_fmt_ir::nil, |expression| {
-            let expression_doc = concat([
-                format_keyword_expression_separator(keyword),
-                format_expression(&expression, formatter),
-            ]);
-            if matches!(expression, Expression::SwitchExpression(_)) {
-                expression_doc
+            let expression = format_expression(&expression, formatter);
+            let expression = concat([format_keyword_expression_separator(keyword), expression]);
+            if keyword_expression_separator_forces_line(keyword) {
+                indent(expression)
             } else {
-                indent(expression_doc)
+                expression
             }
         }),
         format_statement_semicolon(semicolon),
     ])
+}
+
+fn keyword_expression_separator_forces_line(keyword: Option<&JavaSyntaxToken>) -> bool {
+    keyword.is_some_and(trailing_comments_force_line)
 }
 
 fn format_keyword_expression_separator(keyword: Option<&JavaSyntaxToken>) -> Doc {

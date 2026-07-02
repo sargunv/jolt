@@ -11,8 +11,8 @@ public class Foo {
   public static int fn(int x) {
     switch (x) {
       case VERBOSE_WORDY_AND_LENGTHY_ONE | VERBOSE_WORDY_AND_LENGTHY_TWO
-        | VERBOSE_WORDY_AND_LENGTHY_FOUR
-        | VERBOSE_WORDY_AND_LENGTHY_FIVE:
+          | VERBOSE_WORDY_AND_LENGTHY_FOUR
+          | VERBOSE_WORDY_AND_LENGTHY_FIVE:
         return 0;
       default:
         return 1;

@@ -93,34 +93,34 @@ class RSLs {
       """
         foo
         """
-      + """
+        + """
             bar
             """;
     String notBroken =
       """
     foo
     """
-      + """
+        + """
     bar
     """;
     String working =
       """
         foo
         """
-      + """
+        + """
         bar
         """;
     String u =
       stringVariableOne
-      + """
+        + """
             ...
             """
-      + stringVariableTwo
-      + """
+        + stringVariableTwo
+        + """
                     ...
                     """
-      + sdklfjslfkjsadlkgjsdklfjsadlkfjsaklfjaskdsfkljsaklfjsadflkjsdafkljasdfklsjfklsajflkasjfsfaaaaaaa
-      + """
+        + sdklfjslfkjsadlkgjsdklfjsadlkfjsaklfjaskdsfkljsaklfjsadflkjsdafkljasdfklsjfklsajflkasjfsfaaaaaaa
+        + """
                      my value
                     """;
   }
@@ -151,66 +151,66 @@ class RSLs {
 
   String y =
     refactorFromTo(
-    """
+      """
         someCode
         """,
-    """
+      """
             otherCode
             """
-  );
+    );
 
   String z =
     lotsOfStringParams(
-    """
+      """
         aaa
         """,
-    """
+      """
         bbb
         """,
-    """
+      """
         ccc
         """,
-    """
+      """
         ddd
         """,
-    """
+      """
         eee
         """,
-    """
+      """
         fff
         """,
-    """
+      """
         ggg
         """
-  );
+    );
 
   String w =
     lotsOfStringParams(
-    """
+      """
                     aaa
                     """,
-    "sdklfjslfkjsadlkgjsdklfjsadlkfjsaklfjaskdsfkljsaklfjsadflkjsdafkljasdfklsjfklsajflkasjfsf",
-    """
+      "sdklfjslfkjsadlkgjsdklfjsadlkfjsaklfjaskdsfkljsaklfjsadflkjsdafkljasdfklsjfklsajflkasjfsf",
+      """
                     bbb
                     """,
-    """
+      """
                     ccc
                     """
-  );
+    );
 
   String w =
     lotsOfStringParams(
-    """
+      """
             aaa
             """,
-    "sdklfjslfkjsadlkgjsdklfjsadlkfjsaklfjaskdsfkljsaklfjsadflkjsdafkljasdfklsjfklsajflkasjfsfdasdsadasdsada",
-    """
+      "sdklfjslfkjsadlkgjsdklfjsadlkfjsaklfjaskdsfkljsaklfjsadflkjsdafkljasdfklsjfklsajflkasjfsfdasdsadasdsada",
+      """
             bbb
             """,
-    """
+      """
             ccc
             """
-  );
+    );
 
   String x =
     String.format(
@@ -228,7 +228,7 @@ class RSLs {
         """
           this very long string that does something using arguments %s %s %s
           """
-        + """
+          + """
           my other value
           """
       ),
@@ -253,7 +253,7 @@ class RSLs {
         """
             this is a content that should be indented
             """
-        + """
+          + """
             and this one
             """
       )

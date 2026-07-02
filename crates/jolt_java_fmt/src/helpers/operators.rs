@@ -15,10 +15,9 @@ pub(crate) fn binary_chain(first: Doc, rest: Vec<(Doc, Doc)>) -> Doc {
 
     group(concat([
         first,
-        concat(
-            rest.into_iter()
-                .map(|(operator, operand)| concat([line(), operator, text(" "), operand])),
-        ),
+        indent(concat(rest.into_iter().map(|(operator, operand)| {
+            concat([line(), operator, text(" "), operand])
+        }))),
     ]))
 }
 
@@ -31,13 +30,15 @@ pub(crate) fn ternary_expression(
 ) -> Doc {
     group(concat([
         condition,
-        line(),
-        question,
-        text(" "),
-        consequence,
-        line(),
-        colon,
-        text(" "),
-        alternative,
+        indent(concat([
+            line(),
+            question,
+            text(" "),
+            consequence,
+            line(),
+            colon,
+            text(" "),
+            alternative,
+        ])),
     ]))
 }

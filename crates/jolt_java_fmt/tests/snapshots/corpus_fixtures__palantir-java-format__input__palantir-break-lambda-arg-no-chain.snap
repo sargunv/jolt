@@ -5,10 +5,10 @@ expression: formatted
 class PalantirLambdaBreakChain {
   void foo() {
     return hello.read(
-        txn -> {
-          doSomeWork();
-          doSomeMoreWork();
-        }
-      );
+      txn -> {
+        doSomeWork();
+        doSomeMoreWork();
+      }
+    );
   }
 }
