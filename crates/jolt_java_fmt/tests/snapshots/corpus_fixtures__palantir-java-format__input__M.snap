@@ -54,15 +54,15 @@ class M {
    */
   void methodName3(int x)
     throws Exception0,
-    Exception1,
-    Exception2,
-    Exception3,
-    Exception4,
-    Exception5,
-    Exception6,
-    Exception7,
-    Exception8,
-    Exception9 {
+      Exception1,
+      Exception2,
+      Exception3,
+      Exception4,
+      Exception5,
+      Exception6,
+      Exception7,
+      Exception8,
+      Exception9 {
   }
 
   /**
@@ -152,15 +152,15 @@ class M {
     int v
   )
     throws Exception0,
-    Exception1,
-    Exception2,
-    Exception3,
-    Exception4,
-    Exception5,
-    Exception6,
-    Exception7,
-    Exception8,
-    Exception9 {
+      Exception1,
+      Exception2,
+      Exception3,
+      Exception4,
+      Exception5,
+      Exception6,
+      Exception7,
+      Exception8,
+      Exception9 {
   }
 
   Pair<
@@ -183,15 +183,15 @@ class M {
     Pair<Pair<Pair<T, T>, Pair<T, T>>, Pair<Pair<T, T>, Pair<T, T>>>
   > methodName11(int x)
     throws Exception0,
-    Exception1,
-    Exception2,
-    Exception3,
-    Exception4,
-    Exception5,
-    Exception6,
-    Exception7,
-    Exception8,
-    Exception9 {
+      Exception1,
+      Exception2,
+      Exception3,
+      Exception4,
+      Exception5,
+      Exception6,
+      Exception7,
+      Exception8,
+      Exception9 {
     return null;
   }
 
@@ -284,15 +284,15 @@ class M {
     int v
   )
     throws Exception0,
-    Exception1,
-    Exception2,
-    Exception3,
-    Exception4,
-    Exception5,
-    Exception6,
-    Exception7,
-    Exception8,
-    Exception9 {
+      Exception1,
+      Exception2,
+      Exception3,
+      Exception4,
+      Exception5,
+      Exception6,
+      Exception7,
+      Exception8,
+      Exception9 {
     return null;
   }
 
@@ -406,15 +406,15 @@ class M {
     T31
   > T methodName22(int x)
     throws Exception0,
-    Exception1,
-    Exception2,
-    Exception3,
-    Exception4,
-    Exception5,
-    Exception6,
-    Exception7,
-    Exception8,
-    Exception9 {
+      Exception1,
+      Exception2,
+      Exception3,
+      Exception4,
+      Exception5,
+      Exception6,
+      Exception7,
+      Exception8,
+      Exception9 {
     return null;
   }
 
@@ -597,15 +597,15 @@ class M {
     int v
   )
     throws Exception0,
-    Exception1,
-    Exception2,
-    Exception3,
-    Exception4,
-    Exception5,
-    Exception6,
-    Exception7,
-    Exception8,
-    Exception9 {
+      Exception1,
+      Exception2,
+      Exception3,
+      Exception4,
+      Exception5,
+      Exception6,
+      Exception7,
+      Exception8,
+      Exception9 {
     return null;
   }
 
@@ -728,15 +728,15 @@ class M {
     Pair<Pair<Pair<T, T>, Pair<T, T>>, Pair<Pair<T, T>, Pair<T, T>>>
   > methodName(int x)
     throws Exception0,
-    Exception1,
-    Exception2,
-    Exception3,
-    Exception4,
-    Exception5,
-    Exception6,
-    Exception7,
-    Exception8,
-    Exception9 {
+      Exception1,
+      Exception2,
+      Exception3,
+      Exception4,
+      Exception5,
+      Exception6,
+      Exception7,
+      Exception8,
+      Exception9 {
     return null;
   }
 
@@ -928,15 +928,15 @@ class M {
     int v
   )
     throws Exception0,
-    Exception1,
-    Exception2,
-    Exception3,
-    Exception4,
-    Exception5,
-    Exception6,
-    Exception7,
-    Exception8,
-    Exception9 {
+      Exception1,
+      Exception2,
+      Exception3,
+      Exception4,
+      Exception5,
+      Exception6,
+      Exception7,
+      Exception8,
+      Exception9 {
     return null;
   }
 
@@ -1237,14 +1237,14 @@ class M {
     ZZZZZZZZZZ z
   )
     throws EEEEEEEEEE,
-    EEEEEEEEEE,
-    EEEEEEEEEE,
-    EEEEEEEEEE,
-    EEEEEEEEEE,
-    EEEEEEEEEE,
-    EEEEEEEEEE,
-    EEEEEEEEEE,
-    EEEEEEEEEE,
-    EEEEEEEEEE {
+      EEEEEEEEEE,
+      EEEEEEEEEE,
+      EEEEEEEEEE,
+      EEEEEEEEEE,
+      EEEEEEEEEE,
+      EEEEEEEEEE,
+      EEEEEEEEEE,
+      EEEEEEEEEE,
+      EEEEEEEEEE {
   }
 }

@@ -20,7 +20,8 @@ public class GenericClass<BEAN> {
 }
 
 public class ComplexGenericClass<
-  BEAN extends AbstractBean & BeanItemSelect<BEANTYPE>,
+  BEAN extends AbstractBean
+    & BeanItemSelect<BEANTYPE>,
   BEANTYPE,
   CONFIG extends BeanConfig<BEAN, BEANTYPE, CONFIG>
 >

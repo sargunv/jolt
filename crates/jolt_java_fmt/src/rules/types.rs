@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, concat, group, hard_line, line, text};
+use jolt_fmt_ir::{Doc, concat, group, hard_line, indent, line, text};
 use jolt_java_syntax::{
     Annotation, ArrayDimension, ArrayDimensions, ClassType, IntersectionType, JavaSyntaxToken,
     NameSyntax, PrimitiveType, Type, TypeArgument, TypeArgumentList, TypeBoundList, TypeParameter,
@@ -229,7 +229,14 @@ fn format_type_parameter(parameter: &TypeParameter, formatter: &JavaFormatter<'_
 }
 
 fn format_type_bounds(bounds: &TypeBoundList, formatter: &JavaFormatter<'_>) -> Doc {
-    format_intersection_entries(bounds.entries().collect(), formatter)
+    format_type_operator_entries_doc(
+        bounds
+            .entries()
+            .map(|entry| (entry.ty, entry.separator))
+            .collect(),
+        "&",
+        formatter,
+    )
 }
 
 fn format_intersection_entries(
@@ -262,22 +269,85 @@ fn format_type_operator_entries(
     fallback_operator: &'static str,
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
-    let mut docs = Vec::new();
-    let entries_len = entries.len();
+    group(format_type_operator_entries_doc(
+        entries,
+        fallback_operator,
+        formatter,
+    ))
+}
 
-    for (index, (ty, separator)) in entries.into_iter().enumerate() {
-        docs.push(format_type(&ty, formatter));
-        if let Some(separator) = separator {
-            docs.push(format_type_operator_separator(
-                Some(&separator),
-                fallback_operator,
-            ));
-        } else if index + 1 < entries_len {
-            docs.push(format_type_operator_separator(None, fallback_operator));
-        }
+fn format_type_operator_entries_doc(
+    entries: Vec<(Type, Option<JavaSyntaxToken>)>,
+    fallback_operator: &'static str,
+    formatter: &JavaFormatter<'_>,
+) -> Doc {
+    let entries_len = entries.len();
+    let mut entries = entries.into_iter().enumerate();
+    let Some((mut previous_index, (ty, mut previous_separator))) = entries.next() else {
+        return jolt_fmt_ir::nil();
+    };
+
+    let first = format_type(&ty, formatter);
+    let mut rest = Vec::new();
+
+    for (_index, (ty, separator)) in entries {
+        rest.push(format_type_operator_continuation(
+            previous_separator.as_ref(),
+            previous_index,
+            entries_len,
+            fallback_operator,
+            format_type(&ty, formatter),
+        ));
+        previous_index += 1;
+        previous_separator = separator;
     }
 
-    group(concat(docs))
+    concat([first, indent(concat(rest))])
+}
+
+fn type_operator_separator_forces_line(separator: Option<&JavaSyntaxToken>) -> bool {
+    separator.is_some_and(|separator| {
+        separator
+            .trailing_comments()
+            .iter()
+            .any(comment_forces_line)
+    })
+}
+
+fn format_type_operator_continuation(
+    separator: Option<&JavaSyntaxToken>,
+    index: usize,
+    entries_len: usize,
+    fallback_operator: &'static str,
+    operand: Doc,
+) -> Doc {
+    let separator_doc = format_type_operator_separator_before_operand(
+        separator,
+        index,
+        entries_len,
+        fallback_operator,
+    );
+
+    if type_operator_separator_forces_line(separator) {
+        concat([separator_doc, indent(concat([hard_line(), operand]))])
+    } else {
+        concat([separator_doc, operand])
+    }
+}
+
+fn format_type_operator_separator_before_operand(
+    separator: Option<&JavaSyntaxToken>,
+    index: usize,
+    entries_len: usize,
+    fallback_operator: &'static str,
+) -> Doc {
+    if let Some(separator) = separator {
+        format_type_operator_separator(Some(separator), fallback_operator)
+    } else if index + 1 < entries_len {
+        format_type_operator_separator(None, fallback_operator)
+    } else {
+        jolt_fmt_ir::nil()
+    }
 }
 
 fn format_type_operator_separator(
@@ -289,16 +359,16 @@ fn format_type_operator_separator(
         separator.map_or_else(
             || concat([text(fallback_operator), text(" ")]),
             |separator| {
+                let forces_line = separator
+                    .trailing_comments()
+                    .iter()
+                    .any(comment_forces_line);
                 concat([
                     format_leading_comments(separator),
                     format_token_text(separator.text()),
                     format_trailing_comments_before_line_break(separator),
-                    if separator
-                        .trailing_comments()
-                        .iter()
-                        .any(comment_forces_line)
-                    {
-                        hard_line()
+                    if forces_line {
+                        jolt_fmt_ir::nil()
                     } else {
                         text(" ")
                     },

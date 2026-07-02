@@ -32,5 +32,5 @@ public /*a*/ interface MyInterface
     Param3 p3
   ) /*a*/
     throws /*b*/ Exception /*a*/, /*b*/
-    RuntimeException /*a*/; /*b*/
+      RuntimeException /*a*/; /*b*/
 }

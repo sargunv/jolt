@@ -243,19 +243,38 @@ fn format_throws_keyword_spacing(throws: &ThrowsClause) -> Doc {
 }
 
 fn format_throws_entries(entries: Vec<ThrowsClauseEntry>, formatter: &JavaFormatter<'_>) -> Doc {
-    let mut docs = Vec::new();
     let entries_len = entries.len();
+    let mut entries = entries.into_iter().enumerate();
+    let Some((index, entry)) = entries.next() else {
+        return jolt_fmt_ir::nil();
+    };
 
-    for (index, entry) in entries.into_iter().enumerate() {
-        docs.push(format_type(&entry.exception, formatter));
-        if let Some(comma) = entry.comma {
-            docs.push(format_throws_separator(&comma));
-        } else if index + 1 < entries_len {
-            docs.push(line());
-        }
+    let first = format_type(&entry.exception, formatter);
+    let rest = concat([
+        format_throws_entry_separator(entry.comma, index, entries_len),
+        concat(entries.map(|(index, entry)| {
+            concat([
+                format_type(&entry.exception, formatter),
+                format_throws_entry_separator(entry.comma, index, entries_len),
+            ])
+        })),
+    ]);
+
+    concat([first, jolt_fmt_ir::indent(rest)])
+}
+
+fn format_throws_entry_separator(
+    comma: Option<JavaSyntaxToken>,
+    index: usize,
+    entries_len: usize,
+) -> Doc {
+    if let Some(comma) = comma {
+        format_throws_separator(&comma)
+    } else if index + 1 < entries_len {
+        line()
+    } else {
+        jolt_fmt_ir::nil()
     }
-
-    concat(docs)
 }
 
 fn format_throws_separator(comma: &JavaSyntaxToken) -> Doc {

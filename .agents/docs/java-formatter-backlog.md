@@ -5,37 +5,6 @@ formatter corpus fixtures but are not yet settled Jolt style contracts. Entries
 here should graduate into style-guide rules and focused fixtures only after the
 formatting policy is decided.
 
-## Continuation Indentation for Broken Declaration Groups
-
-Status: failing style fixtures; formatter backlog.
-
-Current fixtures:
-
-- `crates/jolt_java_fmt/tests/style/declarations/broken-method-parameters-and-throws.input.java`
-- `crates/jolt_java_fmt/tests/style/declarations/throws-continuation.input.java`
-- `crates/jolt_java_fmt/tests/style/declarations/type-parameter-bounds.input.java`
-- `crates/jolt_java_fmt/tests/style/declarations/types-and-type-arguments.input.java`
-
-Observed gaps:
-
-- Broken `throws` lists currently align every exception at the same indentation
-  as the first exception after `throws`; expected output gives later exceptions
-  an additional continuation indent, including when trivia is attached to the
-  first exception.
-- Broken type-parameter bounds currently print `&` clauses at the same
-  indentation as the `extends` line; expected output indents each continued
-  bound under the bound list.
-
-Why this needs a formatter decision:
-
-- These are declaration-list indentation policy gaps rather than parse or
-  trivia-loss bugs.
-- The expected style distinguishes top-level continuation under a construct from
-  sibling alignment within the group, especially after `throws`, `extends`, and
-  `&` tokens.
-- Implementing this likely needs a consistent way to pass surrounding break
-  context into declaration list renderers without ad hoc per-node offsets.
-
 ## Fit Boundaries for Long Declarations and Arrow Expressions
 
 Status: failing style fixtures; formatter backlog.
