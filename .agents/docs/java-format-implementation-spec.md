@@ -4,14 +4,6 @@ This spec translates the Jolt Java style guide into implementation work. The
 style guide defines the output policy; this document defines how to build that
 policy into code without reintroducing formatter-compatibility debt.
 
-Primary policy inputs:
-
-- [`java-format-style.md`](java-format-style.md)
-- [`java-format-style-program-comments.md`](java-format-style-program-comments.md)
-- [`java-format-style-declarations.md`](java-format-style-declarations.md)
-- [`java-format-style-statements.md`](java-format-style-statements.md)
-- [`java-format-style-expressions.md`](java-format-style-expressions.md)
-
 ## Build Philosophy
 
 - Build layer by layer, not by proof-grade vertical slices.

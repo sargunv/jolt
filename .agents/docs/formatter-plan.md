@@ -919,7 +919,7 @@ algebra cannot express required formatter layouts.
 
 ### Milestone 8: Jolt Java layout builder
 
-Status: pending.
+Status: complete.
 
 Implement Jolt's Java formatter on top of the completed lexer, parser, CST,
 document IR, and renderer.
