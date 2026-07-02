@@ -5,7 +5,7 @@ formatter corpus fixtures but are not yet settled Jolt style contracts. Entries
 here should graduate into style-guide rules and focused fixtures only after the
 formatting policy is decided.
 
-## Fit Boundaries for Long Declarations and Arrow Expressions
+## Missing Split Points for Long Declarations and Arrow Expressions
 
 Status: failing style fixtures; formatter backlog.
 
@@ -14,8 +14,6 @@ Current fixtures:
 - `crates/jolt_java_fmt/tests/style/declarations/long-array-dimensions.input.java`
 - `crates/jolt_java_fmt/tests/style/declarations/long-variable-declarator.input.java`
 - `crates/jolt_java_fmt/tests/style/declarations/type-header-clauses.input.java`
-- `crates/jolt_java_fmt/tests/style/expressions/assignment-ternary-continuation.input.java`
-- `crates/jolt_java_fmt/tests/style/expressions/operators-and-ternaries.input.java`
 - `crates/jolt_java_fmt/tests/style/statements/switch-rule-arrow-break.input.java`
 
 Observed gaps:
@@ -26,20 +24,42 @@ Observed gaps:
   split point.
 - Single long `implements` or `permits` clauses stay after the keyword instead
   of moving to the next indented line; long combined clauses also stay packed.
-- Assignment RHS ternaries can stay flat after a broken `=` even when the style
-  expects the ternary arms to break.
 - Long switch rule expressions stay on the `default ->` line instead of breaking
   after the arrow.
+
+Why this needs a formatter decision:
+
+- These cases need additional syntactic split points in declarations, type
+  clauses, array dimensions, and switch-rule arrows.
+- The style-guide change appears to prefer early, semantically meaningful break
+  points over keeping a long construct packed until it overflows.
+- The renderer should stay linear or explicitly bounded; any improved fitting
+  must avoid unbounded best-fit search.
+
+## Expression Chain Fit Boundaries
+
+Status: failing style fixtures; formatter backlog.
+
+Current fixtures:
+
+- `crates/jolt_java_fmt/tests/style/expressions/assignment-ternary-continuation.input.java`
+- `crates/jolt_java_fmt/tests/style/expressions/operators-and-ternaries.input.java`
+
+Observed gaps:
+
+- Assignment RHS ternaries can stay flat after a broken `=` even when the style
+  expects the ternary arms to break.
 - Long flattened binary groups may keep an overlong prefix flat and only break
   late in the group, rather than breaking each operand consistently once the
   group exceeds the boundary.
 
 Why this needs a formatter decision:
 
-- These cases require measuring complete declaration, clause, arrow-expression,
-  and operator-group boundaries rather than only local subexpressions.
-- The style-guide change appears to prefer early, semantically meaningful break
-  points over partially-flat overflow.
+- These cases require measuring expression-chain and operator-group boundaries
+  rather than only local subexpressions.
+- Once an enclosing expression continuation breaks, nested ternary and binary
+  groups may need to break consistently instead of independently re-fitting
+  flat.
 - The renderer should stay linear or explicitly bounded; any improved fitting
   must avoid unbounded best-fit search.
 
