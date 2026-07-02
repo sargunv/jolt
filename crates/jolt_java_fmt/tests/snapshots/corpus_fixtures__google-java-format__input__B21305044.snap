@@ -55,9 +55,7 @@ class B21305044 {
   Function g = new Baz()::func;
   Function h = Baz::new;
   Function i =
-    com.foo
-      .bar
-      .VeryLooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooongBaz::new;
+    com.foo.bar.VeryLooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooongBaz::new;
 
   {
     Function f = () -> moderatelyLongResult;

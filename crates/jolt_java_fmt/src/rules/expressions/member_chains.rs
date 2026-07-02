@@ -16,14 +16,41 @@ pub(super) fn format_member_chain(chain: &MemberChain, formatter: &JavaFormatter
                 LeadingComments::SuppressFirstToken,
                 formatter,
             ),
-            chain
-                .suffixes()
-                .iter()
-                .map(|suffix| format_member_chain_suffix(suffix, formatter))
-                .collect(),
+            format_member_chain_units(chain.suffixes(), formatter),
             keep_first_suffix_with_root,
         ),
     ])
+}
+
+fn format_member_chain_units(
+    suffixes: &[MemberChainSuffix],
+    formatter: &JavaFormatter<'_>,
+) -> Vec<Doc> {
+    let mut units = Vec::new();
+    let mut field_run = Vec::new();
+
+    for suffix in suffixes {
+        match suffix {
+            MemberChainSuffix::FieldAccess(_) => {
+                field_run.push(format_member_chain_suffix(suffix, formatter));
+            }
+            MemberChainSuffix::MethodInvocation(_) => {
+                flush_field_run(&mut units, &mut field_run);
+                units.push(format_member_chain_suffix(suffix, formatter));
+            }
+        }
+    }
+
+    flush_field_run(&mut units, &mut field_run);
+    units
+}
+
+fn flush_field_run(units: &mut Vec<Doc>, field_run: &mut Vec<Doc>) {
+    if field_run.is_empty() {
+        return;
+    }
+
+    units.push(concat(std::mem::take(field_run)));
 }
 
 fn format_expression_leading_comments(expression: &Expression) -> Doc {

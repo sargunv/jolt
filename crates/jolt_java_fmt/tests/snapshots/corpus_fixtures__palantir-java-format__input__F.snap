@@ -226,50 +226,7 @@ class F {
           + 10;
       i++
     ) {
-      f.f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .f
-        .Ff =
+      f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.Ff =
         null;
     }
   }

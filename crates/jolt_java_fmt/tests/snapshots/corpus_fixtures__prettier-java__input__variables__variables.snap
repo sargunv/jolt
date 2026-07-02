@@ -152,16 +152,14 @@ public class Variables {
         argument2,
         argument3
       )
-        .attributeOne
-        .attributeTwo
+        .attributeOne.attributeTwo
         .invocationTwo(argument1, argument2)
         .attributeThree
         .invocationThree();
 
     Object.test.creation thisObject6 =
       classWithName.invocationOne(argument1, argument2, argument3)
-        .attributeOne
-        .attributeTwo
+        .attributeOne.attributeTwo
         .invocationTwo(argument1, argument2)
         .attributeThree
         .invocationThree();

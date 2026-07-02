@@ -43,29 +43,6 @@ Why this needs a formatter decision:
 - The renderer should stay linear or explicitly bounded; any improved fitting
   must avoid unbounded best-fit search.
 
-## Dotted Identifier Runs
-
-Status: failing style fixtures; formatter backlog.
-
-Current fixtures:
-
-- `crates/jolt_java_fmt/tests/style/expressions/dotted-identifier-runs.input.java`
-
-Observed gaps:
-
-- Long dotted constants such as
-  `com.example.deep.config.ConflictResolutionFactory.DEFAULT_VALUE.getNumber()`
-  currently break at every dot.
-- Expected output keeps the package/type/constant run together and breaks only
-  before the terminal method call when possible.
-
-Why this needs a formatter decision:
-
-- Java uses dots for both qualified names and fluent method chains, but the
-  style expectations treat those as different break units.
-- The formatter needs to identify stable dotted-name prefixes without losing
-  comments around dots or changing method-chain behavior.
-
 ## Mixed-Precedence Binary Expressions
 
 Status: formatter backlog.
