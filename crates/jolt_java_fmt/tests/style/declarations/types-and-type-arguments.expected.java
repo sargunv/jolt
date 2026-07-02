@@ -1,7 +1,7 @@
 class Types< /* params */
   @Marker T extends Number
-  & // numeric
-  Comparable<T>, // first
+    & // numeric
+      Comparable<T>, // first
   U
   // before params close
 > {

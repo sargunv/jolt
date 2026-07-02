@@ -11,6 +11,7 @@ builder
 .withSecondValue(second.reallyLongDisplayName())
 
 .build();
+return this.toStringHelper().add("foo", foo_________________________________________).add("bar", bar_________________________________________);
 this.field=builder.value;
 this.field=builder./* field */value;
 }

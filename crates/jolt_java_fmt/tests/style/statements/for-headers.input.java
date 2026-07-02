@@ -6,5 +6,6 @@ for(;ready();tick()) run();
 for(int index = startIndex, limit = computeLimit(input);index < limit && shouldContinue(index);index++,processed++) run(index);
 for(i = 0,/* reset */j = 0;i < count;i++, // bump
 j++) run(i, j);
+for(;;) run();
 }
 }

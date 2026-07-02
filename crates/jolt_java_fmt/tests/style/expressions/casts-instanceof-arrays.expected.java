@@ -17,7 +17,7 @@ class Example {
   }
 
   String[] names() {
-    return new String[] {"a", "b"};
+    return new String[] { "a", "b" };
   }
 
   Object literals() {

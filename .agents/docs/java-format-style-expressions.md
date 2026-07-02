@@ -16,17 +16,30 @@ This document defines Jolt's Java expression style.
 ## Binary And Operator-Like Expressions
 
 - Binary operators wrap at the start of continuation lines.
-- Continuation operator lines align to the first operand rather than being
-  extra-indented.
-- Multi-catch alternatives use the same leading-operator list shape.
+- Operator continuation lines indent one normal level from the construct that
+  owns the expression, even when the operator starts the line.
+- Nested operator continuations add another normal indent level.
+- When a binary operator chain breaks, every operator in the chain breaks. Keep
+  the first operand with the owning construct where possible, then put each
+  operator and its right operand on its own continuation line.
+- Do not fill the first line with as many operators as possible and only break
+  the remaining tail.
+- Multi-catch alternatives use the same indented leading-operator shape.
 - Operator chains flatten only when doing so is semantics-preserving and covered
   by a finite rule.
 
 ```java
 boolean allowed =
     user.isActive()
-    && account.hasPermission("write")
-    && featureFlags.enabled();
+        && account.hasPermission("write")
+        && featureFlags.enabled();
+```
+
+```java
+return x
+    + x
+    + x
+    + x;
 ```
 
 Inside parenthesized control conditions:
@@ -34,25 +47,38 @@ Inside parenthesized control conditions:
 ```java
 if (
     user.isActive()
-    && account.hasPermission("write")
-    && featureFlags.enabled()
+        && account.hasPermission("write")
+        && featureFlags.enabled()
 ) {
   run();
 }
 ```
 
+The same indented leading-operator shape applies inside user-authored
+parentheses and prefix expressions. Closing delimiters return to the indentation
+level of the construct that opened the parenthesized expression.
+
+```java
+return !(
+    bounds.getLeft() > getRight()
+        || bounds.getRight() < getLeft()
+        || bounds.getTop() > getBottom()
+        || bounds.getBottom() < getTop()
+);
+```
+
 ## Ternaries
 
-- Broken ternaries use the same flat expression-continuation shape as binary
-  operators.
-- `?` and `:` start continuation lines aligned to the condition.
+- Broken ternaries put `?` and `:` at the start of continuation lines.
+- When the condition is itself on a broken continuation line, `?` and `:` are
+  nested one normal indent deeper than the condition.
 - Preserve user-authored parentheses around ternary expressions.
 
 ```java
 String label =
     user.isActive()
-    ? user.displayName()
-    : "inactive";
+        ? user.displayName()
+        : "inactive";
 ```
 
 ## Assignments
@@ -66,7 +92,7 @@ String label =
 ```java
 boolean allowed =
     user.isActive()
-    && account.hasPermission("write");
+        && account.hasPermission("write");
 ```
 
 ## Calls And Argument Lists
@@ -89,8 +115,16 @@ Blank lines inside argument lists are normalized away.
 
 ## Member Chains
 
-- Broken member chains keep a simple receiver plus first selector together when
-  that head fits.
+- A contiguous run of dot-separated identifiers with no calls, indexes,
+  operators, or other selectors is a dotted identifier run.
+- Keep dotted identifier runs tight when they fit. This rule is syntactic: the
+  run may be a package/type name, static member path, enum constant path, or
+  property chain.
+- Do not break inside a dotted identifier run unless the run itself cannot fit
+  on a line.
+- If a chain containing calls, indexes, or other non-identifier selectors does
+  not fit on one line, end the first line at the dotted identifier run when that
+  run fits, then put each later selector on an indented continuation line.
 - If the receiver is complex or multiline, the first selector moves to the
   continuation line.
 - This follows Ruff's general shape rather than Prettier-Java's
@@ -102,6 +136,9 @@ ImmutableList.builder()
     .add(first)
     .add(second)
     .build();
+
+com.example.deep.config.Factory.DEFAULT_VALUE
+    .getNumber();
 ```
 
 Complex receiver:
@@ -132,10 +169,13 @@ users.stream().map((User user) -> user.name()).toList();
 - Empty array initializers print as `{}` only if they are true expression/list
   initializers with no block-body policy attached.
 - Non-empty initializers use normal comma-list formatting.
+- Inline non-empty initializers include spaces just inside `{` and `}`.
 - Broken initializer lists put items one per line and may use trailing
   separators where the surrounding Java construct permits them.
 
 ```java
+Object[] objects = new Object[] { new Object(), new Object() };
+
 int[] values = {
     1,
     2,

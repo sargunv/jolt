@@ -16,7 +16,7 @@ class Example {
   }
 
   int[] numbers() {
-    return new int[] {1, 2, 3};
+    return new int[] { 1, 2, 3 };
   }
 
   int[] emptyNumbers() {

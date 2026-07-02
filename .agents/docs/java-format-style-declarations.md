@@ -124,7 +124,7 @@ Result compute(
     ExecutionContext context
 )
     throws IOException,
-    TimeoutException
+        TimeoutException
 {
   return executor.run(request, context);
 }
@@ -135,12 +135,14 @@ Result compute(
 - When a `throws` clause fits, keep it on the declaration line.
 - When a `throws` clause breaks, keep `throws` with the first exception and put
   subsequent exceptions one per continuation line.
+- Subsequent exception lines are nested one normal indent deeper than the
+  `throws` line.
 
 ```java
 void run()
     throws IOException,
-    SQLException,
-    TimeoutException
+        SQLException,
+        TimeoutException
 {
 }
 ```
@@ -159,12 +161,17 @@ void run()
 - Simple single type parameters/arguments may stay inline.
 - Broken type parameter and argument lists use ordinary comma-list formatting
   inside `<` and `>`.
+- When a type-parameter bound list breaks, keep the first bound after `extends`
+  and put each additional `&` bound on its own line one normal indent deeper
+  than the type-parameter line.
 - Comments inside type parameter/argument lists force normal broken-list layout.
 
 ```java
 class Box<
-    T,
-    U extends Serializable
+    T extends Serializable
+        & Closeable
+        & Flushable,
+    U
 > {
 }
 ```

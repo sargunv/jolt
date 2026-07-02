@@ -86,9 +86,16 @@ do {
 ## For Headers
 
 - If a `for` header fits, keep it on one line.
+- Empty `for` control headers print as `for (;;)`, never as a broken header.
 - When it breaks, split first into init, condition, and update segments.
 - Each segment then uses normal declaration, expression, or list formatting only
   when that segment itself needs to break.
+
+```java
+for (;;) {
+  run();
+}
+```
 
 ```java
 for (
@@ -169,16 +176,16 @@ policy.
 - `try`, `catch`, and `finally` clauses form a clause chain with spaces between
   adjacent braced clauses.
 - Catch parameters use normal parameter/declaration formatting.
-- Multi-catch alternatives use the same leading-operator list shape as binary
-  expressions.
+- Multi-catch alternatives use the same indented leading-operator shape as
+  binary expressions.
 
 ```java
 try {
   run();
 } catch (
     IOException
-    | SQLException
-    | TimeoutException e
+        | SQLException
+        | TimeoutException e
 ) {
   recover(e);
 } finally {

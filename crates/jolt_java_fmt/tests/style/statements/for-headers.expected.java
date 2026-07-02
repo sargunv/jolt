@@ -24,5 +24,8 @@ class Example {
     ) {
       run(i, j);
     }
+    for (;;) {
+      run();
+    }
   }
 }

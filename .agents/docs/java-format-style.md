@@ -27,8 +27,10 @@ useful references where noted, but the rules here describe Jolt's own style.
 ## Indentation
 
 - Default line width is 80.
-- Jolt has one indent policy. There is no separate continuation indent.
-- Broken continuation lines use the same indent unit as blocks and lists.
+- Jolt uses the same indent unit for blocks, lists, and broken expression
+  continuations.
+- Every continuation line indents by one normal indent from the construct that
+  owns it. Nested continuations add another normal indent level.
 - Prefer structural wrapping over alignment columns.
 
 ## Program Shape
@@ -104,6 +106,10 @@ useful references where noted, but the rules here describe Jolt's own style.
 - Body declarations get automatic blank-line padding between member categories,
   capped at one blank line.
 - Empty statements in type bodies are removed while preserving comments.
+- Broken `throws` lists nest subsequent exceptions one normal indent deeper
+  than the `throws` line.
+- Broken type-parameter bounds keep the first bound after `extends`, then put
+  each additional `&` bound on a nested continuation line.
 - Multiline enum constant lists get a trailing comma when the enum has no body
   declarations. Enums with body declarations use the required semicolon before
   declarations instead.
@@ -145,6 +151,7 @@ useful references where noted, but the rules here describe Jolt's own style.
 - Broken `for` headers split first into init, condition, and update segments;
   each segment then uses normal declaration/expression/list formatting only when
   that segment itself needs to break.
+- Empty `for` control headers stay compact as `for (;;)`.
 - `return`, `throw`, and `yield` arguments use normal expression formatting.
 - Optional trailing semicolons in try-with-resources resource lists are removed.
 
@@ -154,17 +161,21 @@ useful references where noted, but the rules here describe Jolt's own style.
   from the parsed tree.
 - Do not add readability parentheses in v1; that belongs to a later, explicitly
   scoped policy.
-- Binary operators wrap at the start of continuation lines, with continuation
-  operator lines aligned to the first operand rather than extra-indented.
-- Multi-catch alternatives use the same leading-operator list shape as binary
-  expressions.
-- Broken ternaries use the same flat expression-continuation shape as binary
-  operators: `?` and `:` start continuation lines aligned to the condition.
+- Binary operators wrap at the start of indented continuation lines.
+- When a binary operator chain breaks, break every operator in that chain; do
+  not pack multiple operators onto the first line and only spill the tail.
+- Multi-catch alternatives use the same indented leading-operator shape as
+  binary expressions.
+- Broken ternaries put `?` and `:` on continuation lines one normal indent
+  deeper than a broken condition line.
+- Inline non-empty array initializers include spaces just inside `{` and `}`.
 - Optional parentheses are omitted for a lone untyped lambda parameter. This
   does not change the policy of preserving user-authored expression parentheses.
-- Broken member chains keep a simple receiver plus first selector together when
-  that head fits. If the receiver is complex or multiline, the first selector
-  moves to the continuation line. This follows Ruff's general shape.
+- Keep dotted identifier runs tight when they fit, without trying to determine
+  whether they are package/type names, static member paths, enum constant paths,
+  or property chains. If a chain containing calls, indexes, or other
+  non-identifier selectors breaks, end the first line at the dotted identifier
+  run when that run fits, then continue later selectors on indented lines.
 - Wildcards and `_` are exposed as distinct context-specific syntax constructs
   in formatter accessors, such as wildcard type arguments, unnamed variables,
   unnamed lambda parameters, unnamed exception parameters, and unnamed patterns.

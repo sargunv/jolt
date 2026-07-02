@@ -1,3 +1,4 @@
+use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -14,30 +15,50 @@ fn style_rule_fixtures_match_expected_output() {
         root.display()
     );
 
+    let mut failures: Vec<String> = Vec::new();
+
     for case in cases {
         let input = read_to_string(&case.input_path);
         let expected = read_to_string(&case.expected_path);
-        let formatted = format_or_panic(&case.input_path, &input);
+        let formatted = match format_or_error(&case.input_path, &input) {
+            Ok(formatted) => formatted,
+            Err(error) => {
+                failures.push(format!("{}: {error}", case.name));
+                continue;
+            }
+        };
 
-        assert_eq!(
-            formatted, expected,
-            "formatted output differed for {}",
-            case.name
-        );
+        let formatted_matches_expected = formatted == expected;
+        if !formatted_matches_expected {
+            failures.push(format!("{}: formatted output differed", case.name));
+        }
 
-        let formatted_expected = format_or_panic(&case.expected_path, &expected);
-        assert_eq!(
-            formatted_expected, expected,
-            "expected output was not idempotent for {}",
-            case.name
-        );
+        match format_or_error(&case.expected_path, &expected) {
+            Ok(formatted_expected) if formatted_matches_expected => {
+                if formatted_expected != expected {
+                    failures.push(format!("{}: expected output was not idempotent", case.name));
+                }
+            }
+            Ok(_) => {}
+            Err(error) => failures.push(format!("{}: {error}", case.name)),
+        }
 
-        let repeated = format_or_panic(&case.input_path, &input);
-        assert_eq!(
-            repeated, formatted,
-            "formatting was not deterministic for {}",
-            case.name
-        );
+        match format_or_error(&case.input_path, &input) {
+            Ok(repeated) => {
+                if repeated != formatted {
+                    failures.push(format!("{}: formatting was not deterministic", case.name));
+                }
+            }
+            Err(error) => failures.push(format!("{}: {error}", case.name)),
+        }
+    }
+
+    if !failures.is_empty() {
+        let mut message = format!("{} Java style fixture failure(s):", failures.len());
+        for failure in failures {
+            write!(message, "\n- {failure}").expect("write to string");
+        }
+        panic!("{message}");
     }
 }
 
@@ -112,17 +133,19 @@ fn read_to_string(path: &Path) -> String {
         .unwrap_or_else(|error| panic!("failed to read {}: {error}", path.display()))
 }
 
-fn format_or_panic(path: &Path, source: &str) -> String {
+fn format_or_error(path: &Path, source: &str) -> Result<String, String> {
     let result = format_source(source, &JavaFormatOptions::default());
-    assert!(
-        result.diagnostics.is_empty(),
-        "formatter diagnostics in {}: {:#?}",
-        path.display(),
-        result.diagnostics
-    );
+    if !result.diagnostics.is_empty() {
+        return Err(format!(
+            "formatter diagnostics in {}: {:#?}",
+            path.display(),
+            result.diagnostics
+        ));
+    }
+
     result
         .formatted_source
-        .unwrap_or_else(|| panic!("formatter blocked without output for {}", path.display()))
+        .ok_or_else(|| format!("formatter blocked without output for {}", path.display()))
 }
 
 struct FixtureCase {
