@@ -18,6 +18,10 @@ run = "hk check --all"
 [tasks.test]
 run = "INSTA_UPDATE=no cargo test --workspace"
 
+[tasks.jolt]
+raw_args = true
+run = "cargo run -p jolt_fmt_cli --"
+
 [tasks."test:update"]
 run = "INSTA_UPDATE=always cargo test --workspace"
 

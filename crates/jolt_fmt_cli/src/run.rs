@@ -1,0 +1,262 @@
+use std::{
+    collections::HashSet,
+    env, fs,
+    io::{self, Read as _, Write as _},
+    path::Path,
+};
+
+use jolt_fmt_core::{FormatStatus, LineIndex, TextSize, format_source};
+
+use crate::{
+    args::{Cli, Command, FmtArgs},
+    config::{CliError, ConfigResolver, ResolvedConfig, absolutize, display_path},
+    discover::{CandidateFile, detect_language, discover_files},
+};
+
+pub(crate) fn run(cli: Cli) -> Result<(), CliError> {
+    match cli.command {
+        Command::Fmt(args) => run_fmt(&args),
+    }
+}
+
+fn run_fmt(args: &FmtArgs) -> Result<(), CliError> {
+    let cwd = env::current_dir()
+        .map_err(|error| CliError::new(format!("failed to read current directory: {error}")))?;
+
+    if args.paths.iter().any(|path| path == Path::new("-")) {
+        return run_stdin(&cwd, args);
+    }
+
+    if args.stdin_filename.is_some() {
+        return Err(CliError::new(
+            "--stdin-filename is only valid when formatting stdin with '-'",
+        ));
+    }
+
+    let paths = if args.paths.is_empty() {
+        vec![cwd.clone()]
+    } else {
+        args.paths
+            .iter()
+            .map(|path| absolutize(&cwd, path))
+            .collect()
+    };
+
+    let mut failed = false;
+    let mut changed = false;
+    let mut seen = HashSet::new();
+
+    for path in paths {
+        if path.is_file() {
+            let Some(language) = detect_language(&path) else {
+                return Err(CliError::new(format!(
+                    "{}: unsupported file extension",
+                    display_path(&cwd, &path)
+                )));
+            };
+            let root = path.parent().map_or_else(|| cwd.clone(), Path::to_path_buf);
+            let mut resolver = resolver_for(&cwd, &root, args)?;
+            let config = resolver.resolve_for_dir(&root)?;
+            if seen.insert(path.clone()) {
+                let result = format_file(&cwd, &path, language, &config, args.check)?;
+                failed |= result.failed;
+                changed |= result.changed;
+            }
+            continue;
+        }
+
+        if path.is_dir() {
+            let mut resolver = resolver_for(&cwd, &path, args)?;
+            for candidate in discover_files(&path, &mut resolver)? {
+                if seen.insert(candidate.path.clone()) {
+                    let result = format_candidate(&cwd, &candidate, args.check)?;
+                    failed |= result.failed;
+                    changed |= result.changed;
+                }
+            }
+            continue;
+        }
+
+        return Err(CliError::new(format!(
+            "{}: path does not exist",
+            display_path(&cwd, &path)
+        )));
+    }
+
+    if failed || (args.check && changed) {
+        return Err(CliError::new("formatting failed"));
+    }
+
+    Ok(())
+}
+
+fn run_stdin(cwd: &Path, args: &FmtArgs) -> Result<(), CliError> {
+    if args.paths.len() != 1 {
+        return Err(CliError::new(
+            "'-' cannot be combined with filesystem paths in milestone 10",
+        ));
+    }
+
+    let language = match &args.stdin_filename {
+        Some(path) => detect_language(path).ok_or_else(|| {
+            CliError::new(format!(
+                "{}: unsupported stdin filename extension",
+                path.display()
+            ))
+        })?,
+        None => jolt_fmt_core::Language::Java,
+    };
+
+    let pseudo_parent = args
+        .stdin_filename
+        .as_deref()
+        .and_then(Path::parent)
+        .map_or_else(|| cwd.to_path_buf(), |path| absolutize(cwd, path));
+    let mut resolver = resolver_for(cwd, cwd, args)?;
+    let config = resolver.resolve_for_dir(&pseudo_parent)?;
+
+    let mut source = String::new();
+    io::stdin()
+        .read_to_string(&mut source)
+        .map_err(|error| CliError::new(format!("failed to read stdin as UTF-8: {error}")))?;
+
+    let result = format_source(&source, language, &config.options);
+    let label = args
+        .stdin_filename
+        .as_deref()
+        .map_or_else(|| "<stdin>".to_owned(), |path| path.display().to_string());
+    emit_diagnostics(&label, &source, &result.diagnostics)?;
+
+    let Some(formatted) = result.formatted_source else {
+        return Err(CliError::new("formatting failed"));
+    };
+
+    if args.check {
+        if result.status == FormatStatus::Formatted {
+            println!("{label}");
+            return Err(CliError::new("formatting failed"));
+        }
+        return Ok(());
+    }
+
+    print!("{formatted}");
+    Ok(())
+}
+
+fn resolver_for(
+    cwd: &Path,
+    invocation_root: &Path,
+    args: &FmtArgs,
+) -> Result<ConfigResolver, CliError> {
+    ConfigResolver::new(
+        cwd,
+        invocation_root.to_path_buf(),
+        args.format_options(),
+        &args.include,
+        &args.exclude,
+        args.config.as_deref(),
+        args.no_config,
+    )
+}
+
+fn format_candidate(
+    cwd: &Path,
+    candidate: &CandidateFile,
+    check: bool,
+) -> Result<FileFormatOutcome, CliError> {
+    format_file(
+        cwd,
+        &candidate.path,
+        candidate.language,
+        &candidate.config,
+        check,
+    )
+}
+
+fn format_file(
+    cwd: &Path,
+    path: &Path,
+    language: jolt_fmt_core::Language,
+    config: &ResolvedConfig,
+    check: bool,
+) -> Result<FileFormatOutcome, CliError> {
+    let source = fs::read_to_string(path).map_err(|error| {
+        CliError::new(format!(
+            "{}: failed to read file: {error}",
+            display_path(cwd, path)
+        ))
+    })?;
+    let result = format_source(&source, language, &config.options);
+    let label = display_path(cwd, path);
+    emit_diagnostics(&label, &source, &result.diagnostics)?;
+
+    let Some(formatted) = result.formatted_source else {
+        return Ok(FileFormatOutcome {
+            failed: true,
+            changed: false,
+        });
+    };
+
+    if formatted == source {
+        return Ok(FileFormatOutcome::default());
+    }
+
+    if check {
+        println!("{label}");
+        return Ok(FileFormatOutcome {
+            failed: false,
+            changed: true,
+        });
+    }
+
+    fs::write(path, formatted).map_err(|error| {
+        CliError::new(format!(
+            "{}: failed to write formatted file: {error}",
+            display_path(cwd, path)
+        ))
+    })?;
+
+    Ok(FileFormatOutcome {
+        failed: false,
+        changed: true,
+    })
+}
+
+fn emit_diagnostics(
+    label: &str,
+    source: &str,
+    diagnostics: &[jolt_fmt_core::Diagnostic],
+) -> Result<(), CliError> {
+    let mut stderr = io::stderr().lock();
+    let line_index = LineIndex::new(source);
+
+    for diagnostic in diagnostics {
+        if let Some(range) = diagnostic.range {
+            let position = line_index.line_col(TextSize::new(range.start().get()));
+            writeln!(
+                stderr,
+                "{}:{}:{}: {}: {}",
+                label,
+                position.line + 1,
+                position.column.get() + 1,
+                diagnostic.code,
+                diagnostic.message
+            )
+        } else {
+            writeln!(
+                stderr,
+                "{}: {}: {}",
+                label, diagnostic.code, diagnostic.message
+            )
+        }
+        .map_err(|error| CliError::new(format!("failed to write diagnostics: {error}")))?;
+    }
+
+    Ok(())
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+struct FileFormatOutcome {
+    failed: bool,
+    changed: bool,
+}

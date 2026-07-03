@@ -979,7 +979,7 @@ Hardening should proceed in three passes:
 
 ### Milestone 10: native CLI wrapper
 
-Status: pending.
+Status: complete.
 
 Add the CLI after the Java engine can format real fixture inputs through
 `format_source`. The detailed CLI/config behavior is specified in
