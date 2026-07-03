@@ -57,6 +57,7 @@ jolt fmt --include 'src/**/*.java' --exclude 'src/generated/**'
 jolt fmt --config path/to/jolt.toml
 jolt fmt --no-config
 jolt fmt -
+jolt fmt --stdin-filename src/Main.java -
 ```
 
 For Milestone 10, default discovery includes only Java:
@@ -78,6 +79,10 @@ directory.
 
 If a path is `-`, the CLI reads stdin and writes the formatted result to stdout.
 Stdin mode does not write files and does not perform recursive discovery.
+
+`--stdin-filename <path>` may be provided with `-` to give stdin a path-like
+name for language detection and diagnostics. It does not read or write that
+path.
 
 If one or more filesystem paths are provided, each path is either:
 
@@ -120,6 +125,10 @@ jolt fmt -
 `--check` with stdin should format in memory and exit nonzero if stdin is not
 already formatted. It may print no formatted source in check mode.
 
+`--stdin-filename <path>` is only valid in stdin mode. It should be optional in
+Milestone 10, but once Kotlin is supported it is the mechanism for selecting the
+stdin language from the supplied extension.
+
 ## Public Options
 
 The CLI exposes the same formatter options as `jolt_fmt_core::FormatOptions`:
@@ -147,6 +156,15 @@ user actually supplied a value.
 `--tabs` sets `tabs = true`. `--spaces` sets `tabs = false`. They conflict with
 each other.
 
+`--stdin-filename` is not a formatter option and should not be included in
+`CliFormatOptions`; keep it with command input selection fields.
+
+The CLI also exposes input selection options:
+
+```text
+--stdin-filename <path>
+```
+
 Validate option ranges at the CLI/config boundary before calling
 `jolt_fmt_core`:
 
@@ -168,13 +186,7 @@ indent-width = 2
 tabs = false
 include = ["**/*.java"]
 exclude = ["generated/**"]
-
-[format.java]
-# Reserved for future Java-specific formatting options if they prove necessary.
 ```
-
-The `[format.java]` table is reserved but should have no Milestone 10 options.
-Do not add language-specific options unless a real formatting rule requires one.
 
 Unknown config keys should be errors. Silent typos in formatter config make
 rollout harder and can hide user mistakes.
@@ -185,7 +197,7 @@ Support both project-root and dot-config locations:
 
 ```text
 jolt.toml
-.config/jolt.toml
+.config/jolt/config.toml
 ```
 
 This follows the dot-config convention of storing project-specific tool
@@ -216,7 +228,7 @@ repo/module-a/src/A.java
 `repo/module-a/.config/jolt.toml`.
 
 If both `dir/jolt.toml` and `dir/.config/jolt.toml` exist in the same directory,
-merge `dir/jolt.toml` first and `dir/.config/jolt.toml` second.
+merge `dir/jolt.toml` over `dir/.config/jolt.toml`.
 
 Config-relative path patterns, such as `include` and `exclude`, are interpreted
 relative to the directory that contains the config file. CLI path patterns are
@@ -304,6 +316,10 @@ For Milestone 10:
 Other extensions are ignored during recursive walking. Explicit unsupported
 files are errors.
 
+For stdin, use `--stdin-filename` when present to run the same extension-based
+language detection used for filesystem inputs. Without `--stdin-filename`,
+default to Java in Milestone 10.
+
 Do not add parser version flags such as `--source` or `--release`.
 
 ## Output and Exit Codes
@@ -334,7 +350,8 @@ For check mode:
 For stdin/stdout:
 
 - read all stdin as UTF-8 text,
-- infer Java unless a later CLI option introduces explicit language selection,
+- use `--stdin-filename` for language detection when provided,
+- otherwise infer Java in Milestone 10,
 - write formatted output to stdout in normal mode,
 - write diagnostics to stderr.
 
@@ -355,11 +372,14 @@ Config errors should preserve Figment provenance where possible.
 
 ## Tests
 
-Add owned tests in `jolt_fmt_cli`.
+Add owned tests in `jolt_fmt_cli`. Prefer coarse integration tests over
+fine-grained unit tests. Prefer `insta` snapshots for asserting output,
 
 Cover:
 
 - `jolt fmt -` formats stdin to stdout,
+- `jolt fmt --stdin-filename src/Main.java -` uses the supplied name for stdin
+  language detection and diagnostics,
 - write mode rewrites changed Java files,
 - write mode leaves unchanged Java files unchanged,
 - `--check` returns success when files are already formatted,
