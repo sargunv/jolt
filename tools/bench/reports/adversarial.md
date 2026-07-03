@@ -16,26 +16,24 @@ System: Linux 7.0.13-200.fc44.x86_64, x86_64, AMD RYZEN AI MAX+ 395 w/ Radeon
 
 ```text
 Benchmark 1: jolt fmt
-  Time (mean ± σ):      49.5 ms ±   4.8 ms    [User: 43.4 ms, System: 5.0 ms]
-  Range (min … max):    46.7 ms …  55.0 ms    3 runs
- 
-  Warning: Statistical outliers were detected. Consider re-running this benchmark on a quiet system without any interferences from other programs.
+  Time (mean ± σ):      14.0 ms ±   1.8 ms    [User: 74.3 ms, System: 18.1 ms]
+  Range (min … max):    12.5 ms …  16.0 ms    3 runs
  
 Benchmark 2: dprint --plugins=jolt_fmt_dprint.wasm fmt --incremental=false --skip-stable-format
-  Time (mean ± σ):      26.2 ms ±   3.4 ms    [User: 78.0 ms, System: 41.5 ms]
-  Range (min … max):    23.8 ms …  30.1 ms    3 runs
+  Time (mean ± σ):      26.6 ms ±   2.2 ms    [User: 77.0 ms, System: 48.1 ms]
+  Range (min … max):    25.0 ms …  29.1 ms    3 runs
  
 Benchmark 3: google-java-format --replace
-  Time (mean ± σ):     201.2 ms ±   7.8 ms    [User: 368.1 ms, System: 186.6 ms]
-  Range (min … max):   193.6 ms … 209.3 ms    3 runs
+  Time (mean ± σ):     199.4 ms ±  11.5 ms    [User: 386.0 ms, System: 167.9 ms]
+  Range (min … max):   189.0 ms … 211.7 ms    3 runs
  
 Benchmark 4: prettier --write --plugin prettier-plugin-java
-  Time (mean ± σ):     778.9 ms ±   2.0 ms    [User: 1120.6 ms, System: 236.4 ms]
-  Range (min … max):   776.9 ms … 781.0 ms    3 runs
+  Time (mean ± σ):     765.3 ms ±   4.6 ms    [User: 1096.4 ms, System: 217.2 ms]
+  Range (min … max):   760.6 ms … 769.8 ms    3 runs
  
 Summary
-  dprint --plugins=jolt_fmt_dprint.wasm fmt --incremental=false --skip-stable-format ran
-    1.89 ± 0.31 times faster than jolt fmt
-    7.68 ± 1.05 times faster than google-java-format --replace
-   29.73 ± 3.88 times faster than prettier --write --plugin prettier-plugin-java
+  jolt fmt ran
+    1.90 ± 0.29 times faster than dprint --plugins=jolt_fmt_dprint.wasm fmt --incremental=false --skip-stable-format
+   14.25 ± 2.00 times faster than google-java-format --replace
+   54.70 ± 7.03 times faster than prettier --write --plugin prettier-plugin-java
 ```

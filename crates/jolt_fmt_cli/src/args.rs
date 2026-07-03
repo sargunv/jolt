@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{num::NonZeroUsize, path::PathBuf};
 
 use clap::{ArgAction, Args, Parser, Subcommand};
 
@@ -58,6 +58,10 @@ pub(crate) struct FmtArgs {
     /// Path-like name used for stdin language detection and diagnostics.
     #[arg(long)]
     pub(crate) stdin_filename: Option<PathBuf>,
+
+    /// Number of formatter worker threads to use for filesystem paths.
+    #[arg(long)]
+    pub(crate) threads: Option<NonZeroUsize>,
 
     /// Files or directories to format. Use '-' to read stdin.
     pub(crate) paths: Vec<PathBuf>,

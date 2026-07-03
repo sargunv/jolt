@@ -47,6 +47,19 @@ fn write_mode_rewrites_changed_java_files() {
 }
 
 #[test]
+fn write_mode_formats_multiple_files_with_threads() {
+    let temp = TempDir::new().expect("tempdir should be created");
+    write(temp.path().join("A.java"), SIMPLE_INPUT);
+    write(temp.path().join("B.java"), NESTED_INPUT);
+
+    let output = jolt(temp.path(), ["fmt", "--threads", "2", "."], "");
+
+    assert_success(&output);
+    assert_eq!(read(temp.path().join("A.java")), SIMPLE_FORMATTED);
+    assert_eq!(read(temp.path().join("B.java")), NESTED_FORMATTED);
+}
+
+#[test]
 fn write_mode_leaves_unchanged_java_files_untouched() {
     let temp = TempDir::new().expect("tempdir should be created");
     let path = temp.path().join("A.java");
@@ -87,6 +100,21 @@ fn check_mode_fails_when_files_would_change_without_writing() {
 }
 
 #[test]
+fn check_mode_with_threads_prints_changed_paths_in_order_without_writing() {
+    let temp = TempDir::new().expect("tempdir should be created");
+    fs::create_dir_all(temp.path().join("src")).expect("src dir should be created");
+    write(temp.path().join("src/B.java"), SIMPLE_INPUT);
+    write(temp.path().join("src/A.java"), SIMPLE_INPUT);
+
+    let output = jolt(temp.path(), ["fmt", "--check", "--threads", "2", "."], "");
+
+    assert_failure(&output);
+    assert_eq!(stdout(&output), "src/A.java\nsrc/B.java\n");
+    assert_eq!(read(temp.path().join("src/A.java")), SIMPLE_INPUT);
+    assert_eq!(read(temp.path().join("src/B.java")), SIMPLE_INPUT);
+}
+
+#[test]
 fn parse_errors_do_not_write_files() {
     let temp = TempDir::new().expect("tempdir should be created");
     write(temp.path().join("A.java"), "class {\n");
@@ -96,6 +124,20 @@ fn parse_errors_do_not_write_files() {
     assert_failure(&output);
     assert!(stderr(&output).contains("A.java:1:7"));
     assert_eq!(read(temp.path().join("A.java")), "class {\n");
+}
+
+#[test]
+fn parse_errors_with_threads_do_not_stop_other_files() {
+    let temp = TempDir::new().expect("tempdir should be created");
+    write(temp.path().join("Bad.java"), "class {\n");
+    write(temp.path().join("Good.java"), SIMPLE_INPUT);
+
+    let output = jolt(temp.path(), ["fmt", "--threads", "2", "."], "");
+
+    assert_failure(&output);
+    assert!(stderr(&output).contains("Bad.java:1:7"));
+    assert_eq!(read(temp.path().join("Bad.java")), "class {\n");
+    assert_eq!(read(temp.path().join("Good.java")), SIMPLE_FORMATTED);
 }
 
 #[test]
@@ -165,6 +207,31 @@ fn nested_configs_override_parent_configs() {
     write(temp.path().join("module/Module.java"), NESTED_INPUT);
 
     let output = jolt(temp.path(), ["fmt", "."], "");
+
+    assert_success(&output);
+    assert_eq!(read(temp.path().join("Root.java")), NESTED_FORMATTED_4);
+    assert_eq!(
+        read(temp.path().join("module/Module.java")),
+        NESTED_FORMATTED
+    );
+}
+
+#[test]
+fn nested_configs_apply_with_threads() {
+    let temp = TempDir::new().expect("tempdir should be created");
+    write(
+        temp.path().join("jolt.toml"),
+        "[format]\nindent-width = 4\n",
+    );
+    fs::create_dir_all(temp.path().join("module")).expect("module dir should be created");
+    write(
+        temp.path().join("module/jolt.toml"),
+        "[format]\nindent-width = 2\n",
+    );
+    write(temp.path().join("Root.java"), NESTED_INPUT);
+    write(temp.path().join("module/Module.java"), NESTED_INPUT);
+
+    let output = jolt(temp.path(), ["fmt", "--threads", "2", "."], "");
 
     assert_success(&output);
     assert_eq!(read(temp.path().join("Root.java")), NESTED_FORMATTED_4);
@@ -319,6 +386,26 @@ fn config_file_errors_and_no_config_behavior() {
     let invalid_glob = jolt(temp.path(), ["fmt", "-"], SIMPLE_INPUT);
     assert_failure(&invalid_glob);
     assert!(stderr(&invalid_glob).contains("jolt.toml: invalid glob pattern"));
+}
+
+#[test]
+fn threads_zero_fails_argument_parsing() {
+    let temp = TempDir::new().expect("tempdir should be created");
+
+    let output = jolt(temp.path(), ["fmt", "--threads", "0", "-"], SIMPLE_INPUT);
+
+    assert_failure(&output);
+    assert!(stderr(&output).contains("--threads"));
+}
+
+#[test]
+fn stdin_formatting_accepts_threads_but_stays_serial() {
+    let temp = TempDir::new().expect("tempdir should be created");
+
+    let output = jolt(temp.path(), ["fmt", "--threads", "2", "-"], SIMPLE_INPUT);
+
+    assert_success(&output);
+    assert_eq!(stdout(&output), SIMPLE_FORMATTED);
 }
 
 #[test]

@@ -1,11 +1,16 @@
 use std::{
     collections::HashSet,
-    env, fs,
+    env,
+    fmt::Write as _,
+    fs,
     io::{self, Read as _, Write as _},
-    path::Path,
+    num::NonZeroUsize,
+    path::{Path, PathBuf},
+    thread,
 };
 
 use jolt_fmt_core::{FormatStatus, LineIndex, TextSize, format_source};
+use rayon::prelude::*;
 
 use crate::{
     args::{Cli, Command, FmtArgs},
@@ -33,46 +38,13 @@ fn run_fmt(args: &FmtArgs) -> Result<(), CliError> {
         ));
     }
 
-    let paths = if args.paths.is_empty() {
-        vec![cwd.clone()]
-    } else {
-        args.paths
-            .iter()
-            .map(|path| absolutize(&cwd, path))
-            .collect()
-    };
+    let candidates = collect_candidates(&cwd, args)?;
+    let results = format_candidates(&cwd, args, candidates)?;
 
     let mut stats = FormatRunStats::default();
-    let mut seen = HashSet::new();
-
-    for path in paths {
-        if path.is_file() {
-            let language = detect_language(&path).unwrap_or(jolt_fmt_core::Language::Java);
-            let root = path.parent().map_or_else(|| cwd.clone(), Path::to_path_buf);
-            let mut resolver = resolver_for(&cwd, &root, args)?;
-            let config = resolver.resolve_for_dir(&root)?;
-            if seen.insert(path.clone()) {
-                let result = format_file(&cwd, &path, language, &config, args.check)?;
-                stats.record(result);
-            }
-            continue;
-        }
-
-        if path.is_dir() {
-            let mut resolver = resolver_for(&cwd, &path, args)?;
-            for candidate in discover_files(&path, &mut resolver)? {
-                if seen.insert(candidate.path.clone()) {
-                    let result = format_candidate(&cwd, &candidate, args.check)?;
-                    stats.record(result);
-                }
-            }
-            continue;
-        }
-
-        return Err(CliError::new(format!(
-            "{}: path does not exist",
-            display_path(&cwd, &path)
-        )));
+    for result in results {
+        result.emit()?;
+        stats.record(result.outcome);
     }
 
     if args.check && (stats.failed > 0 || stats.changed > 0) {
@@ -84,6 +56,56 @@ fn run_fmt(args: &FmtArgs) -> Result<(), CliError> {
     }
 
     Ok(())
+}
+
+fn collect_candidates(cwd: &Path, args: &FmtArgs) -> Result<Vec<CandidateFile>, CliError> {
+    let paths: Vec<PathBuf> = if args.paths.is_empty() {
+        vec![cwd.to_path_buf()]
+    } else {
+        args.paths
+            .iter()
+            .map(|path| absolutize(cwd, path))
+            .collect()
+    };
+
+    let mut candidates = Vec::new();
+    let mut seen: HashSet<PathBuf> = HashSet::new();
+
+    for path in paths {
+        if path.is_file() {
+            let language = detect_language(&path).unwrap_or(jolt_fmt_core::Language::Java);
+            let root = path
+                .parent()
+                .map_or_else(|| cwd.to_path_buf(), Path::to_path_buf);
+            let mut resolver = resolver_for(cwd, &root, args)?;
+            let config = resolver.resolve_for_dir(&root)?;
+            if seen.insert(path.clone()) {
+                candidates.push(CandidateFile {
+                    path,
+                    language,
+                    config,
+                });
+            }
+            continue;
+        }
+
+        if path.is_dir() {
+            let mut resolver = resolver_for(cwd, &path, args)?;
+            for candidate in discover_files(&path, &mut resolver)? {
+                if seen.insert(candidate.path.clone()) {
+                    candidates.push(candidate);
+                }
+            }
+            continue;
+        }
+
+        return Err(CliError::new(format!(
+            "{}: path does not exist",
+            display_path(cwd, &path)
+        )));
+    }
+
+    Ok(candidates)
 }
 
 fn run_stdin(cwd: &Path, args: &FmtArgs) -> Result<(), CliError> {
@@ -166,14 +188,33 @@ fn resolver_for(
     )
 }
 
-fn format_candidate(
+fn format_candidates(
     cwd: &Path,
-    candidate: &CandidateFile,
-    check: bool,
-) -> Result<FileFormatOutcome, CliError> {
+    args: &FmtArgs,
+    candidates: Vec<CandidateFile>,
+) -> Result<Vec<FileFormatResult>, CliError> {
+    let threads = args.threads.unwrap_or_else(default_thread_count).get();
+    let pool = rayon::ThreadPoolBuilder::new()
+        .num_threads(threads)
+        .build()
+        .map_err(|error| CliError::new(format!("failed to start formatter workers: {error}")))?;
+
+    Ok(pool.install(|| {
+        candidates
+            .into_par_iter()
+            .map(|candidate| format_candidate(cwd, candidate, args.check))
+            .collect()
+    }))
+}
+
+fn default_thread_count() -> NonZeroUsize {
+    thread::available_parallelism().unwrap_or(NonZeroUsize::MIN)
+}
+
+fn format_candidate(cwd: &Path, candidate: CandidateFile, check: bool) -> FileFormatResult {
     format_file(
         cwd,
-        &candidate.path,
+        candidate.path,
         candidate.language,
         &candidate.config,
         check,
@@ -182,51 +223,81 @@ fn format_candidate(
 
 fn format_file(
     cwd: &Path,
-    path: &Path,
+    path: PathBuf,
     language: jolt_fmt_core::Language,
     config: &ResolvedConfig,
     check: bool,
-) -> Result<FileFormatOutcome, CliError> {
-    let source = fs::read_to_string(path).map_err(|error| {
-        CliError::new(format!(
-            "{}: failed to read file: {error}",
-            display_path(cwd, path)
-        ))
-    })?;
+) -> FileFormatResult {
+    let label = display_path(cwd, &path);
+    let source = match fs::read_to_string(&path) {
+        Ok(source) => source,
+        Err(error) => {
+            return FileFormatResult::failed_with_error(format!(
+                "{}: failed to read file: {error}",
+                display_path(cwd, &path)
+            ));
+        }
+    };
     let result = format_source(&source, language, &config.options);
-    let label = display_path(cwd, path);
-    emit_diagnostics(&label, &source, &result.diagnostics)?;
+    let diagnostics = diagnostics_text(&label, &source, &result.diagnostics);
 
     let Some(formatted) = result.formatted_source else {
-        return Ok(FileFormatOutcome {
-            failed: true,
-            changed: false,
-        });
+        return FileFormatResult {
+            outcome: FileFormatOutcome {
+                failed: true,
+                changed: false,
+            },
+            diagnostics,
+            check_output: String::new(),
+            error: None,
+        };
     };
 
     if formatted == source {
-        return Ok(FileFormatOutcome::default());
+        return FileFormatResult {
+            outcome: FileFormatOutcome::default(),
+            diagnostics,
+            check_output: String::new(),
+            error: None,
+        };
     }
 
     if check {
-        println!("{label}");
-        return Ok(FileFormatOutcome {
-            failed: false,
-            changed: true,
-        });
+        return FileFormatResult {
+            outcome: FileFormatOutcome {
+                failed: false,
+                changed: true,
+            },
+            diagnostics,
+            check_output: format!("{label}\n"),
+            error: None,
+        };
     }
 
-    fs::write(path, formatted).map_err(|error| {
-        CliError::new(format!(
-            "{}: failed to write formatted file: {error}",
-            display_path(cwd, path)
-        ))
-    })?;
+    if let Err(error) = fs::write(&path, formatted) {
+        return FileFormatResult {
+            outcome: FileFormatOutcome {
+                failed: true,
+                changed: false,
+            },
+            diagnostics,
+            check_output: String::new(),
+            error: Some(format!(
+                "{}: failed to write formatted file: {error}",
+                display_path(cwd, &path)
+            )),
+        };
+    }
 
-    Ok(FileFormatOutcome {
-        failed: false,
-        changed: true,
-    })
+    FileFormatResult {
+        outcome: FileFormatOutcome {
+            failed: false,
+            changed: true,
+        },
+        diagnostics,
+        check_output: String::new(),
+        error: None,
+    }
 }
 
 fn emit_diagnostics(
@@ -260,6 +331,78 @@ fn emit_diagnostics(
     }
 
     Ok(())
+}
+
+fn diagnostics_text(
+    label: &str,
+    source: &str,
+    diagnostics: &[jolt_fmt_core::Diagnostic],
+) -> String {
+    let mut text = String::new();
+    let line_index = LineIndex::new(source);
+
+    for diagnostic in diagnostics {
+        if let Some(range) = diagnostic.range {
+            let position = line_index.line_col(TextSize::new(range.start().get()));
+            let _ = writeln!(
+                text,
+                "{}:{}:{}: {}: {}",
+                label,
+                position.line + 1,
+                position.column.get() + 1,
+                diagnostic.code,
+                diagnostic.message
+            );
+        } else {
+            let _ = writeln!(
+                text,
+                "{}: {}: {}",
+                label, diagnostic.code, diagnostic.message
+            );
+        }
+    }
+
+    text
+}
+
+#[derive(Debug, Default)]
+struct FileFormatResult {
+    outcome: FileFormatOutcome,
+    diagnostics: String,
+    check_output: String,
+    error: Option<String>,
+}
+
+impl FileFormatResult {
+    fn failed_with_error(error: String) -> Self {
+        Self {
+            outcome: FileFormatOutcome {
+                failed: true,
+                changed: false,
+            },
+            diagnostics: String::new(),
+            check_output: String::new(),
+            error: Some(error),
+        }
+    }
+
+    fn emit(&self) -> Result<(), CliError> {
+        let mut stdout = io::stdout().lock();
+        stdout
+            .write_all(self.check_output.as_bytes())
+            .map_err(|error| CliError::new(format!("failed to write check output: {error}")))?;
+
+        let mut stderr = io::stderr().lock();
+        stderr
+            .write_all(self.diagnostics.as_bytes())
+            .map_err(|error| CliError::new(format!("failed to write diagnostics: {error}")))?;
+        if let Some(error) = &self.error {
+            writeln!(stderr, "{error}")
+                .map_err(|error| CliError::new(format!("failed to write diagnostics: {error}")))?;
+        }
+
+        Ok(())
+    }
 }
 
 #[derive(Clone, Copy, Debug, Default)]

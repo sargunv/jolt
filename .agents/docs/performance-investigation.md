@@ -1,65 +1,5 @@
 # Formatter Performance Investigation
 
-## Summary
-
-Jolt's native formatter is not fundamentally losing because Rust is slow or
-because the formatting engine burns more CPU than JVM/Node competitors. The
-current realistic benchmark mostly exposes two different problems:
-
-- The native CLI formats files serially.
-- The formatter pipeline allocates and clones heavily inside syntax traversal
-  and layout construction/rendering.
-
-On the Spring Framework corpus, `jolt fmt` uses roughly one core for about ten
-seconds. `google-java-format` reaches similar wall time while burning much more
-aggregate CPU, and `dprint` reaches much lower wall time by parallelizing Jolt's
-wasm plugin across files.
-
-The first performance win should be CLI-level parallelism. The deeper engine
-work should target data shape: fewer red syntax handle clones, fewer parser
-token/trivia clones, and a more compact document/layout representation.
-
-## Evidence
-
-Benchmark reports in `tools/bench/reports`:
-
-| Corpus      |                   Tool | Wall time |   User CPU | Notes                                                        |
-| ----------- | ---------------------: | --------: | ---------: | ------------------------------------------------------------ |
-| realistic   |             `jolt fmt` |  10.319 s |    9.443 s | Native CLI, effectively serial                               |
-| realistic   |   `dprint` + Jolt wasm |  847.1 ms | 17065.3 ms | Same core formatter through dprint, parallel                 |
-| realistic   |   `google-java-format` |  11.191 s |   64.210 s | Parallel JVM formatter                                       |
-| realistic   | `prettier-plugin-java` |  564.0 ms |   720.6 ms | Needs equivalence checks before treating as apples-to-apples |
-| adversarial |             `jolt fmt` |   63.9 ms |    57.0 ms | Small corpus, startup/discovery matter more                  |
-| adversarial |   `dprint` + Jolt wasm |   30.5 ms |    93.0 ms | Parallelism still helps wall time                            |
-
-Local corpus sizes at the time of investigation:
-
-- `realistic`: 9,136 Java files, 69 MB.
-- `adversarial`: 207 Java files, 872 KB.
-
-Additional observations:
-
-- Re-running native `jolt fmt` over an already-formatted Spring tree still took
-  about 10.5 seconds, so output writing is not the main cost.
-- `dprint output-file-paths` sees all 9,136 realistic Java files when invoked
-  from the benchmark working directory.
-- `perf stat` on representative inputs showed about 0.9-1.0 CPUs utilized by
-  native `jolt fmt`, confirming serial execution.
-
-Single-large-file `perf record` sample highlights:
-
-- `jolt_syntax::red::node::SyntaxNode<L>::children_with_tokens::{closure}`:
-  about 25% self in the sample.
-- `jolt_java_syntax::parser::source::TokenCursor::token`: about 6%.
-- `jolt_fmt_ir::render::FitChecker::fits_stack`: about 6%.
-- `jolt_java_syntax::lexer::JavaLexer::next_token`: about 5%.
-- Red/green handle drops and `Arc`/`Rc` refcount traffic also showed up.
-
-Callgrind on the same large file showed allocator internals as a visible slice
-of total instructions, with `_int_malloc` around 11%. The exact percentage is
-less important than the direction: current formatting creates many short-lived
-objects.
-
 ## Ranked Opportunities
 
 Tags:
@@ -70,38 +10,9 @@ Tags:
 
 ### 1. Parallelize Native CLI File Formatting
 
-Tags: Impact `H`, effort `M`, confidence `H`.
-
-The native CLI formats candidates one at a time in
-`crates/jolt_fmt_cli/src/run.rs`. This explains most of the wall-clock gap
-against dprint on the realistic corpus.
-
-Likely shape:
-
-- Discover and sort candidates deterministically on the main thread.
-- Resolve config before parallel execution, or make config resolution/cache safe
-  to share.
-- Format files in parallel with a bounded worker pool.
-- Preserve deterministic diagnostics and changed-file reporting by collecting
-  outcomes and emitting in candidate order.
-- Keep `stdin` formatting serial.
-
-Things to watch:
-
-- Do not interleave diagnostics from workers.
-- Avoid unbounded parallelism on huge repos.
-- Decide whether writes happen in workers or after collecting formatted output.
-  Worker writes reduce peak memory; collected writes make ordering simpler.
-
-Suggested first experiment:
-
-- Add a `rayon`-backed internal path for directory candidates.
-- Benchmark realistic/adversarial with `--threads=1`, default threads, and a few
-  fixed thread counts.
+Completed.
 
 ### 2. Make Benchmark Semantics Stricter
-
-Tags: Impact `H` for measurement quality, effort `S`, confidence `H`.
 
 Completed.
 
