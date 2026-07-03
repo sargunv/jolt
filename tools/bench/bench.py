@@ -3,10 +3,13 @@
 
 import fnmatch
 import json
+import os
+import platform
 import shutil
 import subprocess
 import sys
 from pathlib import Path, PurePosixPath
+from typing import Literal, NamedTuple
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -17,7 +20,6 @@ JOLT = ROOT / "target/release/jolt"
 DPRINT_PLUGIN = (
     ROOT / "target/wasm32-unknown-unknown/release/jolt_fmt_dprint.wasm"
 )
-TOOLS = ("jolt", "dprint", "google-java-format", "prettier-java")
 HYPERFINE_RUNS = 3
 HYPERFINE_WARMUP = 1
 
@@ -122,21 +124,37 @@ CORPORA = {
     },
 }
 
-COMMANDS = (
-    ("jolt fmt", "{jolt} fmt {jolt_dir}"),
-    (
-        "dprint --plugins=jolt_fmt_dprint.wasm fmt --incremental=false --skip-stable-format",
-        "cd {dprint_dir} && dprint --plugins={dprint_plugin} fmt --incremental=false --skip-stable-format .",
+ToolKey = Literal["jolt", "dprint-jolt", "google-java-format", "prettier-java"]
+
+
+class Tool(NamedTuple):
+    label: str
+    benchmark_command: str
+    version_command: str
+
+
+TOOLS: dict[ToolKey, Tool] = {
+    "jolt": Tool(
+        "jolt fmt",
+        "{jolt} fmt {jolt_dir}",
+        "{jolt} --version",
     ),
-    (
+    "dprint-jolt": Tool(
+        "dprint --plugins=jolt_fmt_dprint.wasm fmt --incremental=false --skip-stable-format",
+        "cd {dprint_jolt_dir} && dprint --plugins={dprint_plugin} fmt --incremental=false --skip-stable-format .",
+        "dprint --version",
+    ),
+    "google-java-format": Tool(
         "google-java-format --replace",
         "google-java-format --replace --skip-removing-unused-imports @{gjf_args}",
+        "google-java-format --version",
     ),
-    (
+    "prettier-java": Tool(
         "prettier --write --plugin prettier-plugin-java",
-        "pnpm exec prettier --write {prettier_glob} --plugin prettier-plugin-java --print-width 80 --tab-width 2",
+        "pnpm exec prettier --write {prettier_glob} --plugin prettier-plugin-java --print-width 80 --tab-width 2 --ignore-path {prettier_ignore} --log-level silent",
+        "pnpm exec prettier --version",
     ),
-)
+}
 
 
 def main() -> int:
@@ -154,6 +172,7 @@ def prepare_baseline(name: str) -> None:
 
     copy_corpus(corpus, baseline_dir(name))
     (WORK / name).mkdir(parents=True, exist_ok=True)
+    (WORK / name / "prettier.ignore").write_text("", encoding="utf-8")
     (WORK / name / "dprint.json").write_text(
         json.dumps(
             {
@@ -198,6 +217,7 @@ def benchmark() -> None:
     for name, corpus in CORPORA.items():
         prepare_baseline(name)
         summarize(name, corpus)
+        metadata = collect_metadata(name)
         args = [
             "hyperfine",
             "--warmup",
@@ -207,34 +227,40 @@ def benchmark() -> None:
             "--prepare",
             reset_command(name),
         ]
-        for label, command in COMMANDS:
-            args += ["-n", label, command.format_map(context(name))]
-        write_report(name, corpus, run_capture(*args, cwd=ROOT))
+        for tool in TOOLS.values():
+            args += [
+                "-n",
+                tool.label,
+                tool.benchmark_command.format_map(context(name)),
+            ]
+        write_report(name, corpus, metadata, run_capture(*args, cwd=ROOT))
 
 
 def context(name: str) -> dict[str, str]:
     return {
         "jolt": q(JOLT),
         "jolt_dir": q(tool_dir(name, "jolt")),
-        "dprint_dir": q(tool_dir(name, "dprint")),
+        "dprint_jolt_dir": q(tool_dir(name, "dprint-jolt")),
         "dprint_plugin": q(DPRINT_PLUGIN),
         "gjf_args": q(WORK / name / "google-java-format.args"),
         "prettier_glob": q(str(tool_dir(name, "prettier-java") / "**/*.java")),
+        "prettier_ignore": q(WORK / name / "prettier.ignore"),
     }
 
 
-def write_report(name: str, corpus: dict, output: str) -> None:
+def write_report(name: str, corpus: dict, metadata: dict, output: str) -> None:
     REPORTS.mkdir(parents=True, exist_ok=True)
     report = REPORTS / f"{name}.md"
     log(f"writing hyperfine report: {report}")
-    report.write_text(
+    contents = (
         f"# {name}\n\n"
         f"{corpus['description']}.\n\n"
+        f"{format_metadata(metadata)}\n"
         "```text\n"
         f"{output.rstrip()}\n"
-        "```\n",
-        encoding="utf-8",
+        "```\n"
     )
+    report.write_text(contents, encoding="utf-8")
     run("dprint", "fmt", report, cwd=ROOT)
 
 
@@ -245,6 +271,140 @@ def summarize(name: str, corpus: dict) -> None:
         f"benchmarking {name} ({corpus['description']}): "
         f"{len(files)} file(s), {total_bytes} byte(s)"
     )
+
+
+def collect_metadata(name: str) -> dict:
+    log(f"collecting metadata for {name}")
+    versions = version_strings(name)
+    rows = []
+
+    run_shell(reset_command(name), cwd=ROOT)
+    for key, tool in TOOLS.items():
+        input_files = len(java_files(tool_dir(name, key)))
+        run_shell(tool.benchmark_command.format_map(context(name)), cwd=ROOT)
+        rows.append(
+            {
+                "tool": key,
+                "version": versions[key],
+                "input_files": input_files,
+                "modified_files": count_modified_files(
+                    baseline_dir(name), tool_dir(name, key)
+                ),
+            }
+        )
+
+    return {
+        "rows": rows,
+        "system": system_info(),
+        "hyperfine": {
+            "runs": HYPERFINE_RUNS,
+            "warmup": HYPERFINE_WARMUP,
+        },
+    }
+
+
+def version_strings(name: str) -> dict[str, str]:
+    versions = {}
+    for key, tool in TOOLS.items():
+        try:
+            output = run_shell_capture(
+                tool.version_command.format_map(context(name)), cwd=ROOT
+            )
+            versions[key] = " ".join(output.split()) or "unknown"
+        except subprocess.CalledProcessError:
+            versions[key] = "unknown"
+    return versions
+
+
+def format_metadata(metadata: dict) -> str:
+    lines = [
+        "## Metadata",
+        "",
+        "| Tool | Version | Input files | Modified files |",
+        "| --- | --- | ---: | ---: |",
+    ]
+    for row in metadata["rows"]:
+        lines.append(
+            f"| {row['tool']} | {row['version']} | "
+            f"{row['input_files']} | {row['modified_files']} |"
+        )
+    system = metadata["system"]
+    hyperfine = metadata["hyperfine"]
+    lines += [
+        "",
+        f"System: {system}.",
+        f"Hyperfine: {hyperfine['runs']} runs, {hyperfine['warmup']} warmup.",
+        "",
+    ]
+    return "\n".join(lines)
+
+
+def java_files(directory: Path) -> list[Path]:
+    return sorted(directory.rglob("*.java"))
+
+
+def count_modified_files(baseline: Path, formatted: Path) -> int:
+    count = 0
+    for path in java_files(baseline):
+        relative = path.relative_to(baseline)
+        formatted_path = formatted / relative
+        if (
+            not formatted_path.exists()
+            or path.read_bytes() != formatted_path.read_bytes()
+        ):
+            count += 1
+    return count
+
+
+def system_info() -> str:
+    parts = [
+        f"{platform.system()} {platform.release()}",
+        platform.machine(),
+    ]
+    cpu = cpu_name()
+    if cpu:
+        parts.append(cpu)
+    logical_cpus = os.cpu_count()
+    if logical_cpus is not None:
+        parts.append(f"{logical_cpus} logical CPUs")
+    memory = memory_gb()
+    if memory is not None:
+        parts.append(f"{memory:.0f} GB memory")
+    return ", ".join(parts)
+
+
+def cpu_name() -> str | None:
+    if platform.system() == "Linux":
+        cpuinfo = Path("/proc/cpuinfo")
+        if cpuinfo.exists():
+            for line in cpuinfo.read_text(encoding="utf-8").splitlines():
+                if line.startswith("model name"):
+                    return line.split(":", 1)[1].strip()
+    if platform.system() == "Darwin":
+        try:
+            return run_shell_capture(
+                "sysctl -n machdep.cpu.brand_string"
+            ).strip()
+        except subprocess.CalledProcessError:
+            pass
+    return platform.processor() or None
+
+
+def memory_gb() -> float | None:
+    if platform.system() == "Linux":
+        meminfo = Path("/proc/meminfo")
+        if meminfo.exists():
+            for line in meminfo.read_text(encoding="utf-8").splitlines():
+                if line.startswith("MemTotal:"):
+                    kib = int(line.split()[1])
+                    return kib / 1024 / 1024
+    if platform.system() == "Darwin":
+        try:
+            bytes_total = int(run_shell_capture("sysctl -n hw.memsize").strip())
+            return bytes_total / 1024 / 1024 / 1024
+        except subprocess.CalledProcessError:
+            pass
+    return None
 
 
 def tool_dir(corpus: str, tool: str) -> Path:
@@ -264,7 +424,7 @@ def reset_command(corpus: str) -> str:
         parts.append(f"rm -rf {q(tool_dir(corpus, tool))}")
         parts.append(f"cp -R {baseline} {q(tool_dir(corpus, tool))}")
     parts.append(
-        f"cp {dprint_config} {q(tool_dir(corpus, 'dprint') / 'dprint.json')}"
+        f"cp {dprint_config} {q(tool_dir(corpus, 'dprint-jolt') / 'dprint.json')}"
     )
     parts.append(
         f"find {q(tool_dir(corpus, 'google-java-format'))} -name '*.java' -print > {gjf_args}"
@@ -287,12 +447,30 @@ def run(*command: str | Path, cwd: Path | None = None) -> None:
     subprocess.run(args, cwd=cwd, check=True)
 
 
+def run_shell(command: str, cwd: Path | None = None) -> None:
+    print("+ " + command, file=sys.stderr)
+    subprocess.run(command, cwd=cwd, shell=True, check=True)
+
+
 def run_capture(*command: str | Path, cwd: Path | None = None) -> str:
     args = [str(arg) for arg in command]
     print("+ " + " ".join(args), file=sys.stderr)
     output = subprocess.check_output(
         args,
         cwd=cwd,
+        stderr=subprocess.STDOUT,
+        text=True,
+    )
+    print(output, end="", file=sys.stderr)
+    return output
+
+
+def run_shell_capture(command: str, cwd: Path | None = None) -> str:
+    print("+ " + command, file=sys.stderr)
+    output = subprocess.check_output(
+        command,
+        cwd=cwd,
+        shell=True,
         stderr=subprocess.STDOUT,
         text=True,
     )

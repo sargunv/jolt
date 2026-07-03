@@ -103,26 +103,7 @@ Suggested first experiment:
 
 Tags: Impact `H` for measurement quality, effort `S`, confidence `H`.
 
-Before using benchmark numbers as product claims, tighten equivalence checks.
-The current benchmark is useful for investigation, but formatter comparisons can
-be misleading because tools differ on file matching, stability checks, write
-behavior, diagnostics, and parallelism.
-
-Add or verify:
-
-- File count each tool sees before timing.
-- Number of files actually changed.
-- Exit status and stderr capture.
-- Output byte count and maybe checksum per tool directory.
-- Cold/warm variants if startup is relevant.
-- A native Jolt `--check` benchmark to separate formatting CPU from write cost.
-- A native Jolt single-file benchmark to separate engine cost from discovery.
-
-Suggested first experiment:
-
-- Extend `tools/bench/bench.py` to write metadata next to each report: file
-  count, total bytes, changed files, output checksum, command exit code, and
-  tool version.
+Completed.
 
 ### 3. Reduce Red Syntax Traversal Handle Churn
 

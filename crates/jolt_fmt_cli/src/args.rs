@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use clap::{ArgAction, Args, Parser, Subcommand};
 
 #[derive(Debug, Parser)]
-#[command(name = "jolt")]
+#[command(name = "jolt", version)]
 #[command(about = "Simple, predictable, and opinionated Java formatter.")]
 pub(crate) struct Cli {
     #[command(subcommand)]
