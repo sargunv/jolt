@@ -39,7 +39,7 @@ fn run_fmt(args: &FmtArgs) -> Result<(), CliError> {
     }
 
     let candidates = collect_candidates(&cwd, args)?;
-    let results = format_candidates(&cwd, args, candidates)?;
+    let results = format_candidates(&cwd, args, &candidates)?;
 
     let mut stats = FormatRunStats::default();
     for result in results {
@@ -191,7 +191,7 @@ fn resolver_for(
 fn format_candidates(
     cwd: &Path,
     args: &FmtArgs,
-    candidates: Vec<CandidateFile>,
+    candidates: &[CandidateFile],
 ) -> Result<Vec<FileFormatResult>, CliError> {
     let threads = args.threads.unwrap_or_else(default_thread_count).get();
     let pool = rayon::ThreadPoolBuilder::new()
@@ -201,7 +201,7 @@ fn format_candidates(
 
     Ok(pool.install(|| {
         candidates
-            .into_par_iter()
+            .par_iter()
             .map(|candidate| format_candidate(cwd, candidate, args.check))
             .collect()
     }))
@@ -211,10 +211,10 @@ fn default_thread_count() -> NonZeroUsize {
     thread::available_parallelism().unwrap_or(NonZeroUsize::MIN)
 }
 
-fn format_candidate(cwd: &Path, candidate: CandidateFile, check: bool) -> FileFormatResult {
+fn format_candidate(cwd: &Path, candidate: &CandidateFile, check: bool) -> FileFormatResult {
     format_file(
         cwd,
-        candidate.path,
+        &candidate.path,
         candidate.language,
         &candidate.config,
         check,
@@ -223,18 +223,18 @@ fn format_candidate(cwd: &Path, candidate: CandidateFile, check: bool) -> FileFo
 
 fn format_file(
     cwd: &Path,
-    path: PathBuf,
+    path: &Path,
     language: jolt_fmt_core::Language,
     config: &ResolvedConfig,
     check: bool,
 ) -> FileFormatResult {
-    let label = display_path(cwd, &path);
-    let source = match fs::read_to_string(&path) {
+    let label = display_path(cwd, path);
+    let source = match fs::read_to_string(path) {
         Ok(source) => source,
         Err(error) => {
             return FileFormatResult::failed_with_error(format!(
                 "{}: failed to read file: {error}",
-                display_path(cwd, &path)
+                display_path(cwd, path)
             ));
         }
     };
@@ -274,7 +274,7 @@ fn format_file(
         };
     }
 
-    if let Err(error) = fs::write(&path, formatted) {
+    if let Err(error) = fs::write(path, formatted) {
         return FileFormatResult {
             outcome: FileFormatOutcome {
                 failed: true,
@@ -284,7 +284,7 @@ fn format_file(
             check_output: String::new(),
             error: Some(format!(
                 "{}: failed to write formatted file: {error}",
-                display_path(cwd, &path)
+                display_path(cwd, path)
             )),
         };
     }
