@@ -72,11 +72,16 @@ raw_args = true
 run = "dprint --plugins=\"$PWD/target/wasm32-unknown-unknown/debug/jolt_fmt_dprint.wasm\""
 
 [tasks.benchmark]
+usage = '''
+arg "[tools]" help="Benchmark tools" var=#true {
+  choices "jolt" "dprint-jolt" "google-java-format" "prettier-java" "all"
+}
+'''
 depends = [
   { task = "build:jolt", args = ["--mode", "release"] },
   { task = "build:dprint-plugin", args = ["--mode", "release"] },
 ]
-run = "python tools/bench/bench.py"
+run = 'python tools/bench/bench.py ${usage_tools:-}'
 
 [tasks.fix]
 run = "hk fix --all"

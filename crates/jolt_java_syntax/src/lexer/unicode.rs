@@ -13,151 +13,160 @@ pub(super) struct InputChar {
 }
 
 pub(super) fn translate_unicode_escapes(source: &str) -> (Vec<InputChar>, Vec<LexerDiagnostic>) {
-    if !contains_unicode_escape_marker(source) {
-        return (raw_input_chars(source), Vec::new());
-    }
-
-    let raw: Vec<(usize, char)> = source.char_indices().collect();
-    let mut chars = Vec::with_capacity(raw.len());
+    let mut chars = Vec::with_capacity(source.len());
     let mut diagnostics = Vec::new();
-    let mut index = 0usize;
+    let mut eligibility = UnicodeEscapeEligibility::default();
+    let mut offset = 0usize;
 
-    while index < raw.len() {
-        let (start, ch) = raw[index];
+    while let Some((ch, end)) = char_at(source, offset) {
+        let start = offset;
 
-        if ch == '\\'
-            && is_unicode_escape_eligible(&chars)
-            && raw.get(index + 1).is_some_and(|(_, ch)| *ch == 'u')
-        {
-            if let Some(first_escape) = parse_unicode_escape(&raw, index, source) {
+        if has_unicode_escape_marker_at(source, start) && eligibility.is_eligible() {
+            if let Some(first_escape) = parse_unicode_escape(source, start) {
                 if is_high_surrogate(first_escape.value)
-                    && raw
-                        .get(first_escape.end_index)
-                        .is_some_and(|(_, ch)| *ch == '\\')
-                    && raw
-                        .get(first_escape.end_index + 1)
-                        .is_some_and(|(_, ch)| *ch == 'u')
+                    && has_unicode_escape_marker_at(source, first_escape.end_offset)
                     && let Some(second_escape) =
-                        parse_unicode_escape(&raw, first_escape.end_index, source)
+                        parse_unicode_escape(source, first_escape.end_offset)
                     && is_low_surrogate(second_escape.value)
                 {
                     let high = first_escape.value - 0xD800;
                     let low = second_escape.value - 0xDC00;
                     let scalar = 0x10000 + ((high << 10) | low);
-                    chars.push(InputChar {
-                        ch: char::from_u32(scalar).expect("valid surrogate pair scalar value"),
-                        range: TextRange::new(
-                            TextSize::new(start),
-                            TextSize::new(second_escape.end_offset),
-                        ),
-                        from_escape: true,
-                    });
-                    index = second_escape.end_index;
+                    push_char(
+                        &mut chars,
+                        &mut eligibility,
+                        char::from_u32(scalar).expect("valid surrogate pair scalar value"),
+                        start,
+                        second_escape.end_offset,
+                        true,
+                    );
+                    offset = second_escape.end_offset;
                     continue;
                 }
 
-                chars.push(InputChar {
-                    ch: char::from_u32(first_escape.value).unwrap_or(char::REPLACEMENT_CHARACTER),
-                    range: TextRange::new(
-                        TextSize::new(start),
-                        TextSize::new(first_escape.end_offset),
-                    ),
-                    from_escape: true,
-                });
-                index = first_escape.end_index;
+                push_char(
+                    &mut chars,
+                    &mut eligibility,
+                    char::from_u32(first_escape.value).unwrap_or(char::REPLACEMENT_CHARACTER),
+                    start,
+                    first_escape.end_offset,
+                    true,
+                );
+                offset = first_escape.end_offset;
                 continue;
             }
 
-            let end = malformed_unicode_escape_end(&raw, index, source);
+            let end = malformed_unicode_escape_end(source, start);
             diagnostics.push(lexer_diagnostic(
                 JavaLexDiagnosticCode::MalformedUnicodeEscape,
                 TextRange::new(TextSize::new(start), TextSize::new(end)),
             ));
         }
 
-        let end = raw
-            .get(index + 1)
-            .map_or(source.len(), |(offset, _)| *offset);
-        chars.push(InputChar {
-            ch,
-            range: TextRange::new(TextSize::new(start), TextSize::new(end)),
-            from_escape: false,
-        });
-        index += 1;
+        push_char(&mut chars, &mut eligibility, ch, start, end, false);
+        offset = end;
     }
 
     (chars, diagnostics)
 }
 
-fn contains_unicode_escape_marker(source: &str) -> bool {
-    source.as_bytes().windows(2).any(|pair| pair == b"\\u")
+#[derive(Default)]
+struct UnicodeEscapeEligibility {
+    previous_from_escape: bool,
+    trailing_backslashes: usize,
 }
 
-fn raw_input_chars(source: &str) -> Vec<InputChar> {
-    let mut chars = Vec::with_capacity(source.len());
-    for (start, ch) in source.char_indices() {
-        let end = start + ch.len_utf8();
-        chars.push(InputChar {
-            ch,
-            range: TextRange::new(TextSize::new(start), TextSize::new(end)),
-            from_escape: false,
-        });
+impl UnicodeEscapeEligibility {
+    fn is_eligible(&self) -> bool {
+        self.previous_from_escape || self.trailing_backslashes.is_multiple_of(2)
     }
-    chars
+
+    fn advance(&mut self, ch: char, from_escape: bool) {
+        self.previous_from_escape = from_escape;
+        if ch == '\\' {
+            self.trailing_backslashes += 1;
+        } else {
+            self.trailing_backslashes = 0;
+        }
+    }
+}
+
+fn push_char(
+    chars: &mut Vec<InputChar>,
+    eligibility: &mut UnicodeEscapeEligibility,
+    ch: char,
+    start: usize,
+    end: usize,
+    from_escape: bool,
+) {
+    eligibility.advance(ch, from_escape);
+    chars.push(InputChar {
+        ch,
+        range: TextRange::new(TextSize::new(start), TextSize::new(end)),
+        from_escape,
+    });
 }
 
 #[derive(Clone, Copy, Debug)]
 struct UnicodeEscape {
     value: u32,
-    end_index: usize,
     end_offset: usize,
 }
 
-fn parse_unicode_escape(
-    raw: &[(usize, char)],
-    start_index: usize,
-    source: &str,
-) -> Option<UnicodeEscape> {
-    debug_assert_eq!(raw[start_index].1, '\\');
-    debug_assert_eq!(raw[start_index + 1].1, 'u');
+fn char_at(source: &str, offset: usize) -> Option<(char, usize)> {
+    let ch = source.get(offset..)?.chars().next()?;
+    Some((ch, offset + ch.len_utf8()))
+}
 
-    let mut marker_end = start_index + 1;
-    while raw.get(marker_end).is_some_and(|(_, ch)| *ch == 'u') {
-        marker_end += 1;
-    }
+fn has_unicode_escape_marker_at(source: &str, offset: usize) -> bool {
+    let bytes = source.as_bytes();
+    bytes.get(offset).is_some_and(|byte| *byte == b'\\')
+        && bytes.get(offset + 1).is_some_and(|byte| *byte == b'u')
+}
 
-    if marker_end + 4 > raw.len()
-        || !raw[marker_end..marker_end + 4]
+fn parse_unicode_escape(source: &str, start_offset: usize) -> Option<UnicodeEscape> {
+    debug_assert!(has_unicode_escape_marker_at(source, start_offset));
+
+    let bytes = source.as_bytes();
+    let marker_end = unicode_marker_end(bytes, start_offset);
+
+    if marker_end + 4 > bytes.len()
+        || !bytes[marker_end..marker_end + 4]
             .iter()
-            .all(|(_, ch)| ch.is_ascii_hexdigit())
+            .all(u8::is_ascii_hexdigit)
     {
         return None;
     }
 
-    let value = raw[marker_end..marker_end + 4]
+    let value = bytes[marker_end..marker_end + 4]
         .iter()
-        .fold(0u32, |value, (_, ch)| {
-            (value << 4) + ch.to_digit(16).expect("hex digit checked")
-        });
-    let end_index = marker_end + 4;
-    let end_offset = raw
-        .get(end_index)
-        .map_or(source.len(), |(offset, _)| *offset);
+        .fold(0u32, |value, byte| (value << 4) + hex_digit(*byte));
 
     Some(UnicodeEscape {
         value,
-        end_index,
-        end_offset,
+        end_offset: marker_end + 4,
     })
 }
 
-fn malformed_unicode_escape_end(raw: &[(usize, char)], start_index: usize, source: &str) -> usize {
-    let mut marker_end = start_index + 1;
-    while raw.get(marker_end).is_some_and(|(_, ch)| *ch == 'u') {
+fn hex_digit(byte: u8) -> u32 {
+    match byte {
+        b'0'..=b'9' => u32::from(byte - b'0'),
+        b'a'..=b'f' => u32::from(byte - b'a' + 10),
+        b'A'..=b'F' => u32::from(byte - b'A' + 10),
+        _ => unreachable!("hex digit checked"),
+    }
+}
+
+fn malformed_unicode_escape_end(source: &str, start_offset: usize) -> usize {
+    unicode_marker_end(source.as_bytes(), start_offset)
+}
+
+fn unicode_marker_end(bytes: &[u8], start_offset: usize) -> usize {
+    let mut marker_end = start_offset + 1;
+    while bytes.get(marker_end).is_some_and(|byte| *byte == b'u') {
         marker_end += 1;
     }
-    raw.get(marker_end)
-        .map_or(source.len(), |(offset, _)| *offset)
+    marker_end
 }
 
 fn is_high_surrogate(value: u32) -> bool {
@@ -166,20 +175,4 @@ fn is_high_surrogate(value: u32) -> bool {
 
 fn is_low_surrogate(value: u32) -> bool {
     (0xDC00..=0xDFFF).contains(&value)
-}
-
-fn is_unicode_escape_eligible(chars: &[InputChar]) -> bool {
-    match chars.last() {
-        None => true,
-        Some(last) if last.from_escape => true,
-        Some(_) => {
-            chars
-                .iter()
-                .rev()
-                .take_while(|input| input.ch == '\\')
-                .count()
-                % 2
-                == 0
-        }
-    }
 }

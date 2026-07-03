@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Run formatter benchmarks over imported benchmark corpora."""
 
+import argparse
 import fnmatch
 import json
 import os
@@ -8,8 +9,9 @@ import platform
 import shutil
 import subprocess
 import sys
-from pathlib import Path, PurePosixPath
-from typing import Literal, NamedTuple
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Callable, Literal
 
 ROOT = Path(__file__).resolve().parents[2]
 IMPORTS = ROOT / "tools/import/.imports"
@@ -123,48 +125,103 @@ CORPORA = {
     },
 }
 
+
+def q(path: str | Path) -> str:
+    return "'" + str(path).replace("'", "'\"'\"'") + "'"
+
+
 ToolKey = Literal["jolt", "dprint-jolt", "google-java-format", "prettier-java"]
+DEFAULT_TOOLS: tuple[ToolKey, ...] = ("jolt", "dprint-jolt")
 
 
-class Tool(NamedTuple):
+@dataclass(frozen=True)
+class Tool:
     label: str
-    benchmark_command: str
+    benchmark_command: Callable[[str], str]
     version_command: str
+    requirements: tuple[tuple[Path, str], ...] = ()
+    reset_commands: Callable[[str], list[str]] = lambda _corpus: []
 
 
 TOOLS: dict[ToolKey, Tool] = {
     "jolt": Tool(
         "jolt fmt",
-        "{jolt} fmt {jolt_dir}",
-        "{jolt} --version",
+        lambda corpus: f"{q(JOLT)} fmt {q(tool_dir(corpus, 'jolt'))}",
+        f"{q(JOLT)} --version",
+        ((JOLT, "release Jolt CLI"),),
     ),
     "dprint-jolt": Tool(
         "dprint --plugins=jolt_fmt_dprint.wasm fmt --incremental=false --skip-stable-format",
-        "cd {dprint_jolt_dir} && dprint --plugins={dprint_plugin} fmt --incremental=false --skip-stable-format .",
+        lambda corpus: (
+            f"cd {q(tool_dir(corpus, 'dprint-jolt'))} && "
+            f"dprint --plugins={q(DPRINT_PLUGIN)} fmt --incremental=false "
+            "--skip-stable-format ."
+        ),
         "dprint --version",
+        ((DPRINT_PLUGIN, "release dprint plugin"),),
+        lambda corpus: [
+            f"cp {q(WORK / corpus / 'dprint.json')} "
+            f"{q(tool_dir(corpus, 'dprint-jolt') / 'dprint.json')}"
+        ],
     ),
-    # DISABLED to speed up iteration optimizing jolt itself
-    # "google-java-format": Tool(
-    #     "google-java-format --replace",
-    #     "google-java-format --replace --skip-removing-unused-imports @{gjf_args}",
-    #     "google-java-format --version",
-    # ),
-    # "prettier-java": Tool(
-    #     "prettier --write --plugin prettier-plugin-java",
-    #     "pnpm exec prettier --write {prettier_glob} --plugin prettier-plugin-java --print-width 80 --tab-width 2 --ignore-path {prettier_ignore} --log-level silent",
-    #     "pnpm exec prettier --version",
-    # ),
+    "google-java-format": Tool(
+        "google-java-format --replace",
+        lambda corpus: (
+            "google-java-format --replace --skip-removing-unused-imports "
+            f"@{q(WORK / corpus / 'google-java-format.args')}"
+        ),
+        "google-java-format --version",
+        reset_commands=lambda corpus: [
+            f"find {q(tool_dir(corpus, 'google-java-format'))} "
+            f"-name '*.java' -print > {q(WORK / corpus / 'google-java-format.args')}"
+        ],
+    ),
+    "prettier-java": Tool(
+        "prettier --write --plugin prettier-plugin-java",
+        lambda corpus: (
+            "pnpm exec prettier --write "
+            f"{q(str(tool_dir(corpus, 'prettier-java') / '**/*.java'))} "
+            "--plugin prettier-plugin-java --print-width 80 --tab-width 2 "
+            f"--ignore-path {q(WORK / corpus / 'prettier.ignore')} "
+            "--log-level silent"
+        ),
+        "pnpm exec prettier --version",
+        ((ROOT / "node_modules/.bin/prettier", "Prettier install"),),
+    ),
 }
 
 
 def main() -> int:
-    if len(sys.argv) != 1:
-        raise RuntimeError("benchmark does not take arguments")
-    benchmark()
+    tool_keys = parse_args(sys.argv[1:])
+    benchmark(tool_keys)
     return 0
 
 
-def prepare_baseline(name: str) -> None:
+def parse_args(argv: list[str]) -> tuple[ToolKey, ...]:
+    parser = argparse.ArgumentParser(
+        description="Run formatter benchmarks over imported benchmark corpora."
+    )
+    parser.add_argument(
+        "tools",
+        nargs="*",
+        choices=(*TOOLS, "all"),
+        help=f"tools to benchmark (default: {' '.join(DEFAULT_TOOLS)})",
+    )
+    args = parser.parse_args(argv)
+
+    if not args.tools:
+        return DEFAULT_TOOLS
+
+    if args.tools == ["all"]:
+        return tuple(TOOLS)
+
+    if "all" in args.tools:
+        parser.error("'all' cannot be combined with explicit tools")
+
+    return tuple(dict.fromkeys(args.tools))
+
+
+def prepare_baseline(name: str, tool_keys: tuple[ToolKey, ...]) -> None:
     corpus = CORPORA[name]
     source = corpus["source"]
     if not source.is_dir():
@@ -172,19 +229,21 @@ def prepare_baseline(name: str) -> None:
 
     copy_corpus(corpus, baseline_dir(name))
     (WORK / name).mkdir(parents=True, exist_ok=True)
-    (WORK / name / "prettier.ignore").write_text("", encoding="utf-8")
-    (WORK / name / "dprint.json").write_text(
-        json.dumps(
-            {
-                "lineWidth": 80,
-                "indentWidth": 2,
-                "useTabs": False,
-            },
-            indent=2,
+    if "prettier-java" in tool_keys:
+        (WORK / name / "prettier.ignore").write_text("", encoding="utf-8")
+    if "dprint-jolt" in tool_keys:
+        (WORK / name / "dprint.json").write_text(
+            json.dumps(
+                {
+                    "lineWidth": 80,
+                    "indentWidth": 2,
+                    "useTabs": False,
+                },
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
         )
-        + "\n",
-        encoding="utf-8",
-    )
 
 
 def copy_corpus(corpus: dict, dest: Path) -> None:
@@ -202,22 +261,20 @@ def copy_corpus(corpus: dict, dest: Path) -> None:
 
 
 def is_excluded(path: Path, patterns: list[str]) -> bool:
-    posix = PurePosixPath(path.as_posix())
-    return any(
-        posix.match(pattern) or fnmatch.fnmatchcase(posix.as_posix(), pattern)
-        for pattern in patterns
-    )
+    posix = path.as_posix()
+    return any(fnmatch.fnmatchcase(posix, pattern) for pattern in patterns)
 
 
-def benchmark() -> None:
-    require(JOLT, "release Jolt CLI")
-    require(DPRINT_PLUGIN, "release dprint plugin")
-    require(ROOT / "node_modules/.bin/prettier", "Prettier install")
+def benchmark(tool_keys: tuple[ToolKey, ...]) -> None:
+    for key in tool_keys:
+        for path, label in TOOLS[key].requirements:
+            require(path, label)
 
     for name, corpus in CORPORA.items():
-        prepare_baseline(name)
+        prepare_baseline(name, tool_keys)
         summarize(name, corpus)
-        metadata = collect_metadata(name)
+        versions = version_strings(tool_keys)
+        rows = report_rows(name, tool_keys, versions)
         args = [
             "hyperfine",
             "--warmup",
@@ -225,43 +282,36 @@ def benchmark() -> None:
             "--runs",
             str(HYPERFINE_RUNS),
             "--prepare",
-            reset_command(name),
+            reset_command(name, tool_keys),
         ]
-        for tool in TOOLS.values():
+        for key in tool_keys:
+            tool = TOOLS[key]
             args += [
                 "-n",
                 tool.label,
-                tool.benchmark_command.format_map(context(name)),
+                tool.benchmark_command(name),
             ]
-        write_report(name, corpus, metadata, run_capture(*args, cwd=ROOT))
+        output = run_capture(*args, cwd=ROOT)
+        write_report(name, rows, output)
 
 
-def context(name: str) -> dict[str, str]:
-    return {
-        "jolt": q(JOLT),
-        "jolt_dir": q(tool_dir(name, "jolt")),
-        "dprint_jolt_dir": q(tool_dir(name, "dprint-jolt")),
-        "dprint_plugin": q(DPRINT_PLUGIN),
-        "gjf_args": q(WORK / name / "google-java-format.args"),
-        "prettier_glob": q(str(tool_dir(name, "prettier-java") / "**/*.java")),
-        "prettier_ignore": q(WORK / name / "prettier.ignore"),
-    }
-
-
-def write_report(name: str, corpus: dict, metadata: dict, output: str) -> None:
+def write_report(
+    name: str, rows: list[dict[str, str | int]], output: str
+) -> None:
     REPORTS.mkdir(parents=True, exist_ok=True)
-    report = REPORTS / f"{name}.md"
-    log(f"writing hyperfine report: {report}")
-    contents = (
-        f"# {name}\n\n"
-        f"{corpus['description']}.\n\n"
-        f"{format_metadata(metadata)}\n"
-        "```text\n"
-        f"{output.rstrip()}\n"
-        "```\n"
+    report = REPORTS / f"{name}.txt"
+    log(f"writing benchmark report: {report}")
+    contents = "\n".join(
+        [
+            format_rows(rows),
+            f"System: {system_info()}",
+            f"Hyperfine: {HYPERFINE_RUNS} runs, {HYPERFINE_WARMUP} warmup",
+            "",
+            output.rstrip(),
+            "",
+        ]
     )
     report.write_text(contents, encoding="utf-8")
-    run("dprint", "fmt", report, cwd=ROOT)
 
 
 def summarize(name: str, corpus: dict) -> None:
@@ -273,69 +323,52 @@ def summarize(name: str, corpus: dict) -> None:
     )
 
 
-def collect_metadata(name: str) -> dict:
-    log(f"collecting metadata for {name}")
-    versions = version_strings(name)
+def report_rows(
+    name: str, tool_keys: tuple[ToolKey, ...], versions: dict[ToolKey, str]
+) -> list[dict[str, str | int]]:
+    log(f"collecting report rows for {name}")
     rows = []
 
-    run_shell(reset_command(name), cwd=ROOT)
-    for key, tool in TOOLS.items():
+    run_shell(reset_command(name, tool_keys), cwd=ROOT)
+    for key in tool_keys:
+        run_shell(TOOLS[key].benchmark_command(name), cwd=ROOT)
         input_files = len(java_files(tool_dir(name, key)))
-        run_shell(tool.benchmark_command.format_map(context(name)), cwd=ROOT)
+        modified_files = count_modified_files(
+            baseline_dir(name), tool_dir(name, key)
+        )
+        if input_files > 0 and modified_files == 0:
+            raise RuntimeError(f"{key} did not modify any files for {name}")
         rows.append(
             {
                 "tool": key,
                 "version": versions[key],
                 "input_files": input_files,
-                "modified_files": count_modified_files(
-                    baseline_dir(name), tool_dir(name, key)
-                ),
+                "modified_files": modified_files,
             }
         )
 
-    return {
-        "rows": rows,
-        "system": system_info(),
-        "hyperfine": {
-            "runs": HYPERFINE_RUNS,
-            "warmup": HYPERFINE_WARMUP,
-        },
-    }
+    return rows
 
 
-def version_strings(name: str) -> dict[str, str]:
+def version_strings(tool_keys: tuple[ToolKey, ...]) -> dict[ToolKey, str]:
     versions = {}
-    for key, tool in TOOLS.items():
+    for key in tool_keys:
+        tool = TOOLS[key]
         try:
-            output = run_shell_capture(
-                tool.version_command.format_map(context(name)), cwd=ROOT
-            )
+            output = run_shell_capture(tool.version_command, cwd=ROOT)
             versions[key] = " ".join(output.split()) or "unknown"
         except subprocess.CalledProcessError:
             versions[key] = "unknown"
     return versions
 
 
-def format_metadata(metadata: dict) -> str:
-    lines = [
-        "## Metadata",
-        "",
-        "| Tool | Version | Input files | Modified files |",
-        "| --- | --- | ---: | ---: |",
-    ]
-    for row in metadata["rows"]:
+def format_rows(rows: list[dict[str, str | int]]) -> str:
+    lines = ["tool\tversion\tinput_files\tmodified_files"]
+    for row in rows:
         lines.append(
-            f"| {row['tool']} | {row['version']} | "
-            f"{row['input_files']} | {row['modified_files']} |"
+            f"{row['tool']}\t{row['version']}\t"
+            f"{row['input_files']}\t{row['modified_files']}"
         )
-    system = metadata["system"]
-    hyperfine = metadata["hyperfine"]
-    lines += [
-        "",
-        f"System: {system}.",
-        f"Hyperfine: {hyperfine['runs']} runs, {hyperfine['warmup']} warmup.",
-        "",
-    ]
     return "\n".join(lines)
 
 
@@ -357,54 +390,15 @@ def count_modified_files(baseline: Path, formatted: Path) -> int:
 
 
 def system_info() -> str:
+    uname = platform.uname()
     parts = [
-        f"{platform.system()} {platform.release()}",
-        platform.machine(),
+        f"{uname.system} {uname.release}",
+        uname.machine,
     ]
-    cpu = cpu_name()
-    if cpu:
-        parts.append(cpu)
     logical_cpus = os.cpu_count()
     if logical_cpus is not None:
         parts.append(f"{logical_cpus} logical CPUs")
-    memory = memory_gb()
-    if memory is not None:
-        parts.append(f"{memory:.0f} GB memory")
     return ", ".join(parts)
-
-
-def cpu_name() -> str | None:
-    if platform.system() == "Linux":
-        cpuinfo = Path("/proc/cpuinfo")
-        if cpuinfo.exists():
-            for line in cpuinfo.read_text(encoding="utf-8").splitlines():
-                if line.startswith("model name"):
-                    return line.split(":", 1)[1].strip()
-    if platform.system() == "Darwin":
-        try:
-            return run_shell_capture(
-                "sysctl -n machdep.cpu.brand_string"
-            ).strip()
-        except subprocess.CalledProcessError:
-            pass
-    return platform.processor() or None
-
-
-def memory_gb() -> float | None:
-    if platform.system() == "Linux":
-        meminfo = Path("/proc/meminfo")
-        if meminfo.exists():
-            for line in meminfo.read_text(encoding="utf-8").splitlines():
-                if line.startswith("MemTotal:"):
-                    kib = int(line.split()[1])
-                    return kib / 1024 / 1024
-    if platform.system() == "Darwin":
-        try:
-            bytes_total = int(run_shell_capture("sysctl -n hw.memsize").strip())
-            return bytes_total / 1024 / 1024 / 1024
-        except subprocess.CalledProcessError:
-            pass
-    return None
 
 
 def tool_dir(corpus: str, tool: str) -> Path:
@@ -415,41 +409,19 @@ def baseline_dir(corpus: str) -> Path:
     return WORK / corpus / "baseline"
 
 
-def reset_command(corpus: str) -> str:
+def reset_command(corpus: str, tool_keys: tuple[ToolKey, ...]) -> str:
     baseline = q(baseline_dir(corpus))
-    dprint_config = q(WORK / corpus / "dprint.json")
-    gjf_args = q(WORK / corpus / "google-java-format.args")
     parts = []
-    for tool in TOOLS:
-        parts.append(f"rm -rf {q(tool_dir(corpus, tool))}")
-        parts.append(f"cp -R {baseline} {q(tool_dir(corpus, tool))}")
-    parts.append(
-        f"cp {dprint_config} {q(tool_dir(corpus, 'dprint-jolt') / 'dprint.json')}"
-    )
-    parts.append(
-        f"find {q(tool_dir(corpus, 'google-java-format'))} -name '*.java' -print > {gjf_args}"
-    )
+    for key in tool_keys:
+        parts.append(f"rm -rf {q(tool_dir(corpus, key))}")
+        parts.append(f"cp -R {baseline} {q(tool_dir(corpus, key))}")
+        parts.extend(TOOLS[key].reset_commands(corpus))
     return " && ".join(parts)
 
 
 def require(path: Path, label: str) -> None:
     if not path.exists():
         raise RuntimeError(f"missing {label}: {path}")
-
-
-def q(path: str | Path) -> str:
-    return "'" + str(path).replace("'", "'\"'\"'") + "'"
-
-
-def run(*command: str | Path, cwd: Path | None = None) -> None:
-    args = [str(arg) for arg in command]
-    print("+ " + " ".join(args), file=sys.stderr)
-    subprocess.run(args, cwd=cwd, check=True)
-
-
-def run_shell(command: str, cwd: Path | None = None) -> None:
-    print("+ " + command, file=sys.stderr)
-    subprocess.run(command, cwd=cwd, shell=True, check=True)
 
 
 def run_capture(*command: str | Path, cwd: Path | None = None) -> str:
@@ -463,6 +435,11 @@ def run_capture(*command: str | Path, cwd: Path | None = None) -> str:
     )
     print(output, end="", file=sys.stderr)
     return output
+
+
+def run_shell(command: str, cwd: Path | None = None) -> None:
+    print("+ " + command, file=sys.stderr)
+    subprocess.run(command, cwd=cwd, shell=True, check=True)
 
 
 def run_shell_capture(command: str, cwd: Path | None = None) -> str:
