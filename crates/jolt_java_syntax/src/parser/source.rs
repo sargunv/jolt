@@ -254,7 +254,11 @@ impl<'source> TokenCursor<'source> {
     }
 
     pub(super) fn kind(&self) -> JavaSyntaxKind {
-        self.token().map_or(JavaSyntaxKind::Eof, |token| token.kind)
+        if self.pending_gt_split.is_some() {
+            JavaSyntaxKind::Gt
+        } else {
+            self.kind_at(self.pos)
+        }
     }
 
     pub(super) fn nth_kind(&self, n: usize) -> JavaSyntaxKind {
@@ -277,7 +281,7 @@ impl<'source> TokenCursor<'source> {
     }
 
     pub(super) fn text(&self) -> Option<&'source str> {
-        self.token().map(|token| self.token_text(&token))
+        self.range().map(|range| self.source_text(range))
     }
 
     pub(super) fn text_at(&self, index: usize) -> Option<&'source str> {
@@ -286,15 +290,15 @@ impl<'source> TokenCursor<'source> {
     }
 
     pub(super) fn range(&self) -> Option<TextRange> {
-        self.token().map(|token| token.range)
+        if let Some(split) = self.pending_gt_split {
+            Some(self.virtual_gt_range(split))
+        } else {
+            self.tokens.get(self.pos).map(|token| token.range)
+        }
     }
 
-    pub(super) fn token(&self) -> Option<ParserToken> {
-        self.logical_token_at(self.pos)
-    }
-
-    pub(super) fn last_token(&self) -> Option<ParserToken> {
-        self.tokens.last().cloned()
+    pub(super) fn last_token(&self) -> Option<&ParserToken> {
+        self.tokens.last()
     }
 
     pub(super) fn bump(&mut self) -> ParserToken {
@@ -309,6 +313,18 @@ impl<'source> TokenCursor<'source> {
             .clone();
         self.pos += 1;
         token
+    }
+
+    pub(super) fn advance(&mut self) {
+        if self.pending_gt_split.is_some() {
+            self.advance_pending_gt_split();
+            return;
+        }
+
+        self.tokens
+            .get(self.pos)
+            .expect("parser attempted to advance beyond EOF token");
+        self.pos += 1;
     }
 
     pub(super) fn bump_split_gt(&mut self) -> Option<ParserToken> {
@@ -353,7 +369,18 @@ impl<'source> TokenCursor<'source> {
             .pending_gt_split
             .expect("pending split must exist before bumping virtual `>`");
         let token = self.virtual_gt_token(split);
+        self.finish_pending_gt_split(split);
+        token
+    }
 
+    fn advance_pending_gt_split(&mut self) {
+        let split = self
+            .pending_gt_split
+            .expect("pending split must exist before advancing virtual `>`");
+        self.finish_pending_gt_split(split);
+    }
+
+    fn finish_pending_gt_split(&mut self, split: PendingGtSplit) {
         let next_part = split.next_part + 1;
         if next_part == split.total_parts {
             self.pending_gt_split = None;
@@ -361,26 +388,13 @@ impl<'source> TokenCursor<'source> {
         } else {
             self.pending_gt_split = Some(PendingGtSplit { next_part, ..split });
         }
-        token
-    }
-
-    fn logical_token_at(&self, index: usize) -> Option<ParserToken> {
-        if index == self.pos
-            && let Some(split) = self.pending_gt_split
-        {
-            return Some(self.virtual_gt_token(split));
-        }
-
-        self.tokens.get(index).cloned()
     }
 
     fn virtual_gt_token(&self, split: PendingGtSplit) -> ParserToken {
         let token = &self.tokens[split.original_index];
-        let token_start = token.range.start() + TextSize::new(usize::from(split.next_part));
-        let token_end = token_start + TextSize::new(1);
         ParserToken {
             kind: JavaSyntaxKind::Gt,
-            range: TextRange::new(token_start, token_end),
+            range: self.virtual_gt_range(split),
             leading: if split.next_part == 0 {
                 token.leading.clone()
             } else {
@@ -394,9 +408,20 @@ impl<'source> TokenCursor<'source> {
         }
     }
 
+    fn virtual_gt_range(&self, split: PendingGtSplit) -> TextRange {
+        let token = &self.tokens[split.original_index];
+        let token_start = token.range.start() + TextSize::new(usize::from(split.next_part));
+        let token_end = token_start + TextSize::new(1);
+        TextRange::new(token_start, token_end)
+    }
+
     fn token_text(&self, token: &ParserToken) -> &'source str {
-        let start = token.range.start().get();
-        let end = token.range.end().get();
+        self.source_text(token.range)
+    }
+
+    fn source_text(&self, range: TextRange) -> &'source str {
+        let start = range.start().get();
+        let end = range.end().get();
         &self.source[start..end]
     }
 }

@@ -42,7 +42,7 @@ impl<'source> JavaLookahead<'source> {
     }
 
     pub(in crate::parser::grammar) fn bump(&mut self) {
-        self.cursor.bump();
+        self.cursor.advance();
     }
 
     pub(in crate::parser::grammar) fn eat(&mut self, kind: JavaSyntaxKind) -> bool {
