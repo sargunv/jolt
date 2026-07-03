@@ -958,7 +958,7 @@ pass/fail compatibility gates.
 
 ### Milestone 9: Java comments and trivia hardening
 
-Status: pending.
+Status: complete.
 
 Tighten the parts most likely to cause destructive output after the main layout
 builder exists.
@@ -976,42 +976,6 @@ Hardening should proceed in three passes:
 3. Introduce the durable formatter API that makes trivia-aware token emission
    the default path, then promote representative cases into exact input/expected
    style fixtures once placement policy is intentional.
-
-The durable API and migration checklist are specified in
-[`java-trivia-formatting-pattern.md`](java-trivia-formatting-pattern.md). Follow
-that pattern instead of adding one-off `text()` plus comment handling at
-individual rule sites.
-
-Add:
-
-- license headers,
-- comments around imports,
-- trailing line comments,
-- dangling comments in empty blocks and argument lists,
-- disabled-code comments,
-- blank-line normalization,
-- narrowed regression fixtures for cases not present upstream.
-
-Owned regression fixtures are appropriate here because they cover Jolt-owned
-safety behavior or gaps in imported fixture inputs.
-
-Regression fixture expectations:
-
-- each fixture must parse as valid Java,
-- every `JOLT-TRIVIA:*` marker present in the source must be present in the
-  formatted output,
-- formatter diagnostics are failures,
-- formatted output must parse cleanly,
-- formatting the formatted output must be idempotent once no marker was lost.
-
-Exact comment placement belongs in style fixtures after the marker tests expose
-the destructive cases and the formatter has a trivia-aware token rendering
-contract.
-
-Parse-error no-write behavior belongs to the shared diagnostics/failure-policy
-milestone. This milestone may add Java-specific regression cases that exercise
-that policy with comments and tricky trivia, but it should not define the core
-diagnostic model.
 
 ### Milestone 10: native CLI wrapper
 

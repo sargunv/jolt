@@ -2,26 +2,28 @@
 source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
 expression: formatted
 ---
-open module soat /*a*/. /*b*/ vending.machine.gui {
+/*a*/
+open /*b*/ /*a*/
+module /*b*/ soat /*a*/. /*b*/ vending.machine.gui {
   /*a*/
-  requires java.desktopa /*a*/ ; /*b*/
-  requires transitive soat.core;
+  requires /*a*/ java.desktopa /*a*/ ; /*b*/
+  requires /*a*/ transitive /*b*/ soat.core;
   requires soat.vending.machine.model;
 
   /*a*/
-  exports fr.soat.vending.machine.model /*a*/  to
+  exports /*b*/ fr.soat.vending.machine.model /*a*/  to /*b*/
     another /*a*/ , /*b*/
     again /*c*/ , /*d*/
     ano /*a*/ ; /*b*/
 
   // opens
   /*a*/
-  opens fr.soat.vending.machine.model /*a*/  to
+  opens /*b*/ fr.soat.vending.machine.model /*a*/  to /*b*/
     another /*a*/ , /*b*/
     again /*c*/ , /*d*/
     ano /*a*/ ; /*b*/
 
   // uses
   /*a*/
-  uses fr.soat.vendinga /*a*/. /*b*/ machine.services.DrinksService /*a*/ ; /*b*/
+  uses /*b*/ fr.soat.vendinga /*a*/. /*b*/ machine.services.DrinksService /*a*/ ; /*b*/
 }

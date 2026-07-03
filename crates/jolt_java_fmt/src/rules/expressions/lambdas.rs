@@ -1,7 +1,8 @@
 use super::{
     Doc, JavaFormatter, LambdaExpression, LambdaParameter, comment_forces_line, concat,
-    format_annotation, format_block, format_expression, format_leading_comments, format_token_text,
-    format_token_with_comments, format_trailing_comments_before_line_break, format_type, hard_line,
+    format_annotation, format_block, format_expression, format_leading_comments,
+    format_token_text_after_trivia_relocated, format_token_with_comments,
+    format_trailing_comments_before_line_break, format_type, hard_line,
     inline_modifier_prefix_from_docs, text, tokens_have_comments,
 };
 
@@ -38,7 +39,7 @@ fn format_lambda_arrow(expression: &LambdaExpression) -> Doc {
     concat([
         text(" "),
         format_leading_comments(&arrow),
-        text("->"),
+        format_token_text_after_trivia_relocated(&arrow),
         format_trailing_comments_before_line_break(&arrow),
         if forced_line { hard_line() } else { text(" ") },
     ])
@@ -54,11 +55,12 @@ fn format_lambda_parameters(expression: &LambdaExpression, formatter: &JavaForma
         }
         return parameter
             .name()
-            .map_or_else(jolt_fmt_ir::nil, |name| format_token_text(name.text()));
+            .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name));
     }
 
-    let parameters = expression
-        .parameters()
+    let parameter_list = expression.parameters();
+    let parameters = parameter_list
+        .as_ref()
         .map(|parameters| parameters.parameters().collect::<Vec<_>>())
         .unwrap_or_default();
 
@@ -71,18 +73,34 @@ fn format_lambda_parameters(expression: &LambdaExpression, formatter: &JavaForma
         }
         return parameter
             .name()
-            .map_or_else(jolt_fmt_ir::nil, |name| format_token_text(name.text()));
+            .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name));
+    }
+
+    let open = parameter_list
+        .as_ref()
+        .and_then(jolt_java_syntax::LambdaParameterList::open_paren)
+        .or_else(|| expression.open_paren());
+    let close = parameter_list
+        .as_ref()
+        .and_then(jolt_java_syntax::LambdaParameterList::close_paren)
+        .or_else(|| expression.close_paren());
+
+    if open.is_none() && close.is_none() && parameters.is_empty() {
+        return text("()");
     }
 
     concat([
-        text("("),
+        open.as_ref()
+            .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
         jolt_fmt_ir::join(
             text(", "),
             parameters
                 .into_iter()
                 .map(|parameter| format_lambda_parameter(&parameter, formatter)),
         ),
-        text(")"),
+        close
+            .as_ref()
+            .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
     ])
 }
 
@@ -111,7 +129,7 @@ fn format_lambda_parameter(parameter: &LambdaParameter, formatter: &JavaFormatte
         .map(|annotation| format_annotation(&annotation, formatter))
         .collect::<Vec<_>>();
     let ty = ty.map_or_else(
-        || var_token.map_or_else(jolt_fmt_ir::nil, |token| format_token_text(token.text())),
+        || var_token.map_or_else(jolt_fmt_ir::nil, |token| format_token_with_comments(&token)),
         |ty| format_type(&ty, formatter),
     );
     let name = parameter
@@ -129,14 +147,19 @@ fn format_lambda_parameter(parameter: &LambdaParameter, formatter: &JavaFormatte
         prefix,
         ty,
         if parameter.is_variable_arity() {
-            if varargs_annotations.is_empty() {
-                text("... ")
+            if let Some(ellipsis) = parameter.ellipsis_token() {
+                if varargs_annotations.is_empty() {
+                    concat([format_token_with_comments(&ellipsis), text(" ")])
+                } else {
+                    concat([
+                        text(" "),
+                        inline_modifier_prefix_from_docs(varargs_annotations, Vec::new()),
+                        format_token_with_comments(&ellipsis),
+                        text(" "),
+                    ])
+                }
             } else {
-                concat([
-                    text(" "),
-                    inline_modifier_prefix_from_docs(varargs_annotations, Vec::new()),
-                    text("... "),
-                ])
+                jolt_fmt_ir::nil()
             }
         } else {
             text(" ")

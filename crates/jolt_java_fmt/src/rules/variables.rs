@@ -7,11 +7,12 @@ use jolt_java_syntax::{
 
 use crate::context::JavaFormatter;
 use crate::helpers::comments::{
-    comment_forces_line, format_construct_leading_comments, format_leading_comments,
-    format_token_text, format_token_with_comments, format_trailing_comments,
+    InlineLeadingTrivia, TrailingTrivia, comment_forces_line, format_construct_leading_comments,
+    format_leading_comments, format_token_text_after_trivia_relocated, format_token_with_comments,
+    format_token_with_inline_leading_comments, format_trailing_comments,
 };
 use crate::helpers::modifiers::inline_modifier_prefix_from_docs;
-use crate::rules::annotations::format_annotation;
+use crate::rules::annotations::{format_annotation, format_annotation_without_leading_comments};
 use crate::rules::expressions::format_variable_initializer_value;
 use crate::rules::modifiers::{
     format_typed_modifier_prefix, format_typed_modifier_prefix_from_token_split_parts,
@@ -26,16 +27,20 @@ pub(crate) fn format_field_declaration(
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
     let modifiers = format_typed_modifier_prefix(field.modifiers(), formatter);
-    let ty = field
-        .ty()
-        .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty, formatter));
+    let declaration_prefix = concat([
+        format_construct_leading_comments(formatter.comments(), &field.tokens()),
+        modifiers.declaration_prefix,
+    ]);
+    let ty = field.ty().map_or_else(jolt_fmt_ir::nil, |ty| {
+        format_type_without_leading_comments(&ty, formatter)
+    });
 
     if let Some(declarators) = field.declarators()
         && let Some(declarator) = single_declarator(&declarators)
     {
         return concat([
             format_single_variable_declaration(
-                concat([modifiers.declaration_prefix, modifiers.type_use_prefix, ty]),
+                concat([declaration_prefix, modifiers.type_use_prefix, ty]),
                 &declarator,
                 formatter,
             ),
@@ -44,7 +49,7 @@ pub(crate) fn format_field_declaration(
     }
 
     concat([
-        modifiers.declaration_prefix,
+        declaration_prefix,
         modifiers.type_use_prefix,
         ty,
         text(" "),
@@ -100,10 +105,7 @@ pub(crate) fn format_formal_parameter(
         concat([
             format_construct_leading_comments(formatter.comments(), &parameter.tokens()),
             inline_modifier_prefix_from_docs(
-                parameter
-                    .prefix_annotations()
-                    .map(|annotation| format_annotation(&annotation, formatter))
-                    .collect(),
+                format_construct_prefix_annotations(parameter.prefix_annotations(), formatter),
                 parameter.modifier_tokens().collect(),
             ),
         ]),
@@ -116,13 +118,13 @@ pub(crate) fn format_formal_parameter(
             .collect(),
         parameter
             .name()
-            .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name)),
+            .map_or_else(jolt_fmt_ir::nil, |name| format_name_after_type_token(&name)),
         parameter
             .dimensions()
             .map_or_else(jolt_fmt_ir::nil, |dimensions| {
                 format_array_dimensions(&dimensions, formatter)
             }),
-        parameter.is_variable_arity(),
+        parameter.ellipsis_token().as_ref(),
     )
 }
 
@@ -134,10 +136,7 @@ pub(crate) fn format_record_component(
         concat([
             format_construct_leading_comments(formatter.comments(), &component.tokens()),
             inline_modifier_prefix_from_docs(
-                component
-                    .prefix_annotations()
-                    .map(|annotation| format_annotation(&annotation, formatter))
-                    .collect(),
+                format_construct_prefix_annotations(component.prefix_annotations(), formatter),
                 component.modifier_tokens().collect(),
             ),
         ]),
@@ -150,13 +149,13 @@ pub(crate) fn format_record_component(
             .collect(),
         component
             .name()
-            .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name)),
+            .map_or_else(jolt_fmt_ir::nil, |name| format_name_after_type_token(&name)),
         component
             .dimensions()
             .map_or_else(jolt_fmt_ir::nil, |dimensions| {
                 format_array_dimensions(&dimensions, formatter)
             }),
-        component.is_variable_arity(),
+        component.ellipsis_token().as_ref(),
     )
 }
 
@@ -167,10 +166,7 @@ pub(crate) fn format_receiver_parameter(
     concat([
         format_construct_leading_comments(formatter.comments(), &parameter.tokens()),
         inline_modifier_prefix_from_docs(
-            parameter
-                .annotations()
-                .map(|annotation| format_annotation(&annotation, formatter))
-                .collect(),
+            format_construct_prefix_annotations(parameter.annotations(), formatter),
             Vec::new(),
         ),
         parameter.ty().map_or_else(jolt_fmt_ir::nil, |ty| {
@@ -187,7 +183,7 @@ pub(crate) fn format_receiver_parameter(
                         |dot| {
                             concat([
                                 format_leading_comments(&dot),
-                                text("."),
+                                format_token_text_after_trivia_relocated(&dot),
                                 format_trailing_comments(&dot),
                             ])
                         },
@@ -201,29 +197,45 @@ pub(crate) fn format_receiver_parameter(
     ])
 }
 
+fn format_construct_prefix_annotations(
+    annotations: impl Iterator<Item = jolt_java_syntax::Annotation>,
+    formatter: &JavaFormatter<'_>,
+) -> Vec<Doc> {
+    annotations
+        .enumerate()
+        .map(|(index, annotation)| {
+            if index == 0 {
+                format_annotation_without_leading_comments(&annotation, formatter)
+            } else {
+                format_annotation(&annotation, formatter)
+            }
+        })
+        .collect()
+}
+
 fn format_named_typed_declaration(
     modifiers: Doc,
     ty: Doc,
     varargs_annotations: Vec<Doc>,
     name: Doc,
     dimensions: Doc,
-    is_variable_arity: bool,
+    ellipsis: Option<&jolt_java_syntax::JavaSyntaxToken>,
 ) -> Doc {
     let has_varargs_annotations = !varargs_annotations.is_empty();
     let name = concat([
-        if is_variable_arity {
+        if let Some(ellipsis) = ellipsis {
             if has_varargs_annotations {
                 concat([
                     inline_modifier_prefix_from_docs(varargs_annotations, Vec::new()),
-                    text("..."),
+                    format_token_with_comments(ellipsis),
                 ])
             } else {
-                text("...")
+                format_token_with_comments(ellipsis)
             }
         } else {
             jolt_fmt_ir::nil()
         },
-        if is_variable_arity {
+        if ellipsis.is_some() {
             text(" ")
         } else {
             jolt_fmt_ir::nil()
@@ -231,7 +243,7 @@ fn format_named_typed_declaration(
         name,
         dimensions,
     ]);
-    let type_name_separator = if is_variable_arity && !has_varargs_annotations {
+    let type_name_separator = if ellipsis.is_some() && !has_varargs_annotations {
         jolt_fmt_ir::nil()
     } else {
         text(" ")
@@ -248,7 +260,7 @@ fn local_variable_type(
         || {
             declaration
                 .var_token()
-                .map_or_else(jolt_fmt_ir::nil, |token| format_token_text(token.text()))
+                .map_or_else(jolt_fmt_ir::nil, |token| format_token_with_comments(&token))
         },
         |ty| format_type(&ty, formatter),
     )
@@ -334,13 +346,21 @@ fn format_variable_declarator_name_and_dimensions(
     concat([
         declarator
             .name()
-            .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name)),
+            .map_or_else(jolt_fmt_ir::nil, |name| format_name_after_type_token(&name)),
         declarator
             .dimensions()
             .map_or_else(jolt_fmt_ir::nil, |dimensions| {
                 format_array_dimensions(&dimensions, formatter)
             }),
     ])
+}
+
+fn format_name_after_type_token(name: &jolt_java_syntax::JavaSyntaxToken) -> Doc {
+    format_token_with_inline_leading_comments(
+        name,
+        InlineLeadingTrivia::BeforeToken,
+        TrailingTrivia::Preserve,
+    )
 }
 
 fn format_variable_initializer_split(

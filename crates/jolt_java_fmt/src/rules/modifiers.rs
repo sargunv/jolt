@@ -5,7 +5,7 @@ use crate::context::JavaFormatter;
 use crate::helpers::modifiers::{
     inline_modifier_prefix_from_docs, modifier_prefix_from_docs, modifier_prefix_from_token_docs,
 };
-use crate::rules::annotations::format_annotation;
+use crate::rules::annotations::{format_annotation, format_annotation_without_leading_comments};
 
 pub(crate) struct TypedModifierPrefix {
     pub(crate) declaration_prefix: Doc,
@@ -100,7 +100,14 @@ pub(crate) fn format_modifier_prefix_from_parts(
     modifier_prefix_from_docs(
         annotations
             .into_iter()
-            .map(|annotation| format_annotation(&annotation, formatter))
+            .enumerate()
+            .map(|(index, annotation)| {
+                if index == 0 {
+                    format_annotation_without_leading_comments(&annotation, formatter)
+                } else {
+                    format_annotation(&annotation, formatter)
+                }
+            })
             .collect(),
         modifier_entries,
     )

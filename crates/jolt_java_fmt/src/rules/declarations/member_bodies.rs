@@ -5,9 +5,9 @@ use super::{
     format_class_declaration, format_compact_constructor_declaration,
     format_constructor_declaration, format_dangling_comments, format_enum_declaration,
     format_field_declaration, format_interface_declaration, format_method_declaration,
-    format_record_declaration, format_removed_token_comments, formatter_ignore_ranges,
-    formatter_ignore_run_doc, formatter_ignore_runs, hard_line, join_member_docs,
-    non_formatter_control_comments, relative_token_range, text,
+    format_record_declaration, format_removed_token_comments, format_token_with_comments,
+    formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs, hard_line,
+    join_member_docs, non_formatter_control_comments, relative_token_range, text,
 };
 
 pub(super) fn format_class_body(body: &ClassBody, formatter: &JavaFormatter<'_>) -> Option<Doc> {
@@ -435,7 +435,12 @@ impl FormattedMember {
                 category: Some(MemberCategory::Initializer),
                 starts_after_blank_line,
                 doc: concat([
-                    text("static "),
+                    member
+                        .static_token()
+                        .as_ref()
+                        .map_or_else(jolt_fmt_ir::nil, |token| {
+                            concat([format_token_with_comments(token), text(" ")])
+                        }),
                     member
                         .body()
                         .map_or_else(jolt_fmt_ir::nil, |body| format_block(&body, formatter)),

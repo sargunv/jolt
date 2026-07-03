@@ -8,7 +8,7 @@ class B24988078 {
   ) {
   }
 
-  public static <T extends Object> Optional<T> fromNullable(
+  public static <T extends /*@NonNull*/ Object> Optional<T> fromNullable(
     @Nullable T nullableReference
   ) {
   }

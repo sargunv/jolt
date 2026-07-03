@@ -7,8 +7,10 @@ use jolt_java_syntax::{
 
 use crate::context::JavaFormatter;
 use crate::helpers::comments::{
-    comment_forces_line, format_leading_comments, format_token_text, format_token_with_comments,
-    format_trailing_comments, format_trailing_comments_before_line_break,
+    InlineLeadingTrivia, LeadingTrivia, TrailingTrivia, comment_forces_line,
+    format_leading_comments, format_token, format_token_after_relocated_leading_comments,
+    format_token_text_after_trivia_relocated, format_token_with_comments,
+    format_token_with_inline_leading_comments, format_trailing_comments_before_line_break,
 };
 use crate::helpers::lists::{CommaListItem, angle_bracket_list};
 use crate::rules::annotations::format_annotation;
@@ -112,14 +114,7 @@ fn format_primitive_type(
     concat([
         format_inline_annotations(ty.annotations().collect(), formatter),
         ty.keyword().map_or_else(jolt_fmt_ir::nil, |keyword| {
-            concat([
-                match leading_comments {
-                    LeadingComments::Preserve => format_leading_comments(&keyword),
-                    LeadingComments::SuppressFirstToken => jolt_fmt_ir::nil(),
-                },
-                format_token_text(keyword.text()),
-                format_trailing_comments(&keyword),
-            ])
+            format_type_head_token(&keyword, leading_comments)
         }),
     ])
 }
@@ -130,15 +125,19 @@ pub(crate) fn format_void_type(ty: &VoidType) -> Doc {
 
 fn format_void_type_with_leading_comments(ty: &VoidType, leading_comments: LeadingComments) -> Doc {
     ty.keyword().map_or_else(jolt_fmt_ir::nil, |keyword| {
-        concat([
-            match leading_comments {
-                LeadingComments::Preserve => format_leading_comments(&keyword),
-                LeadingComments::SuppressFirstToken => jolt_fmt_ir::nil(),
-            },
-            format_token_text(keyword.text()),
-            format_trailing_comments(&keyword),
-        ])
+        format_type_head_token(&keyword, leading_comments)
     })
+}
+
+fn format_type_head_token(token: &JavaSyntaxToken, leading_comments: LeadingComments) -> Doc {
+    match leading_comments {
+        LeadingComments::Preserve => {
+            format_token(token, LeadingTrivia::Preserve, TrailingTrivia::Preserve)
+        }
+        LeadingComments::SuppressFirstToken => {
+            format_token_after_relocated_leading_comments(token, TrailingTrivia::Preserve)
+        }
+    }
 }
 
 fn format_class_type(
@@ -146,20 +145,27 @@ fn format_class_type(
     leading_comments: LeadingComments,
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
-    group(jolt_fmt_ir::join(
-        text("."),
-        ty.segments().enumerate().map(|(index, segment)| {
-            format_class_type_segment(
-                segment,
-                if index == 0 {
-                    leading_comments
-                } else {
-                    LeadingComments::Preserve
-                },
-                formatter,
-            )
-        }),
-    ))
+    let mut docs = Vec::new();
+    for (index, segment) in ty.segments().enumerate() {
+        if index > 0 {
+            docs.push(
+                segment
+                    .dot_before
+                    .as_ref()
+                    .map_or_else(|| text("."), format_token_with_comments),
+            );
+        }
+        docs.push(format_class_type_segment(
+            segment,
+            if index == 0 {
+                leading_comments
+            } else {
+                LeadingComments::Preserve
+            },
+            formatter,
+        ));
+    }
+    group(concat(docs))
 }
 
 fn format_class_type_segment(
@@ -183,29 +189,24 @@ fn format_type_name(
     leading_comments: LeadingComments,
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
-    jolt_fmt_ir::join(
-        text("."),
-        name.segments_with_annotations()
-            .enumerate()
-            .map(|(index, segment)| {
-                concat([
-                    format_inline_annotations(segment.annotations, formatter),
-                    if index == 0 {
-                        match leading_comments {
-                            LeadingComments::Preserve => {
-                                format_token_with_comments(&segment.identifier)
-                            }
-                            LeadingComments::SuppressFirstToken => concat([
-                                format_token_text(segment.identifier.text()),
-                                format_trailing_comments(&segment.identifier),
-                            ]),
-                        }
-                    } else {
-                        format_token_with_comments(&segment.identifier)
-                    },
-                ])
-            }),
-    )
+    let mut docs = Vec::new();
+    for (index, segment) in name.segments_with_annotations().enumerate() {
+        if index > 0 {
+            docs.push(
+                segment
+                    .dot_before
+                    .as_ref()
+                    .map_or_else(|| text("."), format_token_with_comments),
+            );
+        }
+        docs.push(format_inline_annotations(segment.annotations, formatter));
+        docs.push(if index == 0 {
+            format_type_head_token(&segment.identifier, leading_comments)
+        } else {
+            format_token_with_comments(&segment.identifier)
+        });
+    }
+    concat(docs)
 }
 
 fn format_intersection_type(ty: &IntersectionType, formatter: &JavaFormatter<'_>) -> Doc {
@@ -221,9 +222,17 @@ fn format_type_parameter(parameter: &TypeParameter, formatter: &JavaFormatter<'_
         format_inline_annotations(parameter.annotations().collect(), formatter),
         parameter
             .name()
-            .map_or_else(jolt_fmt_ir::nil, |name| format_token_text(name.text())),
+            .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name)),
         parameter.bounds().map_or_else(jolt_fmt_ir::nil, |bounds| {
-            concat([text(" extends "), format_type_bounds(&bounds, formatter)])
+            concat([
+                text(" "),
+                bounds
+                    .extends_token()
+                    .as_ref()
+                    .map_or_else(|| text("extends"), format_token_with_comments),
+                text(" "),
+                format_type_bounds(&bounds, formatter),
+            ])
         }),
     ])
 }
@@ -365,7 +374,7 @@ fn format_type_operator_separator(
                     .any(comment_forces_line);
                 concat([
                     format_leading_comments(separator),
-                    format_token_text(separator.text()),
+                    format_token_text_after_trivia_relocated(separator),
                     format_trailing_comments_before_line_break(separator),
                     if forces_line {
                         jolt_fmt_ir::nil()
@@ -389,15 +398,20 @@ fn format_type_argument(argument: &TypeArgument, formatter: &JavaFormatter<'_>) 
 
 fn format_wildcard_type(ty: &WildcardType, formatter: &JavaFormatter<'_>) -> Doc {
     concat([
-        text("?"),
+        ty.question_token()
+            .as_ref()
+            .map_or_else(|| text("?"), format_token_with_comments),
         ty.bound_clause().map_or_else(jolt_fmt_ir::nil, |bound| {
             let (keyword, bound) = match bound {
-                WildcardBound::Extends(bound) => ("extends", bound),
-                WildcardBound::Super(bound) => ("super", bound),
+                WildcardBound::Extends(bound) | WildcardBound::Super(bound) => {
+                    (ty.bound_keyword(), bound)
+                }
             };
             concat([
                 text(" "),
-                text(keyword),
+                keyword
+                    .as_ref()
+                    .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
                 text(" "),
                 format_type(&bound, formatter),
             ])
@@ -408,14 +422,38 @@ fn format_wildcard_type(ty: &WildcardType, formatter: &JavaFormatter<'_>) -> Doc
 fn format_array_dimension(dimension: &ArrayDimension, formatter: &JavaFormatter<'_>) -> Doc {
     let annotations = dimension.annotations().collect::<Vec<_>>();
     if annotations.is_empty() {
-        return text("[]");
+        return concat([
+            dimension
+                .open_bracket()
+                .as_ref()
+                .map_or_else(|| text("["), format_token_with_comments),
+            dimension
+                .close_bracket()
+                .as_ref()
+                .map_or_else(|| text("]"), format_array_dimension_close_bracket),
+        ]);
     }
 
     concat([
         text(" "),
         format_inline_annotations(annotations, formatter),
-        text("[]"),
+        dimension
+            .open_bracket()
+            .as_ref()
+            .map_or_else(|| text("["), format_token_with_comments),
+        dimension
+            .close_bracket()
+            .as_ref()
+            .map_or_else(|| text("]"), format_array_dimension_close_bracket),
     ])
+}
+
+fn format_array_dimension_close_bracket(close: &JavaSyntaxToken) -> Doc {
+    format_token_with_inline_leading_comments(
+        close,
+        InlineLeadingTrivia::AfterPreviousToken,
+        TrailingTrivia::Preserve,
+    )
 }
 
 pub(crate) fn format_inline_annotations(

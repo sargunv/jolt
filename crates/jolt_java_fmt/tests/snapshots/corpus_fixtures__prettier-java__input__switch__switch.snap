@@ -25,6 +25,7 @@ class Switch {
         return 2;
       case "c":
         return 3;
+      // default case
       default:
         return 3;
     }
@@ -37,6 +38,7 @@ class Switch {
         return 1;
       case "b":
         return 2;
+      // case c
       case "c":
         return 3;
       default:
@@ -146,6 +148,7 @@ class Switch {
       case WEST:
         return new Location(this.x - SnakeUtils.GRID_SIZE, this.y);
       case NONE:
+      // fall through
       default:
         return this;
     }

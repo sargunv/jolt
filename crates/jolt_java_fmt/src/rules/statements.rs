@@ -13,14 +13,14 @@ use std::ops::Range;
 
 use crate::context::JavaFormatter;
 use crate::helpers::blocks::{
-    BodyItem, braced_block, braced_body, empty_block, join_body_items, join_hard_lines,
+    BodyItem, braced_body, empty_block, join_body_items, join_hard_lines,
 };
 use crate::helpers::comments::{
-    comment_forces_line, comment_is_star_block, format_comment, format_dangling_comments,
-    format_leading_comments, format_removed_token_comments, format_separator_with_comments,
-    format_token_text, format_token_with_comments, format_trailing_comments,
-    format_trailing_comments_before_line_break, non_formatter_control_comments,
-    trailing_comments_force_line,
+    LeadingTrivia, TrailingTrivia, comment_forces_line, comment_is_star_block, format_comment,
+    format_dangling_comments, format_leading_comments, format_removed_token_comments,
+    format_separator_with_comments, format_token, format_token_before_relocated_trailing_comments,
+    format_token_with_comments, format_trailing_comments_before_line_break,
+    non_formatter_control_comments, trailing_comments_force_line,
 };
 use crate::helpers::formatter_ignore::{
     FormatterIgnoreRange, formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
@@ -40,7 +40,7 @@ mod simple;
 mod switches;
 mod try_resources;
 
-pub(crate) use blocks::{format_block, format_block_body, format_block_statement_item};
+pub(crate) use blocks::{format_block, format_block_statement_item};
 use control_flow::{
     format_do_statement, format_for_statement, format_if_statement, format_synchronized_statement,
     format_while_statement,
@@ -108,15 +108,7 @@ fn statement_body_as_block_with_trailing_comments(
     body: Option<StatementBody>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
-    match body {
-        Some(StatementBody::Block(block)) => concat([
-            format_block(&block, formatter),
-            block
-                .close_brace()
-                .map_or_else(jolt_fmt_ir::nil, |close| format_trailing_comments(&close)),
-        ]),
-        body => statement_body_as_block(body, formatter),
-    }
+    statement_body_as_block(body, formatter)
 }
 
 fn statement_body_trailing_comments_force_line(body: Option<&StatementBody>) -> bool {

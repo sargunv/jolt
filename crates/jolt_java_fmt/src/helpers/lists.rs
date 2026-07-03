@@ -5,8 +5,9 @@ use jolt_java_syntax::JavaSyntaxToken;
 
 use crate::comments::CommentMap;
 use crate::helpers::comments::{
-    format_dangling_comments, format_leading_comments, format_separator_with_comments,
-    format_trailing_comments, format_trailing_comments_before_line_break,
+    InlineLeadingTrivia, LeadingTrivia, TrailingTrivia, format_dangling_comments,
+    format_leading_comments, format_separator_with_comments, format_token,
+    format_token_after_relocated_leading_comments, format_token_with_inline_leading_comments,
     trailing_comments_force_line,
 };
 
@@ -22,7 +23,7 @@ pub(crate) fn comma_list(items: Vec<CommaListItem>) -> Doc {
     for (index, item) in items.into_iter().enumerate() {
         docs.push(item.doc);
         if let Some(comma) = item.comma {
-            docs.push(format_separator_with_comments(&comma, ",", line()));
+            docs.push(format_separator_with_comments(&comma, line()));
         } else if index + 1 < items_len {
             docs.push(line());
         }
@@ -90,9 +91,8 @@ fn delimited_comma_list(
     }
 
     group(concat([
-        format_open_delimiter(open, open_text),
         indent(concat([
-            format_open_spacing(open),
+            format_open_delimiter_before_items(open, open_text),
             comma_list(items),
             format_close_leading_comments(close),
         ])),
@@ -132,29 +132,40 @@ fn has_dangling_delimiter_comments(
 }
 
 fn format_open_delimiter(open: Option<&JavaSyntaxToken>, fallback: &'static str) -> Doc {
+    format_open_delimiter_with_trailing(open, fallback, TrailingTrivia::RelocatedToEnclosingContext)
+}
+
+fn format_open_delimiter_before_items(
+    open: Option<&JavaSyntaxToken>,
+    fallback: &'static str,
+) -> Doc {
     open.map_or_else(
-        || text(fallback),
-        |open| concat([format_leading_comments(open), text(fallback)]),
+        || concat([text(fallback), soft_line()]),
+        |open| {
+            format_open_delimiter_with_trailing(
+                Some(open),
+                fallback,
+                TrailingTrivia::BeforeSoftLine,
+            )
+        },
     )
 }
 
-fn format_open_spacing(open: Option<&JavaSyntaxToken>) -> Doc {
-    let Some(open) = open else {
-        return soft_line();
-    };
-
-    if open.trailing_comments().is_empty() {
-        return soft_line();
-    }
-
-    concat([
-        format_trailing_comments_before_line_break(open),
-        if trailing_comments_force_line(open) {
-            hard_line()
-        } else {
-            soft_line()
+fn format_open_delimiter_with_trailing(
+    open: Option<&JavaSyntaxToken>,
+    fallback: &'static str,
+    trailing: TrailingTrivia,
+) -> Doc {
+    open.map_or_else(
+        || text(fallback),
+        |open| {
+            format_token_with_inline_leading_comments(
+                open,
+                InlineLeadingTrivia::BeforeToken,
+                trailing,
+            )
         },
-    ])
+    )
 }
 
 fn comma_list_with_trailing_separator(items: Vec<CommaListItem>) -> Doc {
@@ -181,9 +192,11 @@ fn trailing_comma_separator(comma: &JavaSyntaxToken, is_last: bool) -> Doc {
     let force_line = trailing_comments_force_line(comma);
 
     concat([
-        format_leading_comments(comma),
-        text(","),
-        format_trailing_comments_before_line_break(comma),
+        format_token(
+            comma,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::BeforeLineBreak,
+        ),
         if is_last {
             if has_trailing_comments && !force_line {
                 text(" ")
@@ -259,8 +272,7 @@ fn format_close_delimiter(close: Option<&JavaSyntaxToken>, fallback: &'static st
                 } else {
                     jolt_fmt_ir::nil()
                 },
-                text(fallback),
-                format_trailing_comments(close),
+                format_token_after_relocated_leading_comments(close, TrailingTrivia::Preserve),
             ])
         },
     )
@@ -272,7 +284,7 @@ fn format_close_delimiter_without_leading(
 ) -> Doc {
     close.map_or_else(
         || text(fallback),
-        |close| concat([text(fallback), format_trailing_comments(close)]),
+        |close| format_token_after_relocated_leading_comments(close, TrailingTrivia::Preserve),
     )
 }
 

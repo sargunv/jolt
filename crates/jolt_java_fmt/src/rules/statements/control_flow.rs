@@ -5,10 +5,10 @@ use super::{
     StatementExpressionEntry, StatementExpressionList, SynchronizedStatement, WhileStatement,
     comment_forces_line, concat, empty_block, format_block, format_comment, format_expression,
     format_leading_comments, format_local_variable_declaration, format_separator_with_comments,
-    format_statement_semicolon, format_trailing_comments_before_line_break, group, hard_line,
-    indent, line, semicolon_list, soft_line, statement_body_as_block,
-    statement_body_as_block_with_trailing_comments, statement_body_trailing_comments_force_line,
-    text, trailing_comments_force_line,
+    format_statement_semicolon, format_token_with_comments,
+    format_trailing_comments_before_line_break, group, hard_line, indent, line, semicolon_list,
+    soft_line, statement_body_as_block, statement_body_as_block_with_trailing_comments,
+    statement_body_trailing_comments_force_line, text, trailing_comments_force_line,
 };
 
 pub(super) fn format_if_statement(statement: &IfStatement, formatter: &JavaFormatter<'_>) -> Doc {
@@ -253,7 +253,12 @@ fn format_enhanced_for_statement(
                     .map_or_else(jolt_fmt_ir::nil, |variable| {
                         format_local_variable_declaration(&variable, formatter)
                     }),
-                text(" : "),
+                text(" "),
+                statement
+                    .colon()
+                    .as_ref()
+                    .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
+                text(" "),
                 statement
                     .iterable()
                     .map_or_else(jolt_fmt_ir::nil, |iterable| {
@@ -423,7 +428,7 @@ fn format_statement_expression_entries(
     for (index, entry) in entries.into_iter().enumerate() {
         docs.push(format_expression(&entry.expression, formatter));
         if let Some(comma) = entry.comma {
-            docs.push(format_separator_with_comments(&comma, ",", text(" ")));
+            docs.push(format_separator_with_comments(&comma, text(" ")));
         } else if index + 1 < entries_len {
             docs.push(line());
         }

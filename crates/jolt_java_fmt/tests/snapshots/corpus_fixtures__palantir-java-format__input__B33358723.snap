@@ -20,6 +20,7 @@ class B33358723 {
         )
     );
     f(
+      //
       (int //
        x) -> System.err
         .println(

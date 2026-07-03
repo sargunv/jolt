@@ -126,7 +126,7 @@ fn flatten_binary_expression(
     let mut operators = Vec::new();
     collect_binary_chain(&root, &mut operands, &mut operators);
     if operators.len() + 1 != operands.len() {
-        return unflattened_binary_expression(expression, formatter, operator);
+        return unflattened_binary_expression(expression, formatter, &operator);
     }
 
     let mut operands = operands.into_iter();
@@ -166,14 +166,14 @@ fn format_binary_operand(
 fn unflattened_binary_expression(
     expression: &BinaryExpression,
     formatter: &JavaFormatter<'_>,
-    operator: JavaSyntaxToken,
+    operator: &JavaSyntaxToken,
 ) -> (Expression, Vec<(Doc, Doc)>) {
     (
         expression
             .left()
             .unwrap_or_else(|| Expression::from(expression.clone())),
         vec![(
-            format_token_with_comments(&operator),
+            format_token_with_comments(operator),
             expression.right().map_or_else(jolt_fmt_ir::nil, |right| {
                 format_expression(&right, formatter)
             }),

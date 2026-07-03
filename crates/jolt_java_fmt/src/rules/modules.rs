@@ -8,8 +8,10 @@ use jolt_java_syntax::{
 use crate::context::JavaFormatter;
 use crate::helpers::blocks::{join_empty_lines, join_hard_lines};
 use crate::helpers::comments::{
-    format_comment, format_construct_leading_comments, format_inline_trailing_comment_list,
-    format_separator_with_comments, split_leading_comment_barrier_runs, token_has_comments,
+    LeadingTrivia, TrailingTrivia, format_comment, format_construct_leading_comments,
+    format_inline_trailing_comment_list, format_separator_with_comments,
+    format_token_after_relocated_leading_comments, format_token_before_relocated_trailing_comments,
+    format_token_with_comments, split_leading_comment_barrier_runs, token_has_comments,
 };
 use crate::helpers::formatter_ignore::{
     formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs, relative_token_range,
@@ -21,18 +23,33 @@ pub(crate) fn format_module_declaration(
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
     concat([
-        if module.is_open() {
-            text("open module ")
-        } else {
-            text("module ")
-        },
+        module
+            .open_token()
+            .as_ref()
+            .map_or_else(jolt_fmt_ir::nil, |token| {
+                concat([format_token_with_comments(token), text(" ")])
+            }),
+        module
+            .module_token()
+            .as_ref()
+            .map_or_else(jolt_fmt_ir::nil, |token| {
+                concat([format_token_with_comments(token), text(" ")])
+            }),
         module
             .name()
             .map_or_else(jolt_fmt_ir::nil, |name| format_name(&name)),
-        text(" {"),
+        module
+            .open_brace()
+            .as_ref()
+            .map_or_else(jolt_fmt_ir::nil, |token| {
+                concat([text(" "), format_token_with_comments(token)])
+            }),
         indent_module_body(format_module_directives(module, formatter)),
         hard_line(),
-        text("}"),
+        module
+            .close_brace()
+            .as_ref()
+            .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
     ])
 }
 
@@ -278,79 +295,113 @@ fn format_module_directive_doc(
 ) -> Doc {
     match (directive, role) {
         (
-            ModuleDirective::RequiresDirective(_),
+            ModuleDirective::RequiresDirective(requires),
             ModuleDirectiveRole::Requires {
                 module,
                 is_static,
                 is_transitive,
             },
         ) => {
-            let mut parts = vec![text("requires ")];
+            let mut parts = vec![format_directive_head(requires.requires_token().as_ref())];
             if *is_static {
-                parts.push(text("static "));
+                parts.push(format_directive_middle_token(
+                    requires.static_token().as_ref(),
+                ));
             }
             if *is_transitive {
-                parts.push(text("transitive "));
+                parts.push(format_directive_middle_token(
+                    requires.transitive_token().as_ref(),
+                ));
             }
             parts.push(format_name(module));
-            parts.push(text(";"));
+            parts.push(format_directive_semicolon(requires.semicolon().as_ref()));
             concat(parts)
         }
         (
             ModuleDirective::ExportsDirective(exports),
             ModuleDirectiveRole::Exports { package, .. },
         ) => format_module_name_list_directive(
-            "exports",
+            exports.exports_token().as_ref(),
             package,
-            "to",
+            exports.to_token().as_ref(),
             exports.target_entries().collect(),
+            exports.semicolon().as_ref(),
             formatter,
         ),
         (ModuleDirective::OpensDirective(opens), ModuleDirectiveRole::Opens { package, .. }) => {
             format_module_name_list_directive(
-                "opens",
+                opens.opens_token().as_ref(),
                 package,
-                "to",
+                opens.to_token().as_ref(),
                 opens.target_entries().collect(),
+                opens.semicolon().as_ref(),
                 formatter,
             )
         }
-        (ModuleDirective::UsesDirective(_), ModuleDirectiveRole::Uses { service }) => {
-            concat([text("uses "), format_name(service), text(";")])
-        }
+        (ModuleDirective::UsesDirective(uses), ModuleDirectiveRole::Uses { service }) => concat([
+            format_directive_head(uses.uses_token().as_ref()),
+            format_name(service),
+            format_directive_semicolon(uses.semicolon().as_ref()),
+        ]),
         (
             ModuleDirective::ProvidesDirective(provides),
             ModuleDirectiveRole::Provides { service, .. },
         ) => format_module_name_list_directive(
-            "provides",
+            provides.provides_token().as_ref(),
             service,
-            "with",
+            provides.with_token().as_ref(),
             provides.implementation_entries().collect(),
+            provides.semicolon().as_ref(),
             formatter,
         ),
         _ => unreachable!("module directive role should match directive variant"),
     }
 }
 
+fn format_directive_head(token: Option<&jolt_java_syntax::JavaSyntaxToken>) -> Doc {
+    token.map_or_else(jolt_fmt_ir::nil, |token| {
+        concat([
+            format_token_after_relocated_leading_comments(token, TrailingTrivia::Preserve),
+            text(" "),
+        ])
+    })
+}
+
+fn format_directive_middle_token(token: Option<&jolt_java_syntax::JavaSyntaxToken>) -> Doc {
+    token.map_or_else(jolt_fmt_ir::nil, |token| {
+        concat([format_token_with_comments(token), text(" ")])
+    })
+}
+
+fn format_directive_semicolon(token: Option<&jolt_java_syntax::JavaSyntaxToken>) -> Doc {
+    token.map_or_else(jolt_fmt_ir::nil, |token| {
+        format_token_before_relocated_trailing_comments(token, LeadingTrivia::Preserve)
+    })
+}
+
 fn format_module_name_list_directive(
-    keyword: &'static str,
+    keyword: Option<&jolt_java_syntax::JavaSyntaxToken>,
     subject: &NameSyntax,
-    connective: &'static str,
+    connective: Option<&jolt_java_syntax::JavaSyntaxToken>,
     entries: Vec<ModuleNameListEntry>,
+    semicolon: Option<&jolt_java_syntax::JavaSyntaxToken>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
     if entries.is_empty() {
-        return concat([text(keyword), text(" "), format_name(subject), text(";")]);
+        return concat([
+            format_directive_head(keyword),
+            format_name(subject),
+            format_directive_semicolon(semicolon),
+        ]);
     }
 
     concat([
-        text(keyword),
-        text(" "),
+        format_directive_head(keyword),
         format_name(subject),
         text(" "),
-        text(connective),
+        connective.map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
         format_module_name_list(entries, formatter),
-        text(";"),
+        format_directive_semicolon(semicolon),
     ])
 }
 
@@ -379,7 +430,7 @@ fn format_module_name_entries_inline(entries: Vec<ModuleNameListEntry>) -> Doc {
     for entry in entries {
         docs.push(format_name(&entry.name));
         if let Some(comma) = entry.comma {
-            docs.push(format_separator_with_comments(&comma, ",", text(" ")));
+            docs.push(format_separator_with_comments(&comma, text(" ")));
         }
     }
 
@@ -399,11 +450,7 @@ fn format_module_name_entries_broken(
             format_name(&entry.name),
         ]));
         if let Some(comma) = entry.comma {
-            docs.push(format_separator_with_comments(
-                &comma,
-                ",",
-                jolt_fmt_ir::line(),
-            ));
+            docs.push(format_separator_with_comments(&comma, jolt_fmt_ir::line()));
         } else if index + 1 < entries_len {
             docs.push(hard_line());
         }

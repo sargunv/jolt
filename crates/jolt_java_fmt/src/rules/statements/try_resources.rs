@@ -184,6 +184,8 @@ fn format_catch_clauses<'a>(
 }
 
 fn format_catch_clause(clause: &CatchClause, formatter: &JavaFormatter<'_>) -> Doc {
+    let open = clause.open_paren();
+    let close = clause.close_paren();
     concat([
         text(" "),
         format_statement_keyword(clause.keyword(), "catch"),
@@ -191,7 +193,12 @@ fn format_catch_clause(clause: &CatchClause, formatter: &JavaFormatter<'_>) -> D
         clause
             .parameter()
             .map_or_else(jolt_fmt_ir::nil, |parameter| {
-                format_parenthesized_catch_parameter(&parameter, formatter)
+                format_parenthesized_catch_parameter(
+                    open.as_ref(),
+                    &parameter,
+                    close.as_ref(),
+                    formatter,
+                )
             }),
         text(" "),
         clause
@@ -201,17 +208,19 @@ fn format_catch_clause(clause: &CatchClause, formatter: &JavaFormatter<'_>) -> D
 }
 
 fn format_parenthesized_catch_parameter(
+    open: Option<&JavaSyntaxToken>,
     parameter: &CatchParameter,
+    close: Option<&JavaSyntaxToken>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
     group(concat([
-        text("("),
+        open.map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
         indent(concat([
             soft_line(),
             format_catch_parameter(parameter, formatter),
         ])),
         soft_line(),
-        text(")"),
+        close.map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
     ]))
 }
 
@@ -282,7 +291,7 @@ fn format_catch_type_separator(separator: Option<&JavaSyntaxToken>) -> Doc {
         line(),
         separator.map_or_else(
             || text("| "),
-            |separator| format_separator_with_comments(separator, "|", text(" ")),
+            |separator| format_separator_with_comments(separator, text(" ")),
         ),
     ])
 }

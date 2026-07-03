@@ -3,13 +3,12 @@ use super::control_flow::{
 };
 use super::simple::format_statement_keyword;
 use super::{
-    BlockItem, BlockStatement, Doc, JavaFormatter, SwitchBlock, SwitchBlockEntry,
+    BlockItem, BlockStatement, Doc, JavaFormatter, LeadingTrivia, SwitchBlock, SwitchBlockEntry,
     SwitchBlockStatementGroup, SwitchLabel, SwitchLabelCaseEntry, SwitchLabelCaseItem, SwitchRule,
-    SwitchStatement, braced_block, comment_forces_line, concat, empty_block, format_block,
-    format_block_statement_item, format_comment, format_expression, format_leading_comments,
-    format_pattern, format_separator_with_comments, format_throw_statement,
-    format_trailing_comments_before_line_break, group, hard_line, indent, join_body_items,
-    join_hard_lines, line, text,
+    SwitchStatement, TrailingTrivia, comment_forces_line, concat, empty_block, format_block,
+    format_block_statement_item, format_expression, format_pattern, format_separator_with_comments,
+    format_statement_semicolon, format_throw_statement, format_token, format_token_with_comments,
+    group, hard_line, indent, join_body_items, join_hard_lines, line, text,
 };
 
 pub(super) fn format_switch_statement(
@@ -48,7 +47,27 @@ pub(crate) fn format_switch_block(block: &SwitchBlock, formatter: &JavaFormatter
         })
         .collect::<Vec<_>>();
 
-    braced_block(entries)
+    braced_switch_block(block, entries)
+}
+
+fn braced_switch_block(block: &SwitchBlock, entries: Vec<Doc>) -> Doc {
+    let body = (!entries.is_empty()).then(|| join_hard_lines(entries));
+    concat([
+        block
+            .open_brace()
+            .as_ref()
+            .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
+        body.map_or_else(hard_line, |body| {
+            concat([
+                jolt_fmt_ir::indent(concat([hard_line(), body])),
+                hard_line(),
+            ])
+        }),
+        block
+            .close_brace()
+            .as_ref()
+            .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
+    ])
 }
 
 fn format_switch_statement_group(
@@ -56,8 +75,16 @@ fn format_switch_statement_group(
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
     let labels = group
-        .labels()
-        .map(|label| concat([format_switch_label(&label, formatter), text(":")]))
+        .label_entries()
+        .map(|entry| {
+            concat([
+                format_switch_label(&entry.label, formatter),
+                entry
+                    .colon
+                    .as_ref()
+                    .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
+            ])
+        })
         .collect::<Vec<_>>();
     let statements = group.block_statements().collect::<Vec<_>>();
 
@@ -113,7 +140,7 @@ fn format_switch_rule(rule: &SwitchRule, formatter: &JavaFormatter<'_>) -> Doc {
                 indent(concat([
                     format_switch_rule_arrow_body_separator(rule),
                     format_expression(&expression, formatter),
-                    text(";"),
+                    format_statement_semicolon(rule.semicolon()),
                 ])),
             ])),
         ]);
@@ -133,15 +160,17 @@ fn format_switch_rule_arrow_head(rule: &SwitchRule) -> Doc {
 
     let trailing_comments = arrow.trailing_comments();
     if trailing_comments.is_empty() {
-        return text(" ->");
+        return concat([text(" "), format_token_with_comments(&arrow)]);
     }
 
-    let mut docs = vec![text(" ->")];
-    for comment in trailing_comments {
-        docs.push(text(" "));
-        docs.push(format_comment(&comment));
-    }
-    concat(docs)
+    concat([
+        text(" "),
+        format_token(
+            &arrow,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::BeforeLineBreak,
+        ),
+    ])
 }
 
 fn format_switch_rule_arrow_body_separator(rule: &SwitchRule) -> Doc {
@@ -162,33 +191,48 @@ fn format_switch_rule_arrow(rule: &SwitchRule) -> Doc {
 
     let trailing_comments = arrow.trailing_comments();
     if trailing_comments.is_empty() {
-        return text(" -> ");
+        return concat([text(" "), format_token_with_comments(&arrow), text(" ")]);
     }
 
-    let mut docs = vec![text(" ->")];
-    let mut forced_line = false;
-    for comment in trailing_comments {
-        docs.push(text(" "));
-        forced_line |= comment_forces_line(&comment);
-        docs.push(format_comment(&comment));
-    }
+    let forced_line = trailing_comments.iter().any(comment_forces_line);
+    let mut docs = vec![
+        text(" "),
+        format_token(
+            &arrow,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::BeforeLineBreak,
+        ),
+    ];
     docs.push(if forced_line { hard_line() } else { text(" ") });
     concat(docs)
 }
 
 fn format_switch_label(label: &SwitchLabel, formatter: &JavaFormatter<'_>) -> Doc {
     if label.is_default_label() {
-        return text("default");
+        return label
+            .default_token()
+            .as_ref()
+            .map_or_else(jolt_fmt_ir::nil, format_token_with_comments);
     }
 
     let entries = label.case_entries().collect::<Vec<_>>();
 
     concat([
-        text("case "),
+        label
+            .case_token()
+            .as_ref()
+            .map_or_else(jolt_fmt_ir::nil, |token| {
+                concat([format_token_with_comments(token), text(" ")])
+            }),
         group(indent(format_switch_label_case_entries(entries, formatter))),
         label.guard().map_or_else(jolt_fmt_ir::nil, |guard| {
             concat([
-                text(" when "),
+                text(" "),
+                guard
+                    .when_token()
+                    .as_ref()
+                    .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
+                text(" "),
                 guard
                     .expression()
                     .map_or_else(jolt_fmt_ir::nil, |expression| {
@@ -208,7 +252,7 @@ fn format_switch_label_case_entries(
     for entry in entries {
         docs.push(format_switch_label_case_item(&entry.item, formatter));
         if let Some(comma) = entry.comma {
-            docs.push(format_separator_with_comments(&comma, ",", line()));
+            docs.push(format_separator_with_comments(&comma, line()));
         }
     }
 
@@ -227,11 +271,11 @@ fn format_switch_label_case_item(item: &SwitchLabelCaseItem, formatter: &JavaFor
                 format_pattern(&pattern, formatter)
             })
         }
-        SwitchLabelCaseItem::Default(default) => concat([
-            format_leading_comments(default),
-            text("default"),
-            format_trailing_comments_before_line_break(default),
-        ]),
+        SwitchLabelCaseItem::Default(default) => format_token(
+            default,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::BeforeLineBreak,
+        ),
     }
 }
 
@@ -243,7 +287,10 @@ fn format_switch_rule_body(rule: &SwitchRule, formatter: &JavaFormatter<'_>) -> 
         return format_throw_statement(&statement, formatter);
     }
     if let Some(expression) = rule.expression() {
-        return concat([format_expression(&expression, formatter), text(";")]);
+        return concat([
+            format_expression(&expression, formatter),
+            format_statement_semicolon(rule.semicolon()),
+        ]);
     }
 
     jolt_fmt_ir::nil()

@@ -1,15 +1,16 @@
 use super::{
     AnnotationInterfaceDeclaration, ClassDeclaration, CommaListItem, Doc, EnumDeclaration,
     ExtendsClause, ImplementsClause, InterfaceDeclaration, JavaFormatter, JavaSyntaxToken,
-    ModifierList, PermitsClause, PermitsClauseEntry, RecordComponentList, RecordDeclaration,
-    TypeClauseEntry, comment_forces_line, concat, declaration_with_body,
+    LeadingTrivia, ModifierList, PermitsClause, PermitsClauseEntry, RecordDeclaration,
+    TrailingTrivia, TypeClauseEntry, comment_forces_line, concat, declaration_with_body,
     format_annotation_interface_body, format_class_body, format_construct_leading_comments,
     format_enum_body_contents, format_enum_constant_entry, format_interface_body,
-    format_leading_comment_list, format_leading_comments, format_modifier_prefix, format_name,
-    format_record_body, format_record_component, format_separator_with_comments, format_token_text,
-    format_trailing_comments_before_line_break, format_type_parameter_list,
-    format_type_without_leading_comments, group, hard_line, line, parenthesized_list, text,
+    format_leading_comment_list, format_modifier_prefix, format_name, format_record_body,
+    format_record_component, format_separator_with_comments, format_token,
+    format_token_with_comments, format_type_parameter_list, format_type_without_leading_comments,
+    group, hard_line, line, parenthesized_list, text,
 };
+use crate::helpers::comments::format_token_after_relocated_leading_comments;
 
 pub(super) fn format_class_declaration(
     class: &ClassDeclaration,
@@ -19,10 +20,10 @@ pub(super) fn format_class_declaration(
         &class.tokens(),
         class.modifiers(),
         concat([
-            text("class "),
+            format_keyword_with_space(class.keyword()),
             class
                 .name()
-                .map_or_else(jolt_fmt_ir::nil, |name| format_token_text(name.text())),
+                .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name)),
             format_type_parameter_list(class.type_parameters(), formatter),
             format_extends_clause(class.extends_clause(), formatter),
             format_implements_clause(class.implements_clause(), formatter),
@@ -43,10 +44,10 @@ pub(super) fn format_interface_declaration(
         &interface.tokens(),
         interface.modifiers(),
         concat([
-            text("interface "),
+            format_keyword_with_space(interface.keyword()),
             interface
                 .name()
-                .map_or_else(jolt_fmt_ir::nil, |name| format_token_text(name.text())),
+                .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name)),
             format_type_parameter_list(interface.type_parameters(), formatter),
             format_extends_clause(interface.extends_clause(), formatter),
             format_permits_clause(interface.permits_clause(), formatter),
@@ -66,12 +67,12 @@ pub(super) fn format_record_declaration(
         &record.tokens(),
         record.modifiers(),
         group(concat([
-            text("record "),
+            format_keyword_with_space(record.keyword()),
             record
                 .name()
-                .map_or_else(jolt_fmt_ir::nil, |name| format_token_text(name.text())),
+                .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name)),
             format_type_parameter_list(record.type_parameters(), formatter),
-            format_record_components(record.components(), formatter),
+            format_record_components(record, formatter),
             format_implements_clause(record.implements_clause(), formatter),
         ])),
         record
@@ -103,10 +104,10 @@ pub(super) fn format_enum_declaration(
         &enum_.tokens(),
         enum_.modifiers(),
         concat([
-            text("enum "),
+            format_keyword_with_space(enum_.keyword()),
             enum_
                 .name()
-                .map_or_else(jolt_fmt_ir::nil, |name| format_token_text(name.text())),
+                .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name)),
             format_implements_clause(enum_.implements_clause(), formatter),
         ]),
         body_doc,
@@ -122,16 +123,30 @@ pub(super) fn format_annotation_interface_declaration(
         &annotation.tokens(),
         annotation.modifiers(),
         concat([
-            text("@interface "),
+            annotation
+                .at_token()
+                .map_or_else(jolt_fmt_ir::nil, |token| {
+                    format_token_after_relocated_leading_comments(&token, TrailingTrivia::Preserve)
+                }),
+            format_keyword_with_space(annotation.interface_token()),
             annotation
                 .name()
-                .map_or_else(jolt_fmt_ir::nil, |name| format_token_text(name.text())),
+                .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name)),
         ]),
         annotation
             .body()
             .and_then(|body| format_annotation_interface_body(&body, formatter)),
         formatter,
     )
+}
+
+fn format_keyword_with_space(keyword: Option<JavaSyntaxToken>) -> Doc {
+    keyword.map_or_else(jolt_fmt_ir::nil, |keyword| {
+        concat([
+            format_token_after_relocated_leading_comments(&keyword, TrailingTrivia::Preserve),
+            text(" "),
+        ])
+    })
 }
 
 fn format_type_declaration_with_body(
@@ -151,13 +166,13 @@ fn format_type_declaration_with_body(
     )
 }
 
-fn format_record_components(
-    components: Option<RecordComponentList>,
-    formatter: &JavaFormatter<'_>,
-) -> Doc {
-    let Some(components) = components else {
-        return text("()");
+fn format_record_components(record: &RecordDeclaration, formatter: &JavaFormatter<'_>) -> Doc {
+    let Some(components) = record.components() else {
+        let open = record.open_paren();
+        let close = record.close_paren();
+        return parenthesized_list(open.as_ref(), close.as_ref(), Vec::new());
     };
+
     let open = components.open_paren();
     let close = components.close_paren();
     parenthesized_list(
@@ -259,11 +274,11 @@ fn format_header_clause_keyword(keyword: Option<&JavaSyntaxToken>, fallback: &'s
     keyword.map_or_else(
         || text(fallback),
         |keyword| {
-            concat([
-                format_leading_comments(keyword),
-                format_token_text(keyword.text()),
-                format_trailing_comments_before_line_break(keyword),
-            ])
+            format_token(
+                keyword,
+                LeadingTrivia::Preserve,
+                TrailingTrivia::BeforeLineBreak,
+            )
         },
     )
 }
@@ -293,7 +308,7 @@ fn format_type_clause_entries_broken(
             format_type_without_leading_comments(&entry.ty, formatter),
         ]));
         if let Some(comma) = entry.comma {
-            docs.push(format_separator_with_comments(&comma, ",", line()));
+            docs.push(format_separator_with_comments(&comma, line()));
         } else if index + 1 < entries_len {
             docs.push(line());
         }
@@ -315,7 +330,7 @@ fn format_permits_clause_entries_broken(
             format_name(&entry.name),
         ]));
         if let Some(comma) = entry.comma {
-            docs.push(format_separator_with_comments(&comma, ",", line()));
+            docs.push(format_separator_with_comments(&comma, line()));
         } else if index + 1 < entries_len {
             docs.push(line());
         }

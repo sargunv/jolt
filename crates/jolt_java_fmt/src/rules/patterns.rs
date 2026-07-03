@@ -2,7 +2,7 @@ use jolt_fmt_ir::{Doc, concat, text};
 use jolt_java_syntax::{ComponentPattern, MatchAllPattern, Pattern, RecordPattern, TypePattern};
 
 use crate::context::JavaFormatter;
-use crate::helpers::comments::format_token_text;
+use crate::helpers::comments::format_token_with_comments;
 use crate::helpers::lists::{CommaListItem, parenthesized_list};
 use crate::rules::types::format_type;
 use crate::rules::variables::format_local_variable_declaration;
@@ -58,5 +58,5 @@ fn format_component_pattern(pattern: &ComponentPattern, formatter: &JavaFormatte
 fn format_match_all_pattern(pattern: &MatchAllPattern) -> Doc {
     pattern
         .underscore()
-        .map_or_else(|| text("_"), |token| format_token_text(token.text()))
+        .map_or_else(|| text("_"), |token| format_token_with_comments(&token))
 }

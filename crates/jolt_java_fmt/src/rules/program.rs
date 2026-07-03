@@ -5,6 +5,7 @@ use jolt_java_syntax::{CompilationUnit, CompilationUnitItem, PackageDeclaration}
 
 use crate::context::{FormatRule, JavaFormatter};
 use crate::helpers::blocks::{join_empty_lines, join_hard_lines};
+use crate::helpers::comments::format_token_with_comments;
 use crate::helpers::formatter_ignore::{
     formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs, token_range,
 };
@@ -191,11 +192,17 @@ fn format_package_declaration(package: &PackageDeclaration, formatter: &JavaForm
         .map(|annotation| format_annotation(&annotation, formatter))
         .collect::<Vec<_>>();
     let declaration = concat([
-        text("package "),
+        package
+            .package_token()
+            .map_or_else(jolt_fmt_ir::nil, |token| {
+                concat([format_token_with_comments(&token), text(" ")])
+            }),
         package
             .name()
             .map_or_else(jolt_fmt_ir::nil, |name| format_name(&name)),
-        text(";"),
+        package
+            .semicolon()
+            .map_or_else(jolt_fmt_ir::nil, |token| format_token_with_comments(&token)),
     ]);
 
     if annotations.is_empty() {

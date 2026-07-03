@@ -2,8 +2,8 @@ use jolt_fmt_ir::{Doc, concat, hard_line, indent, text};
 use jolt_java_syntax::{JavaComment, JavaSyntaxToken, NameSegment, NameSyntax};
 
 use crate::helpers::comments::{
-    comment_forces_line, format_comment, format_leading_comments, format_token_text,
-    format_trailing_comments_before_line_break,
+    LeadingTrivia, TrailingTrivia, comment_forces_line, format_comment, format_token,
+    format_token_text_after_trivia_relocated, format_token_with_comments,
 };
 use crate::helpers::names::qualified_name;
 
@@ -19,7 +19,7 @@ pub(crate) fn format_name(name: &NameSyntax) -> Doc {
     qualified_name(
         segments
             .into_iter()
-            .map(|segment| format_token_text(segment.identifier.text()))
+            .map(|segment| format_token_with_comments(&segment.identifier))
             .collect(),
     )
 }
@@ -106,23 +106,23 @@ fn format_leading_dot_segment(segment: &NameSegment) -> Doc {
 fn format_name_dot(dot: &JavaSyntaxToken) -> Doc {
     concat([
         format_leading_dot_comments(dot.leading_comments()),
-        text("."),
+        format_token_text_after_trivia_relocated(dot),
         format_inline_comments(dot.trailing_comments()),
     ])
 }
 
 fn format_name_segment_identifier(segment: &NameSegment) -> Doc {
-    concat([
-        format_leading_comments(&segment.identifier),
-        format_token_text(segment.identifier.text()),
-        format_trailing_comments_before_line_break(&segment.identifier),
-    ])
+    format_token(
+        &segment.identifier,
+        LeadingTrivia::Preserve,
+        TrailingTrivia::BeforeLineBreak,
+    )
 }
 
 fn format_inline_name_segment_identifier(segment: &NameSegment, followed_by_dot: bool) -> Doc {
     concat([
         format_inline_comments(segment.identifier.leading_comments()),
-        format_token_text(segment.identifier.text()),
+        format_token_text_after_trivia_relocated(&segment.identifier),
         if followed_by_dot {
             format_leading_dot_comments(segment.identifier.trailing_comments())
         } else {

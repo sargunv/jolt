@@ -3,5 +3,9 @@ source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
 expression: formatted
 ---
 class B35797074 {
+  /**
+   * javadoc
+   */
+  /* package */
   final int x;
 }

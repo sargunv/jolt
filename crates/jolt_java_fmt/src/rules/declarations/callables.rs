@@ -1,14 +1,14 @@
 use super::{
     AnnotationElementDeclaration, CommaListItem, Doc, FormalParameterList, JavaFormatter,
-    JavaSyntaxToken, MethodDeclaration, ThrowsClause, ThrowsClauseEntry, braced_body,
-    comment_forces_line, concat, declaration_with_body, declaration_without_body,
-    format_annotation_element_value, format_array_dimensions, format_block_body,
-    format_construct_leading_comments, format_constructor_body, format_formal_parameter,
-    format_inline_annotations, format_leading_comments, format_modifier_prefix,
+    JavaSyntaxToken, LeadingTrivia, MethodDeclaration, ThrowsClause, ThrowsClauseEntry,
+    TrailingTrivia, braced_body, comment_forces_line, concat, declaration_with_body,
+    declaration_without_body, format_annotation_element_value, format_array_dimensions,
+    format_block, format_construct_leading_comments, format_constructor_body,
+    format_formal_parameter, format_inline_annotations, format_modifier_prefix,
     format_receiver_parameter, format_separator_with_comments, format_statement_semicolon,
-    format_token_text, format_trailing_comments_before_line_break, format_type,
-    format_type_parameter_list, format_type_without_leading_comments, format_typed_modifier_prefix,
-    group, hard_line, line, parenthesized_list, text,
+    format_token, format_token_after_construct_leading_comments, format_token_with_comments,
+    format_type, format_type_parameter_list, format_type_without_leading_comments,
+    format_typed_modifier_prefix, group, hard_line, line, parenthesized_list, text,
 };
 
 pub(super) fn format_constructor_declaration(
@@ -32,9 +32,9 @@ pub(super) fn format_constructor_declaration(
         } else {
             jolt_fmt_ir::nil()
         },
-        constructor
-            .name()
-            .map_or_else(jolt_fmt_ir::nil, |name| format_token_text(name.text())),
+        constructor.name().map_or_else(jolt_fmt_ir::nil, |name| {
+            format_token_after_construct_leading_comments(&name, &constructor.tokens())
+        }),
         format_parameters(constructor.parameters(), formatter),
         format_throws_clause(throws, formatter),
     ]);
@@ -59,7 +59,7 @@ pub(super) fn format_compact_constructor_declaration(
     let prefix = format_modifier_prefix(constructor.modifiers(), formatter);
     let header = constructor
         .name()
-        .map_or_else(jolt_fmt_ir::nil, |name| format_token_text(name.text()));
+        .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name));
 
     match constructor.body() {
         Some(body) => {
@@ -88,7 +88,7 @@ pub(super) fn format_method_declaration(
     let name_and_parameters = concat([
         method
             .name()
-            .map_or_else(jolt_fmt_ir::nil, |name| format_token_text(name.text())),
+            .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name)),
         format_parameters(parameters.clone(), formatter),
     ]);
     let header = concat([
@@ -112,10 +112,10 @@ pub(super) fn format_method_declaration(
 
     match method.body() {
         Some(body) if has_throws => {
-            declaration_with_body(prefix, header, format_block_body(&body, formatter))
+            declaration_with_body_doc(prefix, header, format_block(&body, formatter))
         }
         Some(body) => {
-            callable_declaration_with_body(prefix, header, format_block_body(&body, formatter))
+            callable_declaration_with_body_doc(prefix, header, format_block(&body, formatter))
         }
         None => concat([
             prefix,
@@ -138,8 +138,12 @@ pub(super) fn format_annotation_element_declaration(
             text(" "),
             element
                 .name()
-                .map_or_else(jolt_fmt_ir::nil, |name| format_token_text(name.text())),
-            text("()"),
+                .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name)),
+            parenthesized_list(
+                element.open_paren().as_ref(),
+                element.close_paren().as_ref(),
+                Vec::new(),
+            ),
             element
                 .dimensions()
                 .map_or_else(jolt_fmt_ir::nil, |dimensions| {
@@ -158,7 +162,11 @@ fn format_annotation_element_default(
     default.map_or_else(jolt_fmt_ir::nil, |default| {
         concat([
             text(" "),
-            text("default "),
+            default
+                .default_token()
+                .map_or_else(jolt_fmt_ir::nil, |token| {
+                    concat([format_token_with_comments(&token), text(" ")])
+                }),
             default.value().map_or_else(jolt_fmt_ir::nil, |value| {
                 format_annotation_element_value(&value, formatter)
             }),
@@ -199,6 +207,14 @@ fn callable_declaration_with_body(prefix: Doc, header: Doc, body: Option<Doc>) -
     concat([prefix, group(header), text(" "), braced_body(body)])
 }
 
+fn declaration_with_body_doc(prefix: Doc, header_tail: Doc, body: Doc) -> Doc {
+    concat([prefix, group(header_tail), text(" "), body])
+}
+
+fn callable_declaration_with_body_doc(prefix: Doc, header: Doc, body: Doc) -> Doc {
+    concat([prefix, group(header), text(" "), body])
+}
+
 fn format_throws_clause(throws: Option<ThrowsClause>, formatter: &JavaFormatter<'_>) -> Doc {
     let Some(throws) = throws else {
         return jolt_fmt_ir::nil();
@@ -220,11 +236,11 @@ fn format_throws_keyword(throws: &ThrowsClause) -> Doc {
     throws.keyword().map_or_else(
         || text("throws"),
         |keyword| {
-            concat([
-                format_leading_comments(&keyword),
-                text("throws"),
-                format_trailing_comments_before_line_break(&keyword),
-            ])
+            format_token(
+                &keyword,
+                LeadingTrivia::Preserve,
+                TrailingTrivia::BeforeLineBreak,
+            )
         },
     )
 }
@@ -267,7 +283,7 @@ fn format_throws_entry_separator(
     entries_len: usize,
 ) -> Doc {
     if let Some(comma) = comma {
-        format_separator_with_comments(&comma, ",", line())
+        format_separator_with_comments(&comma, line())
     } else if index + 1 < entries_len {
         line()
     } else {

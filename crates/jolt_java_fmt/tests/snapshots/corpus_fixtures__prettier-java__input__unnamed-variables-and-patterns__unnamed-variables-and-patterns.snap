@@ -47,8 +47,10 @@ class T {
   void multipleCatchClauses() {
     try {
     } catch (Exception _) {
-    } catch (Throwable _) {
-    }
+    } // Unnamed variable
+     catch (Throwable _) {
+    } // Unnamed variable
+    
   }
 
   void tryWithResources() {
@@ -67,18 +69,18 @@ class T {
 
   void switchTypePattern() {
     switch (ball) {
-      case RedBall _ -> process(ball);
-      case BlueBall _ -> process(ball);
-      case GreenBall _ -> stopProcessing();
+      case RedBall _ -> process(ball); // Unnamed pattern variable
+      case BlueBall _ -> process(ball); // Unnamed pattern variable
+      case GreenBall _ -> stopProcessing(); // Unnamed pattern variable
     }
   }
 
   void switchRecordPattern() {
     switch (box) {
-      case Box(RedBall _) -> processBox(box);
-      case Box(BlueBall _) -> processBox(box);
-      case Box(GreenBall _) -> stopProcessing();
-      case Box(var _) -> pickAnotherBox();
+      case Box(RedBall _) -> processBox(box); // Unnamed pattern variable
+      case Box(BlueBall _) -> processBox(box); // Unnamed pattern variable
+      case Box(GreenBall _) -> stopProcessing(); // Unnamed pattern variable
+      case Box(var _) -> pickAnotherBox(); // Unnamed pattern variable
     }
   }
 

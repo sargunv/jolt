@@ -5,7 +5,9 @@ use jolt_java_syntax::{
 };
 
 use crate::context::JavaFormatter;
-use crate::helpers::comments::format_token_text;
+use crate::helpers::comments::{
+    TrailingTrivia, format_token_after_relocated_leading_comments, format_token_with_comments,
+};
 use crate::helpers::lists::{
     CommaListItem, braced_comma_list_with_trailing_separator, parenthesized_list,
 };
@@ -13,8 +15,27 @@ use crate::rules::expressions::format_expression;
 use crate::rules::names::format_name;
 
 pub(crate) fn format_annotation(annotation: &Annotation, formatter: &JavaFormatter<'_>) -> Doc {
+    format_annotation_with_at_token(annotation, formatter, format_token_with_comments)
+}
+
+pub(crate) fn format_annotation_without_leading_comments(
+    annotation: &Annotation,
+    formatter: &JavaFormatter<'_>,
+) -> Doc {
+    format_annotation_with_at_token(annotation, formatter, |token| {
+        format_token_after_relocated_leading_comments(token, TrailingTrivia::Preserve)
+    })
+}
+
+fn format_annotation_with_at_token(
+    annotation: &Annotation,
+    formatter: &JavaFormatter<'_>,
+    at_token: impl Fn(&jolt_java_syntax::JavaSyntaxToken) -> Doc,
+) -> Doc {
     concat([
-        text("@"),
+        annotation
+            .at_token()
+            .map_or_else(jolt_fmt_ir::nil, |token| at_token(&token)),
         annotation
             .name()
             .map_or_else(jolt_fmt_ir::nil, |name| format_name(&name)),
@@ -75,8 +96,11 @@ fn format_annotation_element_value_pair(
 ) -> Doc {
     concat([
         pair.name()
-            .map_or_else(jolt_fmt_ir::nil, |name| format_token_text(name.text())),
-        text(" = "),
+            .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name)),
+        text(" "),
+        pair.equals_token()
+            .map_or_else(jolt_fmt_ir::nil, |token| format_token_with_comments(&token)),
+        text(" "),
         pair.value().map_or_else(jolt_fmt_ir::nil, |value| {
             format_annotation_element_value(&value, formatter)
         }),

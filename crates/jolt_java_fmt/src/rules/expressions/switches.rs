@@ -1,5 +1,6 @@
 use super::{
-    Doc, JavaFormatter, SwitchExpression, concat, format_expression, format_switch_block, text,
+    Doc, JavaFormatter, SwitchExpression, concat, format_expression, format_switch_block,
+    format_token_with_comments, text,
 };
 
 pub(super) fn format_switch_expression(
@@ -7,16 +8,29 @@ pub(super) fn format_switch_expression(
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
     concat([
-        text("switch ("),
+        expression
+            .keyword()
+            .as_ref()
+            .map_or_else(jolt_fmt_ir::nil, |token| {
+                concat([format_token_with_comments(token), text(" ")])
+            }),
+        expression
+            .open_paren()
+            .as_ref()
+            .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
         expression
             .selector()
             .map_or_else(jolt_fmt_ir::nil, |selector| {
                 format_expression(&selector, formatter)
             }),
-        text(") "),
-        expression.block().map_or_else(
-            || text("{}"),
-            |block| format_switch_block(&block, formatter),
-        ),
+        expression
+            .close_paren()
+            .as_ref()
+            .map_or_else(jolt_fmt_ir::nil, |token| {
+                concat([format_token_with_comments(token), text(" ")])
+            }),
+        expression.block().map_or_else(jolt_fmt_ir::nil, |block| {
+            format_switch_block(&block, formatter)
+        }),
     ])
 }

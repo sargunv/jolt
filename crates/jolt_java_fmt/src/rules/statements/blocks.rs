@@ -1,13 +1,43 @@
 use super::{
     Block, BlockItem, BlockStatement, BodyItem, Doc, FormatterIgnoreRange, JavaFormatter,
-    JavaSyntaxToken, Range, braced_body, concat, format_dangling_comments,
+    JavaSyntaxToken, Range, TrailingTrivia, concat, format_dangling_comments,
     format_local_variable_declaration, format_removed_token_comments, format_statement,
     format_statement_semicolon, format_type_declaration, formatter_ignore_ranges,
-    formatter_ignore_run_doc, formatter_ignore_runs, join_body_items, relative_token_range,
+    formatter_ignore_run_doc, formatter_ignore_runs, hard_line, join_body_items,
+    relative_token_range,
+};
+use crate::helpers::comments::{
+    InlineLeadingTrivia, format_token_after_relocated_leading_comments,
+    format_token_with_inline_leading_comments,
 };
 
 pub(crate) fn format_block(block: &Block, formatter: &JavaFormatter<'_>) -> Doc {
-    braced_body(format_block_body(block, formatter))
+    concat([
+        block
+            .open_brace()
+            .as_ref()
+            .map_or_else(jolt_fmt_ir::nil, format_block_open_brace),
+        format_block_body(block, formatter).map_or_else(hard_line, |body| {
+            concat([
+                jolt_fmt_ir::indent(concat([hard_line(), body])),
+                hard_line(),
+            ])
+        }),
+        block
+            .close_brace()
+            .as_ref()
+            .map_or_else(jolt_fmt_ir::nil, |close| {
+                format_token_after_relocated_leading_comments(close, TrailingTrivia::Preserve)
+            }),
+    ])
+}
+
+fn format_block_open_brace(open: &JavaSyntaxToken) -> Doc {
+    format_token_with_inline_leading_comments(
+        open,
+        InlineLeadingTrivia::BeforeToken,
+        TrailingTrivia::RelocatedToEnclosingContext,
+    )
 }
 
 pub(crate) fn format_block_body(block: &Block, formatter: &JavaFormatter<'_>) -> Option<Doc> {

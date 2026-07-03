@@ -7,17 +7,16 @@ use jolt_java_syntax::{
     EnumConstant, EnumConstantListEntry, EnumDeclaration, ExtendsClause, FormalParameterList,
     ImplementsClause, InterfaceBody, InterfaceBodyMember, InterfaceDeclaration, JavaSyntaxToken,
     MethodDeclaration, ModifierList, PermitsClause, PermitsClauseEntry, RecordBody,
-    RecordComponentList, RecordDeclaration, ThrowsClause, ThrowsClauseEntry, TypeClauseEntry,
-    TypeDeclaration,
+    RecordDeclaration, ThrowsClause, ThrowsClauseEntry, TypeClauseEntry, TypeDeclaration,
 };
 
 use crate::context::JavaFormatter;
 use crate::helpers::blocks::{BodyItem, braced_body, join_body_items};
 use crate::helpers::comments::{
-    comment_forces_line, comment_is_star_block, format_comment, format_construct_leading_comments,
-    format_dangling_comments, format_leading_comment_list, format_leading_comments,
-    format_removed_token_comments, format_separator_with_comments, format_token_text,
-    format_trailing_comments, format_trailing_comments_before_line_break,
+    LeadingTrivia, TrailingTrivia, comment_forces_line, comment_is_star_block, format_comment,
+    format_construct_leading_comments, format_dangling_comments, format_leading_comment_list,
+    format_leading_comments, format_removed_token_comments, format_separator_with_comments,
+    format_token, format_token_after_construct_leading_comments, format_token_with_comments,
     non_formatter_control_comments,
 };
 use crate::helpers::declarations::{declaration_with_body, declaration_without_body};
@@ -37,7 +36,7 @@ use crate::rules::modifiers::{
 };
 use crate::rules::names::format_name;
 use crate::rules::statements::{
-    format_block, format_block_body, format_block_statement_item, format_statement_semicolon,
+    format_block, format_block_statement_item, format_statement_semicolon,
 };
 use crate::rules::types::{
     format_array_dimensions, format_inline_annotations, format_type, format_type_argument_list,

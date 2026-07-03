@@ -1,10 +1,10 @@
 use super::{
     AssertStatement, Doc, Expression, ExpressionStatement, JavaComment, JavaFormatter,
-    JavaSyntaxToken, LabeledStatement, ReturnStatement, ThrowStatement, YieldStatement,
-    comment_forces_line, comment_is_star_block, concat, format_comment, format_expression,
-    format_leading_comments, format_statement, format_token_text, format_token_with_comments,
-    format_trailing_comments_before_line_break, hard_line, indent, text,
-    trailing_comments_force_line,
+    JavaSyntaxToken, LabeledStatement, LeadingTrivia, ReturnStatement, ThrowStatement,
+    YieldStatement, comment_forces_line, comment_is_star_block, concat, format_comment,
+    format_expression, format_statement, format_token_before_relocated_trailing_comments,
+    format_token_with_comments, format_trailing_comments_before_line_break, hard_line, indent,
+    text, trailing_comments_force_line,
 };
 
 pub(super) fn format_labeled_statement(
@@ -17,7 +17,10 @@ pub(super) fn format_labeled_statement(
 
     concat([
         label,
-        text(":"),
+        statement
+            .colon()
+            .as_ref()
+            .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
         hard_line(),
         statement
             .body()
@@ -51,7 +54,15 @@ pub(super) fn format_assert_statement(
                 format_expression(&condition, formatter)
             }),
         statement.detail().map_or_else(jolt_fmt_ir::nil, |detail| {
-            concat([text(" : "), format_expression(&detail, formatter)])
+            concat([
+                text(" "),
+                statement
+                    .colon()
+                    .as_ref()
+                    .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
+                text(" "),
+                format_expression(&detail, formatter),
+            ])
         }),
         format_statement_semicolon(statement.semicolon()),
     ])
@@ -213,11 +224,6 @@ pub(super) fn format_statement_keyword_head(
 ) -> Doc {
     keyword.map_or_else(
         || text(fallback),
-        |keyword| {
-            concat([
-                format_leading_comments(keyword),
-                format_token_text(keyword.text()),
-            ])
-        },
+        |keyword| format_token_before_relocated_trailing_comments(keyword, LeadingTrivia::Preserve),
     )
 }

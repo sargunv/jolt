@@ -31,6 +31,6 @@ public sealed strictfp class Base permits Open {
 public non-sealed strictfp class Open extends Base {
 }
 
-public final /* stable */ class CommentedModifier {
-  public volatile /* shared */ int value;
+final /* stable */ public class CommentedModifier {
+  volatile /* shared */ public int value;
 }

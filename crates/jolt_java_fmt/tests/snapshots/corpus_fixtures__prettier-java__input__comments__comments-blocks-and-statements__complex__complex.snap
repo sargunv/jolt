@@ -8,13 +8,15 @@ public class PrettierTest {
   public void myFunction(int arg1) {
     try {
       // Empty Statement
-    } catch (EmptyStackException e) {
+    } /*catch*/ catch (EmptyStackException e) {
       throw new RuntimeException(e);
-    } catch (FirstException | /*2*/ SecondException | /*3*/ ThirdException e2) {
+    } /*multi-catch*/ catch ( /*1*/
+      FirstException | /*2*/ SecondException | /*3*/ ThirdException e2
+    ) {
       throw /*throw an exception*/ new /*don't forget new when throwing exceptions*/ RuntimeException(
         e2
       );
-    } finally {
+    } /*is always executed no matter what*/ finally {
       System.out.println("That's all folks !");
     }
   }
@@ -43,11 +45,13 @@ public class PrettierTest {
           2,
         };
 
-      loop:
+      loop: // Label statement
+      
       //foreach
       for (int num /* num is every number in arr*/ : arr) {
         /*switch*/
-        switch (num) {
+        switch (num) { //switch
+        
           case 1:
             System.out.println("One ");
             System.out.println("One ");
@@ -62,7 +66,7 @@ public class PrettierTest {
             System.out.println("Zero ");
 
             continue /*labeled continued*/ loop;
-          default:
+          default /*def*/:
             /*labeled break*/
             break loop;
         }
@@ -79,7 +83,7 @@ public class PrettierTest {
         continue;
         break /*dead code*/;
         return;
-      } while (false);
+      } /*at least one iteration !*/ while (false);
     }
     synchronized /*declares synchronizd statement*/ (this) {
       while /*infinite*/ (true) {

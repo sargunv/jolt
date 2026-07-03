@@ -4,12 +4,14 @@ expression: formatted
 ---
 class LabeledStatements {
   void commentsLabeledStatementLineComment() {
-    loop:
+    loop: // Label statement
+    
     // comment1
     for (int num : arr) {
     }
 
-    loop:
+    loop: // Label statement
+    
     // comment1
     // comment2
     for (int num : arr) {
@@ -33,7 +35,8 @@ class LabeledStatements {
     for (int num : arr) {
     }
 
-    loop:
+    loop: // comment1
+    
     for (int num : arr) {
     }
 
@@ -43,12 +46,12 @@ class LabeledStatements {
   }
 
   void commentsLabeledStatementBlockComment() {
-    loop:
+    loop: /* Label statement */
     /* comment1 */
     for (int num : arr) {
     }
 
-    loop:
+    loop: /* Label statement */
     /* comment1 */
     /* comment2 */
     for (int num : arr) {
@@ -72,7 +75,7 @@ class LabeledStatements {
     for (int num : arr) {
     }
 
-    loop:
+    loop: /* comment1 */
     for (int num : arr) {
     }
 
@@ -82,47 +85,51 @@ class LabeledStatements {
   }
 
   void commentsLabeledStatementMixedComment() {
-    loop:
+    loop: // Label statement
+    
     /* comment1 */
     for (int num : arr) {
     }
 
-    loop:
+    loop: /* Label statement */
     // comment1
     for (int num : arr) {
     }
 
-    loop:
+    loop: /* Label statement */
     // comment1
     // comment2
     for (int num : arr) {
     }
 
-    loop:
+    loop: // Label statement
+    
     /* comment1 */
     // comment2
     for (int num : arr) {
     }
 
-    loop:
+    loop: // Label statement
+    
     // comment1
     /* comment2 */
     for (int num : arr) {
     }
 
-    loop:
+    loop: /* Label statement */
     // comment1
     /* comment2 */
     for (int num : arr) {
     }
 
-    loop:
+    loop: // Label statement
+    
     /* comment1 */
     /* comment2 */
     for (int num : arr) {
     }
 
-    loop:
+    loop: /* Label statement */
     /* comment1 */
     // comment2
     for (int num : arr) {

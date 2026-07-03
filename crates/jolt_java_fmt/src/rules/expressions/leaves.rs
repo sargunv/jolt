@@ -1,8 +1,10 @@
 use super::{
-    ClassLiteralExpression, Doc, Expression, JavaFormatter, JavaSyntaxToken, LeadingComments,
-    LiteralExpression, NameExpression, SuperExpression, ThisExpression, concat, format_annotation,
-    format_array_dimensions, format_expression, format_leading_comments, format_member_dot,
-    format_token_text, format_trailing_comments, format_void_type, text,
+    ClassLiteralExpression, Doc, Expression, InlineLeadingTrivia, JavaFormatter, JavaSyntaxToken,
+    LeadingComments, LeadingTrivia, LiteralExpression, NameExpression, SuperExpression,
+    ThisExpression, TrailingTrivia, concat, format_annotation, format_array_dimensions,
+    format_expression, format_member_dot, format_token,
+    format_token_after_relocated_leading_comments, format_token_with_inline_leading_comments,
+    format_void_type, hard_line, text,
 };
 
 pub(super) fn format_literal_expression(
@@ -92,14 +94,14 @@ pub(super) fn format_leaf_token(
     token: &jolt_java_syntax::JavaSyntaxToken,
     leading_comments: LeadingComments,
 ) -> Doc {
-    concat([
-        match leading_comments {
-            LeadingComments::Preserve => format_leading_comments(token),
-            LeadingComments::SuppressFirstToken => jolt_fmt_ir::nil(),
-        },
-        format_token_text(token.text()),
-        format_trailing_comments(token),
-    ])
+    match leading_comments {
+        LeadingComments::Preserve => {
+            format_token(token, LeadingTrivia::Preserve, TrailingTrivia::Preserve)
+        }
+        LeadingComments::SuppressFirstToken => {
+            format_token_after_relocated_leading_comments(token, TrailingTrivia::Preserve)
+        }
+    }
 }
 
 pub(super) fn format_class_literal_expression(
@@ -129,6 +131,35 @@ pub(super) fn format_class_literal_expression(
             .map_or_else(jolt_fmt_ir::nil, |dimensions| {
                 format_array_dimensions(&dimensions, formatter)
             }),
-        text(".class"),
+        expression
+            .dot_token()
+            .as_ref()
+            .map_or_else(jolt_fmt_ir::nil, format_class_literal_dot),
+        expression
+            .class_token()
+            .map_or_else(jolt_fmt_ir::nil, |token| {
+                format_token(&token, LeadingTrivia::Preserve, TrailingTrivia::Preserve)
+            }),
+    ])
+}
+
+fn format_class_literal_dot(dot: &JavaSyntaxToken) -> Doc {
+    concat([
+        format_token_with_inline_leading_comments(
+            dot,
+            InlineLeadingTrivia::AfterPreviousToken,
+            TrailingTrivia::BeforeLineBreak,
+        ),
+        if dot
+            .trailing_comments()
+            .iter()
+            .any(super::comment_forces_line)
+        {
+            hard_line()
+        } else if dot.trailing_comments().is_empty() {
+            jolt_fmt_ir::nil()
+        } else {
+            text(" ")
+        },
     ])
 }

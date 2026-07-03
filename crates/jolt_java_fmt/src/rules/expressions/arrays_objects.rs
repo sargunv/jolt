@@ -1,11 +1,12 @@
 use super::calls::format_argument_list;
 use super::{
     ArrayAccessExpression, ArrayCreationExpression, ArrayInitializer, CommaListItem, DimExpression,
-    Doc, JavaFormatter, JavaSyntaxToken, ObjectCreationExpression, VariableInitializerValue,
-    braced_comma_list_with_trailing_separator, comment_forces_line, concat,
-    format_anonymous_class_body, format_expression, format_leading_comments,
-    format_trailing_comments, format_trailing_comments_before_line_break, format_type,
-    format_type_argument_list, group, hard_line, indent, line, text, trailing_comments_force_line,
+    Doc, InlineLeadingTrivia, JavaFormatter, JavaSyntaxToken, ObjectCreationExpression,
+    TrailingTrivia, VariableInitializerValue, braced_comma_list_with_trailing_separator,
+    comment_forces_line, concat, format_anonymous_class_body, format_expression,
+    format_leading_comments, format_token_with_inline_leading_comments,
+    format_trailing_comments_before_line_break, format_type, format_type_argument_list, group,
+    hard_line, indent, text, trailing_comments_force_line,
 };
 
 pub(super) fn format_array_access_expression(
@@ -149,30 +150,16 @@ fn format_open_bracket_spacing(open: Option<&JavaSyntaxToken>) -> Doc {
 }
 
 fn format_close_bracket_with_spacing(close: Option<&JavaSyntaxToken>) -> Doc {
-    let close_has_leading_comments =
-        close.is_some_and(|token| !token.leading_comments().is_empty());
-
-    concat([
-        if close_has_leading_comments {
-            line()
-        } else {
-            jolt_fmt_ir::nil()
+    close.map_or_else(
+        || text("]"),
+        |close| {
+            format_token_with_inline_leading_comments(
+                close,
+                InlineLeadingTrivia::AfterPreviousToken,
+                TrailingTrivia::Preserve,
+            )
         },
-        close.map_or_else(
-            || text("]"),
-            |close| {
-                concat([
-                    if close_has_leading_comments {
-                        format_leading_comments(close)
-                    } else {
-                        jolt_fmt_ir::nil()
-                    },
-                    text("]"),
-                    format_trailing_comments(close),
-                ])
-            },
-        ),
-    ])
+    )
 }
 
 fn format_array_initializer(initializer: &ArrayInitializer, formatter: &JavaFormatter<'_>) -> Doc {

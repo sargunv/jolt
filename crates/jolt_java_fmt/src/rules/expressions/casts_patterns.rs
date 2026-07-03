@@ -1,7 +1,8 @@
 use super::{
-    CastExpression, Doc, InstanceofExpression, JavaFormatter, JavaSyntaxToken, comment_forces_line,
-    concat, format_expression, format_leading_comments, format_pattern, format_trailing_comments,
-    format_trailing_comments_before_line_break, format_type, hard_line, line, text,
+    CastExpression, Doc, InlineLeadingTrivia, InstanceofExpression, JavaFormatter, JavaSyntaxToken,
+    TrailingTrivia, concat, format_expression, format_leading_comments, format_pattern,
+    format_token_with_inline_leading_comments, format_trailing_comments,
+    format_trailing_comments_before_line_break, format_type, group, hard_line, line, text,
     trailing_comments_force_line,
 };
 
@@ -12,9 +13,8 @@ pub(super) fn format_cast_expression(
     let open_paren = expression.open_paren();
     let close_paren = expression.close_paren();
 
-    concat([
+    group(concat([
         format_cast_open_paren(open_paren.as_ref()),
-        format_cast_open_paren_spacing(open_paren.as_ref()),
         expression
             .ty()
             .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty, formatter)),
@@ -32,33 +32,20 @@ pub(super) fn format_cast_expression(
             .map_or_else(jolt_fmt_ir::nil, |expression| {
                 format_expression(&expression, formatter)
             }),
-    ])
+    ]))
 }
 
 fn format_cast_open_paren(open: Option<&JavaSyntaxToken>) -> Doc {
     open.map_or_else(
         || text("("),
-        |open| concat([format_leading_comments(open), text("(")]),
-    )
-}
-
-fn format_cast_open_paren_spacing(open: Option<&JavaSyntaxToken>) -> Doc {
-    let Some(open) = open else {
-        return jolt_fmt_ir::nil();
-    };
-
-    if open.trailing_comments().is_empty() {
-        return jolt_fmt_ir::nil();
-    }
-
-    concat([
-        format_trailing_comments_before_line_break(open),
-        if open.trailing_comments().iter().any(comment_forces_line) {
-            hard_line()
-        } else {
-            text(" ")
+        |open| {
+            format_token_with_inline_leading_comments(
+                open,
+                InlineLeadingTrivia::BeforeToken,
+                TrailingTrivia::BeforeSpaceIfComments,
+            )
         },
-    ])
+    )
 }
 
 fn format_cast_close_paren(close: Option<&JavaSyntaxToken>) -> Doc {

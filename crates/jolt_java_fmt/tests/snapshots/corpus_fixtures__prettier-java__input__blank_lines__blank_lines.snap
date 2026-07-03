@@ -9,6 +9,7 @@ public class BlankLines {
   public int k = 3;
   public int l = 4;
 
+  // Bug Fix: https://github.com/jhipster/prettier-java/issues/368
   private String fieldOne;
   private String fieldTwo;
   @Nullable

@@ -54,7 +54,8 @@ class IfStatements {
 
     if (t) {
     } else {
-    }
+    } // test
+    
   }
 
   void commentsElseBlockComment() {

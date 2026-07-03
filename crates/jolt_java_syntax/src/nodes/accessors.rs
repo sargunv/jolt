@@ -31,17 +31,17 @@ use super::{
     RecordPattern, RecordPatternComponentEntry, RequiresDirective, Resource, ResourceList,
     ResourceListEntry, ResourceSpecification, ReturnStatement, Statement, StatementBody,
     StatementExpressionEntry, StatementExpressionList, StaticInitializer, SuperExpression,
-    SwitchBlock, SwitchBlockEntry, SwitchBlockStatementGroup, SwitchExpression, SwitchLabel,
-    SwitchLabelCaseEntry, SwitchLabelCaseItem, SwitchRule, SwitchStatement, SynchronizedStatement,
-    ThisExpression, ThrowStatement, ThrowsClause, ThrowsClauseEntry, TryStatement,
-    TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList, TypeArgumentListEntry,
-    TypeBoundList, TypeClauseEntry, TypeDeclaration, TypeParameter, TypeParameterList,
-    TypeParameterListEntry, TypePattern, UnaryExpression, UnionType, UnionTypeEntry, UsesDirective,
-    VariableAccess, VariableDeclarator, VariableDeclaratorEntry, VariableDeclaratorList,
-    VariableInitializer, VariableInitializerValue, VoidType, WhileStatement, WildcardBound,
-    WildcardType, YieldStatement, child, child_family, child_token, child_token_in, children,
-    children_family, children_tokens_matching, nth_child_family, nth_child_token,
-    starts_after_blank_line, tokens,
+    SwitchBlock, SwitchBlockEntry, SwitchBlockStatementGroup, SwitchBlockStatementGroupLabel,
+    SwitchExpression, SwitchLabel, SwitchLabelCaseEntry, SwitchLabelCaseItem, SwitchRule,
+    SwitchStatement, SynchronizedStatement, ThisExpression, ThrowStatement, ThrowsClause,
+    ThrowsClauseEntry, TryStatement, TryWithResourcesStatement, Type, TypeArgument,
+    TypeArgumentList, TypeArgumentListEntry, TypeBoundList, TypeClauseEntry, TypeDeclaration,
+    TypeParameter, TypeParameterList, TypeParameterListEntry, TypePattern, UnaryExpression,
+    UnionType, UnionTypeEntry, UsesDirective, VariableAccess, VariableDeclarator,
+    VariableDeclaratorEntry, VariableDeclaratorList, VariableInitializer, VariableInitializerValue,
+    VoidType, WhileStatement, WildcardBound, WildcardType, YieldStatement, child, child_family,
+    child_token, child_token_in, children, children_family, children_tokens_matching,
+    nth_child_family, nth_child_token, starts_after_blank_line, tokens,
 };
 use crate::JavaSyntaxNode;
 use jolt_syntax::{SyntaxElement, TriviaKind};
@@ -119,6 +119,44 @@ impl ImportDeclaration {
     }
 
     #[must_use]
+    pub fn import_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::ImportKw)
+    }
+
+    #[must_use]
+    pub fn module_token(&self) -> Option<JavaSyntaxToken> {
+        let name_start = self.name().map(|name| name.text_range().start());
+        self.contextual_keyword("module").filter(|token| {
+            name_start.is_some_and(|name_start| token.token_text_range().end() <= name_start)
+        })
+    }
+
+    #[must_use]
+    pub fn static_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::StaticKw)
+    }
+
+    #[must_use]
+    pub fn star_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Star)
+    }
+
+    #[must_use]
+    pub fn on_demand_dot_token(&self) -> Option<JavaSyntaxToken> {
+        let star_start = self
+            .star_token()
+            .map(|token| token.token_text_range().start())?;
+        children_tokens_matching(&self.syntax, |kind| kind == JavaSyntaxKind::Dot)
+            .filter(|token| token.token_text_range().start() < star_start)
+            .last()
+    }
+
+    #[must_use]
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Semicolon)
+    }
+
+    #[must_use]
     pub fn is_static(&self) -> bool {
         child_token(&self.syntax, JavaSyntaxKind::StaticKw).is_some()
     }
@@ -165,6 +203,11 @@ impl ImportDeclaration {
 }
 
 impl PackageDeclaration {
+    #[must_use]
+    pub fn package_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::PackageKw)
+    }
+
     pub fn annotations(&self) -> impl Iterator<Item = Annotation> + '_ {
         children(&self.syntax)
     }
@@ -172,6 +215,11 @@ impl PackageDeclaration {
     #[must_use]
     pub fn name(&self) -> Option<NameSyntax> {
         child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 }
 
@@ -220,6 +268,11 @@ impl NameSyntax {
 
 impl ClassDeclaration {
     #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::ClassKw)
+    }
+
+    #[must_use]
     pub fn modifiers(&self) -> Option<ModifierList> {
         child(&self.syntax)
     }
@@ -257,6 +310,12 @@ impl ClassDeclaration {
 
 impl RecordDeclaration {
     #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        children_tokens_matching(&self.syntax, |kind| kind == JavaSyntaxKind::Identifier)
+            .find(|token| token.text() == "record")
+    }
+
+    #[must_use]
     pub fn modifiers(&self) -> Option<ModifierList> {
         child(&self.syntax)
     }
@@ -269,6 +328,16 @@ impl RecordDeclaration {
     #[must_use]
     pub fn type_parameters(&self) -> Option<TypeParameterList> {
         child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RParen)
     }
 
     #[must_use]
@@ -288,6 +357,11 @@ impl RecordDeclaration {
 }
 
 impl EnumDeclaration {
+    #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::EnumKw)
+    }
+
     #[must_use]
     pub fn modifiers(&self) -> Option<ModifierList> {
         child(&self.syntax)
@@ -310,6 +384,11 @@ impl EnumDeclaration {
 }
 
 impl InterfaceDeclaration {
+    #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::InterfaceKw)
+    }
+
     #[must_use]
     pub fn modifiers(&self) -> Option<ModifierList> {
         child(&self.syntax)
@@ -420,6 +499,16 @@ impl PermitsClause {
 }
 
 impl AnnotationInterfaceDeclaration {
+    #[must_use]
+    pub fn at_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::At)
+    }
+
+    #[must_use]
+    pub fn interface_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::InterfaceKw)
+    }
+
     #[must_use]
     pub fn modifiers(&self) -> Option<ModifierList> {
         child(&self.syntax)
@@ -554,6 +643,11 @@ impl TypeParameter {
 }
 
 impl TypeBoundList {
+    #[must_use]
+    pub fn extends_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::ExtendsKw)
+    }
+
     pub fn bounds(&self) -> impl Iterator<Item = Type> + '_ {
         children_family(&self.syntax)
     }
@@ -609,11 +703,17 @@ impl ClassType {
     pub fn segments(&self) -> impl Iterator<Item = ClassTypeSegment> {
         let mut segments = Vec::new();
         let mut annotations = Vec::new();
+        let mut dot_before = None;
         let mut current: Option<ClassTypeSegment> = None;
 
         for element in self.syntax.children_with_tokens() {
-            let SyntaxElement::Node(node) = element else {
-                continue;
+            let node = match element {
+                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Dot => {
+                    dot_before = Some(JavaSyntaxToken { syntax: token });
+                    continue;
+                }
+                SyntaxElement::Node(node) => node,
+                SyntaxElement::Token(_) => continue,
             };
 
             if let Some(annotation) = Annotation::cast(node.clone()) {
@@ -627,6 +727,7 @@ impl ClassType {
                 }
                 current = Some(ClassTypeSegment {
                     annotations: std::mem::take(&mut annotations),
+                    dot_before: dot_before.take(),
                     name,
                     type_arguments: None,
                 });
@@ -660,6 +761,11 @@ impl TypeArgument {
 }
 
 impl WildcardType {
+    #[must_use]
+    pub fn question_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Question)
+    }
+
     #[must_use]
     pub fn bound_clause(&self) -> Option<WildcardBound> {
         let keyword = self.bound_keyword()?;
@@ -761,6 +867,11 @@ impl RecordComponent {
     #[must_use]
     pub fn is_variable_arity(&self) -> bool {
         child_token(&self.syntax, JavaSyntaxKind::Ellipsis).is_some()
+    }
+
+    #[must_use]
+    pub fn ellipsis_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Ellipsis)
     }
 
     #[must_use]
@@ -949,6 +1060,16 @@ impl AnnotationElementDeclaration {
     }
 
     #[must_use]
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RParen)
+    }
+
+    #[must_use]
     pub fn dimensions(&self) -> Option<ArrayDimensions> {
         child(&self.syntax)
     }
@@ -965,6 +1086,11 @@ impl AnnotationElementDeclaration {
 }
 
 impl DefaultValue {
+    #[must_use]
+    pub fn default_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::DefaultKw)
+    }
+
     #[must_use]
     pub fn value(&self) -> Option<AnnotationElementValue> {
         child(&self.syntax)
@@ -1269,6 +1395,11 @@ impl ConstructorInvocation {
     }
 
     #[must_use]
+    pub fn dot_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Dot)
+    }
+
+    #[must_use]
     pub fn type_arguments(&self) -> Option<TypeArgumentList> {
         child(&self.syntax)
     }
@@ -1342,6 +1473,11 @@ impl ThrowsClause {
 }
 
 impl StaticInitializer {
+    #[must_use]
+    pub fn static_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::StaticKw)
+    }
+
     #[must_use]
     pub fn body(&self) -> Option<Block> {
         child(&self.syntax)
@@ -1435,6 +1571,11 @@ impl FormalParameter {
     #[must_use]
     pub fn is_variable_arity(&self) -> bool {
         child_token(&self.syntax, JavaSyntaxKind::Ellipsis).is_some()
+    }
+
+    #[must_use]
+    pub fn ellipsis_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Ellipsis)
     }
 
     #[must_use]
@@ -1733,6 +1874,16 @@ impl ClassLiteralExpression {
     #[must_use]
     pub fn dimensions(&self) -> Option<ArrayDimensions> {
         child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn dot_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Dot)
+    }
+
+    #[must_use]
+    pub fn class_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::ClassKw)
     }
 }
 
@@ -2274,6 +2425,16 @@ impl ArrayDimensions {
 }
 
 impl ArrayDimension {
+    #[must_use]
+    pub fn open_bracket(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LBracket)
+    }
+
+    #[must_use]
+    pub fn close_bracket(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RBracket)
+    }
+
     pub fn annotations(&self) -> impl Iterator<Item = Annotation> + '_ {
         children(&self.syntax)
     }
@@ -2290,6 +2451,11 @@ impl IntersectionType {
 }
 
 impl Annotation {
+    #[must_use]
+    pub fn at_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::At)
+    }
+
     #[must_use]
     pub fn name(&self) -> Option<NameSyntax> {
         child_family(&self.syntax)
@@ -2331,6 +2497,11 @@ impl AnnotationElementValuePair {
     #[must_use]
     pub fn name(&self) -> Option<JavaSyntaxToken> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
+    }
+
+    #[must_use]
+    pub fn equals_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Assign)
     }
 
     #[must_use]
@@ -2715,6 +2886,21 @@ impl ReceiverParameter {
 
 impl LambdaExpression {
     #[must_use]
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken> {
+        children_tokens_matching(&self.syntax, |kind| kind == JavaSyntaxKind::LParen).next()
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken> {
+        let arrow_start = self.arrow().map(|token| token.token_text_range().start());
+        children_tokens_matching(&self.syntax, |kind| kind == JavaSyntaxKind::RParen)
+            .filter(|token| {
+                arrow_start.is_none_or(|arrow_start| token.token_text_range().end() <= arrow_start)
+            })
+            .last()
+    }
+
+    #[must_use]
     pub fn parameters(&self) -> Option<LambdaParameterList> {
         child(&self.syntax)
     }
@@ -2741,6 +2927,16 @@ impl LambdaExpression {
 }
 
 impl LambdaParameterList {
+    #[must_use]
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RParen)
+    }
+
     pub fn parameters(&self) -> impl Iterator<Item = LambdaParameter> + '_ {
         children(&self.syntax)
     }
@@ -2768,6 +2964,11 @@ impl LambdaParameter {
     #[must_use]
     pub fn is_variable_arity(&self) -> bool {
         child_token(&self.syntax, JavaSyntaxKind::Ellipsis).is_some()
+    }
+
+    #[must_use]
+    pub fn ellipsis_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Ellipsis)
     }
 
     #[must_use]
@@ -2812,6 +3013,11 @@ impl LabeledStatement {
     }
 
     #[must_use]
+    pub fn colon(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Colon)
+    }
+
+    #[must_use]
     pub fn body(&self) -> Option<Statement> {
         child_family(&self.syntax)
     }
@@ -2831,6 +3037,11 @@ impl AssertStatement {
     #[must_use]
     pub fn detail(&self) -> Option<Expression> {
         nth_child_family(&self.syntax, 1)
+    }
+
+    #[must_use]
+    pub fn colon(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Colon)
     }
 
     #[must_use]
@@ -3087,6 +3298,16 @@ impl CatchClause {
     #[must_use]
     pub fn parameter(&self) -> Option<CatchParameter> {
         child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RParen)
     }
 
     #[must_use]
@@ -3383,6 +3604,11 @@ impl EnhancedForStatement {
     }
 
     #[must_use]
+    pub fn colon(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Colon)
+    }
+
+    #[must_use]
     pub fn body(&self) -> Option<Statement> {
         child_family(&self.syntax)
     }
@@ -3485,6 +3711,21 @@ impl SwitchStatement {
 
 impl SwitchExpression {
     #[must_use]
+    pub fn keyword(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::SwitchKw)
+    }
+
+    #[must_use]
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RParen)
+    }
+
+    #[must_use]
     pub fn selector(&self) -> Option<Expression> {
         child_family(&self.syntax)
     }
@@ -3496,6 +3737,16 @@ impl SwitchExpression {
 }
 
 impl SwitchBlock {
+    #[must_use]
+    pub fn open_brace(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LBrace)
+    }
+
+    #[must_use]
+    pub fn close_brace(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RBrace)
+    }
+
     pub fn entries(&self) -> impl Iterator<Item = SwitchBlockEntry> + '_ {
         self.syntax.children().filter_map(|syntax| {
             if let Some(group) = SwitchBlockStatementGroup::cast(syntax.clone()) {
@@ -3523,6 +3774,38 @@ impl SwitchBlockStatementGroup {
         children(&self.syntax)
     }
 
+    pub fn label_entries(&self) -> impl Iterator<Item = SwitchBlockStatementGroupLabel> + '_ {
+        let mut labels = Vec::new();
+        let mut pending_label = None;
+
+        for element in self.syntax.children_with_tokens() {
+            match element {
+                SyntaxElement::Node(node) => {
+                    if let Some(label) = SwitchLabel::cast(node)
+                        && let Some(label) = pending_label.replace(label)
+                    {
+                        labels.push(SwitchBlockStatementGroupLabel { label, colon: None });
+                    }
+                }
+                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Colon => {
+                    if let Some(label) = pending_label.take() {
+                        labels.push(SwitchBlockStatementGroupLabel {
+                            label,
+                            colon: Some(JavaSyntaxToken { syntax: token }),
+                        });
+                    }
+                }
+                SyntaxElement::Token(_) => {}
+            }
+        }
+
+        if let Some(label) = pending_label {
+            labels.push(SwitchBlockStatementGroupLabel { label, colon: None });
+        }
+
+        labels.into_iter()
+    }
+
     pub fn items(&self) -> impl Iterator<Item = BlockItem> + '_ {
         children::<BlockStatement>(&self.syntax).filter_map(|statement| statement.item())
     }
@@ -3537,6 +3820,11 @@ impl SwitchRule {
     #[must_use]
     pub fn arrow(&self) -> Option<JavaSyntaxToken> {
         child_token(&self.syntax, JavaSyntaxKind::Arrow)
+    }
+
+    #[must_use]
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 
     #[must_use]
@@ -3556,6 +3844,16 @@ impl SwitchRule {
 }
 
 impl SwitchLabel {
+    #[must_use]
+    pub fn case_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::CaseKw)
+    }
+
+    #[must_use]
+    pub fn default_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::DefaultKw)
+    }
+
     #[must_use]
     pub fn is_default_label(&self) -> bool {
         self.syntax
@@ -3639,6 +3937,11 @@ impl CasePattern {
 }
 
 impl Guard {
+    #[must_use]
+    pub fn when_token(&self) -> Option<JavaSyntaxToken> {
+        contextual_keyword_in(&self.syntax, "when")
+    }
+
     #[must_use]
     pub fn expression(&self) -> Option<Expression> {
         child_family(&self.syntax)
@@ -3831,7 +4134,30 @@ const BINARY_OPERATORS: &[JavaSyntaxKind] = &[
 impl ModuleDeclaration {
     #[must_use]
     pub fn is_open(&self) -> bool {
-        self.contextual_keyword("open").is_some()
+        self.open_token().is_some()
+    }
+
+    #[must_use]
+    pub fn open_token(&self) -> Option<JavaSyntaxToken> {
+        self.contextual_keyword("open")
+    }
+
+    #[must_use]
+    pub fn module_token(&self) -> Option<JavaSyntaxToken> {
+        let name_start = self.name().map(|name| name.text_range().start());
+        self.contextual_keyword("module").filter(|token| {
+            name_start.is_some_and(|name_start| token.token_text_range().end() <= name_start)
+        })
+    }
+
+    #[must_use]
+    pub fn open_brace(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::LBrace)
+    }
+
+    #[must_use]
+    pub fn close_brace(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::RBrace)
     }
 
     #[must_use]
@@ -3904,13 +4230,33 @@ impl RequiresDirective {
     }
 
     #[must_use]
+    pub fn requires_token(&self) -> Option<JavaSyntaxToken> {
+        self.contextual_keyword("requires")
+    }
+
+    #[must_use]
+    pub fn static_token(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::StaticKw)
+    }
+
+    #[must_use]
+    pub fn transitive_token(&self) -> Option<JavaSyntaxToken> {
+        self.contextual_keyword("transitive")
+    }
+
+    #[must_use]
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Semicolon)
+    }
+
+    #[must_use]
     pub fn has_static_modifier(&self) -> bool {
-        child_token(&self.syntax, JavaSyntaxKind::StaticKw).is_some()
+        self.static_token().is_some()
     }
 
     #[must_use]
     pub fn has_transitive_modifier(&self) -> bool {
-        self.contextual_keyword("transitive").is_some()
+        self.transitive_token().is_some()
     }
 
     fn contextual_keyword(&self, text: &str) -> Option<JavaSyntaxToken> {
@@ -3933,6 +4279,21 @@ impl ExportsDirective {
         children_family(&self.syntax)
     }
 
+    #[must_use]
+    pub fn exports_token(&self) -> Option<JavaSyntaxToken> {
+        contextual_keyword_in(&self.syntax, "exports")
+    }
+
+    #[must_use]
+    pub fn to_token(&self) -> Option<JavaSyntaxToken> {
+        contextual_keyword_in(&self.syntax, "to")
+    }
+
+    #[must_use]
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Semicolon)
+    }
+
     pub fn target_entries(&self) -> impl Iterator<Item = ModuleNameListEntry> {
         module_name_entries_after_contextual_keyword(&self.syntax, "to")
     }
@@ -3952,6 +4313,21 @@ impl OpensDirective {
         children_family(&self.syntax)
     }
 
+    #[must_use]
+    pub fn opens_token(&self) -> Option<JavaSyntaxToken> {
+        contextual_keyword_in(&self.syntax, "opens")
+    }
+
+    #[must_use]
+    pub fn to_token(&self) -> Option<JavaSyntaxToken> {
+        contextual_keyword_in(&self.syntax, "to")
+    }
+
+    #[must_use]
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Semicolon)
+    }
+
     pub fn target_entries(&self) -> impl Iterator<Item = ModuleNameListEntry> {
         module_name_entries_after_contextual_keyword(&self.syntax, "to")
     }
@@ -3968,6 +4344,16 @@ impl UsesDirective {
     #[must_use]
     pub fn service_name(&self) -> Option<NameSyntax> {
         child_family(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn uses_token(&self) -> Option<JavaSyntaxToken> {
+        contextual_keyword_in(&self.syntax, "uses")
+    }
+
+    #[must_use]
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 }
 
@@ -3991,6 +4377,21 @@ impl ProvidesDirective {
 
     pub fn implementation_entries(&self) -> impl Iterator<Item = ModuleNameListEntry> {
         module_name_entries_after_contextual_keyword(&self.syntax, "with")
+    }
+
+    #[must_use]
+    pub fn provides_token(&self) -> Option<JavaSyntaxToken> {
+        contextual_keyword_in(&self.syntax, "provides")
+    }
+
+    #[must_use]
+    pub fn with_token(&self) -> Option<JavaSyntaxToken> {
+        contextual_keyword_in(&self.syntax, "with")
+    }
+
+    #[must_use]
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken> {
+        child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 
     fn names(&self) -> impl Iterator<Item = NameSyntax> + '_ {
@@ -4073,6 +4474,11 @@ fn next_sibling_token(
         SyntaxElement::Token(syntax) if syntax.kind() == kind => Some(JavaSyntaxToken { syntax }),
         _ => None,
     }
+}
+
+fn contextual_keyword_in(syntax: &super::JavaSyntaxNode, text: &str) -> Option<JavaSyntaxToken> {
+    children_tokens_matching(syntax, |kind| kind == JavaSyntaxKind::Identifier)
+        .find(|token| token.text() == text)
 }
 
 fn type_clause_entries(syntax: &super::JavaSyntaxNode) -> std::vec::IntoIter<TypeClauseEntry> {

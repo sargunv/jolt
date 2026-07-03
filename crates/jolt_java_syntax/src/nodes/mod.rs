@@ -737,6 +737,12 @@ pub struct SwitchLabelCaseEntry {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SwitchBlockStatementGroupLabel {
+    pub label: SwitchLabel,
+    pub colon: Option<JavaSyntaxToken>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum AnnotationArgument {
     Value(AnnotationElementValue),
     Pair(AnnotationElementValuePair),
@@ -981,6 +987,7 @@ pub struct PermitsClauseEntry {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ClassTypeSegment {
     pub annotations: Vec<Annotation>,
+    pub dot_before: Option<JavaSyntaxToken>,
     pub name: NameSyntax,
     pub type_arguments: Option<TypeArgumentList>,
 }

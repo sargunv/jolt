@@ -2,9 +2,9 @@ use super::{
     BlockStatement, BodyItem, ConstructorInvocation, Doc, JavaFormatter, JavaSyntaxToken, Range,
     concat, format_argument_list, format_block_statement_item, format_construct_leading_comments,
     format_dangling_comments, format_expression, format_name, format_statement_semicolon,
-    format_token_text, format_type_argument_list, formatter_ignore_ranges,
-    formatter_ignore_run_doc, formatter_ignore_runs, join_body_items,
-    non_formatter_control_comments, relative_token_range, text,
+    format_token_after_construct_leading_comments, format_token_with_comments,
+    format_type_argument_list, formatter_ignore_ranges, formatter_ignore_run_doc,
+    formatter_ignore_runs, join_body_items, non_formatter_control_comments, relative_token_range,
 };
 
 pub(super) fn format_constructor_body(
@@ -128,9 +128,9 @@ fn format_constructor_invocation(
             .map_or_else(jolt_fmt_ir::nil, |arguments| {
                 format_type_argument_list(&arguments, formatter)
             }),
-        invocation
-            .target()
-            .map_or_else(jolt_fmt_ir::nil, |target| format_token_text(target.text())),
+        invocation.target().map_or_else(jolt_fmt_ir::nil, |target| {
+            format_token_after_construct_leading_comments(&target, &invocation.tokens())
+        }),
         format_argument_list(invocation.arguments(), formatter),
         format_statement_semicolon(invocation.semicolon()),
     ])
@@ -141,12 +141,24 @@ fn format_constructor_invocation_qualifier(
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
     if let Some(name) = invocation.qualifier_name() {
-        return concat([format_name(&name), text(".")]);
+        return concat([
+            format_name(&name),
+            invocation
+                .dot_token()
+                .as_ref()
+                .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
+        ]);
     }
     invocation
         .qualifier_expression()
         .map_or_else(jolt_fmt_ir::nil, |expression| {
-            concat([format_expression(&expression, formatter), text(".")])
+            concat([
+                format_expression(&expression, formatter),
+                invocation
+                    .dot_token()
+                    .as_ref()
+                    .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
+            ])
         })
 }
 

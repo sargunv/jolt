@@ -1,8 +1,29 @@
-use jolt_fmt_ir::{Doc, concat, hard_line, literal_text, text};
+use jolt_fmt_ir::{Doc, concat, hard_line, literal_text, soft_line, text};
 use jolt_java_syntax::{JavaComment, JavaCommentKind, JavaSyntaxToken, TriviaKind};
 
 use crate::comments::CommentMap;
 use crate::helpers::formatter_ignore::is_formatter_control_marker;
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum LeadingTrivia {
+    Preserve,
+    SuppressAlreadyHandled,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum TrailingTrivia {
+    Preserve,
+    BeforeLineBreak,
+    BeforeSoftLine,
+    BeforeSpaceIfComments,
+    RelocatedToEnclosingContext,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum InlineLeadingTrivia {
+    AfterPreviousToken,
+    BeforeToken,
+}
 
 pub(crate) fn tokens_have_comments(tokens: &[JavaSyntaxToken]) -> bool {
     tokens.iter().any(token_has_comments)
@@ -95,15 +116,13 @@ pub(crate) fn format_inline_trailing_comment_list(comments: &[JavaComment]) -> D
     )
 }
 
-pub(crate) fn format_separator_with_comments(
-    token: &JavaSyntaxToken,
-    separator: &'static str,
-    unforced_break: Doc,
-) -> Doc {
+pub(crate) fn format_separator_with_comments(token: &JavaSyntaxToken, unforced_break: Doc) -> Doc {
     concat([
-        format_leading_comments(token),
-        text(separator),
-        format_trailing_comments_before_line_break(token),
+        format_token(
+            token,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::BeforeLineBreak,
+        ),
         if trailing_comments_force_line(token) {
             hard_line()
         } else {
@@ -128,11 +147,100 @@ pub(crate) fn trailing_comments_force_line(token: &JavaSyntaxToken) -> bool {
 }
 
 pub(crate) fn format_token_with_comments(token: &JavaSyntaxToken) -> Doc {
+    format_token(token, LeadingTrivia::Preserve, TrailingTrivia::Preserve)
+}
+
+pub(crate) fn format_token_after_relocated_leading_comments(
+    token: &JavaSyntaxToken,
+    trailing: TrailingTrivia,
+) -> Doc {
+    format_token(token, LeadingTrivia::SuppressAlreadyHandled, trailing)
+}
+
+pub(crate) fn format_token_before_relocated_trailing_comments(
+    token: &JavaSyntaxToken,
+    leading: LeadingTrivia,
+) -> Doc {
+    format_token(token, leading, TrailingTrivia::RelocatedToEnclosingContext)
+}
+
+pub(crate) fn format_token(
+    token: &JavaSyntaxToken,
+    leading: LeadingTrivia,
+    trailing: TrailingTrivia,
+) -> Doc {
     concat([
-        format_leading_comments(token),
+        match leading {
+            LeadingTrivia::Preserve => format_leading_comments(token),
+            LeadingTrivia::SuppressAlreadyHandled => jolt_fmt_ir::nil(),
+        },
         format_token_text(token.text()),
-        format_trailing_comments(token),
+        match trailing {
+            TrailingTrivia::Preserve => format_trailing_comments(token),
+            TrailingTrivia::BeforeLineBreak => format_trailing_comments_before_line_break(token),
+            TrailingTrivia::BeforeSoftLine => concat([
+                format_trailing_comments_before_line_break(token),
+                if trailing_comments_force_line(token) {
+                    hard_line()
+                } else {
+                    soft_line()
+                },
+            ]),
+            TrailingTrivia::BeforeSpaceIfComments => {
+                if token.trailing_comments().is_empty() {
+                    jolt_fmt_ir::nil()
+                } else {
+                    concat([
+                        format_trailing_comments_before_line_break(token),
+                        if trailing_comments_force_line(token) {
+                            hard_line()
+                        } else {
+                            text(" ")
+                        },
+                    ])
+                }
+            }
+            TrailingTrivia::RelocatedToEnclosingContext => jolt_fmt_ir::nil(),
+        },
     ])
+}
+
+pub(crate) fn format_token_with_inline_leading_comments(
+    token: &JavaSyntaxToken,
+    placement: InlineLeadingTrivia,
+    trailing: TrailingTrivia,
+) -> Doc {
+    let leading = token.leading_comments();
+    concat([
+        if leading.is_empty() {
+            jolt_fmt_ir::nil()
+        } else {
+            let comments = jolt_fmt_ir::join(
+                text(" "),
+                leading.iter().map(format_comment).collect::<Vec<_>>(),
+            );
+            match placement {
+                InlineLeadingTrivia::AfterPreviousToken => concat([text(" "), comments]),
+                InlineLeadingTrivia::BeforeToken => concat([comments, text(" ")]),
+            }
+        },
+        format_token_after_relocated_leading_comments(token, trailing),
+    ])
+}
+
+pub(crate) fn format_token_after_construct_leading_comments(
+    token: &JavaSyntaxToken,
+    construct_tokens: &[JavaSyntaxToken],
+) -> Doc {
+    if construct_tokens.first() == Some(token) {
+        format_token_after_relocated_leading_comments(token, TrailingTrivia::Preserve)
+    } else {
+        format_token_with_comments(token)
+    }
+}
+
+pub(crate) fn format_token_text_after_trivia_relocated(token: &JavaSyntaxToken) -> Doc {
+    format_token_text(token.text())
 }
 
 pub(crate) fn format_comment(comment: &JavaComment) -> Doc {
@@ -226,7 +334,17 @@ fn preserve_comment_lines(comment: &str) -> Vec<String> {
 
 fn is_star_block_comment(comment: &str) -> bool {
     let trimmed = comment.trim_start();
-    trimmed.starts_with("/**") || trimmed.starts_with("/*\n") || trimmed.starts_with("/*\r")
+    if trimmed.starts_with("/**") {
+        return true;
+    }
+
+    let Some(body) = trimmed.strip_prefix("/*") else {
+        return false;
+    };
+
+    body.lines()
+        .find(|line| !line.trim().is_empty())
+        .is_some_and(|line| line.trim_start().starts_with('*'))
 }
 
 fn normalize_star_block_comment(comment: &str) -> Vec<String> {
