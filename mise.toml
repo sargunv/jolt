@@ -11,6 +11,10 @@ lockfile = true
 "core:java" = "zulu-25.34.17.0"
 "core:python" = "3.14.5"
 "core:rust" = { version = "1.96.0", profile = "minimal", components = "rustfmt,clippy", targets = "wasm32-unknown-unknown" }
+"aqua:sharkdp/hyperfine" = "1.20.0"
+"aqua:google/google-java-format" = "1.35.0"
+"aqua:pnpm/pnpm" = "11.9.0"
+"core:node" = "24.18.0"
 
 [tasks.check]
 run = "hk check --all"
