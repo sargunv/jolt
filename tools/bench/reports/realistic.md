@@ -14,14 +14,14 @@ System: Linux 7.0.13-200.fc44.x86_64, x86_64, AMD RYZEN AI MAX+ 395 w/ Radeon
 
 ```text
 Benchmark 1: jolt fmt
-  Time (mean ± σ):     873.1 ms ±  21.6 ms    [User: 16774.7 ms, System: 784.5 ms]
-  Range (min … max):   851.3 ms … 894.4 ms    3 runs
+  Time (mean ± σ):     806.4 ms ±  11.1 ms    [User: 15200.9 ms, System: 794.5 ms]
+  Range (min … max):   795.3 ms … 817.4 ms    3 runs
  
 Benchmark 2: dprint --plugins=jolt_fmt_dprint.wasm fmt --incremental=false --skip-stable-format
-  Time (mean ± σ):     837.1 ms ±   3.6 ms    [User: 17232.2 ms, System: 1093.1 ms]
-  Range (min … max):   833.1 ms … 839.8 ms    3 runs
+  Time (mean ± σ):     856.9 ms ±  11.6 ms    [User: 17136.6 ms, System: 1168.8 ms]
+  Range (min … max):   848.9 ms … 870.1 ms    3 runs
  
 Summary
-  dprint --plugins=jolt_fmt_dprint.wasm fmt --incremental=false --skip-stable-format ran
-    1.04 ± 0.03 times faster than jolt fmt
+  jolt fmt ran
+    1.06 ± 0.02 times faster than dprint --plugins=jolt_fmt_dprint.wasm fmt --incremental=false --skip-stable-format
 ```
