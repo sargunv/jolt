@@ -16,14 +16,37 @@ lockfile = true
 run = "hk check --all"
 
 [tasks.test]
-run = "INSTA_UPDATE=no cargo test --workspace"
+usage = 'flag "--update" help="Update insta snapshots"'
+run = 'INSTA_UPDATE="$([ "${usage_update:-false}" = "true" ] && printf always || printf no)" cargo test --workspace'
 
-[tasks.jolt]
+[tasks.build]
+depends = ["build:jolt", "build:dprint-plugin"]
+
+[tasks."build:jolt"]
+usage = '''
+flag "--mode <mode>" help="Cargo build mode" {
+  choices "debug" "release"
+  default "debug"
+}
+'''
+run = '''
+case "${usage_mode?}" in
+  debug) cargo build --package jolt_fmt_cli ;;
+  release) cargo build --package jolt_fmt_cli --release ;;
+esac
+'''
+
+[tasks."jolt"]
 raw_args = true
 run = "cargo run -p jolt_fmt_cli --"
 
-[tasks."test:update"]
-run = "INSTA_UPDATE=always cargo test --workspace"
+[tasks."build:dprint-plugin"]
+run = "cargo build --target wasm32-unknown-unknown --package jolt_fmt_dprint --features wasm"
+
+[tasks."dprint-with-jolt"]
+depends = ["build:dprint-plugin"]
+raw_args = true
+run = "dprint --plugins=\"$PWD/target/wasm32-unknown-unknown/debug/jolt_fmt_dprint.wasm\""
 
 [tasks.fix]
 run = "hk fix --all"

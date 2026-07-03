@@ -130,7 +130,9 @@ def clear_dir(path: Path) -> None:
 def materialized_path(
     suite: JavaSuite, source_dir: Path, template: str, path: Path
 ) -> Path:
-    name = template.format(stem=path.stem, parent=path.parent.name, name=path.name)
+    name = template.format(
+        stem=path.stem, parent=path.parent.name, name=path.name
+    )
     if not suite.preserve_relative_parent:
         return Path(name)
     relative_parent = path.parent.relative_to(source_dir)

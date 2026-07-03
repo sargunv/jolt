@@ -1,0 +1,196 @@
+//! dprint plugin handler for Jolt.
+
+use std::{fmt::Write as _, path::Path};
+
+use dprint_core::{
+    configuration::{ConfigKeyMap, GlobalConfiguration},
+    plugins::{
+        CheckConfigUpdatesMessage, ConfigChange, FileMatchingInfo, FormatError, FormatResult,
+        PluginInfo, PluginResolveConfigurationResult,
+    },
+};
+use jolt_fmt_core::{
+    Diagnostic, FormatOptions, FormatStatus, Language, LineIndex, Severity, format_source,
+};
+
+use crate::configuration;
+
+/// dprint plugin handler that delegates formatting to `jolt_fmt_core`.
+#[derive(Debug, Default)]
+pub struct JoltDprintPlugin;
+
+impl JoltDprintPlugin {
+    /// Creates a Jolt dprint plugin handler.
+    #[must_use]
+    pub const fn new() -> Self {
+        Self
+    }
+
+    /// Resolves dprint configuration into Jolt's shared formatter options.
+    #[must_use]
+    pub fn resolve_jolt_config(
+        &self,
+        config: ConfigKeyMap,
+        global_config: &GlobalConfiguration,
+    ) -> PluginResolveConfigurationResult<FormatOptions> {
+        configuration::resolve_config(config, global_config)
+    }
+
+    /// Returns the plugin metadata exposed to dprint.
+    #[must_use]
+    pub fn jolt_plugin_info(&self) -> PluginInfo {
+        PluginInfo {
+            name: env!("CARGO_PKG_NAME").to_owned(),
+            version: env!("CARGO_PKG_VERSION").to_owned(),
+            config_key: "jolt".to_owned(),
+            help_url: env!("CARGO_PKG_REPOSITORY").to_owned(),
+            config_schema_url: String::new(),
+            update_url: None,
+        }
+    }
+
+    /// Returns the file matching declaration for resolved configs.
+    #[must_use]
+    pub fn file_matching_info(&self) -> FileMatchingInfo {
+        configuration::file_matching_info()
+    }
+
+    /// Formats a dprint request payload using Jolt's core engine boundary.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the file is not UTF-8, the path is not a supported
+    /// Jolt language, or the core formatter blocks without producing output.
+    pub fn format_file(
+        &self,
+        file_path: &Path,
+        file_bytes: &[u8],
+        options: &FormatOptions,
+    ) -> FormatResult {
+        let source = std::str::from_utf8(file_bytes).map_err(|error| {
+            FormatError::from(format!("Jolt formatter requires UTF-8 input: {error}"))
+        })?;
+        let language = language_for_path(file_path)?;
+        let result = format_source(source, language, options);
+
+        match result.status {
+            FormatStatus::Unchanged => Ok(None),
+            FormatStatus::Formatted => {
+                Ok(result.formatted_source.map(std::string::String::into_bytes))
+            }
+            FormatStatus::Blocked => Err(FormatError::from(format_blocked_diagnostics(
+                source,
+                &result.diagnostics,
+            ))),
+        }
+    }
+
+    /// Returns no config rewrites for the initial plugin.
+    ///
+    /// # Errors
+    ///
+    /// This implementation never returns an error.
+    pub fn check_jolt_config_updates(
+        &self,
+        _message: CheckConfigUpdatesMessage,
+    ) -> Result<Vec<ConfigChange>, FormatError> {
+        Ok(Vec::new())
+    }
+}
+
+#[cfg(feature = "wasm")]
+impl dprint_core::plugins::SyncPluginHandler<FormatOptions> for JoltDprintPlugin {
+    fn resolve_config(
+        &mut self,
+        config: ConfigKeyMap,
+        global_config: &GlobalConfiguration,
+    ) -> PluginResolveConfigurationResult<FormatOptions> {
+        self.resolve_jolt_config(config, global_config)
+    }
+
+    fn plugin_info(&mut self) -> PluginInfo {
+        self.jolt_plugin_info()
+    }
+
+    fn license_text(&mut self) -> String {
+        env!("CARGO_PKG_LICENSE").to_owned()
+    }
+
+    fn check_config_updates(
+        &self,
+        message: CheckConfigUpdatesMessage,
+    ) -> Result<Vec<ConfigChange>, FormatError> {
+        self.check_jolt_config_updates(message)
+    }
+
+    fn format(
+        &mut self,
+        request: dprint_core::plugins::SyncFormatRequest<FormatOptions>,
+        _format_with_host: impl FnMut(dprint_core::plugins::SyncHostFormatRequest) -> FormatResult,
+    ) -> FormatResult {
+        self.format_file(request.file_path, &request.file_bytes, request.config)
+    }
+}
+
+fn language_for_path(file_path: &Path) -> Result<Language, FormatError> {
+    match file_path
+        .extension()
+        .and_then(|extension| extension.to_str())
+    {
+        Some("java") => Ok(Language::Java),
+        Some(extension) => Err(FormatError::from(format!(
+            "Jolt dprint plugin does not support '.{extension}' files"
+        ))),
+        None => Err(FormatError::from(
+            "Jolt dprint plugin requires a supported file extension",
+        )),
+    }
+}
+
+fn format_blocked_diagnostics(source: &str, diagnostics: &[Diagnostic]) -> String {
+    if diagnostics.is_empty() {
+        return "Jolt formatter blocked without diagnostics.".to_owned();
+    }
+
+    let line_index = LineIndex::new(source);
+    diagnostics
+        .iter()
+        .map(|diagnostic| format_diagnostic(source, &line_index, diagnostic))
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+fn format_diagnostic(source: &str, line_index: &LineIndex, diagnostic: &Diagnostic) -> String {
+    let mut text = format!(
+        "code={} severity={} stage={} message={}",
+        diagnostic.code.as_str(),
+        severity_name(diagnostic.severity),
+        format!("{:?}", diagnostic.stage).to_ascii_lowercase(),
+        diagnostic.message
+    );
+
+    if let Some(range) = diagnostic.range {
+        let location = line_index.line_col(range.start());
+        write!(
+            text,
+            " line={} column={} range={range}",
+            location.line + 1,
+            usize::from(location.column) + 1
+        )
+        .expect("writing to a String should not fail");
+        if range.start().get() > source.len() {
+            text.push_str(" location=out-of-bounds");
+        }
+    }
+
+    text
+}
+
+const fn severity_name(severity: Severity) -> &'static str {
+    match severity {
+        Severity::InternalError => "internal-error",
+        Severity::Error => "error",
+        Severity::Warning => "warning",
+        Severity::Note => "note",
+    }
+}

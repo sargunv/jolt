@@ -9,7 +9,7 @@ local lintSteps = new Mapping<String, Step> {
     }
     ["cargo-check-wasm"] {
         glob = List("**/*.rs", "Cargo.toml", "Cargo.lock")
-        check = "cargo check --target wasm32-unknown-unknown --package jolt_text --package jolt_fmt_core --package jolt_fmt_ir --package jolt_syntax --package jolt_java_syntax --package jolt_kotlin_syntax --package jolt_java_fmt --package jolt_kotlin_fmt --package jolt_fmt_dprint"
+        check = "cargo check --target wasm32-unknown-unknown --package jolt_text --package jolt_fmt_core --package jolt_fmt_ir --package jolt_syntax --package jolt_java_syntax --package jolt_kotlin_syntax --package jolt_java_fmt --package jolt_kotlin_fmt --package jolt_fmt_dprint --features jolt_fmt_dprint/wasm"
     }
     ["cargo-clippy"] {
         glob = List("**/*.rs")

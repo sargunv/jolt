@@ -4,7 +4,7 @@ use clap::{ArgAction, Args, Parser, Subcommand};
 
 #[derive(Debug, Parser)]
 #[command(name = "jolt")]
-#[command(about = "Fast, opinionated JVM and Kotlin Multiplatform project tooling.")]
+#[command(about = "Simple, predictable, and opinionated Java formatter.")]
 pub(crate) struct Cli {
     #[command(subcommand)]
     pub(crate) command: Command,

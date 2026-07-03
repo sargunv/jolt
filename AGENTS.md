@@ -8,10 +8,17 @@ Fast, opinionated JVM and Kotlin Multiplatform project tooling.
 - `.agents/docs/formatter-plan.md`: formatter architecture notes.
 - `crates/`: Rust workspace crates for the formatter engine and wrappers.
 
-## Dev Workflow
+## Useful Commands
 
 - `mise run fix`: run all checks and fixers through hk.
 - `mise run test`: run all tests.
+- `mise run test --update`: run tests with `INSTA_UPDATE=always`.
+- `mise run jolt ...`: run the Jolt CLI from local source.
+- `mise run dprint-with-jolt ...`: run the dprint cli with the jolt formatter
+  plugin.
+- `mise x google-java-format -- google-java-format ...`: run the
+  google-java-format formatter as a useful reference.
+- `mise x oxfmt -- oxfmt ...`: run the oxfmt formatter as a useful reference.
 
 Run `mise tasks ls --all` for the full task list.
 
@@ -26,9 +33,6 @@ Run `mise tasks ls --all` for the full task list.
   misconfiguration; do not silently skip them.
 - Do not add convenience APIs unless they carry real behavior needed by current
   code.
-- Formatter rendering must stay linear or explicitly bounded; do not add
-  unbounded layout search, best-fitting, or conditional-group behavior without a
-  documented finite cost model and proven Java/Kotlin need.
-- Proper trivia handling is critical when working on the formatter. Comments are
-  likely to exist in between any token; don't lose the trivia by recreating the
-  tokens.
+- Algorithms must remain linear or explicitly bounded; do not add unbounded
+  layout search, best-fitting, or conditional-group behavior without a
+  documented finite cost model and proven need.

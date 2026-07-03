@@ -33,14 +33,6 @@ style from dozens of settings.
 - Formatter-native syntax infrastructure: lexer, parser, lossless CST, trivia,
   and language-specific CST wrappers.
 
-The Java policy is documented in [`java-format-style.md`](java-format-style.md).
-The implementation approach is documented in
-[`java-format-implementation-spec.md`](java-format-implementation-spec.md), with
-progress and permanent intentional deviations tracked in
-[`java-format-implementation-checklist.md`](java-format-implementation-checklist.md).
-The Java trivia-preservation policy and migration checklist are documented in
-[`java-trivia-formatting-pattern.md`](java-trivia-formatting-pattern.md).
-
 ### Out of scope for the first product
 
 - Gradle integration.
@@ -936,13 +928,6 @@ Status: complete.
 Implement Jolt's Java formatter on top of the completed lexer, parser, CST,
 document IR, and renderer.
 
-The implementation target is the Jolt style guide in
-[`java-format-style.md`](java-format-style.md). Build it according to
-[`java-format-implementation-spec.md`](java-format-implementation-spec.md) and
-keep
-[`java-format-implementation-checklist.md`](java-format-implementation-checklist.md)
-up to date as implementation lands.
-
 Add:
 
 - `jolt_java_fmt`,
@@ -982,10 +967,7 @@ Hardening should proceed in three passes:
 Status: complete.
 
 Add the CLI after the Java engine can format real fixture inputs through
-`format_source`. The detailed CLI/config behavior is specified in
-[`formatter-milestone-10-cli-spec.md`](formatter-milestone-10-cli-spec.md).
-
-Add:
+`format_source`. Add:
 
 - `jolt_fmt_cli`,
 - `jolt fmt`,
@@ -1010,13 +992,10 @@ behavior.
 
 ### Milestone 11: dprint wrapper
 
-Status: pending.
+Status: complete.
 
 Add dprint integration after the Java formatter and native CLI have proven that
 `jolt_fmt_core::format_source` is the stable public engine boundary.
-
-The detailed dprint wrapper behavior is specified in
-[`formatter-milestone-11-dprint-spec.md`](formatter-milestone-11-dprint-spec.md).
 
 Add:
 

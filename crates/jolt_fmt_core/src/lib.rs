@@ -16,6 +16,8 @@ pub enum Language {
 
 /// Formatter options shared by CLI, dprint, tests, and direct engine callers.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 pub struct FormatOptions {
     /// Preferred maximum rendered line width.
     pub line_width: u16,
