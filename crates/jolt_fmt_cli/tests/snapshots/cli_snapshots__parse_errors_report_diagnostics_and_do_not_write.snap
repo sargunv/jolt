@@ -1,0 +1,14 @@
+---
+source: crates/jolt_fmt_cli/tests/cli_snapshots.rs
+expression: "snapshot(&output, &[temp.path().join(\"A.java\")])"
+---
+status: 1
+stdout:
+<empty>
+stderr:
+A.java:1:7: java.parse.expected_syntax: expected type name
+A.java:2:1: java.parse.expected_syntax: expected `}` after type body
+formatting failed
+files:
+-- A.java --
+class {

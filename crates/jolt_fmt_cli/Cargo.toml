@@ -23,4 +23,5 @@ serde = { version = "1.0", features = ["derive"] }
 
 [dev-dependencies]
 assert_cmd = "2.0"
+insta = "1.48"
 tempfile = "3.23"

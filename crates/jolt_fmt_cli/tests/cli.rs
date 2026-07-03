@@ -392,18 +392,20 @@ fn gitignore_and_ignore_files_are_respected() {
 }
 
 #[test]
-fn unsupported_files_fail_when_explicit_and_are_ignored_when_recursive() {
+fn unknown_extensions_are_formatted_when_explicit_and_ignored_when_recursive() {
     let temp = TempDir::new().expect("tempdir should be created");
-    write(temp.path().join("README.md"), "not java\n");
+    write(temp.path().join("README.md"), SIMPLE_INPUT);
     write(temp.path().join("A.java"), SIMPLE_INPUT);
 
     let explicit = jolt(temp.path(), ["fmt", "README.md"], "");
-    assert_failure(&explicit);
-    assert!(stderr(&explicit).contains("unsupported file extension"));
+    assert_success(&explicit);
+    assert_eq!(read(temp.path().join("README.md")), SIMPLE_FORMATTED);
+
+    write(temp.path().join("README.md"), SIMPLE_INPUT);
 
     let recursive = jolt(temp.path(), ["fmt", "."], "");
     assert_success(&recursive);
-    assert_eq!(read(temp.path().join("README.md")), "not java\n");
+    assert_eq!(read(temp.path().join("README.md")), SIMPLE_INPUT);
     assert_eq!(read(temp.path().join("A.java")), SIMPLE_FORMATTED);
 }
 

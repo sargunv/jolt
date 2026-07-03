@@ -1,0 +1,18 @@
+---
+source: crates/jolt_fmt_cli/tests/cli_snapshots.rs
+expression: "snapshot(&output,\n&[temp.path().join(\"A.java\"), temp.path().join(\"B.java\"),\ntemp.path().join(\"C.java\"),],)"
+---
+status: 1
+stdout:
+A.java
+C.java
+stderr:
+2 of 3 files are not formatted
+files:
+-- A.java --
+class A {}
+-- B.java --
+class B {
+}
+-- C.java --
+class C {}

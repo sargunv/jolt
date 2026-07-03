@@ -1,0 +1,11 @@
+---
+source: crates/jolt_fmt_cli/tests/cli_snapshots.rs
+expression: "snapshot(&output, &[])"
+---
+status: 1
+stdout:
+<empty>
+stderr:
+Missing.java: path does not exist
+files:
+<none>

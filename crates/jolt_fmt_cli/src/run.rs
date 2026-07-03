@@ -42,25 +42,18 @@ fn run_fmt(args: &FmtArgs) -> Result<(), CliError> {
             .collect()
     };
 
-    let mut failed = false;
-    let mut changed = false;
+    let mut stats = FormatRunStats::default();
     let mut seen = HashSet::new();
 
     for path in paths {
         if path.is_file() {
-            let Some(language) = detect_language(&path) else {
-                return Err(CliError::new(format!(
-                    "{}: unsupported file extension",
-                    display_path(&cwd, &path)
-                )));
-            };
+            let language = detect_language(&path).unwrap_or(jolt_fmt_core::Language::Java);
             let root = path.parent().map_or_else(|| cwd.clone(), Path::to_path_buf);
             let mut resolver = resolver_for(&cwd, &root, args)?;
             let config = resolver.resolve_for_dir(&root)?;
             if seen.insert(path.clone()) {
                 let result = format_file(&cwd, &path, language, &config, args.check)?;
-                failed |= result.failed;
-                changed |= result.changed;
+                stats.record(result);
             }
             continue;
         }
@@ -70,8 +63,7 @@ fn run_fmt(args: &FmtArgs) -> Result<(), CliError> {
             for candidate in discover_files(&path, &mut resolver)? {
                 if seen.insert(candidate.path.clone()) {
                     let result = format_candidate(&cwd, &candidate, args.check)?;
-                    failed |= result.failed;
-                    changed |= result.changed;
+                    stats.record(result);
                 }
             }
             continue;
@@ -83,7 +75,11 @@ fn run_fmt(args: &FmtArgs) -> Result<(), CliError> {
         )));
     }
 
-    if failed || (args.check && changed) {
+    if args.check && (stats.failed > 0 || stats.changed > 0) {
+        return Err(CliError::new(format_check_summary(stats)));
+    }
+
+    if stats.failed > 0 {
         return Err(CliError::new("formatting failed"));
     }
 
@@ -128,13 +124,24 @@ fn run_stdin(cwd: &Path, args: &FmtArgs) -> Result<(), CliError> {
     emit_diagnostics(&label, &source, &result.diagnostics)?;
 
     let Some(formatted) = result.formatted_source else {
+        if args.check {
+            return Err(CliError::new(format_check_summary(FormatRunStats {
+                total: 1,
+                failed: 1,
+                changed: 0,
+            })));
+        }
         return Err(CliError::new("formatting failed"));
     };
 
     if args.check {
         if result.status == FormatStatus::Formatted {
             println!("{label}");
-            return Err(CliError::new("formatting failed"));
+            return Err(CliError::new(format_check_summary(FormatRunStats {
+                total: 1,
+                failed: 0,
+                changed: 1,
+            })));
         }
         return Ok(());
     }
@@ -259,4 +266,46 @@ fn emit_diagnostics(
 struct FileFormatOutcome {
     failed: bool,
     changed: bool,
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+struct FormatRunStats {
+    total: usize,
+    failed: usize,
+    changed: usize,
+}
+
+impl FormatRunStats {
+    fn record(&mut self, outcome: FileFormatOutcome) {
+        self.total += 1;
+        self.failed += usize::from(outcome.failed);
+        self.changed += usize::from(outcome.changed);
+    }
+}
+
+fn format_check_summary(stats: FormatRunStats) -> String {
+    match (stats.changed, stats.failed) {
+        (changed, 0) => format!(
+            "{changed} of {total} {files} {verb} not formatted",
+            total = stats.total,
+            files = plural(stats.total, "file", "files"),
+            verb = if changed == 1 { "is" } else { "are" },
+        ),
+        (0, failed) => format!(
+            "format check failed: {failed} of {total} {files} could not be formatted",
+            total = stats.total,
+            files = plural(stats.total, "file", "files"),
+        ),
+        (changed, failed) => format!(
+            "format check failed: {changed} of {total} {files} {verb} not formatted; {failed} {failed_files} could not be formatted",
+            total = stats.total,
+            files = plural(stats.total, "file", "files"),
+            verb = if changed == 1 { "is" } else { "are" },
+            failed_files = plural(failed, "file", "files"),
+        ),
+    }
+}
+
+const fn plural(count: usize, singular: &'static str, plural: &'static str) -> &'static str {
+    if count == 1 { singular } else { plural }
 }

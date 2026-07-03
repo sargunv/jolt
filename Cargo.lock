@@ -359,6 +359,7 @@ dependencies = [
  "figment",
  "globset",
  "ignore",
+ "insta",
  "jolt_fmt_core",
  "serde",
  "tempfile",
