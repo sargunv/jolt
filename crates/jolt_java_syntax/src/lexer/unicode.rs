@@ -13,6 +13,10 @@ pub(super) struct InputChar {
 }
 
 pub(super) fn translate_unicode_escapes(source: &str) -> (Vec<InputChar>, Vec<LexerDiagnostic>) {
+    if !contains_unicode_escape_marker(source) {
+        return (raw_input_chars(source), Vec::new());
+    }
+
     let raw: Vec<(usize, char)> = source.char_indices().collect();
     let mut chars = Vec::with_capacity(raw.len());
     let mut diagnostics = Vec::new();
@@ -83,6 +87,23 @@ pub(super) fn translate_unicode_escapes(source: &str) -> (Vec<InputChar>, Vec<Le
     }
 
     (chars, diagnostics)
+}
+
+fn contains_unicode_escape_marker(source: &str) -> bool {
+    source.as_bytes().windows(2).any(|pair| pair == b"\\u")
+}
+
+fn raw_input_chars(source: &str) -> Vec<InputChar> {
+    let mut chars = Vec::with_capacity(source.len());
+    for (start, ch) in source.char_indices() {
+        let end = start + ch.len_utf8();
+        chars.push(InputChar {
+            ch,
+            range: TextRange::new(TextSize::new(start), TextSize::new(end)),
+            from_escape: false,
+        });
+    }
+    chars
 }
 
 #[derive(Clone, Copy, Debug)]
