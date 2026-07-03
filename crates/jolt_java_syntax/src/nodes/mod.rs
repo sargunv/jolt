@@ -1087,8 +1087,7 @@ fn nth_child_token(
     index: usize,
 ) -> Option<JavaSyntaxToken> {
     syntax
-        .children_with_tokens()
-        .filter_map(SyntaxElement::into_token)
+        .child_tokens()
         .filter(|token| token.kind() == kind)
         .nth(index)
         .map(|syntax| JavaSyntaxToken { syntax })
@@ -1096,8 +1095,7 @@ fn nth_child_token(
 
 fn child_token_in(syntax: &JavaSyntaxNode, kinds: &[JavaSyntaxKind]) -> Option<JavaSyntaxToken> {
     syntax
-        .children_with_tokens()
-        .filter_map(SyntaxElement::into_token)
+        .child_tokens()
         .find(|token| kinds.contains(&token.kind()))
         .map(|syntax| JavaSyntaxToken { syntax })
 }
@@ -1107,8 +1105,7 @@ fn children_tokens_matching<'a>(
     predicate: impl Fn(JavaSyntaxKind) -> bool + Copy + 'a,
 ) -> impl Iterator<Item = JavaSyntaxToken> + 'a {
     syntax
-        .children_with_tokens()
-        .filter_map(SyntaxElement::into_token)
+        .child_tokens()
         .filter(move |token| predicate(token.kind()))
         .map(|syntax| JavaSyntaxToken { syntax })
 }

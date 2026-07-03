@@ -139,6 +139,47 @@ fn last_token_ignores_empty_trailing_child_nodes() {
 }
 
 #[test]
+fn sibling_accessors_preserve_offsets() {
+    let root = GreenNode::new(
+        ROOT,
+        [
+            GreenToken::new(TOKEN, "a").into(),
+            GreenNode::new(WRAPPER, [GreenToken::new(TOKEN, "bc").into()]).into(),
+            GreenToken::new(TOKEN, "d").into(),
+        ],
+    );
+    let root = SyntaxNode::<TestLanguage>::new_root(root);
+
+    let first_token = root.first_token().unwrap();
+    let wrapper = first_token.next_sibling().unwrap();
+
+    assert_eq!(wrapper.offset(), 1usize.into());
+    assert_eq!(
+        wrapper.first_token().unwrap().token_text_range().start(),
+        1usize.into()
+    );
+    assert_eq!(
+        wrapper.first_token().unwrap().token_text_range().end(),
+        3usize.into()
+    );
+
+    match wrapper.prev_sibling_or_token().unwrap() {
+        SyntaxElement::Token(token) => assert_eq!(token.text(), "a"),
+        SyntaxElement::Node(_) => panic!("expected previous token"),
+    }
+
+    match wrapper.next_sibling_or_token().unwrap() {
+        SyntaxElement::Token(token) => {
+            assert_eq!(token.text(), "d");
+            assert_eq!(token.offset(), 3usize.into());
+        }
+        SyntaxElement::Node(_) => panic!("expected next token"),
+    }
+
+    assert_eq!(root.last_token().unwrap().prev_sibling().unwrap(), wrapper);
+}
+
+#[test]
 fn syntax_node_debug_prints_tree_shape_without_parent_recursion() {
     let root = GreenNode::new(
         ROOT,

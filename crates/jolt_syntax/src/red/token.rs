@@ -106,36 +106,25 @@ impl<L: Language> SyntaxToken<L> {
     /// Returns the next sibling node.
     #[must_use]
     pub fn next_sibling(&self) -> Option<SyntaxNode<L>> {
-        self.parent()
-            .children_with_tokens()
-            .skip(self.index().saturating_add(1))
-            .find_map(SyntaxElement::into_node)
+        self.parent.next_child_node_after(self.index())
     }
 
     /// Returns the next sibling node or token.
     #[must_use]
     pub fn next_sibling_or_token(&self) -> Option<SyntaxElement<L>> {
-        self.parent()
-            .children_with_tokens()
-            .nth(self.index().saturating_add(1))
+        self.parent.child_element_at(self.index().saturating_add(1))
     }
 
     /// Returns the previous sibling node.
     #[must_use]
     pub fn prev_sibling(&self) -> Option<SyntaxNode<L>> {
-        self.parent()
-            .children_with_tokens()
-            .take(self.index())
-            .filter_map(SyntaxElement::into_node)
-            .last()
+        self.parent.prev_child_node_before(self.index())
     }
 
     /// Returns the previous sibling node or token.
     #[must_use]
     pub fn prev_sibling_or_token(&self) -> Option<SyntaxElement<L>> {
-        self.parent()
-            .children_with_tokens()
-            .nth(self.index().checked_sub(1)?)
+        self.parent.child_element_at(self.index().checked_sub(1)?)
     }
 }
 
