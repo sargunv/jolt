@@ -11,7 +11,6 @@ import sys
 from pathlib import Path, PurePosixPath
 from typing import Literal, NamedTuple
 
-
 ROOT = Path(__file__).resolve().parents[2]
 IMPORTS = ROOT / "tools/import/.imports"
 WORK = ROOT / "target/bench"
@@ -144,16 +143,17 @@ TOOLS: dict[ToolKey, Tool] = {
         "cd {dprint_jolt_dir} && dprint --plugins={dprint_plugin} fmt --incremental=false --skip-stable-format .",
         "dprint --version",
     ),
-    "google-java-format": Tool(
-        "google-java-format --replace",
-        "google-java-format --replace --skip-removing-unused-imports @{gjf_args}",
-        "google-java-format --version",
-    ),
-    "prettier-java": Tool(
-        "prettier --write --plugin prettier-plugin-java",
-        "pnpm exec prettier --write {prettier_glob} --plugin prettier-plugin-java --print-width 80 --tab-width 2 --ignore-path {prettier_ignore} --log-level silent",
-        "pnpm exec prettier --version",
-    ),
+    # DISABLED to speed up iteration optimizing jolt itself
+    # "google-java-format": Tool(
+    #     "google-java-format --replace",
+    #     "google-java-format --replace --skip-removing-unused-imports @{gjf_args}",
+    #     "google-java-format --version",
+    # ),
+    # "prettier-java": Tool(
+    #     "prettier --write --plugin prettier-plugin-java",
+    #     "pnpm exec prettier --write {prettier_glob} --plugin prettier-plugin-java --print-width 80 --tab-width 2 --ignore-path {prettier_ignore} --log-level silent",
+    #     "pnpm exec prettier --version",
+    # ),
 }
 
 
