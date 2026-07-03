@@ -186,6 +186,225 @@ Spec links:
 - Java 22 preview JLS, String Templates:
   <https://docs.oracle.com/javase/specs/jls/se22/preview/specs/string-templates-jls.html>
 
+## Selector Relational Expressions
+
+Status: parser backlog.
+
+Current benchmark corpus:
+
+- `tools/import/imports.toml`, `bench` copy `realistic` excludes grouped under
+  "relational expressions whose left side is a selector, array access, or call"
+  for Spring Framework `v7.0.8`.
+
+Sample:
+
+```java
+class Example {
+  int index;
+
+  boolean hasMore(String[] names) {
+    return this.index < names.length;
+  }
+}
+```
+
+Why this is valid:
+
+- Relational expressions accept any numeric expression on either side.
+- Field access, array access, and method invocation are valid primary
+  expressions.
+
+Implementation note:
+
+The parser currently accepts simple `x < 0` but reports
+`java.parse.expected_syntax: expected type` for examples such as
+`this.index < names.length` and `names.length < 2`. The expression parser is
+likely treating `<` after a selector-like left-hand side as type-argument syntax
+instead of a relational operator.
+
+Spec links:
+
+- JLS 15.10.3, Array Access Expressions:
+  <https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.10.3>
+- JLS 15.11, Field Access Expressions:
+  <https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.11>
+- JLS 15.20, Relational Operators:
+  <https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.20>
+
+## Array Types And Patterns In Instanceof
+
+Status: parser backlog.
+
+Current benchmark corpus:
+
+- `tools/import/imports.toml`, `bench` copy `realistic` excludes grouped under
+  "array types and pattern variables in `instanceof`" for Spring Framework
+  `v7.0.8`.
+
+Sample:
+
+```java
+class Example {
+  boolean isBytes(Object value) {
+    return value instanceof byte[];
+  }
+
+  boolean isString(Object value) {
+    return value instanceof String string && !string.isEmpty();
+  }
+}
+```
+
+Why this is valid:
+
+- The legacy `instanceof` operator accepts reference types, including array
+  types such as `byte[]` and `String[]`.
+- Pattern matching for `instanceof` is final in Java 16.
+
+Implementation note:
+
+The parser currently reports `expected class or interface type` on array
+instanceof checks and also trips on some type patterns with binding variables.
+The fix should keep legacy type tests and pattern tests distinct while allowing
+array reference types in the legacy branch.
+
+Spec links:
+
+- JEP 394, Pattern Matching for instanceof: <https://openjdk.org/jeps/394>
+- JLS 10.1, Array Types:
+  <https://docs.oracle.com/javase/specs/jls/se21/html/jls-10.html#jls-10.1>
+- JLS 15.20.2, Type Comparison Operator instanceof:
+  <https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.20.2>
+
+## Explicit This And Super Constructor Invocations
+
+Status: parser backlog.
+
+Current benchmark corpus:
+
+- `tools/import/imports.toml`, `bench` copy `realistic` excludes grouped under
+  "explicit constructor invocations using `this(...)` or `super(...)`" for
+  Spring Framework `v7.0.8`.
+
+Sample:
+
+```java
+class Example extends RuntimeException {
+  Example(String name) {
+    this(name, null);
+  }
+
+  Example(String name, Throwable cause) {
+    super("Missing " + name, cause);
+  }
+}
+```
+
+Why this is valid:
+
+- Java constructor bodies may begin with an explicit constructor invocation:
+  either an alternate constructor invocation `this(...)` or a superclass
+  constructor invocation `super(...)`.
+
+Implementation note:
+
+The parser currently reports `java.parse.invalid_statement_expression` on Spring
+constructors whose first statement is `this(...)` or `super(...)`. This is
+distinct from flexible constructor bodies: these examples are ordinary
+pre-Java-22 constructor bodies where the invocation already appears first.
+
+Spec links:
+
+- JLS 8.8.7.1, Explicit Constructor Invocations:
+  <https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.8.7.1>
+
+## Yield Statements In Switch Expressions
+
+Status: parser backlog.
+
+Current benchmark corpus:
+
+- `tools/import/imports.toml`, `bench` copy `realistic` excludes grouped under
+  "`yield` statements in switch expression block rules" for Spring Framework
+  `v7.0.8`.
+
+Sample:
+
+```java
+class Example {
+  Object scope(int value) {
+    return switch (value) {
+      case 1 -> {
+        yield "one";
+      }
+      default -> "other";
+    };
+  }
+}
+```
+
+Why this is valid:
+
+- Switch expressions are final in Java 14.
+- A switch expression block can produce its value using a `yield` statement.
+
+Implementation note:
+
+The parser currently reports
+`java.parse.unqualified_yield_method_invocation: unqualified yield method
+invocation is not allowed`
+for valid `yield` statements inside switch expression block rules. The statement
+parser should recognize `yield` in the switch-expression context before falling
+back to expression-statement parsing.
+
+Spec links:
+
+- JEP 361, Switch Expressions: <https://openjdk.org/jeps/361>
+- JLS 14.21, The yield Statement:
+  <https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.21>
+- JLS 15.28, Switch Expressions:
+  <https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.28>
+
+## Generic Array Constructor References
+
+Status: parser backlog.
+
+Current benchmark corpus:
+
+- `tools/import/imports.toml`, `bench` copy `realistic` excludes grouped under
+  "generic array constructor references" for Spring Framework `v7.0.8`.
+
+Sample:
+
+```java
+import java.util.Set;
+
+class Example {
+  Class<?>[] copy(Set<Class<?>> classes) {
+    return classes.toArray(Class<?>[]::new);
+  }
+}
+```
+
+Why this is valid:
+
+- Constructor references include array constructor references.
+- The array component type can be parameterized or contain wildcards, as in
+  `Class<?>[]::new`.
+
+Implementation note:
+
+The parser currently reports `expected expression` around `Class<?>[]::new`.
+Method-reference parsing should accept array types before `::new`, including
+generic component types and wildcard type arguments.
+
+Spec links:
+
+- JLS 15.13, Method Reference Expressions:
+  <https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.13>
+- JLS 15.13.1, Compile-Time Declaration of a Method Reference:
+  <https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.13.1>
+
 ## Recoverable Parse Opportunity Audit
 
 Status: parser recovery audit.

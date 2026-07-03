@@ -6,7 +6,6 @@ lockfile = true
 
 [tools]
 "aqua:dprint/dprint" = "0.54.0"
-"aqua:gradle/gradle" = "9.6.0"
 "aqua:jdx/hk" = "1.48.0"
 "core:java" = "zulu-25.34.17.0"
 "core:python" = "3.14.5"
@@ -15,6 +14,21 @@ lockfile = true
 "aqua:google/google-java-format" = "1.35.0"
 "aqua:pnpm/pnpm" = "11.9.0"
 "core:node" = "24.18.0"
+
+[deps.pnpm]
+auto = true
+
+[deps."test-fixtures"]
+auto = true
+sources = ["tools/import/import.py", "tools/import/imports.toml"]
+outputs = [".fixtures/fixtures"]
+run = "python tools/import/import.py test"
+
+[deps."bench-fixtures"]
+auto = true
+sources = ["tools/import/import.py", "tools/import/imports.toml"]
+outputs = [".bench/corpora"]
+run = "python tools/import/import.py bench"
 
 [tasks.check]
 run = "hk check --all"
@@ -45,22 +59,34 @@ raw_args = true
 run = "cargo run -p jolt_fmt_cli --"
 
 [tasks."build:dprint-plugin"]
-run = "cargo build --target wasm32-unknown-unknown --package jolt_fmt_dprint --features wasm"
+usage = '''
+flag "--mode <mode>" help="Cargo build mode" {
+  choices "debug" "release"
+  default "debug"
+}
+'''
+run = '''
+case "${usage_mode?}" in
+  debug) cargo build --target wasm32-unknown-unknown --package jolt_fmt_dprint --features wasm ;;
+  release) cargo build --release --target wasm32-unknown-unknown --package jolt_fmt_dprint --features wasm ;;
+esac
+'''
 
 [tasks."dprint-with-jolt"]
 depends = ["build:dprint-plugin"]
 raw_args = true
 run = "dprint --plugins=\"$PWD/target/wasm32-unknown-unknown/debug/jolt_fmt_dprint.wasm\""
 
+[tasks.benchmark]
+depends = [
+  { task = "build:jolt", args = ["--mode", "release"] },
+  { task = "build:dprint-plugin", args = ["--mode", "release"] },
+]
+raw_args = true
+run = "python tools/bench/bench.py"
+
 [tasks.fix]
 run = "hk fix --all"
-
-[tasks.import-fixtures]
-description = "Import formatter fixture inputs and advisory reference outputs"
-run = [
-  "python tools/fixtures/import_fixtures.py",
-  "gradle -q --project-dir tools/fixtures/formatter-harness run --args \"$PWD/.fixtures/fixtures\"",
-]
 
 [hooks]
 postinstall = ["hk install --mise"]

@@ -6,5 +6,5 @@
       "arguments": ["x", "--", "dprint", "fmt", "--stdin", "{buffer_path}"]
     }
   },
-  "file_scan_exclusions": [".git", "./.fixtures", "./target"]
+  "file_scan_exclusions": [".git", "./.fixtures", "./.bench"]
 }

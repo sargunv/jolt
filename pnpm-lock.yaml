@@ -1,0 +1,45 @@
+lockfileVersion: "9.0"
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+  .:
+    devDependencies:
+      prettier:
+        specifier: 3.9.4
+        version: 3.9.4
+      prettier-plugin-java:
+        specifier: 2.10.2
+        version: 2.10.2(prettier@3.9.4)
+
+packages:
+  prettier-plugin-java@2.10.2:
+    resolution: {
+      integrity: sha512-oOXUBqb0BKfL//ZeYFcsRtbm4h8jdicg1axbBrXh2tnUcAcKAyFCl3gUL7bN7kwDwFRraQop1RF9BZk+K6pmoQ==,
+    }
+    peerDependencies:
+      prettier: ^3.0.0
+
+  prettier@3.9.4:
+    resolution: {
+      integrity: sha512-yWG/o/4oJfo036EKAfK6ACAoDOfHeRHx4tuxkfBZiauURiaSmYwlpOr5LQqKtIkRD2z1PLteme2WoxEnj4tHTg==,
+    }
+    engines: { node: ">=14" }
+    hasBin: true
+
+  web-tree-sitter@0.26.9:
+    resolution: {
+      integrity: sha512-YJwSHANl6XFgeEjB8nitgj0qZYt5gkIesJ4w2srS2wcLB4GUa4xcOkM0YaMsU6WNR53YVIkDSY7Ej4pf3IXtCA==,
+    }
+
+snapshots:
+  prettier-plugin-java@2.10.2(prettier@3.9.4):
+    dependencies:
+      prettier: 3.9.4
+      web-tree-sitter: 0.26.9
+
+  prettier@3.9.4: {}
+
+  web-tree-sitter@0.26.9: {}

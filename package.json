@@ -1,0 +1,5 @@
+{
+  "private": true,
+  "packageManager": "pnpm@11.9.0",
+  "devDependencies": { "prettier": "3.9.4", "prettier-plugin-java": "2.10.2" }
+}

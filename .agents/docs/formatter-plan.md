@@ -742,7 +742,7 @@ Tests should live with the implementation they exercise:
 - Fixture import/update tooling is invoked through mise and is not a formatter
   test crate.
 
-### Milestone 1: workspace, mise tasks, and Java fixture import
+### Milestone 1: workspace, mise deps, and Java fixture import
 
 Status: complete.
 
@@ -752,20 +752,19 @@ fixtures.
 Add:
 
 - Rust workspace skeleton,
-- mise tasks for fixture import/update,
-- native-only fixture import helpers under `tools/fixtures`,
+- mise deps for fixture import/update,
+- native-only fixture import helpers under `tools/import`,
 - Java fixture directory layout,
 - fixture metadata format,
 - pinned upstream source metadata for Google Java Format,
 - pinned upstream source metadata for Palantir Java Format,
 - pinned upstream source metadata for Prettier Java,
 - materialized Java input fixtures,
-- optional upstream formatter outputs for advisory reports.
 
-The import operation is explicit:
+The import operation is a mise dependency provider:
 
 ```bash
-mise run import-fixtures
+mise deps test-fixtures
 ```
 
 This milestone answers the first implementation question: which Java files must
