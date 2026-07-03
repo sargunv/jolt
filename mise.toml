@@ -18,17 +18,11 @@ lockfile = true
 [deps.pnpm]
 auto = true
 
-[deps."test-fixtures"]
+[deps.imports]
 auto = true
-sources = ["tools/import/import.py", "tools/import/imports.toml"]
-outputs = [".fixtures/fixtures"]
-run = "python tools/import/import.py test"
-
-[deps."bench-fixtures"]
-auto = true
-sources = ["tools/import/import.py", "tools/import/imports.toml"]
-outputs = [".bench/corpora"]
-run = "python tools/import/import.py bench"
+sources = ["tools/import/import.py"]
+outputs = ["tools/import/.imports"]
+run = "python tools/import/import.py"
 
 [tasks.check]
 run = "hk check --all"
@@ -82,7 +76,6 @@ depends = [
   { task = "build:jolt", args = ["--mode", "release"] },
   { task = "build:dprint-plugin", args = ["--mode", "release"] },
 ]
-raw_args = true
 run = "python tools/bench/bench.py"
 
 [tasks.fix]

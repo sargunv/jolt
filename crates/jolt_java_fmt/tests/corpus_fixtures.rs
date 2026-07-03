@@ -167,7 +167,7 @@ fn allows_syntax_diagnostics(path: &Path) -> bool {
 fn snapshot_name(path: &Path) -> String {
     let fixture_root = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../..")
-        .join(".fixtures/fixtures");
+        .join("tools/import/.imports");
     path.strip_prefix(&fixture_root)
         .unwrap_or(path)
         .with_extension("")
@@ -180,7 +180,7 @@ fn snapshot_name(path: &Path) -> String {
 fn fixture_root(suite: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../..")
-        .join(".fixtures/fixtures")
+        .join("tools/import/.imports")
         .join(suite)
         .join("input")
 }

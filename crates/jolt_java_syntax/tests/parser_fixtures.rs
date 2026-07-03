@@ -83,7 +83,7 @@ fn allows_syntax_diagnostics(path: &Path) -> bool {
 fn fixture_root(suite: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../..")
-        .join(".fixtures/fixtures")
+        .join("tools/import/.imports")
         .join(suite)
         .join("input")
 }

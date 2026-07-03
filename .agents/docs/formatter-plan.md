@@ -764,7 +764,7 @@ Add:
 The import operation is a mise dependency provider:
 
 ```bash
-mise deps test-fixtures
+mise deps imports
 ```
 
 This milestone answers the first implementation question: which Java files must

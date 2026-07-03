@@ -16,8 +16,8 @@ Status: parser backlog.
 
 Current fixtures:
 
-- `.fixtures/fixtures/prettier-java/input/lambda/arrow-parens-always/arrow-parens-always.java`
-- `.fixtures/fixtures/prettier-java/input/lambda/arrow-parens-avoid/arrow-parens-avoid.java`
+- `tools/import/.imports/prettier-java/input/lambda/arrow-parens-always/arrow-parens-always.java`
+- `tools/import/.imports/prettier-java/input/lambda/arrow-parens-avoid/arrow-parens-avoid.java`
 
 Sample:
 
@@ -62,8 +62,8 @@ Status: parser backlog.
 
 Current fixtures:
 
-- `.fixtures/fixtures/prettier-java/input/lambda/arrow-parens-always/arrow-parens-always.java`
-- `.fixtures/fixtures/prettier-java/input/lambda/arrow-parens-avoid/arrow-parens-avoid.java`
+- `tools/import/.imports/prettier-java/input/lambda/arrow-parens-always/arrow-parens-always.java`
+- `tools/import/.imports/prettier-java/input/lambda/arrow-parens-avoid/arrow-parens-avoid.java`
 
 Sample:
 
@@ -108,7 +108,7 @@ Status: unsupported Java version syntax.
 
 Current fixture:
 
-- `.fixtures/fixtures/prettier-java/input/constructors/constructors.java`
+- `tools/import/.imports/prettier-java/input/constructors/constructors.java`
 
 Sample:
 
@@ -154,7 +154,7 @@ Status: unsupported preview syntax.
 
 Current fixture:
 
-- `.fixtures/fixtures/prettier-java/input/template-expression/template-expression.java`
+- `tools/import/.imports/prettier-java/input/template-expression/template-expression.java`
 
 Sample:
 
@@ -192,9 +192,9 @@ Status: parser backlog.
 
 Current benchmark corpus:
 
-- `tools/import/imports.toml`, `bench` copy `realistic` excludes grouped under
-  "relational expressions whose left side is a selector, array access, or call"
-  for Spring Framework `v7.0.8`.
+- `tools/bench/bench.py`, `realistic` corpus excludes grouped under "relational
+  expressions whose left side is a selector, array access, or call" for Spring
+  Framework `v7.0.8`.
 
 Sample:
 
@@ -237,9 +237,8 @@ Status: parser backlog.
 
 Current benchmark corpus:
 
-- `tools/import/imports.toml`, `bench` copy `realistic` excludes grouped under
-  "array types and pattern variables in `instanceof`" for Spring Framework
-  `v7.0.8`.
+- `tools/bench/bench.py`, `realistic` corpus excludes grouped under "array types
+  and pattern variables in `instanceof`" for Spring Framework `v7.0.8`.
 
 Sample:
 
@@ -282,9 +281,9 @@ Status: parser backlog.
 
 Current benchmark corpus:
 
-- `tools/import/imports.toml`, `bench` copy `realistic` excludes grouped under
-  "explicit constructor invocations using `this(...)` or `super(...)`" for
-  Spring Framework `v7.0.8`.
+- `tools/bench/bench.py`, `realistic` corpus excludes grouped under "explicit
+  constructor invocations using `this(...)` or `super(...)`" for Spring
+  Framework `v7.0.8`.
 
 Sample:
 
@@ -324,9 +323,8 @@ Status: parser backlog.
 
 Current benchmark corpus:
 
-- `tools/import/imports.toml`, `bench` copy `realistic` excludes grouped under
-  "`yield` statements in switch expression block rules" for Spring Framework
-  `v7.0.8`.
+- `tools/bench/bench.py`, `realistic` corpus excludes grouped under "`yield`
+  statements in switch expression block rules" for Spring Framework `v7.0.8`.
 
 Sample:
 
@@ -371,8 +369,8 @@ Status: parser backlog.
 
 Current benchmark corpus:
 
-- `tools/import/imports.toml`, `bench` copy `realistic` excludes grouped under
-  "generic array constructor references" for Spring Framework `v7.0.8`.
+- `tools/bench/bench.py`, `realistic` corpus excludes grouped under "generic
+  array constructor references" for Spring Framework `v7.0.8`.
 
 Sample:
 
