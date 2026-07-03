@@ -1012,8 +1012,11 @@ behavior.
 
 Status: pending.
 
-Add dprint integration after the core API has survived real Java formatting work
-and the core crates already have local wasm build checks.
+Add dprint integration after the Java formatter and native CLI have proven that
+`jolt_fmt_core::format_source` is the stable public engine boundary.
+
+The detailed dprint wrapper behavior is specified in
+[`formatter-milestone-11-dprint-spec.md`](formatter-milestone-11-dprint-spec.md).
 
 Add:
 
