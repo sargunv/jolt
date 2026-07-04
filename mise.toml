@@ -19,6 +19,7 @@ lockfile = true
 "cargo:cargo-llvm-lines" = "0.4.46"
 "cargo:cargo-public-api" = "0.52.0"
 "cargo:cargo-udeps" = "0.1.61"
+"aqua:cargo-bins/cargo-binstall" = "1.20.1"
 
 [deps.pnpm]
 auto = true
