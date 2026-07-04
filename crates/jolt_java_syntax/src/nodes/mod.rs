@@ -263,7 +263,7 @@ pub(crate) enum JavaOperatorKind {
 
 impl JavaOperatorKind {
     #[must_use]
-    pub const fn text(self) -> &'static str {
+    const fn text(self) -> &'static str {
         match self {
             Self::Assign => "=",
             Self::PlusEq => "+=",
@@ -434,7 +434,7 @@ fn trivia_has_blank_line(trivia: &[SyntaxTrivia]) -> bool {
 }
 
 mod private {
-    pub trait Sealed {}
+    pub(crate) trait Sealed {}
 }
 
 pub(crate) trait JavaNode<'source>: Clone + private::Sealed {

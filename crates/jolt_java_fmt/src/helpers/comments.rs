@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use jolt_fmt_ir::{Doc, concat, hard_line, literal_text, soft_line, text};
 use jolt_java_syntax::{JavaComment, JavaCommentKind, JavaSyntaxToken};
 
@@ -36,11 +38,10 @@ pub(crate) fn token_iter_has_comments<'source>(
 
 pub(crate) fn comments_from_tokens<'source>(
     tokens: impl IntoIterator<Item = JavaSyntaxToken<'source>>,
-) -> Vec<JavaComment<'source>> {
+) -> impl Iterator<Item = JavaComment<'source>> {
     tokens
         .into_iter()
         .flat_map(|token| token.leading_comments().chain(token.trailing_comments()))
-        .collect()
 }
 
 pub(crate) fn format_construct_leading_comments<'source>(
@@ -64,29 +65,31 @@ pub(crate) fn format_leading_comment_list<'source>(
     concat(docs)
 }
 
-pub(crate) fn non_formatter_control_comments<'source>(
-    comments: impl IntoIterator<Item = JavaComment<'source>>,
-) -> Vec<JavaComment<'source>> {
-    comments
-        .into_iter()
-        .filter(|comment| !is_formatter_control_marker(comment.text()))
-        .collect()
-}
-
 pub(crate) fn format_removed_token_comments<'source>(
     tokens: &[JavaSyntaxToken<'source>],
 ) -> Option<Doc<'source>> {
-    let comments = tokens
-        .iter()
-        .flat_map(|token| token.leading_comments().chain(token.trailing_comments()))
-        .collect();
-    format_removed_comments(comments)
+    format_removed_comments(
+        tokens
+            .iter()
+            .flat_map(|token| token.leading_comments().chain(token.trailing_comments())),
+    )
 }
 
-pub(crate) fn format_removed_comments(comments: Vec<JavaComment<'_>>) -> Option<Doc<'_>> {
-    let comments = non_formatter_control_comments(comments);
+pub(crate) fn format_removed_comments<'source>(
+    comments: impl IntoIterator<Item = JavaComment<'source>>,
+) -> Option<Doc<'source>> {
+    let mut docs = Vec::new();
+    for comment in comments {
+        if is_formatter_control_marker(comment.text()) {
+            continue;
+        }
+        if !docs.is_empty() {
+            docs.push(hard_line());
+        }
+        docs.push(format_comment(&comment));
+    }
 
-    (!comments.is_empty()).then(|| format_dangling_comments(comments))
+    (!docs.is_empty()).then(|| concat(docs))
 }
 
 pub(crate) fn format_leading_comments<'source>(token: &JavaSyntaxToken<'source>) -> Doc<'source> {
@@ -266,12 +269,8 @@ pub(crate) fn format_token_with_inline_leading_comments<'source>(
         if leading.is_empty() {
             jolt_fmt_ir::nil()
         } else {
-            let comments = jolt_fmt_ir::join(
-                &text(" "),
-                leading
-                    .map(|comment| format_comment(&comment))
-                    .collect::<Vec<_>>(),
-            );
+            let comments =
+                jolt_fmt_ir::join(&text(" "), leading.map(|comment| format_comment(&comment)));
             match placement {
                 InlineLeadingTrivia::AfterPreviousToken => concat([text(" "), comments]),
                 InlineLeadingTrivia::BeforeToken => concat([comments, text(" ")]),
@@ -340,7 +339,9 @@ pub(crate) fn split_leading_comment_barrier_runs<T>(
     runs
 }
 
-fn format_comment_lines<'source>(lines: Vec<String>) -> Doc<'source> {
+fn format_comment_lines<'source>(
+    lines: impl IntoIterator<Item = impl Into<Cow<'source, str>>>,
+) -> Doc<'source> {
     let mut docs = Vec::new();
     for line in lines {
         if !docs.is_empty() {
@@ -351,24 +352,20 @@ fn format_comment_lines<'source>(lines: Vec<String>) -> Doc<'source> {
     concat(docs)
 }
 
-fn format_line_comment<'source>(comment: &str) -> Doc<'source> {
-    format_comment_lines(preserve_comment_lines(comment))
+fn format_line_comment(comment: &str) -> Doc<'_> {
+    format_comment_lines(preserved_comment_lines(comment))
 }
 
-fn format_block_comment<'source>(comment: &str) -> Doc<'source> {
-    format_comment_lines(preserve_comment_lines(comment))
+fn format_block_comment(comment: &str) -> Doc<'_> {
+    format_comment_lines(preserved_comment_lines(comment))
 }
 
 fn format_star_block_comment<'source>(comment: &str) -> Doc<'source> {
     format_comment_lines(normalize_star_block_comment(comment))
 }
 
-fn preserve_comment_lines(comment: &str) -> Vec<String> {
-    comment
-        .trim()
-        .lines()
-        .map(|line| line.trim().to_owned())
-        .collect()
+fn preserved_comment_lines(comment: &str) -> impl Iterator<Item = &str> {
+    comment.trim().lines().map(str::trim)
 }
 
 fn is_star_block_comment(comment: &str) -> bool {

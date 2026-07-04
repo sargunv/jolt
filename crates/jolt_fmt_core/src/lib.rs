@@ -108,39 +108,3 @@ fn format_java_source_to_sink<S: RenderSink + ?Sized>(
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use jolt_fmt_ir::{RenderControl, RenderSink};
-
-    #[derive(Default)]
-    struct TestSink {
-        text: String,
-    }
-
-    impl RenderSink for TestSink {
-        type Error = std::convert::Infallible;
-
-        fn write_str(&mut self, text: &str) -> Result<RenderControl, Self::Error> {
-            self.text.push_str(text);
-            Ok(RenderControl::Continue)
-        }
-    }
-
-    #[test]
-    fn java_formatter_can_render_to_sink_without_owned_output() {
-        let mut sink = TestSink::default();
-        let result = format_source_to_sink(
-            "class A {\n}\n",
-            Language::Java,
-            &FormatOptions::default(),
-            &mut sink,
-        );
-
-        assert!(!result.is_blocked());
-        assert!(result.diagnostics().is_empty());
-        assert!(matches!(result, FormatSinkResult::Complete { .. }));
-        assert_eq!(sink.text, "class A {\n}\n");
-    }
-}

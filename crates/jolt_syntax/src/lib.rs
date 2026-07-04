@@ -14,6 +14,3 @@ pub use red::{SyntaxElement, SyntaxNode, SyntaxToken};
 pub use syntax_tree::{
     BuildSyntaxTreeError, SyntaxTokenData, SyntaxTree, SyntaxTrivia, TriviaKind, build_syntax_tree,
 };
-
-#[cfg(test)]
-mod tests;

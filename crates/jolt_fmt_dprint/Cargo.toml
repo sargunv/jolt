@@ -11,17 +11,31 @@ crate-type = ["cdylib", "rlib"]
 
 [features]
 default = ["wasm"]
-wasm = ["dep:serde_json", "dprint-core/wasm", "jolt_fmt_core/serde"]
+wasm = [
+  "dep:dprint-core",
+  "dep:jolt_diagnostics",
+  "dep:jolt_fmt_core",
+  "dep:jolt_fmt_ir",
+  "dep:jolt_text",
+  "dep:serde_json",
+  "dprint-core/wasm",
+  "jolt_fmt_core/serde",
+]
 
-[dependencies]
-dprint-core = { version = "0.68.2", default-features = false }
-jolt_diagnostics = { path = "../jolt_diagnostics" }
-jolt_fmt_core = { path = "../jolt_fmt_core" }
-jolt_fmt_ir = { path = "../jolt_fmt_ir" }
-jolt_text = { path = "../jolt_text" }
+[target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
+dprint-core = { version = "0.68.2", default-features = false, optional = true }
+jolt_diagnostics = { path = "../jolt_diagnostics", optional = true }
+jolt_fmt_core = { path = "../jolt_fmt_core", optional = true }
+jolt_fmt_ir = { path = "../jolt_fmt_ir", optional = true }
+jolt_text = { path = "../jolt_text", optional = true }
 serde_json = { version = "1.0", optional = true }
 
 [dev-dependencies]
+dprint-core = { version = "0.68.2", default-features = false }
+jolt_diagnostics = { path = "../jolt_diagnostics" }
+jolt_fmt_core = { path = "../jolt_fmt_core", features = ["serde"] }
+jolt_fmt_ir = { path = "../jolt_fmt_ir" }
+jolt_text = { path = "../jolt_text" }
 tempfile = "3.23"
 
 [lints]

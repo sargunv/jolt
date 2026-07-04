@@ -2440,16 +2440,14 @@ impl<'source> AnnotationArgumentList<'source> {
 
     pub fn arguments(&self) -> impl Iterator<Item = AnnotationArgument<'source>> {
         child::<AnnotationElementList>(&self.syntax)
-            .map(|list| list.arguments().collect::<Vec<_>>())
-            .unwrap_or_default()
             .into_iter()
+            .flat_map(|list| list.arguments())
     }
 
     pub fn entries(&self) -> impl Iterator<Item = AnnotationArgumentListEntry<'source>> {
         child::<AnnotationElementList>(&self.syntax)
-            .map(|list| list.argument_entries().collect::<Vec<_>>())
-            .unwrap_or_default()
             .into_iter()
+            .flat_map(|list| list.argument_entries())
     }
 }
 

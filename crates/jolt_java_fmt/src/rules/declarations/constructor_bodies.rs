@@ -1,11 +1,10 @@
 use super::{
     BlockStatement, BodyItem, ConstructorInvocation, Doc, JavaFormatter, JavaSyntaxToken, Range,
     concat, format_argument_list, format_block_statement_item, format_construct_leading_comments,
-    format_dangling_comments, format_expression, format_name, format_statement_semicolon,
+    format_expression, format_name, format_removed_comments, format_statement_semicolon,
     format_token_after_construct_leading_comments, format_token_with_comments,
     format_type_argument_list, formatter_ignore_ranges, formatter_ignore_run_doc,
-    formatter_ignore_runs, join_body_items, non_formatter_control_comments,
-    relative_token_range_between,
+    formatter_ignore_runs, join_body_items, relative_token_range_between,
 };
 
 pub(super) fn format_constructor_body<'source>(
@@ -74,15 +73,15 @@ pub(super) fn format_constructor_body<'source>(
 fn format_constructor_body_open_dangling_comments(
     open: Option<JavaSyntaxToken<'_>>,
 ) -> Option<BodyItem<'_>> {
-    let comments = non_formatter_control_comments(open?.trailing_comments());
-    (!comments.is_empty()).then(|| BodyItem::new(format_dangling_comments(comments), false))
+    format_removed_comments(open?.trailing_comments())
+        .map(|comments| BodyItem::new(comments, false))
 }
 
 fn format_constructor_body_close_dangling_comments(
     close: Option<JavaSyntaxToken<'_>>,
 ) -> Option<BodyItem<'_>> {
-    let comments = non_formatter_control_comments(close?.leading_comments());
-    (!comments.is_empty()).then(|| BodyItem::new(format_dangling_comments(comments), false))
+    format_removed_comments(close?.leading_comments())
+        .map(|comments| BodyItem::new(comments, false))
 }
 
 fn constructor_body_elements<'source>(

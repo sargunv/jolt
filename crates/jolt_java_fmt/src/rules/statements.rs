@@ -20,8 +20,7 @@ use crate::helpers::comments::{
     comments_from_tokens, format_comment, format_dangling_comments, format_leading_comments,
     format_removed_comments, format_separator_with_comments, format_token,
     format_token_before_relocated_trailing_comments, format_token_with_comments,
-    format_trailing_comments_before_line_break, non_formatter_control_comments,
-    trailing_comments_force_line,
+    format_trailing_comments_before_line_break, trailing_comments_force_line,
 };
 use crate::helpers::formatter_ignore::{
     FormatterIgnoreRange, formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,

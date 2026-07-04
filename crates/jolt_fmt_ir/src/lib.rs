@@ -6,8 +6,8 @@ mod validation;
 mod width;
 
 pub use document::{
-    Doc, concat, empty_line, force_group, group, hard_line, if_break, indent, indent_by, join,
-    line, literal_text, nil, soft_line, text,
+    Doc, concat, empty_line, force_group, group, hard_line, if_break, indent, join, line,
+    literal_text, nil, soft_line, text,
 };
 pub use render::{
     IndentStyle, LineEnding, RenderControl, RenderError, RenderOptions, RenderOutcome, RenderSink,

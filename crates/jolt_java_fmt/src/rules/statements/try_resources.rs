@@ -4,10 +4,10 @@ use super::{
     CatchClause, CatchParameter, CatchTypeList, Doc, FinallyClause, JavaFormatter, JavaSyntaxToken,
     Resource, ResourceListEntry, TryStatement, TryWithResourcesStatement, Type, concat,
     empty_block, format_annotation, format_block, format_dangling_comments, format_expression,
-    format_local_variable_declaration, format_separator_with_comments, format_statement_semicolon,
-    format_token_with_comments, format_trailing_comments_before_line_break, format_type, group,
-    hard_line, indent, line, non_formatter_control_comments, soft_line, text,
-    trailing_comments_force_line,
+    format_local_variable_declaration, format_removed_comments, format_separator_with_comments,
+    format_statement_semicolon, format_token_with_comments,
+    format_trailing_comments_before_line_break, format_type, group, hard_line, indent, line,
+    soft_line, text, trailing_comments_force_line,
 };
 
 pub(super) fn format_try_statement<'source>(
@@ -358,10 +358,9 @@ fn join_resource_lines<'source>(
 fn format_removed_resource_separator_comments<'source>(
     separator: &JavaSyntaxToken<'source>,
 ) -> Option<Doc<'source>> {
-    let comments = non_formatter_control_comments(
+    format_removed_comments(
         separator
             .leading_comments()
             .chain(separator.trailing_comments()),
-    );
-    (!comments.is_empty()).then(|| format_dangling_comments(comments))
+    )
 }

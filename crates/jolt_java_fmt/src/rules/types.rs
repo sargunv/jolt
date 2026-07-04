@@ -222,14 +222,14 @@ fn format_intersection_type<'source>(
     ty: &IntersectionType<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    format_intersection_entries(ty.entries().collect(), formatter)
+    format_intersection_entries(ty.entries(), formatter)
 }
 
 fn format_union_type<'source>(
     ty: &UnionType<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    format_union_entries(ty.entries().collect(), formatter)
+    format_union_entries(ty.entries(), formatter)
 }
 
 fn format_type_parameter<'source>(
@@ -270,7 +270,7 @@ fn format_type_bounds<'source>(
 }
 
 fn format_intersection_entries<'source>(
-    entries: Vec<jolt_java_syntax::IntersectionTypeEntry<'source>>,
+    entries: impl IntoIterator<Item = jolt_java_syntax::IntersectionTypeEntry<'source>>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
     format_type_operator_entries(
@@ -284,7 +284,7 @@ fn format_intersection_entries<'source>(
 }
 
 fn format_union_entries<'source>(
-    entries: Vec<UnionTypeEntry<'source>>,
+    entries: impl IntoIterator<Item = UnionTypeEntry<'source>>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
     format_type_operator_entries(

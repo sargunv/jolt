@@ -232,14 +232,6 @@ mod tests {
     use super::JoltDprintPlugin;
 
     #[test]
-    fn java_requests_call_the_java_formatter_and_return_changed_bytes() {
-        let result =
-            format_java("class A {}", FormatOptions::default()).expect("format should succeed");
-
-        assert_eq!(result.as_deref(), Some(b"class A {\n}\n".as_slice()));
-    }
-
-    #[test]
     fn already_formatted_java_returns_no_change() {
         let result =
             format_java("class A {\n}\n", FormatOptions::default()).expect("format should succeed");

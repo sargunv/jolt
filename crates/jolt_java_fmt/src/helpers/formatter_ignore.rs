@@ -188,25 +188,85 @@ fn formatter_ignore_run<'source>(
 }
 
 fn strip_first_line_indent(text: &str) -> Cow<'_, str> {
-    let normalized = text.replace("\r\n", "\n").replace('\r', "\n");
-    let Some(first_line) = normalized.lines().find(|line| !line.trim().is_empty()) else {
-        return Cow::Owned(normalized);
+    let has_carriage_returns = text.as_bytes().contains(&b'\r');
+    let Some(first_line) = first_non_empty_normalized_line(text) else {
+        return if has_carriage_returns {
+            Cow::Owned(normalized_without_first_indent(text, ""))
+        } else {
+            Cow::Borrowed(text)
+        };
     };
     let indent = leading_indent(first_line);
-    if indent.is_empty() {
-        if normalized == text {
-            return Cow::Borrowed(text);
-        }
-        return Cow::Owned(normalized);
+    if indent.is_empty() && !has_carriage_returns {
+        return Cow::Borrowed(text);
     }
 
-    Cow::Owned(
-        normalized
-            .split('\n')
-            .map(|line| line.strip_prefix(indent).unwrap_or(line))
-            .collect::<Vec<_>>()
-            .join("\n"),
-    )
+    Cow::Owned(normalized_without_first_indent(text, indent))
+}
+
+fn first_non_empty_normalized_line(text: &str) -> Option<&str> {
+    let bytes = text.as_bytes();
+    let mut line_start = 0;
+
+    while line_start < text.len() {
+        let line_end = normalized_line_end(bytes, line_start);
+        let line = &text[line_start..line_end];
+        if !line.trim().is_empty() {
+            return Some(line);
+        }
+        line_start = next_line_start(bytes, line_end);
+    }
+
+    None
+}
+
+fn normalized_without_first_indent(text: &str, indent: &str) -> String {
+    if text.is_empty() {
+        return String::new();
+    }
+
+    let bytes = text.as_bytes();
+    let mut stripped = String::with_capacity(text.len());
+    let mut line_start = 0;
+    let mut first = true;
+
+    loop {
+        let line_end = normalized_line_end(bytes, line_start);
+        if !first {
+            stripped.push('\n');
+        }
+        first = false;
+
+        let line = &text[line_start..line_end];
+        stripped.push_str(line.strip_prefix(indent).unwrap_or(line));
+
+        if line_end == text.len() {
+            break;
+        }
+
+        line_start = next_line_start(bytes, line_end);
+        if line_start == text.len() {
+            stripped.push('\n');
+            break;
+        }
+    }
+
+    stripped
+}
+
+fn normalized_line_end(bytes: &[u8], line_start: usize) -> usize {
+    bytes[line_start..]
+        .iter()
+        .position(|byte| matches!(byte, b'\n' | b'\r'))
+        .map_or(bytes.len(), |offset| line_start + offset)
+}
+
+fn next_line_start(bytes: &[u8], line_end: usize) -> usize {
+    match bytes.get(line_end) {
+        Some(b'\r') if bytes.get(line_end + 1) == Some(&b'\n') => line_end + 2,
+        Some(_) => line_end + 1,
+        None => line_end,
+    }
 }
 
 fn leading_indent(line: &str) -> &str {

@@ -24,10 +24,14 @@ pub(crate) fn format_name<'source>(name: &NameSyntax<'source>) -> Doc<'source> {
 }
 
 pub(crate) fn name_key(name: &NameSyntax<'_>) -> String {
-    name.segments()
-        .map(|segment| segment.text().to_owned())
-        .collect::<Vec<_>>()
-        .join(".")
+    let mut key = String::new();
+    for segment in name.segments() {
+        if !key.is_empty() {
+            key.push('.');
+        }
+        key.push_str(segment.text());
+    }
+    key
 }
 
 fn segments_have_comments(segments: &[NameSegment<'_>]) -> bool {

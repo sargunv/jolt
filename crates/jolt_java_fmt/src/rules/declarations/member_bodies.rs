@@ -4,11 +4,11 @@ use super::{
     comments_from_tokens, concat, format_annotation_element_declaration,
     format_annotation_interface_declaration, format_block, format_class_declaration,
     format_compact_constructor_declaration, format_constructor_declaration,
-    format_dangling_comments, format_enum_declaration, format_field_declaration,
-    format_interface_declaration, format_method_declaration, format_record_declaration,
-    format_removed_comments, format_removed_token_comments, format_token_with_comments,
-    formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs, hard_line,
-    join_member_docs, non_formatter_control_comments, relative_token_range_between, text,
+    format_enum_declaration, format_field_declaration, format_interface_declaration,
+    format_method_declaration, format_record_declaration, format_removed_comments,
+    format_removed_token_comments, format_token_with_comments, formatter_ignore_ranges,
+    formatter_ignore_run_doc, formatter_ignore_runs, hard_line, join_member_docs,
+    relative_token_range_between, text,
 };
 
 pub(super) fn format_class_body<'source>(
@@ -324,46 +324,29 @@ fn printable_annotation_members<'source>(
 
 fn is_printable_class_member(member: &ClassBodyMember<'_>) -> bool {
     !matches!(member, ClassBodyMember::EmptyDeclaration(_))
-        || format_removed_empty_declaration_comments(comments_from_tokens(member.token_iter()))
-            .is_some()
+        || format_removed_comments(comments_from_tokens(member.token_iter())).is_some()
 }
 
 fn is_printable_interface_member(member: &InterfaceBodyMember<'_>) -> bool {
     !matches!(member, InterfaceBodyMember::EmptyDeclaration(_))
-        || format_removed_empty_declaration_comments(comments_from_tokens(member.token_iter()))
-            .is_some()
+        || format_removed_comments(comments_from_tokens(member.token_iter())).is_some()
 }
 
 fn is_printable_annotation_member(member: &AnnotationInterfaceBodyMember<'_>) -> bool {
     !matches!(member, AnnotationInterfaceBodyMember::EmptyDeclaration(_))
-        || format_removed_empty_declaration_comments(comments_from_tokens(member.token_iter()))
-            .is_some()
-}
-
-pub(super) fn format_removed_empty_declaration<'source>(
-    tokens: &[JavaSyntaxToken<'source>],
-) -> Option<Doc<'source>> {
-    format_removed_token_comments(tokens)
-}
-
-fn format_removed_empty_declaration_comments(
-    comments: Vec<jolt_java_syntax::JavaComment<'_>>,
-) -> Option<Doc<'_>> {
-    format_removed_comments(comments)
+        || format_removed_comments(comments_from_tokens(member.token_iter())).is_some()
 }
 
 pub(super) fn format_body_open_dangling_comments(
     open: Option<JavaSyntaxToken<'_>>,
 ) -> Option<FormattedMember<'_>> {
-    let comments = non_formatter_control_comments(open?.trailing_comments());
-    (!comments.is_empty()).then(|| FormattedMember::comment(format_dangling_comments(comments)))
+    format_removed_comments(open?.trailing_comments()).map(FormattedMember::comment)
 }
 
 pub(super) fn format_body_close_dangling_comments(
     close: Option<JavaSyntaxToken<'_>>,
 ) -> Option<FormattedMember<'_>> {
-    let comments = non_formatter_control_comments(close?.leading_comments());
-    (!comments.is_empty()).then(|| FormattedMember::comment(format_dangling_comments(comments)))
+    format_removed_comments(close?.leading_comments()).map(FormattedMember::comment)
 }
 
 pub(super) fn format_empty_enum_constant_list_comments(
@@ -374,14 +357,14 @@ pub(super) fn format_empty_enum_constant_list_comments(
         return None;
     }
 
-    format_removed_empty_declaration_comments(comments_from_tokens(constants.token_iter()))
+    format_removed_comments(comments_from_tokens(constants.token_iter()))
         .map(FormattedMember::comment)
 }
 
 pub(super) fn format_enum_body_semicolon_comments<'source>(
     semicolons: &[JavaSyntaxToken<'source>],
 ) -> Option<FormattedMember<'source>> {
-    format_removed_empty_declaration(semicolons).map(FormattedMember::comment)
+    format_removed_token_comments(semicolons).map(FormattedMember::comment)
 }
 
 pub(super) fn combine_comment_members<'source>(
@@ -518,10 +501,8 @@ impl<'source> FormattedMember<'source> {
             ClassBodyMember::EmptyDeclaration(_) => Self {
                 category: None,
                 starts_after_blank_line,
-                doc: format_removed_empty_declaration_comments(comments_from_tokens(
-                    member.token_iter(),
-                ))
-                .unwrap_or_else(jolt_fmt_ir::nil),
+                doc: format_removed_comments(comments_from_tokens(member.token_iter()))
+                    .unwrap_or_else(jolt_fmt_ir::nil),
             },
         }
     }
@@ -570,10 +551,8 @@ impl<'source> FormattedMember<'source> {
             InterfaceBodyMember::EmptyDeclaration(_) => Self {
                 category: None,
                 starts_after_blank_line,
-                doc: format_removed_empty_declaration_comments(comments_from_tokens(
-                    member.token_iter(),
-                ))
-                .unwrap_or_else(jolt_fmt_ir::nil),
+                doc: format_removed_comments(comments_from_tokens(member.token_iter()))
+                    .unwrap_or_else(jolt_fmt_ir::nil),
             },
         }
     }
@@ -627,10 +606,8 @@ impl<'source> FormattedMember<'source> {
             AnnotationInterfaceBodyMember::EmptyDeclaration(_) => Self {
                 category: None,
                 starts_after_blank_line,
-                doc: format_removed_empty_declaration_comments(comments_from_tokens(
-                    member.token_iter(),
-                ))
-                .unwrap_or_else(jolt_fmt_ir::nil),
+                doc: format_removed_comments(comments_from_tokens(member.token_iter()))
+                    .unwrap_or_else(jolt_fmt_ir::nil),
             },
         }
     }

@@ -141,18 +141,8 @@ pub fn force_group(doc: Doc<'_>) -> Doc<'_> {
 
 #[must_use]
 pub fn indent(doc: Doc<'_>) -> Doc<'_> {
-    indent_by(1, doc)
-}
-
-/// Creates a document indented by `levels` indentation levels.
-///
-/// # Panics
-///
-/// Panics if `levels` does not fit in the renderer's signed indentation delta.
-#[must_use]
-pub fn indent_by(levels: u16, doc: Doc<'_>) -> Doc<'_> {
     Doc(DocKind::Indent(Indent {
-        levels: i16::try_from(levels).expect("indent level count fits i16"),
+        levels: 1,
         contents: Box::new(doc),
     }))
 }

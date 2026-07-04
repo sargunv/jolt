@@ -5,7 +5,7 @@ use jolt_fmt_ir::{RenderControl, RenderSink};
 use jolt_java_fmt::{JavaFormatOptions, JavaFormatSinkResult, format_source_to_sink};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct TestFormatResult {
+pub(crate) struct TestFormatResult {
     pub formatted_source: Option<String>,
     pub diagnostics: Vec<Diagnostic>,
 }
@@ -24,7 +24,7 @@ impl RenderSink for StringSink {
     }
 }
 
-pub fn format_source(source: &str, options: &JavaFormatOptions) -> TestFormatResult {
+pub(crate) fn format_source(source: &str, options: &JavaFormatOptions) -> TestFormatResult {
     let mut sink = StringSink::default();
     let result = format_source_to_sink(source, options, &mut sink);
     match result {

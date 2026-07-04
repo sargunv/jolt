@@ -49,7 +49,7 @@ pub(crate) fn discover_files(
     Ok(candidates)
 }
 
-pub(crate) fn matches_selection(path: &Path, config: &ResolvedConfig) -> bool {
+fn matches_selection(path: &Path, config: &ResolvedConfig) -> bool {
     config.include.matches(path) && !config.excludes.iter().any(|exclude| exclude.matches(path))
 }
 
