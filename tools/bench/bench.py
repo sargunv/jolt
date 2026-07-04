@@ -21,7 +21,7 @@ JOLT = ROOT / "target/release/jolt"
 DPRINT_PLUGIN = (
     ROOT / "target/wasm32-unknown-unknown/release/jolt_fmt_dprint.wasm"
 )
-HYPERFINE_RUNS = 10
+HYPERFINE_MIN_RUNS = 3
 HYPERFINE_WARMUP = 1
 
 CORPORA = {
@@ -279,8 +279,8 @@ def benchmark(tool_keys: tuple[ToolKey, ...]) -> None:
             "hyperfine",
             "--warmup",
             str(HYPERFINE_WARMUP),
-            "--runs",
-            str(HYPERFINE_RUNS),
+            "--min-runs",
+            str(HYPERFINE_MIN_RUNS),
             "--prepare",
             reset_command(name, tool_keys),
         ]
@@ -305,7 +305,7 @@ def write_report(
         [
             format_rows(rows),
             f"System: {system_info()}",
-            f"Hyperfine: {HYPERFINE_RUNS} runs, {HYPERFINE_WARMUP} warmup",
+            f"Hyperfine: adaptive runs, min {HYPERFINE_MIN_RUNS}, {HYPERFINE_WARMUP} warmup",
             "",
             output.rstrip(),
             "",
