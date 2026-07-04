@@ -5,15 +5,8 @@ use super::{JavaLexDiagnosticCode, LexerDiagnostic, lexer_diagnostic};
 // Java processes Unicode escapes before tokenization, everywhere in the source.
 // For example, `\u000a` becomes an actual line terminator before string or
 // comment scanning sees it; it is not the same as a string escape like `\n`.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(super) struct InputChar {
-    pub(super) ch: char,
-    pub(super) range: TextRange,
-    from_escape: bool,
-}
-
-pub(super) fn translate_unicode_escapes(source: &str) -> (Vec<InputChar>, Vec<LexerDiagnostic>) {
-    let mut chars = Vec::with_capacity(source.len());
+pub(crate) fn normalize_unicode_escapes(source: &str) -> (String, Vec<LexerDiagnostic>) {
+    let mut normalized = String::with_capacity(source.len());
     let mut diagnostics = Vec::new();
     let mut eligibility = UnicodeEscapeEligibility::default();
     let mut offset = 0usize;
@@ -33,11 +26,9 @@ pub(super) fn translate_unicode_escapes(source: &str) -> (Vec<InputChar>, Vec<Le
                     let low = second_escape.value - 0xDC00;
                     let scalar = 0x10000 + ((high << 10) | low);
                     push_char(
-                        &mut chars,
+                        &mut normalized,
                         &mut eligibility,
                         char::from_u32(scalar).expect("valid surrogate pair scalar value"),
-                        start,
-                        second_escape.end_offset,
                         true,
                     );
                     offset = second_escape.end_offset;
@@ -45,11 +36,9 @@ pub(super) fn translate_unicode_escapes(source: &str) -> (Vec<InputChar>, Vec<Le
                 }
 
                 push_char(
-                    &mut chars,
+                    &mut normalized,
                     &mut eligibility,
                     char::from_u32(first_escape.value).unwrap_or(char::REPLACEMENT_CHARACTER),
-                    start,
-                    first_escape.end_offset,
                     true,
                 );
                 offset = first_escape.end_offset;
@@ -57,17 +46,21 @@ pub(super) fn translate_unicode_escapes(source: &str) -> (Vec<InputChar>, Vec<Le
             }
 
             let end = malformed_unicode_escape_end(source, start);
+            let normalized_start = normalized.len();
             diagnostics.push(lexer_diagnostic(
                 JavaLexDiagnosticCode::MalformedUnicodeEscape,
-                TextRange::new(TextSize::new(start), TextSize::new(end)),
+                TextRange::new(
+                    TextSize::new(normalized_start),
+                    TextSize::new(normalized_start + end - start),
+                ),
             ));
         }
 
-        push_char(&mut chars, &mut eligibility, ch, start, end, false);
+        push_char(&mut normalized, &mut eligibility, ch, false);
         offset = end;
     }
 
-    (chars, diagnostics)
+    (normalized, diagnostics)
 }
 
 #[derive(Default)]
@@ -92,19 +85,13 @@ impl UnicodeEscapeEligibility {
 }
 
 fn push_char(
-    chars: &mut Vec<InputChar>,
+    normalized: &mut String,
     eligibility: &mut UnicodeEscapeEligibility,
     ch: char,
-    start: usize,
-    end: usize,
     from_escape: bool,
 ) {
     eligibility.advance(ch, from_escape);
-    chars.push(InputChar {
-        ch,
-        range: TextRange::new(TextSize::new(start), TextSize::new(end)),
-        from_escape,
-    });
+    normalized.push(ch);
 }
 
 #[derive(Clone, Copy, Debug)]

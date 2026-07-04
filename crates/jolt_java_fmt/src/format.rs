@@ -96,13 +96,14 @@ pub fn format_source_to_sink<S: RenderSink + ?Sized>(
     sink: &mut S,
 ) -> JavaFormatSinkResult<S::Error> {
     let parse = parse_compilation_unit(source);
-    let (syntax, diagnostics, outcome) = parse.into_parts();
+    let diagnostics = parse.diagnostics().to_vec();
+    let outcome = parse.outcome();
 
     if outcome != SyntaxOutcome::Clean {
         return JavaFormatSinkResult::Blocked { diagnostics };
     }
 
-    let Some(syntax) = syntax else {
+    let Some(syntax) = parse.syntax() else {
         return JavaFormatSinkResult::Blocked { diagnostics };
     };
 
@@ -254,13 +255,15 @@ mod tests {
 
     fn format_recovered_source_for_test(source: &str) -> String {
         let parse = parse_compilation_unit(source);
-        let (syntax, diagnostics, outcome) = parse.into_parts();
         assert_eq!(
-            outcome,
+            parse.outcome(),
             SyntaxOutcome::Recovered,
-            "{source}: {diagnostics:#?}"
+            "{source}: {:#?}",
+            parse.diagnostics()
         );
-        let syntax = syntax.expect("recovered parse should still produce syntax");
+        let syntax = parse
+            .syntax()
+            .expect("recovered parse should still produce syntax");
 
         let options = JavaFormatOptions::default();
         let mut formatter = JavaFormatter::new(&options, &syntax);

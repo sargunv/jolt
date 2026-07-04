@@ -6,7 +6,7 @@ use crate::helpers::comments::format_raw_comment;
 
 pub(crate) fn format_comment_only_compilation_unit(unit: &CompilationUnit) -> Doc {
     let source = unit.source_text();
-    let mut lexer = JavaLexer::new(&source);
+    let mut lexer = JavaLexer::new(source);
     let token = lexer.next_token();
     if token.kind != JavaSyntaxKind::Eof {
         return jolt_fmt_ir::nil();

@@ -29,13 +29,15 @@ pub(crate) fn token_has_comments(token: &JavaSyntaxToken) -> bool {
     !token.leading_comments().is_empty() || !token.trailing_comments().is_empty()
 }
 
-pub(crate) fn token_iter_has_comments(tokens: impl IntoIterator<Item = JavaSyntaxToken>) -> bool {
+pub(crate) fn token_iter_has_comments<'source>(
+    tokens: impl IntoIterator<Item = JavaSyntaxToken<'source>>,
+) -> bool {
     tokens.into_iter().any(|token| token_has_comments(&token))
 }
 
-pub(crate) fn comments_from_tokens(
-    tokens: impl IntoIterator<Item = JavaSyntaxToken>,
-) -> Vec<JavaComment> {
+pub(crate) fn comments_from_tokens<'source>(
+    tokens: impl IntoIterator<Item = JavaSyntaxToken<'source>>,
+) -> Vec<JavaComment<'source>> {
     tokens
         .into_iter()
         .flat_map(|token| {
@@ -47,13 +49,13 @@ pub(crate) fn comments_from_tokens(
 }
 
 pub(crate) fn format_construct_leading_comments(
-    comments: &CommentMap,
-    token: Option<&JavaSyntaxToken>,
+    comments: &CommentMap<'_>,
+    token: Option<&JavaSyntaxToken<'_>>,
 ) -> Doc {
     format_leading_comment_list(comments.leading_comments_for_token_option(token))
 }
 
-pub(crate) fn format_leading_comment_list(comments: &[JavaComment]) -> Doc {
+pub(crate) fn format_leading_comment_list(comments: &[JavaComment<'_>]) -> Doc {
     let mut docs = Vec::new();
     for comment in comments {
         docs.push(format_comment(comment));
@@ -62,14 +64,16 @@ pub(crate) fn format_leading_comment_list(comments: &[JavaComment]) -> Doc {
     concat(docs)
 }
 
-pub(crate) fn non_formatter_control_comments(comments: Vec<JavaComment>) -> Vec<JavaComment> {
+pub(crate) fn non_formatter_control_comments(
+    comments: Vec<JavaComment<'_>>,
+) -> Vec<JavaComment<'_>> {
     comments
         .into_iter()
         .filter(|comment| !is_formatter_control_marker(comment.text()))
         .collect()
 }
 
-pub(crate) fn format_removed_token_comments(tokens: &[JavaSyntaxToken]) -> Option<Doc> {
+pub(crate) fn format_removed_token_comments(tokens: &[JavaSyntaxToken<'_>]) -> Option<Doc> {
     let comments = tokens
         .iter()
         .flat_map(|token| {
@@ -81,7 +85,7 @@ pub(crate) fn format_removed_token_comments(tokens: &[JavaSyntaxToken]) -> Optio
     format_removed_comments(comments)
 }
 
-pub(crate) fn format_removed_comments(comments: Vec<JavaComment>) -> Option<Doc> {
+pub(crate) fn format_removed_comments(comments: Vec<JavaComment<'_>>) -> Option<Doc> {
     let comments = non_formatter_control_comments(comments);
 
     (!comments.is_empty()).then(|| format_dangling_comments(comments))
@@ -124,7 +128,7 @@ pub(crate) fn format_trailing_comments_before_line_break(token: &JavaSyntaxToken
     concat(docs)
 }
 
-pub(crate) fn format_inline_trailing_comment_list(comments: &[JavaComment]) -> Doc {
+pub(crate) fn format_inline_trailing_comment_list(comments: &[JavaComment<'_>]) -> Doc {
     concat(
         comments
             .iter()
@@ -148,7 +152,9 @@ pub(crate) fn format_separator_with_comments(token: &JavaSyntaxToken, unforced_b
     ])
 }
 
-pub(crate) fn format_dangling_comments(comments: impl IntoIterator<Item = JavaComment>) -> Doc {
+pub(crate) fn format_dangling_comments<'source>(
+    comments: impl IntoIterator<Item = JavaComment<'source>>,
+) -> Doc {
     let mut docs = Vec::new();
     for comment in comments {
         if !docs.is_empty() {

@@ -1,5 +1,6 @@
 use super::*;
 use crate::green::{GreenElement, GreenToken};
+use jolt_text::TextSize;
 
 const ROOT: RawSyntaxKind = RawSyntaxKind::new(0);
 const WRAPPER: RawSyntaxKind = RawSyntaxKind::new(1);
@@ -34,21 +35,21 @@ impl GreenTokenSource for TestTokenSource {
         TOKEN
     }
 
-    fn token_text(&self, index: usize) -> &str {
-        self.tokens[index]
+    fn token_text_len(&self, index: usize) -> TextSize {
+        TextSize::new(self.tokens[index].len())
     }
 
-    fn leading_trivia(&self, _index: usize) -> impl Iterator<Item = GreenTriviaPiece<'_>> {
+    fn leading_trivia(&self, _index: usize) -> impl Iterator<Item = GreenTriviaPiece> {
         std::iter::empty()
     }
 
-    fn trailing_trivia(&self, _index: usize) -> impl Iterator<Item = GreenTriviaPiece<'_>> {
+    fn trailing_trivia(&self, _index: usize) -> impl Iterator<Item = GreenTriviaPiece> {
         std::iter::empty()
     }
 }
 
 fn token(kind: RawSyntaxKind, text: &'static str) -> GreenToken {
-    GreenToken::with_trivia(kind, text, [], [])
+    GreenToken::with_trivia(kind, TextSize::new(text.len()), [], [])
 }
 
 #[test]
@@ -81,7 +82,7 @@ fn completed_marker_can_precede_and_wrap_a_completed_node() {
         GreenElement::Token(_) => panic!("expected leaf node"),
     };
 
-    assert_eq!(green_text(&root), "ab");
+    assert_eq!(root.text_len(), TextSize::new("ab".len()));
     assert_eq!(wrapper.kind(), WRAPPER);
     assert_eq!(leaf.kind(), LEAF);
 }
@@ -99,18 +100,22 @@ fn token_source_supplies_borrowed_trivia_pieces() {
             TOKEN
         }
 
-        fn token_text(&self, _index: usize) -> &'static str {
-            "token"
+        fn token_text_len(&self, _index: usize) -> TextSize {
+            TextSize::new("token".len())
         }
 
-        fn leading_trivia(&self, _index: usize) -> impl Iterator<Item = GreenTriviaPiece<'_>> {
-            [GreenTriviaPiece::new(TriviaKind::Whitespace, "  ")].into_iter()
+        fn leading_trivia(&self, _index: usize) -> impl Iterator<Item = GreenTriviaPiece> {
+            [GreenTriviaPiece::new(
+                TriviaKind::Whitespace,
+                TextSize::new("  ".len()),
+            )]
+            .into_iter()
         }
 
-        fn trailing_trivia(&self, _index: usize) -> impl Iterator<Item = GreenTriviaPiece<'_>> {
+        fn trailing_trivia(&self, _index: usize) -> impl Iterator<Item = GreenTriviaPiece> {
             [GreenTriviaPiece::new(
                 TriviaKind::LineComment,
-                "// trailing",
+                TextSize::new("// trailing".len()),
             )]
             .into_iter()
         }
@@ -120,16 +125,22 @@ fn token_source_supplies_borrowed_trivia_pieces() {
     let tree = build_green_tree(&events, &TriviaTokenSource).unwrap();
 
     let (root, _) = tree.into_parts();
-    assert_eq!(green_text(&root), "  token// trailing");
+    assert_eq!(root.text_len(), TextSize::new("  token// trailing".len()));
 }
 
 #[test]
 fn green_token_text_len_includes_trivia() {
     let token = GreenToken::with_trivia(
         TOKEN,
-        "token",
-        [GreenTrivia::new(TriviaKind::Whitespace, "  ")],
-        [GreenTrivia::new(TriviaKind::LineComment, "// trailing")],
+        TextSize::new("token".len()),
+        [GreenTrivia::new(
+            TriviaKind::Whitespace,
+            TextSize::new("  ".len()),
+        )],
+        [GreenTrivia::new(
+            TriviaKind::LineComment,
+            TextSize::new("// trailing".len()),
+        )],
     );
 
     assert_eq!(token.token_text_len(), 5usize.into());
@@ -142,7 +153,7 @@ fn last_token_ignores_empty_trailing_child_nodes() {
         ROOT,
         [token(TOKEN, "a").into(), GreenNode::new(EMPTY, []).into()],
     );
-    let root = SyntaxNode::<TestLanguage>::new_root(root);
+    let root = SyntaxNode::<TestLanguage>::new_root("a", root);
 
     assert_eq!(root.last_token().unwrap().text(), "a");
 }
@@ -157,7 +168,7 @@ fn sibling_accessors_preserve_offsets() {
             token(TOKEN, "d").into(),
         ],
     );
-    let root = SyntaxNode::<TestLanguage>::new_root(root);
+    let root = SyntaxNode::<TestLanguage>::new_root("abcd", root);
 
     let wrapper = root.children().next().unwrap();
 
@@ -191,7 +202,7 @@ fn syntax_node_debug_prints_tree_shape_without_parent_recursion() {
         ROOT,
         [GreenNode::new(WRAPPER, [token(TOKEN, "a").into()]).into()],
     );
-    let root = SyntaxNode::<TestLanguage>::new_root(root);
+    let root = SyntaxNode::<TestLanguage>::new_root("a", root);
 
     assert_eq!(
         format!("{root:?}"),

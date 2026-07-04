@@ -20,15 +20,20 @@
 use jolt_diagnostics::{DiagnosticCode, DiagnosticCodeId, DiagnosticStage, Severity};
 use jolt_text::{TextRange, TextSize};
 
-use super::{JavaLexDiagnosticCode, JavaLexer, JavaSyntaxKind, LexerDiagnostic, Token, TriviaKind};
+use super::{
+    JavaLexDiagnosticCode, JavaLexer, JavaSyntaxKind, LexerDiagnostic, Token, TriviaKind,
+    normalize_unicode_escapes,
+};
 
 struct Lexed {
+    source: String,
     tokens: Vec<Token>,
     diagnostics: Vec<LexerDiagnostic>,
 }
 
 fn lex(source: &str) -> Lexed {
-    let mut lexer = JavaLexer::new(source);
+    let (source, mut diagnostics) = normalize_unicode_escapes(source);
+    let mut lexer = JavaLexer::new(&source);
     let mut tokens = Vec::new();
     loop {
         let token = lexer.next_token();
@@ -38,8 +43,9 @@ fn lex(source: &str) -> Lexed {
             break;
         }
     }
-    let diagnostics = lexer.finish();
+    diagnostics.extend(lexer.finish());
     Lexed {
+        source,
         tokens,
         diagnostics,
     }
@@ -67,11 +73,11 @@ fn reconstructed(source: &str) -> String {
     let mut out = String::new();
     for token in lexed.tokens {
         for trivia in token.leading {
-            out.push_str(&source[trivia.range.start().get()..trivia.range.end().get()]);
+            out.push_str(&lexed.source[trivia.range.start().get()..trivia.range.end().get()]);
         }
-        out.push_str(&source[token.range.start().get()..token.range.end().get()]);
+        out.push_str(&lexed.source[token.range.start().get()..token.range.end().get()]);
         for trivia in token.trailing {
-            out.push_str(&source[trivia.range.start().get()..trivia.range.end().get()]);
+            out.push_str(&lexed.source[trivia.range.start().get()..trivia.range.end().get()]);
         }
     }
     out
@@ -157,17 +163,16 @@ fn rejects_non_ascii_separator_and_operator_lookalikes() {
 }
 
 #[test]
-fn preserves_raw_ranges_for_unicode_escape_tokens() {
+fn unicode_escape_token_text_is_normalized_before_lexing() {
     // Spec: JLS 3.3 Unicode Escapes.
-    // Contract: token ranges remain raw-source ranges for lossless formatting.
     let source = "cl\\u0061ss A {}";
     let lexed = lex(source);
     assert_eq!(lexed.tokens[0].kind, JavaSyntaxKind::ClassKw);
     assert_eq!(
-        &source[lexed.tokens[0].range.start().get()..lexed.tokens[0].range.end().get()],
-        "cl\\u0061ss"
+        &lexed.source[lexed.tokens[0].range.start().get()..lexed.tokens[0].range.end().get()],
+        "class"
     );
-    assert_eq!(reconstructed(source), source);
+    assert_eq!(reconstructed(source), "class A {}");
 }
 
 #[test]
@@ -398,13 +403,13 @@ fn keeps_unicode_escape_crlf_as_one_line_terminator_trivia() {
     let b = lexed
         .tokens
         .iter()
-        .find(|token| token.kind == JavaSyntaxKind::Identifier && token.range.start().get() == 13)
+        .find(|token| token.kind == JavaSyntaxKind::Identifier && token.range.start().get() == 3)
         .expect("identifier after escaped CRLF");
     assert_eq!(b.leading.len(), 1);
     assert_eq!(b.leading[0].kind, TriviaKind::Newline);
     assert_eq!(
-        &source[b.leading[0].range.start().get()..b.leading[0].range.end().get()],
-        "\\u000d\\u000a"
+        &lexed.source[b.leading[0].range.start().get()..b.leading[0].range.end().get()],
+        "\r\n"
     );
 }
 
@@ -452,7 +457,7 @@ fn ignores_trailing_sub_after_unicode_escape_translation() {
             JavaSyntaxKind::RBrace,
         ]
     );
-    assert_eq!(reconstructed(source), source);
+    assert_eq!(reconstructed(source), "class A {}\u{001A}");
 }
 
 #[test]

@@ -12,9 +12,11 @@ use jolt_diagnostics::{
 use jolt_syntax::{
     GreenTokenSource, GreenTriviaPiece, TriviaKind as GreenTriviaKind, build_green_tree,
 };
+use jolt_text::TextSize;
 
 use crate::{
     CompilationUnit, Trivia,
+    lexer::normalize_unicode_escapes,
     nodes::{JavaSyntaxNode, cast_compilation_unit},
 };
 
@@ -72,7 +74,8 @@ impl DiagnosticCode for JavaParseDiagnosticCode {
 
 /// The result of parsing Java source text.
 pub struct JavaParse {
-    syntax: Option<CompilationUnit>,
+    source: String,
+    root: Option<jolt_syntax::GreenNode>,
     diagnostics: Vec<Diagnostic>,
     outcome: SyntaxOutcome,
 }
@@ -80,8 +83,10 @@ pub struct JavaParse {
 impl JavaParse {
     /// Returns the parsed syntax tree root.
     #[must_use]
-    pub fn syntax(&self) -> Option<&CompilationUnit> {
-        self.syntax.as_ref()
+    pub fn syntax(&self) -> Option<CompilationUnit<'_>> {
+        self.root
+            .clone()
+            .and_then(|root| cast_compilation_unit(JavaSyntaxNode::new_root(&self.source, root)))
     }
 
     /// Returns parser diagnostics.
@@ -95,18 +100,12 @@ impl JavaParse {
     pub const fn outcome(&self) -> SyntaxOutcome {
         self.outcome
     }
-
-    /// Splits this parse result into its syntax root, diagnostics, and outcome.
-    #[must_use]
-    pub fn into_parts(self) -> (Option<CompilationUnit>, Vec<Diagnostic>, SyntaxOutcome) {
-        (self.syntax, self.diagnostics, self.outcome)
-    }
 }
 
 impl fmt::Debug for JavaParse {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "syntax:")?;
-        if let Some(syntax) = &self.syntax {
+        if let Some(syntax) = self.syntax() {
             writeln!(f, "{syntax:?}")?;
         } else {
             writeln!(f, "  (none)")?;
@@ -146,20 +145,26 @@ fn fmt_diagnostic(f: &mut fmt::Formatter<'_>, diagnostic: &Diagnostic) -> fmt::R
 /// Parses a Java compilation unit.
 #[must_use]
 pub fn parse_compilation_unit(source: &str) -> JavaParse {
-    let parse = Parser::new(source).parse_compilation_unit();
-    finish_parse(source, parse)
+    let (source, mut diagnostics) = normalize_unicode_escapes(source);
+    let parse = Parser::new(&source).parse_compilation_unit();
+    finish_parse(source, parse, &mut diagnostics)
 }
 
-fn finish_parse(source: &str, parse: source::ParseEvents) -> JavaParse {
-    let mut diagnostics = parse.diagnostics;
-    let token_source = JavaGreenTokenSource::new(source, &parse.tokens);
+fn finish_parse(
+    source: String,
+    parse: source::ParseEvents,
+    diagnostics: &mut Vec<Diagnostic>,
+) -> JavaParse {
+    diagnostics.extend(parse.diagnostics);
+    let token_source = JavaGreenTokenSource::new(&source, &parse.tokens);
     let tree = match build_green_tree(&parse.events, &token_source) {
         Ok(tree) => tree,
         Err(error) => {
             diagnostics.push(invalid_event_stream_diagnostic(&error));
             return JavaParse {
-                syntax: None,
-                diagnostics,
+                source,
+                root: None,
+                diagnostics: std::mem::take(diagnostics),
                 outcome: SyntaxOutcome::Aborted,
             };
         }
@@ -173,11 +178,9 @@ fn finish_parse(source: &str, parse: source::ParseEvents) -> JavaParse {
     };
 
     JavaParse {
-        syntax: Some(
-            cast_compilation_unit(JavaSyntaxNode::new_root(root))
-                .expect("parser root must be a compilation unit"),
-        ),
-        diagnostics,
+        source,
+        root: Some(root),
+        diagnostics: std::mem::take(diagnostics),
         outcome,
     }
 }
@@ -208,7 +211,7 @@ struct JavaGreenTokenSource<'source> {
 }
 
 impl<'source> JavaGreenTokenSource<'source> {
-    const fn new(source: &'source str, tokens: &'source [ParserToken]) -> Self {
+    fn new(source: &'source str, tokens: &'source [ParserToken]) -> Self {
         Self { source, tokens }
     }
 
@@ -216,8 +219,8 @@ impl<'source> JavaGreenTokenSource<'source> {
         &self.tokens[index]
     }
 
-    fn trivia_text(&self, trivia: &Trivia) -> &'source str {
-        &self.source[trivia.range.start().get()..trivia.range.end().get()]
+    fn trivia_text_len(trivia: &Trivia) -> TextSize {
+        trivia.range.len()
     }
 }
 
@@ -230,20 +233,26 @@ impl GreenTokenSource for JavaGreenTokenSource<'_> {
         self.token(index).kind.to_raw()
     }
 
-    fn token_text(&self, index: usize) -> &str {
+    fn token_text_len(&self, index: usize) -> TextSize {
         let range = self.token(index).range;
-        &self.source[range.start().get()..range.end().get()]
+        TextSize::new(self.source[range.start().get()..range.end().get()].len())
     }
 
-    fn leading_trivia(&self, index: usize) -> impl Iterator<Item = GreenTriviaPiece<'_>> {
+    fn leading_trivia(&self, index: usize) -> impl Iterator<Item = GreenTriviaPiece> {
         self.token(index).leading.iter().map(|trivia| {
-            GreenTriviaPiece::new(to_green_trivia_kind(trivia.kind), self.trivia_text(trivia))
+            GreenTriviaPiece::new(
+                to_green_trivia_kind(trivia.kind),
+                Self::trivia_text_len(trivia),
+            )
         })
     }
 
-    fn trailing_trivia(&self, index: usize) -> impl Iterator<Item = GreenTriviaPiece<'_>> {
+    fn trailing_trivia(&self, index: usize) -> impl Iterator<Item = GreenTriviaPiece> {
         self.token(index).trailing.iter().map(|trivia| {
-            GreenTriviaPiece::new(to_green_trivia_kind(trivia.kind), self.trivia_text(trivia))
+            GreenTriviaPiece::new(
+                to_green_trivia_kind(trivia.kind),
+                Self::trivia_text_len(trivia),
+            )
         })
     }
 }

@@ -106,10 +106,10 @@ pub(super) fn format_postfix_expression(
     ])
 }
 
-fn flatten_binary_expression(
-    expression: &BinaryExpression,
+fn flatten_binary_expression<'source>(
+    expression: &'source BinaryExpression<'source>,
     formatter: &JavaFormatter<'_>,
-) -> (Expression, Vec<(Doc, Doc)>) {
+) -> (Expression<'source>, Vec<(Doc, Doc)>) {
     let Some(operator) = expression.operator() else {
         return (
             expression
@@ -125,7 +125,7 @@ fn flatten_binary_expression(
     let root = Expression::from(expression.clone());
     let mut operands = Vec::new();
     let mut operators = Vec::new();
-    collect_binary_chain(&root, &mut operands, &mut operators);
+    collect_binary_chain(root.clone(), &mut operands, &mut operators);
     if operators.len() + 1 != operands.len() {
         return unflattened_binary_expression(expression, formatter, &operator);
     }
@@ -164,11 +164,11 @@ fn format_binary_operand(
     }
 }
 
-fn unflattened_binary_expression(
-    expression: &BinaryExpression,
+fn unflattened_binary_expression<'source>(
+    expression: &'source BinaryExpression<'source>,
     formatter: &JavaFormatter<'_>,
-    operator: &JavaOperator,
-) -> (Expression, Vec<(Doc, Doc)>) {
+    operator: &JavaOperator<'source>,
+) -> (Expression<'source>, Vec<(Doc, Doc)>) {
     (
         expression
             .left()
@@ -182,22 +182,22 @@ fn unflattened_binary_expression(
     )
 }
 
-fn collect_binary_chain(
-    expression: &Expression,
-    operands: &mut Vec<Expression>,
-    operators: &mut Vec<JavaOperator>,
+fn collect_binary_chain<'source>(
+    expression: Expression<'source>,
+    operands: &mut Vec<Expression<'source>>,
+    operators: &mut Vec<JavaOperator<'source>>,
 ) {
-    let Some(binary) = binary_for_chain(expression) else {
-        operands.push(expression.clone());
+    let Some(binary) = binary_for_chain(expression.clone()) else {
+        operands.push(expression);
         return;
     };
     let Some(operator) = binary.operator() else {
-        operands.push(expression.clone());
+        operands.push(expression);
         return;
     };
 
     if let Some(left) = binary.left() {
-        collect_binary_left(&left, operator.text(), operands, operators);
+        collect_binary_left(left, operator.text(), operands, operators);
     }
     operators.push(operator);
     if let Some(right) = binary.right() {
@@ -205,32 +205,32 @@ fn collect_binary_chain(
     }
 }
 
-fn collect_binary_left(
-    expression: &Expression,
+fn collect_binary_left<'source>(
+    expression: Expression<'source>,
     parent_operator: &str,
-    operands: &mut Vec<Expression>,
-    operators: &mut Vec<JavaOperator>,
+    operands: &mut Vec<Expression<'source>>,
+    operators: &mut Vec<JavaOperator<'source>>,
 ) {
-    let Some(binary) = binary_for_chain(expression) else {
-        operands.push(expression.clone());
+    let Some(binary) = binary_for_chain(expression.clone()) else {
+        operands.push(expression);
         return;
     };
     let Some(operator) = binary.operator() else {
-        operands.push(expression.clone());
+        operands.push(expression);
         return;
     };
 
     if !should_flatten_binary(parent_operator, operator.text()) {
-        operands.push(expression.clone());
+        operands.push(expression);
         return;
     }
 
-    collect_binary_chain(&Expression::from(binary), operands, operators);
+    collect_binary_chain(Expression::from(binary), operands, operators);
 }
 
-fn binary_for_chain(expression: &Expression) -> Option<BinaryExpression> {
+fn binary_for_chain(expression: Expression<'_>) -> Option<BinaryExpression<'_>> {
     match expression {
-        Expression::BinaryExpression(binary) => Some(binary.clone()),
+        Expression::BinaryExpression(binary) => Some(binary),
         Expression::ParenthesizedExpression(parenthesized)
             if parenthesized
                 .open_paren()

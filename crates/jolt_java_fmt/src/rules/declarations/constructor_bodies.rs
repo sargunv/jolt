@@ -19,7 +19,7 @@ pub(super) fn format_constructor_body(
             constructor_body_element_token_range(element, body.text_range().start().get())
         })
         .collect::<Vec<_>>();
-    let ignored_ranges = formatter_ignore_ranges(&body.source_text());
+    let ignored_ranges = formatter_ignore_ranges(body.source_text());
     let ignored_runs = formatter_ignore_runs(&ignored_ranges, &element_ranges);
     let mut items = Vec::new();
     items.extend(format_constructor_body_open_dangling_comments(
@@ -81,9 +81,9 @@ fn format_constructor_body_close_dangling_comments(
     (!comments.is_empty()).then(|| BodyItem::new(format_dangling_comments(comments), false))
 }
 
-fn constructor_body_elements(
-    body: &jolt_java_syntax::ConstructorBody,
-) -> Vec<ConstructorBodyElement> {
+fn constructor_body_elements<'source>(
+    body: &'source jolt_java_syntax::ConstructorBody<'source>,
+) -> Vec<ConstructorBodyElement<'source>> {
     body.invocation()
         .into_iter()
         .map(ConstructorBodyElement::Invocation)
@@ -167,20 +167,20 @@ fn format_constructor_invocation_qualifier(
         })
 }
 
-enum ConstructorBodyElement {
-    Invocation(ConstructorInvocation),
-    BlockStatement(BlockStatement),
+enum ConstructorBodyElement<'source> {
+    Invocation(ConstructorInvocation<'source>),
+    BlockStatement(BlockStatement<'source>),
 }
 
-impl ConstructorBodyElement {
-    fn first_token(&self) -> Option<jolt_java_syntax::JavaSyntaxToken> {
+impl ConstructorBodyElement<'_> {
+    fn first_token(&self) -> Option<jolt_java_syntax::JavaSyntaxToken<'_>> {
         match self {
             Self::Invocation(invocation) => invocation.first_token(),
             Self::BlockStatement(statement) => statement.first_token(),
         }
     }
 
-    fn last_token(&self) -> Option<jolt_java_syntax::JavaSyntaxToken> {
+    fn last_token(&self) -> Option<jolt_java_syntax::JavaSyntaxToken<'_>> {
         match self {
             Self::Invocation(invocation) => invocation.last_token(),
             Self::BlockStatement(statement) => statement.last_token(),

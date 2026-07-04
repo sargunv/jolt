@@ -86,9 +86,10 @@ pub(super) fn format_enum_declaration(
     enum_: &EnumDeclaration,
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
-    let constants = enum_
-        .body()
-        .and_then(|body| body.constants())
+    let body = enum_.body();
+    let constants = body
+        .as_ref()
+        .and_then(jolt_java_syntax::EnumBody::constants)
         .map(|constants| {
             constants
                 .entries()

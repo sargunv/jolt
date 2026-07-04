@@ -11,18 +11,18 @@ pub(crate) trait FormatRule<N> {
 
 pub(crate) struct JavaFormatter<'a> {
     options: &'a JavaFormatOptions,
-    comments: CommentMap,
+    comments: CommentMap<'a>,
 }
 
 impl<'a> JavaFormatter<'a> {
-    pub(crate) fn new(options: &'a JavaFormatOptions, unit: &CompilationUnit) -> Self {
+    pub(crate) fn new(options: &'a JavaFormatOptions, unit: &CompilationUnit<'a>) -> Self {
         Self {
             options,
             comments: CommentMap::from_compilation_unit(unit),
         }
     }
 
-    pub(crate) fn format_compilation_unit(&mut self, unit: &CompilationUnit) -> Doc {
+    pub(crate) fn format_compilation_unit(&mut self, unit: &CompilationUnit<'a>) -> Doc {
         ProgramRule.fmt(unit, self)
     }
 
@@ -39,7 +39,7 @@ impl<'a> JavaFormatter<'a> {
         }
     }
 
-    pub(crate) const fn comments(&self) -> &CommentMap {
+    pub(crate) const fn comments(&self) -> &CommentMap<'a> {
         &self.comments
     }
 }

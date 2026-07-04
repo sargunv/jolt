@@ -3,20 +3,15 @@ use jolt_text::{TextRange, TextSize};
 use super::*;
 use crate::{SyntaxOutcome, parse_compilation_unit};
 
-fn parse_clean(source: &str) -> CompilationUnit {
+fn parse_clean(source: &str) -> crate::parser::JavaParse {
     let parse = parse_compilation_unit(source);
-    let syntax = parse
-        .syntax()
-        .expect("clean parse should produce syntax")
-        .clone();
-
     assert_eq!(parse.outcome(), SyntaxOutcome::Clean);
     assert!(parse.diagnostics().is_empty());
 
-    syntax
+    parse
 }
 
-fn descendants<N: JavaNode>(syntax: &CompilationUnit) -> Vec<N> {
+fn descendants<'source, N: JavaNode<'source>>(syntax: &CompilationUnit<'source>) -> Vec<N> {
     syntax.syntax.descendants().filter_map(N::cast).collect()
 }
 
@@ -66,7 +61,8 @@ fn compilation_unit_accessors_traverse_real_parser_output() {
 
 #[test]
 fn token_comments_expose_source_ranges() {
-    let syntax = parse_clean("class A {\n  // leading\n  int x; /* trailing */\n}\n");
+    let parse = parse_clean("class A {\n  // leading\n  int x; /* trailing */\n}\n");
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
     let field = descendants::<FieldDeclaration>(&syntax)
         .into_iter()
         .next()
@@ -94,7 +90,7 @@ fn token_comments_expose_source_ranges() {
 
 #[test]
 fn leading_comments_do_not_count_as_blank_lines() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 class A {
                   void run() {
@@ -108,6 +104,7 @@ fn leading_comments_do_not_count_as_blank_lines() {
                 }
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
     let statements = descendants::<BlockStatement>(&syntax);
     let second = statements
         .iter()
@@ -124,7 +121,8 @@ fn leading_comments_do_not_count_as_blank_lines() {
 
 #[test]
 fn variable_declarator_lists_expose_entries_with_commas() {
-    let syntax = parse_clean("class A { int first /* a */, /* b */ second = 2, third; }\n");
+    let parse = parse_clean("class A { int first /* a */, /* b */ second = 2, third; }\n");
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
     let list = descendants::<VariableDeclaratorList>(&syntax)
         .into_iter()
         .next()
@@ -164,7 +162,7 @@ fn variable_declarator_lists_expose_entries_with_commas() {
 
 #[test]
 fn compilation_unit_items_expose_ordered_top_level_roles() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 package example.order;
 
@@ -176,6 +174,7 @@ fn compilation_unit_items_expose_ordered_top_level_roles() {
                 interface B {}
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
 
     let item_kinds = syntax
         .items()
@@ -289,7 +288,7 @@ fn module_declaration_directives_traverse_real_parser_output() {
 
 #[test]
 fn module_directives_expose_structured_roles() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 open module example.module {
                     requires transitive static java.sql;
@@ -300,6 +299,7 @@ fn module_directives_expose_structured_roles() {
                 }
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
     let module = syntax
         .module_declaration()
         .expect("module source should expose module declaration");
@@ -370,7 +370,7 @@ fn module_directives_expose_structured_roles() {
 
 #[test]
 fn module_directive_name_lists_expose_entries_with_commas() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 module example.module {
                     exports example.api to friend.one, // first export
@@ -382,6 +382,7 @@ fn module_directive_name_lists_expose_entries_with_commas() {
                 }
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
     let module = syntax
         .module_declaration()
         .expect("module source should expose module declaration");
@@ -483,7 +484,7 @@ fn block_accessors_unwrap_parser_block_statement_items() {
 
 #[test]
 fn statement_accessors_expose_terminal_semicolons() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 class Accessors extends Base {
                     Accessors() {
@@ -510,6 +511,7 @@ fn statement_accessors_expose_terminal_semicolons() {
                 }
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
 
     let constructor_invocation = descendants::<ConstructorInvocation>(&syntax)
         .into_iter()
@@ -565,7 +567,7 @@ fn statement_accessors_expose_terminal_semicolons() {
 
 #[test]
 fn declaration_accessors_expose_terminal_semicolons() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 class Accessors {
                     String field; // field
@@ -580,6 +582,7 @@ fn declaration_accessors_expose_terminal_semicolons() {
                 }
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
 
     assert_eq!(
         semicolon_trailing_comment(descendants::<FieldDeclaration>(&syntax)[0].semicolon()),
@@ -599,7 +602,7 @@ fn declaration_accessors_expose_terminal_semicolons() {
 
 #[test]
 fn resource_lists_expose_entries_with_semicolons() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 class Accessors {
                     void run() throws Exception {
@@ -612,6 +615,7 @@ fn resource_lists_expose_entries_with_semicolons() {
                 }
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
     let specification = descendants::<ResourceSpecification>(&syntax)
         .into_iter()
         .next()
@@ -643,7 +647,7 @@ fn resource_lists_expose_entries_with_semicolons() {
 
 #[test]
 fn resource_lists_without_trailing_semicolon_expose_no_optional_separator() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 class Accessors {
                     void run() throws Exception {
@@ -657,6 +661,7 @@ fn resource_lists_without_trailing_semicolon_expose_no_optional_separator() {
                 }
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
     let specification = descendants::<ResourceSpecification>(&syntax)
         .into_iter()
         .next()
@@ -682,7 +687,7 @@ fn resource_lists_without_trailing_semicolon_expose_no_optional_separator() {
 
 #[test]
 fn array_initializers_expose_entries_with_commas_and_braces() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 class Accessors {
                     int[] values = {/* start */ 1, // one
@@ -691,6 +696,7 @@ fn array_initializers_expose_entries_with_commas_and_braces() {
                 }
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
     let initializer = descendants::<ArrayInitializer>(&syntax)
         .into_iter()
         .next()
@@ -728,7 +734,7 @@ fn array_initializers_expose_entries_with_commas_and_braces() {
 
 #[test]
 fn import_declarations_expose_structured_names() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 import java.util.List;
                 import java.util.*;
@@ -740,6 +746,7 @@ fn import_declarations_expose_structured_names() {
                 class Imports {}
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
 
     let names = syntax
         .imports()
@@ -752,18 +759,15 @@ fn import_declarations_expose_structured_names() {
     assert_eq!(
         names,
         [
-            (JavaSyntaxKind::QualifiedName, "java.util.List".to_owned()),
-            (JavaSyntaxKind::QualifiedName, "java.util".to_owned()),
+            (JavaSyntaxKind::QualifiedName, "java.util.List"),
+            (JavaSyntaxKind::QualifiedName, "java.util"),
             (
                 JavaSyntaxKind::QualifiedName,
-                "java.util.Collections.emptyList".to_owned()
+                "java.util.Collections.emptyList"
             ),
-            (
-                JavaSyntaxKind::QualifiedName,
-                "java.util.Collections".to_owned()
-            ),
-            (JavaSyntaxKind::QualifiedName, "module.foo.Bar".to_owned()),
-            (JavaSyntaxKind::QualifiedName, "java.base".to_owned()),
+            (JavaSyntaxKind::QualifiedName, "java.util.Collections"),
+            (JavaSyntaxKind::QualifiedName, "module.foo.Bar"),
+            (JavaSyntaxKind::QualifiedName, "java.base"),
         ]
     );
 
@@ -830,13 +834,14 @@ fn import_declarations_expose_structured_names() {
 
 #[test]
 fn qualified_name_segments_expose_separator_dots() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 import z /* dot */ . Z;
 
                 class Imports {}
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
 
     let name = syntax
         .imports()
@@ -865,7 +870,7 @@ fn qualified_name_segments_expose_separator_dots() {
 
 #[test]
 fn type_declarations_expose_names_and_bodies() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 class ClassName {}
                 record RecordName(int value) {}
@@ -874,6 +879,7 @@ fn type_declarations_expose_names_and_bodies() {
                 @interface AnnotationName {}
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
 
     let declarations = syntax.type_declarations().collect::<Vec<_>>();
     assert_eq!(declarations.len(), 5);
@@ -932,7 +938,7 @@ fn type_declarations_expose_names_and_bodies() {
 
 #[test]
 fn method_declarations_expose_names_and_parameter_lists() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 class Methods {
                     String compute(String name, int count) {
@@ -943,6 +949,7 @@ fn method_declarations_expose_names_and_parameter_lists() {
                 }
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
 
     let methods = descendants::<MethodDeclaration>(&syntax);
     assert_eq!(methods.len(), 2);
@@ -962,7 +969,7 @@ fn method_declarations_expose_names_and_parameter_lists() {
 
 #[test]
 fn method_declarations_expose_return_type_annotations() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 class Methods {
                     public <T> @Nonnull T name(T value) {
@@ -971,6 +978,7 @@ fn method_declarations_expose_return_type_annotations() {
                 }
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
 
     let method = descendants::<MethodDeclaration>(&syntax)
         .into_iter()
@@ -989,13 +997,14 @@ fn method_declarations_expose_return_type_annotations() {
 
 #[test]
 fn modifier_lists_split_declaration_and_post_modifier_type_annotations() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 class Fields {
                     @Decl public @Type String value;
                 }
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
 
     let field = descendants::<FieldDeclaration>(&syntax)
         .into_iter()
@@ -1021,12 +1030,13 @@ fn modifier_lists_split_declaration_and_post_modifier_type_annotations() {
 
 #[test]
 fn modifier_lists_expose_contextual_modifier_entries() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 sealed class Base permits Open {}
                 non-sealed class Open extends Base {}
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
 
     let modifier_texts = syntax
         .type_declarations()
@@ -1057,7 +1067,7 @@ fn modifier_lists_expose_contextual_modifier_entries() {
 
 #[test]
 fn local_variables_split_declaration_and_post_modifier_type_annotations() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 class Locals {
                     void run() {
@@ -1066,6 +1076,7 @@ fn local_variables_split_declaration_and_post_modifier_type_annotations() {
                 }
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
 
     let local = descendants::<LocalVariableDeclaration>(&syntax)
         .into_iter()
@@ -1090,7 +1101,7 @@ fn local_variables_split_declaration_and_post_modifier_type_annotations() {
 
 #[test]
 fn if_statements_expose_condition_then_and_else_children() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 class Branches {
                     void branch(boolean ready) {
@@ -1103,6 +1114,7 @@ fn if_statements_expose_condition_then_and_else_children() {
                 }
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
 
     let ifs = descendants::<IfStatement>(&syntax);
     assert_eq!(ifs.len(), 2);
@@ -1143,7 +1155,7 @@ fn if_statements_expose_condition_then_and_else_children() {
 #[test]
 #[allow(clippy::too_many_lines)]
 fn statement_body_accessors_expose_body_kind() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 class Bodies {
                     void body(boolean ready) {
@@ -1160,6 +1172,7 @@ fn statement_body_accessors_expose_body_kind() {
                 }
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
 
     let if_statement = descendants::<IfStatement>(&syntax)
         .into_iter()
@@ -1352,7 +1365,7 @@ fn statement_body_accessors_expose_body_kind() {
 
 #[test]
 fn switch_label_case_entries_expose_commas() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 class Example {
                     int classify(Object value) {
@@ -1365,6 +1378,7 @@ fn switch_label_case_entries_expose_commas() {
                 }
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
     let label = descendants::<SwitchLabel>(&syntax)
         .into_iter()
         .find(|label| label.source_text().contains("default"))
@@ -1389,7 +1403,7 @@ fn switch_label_case_entries_expose_commas() {
 
 #[test]
 fn wildcard_and_unnamed_accessors_expose_roles() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 record Pair(Object left, Object right) {
                 }
@@ -1413,6 +1427,7 @@ fn wildcard_and_unnamed_accessors_expose_roles() {
                 }
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
 
     let unnamed_formal = descendants::<FormalParameter>(&syntax)
         .into_iter()
@@ -1477,7 +1492,7 @@ fn wildcard_and_unnamed_accessors_expose_roles() {
 
 #[test]
 fn record_patterns_expose_component_entries_with_commas_and_parens() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 record Pair(int left, int right) {
                 }
@@ -1493,6 +1508,7 @@ fn record_patterns_expose_component_entries_with_commas_and_parens() {
                 }
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
     let pattern = descendants::<RecordPattern>(&syntax)
         .into_iter()
         .next()
@@ -1523,7 +1539,7 @@ fn record_patterns_expose_component_entries_with_commas_and_parens() {
 
 #[test]
 fn method_invocations_expose_argument_lists() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 class Calls {
                     void call(Target target) {
@@ -1532,6 +1548,7 @@ fn method_invocations_expose_argument_lists() {
                 }
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
 
     let invocations = descendants::<MethodInvocationExpression>(&syntax);
     let foo = invocations
@@ -1576,7 +1593,7 @@ fn method_invocations_expose_argument_lists() {
 
 #[test]
 fn declaration_parameter_lists_expose_entries_with_commas_and_parens() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 record Person(/* components */ String name, // name
                     int age
@@ -1590,6 +1607,7 @@ fn declaration_parameter_lists_expose_entries_with_commas_and_parens() {
                 }
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
 
     let components = descendants::<RecordComponentList>(&syntax)
         .into_iter()
@@ -1648,7 +1666,7 @@ fn declaration_parameter_lists_expose_entries_with_commas_and_parens() {
 
 #[test]
 fn formal_parameter_lists_expose_receiver_parameter_entries() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 class ReceiverOuter {
                     class ReceiverInner {
@@ -1658,6 +1676,7 @@ fn formal_parameter_lists_expose_receiver_parameter_entries() {
                 }
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
 
     let parameters = descendants::<FormalParameterList>(&syntax)
         .into_iter()
@@ -1692,7 +1711,7 @@ fn formal_parameter_lists_expose_receiver_parameter_entries() {
 
 #[test]
 fn throws_clauses_expose_entries_with_commas_and_keyword() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 class Accessors {
                     void run() throws /* checked */ IOException, // io
@@ -1701,6 +1720,7 @@ fn throws_clauses_expose_entries_with_commas_and_keyword() {
                 }
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
     let throws = descendants::<ThrowsClause>(&syntax)
         .into_iter()
         .next()
@@ -1730,7 +1750,7 @@ fn throws_clauses_expose_entries_with_commas_and_keyword() {
 
 #[test]
 fn catch_type_lists_expose_union_entries() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 class Catches {
                     void run() {
@@ -1743,6 +1763,7 @@ fn catch_type_lists_expose_union_entries() {
                 }
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
 
     let parameter = descendants::<CatchParameter>(&syntax)
         .into_iter()
@@ -1763,13 +1784,14 @@ fn catch_type_lists_expose_union_entries() {
 
 #[test]
 fn array_types_expose_dimensions() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 class Arrays {
                     java.util.List<String[][]>[] names;
                 }
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
 
     let array_types = descendants::<ArrayType>(&syntax);
     let outer_array_type = array_types
@@ -1801,7 +1823,7 @@ fn array_types_expose_dimensions() {
 
 #[test]
 fn type_parameter_and_argument_lists_expose_entries_with_commas_and_angles() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 class Accessors</* params */ T, // type
                     U
@@ -1814,6 +1836,7 @@ fn type_parameter_and_argument_lists_expose_entries_with_commas_and_angles() {
                 }
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
 
     let parameters = descendants::<TypeParameterList>(&syntax)
         .into_iter()
@@ -1872,7 +1895,7 @@ fn type_parameter_and_argument_lists_expose_entries_with_commas_and_angles() {
 
 #[test]
 fn type_intersections_expose_entries_with_ampersands() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 class Accessors<T extends Number & // numeric
                     Comparable<T>> {
@@ -1883,6 +1906,7 @@ fn type_intersections_expose_entries_with_ampersands() {
                 }
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
 
     let parameter = descendants::<TypeParameter>(&syntax)
         .into_iter()
@@ -1917,7 +1941,7 @@ fn type_intersections_expose_entries_with_ampersands() {
 
 #[test]
 fn type_header_clauses_expose_entries_with_commas_and_keywords() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 class Derived extends /* base */ Base implements First, // first
                     Second permits Child, // child
@@ -1925,6 +1949,7 @@ fn type_header_clauses_expose_entries_with_commas_and_keywords() {
                 }
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
     let class = descendants::<ClassDeclaration>(&syntax)
         .into_iter()
         .next()
@@ -1974,13 +1999,14 @@ fn type_header_clauses_expose_entries_with_commas_and_keywords() {
 
 #[test]
 fn annotations_expose_argument_lists() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r#"
                 @Anno(value = "x", count = 2)
                 @Marker
                 class Annotated {}
             "#,
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
 
     let annotations = descendants::<Annotation>(&syntax);
     let anno = annotations
@@ -2003,7 +2029,7 @@ fn annotations_expose_argument_lists() {
 
 #[test]
 fn annotation_argument_lists_expose_entries_with_commas_and_parens() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r#"
                 @Anno(/* start */ value = "x", // value
                     count = 2
@@ -2012,6 +2038,7 @@ fn annotation_argument_lists_expose_entries_with_commas_and_parens() {
                 class Annotated {}
             "#,
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
     let arguments = descendants::<AnnotationArgumentList>(&syntax)
         .into_iter()
         .next()
@@ -2044,7 +2071,7 @@ fn annotation_argument_lists_expose_entries_with_commas_and_parens() {
 
 #[test]
 fn annotation_array_initializers_expose_entries_with_commas_and_braces() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 @interface Accessors {
                     int[] values() default {/* start */ 1, // one
@@ -2053,6 +2080,7 @@ fn annotation_array_initializers_expose_entries_with_commas_and_braces() {
                 }
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
     let initializer = descendants::<AnnotationArrayInitializer>(&syntax)
         .into_iter()
         .next()
@@ -2091,7 +2119,7 @@ fn annotation_array_initializers_expose_entries_with_commas_and_braces() {
 #[test]
 #[allow(clippy::too_many_lines)]
 fn declaration_accessors_expose_formatter_facing_structure() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r#"
                 @Deprecated
                 public class Accessors<T> extends Base implements Runnable permits Other {
@@ -2116,6 +2144,7 @@ fn declaration_accessors_expose_formatter_facing_structure() {
                 }
             "#,
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
 
     let class = syntax
         .type_declarations()
@@ -2310,7 +2339,7 @@ fn declaration_accessors_expose_formatter_facing_structure() {
 
 #[test]
 fn interface_and_annotation_body_accessors_expose_members() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r#"
                 interface Api {
                     int VALUE = 1;
@@ -2326,6 +2355,7 @@ fn interface_and_annotation_body_accessors_expose_members() {
                 }
             "#,
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
 
     let interface = syntax
         .type_declarations()
@@ -2374,7 +2404,7 @@ fn interface_and_annotation_body_accessors_expose_members() {
 #[test]
 #[allow(clippy::too_many_lines)]
 fn expression_and_statement_accessors_expose_layout_roles() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 class Expressions {
                     void test(int a, int b, int c, int[] values, boolean ready) {
@@ -2404,6 +2434,7 @@ fn expression_and_statement_accessors_expose_layout_roles() {
                 }
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
 
     let assignment = descendants::<AssignmentExpression>(&syntax)
         .into_iter()
@@ -2771,7 +2802,7 @@ fn expression_and_statement_accessors_expose_layout_roles() {
 #[test]
 #[allow(clippy::too_many_lines)]
 fn expressions_expose_parent_layout_roles() {
-    let syntax = parse_clean(
+    let parse = parse_clean(
         r"
                 class ParentRoles {
                     Object field;
@@ -2794,6 +2825,7 @@ fn expressions_expose_parent_layout_roles() {
                 }
             ",
     );
+    let syntax = parse.syntax().expect("clean parse should produce syntax");
 
     let initializer = descendants::<VariableInitializer>(&syntax)
         .into_iter()
@@ -2851,12 +2883,8 @@ fn expressions_expose_parent_layout_roles() {
         .into_iter()
         .find(|invocation| invocation.source_text().trim() == "call(value)")
         .expect("call expression");
-    let argument = call
-        .arguments()
-        .expect("arguments")
-        .arguments()
-        .next()
-        .expect("argument");
+    let arguments = call.arguments().expect("arguments");
+    let argument = arguments.arguments().next().expect("argument");
     assert_eq!(argument.parent_role(), Some(ExpressionParentRole::Argument));
 
     let if_statement = descendants::<IfStatement>(&syntax)

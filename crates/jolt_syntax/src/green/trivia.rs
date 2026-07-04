@@ -21,34 +21,20 @@ pub enum TriviaKind {
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct GreenTrivia {
     kind: TriviaKind,
-    text: Box<str>,
     text_len: TextSize,
 }
 
 impl GreenTrivia {
     /// Creates a green trivia piece.
     #[must_use]
-    pub(crate) fn new(kind: TriviaKind, text: impl Into<Box<str>>) -> Self {
-        let text = text.into();
-        let text_len = TextSize::new(text.len());
-
-        Self {
-            kind,
-            text,
-            text_len,
-        }
+    pub(crate) const fn new(kind: TriviaKind, text_len: TextSize) -> Self {
+        Self { kind, text_len }
     }
 
     /// Returns the trivia kind.
     #[must_use]
     pub const fn kind(&self) -> TriviaKind {
         self.kind
-    }
-
-    /// Returns the raw trivia text.
-    #[must_use]
-    pub fn text(&self) -> &str {
-        self.text.as_ref()
     }
 
     /// Returns the byte length of the raw trivia text.

@@ -1,22 +1,22 @@
 use std::fmt;
 
-use jolt_syntax::{SyntaxNode, SyntaxToken, TriviaKind as SyntaxTriviaKind, green_text};
+use jolt_syntax::{SyntaxNode, SyntaxToken, TriviaKind as SyntaxTriviaKind};
 use jolt_text::TextRange;
 
 use crate::{JavaSyntaxKind, language::JavaLanguage};
 
-pub(crate) type JavaSyntaxNode = SyntaxNode<JavaLanguage>;
-type JavaRawSyntaxToken = SyntaxToken<JavaLanguage>;
+pub(crate) type JavaSyntaxNode<'source> = SyntaxNode<'source, JavaLanguage>;
+type JavaRawSyntaxToken<'source> = SyntaxToken<'source, JavaLanguage>;
 
 /// A comment attached as token trivia in the Java syntax tree.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct JavaComment {
+pub struct JavaComment<'source> {
     kind: JavaCommentKind,
-    text: String,
+    source: &'source str,
     text_range: TextRange,
 }
 
-impl JavaComment {
+impl JavaComment<'_> {
     /// Returns the comment kind.
     #[must_use]
     pub const fn kind(&self) -> JavaCommentKind {
@@ -26,7 +26,7 @@ impl JavaComment {
     /// Returns the raw comment text.
     #[must_use]
     pub fn text(&self) -> &str {
-        &self.text
+        &self.source[self.text_range.start().get()..self.text_range.end().get()]
     }
 
     /// Returns the raw source range covered by the comment.
@@ -48,11 +48,11 @@ pub enum JavaCommentKind {
 }
 
 #[derive(Clone, Eq, PartialEq)]
-pub struct JavaSyntaxToken {
-    syntax: JavaRawSyntaxToken,
+pub struct JavaSyntaxToken<'source> {
+    syntax: JavaRawSyntaxToken<'source>,
 }
 
-impl JavaSyntaxToken {
+impl<'source> JavaSyntaxToken<'source> {
     #[must_use]
     pub fn kind(&self) -> JavaSyntaxKind {
         self.syntax.kind()
@@ -75,14 +75,22 @@ impl JavaSyntaxToken {
 
     /// Returns comments attached before this token.
     #[must_use]
-    pub fn leading_comments(&self) -> Vec<JavaComment> {
-        comments_from_trivia(self.syntax.leading(), self.syntax.offset())
+    pub fn leading_comments(&self) -> Vec<JavaComment<'source>> {
+        comments_from_trivia(
+            self.syntax.source(),
+            self.syntax.leading(),
+            self.syntax.offset(),
+        )
     }
 
     /// Returns comments attached after this token.
     #[must_use]
-    pub fn trailing_comments(&self) -> Vec<JavaComment> {
-        comments_from_trivia(self.syntax.trailing(), self.syntax.token_text_range().end())
+    pub fn trailing_comments(&self) -> Vec<JavaComment<'source>> {
+        comments_from_trivia(
+            self.syntax.source(),
+            self.syntax.trailing(),
+            self.syntax.token_text_range().end(),
+        )
     }
 
     /// Returns true when the token's leading trivia contains an intentional
@@ -93,7 +101,7 @@ impl JavaSyntaxToken {
     }
 }
 
-impl fmt::Debug for JavaSyntaxToken {
+impl fmt::Debug for JavaSyntaxToken<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.syntax.fmt(f)
     }
@@ -101,14 +109,14 @@ impl fmt::Debug for JavaSyntaxToken {
 
 /// A Java operator, which may span multiple syntax tokens in ambiguous `>` forms.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct JavaOperator {
+pub struct JavaOperator<'source> {
     kind: JavaOperatorKind,
-    first_token: JavaSyntaxToken,
-    last_token: Option<JavaSyntaxToken>,
+    first_token: JavaSyntaxToken<'source>,
+    last_token: Option<JavaSyntaxToken<'source>>,
 }
 
-impl JavaOperator {
-    pub(crate) fn single(kind: JavaOperatorKind, token: JavaSyntaxToken) -> Self {
+impl<'source> JavaOperator<'source> {
+    pub(crate) fn single(kind: JavaOperatorKind, token: JavaSyntaxToken<'source>) -> Self {
         Self {
             kind,
             first_token: token,
@@ -118,8 +126,8 @@ impl JavaOperator {
 
     pub(crate) fn composite(
         kind: JavaOperatorKind,
-        first_token: JavaSyntaxToken,
-        last_token: JavaSyntaxToken,
+        first_token: JavaSyntaxToken<'source>,
+        last_token: JavaSyntaxToken<'source>,
     ) -> Self {
         Self {
             kind,
@@ -134,17 +142,17 @@ impl JavaOperator {
     }
 
     #[must_use]
-    pub fn leading_comments(&self) -> Vec<JavaComment> {
+    pub fn leading_comments(&self) -> Vec<JavaComment<'source>> {
         self.first_token.leading_comments()
     }
 
     #[must_use]
-    pub fn trailing_comments(&self) -> Vec<JavaComment> {
+    pub fn trailing_comments(&self) -> Vec<JavaComment<'source>> {
         self.last_token().trailing_comments()
     }
 
     #[must_use]
-    pub fn as_single_token(&self) -> Option<&JavaSyntaxToken> {
+    pub fn as_single_token(&self) -> Option<&JavaSyntaxToken<'source>> {
         if self.last_token.is_none() {
             Some(&self.first_token)
         } else {
@@ -152,7 +160,7 @@ impl JavaOperator {
         }
     }
 
-    fn last_token(&self) -> &JavaSyntaxToken {
+    fn last_token(&self) -> &JavaSyntaxToken<'source> {
         self.last_token.as_ref().unwrap_or(&self.first_token)
     }
 }
@@ -344,10 +352,11 @@ pub(crate) fn binary_operator_precedence(kind: JavaOperatorKind) -> Option<u8> {
     })
 }
 
-fn comments_from_trivia(
+fn comments_from_trivia<'source>(
+    source: &'source str,
     trivia: &[jolt_syntax::GreenTrivia],
     start: jolt_text::TextSize,
-) -> Vec<JavaComment> {
+) -> Vec<JavaComment<'source>> {
     let mut offset = start;
     trivia
         .iter()
@@ -366,7 +375,7 @@ fn comments_from_trivia(
             };
             Some(JavaComment {
                 kind,
-                text: trivia.text().to_owned(),
+                source,
                 text_range,
             })
         })
@@ -399,12 +408,17 @@ mod private {
     pub trait Sealed {}
 }
 
-pub(crate) trait JavaNode: Clone + private::Sealed {
-    fn cast(syntax: JavaSyntaxNode) -> Option<Self>;
+pub(crate) trait JavaNode<'source>: Clone + private::Sealed {
+    fn cast(syntax: JavaSyntaxNode<'source>) -> Option<Self>;
 }
 
-pub(crate) trait JavaFamily: Clone {
-    fn cast(syntax: JavaSyntaxNode) -> Option<Self>;
+pub(crate) trait JavaFamily<'source>: Clone {
+    fn cast(syntax: JavaSyntaxNode<'source>) -> Option<Self>;
+}
+
+fn syntax_source_text<'source>(syntax: &JavaSyntaxNode<'source>) -> &'source str {
+    let range = syntax.text_range();
+    &syntax.source()[range.start().get()..range.end().get()]
 }
 
 macro_rules! java_cst {
@@ -421,11 +435,11 @@ macro_rules! java_cst {
     ) => {
         $(
             #[derive(Clone, Eq, PartialEq)]
-            pub struct $node {
-                syntax: JavaSyntaxNode,
+            pub struct $node<'source> {
+                syntax: JavaSyntaxNode<'source>,
             }
 
-            impl $node {
+            impl<'source> $node<'source> {
                 #[must_use]
                 pub fn kind(&self) -> JavaSyntaxKind {
                     self.syntax.kind()
@@ -437,35 +451,35 @@ macro_rules! java_cst {
                 }
 
                 #[must_use]
-                pub fn source_text(&self) -> String {
-                    green_text(self.syntax.green())
+                pub fn source_text(&self) -> &'source str {
+                    syntax_source_text(&self.syntax)
                 }
 
-                pub fn token_iter(&self) -> impl Iterator<Item = JavaSyntaxToken> + '_ {
+                pub fn token_iter(&self) -> impl Iterator<Item = JavaSyntaxToken<'source>> + '_ {
                     token_iter(&self.syntax)
                 }
 
                 #[must_use]
-                pub fn first_token(&self) -> Option<JavaSyntaxToken> {
+                pub fn first_token(&self) -> Option<JavaSyntaxToken<'source>> {
                     first_token(&self.syntax)
                 }
 
                 #[must_use]
-                pub fn last_token(&self) -> Option<JavaSyntaxToken> {
+                pub fn last_token(&self) -> Option<JavaSyntaxToken<'source>> {
                     last_token(&self.syntax)
                 }
 
             }
 
-            impl private::Sealed for $node {}
+            impl private::Sealed for $node<'_> {}
 
-            impl JavaNode for $node {
-                fn cast(syntax: JavaSyntaxNode) -> Option<Self> {
+            impl<'source> JavaNode<'source> for $node<'source> {
+                fn cast(syntax: JavaSyntaxNode<'source>) -> Option<Self> {
                     matches!(syntax.kind(), JavaSyntaxKind::$kind).then_some(Self { syntax })
                 }
             }
 
-            impl fmt::Debug for $node {
+            impl fmt::Debug for $node<'_> {
                 fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                     self.syntax.fmt(f)
                 }
@@ -473,11 +487,11 @@ macro_rules! java_cst {
         )*
 
         #[derive(Clone, Debug, Eq, PartialEq)]
-        pub enum AnyJavaNode {
-            $($node($node),)*
+        pub enum AnyJavaNode<'source> {
+            $($node($node<'source>),)*
         }
 
-        impl AnyJavaNode {
+        impl<'source> AnyJavaNode<'source> {
             #[must_use]
             pub fn kind(&self) -> JavaSyntaxKind {
                 self.syntax().kind()
@@ -489,22 +503,22 @@ macro_rules! java_cst {
             }
 
             #[must_use]
-            pub fn source_text(&self) -> String {
-                green_text(self.syntax().green())
+            pub fn source_text(&self) -> &'source str {
+                syntax_source_text(self.syntax())
             }
 
-            pub(crate) fn cast(syntax: JavaSyntaxNode) -> Option<Self> {
+            pub(crate) fn cast(syntax: JavaSyntaxNode<'source>) -> Option<Self> {
                 match syntax.kind() {
                     $(
                         JavaSyntaxKind::$kind => {
-                            <$node as JavaNode>::cast(syntax).map(Self::$node)
+                            <$node<'source> as JavaNode<'source>>::cast(syntax).map(Self::$node)
                         }
                     )*
                     _ => None,
                 }
             }
 
-            fn syntax(&self) -> &JavaSyntaxNode {
+            fn syntax(&self) -> &JavaSyntaxNode<'source> {
                 match self {
                     $(Self::$node(node) => &node.syntax,)*
                 }
@@ -512,8 +526,8 @@ macro_rules! java_cst {
         }
 
         $(
-            impl From<$node> for AnyJavaNode {
-                fn from(node: $node) -> Self {
+            impl<'source> From<$node<'source>> for AnyJavaNode<'source> {
+                fn from(node: $node<'source>) -> Self {
                     Self::$node(node)
                 }
             }
@@ -521,11 +535,11 @@ macro_rules! java_cst {
 
         $(
             #[derive(Clone, Debug, Eq, PartialEq)]
-            pub enum $family {
-                $($variant($variant),)+
+            pub enum $family<'source> {
+                $($variant($variant<'source>),)+
             }
 
-            impl $family {
+            impl<'source> $family<'source> {
                 #[must_use]
                 pub fn kind(&self) -> JavaSyntaxKind {
                     self.syntax().kind()
@@ -537,37 +551,37 @@ macro_rules! java_cst {
                 }
 
                 #[must_use]
-                pub fn source_text(&self) -> String {
-                    green_text(self.syntax().green())
+                pub fn source_text(&self) -> &'source str {
+                    syntax_source_text(self.syntax())
                 }
 
-                pub fn token_iter(&self) -> impl Iterator<Item = JavaSyntaxToken> + '_ {
+                pub fn token_iter(&self) -> impl Iterator<Item = JavaSyntaxToken<'source>> + '_ {
                     token_iter(self.syntax())
                 }
 
                 #[must_use]
-                pub fn first_token(&self) -> Option<JavaSyntaxToken> {
+                pub fn first_token(&self) -> Option<JavaSyntaxToken<'source>> {
                     first_token(self.syntax())
                 }
 
                 #[must_use]
-                pub fn last_token(&self) -> Option<JavaSyntaxToken> {
+                pub fn last_token(&self) -> Option<JavaSyntaxToken<'source>> {
                     last_token(self.syntax())
                 }
 
-                pub(crate) fn syntax(&self) -> &JavaSyntaxNode {
+                pub(crate) fn syntax(&self) -> &JavaSyntaxNode<'source> {
                     match self {
                         $(Self::$variant(node) => &node.syntax,)+
                     }
                 }
             }
 
-            impl JavaFamily for $family {
-                fn cast(syntax: JavaSyntaxNode) -> Option<Self> {
+            impl<'source> JavaFamily<'source> for $family<'source> {
+                fn cast(syntax: JavaSyntaxNode<'source>) -> Option<Self> {
                     match syntax.kind() {
                         $(
                             JavaSyntaxKind::$variant => {
-                                <$variant as JavaNode>::cast(syntax).map(Self::$variant)
+                                <$variant<'source> as JavaNode<'source>>::cast(syntax).map(Self::$variant)
                             }
                         )+
                         _ => None,
@@ -576,8 +590,8 @@ macro_rules! java_cst {
             }
 
             $(
-                impl From<$variant> for $family {
-                    fn from(node: $variant) -> Self {
+                impl<'source> From<$variant<'source>> for $family<'source> {
+                    fn from(node: $variant<'source>) -> Self {
                         Self::$variant(node)
                     }
                 }
@@ -894,54 +908,54 @@ java_cst! {
 mod accessors;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum SwitchLabelCaseItem {
-    Constant(CaseConstant),
-    Pattern(CasePattern),
-    Default(JavaSyntaxToken),
+pub enum SwitchLabelCaseItem<'source> {
+    Constant(CaseConstant<'source>),
+    Pattern(CasePattern<'source>),
+    Default(JavaSyntaxToken<'source>),
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct SwitchLabelCaseEntry {
-    pub item: SwitchLabelCaseItem,
-    pub comma: Option<JavaSyntaxToken>,
+pub struct SwitchLabelCaseEntry<'source> {
+    pub item: SwitchLabelCaseItem<'source>,
+    pub comma: Option<JavaSyntaxToken<'source>>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct SwitchBlockStatementGroupLabel {
-    pub label: SwitchLabel,
-    pub colon: Option<JavaSyntaxToken>,
+pub struct SwitchBlockStatementGroupLabel<'source> {
+    pub label: SwitchLabel<'source>,
+    pub colon: Option<JavaSyntaxToken<'source>>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum AnnotationArgument {
-    Value(AnnotationElementValue),
-    Pair(AnnotationElementValuePair),
+pub enum AnnotationArgument<'source> {
+    Value(AnnotationElementValue<'source>),
+    Pair(AnnotationElementValuePair<'source>),
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct AnnotationArrayInitializerEntry {
-    pub value: AnnotationElementValue,
-    pub comma: Option<JavaSyntaxToken>,
+pub struct AnnotationArrayInitializerEntry<'source> {
+    pub value: AnnotationElementValue<'source>,
+    pub comma: Option<JavaSyntaxToken<'source>>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct AnnotationArgumentListEntry {
-    pub argument: AnnotationArgument,
-    pub comma: Option<JavaSyntaxToken>,
+pub struct AnnotationArgumentListEntry<'source> {
+    pub argument: AnnotationArgument<'source>,
+    pub comma: Option<JavaSyntaxToken<'source>>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum CompilationUnitItem {
-    Package(PackageDeclaration),
-    Import(ImportDeclaration),
-    Module(ModuleDeclaration),
-    Type(TypeDeclaration),
-    EmptyDeclaration(EmptyDeclaration),
+pub enum CompilationUnitItem<'source> {
+    Package(PackageDeclaration<'source>),
+    Import(ImportDeclaration<'source>),
+    Module(ModuleDeclaration<'source>),
+    Type(TypeDeclaration<'source>),
+    EmptyDeclaration(EmptyDeclaration<'source>),
 }
 
-impl CompilationUnitItem {
+impl<'source> CompilationUnitItem<'source> {
     #[must_use]
-    pub fn first_token(&self) -> Option<JavaSyntaxToken> {
+    pub fn first_token(&self) -> Option<JavaSyntaxToken<'source>> {
         match self {
             Self::Package(item) => item.first_token(),
             Self::Import(item) => item.first_token(),
@@ -952,7 +966,7 @@ impl CompilationUnitItem {
     }
 
     #[must_use]
-    pub fn last_token(&self) -> Option<JavaSyntaxToken> {
+    pub fn last_token(&self) -> Option<JavaSyntaxToken<'source>> {
         match self {
             Self::Package(item) => item.last_token(),
             Self::Import(item) => item.last_token(),
@@ -964,79 +978,79 @@ impl CompilationUnitItem {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum ImportKind {
-    SingleType(NameSyntax),
-    TypeOnDemand(NameSyntax),
-    SingleStatic(NameSyntax),
-    StaticOnDemand(NameSyntax),
-    SingleModule(NameSyntax),
+pub enum ImportKind<'source> {
+    SingleType(NameSyntax<'source>),
+    TypeOnDemand(NameSyntax<'source>),
+    SingleStatic(NameSyntax<'source>),
+    StaticOnDemand(NameSyntax<'source>),
+    SingleModule(NameSyntax<'source>),
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum ModuleDirectiveRole {
+pub enum ModuleDirectiveRole<'source> {
     Requires {
-        module: NameSyntax,
+        module: NameSyntax<'source>,
         is_static: bool,
         is_transitive: bool,
     },
     Exports {
-        package: NameSyntax,
-        targets: Vec<NameSyntax>,
+        package: NameSyntax<'source>,
+        targets: Vec<NameSyntax<'source>>,
     },
     Opens {
-        package: NameSyntax,
-        targets: Vec<NameSyntax>,
+        package: NameSyntax<'source>,
+        targets: Vec<NameSyntax<'source>>,
     },
     Uses {
-        service: NameSyntax,
+        service: NameSyntax<'source>,
     },
     Provides {
-        service: NameSyntax,
-        implementations: Vec<NameSyntax>,
+        service: NameSyntax<'source>,
+        implementations: Vec<NameSyntax<'source>>,
     },
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ModuleNameListEntry {
-    pub name: NameSyntax,
-    pub comma: Option<JavaSyntaxToken>,
+pub struct ModuleNameListEntry<'source> {
+    pub name: NameSyntax<'source>,
+    pub comma: Option<JavaSyntaxToken<'source>>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum StatementBody {
-    Block(Block),
-    Empty(EmptyStatement),
-    Unbraced(Statement),
+pub enum StatementBody<'source> {
+    Block(Block<'source>),
+    Empty(EmptyStatement<'source>),
+    Unbraced(Statement<'source>),
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum WildcardBound {
-    Extends(Type),
-    Super(Type),
+pub enum WildcardBound<'source> {
+    Extends(Type<'source>),
+    Super(Type<'source>),
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct MemberChain {
-    root: Expression,
-    suffixes: Vec<MemberChainSuffix>,
+pub struct MemberChain<'source> {
+    root: Expression<'source>,
+    suffixes: Vec<MemberChainSuffix<'source>>,
 }
 
-impl MemberChain {
+impl<'source> MemberChain<'source> {
     #[must_use]
-    pub fn root(&self) -> &Expression {
+    pub fn root(&self) -> &Expression<'source> {
         &self.root
     }
 
     #[must_use]
-    pub fn suffixes(&self) -> &[MemberChainSuffix] {
+    pub fn suffixes(&self) -> &[MemberChainSuffix<'source>] {
         &self.suffixes
     }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum MemberChainSuffix {
-    FieldAccess(FieldAccessExpression),
-    MethodInvocation(MethodInvocationExpression),
+pub enum MemberChainSuffix<'source> {
+    FieldAccess(FieldAccessExpression<'source>),
+    MethodInvocation(MethodInvocationExpression<'source>),
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -1083,124 +1097,124 @@ pub enum ExpressionParentRole {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ArgumentListEntry {
-    pub argument: Expression,
-    pub comma: Option<JavaSyntaxToken>,
+pub struct ArgumentListEntry<'source> {
+    pub argument: Expression<'source>,
+    pub comma: Option<JavaSyntaxToken<'source>>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct StatementExpressionEntry {
-    pub expression: Expression,
-    pub comma: Option<JavaSyntaxToken>,
+pub struct StatementExpressionEntry<'source> {
+    pub expression: Expression<'source>,
+    pub comma: Option<JavaSyntaxToken<'source>>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ResourceListEntry {
-    pub resource: Resource,
-    pub separator: Option<JavaSyntaxToken>,
+pub struct ResourceListEntry<'source> {
+    pub resource: Resource<'source>,
+    pub separator: Option<JavaSyntaxToken<'source>>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ArrayInitializerEntry {
-    pub value: VariableInitializerValue,
-    pub comma: Option<JavaSyntaxToken>,
+pub struct ArrayInitializerEntry<'source> {
+    pub value: VariableInitializerValue<'source>,
+    pub comma: Option<JavaSyntaxToken<'source>>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct UnionTypeEntry {
-    pub ty: Type,
-    pub separator: Option<JavaSyntaxToken>,
+pub struct UnionTypeEntry<'source> {
+    pub ty: Type<'source>,
+    pub separator: Option<JavaSyntaxToken<'source>>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct IntersectionTypeEntry {
-    pub ty: Type,
-    pub separator: Option<JavaSyntaxToken>,
+pub struct IntersectionTypeEntry<'source> {
+    pub ty: Type<'source>,
+    pub separator: Option<JavaSyntaxToken<'source>>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct TypeArgumentListEntry {
-    pub argument: TypeArgument,
-    pub comma: Option<JavaSyntaxToken>,
+pub struct TypeArgumentListEntry<'source> {
+    pub argument: TypeArgument<'source>,
+    pub comma: Option<JavaSyntaxToken<'source>>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct TypeParameterListEntry {
-    pub parameter: TypeParameter,
-    pub comma: Option<JavaSyntaxToken>,
+pub struct TypeParameterListEntry<'source> {
+    pub parameter: TypeParameter<'source>,
+    pub comma: Option<JavaSyntaxToken<'source>>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct FormalParameterListEntry {
-    pub item: FormalParameterListItem,
-    pub comma: Option<JavaSyntaxToken>,
+pub struct FormalParameterListEntry<'source> {
+    pub item: FormalParameterListItem<'source>,
+    pub comma: Option<JavaSyntaxToken<'source>>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum FormalParameterListItem {
-    ReceiverParameter(ReceiverParameter),
-    FormalParameter(FormalParameter),
+pub enum FormalParameterListItem<'source> {
+    ReceiverParameter(ReceiverParameter<'source>),
+    FormalParameter(FormalParameter<'source>),
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct RecordComponentListEntry {
-    pub component: RecordComponent,
-    pub comma: Option<JavaSyntaxToken>,
+pub struct RecordComponentListEntry<'source> {
+    pub component: RecordComponent<'source>,
+    pub comma: Option<JavaSyntaxToken<'source>>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct EnumConstantListEntry {
-    pub constant: EnumConstant,
-    pub comma: Option<JavaSyntaxToken>,
+pub struct EnumConstantListEntry<'source> {
+    pub constant: EnumConstant<'source>,
+    pub comma: Option<JavaSyntaxToken<'source>>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct RecordPatternComponentEntry {
-    pub component: ComponentPattern,
-    pub comma: Option<JavaSyntaxToken>,
+pub struct RecordPatternComponentEntry<'source> {
+    pub component: ComponentPattern<'source>,
+    pub comma: Option<JavaSyntaxToken<'source>>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ThrowsClauseEntry {
-    pub exception: Type,
-    pub comma: Option<JavaSyntaxToken>,
+pub struct ThrowsClauseEntry<'source> {
+    pub exception: Type<'source>,
+    pub comma: Option<JavaSyntaxToken<'source>>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct TypeClauseEntry {
-    pub ty: Type,
-    pub comma: Option<JavaSyntaxToken>,
+pub struct TypeClauseEntry<'source> {
+    pub ty: Type<'source>,
+    pub comma: Option<JavaSyntaxToken<'source>>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct PermitsClauseEntry {
-    pub name: NameSyntax,
-    pub comma: Option<JavaSyntaxToken>,
+pub struct PermitsClauseEntry<'source> {
+    pub name: NameSyntax<'source>,
+    pub comma: Option<JavaSyntaxToken<'source>>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ClassTypeSegment {
-    pub annotations: Vec<Annotation>,
-    pub dot_before: Option<JavaSyntaxToken>,
-    pub name: NameSyntax,
-    pub type_arguments: Option<TypeArgumentList>,
+pub struct ClassTypeSegment<'source> {
+    pub annotations: Vec<Annotation<'source>>,
+    pub dot_before: Option<JavaSyntaxToken<'source>>,
+    pub name: NameSyntax<'source>,
+    pub type_arguments: Option<TypeArgumentList<'source>>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct NameSegment {
-    pub annotations: Vec<Annotation>,
-    pub dot_before: Option<JavaSyntaxToken>,
-    pub identifier: JavaSyntaxToken,
+pub struct NameSegment<'source> {
+    pub annotations: Vec<Annotation<'source>>,
+    pub dot_before: Option<JavaSyntaxToken<'source>>,
+    pub identifier: JavaSyntaxToken<'source>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ModifierEntry {
-    tokens: [Option<JavaSyntaxToken>; 3],
+pub struct ModifierEntry<'source> {
+    tokens: [Option<JavaSyntaxToken<'source>>; 3],
     len: usize,
 }
 
-impl ModifierEntry {
-    pub(crate) fn single(token: JavaSyntaxToken) -> Self {
+impl<'source> ModifierEntry<'source> {
+    pub(crate) fn single(token: JavaSyntaxToken<'source>) -> Self {
         Self {
             tokens: [Some(token), None, None],
             len: 1,
@@ -1208,9 +1222,9 @@ impl ModifierEntry {
     }
 
     pub(crate) fn non_sealed(
-        non: JavaSyntaxToken,
-        minus: JavaSyntaxToken,
-        sealed: JavaSyntaxToken,
+        non: JavaSyntaxToken<'source>,
+        minus: JavaSyntaxToken<'source>,
+        sealed: JavaSyntaxToken<'source>,
     ) -> Self {
         Self {
             tokens: [Some(non), Some(minus), Some(sealed)],
@@ -1218,27 +1232,27 @@ impl ModifierEntry {
         }
     }
 
-    pub fn tokens(&self) -> impl Iterator<Item = &JavaSyntaxToken> {
+    pub fn tokens(&self) -> impl Iterator<Item = &JavaSyntaxToken<'source>> {
         self.tokens[..self.len].iter().filter_map(Option::as_ref)
     }
 
-    pub fn into_tokens(self) -> impl Iterator<Item = JavaSyntaxToken> {
+    pub fn into_tokens(self) -> impl Iterator<Item = JavaSyntaxToken<'source>> {
         self.tokens.into_iter().take(self.len).flatten()
     }
 
-    pub fn first_token(&self) -> Option<&JavaSyntaxToken> {
+    pub fn first_token(&self) -> Option<&JavaSyntaxToken<'source>> {
         self.tokens.first().and_then(Option::as_ref)
     }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct VariableDeclaratorEntry {
-    pub declarator: VariableDeclarator,
-    pub comma: Option<JavaSyntaxToken>,
+pub struct VariableDeclaratorEntry<'source> {
+    pub declarator: VariableDeclarator<'source>,
+    pub comma: Option<JavaSyntaxToken<'source>>,
 }
 
-impl AnnotationArgument {
-    fn cast(syntax: JavaSyntaxNode) -> Option<Self> {
+impl<'source> AnnotationArgument<'source> {
+    fn cast(syntax: JavaSyntaxNode<'source>) -> Option<Self> {
         match syntax.kind() {
             JavaSyntaxKind::AnnotationElementValue => {
                 AnnotationElementValue::cast(syntax).map(Self::Value)
@@ -1252,64 +1266,74 @@ impl AnnotationArgument {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum SwitchBlockEntry {
-    StatementGroup(SwitchBlockStatementGroup),
-    Rule(SwitchRule),
+pub enum SwitchBlockEntry<'source> {
+    StatementGroup(SwitchBlockStatementGroup<'source>),
+    Rule(SwitchRule<'source>),
 }
 
-pub(crate) fn cast_compilation_unit(syntax: JavaSyntaxNode) -> Option<CompilationUnit> {
-    <CompilationUnit as JavaNode>::cast(syntax)
+pub(crate) fn cast_compilation_unit(syntax: JavaSyntaxNode<'_>) -> Option<CompilationUnit<'_>> {
+    <CompilationUnit<'_> as JavaNode<'_>>::cast(syntax)
 }
 
-fn child<N: JavaNode>(syntax: &JavaSyntaxNode) -> Option<N> {
+fn child<'source, N: JavaNode<'source>>(syntax: &JavaSyntaxNode<'source>) -> Option<N> {
     syntax.children().find_map(N::cast)
 }
 
-fn children<'a, N: JavaNode + 'a>(syntax: &'a JavaSyntaxNode) -> impl Iterator<Item = N> + 'a {
+fn children<'source, N: JavaNode<'source> + 'source>(
+    syntax: &'source JavaSyntaxNode<'source>,
+) -> impl Iterator<Item = N> + 'source {
     syntax.children().filter_map(N::cast)
 }
 
-fn token_iter(syntax: &JavaSyntaxNode) -> impl Iterator<Item = JavaSyntaxToken> + '_ {
+fn token_iter<'source>(
+    syntax: &JavaSyntaxNode<'source>,
+) -> impl Iterator<Item = JavaSyntaxToken<'source>> + use<'source> {
     syntax.tokens().map(|syntax| JavaSyntaxToken { syntax })
 }
 
-fn first_token(syntax: &JavaSyntaxNode) -> Option<JavaSyntaxToken> {
+fn first_token<'source>(syntax: &JavaSyntaxNode<'source>) -> Option<JavaSyntaxToken<'source>> {
     syntax
         .first_token()
         .map(|syntax| JavaSyntaxToken { syntax })
 }
 
-fn last_token(syntax: &JavaSyntaxNode) -> Option<JavaSyntaxToken> {
+fn last_token<'source>(syntax: &JavaSyntaxNode<'source>) -> Option<JavaSyntaxToken<'source>> {
     syntax.last_token().map(|syntax| JavaSyntaxToken { syntax })
 }
 
-fn starts_after_blank_line(syntax: &JavaSyntaxNode) -> bool {
+fn starts_after_blank_line(syntax: &JavaSyntaxNode<'_>) -> bool {
     first_token(syntax).is_some_and(|token| token.has_leading_blank_line())
 }
 
-fn child_family<F: JavaFamily>(syntax: &JavaSyntaxNode) -> Option<F> {
+fn child_family<'source, F: JavaFamily<'source>>(syntax: &JavaSyntaxNode<'source>) -> Option<F> {
     syntax.children().find_map(F::cast)
 }
 
-fn nth_child_family<F: JavaFamily>(syntax: &JavaSyntaxNode, index: usize) -> Option<F> {
-    children_family(syntax).nth(index)
+fn nth_child_family<'source, F: JavaFamily<'source>>(
+    syntax: &JavaSyntaxNode<'source>,
+    index: usize,
+) -> Option<F> {
+    syntax.children().filter_map(F::cast).nth(index)
 }
 
-fn children_family<'a, F: JavaFamily + 'a>(
-    syntax: &'a JavaSyntaxNode,
-) -> impl Iterator<Item = F> + 'a {
+fn children_family<'source, F: JavaFamily<'source> + 'source>(
+    syntax: &'source JavaSyntaxNode<'source>,
+) -> impl Iterator<Item = F> + 'source {
     syntax.children().filter_map(F::cast)
 }
 
-fn child_token(syntax: &JavaSyntaxNode, kind: JavaSyntaxKind) -> Option<JavaSyntaxToken> {
+fn child_token<'source>(
+    syntax: &JavaSyntaxNode<'source>,
+    kind: JavaSyntaxKind,
+) -> Option<JavaSyntaxToken<'source>> {
     nth_child_token(syntax, kind, 0)
 }
 
-fn nth_child_token(
-    syntax: &JavaSyntaxNode,
+fn nth_child_token<'source>(
+    syntax: &JavaSyntaxNode<'source>,
     kind: JavaSyntaxKind,
     index: usize,
-) -> Option<JavaSyntaxToken> {
+) -> Option<JavaSyntaxToken<'source>> {
     syntax
         .child_tokens()
         .filter(|token| token.kind() == kind)
@@ -1317,7 +1341,10 @@ fn nth_child_token(
         .map(|syntax| JavaSyntaxToken { syntax })
 }
 
-fn child_token_in(syntax: &JavaSyntaxNode, kinds: &[JavaSyntaxKind]) -> Option<JavaSyntaxToken> {
+fn child_token_in<'source>(
+    syntax: &JavaSyntaxNode<'source>,
+    kinds: &[JavaSyntaxKind],
+) -> Option<JavaSyntaxToken<'source>> {
     syntax
         .child_tokens()
         .find(|token| kinds.contains(&token.kind()))
@@ -1325,9 +1352,9 @@ fn child_token_in(syntax: &JavaSyntaxNode, kinds: &[JavaSyntaxKind]) -> Option<J
 }
 
 fn children_tokens_matching<'a>(
-    syntax: &'a JavaSyntaxNode,
+    syntax: &'a JavaSyntaxNode<'a>,
     predicate: impl Fn(JavaSyntaxKind) -> bool + Copy + 'a,
-) -> impl Iterator<Item = JavaSyntaxToken> + 'a {
+) -> impl Iterator<Item = JavaSyntaxToken<'a>> + 'a {
     syntax
         .child_tokens()
         .filter(move |token| predicate(token.kind()))

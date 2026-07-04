@@ -10,14 +10,18 @@ use crate::{
 use super::SyntaxNode;
 
 /// A parent-aware cursor over a green token.
-pub struct SyntaxToken<L: Language> {
-    parent: SyntaxNode<L>,
+pub struct SyntaxToken<'source, L: Language> {
+    parent: SyntaxNode<'source, L>,
     offset: TextSize,
     index: usize,
 }
 
-impl<L: Language> SyntaxToken<L> {
-    pub(super) const fn new(parent: SyntaxNode<L>, offset: TextSize, index: usize) -> Self {
+impl<'source, L: Language> SyntaxToken<'source, L> {
+    pub(super) const fn new(
+        parent: SyntaxNode<'source, L>,
+        offset: TextSize,
+        index: usize,
+    ) -> Self {
         Self {
             parent,
             offset,
@@ -46,6 +50,12 @@ impl<L: Language> SyntaxToken<L> {
         self.green().kind()
     }
 
+    /// Returns the source text backing this syntax tree.
+    #[must_use]
+    pub fn source(&self) -> &'source str {
+        self.parent.source()
+    }
+
     /// Returns the byte offset where this token starts, including leading trivia.
     #[must_use]
     pub const fn offset(&self) -> TextSize {
@@ -55,7 +65,8 @@ impl<L: Language> SyntaxToken<L> {
     /// Returns the token text without attached trivia.
     #[must_use]
     pub fn text(&self) -> &str {
-        self.green().text()
+        let range = self.token_text_range();
+        &self.source()[range.start().get()..range.end().get()]
     }
 
     /// Returns the byte length covered by this token, including attached trivia.
@@ -91,7 +102,7 @@ impl<L: Language> SyntaxToken<L> {
     }
 }
 
-impl<L: Language> Clone for SyntaxToken<L> {
+impl<L: Language> Clone for SyntaxToken<'_, L> {
     fn clone(&self) -> Self {
         Self {
             parent: self.parent.clone(),
@@ -101,15 +112,15 @@ impl<L: Language> Clone for SyntaxToken<L> {
     }
 }
 
-impl<L: Language> PartialEq for SyntaxToken<L> {
+impl<L: Language> PartialEq for SyntaxToken<'_, L> {
     fn eq(&self, other: &Self) -> bool {
         self.offset() == other.offset() && self.green().ptr_eq(other.green())
     }
 }
 
-impl<L: Language> Eq for SyntaxToken<L> {}
+impl<L: Language> Eq for SyntaxToken<'_, L> {}
 
-impl<L> fmt::Debug for SyntaxToken<L>
+impl<L> fmt::Debug for SyntaxToken<'_, L>
 where
     L: Language,
     L::Kind: fmt::Debug,
@@ -128,27 +139,45 @@ where
 
         if !self.leading().is_empty() {
             f.write_str(" leading=")?;
-            fmt_trivia(f, self.leading())?;
+            fmt_trivia(f, self.parent.source(), self.offset(), self.leading())?;
         }
 
         if !self.trailing().is_empty() {
             f.write_str(" trailing=")?;
-            fmt_trivia(f, self.trailing())?;
+            fmt_trivia(
+                f,
+                self.parent.source(),
+                self.token_text_range().end(),
+                self.trailing(),
+            )?;
         }
 
         Ok(())
     }
 }
 
-fn fmt_trivia(f: &mut fmt::Formatter<'_>, trivia: &[GreenTrivia]) -> fmt::Result {
+fn fmt_trivia(
+    f: &mut fmt::Formatter<'_>,
+    source: &str,
+    start: TextSize,
+    trivia: &[GreenTrivia],
+) -> fmt::Result {
     f.write_str("[")?;
+    let mut offset = start;
 
     for (index, piece) in trivia.iter().enumerate() {
         if index > 0 {
             f.write_str(", ")?;
         }
 
-        write!(f, "{:?} {:?}", piece.kind(), piece.text())?;
+        let range = TextRange::new(offset, offset + piece.text_len());
+        offset = range.end();
+        write!(
+            f,
+            "{:?} {:?}",
+            piece.kind(),
+            &source[range.start().get()..range.end().get()]
+        )?;
     }
 
     f.write_str("]")

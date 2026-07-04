@@ -69,7 +69,7 @@ fn format_module_directives(
         return None;
     }
 
-    let ignored_ranges = formatter_ignore_ranges(&module.source_text());
+    let ignored_ranges = formatter_ignore_ranges(module.source_text());
     let directive_ranges = directives
         .iter()
         .map(|directive| module_directive_token_range(directive, module.text_range().start().get()))
@@ -243,16 +243,19 @@ enum ModuleDirectiveKindOrder {
     Provides,
 }
 
-struct FormattedModuleDirective {
-    leading_comments: Vec<jolt_java_syntax::JavaComment>,
-    trailing_comments: Vec<jolt_java_syntax::JavaComment>,
+struct FormattedModuleDirective<'source> {
+    leading_comments: Vec<jolt_java_syntax::JavaComment<'source>>,
+    trailing_comments: Vec<jolt_java_syntax::JavaComment<'source>>,
     kind_order: ModuleDirectiveKindOrder,
     primary_name: String,
     doc: Doc,
 }
 
-impl FormattedModuleDirective {
-    fn from_directive(directive: &ModuleDirective, formatter: &JavaFormatter<'_>) -> Self {
+impl<'source> FormattedModuleDirective<'source> {
+    fn from_directive(
+        directive: &ModuleDirective<'source>,
+        formatter: &JavaFormatter<'source>,
+    ) -> Self {
         let role = directive
             .directive_role()
             .expect("clean module directive should expose a directive role");

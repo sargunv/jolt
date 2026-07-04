@@ -194,7 +194,7 @@ fn format_removed_empty_statement(statement: &jolt_java_syntax::EmptyStatement) 
 }
 
 fn block_formatter_ignore_ranges(block: &Block) -> Vec<FormatterIgnoreRange> {
-    formatter_ignore_ranges(&block.source_text())
+    formatter_ignore_ranges(block.source_text())
 }
 
 fn block_statement_token_range(

@@ -9,7 +9,7 @@ use jolt_text::{TextRange, TextSize};
 use unicode_general_category::{GeneralCategory, get_general_category};
 
 pub use token::{JavaLexDiagnosticCode, LexerDiagnostic, Token, Trivia, TriviaKind};
-use unicode::{InputChar, translate_unicode_escapes};
+pub(crate) use unicode::normalize_unicode_escapes;
 
 /// A Java lexer that produces tokens on demand.
 pub struct JavaLexer<'source> {
@@ -70,8 +70,8 @@ impl<'source> JavaLexer<'source> {
 
 struct Scanner<'source> {
     source: &'source str,
-    chars: Vec<InputChar>,
     pos: usize,
+    previous_end: TextSize,
     diagnostics: Vec<LexerDiagnostic>,
 }
 
@@ -87,17 +87,16 @@ fn lexer_diagnostic(code: JavaLexDiagnosticCode, range: TextRange) -> Diagnostic
 
 impl<'source> Scanner<'source> {
     fn new(source: &'source str) -> Self {
-        let (chars, diagnostics) = translate_unicode_escapes(source);
         Self {
             source,
-            chars,
             pos: 0,
-            diagnostics,
+            previous_end: TextSize::new(0),
+            diagnostics: Vec::new(),
         }
     }
 
     fn token(&mut self) -> (JavaSyntaxKind, TextRange) {
-        let start = self.current().expect("token called at EOF").range.start();
+        let start = self.current_range().expect("token called at EOF").start();
         let kind = match self.current_char().expect("token called at EOF") {
             '\'' => self.character_literal(),
             '"' if self.peek_char(1) == Some('"') && self.peek_char(2) == Some('"') => {
@@ -136,8 +135,8 @@ impl<'source> Scanner<'source> {
                 }
             }
             (Some('/'), Some('*')) => {
-                let end = find_block_comment_end(&self.chars, self.pos);
-                if end.is_some_and(|end| !contains_line_terminator(&self.chars[self.pos..end])) {
+                let end = find_block_comment_end(self.source, self.pos);
+                if end.is_some_and(|end| !contains_line_terminator(&self.source[self.pos..end])) {
                     trivia.push(self.block_comment());
                     while self.current_char().is_some_and(is_horizontal_whitespace) {
                         trivia.push(self.horizontal_whitespace());
@@ -163,21 +162,20 @@ impl<'source> Scanner<'source> {
     }
 
     fn ignored_final_sub(&mut self) -> Trivia {
-        let current = self.current().expect("SUB starts before EOF");
+        let range = self.current_range().expect("SUB starts before EOF");
         self.bump();
         // JLS 3.5 ignores a final ASCII SUB/control-Z after Unicode escape
         // processing. Keep its raw range as trivia so formatting remains lossless.
         Trivia {
             kind: TriviaKind::Ignored,
-            range: current.range,
+            range,
         }
     }
 
     fn horizontal_whitespace(&mut self) -> Trivia {
         let start = self
-            .current()
+            .current_range()
             .expect("whitespace starts before EOF")
-            .range
             .start();
         while self.current_char().is_some_and(is_horizontal_whitespace) {
             self.bump();
@@ -190,9 +188,8 @@ impl<'source> Scanner<'source> {
 
     fn newline(&mut self, len: usize) -> Trivia {
         let start = self
-            .current()
+            .current_range()
             .expect("newline starts before EOF")
-            .range
             .start();
         for _ in 0..len {
             self.bump();
@@ -205,9 +202,8 @@ impl<'source> Scanner<'source> {
 
     fn line_comment(&mut self) -> Trivia {
         let start = self
-            .current()
+            .current_range()
             .expect("comment starts before EOF")
-            .range
             .start();
         self.bump();
         self.bump();
@@ -226,9 +222,8 @@ impl<'source> Scanner<'source> {
     fn block_comment(&mut self) -> Trivia {
         let start_pos = self.pos;
         let start = self
-            .current()
+            .current_range()
             .expect("comment starts before EOF")
-            .range
             .start();
         let kind = if self.peek_char(2) == Some('*') && self.peek_char(3) != Some('/') {
             TriviaKind::JavadocComment
@@ -262,9 +257,8 @@ impl<'source> Scanner<'source> {
 
     fn character_literal(&mut self) -> JavaSyntaxKind {
         let start = self
-            .current()
+            .current_range()
             .expect("literal starts before EOF")
-            .range
             .start();
         self.bump();
         let mut content_chars = 0usize;
@@ -280,15 +274,14 @@ impl<'source> Scanner<'source> {
                 '\r' | '\n' => break,
                 '\\' => {
                     let escape_start = self
-                        .current()
+                        .current_range()
                         .expect("escape starts before EOF")
-                        .range
                         .start();
                     self.bump();
                     if self.current_char().is_some_and(is_line_terminator_start) {
                         // Line-continuation escapes are valid only in text blocks;
                         // ordinary char literals still terminate at the line break.
-                        let range = self.current().expect("line terminator exists").range;
+                        let range = self.current_range().expect("line terminator exists");
                         self.diagnostics.push(lexer_diagnostic(
                             JavaLexDiagnosticCode::InvalidEscapeSequence,
                             range,
@@ -303,7 +296,7 @@ impl<'source> Scanner<'source> {
                         break;
                     }
                     if !is_valid_escape_tail(self.current_char().expect("escape tail exists")) {
-                        let range = self.current().expect("escape tail exists").range;
+                        let range = self.current_range().expect("escape tail exists");
                         self.diagnostics.push(lexer_diagnostic(
                             JavaLexDiagnosticCode::InvalidEscapeSequence,
                             range,
@@ -336,9 +329,8 @@ impl<'source> Scanner<'source> {
 
     fn string_literal(&mut self) -> JavaSyntaxKind {
         let start = self
-            .current()
+            .current_range()
             .expect("literal starts before EOF")
-            .range
             .start();
         self.bump();
         let mut terminated = false;
@@ -353,15 +345,14 @@ impl<'source> Scanner<'source> {
                 '\r' | '\n' => break,
                 '\\' => {
                     let escape_start = self
-                        .current()
+                        .current_range()
                         .expect("escape starts before EOF")
-                        .range
                         .start();
                     self.bump();
                     if self.current_char().is_some_and(is_line_terminator_start) {
                         // Line-continuation escapes are valid only in text blocks;
                         // ordinary string literals still terminate at the line break.
-                        let range = self.current().expect("line terminator exists").range;
+                        let range = self.current_range().expect("line terminator exists");
                         self.diagnostics.push(lexer_diagnostic(
                             JavaLexDiagnosticCode::InvalidEscapeSequence,
                             range,
@@ -376,7 +367,7 @@ impl<'source> Scanner<'source> {
                         break;
                     }
                     if !is_valid_escape_tail(self.current_char().expect("escape tail exists")) {
-                        let range = self.current().expect("escape tail exists").range;
+                        let range = self.current_range().expect("escape tail exists");
                         self.diagnostics.push(lexer_diagnostic(
                             JavaLexDiagnosticCode::InvalidEscapeSequence,
                             range,
@@ -402,9 +393,8 @@ impl<'source> Scanner<'source> {
 
     fn text_block_literal(&mut self) -> JavaSyntaxKind {
         let start = self
-            .current()
+            .current_range()
             .expect("literal starts before EOF")
-            .range
             .start();
         self.bump();
         self.bump();
@@ -438,9 +428,8 @@ impl<'source> Scanner<'source> {
 
             if self.current_char() == Some('\\') {
                 let escape_start = self
-                    .current()
+                    .current_range()
                     .expect("escape starts before EOF")
-                    .range
                     .start();
                 self.bump();
                 if self.current_char().is_some_and(is_line_terminator_start) {
@@ -449,7 +438,7 @@ impl<'source> Scanner<'source> {
                 } else if !self.at_end() && self.current_char().is_some_and(is_valid_escape_tail) {
                     self.bump_escape_tail();
                 } else if !self.at_end() {
-                    let range = self.current().expect("escape tail exists").range;
+                    let range = self.current_range().expect("escape tail exists");
                     self.diagnostics.push(lexer_diagnostic(
                         JavaLexDiagnosticCode::InvalidEscapeSequence,
                         range,
@@ -479,9 +468,8 @@ impl<'source> Scanner<'source> {
     fn number_literal(&mut self) -> JavaSyntaxKind {
         let start_pos = self.pos;
         let start = self
-            .current()
+            .current_range()
             .expect("literal starts before EOF")
-            .range
             .start();
         let kind = if self.current_char() == Some('.') {
             self.bump();
@@ -494,9 +482,9 @@ impl<'source> Scanner<'source> {
             self.bump();
             let before_digits = self.pos;
             self.consume_digits_for_radix(16);
-            let has_whole_digits = self.chars[before_digits..self.pos]
-                .iter()
-                .any(|input| input.ch.is_ascii_hexdigit());
+            let has_whole_digits = self.source[before_digits..self.pos]
+                .chars()
+                .any(|ch| ch.is_ascii_hexdigit());
             let mut floating = false;
             let mut has_binary_exponent = false;
             let mut has_fraction_digits = false;
@@ -505,9 +493,9 @@ impl<'source> Scanner<'source> {
                 self.bump();
                 let before_fraction = self.pos;
                 self.consume_digits_for_radix(16);
-                has_fraction_digits = self.chars[before_fraction..self.pos]
-                    .iter()
-                    .any(|input| input.ch.is_ascii_hexdigit());
+                has_fraction_digits = self.source[before_fraction..self.pos]
+                    .chars()
+                    .any(|ch| ch.is_ascii_hexdigit());
             }
             if matches!(self.current_char(), Some('p' | 'P')) {
                 floating = true;
@@ -585,10 +573,10 @@ impl<'source> Scanner<'source> {
             self.bump();
         }
 
-        let text = self.logical_text(start, self.pos);
+        let text = &self.source[start..self.pos];
         // JLS 3.9 contextual keywords are recognized only in parser context, so
         // the lexer keeps `record`, `var`, `yield`, `non-sealed`, etc. as identifiers.
-        match text.as_str() {
+        match text {
             "true" | "false" => JavaSyntaxKind::BooleanLiteral,
             "null" => JavaSyntaxKind::NullLiteral,
             "abstract" => JavaSyntaxKind::AbstractKw,
@@ -648,9 +636,8 @@ impl<'source> Scanner<'source> {
 
     fn operator_or_punctuation(&mut self) -> JavaSyntaxKind {
         let start = self
-            .current()
+            .current_range()
             .expect("operator starts before EOF")
-            .range
             .start();
         match self.current_char().expect("operator starts before EOF") {
             '(' => self.one(JavaSyntaxKind::LParen),
@@ -782,27 +769,24 @@ impl<'source> Scanner<'source> {
         start: TextSize,
         kind: JavaSyntaxKind,
     ) {
-        let text = self.logical_text(start_pos, self.pos);
-        if !underscores_are_between_digits(&text) || exponent_is_missing_digits(&text, kind) {
+        let text = &self.source[start_pos..self.pos];
+        if !underscores_are_between_digits(text) || exponent_is_missing_digits(text, kind) {
             self.invalid_numeric_literal(start);
         }
     }
 
     fn validate_octal_literal(&mut self, start_pos: usize, start: TextSize, kind: JavaSyntaxKind) {
         if kind != JavaSyntaxKind::IntegerLiteral
-            || self
-                .chars
-                .get(start_pos)
-                .is_none_or(|input| input.ch != '0')
-            || matches!(
-                self.chars.get(start_pos + 1).map(|input| input.ch),
-                Some('x' | 'X' | 'b' | 'B')
-            )
+            || !self.source[start_pos..].starts_with('0')
+            || self.source[start_pos..].starts_with("0x")
+            || self.source[start_pos..].starts_with("0X")
+            || self.source[start_pos..].starts_with("0b")
+            || self.source[start_pos..].starts_with("0B")
         {
             return;
         }
 
-        let text = self.logical_text(start_pos, self.pos);
+        let text = &self.source[start_pos..self.pos];
         let digits = text.trim_end_matches(['l', 'L']);
         if digits.chars().any(|ch| matches!(ch, '8' | '9')) {
             self.invalid_numeric_literal(start);
@@ -865,31 +849,40 @@ impl<'source> Scanner<'source> {
         kind
     }
 
-    fn current(&self) -> Option<InputChar> {
-        self.chars.get(self.pos).copied()
+    fn current(&self) -> Option<(char, TextRange)> {
+        let ch = self.source.get(self.pos..)?.chars().next()?;
+        let end = self.pos + ch.len_utf8();
+        Some((
+            ch,
+            TextRange::new(TextSize::new(self.pos), TextSize::new(end)),
+        ))
     }
 
     fn current_char(&self) -> Option<char> {
-        self.current().map(|input| input.ch)
+        self.current().map(|(ch, _)| ch)
+    }
+
+    fn current_range(&self) -> Option<TextRange> {
+        self.current().map(|(_, range)| range)
     }
 
     fn peek_char(&self, offset: usize) -> Option<char> {
-        self.chars.get(self.pos + offset).map(|input| input.ch)
+        self.source.get(self.pos..)?.chars().nth(offset)
     }
 
     fn bump(&mut self) {
         debug_assert!(!self.at_end());
-        self.pos += 1;
+        let (_, range) = self.current().expect("bump before EOF");
+        self.pos = range.end().get();
+        self.previous_end = range.end();
     }
 
     fn at_end(&self) -> bool {
-        self.pos >= self.chars.len()
+        self.pos >= self.source.len()
     }
 
     fn previous_end(&self) -> TextSize {
-        self.chars
-            .get(self.pos.saturating_sub(1))
-            .map_or_else(|| TextSize::new(0), |input| input.range.end())
+        self.previous_end
     }
 
     fn previous_end_or_source_end(&self) -> TextSize {
@@ -901,37 +894,40 @@ impl<'source> Scanner<'source> {
     }
 
     fn raw_end_for_pos(&self, pos: usize) -> TextSize {
-        self.chars.get(pos).map_or_else(
-            || TextSize::new(self.source.len()),
-            |input| input.range.end(),
-        )
+        self.source
+            .get(pos..)
+            .and_then(|text| text.chars().next())
+            .map_or_else(
+                || TextSize::new(self.source.len()),
+                |ch| TextSize::new(pos + ch.len_utf8()),
+            )
     }
 
     fn is_ignored_final_sub(&self) -> bool {
-        self.pos + 1 == self.chars.len() && self.current_char() == Some('\u{001A}')
-    }
-
-    fn logical_text(&self, start: usize, end: usize) -> String {
-        self.chars[start..end]
-            .iter()
-            .map(|input| input.ch)
-            .collect()
+        self.current_char() == Some('\u{001A}')
+            && self
+                .current()
+                .is_some_and(|(_, range)| range.end().get() == self.source.len())
     }
 }
 
-fn find_block_comment_end(chars: &[InputChar], start: usize) -> Option<usize> {
+fn find_block_comment_end(source: &str, start: usize) -> Option<usize> {
     let mut pos = start + 2;
-    while pos + 1 < chars.len() {
-        if chars[pos].ch == '*' && chars[pos + 1].ch == '/' {
+    while pos + 1 < source.len() {
+        if source.as_bytes()[pos] == b'*' && source.as_bytes()[pos + 1] == b'/' {
             return Some(pos + 2);
         }
-        pos += 1;
+        pos += source[pos..]
+            .chars()
+            .next()
+            .expect("valid char boundary")
+            .len_utf8();
     }
     None
 }
 
-fn contains_line_terminator(chars: &[InputChar]) -> bool {
-    chars.iter().any(|input| matches!(input.ch, '\r' | '\n'))
+fn contains_line_terminator(text: &str) -> bool {
+    text.chars().any(|ch| matches!(ch, '\r' | '\n'))
 }
 
 fn is_horizontal_whitespace(ch: char) -> bool {

@@ -203,8 +203,8 @@ pub(crate) fn format_receiver_parameter(
     ])
 }
 
-fn format_construct_prefix_annotations(
-    annotations: impl Iterator<Item = jolt_java_syntax::Annotation>,
+fn format_construct_prefix_annotations<'source>(
+    annotations: impl Iterator<Item = jolt_java_syntax::Annotation<'source>>,
     formatter: &JavaFormatter<'_>,
 ) -> Vec<Doc> {
     annotations
@@ -284,7 +284,9 @@ fn format_variable_declarator_list(
     ))
 }
 
-fn single_declarator(declarators: &VariableDeclaratorList) -> Option<VariableDeclarator> {
+fn single_declarator<'source>(
+    declarators: &'source VariableDeclaratorList<'source>,
+) -> Option<VariableDeclarator<'source>> {
     let mut entries = declarators.entries();
     let entry = entries.next()?;
     if entries.next().is_some() || entry.comma.is_some() {

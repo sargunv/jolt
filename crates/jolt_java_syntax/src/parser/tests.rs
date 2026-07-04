@@ -42,13 +42,15 @@ fn parser_shell_preserves_source_text() {
 
 #[test]
 fn invalid_event_stream_aborts_without_syntax() {
+    let mut diagnostics = Vec::new();
     let parse = finish_parse(
-        "",
+        String::new(),
         ParseEvents {
             events: vec![Event::Token],
             tokens: Vec::new(),
             diagnostics: Vec::new(),
         },
+        &mut diagnostics,
     );
 
     assert_eq!(parse.outcome(), SyntaxOutcome::Aborted);

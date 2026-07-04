@@ -3,13 +3,13 @@ use std::collections::HashMap;
 use jolt_java_syntax::{CompilationUnit, JavaComment, JavaSyntaxToken};
 
 #[derive(Default)]
-pub(crate) struct CommentMap {
-    leading: HashMap<CommentAnchor, Vec<JavaComment>>,
-    trailing: HashMap<CommentAnchor, Vec<JavaComment>>,
+pub(crate) struct CommentMap<'source> {
+    leading: HashMap<CommentAnchor, Vec<JavaComment<'source>>>,
+    trailing: HashMap<CommentAnchor, Vec<JavaComment<'source>>>,
 }
 
-impl CommentMap {
-    pub(crate) fn from_compilation_unit(unit: &CompilationUnit) -> Self {
+impl<'source> CommentMap<'source> {
+    pub(crate) fn from_compilation_unit(unit: &CompilationUnit<'source>) -> Self {
         let mut map = Self::default();
 
         for token in unit.token_iter() {
@@ -25,7 +25,10 @@ impl CommentMap {
         map
     }
 
-    pub(crate) fn leading_comments_for_token(&self, token: &JavaSyntaxToken) -> &[JavaComment] {
+    pub(crate) fn leading_comments_for_token(
+        &self,
+        token: &JavaSyntaxToken<'source>,
+    ) -> &[JavaComment<'source>] {
         self.leading
             .get(&comment_anchor(token))
             .map_or(&[], Vec::as_slice)
@@ -33,12 +36,15 @@ impl CommentMap {
 
     pub(crate) fn leading_comments_for_token_option(
         &self,
-        token: Option<&JavaSyntaxToken>,
-    ) -> &[JavaComment] {
+        token: Option<&JavaSyntaxToken<'source>>,
+    ) -> &[JavaComment<'source>] {
         token.map_or(&[], |token| self.leading_comments_for_token(token))
     }
 
-    pub(crate) fn trailing_comments_for_token(&self, token: &JavaSyntaxToken) -> &[JavaComment] {
+    pub(crate) fn trailing_comments_for_token(
+        &self,
+        token: &JavaSyntaxToken<'source>,
+    ) -> &[JavaComment<'source>] {
         self.trailing
             .get(&comment_anchor(token))
             .map_or(&[], Vec::as_slice)
@@ -46,27 +52,27 @@ impl CommentMap {
 
     pub(crate) fn trailing_comments_for_token_option(
         &self,
-        token: Option<&JavaSyntaxToken>,
-    ) -> &[JavaComment] {
+        token: Option<&JavaSyntaxToken<'source>>,
+    ) -> &[JavaComment<'source>] {
         token.map_or(&[], |token| self.trailing_comments_for_token(token))
     }
 
-    pub(crate) fn has_leading_comment_for_token(&self, token: &JavaSyntaxToken) -> bool {
+    pub(crate) fn has_leading_comment_for_token(&self, token: &JavaSyntaxToken<'source>) -> bool {
         !self.leading_comments_for_token(token).is_empty()
     }
 
     pub(crate) fn has_delimiter_dangling_comments(
-        open: Option<&JavaSyntaxToken>,
-        close: Option<&JavaSyntaxToken>,
+        open: Option<&JavaSyntaxToken<'source>>,
+        close: Option<&JavaSyntaxToken<'source>>,
     ) -> bool {
         open.is_some_and(|token| !token.trailing_comments().is_empty())
             || close.is_some_and(|token| !token.leading_comments().is_empty())
     }
 
     pub(crate) fn delimiter_dangling_comments(
-        open: Option<&JavaSyntaxToken>,
-        close: Option<&JavaSyntaxToken>,
-    ) -> Vec<JavaComment> {
+        open: Option<&JavaSyntaxToken<'source>>,
+        close: Option<&JavaSyntaxToken<'source>>,
+    ) -> Vec<JavaComment<'source>> {
         let mut comments = Vec::new();
 
         if let Some(open) = open {
@@ -86,7 +92,7 @@ struct CommentAnchor {
     end: usize,
 }
 
-fn comment_anchor(token: &JavaSyntaxToken) -> CommentAnchor {
+fn comment_anchor(token: &JavaSyntaxToken<'_>) -> CommentAnchor {
     let range = token.token_text_range();
     CommentAnchor {
         start: range.start().get(),

@@ -79,7 +79,7 @@ aoeu
     """
     \n\t\r\f\b\s\\
     \077
-    \u0041""";
+    A""";
 
   void json() {
     // language = json

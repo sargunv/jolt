@@ -14,7 +14,7 @@ use super::{
 pub(super) fn format_class_body(body: &ClassBody, formatter: &JavaFormatter<'_>) -> Option<Doc> {
     let members = body.members().collect::<Vec<_>>();
     format_class_member_body(
-        &body.source_text(),
+        body.source_text(),
         body.text_range().start().get(),
         &members,
         format_body_open_dangling_comments(body.open_brace()),
@@ -26,7 +26,7 @@ pub(super) fn format_class_body(body: &ClassBody, formatter: &JavaFormatter<'_>)
 pub(super) fn format_record_body(body: &RecordBody, formatter: &JavaFormatter<'_>) -> Option<Doc> {
     let members = body.members().collect::<Vec<_>>();
     format_class_member_body(
-        &body.source_text(),
+        body.source_text(),
         body.text_range().start().get(),
         &members,
         format_body_open_dangling_comments(body.open_brace()),
@@ -45,7 +45,7 @@ pub(super) fn format_interface_body(
         .iter()
         .map(|member| interface_member_token_range(member, body.text_range().start().get()))
         .collect::<Vec<_>>();
-    let ignored_ranges = formatter_ignore_ranges(&body.source_text());
+    let ignored_ranges = formatter_ignore_ranges(body.source_text());
     let ignored_runs = formatter_ignore_runs(&ignored_ranges, &member_ranges);
     let mut formatted_members = Vec::new();
     formatted_members.extend(format_body_open_dangling_comments(body.open_brace()));
@@ -102,7 +102,7 @@ pub(super) fn format_annotation_interface_body(
         .iter()
         .map(|member| annotation_member_token_range(member, body.text_range().start().get()))
         .collect::<Vec<_>>();
-    let ignored_ranges = formatter_ignore_ranges(&body.source_text());
+    let ignored_ranges = formatter_ignore_ranges(body.source_text());
     let ignored_runs = formatter_ignore_runs(&ignored_ranges, &member_ranges);
     let mut formatted_members = Vec::new();
     formatted_members.extend(format_body_open_dangling_comments(body.open_brace()));
@@ -266,11 +266,15 @@ fn ignored_annotation_member_category(
         .map_or(MemberCategory::Type, annotation_member_category)
 }
 
-pub(super) fn effective_members(members: &[ClassBodyMember]) -> Vec<ClassBodyMember> {
+pub(super) fn effective_members<'source>(
+    members: &[ClassBodyMember<'source>],
+) -> Vec<ClassBodyMember<'source>> {
     printable_class_members(members)
 }
 
-fn printable_class_members(members: &[ClassBodyMember]) -> Vec<ClassBodyMember> {
+fn printable_class_members<'source>(
+    members: &[ClassBodyMember<'source>],
+) -> Vec<ClassBodyMember<'source>> {
     members
         .iter()
         .filter(|member| is_printable_class_member(member))
@@ -278,7 +282,9 @@ fn printable_class_members(members: &[ClassBodyMember]) -> Vec<ClassBodyMember> 
         .collect()
 }
 
-fn printable_interface_members(members: &[InterfaceBodyMember]) -> Vec<InterfaceBodyMember> {
+fn printable_interface_members<'source>(
+    members: &[InterfaceBodyMember<'source>],
+) -> Vec<InterfaceBodyMember<'source>> {
     members
         .iter()
         .filter(|member| is_printable_interface_member(member))
@@ -286,9 +292,9 @@ fn printable_interface_members(members: &[InterfaceBodyMember]) -> Vec<Interface
         .collect()
 }
 
-fn printable_annotation_members(
-    members: &[AnnotationInterfaceBodyMember],
-) -> Vec<AnnotationInterfaceBodyMember> {
+fn printable_annotation_members<'source>(
+    members: &[AnnotationInterfaceBodyMember<'source>],
+) -> Vec<AnnotationInterfaceBodyMember<'source>> {
     members
         .iter()
         .filter(|member| is_printable_annotation_member(member))

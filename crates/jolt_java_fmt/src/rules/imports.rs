@@ -73,20 +73,23 @@ fn format_import_run(imports: Vec<FormattedImport>) -> Doc {
     join_empty_lines(groups)
 }
 
-struct FormattedImport {
-    leading_comments: Vec<jolt_java_syntax::JavaComment>,
-    trailing_comments: Vec<jolt_java_syntax::JavaComment>,
+struct FormattedImport<'source> {
+    leading_comments: Vec<jolt_java_syntax::JavaComment<'source>>,
+    trailing_comments: Vec<jolt_java_syntax::JavaComment<'source>>,
     is_static: bool,
     path: String,
-    import_token: Option<jolt_java_syntax::JavaSyntaxToken>,
-    module_token: Option<jolt_java_syntax::JavaSyntaxToken>,
-    static_token: Option<jolt_java_syntax::JavaSyntaxToken>,
+    import_token: Option<jolt_java_syntax::JavaSyntaxToken<'source>>,
+    module_token: Option<jolt_java_syntax::JavaSyntaxToken<'source>>,
+    static_token: Option<jolt_java_syntax::JavaSyntaxToken<'source>>,
     path_doc: Doc,
-    semicolon: Option<jolt_java_syntax::JavaSyntaxToken>,
+    semicolon: Option<jolt_java_syntax::JavaSyntaxToken<'source>>,
 }
 
-impl FormattedImport {
-    fn from_declaration(import: &ImportDeclaration, formatter: &JavaFormatter<'_>) -> Self {
+impl<'source> FormattedImport<'source> {
+    fn from_declaration(
+        import: &ImportDeclaration<'source>,
+        formatter: &JavaFormatter<'source>,
+    ) -> Self {
         let kind = import
             .import_kind()
             .expect("clean import declaration should expose an import kind");

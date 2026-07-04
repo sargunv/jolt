@@ -5,14 +5,14 @@ use crate::Language;
 use super::{SyntaxNode, SyntaxToken};
 
 /// A parent-aware syntax node or token.
-pub enum SyntaxElement<L: Language> {
+pub enum SyntaxElement<'source, L: Language> {
     /// A syntax node.
-    Node(SyntaxNode<L>),
+    Node(SyntaxNode<'source, L>),
     /// A syntax token.
-    Token(SyntaxToken<L>),
+    Token(SyntaxToken<'source, L>),
 }
 
-impl<L: Language> Clone for SyntaxElement<L> {
+impl<L: Language> Clone for SyntaxElement<'_, L> {
     fn clone(&self) -> Self {
         match self {
             Self::Node(node) => Self::Node(node.clone()),
@@ -21,7 +21,7 @@ impl<L: Language> Clone for SyntaxElement<L> {
     }
 }
 
-impl<L> fmt::Debug for SyntaxElement<L>
+impl<L> fmt::Debug for SyntaxElement<'_, L>
 where
     L: Language,
     L::Kind: fmt::Debug,
@@ -34,14 +34,14 @@ where
     }
 }
 
-impl<L: Language> From<SyntaxNode<L>> for SyntaxElement<L> {
-    fn from(node: SyntaxNode<L>) -> Self {
+impl<'source, L: Language> From<SyntaxNode<'source, L>> for SyntaxElement<'source, L> {
+    fn from(node: SyntaxNode<'source, L>) -> Self {
         Self::Node(node)
     }
 }
 
-impl<L: Language> From<SyntaxToken<L>> for SyntaxElement<L> {
-    fn from(token: SyntaxToken<L>) -> Self {
+impl<'source, L: Language> From<SyntaxToken<'source, L>> for SyntaxElement<'source, L> {
+    fn from(token: SyntaxToken<'source, L>) -> Self {
         Self::Token(token)
     }
 }

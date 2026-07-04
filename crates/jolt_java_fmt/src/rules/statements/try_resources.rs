@@ -34,8 +34,8 @@ pub(super) fn format_try_with_resources_statement(
     statement: &TryWithResourcesStatement,
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
-    let close_paren = statement
-        .resources()
+    let resources = statement.resources();
+    let close_paren = resources
         .as_ref()
         .and_then(jolt_java_syntax::ResourceSpecification::close_paren);
 
@@ -146,15 +146,15 @@ fn format_resource_close_paren(close: Option<&JavaSyntaxToken>) -> Doc {
     ])
 }
 
-struct FormattedResource {
+struct FormattedResource<'source> {
     resource: Doc,
-    separator: Option<JavaSyntaxToken>,
+    separator: Option<JavaSyntaxToken<'source>>,
 }
 
-fn format_resource_entry(
-    entry: &ResourceListEntry,
+fn format_resource_entry<'source>(
+    entry: &ResourceListEntry<'source>,
     formatter: &JavaFormatter<'_>,
-) -> FormattedResource {
+) -> FormattedResource<'source> {
     FormattedResource {
         resource: format_resource(&entry.resource, formatter),
         separator: entry.separator.clone(),
@@ -176,8 +176,8 @@ fn format_resource(resource: &Resource, formatter: &JavaFormatter<'_>) -> Doc {
     jolt_fmt_ir::nil()
 }
 
-fn format_catch_clauses<'a>(
-    clauses: impl Iterator<Item = CatchClause> + 'a,
+fn format_catch_clauses<'source>(
+    clauses: impl Iterator<Item = CatchClause<'source>> + 'source,
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
     concat(clauses.map(|clause| format_catch_clause(&clause, formatter)))

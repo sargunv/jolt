@@ -18,8 +18,8 @@ use crate::rules::names::format_name;
 
 pub(crate) struct ProgramRule;
 
-impl FormatRule<CompilationUnit> for ProgramRule {
-    fn fmt(&self, unit: &CompilationUnit, formatter: &mut JavaFormatter<'_>) -> Doc {
+impl FormatRule<CompilationUnit<'_>> for ProgramRule {
+    fn fmt(&self, unit: &CompilationUnit<'_>, formatter: &mut JavaFormatter<'_>) -> Doc {
         format_compilation_unit(unit, formatter)
     }
 }
@@ -29,7 +29,7 @@ fn format_compilation_unit(unit: &CompilationUnit, formatter: &mut JavaFormatter
     let contents = if items.is_empty() {
         format_comment_only_compilation_unit(unit)
     } else {
-        let ignored_ranges = formatter_ignore_ranges(&unit.source_text());
+        let ignored_ranges = formatter_ignore_ranges(unit.source_text());
         let item_ranges = items
             .iter()
             .map(compilation_unit_item_token_range)

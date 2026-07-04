@@ -11,12 +11,12 @@ use crate::helpers::comments::{
     trailing_comments_force_line,
 };
 
-pub(crate) struct CommaListItem {
+pub(crate) struct CommaListItem<'source> {
     pub(crate) doc: Doc,
-    pub(crate) comma: Option<JavaSyntaxToken>,
+    pub(crate) comma: Option<JavaSyntaxToken<'source>>,
 }
 
-pub(crate) fn comma_list(items: Vec<CommaListItem>) -> Doc {
+pub(crate) fn comma_list(items: Vec<CommaListItem<'_>>) -> Doc {
     let mut docs = Vec::new();
     let items_len = items.len();
 
@@ -33,17 +33,17 @@ pub(crate) fn comma_list(items: Vec<CommaListItem>) -> Doc {
 }
 
 pub(crate) fn parenthesized_list(
-    open: Option<&JavaSyntaxToken>,
-    close: Option<&JavaSyntaxToken>,
-    items: Vec<CommaListItem>,
+    open: Option<&JavaSyntaxToken<'_>>,
+    close: Option<&JavaSyntaxToken<'_>>,
+    items: Vec<CommaListItem<'_>>,
 ) -> Doc {
     delimited_comma_list("(", ")", open, close, items)
 }
 
 pub(crate) fn angle_bracket_list(
-    open: Option<&JavaSyntaxToken>,
-    close: Option<&JavaSyntaxToken>,
-    items: Vec<CommaListItem>,
+    open: Option<&JavaSyntaxToken<'_>>,
+    close: Option<&JavaSyntaxToken<'_>>,
+    items: Vec<CommaListItem<'_>>,
 ) -> Doc {
     delimited_comma_list("<", ">", open, close, items)
 }

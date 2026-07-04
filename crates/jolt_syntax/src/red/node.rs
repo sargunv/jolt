@@ -10,24 +10,26 @@ use crate::{
 use super::{SyntaxElement, SyntaxToken};
 
 /// A parent-aware cursor over a green node.
-pub struct SyntaxNode<L: Language> {
-    data: Rc<SyntaxNodeData<L>>,
+pub struct SyntaxNode<'source, L: Language> {
+    data: Rc<SyntaxNodeData<'source, L>>,
 }
 
-struct SyntaxNodeData<L: Language> {
+struct SyntaxNodeData<'source, L: Language> {
+    source: &'source str,
     green: GreenNode,
-    parent: Option<SyntaxNode<L>>,
+    parent: Option<SyntaxNode<'source, L>>,
     offset: TextSize,
     index: usize,
     language: PhantomData<L>,
 }
 
-impl<L: Language> SyntaxNode<L> {
+impl<'source, L: Language> SyntaxNode<'source, L> {
     /// Creates the red root for a green tree.
     #[must_use]
-    pub fn new_root(green: GreenNode) -> Self {
+    pub fn new_root(source: &'source str, green: GreenNode) -> Self {
         Self {
             data: Rc::new(SyntaxNodeData {
+                source,
                 green,
                 parent: None,
                 offset: TextSize::new(0),
@@ -45,6 +47,7 @@ impl<L: Language> SyntaxNode<L> {
     ) -> Self {
         Self {
             data: Rc::new(SyntaxNodeData {
+                source: parent.source(),
                 green,
                 parent: Some(parent),
                 offset,
@@ -58,6 +61,12 @@ impl<L: Language> SyntaxNode<L> {
     #[must_use]
     pub fn green(&self) -> &GreenNode {
         &self.data.green
+    }
+
+    /// Returns the source text backing this syntax tree.
+    #[must_use]
+    pub fn source(&self) -> &'source str {
+        self.data.source
     }
 
     /// Returns the language-specific kind for this node.
@@ -103,7 +112,7 @@ impl<L: Language> SyntaxNode<L> {
     }
 
     /// Returns this node's child nodes and tokens.
-    pub fn children_with_tokens(&self) -> impl Iterator<Item = SyntaxElement<L>> + '_ {
+    pub fn children_with_tokens(&self) -> impl Iterator<Item = SyntaxElement<'source, L>> + '_ {
         self.child_slots()
             .map(|(index, offset, child)| self.child_element(index, offset, child))
     }
@@ -118,7 +127,7 @@ impl<L: Language> SyntaxNode<L> {
     }
 
     /// Returns this node's child tokens.
-    pub fn child_tokens(&self) -> impl Iterator<Item = SyntaxToken<L>> + '_ {
+    pub fn child_tokens(&self) -> impl Iterator<Item = SyntaxToken<'source, L>> + '_ {
         self.child_slots()
             .filter_map(|(index, offset, child)| match child {
                 GreenElement::Node(_) => None,
@@ -128,7 +137,7 @@ impl<L: Language> SyntaxNode<L> {
 
     /// Returns the first token contained by this node.
     #[must_use]
-    pub fn first_token(&self) -> Option<SyntaxToken<L>> {
+    pub fn first_token(&self) -> Option<SyntaxToken<'source, L>> {
         for (index, offset, child) in self.child_slots() {
             match child {
                 GreenElement::Node(green) => {
@@ -148,7 +157,7 @@ impl<L: Language> SyntaxNode<L> {
 
     /// Returns the last token contained by this node.
     #[must_use]
-    pub fn last_token(&self) -> Option<SyntaxToken<L>> {
+    pub fn last_token(&self) -> Option<SyntaxToken<'source, L>> {
         for (index, offset, child) in self.child_slots_rev() {
             match child {
                 GreenElement::Node(green) => {
@@ -167,30 +176,30 @@ impl<L: Language> SyntaxNode<L> {
     }
 
     /// Returns this node's descendant nodes in preorder, excluding this node.
-    pub fn descendants(&self) -> impl Iterator<Item = Self> {
+    pub fn descendants(&self) -> impl Iterator<Item = Self> + use<'source, L> {
         Descendants::new(self)
     }
 
     /// Returns every token contained by this node in source order.
-    pub fn tokens(&self) -> impl Iterator<Item = SyntaxToken<L>> {
+    pub fn tokens(&self) -> impl Iterator<Item = SyntaxToken<'source, L>> + use<'source, L> {
         Tokens::new(self)
     }
 
     /// Returns the next sibling node or token.
     #[must_use]
-    pub fn next_sibling_or_token(&self) -> Option<SyntaxElement<L>> {
+    pub fn next_sibling_or_token(&self) -> Option<SyntaxElement<'source, L>> {
         self.parent()?
             .child_element_at(self.index().saturating_add(1))
     }
 
     /// Returns the previous sibling node or token.
     #[must_use]
-    pub fn prev_sibling_or_token(&self) -> Option<SyntaxElement<L>> {
+    pub fn prev_sibling_or_token(&self) -> Option<SyntaxElement<'source, L>> {
         self.parent()?
             .child_element_at(self.index().checked_sub(1)?)
     }
 
-    pub(super) fn child_element_at(&self, index: usize) -> Option<SyntaxElement<L>> {
+    pub(super) fn child_element_at(&self, index: usize) -> Option<SyntaxElement<'source, L>> {
         self.child_slots()
             .find(|(child_index, _, _)| *child_index == index)
             .map(|(index, offset, child)| self.child_element(index, offset, child))
@@ -229,7 +238,7 @@ impl<L: Language> SyntaxNode<L> {
         index: usize,
         offset: TextSize,
         child: &GreenElement,
-    ) -> SyntaxElement<L> {
+    ) -> SyntaxElement<'source, L> {
         match child {
             GreenElement::Node(green) => SyntaxElement::Node(self.child_node(index, offset, green)),
             GreenElement::Token(green) => {
@@ -242,12 +251,17 @@ impl<L: Language> SyntaxNode<L> {
         Self::new_child(green.clone(), self.clone(), offset, index)
     }
 
-    fn child_token(&self, index: usize, offset: TextSize, _green: &GreenToken) -> SyntaxToken<L> {
+    fn child_token(
+        &self,
+        index: usize,
+        offset: TextSize,
+        _green: &GreenToken,
+    ) -> SyntaxToken<'source, L> {
         SyntaxToken::new(self.clone(), offset, index)
     }
 }
 
-impl<L: Language> Clone for SyntaxNode<L> {
+impl<L: Language> Clone for SyntaxNode<'_, L> {
     fn clone(&self) -> Self {
         Self {
             data: Rc::clone(&self.data),
@@ -255,15 +269,15 @@ impl<L: Language> Clone for SyntaxNode<L> {
     }
 }
 
-impl<L: Language> PartialEq for SyntaxNode<L> {
+impl<L: Language> PartialEq for SyntaxNode<'_, L> {
     fn eq(&self, other: &Self) -> bool {
         self.offset() == other.offset() && self.green().ptr_eq(other.green())
     }
 }
 
-impl<L: Language> Eq for SyntaxNode<L> {}
+impl<L: Language> Eq for SyntaxNode<'_, L> {}
 
-impl<L> fmt::Debug for SyntaxNode<L>
+impl<L> fmt::Debug for SyntaxNode<'_, L>
 where
     L: Language,
     L::Kind: fmt::Debug,
@@ -273,7 +287,7 @@ where
     }
 }
 
-fn fmt_node<L>(f: &mut fmt::Formatter<'_>, node: &SyntaxNode<L>, indent: usize) -> fmt::Result
+fn fmt_node<L>(f: &mut fmt::Formatter<'_>, node: &SyntaxNode<'_, L>, indent: usize) -> fmt::Result
 where
     L: Language,
     L::Kind: fmt::Debug,
@@ -303,12 +317,12 @@ fn fmt_indent(f: &mut fmt::Formatter<'_>, indent: usize) -> fmt::Result {
     Ok(())
 }
 
-struct Descendants<L: Language> {
-    stack: Vec<SyntaxNode<L>>,
+struct Descendants<'source, L: Language> {
+    stack: Vec<SyntaxNode<'source, L>>,
 }
 
-impl<L: Language> Descendants<L> {
-    fn new(root: &SyntaxNode<L>) -> Self {
+impl<'source, L: Language> Descendants<'source, L> {
+    fn new(root: &SyntaxNode<'source, L>) -> Self {
         let mut stack = root.children().collect::<Vec<_>>();
         stack.reverse();
 
@@ -316,8 +330,8 @@ impl<L: Language> Descendants<L> {
     }
 }
 
-impl<L: Language> Iterator for Descendants<L> {
-    type Item = SyntaxNode<L>;
+impl<'source, L: Language> Iterator for Descendants<'source, L> {
+    type Item = SyntaxNode<'source, L>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let node = self.stack.pop()?;
@@ -329,18 +343,18 @@ impl<L: Language> Iterator for Descendants<L> {
     }
 }
 
-struct Tokens<L: Language> {
-    stack: Vec<TokenFrame<L>>,
+struct Tokens<'source, L: Language> {
+    stack: Vec<TokenFrame<'source, L>>,
 }
 
-struct TokenFrame<L: Language> {
-    node: SyntaxNode<L>,
+struct TokenFrame<'source, L: Language> {
+    node: SyntaxNode<'source, L>,
     next_index: usize,
     next_offset: TextSize,
 }
 
-impl<L: Language> Tokens<L> {
-    fn new(root: &SyntaxNode<L>) -> Self {
+impl<'source, L: Language> Tokens<'source, L> {
+    fn new(root: &SyntaxNode<'source, L>) -> Self {
         Self {
             stack: vec![TokenFrame {
                 node: root.clone(),
@@ -351,8 +365,8 @@ impl<L: Language> Tokens<L> {
     }
 }
 
-impl<L: Language> Iterator for Tokens<L> {
-    type Item = SyntaxToken<L>;
+impl<'source, L: Language> Iterator for Tokens<'source, L> {
+    type Item = SyntaxToken<'source, L>;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {

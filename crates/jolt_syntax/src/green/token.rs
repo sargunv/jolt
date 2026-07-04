@@ -8,7 +8,6 @@ use super::GreenTrivia;
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct GreenToken {
     kind: RawSyntaxKind,
-    text: Box<str>,
     token_text_len: TextSize,
     text_len: TextSize,
     leading: Box<[GreenTrivia]>,
@@ -20,19 +19,16 @@ impl GreenToken {
     #[must_use]
     pub(crate) fn with_trivia(
         kind: RawSyntaxKind,
-        text: impl Into<Box<str>>,
+        token_text_len: TextSize,
         leading: impl IntoIterator<Item = GreenTrivia>,
         trailing: impl IntoIterator<Item = GreenTrivia>,
     ) -> Self {
-        let text = text.into();
-        let token_text_len = TextSize::new(text.len());
         let leading = leading.into_iter().collect::<Box<[_]>>();
         let trailing = trailing.into_iter().collect::<Box<[_]>>();
         let text_len = token_text_len + trivia_text_len(&leading) + trivia_text_len(&trailing);
 
         Self {
             kind,
-            text,
             token_text_len,
             text_len,
             leading,
@@ -44,12 +40,6 @@ impl GreenToken {
     #[must_use]
     pub(crate) fn kind(&self) -> RawSyntaxKind {
         self.kind
-    }
-
-    /// Returns the token text without attached trivia.
-    #[must_use]
-    pub(crate) fn text(&self) -> &str {
-        self.text.as_ref()
     }
 
     /// Returns the byte length of this token including attached trivia.

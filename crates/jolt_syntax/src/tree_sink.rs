@@ -2,19 +2,20 @@ use crate::{
     Diagnostic, Event, GreenNode, GreenTrivia, RawSyntaxKind, TriviaKind,
     green::{GreenElement, GreenToken},
 };
+use jolt_text::TextSize;
 
-/// A borrowed trivia piece supplied by a token source.
+/// A trivia piece supplied by a token source.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct GreenTriviaPiece<'a> {
+pub struct GreenTriviaPiece {
     kind: TriviaKind,
-    text: &'a str,
+    text_len: TextSize,
 }
 
-impl<'a> GreenTriviaPiece<'a> {
-    /// Creates a borrowed trivia piece.
+impl GreenTriviaPiece {
+    /// Creates a trivia piece.
     #[must_use]
-    pub const fn new(kind: TriviaKind, text: &'a str) -> Self {
-        Self { kind, text }
+    pub const fn new(kind: TriviaKind, text_len: TextSize) -> Self {
+        Self { kind, text_len }
     }
 
     /// Returns the trivia kind.
@@ -23,10 +24,10 @@ impl<'a> GreenTriviaPiece<'a> {
         self.kind
     }
 
-    /// Returns the trivia text.
+    /// Returns the byte length of this trivia piece.
     #[must_use]
-    pub const fn text(self) -> &'a str {
-        self.text
+    pub const fn text_len(self) -> TextSize {
+        self.text_len
     }
 }
 
@@ -38,14 +39,14 @@ pub trait GreenTokenSource {
     /// Returns the raw kind for the token at `index`.
     fn token_kind(&self, index: usize) -> RawSyntaxKind;
 
-    /// Returns the token text without attached trivia for the token at `index`.
-    fn token_text(&self, index: usize) -> &str;
+    /// Returns the token text byte length without attached trivia for the token at `index`.
+    fn token_text_len(&self, index: usize) -> TextSize;
 
     /// Returns trivia attached before the token at `index`.
-    fn leading_trivia(&self, index: usize) -> impl Iterator<Item = GreenTriviaPiece<'_>>;
+    fn leading_trivia(&self, index: usize) -> impl Iterator<Item = GreenTriviaPiece>;
 
     /// Returns trivia attached after the token at `index`.
-    fn trailing_trivia(&self, index: usize) -> impl Iterator<Item = GreenTriviaPiece<'_>>;
+    fn trailing_trivia(&self, index: usize) -> impl Iterator<Item = GreenTriviaPiece>;
 }
 
 /// A green tree and the parser diagnostics collected while building it.
@@ -140,13 +141,13 @@ pub fn build_green_tree(
 
                 let token = GreenToken::with_trivia(
                     token_source.token_kind(token_index),
-                    token_source.token_text(token_index),
+                    token_source.token_text_len(token_index),
                     token_source
                         .leading_trivia(token_index)
-                        .map(|trivia| GreenTrivia::new(trivia.kind(), trivia.text())),
+                        .map(|trivia| GreenTrivia::new(trivia.kind(), trivia.text_len())),
                     token_source
                         .trailing_trivia(token_index)
-                        .map(|trivia| GreenTrivia::new(trivia.kind(), trivia.text())),
+                        .map(|trivia| GreenTrivia::new(trivia.kind(), trivia.text_len())),
                 );
 
                 push_child(&mut stack, token.into());
