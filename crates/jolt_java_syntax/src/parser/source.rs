@@ -1,14 +1,17 @@
+use std::ops::Range;
+
 use jolt_diagnostics::{Diagnostic, DiagnosticCode, DiagnosticStage, Severity};
 use jolt_syntax::{CompletedMarker, Event, Marker};
 use jolt_text::{TextRange, TextSize};
 
-use crate::{JavaLexer, JavaSyntaxKind, Token, Trivia};
+use crate::{JavaLexer, JavaSyntaxKind, Trivia, lexer::LexedToken};
 
 use super::JavaParseDiagnosticCode;
 
 pub(super) struct ParseEvents {
     pub(super) events: Vec<Event>,
     pub(super) tokens: Vec<ParserToken>,
+    pub(super) trivia: Vec<Trivia>,
     pub(super) diagnostics: Vec<Diagnostic>,
 }
 
@@ -16,8 +19,8 @@ pub(super) struct ParseEvents {
 pub(super) struct ParserToken {
     pub(super) kind: JavaSyntaxKind,
     pub(super) range: TextRange,
-    pub(super) leading: Vec<Trivia>,
-    pub(super) trailing: Vec<Trivia>,
+    pub(super) leading: Range<usize>,
+    pub(super) trailing: Range<usize>,
 }
 
 pub(super) struct Parser<'source> {
@@ -50,10 +53,11 @@ impl<'source> Parser<'source> {
     pub(super) fn finish(self) -> ParseEvents {
         let events = self.events;
         let committed_len = self.cursor.position();
-        let (tokens, diagnostics) = self.buffer.finish(committed_len);
+        let (tokens, trivia, diagnostics) = self.buffer.finish(committed_len);
         ParseEvents {
             events,
             tokens,
+            trivia,
             diagnostics,
         }
     }
@@ -294,20 +298,10 @@ fn source_text(source: &str, range: TextRange) -> &str {
     &source[start..end]
 }
 
-impl From<Token> for ParserToken {
-    fn from(token: Token) -> Self {
-        Self {
-            kind: token.kind,
-            range: token.range,
-            leading: token.leading,
-            trailing: token.trailing,
-        }
-    }
-}
-
 pub(super) struct TokenBuffer<'source> {
     lexer: JavaLexer<'source>,
     tokens: Vec<ParserToken>,
+    trivia: Vec<Trivia>,
 }
 
 impl<'source> TokenBuffer<'source> {
@@ -315,6 +309,7 @@ impl<'source> TokenBuffer<'source> {
         Self {
             lexer: JavaLexer::new(source),
             tokens: Vec::new(),
+            trivia: Vec::new(),
         }
     }
 
@@ -362,28 +357,28 @@ impl<'source> TokenBuffer<'source> {
                 .last()
                 .is_some_and(|token| token.kind == JavaSyntaxKind::Eof)
         {
-            let token = self.lexer.next_token();
+            let token = self.lexer.next_token_into(&mut self.trivia);
             self.push_token(token);
         }
     }
 
-    fn push_token(&mut self, token: Token) {
+    fn push_token(&mut self, token: LexedToken) {
         match token.kind {
             JavaSyntaxKind::GtEq => {
-                self.push_split_token(token, &[JavaSyntaxKind::Gt, JavaSyntaxKind::Assign]);
+                self.push_split_token(&token, &[JavaSyntaxKind::Gt, JavaSyntaxKind::Assign]);
             }
             JavaSyntaxKind::RShift => {
-                self.push_split_token(token, &[JavaSyntaxKind::Gt, JavaSyntaxKind::Gt]);
+                self.push_split_token(&token, &[JavaSyntaxKind::Gt, JavaSyntaxKind::Gt]);
             }
             JavaSyntaxKind::UnsignedRShift => {
                 self.push_split_token(
-                    token,
+                    &token,
                     &[JavaSyntaxKind::Gt, JavaSyntaxKind::Gt, JavaSyntaxKind::Gt],
                 );
             }
             JavaSyntaxKind::RShiftEq => {
                 self.push_split_token(
-                    token,
+                    &token,
                     &[
                         JavaSyntaxKind::Gt,
                         JavaSyntaxKind::Gt,
@@ -393,7 +388,7 @@ impl<'source> TokenBuffer<'source> {
             }
             JavaSyntaxKind::UnsignedRShiftEq => {
                 self.push_split_token(
-                    token,
+                    &token,
                     &[
                         JavaSyntaxKind::Gt,
                         JavaSyntaxKind::Gt,
@@ -402,39 +397,53 @@ impl<'source> TokenBuffer<'source> {
                     ],
                 );
             }
-            _ => self.tokens.push(ParserToken::from(token)),
+            _ => {
+                self.tokens.push(ParserToken {
+                    kind: token.kind,
+                    range: token.range,
+                    leading: token.leading,
+                    trailing: token.trailing,
+                });
+            }
         }
     }
 
-    fn push_split_token(&mut self, token: Token, kinds: &[JavaSyntaxKind]) {
+    fn push_split_token(&mut self, token: &LexedToken, kinds: &[JavaSyntaxKind]) {
         let start = token.range.start();
         let last_index = kinds.len().saturating_sub(1);
-        let mut leading = Some(token.leading);
-        let mut trailing = Some(token.trailing);
         for (index, kind) in kinds.iter().copied().enumerate() {
             let token_start = start + TextSize::new(index);
             self.tokens.push(ParserToken {
                 kind,
                 range: TextRange::new(token_start, token_start + TextSize::new(1)),
                 leading: if index == 0 {
-                    leading.take().expect("split token has one leading trivia")
+                    token.leading.start..token.leading.end
                 } else {
-                    Vec::new()
+                    self.empty_trivia()
                 },
                 trailing: if index == last_index {
-                    trailing
-                        .take()
-                        .expect("split token has one trailing trivia")
+                    token.trailing.start..token.trailing.end
                 } else {
-                    Vec::new()
+                    self.empty_trivia()
                 },
             });
         }
     }
 
-    fn finish(mut self, committed_len: usize) -> (Vec<ParserToken>, Vec<Diagnostic>) {
+    fn empty_trivia(&self) -> Range<usize> {
+        self.trivia.len()..self.trivia.len()
+    }
+
+    fn finish(mut self, committed_len: usize) -> (Vec<ParserToken>, Vec<Trivia>, Vec<Diagnostic>) {
         self.tokens.truncate(committed_len.min(self.tokens.len()));
+        let trivia_len = self
+            .tokens
+            .iter()
+            .flat_map(|token| [token.leading.end, token.trailing.end])
+            .max()
+            .unwrap_or(0);
+        self.trivia.truncate(trivia_len);
         let diagnostics = self.lexer.finish();
-        (self.tokens, diagnostics)
+        (self.tokens, self.trivia, diagnostics)
     }
 }

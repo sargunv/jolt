@@ -50,16 +50,16 @@ use jolt_syntax::{SyntaxElement, TriviaKind};
 impl CompilationUnit<'_> {
     pub fn items(&self) -> impl Iterator<Item = CompilationUnitItem<'_>> + '_ {
         self.syntax.children().filter_map(|syntax| {
-            if let Some(package) = PackageDeclaration::cast(syntax.clone()) {
+            if let Some(package) = PackageDeclaration::cast(syntax) {
                 return Some(CompilationUnitItem::Package(package));
             }
-            if let Some(import) = ImportDeclaration::cast(syntax.clone()) {
+            if let Some(import) = ImportDeclaration::cast(syntax) {
                 return Some(CompilationUnitItem::Import(import));
             }
-            if let Some(module) = ModuleDeclaration::cast(syntax.clone()) {
+            if let Some(module) = ModuleDeclaration::cast(syntax) {
                 return Some(CompilationUnitItem::Module(module));
             }
-            if let Some(declaration) = TypeDeclaration::cast(syntax.clone()) {
+            if let Some(declaration) = TypeDeclaration::cast(syntax) {
                 return Some(CompilationUnitItem::Type(declaration));
             }
             EmptyDeclaration::cast(syntax).map(CompilationUnitItem::EmptyDeclaration)
@@ -725,12 +725,12 @@ impl ClassType<'_> {
                 SyntaxElement::Token(_) => continue,
             };
 
-            if let Some(annotation) = Annotation::cast(node.clone()) {
+            if let Some(annotation) = Annotation::cast(node) {
                 annotations.push(annotation);
                 continue;
             }
 
-            if let Some(name) = NameSyntax::cast(node.clone()) {
+            if let Some(name) = NameSyntax::cast(node) {
                 if let Some(segment) = current.take() {
                     segments.push(segment);
                 }
@@ -912,7 +912,7 @@ impl ClassBody<'_> {
 
     pub fn members(&self) -> impl Iterator<Item = ClassBodyMember<'_>> + '_ {
         self.syntax.children().filter_map(|syntax| {
-            if let Some(declaration) = ClassBodyDeclaration::cast(syntax.clone()) {
+            if let Some(declaration) = ClassBodyDeclaration::cast(syntax) {
                 return child_family(&declaration.syntax);
             }
             ClassBodyMember::cast(syntax)
@@ -940,7 +940,7 @@ impl RecordBody<'_> {
 
     pub fn members(&self) -> impl Iterator<Item = ClassBodyMember<'_>> + '_ {
         self.syntax.children().filter_map(|syntax| {
-            if let Some(declaration) = ClassBodyDeclaration::cast(syntax.clone()) {
+            if let Some(declaration) = ClassBodyDeclaration::cast(syntax) {
                 return child_family(&declaration.syntax);
             }
             ClassBodyMember::cast(syntax)
@@ -1134,7 +1134,7 @@ impl EnumBody<'_> {
 
     pub fn members(&self) -> impl Iterator<Item = ClassBodyMember<'_>> + '_ {
         self.syntax.children().filter_map(|syntax| {
-            if let Some(declaration) = ClassBodyDeclaration::cast(syntax.clone()) {
+            if let Some(declaration) = ClassBodyDeclaration::cast(syntax) {
                 return child_family(&declaration.syntax);
             }
             ClassBodyMember::cast(syntax)
@@ -1505,7 +1505,7 @@ impl FormalParameterList<'_> {
         for element in self.syntax.children_with_tokens() {
             match element {
                 SyntaxElement::Node(node) => {
-                    let item = ReceiverParameter::cast(node.clone())
+                    let item = ReceiverParameter::cast(node)
                         .map(FormalParameterListItem::ReceiverParameter)
                         .or_else(|| {
                             FormalParameter::cast(node)
@@ -3717,7 +3717,7 @@ impl SwitchBlock<'_> {
 
     pub fn entries(&self) -> impl Iterator<Item = SwitchBlockEntry<'_>> + '_ {
         self.syntax.children().filter_map(|syntax| {
-            if let Some(group) = SwitchBlockStatementGroup::cast(syntax.clone()) {
+            if let Some(group) = SwitchBlockStatementGroup::cast(syntax) {
                 return Some(SwitchBlockEntry::StatementGroup(group));
             }
             SwitchRule::cast(syntax).map(SwitchBlockEntry::Rule)
@@ -3844,7 +3844,7 @@ impl SwitchLabel<'_> {
         for element in self.syntax.children_with_tokens() {
             match element {
                 SyntaxElement::Node(node) => {
-                    if let Some(item) = CaseConstant::cast(node.clone())
+                    if let Some(item) = CaseConstant::cast(node)
                         .map(SwitchLabelCaseItem::Constant)
                         .or_else(|| CasePattern::cast(node).map(SwitchLabelCaseItem::Pattern))
                         && let Some(previous) = pending_item.replace(item)

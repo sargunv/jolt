@@ -1,6 +1,6 @@
 use std::fmt;
 
-use jolt_syntax::{SyntaxNode, SyntaxToken, TriviaKind as SyntaxTriviaKind};
+use jolt_syntax::{SyntaxNode, SyntaxToken, SyntaxTrivia, TriviaKind as SyntaxTriviaKind};
 use jolt_text::TextRange;
 
 use crate::{JavaSyntaxKind, language::JavaLanguage};
@@ -354,7 +354,7 @@ pub(crate) fn binary_operator_precedence(kind: JavaOperatorKind) -> Option<u8> {
 
 fn comments_from_trivia<'source>(
     source: &'source str,
-    trivia: &[jolt_syntax::GreenTrivia],
+    trivia: &[SyntaxTrivia],
     start: jolt_text::TextSize,
 ) -> Vec<JavaComment<'source>> {
     let mut offset = start;
@@ -382,7 +382,7 @@ fn comments_from_trivia<'source>(
         .collect()
 }
 
-fn trivia_has_blank_line(trivia: &[jolt_syntax::GreenTrivia]) -> bool {
+fn trivia_has_blank_line(trivia: &[SyntaxTrivia]) -> bool {
     let mut line_breaks_since_content = 0;
     for trivia in trivia {
         match trivia.kind() {

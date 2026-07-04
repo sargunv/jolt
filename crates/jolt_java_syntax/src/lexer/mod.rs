@@ -3,11 +3,14 @@ mod tests;
 mod token;
 mod unicode;
 
+use std::ops::Range;
+
 use crate::JavaSyntaxKind;
 use jolt_diagnostics::{Diagnostic, DiagnosticCode, DiagnosticStage, Severity};
 use jolt_text::{TextRange, TextSize};
 use unicode_general_category::{GeneralCategory, get_general_category};
 
+pub(crate) use token::LexedToken;
 pub use token::{JavaLexDiagnosticCode, LexerDiagnostic, Token, Trivia, TriviaKind};
 pub(crate) use unicode::normalize_unicode_escapes;
 
@@ -49,11 +52,35 @@ impl<'source> JavaLexer<'source> {
         }
     }
 
+    /// Returns the next token, appending its trivia to the supplied buffer.
+    pub(crate) fn next_token_into(&mut self, trivia: &mut Vec<Trivia>) -> LexedToken {
+        if self.emitted_eof {
+            return self.eof_token_into(trivia.len()..trivia.len());
+        }
+
+        let leading = self.scanner.leading_trivia_into(trivia);
+        if self.scanner.at_end() {
+            self.emitted_eof = true;
+            return self.eof_token_into(leading);
+        }
+
+        let (kind, range) = self.scanner.token();
+        let trailing = self.scanner.trailing_trivia_into(trivia);
+        LexedToken {
+            kind,
+            range,
+            leading,
+            trailing,
+        }
+    }
+
     /// Drains the remaining source and returns all lexer diagnostics.
     #[must_use]
     pub(crate) fn finish(mut self) -> Vec<LexerDiagnostic> {
+        let mut trivia = Vec::new();
         while !self.emitted_eof {
-            self.next_token();
+            self.next_token_into(&mut trivia);
+            trivia.clear();
         }
         self.scanner.diagnostics
     }
@@ -64,6 +91,17 @@ impl<'source> JavaLexer<'source> {
             range: TextRange::empty(TextSize::new(self.scanner.source.len())),
             leading,
             trailing: Vec::new(),
+        }
+    }
+
+    fn eof_token_into(&self, leading: Range<usize>) -> LexedToken {
+        let end = TextSize::new(self.scanner.source.len());
+        let trivia_end = leading.end;
+        LexedToken {
+            kind: JavaSyntaxKind::Eof,
+            range: TextRange::empty(end),
+            leading,
+            trailing: trivia_end..trivia_end,
         }
     }
 }
@@ -114,14 +152,26 @@ impl<'source> Scanner<'source> {
 
     fn leading_trivia(&mut self) -> Vec<Trivia> {
         let mut trivia = Vec::new();
+        self.leading_trivia_into(&mut trivia);
+        trivia
+    }
+
+    fn leading_trivia_into(&mut self, trivia: &mut Vec<Trivia>) -> Range<usize> {
+        let start = trivia.len();
         while let Some(piece) = self.trivia_piece() {
             trivia.push(piece);
         }
-        trivia
+        start..trivia.len()
     }
 
     fn trailing_trivia(&mut self) -> Vec<Trivia> {
         let mut trivia = Vec::new();
+        self.trailing_trivia_into(&mut trivia);
+        trivia
+    }
+
+    fn trailing_trivia_into(&mut self, trivia: &mut Vec<Trivia>) -> Range<usize> {
+        let start = trivia.len();
 
         while self.current_char().is_some_and(is_horizontal_whitespace) {
             trivia.push(self.horizontal_whitespace());
@@ -146,7 +196,7 @@ impl<'source> Scanner<'source> {
             _ => {}
         }
 
-        trivia
+        start..trivia.len()
     }
 
     fn trivia_piece(&mut self) -> Option<Trivia> {

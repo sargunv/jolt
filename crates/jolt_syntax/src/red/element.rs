@@ -14,12 +14,11 @@ pub enum SyntaxElement<'source, L: Language> {
 
 impl<L: Language> Clone for SyntaxElement<'_, L> {
     fn clone(&self) -> Self {
-        match self {
-            Self::Node(node) => Self::Node(node.clone()),
-            Self::Token(token) => Self::Token(token.clone()),
-        }
+        *self
     }
 }
+
+impl<L: Language> Copy for SyntaxElement<'_, L> {}
 
 impl<L> fmt::Debug for SyntaxElement<'_, L>
 where

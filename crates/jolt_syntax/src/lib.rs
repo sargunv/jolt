@@ -3,21 +3,20 @@
 mod event;
 mod kind;
 mod language;
-mod tree_sink;
+mod syntax_tree;
 
-mod green;
 mod red;
 
 pub use event::{CompletedMarker, Event, Marker};
-pub use green::{GreenNode, GreenTrivia, TriviaKind};
 pub use jolt_diagnostics::{
     Diagnostic, DiagnosticCode, DiagnosticCodeId, DiagnosticStage, Severity, SyntaxOutcome,
 };
 pub use kind::RawSyntaxKind;
 pub use language::Language;
 pub use red::{SyntaxElement, SyntaxNode, SyntaxToken};
-pub use tree_sink::{
-    BuildGreenTreeError, GreenTokenSource, GreenTree, GreenTriviaPiece, build_green_tree,
+pub use syntax_tree::{
+    BuildSyntaxTreeError, BuiltSyntaxTree, SyntaxTokenData, SyntaxTree, SyntaxTrivia, TriviaKind,
+    build_syntax_tree,
 };
 
 #[cfg(test)]

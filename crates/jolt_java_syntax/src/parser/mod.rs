@@ -10,9 +10,8 @@ use jolt_diagnostics::{
     Diagnostic, DiagnosticCode, DiagnosticCodeId, DiagnosticStage, Severity, SyntaxOutcome,
 };
 use jolt_syntax::{
-    GreenTokenSource, GreenTriviaPiece, TriviaKind as GreenTriviaKind, build_green_tree,
+    SyntaxTokenData, SyntaxTree, SyntaxTrivia, TriviaKind as SyntaxTriviaKind, build_syntax_tree,
 };
-use jolt_text::TextSize;
 
 use crate::{
     CompilationUnit, Trivia,
@@ -75,7 +74,7 @@ impl DiagnosticCode for JavaParseDiagnosticCode {
 /// The result of parsing Java source text.
 pub struct JavaParse {
     source: String,
-    root: Option<jolt_syntax::GreenNode>,
+    tree: Option<SyntaxTree>,
     diagnostics: Vec<Diagnostic>,
     outcome: SyntaxOutcome,
 }
@@ -84,9 +83,9 @@ impl JavaParse {
     /// Returns the parsed syntax tree root.
     #[must_use]
     pub fn syntax(&self) -> Option<CompilationUnit<'_>> {
-        self.root
-            .clone()
-            .and_then(|root| cast_compilation_unit(JavaSyntaxNode::new_root(&self.source, root)))
+        self.tree
+            .as_ref()
+            .and_then(|tree| cast_compilation_unit(JavaSyntaxNode::new_root(&self.source, tree)))
     }
 
     /// Returns parser diagnostics.
@@ -156,20 +155,20 @@ fn finish_parse(
     diagnostics: &mut Vec<Diagnostic>,
 ) -> JavaParse {
     diagnostics.extend(parse.diagnostics);
-    let token_source = JavaGreenTokenSource::new(&source, &parse.tokens);
-    let tree = match build_green_tree(&parse.events, &token_source) {
+    let (tokens, trivia) = into_syntax_tokens(parse.tokens, parse.trivia);
+    let tree = match build_syntax_tree(&parse.events, tokens, trivia) {
         Ok(tree) => tree,
         Err(error) => {
             diagnostics.push(invalid_event_stream_diagnostic(&error));
             return JavaParse {
                 source,
-                root: None,
+                tree: None,
                 diagnostics: std::mem::take(diagnostics),
                 outcome: SyntaxOutcome::Aborted,
             };
         }
     };
-    let (root, parser_diagnostics) = tree.into_parts();
+    let (tree, parser_diagnostics) = tree.into_parts();
     diagnostics.extend(parser_diagnostics);
     let outcome = if diagnostics.iter().any(diagnostic_affects_syntax_tree) {
         SyntaxOutcome::Recovered
@@ -179,7 +178,7 @@ fn finish_parse(
 
     JavaParse {
         source,
-        root: Some(root),
+        tree: Some(tree),
         diagnostics: std::mem::take(diagnostics),
         outcome,
     }
@@ -195,7 +194,7 @@ const fn diagnostic_affects_syntax_tree(diagnostic: &Diagnostic) -> bool {
     )
 }
 
-fn invalid_event_stream_diagnostic(error: &jolt_syntax::BuildGreenTreeError) -> Diagnostic {
+fn invalid_event_stream_diagnostic(error: &jolt_syntax::BuildSyntaxTreeError) -> Diagnostic {
     Diagnostic {
         code: JavaParseDiagnosticCode::InvalidEventStream.id(),
         severity: Severity::InternalError,
@@ -205,65 +204,37 @@ fn invalid_event_stream_diagnostic(error: &jolt_syntax::BuildGreenTreeError) -> 
     }
 }
 
-struct JavaGreenTokenSource<'source> {
-    source: &'source str,
-    tokens: &'source [ParserToken],
-}
-
-impl<'source> JavaGreenTokenSource<'source> {
-    fn new(source: &'source str, tokens: &'source [ParserToken]) -> Self {
-        Self { source, tokens }
-    }
-
-    fn token(&self, index: usize) -> &ParserToken {
-        &self.tokens[index]
-    }
-
-    fn trivia_text_len(trivia: &Trivia) -> TextSize {
-        trivia.range.len()
-    }
-}
-
-impl GreenTokenSource for JavaGreenTokenSource<'_> {
-    fn token_count(&self) -> usize {
-        self.tokens.len()
-    }
-
-    fn token_kind(&self, index: usize) -> jolt_syntax::RawSyntaxKind {
-        self.token(index).kind.to_raw()
-    }
-
-    fn token_text_len(&self, index: usize) -> TextSize {
-        let range = self.token(index).range;
-        TextSize::new(self.source[range.start().get()..range.end().get()].len())
-    }
-
-    fn leading_trivia(&self, index: usize) -> impl Iterator<Item = GreenTriviaPiece> {
-        self.token(index).leading.iter().map(|trivia| {
-            GreenTriviaPiece::new(
-                to_green_trivia_kind(trivia.kind),
-                Self::trivia_text_len(trivia),
+fn into_syntax_tokens(
+    tokens: Vec<ParserToken>,
+    trivia: Vec<Trivia>,
+) -> (Vec<SyntaxTokenData>, Vec<SyntaxTrivia>) {
+    let syntax_trivia = trivia
+        .into_iter()
+        .map(|trivia| SyntaxTrivia::new(to_syntax_trivia_kind(trivia.kind), trivia.range.len()))
+        .collect::<Vec<_>>();
+    let syntax_tokens = tokens
+        .into_iter()
+        .map(|token| {
+            SyntaxTokenData::new(
+                token.kind.to_raw(),
+                token.range,
+                token.leading,
+                token.trailing,
+                &syntax_trivia,
             )
         })
-    }
+        .collect();
 
-    fn trailing_trivia(&self, index: usize) -> impl Iterator<Item = GreenTriviaPiece> {
-        self.token(index).trailing.iter().map(|trivia| {
-            GreenTriviaPiece::new(
-                to_green_trivia_kind(trivia.kind),
-                Self::trivia_text_len(trivia),
-            )
-        })
-    }
+    (syntax_tokens, syntax_trivia)
 }
 
-fn to_green_trivia_kind(kind: crate::TriviaKind) -> GreenTriviaKind {
+fn to_syntax_trivia_kind(kind: crate::TriviaKind) -> SyntaxTriviaKind {
     match kind {
-        crate::TriviaKind::Whitespace => GreenTriviaKind::Whitespace,
-        crate::TriviaKind::Newline => GreenTriviaKind::Newline,
-        crate::TriviaKind::LineComment => GreenTriviaKind::LineComment,
-        crate::TriviaKind::BlockComment => GreenTriviaKind::BlockComment,
-        crate::TriviaKind::JavadocComment => GreenTriviaKind::DocComment,
-        crate::TriviaKind::Ignored => GreenTriviaKind::Ignored,
+        crate::TriviaKind::Whitespace => SyntaxTriviaKind::Whitespace,
+        crate::TriviaKind::Newline => SyntaxTriviaKind::Newline,
+        crate::TriviaKind::LineComment => SyntaxTriviaKind::LineComment,
+        crate::TriviaKind::BlockComment => SyntaxTriviaKind::BlockComment,
+        crate::TriviaKind::JavadocComment => SyntaxTriviaKind::DocComment,
+        crate::TriviaKind::Ignored => SyntaxTriviaKind::Ignored,
     }
 }

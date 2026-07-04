@@ -1,10 +1,12 @@
+use std::ops::Range;
+
 use jolt_diagnostics::{Diagnostic, DiagnosticCode, DiagnosticCodeId};
 use jolt_text::TextRange;
 
 use crate::JavaSyntaxKind;
 
 /// Trivia attached to a token.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct Trivia {
     pub kind: TriviaKind,
     pub range: TextRange,
@@ -22,12 +24,21 @@ pub enum TriviaKind {
 }
 
 /// A lexed Java token with attached trivia and raw source range.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct Token {
     pub kind: JavaSyntaxKind,
     pub range: TextRange,
     pub leading: Vec<Trivia>,
     pub trailing: Vec<Trivia>,
+}
+
+/// A lexed token whose trivia lives in a caller-owned buffer.
+#[derive(Debug, Eq, PartialEq)]
+pub(crate) struct LexedToken {
+    pub(crate) kind: JavaSyntaxKind,
+    pub(crate) range: TextRange,
+    pub(crate) leading: Range<usize>,
+    pub(crate) trailing: Range<usize>,
 }
 
 /// A lexer diagnostic with a raw source range.

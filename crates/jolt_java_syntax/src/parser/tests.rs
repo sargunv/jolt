@@ -48,6 +48,7 @@ fn invalid_event_stream_aborts_without_syntax() {
         ParseEvents {
             events: vec![Event::Token],
             tokens: Vec::new(),
+            trivia: Vec::new(),
             diagnostics: Vec::new(),
         },
         &mut diagnostics,

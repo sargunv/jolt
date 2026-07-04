@@ -1,40 +1,27 @@
-use std::fmt;
+use std::{fmt, marker::PhantomData};
 
 use jolt_text::{TextRange, TextSize};
 
 use crate::{
-    GreenTrivia, Language, RawSyntaxKind,
-    green::{GreenElement, GreenToken},
+    Language, RawSyntaxKind, SyntaxTrivia,
+    syntax_tree::{SyntaxTree, TokenId},
 };
 
-use super::SyntaxNode;
-
-/// A parent-aware cursor over a green token.
-pub struct SyntaxToken<'source, L: Language> {
-    parent: SyntaxNode<'source, L>,
-    offset: TextSize,
-    index: usize,
+/// A parent-aware borrowed cursor over a syntax tree token.
+pub struct SyntaxToken<'tree, L: Language> {
+    source: &'tree str,
+    tree: &'tree SyntaxTree,
+    id: TokenId,
+    language: PhantomData<L>,
 }
 
-impl<'source, L: Language> SyntaxToken<'source, L> {
-    pub(super) const fn new(
-        parent: SyntaxNode<'source, L>,
-        offset: TextSize,
-        index: usize,
-    ) -> Self {
+impl<'tree, L: Language> SyntaxToken<'tree, L> {
+    pub(crate) const fn new(source: &'tree str, tree: &'tree SyntaxTree, id: TokenId) -> Self {
         Self {
-            parent,
-            offset,
-            index,
-        }
-    }
-
-    /// Returns the raw green token backing this red token.
-    #[must_use]
-    pub(crate) fn green(&self) -> &GreenToken {
-        match &self.parent.green().children()[self.index] {
-            GreenElement::Token(token) => token,
-            GreenElement::Node(_) => unreachable!("syntax token index must point to a token"),
+            source,
+            tree,
+            id,
+            language: PhantomData,
         }
     }
 
@@ -47,32 +34,32 @@ impl<'source, L: Language> SyntaxToken<'source, L> {
     /// Returns the raw kind for this token.
     #[must_use]
     pub(crate) fn raw_kind(&self) -> RawSyntaxKind {
-        self.green().kind()
+        self.tree.token(self.id).kind
     }
 
     /// Returns the source text backing this syntax tree.
     #[must_use]
-    pub fn source(&self) -> &'source str {
-        self.parent.source()
+    pub const fn source(&self) -> &'tree str {
+        self.source
     }
 
     /// Returns the byte offset where this token starts, including leading trivia.
     #[must_use]
-    pub const fn offset(&self) -> TextSize {
-        self.offset
+    pub fn offset(&self) -> TextSize {
+        self.tree.token(self.id).offset
     }
 
     /// Returns the token text without attached trivia.
     #[must_use]
     pub fn text(&self) -> &str {
         let range = self.token_text_range();
-        &self.source()[range.start().get()..range.end().get()]
+        &self.source[range.start().get()..range.end().get()]
     }
 
     /// Returns the byte length covered by this token, including attached trivia.
     #[must_use]
     pub(crate) fn text_len(&self) -> TextSize {
-        self.green().text_len()
+        self.tree.token(self.id).text_len
     }
 
     /// Returns the full source range covered by this token, including attached trivia.
@@ -84,37 +71,33 @@ impl<'source, L: Language> SyntaxToken<'source, L> {
     /// Returns the source range covered by the token text without attached trivia.
     #[must_use]
     pub fn token_text_range(&self) -> TextRange {
-        let start = self.offset() + trivia_text_len(self.leading());
-
-        TextRange::new(start, start + self.green().token_text_len())
+        self.tree.token(self.id).token_text_range
     }
 
     /// Returns trivia attached before this token.
     #[must_use]
-    pub fn leading(&self) -> &[GreenTrivia] {
-        self.green().leading()
+    pub fn leading(&self) -> &[SyntaxTrivia] {
+        self.tree.trivia(&self.tree.token(self.id).leading)
     }
 
     /// Returns trivia attached after this token.
     #[must_use]
-    pub fn trailing(&self) -> &[GreenTrivia] {
-        self.green().trailing()
+    pub fn trailing(&self) -> &[SyntaxTrivia] {
+        self.tree.trivia(&self.tree.token(self.id).trailing)
     }
 }
 
 impl<L: Language> Clone for SyntaxToken<'_, L> {
     fn clone(&self) -> Self {
-        Self {
-            parent: self.parent.clone(),
-            offset: self.offset,
-            index: self.index,
-        }
+        *self
     }
 }
 
+impl<L: Language> Copy for SyntaxToken<'_, L> {}
+
 impl<L: Language> PartialEq for SyntaxToken<'_, L> {
     fn eq(&self, other: &Self) -> bool {
-        self.offset() == other.offset() && self.green().ptr_eq(other.green())
+        std::ptr::eq(self.tree, other.tree) && self.id == other.id
     }
 }
 
@@ -139,14 +122,14 @@ where
 
         if !self.leading().is_empty() {
             f.write_str(" leading=")?;
-            fmt_trivia(f, self.parent.source(), self.offset(), self.leading())?;
+            fmt_trivia(f, self.source, self.offset(), self.leading())?;
         }
 
         if !self.trailing().is_empty() {
             f.write_str(" trailing=")?;
             fmt_trivia(
                 f,
-                self.parent.source(),
+                self.source,
                 self.token_text_range().end(),
                 self.trailing(),
             )?;
@@ -160,7 +143,7 @@ fn fmt_trivia(
     f: &mut fmt::Formatter<'_>,
     source: &str,
     start: TextSize,
-    trivia: &[GreenTrivia],
+    trivia: &[SyntaxTrivia],
 ) -> fmt::Result {
     f.write_str("[")?;
     let mut offset = start;
@@ -181,8 +164,4 @@ fn fmt_trivia(
     }
 
     f.write_str("]")
-}
-
-fn trivia_text_len(trivia: &[GreenTrivia]) -> TextSize {
-    TextSize::new(trivia.iter().map(|piece| piece.text_len().get()).sum())
 }
