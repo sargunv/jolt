@@ -1,6 +1,5 @@
 ---
 source: crates/jolt_java_syntax/src/parser/tests.rs
-assertion_line: 2458
 expression: "&parse"
 ---
 syntax:
@@ -17,8 +16,6 @@ CompilationUnit
           Semicolon ";" @ 31..32 trailing=[Whitespace " "]
       RBrace "}" @ 33..34
   Eof "" @ 34..34
-
-outcome: Recovered
 
 diagnostics:
   code=java.parse.unexpected_syntax severity=Error stage=Parser range=25..29 message="unexpected token in type body"

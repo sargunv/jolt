@@ -17,12 +17,12 @@
 // Focused tests should not try to enumerate the combinatorial product of the
 // lexical grammar. Each test should make one source-shape claim obvious.
 
-use jolt_diagnostics::{DiagnosticCode, DiagnosticCodeId, DiagnosticStage, Severity};
+use jolt_diagnostics::{DiagnosticCodeId, DiagnosticStage, Severity};
+use jolt_syntax::{SyntaxTrivia, TriviaKind};
 use jolt_text::{TextRange, TextSize};
 
 use super::{
-    JavaLexDiagnosticCode, JavaLexer, JavaSyntaxKind, LexerDiagnostic, Token, TriviaKind,
-    normalize_unicode_escapes,
+    JavaLexDiagnosticCode, JavaLexer, JavaSyntaxKind, LexerDiagnostic, normalize_unicode_escapes,
 };
 
 struct Lexed {
@@ -31,14 +31,29 @@ struct Lexed {
     diagnostics: Vec<LexerDiagnostic>,
 }
 
+#[derive(Debug, Eq, PartialEq)]
+struct Token {
+    kind: JavaSyntaxKind,
+    range: TextRange,
+    leading: Vec<Trivia>,
+    trailing: Vec<Trivia>,
+}
+
+#[derive(Debug, Eq, PartialEq)]
+struct Trivia {
+    kind: TriviaKind,
+    range: TextRange,
+}
+
 fn lex(source: &str) -> Lexed {
     let (source, mut diagnostics) = normalize_unicode_escapes(source);
     let mut lexer = JavaLexer::new(&source);
-    let mut tokens = Vec::new();
+    let mut token_data = Vec::new();
+    let mut trivia = Vec::new();
     loop {
-        let token = lexer.next_token();
+        let token = lexer.next_token_into(&mut trivia);
         let at_eof = token.kind == JavaSyntaxKind::Eof;
-        tokens.push(token);
+        token_data.push(token);
         if at_eof {
             break;
         }
@@ -46,9 +61,50 @@ fn lex(source: &str) -> Lexed {
     diagnostics.extend(lexer.finish());
     Lexed {
         source: source.into_owned(),
-        tokens,
+        tokens: tokens_with_trivia(token_data, &trivia),
         diagnostics,
     }
+}
+
+fn tokens_with_trivia(tokens: Vec<super::LexedToken>, trivia: &[SyntaxTrivia]) -> Vec<Token> {
+    tokens
+        .into_iter()
+        .map(|token| {
+            let leading_start = token.leading.start;
+            let leading_end = token.leading.end;
+            let leading = trivia_with_ranges(
+                &trivia[leading_start..leading_end],
+                token.range.start() - trivia_text_len(&trivia[leading_start..leading_end]),
+            );
+            let trailing = trivia_with_ranges(&trivia[token.trailing], token.range.end());
+            Token {
+                kind: token.kind,
+                range: token.range,
+                leading,
+                trailing,
+            }
+        })
+        .collect()
+}
+
+fn trivia_with_ranges(trivia: &[SyntaxTrivia], mut offset: TextSize) -> Vec<Trivia> {
+    trivia
+        .iter()
+        .map(|trivia| {
+            let range = TextRange::new(offset, offset + trivia.text_len());
+            offset += trivia.text_len();
+            Trivia {
+                kind: trivia.kind(),
+                range,
+            }
+        })
+        .collect()
+}
+
+fn trivia_text_len(trivia: &[SyntaxTrivia]) -> TextSize {
+    trivia
+        .iter()
+        .fold(TextSize::new(0), |len, trivia| len + trivia.text_len())
 }
 
 fn real_tokens(source: &str) -> Vec<JavaSyntaxKind> {

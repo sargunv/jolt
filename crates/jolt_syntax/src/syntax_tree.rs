@@ -220,6 +220,7 @@ pub fn build_syntax_tree(
     let builder = SyntaxTreeBuilder {
         nodes: Vec::new(),
         children: Vec::new(),
+        pending_children: Vec::new(),
         tokens,
         trivia,
         stack: Vec::new(),
@@ -235,6 +236,7 @@ pub fn build_syntax_tree(
 struct SyntaxTreeBuilder {
     nodes: Vec<TreeNode>,
     children: Vec<TreeElement>,
+    pending_children: Vec<TreeElement>,
     tokens: Vec<SyntaxTokenData>,
     trivia: Vec<SyntaxTrivia>,
     stack: Vec<PartialNode>,
@@ -258,16 +260,14 @@ impl SyntaxTreeBuilder {
             }
 
             match &events[event_index] {
-                Event::StartNode { .. } => {
-                    for kind in start_node_kinds(&events, &mut self.skip_events, event_index)?
-                        .into_iter()
-                        .rev()
-                    {
-                        self.stack.push(PartialNode {
-                            kind,
-                            children: Vec::new(),
-                            text_len: TextSize::new(0),
-                        });
+                Event::StartNode {
+                    kind,
+                    forward_parent,
+                } => {
+                    if forward_parent.is_none() {
+                        self.start_node(*kind);
+                    } else {
+                        self.start_forward_parent_nodes(&events, event_index)?;
                     }
                 }
                 Event::Token => self.push_token()?,
@@ -315,6 +315,55 @@ impl SyntaxTreeBuilder {
         Ok((tree, self.diagnostics))
     }
 
+    fn start_node(&mut self, kind: RawSyntaxKind) {
+        self.stack.push(PartialNode {
+            kind,
+            children_start: self.pending_children.len(),
+            text_len: TextSize::new(0),
+        });
+    }
+
+    fn start_forward_parent_nodes(
+        &mut self,
+        events: &[Event],
+        position: usize,
+    ) -> Result<(), BuildSyntaxTreeError> {
+        let Event::StartNode {
+            kind,
+            forward_parent,
+        } = events
+            .get(position)
+            .ok_or(BuildSyntaxTreeError::InvalidForwardParent {
+                position,
+                target: position,
+            })?
+        else {
+            return Err(BuildSyntaxTreeError::InvalidForwardParent {
+                position,
+                target: position,
+            });
+        };
+
+        if let Some(forward_parent) = forward_parent {
+            let target = position.checked_add(*forward_parent).ok_or(
+                BuildSyntaxTreeError::InvalidForwardParent {
+                    position,
+                    target: usize::MAX,
+                },
+            )?;
+
+            if target <= position || target >= events.len() || self.skip_events[target] {
+                return Err(BuildSyntaxTreeError::InvalidForwardParent { position, target });
+            }
+
+            self.skip_events[target] = true;
+            self.start_forward_parent_nodes(events, target)?;
+        }
+
+        self.start_node(*kind);
+        Ok(())
+    }
+
     fn push_token(&mut self) -> Result<(), BuildSyntaxTreeError> {
         let parent = self
             .stack
@@ -331,7 +380,7 @@ impl SyntaxTreeBuilder {
 
         let token = TokenId::new(self.token_index);
         parent.text_len += self.tokens[token.index()].text_len;
-        parent.children.push(TreeElement::Token(token));
+        self.pending_children.push(TreeElement::Token(token));
         self.token_index += 1;
 
         Ok(())
@@ -343,8 +392,10 @@ impl SyntaxTreeBuilder {
             .pop()
             .ok_or(BuildSyntaxTreeError::UnexpectedFinishNode)?;
         let children_start = self.children.len();
-        self.children.extend(node.children);
+        self.children
+            .extend_from_slice(&self.pending_children[node.children_start..]);
         let children = children_start..self.children.len();
+        self.pending_children.truncate(node.children_start);
         let node_id = NodeId::new(self.nodes.len());
         self.nodes.push(TreeNode {
             kind: node.kind,
@@ -357,7 +408,7 @@ impl SyntaxTreeBuilder {
 
         if let Some(parent) = self.stack.last_mut() {
             parent.text_len += node.text_len;
-            parent.children.push(TreeElement::Node(node_id));
+            self.pending_children.push(TreeElement::Node(node_id));
         } else if self.root.replace(node_id).is_some() {
             return Err(BuildSyntaxTreeError::MultipleRoots);
         }
@@ -369,7 +420,7 @@ impl SyntaxTreeBuilder {
 #[derive(Debug)]
 struct PartialNode {
     kind: RawSyntaxKind,
-    children: Vec<TreeElement>,
+    children_start: usize,
     text_len: TextSize,
 }
 
@@ -409,53 +460,4 @@ fn assign_layout(
             }
         }
     }
-}
-
-fn start_node_kinds(
-    events: &[Event],
-    skip_events: &mut [bool],
-    position: usize,
-) -> Result<Vec<RawSyntaxKind>, BuildSyntaxTreeError> {
-    let mut position = position;
-    let mut kinds = Vec::new();
-
-    loop {
-        let Event::StartNode {
-            kind,
-            forward_parent,
-        } = events
-            .get(position)
-            .ok_or(BuildSyntaxTreeError::InvalidForwardParent {
-                position,
-                target: position,
-            })?
-        else {
-            return Err(BuildSyntaxTreeError::InvalidForwardParent {
-                position,
-                target: position,
-            });
-        };
-
-        kinds.push(*kind);
-
-        let Some(forward_parent) = forward_parent else {
-            break;
-        };
-
-        let target = position.checked_add(*forward_parent).ok_or(
-            BuildSyntaxTreeError::InvalidForwardParent {
-                position,
-                target: usize::MAX,
-            },
-        )?;
-
-        if target <= position || target >= events.len() || skip_events[target] {
-            return Err(BuildSyntaxTreeError::InvalidForwardParent { position, target });
-        }
-
-        skip_events[target] = true;
-        position = target;
-    }
-
-    Ok(kinds)
 }

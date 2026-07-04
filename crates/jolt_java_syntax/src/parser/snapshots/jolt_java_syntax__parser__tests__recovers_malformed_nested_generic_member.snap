@@ -55,7 +55,5 @@ CompilationUnit
       RBrace "}" @ 146..147 leading=[Newline "\n", Whitespace "            "]
   Eof "" @ 156..156 leading=[Newline "\n", Whitespace "        "]
 
-outcome: Recovered
-
 diagnostics:
   code=java.parse.expected_syntax severity=Error stage=Parser range=105..106 message="expected variable name"

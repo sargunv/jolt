@@ -104,7 +104,5 @@ CompilationUnit
       RBrace "}" @ 315..316 leading=[Newline "\n", Whitespace "            "]
   Eof "" @ 325..325 leading=[Newline "\n", Whitespace "        "]
 
-outcome: Clean
-
 diagnostics:
   (none)

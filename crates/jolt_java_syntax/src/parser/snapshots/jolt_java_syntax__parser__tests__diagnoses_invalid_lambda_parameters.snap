@@ -264,8 +264,6 @@ CompilationUnit
       RBrace "}" @ 795..796 leading=[Newline "\n", Whitespace "            "]
   Eof "" @ 805..805 leading=[Newline "\n", Whitespace "        "]
 
-outcome: Recovered
-
 diagnostics:
   code=java.parse.expected_syntax severity=Error stage=Parser range=203..204 message="lambda parameters must use the same form"
   code=java.parse.expected_syntax severity=Error stage=Parser range=332..333 message="lambda parameters must use the same form"

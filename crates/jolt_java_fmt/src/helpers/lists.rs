@@ -16,15 +16,17 @@ pub(crate) struct CommaListItem<'source> {
     pub(crate) comma: Option<JavaSyntaxToken<'source>>,
 }
 
-pub(crate) fn comma_list(items: Vec<CommaListItem<'_>>) -> Doc<'_> {
+pub(crate) fn comma_list<'source>(
+    items: impl IntoIterator<Item = CommaListItem<'source>>,
+) -> Doc<'source> {
     let mut docs = Vec::new();
-    let items_len = items.len();
+    let mut items = items.into_iter().peekable();
 
-    for (index, item) in items.into_iter().enumerate() {
+    while let Some(item) = items.next() {
         docs.push(item.doc);
         if let Some(comma) = item.comma {
             docs.push(format_separator_with_comments(&comma, line()));
-        } else if index + 1 < items_len {
+        } else if items.peek().is_some() {
             docs.push(line());
         }
     }
@@ -35,7 +37,7 @@ pub(crate) fn comma_list(items: Vec<CommaListItem<'_>>) -> Doc<'_> {
 pub(crate) fn parenthesized_list<'source>(
     open: Option<&JavaSyntaxToken<'source>>,
     close: Option<&JavaSyntaxToken<'source>>,
-    items: Vec<CommaListItem<'source>>,
+    items: impl IntoIterator<Item = CommaListItem<'source>>,
 ) -> Doc<'source> {
     delimited_comma_list("(", ")", open, close, items)
 }
@@ -43,7 +45,7 @@ pub(crate) fn parenthesized_list<'source>(
 pub(crate) fn angle_bracket_list<'source>(
     open: Option<&JavaSyntaxToken<'source>>,
     close: Option<&JavaSyntaxToken<'source>>,
-    items: Vec<CommaListItem<'source>>,
+    items: impl IntoIterator<Item = CommaListItem<'source>>,
 ) -> Doc<'source> {
     delimited_comma_list("<", ">", open, close, items)
 }
@@ -84,9 +86,10 @@ fn delimited_comma_list<'source>(
     close_text: &'static str,
     open: Option<&JavaSyntaxToken<'source>>,
     close: Option<&JavaSyntaxToken<'source>>,
-    items: Vec<CommaListItem<'source>>,
+    items: impl IntoIterator<Item = CommaListItem<'source>>,
 ) -> Doc<'source> {
-    if items.is_empty() {
+    let mut items = items.into_iter().peekable();
+    if items.peek().is_none() {
         return empty_delimited_list(open_text, close_text, open, close);
     }
 

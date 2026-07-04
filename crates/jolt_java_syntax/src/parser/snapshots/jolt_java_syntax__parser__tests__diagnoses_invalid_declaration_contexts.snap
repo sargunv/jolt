@@ -270,8 +270,6 @@ CompilationUnit
       RBrace "}" @ 820..821 leading=[Newline "\n", Whitespace "            "]
   Eof "" @ 830..830 leading=[Newline "\n", Whitespace "        "]
 
-outcome: Recovered
-
 diagnostics:
   code=java.parse.expected_syntax severity=Error stage=Parser range=56..59 message="expected class or interface type"
   code=java.parse.expected_syntax severity=Error stage=Parser range=139..142 message="expected class or interface type"

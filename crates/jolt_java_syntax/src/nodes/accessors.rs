@@ -44,7 +44,7 @@ use super::{
     child_token_in, children, children_family, children_tokens_matching, nth_child_family,
     nth_child_token, starts_after_blank_line,
 };
-use crate::JavaSyntaxNode;
+use crate::{JavaSyntaxNode, language::JavaLanguage};
 use jolt_syntax::SyntaxElement;
 
 impl<'source> CompilationUnit<'source> {
@@ -200,32 +200,32 @@ impl<'source> NameSyntax<'source> {
     }
 
     pub fn segments_with_annotations(&self) -> impl Iterator<Item = NameSegment<'source>> {
-        let mut segments = Vec::new();
+        let mut elements = self.syntax().children_with_tokens();
         let mut annotations = Vec::new();
         let mut dot_before = None;
 
-        for element in self.syntax().children_with_tokens() {
-            match element {
-                SyntaxElement::Node(node) => {
-                    if let Some(annotation) = Annotation::cast(node) {
-                        annotations.push(annotation);
+        std::iter::from_fn(move || {
+            loop {
+                match elements.next()? {
+                    SyntaxElement::Node(node) => {
+                        if let Some(annotation) = Annotation::cast(node) {
+                            annotations.push(annotation);
+                        }
                     }
+                    SyntaxElement::Token(syntax) if syntax.kind() == JavaSyntaxKind::Dot => {
+                        dot_before = Some(JavaSyntaxToken { syntax });
+                    }
+                    SyntaxElement::Token(syntax) if syntax.kind() == JavaSyntaxKind::Identifier => {
+                        return Some(NameSegment {
+                            annotations: std::mem::take(&mut annotations),
+                            dot_before: dot_before.take(),
+                            identifier: JavaSyntaxToken { syntax },
+                        });
+                    }
+                    SyntaxElement::Token(_) => {}
                 }
-                SyntaxElement::Token(syntax) if syntax.kind() == JavaSyntaxKind::Dot => {
-                    dot_before = Some(JavaSyntaxToken { syntax });
-                }
-                SyntaxElement::Token(syntax) if syntax.kind() == JavaSyntaxKind::Identifier => {
-                    segments.push(NameSegment {
-                        annotations: std::mem::take(&mut annotations),
-                        dot_before: dot_before.take(),
-                        identifier: JavaSyntaxToken { syntax },
-                    });
-                }
-                SyntaxElement::Token(_) => {}
             }
-        }
-
-        segments.into_iter()
+        })
     }
 }
 
@@ -389,7 +389,7 @@ impl<'source> ExtendsClause<'source> {
         child_token(&self.syntax, JavaSyntaxKind::ExtendsKw)
     }
 
-    pub fn types(&self) -> impl Iterator<Item = Type<'source>> + use<'source> {
+    pub fn types(&self) -> impl Iterator<Item = Type<'source>> + use<'source, '_> {
         children_family(&self.syntax)
     }
 
@@ -404,7 +404,7 @@ impl<'source> ImplementsClause<'source> {
         child_token(&self.syntax, JavaSyntaxKind::ImplementsKw)
     }
 
-    pub fn types(&self) -> impl Iterator<Item = Type<'source>> + use<'source> {
+    pub fn types(&self) -> impl Iterator<Item = Type<'source>> + use<'source, '_> {
         children_family(&self.syntax)
     }
 
@@ -425,39 +425,13 @@ impl<'source> PermitsClause<'source> {
         children_family(&self.syntax)
     }
 
-    pub fn entries(&self) -> impl Iterator<Item = PermitsClauseEntry<'source>> {
-        let mut entries = Vec::new();
-        let mut pending_name = None;
-
-        for element in self.syntax.children_with_tokens() {
-            match element {
-                SyntaxElement::Node(node) => {
-                    if let Some(name) = NameSyntax::cast(node)
-                        && let Some(previous) = pending_name.replace(name)
-                    {
-                        entries.push(PermitsClauseEntry {
-                            name: previous,
-                            comma: None,
-                        });
-                    }
-                }
-                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
-                    if let Some(name) = pending_name.take() {
-                        entries.push(PermitsClauseEntry {
-                            name,
-                            comma: Some(JavaSyntaxToken { syntax: token }),
-                        });
-                    }
-                }
-                SyntaxElement::Token(_) => {}
-            }
-        }
-
-        if let Some(name) = pending_name {
-            entries.push(PermitsClauseEntry { name, comma: None });
-        }
-
-        entries.into_iter()
+    pub fn entries(&self) -> impl Iterator<Item = PermitsClauseEntry<'source>> + use<'source, '_> {
+        separated_entries(
+            self.syntax.children_with_tokens(),
+            JavaSyntaxKind::Comma,
+            NameSyntax::cast,
+            |name, comma| PermitsClauseEntry { name, comma },
+        )
     }
 }
 
@@ -553,42 +527,15 @@ impl<'source> TypeParameterList<'source> {
         children(&self.syntax)
     }
 
-    pub fn entries(&self) -> impl Iterator<Item = TypeParameterListEntry<'source>> {
-        let mut entries = Vec::new();
-        let mut pending_parameter = None;
-
-        for element in self.syntax.children_with_tokens() {
-            match element {
-                SyntaxElement::Node(node) => {
-                    if let Some(parameter) = TypeParameter::cast(node)
-                        && let Some(previous) = pending_parameter.replace(parameter)
-                    {
-                        entries.push(TypeParameterListEntry {
-                            parameter: previous,
-                            comma: None,
-                        });
-                    }
-                }
-                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
-                    if let Some(parameter) = pending_parameter.take() {
-                        entries.push(TypeParameterListEntry {
-                            parameter,
-                            comma: Some(JavaSyntaxToken { syntax: token }),
-                        });
-                    }
-                }
-                SyntaxElement::Token(_) => {}
-            }
-        }
-
-        if let Some(parameter) = pending_parameter {
-            entries.push(TypeParameterListEntry {
-                parameter,
-                comma: None,
-            });
-        }
-
-        entries.into_iter()
+    pub fn entries(
+        &self,
+    ) -> impl Iterator<Item = TypeParameterListEntry<'source>> + use<'source, '_> {
+        separated_entries(
+            self.syntax.children_with_tokens(),
+            JavaSyntaxKind::Comma,
+            TypeParameter::cast,
+            |parameter, comma| TypeParameterListEntry { parameter, comma },
+        )
     }
 }
 
@@ -619,19 +566,22 @@ impl<'source> TypeBoundList<'source> {
     }
 
     pub fn entries(&self) -> impl Iterator<Item = IntersectionTypeEntry<'source>> {
-        child::<IntersectionType>(&self.syntax)
-            .map_or_else(
-                || {
-                    children_family(&self.syntax)
-                        .map(|ty| IntersectionTypeEntry {
-                            ty,
-                            separator: None,
-                        })
-                        .collect()
-                },
-                |intersection| intersection_type_entries(&intersection.syntax).collect::<Vec<_>>(),
-            )
+        let intersection = child::<IntersectionType>(&self.syntax);
+        let has_intersection = intersection.is_some();
+        (!has_intersection)
+            .then_some(())
             .into_iter()
+            .flat_map(|()| {
+                children_family(&self.syntax).map(|ty| IntersectionTypeEntry {
+                    ty,
+                    separator: None,
+                })
+            })
+            .chain(
+                intersection
+                    .into_iter()
+                    .flat_map(|intersection| intersection_type_entries(&intersection.syntax)),
+            )
     }
 }
 
@@ -667,51 +617,57 @@ impl<'source> VoidType<'source> {
 
 impl<'source> ClassType<'source> {
     pub fn segments(&self) -> impl Iterator<Item = ClassTypeSegment<'source>> {
-        let mut segments = Vec::new();
+        let mut elements = self.syntax.children_with_tokens();
         let mut annotations = Vec::new();
         let mut dot_before = None;
         let mut current: Option<ClassTypeSegment> = None;
+        let mut finished = false;
 
-        for element in self.syntax.children_with_tokens() {
-            let node = match element {
-                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Dot => {
-                    dot_before = Some(JavaSyntaxToken { syntax: token });
+        std::iter::from_fn(move || {
+            if finished {
+                return None;
+            }
+
+            loop {
+                let Some(element) = elements.next() else {
+                    finished = true;
+                    return current.take();
+                };
+
+                let node = match element {
+                    SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Dot => {
+                        dot_before = Some(JavaSyntaxToken { syntax: token });
+                        continue;
+                    }
+                    SyntaxElement::Node(node) => node,
+                    SyntaxElement::Token(_) => continue,
+                };
+
+                if let Some(annotation) = Annotation::cast(node) {
+                    annotations.push(annotation);
                     continue;
                 }
-                SyntaxElement::Node(node) => node,
-                SyntaxElement::Token(_) => continue,
-            };
 
-            if let Some(annotation) = Annotation::cast(node) {
-                annotations.push(annotation);
-                continue;
-            }
-
-            if let Some(name) = NameSyntax::cast(node) {
-                if let Some(segment) = current.take() {
-                    segments.push(segment);
+                if let Some(name) = NameSyntax::cast(node) {
+                    let next = ClassTypeSegment {
+                        annotations: std::mem::take(&mut annotations),
+                        dot_before: dot_before.take(),
+                        name,
+                        type_arguments: None,
+                    };
+                    if let Some(segment) = current.replace(next) {
+                        return Some(segment);
+                    }
+                    continue;
                 }
-                current = Some(ClassTypeSegment {
-                    annotations: std::mem::take(&mut annotations),
-                    dot_before: dot_before.take(),
-                    name,
-                    type_arguments: None,
-                });
-                continue;
+
+                if let Some(type_arguments) = TypeArgumentList::cast(node)
+                    && let Some(segment) = current.as_mut()
+                {
+                    segment.type_arguments = Some(type_arguments);
+                }
             }
-
-            if let Some(type_arguments) = TypeArgumentList::cast(node)
-                && let Some(segment) = current.as_mut()
-            {
-                segment.type_arguments = Some(type_arguments);
-            }
-        }
-
-        if let Some(segment) = current {
-            segments.push(segment);
-        }
-
-        segments.into_iter()
+        })
     }
 }
 
@@ -774,42 +730,15 @@ impl<'source> RecordComponentList<'source> {
         children(&self.syntax)
     }
 
-    pub fn entries(&self) -> impl Iterator<Item = RecordComponentListEntry<'source>> {
-        let mut entries = Vec::new();
-        let mut pending_component = None;
-
-        for element in self.syntax.children_with_tokens() {
-            match element {
-                SyntaxElement::Node(node) => {
-                    if let Some(component) = RecordComponent::cast(node)
-                        && let Some(previous) = pending_component.replace(component)
-                    {
-                        entries.push(RecordComponentListEntry {
-                            component: previous,
-                            comma: None,
-                        });
-                    }
-                }
-                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
-                    if let Some(component) = pending_component.take() {
-                        entries.push(RecordComponentListEntry {
-                            component,
-                            comma: Some(JavaSyntaxToken { syntax: token }),
-                        });
-                    }
-                }
-                SyntaxElement::Token(_) => {}
-            }
-        }
-
-        if let Some(component) = pending_component {
-            entries.push(RecordComponentListEntry {
-                component,
-                comma: None,
-            });
-        }
-
-        entries.into_iter()
+    pub fn entries(
+        &self,
+    ) -> impl Iterator<Item = RecordComponentListEntry<'source>> + use<'source, '_> {
+        separated_entries(
+            self.syntax.children_with_tokens(),
+            JavaSyntaxKind::Comma,
+            RecordComponent::cast,
+            |component, comma| RecordComponentListEntry { component, comma },
+        )
     }
 }
 
@@ -905,13 +834,6 @@ impl<'source> RecordBody<'source> {
     }
 }
 
-impl<'source> ClassBodyDeclaration<'source> {
-    #[must_use]
-    pub fn member(&self) -> Option<ClassBodyMember<'source>> {
-        child_family(&self.syntax)
-    }
-}
-
 impl<'source> InterfaceBody<'source> {
     #[must_use]
     pub fn open_brace(&self) -> Option<JavaSyntaxToken<'source>> {
@@ -948,14 +870,12 @@ impl<'source> AnnotationInterfaceBody<'source> {
 
     pub fn members(&self) -> impl Iterator<Item = AnnotationInterfaceBodyMember<'source>> {
         child::<AnnotationElementList>(&self.syntax)
-            .map(|list| {
+            .into_iter()
+            .flat_map(|list| {
                 list.syntax
                     .children()
                     .filter_map(AnnotationInterfaceBodyMember::cast)
-                    .collect::<Vec<_>>()
             })
-            .unwrap_or_default()
-            .into_iter()
     }
 }
 
@@ -973,51 +893,15 @@ impl<'source> AnnotationElementList<'source> {
         children_family(&self.syntax)
     }
 
-    pub fn arguments(&self) -> std::vec::IntoIter<AnnotationArgument<'source>> {
-        self.syntax
-            .children()
-            .filter_map(AnnotationArgument::cast)
-            .collect::<Vec<_>>()
-            .into_iter()
-    }
-
-    #[must_use]
-    pub fn argument_entries(&self) -> std::vec::IntoIter<AnnotationArgumentListEntry<'source>> {
-        let mut entries = Vec::new();
-        let mut pending_argument = None;
-
-        for element in self.syntax.children_with_tokens() {
-            match element {
-                SyntaxElement::Node(node) => {
-                    if let Some(argument) = AnnotationArgument::cast(node)
-                        && let Some(previous) = pending_argument.replace(argument)
-                    {
-                        entries.push(AnnotationArgumentListEntry {
-                            argument: previous,
-                            comma: None,
-                        });
-                    }
-                }
-                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
-                    if let Some(argument) = pending_argument.take() {
-                        entries.push(AnnotationArgumentListEntry {
-                            argument,
-                            comma: Some(JavaSyntaxToken { syntax: token }),
-                        });
-                    }
-                }
-                SyntaxElement::Token(_) => {}
-            }
-        }
-
-        if let Some(argument) = pending_argument {
-            entries.push(AnnotationArgumentListEntry {
-                argument,
-                comma: None,
-            });
-        }
-
-        entries.into_iter()
+    pub fn argument_entries(
+        &self,
+    ) -> impl Iterator<Item = AnnotationArgumentListEntry<'source>> + use<'source> {
+        separated_entries(
+            self.syntax.children_with_tokens(),
+            JavaSyntaxKind::Comma,
+            AnnotationArgument::cast,
+            |argument, comma| AnnotationArgumentListEntry { argument, comma },
+        )
     }
 }
 
@@ -1112,43 +996,13 @@ impl<'source> EnumConstantList<'source> {
         children(&self.syntax)
     }
 
-    #[must_use]
-    pub fn entries(&self) -> std::vec::IntoIter<EnumConstantListEntry<'source>> {
-        let mut entries = Vec::new();
-        let mut pending_constant = None;
-
-        for element in self.syntax.children_with_tokens() {
-            match element {
-                SyntaxElement::Node(node) => {
-                    if let Some(constant) = EnumConstant::cast(node)
-                        && let Some(previous) = pending_constant.replace(constant)
-                    {
-                        entries.push(EnumConstantListEntry {
-                            constant: previous,
-                            comma: None,
-                        });
-                    }
-                }
-                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
-                    if let Some(constant) = pending_constant.take() {
-                        entries.push(EnumConstantListEntry {
-                            constant,
-                            comma: Some(JavaSyntaxToken { syntax: token }),
-                        });
-                    }
-                }
-                SyntaxElement::Token(_) => {}
-            }
-        }
-
-        if let Some(constant) = pending_constant {
-            entries.push(EnumConstantListEntry {
-                constant,
-                comma: None,
-            });
-        }
-
-        entries.into_iter()
+    pub fn entries(&self) -> impl Iterator<Item = EnumConstantListEntry<'source>> + use<'source> {
+        separated_entries(
+            self.syntax.children_with_tokens(),
+            JavaSyntaxKind::Comma,
+            EnumConstant::cast,
+            |constant, comma| EnumConstantListEntry { constant, comma },
+        )
     }
 }
 
@@ -1384,42 +1238,13 @@ impl<'source> ThrowsClause<'source> {
         children_family(&self.syntax)
     }
 
-    pub fn entries(&self) -> impl Iterator<Item = ThrowsClauseEntry<'source>> {
-        let mut entries = Vec::new();
-        let mut pending_exception = None;
-
-        for element in self.syntax.children_with_tokens() {
-            match element {
-                SyntaxElement::Node(node) => {
-                    if let Some(exception) = Type::cast(node)
-                        && let Some(previous) = pending_exception.replace(exception)
-                    {
-                        entries.push(ThrowsClauseEntry {
-                            exception: previous,
-                            comma: None,
-                        });
-                    }
-                }
-                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
-                    if let Some(exception) = pending_exception.take() {
-                        entries.push(ThrowsClauseEntry {
-                            exception,
-                            comma: Some(JavaSyntaxToken { syntax: token }),
-                        });
-                    }
-                }
-                SyntaxElement::Token(_) => {}
-            }
-        }
-
-        if let Some(exception) = pending_exception {
-            entries.push(ThrowsClauseEntry {
-                exception,
-                comma: None,
-            });
-        }
-
-        entries.into_iter()
+    pub fn entries(&self) -> impl Iterator<Item = ThrowsClauseEntry<'source>> + use<'source, '_> {
+        separated_entries(
+            self.syntax.children_with_tokens(),
+            JavaSyntaxKind::Comma,
+            Type::cast,
+            |exception, comma| ThrowsClauseEntry { exception, comma },
+        )
     }
 }
 
@@ -1459,46 +1284,21 @@ impl<'source> FormalParameterList<'source> {
         children(&self.syntax)
     }
 
-    pub fn entries(&self) -> impl Iterator<Item = FormalParameterListEntry<'source>> {
-        let mut entries = Vec::new();
-        let mut pending_item = None;
-
-        for element in self.syntax.children_with_tokens() {
-            match element {
-                SyntaxElement::Node(node) => {
-                    let item = ReceiverParameter::cast(node)
-                        .map(FormalParameterListItem::ReceiverParameter)
-                        .or_else(|| {
-                            FormalParameter::cast(node)
-                                .map(FormalParameterListItem::FormalParameter)
-                        });
-
-                    if let Some(item) = item
-                        && let Some(previous) = pending_item.replace(item)
-                    {
-                        entries.push(FormalParameterListEntry {
-                            item: previous,
-                            comma: None,
-                        });
-                    }
-                }
-                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
-                    if let Some(item) = pending_item.take() {
-                        entries.push(FormalParameterListEntry {
-                            item,
-                            comma: Some(JavaSyntaxToken { syntax: token }),
-                        });
-                    }
-                }
-                SyntaxElement::Token(_) => {}
-            }
-        }
-
-        if let Some(item) = pending_item {
-            entries.push(FormalParameterListEntry { item, comma: None });
-        }
-
-        entries.into_iter()
+    pub fn entries(
+        &self,
+    ) -> impl Iterator<Item = FormalParameterListEntry<'source>> + use<'source, '_> {
+        separated_entries(
+            self.syntax.children_with_tokens(),
+            JavaSyntaxKind::Comma,
+            |node| {
+                ReceiverParameter::cast(node)
+                    .map(FormalParameterListItem::ReceiverParameter)
+                    .or_else(|| {
+                        FormalParameter::cast(node).map(FormalParameterListItem::FormalParameter)
+                    })
+            },
+            |item, comma| FormalParameterListEntry { item, comma },
+        )
     }
 }
 
@@ -1543,12 +1343,6 @@ impl<'source> FormalParameter<'source> {
     }
 
     #[must_use]
-    pub fn is_unnamed(&self) -> bool {
-        self.name()
-            .is_some_and(|name| name.kind() == JavaSyntaxKind::UnderscoreKw)
-    }
-
-    #[must_use]
     pub fn dimensions(&self) -> Option<ArrayDimensions<'source>> {
         child(&self.syntax)
     }
@@ -1559,42 +1353,15 @@ impl<'source> VariableDeclaratorList<'source> {
         children(&self.syntax)
     }
 
-    pub fn entries(&self) -> impl Iterator<Item = VariableDeclaratorEntry<'source>> {
-        let mut entries = Vec::new();
-        let mut pending_declarator = None;
-
-        for element in self.syntax.children_with_tokens() {
-            match element {
-                SyntaxElement::Node(node) => {
-                    if let Some(declarator) = VariableDeclarator::cast(node)
-                        && let Some(previous) = pending_declarator.replace(declarator)
-                    {
-                        entries.push(VariableDeclaratorEntry {
-                            declarator: previous,
-                            comma: None,
-                        });
-                    }
-                }
-                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
-                    if let Some(declarator) = pending_declarator.take() {
-                        entries.push(VariableDeclaratorEntry {
-                            declarator,
-                            comma: Some(JavaSyntaxToken { syntax: token }),
-                        });
-                    }
-                }
-                SyntaxElement::Token(_) => {}
-            }
-        }
-
-        if let Some(declarator) = pending_declarator {
-            entries.push(VariableDeclaratorEntry {
-                declarator,
-                comma: None,
-            });
-        }
-
-        entries.into_iter()
+    pub fn entries(
+        &self,
+    ) -> impl Iterator<Item = VariableDeclaratorEntry<'source>> + use<'source, '_> {
+        separated_entries(
+            self.syntax.children_with_tokens(),
+            JavaSyntaxKind::Comma,
+            VariableDeclarator::cast,
+            |declarator, comma| VariableDeclaratorEntry { declarator, comma },
+        )
     }
 }
 
@@ -1605,12 +1372,6 @@ impl<'source> VariableDeclarator<'source> {
             &self.syntax,
             &[JavaSyntaxKind::Identifier, JavaSyntaxKind::UnderscoreKw],
         )
-    }
-
-    #[must_use]
-    pub fn is_unnamed(&self) -> bool {
-        self.name()
-            .is_some_and(|name| name.kind() == JavaSyntaxKind::UnderscoreKw)
     }
 
     #[must_use]
@@ -1713,8 +1474,7 @@ impl<'source> IfStatement<'source> {
         child_family(&self.syntax)
     }
 
-    #[must_use]
-    pub fn then_statement(&self) -> Option<Statement<'source>> {
+    fn then_statement(&self) -> Option<Statement<'source>> {
         nth_child_family(&self.syntax, 0)
     }
 
@@ -1723,8 +1483,7 @@ impl<'source> IfStatement<'source> {
         self.then_statement().map(StatementBody::from)
     }
 
-    #[must_use]
-    pub fn else_statement(&self) -> Option<Statement<'source>> {
+    fn else_statement(&self) -> Option<Statement<'source>> {
         nth_child_family(&self.syntax, 1)
     }
 
@@ -2184,42 +1943,13 @@ impl<'source> ArgumentList<'source> {
         children_family(&self.syntax)
     }
 
-    pub fn entries(&self) -> impl Iterator<Item = ArgumentListEntry<'source>> {
-        let mut entries = Vec::new();
-        let mut pending_argument = None;
-
-        for element in self.syntax.children_with_tokens() {
-            match element {
-                SyntaxElement::Node(node) => {
-                    if let Some(argument) = Expression::cast(node)
-                        && let Some(previous) = pending_argument.replace(argument)
-                    {
-                        entries.push(ArgumentListEntry {
-                            argument: previous,
-                            comma: None,
-                        });
-                    }
-                }
-                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
-                    if let Some(argument) = pending_argument.take() {
-                        entries.push(ArgumentListEntry {
-                            argument,
-                            comma: Some(JavaSyntaxToken { syntax: token }),
-                        });
-                    }
-                }
-                SyntaxElement::Token(_) => {}
-            }
-        }
-
-        if let Some(argument) = pending_argument {
-            entries.push(ArgumentListEntry {
-                argument,
-                comma: None,
-            });
-        }
-
-        entries.into_iter()
+    pub fn entries(&self) -> impl Iterator<Item = ArgumentListEntry<'source>> + use<'source, '_> {
+        separated_entries(
+            self.syntax.children_with_tokens(),
+            JavaSyntaxKind::Comma,
+            Expression::cast,
+            |argument, comma| ArgumentListEntry { argument, comma },
+        )
     }
 }
 
@@ -2238,42 +1968,15 @@ impl<'source> TypeArgumentList<'source> {
         children(&self.syntax)
     }
 
-    pub fn entries(&self) -> impl Iterator<Item = TypeArgumentListEntry<'source>> {
-        let mut entries = Vec::new();
-        let mut pending_argument = None;
-
-        for element in self.syntax.children_with_tokens() {
-            match element {
-                SyntaxElement::Node(node) => {
-                    if let Some(argument) = TypeArgument::cast(node)
-                        && let Some(previous) = pending_argument.replace(argument)
-                    {
-                        entries.push(TypeArgumentListEntry {
-                            argument: previous,
-                            comma: None,
-                        });
-                    }
-                }
-                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
-                    if let Some(argument) = pending_argument.take() {
-                        entries.push(TypeArgumentListEntry {
-                            argument,
-                            comma: Some(JavaSyntaxToken { syntax: token }),
-                        });
-                    }
-                }
-                SyntaxElement::Token(_) => {}
-            }
-        }
-
-        if let Some(argument) = pending_argument {
-            entries.push(TypeArgumentListEntry {
-                argument,
-                comma: None,
-            });
-        }
-
-        entries.into_iter()
+    pub fn entries(
+        &self,
+    ) -> impl Iterator<Item = TypeArgumentListEntry<'source>> + use<'source, '_> {
+        separated_entries(
+            self.syntax.children_with_tokens(),
+            JavaSyntaxKind::Comma,
+            TypeArgument::cast,
+            |argument, comma| TypeArgumentListEntry { argument, comma },
+        )
     }
 }
 
@@ -2435,12 +2138,6 @@ impl<'source> AnnotationArgumentList<'source> {
         child_token(&self.syntax, JavaSyntaxKind::RParen)
     }
 
-    pub fn arguments(&self) -> impl Iterator<Item = AnnotationArgument<'source>> {
-        child::<AnnotationElementList>(&self.syntax)
-            .into_iter()
-            .flat_map(|list| list.arguments())
-    }
-
     pub fn entries(&self) -> impl Iterator<Item = AnnotationArgumentListEntry<'source>> {
         child::<AnnotationElementList>(&self.syntax)
             .into_iter()
@@ -2493,43 +2190,15 @@ impl<'source> AnnotationArrayInitializer<'source> {
         child_token(&self.syntax, JavaSyntaxKind::RBrace)
     }
 
-    pub fn values(&self) -> impl Iterator<Item = AnnotationElementValue<'source>> + use<'source> {
-        children(&self.syntax)
-    }
-
-    pub fn entries(&self) -> impl Iterator<Item = AnnotationArrayInitializerEntry<'source>> {
-        let mut entries = Vec::new();
-        let mut pending_value = None;
-
-        for element in self.syntax.children_with_tokens() {
-            match element {
-                SyntaxElement::Node(node) => {
-                    if let Some(value) = AnnotationElementValue::cast(node)
-                        && let Some(previous) = pending_value.replace(value)
-                    {
-                        entries.push(AnnotationArrayInitializerEntry {
-                            value: previous,
-                            comma: None,
-                        });
-                    }
-                }
-                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
-                    if let Some(value) = pending_value.take() {
-                        entries.push(AnnotationArrayInitializerEntry {
-                            value,
-                            comma: Some(JavaSyntaxToken { syntax: token }),
-                        });
-                    }
-                }
-                SyntaxElement::Token(_) => {}
-            }
-        }
-
-        if let Some(value) = pending_value {
-            entries.push(AnnotationArrayInitializerEntry { value, comma: None });
-        }
-
-        entries.into_iter()
+    pub fn entries(
+        &self,
+    ) -> impl Iterator<Item = AnnotationArrayInitializerEntry<'source>> + use<'source, '_> {
+        separated_entries(
+            self.syntax.children_with_tokens(),
+            JavaSyntaxKind::Comma,
+            AnnotationElementValue::cast,
+            |value, comma| AnnotationArrayInitializerEntry { value, comma },
+        )
     }
 }
 
@@ -2773,43 +2442,15 @@ impl<'source> ArrayInitializer<'source> {
         child_token(&self.syntax, JavaSyntaxKind::RBrace)
     }
 
-    pub fn values(&self) -> impl Iterator<Item = VariableInitializerValue<'source>> + use<'source> {
-        children_family(&self.syntax)
-    }
-
-    pub fn entries(&self) -> impl Iterator<Item = ArrayInitializerEntry<'source>> {
-        let mut entries = Vec::new();
-        let mut pending_value = None;
-
-        for element in self.syntax.children_with_tokens() {
-            match element {
-                SyntaxElement::Node(node) => {
-                    if let Some(value) = VariableInitializerValue::cast(node)
-                        && let Some(previous) = pending_value.replace(value)
-                    {
-                        entries.push(ArrayInitializerEntry {
-                            value: previous,
-                            comma: None,
-                        });
-                    }
-                }
-                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
-                    if let Some(value) = pending_value.take() {
-                        entries.push(ArrayInitializerEntry {
-                            value,
-                            comma: Some(JavaSyntaxToken { syntax: token }),
-                        });
-                    }
-                }
-                SyntaxElement::Token(_) => {}
-            }
-        }
-
-        if let Some(value) = pending_value {
-            entries.push(ArrayInitializerEntry { value, comma: None });
-        }
-
-        entries.into_iter()
+    pub fn entries(
+        &self,
+    ) -> impl Iterator<Item = ArrayInitializerEntry<'source>> + use<'source, '_> {
+        separated_entries(
+            self.syntax.children_with_tokens(),
+            JavaSyntaxKind::Comma,
+            VariableInitializerValue::cast,
+            |value, comma| ArrayInitializerEntry { value, comma },
+        )
     }
 }
 
@@ -2940,12 +2581,6 @@ impl<'source> LambdaParameter<'source> {
             )
         })
         .last()
-    }
-
-    #[must_use]
-    pub fn is_unnamed(&self) -> bool {
-        self.name()
-            .is_some_and(|name| name.kind() == JavaSyntaxKind::UnderscoreKw)
     }
 }
 
@@ -3292,44 +2927,40 @@ impl<'source> CatchParameter<'source> {
             &[JavaSyntaxKind::Identifier, JavaSyntaxKind::UnderscoreKw],
         )
     }
-
-    #[must_use]
-    pub fn is_unnamed(&self) -> bool {
-        self.name()
-            .is_some_and(|name| name.kind() == JavaSyntaxKind::UnderscoreKw)
-    }
 }
 
 impl<'source> CatchTypeList<'source> {
-    pub fn types(&self) -> impl Iterator<Item = Type<'source>> + use<'source> {
-        child::<UnionType>(&self.syntax)
-            .map_or_else(
-                || children_family(&self.syntax).collect(),
-                |union| {
-                    union
-                        .syntax
-                        .children()
-                        .filter_map(Type::cast)
-                        .collect::<Vec<_>>()
-                },
-            )
+    pub fn types(&self) -> impl Iterator<Item = Type<'source>> + use<'source, '_> {
+        let union = child::<UnionType>(&self.syntax);
+        let has_union = union.is_some();
+        (!has_union)
+            .then_some(())
             .into_iter()
+            .flat_map(|()| children_family(&self.syntax))
+            .chain(
+                union
+                    .into_iter()
+                    .flat_map(|union| union.syntax.children().filter_map(Type::cast)),
+            )
     }
 
     pub fn entries(&self) -> impl Iterator<Item = UnionTypeEntry<'source>> {
-        child::<UnionType>(&self.syntax)
-            .map_or_else(
-                || {
-                    children_family(&self.syntax)
-                        .map(|ty| UnionTypeEntry {
-                            ty,
-                            separator: None,
-                        })
-                        .collect()
-                },
-                |union| union_type_entries(&union.syntax).collect::<Vec<_>>(),
-            )
+        let union = child::<UnionType>(&self.syntax);
+        let has_union = union.is_some();
+        (!has_union)
+            .then_some(())
             .into_iter()
+            .flat_map(|()| {
+                children_family(&self.syntax).map(|ty| UnionTypeEntry {
+                    ty,
+                    separator: None,
+                })
+            })
+            .chain(
+                union
+                    .into_iter()
+                    .flat_map(|union| union_type_entries(&union.syntax)),
+            )
     }
 }
 
@@ -3382,43 +3013,16 @@ impl<'source> ResourceList<'source> {
         children(&self.syntax)
     }
 
-    #[must_use]
-    pub fn entries(&self) -> std::vec::IntoIter<ResourceListEntry<'source>> {
-        let mut entries = Vec::new();
-        let mut pending_resource = None;
-
-        for element in self.syntax.children_with_tokens() {
-            match element {
-                SyntaxElement::Node(node) => {
-                    if let Some(resource) = Resource::cast(node)
-                        && let Some(previous) = pending_resource.replace(resource)
-                    {
-                        entries.push(ResourceListEntry {
-                            resource: previous,
-                            separator: None,
-                        });
-                    }
-                }
-                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Semicolon => {
-                    if let Some(resource) = pending_resource.take() {
-                        entries.push(ResourceListEntry {
-                            resource,
-                            separator: Some(JavaSyntaxToken { syntax: token }),
-                        });
-                    }
-                }
-                SyntaxElement::Token(_) => {}
-            }
-        }
-
-        if let Some(resource) = pending_resource {
-            entries.push(ResourceListEntry {
+    pub fn entries(&self) -> impl Iterator<Item = ResourceListEntry<'source>> + use<'source, '_> {
+        separated_entries(
+            self.syntax.children_with_tokens(),
+            JavaSyntaxKind::Semicolon,
+            Resource::cast,
+            |resource, separator| ResourceListEntry {
                 resource,
-                separator: None,
-            });
-        }
-
-        entries.into_iter()
+                separator,
+            },
+        )
     }
 }
 
@@ -3571,42 +3175,15 @@ impl<'source> StatementExpressionList<'source> {
         children_family(&self.syntax)
     }
 
-    pub fn entries(&self) -> impl Iterator<Item = StatementExpressionEntry<'source>> {
-        let mut entries = Vec::new();
-        let mut pending_expression = None;
-
-        for element in self.syntax.children_with_tokens() {
-            match element {
-                SyntaxElement::Node(node) => {
-                    if let Some(expression) = Expression::cast(node)
-                        && let Some(previous) = pending_expression.replace(expression)
-                    {
-                        entries.push(StatementExpressionEntry {
-                            expression: previous,
-                            comma: None,
-                        });
-                    }
-                }
-                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
-                    if let Some(expression) = pending_expression.take() {
-                        entries.push(StatementExpressionEntry {
-                            expression,
-                            comma: Some(JavaSyntaxToken { syntax: token }),
-                        });
-                    }
-                }
-                SyntaxElement::Token(_) => {}
-            }
-        }
-
-        if let Some(expression) = pending_expression {
-            entries.push(StatementExpressionEntry {
-                expression,
-                comma: None,
-            });
-        }
-
-        entries.into_iter()
+    pub fn entries(
+        &self,
+    ) -> impl Iterator<Item = StatementExpressionEntry<'source>> + use<'source, '_> {
+        separated_entries(
+            self.syntax.children_with_tokens(),
+            JavaSyntaxKind::Comma,
+            Expression::cast,
+            |expression, comma| StatementExpressionEntry { expression, comma },
+        )
     }
 }
 
@@ -3683,16 +3260,6 @@ impl<'source> SwitchBlock<'source> {
             SwitchRule::cast(syntax).map(SwitchBlockEntry::Rule)
         })
     }
-
-    pub fn statement_groups(
-        &self,
-    ) -> impl Iterator<Item = SwitchBlockStatementGroup<'source>> + use<'source> {
-        children(&self.syntax)
-    }
-
-    pub fn rules(&self) -> impl Iterator<Item = SwitchRule<'source>> + use<'source> {
-        children(&self.syntax)
-    }
 }
 
 impl<'source> SwitchBlockStatementGroup<'source> {
@@ -3700,42 +3267,15 @@ impl<'source> SwitchBlockStatementGroup<'source> {
         children(&self.syntax)
     }
 
-    pub fn labels(&self) -> impl Iterator<Item = SwitchLabel<'source>> + use<'source> {
-        children(&self.syntax)
-    }
-
     pub fn label_entries(
         &self,
-    ) -> impl Iterator<Item = SwitchBlockStatementGroupLabel<'source>> + use<'source> {
-        let mut labels = Vec::new();
-        let mut pending_label = None;
-
-        for element in self.syntax.children_with_tokens() {
-            match element {
-                SyntaxElement::Node(node) => {
-                    if let Some(label) = SwitchLabel::cast(node)
-                        && let Some(label) = pending_label.replace(label)
-                    {
-                        labels.push(SwitchBlockStatementGroupLabel { label, colon: None });
-                    }
-                }
-                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Colon => {
-                    if let Some(label) = pending_label.take() {
-                        labels.push(SwitchBlockStatementGroupLabel {
-                            label,
-                            colon: Some(JavaSyntaxToken { syntax: token }),
-                        });
-                    }
-                }
-                SyntaxElement::Token(_) => {}
-            }
-        }
-
-        if let Some(label) = pending_label {
-            labels.push(SwitchBlockStatementGroupLabel { label, colon: None });
-        }
-
-        labels.into_iter()
+    ) -> impl Iterator<Item = SwitchBlockStatementGroupLabel<'source>> + use<'source, '_> {
+        separated_entries(
+            self.syntax.children_with_tokens(),
+            JavaSyntaxKind::Colon,
+            SwitchLabel::cast,
+            |label, colon| SwitchBlockStatementGroupLabel { label, colon },
+        )
     }
 
     pub fn items(&self) -> impl Iterator<Item = BlockItem<'source>> + use<'source> {
@@ -3794,59 +3334,59 @@ impl<'source> SwitchLabel<'source> {
             .is_some_and(|token| token.kind() == JavaSyntaxKind::DefaultKw)
     }
 
-    pub fn case_items(&self) -> impl Iterator<Item = SwitchLabelCaseItem<'source>> {
-        self.case_entries()
-            .map(|entry| entry.item)
-            .collect::<Vec<_>>()
-            .into_iter()
-    }
-
     pub fn case_entries(&self) -> impl Iterator<Item = SwitchLabelCaseEntry<'source>> {
-        let mut entries = Vec::new();
+        let mut elements = self.syntax.children_with_tokens();
         let mut pending_item = None;
+        let is_default_label = self.is_default_label();
+        let mut done = false;
 
-        for element in self.syntax.children_with_tokens() {
-            match element {
-                SyntaxElement::Node(node) => {
-                    if let Some(item) = CaseConstant::cast(node)
-                        .map(SwitchLabelCaseItem::Constant)
-                        .or_else(|| CasePattern::cast(node).map(SwitchLabelCaseItem::Pattern))
-                        && let Some(previous) = pending_item.replace(item)
-                    {
-                        entries.push(SwitchLabelCaseEntry {
-                            item: previous,
-                            comma: None,
-                        });
-                    }
-                }
-                SyntaxElement::Token(syntax) if syntax.kind() == JavaSyntaxKind::DefaultKw => {
-                    if !self.is_default_label()
-                        && let Some(previous) = pending_item
-                            .replace(SwitchLabelCaseItem::Default(JavaSyntaxToken { syntax }))
-                    {
-                        entries.push(SwitchLabelCaseEntry {
-                            item: previous,
-                            comma: None,
-                        });
-                    }
-                }
-                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
-                    if let Some(item) = pending_item.take() {
-                        entries.push(SwitchLabelCaseEntry {
-                            item,
-                            comma: Some(JavaSyntaxToken { syntax: token }),
-                        });
-                    }
-                }
-                SyntaxElement::Token(_) => {}
+        std::iter::from_fn(move || {
+            if done {
+                return None;
             }
-        }
 
-        if let Some(item) = pending_item {
-            entries.push(SwitchLabelCaseEntry { item, comma: None });
-        }
+            for element in elements.by_ref() {
+                match element {
+                    SyntaxElement::Node(node) => {
+                        if let Some(item) = CaseConstant::cast(node)
+                            .map(SwitchLabelCaseItem::Constant)
+                            .or_else(|| CasePattern::cast(node).map(SwitchLabelCaseItem::Pattern))
+                            && let Some(previous) = pending_item.replace(item)
+                        {
+                            return Some(SwitchLabelCaseEntry {
+                                item: previous,
+                                comma: None,
+                            });
+                        }
+                    }
+                    SyntaxElement::Token(syntax) if syntax.kind() == JavaSyntaxKind::DefaultKw => {
+                        if !is_default_label
+                            && let Some(previous) = pending_item
+                                .replace(SwitchLabelCaseItem::Default(JavaSyntaxToken { syntax }))
+                        {
+                            return Some(SwitchLabelCaseEntry {
+                                item: previous,
+                                comma: None,
+                            });
+                        }
+                    }
+                    SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
+                        if let Some(item) = pending_item.take() {
+                            return Some(SwitchLabelCaseEntry {
+                                item,
+                                comma: Some(JavaSyntaxToken { syntax: token }),
+                            });
+                        }
+                    }
+                    SyntaxElement::Token(_) => {}
+                }
+            }
 
-        entries.into_iter()
+            done = true;
+            pending_item
+                .take()
+                .map(|item| SwitchLabelCaseEntry { item, comma: None })
+        })
     }
 
     #[must_use]
@@ -3908,42 +3448,15 @@ impl<'source> RecordPattern<'source> {
         children(&self.syntax)
     }
 
-    pub fn entries(&self) -> impl Iterator<Item = RecordPatternComponentEntry<'source>> {
-        let mut entries = Vec::new();
-        let mut pending_component = None;
-
-        for element in self.syntax.children_with_tokens() {
-            match element {
-                SyntaxElement::Node(node) => {
-                    if let Some(component) = ComponentPattern::cast(node)
-                        && let Some(previous) = pending_component.replace(component)
-                    {
-                        entries.push(RecordPatternComponentEntry {
-                            component: previous,
-                            comma: None,
-                        });
-                    }
-                }
-                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
-                    if let Some(component) = pending_component.take() {
-                        entries.push(RecordPatternComponentEntry {
-                            component,
-                            comma: Some(JavaSyntaxToken { syntax: token }),
-                        });
-                    }
-                }
-                SyntaxElement::Token(_) => {}
-            }
-        }
-
-        if let Some(component) = pending_component {
-            entries.push(RecordPatternComponentEntry {
-                component,
-                comma: None,
-            });
-        }
-
-        entries.into_iter()
+    pub fn entries(
+        &self,
+    ) -> impl Iterator<Item = RecordPatternComponentEntry<'source>> + use<'source, '_> {
+        separated_entries(
+            self.syntax.children_with_tokens(),
+            JavaSyntaxKind::Comma,
+            ComponentPattern::cast,
+            |component, comma| RecordPatternComponentEntry { component, comma },
+        )
     }
 }
 
@@ -3958,11 +3471,6 @@ impl<'source> MatchAllPattern<'source> {
     #[must_use]
     pub fn underscore(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::UnderscoreKw)
-    }
-
-    #[must_use]
-    pub fn is_unnamed(&self) -> bool {
-        self.underscore().is_some()
     }
 }
 
@@ -3994,37 +3502,39 @@ fn modifier_entries<'source>(
             SyntaxElement::Node(_) => None,
         });
 
-    let mut entries = Vec::new();
     let mut pending = None;
-    while let Some(token) = pending.take().or_else(|| tokens.next()) {
-        if token.text() == "non" {
-            let Some(minus) = tokens.next() else {
-                continue;
-            };
 
-            if minus.kind() != JavaSyntaxKind::Minus {
-                pending = Some(minus);
-                continue;
-            }
+    std::iter::from_fn(move || {
+        loop {
+            let token = pending.take().or_else(|| tokens.next())?;
 
-            let Some(sealed) = tokens.next() else {
-                continue;
-            };
+            if token.text() == "non" {
+                let Some(minus) = tokens.next() else {
+                    continue;
+                };
 
-            if sealed.text() == "sealed" {
-                entries.push(ModifierEntry::non_sealed(token, minus, sealed));
-            } else {
+                if minus.kind() != JavaSyntaxKind::Minus {
+                    pending = Some(minus);
+                    continue;
+                }
+
+                let Some(sealed) = tokens.next() else {
+                    continue;
+                };
+
+                if sealed.text() == "sealed" {
+                    return Some(ModifierEntry::non_sealed(token, minus, sealed));
+                }
+
                 pending = Some(sealed);
+                continue;
             }
-            continue;
-        }
 
-        if is_modifier_token(token.kind()) || token.text() == "sealed" {
-            entries.push(ModifierEntry::single(token));
+            if is_modifier_token(token.kind()) || token.text() == "sealed" {
+                return Some(ModifierEntry::single(token));
+            }
         }
-    }
-
-    entries.into_iter()
+    })
 }
 
 fn assignment_operator<'source>(syntax: &JavaSyntaxNode<'source>) -> Option<JavaOperator<'source>> {
@@ -4414,204 +3924,160 @@ fn contextual_keyword_in<'source>(
 
 fn type_clause_entries<'source>(
     syntax: &super::JavaSyntaxNode<'source>,
-) -> std::vec::IntoIter<TypeClauseEntry<'source>> {
-    let mut entries = Vec::new();
-    let mut pending_type = None;
-
-    for element in syntax.children_with_tokens() {
-        match element {
-            SyntaxElement::Node(node) => {
-                if let Some(ty) = Type::cast(node)
-                    && let Some(previous) = pending_type.replace(ty)
-                {
-                    entries.push(TypeClauseEntry {
-                        ty: previous,
-                        comma: None,
-                    });
-                }
-            }
-            SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
-                if let Some(ty) = pending_type.take() {
-                    entries.push(TypeClauseEntry {
-                        ty,
-                        comma: Some(JavaSyntaxToken { syntax: token }),
-                    });
-                }
-            }
-            SyntaxElement::Token(_) => {}
-        }
-    }
-
-    if let Some(ty) = pending_type {
-        entries.push(TypeClauseEntry { ty, comma: None });
-    }
-
-    entries.into_iter()
+) -> impl Iterator<Item = TypeClauseEntry<'source>> + use<'source> {
+    separated_entries(
+        syntax.children_with_tokens(),
+        JavaSyntaxKind::Comma,
+        Type::cast,
+        |ty, comma| TypeClauseEntry { ty, comma },
+    )
 }
 
 fn intersection_type_entries<'source>(
     syntax: &super::JavaSyntaxNode<'source>,
-) -> std::vec::IntoIter<IntersectionTypeEntry<'source>> {
-    let mut entries = Vec::new();
-    let mut pending_type = None;
-
-    for element in syntax.children_with_tokens() {
-        match element {
-            SyntaxElement::Node(node) => {
-                if let Some(ty) = Type::cast(node)
-                    && let Some(previous) = pending_type.replace(ty)
-                {
-                    entries.push(IntersectionTypeEntry {
-                        ty: previous,
-                        separator: None,
-                    });
-                }
-            }
-            SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Amp => {
-                if let Some(ty) = pending_type.take() {
-                    entries.push(IntersectionTypeEntry {
-                        ty,
-                        separator: Some(JavaSyntaxToken { syntax: token }),
-                    });
-                }
-            }
-            SyntaxElement::Token(_) => {}
-        }
-    }
-
-    if let Some(ty) = pending_type {
-        entries.push(IntersectionTypeEntry {
-            ty,
-            separator: None,
-        });
-    }
-
-    entries.into_iter()
+) -> impl Iterator<Item = IntersectionTypeEntry<'source>> + use<'source> {
+    separated_entries(
+        syntax.children_with_tokens(),
+        JavaSyntaxKind::Amp,
+        Type::cast,
+        |ty, separator| IntersectionTypeEntry { ty, separator },
+    )
 }
 
 fn union_type_entries<'source>(
     syntax: &super::JavaSyntaxNode<'source>,
-) -> std::vec::IntoIter<UnionTypeEntry<'source>> {
-    let mut entries = Vec::new();
-    let mut pending_type = None;
-
-    for element in syntax.children_with_tokens() {
-        match element {
-            SyntaxElement::Node(node) => {
-                if let Some(ty) = Type::cast(node)
-                    && let Some(previous) = pending_type.replace(ty)
-                {
-                    entries.push(UnionTypeEntry {
-                        ty: previous,
-                        separator: None,
-                    });
-                }
-            }
-            SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Bar => {
-                if let Some(ty) = pending_type.take() {
-                    entries.push(UnionTypeEntry {
-                        ty,
-                        separator: Some(JavaSyntaxToken { syntax: token }),
-                    });
-                }
-            }
-            SyntaxElement::Token(_) => {}
-        }
-    }
-
-    if let Some(ty) = pending_type {
-        entries.push(UnionTypeEntry {
-            ty,
-            separator: None,
-        });
-    }
-
-    entries.into_iter()
+) -> impl Iterator<Item = UnionTypeEntry<'source>> + use<'source> {
+    separated_entries(
+        syntax.children_with_tokens(),
+        JavaSyntaxKind::Bar,
+        Type::cast,
+        |ty, separator| UnionTypeEntry { ty, separator },
+    )
 }
 
-fn module_name_entries_after_contextual_keyword<'source>(
+fn module_name_entries_after_contextual_keyword<'source, 'keyword>(
     syntax: &super::JavaSyntaxNode<'source>,
-    keyword_text: &str,
-) -> std::vec::IntoIter<ModuleNameListEntry<'source>> {
-    let mut entries = Vec::new();
+    keyword_text: &'keyword str,
+) -> impl Iterator<Item = ModuleNameListEntry<'source>> + use<'source, 'keyword> {
+    let mut elements = syntax.children_with_tokens();
     let mut after_keyword = false;
     let mut pending_name = None;
+    let mut done = false;
 
-    for element in syntax.children_with_tokens() {
-        match element {
-            SyntaxElement::Token(token)
-                if token.kind() == JavaSyntaxKind::Identifier && token.text() == keyword_text =>
-            {
-                after_keyword = true;
-                pending_name = None;
-            }
-            _ if !after_keyword => {}
-            SyntaxElement::Node(node) => {
-                if let Some(name) = NameSyntax::cast(node)
-                    && let Some(previous) = pending_name.replace(name)
-                {
-                    entries.push(ModuleNameListEntry {
-                        name: previous,
-                        comma: None,
-                    });
-                }
-            }
-            SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
-                if let Some(name) = pending_name.take() {
-                    entries.push(ModuleNameListEntry {
-                        name,
-                        comma: Some(JavaSyntaxToken { syntax: token }),
-                    });
-                }
-            }
-            SyntaxElement::Token(_) => {}
+    std::iter::from_fn(move || {
+        if done {
+            return None;
         }
-    }
 
-    if let Some(name) = pending_name {
-        entries.push(ModuleNameListEntry { name, comma: None });
-    }
+        for element in elements.by_ref() {
+            match element {
+                SyntaxElement::Token(token)
+                    if token.kind() == JavaSyntaxKind::Identifier
+                        && token.text() == keyword_text =>
+                {
+                    after_keyword = true;
+                    pending_name = None;
+                }
+                _ if !after_keyword => {}
+                SyntaxElement::Node(node) => {
+                    if let Some(name) = NameSyntax::cast(node)
+                        && let Some(previous) = pending_name.replace(name)
+                    {
+                        return Some(ModuleNameListEntry {
+                            name: previous,
+                            comma: None,
+                        });
+                    }
+                }
+                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
+                    if let Some(name) = pending_name.take() {
+                        return Some(ModuleNameListEntry {
+                            name,
+                            comma: Some(JavaSyntaxToken { syntax: token }),
+                        });
+                    }
+                }
+                SyntaxElement::Token(_) => {}
+            }
+        }
 
-    entries.into_iter()
+        done = true;
+        pending_name
+            .take()
+            .map(|name| ModuleNameListEntry { name, comma: None })
+    })
+}
+
+fn separated_entries<'source, Elements, Item, Entry, Cast, Make>(
+    mut elements: Elements,
+    separator_kind: JavaSyntaxKind,
+    mut cast: Cast,
+    mut make: Make,
+) -> impl Iterator<Item = Entry> + use<'source, Elements, Item, Entry, Cast, Make>
+where
+    Elements: Iterator<Item = SyntaxElement<'source, JavaLanguage>>,
+    Cast: FnMut(JavaSyntaxNode<'source>) -> Option<Item>,
+    Make: FnMut(Item, Option<JavaSyntaxToken<'source>>) -> Entry,
+{
+    let mut pending_item = None;
+    let mut done = false;
+
+    std::iter::from_fn(move || {
+        if done {
+            return None;
+        }
+
+        for element in elements.by_ref() {
+            match element {
+                SyntaxElement::Node(node) => {
+                    if let Some(item) = cast(node)
+                        && let Some(previous) = pending_item.replace(item)
+                    {
+                        return Some(make(previous, None));
+                    }
+                }
+                SyntaxElement::Token(token) if token.kind() == separator_kind => {
+                    if let Some(item) = pending_item.take() {
+                        return Some(make(item, Some(JavaSyntaxToken { syntax: token })));
+                    }
+                }
+                SyntaxElement::Token(_) => {}
+            }
+        }
+
+        done = true;
+        pending_item.take().map(|item| make(item, None))
+    })
 }
 
 fn annotations_before_type<'source>(
     syntax: &super::JavaSyntaxNode<'source>,
     ty: Option<Type<'source>>,
-) -> std::vec::IntoIter<Annotation<'source>> {
-    let Some(ty) = ty else {
-        return syntax
-            .children()
-            .filter_map(Annotation::cast)
-            .collect::<Vec<_>>()
-            .into_iter();
-    };
-    let type_start = ty.text_range().start();
+) -> impl Iterator<Item = Annotation<'source>> + use<'source> {
+    let type_start = ty.map(|ty| ty.text_range().start());
     syntax
         .children()
         .filter_map(Annotation::cast)
-        .filter(|annotation| annotation.text_range().start() < type_start)
-        .collect::<Vec<_>>()
-        .into_iter()
+        .filter(move |annotation| {
+            type_start.is_none_or(|type_start| annotation.text_range().start() < type_start)
+        })
 }
 
 fn annotations_between_type_and_token<'source>(
     syntax: &super::JavaSyntaxNode<'source>,
     ty: Option<Type<'source>>,
     token_kind: JavaSyntaxKind,
-) -> std::vec::IntoIter<Annotation<'source>> {
-    let (Some(ty), Some(token)) = (ty, child_token(syntax, token_kind)) else {
-        return Vec::new().into_iter();
-    };
-    let type_end = ty.text_range().end();
-    let token_start = token.token_text_range().start();
+) -> impl Iterator<Item = Annotation<'source>> + use<'source> {
+    let range = ty
+        .zip(child_token(syntax, token_kind))
+        .map(|(ty, token)| ty.text_range().end()..token.token_text_range().start());
     syntax
         .children()
         .filter_map(Annotation::cast)
-        .filter(|annotation| {
+        .filter(move |annotation| {
             let start = annotation.text_range().start();
-            start >= type_end && start < token_start
+            range
+                .as_ref()
+                .is_some_and(|range| start >= range.start && start < range.end)
         })
-        .collect::<Vec<_>>()
-        .into_iter()
 }

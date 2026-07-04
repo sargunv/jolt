@@ -32,15 +32,3 @@ where
         }
     }
 }
-
-impl<'source, L: Language> From<SyntaxNode<'source, L>> for SyntaxElement<'source, L> {
-    fn from(node: SyntaxNode<'source, L>) -> Self {
-        Self::Node(node)
-    }
-}
-
-impl<'source, L: Language> From<SyntaxToken<'source, L>> for SyntaxElement<'source, L> {
-    fn from(token: SyntaxToken<'source, L>) -> Self {
-        Self::Token(token)
-    }
-}

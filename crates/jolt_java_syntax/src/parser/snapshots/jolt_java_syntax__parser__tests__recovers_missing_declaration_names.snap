@@ -56,8 +56,6 @@ CompilationUnit
       RBrace "}" @ 250..251
   Eof "" @ 260..260 leading=[Newline "\n", Whitespace "        "]
 
-outcome: Recovered
-
 diagnostics:
   code=java.parse.expected_syntax severity=Error stage=Parser range=64..65 message="expected constructor name"
   code=java.parse.expected_syntax severity=Error stage=Parser range=91..92 message="expected method name"

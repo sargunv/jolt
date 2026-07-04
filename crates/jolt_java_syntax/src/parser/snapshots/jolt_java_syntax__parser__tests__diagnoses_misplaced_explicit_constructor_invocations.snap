@@ -46,8 +46,6 @@ CompilationUnit
       RBrace "}" @ 227..228 leading=[Newline "\n", Whitespace "            "]
   Eof "" @ 237..237 leading=[Newline "\n", Whitespace "        "]
 
-outcome: Recovered
-
 diagnostics:
   code=java.parse.misplaced_constructor_invocation severity=Error stage=Parser range=160..164 message="explicit constructor invocation must be first in constructor body"
   code=java.parse.misplaced_constructor_invocation severity=Error stage=Parser range=188..193 message="explicit constructor invocation must be first in constructor body"

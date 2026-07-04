@@ -4,10 +4,10 @@ use jolt_fmt_ir::{Doc, concat, group, hard_line, line, text};
 use jolt_java_syntax::{
     AnnotationElementDeclaration, AnnotationInterfaceBodyMember, AnnotationInterfaceDeclaration,
     BlockStatement, ClassBody, ClassBodyMember, ClassDeclaration, ConstructorInvocation,
-    EnumConstant, EnumConstantListEntry, EnumDeclaration, ExtendsClause, FormalParameterList,
-    ImplementsClause, InterfaceBody, InterfaceBodyMember, InterfaceDeclaration, JavaSyntaxToken,
-    MethodDeclaration, ModifierList, PermitsClause, PermitsClauseEntry, RecordBody,
-    RecordDeclaration, ThrowsClause, ThrowsClauseEntry, TypeClauseEntry, TypeDeclaration,
+    EnumConstant, EnumDeclaration, ExtendsClause, FormalParameterList, ImplementsClause,
+    InterfaceBody, InterfaceBodyMember, InterfaceDeclaration, JavaSyntaxToken, MethodDeclaration,
+    ModifierList, PermitsClause, PermitsClauseEntry, RecordBody, RecordDeclaration, ThrowsClause,
+    ThrowsClauseEntry, TypeClauseEntry, TypeDeclaration,
 };
 
 use crate::context::JavaFormatter;
@@ -16,8 +16,8 @@ use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, comment_forces_line, comment_is_star_block,
     comments_from_tokens, format_comment, format_construct_leading_comments,
     format_dangling_comments, format_leading_comment_list, format_leading_comments,
-    format_removed_comments, format_removed_token_comments, format_separator_with_comments,
-    format_token, format_token_after_construct_leading_comments, format_token_with_comments,
+    format_removed_comments, format_separator_with_comments, format_token,
+    format_token_after_construct_leading_comments, format_token_with_comments,
     has_removed_comments,
 };
 use crate::helpers::declarations::{declaration_with_body, declaration_without_body};
@@ -25,7 +25,7 @@ use crate::helpers::formatter_ignore::{
     formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
     is_formatter_control_marker, relative_token_range_between,
 };
-use crate::helpers::lists::{CommaListItem, parenthesized_list};
+use crate::helpers::lists::{CommaListItem, comma_list, parenthesized_list};
 use crate::helpers::member_body::{
     MemberBodyCategory as MemberCategory, MemberBodyItem as FormattedMember,
     join_member_body as join_member_docs,
@@ -59,7 +59,7 @@ use callables::{
     format_constructor_declaration, format_method_declaration,
 };
 use constructor_bodies::format_constructor_body;
-use enums::{format_enum_body_contents, format_enum_constant_entry};
+use enums::format_enum_body_contents;
 use member_bodies::{
     format_annotation_interface_body, format_class_body, format_interface_body, format_record_body,
 };

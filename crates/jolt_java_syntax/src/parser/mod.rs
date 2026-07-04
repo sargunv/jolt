@@ -6,9 +6,7 @@ mod source;
 
 use std::{borrow::Cow, fmt};
 
-use jolt_diagnostics::{
-    Diagnostic, DiagnosticCode, DiagnosticCodeId, DiagnosticStage, Severity, SyntaxOutcome,
-};
+use jolt_diagnostics::{Diagnostic, DiagnosticCodeId, DiagnosticStage, Severity};
 use jolt_syntax::{SyntaxTree, build_syntax_tree};
 
 use crate::{
@@ -35,8 +33,8 @@ pub(crate) enum JavaParseDiagnosticCode {
     InvalidEventStream,
 }
 
-impl DiagnosticCode for JavaParseDiagnosticCode {
-    fn id(&self) -> DiagnosticCodeId {
+impl JavaParseDiagnosticCode {
+    pub(crate) const fn id(self) -> DiagnosticCodeId {
         match self {
             Self::ExpectedSyntax => DiagnosticCodeId::new("java.parse.expected_syntax"),
             Self::UnexpectedSyntax => DiagnosticCodeId::new("java.parse.unexpected_syntax"),
@@ -74,7 +72,6 @@ pub struct JavaParse<'source> {
     source: Cow<'source, str>,
     tree: Option<SyntaxTree>,
     diagnostics: Vec<Diagnostic>,
-    outcome: SyntaxOutcome,
 }
 
 impl JavaParse<'_> {
@@ -91,12 +88,6 @@ impl JavaParse<'_> {
     pub fn diagnostics(&self) -> &[Diagnostic] {
         &self.diagnostics
     }
-
-    /// Returns the syntax production outcome.
-    #[must_use]
-    pub const fn outcome(&self) -> SyntaxOutcome {
-        self.outcome
-    }
 }
 
 impl fmt::Debug for JavaParse<'_> {
@@ -107,9 +98,6 @@ impl fmt::Debug for JavaParse<'_> {
         } else {
             writeln!(f, "  (none)")?;
         }
-
-        writeln!(f)?;
-        writeln!(f, "outcome: {:?}", self.outcome)?;
 
         writeln!(f)?;
         writeln!(f, "diagnostics:")?;
@@ -161,34 +149,17 @@ fn finish_parse<'source>(
                 source,
                 tree: None,
                 diagnostics: std::mem::take(diagnostics),
-                outcome: SyntaxOutcome::Aborted,
             };
         }
     };
     let (tree, parser_diagnostics) = tree;
     diagnostics.extend(parser_diagnostics);
-    let outcome = if diagnostics.iter().any(diagnostic_affects_syntax_tree) {
-        SyntaxOutcome::Recovered
-    } else {
-        SyntaxOutcome::Clean
-    };
 
     JavaParse {
         source,
         tree: Some(tree),
         diagnostics: std::mem::take(diagnostics),
-        outcome,
     }
-}
-
-const fn diagnostic_affects_syntax_tree(diagnostic: &Diagnostic) -> bool {
-    matches!(
-        diagnostic.stage,
-        DiagnosticStage::Lexer | DiagnosticStage::Parser
-    ) && matches!(
-        diagnostic.severity,
-        Severity::Error | Severity::InternalError
-    )
 }
 
 fn invalid_event_stream_diagnostic(error: &jolt_syntax::BuildSyntaxTreeError) -> Diagnostic {

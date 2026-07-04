@@ -1,73 +1,87 @@
 use super::member_bodies::{
-    combine_comment_members, effective_members, format_body_close_dangling_comments,
+    combine_comment_members, format_body_close_dangling_comments,
     format_body_open_dangling_comments, format_class_member_body,
-    format_empty_enum_constant_list_comments, format_enum_body_semicolon_comments,
+    format_empty_enum_constant_list_comments,
 };
 use super::{
-    ClassBodyMember, Doc, EnumConstant, EnumConstantListEntry, JavaFormatter, JavaSyntaxToken,
-    braced_body, comment_forces_line, comment_is_star_block, concat, format_argument_list,
-    format_class_body, format_comment, format_dangling_comments, format_leading_comments,
-    format_modifier_prefix_from_parts, format_token_with_comments, hard_line,
-    is_formatter_control_marker, text,
+    ClassBodyMember, Doc, EnumConstant, FormattedMember, JavaFormatter, JavaSyntaxToken,
+    braced_body, comment_forces_line, comment_is_star_block, comments_from_tokens, concat,
+    format_argument_list, format_class_body, format_comment, format_dangling_comments,
+    format_leading_comments, format_modifier_prefix_from_parts, format_removed_comments,
+    format_token_with_comments, formatter_ignore_ranges, hard_line, is_formatter_control_marker,
+    text,
 };
 
-pub(super) struct FormattedEnumConstant<'source> {
+struct FormattedEnumConstant<'source> {
     doc: Doc<'source>,
     comma: Option<JavaSyntaxToken<'source>>,
 }
 
 pub(super) fn format_enum_body_contents<'source>(
-    constants: Vec<FormattedEnumConstant<'source>>,
     body: &jolt_java_syntax::EnumBody<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Option<Doc<'source>> {
-    let members = body.members().collect::<Vec<_>>();
-    let enum_semicolons = body.semicolon_tokens().collect::<Vec<_>>();
-    let effective_members = effective_members(&members);
-    let has_body_declarations = effective_members
-        .iter()
+    let mut constants = body
+        .constants()
+        .into_iter()
+        .flat_map(|constants| constants.entries())
+        .map(|entry| format_enum_constant_entry(&entry, formatter))
+        .peekable();
+    let has_constants = constants.peek().is_some();
+    let has_body_declarations = body
+        .members()
         .any(|member| !matches!(member, ClassBodyMember::EmptyDeclaration(_)));
     let open_comments = combine_comment_members(
         combine_comment_members(
             format_body_open_dangling_comments(body.open_brace()),
-            format_enum_body_semicolon_comments(&enum_semicolons),
+            format_removed_comments(comments_from_tokens(body.semicolon_tokens()))
+                .map(FormattedMember::comment),
         ),
         format_empty_enum_constant_list_comments(body.constants()),
     );
     let close_comments = format_body_close_dangling_comments(body.close_brace());
-    if constants.is_empty()
-        && effective_members.is_empty()
-        && open_comments.is_none()
-        && close_comments.is_none()
-    {
+    let ignored_ranges = formatter_ignore_ranges(
+        body.source_text(),
+        body.text_range().start().get(),
+        body.token_iter(),
+    );
+    let members_doc = format_class_member_body(
+        body.text_range().start().get(),
+        &ignored_ranges,
+        body.members(),
+        open_comments,
+        close_comments,
+        formatter,
+    );
+    if !has_constants && members_doc.is_none() {
         return None;
     }
 
     let mut moved_member_comments = Vec::new();
-    let constants_doc = (!constants.is_empty()).then(|| {
-        let constants_len = constants.len();
+    let constants_doc = has_constants.then(|| {
         let mut pending_constant_comments = Vec::new();
         let mut constant_lines = Vec::new();
-        for (index, entry) in constants.into_iter().enumerate() {
+        while let Some(entry) = constants.next() {
             if !pending_constant_comments.is_empty() {
                 constant_lines.push(format_dangling_comments(std::mem::take(
                     &mut pending_constant_comments,
                 )));
             }
 
-            let is_last_constant = index + 1 == constants_len;
+            let is_last_constant = constants.peek().is_none();
             let separator = if !has_body_declarations || !is_last_constant {
                 ","
             } else {
                 ";"
             };
-            let moved_comments = entry.comma.as_ref().map_or_else(Vec::new, |comma| {
-                enum_separator_moved_comments(comma, has_body_declarations && is_last_constant)
-            });
-            if has_body_declarations && is_last_constant {
-                moved_member_comments.extend(moved_comments);
-            } else {
-                pending_constant_comments.extend(moved_comments);
+            if let Some(comma) = entry.comma {
+                let moved_comments =
+                    enum_separator_moved_comments(comma, has_body_declarations && is_last_constant);
+                if has_body_declarations && is_last_constant {
+                    moved_member_comments.extend(moved_comments);
+                } else {
+                    pending_constant_comments.extend(moved_comments);
+                }
             }
 
             constant_lines.push(concat([
@@ -89,15 +103,6 @@ pub(super) fn format_enum_body_contents<'source>(
 
     let moved_member_comments = (!moved_member_comments.is_empty())
         .then(|| format_dangling_comments(moved_member_comments));
-    let members_doc = format_class_member_body(
-        body.source_text(),
-        body.text_range().start().get(),
-        body.token_iter(),
-        &members,
-        open_comments,
-        close_comments,
-        formatter,
-    );
     let members_doc = match (moved_member_comments, members_doc) {
         (Some(comments), Some(members)) => Some(concat([comments, hard_line(), members])),
         (Some(comments), None) => Some(comments),
@@ -117,8 +122,8 @@ pub(super) fn format_enum_body_contents<'source>(
     }
 }
 
-pub(super) fn format_enum_constant_entry<'source>(
-    entry: &EnumConstantListEntry<'source>,
+fn format_enum_constant_entry<'source>(
+    entry: &jolt_java_syntax::EnumConstantListEntry<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> FormattedEnumConstant<'source> {
     FormattedEnumConstant {
@@ -151,30 +156,25 @@ fn format_enum_constant_separator<'source>(
 fn format_enum_separator_inline_trailing_comments<'source>(
     comma: &JavaSyntaxToken<'source>,
 ) -> Doc<'source> {
-    let comments = comma
+    let mut docs = Vec::new();
+    for comment in comma
         .trailing_comments()
         .filter(|comment| !enum_separator_comment_moves(comment))
-        .collect::<Vec<_>>();
-
-    let mut docs = Vec::new();
-    for comment in comments {
+    {
         docs.push(text(" "));
         docs.push(format_comment(&comment));
     }
     concat(docs)
 }
 
-fn enum_separator_moved_comments<'source>(
-    comma: &JavaSyntaxToken<'source>,
+fn enum_separator_moved_comments(
+    comma: JavaSyntaxToken<'_>,
     move_all_trailing_comments: bool,
-) -> Vec<jolt_java_syntax::JavaComment<'source>> {
-    comma
-        .trailing_comments()
-        .filter(|comment| {
-            !is_formatter_control_marker(comment.text())
-                && (move_all_trailing_comments || enum_separator_comment_moves(comment))
-        })
-        .collect()
+) -> impl Iterator<Item = jolt_java_syntax::JavaComment<'_>> + use<'_> {
+    comma.trailing_comments().filter(move |comment| {
+        !is_formatter_control_marker(comment.text())
+            && (move_all_trailing_comments || enum_separator_comment_moves(comment))
+    })
 }
 
 fn enum_separator_comment_moves(comment: &jolt_java_syntax::JavaComment<'_>) -> bool {

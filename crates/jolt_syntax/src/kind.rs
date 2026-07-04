@@ -21,18 +21,6 @@ impl RawSyntaxKind {
     }
 }
 
-impl From<u16> for RawSyntaxKind {
-    fn from(value: u16) -> Self {
-        Self(value)
-    }
-}
-
-impl From<RawSyntaxKind> for u16 {
-    fn from(kind: RawSyntaxKind) -> Self {
-        kind.0
-    }
-}
-
 impl fmt::Debug for RawSyntaxKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "RawSyntaxKind({})", self.0)

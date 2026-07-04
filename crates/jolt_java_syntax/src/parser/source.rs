@@ -1,12 +1,10 @@
 use std::ops::Range;
 
-use jolt_diagnostics::{Diagnostic, DiagnosticCode, DiagnosticStage, Severity};
-use jolt_syntax::{
-    CompletedMarker, Event, Marker, SyntaxTokenData, SyntaxTrivia, TriviaKind as SyntaxTriviaKind,
-};
+use jolt_diagnostics::{Diagnostic, DiagnosticStage, Severity};
+use jolt_syntax::{CompletedMarker, Event, Marker, SyntaxTokenData, SyntaxTrivia};
 use jolt_text::{TextRange, TextSize};
 
-use crate::{JavaLexer, JavaSyntaxKind, Trivia, lexer::LexedToken};
+use crate::{JavaLexer, JavaSyntaxKind, lexer::LexedToken};
 
 use super::JavaParseDiagnosticCode;
 
@@ -280,7 +278,7 @@ fn source_text(source: &str, range: TextRange) -> &str {
 pub(super) struct TokenBuffer<'source> {
     lexer: JavaLexer<'source>,
     tokens: Vec<SyntaxTokenData>,
-    trivia: Vec<Trivia>,
+    trivia: Vec<SyntaxTrivia>,
 }
 
 impl<'source> TokenBuffer<'source> {
@@ -388,7 +386,7 @@ impl<'source> TokenBuffer<'source> {
                 );
             }
             _ => {
-                self.push_syntax_token(token.kind, token.range, token.leading, token.trailing);
+                self.push_buffered_token(token.kind, token.range, token.leading, token.trailing);
             }
         }
     }
@@ -398,7 +396,7 @@ impl<'source> TokenBuffer<'source> {
         let last_index = kinds.len().saturating_sub(1);
         for (index, kind) in kinds.iter().copied().enumerate() {
             let token_start = start + TextSize::new(index);
-            self.push_syntax_token(
+            self.push_buffered_token(
                 kind,
                 TextRange::new(token_start, token_start + TextSize::new(1)),
                 if index == 0 {
@@ -415,7 +413,7 @@ impl<'source> TokenBuffer<'source> {
         }
     }
 
-    fn push_syntax_token(
+    fn push_buffered_token(
         &mut self,
         kind: JavaSyntaxKind,
         range: TextRange,
@@ -436,7 +434,7 @@ impl<'source> TokenBuffer<'source> {
     fn trivia_text_len(&self, range: &Range<usize>) -> TextSize {
         self.trivia[range.start..range.end]
             .iter()
-            .fold(TextSize::new(0), |len, trivia| len + trivia.range.len())
+            .fold(TextSize::new(0), |len, trivia| len + trivia.text_len())
     }
 
     fn empty_trivia(&self) -> Range<usize> {
@@ -455,23 +453,7 @@ impl<'source> TokenBuffer<'source> {
             .max()
             .unwrap_or(0);
         self.trivia.truncate(trivia_len);
-        let trivia = self
-            .trivia
-            .into_iter()
-            .map(|trivia| SyntaxTrivia::new(to_syntax_trivia_kind(trivia.kind), trivia.range.len()))
-            .collect();
         let diagnostics = self.lexer.finish();
-        (self.tokens, trivia, diagnostics)
-    }
-}
-
-fn to_syntax_trivia_kind(kind: crate::TriviaKind) -> SyntaxTriviaKind {
-    match kind {
-        crate::TriviaKind::Whitespace => SyntaxTriviaKind::Whitespace,
-        crate::TriviaKind::Newline => SyntaxTriviaKind::Newline,
-        crate::TriviaKind::LineComment => SyntaxTriviaKind::LineComment,
-        crate::TriviaKind::BlockComment => SyntaxTriviaKind::BlockComment,
-        crate::TriviaKind::JavadocComment => SyntaxTriviaKind::DocComment,
-        crate::TriviaKind::Ignored => SyntaxTriviaKind::Ignored,
+        (self.tokens, self.trivia, diagnostics)
     }
 }

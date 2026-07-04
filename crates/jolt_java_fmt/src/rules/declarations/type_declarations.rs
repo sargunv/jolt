@@ -2,13 +2,12 @@ use super::{
     AnnotationInterfaceDeclaration, ClassDeclaration, CommaListItem, Doc, EnumDeclaration,
     ExtendsClause, ImplementsClause, InterfaceDeclaration, JavaFormatter, JavaSyntaxToken,
     LeadingTrivia, ModifierList, PermitsClause, PermitsClauseEntry, RecordDeclaration,
-    TrailingTrivia, TypeClauseEntry, comment_forces_line, concat, declaration_with_body,
-    format_annotation_interface_body, format_class_body, format_construct_leading_comments,
-    format_enum_body_contents, format_enum_constant_entry, format_interface_body,
+    TrailingTrivia, TypeClauseEntry, comma_list, comment_forces_line, concat,
+    declaration_with_body, format_annotation_interface_body, format_class_body,
+    format_construct_leading_comments, format_enum_body_contents, format_interface_body,
     format_leading_comment_list, format_modifier_prefix, format_name, format_record_body,
-    format_record_component, format_separator_with_comments, format_token,
-    format_token_with_comments, format_type_parameter_list, format_type_without_leading_comments,
-    group, hard_line, line, parenthesized_list, text,
+    format_record_component, format_token, format_token_with_comments, format_type_parameter_list,
+    format_type_without_leading_comments, group, hard_line, line, parenthesized_list, text,
 };
 use crate::helpers::comments::format_token_after_relocated_leading_comments;
 
@@ -86,20 +85,9 @@ pub(super) fn format_enum_declaration<'source>(
     enum_: &EnumDeclaration<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    let body = enum_.body();
-    let constants = body
-        .as_ref()
-        .and_then(jolt_java_syntax::EnumBody::constants)
-        .map(|constants| {
-            constants
-                .entries()
-                .map(|entry| format_enum_constant_entry(&entry, formatter))
-                .collect::<Vec<_>>()
-        })
-        .unwrap_or_default();
     let body_doc = enum_
         .body()
-        .and_then(|body| format_enum_body_contents(constants, &body, formatter));
+        .and_then(|body| format_enum_body_contents(&body, formatter));
 
     format_type_declaration_with_body(
         enum_.first_token().as_ref(),
@@ -178,7 +166,7 @@ fn format_record_components<'source>(
     let Some(components) = record.components() else {
         let open = record.open_paren();
         let close = record.close_paren();
-        return parenthesized_list(open.as_ref(), close.as_ref(), Vec::new());
+        return parenthesized_list(open.as_ref(), close.as_ref(), std::iter::empty());
     };
 
     let open = components.open_paren();
@@ -186,13 +174,10 @@ fn format_record_components<'source>(
     parenthesized_list(
         open.as_ref(),
         close.as_ref(),
-        components
-            .entries()
-            .map(|entry| CommaListItem {
-                doc: format_record_component(&entry.component, formatter),
-                comma: entry.comma,
-            })
-            .collect(),
+        components.entries().map(|entry| CommaListItem {
+            doc: format_record_component(&entry.component, formatter),
+            comma: entry.comma,
+        }),
     )
 }
 
@@ -204,12 +189,7 @@ fn format_extends_clause<'source>(
         return jolt_fmt_ir::nil();
     };
     let keyword = clause.keyword();
-    format_type_header_clause(
-        keyword.as_ref(),
-        "extends",
-        clause.entries().collect::<Vec<_>>(),
-        formatter,
-    )
+    format_type_header_clause(keyword.as_ref(), "extends", clause.entries(), formatter)
 }
 
 fn format_implements_clause<'source>(
@@ -220,12 +200,7 @@ fn format_implements_clause<'source>(
         return jolt_fmt_ir::nil();
     };
     let keyword = clause.keyword();
-    format_type_header_clause(
-        keyword.as_ref(),
-        "implements",
-        clause.entries().collect::<Vec<_>>(),
-        formatter,
-    )
+    format_type_header_clause(keyword.as_ref(), "implements", clause.entries(), formatter)
 }
 
 fn format_permits_clause(clause: Option<PermitsClause<'_>>) -> Doc<'_> {
@@ -233,20 +208,17 @@ fn format_permits_clause(clause: Option<PermitsClause<'_>>) -> Doc<'_> {
         return jolt_fmt_ir::nil();
     };
     let keyword = clause.keyword();
-    format_permits_header_clause(
-        keyword.as_ref(),
-        "permits",
-        clause.entries().collect::<Vec<_>>(),
-    )
+    format_permits_header_clause(keyword.as_ref(), "permits", clause.entries())
 }
 
 fn format_type_header_clause<'source>(
     keyword: Option<&JavaSyntaxToken<'source>>,
     fallback: &'static str,
-    entries: Vec<TypeClauseEntry<'source>>,
+    entries: impl IntoIterator<Item = TypeClauseEntry<'source>>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    if entries.is_empty() {
+    let mut entries = entries.into_iter().peekable();
+    if entries.peek().is_none() {
         return jolt_fmt_ir::nil();
     }
 
@@ -263,9 +235,10 @@ fn format_type_header_clause<'source>(
 fn format_permits_header_clause<'source>(
     keyword: Option<&JavaSyntaxToken<'source>>,
     fallback: &'static str,
-    entries: Vec<PermitsClauseEntry<'source>>,
+    entries: impl IntoIterator<Item = PermitsClauseEntry<'source>>,
 ) -> Doc<'source> {
-    if entries.is_empty() {
+    let mut entries = entries.into_iter().peekable();
+    if entries.peek().is_none() {
         return jolt_fmt_ir::nil();
     }
 
@@ -314,42 +287,26 @@ fn header_keyword_forces_line(keyword: Option<&JavaSyntaxToken<'_>>) -> bool {
 }
 
 fn format_type_clause_entries_broken<'source>(
-    entries: Vec<TypeClauseEntry<'source>>,
+    entries: impl IntoIterator<Item = TypeClauseEntry<'source>>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    let mut docs = Vec::new();
-    let entries_len = entries.len();
-
-    for (index, entry) in entries.into_iter().enumerate() {
-        docs.push(concat([
+    comma_list(entries.into_iter().map(|entry| CommaListItem {
+        doc: concat([
             format_construct_leading_comments(entry.ty.first_token().as_ref()),
             format_type_without_leading_comments(&entry.ty, formatter),
-        ]));
-        if let Some(comma) = entry.comma {
-            docs.push(format_separator_with_comments(&comma, line()));
-        } else if index + 1 < entries_len {
-            docs.push(line());
-        }
-    }
-
-    concat(docs)
+        ]),
+        comma: entry.comma,
+    }))
 }
 
-fn format_permits_clause_entries_broken(entries: Vec<PermitsClauseEntry<'_>>) -> Doc<'_> {
-    let mut docs = Vec::new();
-    let entries_len = entries.len();
-
-    for (index, entry) in entries.into_iter().enumerate() {
-        docs.push(concat([
+fn format_permits_clause_entries_broken<'source>(
+    entries: impl IntoIterator<Item = PermitsClauseEntry<'source>>,
+) -> Doc<'source> {
+    comma_list(entries.into_iter().map(|entry| CommaListItem {
+        doc: concat([
             format_construct_leading_comments(entry.name.first_token().as_ref()),
             format_name(&entry.name),
-        ]));
-        if let Some(comma) = entry.comma {
-            docs.push(format_separator_with_comments(&comma, line()));
-        } else if index + 1 < entries_len {
-            docs.push(line());
-        }
-    }
-
-    concat(docs)
+        ]),
+        comma: entry.comma,
+    }))
 }

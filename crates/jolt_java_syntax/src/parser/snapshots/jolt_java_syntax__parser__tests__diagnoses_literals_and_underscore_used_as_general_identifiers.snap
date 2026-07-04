@@ -1,6 +1,5 @@
 ---
 source: crates/jolt_java_syntax/src/parser/tests.rs
-assertion_line: 2458
 expression: "&parse"
 ---
 syntax:
@@ -50,8 +49,6 @@ CompilationUnit
           RBrace "}" @ 174..175
       RBrace "}" @ 188..189 leading=[Newline "\n", Whitespace "            "]
   Eof "" @ 198..198 leading=[Newline "\n", Whitespace "        "]
-
-outcome: Recovered
 
 diagnostics:
   code=java.parse.expected_syntax severity=Error stage=Parser range=21..25 message="expected identifier"

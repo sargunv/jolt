@@ -76,13 +76,10 @@ fn format_annotation_argument_list<'source>(
     parenthesized_list(
         open.as_ref(),
         close.as_ref(),
-        arguments
-            .entries()
-            .map(|entry| CommaListItem {
-                doc: format_annotation_argument(&entry.argument, formatter),
-                comma: entry.comma,
-            })
-            .collect(),
+        arguments.entries().map(|entry| CommaListItem {
+            doc: format_annotation_argument(&entry.argument, formatter),
+            comma: entry.comma,
+        }),
     )
 }
 

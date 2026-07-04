@@ -35,19 +35,10 @@ impl Default for FormatOptions {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum FormatSinkResult<E> {
-    Complete {
-        diagnostics: Vec<Diagnostic>,
-    },
-    Halted {
-        diagnostics: Vec<Diagnostic>,
-    },
-    Blocked {
-        diagnostics: Vec<Diagnostic>,
-    },
-    SinkError {
-        diagnostics: Vec<Diagnostic>,
-        error: E,
-    },
+    Complete,
+    Halted,
+    Blocked { diagnostics: Vec<Diagnostic> },
+    SinkError { error: E },
 }
 
 impl<E> FormatSinkResult<E> {
@@ -58,15 +49,13 @@ impl<E> FormatSinkResult<E> {
 
     #[must_use]
     pub fn is_halted(&self) -> bool {
-        matches!(self, Self::Halted { .. })
+        matches!(self, Self::Halted)
     }
 
     pub fn diagnostics(&self) -> &[Diagnostic] {
         match self {
-            Self::Complete { diagnostics }
-            | Self::Halted { diagnostics }
-            | Self::Blocked { diagnostics }
-            | Self::SinkError { diagnostics, .. } => diagnostics,
+            Self::Blocked { diagnostics } => diagnostics,
+            Self::Complete | Self::Halted | Self::SinkError { .. } => &[],
         }
     }
 }
@@ -94,17 +83,13 @@ fn format_java_source_to_sink<S: RenderSink + ?Sized>(
         use_tabs: options.use_tabs,
     };
     match jolt_java_fmt::format_source_to_sink(source, &java_options, sink) {
-        jolt_java_fmt::JavaFormatSinkResult::Complete { diagnostics } => {
-            FormatSinkResult::Complete { diagnostics }
-        }
-        jolt_java_fmt::JavaFormatSinkResult::Halted { diagnostics } => {
-            FormatSinkResult::Halted { diagnostics }
-        }
+        jolt_java_fmt::JavaFormatSinkResult::Complete => FormatSinkResult::Complete,
+        jolt_java_fmt::JavaFormatSinkResult::Halted => FormatSinkResult::Halted,
         jolt_java_fmt::JavaFormatSinkResult::Blocked { diagnostics } => {
             FormatSinkResult::Blocked { diagnostics }
         }
-        jolt_java_fmt::JavaFormatSinkResult::SinkError { diagnostics, error } => {
-            FormatSinkResult::SinkError { diagnostics, error }
+        jolt_java_fmt::JavaFormatSinkResult::SinkError { error } => {
+            FormatSinkResult::SinkError { error }
         }
     }
 }

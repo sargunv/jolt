@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use jolt_fmt_ir::{Doc, concat, hard_line, literal_text, soft_line, text};
+use jolt_fmt_ir::{Doc, concat, empty_line, hard_line, literal_text, soft_line, text};
 use jolt_java_syntax::{JavaComment, JavaCommentKind, JavaSyntaxToken};
 
 use crate::helpers::formatter_ignore::is_formatter_control_marker;
@@ -24,6 +24,38 @@ pub(crate) enum TrailingTrivia {
 pub(crate) enum InlineLeadingTrivia {
     AfterPreviousToken,
     BeforeToken,
+}
+
+pub(crate) fn format_leading_comment_runs<'source, Item>(
+    items: impl IntoIterator<Item = Item>,
+    mut has_leading_comments: impl FnMut(&Item) -> bool,
+    mut format_run: impl FnMut(Vec<Item>) -> Doc<'source>,
+) -> Doc<'source> {
+    let mut docs = Vec::new();
+    let mut current_run = Vec::new();
+
+    for item in items {
+        if has_leading_comments(&item) && !current_run.is_empty() {
+            push_leading_comment_run(&mut docs, std::mem::take(&mut current_run), &mut format_run);
+        }
+        current_run.push(item);
+    }
+    if !current_run.is_empty() {
+        push_leading_comment_run(&mut docs, current_run, &mut format_run);
+    }
+
+    concat(docs)
+}
+
+fn push_leading_comment_run<'source, Item>(
+    docs: &mut Vec<Doc<'source>>,
+    run: Vec<Item>,
+    format_run: &mut impl FnMut(Vec<Item>) -> Doc<'source>,
+) {
+    if !docs.is_empty() {
+        docs.push(empty_line());
+    }
+    docs.push(format_run(run));
 }
 
 pub(crate) fn token_has_comments(token: &JavaSyntaxToken<'_>) -> bool {
@@ -71,16 +103,6 @@ pub(crate) fn format_leading_comment_list<'source>(
         docs.push(hard_line());
     }
     concat(docs)
-}
-
-pub(crate) fn format_removed_token_comments<'source>(
-    tokens: &[JavaSyntaxToken<'source>],
-) -> Option<Doc<'source>> {
-    format_removed_comments(
-        tokens
-            .iter()
-            .flat_map(|token| token.leading_comments().chain(token.trailing_comments())),
-    )
 }
 
 pub(crate) fn format_removed_comments<'source>(
@@ -324,27 +346,6 @@ pub(crate) fn comment_forces_line(comment: &JavaComment<'_>) -> bool {
 
 pub(crate) fn comment_is_star_block(comment: &JavaComment<'_>) -> bool {
     comment.kind() == JavaCommentKind::Doc || is_star_block_comment(comment.text())
-}
-
-pub(crate) fn split_leading_comment_barrier_runs<T>(
-    items: Vec<T>,
-    mut has_leading_comments: impl FnMut(&T) -> bool,
-) -> Vec<Vec<T>> {
-    let mut runs = Vec::new();
-    let mut current_run = Vec::new();
-
-    for item in items {
-        if has_leading_comments(&item) && !current_run.is_empty() {
-            runs.push(current_run);
-            current_run = Vec::new();
-        }
-        current_run.push(item);
-    }
-    if !current_run.is_empty() {
-        runs.push(current_run);
-    }
-
-    runs
 }
 
 fn format_comment_lines<'source>(

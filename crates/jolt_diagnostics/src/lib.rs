@@ -49,12 +49,6 @@ impl fmt::Display for DiagnosticCodeId {
     }
 }
 
-/// A typed source for stable diagnostic codes.
-pub trait DiagnosticCode {
-    /// Returns the stable machine-readable code identifier.
-    fn id(&self) -> DiagnosticCodeId;
-}
-
 /// Diagnostic severity.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum Severity {
@@ -73,15 +67,4 @@ pub enum DiagnosticStage {
     Parser,
     /// Formatting.
     Formatter,
-}
-
-/// Syntax production outcome.
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub enum SyntaxOutcome {
-    /// Syntax was produced without diagnostics.
-    Clean,
-    /// Syntax was produced after recoverable diagnostics.
-    Recovered,
-    /// Syntax could not be produced as a trustworthy complete tree.
-    Aborted,
 }

@@ -1,6 +1,4 @@
-use jolt_diagnostics::{
-    Diagnostic, DiagnosticCode, DiagnosticCodeId, DiagnosticStage, Severity, SyntaxOutcome,
-};
+use jolt_diagnostics::{Diagnostic, DiagnosticCodeId, DiagnosticStage, Severity};
 use jolt_fmt_ir::{RenderSink, RenderToError, render_to};
 use jolt_java_syntax::parse_compilation_unit;
 
@@ -29,19 +27,10 @@ impl Default for JavaFormatOptions {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum JavaFormatSinkResult<E> {
-    Complete {
-        diagnostics: Vec<Diagnostic>,
-    },
-    Halted {
-        diagnostics: Vec<Diagnostic>,
-    },
-    Blocked {
-        diagnostics: Vec<Diagnostic>,
-    },
-    SinkError {
-        diagnostics: Vec<Diagnostic>,
-        error: E,
-    },
+    Complete,
+    Halted,
+    Blocked { diagnostics: Vec<Diagnostic> },
+    SinkError { error: E },
 }
 
 /// Stable Java formatter diagnostic codes.
@@ -51,8 +40,8 @@ enum JavaFormatDiagnosticCode {
     RenderError,
 }
 
-impl DiagnosticCode for JavaFormatDiagnosticCode {
-    fn id<'source>(&self) -> DiagnosticCodeId {
+impl JavaFormatDiagnosticCode {
+    const fn id(self) -> DiagnosticCodeId {
         match self {
             Self::RenderError => DiagnosticCodeId::new("java.format.render_error"),
         }
@@ -66,26 +55,28 @@ pub fn format_source_to_sink<S: RenderSink + ?Sized>(
     sink: &mut S,
 ) -> JavaFormatSinkResult<S::Error> {
     let parse = parse_compilation_unit(source);
-    let diagnostics = parse.diagnostics().to_vec();
-    let outcome = parse.outcome();
 
-    if outcome != SyntaxOutcome::Clean {
-        return JavaFormatSinkResult::Blocked { diagnostics };
+    if !parse.diagnostics().is_empty() {
+        return JavaFormatSinkResult::Blocked {
+            diagnostics: parse.diagnostics().to_vec(),
+        };
     }
 
     let Some(syntax) = parse.syntax() else {
-        return JavaFormatSinkResult::Blocked { diagnostics };
+        return JavaFormatSinkResult::Blocked {
+            diagnostics: Vec::new(),
+        };
     };
 
     let mut formatter = JavaFormatter::new(options);
     let doc = formatter.format_compilation_unit(&syntax);
     match render_to(&doc, formatter.render_options(), sink) {
-        Ok(outcome) if outcome.halted => JavaFormatSinkResult::Halted { diagnostics },
-        Ok(_) => JavaFormatSinkResult::Complete { diagnostics },
+        Ok(outcome) if outcome.halted => JavaFormatSinkResult::Halted,
+        Ok(_) => JavaFormatSinkResult::Complete,
         Err(RenderToError::Render(error)) => JavaFormatSinkResult::Blocked {
-            diagnostics: [diagnostics, vec![render_error_diagnostic(&error)]].concat(),
+            diagnostics: vec![render_error_diagnostic(&error)],
         },
-        Err(RenderToError::Sink(error)) => JavaFormatSinkResult::SinkError { diagnostics, error },
+        Err(RenderToError::Sink(error)) => JavaFormatSinkResult::SinkError { error },
     }
 }
 

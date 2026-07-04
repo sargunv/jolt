@@ -68,13 +68,10 @@ pub(crate) fn format_type_parameter_list<'source>(
         angle_bracket_list(
             open.as_ref(),
             close.as_ref(),
-            parameters
-                .entries()
-                .map(|entry| CommaListItem {
-                    doc: format_type_parameter(&entry.parameter, formatter),
-                    comma: entry.comma,
-                })
-                .collect(),
+            parameters.entries().map(|entry| CommaListItem {
+                doc: format_type_parameter(&entry.parameter, formatter),
+                comma: entry.comma,
+            }),
         )
     })
 }
@@ -88,13 +85,10 @@ pub(crate) fn format_type_argument_list<'source>(
     angle_bracket_list(
         open.as_ref(),
         close.as_ref(),
-        arguments
-            .entries()
-            .map(|entry| CommaListItem {
-                doc: format_type_argument(&entry.argument, formatter),
-                comma: entry.comma,
-            })
-            .collect(),
+        arguments.entries().map(|entry| CommaListItem {
+            doc: format_type_argument(&entry.argument, formatter),
+            comma: entry.comma,
+        }),
     )
 }
 
@@ -115,7 +109,7 @@ fn format_primitive_type<'source>(
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
     concat([
-        format_inline_annotations(ty.annotations().collect(), formatter),
+        format_inline_annotations(ty.annotations(), formatter),
         ty.keyword().map_or_else(jolt_fmt_ir::nil, |keyword| {
             format_type_head_token(&keyword, leading_comments)
         }),
@@ -237,7 +231,7 @@ fn format_type_parameter<'source>(
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
     concat([
-        format_inline_annotations(parameter.annotations().collect(), formatter),
+        format_inline_annotations(parameter.annotations(), formatter),
         parameter
             .name()
             .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name)),
@@ -260,10 +254,7 @@ fn format_type_bounds<'source>(
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
     format_type_operator_entries_doc(
-        bounds
-            .entries()
-            .map(|entry| (entry.ty, entry.separator))
-            .collect(),
+        bounds.entries().map(|entry| (entry.ty, entry.separator)),
         "&",
         formatter,
     )
@@ -274,10 +265,7 @@ fn format_intersection_entries<'source>(
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
     format_type_operator_entries(
-        entries
-            .into_iter()
-            .map(|entry| (entry.ty, entry.separator))
-            .collect(),
+        entries.into_iter().map(|entry| (entry.ty, entry.separator)),
         "&",
         formatter,
     )
@@ -288,17 +276,14 @@ fn format_union_entries<'source>(
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
     format_type_operator_entries(
-        entries
-            .into_iter()
-            .map(|entry| (entry.ty, entry.separator))
-            .collect(),
+        entries.into_iter().map(|entry| (entry.ty, entry.separator)),
         "|",
         formatter,
     )
 }
 
 fn format_type_operator_entries<'source>(
-    entries: Vec<(Type<'source>, Option<JavaSyntaxToken<'source>>)>,
+    entries: impl IntoIterator<Item = (Type<'source>, Option<JavaSyntaxToken<'source>>)>,
     fallback_operator: &'static str,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
@@ -310,28 +295,25 @@ fn format_type_operator_entries<'source>(
 }
 
 fn format_type_operator_entries_doc<'source>(
-    entries: Vec<(Type<'source>, Option<JavaSyntaxToken<'source>>)>,
+    entries: impl IntoIterator<Item = (Type<'source>, Option<JavaSyntaxToken<'source>>)>,
     fallback_operator: &'static str,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    let entries_len = entries.len();
-    let mut entries = entries.into_iter().enumerate();
-    let Some((mut previous_index, (ty, mut previous_separator))) = entries.next() else {
+    let mut entries = entries.into_iter().peekable();
+    let Some((ty, mut previous_separator)) = entries.next() else {
         return jolt_fmt_ir::nil();
     };
 
     let first = format_type(&ty, formatter);
     let mut rest = Vec::new();
 
-    for (_index, (ty, separator)) in entries {
+    while let Some((ty, separator)) = entries.next() {
         rest.push(format_type_operator_continuation(
             previous_separator.as_ref(),
-            previous_index,
-            entries_len,
+            entries.peek().is_some(),
             fallback_operator,
             format_type(&ty, formatter),
         ));
-        previous_index += 1;
         previous_separator = separator;
     }
 
@@ -348,17 +330,12 @@ fn type_operator_separator_forces_line(separator: Option<&JavaSyntaxToken<'_>>) 
 
 fn format_type_operator_continuation<'source>(
     separator: Option<&JavaSyntaxToken<'source>>,
-    index: usize,
-    entries_len: usize,
+    has_next: bool,
     fallback_operator: &'static str,
     operand: Doc<'source>,
 ) -> Doc<'source> {
-    let separator_doc = format_type_operator_separator_before_operand(
-        separator,
-        index,
-        entries_len,
-        fallback_operator,
-    );
+    let separator_doc =
+        format_type_operator_separator_before_operand(separator, has_next, fallback_operator);
 
     if type_operator_separator_forces_line(separator) {
         concat([separator_doc, indent(concat([hard_line(), operand]))])
@@ -369,13 +346,12 @@ fn format_type_operator_continuation<'source>(
 
 fn format_type_operator_separator_before_operand<'source>(
     separator: Option<&JavaSyntaxToken<'source>>,
-    index: usize,
-    entries_len: usize,
+    has_next: bool,
     fallback_operator: &'static str,
 ) -> Doc<'source> {
     if let Some(separator) = separator {
         format_type_operator_separator(Some(separator), fallback_operator)
-    } else if index + 1 < entries_len {
+    } else if has_next {
         format_type_operator_separator(None, fallback_operator)
     } else {
         jolt_fmt_ir::nil()
@@ -414,7 +390,7 @@ fn format_type_argument<'source>(
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
     concat([
-        format_inline_annotations(argument.annotations().collect(), formatter),
+        format_inline_annotations(argument.annotations(), formatter),
         argument
             .ty()
             .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty, formatter)),
@@ -451,8 +427,8 @@ fn format_array_dimension<'source>(
     dimension: &ArrayDimension<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    let annotations = dimension.annotations().collect::<Vec<_>>();
-    if annotations.is_empty() {
+    let mut annotations = dimension.annotations().peekable();
+    if annotations.peek().is_none() {
         return concat([
             dimension
                 .open_bracket()
@@ -488,19 +464,18 @@ fn format_array_dimension_close_bracket<'source>(close: &JavaSyntaxToken<'source
 }
 
 pub(crate) fn format_inline_annotations<'source>(
-    annotations: Vec<Annotation<'source>>,
+    annotations: impl IntoIterator<Item = Annotation<'source>>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    if annotations.is_empty() {
+    let mut annotations = annotations.into_iter().peekable();
+    if annotations.peek().is_none() {
         return jolt_fmt_ir::nil();
     }
 
     concat([
         jolt_fmt_ir::join(
             &text(" "),
-            annotations
-                .into_iter()
-                .map(|annotation| format_annotation(&annotation, formatter)),
+            annotations.map(|annotation| format_annotation(&annotation, formatter)),
         ),
         text(" "),
     ])

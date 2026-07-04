@@ -28,15 +28,14 @@ pub(crate) fn format_source(source: &str, options: &JavaFormatOptions) -> TestFo
     let mut sink = StringSink::default();
     let result = format_source_to_sink(source, options, &mut sink);
     match result {
-        JavaFormatSinkResult::Complete { diagnostics }
-        | JavaFormatSinkResult::Halted { diagnostics } => TestFormatResult {
+        JavaFormatSinkResult::Complete | JavaFormatSinkResult::Halted => TestFormatResult {
             formatted_source: Some(sink.text),
-            diagnostics,
+            diagnostics: Vec::new(),
         },
         JavaFormatSinkResult::Blocked { diagnostics } => TestFormatResult {
             formatted_source: None,
             diagnostics,
         },
-        JavaFormatSinkResult::SinkError { error, .. } => match error {},
+        JavaFormatSinkResult::SinkError { error } => match error {},
     }
 }

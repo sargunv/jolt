@@ -1,34 +1,9 @@
 use std::ops::Range;
 
-use jolt_diagnostics::{Diagnostic, DiagnosticCode, DiagnosticCodeId};
+use jolt_diagnostics::{Diagnostic, DiagnosticCodeId};
 use jolt_text::TextRange;
 
 use crate::JavaSyntaxKind;
-
-#[derive(Debug, Eq, PartialEq)]
-pub(crate) struct Trivia {
-    pub(crate) kind: TriviaKind,
-    pub(crate) range: TextRange,
-}
-
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub(crate) enum TriviaKind {
-    Whitespace,
-    Newline,
-    LineComment,
-    BlockComment,
-    JavadocComment,
-    Ignored,
-}
-
-#[derive(Debug, Eq, PartialEq)]
-#[cfg(test)]
-pub(crate) struct Token {
-    pub(crate) kind: JavaSyntaxKind,
-    pub(crate) range: TextRange,
-    pub(crate) leading: Vec<Trivia>,
-    pub(crate) trailing: Vec<Trivia>,
-}
 
 /// A lexed token whose trivia lives in a caller-owned buffer.
 #[derive(Debug, Eq, PartialEq)]
@@ -42,7 +17,6 @@ pub(crate) struct LexedToken {
 /// A lexer diagnostic with a raw source range.
 pub(crate) type LexerDiagnostic = Diagnostic;
 
-/// Stable Java lexer diagnostic codes.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub(crate) enum JavaLexDiagnosticCode {
     MalformedUnicodeEscape,
@@ -75,10 +49,8 @@ impl JavaLexDiagnosticCode {
             Self::UnknownCharacter => "unknown character",
         }
     }
-}
 
-impl DiagnosticCode for JavaLexDiagnosticCode {
-    fn id(&self) -> DiagnosticCodeId {
+    pub(crate) const fn id(self) -> DiagnosticCodeId {
         match self {
             Self::MalformedUnicodeEscape => {
                 DiagnosticCodeId::new("java.lex.malformed_unicode_escape")

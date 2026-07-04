@@ -53,7 +53,5 @@ CompilationUnit
       RBrace "}" @ 247..248 leading=[Newline "\n", Whitespace "            "]
   Eof "" @ 257..257 leading=[Newline "\n", Whitespace "        "]
 
-outcome: Recovered
-
 diagnostics:
   code=java.parse.invalid_switch_guard severity=Error stage=Parser range=149..153 message="switch guard requires a pattern"

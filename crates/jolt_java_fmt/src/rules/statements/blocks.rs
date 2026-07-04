@@ -54,17 +54,25 @@ fn format_block_statements_body<'source>(
     block: &Block<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Option<Doc<'source>> {
-    let statements = block.block_statements().collect::<Vec<_>>();
     let block_start = block.text_range().start().get();
     let ignored_ranges = block_formatter_ignore_ranges(block);
     let mut items = Vec::new();
     items.extend(format_block_open_dangling_comments(block));
-    items.extend(format_block_statement_items(
-        &statements,
-        block_start,
-        &ignored_ranges,
-        formatter,
-    ));
+    if ignored_ranges.is_empty() {
+        items.extend(
+            block
+                .block_statements()
+                .filter_map(|statement| format_block_statement_item(&statement, formatter)),
+        );
+    } else {
+        let statements = block.block_statements().collect::<Vec<_>>();
+        items.extend(format_block_statement_items(
+            &statements,
+            block_start,
+            &ignored_ranges,
+            formatter,
+        ));
+    }
     items.extend(format_block_close_dangling_comments(block));
     (!items.is_empty()).then(|| join_body_items(items))
 }
@@ -89,13 +97,6 @@ fn format_block_statement_items<'source>(
     ignored_ranges: &[FormatterIgnoreRange<'source>],
     formatter: &JavaFormatter<'_>,
 ) -> Vec<BodyItem<'source>> {
-    if ignored_ranges.is_empty() {
-        return statements
-            .iter()
-            .filter_map(|statement| format_block_statement_item(statement, formatter))
-            .collect();
-    }
-
     let statement_ranges = statements
         .iter()
         .map(|statement| block_statement_token_range(statement, block_start))

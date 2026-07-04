@@ -70,12 +70,11 @@ impl JoltDprintPlugin {
         let mut sink = DprintFormatSink::default();
         let result = format_source_to_sink(source, language, options, &mut sink);
         match result {
-            FormatSinkResult::Complete { diagnostics: _ } => {}
-            FormatSinkResult::Halted { diagnostics } => {
-                return Err(FormatError::from(format!(
-                    "Jolt formatter halted before producing complete output:\n{}",
-                    format_blocked_diagnostics(source, &diagnostics)
-                )));
+            FormatSinkResult::Complete => {}
+            FormatSinkResult::Halted => {
+                return Err(FormatError::from(
+                    "Jolt formatter halted before producing complete output",
+                ));
             }
             FormatSinkResult::Blocked { diagnostics } => {
                 return Err(FormatError::from(format_blocked_diagnostics(
@@ -83,7 +82,7 @@ impl JoltDprintPlugin {
                     &diagnostics,
                 )));
             }
-            FormatSinkResult::SinkError { error, .. } => match error {},
+            FormatSinkResult::SinkError { error } => match error {},
         }
 
         let formatted = sink.into_bytes();
@@ -182,11 +181,14 @@ fn format_blocked_diagnostics(source: &str, diagnostics: &[Diagnostic]) -> Strin
     }
 
     let line_index = LineIndex::new(source);
-    diagnostics
-        .iter()
-        .map(|diagnostic| format_diagnostic(source, &line_index, diagnostic))
-        .collect::<Vec<_>>()
-        .join("\n")
+    let mut text = String::new();
+    for (index, diagnostic) in diagnostics.iter().enumerate() {
+        if index > 0 {
+            text.push('\n');
+        }
+        text.push_str(&format_diagnostic(source, &line_index, diagnostic));
+    }
+    text
 }
 
 fn format_diagnostic(source: &str, line_index: &LineIndex, diagnostic: &Diagnostic) -> String {

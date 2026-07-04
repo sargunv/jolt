@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use jolt_fmt_ir::{Doc, concat, hard_line, indent, text};
 use jolt_java_syntax::{JavaComment, JavaSyntaxToken, NameSegment, NameSyntax};
 
@@ -23,15 +25,45 @@ pub(crate) fn format_name<'source>(name: &NameSyntax<'source>) -> Doc<'source> {
     )
 }
 
-pub(crate) fn name_key(name: &NameSyntax<'_>) -> String {
-    let mut key = String::new();
-    for segment in name.segments() {
-        if !key.is_empty() {
-            key.push('.');
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(crate) struct NameSortKey<'source> {
+    segments: Vec<&'source str>,
+    on_demand: bool,
+}
+
+impl<'source> NameSortKey<'source> {
+    pub(crate) fn new(name: &NameSyntax<'source>, on_demand: bool) -> Self {
+        Self {
+            segments: name.segments().map(|segment| segment.text()).collect(),
+            on_demand,
         }
-        key.push_str(segment.text());
     }
-    key
+
+    fn chars(&self) -> impl Iterator<Item = char> + '_ {
+        self.segments
+            .iter()
+            .enumerate()
+            .flat_map(|(index, segment)| {
+                (index > 0)
+                    .then_some(".")
+                    .into_iter()
+                    .chain(std::iter::once(*segment))
+            })
+            .chain(self.on_demand.then_some(".*"))
+            .flat_map(str::chars)
+    }
+}
+
+impl Ord for NameSortKey<'_> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.chars().cmp(other.chars())
+    }
+}
+
+impl PartialOrd for NameSortKey<'_> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 fn segments_have_comments(segments: &[NameSegment<'_>]) -> bool {

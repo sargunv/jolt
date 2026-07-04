@@ -276,8 +276,6 @@ CompilationUnit
       RBrace "}" @ 699..700 leading=[Newline "\n", Whitespace "            "]
   Eof "" @ 709..709 leading=[Newline "\n", Whitespace "        "]
 
-outcome: Recovered
-
 diagnostics:
   code=java.parse.invalid_statement_expression severity=Error stage=Parser range=110..111 message="expected statement expression"
   code=java.parse.invalid_statement_expression severity=Error stage=Parser range=136..137 message="expected statement expression"

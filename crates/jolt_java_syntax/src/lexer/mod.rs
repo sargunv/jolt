@@ -6,15 +6,13 @@ mod unicode;
 use std::ops::Range;
 
 use crate::JavaSyntaxKind;
-use jolt_diagnostics::{Diagnostic, DiagnosticCode, DiagnosticStage, Severity};
+use jolt_diagnostics::{Diagnostic, DiagnosticStage, Severity};
+use jolt_syntax::{SyntaxTrivia, TriviaKind as SyntaxTriviaKind};
 use jolt_text::{TextRange, TextSize};
 use unicode_general_category::{GeneralCategory, get_general_category};
 
 pub(crate) use token::LexedToken;
-#[cfg(test)]
-pub(crate) use token::Token;
 pub(crate) use token::{JavaLexDiagnosticCode, LexerDiagnostic};
-pub(crate) use token::{Trivia, TriviaKind};
 pub(crate) use unicode::normalize_unicode_escapes;
 
 pub(crate) struct JavaLexer<'source> {
@@ -31,30 +29,8 @@ impl<'source> JavaLexer<'source> {
         }
     }
 
-    #[cfg(test)]
-    pub(crate) fn next_token(&mut self) -> Token {
-        if self.emitted_eof {
-            return self.eof_token(Vec::new());
-        }
-
-        let leading = self.scanner.leading_trivia();
-        if self.scanner.at_end() {
-            self.emitted_eof = true;
-            return self.eof_token(leading);
-        }
-
-        let (kind, range) = self.scanner.token();
-        let trailing = self.scanner.trailing_trivia();
-        Token {
-            kind,
-            range,
-            leading,
-            trailing,
-        }
-    }
-
     /// Returns the next token, appending its trivia to the supplied buffer.
-    pub(crate) fn next_token_into(&mut self, trivia: &mut Vec<Trivia>) -> LexedToken {
+    pub(crate) fn next_token_into(&mut self, trivia: &mut Vec<SyntaxTrivia>) -> LexedToken {
         if self.emitted_eof {
             return self.eof_token_into(trivia.len()..trivia.len());
         }
@@ -78,22 +54,8 @@ impl<'source> JavaLexer<'source> {
     /// Drains the remaining source and returns all lexer diagnostics.
     #[must_use]
     pub(crate) fn finish(mut self) -> Vec<LexerDiagnostic> {
-        let mut trivia = Vec::new();
-        while !self.emitted_eof {
-            self.next_token_into(&mut trivia);
-            trivia.clear();
-        }
+        self.scanner.drain();
         self.scanner.diagnostics
-    }
-
-    #[cfg(test)]
-    fn eof_token(&self, leading: Vec<Trivia>) -> Token {
-        Token {
-            kind: JavaSyntaxKind::Eof,
-            range: TextRange::empty(TextSize::new(self.scanner.source.len())),
-            leading,
-            trailing: Vec::new(),
-        }
     }
 
     fn eof_token_into(&self, leading: Range<usize>) -> LexedToken {
@@ -152,14 +114,16 @@ impl<'source> Scanner<'source> {
         (kind, TextRange::new(start, end))
     }
 
-    #[cfg(test)]
-    fn leading_trivia(&mut self) -> Vec<Trivia> {
-        let mut trivia = Vec::new();
-        self.leading_trivia_into(&mut trivia);
-        trivia
+    fn drain(&mut self) {
+        while !self.at_end() {
+            while self.trivia_piece().is_some() {}
+            if !self.at_end() {
+                self.token();
+            }
+        }
     }
 
-    fn leading_trivia_into(&mut self, trivia: &mut Vec<Trivia>) -> Range<usize> {
+    fn leading_trivia_into(&mut self, trivia: &mut Vec<SyntaxTrivia>) -> Range<usize> {
         let start = trivia.len();
         while let Some(piece) = self.trivia_piece() {
             trivia.push(piece);
@@ -167,14 +131,7 @@ impl<'source> Scanner<'source> {
         start..trivia.len()
     }
 
-    #[cfg(test)]
-    fn trailing_trivia(&mut self) -> Vec<Trivia> {
-        let mut trivia = Vec::new();
-        self.trailing_trivia_into(&mut trivia);
-        trivia
-    }
-
-    fn trailing_trivia_into(&mut self, trivia: &mut Vec<Trivia>) -> Range<usize> {
+    fn trailing_trivia_into(&mut self, trivia: &mut Vec<SyntaxTrivia>) -> Range<usize> {
         let start = trivia.len();
 
         while self.current_char().is_some_and(is_horizontal_whitespace) {
@@ -203,7 +160,7 @@ impl<'source> Scanner<'source> {
         start..trivia.len()
     }
 
-    fn trivia_piece(&mut self) -> Option<Trivia> {
+    fn trivia_piece(&mut self) -> Option<SyntaxTrivia> {
         match (self.current_char(), self.peek_char(1)) {
             (Some('\u{001A}'), _) if self.is_ignored_final_sub() => Some(self.ignored_final_sub()),
             (Some(ch), _) if is_horizontal_whitespace(ch) => Some(self.horizontal_whitespace()),
@@ -215,18 +172,15 @@ impl<'source> Scanner<'source> {
         }
     }
 
-    fn ignored_final_sub(&mut self) -> Trivia {
+    fn ignored_final_sub(&mut self) -> SyntaxTrivia {
         let range = self.current_range().expect("SUB starts before EOF");
         self.bump();
         // JLS 3.5 ignores a final ASCII SUB/control-Z after Unicode escape
         // processing. Keep its raw range as trivia so formatting remains lossless.
-        Trivia {
-            kind: TriviaKind::Ignored,
-            range,
-        }
+        SyntaxTrivia::new(SyntaxTriviaKind::Ignored, range.len())
     }
 
-    fn horizontal_whitespace(&mut self) -> Trivia {
+    fn horizontal_whitespace(&mut self) -> SyntaxTrivia {
         let start = self
             .current_range()
             .expect("whitespace starts before EOF")
@@ -234,13 +188,13 @@ impl<'source> Scanner<'source> {
         while self.current_char().is_some_and(is_horizontal_whitespace) {
             self.bump();
         }
-        Trivia {
-            kind: TriviaKind::Whitespace,
-            range: TextRange::new(start, self.previous_end()),
-        }
+        SyntaxTrivia::new(
+            SyntaxTriviaKind::Whitespace,
+            TextRange::new(start, self.previous_end()).len(),
+        )
     }
 
-    fn newline(&mut self, len: usize) -> Trivia {
+    fn newline(&mut self, len: usize) -> SyntaxTrivia {
         let start = self
             .current_range()
             .expect("newline starts before EOF")
@@ -248,13 +202,13 @@ impl<'source> Scanner<'source> {
         for _ in 0..len {
             self.bump();
         }
-        Trivia {
-            kind: TriviaKind::Newline,
-            range: TextRange::new(start, self.previous_end()),
-        }
+        SyntaxTrivia::new(
+            SyntaxTriviaKind::Newline,
+            TextRange::new(start, self.previous_end()).len(),
+        )
     }
 
-    fn line_comment(&mut self) -> Trivia {
+    fn line_comment(&mut self) -> SyntaxTrivia {
         let start = self
             .current_range()
             .expect("comment starts before EOF")
@@ -267,22 +221,22 @@ impl<'source> Scanner<'source> {
         {
             self.bump();
         }
-        Trivia {
-            kind: TriviaKind::LineComment,
-            range: TextRange::new(start, self.previous_end()),
-        }
+        SyntaxTrivia::new(
+            SyntaxTriviaKind::LineComment,
+            TextRange::new(start, self.previous_end()).len(),
+        )
     }
 
-    fn block_comment(&mut self) -> Trivia {
+    fn block_comment(&mut self) -> SyntaxTrivia {
         let start_pos = self.pos;
         let start = self
             .current_range()
             .expect("comment starts before EOF")
             .start();
         let kind = if self.peek_char(2) == Some('*') && self.peek_char(3) != Some('/') {
-            TriviaKind::JavadocComment
+            SyntaxTriviaKind::DocComment
         } else {
-            TriviaKind::BlockComment
+            SyntaxTriviaKind::BlockComment
         };
 
         self.bump();
@@ -291,10 +245,7 @@ impl<'source> Scanner<'source> {
             if self.current_char() == Some('*') && self.peek_char(1) == Some('/') {
                 self.bump();
                 self.bump();
-                return Trivia {
-                    kind,
-                    range: TextRange::new(start, self.previous_end()),
-                };
+                return SyntaxTrivia::new(kind, TextRange::new(start, self.previous_end()).len());
             }
             self.bump();
         }
@@ -303,10 +254,10 @@ impl<'source> Scanner<'source> {
             JavaLexDiagnosticCode::UnterminatedBlockComment,
             TextRange::new(start, self.raw_end_for_pos(start_pos)),
         ));
-        Trivia {
+        SyntaxTrivia::new(
             kind,
-            range: TextRange::new(start, self.previous_end_or_source_end()),
-        }
+            TextRange::new(start, self.previous_end_or_source_end()).len(),
+        )
     }
 
     fn character_literal(&mut self) -> JavaSyntaxKind {

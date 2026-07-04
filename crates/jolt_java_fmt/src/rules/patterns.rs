@@ -51,13 +51,10 @@ fn format_record_pattern_components<'source>(
     parenthesized_list(
         open.as_ref(),
         close.as_ref(),
-        pattern
-            .entries()
-            .map(|entry| CommaListItem {
-                doc: format_component_pattern(&entry.component, formatter),
-                comma: entry.comma,
-            })
-            .collect(),
+        pattern.entries().map(|entry| CommaListItem {
+            doc: format_component_pattern(&entry.component, formatter),
+            comma: entry.comma,
+        }),
     )
 }
 

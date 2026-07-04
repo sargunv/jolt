@@ -5,18 +5,19 @@ use jolt_java_syntax::{
     ModuleDeclaration, ModuleDirective, ModuleDirectiveRole, ModuleNameListEntry, NameSyntax,
 };
 
-use crate::helpers::blocks::{join_empty_lines, join_hard_lines};
+use crate::helpers::blocks::join_hard_lines;
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_comment, format_construct_leading_comments,
-    format_inline_trailing_comment_list, format_separator_with_comments,
-    format_token_after_relocated_leading_comments, format_token_before_relocated_trailing_comments,
-    format_token_with_comments, split_leading_comment_barrier_runs, token_has_comments,
+    format_inline_trailing_comment_list, format_leading_comment_runs,
+    format_separator_with_comments, format_token_after_relocated_leading_comments,
+    format_token_before_relocated_trailing_comments, format_token_with_comments,
+    token_has_comments,
 };
 use crate::helpers::formatter_ignore::{
     formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
     relative_token_range_between,
 };
-use crate::rules::names::{format_name, name_key};
+use crate::rules::names::{NameSortKey, format_name};
 
 pub(crate) fn format_module_declaration<'source>(
     module: &ModuleDeclaration<'source>,
@@ -167,19 +168,13 @@ struct ModuleDirectiveSection<'source> {
 }
 
 fn format_module_directive_segments(directives: Vec<ModuleDirective<'_>>) -> Doc<'_> {
-    let runs = split_leading_comment_barrier_runs(directives, |directive| {
-        directive
-            .first_token()
-            .is_some_and(|token| !token.leading_comments().is_empty())
-    });
-
-    join_empty_lines(runs.into_iter().map(|run| {
-        format_module_directive_run(
-            run.into_iter()
-                .map(|directive| FormattedModuleDirective::from_directive(&directive))
-                .collect(),
-        )
-    }))
+    format_leading_comment_runs(
+        directives
+            .into_iter()
+            .map(|directive| FormattedModuleDirective::from_directive(&directive)),
+        FormattedModuleDirective::has_leading_comments,
+        format_module_directive_run,
+    )
 }
 
 fn module_directive_token_range(
@@ -201,23 +196,30 @@ fn format_module_directive_run(directives: Vec<FormattedModuleDirective<'_>>) ->
             .then_with(|| lhs.primary_name.cmp(&rhs.primary_name))
     });
 
-    let mut groups = Vec::new();
+    let mut docs = Vec::new();
     let mut current_kind = None;
     let mut current_group = Vec::new();
 
     for directive in directives {
         if current_kind.is_some_and(|kind| kind != directive.kind_order) {
-            groups.push(join_hard_lines(current_group));
+            push_module_directive_group(&mut docs, current_group);
             current_group = Vec::new();
         }
         current_kind = Some(directive.kind_order);
         current_group.push(directive.into_doc());
     }
     if !current_group.is_empty() {
-        groups.push(join_hard_lines(current_group));
+        push_module_directive_group(&mut docs, current_group);
     }
 
-    join_empty_lines(groups)
+    concat(docs)
+}
+
+fn push_module_directive_group<'source>(docs: &mut Vec<Doc<'source>>, group: Vec<Doc<'source>>) {
+    if !docs.is_empty() {
+        docs.push(empty_line());
+    }
+    docs.push(join_hard_lines(group));
 }
 
 #[derive(Clone, Copy, Eq, Ord, PartialEq, PartialOrd)]
@@ -233,7 +235,7 @@ struct FormattedModuleDirective<'source> {
     first_token: Option<jolt_java_syntax::JavaSyntaxToken<'source>>,
     last_token: Option<jolt_java_syntax::JavaSyntaxToken<'source>>,
     kind_order: ModuleDirectiveKindOrder,
-    primary_name: String,
+    primary_name: NameSortKey<'source>,
     doc: Doc<'source>,
 }
 
@@ -253,6 +255,12 @@ impl<'source> FormattedModuleDirective<'source> {
             primary_name,
             doc,
         }
+    }
+
+    fn has_leading_comments(&self) -> bool {
+        self.first_token
+            .as_ref()
+            .is_some_and(|token| !token.leading_comments().is_empty())
     }
 
     fn into_doc(self) -> Doc<'source> {
@@ -317,7 +325,7 @@ fn format_module_directive_doc<'source>(
             exports.exports_token().as_ref(),
             package,
             exports.to_token().as_ref(),
-            exports.target_entries().collect(),
+            exports.target_entries(),
             exports.semicolon().as_ref(),
         ),
         (ModuleDirective::OpensDirective(opens), ModuleDirectiveRole::Opens { package, .. }) => {
@@ -325,7 +333,7 @@ fn format_module_directive_doc<'source>(
                 opens.opens_token().as_ref(),
                 package,
                 opens.to_token().as_ref(),
-                opens.target_entries().collect(),
+                opens.target_entries(),
                 opens.semicolon().as_ref(),
             )
         }
@@ -341,7 +349,7 @@ fn format_module_directive_doc<'source>(
             provides.provides_token().as_ref(),
             service,
             provides.with_token().as_ref(),
-            provides.implementation_entries().collect(),
+            provides.implementation_entries(),
             provides.semicolon().as_ref(),
         ),
         _ => unreachable!("module directive role should match directive variant"),
@@ -379,72 +387,82 @@ fn format_module_name_list_directive<'source>(
     keyword: Option<&jolt_java_syntax::JavaSyntaxToken<'source>>,
     subject: &NameSyntax<'source>,
     connective: Option<&jolt_java_syntax::JavaSyntaxToken<'source>>,
-    entries: Vec<ModuleNameListEntry<'source>>,
+    entries: impl IntoIterator<Item = ModuleNameListEntry<'source>>,
     semicolon: Option<&jolt_java_syntax::JavaSyntaxToken<'source>>,
 ) -> Doc<'source> {
-    if entries.is_empty() {
+    let Some(entries) = format_module_name_list(entries) else {
         return concat([
             format_directive_head(keyword),
             format_name(subject),
             format_directive_semicolon(semicolon),
         ]);
-    }
+    };
 
     concat([
         format_directive_head(keyword),
         format_name(subject),
         text(" "),
         connective.map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
-        format_module_name_list(entries),
+        entries,
         format_directive_semicolon(semicolon),
     ])
 }
 
-fn format_module_name_list(entries: Vec<ModuleNameListEntry<'_>>) -> Doc<'_> {
-    let should_break = entries.iter().any(|entry| {
-        name_has_leading_comments(&entry.name)
-            || entry.comma.as_ref().is_some_and(token_has_comments)
-    });
-
-    if should_break {
-        return jolt_fmt_ir::indent(concat([
-            hard_line(),
-            format_module_name_entries_broken(entries),
-        ]));
+fn format_module_name_list<'source>(
+    entries: impl IntoIterator<Item = ModuleNameListEntry<'source>>,
+) -> Option<Doc<'source>> {
+    let mut entries = entries.into_iter();
+    let first = entries.next()?;
+    let mut should_break = false;
+    let mut items = Vec::new();
+    for entry in std::iter::once(first).chain(entries) {
+        should_break |= name_has_leading_comments(&entry.name)
+            || entry.comma.as_ref().is_some_and(token_has_comments);
+        items.push(FormattedModuleNameEntry {
+            leading_comments: format_construct_leading_comments(entry.name.first_token().as_ref()),
+            name: format_name(&entry.name),
+            comma: entry.comma,
+        });
     }
 
-    concat([text(" "), format_module_name_entries_inline(entries)])
+    Some(if should_break {
+        jolt_fmt_ir::indent(concat([
+            hard_line(),
+            format_module_name_entries_broken(items),
+        ]))
+    } else {
+        concat([text(" "), format_module_name_entries_inline(items)])
+    })
 }
 
-fn format_module_name_entries_inline(entries: Vec<ModuleNameListEntry<'_>>) -> Doc<'_> {
-    let mut docs = Vec::new();
+struct FormattedModuleNameEntry<'source> {
+    leading_comments: Doc<'source>,
+    name: Doc<'source>,
+    comma: Option<jolt_java_syntax::JavaSyntaxToken<'source>>,
+}
 
+fn format_module_name_entries_inline(entries: Vec<FormattedModuleNameEntry<'_>>) -> Doc<'_> {
+    let mut docs = Vec::new();
     for entry in entries {
-        docs.push(format_name(&entry.name));
+        docs.push(entry.name);
         if let Some(comma) = entry.comma {
             docs.push(format_separator_with_comments(&comma, text(" ")));
         }
     }
-
     concat(docs)
 }
 
-fn format_module_name_entries_broken(entries: Vec<ModuleNameListEntry<'_>>) -> Doc<'_> {
+fn format_module_name_entries_broken(entries: Vec<FormattedModuleNameEntry<'_>>) -> Doc<'_> {
     let mut docs = Vec::new();
     let entries_len = entries.len();
-
     for (index, entry) in entries.into_iter().enumerate() {
-        docs.push(concat([
-            format_construct_leading_comments(entry.name.first_token().as_ref()),
-            format_name(&entry.name),
-        ]));
+        docs.push(concat([entry.leading_comments, entry.name]));
         if let Some(comma) = entry.comma {
             docs.push(format_separator_with_comments(&comma, jolt_fmt_ir::line()));
         } else if index + 1 < entries_len {
             docs.push(hard_line());
         }
     }
-
     concat(docs)
 }
 
@@ -453,13 +471,15 @@ fn name_has_leading_comments(name: &NameSyntax<'_>) -> bool {
         .is_some_and(|token| !token.leading_comments().is_empty())
 }
 
-fn module_directive_primary_name(role: &ModuleDirectiveRole<'_>) -> String {
+fn module_directive_primary_name<'source>(
+    role: &ModuleDirectiveRole<'source>,
+) -> NameSortKey<'source> {
     match role {
-        ModuleDirectiveRole::Requires { module, .. } => name_key(module),
+        ModuleDirectiveRole::Requires { module, .. } => NameSortKey::new(module, false),
         ModuleDirectiveRole::Exports { package, .. }
-        | ModuleDirectiveRole::Opens { package, .. } => name_key(package),
+        | ModuleDirectiveRole::Opens { package, .. } => NameSortKey::new(package, false),
         ModuleDirectiveRole::Uses { service } | ModuleDirectiveRole::Provides { service, .. } => {
-            name_key(service)
+            NameSortKey::new(service, false)
         }
     }
 }

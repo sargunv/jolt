@@ -61,20 +61,19 @@ fn format_lambda_parameters<'source>(
     }
 
     let parameter_list = expression.parameters();
-    let parameters = parameter_list
-        .as_ref()
-        .map(|parameters| parameters.parameters().collect::<Vec<_>>())
-        .unwrap_or_default();
-
-    if let [parameter] = parameters.as_slice()
-        && is_simple_untyped_lambda_parameter(parameter)
-    {
-        if token_iter_has_comments(parameter.token_iter()) {
-            return format_lambda_parameter(parameter, formatter);
+    if let Some(parameters) = parameter_list.as_ref() {
+        let mut parameters = parameters.parameters();
+        if let Some(parameter) = parameters.next()
+            && parameters.next().is_none()
+            && is_simple_untyped_lambda_parameter(&parameter)
+        {
+            if token_iter_has_comments(parameter.token_iter()) {
+                return format_lambda_parameter(&parameter, formatter);
+            }
+            return parameter
+                .name()
+                .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name));
         }
-        return parameter
-            .name()
-            .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name));
     }
 
     let open = parameter_list
@@ -85,20 +84,27 @@ fn format_lambda_parameters<'source>(
         .as_ref()
         .and_then(jolt_java_syntax::LambdaParameterList::close_paren)
         .or_else(|| expression.close_paren());
+    let has_parameters = parameter_list
+        .as_ref()
+        .is_some_and(|parameters| parameters.parameters().next().is_some());
 
-    if open.is_none() && close.is_none() && parameters.is_empty() {
+    if open.is_none() && close.is_none() && !has_parameters {
         return text("()");
     }
 
     concat([
         open.as_ref()
             .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
-        jolt_fmt_ir::join(
-            &text(", "),
-            parameters
-                .into_iter()
-                .map(|parameter| format_lambda_parameter(&parameter, formatter)),
-        ),
+        parameter_list
+            .as_ref()
+            .map_or_else(jolt_fmt_ir::nil, |parameters| {
+                jolt_fmt_ir::join(
+                    &text(", "),
+                    parameters
+                        .parameters()
+                        .map(|parameter| format_lambda_parameter(&parameter, formatter)),
+                )
+            }),
         close
             .as_ref()
             .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),

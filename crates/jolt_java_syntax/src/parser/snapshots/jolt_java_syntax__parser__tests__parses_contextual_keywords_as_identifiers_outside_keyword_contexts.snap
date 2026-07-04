@@ -197,7 +197,5 @@ CompilationUnit
       RBrace "}" @ 709..710 leading=[Newline "\n", Whitespace "            "]
   Eof "" @ 719..719 leading=[Newline "\n", Whitespace "        "]
 
-outcome: Clean
-
 diagnostics:
   (none)

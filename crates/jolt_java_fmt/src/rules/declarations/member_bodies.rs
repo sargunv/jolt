@@ -6,21 +6,33 @@ use super::{
     format_compact_constructor_declaration, format_constructor_declaration,
     format_enum_declaration, format_field_declaration, format_interface_declaration,
     format_method_declaration, format_record_declaration, format_removed_comments,
-    format_removed_token_comments, format_token_with_comments, formatter_ignore_ranges,
-    formatter_ignore_run_doc, formatter_ignore_runs, hard_line, has_removed_comments,
-    join_member_docs, relative_token_range_between, text,
+    format_token_with_comments, formatter_ignore_ranges, formatter_ignore_run_doc,
+    formatter_ignore_runs, hard_line, has_removed_comments, join_member_docs,
+    relative_token_range_between, text,
 };
 
 pub(super) fn format_class_body<'source>(
     body: &ClassBody<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Option<Doc<'source>> {
-    let members = body.members().collect::<Vec<_>>();
-    format_class_member_body(
+    let ignored_ranges = formatter_ignore_ranges(
         body.source_text(),
         body.text_range().start().get(),
         body.token_iter(),
-        &members,
+    );
+    if ignored_ranges.is_empty() {
+        return format_class_member_docs(
+            format_body_open_dangling_comments(body.open_brace()),
+            body.members().filter(is_printable_class_member),
+            format_body_close_dangling_comments(body.close_brace()),
+            formatter,
+        );
+    }
+
+    format_class_member_body(
+        body.text_range().start().get(),
+        &ignored_ranges,
+        body.members(),
         format_body_open_dangling_comments(body.open_brace()),
         format_body_close_dangling_comments(body.close_brace()),
         formatter,
@@ -31,12 +43,24 @@ pub(super) fn format_record_body<'source>(
     body: &RecordBody<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Option<Doc<'source>> {
-    let members = body.members().collect::<Vec<_>>();
-    format_class_member_body(
+    let ignored_ranges = formatter_ignore_ranges(
         body.source_text(),
         body.text_range().start().get(),
         body.token_iter(),
-        &members,
+    );
+    if ignored_ranges.is_empty() {
+        return format_class_member_docs(
+            format_body_open_dangling_comments(body.open_brace()),
+            body.members().filter(is_printable_class_member),
+            format_body_close_dangling_comments(body.close_brace()),
+            formatter,
+        );
+    }
+
+    format_class_member_body(
+        body.text_range().start().get(),
+        &ignored_ranges,
+        body.members(),
         format_body_open_dangling_comments(body.open_brace()),
         format_body_close_dangling_comments(body.close_brace()),
         formatter,
@@ -47,8 +71,6 @@ pub(super) fn format_interface_body<'source>(
     body: &InterfaceBody<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Option<Doc<'source>> {
-    let members = body.members().collect::<Vec<_>>();
-    let effective_members = printable_interface_members(&members);
     let ignored_ranges = formatter_ignore_ranges(
         body.source_text(),
         body.text_range().start().get(),
@@ -58,69 +80,33 @@ pub(super) fn format_interface_body<'source>(
         let mut formatted_members = Vec::new();
         formatted_members.extend(format_body_open_dangling_comments(body.open_brace()));
         formatted_members.extend(
-            effective_members
-                .iter()
-                .map(|member| FormattedMember::from_interface_member(member, formatter)),
+            body.members()
+                .filter(is_printable_interface_member)
+                .map(|member| FormattedMember::from_interface_member(&member, formatter)),
         );
         formatted_members.extend(format_body_close_dangling_comments(body.close_brace()));
         return (!formatted_members.is_empty()).then(|| join_member_docs(formatted_members));
     }
+    let members = body.members().collect::<Vec<_>>();
+    let effective_members = printable_interface_members(&members);
     let member_ranges = effective_members
         .iter()
         .map(|member| interface_member_token_range(member, body.text_range().start().get()))
         .collect::<Vec<_>>();
-    let ignored_runs = formatter_ignore_runs(&ignored_ranges, &member_ranges);
-    let mut formatted_members = Vec::new();
-    formatted_members.extend(format_body_open_dangling_comments(body.open_brace()));
-    let mut ignored_index = 0;
-    let mut skip_index = 0;
-
-    for (member_index, member) in effective_members.iter().enumerate() {
-        while ignored_index < ignored_runs.len()
-            && ignored_runs[ignored_index].insert_index == member_index
-        {
-            let run = &ignored_runs[ignored_index];
-            formatted_members.push(FormattedMember::ignored(
-                formatter_ignore_run_doc(run),
-                ignored_interface_member_category(run, &effective_members),
-            ));
-            ignored_index += 1;
-        }
-
-        while skip_index < ignored_runs.len() && ignored_runs[skip_index].skip_end <= member_index {
-            skip_index += 1;
-        }
-
-        if skip_index < ignored_runs.len() && ignored_runs[skip_index].skips(member_index) {
-            continue;
-        }
-
-        let mut formatted_member = FormattedMember::from_interface_member(member, formatter);
-        if skip_index > 0 && ignored_runs[skip_index - 1].skip_end == member_index {
-            formatted_member = formatted_member.without_blank_line_before();
-        }
-        formatted_members.push(formatted_member);
-    }
-
-    while ignored_index < ignored_runs.len() {
-        let run = &ignored_runs[ignored_index];
-        formatted_members.push(FormattedMember::ignored(
-            formatter_ignore_run_doc(run),
-            ignored_interface_member_category(run, &effective_members),
-        ));
-        ignored_index += 1;
-    }
-    formatted_members.extend(format_body_close_dangling_comments(body.close_brace()));
-
-    (!formatted_members.is_empty()).then(|| join_member_docs(formatted_members))
+    format_members_with_ignored(
+        &effective_members,
+        &formatter_ignore_runs(&ignored_ranges, &member_ranges),
+        format_body_open_dangling_comments(body.open_brace()),
+        |run, members| ignored_interface_member_category(run, members),
+        |member| FormattedMember::from_interface_member(member, formatter),
+        format_body_close_dangling_comments(body.close_brace()),
+    )
 }
 
 pub(super) fn format_annotation_interface_body<'source>(
     body: &jolt_java_syntax::AnnotationInterfaceBody<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Option<Doc<'source>> {
-    let members = body.members().collect::<Vec<_>>();
-    let members = printable_annotation_members(&members);
     let ignored_ranges = formatter_ignore_ranges(
         body.source_text(),
         body.text_range().start().get(),
@@ -130,20 +116,76 @@ pub(super) fn format_annotation_interface_body<'source>(
         let mut formatted_members = Vec::new();
         formatted_members.extend(format_body_open_dangling_comments(body.open_brace()));
         formatted_members.extend(
-            members
-                .iter()
-                .map(|member| FormattedMember::from_annotation_member(member, formatter)),
+            body.members()
+                .filter(is_printable_annotation_member)
+                .map(|member| FormattedMember::from_annotation_member(&member, formatter)),
         );
         formatted_members.extend(format_body_close_dangling_comments(body.close_brace()));
         return (!formatted_members.is_empty()).then(|| join_member_docs(formatted_members));
     }
+    let members = body.members().collect::<Vec<_>>();
+    let members = printable_annotation_members(&members);
     let member_ranges = members
         .iter()
         .map(|member| annotation_member_token_range(member, body.text_range().start().get()))
         .collect::<Vec<_>>();
-    let ignored_runs = formatter_ignore_runs(&ignored_ranges, &member_ranges);
+    format_members_with_ignored(
+        &members,
+        &formatter_ignore_runs(&ignored_ranges, &member_ranges),
+        format_body_open_dangling_comments(body.open_brace()),
+        |run, members| ignored_annotation_member_category(run, members),
+        |member| FormattedMember::from_annotation_member(member, formatter),
+        format_body_close_dangling_comments(body.close_brace()),
+    )
+}
+
+pub(super) fn format_class_member_body<'source>(
+    body_start: usize,
+    ignored_ranges: &[crate::helpers::formatter_ignore::FormatterIgnoreRange<'source>],
+    members: impl IntoIterator<Item = ClassBodyMember<'source>>,
+    open_dangling_comments: Option<FormattedMember<'source>>,
+    close_dangling_comments: Option<FormattedMember<'source>>,
+    formatter: &JavaFormatter<'_>,
+) -> Option<Doc<'source>> {
+    let members = members.into_iter();
+    if ignored_ranges.is_empty() {
+        return format_class_member_docs(
+            open_dangling_comments,
+            members.filter(is_printable_class_member),
+            close_dangling_comments,
+            formatter,
+        );
+    }
+
+    let members = members.collect::<Vec<_>>();
+    let effective_members = printable_class_members(&members);
+    let member_ranges = effective_members
+        .iter()
+        .map(|member| class_member_token_range(member, body_start))
+        .collect::<Vec<_>>();
+    format_members_with_ignored(
+        &effective_members,
+        &formatter_ignore_runs(ignored_ranges, &member_ranges),
+        open_dangling_comments,
+        |run, members| ignored_member_category(run, members),
+        |member| FormattedMember::from_member(member, formatter),
+        close_dangling_comments,
+    )
+}
+
+fn format_members_with_ignored<'source, Member>(
+    members: &[Member],
+    ignored_runs: &[crate::helpers::formatter_ignore::FormatterIgnoreRun<'source>],
+    open_dangling_comments: Option<FormattedMember<'source>>,
+    mut ignored_category: impl FnMut(
+        &crate::helpers::formatter_ignore::FormatterIgnoreRun<'source>,
+        &[Member],
+    ) -> MemberCategory,
+    mut format_member: impl FnMut(&Member) -> FormattedMember<'source>,
+    close_dangling_comments: Option<FormattedMember<'source>>,
+) -> Option<Doc<'source>> {
     let mut formatted_members = Vec::new();
-    formatted_members.extend(format_body_open_dangling_comments(body.open_brace()));
+    formatted_members.extend(open_dangling_comments);
     let mut ignored_index = 0;
     let mut skip_index = 0;
 
@@ -154,7 +196,7 @@ pub(super) fn format_annotation_interface_body<'source>(
             let run = &ignored_runs[ignored_index];
             formatted_members.push(FormattedMember::ignored(
                 formatter_ignore_run_doc(run),
-                ignored_annotation_member_category(run, &members),
+                ignored_category(run, members),
             ));
             ignored_index += 1;
         }
@@ -167,7 +209,7 @@ pub(super) fn format_annotation_interface_body<'source>(
             continue;
         }
 
-        let mut formatted_member = FormattedMember::from_annotation_member(member, formatter);
+        let mut formatted_member = format_member(member);
         if skip_index > 0 && ignored_runs[skip_index - 1].skip_end == member_index {
             formatted_member = formatted_member.without_blank_line_before();
         }
@@ -178,82 +220,28 @@ pub(super) fn format_annotation_interface_body<'source>(
         let run = &ignored_runs[ignored_index];
         formatted_members.push(FormattedMember::ignored(
             formatter_ignore_run_doc(run),
-            ignored_annotation_member_category(run, &members),
+            ignored_category(run, members),
         ));
         ignored_index += 1;
     }
-    formatted_members.extend(format_body_close_dangling_comments(body.close_brace()));
+    formatted_members.extend(close_dangling_comments);
 
     (!formatted_members.is_empty()).then(|| join_member_docs(formatted_members))
 }
 
-pub(super) fn format_class_member_body<'source>(
-    source: &'source str,
-    body_start: usize,
-    tokens: impl IntoIterator<Item = JavaSyntaxToken<'source>>,
-    members: &[ClassBodyMember<'source>],
+fn format_class_member_docs<'source>(
     open_dangling_comments: Option<FormattedMember<'source>>,
+    members: impl IntoIterator<Item = ClassBodyMember<'source>>,
     close_dangling_comments: Option<FormattedMember<'source>>,
     formatter: &JavaFormatter<'_>,
 ) -> Option<Doc<'source>> {
-    let effective_members = effective_members(members);
-    let ignored_ranges = formatter_ignore_ranges(source, body_start, tokens);
-    if ignored_ranges.is_empty() {
-        let mut formatted_members = Vec::new();
-        formatted_members.extend(open_dangling_comments);
-        formatted_members.extend(
-            effective_members
-                .iter()
-                .map(|member| FormattedMember::from_member(member, formatter)),
-        );
-        formatted_members.extend(close_dangling_comments);
-        return (!formatted_members.is_empty()).then(|| join_member_docs(formatted_members));
-    }
-    let member_ranges = effective_members
-        .iter()
-        .map(|member| class_member_token_range(member, body_start))
-        .collect::<Vec<_>>();
-    let ignored_runs = formatter_ignore_runs(&ignored_ranges, &member_ranges);
     let mut formatted_members = Vec::new();
     formatted_members.extend(open_dangling_comments);
-    let mut ignored_index = 0;
-    let mut skip_index = 0;
-
-    for (member_index, member) in effective_members.iter().enumerate() {
-        while ignored_index < ignored_runs.len()
-            && ignored_runs[ignored_index].insert_index == member_index
-        {
-            let run = &ignored_runs[ignored_index];
-            formatted_members.push(FormattedMember::ignored(
-                formatter_ignore_run_doc(run),
-                ignored_member_category(run, &effective_members),
-            ));
-            ignored_index += 1;
-        }
-
-        while skip_index < ignored_runs.len() && ignored_runs[skip_index].skip_end <= member_index {
-            skip_index += 1;
-        }
-
-        if skip_index < ignored_runs.len() && ignored_runs[skip_index].skips(member_index) {
-            continue;
-        }
-
-        let mut formatted_member = FormattedMember::from_member(member, formatter);
-        if skip_index > 0 && ignored_runs[skip_index - 1].skip_end == member_index {
-            formatted_member = formatted_member.without_blank_line_before();
-        }
-        formatted_members.push(formatted_member);
-    }
-
-    while ignored_index < ignored_runs.len() {
-        let run = &ignored_runs[ignored_index];
-        formatted_members.push(FormattedMember::ignored(
-            formatter_ignore_run_doc(run),
-            ignored_member_category(run, &effective_members),
-        ));
-        ignored_index += 1;
-    }
+    formatted_members.extend(
+        members
+            .into_iter()
+            .map(|member| FormattedMember::from_member(&member, formatter)),
+    );
     formatted_members.extend(close_dangling_comments);
 
     (!formatted_members.is_empty()).then(|| join_member_docs(formatted_members))
@@ -317,12 +305,6 @@ fn ignored_annotation_member_category(
     members
         .get(run.skip_start)
         .map_or(MemberCategory::Type, annotation_member_category)
-}
-
-pub(super) fn effective_members<'source>(
-    members: &[ClassBodyMember<'source>],
-) -> Vec<ClassBodyMember<'source>> {
-    printable_class_members(members)
 }
 
 fn printable_class_members<'source>(
@@ -392,12 +374,6 @@ pub(super) fn format_empty_enum_constant_list_comments(
 
     format_removed_comments(comments_from_tokens(constants.token_iter()))
         .map(FormattedMember::comment)
-}
-
-pub(super) fn format_enum_body_semicolon_comments<'source>(
-    semicolons: &[JavaSyntaxToken<'source>],
-) -> Option<FormattedMember<'source>> {
-    format_removed_token_comments(semicolons).map(FormattedMember::comment)
 }
 
 pub(super) fn combine_comment_members<'source>(

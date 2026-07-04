@@ -100,7 +100,7 @@ pub(super) fn format_method_declaration<'source>(
             jolt_fmt_ir::nil()
         },
         modifiers.type_use_prefix,
-        format_inline_annotations(method.return_type_annotations().collect(), formatter),
+        format_inline_annotations(method.return_type_annotations(), formatter),
         method
             .return_type()
             .map_or_else(jolt_fmt_ir::nil, |return_type| {
@@ -143,7 +143,7 @@ pub(super) fn format_annotation_element_declaration<'source>(
             parenthesized_list(
                 element.open_paren().as_ref(),
                 element.close_paren().as_ref(),
-                Vec::new(),
+                std::iter::empty(),
             ),
             element
                 .dimensions()
@@ -187,20 +187,17 @@ fn format_parameters<'source>(
     parenthesized_list(
         open.as_ref(),
         close.as_ref(),
-        parameters
-            .entries()
-            .map(|entry| CommaListItem {
-                doc: match entry.item {
-                    jolt_java_syntax::FormalParameterListItem::ReceiverParameter(parameter) => {
-                        format_receiver_parameter(&parameter, formatter)
-                    }
-                    jolt_java_syntax::FormalParameterListItem::FormalParameter(parameter) => {
-                        format_formal_parameter(&parameter, formatter)
-                    }
-                },
-                comma: entry.comma,
-            })
-            .collect(),
+        parameters.entries().map(|entry| CommaListItem {
+            doc: match entry.item {
+                jolt_java_syntax::FormalParameterListItem::ReceiverParameter(parameter) => {
+                    format_receiver_parameter(&parameter, formatter)
+                }
+                jolt_java_syntax::FormalParameterListItem::FormalParameter(parameter) => {
+                    format_formal_parameter(&parameter, formatter)
+                }
+            },
+            comma: entry.comma,
+        }),
     )
 }
 
@@ -227,8 +224,8 @@ fn format_throws_clause<'source>(
     let Some(throws) = throws else {
         return jolt_fmt_ir::nil();
     };
-    let entries = throws.entries().collect::<Vec<_>>();
-    if entries.is_empty() {
+    let mut entries = throws.entries().peekable();
+    if entries.peek().is_none() {
         return jolt_fmt_ir::nil();
     }
 
@@ -266,37 +263,34 @@ fn format_throws_keyword_spacing<'source>(throws: &ThrowsClause<'source>) -> Doc
 }
 
 fn format_throws_entries<'source>(
-    entries: Vec<ThrowsClauseEntry<'source>>,
+    entries: impl IntoIterator<Item = ThrowsClauseEntry<'source>>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    let entries_len = entries.len();
-    let mut entries = entries.into_iter().enumerate();
-    let Some((index, entry)) = entries.next() else {
+    let mut entries = entries.into_iter().peekable();
+    let Some(entry) = entries.next() else {
         return jolt_fmt_ir::nil();
     };
 
     let first = format_type(&entry.exception, formatter);
     let rest = concat([
-        format_throws_entry_separator(entry.comma, index, entries_len),
-        concat(entries.map(|(index, entry)| {
-            concat([
+        format_throws_entry_separator(entry.comma, entries.peek().is_some()),
+        concat(std::iter::from_fn(move || {
+            let entry = entries.next()?;
+            let has_next = entries.peek().is_some();
+            Some(concat([
                 format_type(&entry.exception, formatter),
-                format_throws_entry_separator(entry.comma, index, entries_len),
-            ])
+                format_throws_entry_separator(entry.comma, has_next),
+            ]))
         })),
     ]);
 
     concat([first, jolt_fmt_ir::indent(rest)])
 }
 
-fn format_throws_entry_separator(
-    comma: Option<JavaSyntaxToken<'_>>,
-    index: usize,
-    entries_len: usize,
-) -> Doc<'_> {
+fn format_throws_entry_separator(comma: Option<JavaSyntaxToken<'_>>, has_next: bool) -> Doc<'_> {
     if let Some(comma) = comma {
         format_separator_with_comments(&comma, line())
-    } else if index + 1 < entries_len {
+    } else if has_next {
         line()
     } else {
         jolt_fmt_ir::nil()

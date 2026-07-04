@@ -1,32 +1,26 @@
-use jolt_fmt_ir::{Doc, concat, hard_line, text};
+use jolt_fmt_ir::{Doc, concat, empty_line, hard_line, text};
 use jolt_java_syntax::{ImportDeclaration, ImportKind};
 
-use crate::helpers::blocks::{join_empty_lines, join_hard_lines};
+use crate::helpers::blocks::join_hard_lines;
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_comment, format_inline_trailing_comment_list,
-    format_token_after_relocated_leading_comments, format_token_before_relocated_trailing_comments,
-    format_token_with_comments, split_leading_comment_barrier_runs,
+    format_leading_comment_runs, format_token_after_relocated_leading_comments,
+    format_token_before_relocated_trailing_comments, format_token_with_comments,
 };
-use crate::rules::names::{format_name, name_key};
+use crate::rules::names::{NameSortKey, format_name};
 
 pub(crate) fn format_imports(imports: Vec<ImportDeclaration<'_>>) -> Option<Doc<'_>> {
     if imports.is_empty() {
         return None;
     }
 
-    let runs = split_leading_comment_barrier_runs(imports, |import| {
-        import
-            .first_token()
-            .is_some_and(|token| !token.leading_comments().is_empty())
-    });
-
-    Some(join_empty_lines(runs.into_iter().map(|run| {
-        format_import_run(
-            run.into_iter()
-                .map(|import| FormattedImport::from_declaration(&import))
-                .collect(),
-        )
-    })))
+    Some(format_leading_comment_runs(
+        imports
+            .into_iter()
+            .map(|import| FormattedImport::from_declaration(&import)),
+        FormattedImport::has_leading_comments,
+        format_import_run,
+    ))
 }
 
 fn format_import_run(imports: Vec<FormattedImport<'_>>) -> Doc<'_> {
@@ -44,26 +38,29 @@ fn format_import_run(imports: Vec<FormattedImport<'_>>) -> Doc<'_> {
     normal_imports.sort_by(|lhs, rhs| lhs.path.cmp(&rhs.path));
     static_imports.sort_by(|lhs, rhs| lhs.path.cmp(&rhs.path));
 
-    let mut groups = Vec::new();
+    let mut docs = Vec::new();
     if !normal_imports.is_empty() {
-        groups.push(join_hard_lines(
+        docs.push(join_hard_lines(
             normal_imports.into_iter().map(FormattedImport::into_doc),
         ));
     }
     if !static_imports.is_empty() {
-        groups.push(join_hard_lines(
+        if !docs.is_empty() {
+            docs.push(empty_line());
+        }
+        docs.push(join_hard_lines(
             static_imports.into_iter().map(FormattedImport::into_doc),
         ));
     }
 
-    join_empty_lines(groups)
+    concat(docs)
 }
 
 struct FormattedImport<'source> {
     first_token: Option<jolt_java_syntax::JavaSyntaxToken<'source>>,
     last_token: Option<jolt_java_syntax::JavaSyntaxToken<'source>>,
     is_static: bool,
-    path: String,
+    path: NameSortKey<'source>,
     import_token: Option<jolt_java_syntax::JavaSyntaxToken<'source>>,
     module_token: Option<jolt_java_syntax::JavaSyntaxToken<'source>>,
     static_token: Option<jolt_java_syntax::JavaSyntaxToken<'source>>,
@@ -88,6 +85,12 @@ impl<'source> FormattedImport<'source> {
             path_doc,
             semicolon: import.semicolon(),
         }
+    }
+
+    fn has_leading_comments(&self) -> bool {
+        self.first_token
+            .as_ref()
+            .is_some_and(|token| !token.leading_comments().is_empty())
     }
 
     fn into_doc(self) -> Doc<'source> {
@@ -147,15 +150,14 @@ impl<'source> FormattedImport<'source> {
 fn format_import_kind<'source>(
     import: &ImportDeclaration<'source>,
     kind: &ImportKind<'source>,
-) -> (bool, String, Doc<'source>) {
+) -> (bool, NameSortKey<'source>, Doc<'source>) {
     match kind {
         ImportKind::SingleType(name) | ImportKind::SingleModule(name) => {
-            let path = name_key(name);
+            let path = NameSortKey::new(name, false);
             (false, path, format_name(name))
         }
         ImportKind::TypeOnDemand(name) => {
-            let mut path = name_key(name);
-            path.push_str(".*");
+            let path = NameSortKey::new(name, true);
             (
                 false,
                 path,
@@ -173,12 +175,11 @@ fn format_import_kind<'source>(
             )
         }
         ImportKind::SingleStatic(name) => {
-            let path = name_key(name);
+            let path = NameSortKey::new(name, false);
             (true, path, format_name(name))
         }
         ImportKind::StaticOnDemand(name) => {
-            let mut path = name_key(name);
-            path.push_str(".*");
+            let path = NameSortKey::new(name, true);
             (
                 true,
                 path,
