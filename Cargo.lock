@@ -377,6 +377,7 @@ name = "jolt_fmt_core"
 version = "0.0.0"
 dependencies = [
  "jolt_diagnostics",
+ "jolt_fmt_ir",
  "jolt_java_fmt",
  "jolt_text",
  "serde",

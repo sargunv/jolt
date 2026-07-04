@@ -1,5 +1,6 @@
 use std::{
     collections::HashSet,
+    convert::Infallible,
     env,
     fmt::Write as _,
     fs,
@@ -9,7 +10,9 @@ use std::{
     thread,
 };
 
-use jolt_fmt_core::{FormatStatus, LineIndex, TextSize, format_source};
+use jolt_fmt_core::{
+    FormatSinkResult, LineIndex, RenderControl, RenderSink, TextSize, format_source_to_sink,
+};
 use rayon::prelude::*;
 
 use crate::{
@@ -138,26 +141,25 @@ fn run_stdin(cwd: &Path, args: &FmtArgs) -> Result<(), CliError> {
         .read_to_string(&mut source)
         .map_err(|error| CliError::new(format!("failed to read stdin as UTF-8: {error}")))?;
 
-    let result = format_source(&source, language, &config.options);
     let label = args
         .stdin_filename
         .as_deref()
         .map_or_else(|| "<stdin>".to_owned(), |path| path.display().to_string());
-    emit_diagnostics(&label, &source, &result.diagnostics)?;
 
-    let Some(formatted) = result.formatted_source else {
-        if args.check {
+    if args.check {
+        let mut sink = CompareSink::new(&source);
+        let result = format_source_to_sink(&source, language, &config.options, &mut sink);
+        emit_diagnostics(&label, &source, result.diagnostics())?;
+
+        if result.is_blocked() {
             return Err(CliError::new(format_check_summary(FormatRunStats {
                 total: 1,
                 failed: 1,
                 changed: 0,
             })));
         }
-        return Err(CliError::new("formatting failed"));
-    };
 
-    if args.check {
-        if result.status == FormatStatus::Formatted {
+        if sink.is_changed() {
             println!("{label}");
             return Err(CliError::new(format_check_summary(FormatRunStats {
                 total: 1,
@@ -168,7 +170,22 @@ fn run_stdin(cwd: &Path, args: &FmtArgs) -> Result<(), CliError> {
         return Ok(());
     }
 
-    print!("{formatted}");
+    let mut sink = BufferedIoSink::new(io::stdout().lock());
+    let result = format_source_to_sink(&source, language, &config.options, &mut sink);
+    emit_diagnostics(&label, &source, result.diagnostics())?;
+    if result.is_blocked() {
+        return Err(CliError::new("formatting failed"));
+    }
+    if result.is_halted() {
+        return Err(CliError::new("formatting halted before writing stdout"));
+    }
+    if matches!(result, FormatSinkResult::SinkError { .. }) {
+        unreachable!("buffered stdout sink cannot fail while rendering");
+    }
+    if let Err(error) = sink.commit() {
+        return Err(CliError::new(format!("failed to write stdout: {error}")));
+    }
+
     Ok(())
 }
 
@@ -238,10 +255,24 @@ fn format_file(
             ));
         }
     };
-    let result = format_source(&source, language, &config.options);
-    let diagnostics = diagnostics_text(&label, &source, &result.diagnostics);
+    if check {
+        return format_file_check(&label, &source, language, config);
+    }
 
-    let Some(formatted) = result.formatted_source else {
+    format_file_write(cwd, path, &label, &source, language, config)
+}
+
+fn format_file_check(
+    label: &str,
+    source: &str,
+    language: jolt_fmt_core::Language,
+    config: &ResolvedConfig,
+) -> FileFormatResult {
+    let mut sink = CompareSink::new(source);
+    let result = format_source_to_sink(source, language, &config.options, &mut sink);
+    let diagnostics = diagnostics_text(label, source, result.diagnostics());
+
+    if result.is_blocked() {
         return FileFormatResult {
             outcome: FileFormatOutcome {
                 failed: true,
@@ -251,9 +282,9 @@ fn format_file(
             check_output: String::new(),
             error: None,
         };
-    };
+    }
 
-    if formatted == source {
+    if !sink.is_changed() {
         return FileFormatResult {
             outcome: FileFormatOutcome::default(),
             diagnostics,
@@ -262,19 +293,72 @@ fn format_file(
         };
     }
 
-    if check {
+    FileFormatResult {
+        outcome: FileFormatOutcome {
+            failed: false,
+            changed: true,
+        },
+        diagnostics,
+        check_output: format!("{label}\n"),
+        error: None,
+    }
+}
+
+fn format_file_write(
+    cwd: &Path,
+    path: &Path,
+    label: &str,
+    source: &str,
+    language: jolt_fmt_core::Language,
+    config: &ResolvedConfig,
+) -> FileFormatResult {
+    let mut sink = BufferedFileSink::new(path, source);
+    let result = format_source_to_sink(source, language, &config.options, &mut sink);
+    let diagnostics = diagnostics_text(label, source, result.diagnostics());
+
+    finish_file_write(cwd, path, diagnostics, &result, sink)
+}
+
+fn finish_file_write(
+    cwd: &Path,
+    path: &Path,
+    diagnostics: String,
+    result: &FormatSinkResult<Infallible>,
+    sink: BufferedFileSink<'_>,
+) -> FileFormatResult {
+    if result.is_blocked() {
         return FileFormatResult {
             outcome: FileFormatOutcome {
-                failed: false,
-                changed: true,
+                failed: true,
+                changed: false,
             },
             diagnostics,
-            check_output: format!("{label}\n"),
+            check_output: String::new(),
             error: None,
         };
     }
 
-    if let Err(error) = fs::write(path, formatted) {
+    if result.is_halted() {
+        return FileFormatResult {
+            outcome: FileFormatOutcome {
+                failed: true,
+                changed: false,
+            },
+            diagnostics,
+            check_output: String::new(),
+            error: Some(format!(
+                "{}: formatting halted unexpectedly",
+                display_path(cwd, path)
+            )),
+        };
+    }
+
+    if matches!(result, FormatSinkResult::SinkError { .. }) {
+        unreachable!("buffered file sink cannot fail while rendering");
+    }
+
+    let changed = sink.is_changed();
+    if changed && let Err(error) = sink.commit() {
         return FileFormatResult {
             outcome: FileFormatOutcome {
                 failed: true,
@@ -292,11 +376,132 @@ fn format_file(
     FileFormatResult {
         outcome: FileFormatOutcome {
             failed: false,
-            changed: true,
+            changed,
         },
         diagnostics,
         check_output: String::new(),
         error: None,
+    }
+}
+
+struct BufferedIoSink<W> {
+    writer: W,
+    contents: String,
+}
+
+impl<W> BufferedIoSink<W> {
+    fn new(writer: W) -> Self {
+        Self {
+            writer,
+            contents: String::new(),
+        }
+    }
+}
+
+impl<W: io::Write> BufferedIoSink<W> {
+    fn commit(mut self) -> io::Result<()> {
+        self.writer.write_all(self.contents.as_bytes())
+    }
+}
+
+impl<W> RenderSink for BufferedIoSink<W> {
+    type Error = Infallible;
+
+    fn write_str(&mut self, text: &str) -> Result<RenderControl, Self::Error> {
+        self.contents.push_str(text);
+        Ok(RenderControl::Continue)
+    }
+}
+
+struct CompareSink<'a> {
+    expected: &'a [u8],
+    offset: usize,
+    matches: bool,
+}
+
+impl<'a> CompareSink<'a> {
+    fn new(expected: &'a str) -> Self {
+        Self {
+            expected: expected.as_bytes(),
+            offset: 0,
+            matches: true,
+        }
+    }
+
+    fn is_changed(&self) -> bool {
+        !self.matches || self.offset != self.expected.len()
+    }
+}
+
+impl RenderSink for CompareSink<'_> {
+    type Error = Infallible;
+
+    fn write_str(&mut self, text: &str) -> Result<RenderControl, Self::Error> {
+        if !self.matches {
+            self.offset += text.len();
+            return Ok(RenderControl::Halt);
+        }
+
+        compare_chunk(self.expected, &mut self.offset, &mut self.matches, text);
+
+        if self.matches {
+            Ok(RenderControl::Continue)
+        } else {
+            Ok(RenderControl::Halt)
+        }
+    }
+}
+
+fn compare_chunk(expected: &[u8], offset: &mut usize, matches: &mut bool, text: &str) {
+    if !*matches {
+        *offset += text.len();
+        return;
+    }
+
+    let bytes = text.as_bytes();
+    let remaining = expected.get(*offset..).unwrap_or_default();
+    let overlap = remaining.len().min(bytes.len());
+    if remaining[..overlap] != bytes[..overlap] || bytes.len() > remaining.len() {
+        *matches = false;
+    }
+    *offset += bytes.len();
+}
+
+struct BufferedFileSink<'a> {
+    path: &'a Path,
+    expected: &'a [u8],
+    offset: usize,
+    matches: bool,
+    contents: String,
+}
+
+impl<'a> BufferedFileSink<'a> {
+    fn new(path: &'a Path, expected: &'a str) -> Self {
+        Self {
+            path,
+            expected: expected.as_bytes(),
+            offset: 0,
+            matches: true,
+            contents: String::new(),
+        }
+    }
+
+    fn is_changed(&self) -> bool {
+        !self.matches || self.offset != self.expected.len()
+    }
+
+    fn commit(self) -> io::Result<()> {
+        fs::write(self.path, self.contents)
+    }
+}
+
+impl RenderSink for BufferedFileSink<'_> {
+    type Error = Infallible;
+
+    fn write_str(&mut self, text: &str) -> Result<RenderControl, Self::Error> {
+        self.contents.push_str(text);
+        compare_chunk(self.expected, &mut self.offset, &mut self.matches, text);
+        Ok(RenderControl::Continue)
     }
 }
 

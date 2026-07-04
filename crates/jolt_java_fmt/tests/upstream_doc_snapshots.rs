@@ -1,7 +1,10 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use jolt_java_fmt::{JavaFormatOptions, format_source};
+use jolt_java_fmt::JavaFormatOptions;
+
+mod support;
+use support::format_source;
 
 #[test]
 fn upstream_doc_snippets_format_snapshots() {

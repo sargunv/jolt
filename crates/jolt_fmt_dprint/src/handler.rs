@@ -1,6 +1,6 @@
 //! dprint plugin handler for Jolt.
 
-use std::{fmt::Write as _, path::Path};
+use std::{convert::Infallible, fmt::Write as _, path::Path};
 
 use dprint_core::{
     configuration::{ConfigKeyMap, GlobalConfiguration},
@@ -10,7 +10,8 @@ use dprint_core::{
     },
 };
 use jolt_fmt_core::{
-    Diagnostic, FormatOptions, FormatStatus, Language, LineIndex, Severity, format_source,
+    Diagnostic, FormatOptions, FormatSinkResult, Language, LineIndex, RenderControl, RenderSink,
+    Severity, format_source_to_sink,
 };
 
 use crate::configuration;
@@ -71,17 +72,31 @@ impl JoltDprintPlugin {
             FormatError::from(format!("Jolt formatter requires UTF-8 input: {error}"))
         })?;
         let language = language_for_path(file_path)?;
-        let result = format_source(source, language, options);
 
-        match result.status {
-            FormatStatus::Unchanged => Ok(None),
-            FormatStatus::Formatted => {
-                Ok(result.formatted_source.map(std::string::String::into_bytes))
+        let mut sink = DprintFormatSink::default();
+        let result = format_source_to_sink(source, language, options, &mut sink);
+        match result {
+            FormatSinkResult::Complete { diagnostics: _ } => {}
+            FormatSinkResult::Halted { diagnostics } => {
+                return Err(FormatError::from(format!(
+                    "Jolt formatter halted before producing complete output:\n{}",
+                    format_blocked_diagnostics(source, &diagnostics)
+                )));
             }
-            FormatStatus::Blocked => Err(FormatError::from(format_blocked_diagnostics(
-                source,
-                &result.diagnostics,
-            ))),
+            FormatSinkResult::Blocked { diagnostics } => {
+                return Err(FormatError::from(format_blocked_diagnostics(
+                    source,
+                    &diagnostics,
+                )));
+            }
+            FormatSinkResult::SinkError { error, .. } => match error {},
+        }
+
+        let formatted = sink.into_bytes();
+        if formatted == file_bytes {
+            Ok(None)
+        } else {
+            Ok(Some(formatted))
         }
     }
 
@@ -129,6 +144,26 @@ impl dprint_core::plugins::SyncPluginHandler<FormatOptions> for JoltDprintPlugin
         _format_with_host: impl FnMut(dprint_core::plugins::SyncHostFormatRequest) -> FormatResult,
     ) -> FormatResult {
         self.format_file(request.file_path, &request.file_bytes, request.config)
+    }
+}
+
+#[derive(Default)]
+struct DprintFormatSink {
+    bytes: Vec<u8>,
+}
+
+impl DprintFormatSink {
+    fn into_bytes(self) -> Vec<u8> {
+        self.bytes
+    }
+}
+
+impl RenderSink for DprintFormatSink {
+    type Error = Infallible;
+
+    fn write_str(&mut self, text: &str) -> Result<RenderControl, Self::Error> {
+        self.bytes.extend_from_slice(text.as_bytes());
+        Ok(RenderControl::Continue)
     }
 }
 

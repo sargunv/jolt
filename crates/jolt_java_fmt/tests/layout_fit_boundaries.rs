@@ -1,4 +1,7 @@
-use jolt_java_fmt::{JavaFormatOptions, format_source};
+use jolt_java_fmt::JavaFormatOptions;
+
+mod support;
+use support::format_source;
 
 #[test]
 fn expression_statement_semicolon_participates_in_assignment_fit() {

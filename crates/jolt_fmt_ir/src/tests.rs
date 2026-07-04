@@ -22,6 +22,35 @@ fn text_and_concat_render() {
 }
 
 #[test]
+fn render_to_writes_to_sink_without_returning_text() {
+    #[derive(Default)]
+    struct TestSink {
+        text: String,
+    }
+
+    impl RenderSink for TestSink {
+        type Error = std::convert::Infallible;
+
+        fn write_str(&mut self, text: &str) -> Result<RenderControl, Self::Error> {
+            self.text.push_str(text);
+            Ok(RenderControl::Continue)
+        }
+    }
+
+    let mut sink = TestSink::default();
+    let outcome = render_to(
+        &concat([text("class"), text(" "), text("Main")]),
+        test_options(80),
+        &mut sink,
+    )
+    .expect("document should render");
+
+    assert_eq!(sink.text, "class Main");
+    assert!(!outcome.halted);
+    assert_eq!(outcome.stats.line_count, 1);
+}
+
+#[test]
 fn text_rejects_line_terminators() {
     let err = render(&text("a\nb"), test_options(80)).expect_err("invalid text");
     assert_eq!(err, RenderError::InvalidText { context: "Text" });

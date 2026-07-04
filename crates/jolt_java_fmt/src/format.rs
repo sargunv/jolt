@@ -1,7 +1,7 @@
 use jolt_diagnostics::{
     Diagnostic, DiagnosticCode, DiagnosticCodeId, DiagnosticStage, Severity, SyntaxOutcome,
 };
-use jolt_fmt_ir::render;
+use jolt_fmt_ir::{RenderSink, RenderToError, render_to};
 use jolt_java_syntax::parse_compilation_unit;
 
 use crate::context::JavaFormatter;
@@ -27,13 +27,51 @@ impl Default for JavaFormatOptions {
     }
 }
 
-/// Java formatter output plus diagnostics.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct JavaFormatResult {
-    /// Formatted source text, absent when formatting was blocked.
-    pub formatted_source: Option<String>,
-    /// Diagnostics produced while formatting.
-    pub diagnostics: Vec<Diagnostic>,
+pub enum JavaFormatSinkResult<E> {
+    Complete {
+        diagnostics: Vec<Diagnostic>,
+    },
+    Halted {
+        diagnostics: Vec<Diagnostic>,
+    },
+    Blocked {
+        diagnostics: Vec<Diagnostic>,
+    },
+    SinkError {
+        diagnostics: Vec<Diagnostic>,
+        error: E,
+    },
+}
+
+impl<E> JavaFormatSinkResult<E> {
+    pub fn diagnostics(&self) -> &[Diagnostic] {
+        match self {
+            Self::Complete { diagnostics }
+            | Self::Halted { diagnostics }
+            | Self::Blocked { diagnostics }
+            | Self::SinkError { diagnostics, .. } => diagnostics,
+        }
+    }
+
+    pub fn into_parts(self) -> (Vec<Diagnostic>, JavaFormatSinkStatus<E>) {
+        match self {
+            Self::Complete { diagnostics } => (diagnostics, JavaFormatSinkStatus::Complete),
+            Self::Halted { diagnostics } => (diagnostics, JavaFormatSinkStatus::Halted),
+            Self::Blocked { diagnostics } => (diagnostics, JavaFormatSinkStatus::Blocked),
+            Self::SinkError { diagnostics, error } => {
+                (diagnostics, JavaFormatSinkStatus::SinkError(error))
+            }
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum JavaFormatSinkStatus<E> {
+    Complete,
+    Halted,
+    Blocked,
+    SinkError(E),
 }
 
 /// Stable Java formatter diagnostic codes.
@@ -51,37 +89,32 @@ impl DiagnosticCode for JavaFormatDiagnosticCode {
     }
 }
 
-/// Formats Java source text using the Jolt Java layout builder.
-#[must_use]
-pub fn format_source(source: &str, options: &JavaFormatOptions) -> JavaFormatResult {
+/// Formats Java source text into a render sink.
+pub fn format_source_to_sink<S: RenderSink + ?Sized>(
+    source: &str,
+    options: &JavaFormatOptions,
+    sink: &mut S,
+) -> JavaFormatSinkResult<S::Error> {
     let parse = parse_compilation_unit(source);
     let (syntax, diagnostics, outcome) = parse.into_parts();
 
     if outcome != SyntaxOutcome::Clean {
-        return JavaFormatResult {
-            formatted_source: None,
-            diagnostics,
-        };
+        return JavaFormatSinkResult::Blocked { diagnostics };
     }
 
     let Some(syntax) = syntax else {
-        return JavaFormatResult {
-            formatted_source: None,
-            diagnostics,
-        };
+        return JavaFormatSinkResult::Blocked { diagnostics };
     };
 
     let mut formatter = JavaFormatter::new(options, &syntax);
     let doc = formatter.format_compilation_unit(&syntax);
-    match render(&doc, formatter.render_options()) {
-        Ok(rendered) => JavaFormatResult {
-            formatted_source: Some(rendered.text),
-            diagnostics,
-        },
-        Err(error) => JavaFormatResult {
-            formatted_source: None,
+    match render_to(&doc, formatter.render_options(), sink) {
+        Ok(outcome) if outcome.halted => JavaFormatSinkResult::Halted { diagnostics },
+        Ok(_) => JavaFormatSinkResult::Complete { diagnostics },
+        Err(RenderToError::Render(error)) => JavaFormatSinkResult::Blocked {
             diagnostics: [diagnostics, vec![render_error_diagnostic(&error)]].concat(),
         },
+        Err(RenderToError::Sink(error)) => JavaFormatSinkResult::SinkError { diagnostics, error },
     }
 }
 
@@ -97,7 +130,47 @@ fn render_error_diagnostic(error: &jolt_fmt_ir::RenderError) -> Diagnostic {
 
 #[cfg(test)]
 mod tests {
+    use std::convert::Infallible;
+
     use super::*;
+    use jolt_fmt_ir::{RenderControl, render};
+
+    #[derive(Debug)]
+    struct TestFormatResult {
+        formatted_source: Option<String>,
+        diagnostics: Vec<Diagnostic>,
+    }
+
+    #[derive(Default)]
+    struct StringSink {
+        text: String,
+    }
+
+    impl RenderSink for StringSink {
+        type Error = Infallible;
+
+        fn write_str(&mut self, text: &str) -> Result<RenderControl, Self::Error> {
+            self.text.push_str(text);
+            Ok(RenderControl::Continue)
+        }
+    }
+
+    fn format_source(source: &str, options: &JavaFormatOptions) -> TestFormatResult {
+        let mut sink = StringSink::default();
+        let result = format_source_to_sink(source, options, &mut sink);
+        match result {
+            JavaFormatSinkResult::Complete { diagnostics }
+            | JavaFormatSinkResult::Halted { diagnostics } => TestFormatResult {
+                formatted_source: Some(sink.text),
+                diagnostics,
+            },
+            JavaFormatSinkResult::Blocked { diagnostics } => TestFormatResult {
+                formatted_source: None,
+                diagnostics,
+            },
+            JavaFormatSinkResult::SinkError { error, .. } => match error {},
+        }
+    }
 
     #[test]
     fn clean_java_formats_through_renderer_and_adds_final_newline() {

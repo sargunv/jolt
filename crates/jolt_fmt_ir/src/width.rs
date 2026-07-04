@@ -97,9 +97,3 @@ fn char_width(ch: char) -> TextWidth {
 pub(crate) fn has_line_terminator(text: &str) -> bool {
     text.contains(['\r', '\n'])
 }
-
-pub(crate) fn push_repeated(output: &mut String, ch: char, count: u32) {
-    for _ in 0..count {
-        output.push(ch);
-    }
-}

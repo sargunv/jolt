@@ -1,4 +1,7 @@
-use jolt_java_fmt::{JavaFormatOptions, format_source};
+use jolt_java_fmt::JavaFormatOptions;
+
+mod support;
+use support::format_source;
 
 #[test]
 fn ignored_range_can_end_at_eof_without_trailing_newline() {

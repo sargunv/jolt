@@ -2,8 +2,11 @@ use std::collections::BTreeSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use jolt_java_fmt::{JavaFormatOptions, format_source};
+use jolt_java_fmt::JavaFormatOptions;
+
+mod support;
 use jolt_java_syntax::parse_compilation_unit;
+use support::format_source;
 
 #[test]
 fn trivia_marker_regressions_preserve_all_comments() {

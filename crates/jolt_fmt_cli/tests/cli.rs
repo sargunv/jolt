@@ -46,6 +46,26 @@ fn write_mode_rewrites_changed_java_files() {
     assert_eq!(read(temp.path().join("A.java")), SIMPLE_FORMATTED);
 }
 
+#[cfg(unix)]
+#[test]
+fn write_mode_in_place_rewrite_preserves_unix_mode_bits() {
+    use std::os::unix::fs::{MetadataExt as _, PermissionsExt as _};
+
+    let temp = TempDir::new().expect("tempdir should be created");
+    let path = temp.path().join("A.java");
+    write(&path, SIMPLE_INPUT);
+    fs::set_permissions(&path, fs::Permissions::from_mode(0o754)).expect("mode should be set");
+    let before = fs::metadata(&path).expect("metadata should be readable");
+
+    let output = jolt(temp.path(), ["fmt", "A.java"], "");
+
+    assert_success(&output);
+    assert_eq!(read(&path), SIMPLE_FORMATTED);
+    let after = fs::metadata(&path).expect("metadata should be readable");
+    assert_eq!(after.mode() & 0o777, 0o754);
+    assert_eq!(after.ino(), before.ino());
+}
+
 #[test]
 fn write_mode_formats_multiple_files_with_threads() {
     let temp = TempDir::new().expect("tempdir should be created");

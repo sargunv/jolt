@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::convert::Infallible;
 use std::error::Error;
 use std::fmt;
 
@@ -6,7 +7,7 @@ use crate::document::{
     Doc, DocKind, FillEntry, FlatLine, Group, GroupId, Line, LineMode, LiteralText,
 };
 use crate::validation::validate_doc;
-use crate::width::{TextWidth, add_width, has_line_terminator, push_repeated};
+use crate::width::{TextWidth, add_width, has_line_terminator};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum IndentStyle {
@@ -41,6 +42,57 @@ pub struct RenderStats {
     pub group_count: u32,
     pub expanded_group_count: u32,
     pub line_suffix_count: u32,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RenderOutcome {
+    pub stats: RenderStats,
+    pub halted: bool,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RenderControl {
+    Continue,
+    Halt,
+}
+
+pub trait RenderSink {
+    type Error;
+
+    /// Writes a rendered text chunk and returns whether rendering should continue.
+    ///
+    /// # Errors
+    ///
+    /// Returns a sink-specific error when the chunk cannot be accepted.
+    fn write_str(&mut self, text: &str) -> Result<RenderControl, Self::Error>;
+}
+
+impl<T: RenderSink + ?Sized> RenderSink for &mut T {
+    type Error = T::Error;
+
+    fn write_str(&mut self, text: &str) -> Result<RenderControl, Self::Error> {
+        (**self).write_str(text)
+    }
+}
+
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+struct StringSink {
+    text: String,
+}
+
+impl StringSink {
+    fn into_string(self) -> String {
+        self.text
+    }
+}
+
+impl RenderSink for StringSink {
+    type Error = Infallible;
+
+    fn write_str(&mut self, text: &str) -> Result<RenderControl, Self::Error> {
+        self.text.push_str(text);
+        Ok(RenderControl::Continue)
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -80,18 +132,63 @@ impl fmt::Display for RenderError {
 
 impl Error for RenderError {}
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum RenderToError<E> {
+    Render(RenderError),
+    Sink(E),
+}
+
+impl<E: fmt::Display> fmt::Display for RenderToError<E> {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Render(error) => error.fmt(formatter),
+            Self::Sink(error) => error.fmt(formatter),
+        }
+    }
+}
+
+impl<E: fmt::Debug + fmt::Display> Error for RenderToError<E> {}
+
 /// Renders a document using the provided options.
 ///
 /// # Errors
 ///
 /// Returns [`RenderError`] when the document is structurally invalid or contains
 /// invalid non-literal text.
-pub fn render(doc: &Doc, options: RenderOptions) -> Result<Rendered, RenderError> {
-    validate_doc(doc)?;
-    let mut renderer = Renderer::new(options);
+pub fn render_to<S: RenderSink>(
+    doc: &Doc,
+    options: RenderOptions,
+    sink: S,
+) -> Result<RenderOutcome, RenderToError<S::Error>> {
+    validate_doc(doc).map_err(RenderToError::Render)?;
+    let mut renderer = Renderer::new(options, sink);
     renderer.render_doc(doc, Mode::Break)?;
-    renderer.flush_line_suffixes()?;
+    if !renderer.halted {
+        renderer.flush_line_suffixes()?;
+    }
     Ok(renderer.finish())
+}
+
+/// Renders a document into an owned [`String`].
+///
+/// # Errors
+///
+/// Returns [`RenderError`] when the document is structurally invalid or contains
+/// invalid non-literal text.
+pub fn render(doc: &Doc, options: RenderOptions) -> Result<Rendered, RenderError> {
+    let mut sink = StringSink::default();
+    let outcome = render_to(doc, options, &mut sink).map_err(infallible_render_to_error)?;
+    Ok(Rendered {
+        text: sink.into_string(),
+        stats: outcome.stats,
+    })
+}
+
+fn infallible_render_to_error(error: RenderToError<Infallible>) -> RenderError {
+    match error {
+        RenderToError::Render(error) => error,
+        RenderToError::Sink(error) => match error {},
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -114,9 +211,10 @@ enum PrintCommand<'a> {
     EndGroup,
 }
 
-struct Renderer {
+struct Renderer<S> {
     options: RenderOptions,
-    output: String,
+    sink: S,
+    halted: bool,
     line: u32,
     column: TextWidth,
     max_column: TextWidth,
@@ -130,11 +228,12 @@ struct Renderer {
     stats: RenderStats,
 }
 
-impl Renderer {
-    fn new(options: RenderOptions) -> Self {
+impl<S: RenderSink> Renderer<S> {
+    fn new(options: RenderOptions, sink: S) -> Self {
         Self {
             options,
-            output: String::new(),
+            sink,
+            halted: false,
             line: 1,
             column: TextWidth::ZERO,
             max_column: TextWidth::ZERO,
@@ -149,22 +248,28 @@ impl Renderer {
         }
     }
 
-    fn finish(mut self) -> Rendered {
+    fn finish(mut self) -> RenderOutcome {
         self.stats.line_count = self.line;
         self.stats.max_column = self.max_column.max(self.column);
-        Rendered {
-            text: self.output,
+        RenderOutcome {
             stats: self.stats,
+            halted: self.halted,
         }
     }
 
-    fn render_doc(&mut self, doc: &Doc, mode: Mode) -> Result<(), RenderError> {
+    fn render_doc(&mut self, doc: &Doc, mode: Mode) -> Result<(), RenderToError<S::Error>> {
         let mut stack = vec![PrintCommand::Doc(doc, mode)];
         self.render_commands(&mut stack)
     }
 
-    fn render_commands(&mut self, stack: &mut Vec<PrintCommand<'_>>) -> Result<(), RenderError> {
+    fn render_commands(
+        &mut self,
+        stack: &mut Vec<PrintCommand<'_>>,
+    ) -> Result<(), RenderToError<S::Error>> {
         while let Some(command) = stack.pop() {
+            if self.halted {
+                break;
+            }
             match command {
                 PrintCommand::Doc(doc, mode) => self.render_command_doc(doc, mode, stack)?,
                 PrintCommand::EndIndent(levels) => {
@@ -186,15 +291,15 @@ impl Renderer {
         doc: &'a Doc,
         mode: Mode,
         stack: &mut Vec<PrintCommand<'a>>,
-    ) -> Result<(), RenderError> {
+    ) -> Result<(), RenderToError<S::Error>> {
         match doc.kind() {
             DocKind::Nil | DocKind::BreakParent => Ok(()),
             DocKind::Text(text) => {
-                self.write_text(&text.text, text.width);
+                self.write_text(&text.text, text.width)?;
                 Ok(())
             }
             DocKind::LiteralText(text) => {
-                self.write_literal(text);
+                self.write_literal(text)?;
                 Ok(())
             }
             DocKind::Concat(docs) => {
@@ -219,7 +324,9 @@ impl Renderer {
             }
             DocKind::Line(line) => self.render_line(line, mode),
             DocKind::IfBreak(if_break) => {
-                let is_broken = self.group_break_state(if_break.group_id)?;
+                let is_broken = self
+                    .group_break_state(if_break.group_id)
+                    .map_err(RenderToError::Render)?;
                 stack.push(PrintCommand::Doc(
                     if is_broken {
                         &if_break.breaks
@@ -231,7 +338,9 @@ impl Renderer {
                 Ok(())
             }
             DocKind::IndentIfBreak(indent_if_break) => {
-                let is_broken = self.group_break_state(Some(indent_if_break.group_id))?;
+                let is_broken = self
+                    .group_break_state(Some(indent_if_break.group_id))
+                    .map_err(RenderToError::Render)?;
                 let should_indent = is_broken != indent_if_break.negate;
                 if should_indent {
                     self.indent_levels += 1;
@@ -254,13 +363,15 @@ impl Renderer {
         group: &'a Group,
         mode: Mode,
         stack: &mut Vec<PrintCommand<'a>>,
-    ) -> Result<(), RenderError> {
+    ) -> Result<(), RenderToError<S::Error>> {
         let is_broken = if group.should_break {
             true
         } else if mode == Mode::Flat && self.measured_group_fits {
             false
         } else {
-            let fits = self.group_fits(group, stack)?;
+            let fits = self
+                .group_fits(group, stack)
+                .map_err(RenderToError::Render)?;
             if fits {
                 self.measured_group_fits = true;
             }
@@ -294,13 +405,19 @@ impl Renderer {
         checker.fit_group_flat_with_stack(group, stack)
     }
 
-    fn render_fill(&mut self, entries: &[FillEntry], mode: Mode) -> Result<(), RenderError> {
+    fn render_fill(
+        &mut self,
+        entries: &[FillEntry],
+        mode: Mode,
+    ) -> Result<(), RenderToError<S::Error>> {
         for (index, entry) in entries.iter().enumerate() {
             self.render_doc(&entry.content, mode)?;
             let Some(separator) = &entry.separator else {
                 continue;
             };
-            let separator_mode = self.fill_pair_separator_mode(entries, index, separator)?;
+            let separator_mode = self
+                .fill_pair_separator_mode(entries, index, separator)
+                .map_err(RenderToError::Render)?;
             self.render_doc(separator, separator_mode)?;
         }
         Ok(())
@@ -317,12 +434,12 @@ impl Renderer {
         Ok(checker.column <= self.options.line_width)
     }
 
-    fn render_line(&mut self, line: &Line, mode: Mode) -> Result<(), RenderError> {
+    fn render_line(&mut self, line: &Line, mode: Mode) -> Result<(), RenderToError<S::Error>> {
         match (mode, line.mode) {
             (_, LineMode::Hard) => self.write_newline(line.indent_delta, 1),
             (_, LineMode::Empty) => self.write_newline(line.indent_delta, 2),
             (Mode::Flat, LineMode::Soft | LineMode::SoftOrSpace) => {
-                self.write_flat_line(&line.flat);
+                self.write_flat_line(&line.flat)?;
                 Ok(())
             }
             (Mode::Break, LineMode::Soft | LineMode::SoftOrSpace) => {
@@ -348,13 +465,14 @@ impl Renderer {
         }
     }
 
-    fn write_text(&mut self, text: &str, width: TextWidth) {
-        self.output.push_str(text);
+    fn write_text(&mut self, text: &str, width: TextWidth) -> Result<(), RenderToError<S::Error>> {
+        self.write_str(text)?;
         self.add_width(width);
+        Ok(())
     }
 
-    fn write_literal(&mut self, literal: &LiteralText) {
-        self.output.push_str(&literal.text);
+    fn write_literal(&mut self, literal: &LiteralText) -> Result<(), RenderToError<S::Error>> {
+        self.write_str(&literal.text)?;
         let mut line_base_column = self.column;
         let mut line_index = 0;
         let mut chars = literal.text.chars().peekable();
@@ -387,30 +505,34 @@ impl Renderer {
             self.max_column = self.max_column.max(self.column);
             self.measured_group_fits = false;
         }
+        Ok(())
     }
 
-    fn write_flat_line(&mut self, flat: &FlatLine) {
+    fn write_flat_line(&mut self, flat: &FlatLine) -> Result<(), RenderToError<S::Error>> {
         match flat {
-            FlatLine::Empty => {}
+            FlatLine::Empty => Ok(()),
             FlatLine::Space => self.write_text(" ", TextWidth::new(1)),
             FlatLine::Text(text, width) => self.write_text(text, *width),
         }
     }
 
-    fn write_newline(&mut self, indent_delta: i16, count: u32) -> Result<(), RenderError> {
+    fn write_newline(
+        &mut self,
+        indent_delta: i16,
+        count: u32,
+    ) -> Result<(), RenderToError<S::Error>> {
         self.flush_line_suffixes()?;
         for _ in 0..count {
             self.max_column = self.max_column.max(self.column);
-            self.output.push_str(self.options.line_ending.as_str());
+            self.write_str(self.options.line_ending.as_str())?;
             self.line += 1;
             self.column = TextWidth::ZERO;
             self.measured_group_fits = false;
         }
-        self.write_indent(indent_delta);
-        Ok(())
+        self.write_indent(indent_delta)
     }
 
-    fn write_indent(&mut self, indent_delta: i16) {
+    fn write_indent(&mut self, indent_delta: i16) -> Result<(), RenderToError<S::Error>> {
         let effective_levels = (self.indent_levels + i32::from(indent_delta))
             .max(0)
             .cast_unsigned();
@@ -420,14 +542,14 @@ impl Renderer {
                 let width = saturating_nonnegative_u32(
                     i64::from(base_width) + i64::from(self.align_spaces),
                 );
-                push_repeated(&mut self.output, ' ', width);
+                self.write_repeated(' ', width)?;
                 self.column = TextWidth::new(width);
             }
             IndentStyle::Tab => {
                 if self.align_spaces >= 0 {
-                    push_repeated(&mut self.output, '\t', effective_levels);
+                    self.write_repeated('\t', effective_levels)?;
                     let spaces = self.align_spaces.cast_unsigned();
-                    push_repeated(&mut self.output, ' ', spaces);
+                    self.write_repeated(' ', spaces)?;
                     self.column = TextWidth::new(base_width + spaces);
                 } else {
                     let width = saturating_nonnegative_u32(
@@ -436,16 +558,17 @@ impl Renderer {
                     let tab_width = u32::from(self.options.indent_width);
                     let tabs = width / tab_width;
                     let spaces = width % tab_width;
-                    push_repeated(&mut self.output, '\t', tabs);
-                    push_repeated(&mut self.output, ' ', spaces);
+                    self.write_repeated('\t', tabs)?;
+                    self.write_repeated(' ', spaces)?;
                     self.column = TextWidth::new(width);
                 }
             }
         }
         self.max_column = self.max_column.max(self.column);
+        Ok(())
     }
 
-    fn flush_line_suffixes(&mut self) -> Result<(), RenderError> {
+    fn flush_line_suffixes(&mut self) -> Result<(), RenderToError<S::Error>> {
         if self.flushing_suffixes || self.line_suffixes.is_empty() {
             return Ok(());
         }
@@ -461,6 +584,38 @@ impl Renderer {
         })();
         self.flushing_suffixes = false;
         result
+    }
+
+    fn write_str(&mut self, text: &str) -> Result<(), RenderToError<S::Error>> {
+        if text.is_empty() || self.halted {
+            return Ok(());
+        }
+        match self.sink.write_str(text).map_err(RenderToError::Sink)? {
+            RenderControl::Continue => {}
+            RenderControl::Halt => {
+                self.halted = true;
+            }
+        }
+        Ok(())
+    }
+
+    fn write_repeated(&mut self, ch: char, count: u32) -> Result<(), RenderToError<S::Error>> {
+        const SPACES: &str = "                                ";
+        const TABS: &str = "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t";
+
+        let chunk = match ch {
+            ' ' => SPACES,
+            '\t' => TABS,
+            _ => unreachable!("renderer only repeats indentation whitespace"),
+        };
+        let chunk_len = u32::try_from(chunk.len()).expect("indent chunk length fits u32");
+        let mut remaining = count;
+        while remaining > 0 {
+            let write_len = remaining.min(chunk_len);
+            self.write_str(&chunk[..usize::try_from(write_len).expect("chunk length fits usize")])?;
+            remaining -= write_len;
+        }
+        Ok(())
     }
 
     fn fill_pair_separator_mode(
@@ -510,7 +665,7 @@ struct FitChecker {
 }
 
 impl FitChecker {
-    fn from_renderer(renderer: &Renderer) -> Self {
+    fn from_renderer<S>(renderer: &Renderer<S>) -> Self {
         Self {
             options: renderer.options,
             column: renderer.column,

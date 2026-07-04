@@ -19,12 +19,13 @@ CLI args
   -> collect all candidate files and resolved config
   -> format candidates in parallel with Rayon
        -> read the whole file into a String
-       -> call jolt_fmt_core::format_source
+       -> call jolt_fmt_core::format_source_to_sink
             -> parse Java source
             -> build Java formatter Doc IR
-            -> render Doc IR into a String
-       -> compare source and formatted strings
-       -> write the whole formatted string if changed
+       -> render Doc IR into a host-provided sink
+       -> check mode: compare rendered chunks and halt after mismatch
+       -> write mode: buffer rendered output while comparing to source
+       -> commit the buffered output if changed
   -> emit collected stdout and stderr output on the main thread
 ```
 
@@ -34,7 +35,7 @@ The stdin path is single-file and single-threaded:
 stdin
   -> read all input into a String
   -> format
-  -> print the full formatted String
+  -> buffered sink commits complete output to stdout
 ```
 
 ## Current Memory Shape
@@ -51,7 +52,7 @@ sets:
 - copied token and trivia text inside green tokens,
 - a comment map for the compilation unit,
 - a full formatter `Doc` tree,
-- a full rendered output `String`,
+- a full rendered output buffer for normal write/stdout/dprint paths,
 - all per-file output records before terminal emission.
 
 Some of these are short-lived, but at peak each worker can hold several
@@ -87,20 +88,28 @@ candidate Vec
        -> validate layout
        -> render into a sink
             check mode: compare against source and cancel after mismatch
-            write mode: write to temp file while comparing against source
+            write mode: buffer output while comparing against source, then
+              write once if changed
+            dprint mode: buffer output bytes and return them to dprint
        -> return a small per-file result
   -> main thread emits terminal output
 ```
 
-The important shift is inside each worker: avoid holding both full source and
-full formatted output when a sink can compare or write incrementally, and remove
-duplicate parser/syntax representations where they do not buy useful behavior.
+The important shift is inside each worker: make output behavior host-specific
+through sinks, avoid full formatted output in check mode, and remove duplicate
+parser/syntax representations where they do not buy useful behavior.
 
 ## Design Principle: Stream Where It Pays
 
-The strongest streaming opportunity is rendered output. The formatter should not
-need to allocate a full formatted `String` just to answer "changed?" or to write
-the final bytes to disk.
+The strongest streaming opportunity is check-mode rendered output. The formatter
+should not need to allocate a full formatted `String` just to answer "changed?".
+
+Normal write mode is more subtle. A fully streaming file write is fast, but it
+can partially rewrite the destination if layout/rendering fails or panics after
+the first emitted chunk. A temp-file streaming write avoids that, but benchmark
+data showed that per-file temp creation, replacement, metadata handling, and
+especially fsync-style durability costs can dominate large changed-file
+workloads.
 
 Java formatting needs enough structural context to parse a compilation unit and
 make layout decisions. Trying to make every intra-file phase byte-streaming is
@@ -110,9 +119,14 @@ A better foundation is:
 
 - stream renderer output to sinks,
 - cancel check-mode rendering after the first mismatch,
-- write through a temp-file sink for safe replacement,
+- buffer normal write/stdout/dprint output in a sink and commit only after a
+  complete render,
+- write changed files with one final `fs::write`,
 - reduce duplicate parser and syntax storage,
 - keep full-file candidate discovery unless profiling proves it matters.
+
+This means "sink-based" is the formatter boundary, but not every sink should be
+a direct I/O stream. Some sinks are deliberately completion-gated buffers.
 
 ## Work Order
 
@@ -120,24 +134,29 @@ A better foundation is:
 
 The renderer should not require building a final `String`.
 
-Add a sink-oriented rendering API while keeping the current string API as a
-convenience caller only where a caller truly needs an owned string:
+Add a sink-oriented rendering API. Keep owned-string rendering private to the
+renderer as the implementation of `render`, not as a parallel formatter API:
 
 ```text
-render_to(doc, options, sink) -> RenderStats
-render_to_string(doc, options) -> Rendered { text, stats }
+render_to(doc, options, sink) -> RenderOutcome { stats, halted }
+render(doc, options) -> Rendered { text, stats }
 ```
 
-Useful sinks:
+Useful host sinks:
 
-- `StringSink` for tests and embedders that need owned output,
-- `CompareSink` for `--check`,
-- `TempFileSink` for write mode,
+- `CompareSink` for CLI `--check`,
+- buffered compare-and-commit sink for CLI write mode,
+- buffered stdout sink for CLI stdin formatting,
+- buffered byte sink for dprint,
 - possibly `CountingSink` or `NullSink` for benchmarks and diagnostics.
 
 This change should come early because many later optimizations depend on it.
 Without render sinks, the pipeline always has to allocate the full formatted
 output even when it only needs to know whether the file changed.
+
+Early-halt rendering must be explicit in the renderer return value. A halted
+render is useful for check mode, but it is not a complete render and downstream
+callers must not treat it as a successful full output.
 
 ### 2. Add Source Comparison As A Sink
 
@@ -147,78 +166,51 @@ the original source.
 A compare sink can receive rendered chunks and compare them against the original
 source bytes. Once it sees a mismatch, it can mark the file as changed.
 
-The intended end state is cancellable check-mode rendering. After parser and
-formatter diagnostics have been produced, check mode only needs a yes/no answer
-for whether the rendered bytes match the source. It should be able to stop
-rendering after the first output mismatch unless a specific diagnostic
-requirement says otherwise.
+The end state is cancellable check-mode rendering. After parser and formatter
+diagnostics have been produced, check mode only needs a yes/no answer for
+whether the rendered bytes match the source. It should be able to stop rendering
+after the first output mismatch unless a specific diagnostic requirement says
+otherwise.
 
-### 3. Add Atomic Write Sinks
+### 3. Add Buffered Commit Sinks
 
-Write mode should render to a same-directory temporary file, then atomically
-replace the destination if the output differs from the input.
+Write mode should render to a buffered sink that compares rendered output with
+the source while accumulating the final output. At the end:
 
-The sink should compare rendered output with the source while writing. At the
-end:
+- if unchanged, do not touch the file,
+- if changed, write the buffered output with one `fs::write`,
+- if parsing, layout, rendering, or diagnostics block formatting, leave the
+  original file untouched.
 
-- if unchanged, delete the temp file,
-- if changed, apply the formatter metadata policy and atomically commit,
-- if rendering or writing fails, leave the original file untouched.
+This keeps the successful changed-file path close to the original fast
+implementation, restores unchanged-file behavior, and avoids exposing users to
+partially written files on ordinary formatter/render errors.
 
-This avoids a full formatted `String` in write mode and improves crash safety.
+This does not provide crash-safe atomic replacement. That is an explicit
+tradeoff for the normal formatter path. If a future `--safe-write` or release
+hardening mode needs atomic replacement, it should be added as a separate host
+policy with fresh benchmark data.
 
-Important details:
+Research notes from the walked-back atomic-write experiment:
 
-- use `atomic-write-file` for the write sink,
-- add it as a normal `jolt_fmt_cli` dependency,
-- keep writing through an `io::Write` implementation so rendered output is not
-  materialized,
-- flush any buffering before commit,
-- commit only after rendering, comparison, and flushing succeed,
-- discard the atomic writer when formatting fails or the file is unchanged,
-- explicitly test Windows replacement behavior before the first binary release.
+- `atomic-write-file` gives a streaming file-like writer and safe replacement,
+  but its commit path performs durability work that caused very large system
+  time regressions when thousands of files changed.
+- `tempfile::NamedTempFile::persist` avoids the fsync behavior and can
+  atomically replace an existing target, but the temp-file lifecycle and
+  metadata handling still added measurable overhead in changed-heavy corpora.
+- In-place direct streaming was fast, but it made render/layout failures after
+  the first output chunk destructive. Buffered commit recovered the fast path
+  while keeping ordinary formatter failures non-destructive.
 
-`atomic-write-file` is the best fit for this workstream because it is already a
-streaming `Write`-like file, creates the temporary file in the destination
-directory, supports Unix, Windows, and WASI, and commits by replacing the
-destination only after the new contents have been written. Its current crate
-version requires Rust 1.85; the workspace is already on Rust 1.96.
-
-Metadata policy should be explicit:
-
-- preserve Unix mode bits,
-- try to preserve Unix ownership where supported,
-- do not preserve modification time, because a formatter write is a real content
-  change and build tools should be able to observe it,
-- do not block the formatter on exact preservation of timestamps, ACLs, extended
-  attributes, or SELinux contexts unless tests show a concrete source-file use
-  case that needs them.
-
-This is a tradeoff, not an open question. Exact metadata preservation is not the
-right default for a formatter because some metadata, such as file size and
-modification time, should change when contents change. Portable atomic
-replacement also creates a new filesystem object under the hood, so preserving
-every platform-specific metadata field is not generally available from one
-standard API.
-
-Research notes:
-
-- [`atomic-write-file`](https://docs.rs/atomic-write-file/latest/atomic_write_file/)
-  is the preferred implementation path because it exposes a streaming file-like
-  writer, writes in the destination directory, supports Windows, and commits
-  only after the new contents have been written.
-- [`tempfile::NamedTempFile::persist`](https://docs.rs/tempfile/latest/tempfile/struct.NamedTempFile.html#method.persist)
-  can atomically replace an existing target, but its docs note that neither the
-  file contents nor containing directory are synchronized when `persist`
-  returns. It is a lower-level fallback, not the preferred write sink.
-- [`write_atomic`](https://docs.rs/write_atomic/latest/write_atomic/) is a
-  convenient one-shot API and explicitly notes that recent `tempfile`
-  improvements cover much of its original purpose. Its one-shot shape is less
-  direct for a renderer sink.
+Metadata policy for the current normal write path is simple: changed files are
+written in place with `fs::write`, so existing Unix mode bits and inode identity
+are preserved. Modification time changes only when contents change.
 
 ### 4. Reduce Parser Token Duplication
 
-After rendered output no longer has to be materialized, turn to parser memory.
+After check mode no longer has to materialize rendered output, turn to parser
+memory.
 
 Current parse flow includes:
 
@@ -361,15 +353,16 @@ The best write-mode pipeline is:
 source
   -> parse
   -> build layout
-  -> render to TempFileCompareSink
-       writes formatted bytes to temp file
+  -> render to BufferedCompareFileSink
+       buffers formatted bytes
        compares against source as bytes are emitted
-  -> if unchanged: remove temp file
-  -> if changed: flush, preserve metadata, atomic replace
+  -> if unchanged: do not touch the destination
+  -> if changed: write the buffered output once
 ```
 
-This removes the full output `String` and protects users from partially written
-files after a crash or interrupted process.
+This still materializes the full output, but only inside the host sink. The
+formatter API remains sink-based, check mode avoids the allocation, and normal
+write mode commits only after complete successful rendering.
 
 ## Stdin Mode
 
@@ -377,25 +370,33 @@ Stdin cannot avoid reading all input if the parser requires a full source
 string. However, it can still benefit from render sinks:
 
 - check mode can compare rendered output to the input buffer,
-- normal mode can render directly to stdout instead of allocating a formatted
-  string.
+- normal mode can render into the same completion-gated buffer shape as file
+  writes, then commit to stdout after success.
 
-Direct stdout rendering should still handle write errors cleanly.
+Stdout uses buffering for the same reason file writes do: avoid emitting partial
+formatter output if rendering fails after the first chunk. This also gives
+stdout and file mode one consistent completion contract.
 
 ## Suggested Milestones
 
 ### Milestone 1: Pipeline Interfaces
 
 - Introduce render sinks.
-- Replace string-first rendering with sink-first rendering.
+- Replace string-first formatting with sink-first rendering.
+- Represent early halt explicitly in the renderer outcome.
 
-### Milestone 2: Output Without Full Formatted Strings
+### Milestone 2: Host Sink Output Paths
 
 - Implement compare sink for check mode.
-- Implement temp-file compare sink for write mode.
-- Add atomic replacement semantics.
-- Keep owned-string rendering only as an explicit sink-backed convenience path
-  for tests and embedders that actually need a `String`.
+- Implement buffered compare-and-commit sinks for write, stdout, and dprint host
+  paths.
+- Remove parallel public formatter APIs that return owned formatted strings.
+- Keep owned-string rendering only inside tests or host-local adapters that
+  actually need a `String`.
+
+Milestone 2 no longer includes atomic replacement semantics for the normal
+formatter path. That experiment exposed too much per-file overhead for the
+current benchmarks.
 
 ### Milestone 3: Parser Memory Reduction
 
@@ -419,10 +420,14 @@ Direct stdout rendering should still handle write errors cleanly.
 
 Terminal output ordering is not a requirement, but output architecture is not a
 priority performance target unless profiling shows the collected per-file
-results are costly after rendered output strings have been removed. Check mode
-should be cancellable once it has enough information to report
-changed/unchanged. Explicit-file language fallback is a CLI policy question
-outside this performance workstream.
+results are costly after sinked output paths land. Check mode should be
+cancellable once it has enough information to report changed/unchanged.
+Explicit-file language fallback is a CLI policy question outside this
+performance workstream.
+
+Atomic replacement is not part of the normal write-mode performance pipeline. It
+may be revisited as an opt-in safety policy if product requirements demand
+crash-safe replacement and benchmarks justify the overhead.
 
 ## Input Text Ownership
 
@@ -460,7 +465,8 @@ The strongest architecture is not "stream every byte immediately." It is
 Rayon-backed file parallelism with carefully chosen intra-file ownership.
 
 The first foundational move is to make formatting output sink-based. That
-unlocks check-mode comparison, atomic write-mode output, lower memory use, and
-cleaner write behavior. After that, the deeper work is reducing duplicate parser
-storage, making Unicode translation lazy, and eventually storing syntax text by
-source range instead of copying it into green tokens.
+unlocks check-mode comparison, host-specific buffered commit behavior, lower
+memory use in check mode, and cleaner write behavior. After that, the deeper
+work is reducing duplicate parser storage, making Unicode translation lazy, and
+eventually storing syntax text by source range instead of copying it into green
+tokens.

@@ -15,6 +15,7 @@ pub use document::{
     literal_text_with_line_widths, literal_text_with_width, nil, soft_line, text, text_with_width,
 };
 pub use render::{
-    IndentStyle, LineEnding, RenderError, RenderOptions, RenderStats, Rendered, render,
+    IndentStyle, LineEnding, RenderControl, RenderError, RenderOptions, RenderOutcome, RenderSink,
+    RenderStats, RenderToError, Rendered, render, render_to,
 };
 pub use width::TextWidth;

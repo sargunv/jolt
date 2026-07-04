@@ -2,7 +2,10 @@ use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use jolt_java_fmt::{JavaFormatOptions, format_source};
+use jolt_java_fmt::JavaFormatOptions;
+
+mod support;
+use support::format_source;
 
 #[test]
 fn style_rule_fixtures_match_expected_output() {

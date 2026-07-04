@@ -2,8 +2,11 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use jolt_diagnostics::DiagnosticStage;
-use jolt_java_fmt::{JavaFormatOptions, format_source};
+use jolt_java_fmt::JavaFormatOptions;
+
+mod support;
 use jolt_java_syntax::parse_compilation_unit;
+use support::format_source;
 
 #[test]
 fn imported_fixture_inputs_format_idempotently_and_parse() {
