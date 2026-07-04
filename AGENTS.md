@@ -5,7 +5,6 @@ Fast, opinionated JVM and Kotlin Multiplatform project tooling.
 ## Project Map
 
 - `.agents/docs/VISION.md`: product vision.
-- `.agents/docs/formatter-plan.md`: formatter architecture notes.
 - `crates/`: Rust workspace crates for the formatter engine and wrappers.
 
 ## Useful Commands
@@ -33,6 +32,8 @@ Run `mise tasks ls --all` for the full task list.
   misconfiguration; do not silently skip them.
 - Do not add convenience APIs unless they carry real behavior needed by current
   code.
+- Remove legacy code as you go; do not design for backwards compatiblity. This
+  is a pre-release project.
 - Algorithms must remain linear or explicitly bounded; do not add unbounded
   layout search, best-fitting, or conditional-group behavior without a
   documented finite cost model and proven need.
