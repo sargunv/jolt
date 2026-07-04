@@ -1,10 +1,11 @@
 use super::{
     AssignmentExpression, BinaryExpression, ConditionalExpression, Doc, Expression, JavaFormatter,
-    PostfixExpression, UnaryExpression, assignment_expression, binary_chain, concat,
-    format_expression, format_token_with_comments, ternary_expression, text,
+    PostfixExpression, UnaryExpression, concat, format_expression, format_token_with_comments,
+    text,
 };
-use crate::helpers::comments::{comment_forces_line, format_comment};
-use jolt_java_syntax::{ExpressionParentRole, JavaOperator, JavaSyntaxToken};
+use crate::helpers::comments::{comment_forces_line, format_comment, token_has_comments};
+use jolt_fmt_ir::{force_group, group, indent, line};
+use jolt_java_syntax::{ExpressionParentRole, JavaOperator};
 
 pub(super) fn format_assignment_expression(
     expression: &AssignmentExpression,
@@ -114,7 +115,7 @@ fn flatten_binary_expression<'source>(
         return (
             expression
                 .left()
-                .unwrap_or_else(|| Expression::from(expression.clone())),
+                .unwrap_or_else(|| Expression::from(*expression)),
             expression
                 .right()
                 .map(|right| (jolt_fmt_ir::nil(), format_expression(&right, formatter)))
@@ -122,10 +123,10 @@ fn flatten_binary_expression<'source>(
                 .collect(),
         );
     };
-    let root = Expression::from(expression.clone());
+    let root = Expression::from(*expression);
     let mut operands = Vec::new();
     let mut operators = Vec::new();
-    collect_binary_chain(root.clone(), &mut operands, &mut operators);
+    collect_binary_chain(root, &mut operands, &mut operators);
     if operators.len() + 1 != operands.len() {
         return unflattened_binary_expression(expression, formatter, &operator);
     }
@@ -172,7 +173,7 @@ fn unflattened_binary_expression<'source>(
     (
         expression
             .left()
-            .unwrap_or_else(|| Expression::from(expression.clone())),
+            .unwrap_or_else(|| Expression::from(*expression)),
         vec![(
             format_operator_with_comments(operator),
             expression.right().map_or_else(jolt_fmt_ir::nil, |right| {
@@ -187,7 +188,7 @@ fn collect_binary_chain<'source>(
     operands: &mut Vec<Expression<'source>>,
     operators: &mut Vec<JavaOperator<'source>>,
 ) {
-    let Some(binary) = binary_for_chain(expression.clone()) else {
+    let Some(binary) = binary_for_chain(expression) else {
         operands.push(expression);
         return;
     };
@@ -211,7 +212,7 @@ fn collect_binary_left<'source>(
     operands: &mut Vec<Expression<'source>>,
     operators: &mut Vec<JavaOperator<'source>>,
 ) {
-    let Some(binary) = binary_for_chain(expression.clone()) else {
+    let Some(binary) = binary_for_chain(expression) else {
         operands.push(expression);
         return;
     };
@@ -248,10 +249,6 @@ fn binary_for_chain(expression: Expression<'_>) -> Option<BinaryExpression<'_>> 
     }
 }
 
-fn token_has_comments(token: &JavaSyntaxToken) -> bool {
-    !token.leading_comments().is_empty() || !token.trailing_comments().is_empty()
-}
-
 fn format_operator_with_comments(operator: &JavaOperator) -> Doc {
     if let Some(token) = operator.as_single_token() {
         return format_token_with_comments(token);
@@ -285,9 +282,59 @@ fn format_operator_trailing_comments(operator: &JavaOperator) -> Doc {
     concat(docs)
 }
 
+fn assignment_expression(left: Doc, operator: Doc, right: Doc) -> Doc {
+    group(concat([left, text(" "), operator, assignment_rhs(right)]))
+}
+
+fn assignment_rhs(right: Doc) -> Doc {
+    indent(concat([line(), right]))
+}
+
+fn binary_chain(first: Doc, rest: Vec<(Doc, Doc)>) -> Doc {
+    if rest.is_empty() {
+        return first;
+    }
+
+    group(concat([
+        first,
+        indent(concat(rest.into_iter().map(|(operator, operand)| {
+            concat([line(), operator, text(" "), operand])
+        }))),
+    ]))
+}
+
+fn ternary_expression(
+    condition: Doc,
+    question: Doc,
+    consequence: Doc,
+    colon: Doc,
+    alternative: Doc,
+    force_break: bool,
+) -> Doc {
+    let doc = concat([
+        condition,
+        indent(concat([
+            line(),
+            question,
+            text(" "),
+            consequence,
+            line(),
+            colon,
+            text(" "),
+            alternative,
+        ])),
+    ]);
+
+    if force_break {
+        force_group(doc)
+    } else {
+        group(doc)
+    }
+}
+
 fn should_force_conditional_break(expression: &ConditionalExpression) -> bool {
     matches!(
-        Expression::from(expression.clone()).parent_role(),
+        Expression::from(*expression).parent_role(),
         Some(
             ExpressionParentRole::ConditionalCondition
                 | ExpressionParentRole::ConditionalTrueExpression

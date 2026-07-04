@@ -4,7 +4,7 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 /// A Java token or syntax node kind.
 ///
 /// This enum is language-wide: lexer tokens and parser-created CST nodes share
-/// the same kind space, while the green tree stores whether an element is a
+/// the same kind space, while the syntax tree stores whether an element is a
 /// token or node structurally.
 #[repr(u16)]
 #[derive(Clone, Copy, Debug, Eq, Hash, IntoPrimitive, PartialEq, TryFromPrimitive)]
@@ -301,13 +301,13 @@ pub enum JavaSyntaxKind {
 impl JavaSyntaxKind {
     /// Converts this kind into the raw representation used by shared syntax data.
     #[must_use]
-    pub fn to_raw(self) -> RawSyntaxKind {
+    pub(crate) fn to_raw(self) -> RawSyntaxKind {
         RawSyntaxKind::new(u16::from(self))
     }
 
     /// Converts a raw kind back into a Java syntax kind.
     #[must_use]
-    pub fn from_raw(raw: RawSyntaxKind) -> Option<Self> {
+    pub(crate) fn from_raw(raw: RawSyntaxKind) -> Option<Self> {
         Self::try_from(raw.get()).ok()
     }
 }

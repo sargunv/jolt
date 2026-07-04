@@ -8,7 +8,7 @@ use jolt_java_syntax::{
 use crate::context::JavaFormatter;
 use crate::helpers::comments::{
     InlineLeadingTrivia, TrailingTrivia, comment_forces_line, format_construct_leading_comments,
-    format_leading_comments, format_token_text_after_trivia_relocated, format_token_with_comments,
+    format_leading_comments, format_token_text, format_token_with_comments,
     format_token_with_inline_leading_comments, format_trailing_comments,
 };
 use crate::helpers::modifiers::inline_modifier_prefix_from_docs;
@@ -189,7 +189,7 @@ pub(crate) fn format_receiver_parameter(
                         |dot| {
                             concat([
                                 format_leading_comments(&dot),
-                                format_token_text_after_trivia_relocated(&dot),
+                                format_token_text(dot.text()),
                                 format_trailing_comments(&dot),
                             ])
                         },
@@ -279,7 +279,7 @@ fn format_variable_declarator_list(
     group(concat(
         declarators
             .entries()
-            .map(|entry| format_variable_declarator_entry(entry, formatter))
+            .map(|entry| format_variable_declarator_entry(&entry, formatter))
             .collect::<Vec<_>>(),
     ))
 }
@@ -317,7 +317,7 @@ fn format_single_variable_declaration(
 }
 
 fn format_variable_declarator_entry(
-    entry: VariableDeclaratorEntry,
+    entry: &VariableDeclaratorEntry,
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
     concat([

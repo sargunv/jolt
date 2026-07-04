@@ -1,6 +1,6 @@
 use crate::{Diagnostic, RawSyntaxKind};
 
-/// A parser event consumed by the shared green tree sink.
+/// A parser event consumed by the shared syntax tree builder.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Event {
     /// Starts a syntax node with the supplied raw kind.

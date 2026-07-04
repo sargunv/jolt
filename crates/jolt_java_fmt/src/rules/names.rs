@@ -3,9 +3,8 @@ use jolt_java_syntax::{JavaComment, JavaSyntaxToken, NameSegment, NameSyntax};
 
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, comment_forces_line, format_comment, format_token,
-    format_token_text_after_trivia_relocated, format_token_with_comments,
+    format_token_text, format_token_with_comments,
 };
-use crate::helpers::names::qualified_name;
 
 pub(crate) fn format_name(name: &NameSyntax) -> Doc {
     let segments = name.segments_with_annotations().collect::<Vec<_>>();
@@ -16,11 +15,11 @@ pub(crate) fn format_name(name: &NameSyntax) -> Doc {
         return format_inline_name(&segments);
     }
 
-    qualified_name(
+    jolt_fmt_ir::join(
+        text("."),
         segments
             .into_iter()
-            .map(|segment| format_token_with_comments(&segment.identifier))
-            .collect(),
+            .map(|segment| format_token_with_comments(&segment.identifier)),
     )
 }
 
@@ -106,7 +105,7 @@ fn format_leading_dot_segment(segment: &NameSegment) -> Doc {
 fn format_name_dot(dot: &JavaSyntaxToken) -> Doc {
     concat([
         format_leading_dot_comments(dot.leading_comments()),
-        format_token_text_after_trivia_relocated(dot),
+        format_token_text(dot.text()),
         format_inline_comments(dot.trailing_comments()),
     ])
 }
@@ -122,7 +121,7 @@ fn format_name_segment_identifier(segment: &NameSegment) -> Doc {
 fn format_inline_name_segment_identifier(segment: &NameSegment, followed_by_dot: bool) -> Doc {
     concat([
         format_inline_comments(segment.identifier.leading_comments()),
-        format_token_text_after_trivia_relocated(&segment.identifier),
+        format_token_text(segment.identifier.text()),
         if followed_by_dot {
             format_leading_dot_comments(segment.identifier.trailing_comments())
         } else {

@@ -76,15 +76,6 @@ fn supported_config_keys_use_camel_case_dprint_names() {
 }
 
 #[test]
-fn resolved_plugin_config_type_is_shared_format_options() {
-    fn assert_shared_type(_: FormatOptions) {}
-
-    let result = resolve_config(ConfigKeyMap::new(), &GlobalConfiguration::default());
-
-    assert_shared_type(result.config);
-}
-
-#[test]
 fn unknown_properties_produce_configuration_diagnostics() {
     let config = config_map([("surprise", ConfigKeyValue::from_bool(true))]);
 

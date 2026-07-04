@@ -91,33 +91,3 @@ pub enum SyntaxOutcome {
     /// Syntax could not be produced as a trustworthy complete tree.
     Aborted,
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    enum TestDiagnosticCode {
-        Example,
-    }
-
-    impl DiagnosticCode for TestDiagnosticCode {
-        fn id(&self) -> DiagnosticCodeId {
-            match self {
-                Self::Example => DiagnosticCodeId::new("test.example"),
-            }
-        }
-    }
-
-    #[test]
-    fn diagnostic_stores_code_from_typed_domain_enum() {
-        let diagnostic = Diagnostic {
-            code: TestDiagnosticCode::Example.id(),
-            severity: Severity::Error,
-            stage: DiagnosticStage::Parser,
-            message: "example diagnostic".to_owned(),
-            range: Some(TextRange::empty(0usize.into())),
-        };
-
-        assert_eq!(diagnostic.code.as_str(), "test.example");
-    }
-}

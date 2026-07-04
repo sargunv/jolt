@@ -9,8 +9,8 @@ use crate::context::JavaFormatter;
 use crate::helpers::comments::{
     InlineLeadingTrivia, LeadingTrivia, TrailingTrivia, comment_forces_line,
     format_leading_comments, format_token, format_token_after_relocated_leading_comments,
-    format_token_text_after_trivia_relocated, format_token_with_comments,
-    format_token_with_inline_leading_comments, format_trailing_comments_before_line_break,
+    format_token_text, format_token_with_comments, format_token_with_inline_leading_comments,
+    format_trailing_comments_before_line_break,
 };
 use crate::helpers::lists::{CommaListItem, angle_bracket_list};
 use crate::rules::annotations::format_annotation;
@@ -374,7 +374,7 @@ fn format_type_operator_separator(
                     .any(comment_forces_line);
                 concat([
                     format_leading_comments(separator),
-                    format_token_text_after_trivia_relocated(separator),
+                    format_token_text(separator.text()),
                     format_trailing_comments_before_line_break(separator),
                     if forces_line {
                         jolt_fmt_ir::nil()

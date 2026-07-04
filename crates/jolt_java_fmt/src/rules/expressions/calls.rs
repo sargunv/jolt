@@ -12,7 +12,7 @@ pub(super) fn format_method_invocation_expression_with_leading_comments(
     leading_comments: LeadingComments,
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
-    let expression = Expression::from(expression.clone());
+    let expression = Expression::from(*expression);
     if !is_member_chain_child(&expression)
         && let Some(chain) = expression.member_chain()
     {
@@ -32,7 +32,7 @@ pub(super) fn format_field_access_expression(
     expression: &FieldAccessExpression,
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
-    let expression = Expression::from(expression.clone());
+    let expression = Expression::from(*expression);
     if !is_member_chain_child(&expression)
         && let Some(chain) = expression.member_chain()
     {

@@ -278,7 +278,7 @@ fn printable_class_members<'source>(
     members
         .iter()
         .filter(|member| is_printable_class_member(member))
-        .cloned()
+        .copied()
         .collect()
 }
 
@@ -288,7 +288,7 @@ fn printable_interface_members<'source>(
     members
         .iter()
         .filter(|member| is_printable_interface_member(member))
-        .cloned()
+        .copied()
         .collect()
 }
 
@@ -298,7 +298,7 @@ fn printable_annotation_members<'source>(
     members
         .iter()
         .filter(|member| is_printable_annotation_member(member))
-        .cloned()
+        .copied()
         .collect()
 }
 

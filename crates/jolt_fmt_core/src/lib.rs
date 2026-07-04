@@ -38,29 +38,6 @@ impl Default for FormatOptions {
     }
 }
 
-impl FormatOptions {
-    /// Returns options with a different line width.
-    #[must_use]
-    pub const fn with_line_width(mut self, line_width: u16) -> Self {
-        self.line_width = line_width;
-        self
-    }
-
-    /// Returns options with a different indentation width.
-    #[must_use]
-    pub const fn with_indent_width(mut self, indent_width: u8) -> Self {
-        self.indent_width = indent_width;
-        self
-    }
-
-    /// Returns options with tab indentation enabled or disabled.
-    #[must_use]
-    pub const fn with_tabs(mut self, use_tabs: bool) -> Self {
-        self.use_tabs = use_tabs;
-        self
-    }
-}
-
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum FormatSinkResult<E> {
     Complete {

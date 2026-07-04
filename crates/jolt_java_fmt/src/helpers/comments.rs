@@ -262,10 +262,6 @@ pub(crate) fn format_token_after_construct_leading_comments(
     }
 }
 
-pub(crate) fn format_token_text_after_trivia_relocated(token: &JavaSyntaxToken) -> Doc {
-    format_token_text(token.text())
-}
-
 pub(crate) fn format_comment(comment: &JavaComment) -> Doc {
     match comment.kind() {
         JavaCommentKind::Line => format_line_comment(comment.text()),

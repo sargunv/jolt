@@ -263,15 +263,35 @@ fn fmt_indent(f: &mut fmt::Formatter<'_>, indent: usize) -> fmt::Result {
 }
 
 struct Descendants<'tree, L: Language> {
-    stack: Vec<SyntaxNode<'tree, L>>,
+    source: &'tree str,
+    tree: &'tree SyntaxTree,
+    stack: Vec<NodeId>,
+    language: PhantomData<L>,
 }
 
 impl<'tree, L: Language> Descendants<'tree, L> {
     fn new(root: SyntaxNode<'tree, L>) -> Self {
-        let mut stack = root.children().collect::<Vec<_>>();
-        stack.reverse();
+        let mut stack = Vec::new();
+        stack.extend(
+            root.tree
+                .children(root.id)
+                .iter()
+                .rev()
+                .filter_map(|child| {
+                    if let TreeElement::Node(id) = child {
+                        Some(*id)
+                    } else {
+                        None
+                    }
+                }),
+        );
 
-        Self { stack }
+        Self {
+            source: root.source,
+            tree: root.tree,
+            stack,
+            language: PhantomData,
+        }
     }
 }
 
@@ -279,12 +299,17 @@ impl<'tree, L: Language> Iterator for Descendants<'tree, L> {
     type Item = SyntaxNode<'tree, L>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let node = self.stack.pop()?;
-        let mut children = node.children().collect::<Vec<_>>();
-        children.reverse();
-        self.stack.extend(children);
+        let id = self.stack.pop()?;
+        self.stack
+            .extend(self.tree.children(id).iter().rev().filter_map(|child| {
+                if let TreeElement::Node(id) = child {
+                    Some(*id)
+                } else {
+                    None
+                }
+            }));
 
-        Some(node)
+        Some(SyntaxNode::new_child(self.source, self.tree, id))
     }
 }
 
@@ -297,8 +322,8 @@ struct Tokens<'tree, L: Language> {
 
 impl<'tree, L: Language> Tokens<'tree, L> {
     fn new(root: SyntaxNode<'tree, L>) -> Self {
-        let mut stack = root.tree.children(root.id).to_vec();
-        stack.reverse();
+        let mut stack = Vec::new();
+        stack.extend(root.tree.children(root.id).iter().rev().copied());
 
         Self {
             source: root.source,

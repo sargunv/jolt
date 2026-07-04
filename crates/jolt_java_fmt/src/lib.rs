@@ -6,6 +6,4 @@ mod format;
 mod helpers;
 mod rules;
 
-pub use format::{
-    JavaFormatOptions, JavaFormatSinkResult, JavaFormatSinkStatus, format_source_to_sink,
-};
+pub use format::{JavaFormatOptions, JavaFormatSinkResult, format_source_to_sink};

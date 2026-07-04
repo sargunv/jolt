@@ -117,7 +117,7 @@ pub(super) fn format_enum_body_contents(
 }
 
 pub(super) fn format_enum_constant_entry<'source>(
-    entry: EnumConstantListEntry<'source>,
+    entry: &EnumConstantListEntry<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> FormattedEnumConstant<'source> {
     FormattedEnumConstant {

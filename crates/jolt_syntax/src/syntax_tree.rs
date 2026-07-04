@@ -78,7 +78,7 @@ impl SyntaxTrivia {
 }
 
 /// Token metadata stored once in the parse-owned syntax arena.
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+#[derive(Debug, Eq, Hash, PartialEq)]
 pub struct SyntaxTokenData {
     pub(crate) kind: RawSyntaxKind,
     pub(crate) token_text_range: TextRange,
@@ -116,7 +116,7 @@ impl SyntaxTokenData {
     }
 }
 
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+#[derive(Debug, Eq, Hash, PartialEq)]
 pub(crate) struct TreeNode {
     pub(crate) kind: RawSyntaxKind,
     pub(crate) children: Range<usize>,
@@ -127,7 +127,7 @@ pub(crate) struct TreeNode {
 }
 
 /// A flat syntax tree arena.
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+#[derive(Debug, Eq, Hash, PartialEq)]
 pub struct SyntaxTree {
     root: NodeId,
     nodes: Vec<TreeNode>,
@@ -173,7 +173,7 @@ impl SyntaxTree {
 }
 
 /// A syntax tree and parser diagnostics collected while building it.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct BuiltSyntaxTree {
     tree: SyntaxTree,
     diagnostics: Vec<Diagnostic>,
@@ -192,7 +192,7 @@ impl BuiltSyntaxTree {
 }
 
 /// An event-to-tree construction error.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum BuildSyntaxTreeError {
     TokenOutsideNode { token_index: usize },
     MissingToken { token_index: usize },
@@ -378,9 +378,13 @@ fn assign_layout(
         node_data.index = index;
     }
 
-    let children = tree.children(node).to_vec();
+    let children = {
+        let range = &tree.node(node).children;
+        range.start..range.end
+    };
     let mut child_offset = offset;
-    for (child_index, child) in children.into_iter().enumerate() {
+    for (child_index, child_position) in children.enumerate() {
+        let child = tree.children[child_position];
         match child {
             TreeElement::Node(child_node) => {
                 assign_layout(tree, child_node, Some(node), child_offset, child_index);

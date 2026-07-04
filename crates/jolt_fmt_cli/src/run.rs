@@ -80,7 +80,15 @@ fn collect_candidates(cwd: &Path, args: &FmtArgs) -> Result<Vec<CandidateFile>, 
             let root = path
                 .parent()
                 .map_or_else(|| cwd.to_path_buf(), Path::to_path_buf);
-            let mut resolver = resolver_for(cwd, &root, args)?;
+            let mut resolver = ConfigResolver::new(
+                cwd,
+                root.clone(),
+                args.format_options(),
+                &args.include,
+                &args.exclude,
+                args.config.as_deref(),
+                args.no_config,
+            )?;
             let config = resolver.resolve_for_dir(&root)?;
             if seen.insert(path.clone()) {
                 candidates.push(CandidateFile {
@@ -93,7 +101,15 @@ fn collect_candidates(cwd: &Path, args: &FmtArgs) -> Result<Vec<CandidateFile>, 
         }
 
         if path.is_dir() {
-            let mut resolver = resolver_for(cwd, &path, args)?;
+            let mut resolver = ConfigResolver::new(
+                cwd,
+                path.clone(),
+                args.format_options(),
+                &args.include,
+                &args.exclude,
+                args.config.as_deref(),
+                args.no_config,
+            )?;
             for candidate in discover_files(&path, &mut resolver)? {
                 if seen.insert(candidate.path.clone()) {
                     candidates.push(candidate);
@@ -133,7 +149,15 @@ fn run_stdin(cwd: &Path, args: &FmtArgs) -> Result<(), CliError> {
         .as_deref()
         .and_then(Path::parent)
         .map_or_else(|| cwd.to_path_buf(), |path| absolutize(cwd, path));
-    let mut resolver = resolver_for(cwd, cwd, args)?;
+    let mut resolver = ConfigResolver::new(
+        cwd,
+        cwd.to_path_buf(),
+        args.format_options(),
+        &args.include,
+        &args.exclude,
+        args.config.as_deref(),
+        args.no_config,
+    )?;
     let config = resolver.resolve_for_dir(&pseudo_parent)?;
 
     let mut source = String::new();
@@ -187,22 +211,6 @@ fn run_stdin(cwd: &Path, args: &FmtArgs) -> Result<(), CliError> {
     }
 
     Ok(())
-}
-
-fn resolver_for(
-    cwd: &Path,
-    invocation_root: &Path,
-    args: &FmtArgs,
-) -> Result<ConfigResolver, CliError> {
-    ConfigResolver::new(
-        cwd,
-        invocation_root.to_path_buf(),
-        args.format_options(),
-        &args.include,
-        &args.exclude,
-        args.config.as_deref(),
-        args.no_config,
-    )
 }
 
 fn format_candidates(

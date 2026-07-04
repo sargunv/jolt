@@ -1,8 +1,7 @@
 use super::{
     Doc, JavaFormatter, LambdaExpression, LambdaParameter, comment_forces_line, concat,
-    format_annotation, format_block, format_expression, format_leading_comments,
-    format_token_text_after_trivia_relocated, format_token_with_comments,
-    format_trailing_comments_before_line_break, format_type, hard_line,
+    format_annotation, format_block, format_expression, format_leading_comments, format_token_text,
+    format_token_with_comments, format_trailing_comments_before_line_break, format_type, hard_line,
     inline_modifier_prefix_from_docs, text, token_iter_has_comments,
 };
 
@@ -39,7 +38,7 @@ fn format_lambda_arrow(expression: &LambdaExpression) -> Doc {
     concat([
         text(" "),
         format_leading_comments(&arrow),
-        format_token_text_after_trivia_relocated(&arrow),
+        format_token_text(arrow.text()),
         format_trailing_comments_before_line_break(&arrow),
         if forced_line { hard_line() } else { text(" ") },
     ])

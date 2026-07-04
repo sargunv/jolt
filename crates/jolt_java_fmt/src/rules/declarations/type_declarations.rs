@@ -93,7 +93,7 @@ pub(super) fn format_enum_declaration(
         .map(|constants| {
             constants
                 .entries()
-                .map(|entry| format_enum_constant_entry(entry, formatter))
+                .map(|entry| format_enum_constant_entry(&entry, formatter))
                 .collect::<Vec<_>>()
         })
         .unwrap_or_default();

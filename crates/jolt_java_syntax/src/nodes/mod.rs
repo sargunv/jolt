@@ -9,7 +9,7 @@ pub(crate) type JavaSyntaxNode<'source> = SyntaxNode<'source, JavaLanguage>;
 type JavaRawSyntaxToken<'source> = SyntaxToken<'source, JavaLanguage>;
 
 /// A comment attached as token trivia in the Java syntax tree.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct JavaComment<'source> {
     kind: JavaCommentKind,
     source: &'source str,
@@ -28,12 +28,6 @@ impl JavaComment<'_> {
     pub fn text(&self) -> &str {
         &self.source[self.text_range.start().get()..self.text_range.end().get()]
     }
-
-    /// Returns the raw source range covered by the comment.
-    #[must_use]
-    pub const fn text_range(&self) -> TextRange {
-        self.text_range
-    }
 }
 
 /// A Java comment kind exposed from syntax trivia.
@@ -47,7 +41,7 @@ pub enum JavaCommentKind {
     Doc,
 }
 
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone, Copy, Eq, PartialEq)]
 pub struct JavaSyntaxToken<'source> {
     syntax: JavaRawSyntaxToken<'source>,
 }
@@ -108,7 +102,7 @@ impl fmt::Debug for JavaSyntaxToken<'_> {
 }
 
 /// A Java operator, which may span multiple syntax tokens in ambiguous `>` forms.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct JavaOperator<'source> {
     kind: JavaOperatorKind,
     first_token: JavaSyntaxToken<'source>,
@@ -434,7 +428,7 @@ macro_rules! java_cst {
         }
     ) => {
         $(
-            #[derive(Clone, Eq, PartialEq)]
+            #[derive(Clone, Copy, Eq, PartialEq)]
             pub struct $node<'source> {
                 syntax: JavaSyntaxNode<'source>,
             }
@@ -486,7 +480,7 @@ macro_rules! java_cst {
             }
         )*
 
-        #[derive(Clone, Debug, Eq, PartialEq)]
+        #[derive(Clone, Copy, Debug, Eq, PartialEq)]
         pub enum AnyJavaNode<'source> {
             $($node($node<'source>),)*
         }
@@ -534,7 +528,7 @@ macro_rules! java_cst {
         )*
 
         $(
-            #[derive(Clone, Debug, Eq, PartialEq)]
+            #[derive(Clone, Copy, Debug, Eq, PartialEq)]
             pub enum $family<'source> {
                 $($variant($variant<'source>),)+
             }
@@ -1236,7 +1230,7 @@ impl<'source> ModifierEntry<'source> {
         self.tokens[..self.len].iter().filter_map(Option::as_ref)
     }
 
-    pub fn into_tokens(self) -> impl Iterator<Item = JavaSyntaxToken<'source>> {
+    fn into_tokens(self) -> impl Iterator<Item = JavaSyntaxToken<'source>> {
         self.tokens.into_iter().take(self.len).flatten()
     }
 

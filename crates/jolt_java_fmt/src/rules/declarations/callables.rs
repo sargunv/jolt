@@ -90,7 +90,7 @@ pub(super) fn format_method_declaration(
         method
             .name()
             .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name)),
-        format_parameters(parameters.clone(), formatter),
+        format_parameters(parameters, formatter),
     ]);
     let header = concat([
         format_type_parameter_list(type_parameters, formatter),
@@ -113,7 +113,7 @@ pub(super) fn format_method_declaration(
 
     match method.body() {
         Some(body) if has_throws => {
-            declaration_with_body_doc(prefix, header, format_block(&body, formatter))
+            callable_declaration_with_body_doc(prefix, header, format_block(&body, formatter))
         }
         Some(body) => {
             callable_declaration_with_body_doc(prefix, header, format_block(&body, formatter))
@@ -206,10 +206,6 @@ fn format_parameters(
 
 fn callable_declaration_with_body(prefix: Doc, header: Doc, body: Option<Doc>) -> Doc {
     concat([prefix, group(header), text(" "), braced_body(body)])
-}
-
-fn declaration_with_body_doc(prefix: Doc, header_tail: Doc, body: Doc) -> Doc {
-    concat([prefix, group(header_tail), text(" "), body])
 }
 
 fn callable_declaration_with_body_doc(prefix: Doc, header: Doc, body: Doc) -> Doc {

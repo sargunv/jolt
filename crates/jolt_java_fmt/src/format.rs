@@ -44,36 +44,6 @@ pub enum JavaFormatSinkResult<E> {
     },
 }
 
-impl<E> JavaFormatSinkResult<E> {
-    pub fn diagnostics(&self) -> &[Diagnostic] {
-        match self {
-            Self::Complete { diagnostics }
-            | Self::Halted { diagnostics }
-            | Self::Blocked { diagnostics }
-            | Self::SinkError { diagnostics, .. } => diagnostics,
-        }
-    }
-
-    pub fn into_parts(self) -> (Vec<Diagnostic>, JavaFormatSinkStatus<E>) {
-        match self {
-            Self::Complete { diagnostics } => (diagnostics, JavaFormatSinkStatus::Complete),
-            Self::Halted { diagnostics } => (diagnostics, JavaFormatSinkStatus::Halted),
-            Self::Blocked { diagnostics } => (diagnostics, JavaFormatSinkStatus::Blocked),
-            Self::SinkError { diagnostics, error } => {
-                (diagnostics, JavaFormatSinkStatus::SinkError(error))
-            }
-        }
-    }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum JavaFormatSinkStatus<E> {
-    Complete,
-    Halted,
-    Blocked,
-    SinkError(E),
-}
-
 /// Stable Java formatter diagnostic codes.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum JavaFormatDiagnosticCode {
@@ -134,7 +104,7 @@ mod tests {
     use std::convert::Infallible;
 
     use super::*;
-    use jolt_fmt_ir::{RenderControl, render};
+    use jolt_fmt_ir::RenderControl;
 
     #[derive(Debug)]
     struct TestFormatResult {
@@ -235,41 +205,5 @@ mod tests {
                 result.diagnostics
             );
         }
-    }
-
-    #[test]
-    fn declaration_recovery_nodes_format_structurally_below_public_gate() {
-        for (source, expected) in [
-            ("enum E { , }", "enum E {\n  ,\n}\n"),
-            ("class C { <T>() {} }", "class C {\n  <T> () {\n  }\n}\n"),
-            ("class C { void () {} }", "class C {\n  void () {\n  }\n}\n"),
-            ("@interface A { int (); }", "@interface A {\n  int ();\n}\n"),
-        ] {
-            assert_eq!(
-                format_recovered_source_for_test(source),
-                expected,
-                "{source}"
-            );
-        }
-    }
-
-    fn format_recovered_source_for_test(source: &str) -> String {
-        let parse = parse_compilation_unit(source);
-        assert_eq!(
-            parse.outcome(),
-            SyntaxOutcome::Recovered,
-            "{source}: {:#?}",
-            parse.diagnostics()
-        );
-        let syntax = parse
-            .syntax()
-            .expect("recovered parse should still produce syntax");
-
-        let options = JavaFormatOptions::default();
-        let mut formatter = JavaFormatter::new(&options, &syntax);
-        let doc = formatter.format_compilation_unit(&syntax);
-        render(&doc, formatter.render_options())
-            .expect("recovered declaration layout should render")
-            .text
     }
 }

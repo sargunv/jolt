@@ -95,18 +95,18 @@ fn format_statement(statement: &Statement, formatter: &JavaFormatter<'_>) -> Doc
     }
 }
 
-fn statement_body_as_block(body: Option<StatementBody>, formatter: &JavaFormatter<'_>) -> Doc {
+fn statement_body_as_block(body: Option<&StatementBody>, formatter: &JavaFormatter<'_>) -> Doc {
     match body {
-        Some(StatementBody::Block(block)) => format_block(&block, formatter),
+        Some(StatementBody::Block(block)) => format_block(block, formatter),
         Some(StatementBody::Empty(_)) | None => empty_block(),
         Some(StatementBody::Unbraced(statement)) => {
-            braced_body(Some(format_statement(&statement, formatter)))
+            braced_body(Some(format_statement(statement, formatter)))
         }
     }
 }
 
 fn statement_body_as_block_with_trailing_comments(
-    body: Option<StatementBody>,
+    body: Option<&StatementBody>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
     statement_body_as_block(body, formatter)

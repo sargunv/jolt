@@ -157,7 +157,7 @@ fn format_resource_entry<'source>(
 ) -> FormattedResource<'source> {
     FormattedResource {
         resource: format_resource(&entry.resource, formatter),
-        separator: entry.separator.clone(),
+        separator: entry.separator,
     }
 }
 

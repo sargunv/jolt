@@ -93,7 +93,7 @@ impl<'source> FormattedImport<'source> {
         let kind = import
             .import_kind()
             .expect("clean import declaration should expose an import kind");
-        let (is_static, path, path_doc) = format_import_kind(import, kind);
+        let (is_static, path, path_doc) = format_import_kind(import, &kind);
         let first_token = import.first_token();
         let last_token = import.last_token();
         Self {
@@ -159,20 +159,20 @@ impl<'source> FormattedImport<'source> {
     }
 }
 
-fn format_import_kind(import: &ImportDeclaration, kind: ImportKind) -> (bool, String, Doc) {
+fn format_import_kind(import: &ImportDeclaration, kind: &ImportKind) -> (bool, String, Doc) {
     match kind {
         ImportKind::SingleType(name) | ImportKind::SingleModule(name) => {
-            let path = name_key(&name);
-            (false, path, format_name(&name))
+            let path = name_key(name);
+            (false, path, format_name(name))
         }
         ImportKind::TypeOnDemand(name) => {
-            let mut path = name_key(&name);
+            let mut path = name_key(name);
             path.push_str(".*");
             (
                 false,
                 path,
                 concat([
-                    format_name(&name),
+                    format_name(name),
                     import
                         .on_demand_dot_token()
                         .as_ref()
@@ -185,17 +185,17 @@ fn format_import_kind(import: &ImportDeclaration, kind: ImportKind) -> (bool, St
             )
         }
         ImportKind::SingleStatic(name) => {
-            let path = name_key(&name);
-            (true, path, format_name(&name))
+            let path = name_key(name);
+            (true, path, format_name(name))
         }
         ImportKind::StaticOnDemand(name) => {
-            let mut path = name_key(&name);
+            let mut path = name_key(name);
             path.push_str(".*");
             (
                 true,
                 path,
                 concat([
-                    format_name(&name),
+                    format_name(name),
                     import
                         .on_demand_dot_token()
                         .as_ref()

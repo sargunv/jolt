@@ -76,17 +76,17 @@ fn format_annotation_argument_list(
         arguments
             .entries()
             .map(|entry| CommaListItem {
-                doc: format_annotation_argument(entry.argument, formatter),
+                doc: format_annotation_argument(&entry.argument, formatter),
                 comma: entry.comma,
             })
             .collect(),
     )
 }
 
-fn format_annotation_argument(argument: AnnotationArgument, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_annotation_argument(argument: &AnnotationArgument, formatter: &JavaFormatter<'_>) -> Doc {
     match argument {
-        AnnotationArgument::Value(value) => format_annotation_element_value(&value, formatter),
-        AnnotationArgument::Pair(pair) => format_annotation_element_value_pair(&pair, formatter),
+        AnnotationArgument::Value(value) => format_annotation_element_value(value, formatter),
+        AnnotationArgument::Pair(pair) => format_annotation_element_value_pair(pair, formatter),
     }
 }
 

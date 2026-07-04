@@ -45,7 +45,7 @@ use super::{
     nth_child_token, starts_after_blank_line,
 };
 use crate::JavaSyntaxNode;
-use jolt_syntax::{SyntaxElement, TriviaKind};
+use jolt_syntax::SyntaxElement;
 
 impl CompilationUnit<'_> {
     pub fn items(&self) -> impl Iterator<Item = CompilationUnitItem<'_>> + '_ {
@@ -97,7 +97,7 @@ impl CompilationUnit<'_> {
     /// Prefer grammar-specific accessors for formatter layout. This traversal is
     /// intended for corpus summaries, diagnostics, and generic syntax tooling.
     pub fn self_and_descendants(&self) -> impl Iterator<Item = AnyJavaNode<'_>> + '_ {
-        std::iter::once(AnyJavaNode::from(self.clone())).chain(self.descendants())
+        std::iter::once(AnyJavaNode::from(*self)).chain(self.descendants())
     }
 }
 
@@ -182,28 +182,6 @@ impl<'source> ImportDeclaration<'source> {
         self.contextual_keyword("module").is_some_and(|token| {
             name_start.is_some_and(|name_start| token.token_text_range().end() <= name_start)
         })
-    }
-
-    #[must_use]
-    pub fn import_path(&self) -> Option<String> {
-        self.import_kind().map(|kind| match kind {
-            ImportKind::SingleType(name)
-            | ImportKind::SingleStatic(name)
-            | ImportKind::SingleModule(name) => name.compact_text(),
-            ImportKind::TypeOnDemand(name) | ImportKind::StaticOnDemand(name) => {
-                format!("{}.*", name.compact_text())
-            }
-        })
-    }
-
-    #[must_use]
-    pub fn has_leading_comment(&self) -> bool {
-        node_has_leading_comment(&self.syntax)
-    }
-
-    #[must_use]
-    pub fn leading_comment_texts(&self) -> Vec<String> {
-        node_leading_comment_texts(&self.syntax)
     }
 
     fn contextual_keyword(&self, text: &str) -> Option<JavaSyntaxToken<'_>> {
@@ -1882,7 +1860,7 @@ impl ClassLiteralExpression<'_> {
 impl<'source> Expression<'source> {
     #[must_use]
     pub fn member_chain(&self) -> Option<MemberChain<'source>> {
-        collect_member_chain(self.clone())
+        collect_member_chain(*self)
     }
 
     #[must_use]
@@ -1890,7 +1868,7 @@ impl<'source> Expression<'source> {
         let parent = self.syntax().parent()?;
         let parent = AnyJavaNode::cast(parent)?;
 
-        expression_parent_role(self, parent.clone()).or_else(|| statement_parent_role(self, parent))
+        expression_parent_role(self, parent).or_else(|| statement_parent_role(self, parent))
     }
 }
 
@@ -1898,8 +1876,7 @@ fn expression_parent_role(
     expression: &Expression,
     parent: AnyJavaNode,
 ) -> Option<ExpressionParentRole> {
-    operator_parent_role(expression, parent.clone())
-        .or_else(|| access_parent_role(expression, parent))
+    operator_parent_role(expression, parent).or_else(|| access_parent_role(expression, parent))
 }
 
 fn operator_parent_role(
@@ -2160,7 +2137,7 @@ fn append_member_chain_suffix<'source>(
     receiver: Expression<'source>,
     suffix: MemberChainSuffix<'source>,
 ) -> MemberChain<'source> {
-    if let Some(mut chain) = collect_member_chain(receiver.clone()) {
+    if let Some(mut chain) = collect_member_chain(receiver) {
         chain.suffixes.push(suffix);
         return chain;
     }
@@ -4212,16 +4189,6 @@ impl ModuleDirective<'_> {
     pub fn primary_name(&self) -> Option<NameSyntax<'_>> {
         self.names().next()
     }
-
-    #[must_use]
-    pub fn has_leading_comment(&self) -> bool {
-        node_has_leading_comment(self.syntax())
-    }
-
-    #[must_use]
-    pub fn leading_comment_texts(&self) -> Vec<String> {
-        node_leading_comment_texts(self.syntax())
-    }
 }
 
 impl RequiresDirective<'_> {
@@ -4455,17 +4422,6 @@ impl BlockStatement<'_> {
     }
 }
 
-fn node_has_leading_comment(syntax: &super::JavaSyntaxNode<'_>) -> bool {
-    syntax.first_token().is_some_and(|token| {
-        token.leading().iter().any(|trivia| {
-            matches!(
-                trivia.kind(),
-                TriviaKind::LineComment | TriviaKind::BlockComment | TriviaKind::DocComment
-            )
-        })
-    })
-}
-
 fn previous_sibling_token<'source>(
     syntax: &super::JavaSyntaxNode<'source>,
     kind: JavaSyntaxKind,
@@ -4657,34 +4613,6 @@ fn module_name_entries_after_contextual_keyword<'source>(
     }
 
     entries.into_iter()
-}
-
-fn node_leading_comment_texts(syntax: &super::JavaSyntaxNode<'_>) -> Vec<String> {
-    syntax
-        .first_token()
-        .map(|token| {
-            token
-                .leading()
-                .iter()
-                .scan(token.offset(), |offset, trivia| {
-                    let range = jolt_text::TextRange::new(*offset, *offset + trivia.text_len());
-                    *offset = range.end();
-                    Some((trivia, range))
-                })
-                .filter(|(trivia, _)| {
-                    matches!(
-                        trivia.kind(),
-                        TriviaKind::LineComment | TriviaKind::BlockComment | TriviaKind::DocComment
-                    )
-                })
-                .map(|(_, range)| {
-                    token.source()[range.start().get()..range.end().get()]
-                        .trim()
-                        .to_owned()
-                })
-                .collect()
-        })
-        .unwrap_or_default()
 }
 
 fn annotations_before_type<'source>(

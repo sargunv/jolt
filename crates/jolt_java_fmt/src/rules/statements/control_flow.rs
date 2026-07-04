@@ -32,7 +32,7 @@ pub(super) fn format_if_statement(statement: &IfStatement, formatter: &JavaForma
             close.as_ref(),
         ),
         format_statement_header_body_separator(close.as_ref()),
-        statement_body_as_block_with_trailing_comments(then_body, formatter),
+        statement_body_as_block_with_trailing_comments(then_body.as_ref(), formatter),
         else_body.map_or_else(jolt_fmt_ir::nil, |else_body| {
             concat([
                 if then_body_trailing_comments_force_line {
@@ -46,7 +46,7 @@ pub(super) fn format_if_statement(statement: &IfStatement, formatter: &JavaForma
                     StatementBody::Unbraced(Statement::IfStatement(else_if)) => {
                         format_if_statement(&else_if, formatter)
                     }
-                    body => statement_body_as_block(Some(body), formatter),
+                    body => statement_body_as_block(Some(&body), formatter),
                 },
             ])
         }),
@@ -150,7 +150,7 @@ pub(super) fn format_while_statement(
             close.as_ref(),
         ),
         format_statement_header_body_separator(close.as_ref()),
-        statement_body_as_block(statement.statement_body(), formatter),
+        statement_body_as_block(statement.statement_body().as_ref(), formatter),
     ])
 }
 
@@ -160,7 +160,7 @@ pub(super) fn format_do_statement(statement: &DoStatement, formatter: &JavaForma
     concat([
         format_statement_keyword(statement.keyword(), "do"),
         text(" "),
-        statement_body_as_block(statement.statement_body(), formatter),
+        statement_body_as_block(statement.statement_body().as_ref(), formatter),
         text(" "),
         format_statement_keyword(statement.while_keyword(), "while"),
         text(" "),
@@ -231,7 +231,7 @@ fn format_basic_for_statement(statement: &BasicForStatement, formatter: &JavaFor
     concat([
         header,
         format_statement_header_body_separator(close.as_ref()),
-        statement_body_as_block(statement.statement_body(), formatter),
+        statement_body_as_block(statement.statement_body().as_ref(), formatter),
     ])
 }
 
@@ -268,7 +268,7 @@ fn format_enhanced_for_statement(
             format_for_header_close_paren(close.as_ref()),
         ])),
         format_statement_header_body_separator(close.as_ref()),
-        statement_body_as_block(statement.statement_body(), formatter),
+        statement_body_as_block(statement.statement_body().as_ref(), formatter),
     ])
 }
 

@@ -1,5 +1,3 @@
-use jolt_text::{TextRange, TextSize};
-
 use super::*;
 use crate::{SyntaxOutcome, parse_compilation_unit};
 
@@ -23,6 +21,17 @@ fn semicolon_trailing_comment(semicolon: Option<JavaSyntaxToken>) -> String {
         .expect("semicolon trailing comment")
         .text()
         .to_owned()
+}
+
+fn import_path(import: ImportDeclaration<'_>) -> String {
+    match import.import_kind().expect("import kind") {
+        ImportKind::SingleType(name)
+        | ImportKind::SingleStatic(name)
+        | ImportKind::SingleModule(name) => name.compact_text(),
+        ImportKind::TypeOnDemand(name) | ImportKind::StaticOnDemand(name) => {
+            format!("{}.*", name.compact_text())
+        }
+    }
 }
 
 #[test]
@@ -60,7 +69,7 @@ fn compilation_unit_accessors_traverse_real_parser_output() {
 }
 
 #[test]
-fn token_comments_expose_source_ranges() {
+fn token_comments_expose_kind_and_text() {
     let parse = parse_clean("class A {\n  // leading\n  int x; /* trailing */\n}\n");
     let syntax = parse.syntax().expect("clean parse should produce syntax");
     let field = descendants::<FieldDeclaration>(&syntax)
@@ -74,18 +83,12 @@ fn token_comments_expose_source_ranges() {
         .expect("field semicolon");
 
     let leading = int_token.leading_comments();
+    assert_eq!(leading[0].kind(), JavaCommentKind::Line);
     assert_eq!(leading[0].text(), "// leading");
-    assert_eq!(
-        leading[0].text_range(),
-        TextRange::new(TextSize::new(12), TextSize::new(22))
-    );
 
     let trailing = semicolon.trailing_comments();
+    assert_eq!(trailing[0].kind(), JavaCommentKind::Block);
     assert_eq!(trailing[0].text(), "/* trailing */");
-    assert_eq!(
-        trailing[0].text_range(),
-        TextRange::new(TextSize::new(32), TextSize::new(46))
-    );
 }
 
 #[test]
@@ -185,9 +188,7 @@ fn compilation_unit_items_expose_ordered_top_level_roles() {
                     package.name().expect("package name").compact_text()
                 )
             }
-            CompilationUnitItem::Import(import) => {
-                format!("import:{}", import.import_path().expect("import path"))
-            }
+            CompilationUnitItem::Import(import) => format!("import:{}", import_path(import)),
             CompilationUnitItem::Module(module) => {
                 format!(
                     "module:{}",
@@ -778,7 +779,7 @@ fn import_declarations_expose_structured_names() {
                 import.is_static(),
                 import.is_star(),
                 import.is_module(),
-                import.import_path().expect("import path"),
+                import_path(import),
             )
         })
         .collect::<Vec<_>>();
