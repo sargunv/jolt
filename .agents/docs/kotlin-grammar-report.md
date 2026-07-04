@@ -24,21 +24,22 @@ For a production parser, the safest design is:
    - earlier but still relevant since 1.9–2.3: **data objects**, **guard
      conditions in `when` with subject**, **multi-dollar string interpolation**,
      **nested type aliases**, and **name-based destructuring**. [^kotlin-docs-whatsnew19][^kotlin-docs-whatsnew21][^kotlin-docs-whatsnew22][^kotlin-docs-whatsnew23][^kotlin-docs-whatsnew24][^kotlin-docs-features]
-3. **Keep feature gates explicit**. Several constructs are syntax-affecting but
-   still gated by language flags or experimental status, especially **collection
-   literals**, **name-based destructuring**, and some **context-parameter
-   adjuncts** such as callable references and explicit context arguments. [^kotlin-docs-whatsnew24][^kotlin-docs-features][^kotlin-src-cli-help]
+3. **Ship one formatter parser for current Kotlin syntax**. A formatter should
+   accept stable and preview syntax in the same grammar instead of acting as a
+   language-version validator. Keep preview constructs easy to find by marking
+   them in grammar notes, AST names, or source comments, especially **collection
+   literals** and **name-based destructuring**. [^kotlin-docs-whatsnew24][^kotlin-docs-features]
 4. **Do not attempt a pure CFG-only implementation**. Kotlin requires
    parser-side disambiguation for at least: soft keywords, newline-sensitive
    postfix/call parsing, callable references, and `<...>` as either type
    arguments or comparison operators. The official parser uses those exact
    strategies. [^kotlin-src-kt-tokens][^kotlin-src-expression-parsing]
 
-The report below therefore provides a **parser-friendly consolidated grammar
-profile**: a high-confidence EBNF baseline-plus-delta, ANTLR v4 fragments for
-the hard parts, a source-to-implementation mapping table, a syntax changelog
-from **1.9 through 2.4**, lexer guidance, precedence/associativity, and a
-validation plan grounded in the official compiler test infrastructure. [^kotlin-spec-syntax][^kotlin-spec-introduction][^kotlin-src-build-gradle]
+The report below therefore provides a **parser-friendly consolidated grammar**:
+a high-confidence EBNF baseline-plus-delta, ANTLR v4 fragments for the hard
+parts, a source-to-implementation mapping table, a syntax changelog from **1.9
+through 2.4**, lexer guidance, precedence/associativity, and a validation plan
+grounded in the official compiler test infrastructure. [^kotlin-spec-syntax][^kotlin-spec-introduction][^kotlin-src-build-gradle]
 
 ## Source basis and version scope
 
@@ -65,15 +66,13 @@ The practical reference is therefore:
 - **delta**: syntax additions or syntax-related status changes recorded in
   release notes/proposals and reflected in the parser/lexer implementation. [^kotlin-spec-syntax][^kotlin-spec-introduction][^kotlin-docs-features]
 
-For parser implementation, I recommend shipping **three feature profiles**:
+For formatter implementation, ship **one parser** for the current Kotlin
+surface. It should accept the core grammar, stable 2.4 additions, and documented
+preview syntax such as collection literals and name-based destructuring. Parse
+stable and preview syntax unconditionally; mark preview-only productions in the
+grammar/code so they remain easy to find, modify, or stabilize later. [^kotlin-docs-whatsnew19][^kotlin-docs-whatsnew21][^kotlin-docs-whatsnew22][^kotlin-docs-whatsnew24][^kotlin-docs-features]
 
-| Profile                           | Language surface                                                                                                                                    | Recommended use                                                                                                                                                               |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `kotlin24-stable`                 | Core syntax + context parameters + explicit backing fields + annotation target updates + nested type aliases + guards + multi-dollar + data objects | Default production mode for Kotlin 2.4 codebases. [^kotlin-docs-whatsnew19][^kotlin-docs-whatsnew22][^kotlin-docs-whatsnew24][^kotlin-docs-features][^kotlin-docs-whatsnew21] |
-| `kotlin24-preview`                | `kotlin24-stable` + collection literals + name-based destructuring modes                                                                            | Tooling/parsing for projects using preview flags. [^kotlin-docs-whatsnew24][^kotlin-docs-features][^kotlin-src-cli-help]                                                      |
-| `kotlin-legacy-context-receivers` | Older experimental context receivers syntax                                                                                                         | Only if you must parse pre-2.2 experimental code; do not mix with context parameters. [^kotlin-docs-whatsnew2020][^kotlin-docs-features]                                      |
-
-## Grammar profile and parser-ready productions
+## Grammar shape and parser-ready productions
 
 The safest implementation strategy is to **inherit unchanged productions from
 the spec** and patch only the syntax-affecting deltas below. The EBNF here is
@@ -132,7 +131,7 @@ contextParameter
 
 classDeclaration
   ::= { modifier }
-      [ contextParameterClause ]                (* gate: kotlin24-stable if compiler accepts for this declaration kind *)
+      [ contextParameterClause ]
       ( 'class' | 'interface' )
       simpleIdentifier
       [ typeParameters ]
@@ -281,7 +280,7 @@ callableReferenceSuffix
 atomicExpression
   ::= literalConstant
    | stringLiteral
-   | collectionLiteral                          (* gate: kotlin24-preview *)
+   | collectionLiteral                          (* preview in 2.4; parse in the single formatter grammar *)
    | lambdaLiteral
    | anonymousFunction
    | objectLiteral
@@ -322,10 +321,11 @@ stringLiteral
    | multiLineStringLiteral ;
 ```
 
-For preview destructuring additions introduced after 2.3.20, the parser should
-support them only behind a mode flag. The release notes describe three modes,
-and only the **syntax** should be parsed here; meaning depends on the chosen
-mode. [^kotlin-docs-whatsnew2320][^kotlin-docs-features][^kotlin-src-cli-help]
+For preview destructuring additions introduced after 2.3.20, the formatter
+parser should accept the syntax in the same grammar as stable destructuring. The
+release notes describe multiple compiler feature states, but those are
+validation and semantic concerns; this parser only needs to preserve the syntax
+and mark the preview forms clearly in code. [^kotlin-docs-whatsnew2320][^kotlin-docs-features][^kotlin-src-cli-help]
 
 ```ebnf
 destructuringDeclaration
@@ -334,7 +334,7 @@ destructuringDeclaration
 destructuringPattern
   ::= '(' destructuringEntry { ',' destructuringEntry } [ ',' ] ')'      (* baseline short form *)
    | '[' variableDeclaration { ',' variableDeclaration } [ ',' ] ']'     (* preview positional form *)
-   | '(' namedDestructuringEntry { ',' namedDestructuringEntry } [ ',' ] ')' ;
+   | '(' namedDestructuringEntry { ',' namedDestructuringEntry } [ ',' ] ')'  (* preview named form *) ;
 
 namedDestructuringEntry
   ::= [ 'val' | 'var' ] simpleIdentifier '=' simpleIdentifier ;
@@ -524,7 +524,7 @@ list of non-CFG cases. These are the load-bearing ones. [^kotlin-src-expression-
 | Explicit context arguments                                              | The call-site syntax reuses normal named-argument syntax; the novelty is in overload resolution and parameter matching, not token shape. [^kotlin-docs-whatsnew24]                  | No grammar fork needed. Carry context-parameter metadata into name binding / resolution.                                                                              |
 | Multi-dollar string interpolation                                       | The number of leading `$` characters changes interpolation behavior and requires lexer modes. [^kotlin-docs-whatsnew21][^kotlin-src-kotlin-flex]                                    | Use lexer modes with a stored `requiredInterpolationPrefix`, like the official lexer.                                                                                 |
 | Collection literal vs indexing                                          | `[` at expression start may now mean collection literal; after an expression it is still indexing. [^kotlin-docs-whatsnew24][^kotlin-src-expression-parsing]                        | Decide by position: only allow collection literal in atomic-expression position.                                                                                      |
-| Name-based destructuring vs ordinary grouped declarations               | Preview modes alter both syntax and semantics. [^kotlin-docs-whatsnew2320][^kotlin-docs-features]                                                                                   | Gate square-bracket and full named forms behind a language mode.                                                                                                      |
+| Name-based destructuring vs ordinary grouped declarations               | Preview forms add square-bracket and named destructuring syntax; semantics depend on compiler feature status. [^kotlin-docs-whatsnew2320][^kotlin-docs-features]                    | Accept the preview syntactic forms in the single formatter grammar and mark the corresponding productions clearly in code.                                            |
 
 The major syntax-node relationships, from a parser point of view, look like
 this:
@@ -613,8 +613,8 @@ Practical lexer/parser recommendations for production use are:
 - implement **lexer modes** for strings rather than trying to parse template
   contents in the parser;
 - support **soft keyword fallback to identifier** where the grammar allows it;
-- keep **feature flags** in the parser configuration so syntax trees can reflect
-  the selected language profile. [^kotlin-src-kotlin-flex][^kotlin-src-kt-tokens][^kotlin-src-cli-help]
+- keep **feature-status comments or metadata** near preview productions so they
+  can be found and revised when Kotlin stabilizes or removes them. [^kotlin-src-kotlin-flex][^kotlin-src-kt-tokens][^kotlin-src-cli-help]
 
 ## Rule mapping to authoritative sources and compiler implementation
 
@@ -624,26 +624,26 @@ exact parser method for a newer preview feature within the available source
 extracts, I mark it as a **delta inferred from official release/proposal
 sources** rather than a directly confirmed parser method. [^kotlin-spec-syntax][^kotlin-src-kotlin-parsing][^kotlin-src-expression-parsing][^kotlin-src-kotlin-flex][^kotlin-src-kt-tokens]
 
-| Grammar area                                  | Authoritative source                                                                                                                  | Compiler implementation point                                                                                                                                                       | Notes                                                              |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `kotlinFile`, `script`                        | Spec syntax grammar (`kotlinFile`, `script`). [^kotlin-spec-syntax]                                                                   | `compiler/psi/parser/.../KotlinParsing.java`, `parseFile()` around lines 2510–2518. [^kotlin-src-kotlin-parsing]                                                                    | Direct baseline production.                                        |
-| File annotations, package header              | Spec baseline; parser comments show `fileAnnotationList` and `packageDirective`. [^kotlin-spec-syntax][^kotlin-src-kotlin-parsing]    | `parsePreamble()` around lines 2656–2694. [^kotlin-src-kotlin-parsing]                                                                                                              | Use before imports/declarations.                                   |
-| Imports                                       | Spec baseline import rule. [^kotlin-spec-packages]                                                                                    | `parseImportDirective()` around lines 2813–2841; `parseImportDirectives()` around 2976–2994. [^kotlin-src-kotlin-parsing]                                                           | Supports aliasing and star import.                                 |
-| Modifiers and annotations                     | Spec baseline + token inventory for modifier keywords. [^kotlin-spec-declarations][^kotlin-src-kt-tokens]                             | `parseModifierList()` around lines 3135–3155. [^kotlin-src-kotlin-parsing]                                                                                                          | Soft/modifier keyword aware.                                       |
-| Keywords and soft keywords                    | Spec lexical grammar + `KtTokens`. [^kotlin-spec-syntax][^kotlin-src-kt-tokens]                                                       | `compiler/psi/psi-api/.../KtTokens.java`. [^kotlin-src-kt-tokens]                                                                                                                   | Use token categories, not only a flat reserved-word list.          |
-| Identifiers and literals                      | Spec lexical grammar + official lexer regexes. [^kotlin-spec-syntax][^kotlin-src-kotlin-flex]                                         | `compiler/psi/parser/.../Kotlin.flex`. [^kotlin-src-kotlin-flex]                                                                                                                    | Backticks, numbers, chars, comments, shebang.                      |
-| Expressions entrypoint                        | Spec expressions grammar. [^kotlin-spec-expressions]                                                                                  | `KotlinExpressionParsing.java`, `parseExpression()` around 2472–2480. [^kotlin-src-expression-parsing]                                                                              | Baseline expression dispatch.                                      |
-| Binary precedence ladder                      | Spec expression levels; compiler method explicitly recurses by precedence. [^kotlin-spec-expressions][^kotlin-src-expression-parsing] | `parseBinaryExpression(...)` around 2503 onward. [^kotlin-src-expression-parsing]                                                                                                   | Best mirrored as layered rules.                                    |
-| Postfix expressions and call/reference chains | Spec expression suffixes + parser comments. [^kotlin-spec-expressions]                                                                | `parsePostfixExpression()` and `parseDoubleColonSuffix()` around 2699–2752 and 2806 onward. [^kotlin-src-expression-parsing]                                                        | Newline-sensitive; callable-reference diagnostic behavior matters. |
-| String templates                              | Spec string mode grammar and strings docs. [^kotlin-spec-syntax]                                                                      | `parseStringTemplate()` around 3334–3354; lexer string modes in `Kotlin.flex`. [^kotlin-src-expression-parsing][^kotlin-src-kotlin-flex]                                            | Must be lexer-mode-based.                                          |
-| `when` expressions                            | Spec statements/expressions + official release notes for guards. [^kotlin-spec-statements][^kotlin-docs-whatsnew21]                   | `parseWhen()` around 3531–3549. [^kotlin-src-expression-parsing]                                                                                                                    | v2.2+ patch adds guard conditions.                                 |
-| Context parameters                            | Official docs + proposal status page. [^kotlin-docs-context-parameters][^kotlin-docs-whatsnew22][^kotlin-docs-features]               | `parseContextParameterOrReceiverList(...)` around 3383 onward. [^kotlin-src-kotlin-parsing]                                                                                         | Replaces legacy context receivers.                                 |
-| Type aliases / nested type aliases            | Spec baseline `typealias` + 2.2/2.3 release status. [^kotlin-spec-declarations][^kotlin-docs-whatsnew22][^kotlin-docs-features]       | `parseTypeAlias()` dispatch is confirmed in declaration switch. [^kotlin-src-kotlin-parsing]                                                                                        | Nested form is a 2.2+ delta.                                       |
-| Data objects                                  | Official 1.9 release notes and feature page. [^kotlin-docs-whatsnew19]                                                                | Parsed as object declaration plus `data` modifier. Modifier/object parser path confirmed generally by `parseObject()` dispatch. [^kotlin-src-kotlin-parsing][^kotlin-src-kt-tokens] | Grammar delta is small: allow `data object`.                       |
-| Explicit backing fields                       | 2.3/2.4 release notes and proposal index. [^kotlin-docs-whatsnew23][^kotlin-docs-whatsnew24][^kotlin-docs-features]                   | Exact parser method not confirmed from retrieved snippets; treat as v2.3+ grammar delta needing source verification in current parser history.                                      | Syntax-affecting and stable in 2.4.                                |
-| Collection literals                           | 2.4.0 release notes and proposal index. [^kotlin-docs-whatsnew24][^kotlin-docs-features]                                              | Exact parser method not confirmed from retrieved snippets; treat as preview delta.                                                                                                  | Parse only in atomic-expression position.                          |
-| Name-based destructuring                      | 2.3.20 release notes and proposal index. [^kotlin-docs-whatsnew2320][^kotlin-docs-features]                                           | Exact parser method not confirmed from retrieved snippets; treat as preview delta.                                                                                                  | Gate by mode.                                                      |
-| CLI flags for grammar-profile gating          | Official compiler option help in test data. [^kotlin-src-cli-help]                                                                    | `compiler/testData/cli/js/jsExtraHelp.out`. [^kotlin-src-cli-help]                                                                                                                  | Useful for parser profile configuration.                           |
+| Grammar area                                  | Authoritative source                                                                                                                  | Compiler implementation point                                                                                                                                                       | Notes                                                                 |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `kotlinFile`, `script`                        | Spec syntax grammar (`kotlinFile`, `script`). [^kotlin-spec-syntax]                                                                   | `compiler/psi/parser/.../KotlinParsing.java`, `parseFile()` around lines 2510–2518. [^kotlin-src-kotlin-parsing]                                                                    | Direct baseline production.                                           |
+| File annotations, package header              | Spec baseline; parser comments show `fileAnnotationList` and `packageDirective`. [^kotlin-spec-syntax][^kotlin-src-kotlin-parsing]    | `parsePreamble()` around lines 2656–2694. [^kotlin-src-kotlin-parsing]                                                                                                              | Use before imports/declarations.                                      |
+| Imports                                       | Spec baseline import rule. [^kotlin-spec-packages]                                                                                    | `parseImportDirective()` around lines 2813–2841; `parseImportDirectives()` around 2976–2994. [^kotlin-src-kotlin-parsing]                                                           | Supports aliasing and star import.                                    |
+| Modifiers and annotations                     | Spec baseline + token inventory for modifier keywords. [^kotlin-spec-declarations][^kotlin-src-kt-tokens]                             | `parseModifierList()` around lines 3135–3155. [^kotlin-src-kotlin-parsing]                                                                                                          | Soft/modifier keyword aware.                                          |
+| Keywords and soft keywords                    | Spec lexical grammar + `KtTokens`. [^kotlin-spec-syntax][^kotlin-src-kt-tokens]                                                       | `compiler/psi/psi-api/.../KtTokens.java`. [^kotlin-src-kt-tokens]                                                                                                                   | Use token categories, not only a flat reserved-word list.             |
+| Identifiers and literals                      | Spec lexical grammar + official lexer regexes. [^kotlin-spec-syntax][^kotlin-src-kotlin-flex]                                         | `compiler/psi/parser/.../Kotlin.flex`. [^kotlin-src-kotlin-flex]                                                                                                                    | Backticks, numbers, chars, comments, shebang.                         |
+| Expressions entrypoint                        | Spec expressions grammar. [^kotlin-spec-expressions]                                                                                  | `KotlinExpressionParsing.java`, `parseExpression()` around 2472–2480. [^kotlin-src-expression-parsing]                                                                              | Baseline expression dispatch.                                         |
+| Binary precedence ladder                      | Spec expression levels; compiler method explicitly recurses by precedence. [^kotlin-spec-expressions][^kotlin-src-expression-parsing] | `parseBinaryExpression(...)` around 2503 onward. [^kotlin-src-expression-parsing]                                                                                                   | Best mirrored as layered rules.                                       |
+| Postfix expressions and call/reference chains | Spec expression suffixes + parser comments. [^kotlin-spec-expressions]                                                                | `parsePostfixExpression()` and `parseDoubleColonSuffix()` around 2699–2752 and 2806 onward. [^kotlin-src-expression-parsing]                                                        | Newline-sensitive; callable-reference diagnostic behavior matters.    |
+| String templates                              | Spec string mode grammar and strings docs. [^kotlin-spec-syntax]                                                                      | `parseStringTemplate()` around 3334–3354; lexer string modes in `Kotlin.flex`. [^kotlin-src-expression-parsing][^kotlin-src-kotlin-flex]                                            | Must be lexer-mode-based.                                             |
+| `when` expressions                            | Spec statements/expressions + official release notes for guards. [^kotlin-spec-statements][^kotlin-docs-whatsnew21]                   | `parseWhen()` around 3531–3549. [^kotlin-src-expression-parsing]                                                                                                                    | v2.2+ patch adds guard conditions.                                    |
+| Context parameters                            | Official docs + proposal status page. [^kotlin-docs-context-parameters][^kotlin-docs-whatsnew22][^kotlin-docs-features]               | `parseContextParameterOrReceiverList(...)` around 3383 onward. [^kotlin-src-kotlin-parsing]                                                                                         | Replaces legacy context receivers.                                    |
+| Type aliases / nested type aliases            | Spec baseline `typealias` + 2.2/2.3 release status. [^kotlin-spec-declarations][^kotlin-docs-whatsnew22][^kotlin-docs-features]       | `parseTypeAlias()` dispatch is confirmed in declaration switch. [^kotlin-src-kotlin-parsing]                                                                                        | Nested form is a 2.2+ delta.                                          |
+| Data objects                                  | Official 1.9 release notes and feature page. [^kotlin-docs-whatsnew19]                                                                | Parsed as object declaration plus `data` modifier. Modifier/object parser path confirmed generally by `parseObject()` dispatch. [^kotlin-src-kotlin-parsing][^kotlin-src-kt-tokens] | Grammar delta is small: allow `data object`.                          |
+| Explicit backing fields                       | 2.3/2.4 release notes and proposal index. [^kotlin-docs-whatsnew23][^kotlin-docs-whatsnew24][^kotlin-docs-features]                   | Exact parser method not confirmed from retrieved snippets; treat as v2.3+ grammar delta needing source verification in current parser history.                                      | Syntax-affecting and stable in 2.4.                                   |
+| Collection literals                           | 2.4.0 release notes and proposal index. [^kotlin-docs-whatsnew24][^kotlin-docs-features]                                              | Exact parser method not confirmed from retrieved snippets; treat as preview delta.                                                                                                  | Parse only in atomic-expression position.                             |
+| Name-based destructuring                      | 2.3.20 release notes and proposal index. [^kotlin-docs-whatsnew2320][^kotlin-docs-features]                                           | Exact parser method not confirmed from retrieved snippets; treat as preview delta.                                                                                                  | Parse in the single formatter grammar and mark as preview.            |
+| CLI flags for compiler feature status         | Official compiler option help in test data. [^kotlin-src-cli-help]                                                                    | `compiler/testData/cli/js/jsExtraHelp.out`. [^kotlin-src-cli-help]                                                                                                                  | Useful for compiler parity tests, not formatter parser configuration. |
 
 ## Syntax changelog from Kotlin 1.9 through 2.4
 
@@ -655,7 +655,7 @@ isolates the syntax-relevant deltas. [^kotlin-docs-whatsnew19][^kotlin-docs-what
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
 | 1.9.0   | `data object` became stable. Grammar impact: permit `data` modifier on object declarations. [^kotlin-docs-whatsnew19]                                                                                                                                                                      | Stable.                                                                                 |
 | 2.0.0   | No major new grammar form in the official release notes beyond already existing syntax; `Enum.entries` is API/member syntax, not a new grammar production. [^kotlin-docs-whatsnew20]                                                                                                       | Stable, no parser change needed.                                                        |
-| 2.0.20  | Official docs announced the phased replacement of **context receivers** with **context parameters**; this matters for versioned parser profiles. [^kotlin-docs-whatsnew2020][^kotlin-docs-features]                                                                                        | Legacy experimental form should be optional only.                                       |
+| 2.0.20  | Official docs announced the phased replacement of **context receivers** with **context parameters**; this matters for deciding whether legacy experimental syntax belongs in the current formatter grammar. [^kotlin-docs-whatsnew2020][^kotlin-docs-features]                             | Prefer current context parameters; treat legacy context receivers as archival syntax.   |
 | 2.1.0   | Preview: **guard conditions in `when` with subject**; **multi-dollar string interpolation**; non-local `break`/`continue` was added but does not change grammar shape. [^kotlin-docs-whatsnew21]                                                                                           | Guards and multi-dollar became stable in 2.2.                                           |
 | 2.2.0   | Preview/Beta: **context parameters**, **context-sensitive resolution** (no grammar change), **annotation use-site target improvements** including `@all:`, **nested type aliases**; guards and multi-dollar stabilized. [^kotlin-docs-whatsnew22][^kotlin-docs-features]                   | Context params and annotation changes stable in 2.4; nested type aliases stable in 2.3. |
 | 2.2.20  | Preview: **`return` in expression bodies with explicit return types** is a semantic relaxation using existing syntax; no new production. [^kotlin-docs-whatsnew2220]                                                                                                                       | Parser unchanged.                                                                       |
@@ -668,7 +668,8 @@ The important incompatibilities and deprecations for a parser are these:
 - **Context receivers are effectively superseded by context parameters**. The
   official docs explicitly say context parameters replace the older experimental
   feature, and the feature index marks context receivers as revoked/replaced. A
-  v2.4 parser should not enable both profiles at once. [^kotlin-docs-whatsnew2020][^kotlin-docs-features]
+  current formatter parser should prefer context parameters and should only add
+  legacy context receivers if archival source support becomes an explicit goal. [^kotlin-docs-whatsnew2020][^kotlin-docs-features]
 - **Annotation target defaulting changed in 2.4**. This usually affects binding
   and target assignment more than parsing, but the parser should recognize
   `@all:` and preserve use-site target syntax losslessly. The compatibility
@@ -677,8 +678,9 @@ The important incompatibilities and deprecations for a parser are these:
   overload resolution and argument classification more complicated but use
   existing named-argument tokens. [^kotlin-docs-whatsnew24]
 - **Collection literals** and **name-based destructuring** remain preview
-  features and should be guarded by explicit language mode flags, exactly as the
-  compiler help text does. [^kotlin-docs-whatsnew24][^kotlin-docs-features][^kotlin-src-cli-help]
+  features, but a formatter parser should still accept them in the main grammar.
+  Keep the preview status visible in comments or metadata so these productions
+  are easy to audit as Kotlin changes. [^kotlin-docs-whatsnew24][^kotlin-docs-features][^kotlin-src-cli-help]
 
 The main syntax-relevant keyword/reserved-word changes from a parser perspective
 since 1.9 are:
@@ -709,7 +711,7 @@ That static validation gives the following confidence split:
 | Context parameters, guard conditions                            | High                             | Officially documented and present in parser/doc sources. [^kotlin-docs-whatsnew21][^kotlin-docs-whatsnew22][^kotlin-docs-context-parameters][^kotlin-src-kotlin-parsing][^kotlin-src-expression-parsing] |
 | Explicit backing fields                                         | Medium                           | Official syntax and stability are clear, but I did not confirm exact parser entrypoints from retrieved source snippets. [^kotlin-docs-whatsnew23][^kotlin-docs-whatsnew24][^kotlin-docs-features]        |
 | Collection literals                                             | Medium                           | Official syntax is clear, but parser implementation points were not line-confirmed here. [^kotlin-docs-whatsnew24][^kotlin-docs-features]                                                                |
-| Name-based destructuring                                        | Medium                           | Official syntax/modes are clear; exact parser hooks were not retrieved. [^kotlin-docs-whatsnew2320][^kotlin-docs-features]                                                                               |
+| Name-based destructuring                                        | Medium                           | Official preview syntax is clear; exact parser hooks were not retrieved. [^kotlin-docs-whatsnew2320][^kotlin-docs-features]                                                                              |
 | Explicit context arguments                                      | Grammar: high, semantics: medium | No new grammar form is needed, but binding/resolution behavior changed in 2.3.20 and 2.4.0. [^kotlin-docs-whatsnew2320][^kotlin-docs-whatsnew24]                                                         |
 
 The official build already tells you which test tasks matter most. In the root
@@ -717,8 +719,8 @@ build, `miscCompilerTest` depends on `:compiler:test` and
 `:compiler:multiplatform-parsing:jvmTest`, which are the first two suites I
 would run for syntax validation. The repository also contains parser/diagnostic
 test data under `compiler/testData`, and the compiler option help in
-`compiler/testData/cli/js/jsExtraHelp.out` is useful for a feature-profile
-matrix. [^kotlin-src-build-gradle][^kotlin-src-cli-help]
+`compiler/testData/cli/js/jsExtraHelp.out` is useful for checking compiler
+feature status during parity testing. [^kotlin-src-build-gradle][^kotlin-src-cli-help]
 
 The recommended validation sequence for your parser is:
 
@@ -727,15 +729,14 @@ The recommended validation sequence for your parser is:
      properties, lambdas, callable references, string templates.
 2. **Stable 2.4 syntax**
    - Add context parameters, `when` guards, nested type aliases, explicit
-     backing fields, annotation use-site targets including `@all:`.
-3. **Preview profile**
-   - Add multi-dollar interpolation, collection literals, name-based
-     destructuring modes.
+     backing fields, multi-dollar interpolation, annotation use-site targets
+     including `@all:`.
+3. **Preview syntax**
+   - Add collection literals and name-based destructuring forms.
 4. **Negative corpus**
    - `foo::bar(args)` should diagnose as reserved/future;
    - bad type-argument lookahead cases;
-   - `when` guard without subject;
-   - collection literal in languages modes where the feature is disabled. [^kotlin-src-expression-parsing][^kotlin-docs-whatsnew21][^kotlin-docs-whatsnew24][^kotlin-src-cli-help]
+   - `when` guard without subject. [^kotlin-src-expression-parsing][^kotlin-docs-whatsnew21][^kotlin-docs-whatsnew24][^kotlin-src-cli-help]
 
 Representative edge cases your parser should accept or reject exactly the way
 the compiler does include the following. These are grounded in official examples
@@ -784,10 +785,11 @@ targets before you freeze a production grammar:
   **v1.9-style core grammar plus later deltas**, not as a single document that
   already models every 2.4 preview/stable addition in one place. [^kotlin-spec-syntax][^kotlin-spec-introduction]
 
-Within those limits, the grammar profile above is the highest-confidence parser
+Within those limits, the grammar above is the highest-confidence parser
 reference that can be assembled from the official Kotlin spec, release notes,
 proposal index, and compiler source architecture, and it is suitable as a
-production parser design basis so long as you keep the feature gates explicit. [^kotlin-spec-syntax][^kotlin-docs-features][^kotlin-src-cli-help]
+production formatter parser design basis so long as preview syntax stays
+explicitly marked in code and documentation. [^kotlin-spec-syntax][^kotlin-docs-features][^kotlin-src-cli-help]
 
 ## References
 
