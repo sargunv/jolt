@@ -47,8 +47,8 @@ use super::{
 use crate::JavaSyntaxNode;
 use jolt_syntax::SyntaxElement;
 
-impl CompilationUnit<'_> {
-    pub fn items(&self) -> impl Iterator<Item = CompilationUnitItem<'_>> + '_ {
+impl<'source> CompilationUnit<'source> {
+    pub fn items(&self) -> impl Iterator<Item = CompilationUnitItem<'source>> + use<'source> {
         self.syntax.children().filter_map(|syntax| {
             if let Some(package) = PackageDeclaration::cast(syntax) {
                 return Some(CompilationUnitItem::Package(package));
@@ -67,37 +67,23 @@ impl CompilationUnit<'_> {
     }
 
     #[must_use]
-    pub fn package_declaration(&self) -> Option<PackageDeclaration<'_>> {
+    pub fn package_declaration(&self) -> Option<PackageDeclaration<'source>> {
         child(&self.syntax)
     }
 
-    pub fn imports(&self) -> impl Iterator<Item = ImportDeclaration<'_>> + '_ {
+    pub fn imports(&self) -> impl Iterator<Item = ImportDeclaration<'source>> + use<'source> {
         children(&self.syntax)
     }
 
     #[must_use]
-    pub fn module_declaration(&self) -> Option<ModuleDeclaration<'_>> {
+    pub fn module_declaration(&self) -> Option<ModuleDeclaration<'source>> {
         child(&self.syntax)
     }
 
-    pub fn type_declarations(&self) -> impl Iterator<Item = TypeDeclaration<'_>> + '_ {
+    pub fn type_declarations(
+        &self,
+    ) -> impl Iterator<Item = TypeDeclaration<'source>> + use<'source> {
         children_family(&self.syntax)
-    }
-
-    /// Returns descendant nodes as typed Java wrappers.
-    ///
-    /// Prefer grammar-specific accessors for formatter layout. This traversal is
-    /// intended for corpus summaries, diagnostics, and generic syntax tooling.
-    pub fn descendants(&self) -> impl Iterator<Item = AnyJavaNode<'_>> + '_ {
-        self.syntax.descendants().filter_map(AnyJavaNode::cast)
-    }
-
-    /// Returns this compilation unit and its descendants as typed Java wrappers.
-    ///
-    /// Prefer grammar-specific accessors for formatter layout. This traversal is
-    /// intended for corpus summaries, diagnostics, and generic syntax tooling.
-    pub fn self_and_descendants(&self) -> impl Iterator<Item = AnyJavaNode<'_>> + '_ {
-        std::iter::once(AnyJavaNode::from(*self)).chain(self.descendants())
     }
 }
 
@@ -184,39 +170,39 @@ impl<'source> ImportDeclaration<'source> {
         })
     }
 
-    fn contextual_keyword(&self, text: &str) -> Option<JavaSyntaxToken<'_>> {
+    fn contextual_keyword(&self, text: &str) -> Option<JavaSyntaxToken<'source>> {
         children_tokens_matching(&self.syntax, |kind| kind == JavaSyntaxKind::Identifier)
             .find(|token| token.text() == text)
     }
 }
 
-impl PackageDeclaration<'_> {
+impl<'source> PackageDeclaration<'source> {
     #[must_use]
-    pub fn package_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn package_token(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::PackageKw)
     }
 
-    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'_>> + '_ {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'source>> + use<'source> {
         children(&self.syntax)
     }
 
     #[must_use]
-    pub fn name(&self) -> Option<NameSyntax<'_>> {
+    pub fn name(&self) -> Option<NameSyntax<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 }
 
-impl NameSyntax<'_> {
-    pub fn segments(&self) -> impl Iterator<Item = JavaSyntaxToken<'_>> + '_ {
+impl<'source> NameSyntax<'source> {
+    pub fn segments(&self) -> impl Iterator<Item = JavaSyntaxToken<'source>> + use<'source> {
         children_tokens_matching(self.syntax(), |kind| kind == JavaSyntaxKind::Identifier)
     }
 
-    pub fn segments_with_annotations(&self) -> impl Iterator<Item = NameSegment<'_>> {
+    pub fn segments_with_annotations(&self) -> impl Iterator<Item = NameSegment<'source>> {
         let mut segments = Vec::new();
         let mut annotations = Vec::new();
         let mut dot_before = None;
@@ -244,77 +230,69 @@ impl NameSyntax<'_> {
 
         segments.into_iter()
     }
-
-    #[must_use]
-    pub fn compact_text(&self) -> String {
-        self.segments()
-            .map(|token| token.text().to_owned())
-            .collect::<Vec<_>>()
-            .join(".")
-    }
 }
 
-impl ClassDeclaration<'_> {
+impl<'source> ClassDeclaration<'source> {
     #[must_use]
-    pub fn keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::ClassKw)
     }
 
     #[must_use]
-    pub fn modifiers(&self) -> Option<ModifierList<'_>> {
+    pub fn modifiers(&self) -> Option<ModifierList<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn name(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn name(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
     }
 
     #[must_use]
-    pub fn type_parameters(&self) -> Option<TypeParameterList<'_>> {
+    pub fn type_parameters(&self) -> Option<TypeParameterList<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn extends_clause(&self) -> Option<ExtendsClause<'_>> {
+    pub fn extends_clause(&self) -> Option<ExtendsClause<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn implements_clause(&self) -> Option<ImplementsClause<'_>> {
+    pub fn implements_clause(&self) -> Option<ImplementsClause<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn permits_clause(&self) -> Option<PermitsClause<'_>> {
+    pub fn permits_clause(&self) -> Option<PermitsClause<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn body(&self) -> Option<ClassBody<'_>> {
+    pub fn body(&self) -> Option<ClassBody<'source>> {
         child(&self.syntax)
     }
 }
 
 impl<'source> RecordDeclaration<'source> {
     #[must_use]
-    pub fn keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         children_tokens_matching(&self.syntax, |kind| kind == JavaSyntaxKind::Identifier)
             .find(|token| token.text() == "record")
     }
 
     #[must_use]
-    pub fn modifiers(&self) -> Option<ModifierList<'_>> {
+    pub fn modifiers(&self) -> Option<ModifierList<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn name(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn name(&self) -> Option<JavaSyntaxToken<'source>> {
         nth_child_token(&self.syntax, JavaSyntaxKind::Identifier, 1)
     }
 
     #[must_use]
-    pub fn type_parameters(&self) -> Option<TypeParameterList<'_>> {
+    pub fn type_parameters(&self) -> Option<TypeParameterList<'source>> {
         child(&self.syntax)
     }
 
@@ -329,128 +307,128 @@ impl<'source> RecordDeclaration<'source> {
     }
 
     #[must_use]
-    pub fn components(&self) -> Option<RecordComponentList<'_>> {
+    pub fn components(&self) -> Option<RecordComponentList<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn implements_clause(&self) -> Option<ImplementsClause<'_>> {
+    pub fn implements_clause(&self) -> Option<ImplementsClause<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn body(&self) -> Option<RecordBody<'_>> {
+    pub fn body(&self) -> Option<RecordBody<'source>> {
         child(&self.syntax)
     }
 }
 
-impl EnumDeclaration<'_> {
+impl<'source> EnumDeclaration<'source> {
     #[must_use]
-    pub fn keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::EnumKw)
     }
 
     #[must_use]
-    pub fn modifiers(&self) -> Option<ModifierList<'_>> {
+    pub fn modifiers(&self) -> Option<ModifierList<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn name(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn name(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
     }
 
     #[must_use]
-    pub fn implements_clause(&self) -> Option<ImplementsClause<'_>> {
+    pub fn implements_clause(&self) -> Option<ImplementsClause<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn body(&self) -> Option<EnumBody<'_>> {
+    pub fn body(&self) -> Option<EnumBody<'source>> {
         child(&self.syntax)
     }
 }
 
-impl InterfaceDeclaration<'_> {
+impl<'source> InterfaceDeclaration<'source> {
     #[must_use]
-    pub fn keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::InterfaceKw)
     }
 
     #[must_use]
-    pub fn modifiers(&self) -> Option<ModifierList<'_>> {
+    pub fn modifiers(&self) -> Option<ModifierList<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn name(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn name(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
     }
 
     #[must_use]
-    pub fn type_parameters(&self) -> Option<TypeParameterList<'_>> {
+    pub fn type_parameters(&self) -> Option<TypeParameterList<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn extends_clause(&self) -> Option<ExtendsClause<'_>> {
+    pub fn extends_clause(&self) -> Option<ExtendsClause<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn permits_clause(&self) -> Option<PermitsClause<'_>> {
+    pub fn permits_clause(&self) -> Option<PermitsClause<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn body(&self) -> Option<InterfaceBody<'_>> {
+    pub fn body(&self) -> Option<InterfaceBody<'source>> {
         child(&self.syntax)
     }
 }
 
-impl ExtendsClause<'_> {
+impl<'source> ExtendsClause<'source> {
     #[must_use]
-    pub fn keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::ExtendsKw)
     }
 
-    pub fn types(&self) -> impl Iterator<Item = Type<'_>> + '_ {
+    pub fn types(&self) -> impl Iterator<Item = Type<'source>> + use<'source> {
         children_family(&self.syntax)
     }
 
-    pub fn entries(&self) -> impl Iterator<Item = TypeClauseEntry<'_>> {
+    pub fn entries(&self) -> impl Iterator<Item = TypeClauseEntry<'source>> {
         type_clause_entries(&self.syntax)
     }
 }
 
-impl ImplementsClause<'_> {
+impl<'source> ImplementsClause<'source> {
     #[must_use]
-    pub fn keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::ImplementsKw)
     }
 
-    pub fn types(&self) -> impl Iterator<Item = Type<'_>> + '_ {
+    pub fn types(&self) -> impl Iterator<Item = Type<'source>> + use<'source> {
         children_family(&self.syntax)
     }
 
-    pub fn entries(&self) -> impl Iterator<Item = TypeClauseEntry<'_>> {
+    pub fn entries(&self) -> impl Iterator<Item = TypeClauseEntry<'source>> {
         type_clause_entries(&self.syntax)
     }
 }
 
-impl PermitsClause<'_> {
+impl<'source> PermitsClause<'source> {
     #[must_use]
-    pub fn keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         self.syntax
             .first_token()
             .and_then(|syntax| (syntax.text() == "permits").then_some(JavaSyntaxToken { syntax }))
     }
 
-    pub fn names(&self) -> impl Iterator<Item = NameSyntax<'_>> + '_ {
+    pub fn names(&self) -> impl Iterator<Item = NameSyntax<'source>> + use<'source> {
         children_family(&self.syntax)
     }
 
-    pub fn entries(&self) -> impl Iterator<Item = PermitsClauseEntry<'_>> {
+    pub fn entries(&self) -> impl Iterator<Item = PermitsClauseEntry<'source>> {
         let mut entries = Vec::new();
         let mut pending_name = None;
 
@@ -486,44 +464,47 @@ impl PermitsClause<'_> {
     }
 }
 
-impl AnnotationInterfaceDeclaration<'_> {
+impl<'source> AnnotationInterfaceDeclaration<'source> {
     #[must_use]
-    pub fn at_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn at_token(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::At)
     }
 
     #[must_use]
-    pub fn interface_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn interface_token(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::InterfaceKw)
     }
 
     #[must_use]
-    pub fn modifiers(&self) -> Option<ModifierList<'_>> {
+    pub fn modifiers(&self) -> Option<ModifierList<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn name(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn name(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
     }
 
     #[must_use]
-    pub fn body(&self) -> Option<AnnotationInterfaceBody<'_>> {
+    pub fn body(&self) -> Option<AnnotationInterfaceBody<'source>> {
         child(&self.syntax)
     }
 }
 
-impl ModifierList<'_> {
-    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'_>> + '_ {
+impl<'source> ModifierList<'source> {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'source>> + use<'source> {
         children(&self.syntax)
     }
 
-    pub fn declaration_annotations(&self) -> impl Iterator<Item = Annotation<'_>> + '_ {
+    pub fn declaration_annotations(
+        &self,
+    ) -> impl Iterator<Item = Annotation<'source>> + use<'source> {
         let first_modifier_start = self
             .modifier_entries()
             .filter_map(|entry| {
                 entry
-                    .first_token()
+                    .tokens()
+                    .next()
                     .map(|token| token.token_text_range().start())
             })
             .min();
@@ -535,12 +516,13 @@ impl ModifierList<'_> {
 
     pub fn type_use_annotations_after_modifiers(
         &self,
-    ) -> impl Iterator<Item = Annotation<'_>> + '_ {
+    ) -> impl Iterator<Item = Annotation<'source>> + use<'source> {
         let first_modifier_start = self
             .modifier_entries()
             .filter_map(|entry| {
                 entry
-                    .first_token()
+                    .tokens()
+                    .next()
                     .map(|token| token.token_text_range().start())
             })
             .min();
@@ -550,31 +532,31 @@ impl ModifierList<'_> {
         })
     }
 
-    pub fn modifier_tokens(&self) -> impl Iterator<Item = JavaSyntaxToken<'_>> + '_ {
+    pub fn modifier_tokens(&self) -> impl Iterator<Item = JavaSyntaxToken<'source>> + use<'source> {
         self.modifier_entries().flat_map(ModifierEntry::into_tokens)
     }
 
-    pub fn modifier_entries(&self) -> impl Iterator<Item = ModifierEntry<'_>> + '_ {
+    pub fn modifier_entries(&self) -> impl Iterator<Item = ModifierEntry<'source>> + use<'source> {
         modifier_entries(&self.syntax)
     }
 }
 
-impl TypeParameterList<'_> {
+impl<'source> TypeParameterList<'source> {
     #[must_use]
-    pub fn open_angle(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_angle(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Lt)
     }
 
     #[must_use]
-    pub fn close_angle(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_angle(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Gt)
     }
 
-    pub fn parameters(&self) -> impl Iterator<Item = TypeParameter<'_>> + '_ {
+    pub fn parameters(&self) -> impl Iterator<Item = TypeParameter<'source>> + use<'source> {
         children(&self.syntax)
     }
 
-    pub fn entries(&self) -> impl Iterator<Item = TypeParameterListEntry<'_>> {
+    pub fn entries(&self) -> impl Iterator<Item = TypeParameterListEntry<'source>> {
         let mut entries = Vec::new();
         let mut pending_parameter = None;
 
@@ -613,33 +595,33 @@ impl TypeParameterList<'_> {
     }
 }
 
-impl TypeParameter<'_> {
-    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'_>> + '_ {
+impl<'source> TypeParameter<'source> {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'source>> + use<'source> {
         children(&self.syntax)
     }
 
     #[must_use]
-    pub fn name(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn name(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
     }
 
     #[must_use]
-    pub fn bounds(&self) -> Option<TypeBoundList<'_>> {
+    pub fn bounds(&self) -> Option<TypeBoundList<'source>> {
         child(&self.syntax)
     }
 }
 
-impl TypeBoundList<'_> {
+impl<'source> TypeBoundList<'source> {
     #[must_use]
-    pub fn extends_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn extends_token(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::ExtendsKw)
     }
 
-    pub fn bounds(&self) -> impl Iterator<Item = Type<'_>> + '_ {
+    pub fn bounds(&self) -> impl Iterator<Item = Type<'source>> + use<'source> {
         children_family(&self.syntax)
     }
 
-    pub fn entries(&self) -> impl Iterator<Item = IntersectionTypeEntry<'_>> {
+    pub fn entries(&self) -> impl Iterator<Item = IntersectionTypeEntry<'source>> {
         child::<IntersectionType>(&self.syntax)
             .map_or_else(
                 || {
@@ -656,13 +638,13 @@ impl TypeBoundList<'_> {
     }
 }
 
-impl PrimitiveType<'_> {
-    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'_>> + '_ {
+impl<'source> PrimitiveType<'source> {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'source>> + use<'source> {
         children(&self.syntax)
     }
 
     #[must_use]
-    pub fn keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token_in(
             &self.syntax,
             &[
@@ -679,15 +661,15 @@ impl PrimitiveType<'_> {
     }
 }
 
-impl VoidType<'_> {
+impl<'source> VoidType<'source> {
     #[must_use]
-    pub fn keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::VoidKw)
     }
 }
 
-impl ClassType<'_> {
-    pub fn segments(&self) -> impl Iterator<Item = ClassTypeSegment<'_>> {
+impl<'source> ClassType<'source> {
+    pub fn segments(&self) -> impl Iterator<Item = ClassTypeSegment<'source>> {
         let mut segments = Vec::new();
         let mut annotations = Vec::new();
         let mut dot_before = None;
@@ -736,13 +718,13 @@ impl ClassType<'_> {
     }
 }
 
-impl TypeArgument<'_> {
-    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'_>> + '_ {
+impl<'source> TypeArgument<'source> {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'source>> + use<'source> {
         children(&self.syntax)
     }
 
     #[must_use]
-    pub fn ty(&self) -> Option<Type<'_>> {
+    pub fn ty(&self) -> Option<Type<'source>> {
         child_family(&self.syntax)
     }
 }
@@ -778,24 +760,24 @@ impl<'source> WildcardType<'source> {
     }
 }
 
-impl RecordComponentList<'_> {
+impl<'source> RecordComponentList<'source> {
     #[must_use]
-    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LParen)
             .or_else(|| previous_sibling_token(&self.syntax, JavaSyntaxKind::LParen))
     }
 
     #[must_use]
-    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RParen)
             .or_else(|| next_sibling_token(&self.syntax, JavaSyntaxKind::RParen))
     }
 
-    pub fn components(&self) -> impl Iterator<Item = RecordComponent<'_>> + '_ {
+    pub fn components(&self) -> impl Iterator<Item = RecordComponent<'source>> + use<'source> {
         children(&self.syntax)
     }
 
-    pub fn entries(&self) -> impl Iterator<Item = RecordComponentListEntry<'_>> {
+    pub fn entries(&self) -> impl Iterator<Item = RecordComponentListEntry<'source>> {
         let mut entries = Vec::new();
         let mut pending_component = None;
 
@@ -834,20 +816,20 @@ impl RecordComponentList<'_> {
     }
 }
 
-impl RecordComponent<'_> {
-    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'_>> + '_ {
+impl<'source> RecordComponent<'source> {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'source>> + use<'source> {
         children(&self.syntax)
     }
 
-    pub fn prefix_annotations(&self) -> impl Iterator<Item = Annotation<'_>> {
+    pub fn prefix_annotations(&self) -> impl Iterator<Item = Annotation<'source>> {
         annotations_before_type(&self.syntax, self.ty())
     }
 
-    pub fn varargs_annotations(&self) -> impl Iterator<Item = Annotation<'_>> {
+    pub fn varargs_annotations(&self) -> impl Iterator<Item = Annotation<'source>> {
         annotations_between_type_and_token(&self.syntax, self.ty(), JavaSyntaxKind::Ellipsis)
     }
 
-    pub fn modifier_tokens(&self) -> impl Iterator<Item = JavaSyntaxToken<'_>> + '_ {
+    pub fn modifier_tokens(&self) -> impl Iterator<Item = JavaSyntaxToken<'source>> + use<'source> {
         children_tokens_matching(&self.syntax, is_modifier_token)
     }
 
@@ -857,38 +839,38 @@ impl RecordComponent<'_> {
     }
 
     #[must_use]
-    pub fn ellipsis_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn ellipsis_token(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Ellipsis)
     }
 
     #[must_use]
-    pub fn ty(&self) -> Option<Type<'_>> {
+    pub fn ty(&self) -> Option<Type<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn name(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn name(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
     }
 
     #[must_use]
-    pub fn dimensions(&self) -> Option<ArrayDimensions<'_>> {
+    pub fn dimensions(&self) -> Option<ArrayDimensions<'source>> {
         child(&self.syntax)
     }
 }
 
-impl ClassBody<'_> {
+impl<'source> ClassBody<'source> {
     #[must_use]
-    pub fn open_brace(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_brace(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LBrace)
     }
 
     #[must_use]
-    pub fn close_brace(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_brace(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RBrace)
     }
 
-    pub fn members(&self) -> impl Iterator<Item = ClassBodyMember<'_>> + '_ {
+    pub fn members(&self) -> impl Iterator<Item = ClassBodyMember<'source>> + use<'source> {
         self.syntax.children().filter_map(|syntax| {
             if let Some(declaration) = ClassBodyDeclaration::cast(syntax) {
                 return child_family(&declaration.syntax);
@@ -905,18 +887,18 @@ impl ClassBodyMember<'_> {
     }
 }
 
-impl RecordBody<'_> {
+impl<'source> RecordBody<'source> {
     #[must_use]
-    pub fn open_brace(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_brace(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LBrace)
     }
 
     #[must_use]
-    pub fn close_brace(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_brace(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RBrace)
     }
 
-    pub fn members(&self) -> impl Iterator<Item = ClassBodyMember<'_>> + '_ {
+    pub fn members(&self) -> impl Iterator<Item = ClassBodyMember<'source>> + use<'source> {
         self.syntax.children().filter_map(|syntax| {
             if let Some(declaration) = ClassBodyDeclaration::cast(syntax) {
                 return child_family(&declaration.syntax);
@@ -926,25 +908,25 @@ impl RecordBody<'_> {
     }
 }
 
-impl ClassBodyDeclaration<'_> {
+impl<'source> ClassBodyDeclaration<'source> {
     #[must_use]
-    pub fn member(&self) -> Option<ClassBodyMember<'_>> {
+    pub fn member(&self) -> Option<ClassBodyMember<'source>> {
         child_family(&self.syntax)
     }
 }
 
-impl InterfaceBody<'_> {
+impl<'source> InterfaceBody<'source> {
     #[must_use]
-    pub fn open_brace(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_brace(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LBrace)
     }
 
     #[must_use]
-    pub fn close_brace(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_brace(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RBrace)
     }
 
-    pub fn members(&self) -> impl Iterator<Item = InterfaceBodyMember<'_>> + '_ {
+    pub fn members(&self) -> impl Iterator<Item = InterfaceBodyMember<'source>> + use<'source> {
         children_family(&self.syntax)
     }
 }
@@ -956,18 +938,18 @@ impl InterfaceBodyMember<'_> {
     }
 }
 
-impl AnnotationInterfaceBody<'_> {
+impl<'source> AnnotationInterfaceBody<'source> {
     #[must_use]
-    pub fn open_brace(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_brace(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LBrace)
     }
 
     #[must_use]
-    pub fn close_brace(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_brace(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RBrace)
     }
 
-    pub fn members(&self) -> impl Iterator<Item = AnnotationInterfaceBodyMember<'_>> {
+    pub fn members(&self) -> impl Iterator<Item = AnnotationInterfaceBodyMember<'source>> {
         child::<AnnotationElementList>(&self.syntax)
             .map(|list| {
                 list.syntax
@@ -988,7 +970,9 @@ impl AnnotationInterfaceBodyMember<'_> {
 }
 
 impl<'source> AnnotationElementList<'source> {
-    pub fn members(&self) -> impl Iterator<Item = AnnotationInterfaceBodyMember<'_>> + '_ {
+    pub fn members(
+        &self,
+    ) -> impl Iterator<Item = AnnotationInterfaceBodyMember<'source>> + use<'source> {
         children_family(&self.syntax)
     }
 
@@ -1040,77 +1024,77 @@ impl<'source> AnnotationElementList<'source> {
     }
 }
 
-impl AnnotationElementDeclaration<'_> {
+impl<'source> AnnotationElementDeclaration<'source> {
     #[must_use]
-    pub fn modifiers(&self) -> Option<ModifierList<'_>> {
+    pub fn modifiers(&self) -> Option<ModifierList<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn ty(&self) -> Option<Type<'_>> {
+    pub fn ty(&self) -> Option<Type<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn name(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn name(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
     }
 
     #[must_use]
-    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LParen)
     }
 
     #[must_use]
-    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RParen)
     }
 
     #[must_use]
-    pub fn dimensions(&self) -> Option<ArrayDimensions<'_>> {
+    pub fn dimensions(&self) -> Option<ArrayDimensions<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn default_value(&self) -> Option<DefaultValue<'_>> {
+    pub fn default_value(&self) -> Option<DefaultValue<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 }
 
-impl DefaultValue<'_> {
+impl<'source> DefaultValue<'source> {
     #[must_use]
-    pub fn default_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn default_token(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::DefaultKw)
     }
 
     #[must_use]
-    pub fn value(&self) -> Option<AnnotationElementValue<'_>> {
+    pub fn value(&self) -> Option<AnnotationElementValue<'source>> {
         child(&self.syntax)
     }
 }
 
-impl EnumBody<'_> {
+impl<'source> EnumBody<'source> {
     #[must_use]
-    pub fn open_brace(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_brace(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LBrace)
     }
 
     #[must_use]
-    pub fn close_brace(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_brace(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RBrace)
     }
 
     #[must_use]
-    pub fn constants(&self) -> Option<EnumConstantList<'_>> {
+    pub fn constants(&self) -> Option<EnumConstantList<'source>> {
         child(&self.syntax)
     }
 
-    pub fn members(&self) -> impl Iterator<Item = ClassBodyMember<'_>> + '_ {
+    pub fn members(&self) -> impl Iterator<Item = ClassBodyMember<'source>> + use<'source> {
         self.syntax.children().filter_map(|syntax| {
             if let Some(declaration) = ClassBodyDeclaration::cast(syntax) {
                 return child_family(&declaration.syntax);
@@ -1119,13 +1103,15 @@ impl EnumBody<'_> {
         })
     }
 
-    pub fn semicolon_tokens(&self) -> impl Iterator<Item = JavaSyntaxToken<'_>> + '_ {
+    pub fn semicolon_tokens(
+        &self,
+    ) -> impl Iterator<Item = JavaSyntaxToken<'source>> + use<'source> {
         children_tokens_matching(&self.syntax, |kind| kind == JavaSyntaxKind::Semicolon)
     }
 }
 
 impl<'source> EnumConstantList<'source> {
-    pub fn constants(&self) -> impl Iterator<Item = EnumConstant<'_>> + '_ {
+    pub fn constants(&self) -> impl Iterator<Item = EnumConstant<'source>> + use<'source> {
         children(&self.syntax)
     }
 
@@ -1169,23 +1155,23 @@ impl<'source> EnumConstantList<'source> {
     }
 }
 
-impl EnumConstant<'_> {
-    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'_>> + '_ {
+impl<'source> EnumConstant<'source> {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'source>> + use<'source> {
         children(&self.syntax)
     }
 
     #[must_use]
-    pub fn name(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn name(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
     }
 
     #[must_use]
-    pub fn arguments(&self) -> Option<ArgumentList<'_>> {
+    pub fn arguments(&self) -> Option<ArgumentList<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn body(&self) -> Option<ClassBody<'_>> {
+    pub fn body(&self) -> Option<ClassBody<'source>> {
         child(&self.syntax)
     }
 }
@@ -1197,183 +1183,183 @@ impl BlockItem<'_> {
     }
 }
 
-impl LocalClassOrInterfaceDeclaration<'_> {
+impl<'source> LocalClassOrInterfaceDeclaration<'source> {
     #[must_use]
-    pub fn declaration(&self) -> Option<TypeDeclaration<'_>> {
+    pub fn declaration(&self) -> Option<TypeDeclaration<'source>> {
         child_family(&self.syntax)
     }
 }
 
-impl FieldDeclaration<'_> {
+impl<'source> FieldDeclaration<'source> {
     #[must_use]
-    pub fn modifiers(&self) -> Option<ModifierList<'_>> {
+    pub fn modifiers(&self) -> Option<ModifierList<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn ty(&self) -> Option<Type<'_>> {
+    pub fn ty(&self) -> Option<Type<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn declarators(&self) -> Option<VariableDeclaratorList<'_>> {
+    pub fn declarators(&self) -> Option<VariableDeclaratorList<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 }
 
-impl MethodDeclaration<'_> {
+impl<'source> MethodDeclaration<'source> {
     #[must_use]
-    pub fn modifiers(&self) -> Option<ModifierList<'_>> {
+    pub fn modifiers(&self) -> Option<ModifierList<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn type_parameters(&self) -> Option<TypeParameterList<'_>> {
+    pub fn type_parameters(&self) -> Option<TypeParameterList<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn return_type(&self) -> Option<Type<'_>> {
+    pub fn return_type(&self) -> Option<Type<'source>> {
         child_family(&self.syntax)
     }
 
-    pub fn return_type_annotations(&self) -> impl Iterator<Item = Annotation<'_>> {
+    pub fn return_type_annotations(&self) -> impl Iterator<Item = Annotation<'source>> {
         annotations_before_type(&self.syntax, self.return_type())
     }
 
     #[must_use]
-    pub fn name(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn name(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
     }
 
     #[must_use]
-    pub fn parameters(&self) -> Option<FormalParameterList<'_>> {
+    pub fn parameters(&self) -> Option<FormalParameterList<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn throws_clause(&self) -> Option<ThrowsClause<'_>> {
+    pub fn throws_clause(&self) -> Option<ThrowsClause<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn body(&self) -> Option<Block<'_>> {
+    pub fn body(&self) -> Option<Block<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 }
 
-impl ConstructorDeclaration<'_> {
+impl<'source> ConstructorDeclaration<'source> {
     #[must_use]
-    pub fn modifiers(&self) -> Option<ModifierList<'_>> {
+    pub fn modifiers(&self) -> Option<ModifierList<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn type_parameters(&self) -> Option<TypeParameterList<'_>> {
+    pub fn type_parameters(&self) -> Option<TypeParameterList<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn name(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn name(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
     }
 
     #[must_use]
-    pub fn parameters(&self) -> Option<FormalParameterList<'_>> {
+    pub fn parameters(&self) -> Option<FormalParameterList<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn throws_clause(&self) -> Option<ThrowsClause<'_>> {
+    pub fn throws_clause(&self) -> Option<ThrowsClause<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn body(&self) -> Option<ConstructorBody<'_>> {
+    pub fn body(&self) -> Option<ConstructorBody<'source>> {
         child(&self.syntax)
     }
 }
 
-impl CompactConstructorDeclaration<'_> {
+impl<'source> CompactConstructorDeclaration<'source> {
     #[must_use]
-    pub fn modifiers(&self) -> Option<ModifierList<'_>> {
+    pub fn modifiers(&self) -> Option<ModifierList<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn name(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn name(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
     }
 
     #[must_use]
-    pub fn body(&self) -> Option<ConstructorBody<'_>> {
+    pub fn body(&self) -> Option<ConstructorBody<'source>> {
         child(&self.syntax)
     }
 }
 
-impl ConstructorBody<'_> {
+impl<'source> ConstructorBody<'source> {
     #[must_use]
-    pub fn open_brace(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_brace(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LBrace)
     }
 
     #[must_use]
-    pub fn close_brace(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_brace(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RBrace)
     }
 
     #[must_use]
-    pub fn invocation(&self) -> Option<ConstructorInvocation<'_>> {
+    pub fn invocation(&self) -> Option<ConstructorInvocation<'source>> {
         child(&self.syntax)
     }
 
-    pub fn block_statements(&self) -> impl Iterator<Item = BlockStatement<'_>> + '_ {
+    pub fn block_statements(&self) -> impl Iterator<Item = BlockStatement<'source>> + use<'source> {
         children(&self.syntax)
     }
 
-    pub fn items(&self) -> impl Iterator<Item = BlockItem<'_>> + '_ {
+    pub fn items(&self) -> impl Iterator<Item = BlockItem<'source>> + use<'source> {
         children::<BlockStatement>(&self.syntax).filter_map(|node| child_family(&node.syntax))
     }
 }
 
-impl ConstructorInvocation<'_> {
+impl<'source> ConstructorInvocation<'source> {
     #[must_use]
     pub fn starts_after_blank_line(&self) -> bool {
         starts_after_blank_line(&self.syntax)
     }
 
     #[must_use]
-    pub fn qualifier_name(&self) -> Option<NameSyntax<'_>> {
+    pub fn qualifier_name(&self) -> Option<NameSyntax<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn qualifier_expression(&self) -> Option<Expression<'_>> {
+    pub fn qualifier_expression(&self) -> Option<Expression<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn dot_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn dot_token(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Dot)
     }
 
     #[must_use]
-    pub fn type_arguments(&self) -> Option<TypeArgumentList<'_>> {
+    pub fn type_arguments(&self) -> Option<TypeArgumentList<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn target(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn target(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token_in(
             &self.syntax,
             &[JavaSyntaxKind::ThisKw, JavaSyntaxKind::SuperKw],
@@ -1381,27 +1367,27 @@ impl ConstructorInvocation<'_> {
     }
 
     #[must_use]
-    pub fn arguments(&self) -> Option<ArgumentList<'_>> {
+    pub fn arguments(&self) -> Option<ArgumentList<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 }
 
-impl ThrowsClause<'_> {
+impl<'source> ThrowsClause<'source> {
     #[must_use]
-    pub fn keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::ThrowsKw)
     }
 
-    pub fn exceptions(&self) -> impl Iterator<Item = Type<'_>> + '_ {
+    pub fn exceptions(&self) -> impl Iterator<Item = Type<'source>> + use<'source> {
         children_family(&self.syntax)
     }
 
-    pub fn entries(&self) -> impl Iterator<Item = ThrowsClauseEntry<'_>> {
+    pub fn entries(&self) -> impl Iterator<Item = ThrowsClauseEntry<'source>> {
         let mut entries = Vec::new();
         let mut pending_exception = None;
 
@@ -1440,43 +1426,43 @@ impl ThrowsClause<'_> {
     }
 }
 
-impl StaticInitializer<'_> {
+impl<'source> StaticInitializer<'source> {
     #[must_use]
-    pub fn static_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn static_token(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::StaticKw)
     }
 
     #[must_use]
-    pub fn body(&self) -> Option<Block<'_>> {
+    pub fn body(&self) -> Option<Block<'source>> {
         child(&self.syntax)
     }
 }
 
-impl InstanceInitializer<'_> {
+impl<'source> InstanceInitializer<'source> {
     #[must_use]
-    pub fn body(&self) -> Option<Block<'_>> {
+    pub fn body(&self) -> Option<Block<'source>> {
         child(&self.syntax)
     }
 }
 
-impl FormalParameterList<'_> {
+impl<'source> FormalParameterList<'source> {
     #[must_use]
-    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LParen)
             .or_else(|| previous_sibling_token(&self.syntax, JavaSyntaxKind::LParen))
     }
 
     #[must_use]
-    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RParen)
             .or_else(|| next_sibling_token(&self.syntax, JavaSyntaxKind::RParen))
     }
 
-    pub fn parameters(&self) -> impl Iterator<Item = FormalParameter<'_>> + '_ {
+    pub fn parameters(&self) -> impl Iterator<Item = FormalParameter<'source>> + use<'source> {
         children(&self.syntax)
     }
 
-    pub fn entries(&self) -> impl Iterator<Item = FormalParameterListEntry<'_>> {
+    pub fn entries(&self) -> impl Iterator<Item = FormalParameterListEntry<'source>> {
         let mut entries = Vec::new();
         let mut pending_item = None;
 
@@ -1519,20 +1505,20 @@ impl FormalParameterList<'_> {
     }
 }
 
-impl FormalParameter<'_> {
-    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'_>> + '_ {
+impl<'source> FormalParameter<'source> {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'source>> + use<'source> {
         children(&self.syntax)
     }
 
-    pub fn prefix_annotations(&self) -> impl Iterator<Item = Annotation<'_>> {
+    pub fn prefix_annotations(&self) -> impl Iterator<Item = Annotation<'source>> {
         annotations_before_type(&self.syntax, self.ty())
     }
 
-    pub fn varargs_annotations(&self) -> impl Iterator<Item = Annotation<'_>> {
+    pub fn varargs_annotations(&self) -> impl Iterator<Item = Annotation<'source>> {
         annotations_between_type_and_token(&self.syntax, self.ty(), JavaSyntaxKind::Ellipsis)
     }
 
-    pub fn modifier_tokens(&self) -> impl Iterator<Item = JavaSyntaxToken<'_>> + '_ {
+    pub fn modifier_tokens(&self) -> impl Iterator<Item = JavaSyntaxToken<'source>> + use<'source> {
         children_tokens_matching(&self.syntax, is_modifier_token)
     }
 
@@ -1542,17 +1528,17 @@ impl FormalParameter<'_> {
     }
 
     #[must_use]
-    pub fn ellipsis_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn ellipsis_token(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Ellipsis)
     }
 
     #[must_use]
-    pub fn ty(&self) -> Option<Type<'_>> {
+    pub fn ty(&self) -> Option<Type<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn name(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn name(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token_in(
             &self.syntax,
             &[JavaSyntaxKind::Identifier, JavaSyntaxKind::UnderscoreKw],
@@ -1566,17 +1552,17 @@ impl FormalParameter<'_> {
     }
 
     #[must_use]
-    pub fn dimensions(&self) -> Option<ArrayDimensions<'_>> {
+    pub fn dimensions(&self) -> Option<ArrayDimensions<'source>> {
         child(&self.syntax)
     }
 }
 
-impl VariableDeclaratorList<'_> {
-    pub fn declarators(&self) -> impl Iterator<Item = VariableDeclarator<'_>> + '_ {
+impl<'source> VariableDeclaratorList<'source> {
+    pub fn declarators(&self) -> impl Iterator<Item = VariableDeclarator<'source>> + use<'source> {
         children(&self.syntax)
     }
 
-    pub fn entries(&self) -> impl Iterator<Item = VariableDeclaratorEntry<'_>> {
+    pub fn entries(&self) -> impl Iterator<Item = VariableDeclaratorEntry<'source>> {
         let mut entries = Vec::new();
         let mut pending_declarator = None;
 
@@ -1615,9 +1601,9 @@ impl VariableDeclaratorList<'_> {
     }
 }
 
-impl VariableDeclarator<'_> {
+impl<'source> VariableDeclarator<'source> {
     #[must_use]
-    pub fn name(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn name(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token_in(
             &self.syntax,
             &[JavaSyntaxKind::Identifier, JavaSyntaxKind::UnderscoreKw],
@@ -1631,34 +1617,36 @@ impl VariableDeclarator<'_> {
     }
 
     #[must_use]
-    pub fn dimensions(&self) -> Option<ArrayDimensions<'_>> {
+    pub fn dimensions(&self) -> Option<ArrayDimensions<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn initializer(&self) -> Option<VariableInitializer<'_>> {
+    pub fn initializer(&self) -> Option<VariableInitializer<'source>> {
         child(&self.syntax)
     }
 }
 
-impl VariableInitializer<'_> {
+impl<'source> VariableInitializer<'source> {
     #[must_use]
-    pub fn operator(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn operator(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Assign)
     }
 
     #[must_use]
-    pub fn value(&self) -> Option<VariableInitializerValue<'_>> {
+    pub fn value(&self) -> Option<VariableInitializerValue<'source>> {
         child_family(&self.syntax)
     }
 }
 
-impl LocalVariableDeclaration<'_> {
-    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'_>> + '_ {
+impl<'source> LocalVariableDeclaration<'source> {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'source>> + use<'source> {
         children(&self.syntax)
     }
 
-    pub fn declaration_annotations(&self) -> impl Iterator<Item = Annotation<'_>> + '_ {
+    pub fn declaration_annotations(
+        &self,
+    ) -> impl Iterator<Item = Annotation<'source>> + use<'source> {
         let first_modifier_start = self
             .modifier_tokens()
             .map(|token| token.token_text_range().start())
@@ -1671,7 +1659,7 @@ impl LocalVariableDeclaration<'_> {
 
     pub fn type_use_annotations_after_modifiers(
         &self,
-    ) -> impl Iterator<Item = Annotation<'_>> + '_ {
+    ) -> impl Iterator<Item = Annotation<'source>> + use<'source> {
         let first_modifier_start = self
             .modifier_tokens()
             .map(|token| token.token_text_range().start())
@@ -1682,69 +1670,69 @@ impl LocalVariableDeclaration<'_> {
         })
     }
 
-    pub fn modifier_tokens(&self) -> impl Iterator<Item = JavaSyntaxToken<'_>> + '_ {
+    pub fn modifier_tokens(&self) -> impl Iterator<Item = JavaSyntaxToken<'source>> + use<'source> {
         children_tokens_matching(&self.syntax, is_modifier_token)
     }
 
     #[must_use]
-    pub fn var_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn var_token(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier).filter(|token| token.text() == "var")
     }
 
     #[must_use]
-    pub fn ty(&self) -> Option<Type<'_>> {
+    pub fn ty(&self) -> Option<Type<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn declarators(&self) -> Option<VariableDeclaratorList<'_>> {
+    pub fn declarators(&self) -> Option<VariableDeclaratorList<'source>> {
         child(&self.syntax)
     }
 }
 
-impl IfStatement<'_> {
+impl<'source> IfStatement<'source> {
     #[must_use]
-    pub fn keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::IfKw)
     }
 
     #[must_use]
-    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LParen)
     }
 
     #[must_use]
-    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RParen)
     }
 
     #[must_use]
-    pub fn else_keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn else_keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::ElseKw)
     }
 
     #[must_use]
-    pub fn condition(&self) -> Option<Expression<'_>> {
+    pub fn condition(&self) -> Option<Expression<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn then_statement(&self) -> Option<Statement<'_>> {
+    pub fn then_statement(&self) -> Option<Statement<'source>> {
         nth_child_family(&self.syntax, 0)
     }
 
     #[must_use]
-    pub fn then_body(&self) -> Option<StatementBody<'_>> {
+    pub fn then_body(&self) -> Option<StatementBody<'source>> {
         self.then_statement().map(StatementBody::from)
     }
 
     #[must_use]
-    pub fn else_statement(&self) -> Option<Statement<'_>> {
+    pub fn else_statement(&self) -> Option<Statement<'source>> {
         nth_child_family(&self.syntax, 1)
     }
 
     #[must_use]
-    pub fn else_body(&self) -> Option<StatementBody<'_>> {
+    pub fn else_body(&self) -> Option<StatementBody<'source>> {
         self.else_statement().map(StatementBody::from)
     }
 }
@@ -1759,73 +1747,73 @@ impl<'source> From<Statement<'source>> for StatementBody<'source> {
     }
 }
 
-impl LiteralExpression<'_> {
+impl<'source> LiteralExpression<'source> {
     #[must_use]
-    pub fn literal_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn literal_token(&self) -> Option<JavaSyntaxToken<'source>> {
         self.syntax
             .first_token()
             .map(|syntax| JavaSyntaxToken { syntax })
     }
 }
 
-impl NameExpression<'_> {
-    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'_>> + '_ {
+impl<'source> NameExpression<'source> {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'source>> + use<'source> {
         children(&self.syntax)
     }
 
     #[must_use]
-    pub fn name(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn name(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
     }
 }
 
-impl ThisExpression<'_> {
+impl<'source> ThisExpression<'source> {
     #[must_use]
-    pub fn qualifier(&self) -> Option<Expression<'_>> {
+    pub fn qualifier(&self) -> Option<Expression<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn dot_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn dot_token(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Dot)
     }
 
     #[must_use]
-    pub fn keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::ThisKw)
     }
 }
 
-impl SuperExpression<'_> {
+impl<'source> SuperExpression<'source> {
     #[must_use]
-    pub fn qualifier(&self) -> Option<Expression<'_>> {
+    pub fn qualifier(&self) -> Option<Expression<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn dot_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn dot_token(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Dot)
     }
 
     #[must_use]
-    pub fn keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::SuperKw)
     }
 }
 
-impl ClassLiteralExpression<'_> {
+impl<'source> ClassLiteralExpression<'source> {
     #[must_use]
-    pub fn target_expression(&self) -> Option<Expression<'_>> {
+    pub fn target_expression(&self) -> Option<Expression<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn void_type(&self) -> Option<VoidType<'_>> {
+    pub fn void_type(&self) -> Option<VoidType<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn primitive_keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn primitive_keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token_in(
             &self.syntax,
             &[
@@ -1842,17 +1830,17 @@ impl ClassLiteralExpression<'_> {
     }
 
     #[must_use]
-    pub fn dimensions(&self) -> Option<ArrayDimensions<'_>> {
+    pub fn dimensions(&self) -> Option<ArrayDimensions<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn dot_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn dot_token(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Dot)
     }
 
     #[must_use]
-    pub fn class_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn class_token(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::ClassKw)
     }
 }
@@ -2184,22 +2172,22 @@ impl<'source> MethodInvocationExpression<'source> {
     }
 }
 
-impl ArgumentList<'_> {
+impl<'source> ArgumentList<'source> {
     #[must_use]
-    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LParen)
     }
 
     #[must_use]
-    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RParen)
     }
 
-    pub fn arguments(&self) -> impl Iterator<Item = Expression<'_>> + '_ {
+    pub fn arguments(&self) -> impl Iterator<Item = Expression<'source>> + use<'source> {
         children_family(&self.syntax)
     }
 
-    pub fn entries(&self) -> impl Iterator<Item = ArgumentListEntry<'_>> {
+    pub fn entries(&self) -> impl Iterator<Item = ArgumentListEntry<'source>> {
         let mut entries = Vec::new();
         let mut pending_argument = None;
 
@@ -2238,22 +2226,22 @@ impl ArgumentList<'_> {
     }
 }
 
-impl TypeArgumentList<'_> {
+impl<'source> TypeArgumentList<'source> {
     #[must_use]
-    pub fn open_angle(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_angle(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Lt)
     }
 
     #[must_use]
-    pub fn close_angle(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_angle(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Gt)
     }
 
-    pub fn arguments(&self) -> impl Iterator<Item = TypeArgument<'_>> + '_ {
+    pub fn arguments(&self) -> impl Iterator<Item = TypeArgument<'source>> + use<'source> {
         children(&self.syntax)
     }
 
-    pub fn entries(&self) -> impl Iterator<Item = TypeArgumentListEntry<'_>> {
+    pub fn entries(&self) -> impl Iterator<Item = TypeArgumentListEntry<'source>> {
         let mut entries = Vec::new();
         let mut pending_argument = None;
 
@@ -2304,39 +2292,39 @@ impl<'source> FieldAccessExpression<'source> {
     }
 
     #[must_use]
-    pub fn field_name(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn field_name(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
     }
 
     #[must_use]
-    pub fn type_arguments(&self) -> Option<TypeArgumentList<'_>> {
+    pub fn type_arguments(&self) -> Option<TypeArgumentList<'source>> {
         child(&self.syntax)
     }
 }
 
-impl MethodReferenceExpression<'_> {
+impl<'source> MethodReferenceExpression<'source> {
     #[must_use]
-    pub fn double_colon(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn double_colon(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::DoubleColon)
     }
 
     #[must_use]
-    pub fn receiver_expression(&self) -> Option<Expression<'_>> {
+    pub fn receiver_expression(&self) -> Option<Expression<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn receiver_type(&self) -> Option<Type<'_>> {
+    pub fn receiver_type(&self) -> Option<Type<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn receiver_dimensions(&self) -> Option<ArrayDimensions<'_>> {
+    pub fn receiver_dimensions(&self) -> Option<ArrayDimensions<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn type_arguments(&self) -> Option<TypeArgumentList<'_>> {
+    pub fn type_arguments(&self) -> Option<TypeArgumentList<'source>> {
         child(&self.syntax)
     }
 
@@ -2346,95 +2334,95 @@ impl MethodReferenceExpression<'_> {
     }
 
     #[must_use]
-    pub fn new_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn new_token(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::NewKw)
     }
 
     #[must_use]
-    pub fn target_name(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn target_name(&self) -> Option<JavaSyntaxToken<'source>> {
         children_tokens_matching(&self.syntax, |kind| kind == JavaSyntaxKind::Identifier).last()
     }
 }
 
-impl ArrayAccessExpression<'_> {
+impl<'source> ArrayAccessExpression<'source> {
     #[must_use]
-    pub fn open_bracket(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_bracket(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LBracket)
     }
 
     #[must_use]
-    pub fn close_bracket(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_bracket(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RBracket)
     }
 
     #[must_use]
-    pub fn array(&self) -> Option<Expression<'_>> {
+    pub fn array(&self) -> Option<Expression<'source>> {
         nth_child_family(&self.syntax, 0)
     }
 
     #[must_use]
-    pub fn index(&self) -> Option<Expression<'_>> {
+    pub fn index(&self) -> Option<Expression<'source>> {
         nth_child_family(&self.syntax, 1)
     }
 }
 
-impl ArrayType<'_> {
+impl<'source> ArrayType<'source> {
     #[must_use]
-    pub fn element_type(&self) -> Option<Type<'_>> {
+    pub fn element_type(&self) -> Option<Type<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn dimensions(&self) -> Option<ArrayDimensions<'_>> {
+    pub fn dimensions(&self) -> Option<ArrayDimensions<'source>> {
         child(&self.syntax)
     }
 }
 
-impl ArrayDimensions<'_> {
-    pub fn dimensions(&self) -> impl Iterator<Item = ArrayDimension<'_>> + '_ {
+impl<'source> ArrayDimensions<'source> {
+    pub fn dimensions(&self) -> impl Iterator<Item = ArrayDimension<'source>> + use<'source> {
         children(&self.syntax)
     }
 }
 
-impl ArrayDimension<'_> {
+impl<'source> ArrayDimension<'source> {
     #[must_use]
-    pub fn open_bracket(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_bracket(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LBracket)
     }
 
     #[must_use]
-    pub fn close_bracket(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_bracket(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RBracket)
     }
 
-    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'_>> + '_ {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'source>> + use<'source> {
         children(&self.syntax)
     }
 }
 
-impl IntersectionType<'_> {
-    pub fn types(&self) -> impl Iterator<Item = Type<'_>> + '_ {
+impl<'source> IntersectionType<'source> {
+    pub fn types(&self) -> impl Iterator<Item = Type<'source>> + use<'source> {
         children_family(&self.syntax)
     }
 
-    pub fn entries(&self) -> impl Iterator<Item = IntersectionTypeEntry<'_>> {
+    pub fn entries(&self) -> impl Iterator<Item = IntersectionTypeEntry<'source>> {
         intersection_type_entries(&self.syntax)
     }
 }
 
-impl Annotation<'_> {
+impl<'source> Annotation<'source> {
     #[must_use]
-    pub fn at_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn at_token(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::At)
     }
 
     #[must_use]
-    pub fn name(&self) -> Option<NameSyntax<'_>> {
+    pub fn name(&self) -> Option<NameSyntax<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn arguments(&self) -> Option<AnnotationArgumentList<'_>> {
+    pub fn arguments(&self) -> Option<AnnotationArgumentList<'source>> {
         child(&self.syntax)
     }
 }
@@ -2465,19 +2453,19 @@ impl<'source> AnnotationArgumentList<'source> {
     }
 }
 
-impl AnnotationElementValuePair<'_> {
+impl<'source> AnnotationElementValuePair<'source> {
     #[must_use]
-    pub fn name(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn name(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
     }
 
     #[must_use]
-    pub fn equals_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn equals_token(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Assign)
     }
 
     #[must_use]
-    pub fn value(&self) -> Option<AnnotationElementValue<'_>> {
+    pub fn value(&self) -> Option<AnnotationElementValue<'source>> {
         child(&self.syntax)
     }
 }
@@ -2489,32 +2477,32 @@ impl<'source> AnnotationElementValue<'source> {
     }
 
     #[must_use]
-    pub fn annotation(&self) -> Option<Annotation<'_>> {
+    pub fn annotation(&self) -> Option<Annotation<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn array_initializer(&self) -> Option<AnnotationArrayInitializer<'_>> {
+    pub fn array_initializer(&self) -> Option<AnnotationArrayInitializer<'source>> {
         child(&self.syntax)
     }
 }
 
-impl AnnotationArrayInitializer<'_> {
+impl<'source> AnnotationArrayInitializer<'source> {
     #[must_use]
-    pub fn open_brace(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_brace(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LBrace)
     }
 
     #[must_use]
-    pub fn close_brace(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_brace(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RBrace)
     }
 
-    pub fn values(&self) -> impl Iterator<Item = AnnotationElementValue<'_>> + '_ {
+    pub fn values(&self) -> impl Iterator<Item = AnnotationElementValue<'source>> + use<'source> {
         children(&self.syntax)
     }
 
-    pub fn entries(&self) -> impl Iterator<Item = AnnotationArrayInitializerEntry<'_>> {
+    pub fn entries(&self) -> impl Iterator<Item = AnnotationArrayInitializerEntry<'source>> {
         let mut entries = Vec::new();
         let mut pending_value = None;
 
@@ -2584,29 +2572,29 @@ impl<'source> AssignmentExpression<'source> {
     }
 }
 
-impl ConditionalExpression<'_> {
+impl<'source> ConditionalExpression<'source> {
     #[must_use]
-    pub fn question_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn question_token(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Question)
     }
 
     #[must_use]
-    pub fn colon_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn colon_token(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Colon)
     }
 
     #[must_use]
-    pub fn condition(&self) -> Option<Expression<'_>> {
+    pub fn condition(&self) -> Option<Expression<'source>> {
         nth_child_family(&self.syntax, 0)
     }
 
     #[must_use]
-    pub fn true_expression(&self) -> Option<Expression<'_>> {
+    pub fn true_expression(&self) -> Option<Expression<'source>> {
         nth_child_family(&self.syntax, 1)
     }
 
     #[must_use]
-    pub fn false_expression(&self) -> Option<Expression<'_>> {
+    pub fn false_expression(&self) -> Option<Expression<'source>> {
         nth_child_family(&self.syntax, 2)
     }
 }
@@ -2628,9 +2616,9 @@ impl<'source> BinaryExpression<'source> {
     }
 }
 
-impl UnaryExpression<'_> {
+impl<'source> UnaryExpression<'source> {
     #[must_use]
-    pub fn operator(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn operator(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token_in(
             &self.syntax,
             &[
@@ -2645,19 +2633,19 @@ impl UnaryExpression<'_> {
     }
 
     #[must_use]
-    pub fn operand(&self) -> Option<Expression<'_>> {
+    pub fn operand(&self) -> Option<Expression<'source>> {
         child_family(&self.syntax)
     }
 }
 
-impl PostfixExpression<'_> {
+impl<'source> PostfixExpression<'source> {
     #[must_use]
-    pub fn operand(&self) -> Option<Expression<'_>> {
+    pub fn operand(&self) -> Option<Expression<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn operator(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn operator(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token_in(
             &self.syntax,
             &[JavaSyntaxKind::PlusPlus, JavaSyntaxKind::MinusMinus],
@@ -2665,136 +2653,136 @@ impl PostfixExpression<'_> {
     }
 }
 
-impl CastExpression<'_> {
+impl<'source> CastExpression<'source> {
     #[must_use]
-    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LParen)
     }
 
     #[must_use]
-    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RParen)
     }
 
     #[must_use]
-    pub fn ty(&self) -> Option<Type<'_>> {
+    pub fn ty(&self) -> Option<Type<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn expression(&self) -> Option<Expression<'_>> {
+    pub fn expression(&self) -> Option<Expression<'source>> {
         child_family(&self.syntax)
     }
 }
 
-impl InstanceofExpression<'_> {
+impl<'source> InstanceofExpression<'source> {
     #[must_use]
-    pub fn expression(&self) -> Option<Expression<'_>> {
+    pub fn expression(&self) -> Option<Expression<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn instanceof_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn instanceof_token(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::InstanceofKw)
     }
 
     #[must_use]
-    pub fn ty(&self) -> Option<Type<'_>> {
+    pub fn ty(&self) -> Option<Type<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn pattern(&self) -> Option<Pattern<'_>> {
+    pub fn pattern(&self) -> Option<Pattern<'source>> {
         child_family(&self.syntax)
     }
 }
 
-impl ObjectCreationExpression<'_> {
+impl<'source> ObjectCreationExpression<'source> {
     #[must_use]
-    pub fn new_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn new_token(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::NewKw)
     }
 
     #[must_use]
-    pub fn qualifier(&self) -> Option<Expression<'_>> {
+    pub fn qualifier(&self) -> Option<Expression<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn constructor_type_arguments(&self) -> Option<TypeArgumentList<'_>> {
+    pub fn constructor_type_arguments(&self) -> Option<TypeArgumentList<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn ty(&self) -> Option<Type<'_>> {
+    pub fn ty(&self) -> Option<Type<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn arguments(&self) -> Option<ArgumentList<'_>> {
+    pub fn arguments(&self) -> Option<ArgumentList<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn body(&self) -> Option<ClassBody<'_>> {
+    pub fn body(&self) -> Option<ClassBody<'source>> {
         child(&self.syntax)
     }
 }
 
-impl ArrayCreationExpression<'_> {
+impl<'source> ArrayCreationExpression<'source> {
     #[must_use]
-    pub fn new_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn new_token(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::NewKw)
     }
 
     #[must_use]
-    pub fn ty(&self) -> Option<Type<'_>> {
+    pub fn ty(&self) -> Option<Type<'source>> {
         child_family(&self.syntax)
     }
 
-    pub fn dimensions(&self) -> impl Iterator<Item = DimExpression<'_>> + '_ {
+    pub fn dimensions(&self) -> impl Iterator<Item = DimExpression<'source>> + use<'source> {
         children(&self.syntax)
     }
 
     #[must_use]
-    pub fn initializer(&self) -> Option<ArrayInitializer<'_>> {
+    pub fn initializer(&self) -> Option<ArrayInitializer<'source>> {
         child(&self.syntax)
     }
 }
 
-impl DimExpression<'_> {
+impl<'source> DimExpression<'source> {
     #[must_use]
-    pub fn open_bracket(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_bracket(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LBracket)
     }
 
     #[must_use]
-    pub fn close_bracket(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_bracket(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RBracket)
     }
 
     #[must_use]
-    pub fn expression(&self) -> Option<Expression<'_>> {
+    pub fn expression(&self) -> Option<Expression<'source>> {
         child_family(&self.syntax)
     }
 }
 
-impl ArrayInitializer<'_> {
+impl<'source> ArrayInitializer<'source> {
     #[must_use]
-    pub fn open_brace(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_brace(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LBrace)
     }
 
     #[must_use]
-    pub fn close_brace(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_brace(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RBrace)
     }
 
-    pub fn values(&self) -> impl Iterator<Item = VariableInitializerValue<'_>> + '_ {
+    pub fn values(&self) -> impl Iterator<Item = VariableInitializerValue<'source>> + use<'source> {
         children_family(&self.syntax)
     }
 
-    pub fn entries(&self) -> impl Iterator<Item = ArrayInitializerEntry<'_>> {
+    pub fn entries(&self) -> impl Iterator<Item = ArrayInitializerEntry<'source>> {
         let mut entries = Vec::new();
         let mut pending_value = None;
 
@@ -2830,40 +2818,40 @@ impl ArrayInitializer<'_> {
     }
 }
 
-impl ReceiverParameter<'_> {
-    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'_>> + '_ {
+impl<'source> ReceiverParameter<'source> {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'source>> + use<'source> {
         children(&self.syntax)
     }
 
     #[must_use]
-    pub fn ty(&self) -> Option<Type<'_>> {
+    pub fn ty(&self) -> Option<Type<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn qualifier(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn qualifier(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
     }
 
     #[must_use]
-    pub fn dot(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn dot(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Dot)
     }
 
     #[must_use]
-    pub fn this_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn this_token(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::ThisKw)
     }
 }
 
-impl LambdaExpression<'_> {
+impl<'source> LambdaExpression<'source> {
     #[must_use]
-    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         children_tokens_matching(&self.syntax, |kind| kind == JavaSyntaxKind::LParen).next()
     }
 
     #[must_use]
-    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         let arrow_start = self.arrow().map(|token| token.token_text_range().start());
         children_tokens_matching(&self.syntax, |kind| kind == JavaSyntaxKind::RParen)
             .filter(|token| {
@@ -2873,62 +2861,62 @@ impl LambdaExpression<'_> {
     }
 
     #[must_use]
-    pub fn parameters(&self) -> Option<LambdaParameterList<'_>> {
+    pub fn parameters(&self) -> Option<LambdaParameterList<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn arrow(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn arrow(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Arrow)
     }
 
     #[must_use]
-    pub fn concise_parameter(&self) -> Option<LambdaParameter<'_>> {
+    pub fn concise_parameter(&self) -> Option<LambdaParameter<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn expression_body(&self) -> Option<Expression<'_>> {
+    pub fn expression_body(&self) -> Option<Expression<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn block_body(&self) -> Option<Block<'_>> {
+    pub fn block_body(&self) -> Option<Block<'source>> {
         child(&self.syntax)
     }
 }
 
-impl LambdaParameterList<'_> {
+impl<'source> LambdaParameterList<'source> {
     #[must_use]
-    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LParen)
     }
 
     #[must_use]
-    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RParen)
     }
 
-    pub fn parameters(&self) -> impl Iterator<Item = LambdaParameter<'_>> + '_ {
+    pub fn parameters(&self) -> impl Iterator<Item = LambdaParameter<'source>> + use<'source> {
         children(&self.syntax)
     }
 }
 
-impl LambdaParameter<'_> {
-    pub fn prefix_annotations(&self) -> impl Iterator<Item = Annotation<'_>> {
+impl<'source> LambdaParameter<'source> {
+    pub fn prefix_annotations(&self) -> impl Iterator<Item = Annotation<'source>> {
         annotations_before_type(&self.syntax, self.ty())
     }
 
-    pub fn varargs_annotations(&self) -> impl Iterator<Item = Annotation<'_>> {
+    pub fn varargs_annotations(&self) -> impl Iterator<Item = Annotation<'source>> {
         annotations_between_type_and_token(&self.syntax, self.ty(), JavaSyntaxKind::Ellipsis)
     }
 
-    pub fn modifier_tokens(&self) -> impl Iterator<Item = JavaSyntaxToken<'_>> + '_ {
+    pub fn modifier_tokens(&self) -> impl Iterator<Item = JavaSyntaxToken<'source>> + use<'source> {
         children_tokens_matching(&self.syntax, is_modifier_token)
     }
 
     #[must_use]
-    pub fn var_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn var_token(&self) -> Option<JavaSyntaxToken<'source>> {
         children_tokens_matching(&self.syntax, |kind| kind == JavaSyntaxKind::Identifier)
             .find(|token| token.text() == "var")
     }
@@ -2939,17 +2927,17 @@ impl LambdaParameter<'_> {
     }
 
     #[must_use]
-    pub fn ellipsis_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn ellipsis_token(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Ellipsis)
     }
 
     #[must_use]
-    pub fn ty(&self) -> Option<Type<'_>> {
+    pub fn ty(&self) -> Option<Type<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn name(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn name(&self) -> Option<JavaSyntaxToken<'source>> {
         children_tokens_matching(&self.syntax, |kind| {
             matches!(
                 kind,
@@ -2966,344 +2954,344 @@ impl LambdaParameter<'_> {
     }
 }
 
-impl ExpressionStatement<'_> {
+impl<'source> ExpressionStatement<'source> {
     #[must_use]
-    pub fn expression(&self) -> Option<Expression<'_>> {
+    pub fn expression(&self) -> Option<Expression<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 }
 
-impl LabeledStatement<'_> {
+impl<'source> LabeledStatement<'source> {
     #[must_use]
-    pub fn label(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn label(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
     }
 
     #[must_use]
-    pub fn colon(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn colon(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Colon)
     }
 
     #[must_use]
-    pub fn body(&self) -> Option<Statement<'_>> {
+    pub fn body(&self) -> Option<Statement<'source>> {
         child_family(&self.syntax)
     }
 }
 
-impl AssertStatement<'_> {
+impl<'source> AssertStatement<'source> {
     #[must_use]
-    pub fn keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::AssertKw)
     }
 
     #[must_use]
-    pub fn condition(&self) -> Option<Expression<'_>> {
+    pub fn condition(&self) -> Option<Expression<'source>> {
         nth_child_family(&self.syntax, 0)
     }
 
     #[must_use]
-    pub fn detail(&self) -> Option<Expression<'_>> {
+    pub fn detail(&self) -> Option<Expression<'source>> {
         nth_child_family(&self.syntax, 1)
     }
 
     #[must_use]
-    pub fn colon(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn colon(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Colon)
     }
 
     #[must_use]
-    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 }
 
-impl BreakStatement<'_> {
+impl<'source> BreakStatement<'source> {
     #[must_use]
-    pub fn keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::BreakKw)
     }
 
     #[must_use]
-    pub fn label(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn label(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
     }
 
     #[must_use]
-    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 }
 
-impl ContinueStatement<'_> {
+impl<'source> ContinueStatement<'source> {
     #[must_use]
-    pub fn keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::ContinueKw)
     }
 
     #[must_use]
-    pub fn label(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn label(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
     }
 
     #[must_use]
-    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 }
 
-impl ReturnStatement<'_> {
+impl<'source> ReturnStatement<'source> {
     #[must_use]
-    pub fn keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::ReturnKw)
     }
 
     #[must_use]
-    pub fn expression(&self) -> Option<Expression<'_>> {
+    pub fn expression(&self) -> Option<Expression<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 }
 
-impl ThrowStatement<'_> {
+impl<'source> ThrowStatement<'source> {
     #[must_use]
-    pub fn keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::ThrowKw)
     }
 
     #[must_use]
-    pub fn expression(&self) -> Option<Expression<'_>> {
+    pub fn expression(&self) -> Option<Expression<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 }
 
-impl YieldStatement<'_> {
+impl<'source> YieldStatement<'source> {
     #[must_use]
-    pub fn keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         children_tokens_matching(&self.syntax, |kind| kind == JavaSyntaxKind::Identifier)
             .find(|token| token.text() == "yield")
     }
 
     #[must_use]
-    pub fn expression(&self) -> Option<Expression<'_>> {
+    pub fn expression(&self) -> Option<Expression<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 }
 
-impl WhileStatement<'_> {
+impl<'source> WhileStatement<'source> {
     #[must_use]
-    pub fn keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::WhileKw)
     }
 
     #[must_use]
-    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LParen)
     }
 
     #[must_use]
-    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RParen)
     }
 
     #[must_use]
-    pub fn condition(&self) -> Option<Expression<'_>> {
+    pub fn condition(&self) -> Option<Expression<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn body(&self) -> Option<Statement<'_>> {
+    pub fn body(&self) -> Option<Statement<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn statement_body(&self) -> Option<StatementBody<'_>> {
+    pub fn statement_body(&self) -> Option<StatementBody<'source>> {
         self.body().map(StatementBody::from)
     }
 }
 
-impl DoStatement<'_> {
+impl<'source> DoStatement<'source> {
     #[must_use]
-    pub fn keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::DoKw)
     }
 
     #[must_use]
-    pub fn while_keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn while_keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::WhileKw)
     }
 
     #[must_use]
-    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LParen)
     }
 
     #[must_use]
-    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RParen)
     }
 
     #[must_use]
-    pub fn body(&self) -> Option<Statement<'_>> {
+    pub fn body(&self) -> Option<Statement<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn statement_body(&self) -> Option<StatementBody<'_>> {
+    pub fn statement_body(&self) -> Option<StatementBody<'source>> {
         self.body().map(StatementBody::from)
     }
 
     #[must_use]
-    pub fn condition(&self) -> Option<Expression<'_>> {
+    pub fn condition(&self) -> Option<Expression<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 }
 
-impl SynchronizedStatement<'_> {
+impl<'source> SynchronizedStatement<'source> {
     #[must_use]
-    pub fn keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::SynchronizedKw)
     }
 
     #[must_use]
-    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LParen)
     }
 
     #[must_use]
-    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RParen)
     }
 
     #[must_use]
-    pub fn expression(&self) -> Option<Expression<'_>> {
+    pub fn expression(&self) -> Option<Expression<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn body(&self) -> Option<Block<'_>> {
+    pub fn body(&self) -> Option<Block<'source>> {
         child(&self.syntax)
     }
 }
 
-impl TryStatement<'_> {
+impl<'source> TryStatement<'source> {
     #[must_use]
-    pub fn keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::TryKw)
     }
 
     #[must_use]
-    pub fn resources_statement(&self) -> Option<TryWithResourcesStatement<'_>> {
+    pub fn resources_statement(&self) -> Option<TryWithResourcesStatement<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn body(&self) -> Option<Block<'_>> {
+    pub fn body(&self) -> Option<Block<'source>> {
         child(&self.syntax)
     }
 
-    pub fn catch_clauses(&self) -> impl Iterator<Item = CatchClause<'_>> + '_ {
+    pub fn catch_clauses(&self) -> impl Iterator<Item = CatchClause<'source>> + use<'source> {
         children(&self.syntax)
     }
 
     #[must_use]
-    pub fn finally_clause(&self) -> Option<FinallyClause<'_>> {
+    pub fn finally_clause(&self) -> Option<FinallyClause<'source>> {
         child(&self.syntax)
     }
 }
 
-impl TryWithResourcesStatement<'_> {
+impl<'source> TryWithResourcesStatement<'source> {
     #[must_use]
-    pub fn keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::TryKw)
     }
 
     #[must_use]
-    pub fn resources(&self) -> Option<ResourceSpecification<'_>> {
+    pub fn resources(&self) -> Option<ResourceSpecification<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn body(&self) -> Option<Block<'_>> {
+    pub fn body(&self) -> Option<Block<'source>> {
         child(&self.syntax)
     }
 
-    pub fn catch_clauses(&self) -> impl Iterator<Item = CatchClause<'_>> + '_ {
+    pub fn catch_clauses(&self) -> impl Iterator<Item = CatchClause<'source>> + use<'source> {
         children(&self.syntax)
     }
 
     #[must_use]
-    pub fn finally_clause(&self) -> Option<FinallyClause<'_>> {
+    pub fn finally_clause(&self) -> Option<FinallyClause<'source>> {
         child(&self.syntax)
     }
 }
 
-impl CatchClause<'_> {
+impl<'source> CatchClause<'source> {
     #[must_use]
-    pub fn keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::CatchKw)
     }
 
     #[must_use]
-    pub fn parameter(&self) -> Option<CatchParameter<'_>> {
+    pub fn parameter(&self) -> Option<CatchParameter<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LParen)
     }
 
     #[must_use]
-    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RParen)
     }
 
     #[must_use]
-    pub fn body(&self) -> Option<Block<'_>> {
+    pub fn body(&self) -> Option<Block<'source>> {
         child(&self.syntax)
     }
 }
 
-impl CatchParameter<'_> {
-    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'_>> + '_ {
+impl<'source> CatchParameter<'source> {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'source>> + use<'source> {
         children(&self.syntax)
     }
 
-    pub fn modifier_tokens(&self) -> impl Iterator<Item = JavaSyntaxToken<'_>> + '_ {
+    pub fn modifier_tokens(&self) -> impl Iterator<Item = JavaSyntaxToken<'source>> + use<'source> {
         children_tokens_matching(&self.syntax, is_modifier_token)
     }
 
     #[must_use]
-    pub fn types(&self) -> Option<CatchTypeList<'_>> {
+    pub fn types(&self) -> Option<CatchTypeList<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn name(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn name(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token_in(
             &self.syntax,
             &[JavaSyntaxKind::Identifier, JavaSyntaxKind::UnderscoreKw],
@@ -3317,8 +3305,8 @@ impl CatchParameter<'_> {
     }
 }
 
-impl CatchTypeList<'_> {
-    pub fn types(&self) -> impl Iterator<Item = Type<'_>> + '_ {
+impl<'source> CatchTypeList<'source> {
+    pub fn types(&self) -> impl Iterator<Item = Type<'source>> + use<'source> {
         child::<UnionType>(&self.syntax)
             .map_or_else(
                 || children_family(&self.syntax).collect(),
@@ -3333,7 +3321,7 @@ impl CatchTypeList<'_> {
             .into_iter()
     }
 
-    pub fn entries(&self) -> impl Iterator<Item = UnionTypeEntry<'_>> {
+    pub fn entries(&self) -> impl Iterator<Item = UnionTypeEntry<'source>> {
         child::<UnionType>(&self.syntax)
             .map_or_else(
                 || {
@@ -3350,52 +3338,52 @@ impl CatchTypeList<'_> {
     }
 }
 
-impl UnionType<'_> {
-    pub fn types(&self) -> impl Iterator<Item = Type<'_>> + '_ {
+impl<'source> UnionType<'source> {
+    pub fn types(&self) -> impl Iterator<Item = Type<'source>> + use<'source> {
         children_family(&self.syntax)
     }
 
-    pub fn entries(&self) -> impl Iterator<Item = UnionTypeEntry<'_>> {
+    pub fn entries(&self) -> impl Iterator<Item = UnionTypeEntry<'source>> {
         union_type_entries(&self.syntax)
     }
 }
 
-impl FinallyClause<'_> {
+impl<'source> FinallyClause<'source> {
     #[must_use]
-    pub fn keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::FinallyKw)
     }
 
     #[must_use]
-    pub fn body(&self) -> Option<Block<'_>> {
+    pub fn body(&self) -> Option<Block<'source>> {
         child(&self.syntax)
     }
 }
 
-impl ResourceSpecification<'_> {
+impl<'source> ResourceSpecification<'source> {
     #[must_use]
-    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LParen)
     }
 
     #[must_use]
-    pub fn list(&self) -> Option<ResourceList<'_>> {
+    pub fn list(&self) -> Option<ResourceList<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn trailing_semicolon(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn trailing_semicolon(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 
     #[must_use]
-    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RParen)
     }
 }
 
 impl<'source> ResourceList<'source> {
-    pub fn resources(&self) -> impl Iterator<Item = Resource<'_>> + '_ {
+    pub fn resources(&self) -> impl Iterator<Item = Resource<'source>> + use<'source> {
         children(&self.syntax)
     }
 
@@ -3439,21 +3427,21 @@ impl<'source> ResourceList<'source> {
     }
 }
 
-impl Resource<'_> {
+impl<'source> Resource<'source> {
     #[must_use]
-    pub fn declaration(&self) -> Option<LocalVariableDeclaration<'_>> {
+    pub fn declaration(&self) -> Option<LocalVariableDeclaration<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn variable_access(&self) -> Option<VariableAccess<'_>> {
+    pub fn variable_access(&self) -> Option<VariableAccess<'source>> {
         child(&self.syntax)
     }
 }
 
-impl VariableAccess<'_> {
+impl<'source> VariableAccess<'source> {
     #[must_use]
-    pub fn expression(&self) -> Option<Expression<'_>> {
+    pub fn expression(&self) -> Option<Expression<'source>> {
         child_family(&self.syntax)
     }
 }
@@ -3470,125 +3458,125 @@ impl<'source> ForStatement<'source> {
     }
 }
 
-impl BasicForStatement<'_> {
+impl<'source> BasicForStatement<'source> {
     #[must_use]
-    pub fn keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::ForKw)
     }
 
     #[must_use]
-    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LParen)
     }
 
     #[must_use]
-    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RParen)
     }
 
     #[must_use]
-    pub fn first_semicolon(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn first_semicolon(&self) -> Option<JavaSyntaxToken<'source>> {
         nth_child_token(&self.syntax, JavaSyntaxKind::Semicolon, 0)
     }
 
     #[must_use]
-    pub fn second_semicolon(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn second_semicolon(&self) -> Option<JavaSyntaxToken<'source>> {
         nth_child_token(&self.syntax, JavaSyntaxKind::Semicolon, 1)
     }
 
     #[must_use]
-    pub fn initializer(&self) -> Option<ForInitializer<'_>> {
+    pub fn initializer(&self) -> Option<ForInitializer<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn condition(&self) -> Option<Expression<'_>> {
+    pub fn condition(&self) -> Option<Expression<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn update(&self) -> Option<ForUpdate<'_>> {
+    pub fn update(&self) -> Option<ForUpdate<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn body(&self) -> Option<Statement<'_>> {
+    pub fn body(&self) -> Option<Statement<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn statement_body(&self) -> Option<StatementBody<'_>> {
+    pub fn statement_body(&self) -> Option<StatementBody<'source>> {
         self.body().map(StatementBody::from)
     }
 }
 
-impl EnhancedForStatement<'_> {
+impl<'source> EnhancedForStatement<'source> {
     #[must_use]
-    pub fn keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::ForKw)
     }
 
     #[must_use]
-    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LParen)
     }
 
     #[must_use]
-    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RParen)
     }
 
     #[must_use]
-    pub fn variable(&self) -> Option<LocalVariableDeclaration<'_>> {
+    pub fn variable(&self) -> Option<LocalVariableDeclaration<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn iterable(&self) -> Option<Expression<'_>> {
+    pub fn iterable(&self) -> Option<Expression<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn colon(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn colon(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Colon)
     }
 
     #[must_use]
-    pub fn body(&self) -> Option<Statement<'_>> {
+    pub fn body(&self) -> Option<Statement<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn statement_body(&self) -> Option<StatementBody<'_>> {
+    pub fn statement_body(&self) -> Option<StatementBody<'source>> {
         self.body().map(StatementBody::from)
     }
 }
 
-impl ForInitializer<'_> {
+impl<'source> ForInitializer<'source> {
     #[must_use]
-    pub fn local_variable_declaration(&self) -> Option<LocalVariableDeclaration<'_>> {
+    pub fn local_variable_declaration(&self) -> Option<LocalVariableDeclaration<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn expressions(&self) -> Option<StatementExpressionList<'_>> {
-        child(&self.syntax)
-    }
-}
-
-impl ForUpdate<'_> {
-    #[must_use]
-    pub fn expressions(&self) -> Option<StatementExpressionList<'_>> {
+    pub fn expressions(&self) -> Option<StatementExpressionList<'source>> {
         child(&self.syntax)
     }
 }
 
-impl StatementExpressionList<'_> {
-    pub fn expressions(&self) -> impl Iterator<Item = Expression<'_>> + '_ {
+impl<'source> ForUpdate<'source> {
+    #[must_use]
+    pub fn expressions(&self) -> Option<StatementExpressionList<'source>> {
+        child(&self.syntax)
+    }
+}
+
+impl<'source> StatementExpressionList<'source> {
+    pub fn expressions(&self) -> impl Iterator<Item = Expression<'source>> + use<'source> {
         children_family(&self.syntax)
     }
 
-    pub fn entries(&self) -> impl Iterator<Item = StatementExpressionEntry<'_>> {
+    pub fn entries(&self) -> impl Iterator<Item = StatementExpressionEntry<'source>> {
         let mut entries = Vec::new();
         let mut pending_expression = None;
 
@@ -3627,72 +3615,72 @@ impl StatementExpressionList<'_> {
     }
 }
 
-impl SwitchStatement<'_> {
+impl<'source> SwitchStatement<'source> {
     #[must_use]
-    pub fn keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::SwitchKw)
     }
 
     #[must_use]
-    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LParen)
     }
 
     #[must_use]
-    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RParen)
     }
 
     #[must_use]
-    pub fn selector(&self) -> Option<Expression<'_>> {
+    pub fn selector(&self) -> Option<Expression<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn block(&self) -> Option<SwitchBlock<'_>> {
+    pub fn block(&self) -> Option<SwitchBlock<'source>> {
         child(&self.syntax)
     }
 }
 
-impl SwitchExpression<'_> {
+impl<'source> SwitchExpression<'source> {
     #[must_use]
-    pub fn keyword(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::SwitchKw)
     }
 
     #[must_use]
-    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LParen)
     }
 
     #[must_use]
-    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RParen)
     }
 
     #[must_use]
-    pub fn selector(&self) -> Option<Expression<'_>> {
+    pub fn selector(&self) -> Option<Expression<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn block(&self) -> Option<SwitchBlock<'_>> {
+    pub fn block(&self) -> Option<SwitchBlock<'source>> {
         child(&self.syntax)
     }
 }
 
-impl SwitchBlock<'_> {
+impl<'source> SwitchBlock<'source> {
     #[must_use]
-    pub fn open_brace(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_brace(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LBrace)
     }
 
     #[must_use]
-    pub fn close_brace(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_brace(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RBrace)
     }
 
-    pub fn entries(&self) -> impl Iterator<Item = SwitchBlockEntry<'_>> + '_ {
+    pub fn entries(&self) -> impl Iterator<Item = SwitchBlockEntry<'source>> + use<'source> {
         self.syntax.children().filter_map(|syntax| {
             if let Some(group) = SwitchBlockStatementGroup::cast(syntax) {
                 return Some(SwitchBlockEntry::StatementGroup(group));
@@ -3701,25 +3689,29 @@ impl SwitchBlock<'_> {
         })
     }
 
-    pub fn statement_groups(&self) -> impl Iterator<Item = SwitchBlockStatementGroup<'_>> + '_ {
+    pub fn statement_groups(
+        &self,
+    ) -> impl Iterator<Item = SwitchBlockStatementGroup<'source>> + use<'source> {
         children(&self.syntax)
     }
 
-    pub fn rules(&self) -> impl Iterator<Item = SwitchRule<'_>> + '_ {
+    pub fn rules(&self) -> impl Iterator<Item = SwitchRule<'source>> + use<'source> {
         children(&self.syntax)
     }
 }
 
-impl SwitchBlockStatementGroup<'_> {
-    pub fn block_statements(&self) -> impl Iterator<Item = BlockStatement<'_>> + '_ {
+impl<'source> SwitchBlockStatementGroup<'source> {
+    pub fn block_statements(&self) -> impl Iterator<Item = BlockStatement<'source>> + use<'source> {
         children(&self.syntax)
     }
 
-    pub fn labels(&self) -> impl Iterator<Item = SwitchLabel<'_>> + '_ {
+    pub fn labels(&self) -> impl Iterator<Item = SwitchLabel<'source>> + use<'source> {
         children(&self.syntax)
     }
 
-    pub fn label_entries(&self) -> impl Iterator<Item = SwitchBlockStatementGroupLabel<'_>> + '_ {
+    pub fn label_entries(
+        &self,
+    ) -> impl Iterator<Item = SwitchBlockStatementGroupLabel<'source>> + use<'source> {
         let mut labels = Vec::new();
         let mut pending_label = None;
 
@@ -3751,52 +3743,52 @@ impl SwitchBlockStatementGroup<'_> {
         labels.into_iter()
     }
 
-    pub fn items(&self) -> impl Iterator<Item = BlockItem<'_>> + '_ {
+    pub fn items(&self) -> impl Iterator<Item = BlockItem<'source>> + use<'source> {
         children::<BlockStatement>(&self.syntax)
             .filter_map(|statement| child_family(&statement.syntax))
     }
 }
 
-impl SwitchRule<'_> {
+impl<'source> SwitchRule<'source> {
     #[must_use]
-    pub fn label(&self) -> Option<SwitchLabel<'_>> {
+    pub fn label(&self) -> Option<SwitchLabel<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn arrow(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn arrow(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Arrow)
     }
 
     #[must_use]
-    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 
     #[must_use]
-    pub fn block(&self) -> Option<Block<'_>> {
+    pub fn block(&self) -> Option<Block<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn throw_statement(&self) -> Option<ThrowStatement<'_>> {
+    pub fn throw_statement(&self) -> Option<ThrowStatement<'source>> {
         child(&self.syntax)
     }
 
     #[must_use]
-    pub fn expression(&self) -> Option<Expression<'_>> {
+    pub fn expression(&self) -> Option<Expression<'source>> {
         child_family(&self.syntax)
     }
 }
 
-impl SwitchLabel<'_> {
+impl<'source> SwitchLabel<'source> {
     #[must_use]
-    pub fn case_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn case_token(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::CaseKw)
     }
 
     #[must_use]
-    pub fn default_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn default_token(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::DefaultKw)
     }
 
@@ -3807,14 +3799,14 @@ impl SwitchLabel<'_> {
             .is_some_and(|token| token.kind() == JavaSyntaxKind::DefaultKw)
     }
 
-    pub fn case_items(&self) -> impl Iterator<Item = SwitchLabelCaseItem<'_>> {
+    pub fn case_items(&self) -> impl Iterator<Item = SwitchLabelCaseItem<'source>> {
         self.case_entries()
             .map(|entry| entry.item)
             .collect::<Vec<_>>()
             .into_iter()
     }
 
-    pub fn case_entries(&self) -> impl Iterator<Item = SwitchLabelCaseEntry<'_>> {
+    pub fn case_entries(&self) -> impl Iterator<Item = SwitchLabelCaseEntry<'source>> {
         let mut entries = Vec::new();
         let mut pending_item = None;
 
@@ -3863,65 +3855,65 @@ impl SwitchLabel<'_> {
     }
 
     #[must_use]
-    pub fn guard(&self) -> Option<Guard<'_>> {
+    pub fn guard(&self) -> Option<Guard<'source>> {
         child(&self.syntax)
     }
 }
 
-impl CaseConstant<'_> {
+impl<'source> CaseConstant<'source> {
     #[must_use]
-    pub fn expression(&self) -> Option<Expression<'_>> {
+    pub fn expression(&self) -> Option<Expression<'source>> {
         child_family(&self.syntax)
     }
 }
 
-impl CasePattern<'_> {
+impl<'source> CasePattern<'source> {
     #[must_use]
-    pub fn pattern(&self) -> Option<Pattern<'_>> {
+    pub fn pattern(&self) -> Option<Pattern<'source>> {
         child_family(&self.syntax)
     }
 }
 
-impl Guard<'_> {
+impl<'source> Guard<'source> {
     #[must_use]
-    pub fn when_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn when_token(&self) -> Option<JavaSyntaxToken<'source>> {
         contextual_keyword_in(&self.syntax, "when")
     }
 
     #[must_use]
-    pub fn expression(&self) -> Option<Expression<'_>> {
+    pub fn expression(&self) -> Option<Expression<'source>> {
         child_family(&self.syntax)
     }
 }
 
-impl TypePattern<'_> {
+impl<'source> TypePattern<'source> {
     #[must_use]
-    pub fn variable(&self) -> Option<LocalVariableDeclaration<'_>> {
+    pub fn variable(&self) -> Option<LocalVariableDeclaration<'source>> {
         child(&self.syntax)
     }
 }
 
-impl RecordPattern<'_> {
+impl<'source> RecordPattern<'source> {
     #[must_use]
-    pub fn ty(&self) -> Option<Type<'_>> {
+    pub fn ty(&self) -> Option<Type<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LParen)
     }
 
     #[must_use]
-    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RParen)
     }
 
-    pub fn components(&self) -> impl Iterator<Item = ComponentPattern<'_>> + '_ {
+    pub fn components(&self) -> impl Iterator<Item = ComponentPattern<'source>> + use<'source> {
         children(&self.syntax)
     }
 
-    pub fn entries(&self) -> impl Iterator<Item = RecordPatternComponentEntry<'_>> {
+    pub fn entries(&self) -> impl Iterator<Item = RecordPatternComponentEntry<'source>> {
         let mut entries = Vec::new();
         let mut pending_component = None;
 
@@ -3960,16 +3952,16 @@ impl RecordPattern<'_> {
     }
 }
 
-impl ComponentPattern<'_> {
+impl<'source> ComponentPattern<'source> {
     #[must_use]
-    pub fn pattern(&self) -> Option<Pattern<'_>> {
+    pub fn pattern(&self) -> Option<Pattern<'source>> {
         child_family(&self.syntax)
     }
 }
 
-impl MatchAllPattern<'_> {
+impl<'source> MatchAllPattern<'source> {
     #[must_use]
-    pub fn underscore(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn underscore(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::UnderscoreKw)
     }
 
@@ -4118,19 +4110,19 @@ fn java_operator(
     Some(JavaOperator::composite(kind, first, last))
 }
 
-impl ModuleDeclaration<'_> {
+impl<'source> ModuleDeclaration<'source> {
     #[must_use]
     pub fn is_open(&self) -> bool {
         self.open_token().is_some()
     }
 
     #[must_use]
-    pub fn open_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_token(&self) -> Option<JavaSyntaxToken<'source>> {
         self.contextual_keyword("open")
     }
 
     #[must_use]
-    pub fn module_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn module_token(&self) -> Option<JavaSyntaxToken<'source>> {
         let name_start = self.name().map(|name| name.text_range().start());
         self.contextual_keyword("module").filter(|token| {
             name_start.is_some_and(|name_start| token.token_text_range().end() <= name_start)
@@ -4138,40 +4130,40 @@ impl ModuleDeclaration<'_> {
     }
 
     #[must_use]
-    pub fn open_brace(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_brace(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LBrace)
     }
 
     #[must_use]
-    pub fn close_brace(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_brace(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RBrace)
     }
 
     #[must_use]
-    pub fn name(&self) -> Option<NameSyntax<'_>> {
+    pub fn name(&self) -> Option<NameSyntax<'source>> {
         child_family(&self.syntax)
     }
 
-    pub fn directives(&self) -> impl Iterator<Item = ModuleDirective<'_>> + '_ {
+    pub fn directives(&self) -> impl Iterator<Item = ModuleDirective<'source>> + use<'source> {
         children::<ModuleDirectiveNode>(&self.syntax).filter_map(|node| child_family(&node.syntax))
     }
 
-    fn contextual_keyword(&self, text: &str) -> Option<JavaSyntaxToken<'_>> {
+    fn contextual_keyword(&self, text: &str) -> Option<JavaSyntaxToken<'source>> {
         children_tokens_matching(&self.syntax, |kind| kind == JavaSyntaxKind::Identifier)
             .find(|token| token.text() == text)
     }
 }
 
-impl ModuleDirectiveNode<'_> {
+impl<'source> ModuleDirectiveNode<'source> {
     #[must_use]
-    pub fn directive(&self) -> Option<ModuleDirective<'_>> {
+    pub fn directive(&self) -> Option<ModuleDirective<'source>> {
         child_family(&self.syntax)
     }
 }
 
-impl ModuleDirective<'_> {
+impl<'source> ModuleDirective<'source> {
     #[must_use]
-    pub fn directive_role(&self) -> Option<ModuleDirectiveRole<'_>> {
+    pub fn directive_role(&self) -> Option<ModuleDirectiveRole<'source>> {
         match self {
             Self::RequiresDirective(directive) => directive.directive_role(),
             Self::ExportsDirective(directive) => directive.directive_role(),
@@ -4181,19 +4173,19 @@ impl ModuleDirective<'_> {
         }
     }
 
-    pub fn names(&self) -> impl Iterator<Item = NameSyntax<'_>> + '_ {
+    pub fn names(&self) -> impl Iterator<Item = NameSyntax<'source>> + use<'source> {
         children_family(self.syntax())
     }
 
     #[must_use]
-    pub fn primary_name(&self) -> Option<NameSyntax<'_>> {
+    pub fn primary_name(&self) -> Option<NameSyntax<'source>> {
         self.names().next()
     }
 }
 
-impl RequiresDirective<'_> {
+impl<'source> RequiresDirective<'source> {
     #[must_use]
-    pub fn directive_role(&self) -> Option<ModuleDirectiveRole<'_>> {
+    pub fn directive_role(&self) -> Option<ModuleDirectiveRole<'source>> {
         Some(ModuleDirectiveRole::Requires {
             module: self.module_name()?,
             is_static: self.has_static_modifier(),
@@ -4202,27 +4194,27 @@ impl RequiresDirective<'_> {
     }
 
     #[must_use]
-    pub fn module_name(&self) -> Option<NameSyntax<'_>> {
+    pub fn module_name(&self) -> Option<NameSyntax<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn requires_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn requires_token(&self) -> Option<JavaSyntaxToken<'source>> {
         self.contextual_keyword("requires")
     }
 
     #[must_use]
-    pub fn static_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn static_token(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::StaticKw)
     }
 
     #[must_use]
-    pub fn transitive_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn transitive_token(&self) -> Option<JavaSyntaxToken<'source>> {
         self.contextual_keyword("transitive")
     }
 
     #[must_use]
-    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 
@@ -4236,173 +4228,170 @@ impl RequiresDirective<'_> {
         self.transitive_token().is_some()
     }
 
-    fn contextual_keyword(&self, text: &str) -> Option<JavaSyntaxToken<'_>> {
+    fn contextual_keyword(&self, text: &str) -> Option<JavaSyntaxToken<'source>> {
         children_tokens_matching(&self.syntax, |kind| kind == JavaSyntaxKind::Identifier)
             .find(|token| token.text() == text)
     }
 }
 
-impl ExportsDirective<'_> {
+impl<'source> ExportsDirective<'source> {
     #[must_use]
-    pub fn directive_role(&self) -> Option<ModuleDirectiveRole<'_>> {
+    pub fn directive_role(&self) -> Option<ModuleDirectiveRole<'source>> {
         let mut names = self.names();
         Some(ModuleDirectiveRole::Exports {
             package: names.next()?,
-            targets: names.collect(),
         })
     }
 
-    pub fn names(&self) -> impl Iterator<Item = NameSyntax<'_>> + '_ {
+    pub fn names(&self) -> impl Iterator<Item = NameSyntax<'source>> + use<'source> {
         children_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn exports_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn exports_token(&self) -> Option<JavaSyntaxToken<'source>> {
         contextual_keyword_in(&self.syntax, "exports")
     }
 
     #[must_use]
-    pub fn to_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn to_token(&self) -> Option<JavaSyntaxToken<'source>> {
         contextual_keyword_in(&self.syntax, "to")
     }
 
     #[must_use]
-    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 
-    pub fn target_entries(&self) -> impl Iterator<Item = ModuleNameListEntry<'_>> {
+    pub fn target_entries(&self) -> impl Iterator<Item = ModuleNameListEntry<'source>> {
         module_name_entries_after_contextual_keyword(&self.syntax, "to")
     }
 }
 
-impl OpensDirective<'_> {
+impl<'source> OpensDirective<'source> {
     #[must_use]
-    pub fn directive_role(&self) -> Option<ModuleDirectiveRole<'_>> {
+    pub fn directive_role(&self) -> Option<ModuleDirectiveRole<'source>> {
         let mut names = self.names();
         Some(ModuleDirectiveRole::Opens {
             package: names.next()?,
-            targets: names.collect(),
         })
     }
 
-    pub fn names(&self) -> impl Iterator<Item = NameSyntax<'_>> + '_ {
+    pub fn names(&self) -> impl Iterator<Item = NameSyntax<'source>> + use<'source> {
         children_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn opens_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn opens_token(&self) -> Option<JavaSyntaxToken<'source>> {
         contextual_keyword_in(&self.syntax, "opens")
     }
 
     #[must_use]
-    pub fn to_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn to_token(&self) -> Option<JavaSyntaxToken<'source>> {
         contextual_keyword_in(&self.syntax, "to")
     }
 
     #[must_use]
-    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 
-    pub fn target_entries(&self) -> impl Iterator<Item = ModuleNameListEntry<'_>> {
+    pub fn target_entries(&self) -> impl Iterator<Item = ModuleNameListEntry<'source>> {
         module_name_entries_after_contextual_keyword(&self.syntax, "to")
     }
 }
 
-impl UsesDirective<'_> {
+impl<'source> UsesDirective<'source> {
     #[must_use]
-    pub fn directive_role(&self) -> Option<ModuleDirectiveRole<'_>> {
+    pub fn directive_role(&self) -> Option<ModuleDirectiveRole<'source>> {
         Some(ModuleDirectiveRole::Uses {
             service: self.service_name()?,
         })
     }
 
     #[must_use]
-    pub fn service_name(&self) -> Option<NameSyntax<'_>> {
+    pub fn service_name(&self) -> Option<NameSyntax<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn uses_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn uses_token(&self) -> Option<JavaSyntaxToken<'source>> {
         contextual_keyword_in(&self.syntax, "uses")
     }
 
     #[must_use]
-    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 }
 
-impl ProvidesDirective<'_> {
+impl<'source> ProvidesDirective<'source> {
     #[must_use]
-    pub fn directive_role(&self) -> Option<ModuleDirectiveRole<'_>> {
+    pub fn directive_role(&self) -> Option<ModuleDirectiveRole<'source>> {
         Some(ModuleDirectiveRole::Provides {
             service: self.service_name()?,
-            implementations: self.implementation_names().collect(),
         })
     }
 
     #[must_use]
-    pub fn service_name(&self) -> Option<NameSyntax<'_>> {
+    pub fn service_name(&self) -> Option<NameSyntax<'source>> {
         self.names().next()
     }
 
-    pub fn implementation_names(&self) -> impl Iterator<Item = NameSyntax<'_>> + '_ {
+    pub fn implementation_names(&self) -> impl Iterator<Item = NameSyntax<'source>> + use<'source> {
         self.names().skip(1)
     }
 
-    pub fn implementation_entries(&self) -> impl Iterator<Item = ModuleNameListEntry<'_>> {
+    pub fn implementation_entries(&self) -> impl Iterator<Item = ModuleNameListEntry<'source>> {
         module_name_entries_after_contextual_keyword(&self.syntax, "with")
     }
 
     #[must_use]
-    pub fn provides_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn provides_token(&self) -> Option<JavaSyntaxToken<'source>> {
         contextual_keyword_in(&self.syntax, "provides")
     }
 
     #[must_use]
-    pub fn with_token(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn with_token(&self) -> Option<JavaSyntaxToken<'source>> {
         contextual_keyword_in(&self.syntax, "with")
     }
 
     #[must_use]
-    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 
-    fn names(&self) -> impl Iterator<Item = NameSyntax<'_>> + '_ {
+    fn names(&self) -> impl Iterator<Item = NameSyntax<'source>> + use<'source> {
         children_family(&self.syntax)
     }
 }
 
-impl Block<'_> {
+impl<'source> Block<'source> {
     #[must_use]
-    pub fn open_brace(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn open_brace(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LBrace)
     }
 
     #[must_use]
-    pub fn close_brace(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn close_brace(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RBrace)
     }
 
-    pub fn block_statements(&self) -> impl Iterator<Item = BlockStatement<'_>> + '_ {
+    pub fn block_statements(&self) -> impl Iterator<Item = BlockStatement<'source>> + use<'source> {
         children(&self.syntax)
     }
 
-    pub fn items(&self) -> impl Iterator<Item = BlockItem<'_>> + '_ {
+    pub fn items(&self) -> impl Iterator<Item = BlockItem<'source>> + use<'source> {
         children::<BlockStatement>(&self.syntax).filter_map(|node| child_family(&node.syntax))
     }
 
-    pub fn statements(&self) -> impl Iterator<Item = Statement<'_>> + '_ {
+    pub fn statements(&self) -> impl Iterator<Item = Statement<'source>> + use<'source> {
         children::<BlockStatement>(&self.syntax).filter_map(|node| child_family(&node.syntax))
     }
 }
 
-impl BlockStatement<'_> {
+impl<'source> BlockStatement<'source> {
     #[must_use]
-    pub fn item(&self) -> Option<BlockItem<'_>> {
+    pub fn item(&self) -> Option<BlockItem<'source>> {
         child_family(&self.syntax)
     }
 
@@ -4412,12 +4401,12 @@ impl BlockStatement<'_> {
     }
 
     #[must_use]
-    pub fn statement(&self) -> Option<Statement<'_>> {
+    pub fn statement(&self) -> Option<Statement<'source>> {
         child_family(&self.syntax)
     }
 
     #[must_use]
-    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'_>> {
+    pub fn semicolon(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 }

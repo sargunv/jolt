@@ -31,7 +31,7 @@ pub(crate) fn resolve_config(
 
 /// Returns the file matching declaration for the initial Jolt plugin.
 #[must_use]
-pub(crate) fn file_matching_info() -> FileMatchingInfo {
+fn file_matching_info() -> FileMatchingInfo {
     FileMatchingInfo {
         file_extensions: vec!["java".to_owned()],
         file_names: Vec::new(),

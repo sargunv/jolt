@@ -6,7 +6,10 @@ use super::{
     indent, soft_line, text, trailing_comments_force_line,
 };
 
-pub(super) fn format_member_chain(chain: &MemberChain, formatter: &JavaFormatter<'_>) -> Doc {
+pub(super) fn format_member_chain<'source>(
+    chain: &MemberChain<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     let keep_first_suffix_with_root = is_simple_member_chain_root(chain.root());
     concat([
         format_expression_leading_comments(chain.root()),
@@ -22,10 +25,10 @@ pub(super) fn format_member_chain(chain: &MemberChain, formatter: &JavaFormatter
     ])
 }
 
-fn format_member_chain_units(
-    suffixes: &[MemberChainSuffix],
+fn format_member_chain_units<'source>(
+    suffixes: &[MemberChainSuffix<'source>],
     formatter: &JavaFormatter<'_>,
-) -> Vec<Doc> {
+) -> Vec<Doc<'source>> {
     let mut units = Vec::new();
     let mut field_run = Vec::new();
 
@@ -45,7 +48,11 @@ fn format_member_chain_units(
     units
 }
 
-fn member_chain(root: Doc, suffixes: Vec<Doc>, keep_first_suffix_with_root: bool) -> Doc {
+fn member_chain<'source>(
+    root: Doc<'source>,
+    suffixes: Vec<Doc<'source>>,
+    keep_first_suffix_with_root: bool,
+) -> Doc<'source> {
     if suffixes.is_empty() {
         return root;
     }
@@ -67,7 +74,7 @@ fn member_chain(root: Doc, suffixes: Vec<Doc>, keep_first_suffix_with_root: bool
     group(concat([head, indent(concat(rest))]))
 }
 
-fn flush_field_run(units: &mut Vec<Doc>, field_run: &mut Vec<Doc>) {
+fn flush_field_run<'source>(units: &mut Vec<Doc<'source>>, field_run: &mut Vec<Doc<'source>>) {
     if field_run.is_empty() {
         return;
     }
@@ -75,13 +82,16 @@ fn flush_field_run(units: &mut Vec<Doc>, field_run: &mut Vec<Doc>) {
     units.push(concat(std::mem::take(field_run)));
 }
 
-fn format_expression_leading_comments(expression: &Expression) -> Doc {
+fn format_expression_leading_comments<'source>(expression: &Expression<'source>) -> Doc<'source> {
     expression
         .first_token()
         .map_or_else(jolt_fmt_ir::nil, |token| format_leading_comments(&token))
 }
 
-fn format_member_chain_suffix(suffix: &MemberChainSuffix, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_member_chain_suffix<'source>(
+    suffix: &MemberChainSuffix<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     match suffix {
         MemberChainSuffix::FieldAccess(access) => {
             let dot = access.dot_token();
@@ -115,7 +125,7 @@ fn format_member_chain_suffix(suffix: &MemberChainSuffix, formatter: &JavaFormat
     }
 }
 
-pub(super) fn format_member_dot(dot: Option<&JavaSyntaxToken>) -> Doc {
+pub(super) fn format_member_dot<'source>(dot: Option<&JavaSyntaxToken<'source>>) -> Doc<'source> {
     dot.map_or_else(
         || text("."),
         |dot| {

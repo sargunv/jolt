@@ -56,7 +56,10 @@ pub(crate) use switches::format_switch_block;
 use switches::format_switch_statement;
 use try_resources::{format_try_statement, format_try_with_resources_statement};
 
-fn format_statement(statement: &Statement, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_statement<'source>(
+    statement: &Statement<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     match statement {
         Statement::Block(block) => format_block(block, formatter),
         Statement::EmptyStatement(_) => empty_block(),
@@ -95,7 +98,10 @@ fn format_statement(statement: &Statement, formatter: &JavaFormatter<'_>) -> Doc
     }
 }
 
-fn statement_body_as_block(body: Option<&StatementBody>, formatter: &JavaFormatter<'_>) -> Doc {
+fn statement_body_as_block<'source>(
+    body: Option<&StatementBody<'source>>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     match body {
         Some(StatementBody::Block(block)) => format_block(block, formatter),
         Some(StatementBody::Empty(_)) | None => empty_block(),
@@ -105,7 +111,7 @@ fn statement_body_as_block(body: Option<&StatementBody>, formatter: &JavaFormatt
     }
 }
 
-fn statement_body_trailing_comments_force_line(body: Option<&StatementBody>) -> bool {
+fn statement_body_trailing_comments_force_line(body: Option<&StatementBody<'_>>) -> bool {
     let Some(StatementBody::Block(block)) = body else {
         return false;
     };

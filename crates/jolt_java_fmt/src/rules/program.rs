@@ -16,15 +16,19 @@ use crate::rules::imports::format_imports;
 use crate::rules::modules::format_module_declaration;
 use crate::rules::names::format_name;
 
-pub(crate) fn format_compilation_unit(
-    unit: &CompilationUnit,
+pub(crate) fn format_compilation_unit<'source>(
+    unit: &CompilationUnit<'source>,
     formatter: &mut JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let items = unit.items().collect::<Vec<_>>();
     let contents = if items.is_empty() {
         format_comment_only_compilation_unit(unit)
     } else {
-        let ignored_ranges = formatter_ignore_ranges(unit.source_text());
+        let ignored_ranges = formatter_ignore_ranges(
+            unit.source_text(),
+            unit.text_range().start().get(),
+            unit.token_iter(),
+        );
         let item_ranges = items
             .iter()
             .map(compilation_unit_item_token_range)
@@ -40,10 +44,10 @@ pub(crate) fn format_compilation_unit(
     concat([contents, hard_line()])
 }
 
-fn format_compilation_unit_items(
-    items: Vec<CompilationUnitItem>,
+fn format_compilation_unit_items<'source>(
+    items: Vec<CompilationUnitItem<'source>>,
     formatter: &JavaFormatter<'_>,
-) -> Option<Doc> {
+) -> Option<Doc<'source>> {
     let mut sections = Vec::new();
     let mut package = None;
     let mut imports = Vec::new();
@@ -64,13 +68,13 @@ fn format_compilation_unit_items(
         sections.push(format_package_declaration(&package, formatter));
     }
 
-    let imports = format_imports(imports, formatter);
+    let imports = format_imports(imports);
     if let Some(imports) = imports {
         sections.push(imports);
     }
 
     if let Some(module) = module {
-        sections.push(format_module_declaration(&module, formatter));
+        sections.push(format_module_declaration(&module));
     }
 
     let types = types
@@ -84,11 +88,11 @@ fn format_compilation_unit_items(
     (!sections.is_empty()).then(|| join_empty_lines(sections))
 }
 
-fn format_compilation_unit_items_with_ignored(
-    items: Vec<CompilationUnitItem>,
-    ignored_runs: &[crate::helpers::formatter_ignore::FormatterIgnoreRun],
+fn format_compilation_unit_items_with_ignored<'source>(
+    items: Vec<CompilationUnitItem<'source>>,
+    ignored_runs: &[crate::helpers::formatter_ignore::FormatterIgnoreRun<'source>],
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let mut sections = Vec::new();
     let mut segment = Vec::new();
     let mut ignored_index = 0;
@@ -131,9 +135,9 @@ fn format_compilation_unit_items_with_ignored(
     join_program_sections(sections)
 }
 
-fn push_compilation_unit_segment(
-    sections: &mut Vec<ProgramSection>,
-    segment: &mut Vec<CompilationUnitItem>,
+fn push_compilation_unit_segment<'source>(
+    sections: &mut Vec<ProgramSection<'source>>,
+    segment: &mut Vec<CompilationUnitItem<'source>>,
     formatter: &JavaFormatter<'_>,
 ) {
     if segment.is_empty() {
@@ -148,7 +152,7 @@ fn push_compilation_unit_segment(
     }
 }
 
-fn join_program_sections(sections: Vec<ProgramSection>) -> Doc {
+fn join_program_sections(sections: Vec<ProgramSection<'_>>) -> Doc<'_> {
     let mut joined = Vec::new();
     let mut previous_hard_line_after = false;
     for section in sections {
@@ -165,19 +169,22 @@ fn join_program_sections(sections: Vec<ProgramSection>) -> Doc {
     concat(joined)
 }
 
-struct ProgramSection {
-    doc: Doc,
+struct ProgramSection<'source> {
+    doc: Doc<'source>,
     hard_line_after: bool,
 }
 
-fn compilation_unit_item_token_range(item: &CompilationUnitItem) -> Option<Range<usize>> {
+fn compilation_unit_item_token_range(item: &CompilationUnitItem<'_>) -> Option<Range<usize>> {
     Some(token_range_between(
         &item.first_token()?,
         &item.last_token()?,
     ))
 }
 
-fn format_package_declaration(package: &PackageDeclaration, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_package_declaration<'source>(
+    package: &PackageDeclaration<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     let annotations = package
         .annotations()
         .map(|annotation| format_annotation(&annotation, formatter))

@@ -9,10 +9,10 @@ use dprint_core::{
         PluginResolveConfigurationResult,
     },
 };
-use jolt_fmt_core::{
-    Diagnostic, FormatOptions, FormatSinkResult, Language, LineIndex, RenderControl, RenderSink,
-    Severity, format_source_to_sink,
-};
+use jolt_diagnostics::{Diagnostic, Severity};
+use jolt_fmt_core::{FormatOptions, FormatSinkResult, Language, format_source_to_sink};
+use jolt_fmt_ir::{RenderControl, RenderSink};
+use jolt_text::LineIndex;
 
 use crate::configuration;
 
@@ -29,7 +29,7 @@ impl JoltDprintPlugin {
 
     /// Resolves dprint configuration into Jolt's shared formatter options.
     #[must_use]
-    pub(crate) fn resolve_jolt_config(
+    fn resolve_jolt_config(
         &self,
         config: ConfigKeyMap,
         global_config: &GlobalConfiguration,
@@ -39,7 +39,7 @@ impl JoltDprintPlugin {
 
     /// Returns the plugin metadata exposed to dprint.
     #[must_use]
-    pub(crate) fn jolt_plugin_info(&self) -> PluginInfo {
+    fn jolt_plugin_info(&self) -> PluginInfo {
         PluginInfo {
             name: env!("CARGO_PKG_NAME").to_owned(),
             version: env!("CARGO_PKG_VERSION").to_owned(),
@@ -50,15 +50,13 @@ impl JoltDprintPlugin {
         }
     }
 
-    /// Returns the file matching declaration for resolved configs.
-    #[must_use]
     /// Formats a dprint request payload using Jolt's core engine boundary.
     ///
     /// # Errors
     ///
     /// Returns an error when the file is not UTF-8, the path is not a supported
     /// Jolt language, or the core formatter blocks without producing output.
-    pub(crate) fn format_file(
+    fn format_file(
         &self,
         file_path: &Path,
         file_bytes: &[u8],
@@ -101,7 +99,7 @@ impl JoltDprintPlugin {
     /// # Errors
     ///
     /// This implementation never returns an error.
-    pub(crate) fn check_jolt_config_updates(
+    fn check_jolt_config_updates(
         &self,
         _message: CheckConfigUpdatesMessage,
     ) -> Result<Vec<ConfigChange>, FormatError> {
@@ -221,8 +219,6 @@ const fn severity_name(severity: Severity) -> &'static str {
     match severity {
         Severity::InternalError => "internal-error",
         Severity::Error => "error",
-        Severity::Warning => "warning",
-        Severity::Note => "note",
     }
 }
 

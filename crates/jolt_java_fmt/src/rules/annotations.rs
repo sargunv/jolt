@@ -14,24 +14,27 @@ use crate::helpers::lists::{
 use crate::rules::expressions::format_expression;
 use crate::rules::names::format_name;
 
-pub(crate) fn format_annotation(annotation: &Annotation, formatter: &JavaFormatter<'_>) -> Doc {
+pub(crate) fn format_annotation<'source>(
+    annotation: &Annotation<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     format_annotation_with_at_token(annotation, formatter, format_token_with_comments)
 }
 
-pub(crate) fn format_annotation_without_leading_comments(
-    annotation: &Annotation,
+pub(crate) fn format_annotation_without_leading_comments<'source>(
+    annotation: &Annotation<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     format_annotation_with_at_token(annotation, formatter, |token| {
         format_token_after_relocated_leading_comments(token, TrailingTrivia::Preserve)
     })
 }
 
-fn format_annotation_with_at_token(
-    annotation: &Annotation,
+fn format_annotation_with_at_token<'source>(
+    annotation: &Annotation<'source>,
     formatter: &JavaFormatter<'_>,
-    at_token: impl Fn(&jolt_java_syntax::JavaSyntaxToken) -> Doc,
-) -> Doc {
+    at_token: impl Fn(&jolt_java_syntax::JavaSyntaxToken<'source>) -> Doc<'source>,
+) -> Doc<'source> {
     concat([
         annotation
             .at_token()
@@ -47,10 +50,10 @@ fn format_annotation_with_at_token(
     ])
 }
 
-pub(crate) fn format_annotation_element_value(
-    value: &AnnotationElementValue,
+pub(crate) fn format_annotation_element_value<'source>(
+    value: &AnnotationElementValue<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     if let Some(expression) = value.expression() {
         return format_expression(&expression, formatter);
     }
@@ -64,10 +67,10 @@ pub(crate) fn format_annotation_element_value(
         })
 }
 
-fn format_annotation_argument_list(
-    arguments: &AnnotationArgumentList,
+fn format_annotation_argument_list<'source>(
+    arguments: &AnnotationArgumentList<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let open = arguments.open_paren();
     let close = arguments.close_paren();
     parenthesized_list(
@@ -83,17 +86,20 @@ fn format_annotation_argument_list(
     )
 }
 
-fn format_annotation_argument(argument: &AnnotationArgument, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_annotation_argument<'source>(
+    argument: &AnnotationArgument<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     match argument {
         AnnotationArgument::Value(value) => format_annotation_element_value(value, formatter),
         AnnotationArgument::Pair(pair) => format_annotation_element_value_pair(pair, formatter),
     }
 }
 
-fn format_annotation_element_value_pair(
-    pair: &AnnotationElementValuePair,
+fn format_annotation_element_value_pair<'source>(
+    pair: &AnnotationElementValuePair<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     concat([
         pair.name()
             .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name)),
@@ -107,10 +113,10 @@ fn format_annotation_element_value_pair(
     ])
 }
 
-fn format_annotation_array_initializer(
-    initializer: &AnnotationArrayInitializer,
+fn format_annotation_array_initializer<'source>(
+    initializer: &AnnotationArrayInitializer<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let open = initializer.open_brace();
     let close = initializer.close_brace();
     braced_comma_list_with_trailing_separator(

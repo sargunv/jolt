@@ -9,14 +9,14 @@ pub(crate) enum MemberBodyCategory {
     Type,
 }
 
-pub(crate) struct MemberBodyItem {
+pub(crate) struct MemberBodyItem<'source> {
     pub(crate) category: Option<MemberBodyCategory>,
     pub(crate) starts_after_blank_line: bool,
-    pub(crate) doc: Doc,
+    pub(crate) doc: Doc<'source>,
 }
 
-impl MemberBodyItem {
-    pub(crate) fn comment(doc: Doc) -> Self {
+impl<'source> MemberBodyItem<'source> {
+    pub(crate) fn comment(doc: Doc<'source>) -> Self {
         Self {
             category: None,
             starts_after_blank_line: false,
@@ -24,7 +24,7 @@ impl MemberBodyItem {
         }
     }
 
-    pub(crate) fn ignored(doc: Doc, category: MemberBodyCategory) -> Self {
+    pub(crate) fn ignored(doc: Doc<'source>, category: MemberBodyCategory) -> Self {
         Self {
             category: Some(category),
             starts_after_blank_line: false,
@@ -40,7 +40,7 @@ impl MemberBodyItem {
     }
 }
 
-pub(crate) fn join_member_body(members: Vec<MemberBodyItem>) -> Doc {
+pub(crate) fn join_member_body(members: Vec<MemberBodyItem<'_>>) -> Doc<'_> {
     let mut joined = Vec::new();
     let mut previous_category = None;
     let mut previous_was_neutral = false;
@@ -64,12 +64,12 @@ pub(crate) fn join_member_body(members: Vec<MemberBodyItem>) -> Doc {
     concat(joined)
 }
 
-fn member_separator(
+fn member_separator<'source>(
     previous_category: Option<MemberBodyCategory>,
     current_category: Option<MemberBodyCategory>,
     starts_after_blank_line: bool,
     previous_was_neutral: bool,
-) -> Doc {
+) -> Doc<'source> {
     if previous_was_neutral {
         return hard_line();
     }

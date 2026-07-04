@@ -9,10 +9,10 @@ use super::{
     hard_line, indent, text, trailing_comments_force_line,
 };
 
-pub(super) fn format_array_access_expression(
-    expression: &ArrayAccessExpression,
+pub(super) fn format_array_access_expression<'source>(
+    expression: &ArrayAccessExpression<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let open_bracket = expression.open_bracket();
     let close_bracket = expression.close_bracket();
 
@@ -30,10 +30,10 @@ pub(super) fn format_array_access_expression(
     ]))
 }
 
-pub(super) fn format_object_creation_expression(
-    expression: &ObjectCreationExpression,
+pub(super) fn format_object_creation_expression<'source>(
+    expression: &ObjectCreationExpression<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     group(concat([
         expression
             .qualifier()
@@ -56,10 +56,10 @@ pub(super) fn format_object_creation_expression(
     ]))
 }
 
-pub(super) fn format_array_creation_expression(
-    expression: &ArrayCreationExpression,
+pub(super) fn format_array_creation_expression<'source>(
+    expression: &ArrayCreationExpression<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     group(concat([
         format_creation_new_keyword(expression.new_token().as_ref()),
         expression
@@ -78,7 +78,9 @@ pub(super) fn format_array_creation_expression(
     ]))
 }
 
-fn format_creation_new_keyword(keyword: Option<&JavaSyntaxToken>) -> Doc {
+fn format_creation_new_keyword<'source>(
+    keyword: Option<&JavaSyntaxToken<'source>>,
+) -> Doc<'source> {
     keyword.map_or_else(
         || text("new "),
         |keyword| {
@@ -96,7 +98,10 @@ fn format_creation_new_keyword(keyword: Option<&JavaSyntaxToken>) -> Doc {
     )
 }
 
-fn format_dim_expression(dimension: &DimExpression, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_dim_expression<'source>(
+    dimension: &DimExpression<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     let open_bracket = dimension.open_bracket();
     let close_bracket = dimension.close_bracket();
 
@@ -111,11 +116,11 @@ fn format_dim_expression(dimension: &DimExpression, formatter: &JavaFormatter<'_
     )
 }
 
-fn format_bracketed_expression(
-    open: Option<&JavaSyntaxToken>,
-    expression: Doc,
-    close: Option<&JavaSyntaxToken>,
-) -> Doc {
+fn format_bracketed_expression<'source>(
+    open: Option<&JavaSyntaxToken<'source>>,
+    expression: Doc<'source>,
+    close: Option<&JavaSyntaxToken<'source>>,
+) -> Doc<'source> {
     group(concat([
         format_open_bracket(open),
         indent(concat([format_open_bracket_spacing(open), expression])),
@@ -123,14 +128,14 @@ fn format_bracketed_expression(
     ]))
 }
 
-fn format_open_bracket(open: Option<&JavaSyntaxToken>) -> Doc {
+fn format_open_bracket<'source>(open: Option<&JavaSyntaxToken<'source>>) -> Doc<'source> {
     open.map_or_else(
         || text("["),
         |open| concat([format_leading_comments(open), text("[")]),
     )
 }
 
-fn format_open_bracket_spacing(open: Option<&JavaSyntaxToken>) -> Doc {
+fn format_open_bracket_spacing<'source>(open: Option<&JavaSyntaxToken<'source>>) -> Doc<'source> {
     let Some(open) = open else {
         return jolt_fmt_ir::nil();
     };
@@ -141,7 +146,10 @@ fn format_open_bracket_spacing(open: Option<&JavaSyntaxToken>) -> Doc {
 
     concat([
         format_trailing_comments_before_line_break(open),
-        if open.trailing_comments().iter().any(comment_forces_line) {
+        if open
+            .trailing_comments()
+            .any(|comment| comment_forces_line(&comment))
+        {
             hard_line()
         } else {
             text(" ")
@@ -149,7 +157,9 @@ fn format_open_bracket_spacing(open: Option<&JavaSyntaxToken>) -> Doc {
     ])
 }
 
-fn format_close_bracket_with_spacing(close: Option<&JavaSyntaxToken>) -> Doc {
+fn format_close_bracket_with_spacing<'source>(
+    close: Option<&JavaSyntaxToken<'source>>,
+) -> Doc<'source> {
     close.map_or_else(
         || text("]"),
         |close| {
@@ -162,7 +172,10 @@ fn format_close_bracket_with_spacing(close: Option<&JavaSyntaxToken>) -> Doc {
     )
 }
 
-fn format_array_initializer(initializer: &ArrayInitializer, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_array_initializer<'source>(
+    initializer: &ArrayInitializer<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     let open = initializer.open_brace();
     let close = initializer.close_brace();
     braced_comma_list_with_trailing_separator(
@@ -178,10 +191,10 @@ fn format_array_initializer(initializer: &ArrayInitializer, formatter: &JavaForm
     )
 }
 
-pub(crate) fn format_variable_initializer_value(
-    value: VariableInitializerValue,
+pub(crate) fn format_variable_initializer_value<'source>(
+    value: VariableInitializerValue<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     match value {
         VariableInitializerValue::LiteralExpression(expression) => {
             format_expression(&expression.into(), formatter)

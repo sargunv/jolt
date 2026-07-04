@@ -3,10 +3,10 @@ use super::{
     format_token_with_comments, text,
 };
 
-pub(super) fn format_switch_expression(
-    expression: &SwitchExpression,
+pub(super) fn format_switch_expression<'source>(
+    expression: &SwitchExpression<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     concat([
         expression
             .keyword()

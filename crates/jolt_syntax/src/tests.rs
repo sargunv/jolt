@@ -27,7 +27,7 @@ fn token(start: usize, end: usize) -> SyntaxTokenData {
         TextRange::new(TextSize::new(start), TextSize::new(end)),
         0..0,
         0..0,
-        &[],
+        TextSize::new(end - start),
     )
 }
 
@@ -36,9 +36,7 @@ fn parse<'source>(
     events: Vec<Event>,
     tokens: Vec<SyntaxTokenData>,
 ) -> SyntaxNode<'source, TestLanguage> {
-    let (tree, diagnostics) = build_syntax_tree(events, tokens, Vec::new())
-        .unwrap()
-        .into_parts();
+    let (tree, diagnostics) = build_syntax_tree(events, tokens, Vec::new()).unwrap();
     assert!(diagnostics.is_empty());
 
     SyntaxNode::<TestLanguage>::new_root(source, Box::leak(Box::new(tree)))
@@ -80,12 +78,10 @@ fn token_trivia_contributes_to_offsets() {
         TextRange::new(2usize.into(), 7usize.into()),
         0..1,
         1..2,
-        &trivia,
+        TextSize::new("  token// trailing".len()),
     );
     let events = vec![Event::start_node(ROOT), Event::Token, Event::FinishNode];
-    let (tree, diagnostics) = build_syntax_tree(events, vec![token], trivia)
-        .unwrap()
-        .into_parts();
+    let (tree, diagnostics) = build_syntax_tree(events, vec![token], trivia).unwrap();
     assert!(diagnostics.is_empty());
 
     let root = SyntaxNode::<TestLanguage>::new_root("  token// trailing", &tree);

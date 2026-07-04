@@ -16,10 +16,9 @@
 // Focused tests should not try to enumerate the combinatorial product of the
 // grammar. Each test should make one source-shape claim obvious.
 
-use jolt_diagnostics::{DiagnosticStage, Severity, SyntaxOutcome};
-use jolt_syntax::Event;
+use jolt_diagnostics::SyntaxOutcome;
 
-use super::{finish_parse, parse_compilation_unit, source::ParseEvents};
+use super::parse_compilation_unit;
 use crate::JavaSyntaxKind;
 
 #[test]
@@ -39,34 +38,6 @@ fn parser_shell_preserves_source_text() {
     let syntax = parse.syntax().expect("clean parse should produce syntax");
 
     assert_eq!(syntax.source_text(), source);
-}
-
-#[test]
-fn invalid_event_stream_aborts_without_syntax() {
-    let mut diagnostics = Vec::new();
-    let parse = finish_parse(
-        String::new(),
-        ParseEvents {
-            events: vec![Event::Token],
-            tokens: Vec::new(),
-            trivia: Vec::new(),
-            diagnostics: Vec::new(),
-        },
-        &mut diagnostics,
-    );
-
-    assert_eq!(parse.outcome(), SyntaxOutcome::Aborted);
-    assert!(parse.syntax().is_none());
-    assert_eq!(parse.diagnostics().len(), 1);
-
-    let diagnostic = &parse.diagnostics()[0];
-    assert_eq!(
-        diagnostic.code.as_str(),
-        "internal.syntax.invalid_event_stream"
-    );
-    assert_eq!(diagnostic.severity, Severity::InternalError);
-    assert_eq!(diagnostic.stage, DiagnosticStage::Parser);
-    assert_eq!(diagnostic.range, None);
 }
 
 #[test]

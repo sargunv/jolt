@@ -12,10 +12,10 @@ use super::{
 };
 use crate::helpers::comments::format_token_after_relocated_leading_comments;
 
-pub(super) fn format_class_declaration(
-    class: &ClassDeclaration,
+pub(super) fn format_class_declaration<'source>(
+    class: &ClassDeclaration<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     format_type_declaration_with_body(
         class.first_token().as_ref(),
         class.modifiers(),
@@ -27,7 +27,7 @@ pub(super) fn format_class_declaration(
             format_type_parameter_list(class.type_parameters(), formatter),
             format_extends_clause(class.extends_clause(), formatter),
             format_implements_clause(class.implements_clause(), formatter),
-            format_permits_clause(class.permits_clause(), formatter),
+            format_permits_clause(class.permits_clause()),
         ]),
         class
             .body()
@@ -36,10 +36,10 @@ pub(super) fn format_class_declaration(
     )
 }
 
-pub(super) fn format_interface_declaration(
-    interface: &InterfaceDeclaration,
+pub(super) fn format_interface_declaration<'source>(
+    interface: &InterfaceDeclaration<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     format_type_declaration_with_body(
         interface.first_token().as_ref(),
         interface.modifiers(),
@@ -50,7 +50,7 @@ pub(super) fn format_interface_declaration(
                 .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name)),
             format_type_parameter_list(interface.type_parameters(), formatter),
             format_extends_clause(interface.extends_clause(), formatter),
-            format_permits_clause(interface.permits_clause(), formatter),
+            format_permits_clause(interface.permits_clause()),
         ]),
         interface
             .body()
@@ -59,10 +59,10 @@ pub(super) fn format_interface_declaration(
     )
 }
 
-pub(super) fn format_record_declaration(
-    record: &RecordDeclaration,
+pub(super) fn format_record_declaration<'source>(
+    record: &RecordDeclaration<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     format_type_declaration_with_body(
         record.first_token().as_ref(),
         record.modifiers(),
@@ -82,10 +82,10 @@ pub(super) fn format_record_declaration(
     )
 }
 
-pub(super) fn format_enum_declaration(
-    enum_: &EnumDeclaration,
+pub(super) fn format_enum_declaration<'source>(
+    enum_: &EnumDeclaration<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let body = enum_.body();
     let constants = body
         .as_ref()
@@ -116,10 +116,10 @@ pub(super) fn format_enum_declaration(
     )
 }
 
-pub(super) fn format_annotation_interface_declaration(
-    annotation: &AnnotationInterfaceDeclaration,
+pub(super) fn format_annotation_interface_declaration<'source>(
+    annotation: &AnnotationInterfaceDeclaration<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     format_type_declaration_with_body(
         annotation.first_token().as_ref(),
         annotation.modifiers(),
@@ -141,7 +141,7 @@ pub(super) fn format_annotation_interface_declaration(
     )
 }
 
-fn format_keyword_with_space(keyword: Option<JavaSyntaxToken>) -> Doc {
+fn format_keyword_with_space(keyword: Option<JavaSyntaxToken<'_>>) -> Doc<'_> {
     keyword.map_or_else(jolt_fmt_ir::nil, |keyword| {
         concat([
             format_token_after_relocated_leading_comments(&keyword, TrailingTrivia::Preserve),
@@ -150,19 +150,19 @@ fn format_keyword_with_space(keyword: Option<JavaSyntaxToken>) -> Doc {
     })
 }
 
-fn format_type_declaration_with_body(
-    first_token: Option<&jolt_java_syntax::JavaSyntaxToken>,
-    modifiers: Option<ModifierList>,
-    header_tail: Doc,
-    body: Option<Doc>,
+fn format_type_declaration_with_body<'source>(
+    first_token: Option<&jolt_java_syntax::JavaSyntaxToken<'source>>,
+    modifiers: Option<ModifierList<'source>>,
+    header_tail: Doc<'source>,
+    body: Option<Doc<'source>>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     declaration_with_body(
         concat([
             format_leading_comment_list(
-                formatter
-                    .comments()
-                    .leading_comments_for_token_option(first_token),
+                first_token
+                    .into_iter()
+                    .flat_map(jolt_java_syntax::JavaSyntaxToken::leading_comments),
             ),
             format_modifier_prefix(modifiers, formatter),
         ]),
@@ -171,7 +171,10 @@ fn format_type_declaration_with_body(
     )
 }
 
-fn format_record_components(record: &RecordDeclaration, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_record_components<'source>(
+    record: &RecordDeclaration<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     let Some(components) = record.components() else {
         let open = record.open_paren();
         let close = record.close_paren();
@@ -193,7 +196,10 @@ fn format_record_components(record: &RecordDeclaration, formatter: &JavaFormatte
     )
 }
 
-fn format_extends_clause(clause: Option<ExtendsClause>, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_extends_clause<'source>(
+    clause: Option<ExtendsClause<'source>>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     let Some(clause) = clause else {
         return jolt_fmt_ir::nil();
     };
@@ -206,10 +212,10 @@ fn format_extends_clause(clause: Option<ExtendsClause>, formatter: &JavaFormatte
     )
 }
 
-fn format_implements_clause(
-    clause: Option<ImplementsClause>,
+fn format_implements_clause<'source>(
+    clause: Option<ImplementsClause<'source>>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let Some(clause) = clause else {
         return jolt_fmt_ir::nil();
     };
@@ -222,7 +228,7 @@ fn format_implements_clause(
     )
 }
 
-fn format_permits_clause(clause: Option<PermitsClause>, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_permits_clause(clause: Option<PermitsClause<'_>>) -> Doc<'_> {
     let Some(clause) = clause else {
         return jolt_fmt_ir::nil();
     };
@@ -231,16 +237,15 @@ fn format_permits_clause(clause: Option<PermitsClause>, formatter: &JavaFormatte
         keyword.as_ref(),
         "permits",
         clause.entries().collect::<Vec<_>>(),
-        formatter,
     )
 }
 
-fn format_type_header_clause(
-    keyword: Option<&JavaSyntaxToken>,
+fn format_type_header_clause<'source>(
+    keyword: Option<&JavaSyntaxToken<'source>>,
     fallback: &'static str,
-    entries: Vec<TypeClauseEntry>,
+    entries: Vec<TypeClauseEntry<'source>>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     if entries.is_empty() {
         return jolt_fmt_ir::nil();
     }
@@ -255,12 +260,11 @@ fn format_type_header_clause(
     ]))
 }
 
-fn format_permits_header_clause(
-    keyword: Option<&JavaSyntaxToken>,
+fn format_permits_header_clause<'source>(
+    keyword: Option<&JavaSyntaxToken<'source>>,
     fallback: &'static str,
-    entries: Vec<PermitsClauseEntry>,
-    formatter: &JavaFormatter<'_>,
-) -> Doc {
+    entries: Vec<PermitsClauseEntry<'source>>,
+) -> Doc<'source> {
     if entries.is_empty() {
         return jolt_fmt_ir::nil();
     }
@@ -270,12 +274,15 @@ fn format_permits_header_clause(
         format_header_clause_keyword(keyword, fallback),
         jolt_fmt_ir::indent(group(concat([
             format_header_clause_keyword_break(keyword),
-            format_permits_clause_entries_broken(entries, formatter),
+            format_permits_clause_entries_broken(entries),
         ]))),
     ]))
 }
 
-fn format_header_clause_keyword(keyword: Option<&JavaSyntaxToken>, fallback: &'static str) -> Doc {
+fn format_header_clause_keyword<'source>(
+    keyword: Option<&JavaSyntaxToken<'source>>,
+    fallback: &'static str,
+) -> Doc<'source> {
     keyword.map_or_else(
         || text(fallback),
         |keyword| {
@@ -288,7 +295,9 @@ fn format_header_clause_keyword(keyword: Option<&JavaSyntaxToken>, fallback: &'s
     )
 }
 
-fn format_header_clause_keyword_break(keyword: Option<&JavaSyntaxToken>) -> Doc {
+fn format_header_clause_keyword_break<'source>(
+    keyword: Option<&JavaSyntaxToken<'source>>,
+) -> Doc<'source> {
     if header_keyword_forces_line(keyword) {
         hard_line()
     } else {
@@ -296,23 +305,24 @@ fn format_header_clause_keyword_break(keyword: Option<&JavaSyntaxToken>) -> Doc 
     }
 }
 
-fn header_keyword_forces_line(keyword: Option<&JavaSyntaxToken>) -> bool {
-    keyword.is_some_and(|keyword| keyword.trailing_comments().iter().any(comment_forces_line))
+fn header_keyword_forces_line(keyword: Option<&JavaSyntaxToken<'_>>) -> bool {
+    keyword.is_some_and(|keyword| {
+        keyword
+            .trailing_comments()
+            .any(|comment| comment_forces_line(&comment))
+    })
 }
 
-fn format_type_clause_entries_broken(
-    entries: Vec<TypeClauseEntry>,
+fn format_type_clause_entries_broken<'source>(
+    entries: Vec<TypeClauseEntry<'source>>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let mut docs = Vec::new();
     let entries_len = entries.len();
 
     for (index, entry) in entries.into_iter().enumerate() {
         docs.push(concat([
-            format_construct_leading_comments(
-                formatter.comments(),
-                entry.ty.first_token().as_ref(),
-            ),
+            format_construct_leading_comments(entry.ty.first_token().as_ref()),
             format_type_without_leading_comments(&entry.ty, formatter),
         ]));
         if let Some(comma) = entry.comma {
@@ -325,19 +335,13 @@ fn format_type_clause_entries_broken(
     concat(docs)
 }
 
-fn format_permits_clause_entries_broken(
-    entries: Vec<PermitsClauseEntry>,
-    formatter: &JavaFormatter<'_>,
-) -> Doc {
+fn format_permits_clause_entries_broken(entries: Vec<PermitsClauseEntry<'_>>) -> Doc<'_> {
     let mut docs = Vec::new();
     let entries_len = entries.len();
 
     for (index, entry) in entries.into_iter().enumerate() {
         docs.push(concat([
-            format_construct_leading_comments(
-                formatter.comments(),
-                entry.name.first_token().as_ref(),
-            ),
+            format_construct_leading_comments(entry.name.first_token().as_ref()),
             format_name(&entry.name),
         ]));
         if let Some(comma) = entry.comma {

@@ -7,11 +7,11 @@ use super::{
     parenthesized_list, text,
 };
 
-pub(super) fn format_method_invocation_expression_with_leading_comments(
-    expression: &MethodInvocationExpression,
+pub(super) fn format_method_invocation_expression_with_leading_comments<'source>(
+    expression: &MethodInvocationExpression<'source>,
     leading_comments: LeadingComments,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let expression = Expression::from(*expression);
     if !is_member_chain_child(&expression)
         && let Some(chain) = expression.member_chain()
@@ -28,10 +28,10 @@ pub(super) fn format_method_invocation_expression_with_leading_comments(
     ]))
 }
 
-pub(super) fn format_field_access_expression(
-    expression: &FieldAccessExpression,
+pub(super) fn format_field_access_expression<'source>(
+    expression: &FieldAccessExpression<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let expression = Expression::from(*expression);
     if !is_member_chain_child(&expression)
         && let Some(chain) = expression.member_chain()
@@ -61,11 +61,11 @@ pub(super) fn format_field_access_expression(
     ]))
 }
 
-fn format_method_invocation_callee(
-    expression: &MethodInvocationExpression,
+fn format_method_invocation_callee<'source>(
+    expression: &MethodInvocationExpression<'source>,
     leading_comments: LeadingComments,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     if let Some(name) = expression.direct_method_name() {
         let dot = expression.dot_token();
         return concat([
@@ -93,10 +93,10 @@ fn format_method_invocation_callee(
         })
 }
 
-pub(crate) fn format_argument_list(
-    arguments: Option<ArgumentList>,
+pub(crate) fn format_argument_list<'source>(
+    arguments: Option<ArgumentList<'source>>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let Some(arguments) = arguments else {
         return text("()");
     };

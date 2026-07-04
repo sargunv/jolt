@@ -12,8 +12,7 @@ pub use kind::RawSyntaxKind;
 pub use language::Language;
 pub use red::{SyntaxElement, SyntaxNode, SyntaxToken};
 pub use syntax_tree::{
-    BuildSyntaxTreeError, BuiltSyntaxTree, SyntaxTokenData, SyntaxTree, SyntaxTrivia, TriviaKind,
-    build_syntax_tree,
+    BuildSyntaxTreeError, SyntaxTokenData, SyntaxTree, SyntaxTrivia, TriviaKind, build_syntax_tree,
 };
 
 #[cfg(test)]

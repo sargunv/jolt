@@ -45,7 +45,7 @@ fn lex(source: &str) -> Lexed {
     }
     diagnostics.extend(lexer.finish());
     Lexed {
-        source,
+        source: source.into_owned(),
         tokens,
         diagnostics,
     }

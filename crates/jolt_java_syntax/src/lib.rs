@@ -7,6 +7,6 @@ mod nodes;
 mod parser;
 
 pub use kind::JavaSyntaxKind;
-pub use lexer::{JavaLexer, Token, Trivia, TriviaKind};
+pub(crate) use lexer::{JavaLexer, Trivia, TriviaKind};
 pub use nodes::*;
 pub use parser::{JavaParse, parse_compilation_unit};

@@ -6,10 +6,10 @@ use super::{
     trailing_comments_force_line,
 };
 
-pub(super) fn format_cast_expression(
-    expression: &CastExpression,
+pub(super) fn format_cast_expression<'source>(
+    expression: &CastExpression<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let open_paren = expression.open_paren();
     let close_paren = expression.close_paren();
 
@@ -35,7 +35,7 @@ pub(super) fn format_cast_expression(
     ]))
 }
 
-fn format_cast_open_paren(open: Option<&JavaSyntaxToken>) -> Doc {
+fn format_cast_open_paren<'source>(open: Option<&JavaSyntaxToken<'source>>) -> Doc<'source> {
     open.map_or_else(
         || text("("),
         |open| {
@@ -48,7 +48,7 @@ fn format_cast_open_paren(open: Option<&JavaSyntaxToken>) -> Doc {
     )
 }
 
-fn format_cast_close_paren(close: Option<&JavaSyntaxToken>) -> Doc {
+fn format_cast_close_paren<'source>(close: Option<&JavaSyntaxToken<'source>>) -> Doc<'source> {
     let close_has_leading_comments =
         close.is_some_and(|token| !token.leading_comments().is_empty());
 
@@ -75,10 +75,10 @@ fn format_cast_close_paren(close: Option<&JavaSyntaxToken>) -> Doc {
     ])
 }
 
-pub(super) fn format_instanceof_expression(
-    expression: &InstanceofExpression,
+pub(super) fn format_instanceof_expression<'source>(
+    expression: &InstanceofExpression<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     concat([
         expression
             .expression()
@@ -103,7 +103,7 @@ pub(super) fn format_instanceof_expression(
     ])
 }
 
-fn format_instanceof_operator(operator: &JavaSyntaxToken) -> Doc {
+fn format_instanceof_operator<'source>(operator: &JavaSyntaxToken<'source>) -> Doc<'source> {
     concat([
         format_leading_comments(operator),
         text("instanceof"),

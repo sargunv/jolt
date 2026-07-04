@@ -1,21 +1,16 @@
-//! Public formatter engine API for Jolt.
+//! Shared formatter engine boundary for Jolt's CLI and dprint plugin.
 
-use jolt_diagnostics::{DiagnosticCode, DiagnosticCodeId, DiagnosticStage};
-
-pub use jolt_diagnostics::{Diagnostic, Severity};
-pub use jolt_fmt_ir::{RenderControl, RenderSink};
-pub use jolt_text::{LineIndex, TextSize};
+use jolt_diagnostics::Diagnostic;
+use jolt_fmt_ir::RenderSink;
 
 /// Source language to format.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum Language {
     /// Java source, typically `.java`.
     Java,
-    /// Kotlin source, typically `.kt` or `.kts`.
-    Kotlin,
 }
 
-/// Formatter options shared by CLI, dprint, tests, and direct engine callers.
+/// Formatter options shared by CLI and dprint.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
@@ -76,20 +71,6 @@ impl<E> FormatSinkResult<E> {
     }
 }
 
-/// Stable formatter diagnostic codes.
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-enum FormatDiagnosticCode {
-    Unimplemented,
-}
-
-impl DiagnosticCode for FormatDiagnosticCode {
-    fn id(&self) -> DiagnosticCodeId {
-        match self {
-            Self::Unimplemented => DiagnosticCodeId::new("format.unimplemented"),
-        }
-    }
-}
-
 /// Formats source text for `language` into a render sink using `options`.
 pub fn format_source_to_sink<S: RenderSink + ?Sized>(
     source: &str,
@@ -97,24 +78,8 @@ pub fn format_source_to_sink<S: RenderSink + ?Sized>(
     options: &FormatOptions,
     sink: &mut S,
 ) -> FormatSinkResult<S::Error> {
-    if language == Language::Java {
-        return format_java_source_to_sink(source, *options, sink);
-    }
-
-    let message = match language {
-        Language::Kotlin => "Kotlin formatting is not implemented yet",
-        Language::Java => unreachable!("Java formatting is handled above"),
-    };
-    let diagnostic = Diagnostic {
-        code: FormatDiagnosticCode::Unimplemented.id(),
-        severity: Severity::Error,
-        stage: DiagnosticStage::Formatter,
-        message: message.to_owned(),
-        range: None,
-    };
-
-    FormatSinkResult::Blocked {
-        diagnostics: vec![diagnostic],
+    match language {
+        Language::Java => format_java_source_to_sink(source, *options, sink),
     }
 }
 
@@ -147,6 +112,7 @@ fn format_java_source_to_sink<S: RenderSink + ?Sized>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use jolt_fmt_ir::{RenderControl, RenderSink};
 
     #[derive(Default)]
     struct TestSink {
@@ -160,30 +126,6 @@ mod tests {
             self.text.push_str(text);
             Ok(RenderControl::Continue)
         }
-    }
-
-    #[test]
-    fn kotlin_formatter_still_blocks_without_output() {
-        let mut sink = TestSink::default();
-        let result = format_source_to_sink(
-            "fun main() {}",
-            Language::Kotlin,
-            &FormatOptions::default(),
-            &mut sink,
-        );
-
-        assert!(result.is_blocked());
-        assert_eq!(sink.text, "");
-        assert_eq!(result.diagnostics().len(), 1);
-
-        let diagnostic = &result.diagnostics()[0];
-        assert_eq!(
-            diagnostic.code.as_str(),
-            FormatDiagnosticCode::Unimplemented.id().as_str()
-        );
-        assert_eq!(diagnostic.severity, Severity::Error);
-        assert_eq!(diagnostic.stage, DiagnosticStage::Formatter);
-        assert_eq!(diagnostic.range, None);
     }
 
     #[test]

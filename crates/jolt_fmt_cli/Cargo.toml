@@ -18,7 +18,10 @@ clap = { version = "4.5", features = ["derive"] }
 figment = { version = "0.10", features = ["toml"] }
 globset = "0.4"
 ignore = "0.4"
+jolt_diagnostics = { path = "../jolt_diagnostics" }
 jolt_fmt_core = { path = "../jolt_fmt_core" }
+jolt_fmt_ir = { path = "../jolt_fmt_ir" }
+jolt_text = { path = "../jolt_text" }
 rayon = "1.10"
 serde = { version = "1.0", features = ["derive"] }
 

@@ -10,7 +10,10 @@ use super::{
     trailing_comments_force_line,
 };
 
-pub(super) fn format_try_statement(statement: &TryStatement, formatter: &JavaFormatter<'_>) -> Doc {
+pub(super) fn format_try_statement<'source>(
+    statement: &TryStatement<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     if let Some(resources_statement) = statement.resources_statement() {
         return format_try_with_resources_statement(&resources_statement, formatter);
     }
@@ -30,10 +33,10 @@ pub(super) fn format_try_statement(statement: &TryStatement, formatter: &JavaFor
     ])
 }
 
-pub(super) fn format_try_with_resources_statement(
-    statement: &TryWithResourcesStatement,
+pub(super) fn format_try_with_resources_statement<'source>(
+    statement: &TryWithResourcesStatement<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let resources = statement.resources();
     let close_paren = resources
         .as_ref()
@@ -56,10 +59,10 @@ pub(super) fn format_try_with_resources_statement(
     ])
 }
 
-fn format_resource_specification(
-    statement: &TryWithResourcesStatement,
+fn format_resource_specification<'source>(
+    statement: &TryWithResourcesStatement<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let specification = statement.resources();
     let open_paren = specification
         .as_ref()
@@ -99,13 +102,13 @@ fn format_resource_specification(
         format_condition_open_paren(open_paren.as_ref()),
         jolt_fmt_ir::indent(concat([
             format_resource_open_spacing(open_paren.as_ref()),
-            join_resource_lines(resources, &trailing_comments),
+            join_resource_lines(resources, trailing_comments),
         ])),
         format_resource_close_paren(close_paren.as_ref()),
     ])
 }
 
-fn format_resource_open_spacing(open: Option<&JavaSyntaxToken>) -> Doc {
+fn format_resource_open_spacing<'source>(open: Option<&JavaSyntaxToken<'source>>) -> Doc<'source> {
     open.map_or_else(hard_line, |open| {
         if open.trailing_comments().is_empty() {
             hard_line()
@@ -118,7 +121,7 @@ fn format_resource_open_spacing(open: Option<&JavaSyntaxToken>) -> Doc {
     })
 }
 
-fn format_resource_close_paren(close: Option<&JavaSyntaxToken>) -> Doc {
+fn format_resource_close_paren<'source>(close: Option<&JavaSyntaxToken<'source>>) -> Doc<'source> {
     let Some(close) = close else {
         return concat([hard_line(), text(")")]);
     };
@@ -147,7 +150,7 @@ fn format_resource_close_paren(close: Option<&JavaSyntaxToken>) -> Doc {
 }
 
 struct FormattedResource<'source> {
-    resource: Doc,
+    resource: Doc<'source>,
     separator: Option<JavaSyntaxToken<'source>>,
 }
 
@@ -161,7 +164,10 @@ fn format_resource_entry<'source>(
     }
 }
 
-fn format_resource(resource: &Resource, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_resource<'source>(
+    resource: &Resource<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     if let Some(declaration) = resource.declaration() {
         return format_local_variable_declaration(&declaration, formatter);
     }
@@ -179,11 +185,14 @@ fn format_resource(resource: &Resource, formatter: &JavaFormatter<'_>) -> Doc {
 fn format_catch_clauses<'source>(
     clauses: impl Iterator<Item = CatchClause<'source>> + 'source,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     concat(clauses.map(|clause| format_catch_clause(&clause, formatter)))
 }
 
-fn format_catch_clause(clause: &CatchClause, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_catch_clause<'source>(
+    clause: &CatchClause<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     let open = clause.open_paren();
     let close = clause.close_paren();
     concat([
@@ -207,12 +216,12 @@ fn format_catch_clause(clause: &CatchClause, formatter: &JavaFormatter<'_>) -> D
     ])
 }
 
-fn format_parenthesized_catch_parameter(
-    open: Option<&JavaSyntaxToken>,
-    parameter: &CatchParameter,
-    close: Option<&JavaSyntaxToken>,
+fn format_parenthesized_catch_parameter<'source>(
+    open: Option<&JavaSyntaxToken<'source>>,
+    parameter: &CatchParameter<'source>,
+    close: Option<&JavaSyntaxToken<'source>>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     group(concat([
         open.map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
         indent(concat([
@@ -224,7 +233,10 @@ fn format_parenthesized_catch_parameter(
     ]))
 }
 
-fn format_catch_parameter(parameter: &CatchParameter, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_catch_parameter<'source>(
+    parameter: &CatchParameter<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     concat([
         format_catch_modifier_prefix(parameter, formatter),
         parameter.types().map_or_else(jolt_fmt_ir::nil, |types| {
@@ -233,7 +245,10 @@ fn format_catch_parameter(parameter: &CatchParameter, formatter: &JavaFormatter<
     ])
 }
 
-fn format_catch_modifier_prefix(parameter: &CatchParameter, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_catch_modifier_prefix<'source>(
+    parameter: &CatchParameter<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     let mut docs = parameter
         .annotations()
         .map(|annotation| format_annotation(&annotation, formatter))
@@ -247,15 +262,15 @@ fn format_catch_modifier_prefix(parameter: &CatchParameter, formatter: &JavaForm
     if docs.is_empty() {
         jolt_fmt_ir::nil()
     } else {
-        concat([jolt_fmt_ir::join(text(" "), docs), text(" ")])
+        concat([jolt_fmt_ir::join(&text(" "), docs), text(" ")])
     }
 }
 
-fn format_catch_type_list(
-    types: &CatchTypeList,
-    name: Option<jolt_java_syntax::JavaSyntaxToken>,
+fn format_catch_type_list<'source>(
+    types: &CatchTypeList<'source>,
+    name: Option<jolt_java_syntax::JavaSyntaxToken<'source>>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let mut entries = types.entries().collect::<Vec<_>>();
     let name = name.map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name));
 
@@ -286,7 +301,9 @@ fn format_catch_type_list(
     ]))
 }
 
-fn format_catch_type_separator(separator: Option<&JavaSyntaxToken>) -> Doc {
+fn format_catch_type_separator<'source>(
+    separator: Option<&JavaSyntaxToken<'source>>,
+) -> Doc<'source> {
     concat([
         line(),
         separator.map_or_else(
@@ -296,11 +313,14 @@ fn format_catch_type_separator(separator: Option<&JavaSyntaxToken>) -> Doc {
     ])
 }
 
-fn format_catch_type(ty: &Type, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_catch_type<'source>(ty: &Type<'source>, formatter: &JavaFormatter<'_>) -> Doc<'source> {
     format_type(ty, formatter)
 }
 
-fn format_finally_clause(clause: &FinallyClause, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_finally_clause<'source>(
+    clause: &FinallyClause<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     concat([
         text(" "),
         format_statement_keyword(clause.keyword(), "finally"),
@@ -311,17 +331,21 @@ fn format_finally_clause(clause: &FinallyClause, formatter: &JavaFormatter<'_>) 
     ])
 }
 
-fn join_resource_lines(resources: Vec<FormattedResource>, trailing_comments: &[Doc]) -> Doc {
+fn join_resource_lines<'source>(
+    resources: Vec<FormattedResource<'source>>,
+    trailing_comments: Vec<Doc<'source>>,
+) -> Doc<'source> {
     let mut joined = Vec::new();
     let resource_count = resources.len();
+    let mut trailing_comments = trailing_comments.into_iter();
     for (index, resource) in resources.into_iter().enumerate() {
         let is_last = index + 1 == resource_count;
 
         joined.push(resource.resource);
         if is_last {
-            for comments in trailing_comments {
+            for comments in trailing_comments.by_ref() {
                 joined.push(hard_line());
-                joined.push(comments.clone());
+                joined.push(comments);
             }
         } else {
             joined.push(format_statement_semicolon(resource.separator));
@@ -331,13 +355,13 @@ fn join_resource_lines(resources: Vec<FormattedResource>, trailing_comments: &[D
     concat(joined)
 }
 
-fn format_removed_resource_separator_comments(separator: &JavaSyntaxToken) -> Option<Doc> {
+fn format_removed_resource_separator_comments<'source>(
+    separator: &JavaSyntaxToken<'source>,
+) -> Option<Doc<'source>> {
     let comments = non_formatter_control_comments(
         separator
             .leading_comments()
-            .into_iter()
-            .chain(separator.trailing_comments())
-            .collect(),
+            .chain(separator.trailing_comments()),
     );
     (!comments.is_empty()).then(|| format_dangling_comments(comments))
 }

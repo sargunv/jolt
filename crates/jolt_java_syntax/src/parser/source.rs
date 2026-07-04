@@ -1,7 +1,9 @@
 use std::ops::Range;
 
 use jolt_diagnostics::{Diagnostic, DiagnosticCode, DiagnosticStage, Severity};
-use jolt_syntax::{CompletedMarker, Event, Marker};
+use jolt_syntax::{
+    CompletedMarker, Event, Marker, SyntaxTokenData, SyntaxTrivia, TriviaKind as SyntaxTriviaKind,
+};
 use jolt_text::{TextRange, TextSize};
 
 use crate::{JavaLexer, JavaSyntaxKind, Trivia, lexer::LexedToken};
@@ -10,17 +12,9 @@ use super::JavaParseDiagnosticCode;
 
 pub(super) struct ParseEvents {
     pub(super) events: Vec<Event>,
-    pub(super) tokens: Vec<ParserToken>,
-    pub(super) trivia: Vec<Trivia>,
+    pub(super) tokens: Vec<SyntaxTokenData>,
+    pub(super) trivia: Vec<SyntaxTrivia>,
     pub(super) diagnostics: Vec<Diagnostic>,
-}
-
-#[derive(Debug, Eq, PartialEq)]
-pub(super) struct ParserToken {
-    pub(super) kind: JavaSyntaxKind,
-    pub(super) range: TextRange,
-    pub(super) leading: Range<usize>,
-    pub(super) trailing: Range<usize>,
 }
 
 pub(super) struct Parser<'source> {
@@ -125,8 +119,7 @@ impl<'source> Parser<'source> {
     }
 
     pub(super) fn text_at(&mut self, index: usize) -> Option<&'source str> {
-        let range = self.buffer.range_at(index)?;
-        Some(source_text(self.source, range))
+        self.buffer.text_at(self.source, index)
     }
 
     pub(super) fn tokens_are_adjacent(&mut self, index: usize, count: usize) -> bool {
@@ -256,25 +249,11 @@ impl TokenCursor {
         Some(source_text(source, range))
     }
 
-    pub(super) fn text_at<'source>(
-        source: &'source str,
-        buffer: &mut TokenBuffer<'source>,
-        index: usize,
-    ) -> Option<&'source str> {
-        let range = buffer.range_at(index)?;
-        Some(source_text(source, range))
-    }
-
     pub(super) fn range(self, buffer: &mut TokenBuffer<'_>) -> Option<TextRange> {
         buffer.range_at(self.pos)
     }
 
     pub(super) fn bump(&mut self, buffer: &mut TokenBuffer<'_>) {
-        buffer.ensure(self.pos);
-        self.pos += 1;
-    }
-
-    pub(super) fn advance(&mut self, buffer: &mut TokenBuffer<'_>) {
         buffer.ensure(self.pos);
         self.pos += 1;
     }
@@ -300,7 +279,7 @@ fn source_text(source: &str, range: TextRange) -> &str {
 
 pub(super) struct TokenBuffer<'source> {
     lexer: JavaLexer<'source>,
-    tokens: Vec<ParserToken>,
+    tokens: Vec<SyntaxTokenData>,
     trivia: Vec<Trivia>,
 }
 
@@ -315,19 +294,30 @@ impl<'source> TokenBuffer<'source> {
 
     fn kind_at(&mut self, index: usize) -> JavaSyntaxKind {
         self.ensure(index);
-        self.tokens
-            .get(index)
-            .map_or(JavaSyntaxKind::Eof, |token| token.kind)
+        self.tokens.get(index).map_or(JavaSyntaxKind::Eof, |token| {
+            JavaSyntaxKind::from_raw(token.raw_kind()).unwrap_or(JavaSyntaxKind::Eof)
+        })
     }
 
     fn range_at(&mut self, index: usize) -> Option<TextRange> {
         self.ensure(index);
-        self.tokens.get(index).map(|token| token.range)
+        self.tokens
+            .get(index)
+            .map(SyntaxTokenData::token_text_range)
+    }
+
+    pub(in crate::parser) fn text_at(
+        &mut self,
+        source: &'source str,
+        index: usize,
+    ) -> Option<&'source str> {
+        let range = self.range_at(index)?;
+        Some(source_text(source, range))
     }
 
     fn last_token_range(&mut self) -> Option<TextRange> {
         self.ensure(0);
-        self.tokens.last().map(|token| token.range)
+        self.tokens.last().map(SyntaxTokenData::token_text_range)
     }
 
     fn tokens_are_adjacent(&mut self, index: usize, count: usize) -> bool {
@@ -344,18 +334,18 @@ impl<'source> TokenBuffer<'source> {
             let [left, right] = window else {
                 return true;
             };
-            left.range.end() == right.range.start()
-                && left.trailing.is_empty()
-                && right.leading.is_empty()
+            left.token_text_range().end() == right.token_text_range().start()
+                && left.trailing().is_empty()
+                && right.leading().is_empty()
         })
     }
 
     fn ensure(&mut self, index: usize) {
         while self.tokens.len() <= index
-            && !self
+            && self
                 .tokens
                 .last()
-                .is_some_and(|token| token.kind == JavaSyntaxKind::Eof)
+                .is_none_or(|token| token.raw_kind() != JavaSyntaxKind::Eof.to_raw())
         {
             let token = self.lexer.next_token_into(&mut self.trivia);
             self.push_token(token);
@@ -398,12 +388,7 @@ impl<'source> TokenBuffer<'source> {
                 );
             }
             _ => {
-                self.tokens.push(ParserToken {
-                    kind: token.kind,
-                    range: token.range,
-                    leading: token.leading,
-                    trailing: token.trailing,
-                });
+                self.push_syntax_token(token.kind, token.range, token.leading, token.trailing);
             }
         }
     }
@@ -413,37 +398,80 @@ impl<'source> TokenBuffer<'source> {
         let last_index = kinds.len().saturating_sub(1);
         for (index, kind) in kinds.iter().copied().enumerate() {
             let token_start = start + TextSize::new(index);
-            self.tokens.push(ParserToken {
+            self.push_syntax_token(
                 kind,
-                range: TextRange::new(token_start, token_start + TextSize::new(1)),
-                leading: if index == 0 {
+                TextRange::new(token_start, token_start + TextSize::new(1)),
+                if index == 0 {
                     token.leading.start..token.leading.end
                 } else {
                     self.empty_trivia()
                 },
-                trailing: if index == last_index {
+                if index == last_index {
                     token.trailing.start..token.trailing.end
                 } else {
                     self.empty_trivia()
                 },
-            });
+            );
         }
+    }
+
+    fn push_syntax_token(
+        &mut self,
+        kind: JavaSyntaxKind,
+        range: TextRange,
+        leading: Range<usize>,
+        trailing: Range<usize>,
+    ) {
+        let text_len =
+            self.trivia_text_len(&leading) + range.len() + self.trivia_text_len(&trailing);
+        self.tokens.push(SyntaxTokenData::new(
+            kind.to_raw(),
+            range,
+            leading,
+            trailing,
+            text_len,
+        ));
+    }
+
+    fn trivia_text_len(&self, range: &Range<usize>) -> TextSize {
+        self.trivia[range.start..range.end]
+            .iter()
+            .fold(TextSize::new(0), |len, trivia| len + trivia.range.len())
     }
 
     fn empty_trivia(&self) -> Range<usize> {
         self.trivia.len()..self.trivia.len()
     }
 
-    fn finish(mut self, committed_len: usize) -> (Vec<ParserToken>, Vec<Trivia>, Vec<Diagnostic>) {
+    fn finish(
+        mut self,
+        committed_len: usize,
+    ) -> (Vec<SyntaxTokenData>, Vec<SyntaxTrivia>, Vec<Diagnostic>) {
         self.tokens.truncate(committed_len.min(self.tokens.len()));
         let trivia_len = self
             .tokens
             .iter()
-            .flat_map(|token| [token.leading.end, token.trailing.end])
+            .flat_map(|token| [token.leading().end, token.trailing().end])
             .max()
             .unwrap_or(0);
         self.trivia.truncate(trivia_len);
+        let trivia = self
+            .trivia
+            .into_iter()
+            .map(|trivia| SyntaxTrivia::new(to_syntax_trivia_kind(trivia.kind), trivia.range.len()))
+            .collect();
         let diagnostics = self.lexer.finish();
-        (self.tokens, self.trivia, diagnostics)
+        (self.tokens, trivia, diagnostics)
+    }
+}
+
+fn to_syntax_trivia_kind(kind: crate::TriviaKind) -> SyntaxTriviaKind {
+    match kind {
+        crate::TriviaKind::Whitespace => SyntaxTriviaKind::Whitespace,
+        crate::TriviaKind::Newline => SyntaxTriviaKind::Newline,
+        crate::TriviaKind::LineComment => SyntaxTriviaKind::LineComment,
+        crate::TriviaKind::BlockComment => SyntaxTriviaKind::BlockComment,
+        crate::TriviaKind::JavadocComment => SyntaxTriviaKind::DocComment,
+        crate::TriviaKind::Ignored => SyntaxTriviaKind::Ignored,
     }
 }

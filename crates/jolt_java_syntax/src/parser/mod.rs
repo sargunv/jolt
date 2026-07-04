@@ -4,22 +4,20 @@ mod tests;
 mod grammar;
 mod source;
 
-use std::fmt;
+use std::{borrow::Cow, fmt};
 
 use jolt_diagnostics::{
     Diagnostic, DiagnosticCode, DiagnosticCodeId, DiagnosticStage, Severity, SyntaxOutcome,
 };
-use jolt_syntax::{
-    SyntaxTokenData, SyntaxTree, SyntaxTrivia, TriviaKind as SyntaxTriviaKind, build_syntax_tree,
-};
+use jolt_syntax::{SyntaxTree, build_syntax_tree};
 
 use crate::{
-    CompilationUnit, Trivia,
+    CompilationUnit,
     lexer::normalize_unicode_escapes,
     nodes::{JavaSyntaxNode, cast_compilation_unit},
 };
 
-use self::source::{Parser, ParserToken};
+use self::source::Parser;
 
 /// Stable Java parser diagnostic codes.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -72,14 +70,14 @@ impl DiagnosticCode for JavaParseDiagnosticCode {
 }
 
 /// The result of parsing Java source text.
-pub struct JavaParse {
-    source: String,
+pub struct JavaParse<'source> {
+    source: Cow<'source, str>,
     tree: Option<SyntaxTree>,
     diagnostics: Vec<Diagnostic>,
     outcome: SyntaxOutcome,
 }
 
-impl JavaParse {
+impl JavaParse<'_> {
     /// Returns the parsed syntax tree root.
     #[must_use]
     pub fn syntax(&self) -> Option<CompilationUnit<'_>> {
@@ -101,7 +99,7 @@ impl JavaParse {
     }
 }
 
-impl fmt::Debug for JavaParse {
+impl fmt::Debug for JavaParse<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "syntax:")?;
         if let Some(syntax) = self.syntax() {
@@ -143,20 +141,19 @@ fn fmt_diagnostic(f: &mut fmt::Formatter<'_>, diagnostic: &Diagnostic) -> fmt::R
 
 /// Parses a Java compilation unit.
 #[must_use]
-pub fn parse_compilation_unit(source: &str) -> JavaParse {
+pub fn parse_compilation_unit(source: &str) -> JavaParse<'_> {
     let (source, mut diagnostics) = normalize_unicode_escapes(source);
     let parse = Parser::new(&source).parse_compilation_unit();
     finish_parse(source, parse, &mut diagnostics)
 }
 
-fn finish_parse(
-    source: String,
+fn finish_parse<'source>(
+    source: Cow<'source, str>,
     parse: source::ParseEvents,
     diagnostics: &mut Vec<Diagnostic>,
-) -> JavaParse {
+) -> JavaParse<'source> {
     diagnostics.extend(parse.diagnostics);
-    let (tokens, trivia) = into_syntax_tokens(parse.tokens, parse.trivia);
-    let tree = match build_syntax_tree(parse.events, tokens, trivia) {
+    let tree = match build_syntax_tree(parse.events, parse.tokens, parse.trivia) {
         Ok(tree) => tree,
         Err(error) => {
             diagnostics.push(invalid_event_stream_diagnostic(&error));
@@ -168,7 +165,7 @@ fn finish_parse(
             };
         }
     };
-    let (tree, parser_diagnostics) = tree.into_parts();
+    let (tree, parser_diagnostics) = tree;
     diagnostics.extend(parser_diagnostics);
     let outcome = if diagnostics.iter().any(diagnostic_affects_syntax_tree) {
         SyntaxOutcome::Recovered
@@ -201,40 +198,5 @@ fn invalid_event_stream_diagnostic(error: &jolt_syntax::BuildSyntaxTreeError) ->
         stage: DiagnosticStage::Parser,
         message: format!("Jolt parser produced an invalid event stream: {error:?}"),
         range: None,
-    }
-}
-
-fn into_syntax_tokens(
-    tokens: Vec<ParserToken>,
-    trivia: Vec<Trivia>,
-) -> (Vec<SyntaxTokenData>, Vec<SyntaxTrivia>) {
-    let syntax_trivia = trivia
-        .into_iter()
-        .map(|trivia| SyntaxTrivia::new(to_syntax_trivia_kind(trivia.kind), trivia.range.len()))
-        .collect::<Vec<_>>();
-    let syntax_tokens = tokens
-        .into_iter()
-        .map(|token| {
-            SyntaxTokenData::new(
-                token.kind.to_raw(),
-                token.range,
-                token.leading,
-                token.trailing,
-                &syntax_trivia,
-            )
-        })
-        .collect();
-
-    (syntax_tokens, syntax_trivia)
-}
-
-fn to_syntax_trivia_kind(kind: crate::TriviaKind) -> SyntaxTriviaKind {
-    match kind {
-        crate::TriviaKind::Whitespace => SyntaxTriviaKind::Whitespace,
-        crate::TriviaKind::Newline => SyntaxTriviaKind::Newline,
-        crate::TriviaKind::LineComment => SyntaxTriviaKind::LineComment,
-        crate::TriviaKind::BlockComment => SyntaxTriviaKind::BlockComment,
-        crate::TriviaKind::JavadocComment => SyntaxTriviaKind::DocComment,
-        crate::TriviaKind::Ignored => SyntaxTriviaKind::Ignored,
     }
 }

@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use jolt_text::{TextRange, TextSize};
 
 use super::{JavaLexDiagnosticCode, LexerDiagnostic, lexer_diagnostic};
@@ -5,8 +7,8 @@ use super::{JavaLexDiagnosticCode, LexerDiagnostic, lexer_diagnostic};
 // Java processes Unicode escapes before tokenization, everywhere in the source.
 // For example, `\u000a` becomes an actual line terminator before string or
 // comment scanning sees it; it is not the same as a string escape like `\n`.
-pub(crate) fn normalize_unicode_escapes(source: &str) -> (String, Vec<LexerDiagnostic>) {
-    let mut normalized = String::with_capacity(source.len());
+pub(crate) fn normalize_unicode_escapes(source: &str) -> (Cow<'_, str>, Vec<LexerDiagnostic>) {
+    let mut normalized = None;
     let mut diagnostics = Vec::new();
     let mut eligibility = UnicodeEscapeEligibility::default();
     let mut offset = 0usize;
@@ -22,11 +24,12 @@ pub(crate) fn normalize_unicode_escapes(source: &str) -> (String, Vec<LexerDiagn
                         parse_unicode_escape(source, first_escape.end_offset)
                     && is_low_surrogate(second_escape.value)
                 {
+                    let normalized = normalized_source(source, &mut normalized, start);
                     let high = first_escape.value - 0xD800;
                     let low = second_escape.value - 0xDC00;
                     let scalar = 0x10000 + ((high << 10) | low);
                     push_char(
-                        &mut normalized,
+                        normalized,
                         &mut eligibility,
                         char::from_u32(scalar).expect("valid surrogate pair scalar value"),
                         true,
@@ -35,8 +38,9 @@ pub(crate) fn normalize_unicode_escapes(source: &str) -> (String, Vec<LexerDiagn
                     continue;
                 }
 
+                let normalized = normalized_source(source, &mut normalized, start);
                 push_char(
-                    &mut normalized,
+                    normalized,
                     &mut eligibility,
                     char::from_u32(first_escape.value).unwrap_or(char::REPLACEMENT_CHARACTER),
                     true,
@@ -46,7 +50,7 @@ pub(crate) fn normalize_unicode_escapes(source: &str) -> (String, Vec<LexerDiagn
             }
 
             let end = malformed_unicode_escape_end(source, start);
-            let normalized_start = normalized.len();
+            let normalized_start = normalized.as_ref().map_or(start, String::len);
             diagnostics.push(lexer_diagnostic(
                 JavaLexDiagnosticCode::MalformedUnicodeEscape,
                 TextRange::new(
@@ -56,11 +60,30 @@ pub(crate) fn normalize_unicode_escapes(source: &str) -> (String, Vec<LexerDiagn
             ));
         }
 
-        push_char(&mut normalized, &mut eligibility, ch, false);
+        if let Some(normalized) = normalized.as_mut() {
+            push_char(normalized, &mut eligibility, ch, false);
+        } else {
+            eligibility.advance(ch, false);
+        }
         offset = end;
     }
 
-    (normalized, diagnostics)
+    match normalized {
+        Some(normalized) => (Cow::Owned(normalized), diagnostics),
+        None => (Cow::Borrowed(source), diagnostics),
+    }
+}
+
+fn normalized_source<'a>(
+    source: &str,
+    normalized: &'a mut Option<String>,
+    changed_at: usize,
+) -> &'a mut String {
+    normalized.get_or_insert_with(|| {
+        let mut text = String::with_capacity(source.len());
+        text.push_str(&source[..changed_at]);
+        text
+    })
 }
 
 #[derive(Default)]

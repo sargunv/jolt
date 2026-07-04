@@ -51,7 +51,7 @@ impl<'tree, L: Language> SyntaxToken<'tree, L> {
 
     /// Returns the token text without attached trivia.
     #[must_use]
-    pub fn text(&self) -> &str {
+    pub fn text(&self) -> &'tree str {
         let range = self.token_text_range();
         &self.source[range.start().get()..range.end().get()]
     }
@@ -76,13 +76,13 @@ impl<'tree, L: Language> SyntaxToken<'tree, L> {
 
     /// Returns trivia attached before this token.
     #[must_use]
-    pub fn leading(&self) -> &[SyntaxTrivia] {
+    pub fn leading(&self) -> &'tree [SyntaxTrivia] {
         self.tree.trivia(&self.tree.token(self.id).leading)
     }
 
     /// Returns trivia attached after this token.
     #[must_use]
-    pub fn trailing(&self) -> &[SyntaxTrivia] {
+    pub fn trailing(&self) -> &'tree [SyntaxTrivia] {
         self.tree.trivia(&self.tree.token(self.id).trailing)
     }
 }

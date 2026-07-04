@@ -8,10 +8,10 @@ use super::{
     relative_token_range_between,
 };
 
-pub(super) fn format_constructor_body(
-    body: &jolt_java_syntax::ConstructorBody,
+pub(super) fn format_constructor_body<'source>(
+    body: &jolt_java_syntax::ConstructorBody<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Option<Doc> {
+) -> Option<Doc<'source>> {
     let elements = constructor_body_elements(body);
     let element_ranges = elements
         .iter()
@@ -19,7 +19,11 @@ pub(super) fn format_constructor_body(
             constructor_body_element_token_range(element, body.text_range().start().get())
         })
         .collect::<Vec<_>>();
-    let ignored_ranges = formatter_ignore_ranges(body.source_text());
+    let ignored_ranges = formatter_ignore_ranges(
+        body.source_text(),
+        body.text_range().start().get(),
+        body.token_iter(),
+    );
     let ignored_runs = formatter_ignore_runs(&ignored_ranges, &element_ranges);
     let mut items = Vec::new();
     items.extend(format_constructor_body_open_dangling_comments(
@@ -68,21 +72,21 @@ pub(super) fn format_constructor_body(
 }
 
 fn format_constructor_body_open_dangling_comments(
-    open: Option<JavaSyntaxToken>,
-) -> Option<BodyItem> {
+    open: Option<JavaSyntaxToken<'_>>,
+) -> Option<BodyItem<'_>> {
     let comments = non_formatter_control_comments(open?.trailing_comments());
     (!comments.is_empty()).then(|| BodyItem::new(format_dangling_comments(comments), false))
 }
 
 fn format_constructor_body_close_dangling_comments(
-    close: Option<JavaSyntaxToken>,
-) -> Option<BodyItem> {
+    close: Option<JavaSyntaxToken<'_>>,
+) -> Option<BodyItem<'_>> {
     let comments = non_formatter_control_comments(close?.leading_comments());
     (!comments.is_empty()).then(|| BodyItem::new(format_dangling_comments(comments), false))
 }
 
 fn constructor_body_elements<'source>(
-    body: &'source jolt_java_syntax::ConstructorBody<'source>,
+    body: &jolt_java_syntax::ConstructorBody<'source>,
 ) -> Vec<ConstructorBodyElement<'source>> {
     body.invocation()
         .into_iter()
@@ -95,7 +99,7 @@ fn constructor_body_elements<'source>(
 }
 
 fn constructor_body_element_token_range(
-    element: &ConstructorBodyElement,
+    element: &ConstructorBodyElement<'_>,
     body_start: usize,
 ) -> Option<Range<usize>> {
     Some(relative_token_range_between(
@@ -105,10 +109,10 @@ fn constructor_body_element_token_range(
     ))
 }
 
-fn format_constructor_body_element(
-    element: &ConstructorBodyElement,
+fn format_constructor_body_element<'source>(
+    element: &ConstructorBodyElement<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Option<BodyItem> {
+) -> Option<BodyItem<'source>> {
     match element {
         ConstructorBodyElement::Invocation(invocation) => Some(BodyItem::new(
             format_constructor_invocation(invocation, formatter),
@@ -120,13 +124,13 @@ fn format_constructor_body_element(
     }
 }
 
-fn format_constructor_invocation(
-    invocation: &ConstructorInvocation,
+fn format_constructor_invocation<'source>(
+    invocation: &ConstructorInvocation<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let invocation_first_token = invocation.first_token();
     concat([
-        format_construct_leading_comments(formatter.comments(), invocation_first_token.as_ref()),
+        format_construct_leading_comments(invocation_first_token.as_ref()),
         format_constructor_invocation_qualifier(invocation, formatter),
         invocation
             .type_arguments()
@@ -141,10 +145,10 @@ fn format_constructor_invocation(
     ])
 }
 
-fn format_constructor_invocation_qualifier(
-    invocation: &ConstructorInvocation,
+fn format_constructor_invocation_qualifier<'source>(
+    invocation: &ConstructorInvocation<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     if let Some(name) = invocation.qualifier_name() {
         return concat([
             format_name(&name),
@@ -172,15 +176,15 @@ enum ConstructorBodyElement<'source> {
     BlockStatement(BlockStatement<'source>),
 }
 
-impl ConstructorBodyElement<'_> {
-    fn first_token(&self) -> Option<jolt_java_syntax::JavaSyntaxToken<'_>> {
+impl<'source> ConstructorBodyElement<'source> {
+    fn first_token(&self) -> Option<jolt_java_syntax::JavaSyntaxToken<'source>> {
         match self {
             Self::Invocation(invocation) => invocation.first_token(),
             Self::BlockStatement(statement) => statement.first_token(),
         }
     }
 
-    fn last_token(&self) -> Option<jolt_java_syntax::JavaSyntaxToken<'_>> {
+    fn last_token(&self) -> Option<jolt_java_syntax::JavaSyntaxToken<'source>> {
         match self {
             Self::Invocation(invocation) => invocation.last_token(),
             Self::BlockStatement(statement) => statement.last_token(),

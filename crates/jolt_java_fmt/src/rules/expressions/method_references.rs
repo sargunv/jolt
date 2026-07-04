@@ -5,10 +5,10 @@ use super::{
     hard_line, text, trailing_comments_force_line,
 };
 
-pub(super) fn format_method_reference_expression(
-    expression: &MethodReferenceExpression,
+pub(super) fn format_method_reference_expression<'source>(
+    expression: &MethodReferenceExpression<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     group(concat([
         format_method_reference_receiver(expression, formatter),
         format_method_reference_separator(expression),
@@ -31,7 +31,9 @@ pub(super) fn format_method_reference_expression(
     ]))
 }
 
-fn format_method_reference_separator(expression: &MethodReferenceExpression) -> Doc {
+fn format_method_reference_separator<'source>(
+    expression: &MethodReferenceExpression<'source>,
+) -> Doc<'source> {
     expression.double_colon().map_or_else(
         || text("::"),
         |separator| {
@@ -52,10 +54,10 @@ fn format_method_reference_separator(expression: &MethodReferenceExpression) -> 
     )
 }
 
-fn format_method_reference_receiver(
-    expression: &MethodReferenceExpression,
+fn format_method_reference_receiver<'source>(
+    expression: &MethodReferenceExpression<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     if let Some(receiver) = expression.receiver_expression() {
         return concat([
             format_expression(&receiver, formatter),

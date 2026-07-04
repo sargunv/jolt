@@ -1,5 +1,5 @@
 // Provides a markerless grammar scanner over the same logical tokens as the parser.
-use super::{JavaSyntaxKind, Parser};
+use super::{JavaSyntaxKind, Parser, type_modifier_len};
 use crate::parser::source::{TokenBuffer, TokenCursor};
 
 impl<'source> Parser<'source> {
@@ -41,6 +41,10 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
         self.cursor.text(self.source, self.buffer)
     }
 
+    fn nth_text(&mut self, n: usize) -> Option<&'source str> {
+        self.buffer.text_at(self.source, self.cursor.position() + n)
+    }
+
     pub(in crate::parser::grammar) fn at(&mut self, kind: JavaSyntaxKind) -> bool {
         self.kind() == kind
     }
@@ -54,7 +58,7 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
     }
 
     pub(in crate::parser::grammar) fn bump(&mut self) {
-        self.cursor.advance(self.buffer);
+        self.cursor.bump(self.buffer);
     }
 
     pub(in crate::parser::grammar) fn eat(&mut self, kind: JavaSyntaxKind) -> bool {
@@ -313,39 +317,18 @@ impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
     }
 
     pub(in crate::parser::grammar) fn at_type_modifier(&mut self) -> bool {
-        matches!(
-            self.kind(),
-            JavaSyntaxKind::PublicKw
-                | JavaSyntaxKind::ProtectedKw
-                | JavaSyntaxKind::PrivateKw
-                | JavaSyntaxKind::AbstractKw
-                | JavaSyntaxKind::StaticKw
-                | JavaSyntaxKind::FinalKw
-                | JavaSyntaxKind::TransientKw
-                | JavaSyntaxKind::VolatileKw
-                | JavaSyntaxKind::SynchronizedKw
-                | JavaSyntaxKind::NativeKw
-                | JavaSyntaxKind::StrictfpKw
-                | JavaSyntaxKind::DefaultKw
-        ) || self.at_contextual("sealed")
-            || (self.at_contextual("non")
-                && self.nth_kind(1) == JavaSyntaxKind::Minus
-                && TokenCursor::text_at(self.source, self.buffer, self.cursor.position() + 2)
-                    == Some("sealed"))
+        self.type_modifier_len().is_some()
     }
 
     fn skip_type_modifier(&mut self) {
-        if self.at_contextual("non")
-            && self.nth_kind(1) == JavaSyntaxKind::Minus
-            && TokenCursor::text_at(self.source, self.buffer, self.cursor.position() + 2)
-                == Some("sealed")
-        {
-            self.bump();
-            self.bump();
-            self.bump();
-        } else {
+        let len = self.type_modifier_len().unwrap_or(1);
+        for _ in 0..len {
             self.bump();
         }
+    }
+
+    fn type_modifier_len(&mut self) -> Option<usize> {
+        type_modifier_len(self.kind(), self.text(), self.nth_kind(1), self.nth_text(2))
     }
 
     pub(in crate::parser::grammar) fn starts_expression(&mut self) -> bool {

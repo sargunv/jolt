@@ -62,17 +62,11 @@ pub enum Severity {
     InternalError,
     /// User source or configuration is invalid.
     Error,
-    /// User-visible warning.
-    Warning,
-    /// User-visible note.
-    Note,
 }
 
 /// Stage that produced a diagnostic.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum DiagnosticStage {
-    /// Configuration loading or validation.
-    Config,
     /// Lexical analysis.
     Lexer,
     /// Parsing.

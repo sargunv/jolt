@@ -5,10 +5,10 @@ use super::{
     inline_modifier_prefix_from_docs, text, token_iter_has_comments,
 };
 
-pub(super) fn format_lambda_expression(
-    expression: &LambdaExpression,
+pub(super) fn format_lambda_expression<'source>(
+    expression: &LambdaExpression<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     concat([
         format_lambda_parameters(expression, formatter),
         format_lambda_arrow(expression),
@@ -23,7 +23,7 @@ pub(super) fn format_lambda_expression(
     ])
 }
 
-fn format_lambda_arrow(expression: &LambdaExpression) -> Doc {
+fn format_lambda_arrow<'source>(expression: &LambdaExpression<'source>) -> Doc<'source> {
     let Some(arrow) = expression.arrow() else {
         return text(" -> ");
     };
@@ -32,8 +32,9 @@ fn format_lambda_arrow(expression: &LambdaExpression) -> Doc {
         return text(" -> ");
     }
 
-    let trailing_comments = arrow.trailing_comments();
-    let forced_line = trailing_comments.iter().any(comment_forces_line);
+    let forced_line = arrow
+        .trailing_comments()
+        .any(|comment| comment_forces_line(&comment));
 
     concat([
         text(" "),
@@ -44,7 +45,10 @@ fn format_lambda_arrow(expression: &LambdaExpression) -> Doc {
     ])
 }
 
-fn format_lambda_parameters(expression: &LambdaExpression, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_lambda_parameters<'source>(
+    expression: &LambdaExpression<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     if let Some(parameter) = expression.concise_parameter()
         && is_simple_untyped_lambda_parameter(&parameter)
     {
@@ -90,7 +94,7 @@ fn format_lambda_parameters(expression: &LambdaExpression, formatter: &JavaForma
         open.as_ref()
             .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
         jolt_fmt_ir::join(
-            text(", "),
+            &text(", "),
             parameters
                 .into_iter()
                 .map(|parameter| format_lambda_parameter(&parameter, formatter)),
@@ -101,7 +105,7 @@ fn format_lambda_parameters(expression: &LambdaExpression, formatter: &JavaForma
     ])
 }
 
-fn is_simple_untyped_lambda_parameter(parameter: &LambdaParameter) -> bool {
+fn is_simple_untyped_lambda_parameter(parameter: &LambdaParameter<'_>) -> bool {
     parameter.ty().is_none()
         && parameter.var_token().is_none()
         && !parameter.is_variable_arity()
@@ -110,7 +114,10 @@ fn is_simple_untyped_lambda_parameter(parameter: &LambdaParameter) -> bool {
         && parameter.modifier_tokens().next().is_none()
 }
 
-fn format_lambda_parameter(parameter: &LambdaParameter, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_lambda_parameter<'source>(
+    parameter: &LambdaParameter<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     let prefix_annotations = parameter
         .prefix_annotations()
         .map(|annotation| format_annotation(&annotation, formatter))

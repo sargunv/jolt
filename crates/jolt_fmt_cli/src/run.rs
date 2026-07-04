@@ -10,9 +10,10 @@ use std::{
     thread,
 };
 
-use jolt_fmt_core::{
-    FormatSinkResult, LineIndex, RenderControl, RenderSink, TextSize, format_source_to_sink,
-};
+use jolt_diagnostics::Diagnostic;
+use jolt_fmt_core::{FormatSinkResult, format_source_to_sink};
+use jolt_fmt_ir::{RenderControl, RenderSink};
+use jolt_text::{LineIndex, TextSize};
 use rayon::prelude::*;
 
 use crate::{
@@ -513,11 +514,7 @@ impl RenderSink for BufferedFileSink<'_> {
     }
 }
 
-fn emit_diagnostics(
-    label: &str,
-    source: &str,
-    diagnostics: &[jolt_fmt_core::Diagnostic],
-) -> Result<(), CliError> {
+fn emit_diagnostics(label: &str, source: &str, diagnostics: &[Diagnostic]) -> Result<(), CliError> {
     let mut stderr = io::stderr().lock();
     let line_index = LineIndex::new(source);
 
@@ -546,11 +543,7 @@ fn emit_diagnostics(
     Ok(())
 }
 
-fn diagnostics_text(
-    label: &str,
-    source: &str,
-    diagnostics: &[jolt_fmt_core::Diagnostic],
-) -> String {
+fn diagnostics_text(label: &str, source: &str, diagnostics: &[Diagnostic]) -> String {
     let mut text = String::new();
     let line_index = LineIndex::new(source);
 

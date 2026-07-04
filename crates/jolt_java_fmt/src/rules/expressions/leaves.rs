@@ -7,10 +7,10 @@ use super::{
     format_void_type, hard_line, text,
 };
 
-pub(super) fn format_literal_expression(
-    expression: &LiteralExpression,
+pub(super) fn format_literal_expression<'source>(
+    expression: &LiteralExpression<'source>,
     leading_comments: LeadingComments,
-) -> Doc {
+) -> Doc<'source> {
     expression
         .literal_token()
         .map_or_else(jolt_fmt_ir::nil, |token| {
@@ -18,11 +18,11 @@ pub(super) fn format_literal_expression(
         })
 }
 
-pub(super) fn format_name_expression(
-    expression: &NameExpression,
+pub(super) fn format_name_expression<'source>(
+    expression: &NameExpression<'source>,
     leading_comments: LeadingComments,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let annotations = expression
         .annotations()
         .map(|annotation| format_annotation(&annotation, formatter))
@@ -34,15 +34,15 @@ pub(super) fn format_name_expression(
     if annotations.is_empty() {
         name
     } else {
-        concat([jolt_fmt_ir::join(text(" "), annotations), text(" "), name])
+        concat([jolt_fmt_ir::join(&text(" "), annotations), text(" "), name])
     }
 }
 
-pub(super) fn format_this_expression(
-    expression: &ThisExpression,
+pub(super) fn format_this_expression<'source>(
+    expression: &ThisExpression<'source>,
     leading_comments: LeadingComments,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let dot = expression.dot_token();
 
     format_qualified_keyword_expression(
@@ -56,11 +56,11 @@ pub(super) fn format_this_expression(
     )
 }
 
-pub(super) fn format_super_expression(
-    expression: &SuperExpression,
+pub(super) fn format_super_expression<'source>(
+    expression: &SuperExpression<'source>,
     leading_comments: LeadingComments,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let dot = expression.dot_token();
 
     format_qualified_keyword_expression(
@@ -74,12 +74,12 @@ pub(super) fn format_super_expression(
     )
 }
 
-fn format_qualified_keyword_expression(
-    qualifier: Option<Expression>,
-    dot: Option<&JavaSyntaxToken>,
-    keyword: Doc,
+fn format_qualified_keyword_expression<'source>(
+    qualifier: Option<Expression<'source>>,
+    dot: Option<&JavaSyntaxToken<'source>>,
+    keyword: Doc<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     match qualifier {
         Some(qualifier) => concat([
             format_expression(&qualifier, formatter),
@@ -90,10 +90,10 @@ fn format_qualified_keyword_expression(
     }
 }
 
-pub(super) fn format_leaf_token(
-    token: &jolt_java_syntax::JavaSyntaxToken,
+pub(super) fn format_leaf_token<'source>(
+    token: &jolt_java_syntax::JavaSyntaxToken<'source>,
     leading_comments: LeadingComments,
-) -> Doc {
+) -> Doc<'source> {
     match leading_comments {
         LeadingComments::Preserve => {
             format_token(token, LeadingTrivia::Preserve, TrailingTrivia::Preserve)
@@ -104,10 +104,10 @@ pub(super) fn format_leaf_token(
     }
 }
 
-pub(super) fn format_class_literal_expression(
-    expression: &ClassLiteralExpression,
+pub(super) fn format_class_literal_expression<'source>(
+    expression: &ClassLiteralExpression<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let target = expression.target_expression().map_or_else(
         || {
             expression.void_type().map_or_else(
@@ -143,7 +143,7 @@ pub(super) fn format_class_literal_expression(
     ])
 }
 
-fn format_class_literal_dot(dot: &JavaSyntaxToken) -> Doc {
+fn format_class_literal_dot<'source>(dot: &JavaSyntaxToken<'source>) -> Doc<'source> {
     concat([
         format_token_with_inline_leading_comments(
             dot,
@@ -152,8 +152,7 @@ fn format_class_literal_dot(dot: &JavaSyntaxToken) -> Doc {
         ),
         if dot
             .trailing_comments()
-            .iter()
-            .any(super::comment_forces_line)
+            .any(|comment| super::comment_forces_line(&comment))
         {
             hard_line()
         } else if dot.trailing_comments().is_empty() {

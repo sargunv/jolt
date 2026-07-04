@@ -1,5 +1,5 @@
 // Contains shallow token checks that do not need full grammar lookahead.
-use super::{JavaSyntaxKind, Parser};
+use super::{JavaSyntaxKind, Parser, type_modifier_len};
 
 impl Parser<'_> {
     pub(in crate::parser::grammar) fn at_type_modifier(&mut self) -> bool {
@@ -7,35 +7,11 @@ impl Parser<'_> {
     }
 
     pub(in crate::parser::grammar) fn is_type_modifier_at(&mut self, index: usize) -> bool {
-        matches!(
-            self.kind_at(index),
-            JavaSyntaxKind::PublicKw
-                | JavaSyntaxKind::ProtectedKw
-                | JavaSyntaxKind::PrivateKw
-                | JavaSyntaxKind::AbstractKw
-                | JavaSyntaxKind::StaticKw
-                | JavaSyntaxKind::FinalKw
-                | JavaSyntaxKind::TransientKw
-                | JavaSyntaxKind::VolatileKw
-                | JavaSyntaxKind::SynchronizedKw
-                | JavaSyntaxKind::NativeKw
-                | JavaSyntaxKind::StrictfpKw
-                | JavaSyntaxKind::DefaultKw
-        ) || self.text_at(index) == Some("sealed")
-            || (self.text_at(index) == Some("non")
-                && self.kind_at(index + 1) == JavaSyntaxKind::Minus
-                && self.text_at(index + 2) == Some("sealed"))
+        self.type_modifier_len_at(index).is_some()
     }
 
     pub(in crate::parser::grammar) fn skip_type_modifier_at(&mut self, index: usize) -> usize {
-        if self.text_at(index) == Some("non")
-            && self.kind_at(index + 1) == JavaSyntaxKind::Minus
-            && self.text_at(index + 2) == Some("sealed")
-        {
-            index + 3
-        } else {
-            index + 1
-        }
+        index + self.type_modifier_len_at(index).unwrap_or(1)
     }
 
     pub(in crate::parser::grammar) fn bump_type_modifier(&mut self) {
@@ -43,6 +19,15 @@ impl Parser<'_> {
         while self.position() < next {
             self.bump();
         }
+    }
+
+    fn type_modifier_len_at(&mut self, index: usize) -> Option<usize> {
+        type_modifier_len(
+            self.kind_at(index),
+            self.text_at(index),
+            self.kind_at(index + 1),
+            self.text_at(index + 2),
+        )
     }
 
     pub(in crate::parser::grammar) fn at_name_segment(&mut self) -> bool {

@@ -99,22 +99,38 @@ impl SyntaxTokenData {
         token_text_range: TextRange,
         leading: Range<usize>,
         trailing: Range<usize>,
-        trivia: &[SyntaxTrivia],
+        text_len: TextSize,
     ) -> Self {
-        let leading_len = trivia_text_len(&trivia[leading.start..leading.end]);
-        let trailing_len = trivia_text_len(&trivia[trailing.start..trailing.end]);
-        let token_text_len = token_text_range.len();
-
         Self {
             kind,
             token_text_range,
-            text_len: leading_len + token_text_len + trailing_len,
+            text_len,
             leading,
             trailing,
             parent: None,
             offset: TextSize::new(0),
             index: 0,
         }
+    }
+
+    #[must_use]
+    pub const fn raw_kind(&self) -> RawSyntaxKind {
+        self.kind
+    }
+
+    #[must_use]
+    pub const fn token_text_range(&self) -> TextRange {
+        self.token_text_range
+    }
+
+    #[must_use]
+    pub fn leading(&self) -> &Range<usize> {
+        &self.leading
+    }
+
+    #[must_use]
+    pub fn trailing(&self) -> &Range<usize> {
+        &self.trailing
     }
 }
 
@@ -174,25 +190,6 @@ impl SyntaxTree {
     }
 }
 
-/// A syntax tree and parser diagnostics collected while building it.
-#[derive(Debug, Eq, PartialEq)]
-pub struct BuiltSyntaxTree {
-    tree: SyntaxTree,
-    diagnostics: Vec<Diagnostic>,
-}
-
-impl BuiltSyntaxTree {
-    #[must_use]
-    const fn new(tree: SyntaxTree, diagnostics: Vec<Diagnostic>) -> Self {
-        Self { tree, diagnostics }
-    }
-
-    #[must_use]
-    pub fn into_parts(self) -> (SyntaxTree, Vec<Diagnostic>) {
-        (self.tree, self.diagnostics)
-    }
-}
-
 /// An event-to-tree construction error.
 #[derive(Debug, Eq, PartialEq)]
 pub enum BuildSyntaxTreeError {
@@ -219,7 +216,7 @@ pub fn build_syntax_tree(
     events: Vec<Event>,
     tokens: Vec<SyntaxTokenData>,
     trivia: Vec<SyntaxTrivia>,
-) -> Result<BuiltSyntaxTree, BuildSyntaxTreeError> {
+) -> Result<(SyntaxTree, Vec<Diagnostic>), BuildSyntaxTreeError> {
     let builder = SyntaxTreeBuilder {
         nodes: Vec::new(),
         children: Vec::new(),
@@ -248,7 +245,10 @@ struct SyntaxTreeBuilder {
 }
 
 impl SyntaxTreeBuilder {
-    fn build(mut self, mut events: Vec<Event>) -> Result<BuiltSyntaxTree, BuildSyntaxTreeError> {
+    fn build(
+        mut self,
+        mut events: Vec<Event>,
+    ) -> Result<(SyntaxTree, Vec<Diagnostic>), BuildSyntaxTreeError> {
         let mut event_index = 0;
 
         while event_index < events.len() {
@@ -312,7 +312,7 @@ impl SyntaxTreeBuilder {
         };
         assign_layout(&mut tree, root, None, TextSize::new(0), 0);
 
-        Ok(BuiltSyntaxTree::new(tree, self.diagnostics))
+        Ok((tree, self.diagnostics))
     }
 
     fn push_token(&mut self) -> Result<(), BuildSyntaxTreeError> {
@@ -458,8 +458,4 @@ fn start_node_kinds(
     }
 
     Ok(kinds)
-}
-
-fn trivia_text_len(trivia: &[SyntaxTrivia]) -> TextSize {
-    TextSize::new(trivia.iter().map(|piece| piece.text_len().get()).sum())
 }

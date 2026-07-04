@@ -6,7 +6,7 @@ use crate::helpers::comments::{
     format_token_text, format_token_with_comments,
 };
 
-pub(crate) fn format_name(name: &NameSyntax) -> Doc {
+pub(crate) fn format_name<'source>(name: &NameSyntax<'source>) -> Doc<'source> {
     let segments = name.segments_with_annotations().collect::<Vec<_>>();
     if segments_have_line_comments(&segments) {
         return format_multiline_name(segments);
@@ -16,28 +16,28 @@ pub(crate) fn format_name(name: &NameSyntax) -> Doc {
     }
 
     jolt_fmt_ir::join(
-        text("."),
+        &text("."),
         segments
             .into_iter()
             .map(|segment| format_token_with_comments(&segment.identifier)),
     )
 }
 
-pub(crate) fn name_key(name: &NameSyntax) -> String {
+pub(crate) fn name_key(name: &NameSyntax<'_>) -> String {
     name.segments()
         .map(|segment| segment.text().to_owned())
         .collect::<Vec<_>>()
         .join(".")
 }
 
-fn segments_have_comments(segments: &[NameSegment]) -> bool {
+fn segments_have_comments(segments: &[NameSegment<'_>]) -> bool {
     segments.iter().any(|segment| {
         token_has_comments(&segment.identifier)
             || segment.dot_before.as_ref().is_some_and(token_has_comments)
     })
 }
 
-fn segments_have_line_comments(segments: &[NameSegment]) -> bool {
+fn segments_have_line_comments(segments: &[NameSegment<'_>]) -> bool {
     segments.iter().any(|segment| {
         token_has_line_comments(&segment.identifier)
             || segment
@@ -47,19 +47,18 @@ fn segments_have_line_comments(segments: &[NameSegment]) -> bool {
     })
 }
 
-fn token_has_line_comments(token: &JavaSyntaxToken) -> bool {
+fn token_has_line_comments(token: &JavaSyntaxToken<'_>) -> bool {
     token
         .leading_comments()
-        .iter()
-        .chain(token.trailing_comments().iter())
-        .any(comment_forces_line)
+        .chain(token.trailing_comments())
+        .any(|comment| comment_forces_line(&comment))
 }
 
-fn token_has_comments(token: &JavaSyntaxToken) -> bool {
+fn token_has_comments(token: &JavaSyntaxToken<'_>) -> bool {
     !token.leading_comments().is_empty() || !token.trailing_comments().is_empty()
 }
 
-fn format_inline_name(segments: &[NameSegment]) -> Doc {
+fn format_inline_name<'source>(segments: &[NameSegment<'source>]) -> Doc<'source> {
     let mut docs = Vec::new();
     let segments_len = segments.len();
     for (index, segment) in segments.iter().enumerate() {
@@ -79,7 +78,7 @@ fn format_inline_name(segments: &[NameSegment]) -> Doc {
     concat(docs)
 }
 
-fn format_multiline_name(segments: Vec<NameSegment>) -> Doc {
+fn format_multiline_name(segments: Vec<NameSegment<'_>>) -> Doc<'_> {
     let mut segments = segments.into_iter();
     let Some(first) = segments.next() else {
         return jolt_fmt_ir::nil();
@@ -92,7 +91,7 @@ fn format_multiline_name(segments: Vec<NameSegment>) -> Doc {
     concat([format_name_segment_identifier(&first), indent(concat(rest))])
 }
 
-fn format_leading_dot_segment(segment: &NameSegment) -> Doc {
+fn format_leading_dot_segment<'source>(segment: &NameSegment<'source>) -> Doc<'source> {
     concat([
         segment
             .dot_before
@@ -102,7 +101,7 @@ fn format_leading_dot_segment(segment: &NameSegment) -> Doc {
     ])
 }
 
-fn format_name_dot(dot: &JavaSyntaxToken) -> Doc {
+fn format_name_dot<'source>(dot: &JavaSyntaxToken<'source>) -> Doc<'source> {
     concat([
         format_leading_dot_comments(dot.leading_comments()),
         format_token_text(dot.text()),
@@ -110,7 +109,7 @@ fn format_name_dot(dot: &JavaSyntaxToken) -> Doc {
     ])
 }
 
-fn format_name_segment_identifier(segment: &NameSegment) -> Doc {
+fn format_name_segment_identifier<'source>(segment: &NameSegment<'source>) -> Doc<'source> {
     format_token(
         &segment.identifier,
         LeadingTrivia::Preserve,
@@ -118,7 +117,10 @@ fn format_name_segment_identifier(segment: &NameSegment) -> Doc {
     )
 }
 
-fn format_inline_name_segment_identifier(segment: &NameSegment, followed_by_dot: bool) -> Doc {
+fn format_inline_name_segment_identifier<'source>(
+    segment: &NameSegment<'source>,
+    followed_by_dot: bool,
+) -> Doc<'source> {
     concat([
         format_inline_comments(segment.identifier.leading_comments()),
         format_token_text(segment.identifier.text()),
@@ -130,7 +132,9 @@ fn format_inline_name_segment_identifier(segment: &NameSegment, followed_by_dot:
     ])
 }
 
-fn format_leading_dot_comments(comments: Vec<JavaComment>) -> Doc {
+fn format_leading_dot_comments<'source>(
+    comments: impl IntoIterator<Item = JavaComment<'source>>,
+) -> Doc<'source> {
     let mut docs = Vec::new();
     for comment in comments {
         docs.push(text(" "));
@@ -142,7 +146,9 @@ fn format_leading_dot_comments(comments: Vec<JavaComment>) -> Doc {
     concat(docs)
 }
 
-fn format_inline_comments(comments: Vec<JavaComment>) -> Doc {
+fn format_inline_comments<'source>(
+    comments: impl IntoIterator<Item = JavaComment<'source>>,
+) -> Doc<'source> {
     let mut docs = Vec::new();
     for comment in comments {
         docs.push(text(" "));

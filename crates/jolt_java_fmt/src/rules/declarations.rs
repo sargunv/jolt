@@ -68,10 +68,10 @@ use type_declarations::{
     format_interface_declaration, format_record_declaration,
 };
 
-pub(crate) fn format_type_declaration(
-    declaration: &TypeDeclaration,
+pub(crate) fn format_type_declaration<'source>(
+    declaration: &TypeDeclaration<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     match declaration {
         TypeDeclaration::ClassDeclaration(class) => format_class_declaration(class, formatter),
         TypeDeclaration::InterfaceDeclaration(interface) => {
@@ -85,6 +85,9 @@ pub(crate) fn format_type_declaration(
     }
 }
 
-pub(crate) fn format_anonymous_class_body(body: &ClassBody, formatter: &JavaFormatter<'_>) -> Doc {
+pub(crate) fn format_anonymous_class_body<'source>(
+    body: &ClassBody<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     braced_body(format_class_body(body, formatter))
 }

@@ -5,16 +5,14 @@ use jolt_text::TextRange;
 
 use crate::JavaSyntaxKind;
 
-/// Trivia attached to a token.
 #[derive(Debug, Eq, PartialEq)]
-pub struct Trivia {
-    pub kind: TriviaKind,
-    pub range: TextRange,
+pub(crate) struct Trivia {
+    pub(crate) kind: TriviaKind,
+    pub(crate) range: TextRange,
 }
 
-/// The kind of trivia attached to a token.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub enum TriviaKind {
+pub(crate) enum TriviaKind {
     Whitespace,
     Newline,
     LineComment,
@@ -23,13 +21,13 @@ pub enum TriviaKind {
     Ignored,
 }
 
-/// A lexed Java token with attached trivia and raw source range.
 #[derive(Debug, Eq, PartialEq)]
-pub struct Token {
-    pub kind: JavaSyntaxKind,
-    pub range: TextRange,
-    pub leading: Vec<Trivia>,
-    pub trailing: Vec<Trivia>,
+#[cfg(test)]
+pub(crate) struct Token {
+    pub(crate) kind: JavaSyntaxKind,
+    pub(crate) range: TextRange,
+    pub(crate) leading: Vec<Trivia>,
+    pub(crate) trailing: Vec<Trivia>,
 }
 
 /// A lexed token whose trivia lives in a caller-owned buffer.

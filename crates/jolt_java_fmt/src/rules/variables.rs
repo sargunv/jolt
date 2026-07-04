@@ -22,13 +22,13 @@ use crate::rules::types::{
     format_array_dimensions, format_type, format_type_without_leading_comments,
 };
 
-pub(crate) fn format_field_declaration(
-    field: &FieldDeclaration,
+pub(crate) fn format_field_declaration<'source>(
+    field: &FieldDeclaration<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let modifiers = format_typed_modifier_prefix(field.modifiers(), formatter);
     let declaration_prefix = concat([
-        format_construct_leading_comments(formatter.comments(), field.first_token().as_ref()),
+        format_construct_leading_comments(field.first_token().as_ref()),
         modifiers.declaration_prefix,
     ]);
     let ty = field.ty().map_or_else(jolt_fmt_ir::nil, |ty| {
@@ -62,10 +62,10 @@ pub(crate) fn format_field_declaration(
     ])
 }
 
-pub(crate) fn format_local_variable_declaration(
-    declaration: &LocalVariableDeclaration,
+pub(crate) fn format_local_variable_declaration<'source>(
+    declaration: &LocalVariableDeclaration<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let modifiers = format_typed_modifier_prefix_from_token_split_parts(
         declaration.declaration_annotations().collect(),
         declaration.type_use_annotations_after_modifiers().collect(),
@@ -97,16 +97,13 @@ pub(crate) fn format_local_variable_declaration(
     ])
 }
 
-pub(crate) fn format_formal_parameter(
-    parameter: &FormalParameter,
+pub(crate) fn format_formal_parameter<'source>(
+    parameter: &FormalParameter<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     format_named_typed_declaration(
         concat([
-            format_construct_leading_comments(
-                formatter.comments(),
-                parameter.first_token().as_ref(),
-            ),
+            format_construct_leading_comments(parameter.first_token().as_ref()),
             inline_modifier_prefix_from_docs(
                 format_construct_prefix_annotations(parameter.prefix_annotations(), formatter),
                 parameter.modifier_tokens().collect(),
@@ -131,16 +128,13 @@ pub(crate) fn format_formal_parameter(
     )
 }
 
-pub(crate) fn format_record_component(
-    component: &RecordComponent,
+pub(crate) fn format_record_component<'source>(
+    component: &RecordComponent<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     format_named_typed_declaration(
         concat([
-            format_construct_leading_comments(
-                formatter.comments(),
-                component.first_token().as_ref(),
-            ),
+            format_construct_leading_comments(component.first_token().as_ref()),
             inline_modifier_prefix_from_docs(
                 format_construct_prefix_annotations(component.prefix_annotations(), formatter),
                 component.modifier_tokens().collect(),
@@ -165,12 +159,12 @@ pub(crate) fn format_record_component(
     )
 }
 
-pub(crate) fn format_receiver_parameter(
-    parameter: &ReceiverParameter,
+pub(crate) fn format_receiver_parameter<'source>(
+    parameter: &ReceiverParameter<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     concat([
-        format_construct_leading_comments(formatter.comments(), parameter.first_token().as_ref()),
+        format_construct_leading_comments(parameter.first_token().as_ref()),
         inline_modifier_prefix_from_docs(
             format_construct_prefix_annotations(parameter.annotations(), formatter),
             Vec::new(),
@@ -206,7 +200,7 @@ pub(crate) fn format_receiver_parameter(
 fn format_construct_prefix_annotations<'source>(
     annotations: impl Iterator<Item = jolt_java_syntax::Annotation<'source>>,
     formatter: &JavaFormatter<'_>,
-) -> Vec<Doc> {
+) -> Vec<Doc<'source>> {
     annotations
         .enumerate()
         .map(|(index, annotation)| {
@@ -219,14 +213,14 @@ fn format_construct_prefix_annotations<'source>(
         .collect()
 }
 
-fn format_named_typed_declaration(
-    modifiers: Doc,
-    ty: Doc,
-    varargs_annotations: Vec<Doc>,
-    name: Doc,
-    dimensions: Doc,
-    ellipsis: Option<&jolt_java_syntax::JavaSyntaxToken>,
-) -> Doc {
+fn format_named_typed_declaration<'source>(
+    modifiers: Doc<'source>,
+    ty: Doc<'source>,
+    varargs_annotations: Vec<Doc<'source>>,
+    name: Doc<'source>,
+    dimensions: Doc<'source>,
+    ellipsis: Option<&jolt_java_syntax::JavaSyntaxToken<'source>>,
+) -> Doc<'source> {
     let has_varargs_annotations = !varargs_annotations.is_empty();
     let name = concat([
         if let Some(ellipsis) = ellipsis {
@@ -258,10 +252,10 @@ fn format_named_typed_declaration(
     concat([modifiers, ty, type_name_separator, name])
 }
 
-fn local_variable_type(
-    declaration: &LocalVariableDeclaration,
+fn local_variable_type<'source>(
+    declaration: &LocalVariableDeclaration<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     declaration.ty().map_or_else(
         || {
             declaration
@@ -272,10 +266,10 @@ fn local_variable_type(
     )
 }
 
-fn format_variable_declarator_list(
-    declarators: &VariableDeclaratorList,
+fn format_variable_declarator_list<'source>(
+    declarators: &VariableDeclaratorList<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     group(concat(
         declarators
             .entries()
@@ -285,7 +279,7 @@ fn format_variable_declarator_list(
 }
 
 fn single_declarator<'source>(
-    declarators: &'source VariableDeclaratorList<'source>,
+    declarators: &VariableDeclaratorList<'source>,
 ) -> Option<VariableDeclarator<'source>> {
     let mut entries = declarators.entries();
     let entry = entries.next()?;
@@ -296,11 +290,11 @@ fn single_declarator<'source>(
     Some(entry.declarator)
 }
 
-fn format_single_variable_declaration(
-    typed_prefix: Doc,
-    declarator: &VariableDeclarator,
+fn format_single_variable_declaration<'source>(
+    typed_prefix: Doc<'source>,
+    declarator: &VariableDeclarator<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let name = format_variable_declarator_name_and_dimensions(declarator, formatter);
     let Some(initializer) = declarator.initializer() else {
         return concat([typed_prefix, text(" "), name]);
@@ -316,10 +310,10 @@ fn format_single_variable_declaration(
     ])
 }
 
-fn format_variable_declarator_entry(
-    entry: &VariableDeclaratorEntry,
+fn format_variable_declarator_entry<'source>(
+    entry: &VariableDeclaratorEntry<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     concat([
         format_variable_declarator(&entry.declarator, formatter),
         entry.comma.map_or_else(jolt_fmt_ir::nil, |comma| {
@@ -333,10 +327,10 @@ fn format_variable_declarator_entry(
     ])
 }
 
-fn format_variable_declarator(
-    declarator: &VariableDeclarator,
+fn format_variable_declarator<'source>(
+    declarator: &VariableDeclarator<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     group(concat([
         format_variable_declarator_name_and_dimensions(declarator, formatter),
         declarator
@@ -347,10 +341,10 @@ fn format_variable_declarator(
     ]))
 }
 
-fn format_variable_declarator_name_and_dimensions(
-    declarator: &VariableDeclarator,
+fn format_variable_declarator_name_and_dimensions<'source>(
+    declarator: &VariableDeclarator<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     concat([
         declarator
             .name()
@@ -363,7 +357,9 @@ fn format_variable_declarator_name_and_dimensions(
     ])
 }
 
-fn format_name_after_type_token(name: &jolt_java_syntax::JavaSyntaxToken) -> Doc {
+fn format_name_after_type_token<'source>(
+    name: &jolt_java_syntax::JavaSyntaxToken<'source>,
+) -> Doc<'source> {
     format_token_with_inline_leading_comments(
         name,
         InlineLeadingTrivia::BeforeToken,
@@ -371,10 +367,10 @@ fn format_name_after_type_token(name: &jolt_java_syntax::JavaSyntaxToken) -> Doc
     )
 }
 
-fn format_variable_initializer_split(
-    initializer: &VariableInitializer,
+fn format_variable_initializer_split<'source>(
+    initializer: &VariableInitializer<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let Some(value) = initializer.value() else {
         return text(" =");
     };
@@ -389,17 +385,19 @@ fn format_variable_initializer_split(
     ])
 }
 
-fn format_variable_initializer_operator(initializer: &VariableInitializer) -> Doc {
+fn format_variable_initializer_operator<'source>(
+    initializer: &VariableInitializer<'source>,
+) -> Doc<'source> {
     initializer.operator().map_or_else(
         || text("="),
         |operator| format_token_with_comments(&operator),
     )
 }
 
-fn format_variable_initializer_value_separator(
-    initializer: &VariableInitializer,
-    value: &jolt_java_syntax::VariableInitializerValue,
-) -> Doc {
+fn format_variable_initializer_value_separator<'source>(
+    initializer: &VariableInitializer<'source>,
+    value: &jolt_java_syntax::VariableInitializerValue<'source>,
+) -> Doc<'source> {
     if initializer_operator_trailing_comments_force_line(initializer) {
         jolt_fmt_ir::nil()
     } else if initializer_value_has_leading_comments(value) {
@@ -409,14 +407,18 @@ fn format_variable_initializer_value_separator(
     }
 }
 
-fn initializer_operator_trailing_comments_force_line(initializer: &VariableInitializer) -> bool {
-    initializer
-        .operator()
-        .is_some_and(|operator| operator.trailing_comments().iter().any(comment_forces_line))
+fn initializer_operator_trailing_comments_force_line(
+    initializer: &VariableInitializer<'_>,
+) -> bool {
+    initializer.operator().is_some_and(|operator| {
+        operator
+            .trailing_comments()
+            .any(|comment| comment_forces_line(&comment))
+    })
 }
 
 fn initializer_value_has_leading_comments(
-    value: &jolt_java_syntax::VariableInitializerValue,
+    value: &jolt_java_syntax::VariableInitializerValue<'_>,
 ) -> bool {
     value
         .first_token()

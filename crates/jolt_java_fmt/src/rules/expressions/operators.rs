@@ -7,10 +7,10 @@ use crate::helpers::comments::{comment_forces_line, format_comment, token_has_co
 use jolt_fmt_ir::{force_group, group, indent, line};
 use jolt_java_syntax::{ExpressionParentRole, JavaOperator};
 
-pub(super) fn format_assignment_expression(
-    expression: &AssignmentExpression,
+pub(super) fn format_assignment_expression<'source>(
+    expression: &AssignmentExpression<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     assignment_expression(
         expression
             .left()
@@ -26,10 +26,10 @@ pub(super) fn format_assignment_expression(
     )
 }
 
-pub(super) fn format_conditional_expression(
-    expression: &ConditionalExpression,
+pub(super) fn format_conditional_expression<'source>(
+    expression: &ConditionalExpression<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     ternary_expression(
         expression
             .condition()
@@ -56,25 +56,23 @@ pub(super) fn format_conditional_expression(
     )
 }
 
-pub(super) fn format_binary_expression(
-    expression: &BinaryExpression,
+pub(super) fn format_binary_expression<'source>(
+    expression: &BinaryExpression<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
-    let parent_operator = expression
-        .operator()
-        .map(|operator| operator.text().to_owned());
+) -> Doc<'source> {
+    let parent_operator = expression.operator().map(|operator| operator.text());
     let (first, rest) = flatten_binary_expression(expression, formatter);
-    let first = parent_operator.as_deref().map_or_else(
+    let first = parent_operator.map_or_else(
         || format_expression(&first, formatter),
         |operator| format_binary_operand(&first, operator, formatter),
     );
     binary_chain(first, rest)
 }
 
-pub(super) fn format_unary_expression(
-    expression: &UnaryExpression,
+pub(super) fn format_unary_expression<'source>(
+    expression: &UnaryExpression<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     concat([
         expression
             .operator()
@@ -89,10 +87,10 @@ pub(super) fn format_unary_expression(
     ])
 }
 
-pub(super) fn format_postfix_expression(
-    expression: &PostfixExpression,
+pub(super) fn format_postfix_expression<'source>(
+    expression: &PostfixExpression<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     concat([
         expression
             .operand()
@@ -108,9 +106,9 @@ pub(super) fn format_postfix_expression(
 }
 
 fn flatten_binary_expression<'source>(
-    expression: &'source BinaryExpression<'source>,
+    expression: &BinaryExpression<'source>,
     formatter: &JavaFormatter<'_>,
-) -> (Expression<'source>, Vec<(Doc, Doc)>) {
+) -> (Expression<'source>, Vec<(Doc<'source>, Doc<'source>)>) {
     let Some(operator) = expression.operator() else {
         return (
             expression
@@ -147,11 +145,11 @@ fn flatten_binary_expression<'source>(
     (first, rest)
 }
 
-fn format_binary_operand(
-    expression: &Expression,
+fn format_binary_operand<'source>(
+    expression: &Expression<'source>,
     parent_operator: &str,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let doc = format_expression(expression, formatter);
     if should_parenthesize_binary_operand(expression, parent_operator) {
         jolt_fmt_ir::group(concat([
@@ -166,10 +164,10 @@ fn format_binary_operand(
 }
 
 fn unflattened_binary_expression<'source>(
-    expression: &'source BinaryExpression<'source>,
+    expression: &BinaryExpression<'source>,
     formatter: &JavaFormatter<'_>,
     operator: &JavaOperator<'source>,
-) -> (Expression<'source>, Vec<(Doc, Doc)>) {
+) -> (Expression<'source>, Vec<(Doc<'source>, Doc<'source>)>) {
     (
         expression
             .left()
@@ -249,7 +247,7 @@ fn binary_for_chain(expression: Expression<'_>) -> Option<BinaryExpression<'_>> 
     }
 }
 
-fn format_operator_with_comments(operator: &JavaOperator) -> Doc {
+fn format_operator_with_comments<'source>(operator: &JavaOperator<'source>) -> Doc<'source> {
     if let Some(token) = operator.as_single_token() {
         return format_token_with_comments(token);
     }
@@ -261,7 +259,7 @@ fn format_operator_with_comments(operator: &JavaOperator) -> Doc {
     ])
 }
 
-fn format_operator_leading_comments(operator: &JavaOperator) -> Doc {
+fn format_operator_leading_comments<'source>(operator: &JavaOperator<'source>) -> Doc<'source> {
     let mut docs = Vec::new();
     for comment in operator.leading_comments() {
         docs.push(format_comment(&comment));
@@ -270,7 +268,7 @@ fn format_operator_leading_comments(operator: &JavaOperator) -> Doc {
     concat(docs)
 }
 
-fn format_operator_trailing_comments(operator: &JavaOperator) -> Doc {
+fn format_operator_trailing_comments<'source>(operator: &JavaOperator<'source>) -> Doc<'source> {
     let mut docs = Vec::new();
     for comment in operator.trailing_comments() {
         docs.push(text(" "));
@@ -282,15 +280,22 @@ fn format_operator_trailing_comments(operator: &JavaOperator) -> Doc {
     concat(docs)
 }
 
-fn assignment_expression(left: Doc, operator: Doc, right: Doc) -> Doc {
+fn assignment_expression<'source>(
+    left: Doc<'source>,
+    operator: Doc<'source>,
+    right: Doc<'source>,
+) -> Doc<'source> {
     group(concat([left, text(" "), operator, assignment_rhs(right)]))
 }
 
-fn assignment_rhs(right: Doc) -> Doc {
+fn assignment_rhs(right: Doc<'_>) -> Doc<'_> {
     indent(concat([line(), right]))
 }
 
-fn binary_chain(first: Doc, rest: Vec<(Doc, Doc)>) -> Doc {
+fn binary_chain<'source>(
+    first: Doc<'source>,
+    rest: Vec<(Doc<'source>, Doc<'source>)>,
+) -> Doc<'source> {
     if rest.is_empty() {
         return first;
     }
@@ -303,14 +308,14 @@ fn binary_chain(first: Doc, rest: Vec<(Doc, Doc)>) -> Doc {
     ]))
 }
 
-fn ternary_expression(
-    condition: Doc,
-    question: Doc,
-    consequence: Doc,
-    colon: Doc,
-    alternative: Doc,
+fn ternary_expression<'source>(
+    condition: Doc<'source>,
+    question: Doc<'source>,
+    consequence: Doc<'source>,
+    colon: Doc<'source>,
+    alternative: Doc<'source>,
     force_break: bool,
-) -> Doc {
+) -> Doc<'source> {
     let doc = concat([
         condition,
         indent(concat([
@@ -332,7 +337,7 @@ fn ternary_expression(
     }
 }
 
-fn should_force_conditional_break(expression: &ConditionalExpression) -> bool {
+fn should_force_conditional_break(expression: &ConditionalExpression<'_>) -> bool {
     matches!(
         Expression::from(*expression).parent_role(),
         Some(

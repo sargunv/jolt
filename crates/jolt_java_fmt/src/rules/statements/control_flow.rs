@@ -11,7 +11,10 @@ use super::{
     trailing_comments_force_line,
 };
 
-pub(super) fn format_if_statement(statement: &IfStatement, formatter: &JavaFormatter<'_>) -> Doc {
+pub(super) fn format_if_statement<'source>(
+    statement: &IfStatement<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     let else_body = statement.else_body();
     let then_body = statement.then_body();
     let then_body_trailing_comments_force_line =
@@ -53,11 +56,11 @@ pub(super) fn format_if_statement(statement: &IfStatement, formatter: &JavaForma
     ])
 }
 
-pub(super) fn format_parenthesized_statement_expression(
-    open: Option<&JavaSyntaxToken>,
-    expression: Doc,
-    close: Option<&JavaSyntaxToken>,
-) -> Doc {
+pub(super) fn format_parenthesized_statement_expression<'source>(
+    open: Option<&JavaSyntaxToken<'source>>,
+    expression: Doc<'source>,
+    close: Option<&JavaSyntaxToken<'source>>,
+) -> Doc<'source> {
     group(concat([
         format_condition_open_paren(open),
         indent(concat([format_condition_open_spacing(open), expression])),
@@ -65,14 +68,16 @@ pub(super) fn format_parenthesized_statement_expression(
     ]))
 }
 
-pub(super) fn format_condition_open_paren(open: Option<&JavaSyntaxToken>) -> Doc {
+pub(super) fn format_condition_open_paren<'source>(
+    open: Option<&JavaSyntaxToken<'source>>,
+) -> Doc<'source> {
     open.map_or_else(
         || text("("),
         |open| concat([format_leading_comments(open), text("(")]),
     )
 }
 
-fn format_condition_open_spacing(open: Option<&JavaSyntaxToken>) -> Doc {
+fn format_condition_open_spacing<'source>(open: Option<&JavaSyntaxToken<'source>>) -> Doc<'source> {
     let Some(open) = open else {
         return jolt_fmt_ir::nil();
     };
@@ -91,7 +96,7 @@ fn format_condition_open_spacing(open: Option<&JavaSyntaxToken>) -> Doc {
     ])
 }
 
-fn format_condition_close_paren(close: Option<&JavaSyntaxToken>) -> Doc {
+fn format_condition_close_paren<'source>(close: Option<&JavaSyntaxToken<'source>>) -> Doc<'source> {
     let close_has_leading_comments =
         close.is_some_and(|token| !token.leading_comments().is_empty());
 
@@ -123,7 +128,9 @@ fn format_condition_close_paren(close: Option<&JavaSyntaxToken>) -> Doc {
     ])
 }
 
-pub(super) fn format_statement_header_body_separator(close: Option<&JavaSyntaxToken>) -> Doc {
+pub(super) fn format_statement_header_body_separator<'source>(
+    close: Option<&JavaSyntaxToken<'source>>,
+) -> Doc<'source> {
     if close.is_some_and(trailing_comments_force_line) {
         jolt_fmt_ir::nil()
     } else {
@@ -131,10 +138,10 @@ pub(super) fn format_statement_header_body_separator(close: Option<&JavaSyntaxTo
     }
 }
 
-pub(super) fn format_while_statement(
-    statement: &WhileStatement,
+pub(super) fn format_while_statement<'source>(
+    statement: &WhileStatement<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let open = statement.open_paren();
     let close = statement.close_paren();
     concat([
@@ -154,7 +161,10 @@ pub(super) fn format_while_statement(
     ])
 }
 
-pub(super) fn format_do_statement(statement: &DoStatement, formatter: &JavaFormatter<'_>) -> Doc {
+pub(super) fn format_do_statement<'source>(
+    statement: &DoStatement<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     let open = statement.open_paren();
     let close = statement.close_paren();
     concat([
@@ -177,7 +187,10 @@ pub(super) fn format_do_statement(statement: &DoStatement, formatter: &JavaForma
     ])
 }
 
-pub(super) fn format_for_statement(statement: &ForStatement, formatter: &JavaFormatter<'_>) -> Doc {
+pub(super) fn format_for_statement<'source>(
+    statement: &ForStatement<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     if let Some(basic) = statement.basic() {
         return format_basic_for_statement(&basic, formatter);
     }
@@ -188,7 +201,10 @@ pub(super) fn format_for_statement(statement: &ForStatement, formatter: &JavaFor
     jolt_fmt_ir::nil()
 }
 
-fn format_basic_for_statement(statement: &BasicForStatement, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_basic_for_statement<'source>(
+    statement: &BasicForStatement<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     let open = statement.open_paren();
     let close = statement.close_paren();
     let initializer = statement
@@ -235,10 +251,10 @@ fn format_basic_for_statement(statement: &BasicForStatement, formatter: &JavaFor
     ])
 }
 
-fn format_enhanced_for_statement(
-    statement: &EnhancedForStatement,
+fn format_enhanced_for_statement<'source>(
+    statement: &EnhancedForStatement<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let open = statement.open_paren();
     let close = statement.close_paren();
     concat([
@@ -272,7 +288,9 @@ fn format_enhanced_for_statement(
     ])
 }
 
-fn format_for_header_open_spacing(open: Option<&JavaSyntaxToken>) -> Doc {
+fn format_for_header_open_spacing<'source>(
+    open: Option<&JavaSyntaxToken<'source>>,
+) -> Doc<'source> {
     if open.is_some_and(|open| !open.trailing_comments().is_empty()) {
         format_condition_open_spacing(open)
     } else {
@@ -280,7 +298,7 @@ fn format_for_header_open_spacing(open: Option<&JavaSyntaxToken>) -> Doc {
     }
 }
 
-fn format_inline_close_paren(close: Option<&JavaSyntaxToken>) -> Doc {
+fn format_inline_close_paren<'source>(close: Option<&JavaSyntaxToken<'source>>) -> Doc<'source> {
     let close_has_leading_comments =
         close.is_some_and(|token| !token.leading_comments().is_empty());
 
@@ -312,7 +330,9 @@ fn format_inline_close_paren(close: Option<&JavaSyntaxToken>) -> Doc {
     ])
 }
 
-fn format_inline_open_paren_spacing(open: Option<&JavaSyntaxToken>) -> Doc {
+fn format_inline_open_paren_spacing<'source>(
+    open: Option<&JavaSyntaxToken<'source>>,
+) -> Doc<'source> {
     let Some(open) = open else {
         return jolt_fmt_ir::nil();
     };
@@ -331,7 +351,7 @@ fn format_inline_open_paren_spacing(open: Option<&JavaSyntaxToken>) -> Doc {
     ])
 }
 
-fn format_for_header_semicolon(semicolon: Option<JavaSyntaxToken>) -> Doc {
+fn format_for_header_semicolon(semicolon: Option<JavaSyntaxToken<'_>>) -> Doc<'_> {
     let Some(semicolon) = semicolon else {
         return text(";");
     };
@@ -348,7 +368,9 @@ fn format_for_header_semicolon(semicolon: Option<JavaSyntaxToken>) -> Doc {
     ])
 }
 
-fn format_for_header_semicolon_leading_comments(semicolon: &JavaSyntaxToken) -> Doc {
+fn format_for_header_semicolon_leading_comments<'source>(
+    semicolon: &JavaSyntaxToken<'source>,
+) -> Doc<'source> {
     let mut docs = Vec::new();
     for comment in semicolon.leading_comments() {
         docs.push(text(" "));
@@ -360,7 +382,9 @@ fn format_for_header_semicolon_leading_comments(semicolon: &JavaSyntaxToken) -> 
     concat(docs)
 }
 
-fn format_for_header_close_paren(close: Option<&JavaSyntaxToken>) -> Doc {
+fn format_for_header_close_paren<'source>(
+    close: Option<&JavaSyntaxToken<'source>>,
+) -> Doc<'source> {
     let close_has_leading_comments =
         close.is_some_and(|token| !token.leading_comments().is_empty());
 
@@ -392,7 +416,10 @@ fn format_for_header_close_paren(close: Option<&JavaSyntaxToken>) -> Doc {
     ])
 }
 
-fn format_for_initializer(initializer: &ForInitializer, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_for_initializer<'source>(
+    initializer: &ForInitializer<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     if let Some(declaration) = initializer.local_variable_declaration() {
         return format_local_variable_declaration(&declaration, formatter);
     }
@@ -403,7 +430,10 @@ fn format_for_initializer(initializer: &ForInitializer, formatter: &JavaFormatte
         })
 }
 
-fn format_for_update(update: &ForUpdate, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_for_update<'source>(
+    update: &ForUpdate<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     update
         .expressions()
         .map_or_else(jolt_fmt_ir::nil, |expressions| {
@@ -411,17 +441,17 @@ fn format_for_update(update: &ForUpdate, formatter: &JavaFormatter<'_>) -> Doc {
         })
 }
 
-fn format_statement_expression_list(
-    expressions: &StatementExpressionList,
+fn format_statement_expression_list<'source>(
+    expressions: &StatementExpressionList<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     format_statement_expression_entries(expressions.entries().collect(), formatter)
 }
 
-fn format_statement_expression_entries(
-    entries: Vec<StatementExpressionEntry>,
+fn format_statement_expression_entries<'source>(
+    entries: Vec<StatementExpressionEntry<'source>>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let mut docs = Vec::new();
     let entries_len = entries.len();
 
@@ -437,10 +467,10 @@ fn format_statement_expression_entries(
     concat(docs)
 }
 
-pub(super) fn format_synchronized_statement(
-    statement: &SynchronizedStatement,
+pub(super) fn format_synchronized_statement<'source>(
+    statement: &SynchronizedStatement<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let open = statement.open_paren();
     let close = statement.close_paren();
     concat([

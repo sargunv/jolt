@@ -11,13 +11,13 @@ use super::{
     format_typed_modifier_prefix, group, hard_line, line, parenthesized_list, text,
 };
 
-pub(super) fn format_constructor_declaration(
-    constructor: &jolt_java_syntax::ConstructorDeclaration,
+pub(super) fn format_constructor_declaration<'source>(
+    constructor: &jolt_java_syntax::ConstructorDeclaration<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let constructor_first_token = constructor.first_token();
     let prefix = concat([
-        format_construct_leading_comments(formatter.comments(), constructor_first_token.as_ref()),
+        format_construct_leading_comments(constructor_first_token.as_ref()),
         format_modifier_prefix(constructor.modifiers(), formatter),
     ]);
     let throws = constructor.throws_clause();
@@ -53,10 +53,10 @@ pub(super) fn format_constructor_declaration(
     }
 }
 
-pub(super) fn format_compact_constructor_declaration(
-    constructor: &jolt_java_syntax::CompactConstructorDeclaration,
+pub(super) fn format_compact_constructor_declaration<'source>(
+    constructor: &jolt_java_syntax::CompactConstructorDeclaration<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let prefix = format_modifier_prefix(constructor.modifiers(), formatter);
     let header = constructor
         .name()
@@ -70,13 +70,13 @@ pub(super) fn format_compact_constructor_declaration(
     }
 }
 
-pub(super) fn format_method_declaration(
-    method: &MethodDeclaration,
+pub(super) fn format_method_declaration<'source>(
+    method: &MethodDeclaration<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let modifiers = format_typed_modifier_prefix(method.modifiers(), formatter);
     let prefix = concat([
-        format_construct_leading_comments(formatter.comments(), method.first_token().as_ref()),
+        format_construct_leading_comments(method.first_token().as_ref()),
         modifiers.declaration_prefix,
     ]);
     let throws = method.throws_clause();
@@ -126,10 +126,10 @@ pub(super) fn format_method_declaration(
     }
 }
 
-pub(super) fn format_annotation_element_declaration(
-    element: &AnnotationElementDeclaration,
+pub(super) fn format_annotation_element_declaration<'source>(
+    element: &AnnotationElementDeclaration<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     concat([
         group(concat([
             format_modifier_prefix(element.modifiers(), formatter),
@@ -156,10 +156,10 @@ pub(super) fn format_annotation_element_declaration(
     ])
 }
 
-fn format_annotation_element_default(
-    default: Option<jolt_java_syntax::DefaultValue>,
+fn format_annotation_element_default<'source>(
+    default: Option<jolt_java_syntax::DefaultValue<'source>>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     default.map_or_else(jolt_fmt_ir::nil, |default| {
         concat([
             text(" "),
@@ -175,10 +175,10 @@ fn format_annotation_element_default(
     })
 }
 
-fn format_parameters(
-    parameters: Option<FormalParameterList>,
+fn format_parameters<'source>(
+    parameters: Option<FormalParameterList<'source>>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let Some(parameters) = parameters else {
         return text("()");
     };
@@ -204,15 +204,26 @@ fn format_parameters(
     )
 }
 
-fn callable_declaration_with_body(prefix: Doc, header: Doc, body: Option<Doc>) -> Doc {
+fn callable_declaration_with_body<'source>(
+    prefix: Doc<'source>,
+    header: Doc<'source>,
+    body: Option<Doc<'source>>,
+) -> Doc<'source> {
     concat([prefix, group(header), text(" "), braced_body(body)])
 }
 
-fn callable_declaration_with_body_doc(prefix: Doc, header: Doc, body: Doc) -> Doc {
+fn callable_declaration_with_body_doc<'source>(
+    prefix: Doc<'source>,
+    header: Doc<'source>,
+    body: Doc<'source>,
+) -> Doc<'source> {
     concat([prefix, group(header), text(" "), body])
 }
 
-fn format_throws_clause(throws: Option<ThrowsClause>, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_throws_clause<'source>(
+    throws: Option<ThrowsClause<'source>>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     let Some(throws) = throws else {
         return jolt_fmt_ir::nil();
     };
@@ -229,7 +240,7 @@ fn format_throws_clause(throws: Option<ThrowsClause>, formatter: &JavaFormatter<
     ]))
 }
 
-fn format_throws_keyword(throws: &ThrowsClause) -> Doc {
+fn format_throws_keyword<'source>(throws: &ThrowsClause<'source>) -> Doc<'source> {
     throws.keyword().map_or_else(
         || text("throws"),
         |keyword| {
@@ -242,18 +253,22 @@ fn format_throws_keyword(throws: &ThrowsClause) -> Doc {
     )
 }
 
-fn format_throws_keyword_spacing(throws: &ThrowsClause) -> Doc {
-    if throws
-        .keyword()
-        .is_some_and(|keyword| keyword.trailing_comments().iter().any(comment_forces_line))
-    {
+fn format_throws_keyword_spacing<'source>(throws: &ThrowsClause<'source>) -> Doc<'source> {
+    if throws.keyword().is_some_and(|keyword| {
+        keyword
+            .trailing_comments()
+            .any(|comment| comment_forces_line(&comment))
+    }) {
         hard_line()
     } else {
         text(" ")
     }
 }
 
-fn format_throws_entries(entries: Vec<ThrowsClauseEntry>, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_throws_entries<'source>(
+    entries: Vec<ThrowsClauseEntry<'source>>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     let entries_len = entries.len();
     let mut entries = entries.into_iter().enumerate();
     let Some((index, entry)) = entries.next() else {
@@ -275,10 +290,10 @@ fn format_throws_entries(entries: Vec<ThrowsClauseEntry>, formatter: &JavaFormat
 }
 
 fn format_throws_entry_separator(
-    comma: Option<JavaSyntaxToken>,
+    comma: Option<JavaSyntaxToken<'_>>,
     index: usize,
     entries_len: usize,
-) -> Doc {
+) -> Doc<'_> {
     if let Some(comma) = comma {
         format_separator_with_comments(&comma, line())
     } else if index + 1 < entries_len {

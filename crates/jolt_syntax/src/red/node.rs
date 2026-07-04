@@ -90,16 +90,23 @@ impl<'tree, L: Language> SyntaxNode<'tree, L> {
     }
 
     /// Returns this node's child nodes and tokens.
-    pub fn children_with_tokens(&self) -> impl Iterator<Item = SyntaxElement<'tree, L>> + '_ {
+    pub fn children_with_tokens(
+        &self,
+    ) -> impl Iterator<Item = SyntaxElement<'tree, L>> + use<'tree, L> {
+        let source = self.source;
+        let tree = self.tree;
         self.tree
             .children(self.id)
             .iter()
             .copied()
-            .map(|child| self.child_element(child))
+            .map(move |child| match child {
+                TreeElement::Node(id) => SyntaxElement::Node(Self::new_child(source, tree, id)),
+                TreeElement::Token(id) => SyntaxElement::Token(SyntaxToken::new(source, tree, id)),
+            })
     }
 
     /// Returns this node's child nodes.
-    pub fn children(&self) -> impl Iterator<Item = Self> + '_ {
+    pub fn children(&self) -> impl Iterator<Item = Self> + use<'tree, L> {
         self.tree
             .children(self.id)
             .iter()
@@ -111,7 +118,7 @@ impl<'tree, L: Language> SyntaxNode<'tree, L> {
     }
 
     /// Returns this node's child tokens.
-    pub fn child_tokens(&self) -> impl Iterator<Item = SyntaxToken<'tree, L>> + '_ {
+    pub fn child_tokens(&self) -> impl Iterator<Item = SyntaxToken<'tree, L>> + use<'tree, L> {
         self.tree
             .children(self.id)
             .iter()
@@ -160,11 +167,6 @@ impl<'tree, L: Language> SyntaxNode<'tree, L> {
         }
 
         None
-    }
-
-    /// Returns this node's descendant nodes in preorder, excluding this node.
-    pub fn descendants(&self) -> impl Iterator<Item = Self> + use<'tree, L> {
-        Descendants::new(*self)
     }
 
     /// Returns every token contained by this node in source order.
@@ -260,57 +262,6 @@ fn fmt_indent(f: &mut fmt::Formatter<'_>, indent: usize) -> fmt::Result {
     }
 
     Ok(())
-}
-
-struct Descendants<'tree, L: Language> {
-    source: &'tree str,
-    tree: &'tree SyntaxTree,
-    stack: Vec<NodeId>,
-    language: PhantomData<L>,
-}
-
-impl<'tree, L: Language> Descendants<'tree, L> {
-    fn new(root: SyntaxNode<'tree, L>) -> Self {
-        let mut stack = Vec::new();
-        stack.extend(
-            root.tree
-                .children(root.id)
-                .iter()
-                .rev()
-                .filter_map(|child| {
-                    if let TreeElement::Node(id) = child {
-                        Some(*id)
-                    } else {
-                        None
-                    }
-                }),
-        );
-
-        Self {
-            source: root.source,
-            tree: root.tree,
-            stack,
-            language: PhantomData,
-        }
-    }
-}
-
-impl<'tree, L: Language> Iterator for Descendants<'tree, L> {
-    type Item = SyntaxNode<'tree, L>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let id = self.stack.pop()?;
-        self.stack
-            .extend(self.tree.children(id).iter().rev().filter_map(|child| {
-                if let TreeElement::Node(id) = child {
-                    Some(*id)
-                } else {
-                    None
-                }
-            }));
-
-        Some(SyntaxNode::new_child(self.source, self.tree, id))
-    }
 }
 
 struct Tokens<'tree, L: Language> {

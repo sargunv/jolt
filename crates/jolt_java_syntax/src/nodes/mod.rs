@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, slice};
 
 use jolt_syntax::{SyntaxNode, SyntaxToken, SyntaxTrivia, TriviaKind as SyntaxTriviaKind};
 use jolt_text::TextRange;
@@ -16,7 +16,67 @@ pub struct JavaComment<'source> {
     text_range: TextRange,
 }
 
-impl JavaComment<'_> {
+/// Borrowed comments attached to syntax token trivia.
+#[derive(Clone)]
+pub struct JavaComments<'source> {
+    source: &'source str,
+    trivia: slice::Iter<'source, SyntaxTrivia>,
+    offset: jolt_text::TextSize,
+}
+
+impl<'source> JavaComments<'source> {
+    fn new(
+        source: &'source str,
+        trivia: &'source [SyntaxTrivia],
+        offset: jolt_text::TextSize,
+    ) -> Self {
+        Self {
+            source,
+            trivia: trivia.iter(),
+            offset,
+        }
+    }
+
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.trivia.as_slice().iter().all(|trivia| {
+            !matches!(
+                trivia.kind(),
+                SyntaxTriviaKind::LineComment
+                    | SyntaxTriviaKind::BlockComment
+                    | SyntaxTriviaKind::DocComment
+            )
+        })
+    }
+}
+
+impl<'source> Iterator for JavaComments<'source> {
+    type Item = JavaComment<'source>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        for trivia in self.trivia.by_ref() {
+            let text_range = TextRange::new(self.offset, self.offset + trivia.text_len());
+            self.offset = text_range.end();
+            let kind = match trivia.kind() {
+                SyntaxTriviaKind::LineComment => JavaCommentKind::Line,
+                SyntaxTriviaKind::BlockComment => JavaCommentKind::Block,
+                SyntaxTriviaKind::DocComment => JavaCommentKind::Doc,
+                SyntaxTriviaKind::Whitespace
+                | SyntaxTriviaKind::Newline
+                | SyntaxTriviaKind::Ignored => continue,
+            };
+            return Some(JavaComment {
+                kind,
+                source: self.source,
+                text_range,
+            });
+        }
+
+        None
+    }
+}
+
+impl<'source> JavaComment<'source> {
     /// Returns the comment kind.
     #[must_use]
     pub const fn kind(&self) -> JavaCommentKind {
@@ -25,8 +85,13 @@ impl JavaComment<'_> {
 
     /// Returns the raw comment text.
     #[must_use]
-    pub fn text(&self) -> &str {
+    pub fn text(&self) -> &'source str {
         &self.source[self.text_range.start().get()..self.text_range.end().get()]
+    }
+
+    #[must_use]
+    pub fn text_range(&self) -> TextRange {
+        self.text_range
     }
 }
 
@@ -53,7 +118,7 @@ impl<'source> JavaSyntaxToken<'source> {
     }
 
     #[must_use]
-    pub fn text(&self) -> &str {
+    pub fn text(&self) -> &'source str {
         self.syntax.text()
     }
 
@@ -69,8 +134,8 @@ impl<'source> JavaSyntaxToken<'source> {
 
     /// Returns comments attached before this token.
     #[must_use]
-    pub fn leading_comments(&self) -> Vec<JavaComment<'source>> {
-        comments_from_trivia(
+    pub fn leading_comments(&self) -> JavaComments<'source> {
+        JavaComments::new(
             self.syntax.source(),
             self.syntax.leading(),
             self.syntax.offset(),
@@ -79,8 +144,8 @@ impl<'source> JavaSyntaxToken<'source> {
 
     /// Returns comments attached after this token.
     #[must_use]
-    pub fn trailing_comments(&self) -> Vec<JavaComment<'source>> {
-        comments_from_trivia(
+    pub fn trailing_comments(&self) -> JavaComments<'source> {
+        JavaComments::new(
             self.syntax.source(),
             self.syntax.trailing(),
             self.syntax.token_text_range().end(),
@@ -136,12 +201,12 @@ impl<'source> JavaOperator<'source> {
     }
 
     #[must_use]
-    pub fn leading_comments(&self) -> Vec<JavaComment<'source>> {
+    pub fn leading_comments(&self) -> JavaComments<'source> {
         self.first_token.leading_comments()
     }
 
     #[must_use]
-    pub fn trailing_comments(&self) -> Vec<JavaComment<'source>> {
+    pub fn trailing_comments(&self) -> JavaComments<'source> {
         self.last_token().trailing_comments()
     }
 
@@ -346,36 +411,6 @@ pub(crate) fn binary_operator_precedence(kind: JavaOperatorKind) -> Option<u8> {
     })
 }
 
-fn comments_from_trivia<'source>(
-    source: &'source str,
-    trivia: &[SyntaxTrivia],
-    start: jolt_text::TextSize,
-) -> Vec<JavaComment<'source>> {
-    let mut offset = start;
-    trivia
-        .iter()
-        .filter_map(|trivia| {
-            let text_range = TextRange::new(offset, offset + trivia.text_len());
-            offset = text_range.end();
-            let kind = match trivia.kind() {
-                SyntaxTriviaKind::LineComment => JavaCommentKind::Line,
-                SyntaxTriviaKind::BlockComment => JavaCommentKind::Block,
-                SyntaxTriviaKind::DocComment => JavaCommentKind::Doc,
-                SyntaxTriviaKind::Whitespace
-                | SyntaxTriviaKind::Newline
-                | SyntaxTriviaKind::Ignored => {
-                    return None;
-                }
-            };
-            Some(JavaComment {
-                kind,
-                source,
-                text_range,
-            })
-        })
-        .collect()
-}
-
 fn trivia_has_blank_line(trivia: &[SyntaxTrivia]) -> bool {
     let mut line_breaks_since_content = 0;
     for trivia in trivia {
@@ -481,26 +516,11 @@ macro_rules! java_cst {
         )*
 
         #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-        pub enum AnyJavaNode<'source> {
+        pub(crate) enum AnyJavaNode<'source> {
             $($node($node<'source>),)*
         }
 
         impl<'source> AnyJavaNode<'source> {
-            #[must_use]
-            pub fn kind(&self) -> JavaSyntaxKind {
-                self.syntax().kind()
-            }
-
-            #[must_use]
-            pub fn text_range(&self) -> TextRange {
-                self.syntax().text_range()
-            }
-
-            #[must_use]
-            pub fn source_text(&self) -> &'source str {
-                syntax_source_text(self.syntax())
-            }
-
             pub(crate) fn cast(syntax: JavaSyntaxNode<'source>) -> Option<Self> {
                 match syntax.kind() {
                     $(
@@ -509,12 +529,6 @@ macro_rules! java_cst {
                         }
                     )*
                     _ => None,
-                }
-            }
-
-            fn syntax(&self) -> &JavaSyntaxNode<'source> {
-                match self {
-                    $(Self::$node(node) => &node.syntax,)*
                 }
             }
         }
@@ -989,18 +1003,15 @@ pub enum ModuleDirectiveRole<'source> {
     },
     Exports {
         package: NameSyntax<'source>,
-        targets: Vec<NameSyntax<'source>>,
     },
     Opens {
         package: NameSyntax<'source>,
-        targets: Vec<NameSyntax<'source>>,
     },
     Uses {
         service: NameSyntax<'source>,
     },
     Provides {
         service: NameSyntax<'source>,
-        implementations: Vec<NameSyntax<'source>>,
     },
 }
 
@@ -1233,10 +1244,6 @@ impl<'source> ModifierEntry<'source> {
     fn into_tokens(self) -> impl Iterator<Item = JavaSyntaxToken<'source>> {
         self.tokens.into_iter().take(self.len).flatten()
     }
-
-    pub fn first_token(&self) -> Option<&JavaSyntaxToken<'source>> {
-        self.tokens.first().and_then(Option::as_ref)
-    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -1273,9 +1280,9 @@ fn child<'source, N: JavaNode<'source>>(syntax: &JavaSyntaxNode<'source>) -> Opt
     syntax.children().find_map(N::cast)
 }
 
-fn children<'source, N: JavaNode<'source> + 'source>(
-    syntax: &'source JavaSyntaxNode<'source>,
-) -> impl Iterator<Item = N> + 'source {
+fn children<'source, N: JavaNode<'source>>(
+    syntax: &JavaSyntaxNode<'source>,
+) -> impl Iterator<Item = N> + use<'source, N> {
     syntax.children().filter_map(N::cast)
 }
 
@@ -1310,9 +1317,9 @@ fn nth_child_family<'source, F: JavaFamily<'source>>(
     syntax.children().filter_map(F::cast).nth(index)
 }
 
-fn children_family<'source, F: JavaFamily<'source> + 'source>(
-    syntax: &'source JavaSyntaxNode<'source>,
-) -> impl Iterator<Item = F> + 'source {
+fn children_family<'source, F: JavaFamily<'source>>(
+    syntax: &JavaSyntaxNode<'source>,
+) -> impl Iterator<Item = F> + use<'source, F> {
     syntax.children().filter_map(F::cast)
 }
 
@@ -1345,15 +1352,15 @@ fn child_token_in<'source>(
         .map(|syntax| JavaSyntaxToken { syntax })
 }
 
-fn children_tokens_matching<'a>(
-    syntax: &'a JavaSyntaxNode<'a>,
-    predicate: impl Fn(JavaSyntaxKind) -> bool + Copy + 'a,
-) -> impl Iterator<Item = JavaSyntaxToken<'a>> + 'a {
+fn children_tokens_matching<'source, P>(
+    syntax: &JavaSyntaxNode<'source>,
+    predicate: P,
+) -> impl Iterator<Item = JavaSyntaxToken<'source>> + use<'source, P>
+where
+    P: Fn(JavaSyntaxKind) -> bool + Copy,
+{
     syntax
         .child_tokens()
         .filter(move |token| predicate(token.kind()))
         .map(|syntax| JavaSyntaxToken { syntax })
 }
-
-#[cfg(test)]
-mod tests;

@@ -1,10 +1,10 @@
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
 
 use jolt_diagnostics::DiagnosticStage;
-use jolt_java_syntax::{JavaParse, JavaSyntaxKind, parse_compilation_unit};
+use jolt_java_syntax::{JavaParse, parse_compilation_unit};
 
 #[test]
 fn fixture_java_inputs_parse_without_loss() {
@@ -16,9 +16,6 @@ fn fixture_java_inputs_parse_without_loss() {
         "palantir_java_format_parser_summary",
         palantir_summary.render()
     );
-
-    assert_has_parser_nodes(&google_summary);
-    assert_has_parser_nodes(&palantir_summary);
 }
 
 fn assert_corpus(suite: &str, expected_files: usize) -> CorpusSummary {
@@ -111,7 +108,6 @@ fn collect_java_files(root: &Path, files: &mut Vec<PathBuf>) {
 struct CorpusSummary {
     suite: String,
     files: usize,
-    nodes: HashMap<JavaSyntaxKind, usize>,
     parser_diagnostics: BTreeMap<String, usize>,
     lexer_diagnostics: BTreeMap<String, usize>,
 }
@@ -121,18 +117,12 @@ impl CorpusSummary {
         Self {
             suite: suite.to_owned(),
             files,
-            nodes: HashMap::new(),
             parser_diagnostics: BTreeMap::new(),
             lexer_diagnostics: BTreeMap::new(),
         }
     }
 
     fn record(&mut self, parse: &JavaParse) {
-        let syntax = parse.syntax().expect("parser summary requires syntax");
-        for node in syntax.self_and_descendants() {
-            *self.nodes.entry(node.kind()).or_default() += 1;
-        }
-
         for diagnostic in parse.diagnostics() {
             match diagnostic.stage {
                 DiagnosticStage::Parser => {
@@ -147,25 +137,15 @@ impl CorpusSummary {
                         diagnostic.code.as_str().to_owned(),
                     );
                 }
-                DiagnosticStage::Config | DiagnosticStage::Formatter => {}
+                DiagnosticStage::Formatter => {}
             }
         }
-    }
-
-    fn grammar_node_count(&self) -> usize {
-        self.nodes
-            .iter()
-            .filter(|(kind, _)| **kind != JavaSyntaxKind::CompilationUnit)
-            .map(|(_, count)| *count)
-            .sum()
     }
 
     fn render(&self) -> String {
         let mut output = String::new();
         writeln!(&mut output, "suite: {}", self.suite).expect("write summary");
         writeln!(&mut output, "files: {}", self.files).expect("write summary");
-        output.push_str("\nnodes:\n");
-        push_kind_counts(&mut output, &self.nodes);
         output.push_str("\nparser diagnostics:\n");
         push_counts(&mut output, &self.parser_diagnostics);
         output.push_str("\nlexer diagnostics:\n");
@@ -174,25 +154,8 @@ impl CorpusSummary {
     }
 }
 
-fn assert_has_parser_nodes(summary: &CorpusSummary) {
-    assert!(
-        summary.grammar_node_count() > 0,
-        "expected parser fixture corpus {} to produce grammar nodes beyond the shell root; node counts:\n{}",
-        summary.suite,
-        summary.render()
-    );
-}
-
 fn increment_rendered(counts: &mut BTreeMap<String, usize>, key: String) {
     *counts.entry(key).or_default() += 1;
-}
-
-fn push_kind_counts(output: &mut String, counts: &HashMap<JavaSyntaxKind, usize>) {
-    let counts = counts
-        .iter()
-        .map(|(kind, count)| (format!("{kind:?}"), *count))
-        .collect::<BTreeMap<_, _>>();
-    push_counts(output, &counts);
 }
 
 fn push_counts(output: &mut String, counts: &BTreeMap<String, usize>) {

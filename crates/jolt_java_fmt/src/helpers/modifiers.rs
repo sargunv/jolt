@@ -6,10 +6,10 @@ use crate::helpers::comments::{
     token_has_comments,
 };
 
-pub(crate) fn modifier_prefix_from_docs(
-    annotation_docs: Vec<Doc>,
-    modifier_entries: Vec<ModifierEntry>,
-) -> Doc {
+pub(crate) fn modifier_prefix_from_docs<'source>(
+    annotation_docs: Vec<Doc<'source>>,
+    modifier_entries: Vec<ModifierEntry<'source>>,
+) -> Doc<'source> {
     let modifier_entries = sorted_modifier_entries(modifier_entries);
     modifier_prefix_from_modifier_docs(
         annotation_docs,
@@ -20,10 +20,10 @@ pub(crate) fn modifier_prefix_from_docs(
     )
 }
 
-pub(crate) fn modifier_prefix_from_token_docs(
-    annotation_docs: Vec<Doc>,
-    modifier_tokens: Vec<JavaSyntaxToken>,
-) -> Doc {
+pub(crate) fn modifier_prefix_from_token_docs<'source>(
+    annotation_docs: Vec<Doc<'source>>,
+    modifier_tokens: Vec<JavaSyntaxToken<'source>>,
+) -> Doc<'source> {
     let modifier_tokens = sorted_modifier_tokens(modifier_tokens);
     modifier_prefix_from_modifier_docs(
         annotation_docs,
@@ -34,24 +34,27 @@ pub(crate) fn modifier_prefix_from_token_docs(
     )
 }
 
-fn modifier_prefix_from_modifier_docs(annotation_docs: Vec<Doc>, modifier_docs: Vec<Doc>) -> Doc {
+fn modifier_prefix_from_modifier_docs<'source>(
+    annotation_docs: Vec<Doc<'source>>,
+    modifier_docs: Vec<Doc<'source>>,
+) -> Doc<'source> {
     let mut docs = Vec::new();
     for annotation in annotation_docs {
         docs.push(annotation);
         docs.push(hard_line());
     }
     if !modifier_docs.is_empty() {
-        docs.push(jolt_fmt_ir::join(text(" "), modifier_docs));
+        docs.push(jolt_fmt_ir::join(&text(" "), modifier_docs));
         docs.push(text(" "));
     }
 
     concat(docs)
 }
 
-pub(crate) fn inline_modifier_prefix_from_docs(
-    annotation_docs: Vec<Doc>,
-    modifier_tokens: Vec<JavaSyntaxToken>,
-) -> Doc {
+pub(crate) fn inline_modifier_prefix_from_docs<'source>(
+    annotation_docs: Vec<Doc<'source>>,
+    modifier_tokens: Vec<JavaSyntaxToken<'source>>,
+) -> Doc<'source> {
     let modifier_tokens = sorted_modifier_tokens(modifier_tokens);
     let mut docs = annotation_docs;
     docs.extend(
@@ -63,18 +66,18 @@ pub(crate) fn inline_modifier_prefix_from_docs(
     if docs.is_empty() {
         jolt_fmt_ir::nil()
     } else {
-        concat([jolt_fmt_ir::join(text(" "), docs), text(" ")])
+        concat([jolt_fmt_ir::join(&text(" "), docs), text(" ")])
     }
 }
 
-fn sorted_modifier_tokens(mut tokens: Vec<JavaSyntaxToken>) -> Vec<JavaSyntaxToken> {
+fn sorted_modifier_tokens(mut tokens: Vec<JavaSyntaxToken<'_>>) -> Vec<JavaSyntaxToken<'_>> {
     sort_modifier_runs(&mut tokens, token_has_comments, |run| {
         run.sort_by_key(|token| modifier_order(token.kind()));
     });
     tokens
 }
 
-fn sorted_modifier_entries(mut entries: Vec<ModifierEntry>) -> Vec<ModifierEntry> {
+fn sorted_modifier_entries(mut entries: Vec<ModifierEntry<'_>>) -> Vec<ModifierEntry<'_>> {
     sort_modifier_runs(
         &mut entries,
         |entry| entry.tokens().any(token_has_comments),
@@ -107,21 +110,36 @@ fn sort_modifier_runs<T>(
     }
 }
 
-fn modifier_entry_order(entry: &ModifierEntry) -> u8 {
-    match modifier_entry_text(entry).as_str() {
-        "sealed" => 11,
-        "non-sealed" => 12,
-        _ => entry
-            .first_token()
-            .map_or(u8::MAX, |token| modifier_order(token.kind())),
+fn modifier_entry_order(entry: &ModifierEntry<'_>) -> u8 {
+    if modifier_entry_text_matches(entry, &["sealed"]) {
+        11
+    } else if modifier_entry_text_matches(entry, &["non", "-", "sealed"]) {
+        12
+    } else {
+        entry
+            .tokens()
+            .next()
+            .map_or(u8::MAX, |token| modifier_order(token.kind()))
     }
 }
 
-fn modifier_entry_text(entry: &ModifierEntry) -> String {
-    entry.tokens().map(JavaSyntaxToken::text).collect()
+fn modifier_entry_text_matches(entry: &ModifierEntry<'_>, pieces: &[&str]) -> bool {
+    let mut tokens = entry.tokens();
+    for piece in pieces {
+        let Some(token) = tokens.next() else {
+            return false;
+        };
+        if token.text() != *piece {
+            return false;
+        }
+    }
+    tokens.next().is_none()
 }
 
-fn format_modifier_entry(entry: &ModifierEntry, leading_comments: LeadingComments) -> Doc {
+fn format_modifier_entry<'source>(
+    entry: &ModifierEntry<'source>,
+    leading_comments: LeadingComments,
+) -> Doc<'source> {
     concat(
         entry
             .tokens()
@@ -129,7 +147,10 @@ fn format_modifier_entry(entry: &ModifierEntry, leading_comments: LeadingComment
     )
 }
 
-fn format_modifier_token(token: &JavaSyntaxToken, leading_comments: LeadingComments) -> Doc {
+fn format_modifier_token<'source>(
+    token: &JavaSyntaxToken<'source>,
+    leading_comments: LeadingComments,
+) -> Doc<'source> {
     match leading_comments {
         LeadingComments::Preserve => format_token(
             token,

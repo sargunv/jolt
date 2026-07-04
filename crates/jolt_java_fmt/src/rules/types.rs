@@ -15,22 +15,25 @@ use crate::helpers::comments::{
 use crate::helpers::lists::{CommaListItem, angle_bracket_list};
 use crate::rules::annotations::format_annotation;
 
-pub(crate) fn format_type(ty: &Type, formatter: &JavaFormatter<'_>) -> Doc {
+pub(crate) fn format_type<'source>(
+    ty: &Type<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     format_type_with_leading_comments(ty, LeadingComments::Preserve, formatter)
 }
 
-pub(crate) fn format_type_without_leading_comments(
-    ty: &Type,
+pub(crate) fn format_type_without_leading_comments<'source>(
+    ty: &Type<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     format_type_with_leading_comments(ty, LeadingComments::SuppressFirstToken, formatter)
 }
 
-fn format_type_with_leading_comments(
-    ty: &Type,
+fn format_type_with_leading_comments<'source>(
+    ty: &Type<'source>,
     leading_comments: LeadingComments,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     match ty {
         Type::PrimitiveType(ty) => format_primitive_type(ty, leading_comments, formatter),
         Type::VoidType(ty) => format_void_type_with_leading_comments(ty, leading_comments),
@@ -55,10 +58,10 @@ enum LeadingComments {
     SuppressFirstToken,
 }
 
-pub(crate) fn format_type_parameter_list(
-    parameters: Option<TypeParameterList>,
+pub(crate) fn format_type_parameter_list<'source>(
+    parameters: Option<TypeParameterList<'source>>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     parameters.map_or_else(jolt_fmt_ir::nil, |parameters| {
         let open = parameters.open_angle();
         let close = parameters.close_angle();
@@ -76,10 +79,10 @@ pub(crate) fn format_type_parameter_list(
     })
 }
 
-pub(crate) fn format_type_argument_list(
-    arguments: &TypeArgumentList,
+pub(crate) fn format_type_argument_list<'source>(
+    arguments: &TypeArgumentList<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let open = arguments.open_angle();
     let close = arguments.close_angle();
     angle_bracket_list(
@@ -95,10 +98,10 @@ pub(crate) fn format_type_argument_list(
     )
 }
 
-pub(crate) fn format_array_dimensions(
-    dimensions: &ArrayDimensions,
+pub(crate) fn format_array_dimensions<'source>(
+    dimensions: &ArrayDimensions<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     concat(
         dimensions
             .dimensions()
@@ -106,11 +109,11 @@ pub(crate) fn format_array_dimensions(
     )
 }
 
-fn format_primitive_type(
-    ty: &PrimitiveType,
+fn format_primitive_type<'source>(
+    ty: &PrimitiveType<'source>,
     leading_comments: LeadingComments,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     concat([
         format_inline_annotations(ty.annotations().collect(), formatter),
         ty.keyword().map_or_else(jolt_fmt_ir::nil, |keyword| {
@@ -119,17 +122,23 @@ fn format_primitive_type(
     ])
 }
 
-pub(crate) fn format_void_type(ty: &VoidType) -> Doc {
+pub(crate) fn format_void_type<'source>(ty: &VoidType<'source>) -> Doc<'source> {
     format_void_type_with_leading_comments(ty, LeadingComments::Preserve)
 }
 
-fn format_void_type_with_leading_comments(ty: &VoidType, leading_comments: LeadingComments) -> Doc {
+fn format_void_type_with_leading_comments<'source>(
+    ty: &VoidType<'source>,
+    leading_comments: LeadingComments,
+) -> Doc<'source> {
     ty.keyword().map_or_else(jolt_fmt_ir::nil, |keyword| {
         format_type_head_token(&keyword, leading_comments)
     })
 }
 
-fn format_type_head_token(token: &JavaSyntaxToken, leading_comments: LeadingComments) -> Doc {
+fn format_type_head_token<'source>(
+    token: &JavaSyntaxToken<'source>,
+    leading_comments: LeadingComments,
+) -> Doc<'source> {
     match leading_comments {
         LeadingComments::Preserve => {
             format_token(token, LeadingTrivia::Preserve, TrailingTrivia::Preserve)
@@ -140,11 +149,11 @@ fn format_type_head_token(token: &JavaSyntaxToken, leading_comments: LeadingComm
     }
 }
 
-fn format_class_type(
-    ty: &ClassType,
+fn format_class_type<'source>(
+    ty: &ClassType<'source>,
     leading_comments: LeadingComments,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let mut docs = Vec::new();
     for (index, segment) in ty.segments().enumerate() {
         if index > 0 {
@@ -168,11 +177,11 @@ fn format_class_type(
     group(concat(docs))
 }
 
-fn format_class_type_segment(
-    segment: jolt_java_syntax::ClassTypeSegment,
+fn format_class_type_segment<'source>(
+    segment: jolt_java_syntax::ClassTypeSegment<'source>,
     leading_comments: LeadingComments,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     concat([
         format_inline_annotations(segment.annotations, formatter),
         format_type_name(&segment.name, leading_comments, formatter),
@@ -184,11 +193,11 @@ fn format_class_type_segment(
     ])
 }
 
-fn format_type_name(
-    name: &NameSyntax,
+fn format_type_name<'source>(
+    name: &NameSyntax<'source>,
     leading_comments: LeadingComments,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let mut docs = Vec::new();
     for (index, segment) in name.segments_with_annotations().enumerate() {
         if index > 0 {
@@ -209,15 +218,24 @@ fn format_type_name(
     concat(docs)
 }
 
-fn format_intersection_type(ty: &IntersectionType, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_intersection_type<'source>(
+    ty: &IntersectionType<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     format_intersection_entries(ty.entries().collect(), formatter)
 }
 
-fn format_union_type(ty: &UnionType, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_union_type<'source>(
+    ty: &UnionType<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     format_union_entries(ty.entries().collect(), formatter)
 }
 
-fn format_type_parameter(parameter: &TypeParameter, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_type_parameter<'source>(
+    parameter: &TypeParameter<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     concat([
         format_inline_annotations(parameter.annotations().collect(), formatter),
         parameter
@@ -237,7 +255,10 @@ fn format_type_parameter(parameter: &TypeParameter, formatter: &JavaFormatter<'_
     ])
 }
 
-fn format_type_bounds(bounds: &TypeBoundList, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_type_bounds<'source>(
+    bounds: &TypeBoundList<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     format_type_operator_entries_doc(
         bounds
             .entries()
@@ -248,10 +269,10 @@ fn format_type_bounds(bounds: &TypeBoundList, formatter: &JavaFormatter<'_>) -> 
     )
 }
 
-fn format_intersection_entries(
-    entries: Vec<jolt_java_syntax::IntersectionTypeEntry>,
+fn format_intersection_entries<'source>(
+    entries: Vec<jolt_java_syntax::IntersectionTypeEntry<'source>>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     format_type_operator_entries(
         entries
             .into_iter()
@@ -262,7 +283,10 @@ fn format_intersection_entries(
     )
 }
 
-fn format_union_entries(entries: Vec<UnionTypeEntry>, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_union_entries<'source>(
+    entries: Vec<UnionTypeEntry<'source>>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     format_type_operator_entries(
         entries
             .into_iter()
@@ -273,11 +297,11 @@ fn format_union_entries(entries: Vec<UnionTypeEntry>, formatter: &JavaFormatter<
     )
 }
 
-fn format_type_operator_entries(
-    entries: Vec<(Type, Option<JavaSyntaxToken>)>,
+fn format_type_operator_entries<'source>(
+    entries: Vec<(Type<'source>, Option<JavaSyntaxToken<'source>>)>,
     fallback_operator: &'static str,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     group(format_type_operator_entries_doc(
         entries,
         fallback_operator,
@@ -285,11 +309,11 @@ fn format_type_operator_entries(
     ))
 }
 
-fn format_type_operator_entries_doc(
-    entries: Vec<(Type, Option<JavaSyntaxToken>)>,
+fn format_type_operator_entries_doc<'source>(
+    entries: Vec<(Type<'source>, Option<JavaSyntaxToken<'source>>)>,
     fallback_operator: &'static str,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let entries_len = entries.len();
     let mut entries = entries.into_iter().enumerate();
     let Some((mut previous_index, (ty, mut previous_separator))) = entries.next() else {
@@ -314,22 +338,21 @@ fn format_type_operator_entries_doc(
     concat([first, indent(concat(rest))])
 }
 
-fn type_operator_separator_forces_line(separator: Option<&JavaSyntaxToken>) -> bool {
+fn type_operator_separator_forces_line(separator: Option<&JavaSyntaxToken<'_>>) -> bool {
     separator.is_some_and(|separator| {
         separator
             .trailing_comments()
-            .iter()
-            .any(comment_forces_line)
+            .any(|comment| comment_forces_line(&comment))
     })
 }
 
-fn format_type_operator_continuation(
-    separator: Option<&JavaSyntaxToken>,
+fn format_type_operator_continuation<'source>(
+    separator: Option<&JavaSyntaxToken<'source>>,
     index: usize,
     entries_len: usize,
     fallback_operator: &'static str,
-    operand: Doc,
-) -> Doc {
+    operand: Doc<'source>,
+) -> Doc<'source> {
     let separator_doc = format_type_operator_separator_before_operand(
         separator,
         index,
@@ -344,12 +367,12 @@ fn format_type_operator_continuation(
     }
 }
 
-fn format_type_operator_separator_before_operand(
-    separator: Option<&JavaSyntaxToken>,
+fn format_type_operator_separator_before_operand<'source>(
+    separator: Option<&JavaSyntaxToken<'source>>,
     index: usize,
     entries_len: usize,
     fallback_operator: &'static str,
-) -> Doc {
+) -> Doc<'source> {
     if let Some(separator) = separator {
         format_type_operator_separator(Some(separator), fallback_operator)
     } else if index + 1 < entries_len {
@@ -359,10 +382,10 @@ fn format_type_operator_separator_before_operand(
     }
 }
 
-fn format_type_operator_separator(
-    separator: Option<&JavaSyntaxToken>,
+fn format_type_operator_separator<'source>(
+    separator: Option<&JavaSyntaxToken<'source>>,
     fallback_operator: &'static str,
-) -> Doc {
+) -> Doc<'source> {
     concat([
         line(),
         separator.map_or_else(
@@ -370,8 +393,7 @@ fn format_type_operator_separator(
             |separator| {
                 let forces_line = separator
                     .trailing_comments()
-                    .iter()
-                    .any(comment_forces_line);
+                    .any(|comment| comment_forces_line(&comment));
                 concat([
                     format_leading_comments(separator),
                     format_token_text(separator.text()),
@@ -387,7 +409,10 @@ fn format_type_operator_separator(
     ])
 }
 
-fn format_type_argument(argument: &TypeArgument, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_type_argument<'source>(
+    argument: &TypeArgument<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     concat([
         format_inline_annotations(argument.annotations().collect(), formatter),
         argument
@@ -396,7 +421,10 @@ fn format_type_argument(argument: &TypeArgument, formatter: &JavaFormatter<'_>) 
     ])
 }
 
-fn format_wildcard_type(ty: &WildcardType, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_wildcard_type<'source>(
+    ty: &WildcardType<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     concat([
         ty.question_token()
             .as_ref()
@@ -419,7 +447,10 @@ fn format_wildcard_type(ty: &WildcardType, formatter: &JavaFormatter<'_>) -> Doc
     ])
 }
 
-fn format_array_dimension(dimension: &ArrayDimension, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_array_dimension<'source>(
+    dimension: &ArrayDimension<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     let annotations = dimension.annotations().collect::<Vec<_>>();
     if annotations.is_empty() {
         return concat([
@@ -448,7 +479,7 @@ fn format_array_dimension(dimension: &ArrayDimension, formatter: &JavaFormatter<
     ])
 }
 
-fn format_array_dimension_close_bracket(close: &JavaSyntaxToken) -> Doc {
+fn format_array_dimension_close_bracket<'source>(close: &JavaSyntaxToken<'source>) -> Doc<'source> {
     format_token_with_inline_leading_comments(
         close,
         InlineLeadingTrivia::AfterPreviousToken,
@@ -456,17 +487,17 @@ fn format_array_dimension_close_bracket(close: &JavaSyntaxToken) -> Doc {
     )
 }
 
-pub(crate) fn format_inline_annotations(
-    annotations: Vec<Annotation>,
+pub(crate) fn format_inline_annotations<'source>(
+    annotations: Vec<Annotation<'source>>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     if annotations.is_empty() {
         return jolt_fmt_ir::nil();
     }
 
     concat([
         jolt_fmt_ir::join(
-            text(" "),
+            &text(" "),
             annotations
                 .into_iter()
                 .map(|annotation| format_annotation(&annotation, formatter)),

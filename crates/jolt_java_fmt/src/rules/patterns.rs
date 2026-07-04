@@ -7,7 +7,10 @@ use crate::helpers::lists::{CommaListItem, parenthesized_list};
 use crate::rules::types::format_type;
 use crate::rules::variables::format_local_variable_declaration;
 
-pub(crate) fn format_pattern(pattern: &Pattern, formatter: &JavaFormatter<'_>) -> Doc {
+pub(crate) fn format_pattern<'source>(
+    pattern: &Pattern<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     match pattern {
         Pattern::TypePattern(pattern) => format_type_pattern(pattern, formatter),
         Pattern::RecordPattern(pattern) => format_record_pattern(pattern, formatter),
@@ -16,7 +19,10 @@ pub(crate) fn format_pattern(pattern: &Pattern, formatter: &JavaFormatter<'_>) -
     }
 }
 
-fn format_type_pattern(pattern: &TypePattern, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_type_pattern<'source>(
+    pattern: &TypePattern<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     pattern
         .variable()
         .map_or_else(jolt_fmt_ir::nil, |variable| {
@@ -24,7 +30,10 @@ fn format_type_pattern(pattern: &TypePattern, formatter: &JavaFormatter<'_>) -> 
         })
 }
 
-fn format_record_pattern(pattern: &RecordPattern, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_record_pattern<'source>(
+    pattern: &RecordPattern<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     concat([
         pattern
             .ty()
@@ -33,7 +42,10 @@ fn format_record_pattern(pattern: &RecordPattern, formatter: &JavaFormatter<'_>)
     ])
 }
 
-fn format_record_pattern_components(pattern: &RecordPattern, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_record_pattern_components<'source>(
+    pattern: &RecordPattern<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     let open = pattern.open_paren();
     let close = pattern.close_paren();
     parenthesized_list(
@@ -49,13 +61,16 @@ fn format_record_pattern_components(pattern: &RecordPattern, formatter: &JavaFor
     )
 }
 
-fn format_component_pattern(pattern: &ComponentPattern, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_component_pattern<'source>(
+    pattern: &ComponentPattern<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     pattern.pattern().map_or_else(jolt_fmt_ir::nil, |pattern| {
         format_pattern(&pattern, formatter)
     })
 }
 
-fn format_match_all_pattern(pattern: &MatchAllPattern) -> Doc {
+fn format_match_all_pattern<'source>(pattern: &MatchAllPattern<'source>) -> Doc<'source> {
     pattern
         .underscore()
         .map_or_else(|| text("_"), |token| format_token_with_comments(&token))

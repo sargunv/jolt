@@ -4,10 +4,10 @@ use super::{
     group, hard_line, indent, line, soft_line, text,
 };
 
-pub(super) fn format_parenthesized_expression(
-    expression: &ParenthesizedExpression,
+pub(super) fn format_parenthesized_expression<'source>(
+    expression: &ParenthesizedExpression<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     group(concat([
         format_parenthesized_expression_open(expression),
         indent(concat([
@@ -22,14 +22,18 @@ pub(super) fn format_parenthesized_expression(
     ]))
 }
 
-fn format_parenthesized_expression_open(expression: &ParenthesizedExpression) -> Doc {
+fn format_parenthesized_expression_open<'source>(
+    expression: &ParenthesizedExpression<'source>,
+) -> Doc<'source> {
     expression.open_paren().map_or_else(
         || text("("),
         |open| concat([format_leading_comments(&open), text("(")]),
     )
 }
 
-fn format_open_parenthesized_expression_spacing(expression: &ParenthesizedExpression) -> Doc {
+fn format_open_parenthesized_expression_spacing<'source>(
+    expression: &ParenthesizedExpression<'source>,
+) -> Doc<'source> {
     let Some(open) = expression.open_paren() else {
         return soft_line();
     };
@@ -40,7 +44,10 @@ fn format_open_parenthesized_expression_spacing(expression: &ParenthesizedExpres
 
     concat([
         format_trailing_comments_before_line_break(&open),
-        if open.trailing_comments().iter().any(comment_forces_line) {
+        if open
+            .trailing_comments()
+            .any(|comment| comment_forces_line(&comment))
+        {
             hard_line()
         } else {
             text(" ")
@@ -48,7 +55,9 @@ fn format_open_parenthesized_expression_spacing(expression: &ParenthesizedExpres
     ])
 }
 
-fn format_parenthesized_expression_close_with_spacing(expression: &ParenthesizedExpression) -> Doc {
+fn format_parenthesized_expression_close_with_spacing<'source>(
+    expression: &ParenthesizedExpression<'source>,
+) -> Doc<'source> {
     let close_has_leading_comments = expression
         .close_paren()
         .as_ref()

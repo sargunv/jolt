@@ -11,28 +11,28 @@ use jolt_text::{TextRange, TextSize};
 use unicode_general_category::{GeneralCategory, get_general_category};
 
 pub(crate) use token::LexedToken;
+#[cfg(test)]
+pub(crate) use token::Token;
 pub(crate) use token::{JavaLexDiagnosticCode, LexerDiagnostic};
-pub use token::{Token, Trivia, TriviaKind};
+pub(crate) use token::{Trivia, TriviaKind};
 pub(crate) use unicode::normalize_unicode_escapes;
 
-/// A Java lexer that produces tokens on demand.
-pub struct JavaLexer<'source> {
+pub(crate) struct JavaLexer<'source> {
     scanner: Scanner<'source>,
     emitted_eof: bool,
 }
 
 impl<'source> JavaLexer<'source> {
-    /// Creates a lexer for Java source text.
     #[must_use]
-    pub fn new(source: &'source str) -> Self {
+    pub(crate) fn new(source: &'source str) -> Self {
         Self {
             scanner: Scanner::new(source),
             emitted_eof: false,
         }
     }
 
-    /// Returns the next token, including trivia attached to that token.
-    pub fn next_token(&mut self) -> Token {
+    #[cfg(test)]
+    pub(crate) fn next_token(&mut self) -> Token {
         if self.emitted_eof {
             return self.eof_token(Vec::new());
         }
@@ -86,6 +86,7 @@ impl<'source> JavaLexer<'source> {
         self.scanner.diagnostics
     }
 
+    #[cfg(test)]
     fn eof_token(&self, leading: Vec<Trivia>) -> Token {
         Token {
             kind: JavaSyntaxKind::Eof,
@@ -151,6 +152,7 @@ impl<'source> Scanner<'source> {
         (kind, TextRange::new(start, end))
     }
 
+    #[cfg(test)]
     fn leading_trivia(&mut self) -> Vec<Trivia> {
         let mut trivia = Vec::new();
         self.leading_trivia_into(&mut trivia);
@@ -165,6 +167,7 @@ impl<'source> Scanner<'source> {
         start..trivia.len()
     }
 
+    #[cfg(test)]
     fn trailing_trivia(&mut self) -> Vec<Trivia> {
         let mut trivia = Vec::new();
         self.trailing_trivia_into(&mut trivia);

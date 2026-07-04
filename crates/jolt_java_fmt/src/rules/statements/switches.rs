@@ -11,10 +11,10 @@ use super::{
     group, hard_line, indent, join_body_items, join_hard_lines, line, text,
 };
 
-pub(super) fn format_switch_statement(
-    statement: &SwitchStatement,
+pub(super) fn format_switch_statement<'source>(
+    statement: &SwitchStatement<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let open = statement.open_paren();
     let close = statement.close_paren();
     concat([
@@ -36,7 +36,10 @@ pub(super) fn format_switch_statement(
     ])
 }
 
-pub(crate) fn format_switch_block(block: &SwitchBlock, formatter: &JavaFormatter<'_>) -> Doc {
+pub(crate) fn format_switch_block<'source>(
+    block: &SwitchBlock<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     let entries = block
         .entries()
         .map(|entry| match entry {
@@ -50,7 +53,10 @@ pub(crate) fn format_switch_block(block: &SwitchBlock, formatter: &JavaFormatter
     braced_switch_block(block, entries)
 }
 
-fn braced_switch_block(block: &SwitchBlock, entries: Vec<Doc>) -> Doc {
+fn braced_switch_block<'source>(
+    block: &SwitchBlock<'source>,
+    entries: Vec<Doc<'source>>,
+) -> Doc<'source> {
     let body = (!entries.is_empty()).then(|| join_hard_lines(entries));
     concat([
         block
@@ -70,11 +76,11 @@ fn braced_switch_block(block: &SwitchBlock, entries: Vec<Doc>) -> Doc {
     ])
 }
 
-fn format_switch_statement_group(
-    group: &SwitchBlockStatementGroup,
+fn format_switch_statement_group<'source>(
+    group: &SwitchBlockStatementGroup<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
-    let labels = group
+) -> Doc<'source> {
+    let mut labels = group
         .label_entries()
         .map(|entry| {
             concat([
@@ -88,7 +94,9 @@ fn format_switch_statement_group(
         .collect::<Vec<_>>();
     let statements = group.block_statements().collect::<Vec<_>>();
 
-    if let Some(doc) = format_single_block_switch_statement_group(&labels, &statements, formatter) {
+    if let Some(doc) =
+        format_single_block_switch_statement_group(&mut labels, &statements, formatter)
+    {
         return doc;
     }
 
@@ -107,11 +115,11 @@ fn format_switch_statement_group(
     ])
 }
 
-fn format_single_block_switch_statement_group(
-    labels: &[Doc],
-    statements: &[BlockStatement],
+fn format_single_block_switch_statement_group<'source>(
+    labels: &mut Vec<Doc<'source>>,
+    statements: &[BlockStatement<'source>],
     formatter: &JavaFormatter<'_>,
-) -> Option<Doc> {
+) -> Option<Doc<'source>> {
     if labels.len() != 1 || statements.len() != 1 || statements[0].starts_after_blank_line() {
         return None;
     }
@@ -121,13 +129,16 @@ fn format_single_block_switch_statement_group(
     };
 
     Some(concat([
-        labels.first()?.clone(),
+        labels.pop()?,
         text(" "),
         format_block(&block, formatter),
     ]))
 }
 
-fn format_switch_rule(rule: &SwitchRule, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_switch_rule<'source>(
+    rule: &SwitchRule<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     let label = rule.label().map_or_else(jolt_fmt_ir::nil, |label| {
         format_switch_label(&label, formatter)
     });
@@ -153,7 +164,7 @@ fn format_switch_rule(rule: &SwitchRule, formatter: &JavaFormatter<'_>) -> Doc {
     ])
 }
 
-fn format_switch_rule_arrow_head(rule: &SwitchRule) -> Doc {
+fn format_switch_rule_arrow_head<'source>(rule: &SwitchRule<'source>) -> Doc<'source> {
     let Some(arrow) = rule.arrow() else {
         return text(" ->");
     };
@@ -173,18 +184,19 @@ fn format_switch_rule_arrow_head(rule: &SwitchRule) -> Doc {
     ])
 }
 
-fn format_switch_rule_arrow_body_separator(rule: &SwitchRule) -> Doc {
-    if rule
-        .arrow()
-        .is_some_and(|arrow| arrow.trailing_comments().iter().any(comment_forces_line))
-    {
+fn format_switch_rule_arrow_body_separator<'source>(rule: &SwitchRule<'source>) -> Doc<'source> {
+    if rule.arrow().is_some_and(|arrow| {
+        arrow
+            .trailing_comments()
+            .any(|comment| comment_forces_line(&comment))
+    }) {
         hard_line()
     } else {
         line()
     }
 }
 
-fn format_switch_rule_arrow(rule: &SwitchRule) -> Doc {
+fn format_switch_rule_arrow<'source>(rule: &SwitchRule<'source>) -> Doc<'source> {
     let Some(arrow) = rule.arrow() else {
         return text(" -> ");
     };
@@ -194,7 +206,9 @@ fn format_switch_rule_arrow(rule: &SwitchRule) -> Doc {
         return concat([text(" "), format_token_with_comments(&arrow), text(" ")]);
     }
 
-    let forced_line = trailing_comments.iter().any(comment_forces_line);
+    let forced_line = arrow
+        .trailing_comments()
+        .any(|comment| comment_forces_line(&comment));
     let mut docs = vec![
         text(" "),
         format_token(
@@ -207,7 +221,10 @@ fn format_switch_rule_arrow(rule: &SwitchRule) -> Doc {
     concat(docs)
 }
 
-fn format_switch_label(label: &SwitchLabel, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_switch_label<'source>(
+    label: &SwitchLabel<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     if label.is_default_label() {
         return label
             .default_token()
@@ -243,10 +260,10 @@ fn format_switch_label(label: &SwitchLabel, formatter: &JavaFormatter<'_>) -> Do
     ])
 }
 
-fn format_switch_label_case_entries(
-    entries: Vec<SwitchLabelCaseEntry>,
+fn format_switch_label_case_entries<'source>(
+    entries: Vec<SwitchLabelCaseEntry<'source>>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let mut docs = Vec::new();
 
     for entry in entries {
@@ -259,7 +276,10 @@ fn format_switch_label_case_entries(
     concat(docs)
 }
 
-fn format_switch_label_case_item(item: &SwitchLabelCaseItem, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_switch_label_case_item<'source>(
+    item: &SwitchLabelCaseItem<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     match item {
         SwitchLabelCaseItem::Constant(constant) => constant
             .expression()
@@ -279,7 +299,10 @@ fn format_switch_label_case_item(item: &SwitchLabelCaseItem, formatter: &JavaFor
     }
 }
 
-fn format_switch_rule_body(rule: &SwitchRule, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_switch_rule_body<'source>(
+    rule: &SwitchRule<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     if let Some(block) = rule.block() {
         return format_block(&block, formatter);
     }

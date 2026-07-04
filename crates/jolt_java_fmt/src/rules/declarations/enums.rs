@@ -1,7 +1,7 @@
 use super::member_bodies::{
     combine_comment_members, effective_members, format_body_close_dangling_comments,
     format_body_open_dangling_comments, format_class_member_body,
-    format_empty_enum_constant_list_comments, format_enum_body_semicolon_comments, join_docs,
+    format_empty_enum_constant_list_comments, format_enum_body_semicolon_comments,
 };
 use super::{
     ClassBodyMember, Doc, EnumConstant, EnumConstantListEntry, JavaFormatter, JavaSyntaxToken,
@@ -12,15 +12,15 @@ use super::{
 };
 
 pub(super) struct FormattedEnumConstant<'source> {
-    doc: Doc,
+    doc: Doc<'source>,
     comma: Option<JavaSyntaxToken<'source>>,
 }
 
-pub(super) fn format_enum_body_contents(
-    constants: Vec<FormattedEnumConstant>,
-    body: &jolt_java_syntax::EnumBody,
+pub(super) fn format_enum_body_contents<'source>(
+    constants: Vec<FormattedEnumConstant<'source>>,
+    body: &jolt_java_syntax::EnumBody<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Option<Doc> {
+) -> Option<Doc<'source>> {
     let members = body.members().collect::<Vec<_>>();
     let enum_semicolons = body.semicolon_tokens().collect::<Vec<_>>();
     let effective_members = effective_members(&members);
@@ -84,7 +84,7 @@ pub(super) fn format_enum_body_contents(
             constant_lines.push(format_dangling_comments(pending_constant_comments));
         }
 
-        join_docs(constant_lines, &hard_line())
+        jolt_fmt_ir::join(&hard_line(), constant_lines)
     });
 
     let moved_member_comments = (!moved_member_comments.is_empty())
@@ -92,6 +92,7 @@ pub(super) fn format_enum_body_contents(
     let members_doc = format_class_member_body(
         body.source_text(),
         body.text_range().start().get(),
+        body.token_iter(),
         &members,
         open_comments,
         close_comments,
@@ -126,11 +127,11 @@ pub(super) fn format_enum_constant_entry<'source>(
     }
 }
 
-fn format_enum_constant_separator(
-    comma: Option<&JavaSyntaxToken>,
+fn format_enum_constant_separator<'source>(
+    comma: Option<&JavaSyntaxToken<'source>>,
     separator: &'static str,
     include_trailing_comments: bool,
-) -> Doc {
+) -> Doc<'source> {
     comma.map_or_else(
         || text(separator),
         |comma| {
@@ -147,10 +148,11 @@ fn format_enum_constant_separator(
     )
 }
 
-fn format_enum_separator_inline_trailing_comments(comma: &JavaSyntaxToken) -> Doc {
+fn format_enum_separator_inline_trailing_comments<'source>(
+    comma: &JavaSyntaxToken<'source>,
+) -> Doc<'source> {
     let comments = comma
         .trailing_comments()
-        .into_iter()
         .filter(|comment| !enum_separator_comment_moves(comment))
         .collect::<Vec<_>>();
 
@@ -168,7 +170,6 @@ fn enum_separator_moved_comments<'source>(
 ) -> Vec<jolt_java_syntax::JavaComment<'source>> {
     comma
         .trailing_comments()
-        .into_iter()
         .filter(|comment| {
             !is_formatter_control_marker(comment.text())
                 && (move_all_trailing_comments || enum_separator_comment_moves(comment))
@@ -176,12 +177,15 @@ fn enum_separator_moved_comments<'source>(
         .collect()
 }
 
-fn enum_separator_comment_moves(comment: &jolt_java_syntax::JavaComment) -> bool {
+fn enum_separator_comment_moves(comment: &jolt_java_syntax::JavaComment<'_>) -> bool {
     comment.kind() != jolt_java_syntax::JavaCommentKind::Line
         && (comment_forces_line(comment) || comment_is_star_block(comment))
 }
 
-fn format_enum_constant(constant: &EnumConstant, formatter: &JavaFormatter<'_>) -> Doc {
+fn format_enum_constant<'source>(
+    constant: &EnumConstant<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     concat([
         format_modifier_prefix_from_parts(constant.annotations().collect(), Vec::new(), formatter),
         constant

@@ -125,7 +125,7 @@ impl CompletedMarker {
 impl Event {
     /// Creates a start-node event with no forward parent.
     #[must_use]
-    pub const fn start_node(kind: RawSyntaxKind) -> Self {
+    pub(crate) const fn start_node(kind: RawSyntaxKind) -> Self {
         Self::StartNode {
             kind,
             forward_parent: None,

@@ -1,97 +1,92 @@
 use std::ops::Range;
 
+use std::borrow::Cow;
+
 use jolt_fmt_ir::{Doc, concat, hard_line, literal_text};
-use jolt_java_syntax::{JavaLexer, JavaSyntaxKind, JavaSyntaxToken, TriviaKind};
+use jolt_java_syntax::{JavaComment, JavaSyntaxToken};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub(crate) struct FormatterIgnoreRange {
-    pub(crate) raw_text: String,
-    pub(crate) raw_text_with_on: String,
+pub(crate) struct FormatterIgnoreRange<'source> {
+    pub(crate) raw_text: &'source str,
+    pub(crate) raw_text_with_on: &'source str,
     pub(crate) interior: Range<usize>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub(crate) struct FormatterIgnoreRun {
-    pub(crate) range: FormatterIgnoreRange,
+pub(crate) struct FormatterIgnoreRun<'source> {
+    pub(crate) range: FormatterIgnoreRange<'source>,
     pub(crate) insert_index: usize,
     pub(crate) skip_start: usize,
     pub(crate) skip_end: usize,
     pub(crate) include_on_marker: bool,
 }
 
-impl FormatterIgnoreRun {
+impl FormatterIgnoreRun<'_> {
     pub(crate) fn skips(&self, item_index: usize) -> bool {
         (self.skip_start..self.skip_end).contains(&item_index)
     }
 }
 
-pub(crate) fn formatter_ignore_ranges(source: &str) -> Vec<FormatterIgnoreRange> {
-    let mut lexer = JavaLexer::new(source);
+pub(crate) fn formatter_ignore_ranges<'source>(
+    source: &'source str,
+    base_start: usize,
+    tokens: impl IntoIterator<Item = JavaSyntaxToken<'source>>,
+) -> Vec<FormatterIgnoreRange<'source>> {
     let mut off_comment_start = None;
     let mut ranges = Vec::new();
 
-    loop {
-        let token = lexer.next_token();
-        let mut visit_trivia =
-            |trivia: &jolt_java_syntax::Trivia, leading_comment_start: &mut Option<usize>| {
-                if !matches!(
-                    trivia.kind,
-                    TriviaKind::LineComment | TriviaKind::BlockComment | TriviaKind::JavadocComment
-                ) {
-                    return;
+    let mut visit_comment =
+        |comment: JavaComment<'source>, leading_comment_start: &mut Option<usize>| {
+            let range = comment.text_range();
+            let start_offset = range.start().get() - base_start;
+            let end_offset = range.end().get() - base_start;
+            let comment_text = comment.text();
+            if is_formatter_off_marker(comment_text) {
+                off_comment_start = Some(
+                    leading_comment_start
+                        .take()
+                        .unwrap_or_else(|| line_start(source, start_offset)),
+                );
+            } else if is_formatter_on_marker(comment_text)
+                && let Some(start) = off_comment_start.take()
+            {
+                let end = line_start(source, start_offset);
+                if start < end {
+                    ranges.push(FormatterIgnoreRange {
+                        raw_text: strip_trailing_line_ending(&source[start..end]),
+                        raw_text_with_on: strip_trailing_line_ending(
+                            &source[start..line_end(source, end_offset)],
+                        ),
+                        interior: start..end,
+                    });
                 }
+            } else if off_comment_start.is_none()
+                && leading_comment_start.is_none()
+                && comment_starts_own_line(source, start_offset)
+            {
+                *leading_comment_start = Some(line_start(source, start_offset));
+            }
+        };
 
-                let comment_text = &source[trivia.range.start().get()..trivia.range.end().get()];
-                if is_formatter_off_marker(comment_text) {
-                    off_comment_start = Some(
-                        leading_comment_start
-                            .take()
-                            .unwrap_or_else(|| line_start(source, trivia.range.start().get())),
-                    );
-                } else if is_formatter_on_marker(comment_text)
-                    && let Some(start) = off_comment_start.take()
-                {
-                    let end = line_start(source, trivia.range.start().get());
-                    if start < end {
-                        ranges.push(FormatterIgnoreRange {
-                            raw_text: strip_trailing_line_ending(&source[start..end]).to_owned(),
-                            raw_text_with_on: strip_trailing_line_ending(
-                                &source[start..line_end(source, trivia.range.end().get())],
-                            )
-                            .to_owned(),
-                            interior: start..end,
-                        });
-                    }
-                } else if off_comment_start.is_none()
-                    && leading_comment_start.is_none()
-                    && comment_starts_own_line(source, trivia.range.start().get())
-                {
-                    *leading_comment_start = Some(line_start(source, trivia.range.start().get()));
-                }
-            };
-
+    for token in tokens {
         let mut leading_comment_start = None;
-        for trivia in &token.leading {
-            visit_trivia(trivia, &mut leading_comment_start);
+        for comment in token.leading_comments() {
+            visit_comment(comment, &mut leading_comment_start);
         }
 
         let mut trailing_comment_start = None;
-        for trivia in &token.trailing {
-            visit_trivia(trivia, &mut trailing_comment_start);
-        }
-
-        if token.kind == JavaSyntaxKind::Eof {
-            break;
+        for comment in token.trailing_comments() {
+            visit_comment(comment, &mut trailing_comment_start);
         }
     }
 
     ranges
 }
 
-pub(crate) fn formatter_ignore_runs(
-    ranges: &[FormatterIgnoreRange],
+pub(crate) fn formatter_ignore_runs<'source>(
+    ranges: &[FormatterIgnoreRange<'source>],
     item_ranges: &[Option<Range<usize>>],
-) -> Vec<FormatterIgnoreRun> {
+) -> Vec<FormatterIgnoreRun<'source>> {
     let mut runs = ranges
         .iter()
         .map(|range| formatter_ignore_run(range, item_ranges))
@@ -107,39 +102,55 @@ pub(crate) fn formatter_ignore_runs(
     runs
 }
 
-pub(crate) fn formatter_ignore_run_doc(run: &FormatterIgnoreRun) -> Doc {
+pub(crate) fn formatter_ignore_run_doc<'source>(run: &FormatterIgnoreRun<'source>) -> Doc<'source> {
     let raw_text = if run.include_on_marker {
         &run.range.raw_text_with_on
     } else {
         &run.range.raw_text
     };
+    let stripped = strip_first_line_indent(raw_text);
     let mut docs = Vec::new();
-    for line in strip_first_line_indent(raw_text).split('\n') {
-        if !docs.is_empty() {
-            docs.push(hard_line());
+    match stripped {
+        Cow::Borrowed(text) => {
+            for line in text.split('\n') {
+                if !docs.is_empty() {
+                    docs.push(hard_line());
+                }
+                docs.push(literal_text(line));
+            }
         }
-        docs.push(literal_text(line.to_owned()));
+        Cow::Owned(text) => {
+            for line in text.split('\n') {
+                if !docs.is_empty() {
+                    docs.push(hard_line());
+                }
+                docs.push(literal_text(line.to_owned()));
+            }
+        }
     }
     concat(docs)
 }
 
-pub(crate) fn token_range_between(first: &JavaSyntaxToken, last: &JavaSyntaxToken) -> Range<usize> {
+pub(crate) fn token_range_between<'source>(
+    first: &JavaSyntaxToken<'source>,
+    last: &JavaSyntaxToken<'source>,
+) -> Range<usize> {
     first.token_text_range().start().get()..last.token_text_range().end().get()
 }
 
-pub(crate) fn relative_token_range_between(
-    first: &JavaSyntaxToken,
-    last: &JavaSyntaxToken,
+pub(crate) fn relative_token_range_between<'source>(
+    first: &JavaSyntaxToken<'source>,
+    last: &JavaSyntaxToken<'source>,
     base_start: usize,
 ) -> Range<usize> {
     let range = token_range_between(first, last);
     range.start - base_start..range.end - base_start
 }
 
-fn formatter_ignore_run(
-    range: &FormatterIgnoreRange,
+fn formatter_ignore_run<'source>(
+    range: &FormatterIgnoreRange<'source>,
     item_ranges: &[Option<Range<usize>>],
-) -> FormatterIgnoreRun {
+) -> FormatterIgnoreRun<'source> {
     let skipped = item_ranges
         .iter()
         .enumerate()
@@ -176,21 +187,26 @@ fn formatter_ignore_run(
     }
 }
 
-fn strip_first_line_indent(text: &str) -> String {
+fn strip_first_line_indent(text: &str) -> Cow<'_, str> {
     let normalized = text.replace("\r\n", "\n").replace('\r', "\n");
     let Some(first_line) = normalized.lines().find(|line| !line.trim().is_empty()) else {
-        return normalized;
+        return Cow::Owned(normalized);
     };
     let indent = leading_indent(first_line);
     if indent.is_empty() {
-        return normalized;
+        if normalized == text {
+            return Cow::Borrowed(text);
+        }
+        return Cow::Owned(normalized);
     }
 
-    normalized
-        .split('\n')
-        .map(|line| line.strip_prefix(indent).unwrap_or(line))
-        .collect::<Vec<_>>()
-        .join("\n")
+    Cow::Owned(
+        normalized
+            .split('\n')
+            .map(|line| line.strip_prefix(indent).unwrap_or(line))
+            .collect::<Vec<_>>()
+            .join("\n"),
+    )
 }
 
 fn leading_indent(line: &str) -> &str {

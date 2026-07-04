@@ -7,15 +7,15 @@ use crate::helpers::modifiers::{
 };
 use crate::rules::annotations::{format_annotation, format_annotation_without_leading_comments};
 
-pub(crate) struct TypedModifierPrefix {
-    pub(crate) declaration_prefix: Doc,
-    pub(crate) type_use_prefix: Doc,
+pub(crate) struct TypedModifierPrefix<'source> {
+    pub(crate) declaration_prefix: Doc<'source>,
+    pub(crate) type_use_prefix: Doc<'source>,
 }
 
-pub(crate) fn format_modifier_prefix(
-    modifiers: Option<ModifierList>,
+pub(crate) fn format_modifier_prefix<'source>(
+    modifiers: Option<ModifierList<'source>>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let Some(modifiers) = modifiers else {
         return jolt_fmt_ir::nil();
     };
@@ -27,10 +27,10 @@ pub(crate) fn format_modifier_prefix(
     )
 }
 
-pub(crate) fn format_typed_modifier_prefix(
-    modifiers: Option<ModifierList>,
+pub(crate) fn format_typed_modifier_prefix<'source>(
+    modifiers: Option<ModifierList<'source>>,
     formatter: &JavaFormatter<'_>,
-) -> TypedModifierPrefix {
+) -> TypedModifierPrefix<'source> {
     let Some(modifiers) = modifiers else {
         return TypedModifierPrefix {
             declaration_prefix: jolt_fmt_ir::nil(),
@@ -46,12 +46,12 @@ pub(crate) fn format_typed_modifier_prefix(
     )
 }
 
-pub(crate) fn format_typed_modifier_prefix_from_split_parts(
-    declaration_annotations: Vec<Annotation>,
-    type_use_annotations: Vec<Annotation>,
-    modifier_entries: Vec<ModifierEntry>,
+pub(crate) fn format_typed_modifier_prefix_from_split_parts<'source>(
+    declaration_annotations: Vec<Annotation<'source>>,
+    type_use_annotations: Vec<Annotation<'source>>,
+    modifier_entries: Vec<ModifierEntry<'source>>,
     formatter: &JavaFormatter<'_>,
-) -> TypedModifierPrefix {
+) -> TypedModifierPrefix<'source> {
     TypedModifierPrefix {
         declaration_prefix: format_modifier_prefix_from_parts(
             declaration_annotations,
@@ -68,12 +68,12 @@ pub(crate) fn format_typed_modifier_prefix_from_split_parts(
     }
 }
 
-pub(crate) fn format_typed_modifier_prefix_from_token_split_parts(
-    declaration_annotations: Vec<Annotation>,
-    type_use_annotations: Vec<Annotation>,
-    modifier_tokens: Vec<JavaSyntaxToken>,
+pub(crate) fn format_typed_modifier_prefix_from_token_split_parts<'source>(
+    declaration_annotations: Vec<Annotation<'source>>,
+    type_use_annotations: Vec<Annotation<'source>>,
+    modifier_tokens: Vec<JavaSyntaxToken<'source>>,
     formatter: &JavaFormatter<'_>,
-) -> TypedModifierPrefix {
+) -> TypedModifierPrefix<'source> {
     TypedModifierPrefix {
         declaration_prefix: modifier_prefix_from_token_docs(
             declaration_annotations
@@ -92,11 +92,11 @@ pub(crate) fn format_typed_modifier_prefix_from_token_split_parts(
     }
 }
 
-pub(crate) fn format_modifier_prefix_from_parts(
-    annotations: Vec<Annotation>,
-    modifier_entries: Vec<ModifierEntry>,
+pub(crate) fn format_modifier_prefix_from_parts<'source>(
+    annotations: Vec<Annotation<'source>>,
+    modifier_entries: Vec<ModifierEntry<'source>>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     modifier_prefix_from_docs(
         annotations
             .into_iter()

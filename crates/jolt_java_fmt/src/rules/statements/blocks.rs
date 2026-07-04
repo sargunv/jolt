@@ -11,7 +11,10 @@ use crate::helpers::comments::{
     format_token_with_inline_leading_comments,
 };
 
-pub(crate) fn format_block(block: &Block, formatter: &JavaFormatter<'_>) -> Doc {
+pub(crate) fn format_block<'source>(
+    block: &Block<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     concat([
         block
             .open_brace()
@@ -32,7 +35,7 @@ pub(crate) fn format_block(block: &Block, formatter: &JavaFormatter<'_>) -> Doc 
     ])
 }
 
-fn format_block_open_brace(open: &JavaSyntaxToken) -> Doc {
+fn format_block_open_brace<'source>(open: &JavaSyntaxToken<'source>) -> Doc<'source> {
     format_token_with_inline_leading_comments(
         open,
         InlineLeadingTrivia::BeforeToken,
@@ -40,11 +43,17 @@ fn format_block_open_brace(open: &JavaSyntaxToken) -> Doc {
     )
 }
 
-pub(crate) fn format_block_body(block: &Block, formatter: &JavaFormatter<'_>) -> Option<Doc> {
+pub(crate) fn format_block_body<'source>(
+    block: &Block<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Option<Doc<'source>> {
     format_block_statements_body(block, formatter)
 }
 
-fn format_block_statements_body(block: &Block, formatter: &JavaFormatter<'_>) -> Option<Doc> {
+fn format_block_statements_body<'source>(
+    block: &Block<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Option<Doc<'source>> {
     let statements = block.block_statements().collect::<Vec<_>>();
     let block_start = block.text_range().start().get();
     let ignored_ranges = block_formatter_ignore_ranges(block);
@@ -60,22 +69,26 @@ fn format_block_statements_body(block: &Block, formatter: &JavaFormatter<'_>) ->
     (!items.is_empty()).then(|| join_body_items(items))
 }
 
-fn format_block_open_dangling_comments(block: &Block) -> Option<BodyItem> {
+fn format_block_open_dangling_comments<'source>(
+    block: &Block<'source>,
+) -> Option<BodyItem<'source>> {
     let comments = block.open_brace()?.trailing_comments();
     (!comments.is_empty()).then(|| BodyItem::new(format_dangling_comments(comments), false))
 }
 
-fn format_block_close_dangling_comments(block: &Block) -> Option<BodyItem> {
+fn format_block_close_dangling_comments<'source>(
+    block: &Block<'source>,
+) -> Option<BodyItem<'source>> {
     let comments = block.close_brace()?.leading_comments();
     (!comments.is_empty()).then(|| BodyItem::new(format_dangling_comments(comments), false))
 }
 
-fn format_block_statement_items(
-    statements: &[BlockStatement],
+fn format_block_statement_items<'source>(
+    statements: &[BlockStatement<'source>],
     block_start: usize,
-    ignored_ranges: &[FormatterIgnoreRange],
+    ignored_ranges: &[FormatterIgnoreRange<'source>],
     formatter: &JavaFormatter<'_>,
-) -> Vec<BodyItem> {
+) -> Vec<BodyItem<'source>> {
     let statement_ranges = statements
         .iter()
         .map(|statement| block_statement_token_range(statement, block_start))
@@ -121,20 +134,20 @@ fn format_block_statement_items(
     items
 }
 
-pub(crate) fn format_block_statement_item(
-    statement: &BlockStatement,
+pub(crate) fn format_block_statement_item<'source>(
+    statement: &BlockStatement<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Option<BodyItem> {
+) -> Option<BodyItem<'source>> {
     let starts_after_blank_line = statement.starts_after_blank_line();
     let doc = format_block_item_doc(statement.item()?, statement.semicolon(), formatter)?;
     Some(BodyItem::new(doc, starts_after_blank_line))
 }
 
-fn format_block_item_doc(
-    item: BlockItem,
-    semicolon: Option<JavaSyntaxToken>,
+fn format_block_item_doc<'source>(
+    item: BlockItem<'source>,
+    semicolon: Option<JavaSyntaxToken<'source>>,
     formatter: &JavaFormatter<'_>,
-) -> Option<Doc> {
+) -> Option<Doc<'source>> {
     let doc = match item {
         BlockItem::EmptyStatement(statement) => format_removed_empty_statement(&statement),
         BlockItem::LocalVariableDeclaration(declaration) => Some(concat([
@@ -189,16 +202,24 @@ fn format_block_item_doc(
     Some(doc)
 }
 
-fn format_removed_empty_statement(statement: &jolt_java_syntax::EmptyStatement) -> Option<Doc> {
+fn format_removed_empty_statement<'source>(
+    statement: &jolt_java_syntax::EmptyStatement<'source>,
+) -> Option<Doc<'source>> {
     format_removed_comments(comments_from_tokens(statement.token_iter()))
 }
 
-fn block_formatter_ignore_ranges(block: &Block) -> Vec<FormatterIgnoreRange> {
-    formatter_ignore_ranges(block.source_text())
+fn block_formatter_ignore_ranges<'source>(
+    block: &Block<'source>,
+) -> Vec<FormatterIgnoreRange<'source>> {
+    formatter_ignore_ranges(
+        block.source_text(),
+        block.text_range().start().get(),
+        block.token_iter(),
+    )
 }
 
 fn block_statement_token_range(
-    statement: &BlockStatement,
+    statement: &BlockStatement<'_>,
     block_start: usize,
 ) -> Option<Range<usize>> {
     Some(relative_token_range_between(

@@ -7,10 +7,10 @@ use super::{
     text, trailing_comments_force_line,
 };
 
-pub(super) fn format_labeled_statement(
-    statement: &LabeledStatement,
+pub(super) fn format_labeled_statement<'source>(
+    statement: &LabeledStatement<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     let label = statement
         .label()
         .map_or_else(jolt_fmt_ir::nil, |label| format_token_with_comments(&label));
@@ -28,10 +28,10 @@ pub(super) fn format_labeled_statement(
     ])
 }
 
-pub(super) fn format_expression_statement(
-    statement: &ExpressionStatement,
+pub(super) fn format_expression_statement<'source>(
+    statement: &ExpressionStatement<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     concat([
         statement
             .expression()
@@ -41,10 +41,10 @@ pub(super) fn format_expression_statement(
         format_statement_semicolon(statement.semicolon()),
     ])
 }
-pub(super) fn format_assert_statement(
-    statement: &AssertStatement,
+pub(super) fn format_assert_statement<'source>(
+    statement: &AssertStatement<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     concat([
         format_statement_keyword(statement.keyword(), "assert"),
         text(" "),
@@ -68,10 +68,10 @@ pub(super) fn format_assert_statement(
     ])
 }
 
-pub(super) fn format_return_statement(
-    statement: &ReturnStatement,
+pub(super) fn format_return_statement<'source>(
+    statement: &ReturnStatement<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     format_keyword_expression_statement(
         statement.keyword().as_ref(),
         "return",
@@ -81,10 +81,10 @@ pub(super) fn format_return_statement(
     )
 }
 
-pub(super) fn format_throw_statement(
-    statement: &ThrowStatement,
+pub(super) fn format_throw_statement<'source>(
+    statement: &ThrowStatement<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     format_keyword_expression_statement(
         statement.keyword().as_ref(),
         "throw",
@@ -94,10 +94,10 @@ pub(super) fn format_throw_statement(
     )
 }
 
-pub(super) fn format_yield_statement(
-    statement: &YieldStatement,
+pub(super) fn format_yield_statement<'source>(
+    statement: &YieldStatement<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     format_keyword_expression_statement(
         statement.keyword().as_ref(),
         "yield",
@@ -107,13 +107,13 @@ pub(super) fn format_yield_statement(
     )
 }
 
-fn format_keyword_expression_statement(
-    keyword: Option<&JavaSyntaxToken>,
+fn format_keyword_expression_statement<'source>(
+    keyword: Option<&JavaSyntaxToken<'source>>,
     fallback: &'static str,
-    expression: Option<Expression>,
-    semicolon: Option<JavaSyntaxToken>,
+    expression: Option<Expression<'source>>,
+    semicolon: Option<JavaSyntaxToken<'source>>,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     concat([
         format_statement_keyword_head(keyword, fallback),
         expression.map_or_else(jolt_fmt_ir::nil, |expression| {
@@ -129,11 +129,13 @@ fn format_keyword_expression_statement(
     ])
 }
 
-fn keyword_expression_separator_forces_line(keyword: Option<&JavaSyntaxToken>) -> bool {
+fn keyword_expression_separator_forces_line(keyword: Option<&JavaSyntaxToken<'_>>) -> bool {
     keyword.is_some_and(trailing_comments_force_line)
 }
 
-fn format_keyword_expression_separator(keyword: Option<&JavaSyntaxToken>) -> Doc {
+fn format_keyword_expression_separator<'source>(
+    keyword: Option<&JavaSyntaxToken<'source>>,
+) -> Doc<'source> {
     let Some(keyword) = keyword else {
         return text(" ");
     };
@@ -152,12 +154,12 @@ fn format_keyword_expression_separator(keyword: Option<&JavaSyntaxToken>) -> Doc
     ])
 }
 
-pub(super) fn format_jump_statement(
-    keyword: Option<JavaSyntaxToken>,
+pub(super) fn format_jump_statement<'source>(
+    keyword: Option<JavaSyntaxToken<'source>>,
     fallback: &'static str,
-    label: Option<JavaSyntaxToken>,
-    semicolon: Option<JavaSyntaxToken>,
-) -> Doc {
+    label: Option<JavaSyntaxToken<'source>>,
+    semicolon: Option<JavaSyntaxToken<'source>>,
+) -> Doc<'source> {
     concat([
         format_statement_keyword(keyword, fallback),
         label.map_or_else(jolt_fmt_ir::nil, |label| {
@@ -167,7 +169,7 @@ pub(super) fn format_jump_statement(
     ])
 }
 
-pub(crate) fn format_statement_semicolon(semicolon: Option<JavaSyntaxToken>) -> Doc {
+pub(crate) fn format_statement_semicolon(semicolon: Option<JavaSyntaxToken<'_>>) -> Doc<'_> {
     let Some(semicolon) = semicolon else {
         return text(";");
     };
@@ -179,7 +181,9 @@ pub(crate) fn format_statement_semicolon(semicolon: Option<JavaSyntaxToken>) -> 
     ])
 }
 
-fn format_semicolon_leading_comments(semicolon: &JavaSyntaxToken) -> Doc {
+fn format_semicolon_leading_comments<'source>(
+    semicolon: &JavaSyntaxToken<'source>,
+) -> Doc<'source> {
     let mut docs = Vec::new();
     for comment in semicolon.leading_comments() {
         docs.push(text(" "));
@@ -191,7 +195,7 @@ fn format_semicolon_leading_comments(semicolon: &JavaSyntaxToken) -> Doc {
     concat(docs)
 }
 
-fn format_terminator_trailing_comments(token: &JavaSyntaxToken) -> Doc {
+fn format_terminator_trailing_comments<'source>(token: &JavaSyntaxToken<'source>) -> Doc<'source> {
     let mut docs = Vec::new();
     for comment in token.trailing_comments() {
         if terminator_comment_starts_next_line(&comment) {
@@ -204,24 +208,24 @@ fn format_terminator_trailing_comments(token: &JavaSyntaxToken) -> Doc {
     concat(docs)
 }
 
-fn terminator_comment_starts_next_line(comment: &JavaComment) -> bool {
+fn terminator_comment_starts_next_line(comment: &JavaComment<'_>) -> bool {
     comment_is_star_block(comment)
 }
 
-pub(super) fn format_statement_keyword(
-    keyword: Option<JavaSyntaxToken>,
+pub(super) fn format_statement_keyword<'source>(
+    keyword: Option<JavaSyntaxToken<'source>>,
     fallback: &'static str,
-) -> Doc {
+) -> Doc<'source> {
     keyword.map_or_else(
         || text(fallback),
         |keyword| format_token_with_comments(&keyword),
     )
 }
 
-pub(super) fn format_statement_keyword_head(
-    keyword: Option<&JavaSyntaxToken>,
+pub(super) fn format_statement_keyword_head<'source>(
+    keyword: Option<&JavaSyntaxToken<'source>>,
     fallback: &'static str,
-) -> Doc {
+) -> Doc<'source> {
     keyword.map_or_else(
         || text(fallback),
         |keyword| format_token_before_relocated_trailing_comments(keyword, LeadingTrivia::Preserve),

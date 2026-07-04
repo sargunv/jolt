@@ -18,7 +18,7 @@ pub struct JavaFormatOptions {
 }
 
 impl Default for JavaFormatOptions {
-    fn default() -> Self {
+    fn default<'source>() -> Self {
         Self {
             line_width: 80,
             indent_width: 2,
@@ -52,7 +52,7 @@ enum JavaFormatDiagnosticCode {
 }
 
 impl DiagnosticCode for JavaFormatDiagnosticCode {
-    fn id(&self) -> DiagnosticCodeId {
+    fn id<'source>(&self) -> DiagnosticCodeId {
         match self {
             Self::RenderError => DiagnosticCodeId::new("java.format.render_error"),
         }
@@ -77,7 +77,7 @@ pub fn format_source_to_sink<S: RenderSink + ?Sized>(
         return JavaFormatSinkResult::Blocked { diagnostics };
     };
 
-    let mut formatter = JavaFormatter::new(options, &syntax);
+    let mut formatter = JavaFormatter::new(options);
     let doc = formatter.format_compilation_unit(&syntax);
     match render_to(&doc, formatter.render_options(), sink) {
         Ok(outcome) if outcome.halted => JavaFormatSinkResult::Halted { diagnostics },
@@ -120,13 +120,13 @@ mod tests {
     impl RenderSink for StringSink {
         type Error = Infallible;
 
-        fn write_str(&mut self, text: &str) -> Result<RenderControl, Self::Error> {
+        fn write_str<'source>(&mut self, text: &str) -> Result<RenderControl, Self::Error> {
             self.text.push_str(text);
             Ok(RenderControl::Continue)
         }
     }
 
-    fn format_source(source: &str, options: &JavaFormatOptions) -> TestFormatResult {
+    fn format_source<'source>(source: &str, options: &JavaFormatOptions) -> TestFormatResult {
         let mut sink = StringSink::default();
         let result = format_source_to_sink(source, options, &mut sink);
         match result {
@@ -144,7 +144,7 @@ mod tests {
     }
 
     #[test]
-    fn clean_java_formats_through_renderer_and_adds_final_newline() {
+    fn clean_java_formats_through_renderer_and_adds_final_newline<'source>() {
         let result = format_source("class A {}", &JavaFormatOptions::default());
 
         assert_eq!(result.formatted_source.as_deref(), Some("class A {\n}\n"));
@@ -152,7 +152,7 @@ mod tests {
     }
 
     #[test]
-    fn final_newline_is_idempotent() {
+    fn final_newline_is_idempotent<'source>() {
         let result = format_source("class A {\n}\n", &JavaFormatOptions::default());
 
         assert_eq!(result.formatted_source.as_deref(), Some("class A {\n}\n"));
@@ -160,7 +160,7 @@ mod tests {
     }
 
     #[test]
-    fn deeper_declarations_do_not_block_program_rendering() {
+    fn deeper_declarations_do_not_block_program_rendering<'source>() {
         let result = format_source(
             "class A {\n  void method() { return; }\n}\n",
             &JavaFormatOptions::default(),
@@ -171,7 +171,7 @@ mod tests {
     }
 
     #[test]
-    fn parse_errors_block_formatting_without_output() {
+    fn parse_errors_block_formatting_without_output<'source>() {
         let result = format_source("class", &JavaFormatOptions::default());
 
         assert_eq!(result.formatted_source, None);
@@ -185,7 +185,7 @@ mod tests {
     }
 
     #[test]
-    fn declaration_recovery_nodes_do_not_reach_layout() {
+    fn declaration_recovery_nodes_do_not_reach_layout<'source>() {
         for source in [
             "enum E { , }",
             "class C { <T>() {} }",

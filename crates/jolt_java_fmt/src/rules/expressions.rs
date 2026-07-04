@@ -64,15 +64,18 @@ use operators::{
 use parenthesized::format_parenthesized_expression;
 use switches::format_switch_expression;
 
-pub(crate) fn format_expression(expression: &Expression, formatter: &JavaFormatter<'_>) -> Doc {
+pub(crate) fn format_expression<'source>(
+    expression: &Expression<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
     format_expression_with_leading_comments(expression, LeadingComments::Preserve, formatter)
 }
 
-fn format_expression_with_leading_comments(
-    expression: &Expression,
+fn format_expression_with_leading_comments<'source>(
+    expression: &Expression<'source>,
     leading_comments: LeadingComments,
     formatter: &JavaFormatter<'_>,
-) -> Doc {
+) -> Doc<'source> {
     match expression {
         Expression::ParenthesizedExpression(expression) => {
             format_parenthesized_expression(expression, formatter)

@@ -11,41 +11,53 @@ use super::{
     join_member_docs, non_formatter_control_comments, relative_token_range_between, text,
 };
 
-pub(super) fn format_class_body(body: &ClassBody, formatter: &JavaFormatter<'_>) -> Option<Doc> {
-    let members = body.members().collect::<Vec<_>>();
-    format_class_member_body(
-        body.source_text(),
-        body.text_range().start().get(),
-        &members,
-        format_body_open_dangling_comments(body.open_brace()),
-        format_body_close_dangling_comments(body.close_brace()),
-        formatter,
-    )
-}
-
-pub(super) fn format_record_body(body: &RecordBody, formatter: &JavaFormatter<'_>) -> Option<Doc> {
-    let members = body.members().collect::<Vec<_>>();
-    format_class_member_body(
-        body.source_text(),
-        body.text_range().start().get(),
-        &members,
-        format_body_open_dangling_comments(body.open_brace()),
-        format_body_close_dangling_comments(body.close_brace()),
-        formatter,
-    )
-}
-
-pub(super) fn format_interface_body(
-    body: &InterfaceBody,
+pub(super) fn format_class_body<'source>(
+    body: &ClassBody<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Option<Doc> {
+) -> Option<Doc<'source>> {
+    let members = body.members().collect::<Vec<_>>();
+    format_class_member_body(
+        body.source_text(),
+        body.text_range().start().get(),
+        body.token_iter(),
+        &members,
+        format_body_open_dangling_comments(body.open_brace()),
+        format_body_close_dangling_comments(body.close_brace()),
+        formatter,
+    )
+}
+
+pub(super) fn format_record_body<'source>(
+    body: &RecordBody<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Option<Doc<'source>> {
+    let members = body.members().collect::<Vec<_>>();
+    format_class_member_body(
+        body.source_text(),
+        body.text_range().start().get(),
+        body.token_iter(),
+        &members,
+        format_body_open_dangling_comments(body.open_brace()),
+        format_body_close_dangling_comments(body.close_brace()),
+        formatter,
+    )
+}
+
+pub(super) fn format_interface_body<'source>(
+    body: &InterfaceBody<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Option<Doc<'source>> {
     let members = body.members().collect::<Vec<_>>();
     let effective_members = printable_interface_members(&members);
     let member_ranges = effective_members
         .iter()
         .map(|member| interface_member_token_range(member, body.text_range().start().get()))
         .collect::<Vec<_>>();
-    let ignored_ranges = formatter_ignore_ranges(body.source_text());
+    let ignored_ranges = formatter_ignore_ranges(
+        body.source_text(),
+        body.text_range().start().get(),
+        body.token_iter(),
+    );
     let ignored_runs = formatter_ignore_runs(&ignored_ranges, &member_ranges);
     let mut formatted_members = Vec::new();
     formatted_members.extend(format_body_open_dangling_comments(body.open_brace()));
@@ -92,17 +104,21 @@ pub(super) fn format_interface_body(
     (!formatted_members.is_empty()).then(|| join_member_docs(formatted_members))
 }
 
-pub(super) fn format_annotation_interface_body(
-    body: &jolt_java_syntax::AnnotationInterfaceBody,
+pub(super) fn format_annotation_interface_body<'source>(
+    body: &jolt_java_syntax::AnnotationInterfaceBody<'source>,
     formatter: &JavaFormatter<'_>,
-) -> Option<Doc> {
+) -> Option<Doc<'source>> {
     let members = body.members().collect::<Vec<_>>();
     let members = printable_annotation_members(&members);
     let member_ranges = members
         .iter()
         .map(|member| annotation_member_token_range(member, body.text_range().start().get()))
         .collect::<Vec<_>>();
-    let ignored_ranges = formatter_ignore_ranges(body.source_text());
+    let ignored_ranges = formatter_ignore_ranges(
+        body.source_text(),
+        body.text_range().start().get(),
+        body.token_iter(),
+    );
     let ignored_runs = formatter_ignore_runs(&ignored_ranges, &member_ranges);
     let mut formatted_members = Vec::new();
     formatted_members.extend(format_body_open_dangling_comments(body.open_brace()));
@@ -149,16 +165,17 @@ pub(super) fn format_annotation_interface_body(
     (!formatted_members.is_empty()).then(|| join_member_docs(formatted_members))
 }
 
-pub(super) fn format_class_member_body(
-    source: &str,
+pub(super) fn format_class_member_body<'source>(
+    source: &'source str,
     body_start: usize,
-    members: &[ClassBodyMember],
-    open_dangling_comments: Option<FormattedMember>,
-    close_dangling_comments: Option<FormattedMember>,
+    tokens: impl IntoIterator<Item = JavaSyntaxToken<'source>>,
+    members: &[ClassBodyMember<'source>],
+    open_dangling_comments: Option<FormattedMember<'source>>,
+    close_dangling_comments: Option<FormattedMember<'source>>,
     formatter: &JavaFormatter<'_>,
-) -> Option<Doc> {
+) -> Option<Doc<'source>> {
     let effective_members = effective_members(members);
-    let ignored_ranges = formatter_ignore_ranges(source);
+    let ignored_ranges = formatter_ignore_ranges(source, body_start, tokens);
     let member_ranges = effective_members
         .iter()
         .map(|member| class_member_token_range(member, body_start))
@@ -209,7 +226,10 @@ pub(super) fn format_class_member_body(
     (!formatted_members.is_empty()).then(|| join_member_docs(formatted_members))
 }
 
-fn class_member_token_range(member: &ClassBodyMember, body_start: usize) -> Option<Range<usize>> {
+fn class_member_token_range(
+    member: &ClassBodyMember<'_>,
+    body_start: usize,
+) -> Option<Range<usize>> {
     Some(relative_token_range_between(
         &member.first_token()?,
         &member.last_token()?,
@@ -218,7 +238,7 @@ fn class_member_token_range(member: &ClassBodyMember, body_start: usize) -> Opti
 }
 
 fn interface_member_token_range(
-    member: &InterfaceBodyMember,
+    member: &InterfaceBodyMember<'_>,
     body_start: usize,
 ) -> Option<Range<usize>> {
     Some(relative_token_range_between(
@@ -229,7 +249,7 @@ fn interface_member_token_range(
 }
 
 fn annotation_member_token_range(
-    member: &AnnotationInterfaceBodyMember,
+    member: &AnnotationInterfaceBodyMember<'_>,
     body_start: usize,
 ) -> Option<Range<usize>> {
     Some(relative_token_range_between(
@@ -241,7 +261,7 @@ fn annotation_member_token_range(
 
 fn ignored_member_category(
     run: &crate::helpers::formatter_ignore::FormatterIgnoreRun,
-    members: &[ClassBodyMember],
+    members: &[ClassBodyMember<'_>],
 ) -> MemberCategory {
     members
         .get(run.skip_start)
@@ -250,7 +270,7 @@ fn ignored_member_category(
 
 fn ignored_interface_member_category(
     run: &crate::helpers::formatter_ignore::FormatterIgnoreRun,
-    members: &[InterfaceBodyMember],
+    members: &[InterfaceBodyMember<'_>],
 ) -> MemberCategory {
     members
         .get(run.skip_start)
@@ -259,7 +279,7 @@ fn ignored_interface_member_category(
 
 fn ignored_annotation_member_category(
     run: &crate::helpers::formatter_ignore::FormatterIgnoreRun,
-    members: &[AnnotationInterfaceBodyMember],
+    members: &[AnnotationInterfaceBodyMember<'_>],
 ) -> MemberCategory {
     members
         .get(run.skip_start)
@@ -302,51 +322,53 @@ fn printable_annotation_members<'source>(
         .collect()
 }
 
-fn is_printable_class_member(member: &ClassBodyMember) -> bool {
+fn is_printable_class_member(member: &ClassBodyMember<'_>) -> bool {
     !matches!(member, ClassBodyMember::EmptyDeclaration(_))
         || format_removed_empty_declaration_comments(comments_from_tokens(member.token_iter()))
             .is_some()
 }
 
-fn is_printable_interface_member(member: &InterfaceBodyMember) -> bool {
+fn is_printable_interface_member(member: &InterfaceBodyMember<'_>) -> bool {
     !matches!(member, InterfaceBodyMember::EmptyDeclaration(_))
         || format_removed_empty_declaration_comments(comments_from_tokens(member.token_iter()))
             .is_some()
 }
 
-fn is_printable_annotation_member(member: &AnnotationInterfaceBodyMember) -> bool {
+fn is_printable_annotation_member(member: &AnnotationInterfaceBodyMember<'_>) -> bool {
     !matches!(member, AnnotationInterfaceBodyMember::EmptyDeclaration(_))
         || format_removed_empty_declaration_comments(comments_from_tokens(member.token_iter()))
             .is_some()
 }
 
-pub(super) fn format_removed_empty_declaration(tokens: &[JavaSyntaxToken]) -> Option<Doc> {
+pub(super) fn format_removed_empty_declaration<'source>(
+    tokens: &[JavaSyntaxToken<'source>],
+) -> Option<Doc<'source>> {
     format_removed_token_comments(tokens)
 }
 
 fn format_removed_empty_declaration_comments(
-    comments: Vec<jolt_java_syntax::JavaComment>,
-) -> Option<Doc> {
+    comments: Vec<jolt_java_syntax::JavaComment<'_>>,
+) -> Option<Doc<'_>> {
     format_removed_comments(comments)
 }
 
 pub(super) fn format_body_open_dangling_comments(
-    open: Option<JavaSyntaxToken>,
-) -> Option<FormattedMember> {
+    open: Option<JavaSyntaxToken<'_>>,
+) -> Option<FormattedMember<'_>> {
     let comments = non_formatter_control_comments(open?.trailing_comments());
     (!comments.is_empty()).then(|| FormattedMember::comment(format_dangling_comments(comments)))
 }
 
 pub(super) fn format_body_close_dangling_comments(
-    close: Option<JavaSyntaxToken>,
-) -> Option<FormattedMember> {
+    close: Option<JavaSyntaxToken<'_>>,
+) -> Option<FormattedMember<'_>> {
     let comments = non_formatter_control_comments(close?.leading_comments());
     (!comments.is_empty()).then(|| FormattedMember::comment(format_dangling_comments(comments)))
 }
 
 pub(super) fn format_empty_enum_constant_list_comments(
-    constants: Option<jolt_java_syntax::EnumConstantList>,
-) -> Option<FormattedMember> {
+    constants: Option<jolt_java_syntax::EnumConstantList<'_>>,
+) -> Option<FormattedMember<'_>> {
     let constants = constants?;
     if constants.constants().next().is_some() {
         return None;
@@ -356,16 +378,16 @@ pub(super) fn format_empty_enum_constant_list_comments(
         .map(FormattedMember::comment)
 }
 
-pub(super) fn format_enum_body_semicolon_comments(
-    semicolons: &[JavaSyntaxToken],
-) -> Option<FormattedMember> {
+pub(super) fn format_enum_body_semicolon_comments<'source>(
+    semicolons: &[JavaSyntaxToken<'source>],
+) -> Option<FormattedMember<'source>> {
     format_removed_empty_declaration(semicolons).map(FormattedMember::comment)
 }
 
-pub(super) fn combine_comment_members(
-    first: Option<FormattedMember>,
-    second: Option<FormattedMember>,
-) -> Option<FormattedMember> {
+pub(super) fn combine_comment_members<'source>(
+    first: Option<FormattedMember<'source>>,
+    second: Option<FormattedMember<'source>>,
+) -> Option<FormattedMember<'source>> {
     match (first, second) {
         (Some(first), Some(second)) => Some(FormattedMember::comment(concat([
             first.doc,
@@ -377,7 +399,7 @@ pub(super) fn combine_comment_members(
     }
 }
 
-fn member_category(member: &ClassBodyMember) -> MemberCategory {
+fn member_category(member: &ClassBodyMember<'_>) -> MemberCategory {
     match member {
         ClassBodyMember::FieldDeclaration(_) => MemberCategory::Field,
         ClassBodyMember::ConstructorDeclaration(_)
@@ -395,7 +417,7 @@ fn member_category(member: &ClassBodyMember) -> MemberCategory {
     }
 }
 
-fn interface_member_category(member: &InterfaceBodyMember) -> MemberCategory {
+fn interface_member_category(member: &InterfaceBodyMember<'_>) -> MemberCategory {
     match member {
         InterfaceBodyMember::FieldDeclaration(_) => MemberCategory::Field,
         InterfaceBodyMember::MethodDeclaration(_) => MemberCategory::Method,
@@ -408,7 +430,7 @@ fn interface_member_category(member: &InterfaceBodyMember) -> MemberCategory {
     }
 }
 
-fn annotation_member_category(member: &AnnotationInterfaceBodyMember) -> MemberCategory {
+fn annotation_member_category(member: &AnnotationInterfaceBodyMember<'_>) -> MemberCategory {
     match member {
         AnnotationInterfaceBodyMember::FieldDeclaration(_) => MemberCategory::Field,
         AnnotationInterfaceBodyMember::MethodDeclaration(_)
@@ -422,19 +444,8 @@ fn annotation_member_category(member: &AnnotationInterfaceBodyMember) -> MemberC
     }
 }
 
-pub(super) fn join_docs(docs: Vec<Doc>, separator: &Doc) -> Doc {
-    let mut joined = Vec::new();
-    for doc in docs {
-        if !joined.is_empty() {
-            joined.push(separator.clone());
-        }
-        joined.push(doc);
-    }
-    concat(joined)
-}
-
-impl FormattedMember {
-    fn from_member(member: &ClassBodyMember, formatter: &JavaFormatter<'_>) -> Self {
+impl<'source> FormattedMember<'source> {
+    fn from_member(member: &ClassBodyMember<'source>, formatter: &JavaFormatter<'_>) -> Self {
         let starts_after_blank_line = member.starts_after_blank_line();
         match member {
             ClassBodyMember::FieldDeclaration(field) => Self {
@@ -515,7 +526,10 @@ impl FormattedMember {
         }
     }
 
-    fn from_interface_member(member: &InterfaceBodyMember, formatter: &JavaFormatter<'_>) -> Self {
+    fn from_interface_member(
+        member: &InterfaceBodyMember<'source>,
+        formatter: &JavaFormatter<'_>,
+    ) -> Self {
         let starts_after_blank_line = member.starts_after_blank_line();
         match member {
             InterfaceBodyMember::FieldDeclaration(field) => Self {
@@ -565,7 +579,7 @@ impl FormattedMember {
     }
 
     fn from_annotation_member(
-        member: &AnnotationInterfaceBodyMember,
+        member: &AnnotationInterfaceBodyMember<'source>,
         formatter: &JavaFormatter<'_>,
     ) -> Self {
         let starts_after_blank_line = member.starts_after_blank_line();
