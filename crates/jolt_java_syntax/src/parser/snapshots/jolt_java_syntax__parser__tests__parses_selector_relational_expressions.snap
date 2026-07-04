@@ -1,0 +1,129 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "SelectorRelationalExpressions" @ 19..48 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 49..50
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 67..70 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "index" @ 71..76
+          Semicolon ";" @ 76..77
+      ClassBodyDeclaration
+        FieldDeclaration
+          ClassType
+            QualifiedName
+              Identifier "java" @ 94..98 leading=[Newline "\n", Whitespace "                "]
+              Dot "." @ 98..99
+              Identifier "util" @ 99..103
+              Dot "." @ 103..104
+              Identifier "List" @ 104..108
+            TypeArgumentList
+              Lt "<" @ 108..109
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "String" @ 109..115
+              Gt ">" @ 115..116 trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "items" @ 117..122
+          Semicolon ";" @ 122..123
+      ClassBodyDeclaration
+        MethodDeclaration
+          PrimitiveType
+            BooleanKw "boolean" @ 141..148 leading=[Newline "\n", Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 149..155
+          LParen "(" @ 155..156
+          FormalParameterList
+            FormalParameter
+              ArrayType
+                ClassType
+                  Name
+                    Identifier "String" @ 156..162
+                ArrayDimensions
+                  ArrayDimension
+                    LBracket "[" @ 162..163
+                    RBracket "]" @ 163..164 trailing=[Whitespace " "]
+              Identifier "names" @ 165..170
+          RParen ")" @ 170..171 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 172..173
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 194..200 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                BinaryExpression
+                  BinaryExpression
+                    BinaryExpression
+                      FieldAccessExpression
+                        ThisExpression
+                          ThisKw "this" @ 201..205
+                        Dot "." @ 205..206
+                        Identifier "index" @ 206..211 trailing=[Whitespace " "]
+                      Lt "<" @ 212..213 trailing=[Whitespace " "]
+                      FieldAccessExpression
+                        NameExpression
+                          Identifier "names" @ 214..219
+                        Dot "." @ 219..220
+                        Identifier "length" @ 220..226
+                    AndAnd "&&" @ 251..253 leading=[Newline "\n", Whitespace "                        "] trailing=[Whitespace " "]
+                    BinaryExpression
+                      MethodInvocationExpression
+                        ArrayAccessExpression
+                          NameExpression
+                            Identifier "names" @ 254..259
+                          LBracket "[" @ 259..260
+                          LiteralExpression
+                            IntegerLiteral "0" @ 260..261
+                          RBracket "]" @ 261..262
+                        Dot "." @ 262..263
+                        Identifier "length" @ 263..269
+                        ArgumentList
+                          LParen "(" @ 269..270
+                          RParen ")" @ 270..271 trailing=[Whitespace " "]
+                      Lt "<" @ 272..273 trailing=[Whitespace " "]
+                      MethodInvocationExpression
+                        FieldAccessExpression
+                          ThisExpression
+                            ThisKw "this" @ 274..278
+                          Dot "." @ 278..279
+                          Identifier "items" @ 279..284
+                        Dot "." @ 284..285
+                        Identifier "size" @ 285..289
+                        ArgumentList
+                          LParen "(" @ 289..290
+                          RParen ")" @ 290..291
+                  AndAnd "&&" @ 316..318 leading=[Newline "\n", Whitespace "                        "] trailing=[Whitespace " "]
+                  BinaryExpression
+                    MethodInvocationExpression
+                      FieldAccessExpression
+                        ThisExpression
+                          ThisKw "this" @ 319..323
+                        Dot "." @ 323..324
+                        Identifier "items" @ 324..329
+                      Dot "." @ 329..330
+                      Identifier "size" @ 330..334
+                      ArgumentList
+                        LParen "(" @ 334..335
+                        RParen ")" @ 335..336 trailing=[Whitespace " "]
+                    Lt "<" @ 337..338 trailing=[Whitespace " "]
+                    FieldAccessExpression
+                      NameExpression
+                        Identifier "names" @ 339..344
+                      Dot "." @ 344..345
+                      Identifier "length" @ 345..351
+                Semicolon ";" @ 351..352
+            RBrace "}" @ 369..370 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 383..384 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 393..393 leading=[Newline "\n", Whitespace "        "]
+
+diagnostics:
+  (none)

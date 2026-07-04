@@ -977,7 +977,7 @@ fn is_identifier_ignorable(ch: char) -> bool {
 fn is_valid_escape_tail(ch: char) -> bool {
     matches!(
         ch,
-        'b' | 's' | 't' | 'n' | 'f' | 'r' | '"' | '\'' | '\\' | '0'..='7'
+        'b' | 's' | 't' | 'n' | 'f' | 'r' | '"' | '\'' | '\\' | '{' | '0'..='7'
     )
 }
 

@@ -661,7 +661,10 @@ impl Parser<'_> {
                 "expected `)` after switch guard",
             );
         } else {
-            self.parse_expression_until(&[JavaSyntaxKind::Colon, JavaSyntaxKind::Arrow]);
+            self.parse_expression_until_without_leading_lambda(&[
+                JavaSyntaxKind::Colon,
+                JavaSyntaxKind::Arrow,
+            ]);
         }
         self.complete(guard, JavaSyntaxKind::Guard);
     }

@@ -99,8 +99,7 @@ impl Parser<'_> {
                 .is_none()
             && !matches!(
                 self.nth_kind(1),
-                JavaSyntaxKind::LParen
-                    | JavaSyntaxKind::LBracket
+                JavaSyntaxKind::LBracket
                     | JavaSyntaxKind::Dot
                     | JavaSyntaxKind::Assign
                     | JavaSyntaxKind::PlusPlus
@@ -116,6 +115,8 @@ impl Parser<'_> {
                     | JavaSyntaxKind::LShiftEq
                     | JavaSyntaxKind::Semicolon
             )
+            && !(self.nth_kind(1) == JavaSyntaxKind::LParen
+                && self.tokens_are_adjacent(self.position(), 2))
     }
 
     pub(in crate::parser::grammar) fn for_header_has_top_level_colon(&mut self) -> bool {

@@ -277,12 +277,14 @@ CompilationUnit
                     Assign "=" @ 818..819 trailing=[Whitespace " "]
                     VariableInitializer
                       MethodReferenceExpression
-                        NameExpression
-                          Identifier "String" @ 820..826
-                        ArrayDimensions
-                          ArrayDimension
-                            LBracket "[" @ 826..827
-                            RBracket "]" @ 827..828
+                        ArrayType
+                          ClassType
+                            Name
+                              Identifier "String" @ 820..826
+                          ArrayDimensions
+                            ArrayDimension
+                              LBracket "[" @ 826..827
+                              RBracket "]" @ 827..828
                         DoubleColon "::" @ 828..830
                         NewKw "new" @ 830..833
               Semicolon ";" @ 833..834

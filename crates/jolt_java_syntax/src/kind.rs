@@ -266,6 +266,7 @@ pub enum JavaSyntaxKind {
     QualifiedName,
 
     LiteralExpression,
+    TemplateExpression,
     NameExpression,
     ThisExpression,
     SuperExpression,

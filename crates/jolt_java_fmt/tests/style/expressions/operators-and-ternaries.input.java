@@ -8,6 +8,9 @@ return ready?/* yes */true:/* no */false;
 boolean returned() {
 return user.isActive() && account.hasPermission("write") && featureFlags.enabled() && auditPolicy.allows(user);
 }
+boolean hasMore(String[] names) {
+return this.index<names.length&&names[0].length()<items.size()&&items.size()<names.length;
+}
 void guarded() {
 if (user.isActive() && account.hasPermission("write") && featureFlags.enabled() && auditPolicy.allows(user)) run();
 }

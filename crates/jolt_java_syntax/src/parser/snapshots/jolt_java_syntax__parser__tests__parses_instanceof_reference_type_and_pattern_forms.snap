@@ -28,40 +28,67 @@ CompilationUnit
               ReturnStatement
                 ReturnKw "return" @ 104..110 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
                 BinaryExpression
+                  BinaryExpression
+                    BinaryExpression
+                      InstanceofExpression
+                        NameExpression
+                          Identifier "value" @ 111..116 trailing=[Whitespace " "]
+                        InstanceofKw "instanceof" @ 117..127 trailing=[Whitespace " "]
+                        ArrayType
+                          PrimitiveType
+                            ByteKw "byte" @ 128..132
+                          ArrayDimensions
+                            ArrayDimension
+                              LBracket "[" @ 132..133
+                              RBracket "]" @ 133..134
+                      OrOr "||" @ 159..161 leading=[Newline "\n", Whitespace "                        "] trailing=[Whitespace " "]
+                      InstanceofExpression
+                        NameExpression
+                          Identifier "value" @ 162..167 trailing=[Whitespace " "]
+                        InstanceofKw "instanceof" @ 168..178 trailing=[Whitespace " "]
+                        ArrayType
+                          ClassType
+                            Name
+                              Identifier "String" @ 179..185
+                          ArrayDimensions
+                            ArrayDimension
+                              LBracket "[" @ 185..186
+                              RBracket "]" @ 186..187
+                    OrOr "||" @ 212..214 leading=[Newline "\n", Whitespace "                        "] trailing=[Whitespace " "]
+                    InstanceofExpression
+                      NameExpression
+                        Identifier "value" @ 215..220 trailing=[Whitespace " "]
+                      InstanceofKw "instanceof" @ 221..231 trailing=[Whitespace " "]
+                      ClassType
+                        QualifiedName
+                          Identifier "java" @ 232..236
+                          Dot "." @ 236..237
+                          Identifier "util" @ 237..241
+                          Dot "." @ 241..242
+                          Identifier "List" @ 242..246
+                        TypeArgumentList
+                          Lt "<" @ 246..247
+                          TypeArgument
+                            WildcardType
+                              Question "?" @ 247..248
+                          Gt ">" @ 248..249
+                  OrOr "||" @ 274..276 leading=[Newline "\n", Whitespace "                        "] trailing=[Whitespace " "]
                   InstanceofExpression
                     NameExpression
-                      Identifier "value" @ 111..116 trailing=[Whitespace " "]
-                    InstanceofKw "instanceof" @ 117..127 trailing=[Whitespace " "]
-                    ClassType
-                      QualifiedName
-                        Identifier "java" @ 128..132
-                        Dot "." @ 132..133
-                        Identifier "util" @ 133..137
-                        Dot "." @ 137..138
-                        Identifier "List" @ 138..142
-                      TypeArgumentList
-                        Lt "<" @ 142..143
-                        TypeArgument
-                          WildcardType
-                            Question "?" @ 143..144
-                        Gt ">" @ 144..145 trailing=[Whitespace " "]
-                  OrOr "||" @ 146..148 trailing=[Whitespace " "]
-                  InstanceofExpression
-                    NameExpression
-                      Identifier "value" @ 149..154 trailing=[Whitespace " "]
-                    InstanceofKw "instanceof" @ 155..165 trailing=[Whitespace " "]
+                      Identifier "value" @ 277..282 trailing=[Whitespace " "]
+                    InstanceofKw "instanceof" @ 283..293 trailing=[Whitespace " "]
                     TypePattern
                       LocalVariableDeclaration
                         ClassType
                           Name
-                            Identifier "String" @ 166..172 trailing=[Whitespace " "]
+                            Identifier "String" @ 294..300 trailing=[Whitespace " "]
                         VariableDeclaratorList
                           VariableDeclarator
-                            Identifier "text" @ 173..177
-                Semicolon ";" @ 177..178
-            RBrace "}" @ 195..196 leading=[Newline "\n", Whitespace "                "]
-      RBrace "}" @ 209..210 leading=[Newline "\n", Whitespace "            "]
-  Eof "" @ 219..219 leading=[Newline "\n", Whitespace "        "]
+                            Identifier "text" @ 301..305
+                Semicolon ";" @ 305..306
+            RBrace "}" @ 323..324 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 337..338 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 347..347 leading=[Newline "\n", Whitespace "        "]
 
 diagnostics:
   (none)

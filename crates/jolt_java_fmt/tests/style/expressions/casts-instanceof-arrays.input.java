@@ -1,6 +1,6 @@
 class Example {
 boolean matches(Object value) {
-return (String)value instanceof /* target */ String text||value instanceof java.util.List<?>;
+return value instanceof byte[]||value instanceof String[]||(String)value instanceof /* target */ String text||value instanceof java.util.List<?>;
 }
 Object casted(Object value) {
 return (/* target */ String) /* cast */ value;

@@ -1,5 +1,5 @@
 class Example extends Base {
-  void run(String value, Example target) {
+  void run(String value, Example target, java.util.Set<Class<?>> classes) {
     var expressionName = value::length;
     var primary = (value)::trim;
     var referenceType = String::length;
@@ -8,6 +8,8 @@ class Example extends Base {
     var constructor = Example::new;
     var arrayConstructor = String[]::new;
     var primitiveArray = int[]::new;
+    var genericArrayConstructor = classes.toArray(Class<?>[]::new);
+    var genericArrayFactory = java.util.List<String>[]::new;
     var generic = target::<String>id;
     var typeGeneric = Example::<String>staticId;
     var constructorGeneric = java.util.ArrayList<String>::<String>new;

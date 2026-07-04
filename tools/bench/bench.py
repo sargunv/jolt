@@ -31,97 +31,17 @@ CORPORA = {
         "exclude": [
             # Intentionally invalid upstream Java.
             "B26952926.java",
-            # Uses an annotation expression accepted by google-java-format but
-            # rejected by prettier-plugin-java 2.10.2.
-            "B38352414.java",
         ],
+        "tool_exclude": {
+            # Uses an annotation expression accepted by google-java-format and
+            # Jolt but rejected by prettier-plugin-java 2.10.2.
+            "prettier-java": ["B38352414.java"],
+        },
     },
     "realistic": {
         "description": "Spring Framework Java sources",
         "source": IMPORTS / "spring-framework",
-        "exclude": [
-            # Jolt parser gap: generic array constructor references, for
-            # example `classes.toArray(Class<?>[]::new)`.
-            "spring-aop/src/main/java/org/springframework/aop/framework/AopProxyUtils.java",
-            "spring-context/src/main/java/org/springframework/context/aot/ReflectiveProcessorAotContributionBuilder.java",
-            "spring-context/src/main/java/org/springframework/context/aot/ReflectiveProcessorBeanFactoryInitializationAotProcessor.java",
-            # Jolt parser gap: explicit constructor invocations using
-            # `this(...)` or `super(...)`.
-            "spring-context/src/main/java/org/springframework/context/support/ClassPathXmlApplicationContext.java",
-            "spring-context/src/main/java/org/springframework/context/support/DefaultMessageSourceResolvable.java",
-            "spring-context/src/main/java/org/springframework/context/support/FileSystemXmlApplicationContext.java",
-            "spring-core/src/test/java/org/springframework/core/io/support/SpringFactoriesLoaderTests.java",
-            "spring-jdbc/src/test/java/org/springframework/jdbc/object/SqlUpdateTests.java",
-            "spring-web/src/main/java/org/springframework/web/HttpMediaTypeNotAcceptableException.java",
-            "spring-web/src/main/java/org/springframework/web/HttpMediaTypeNotSupportedException.java",
-            "spring-web/src/main/java/org/springframework/web/bind/MissingMatrixVariableException.java",
-            "spring-web/src/main/java/org/springframework/web/bind/MissingPathVariableException.java",
-            "spring-web/src/main/java/org/springframework/web/bind/MissingRequestCookieException.java",
-            "spring-web/src/main/java/org/springframework/web/bind/MissingRequestHeaderException.java",
-            "spring-web/src/main/java/org/springframework/web/bind/MissingServletRequestParameterException.java",
-            "spring-web/src/main/java/org/springframework/web/bind/UnsatisfiedServletRequestParameterException.java",
-            "spring-web/src/main/java/org/springframework/web/server/MethodNotAllowedException.java",
-            "spring-web/src/main/java/org/springframework/web/server/MissingRequestValueException.java",
-            "spring-web/src/main/java/org/springframework/web/server/NotAcceptableStatusException.java",
-            "spring-web/src/main/java/org/springframework/web/server/ServerErrorException.java",
-            "spring-web/src/main/java/org/springframework/web/server/UnsatisfiedRequestParameterException.java",
-            "spring-web/src/main/java/org/springframework/web/server/UnsupportedMediaTypeStatusException.java",
-            "spring-webflux/src/main/java/org/springframework/web/reactive/resource/NoResourceFoundException.java",
-            "spring-webmvc/src/test/java/org/springframework/web/servlet/view/freemarker/FreeMarkerViewTests.java",
-            # Jolt parser gap: `yield` statements in switch expression block
-            # rules.
-            "spring-core/src/main/java/org/springframework/aot/nativex/BasicJsonWriter.java",
-            "spring-jdbc/src/main/java/org/springframework/jdbc/support/SQLErrorCodeSQLExceptionTranslator.java",
-            "spring-test/src/main/java/org/springframework/mock/web/MockPageContext.java",
-            "spring-web/src/testFixtures/java/org/springframework/web/testfixture/servlet/MockPageContext.java",
-            # Jolt parser gap: array types and pattern variables in
-            # `instanceof`.
-            "spring-beans/src/test/java/org/springframework/beans/AbstractPropertyAccessorTests.java",
-            "spring-core/src/main/java/org/springframework/asm/AnnotationWriter.java",
-            "spring-core/src/main/java/org/springframework/core/annotation/TypeMappedAnnotation.java",
-            "spring-core/src/main/java/org/springframework/core/convert/support/ByteBufferConverter.java",
-            "spring-core/src/main/java/org/springframework/core/io/support/ResourceArrayPropertyEditor.java",
-            "spring-core/src/test/java/org/springframework/util/xml/AbstractStaxXMLReaderTests.java",
-            "spring-jdbc/src/main/java/org/springframework/jdbc/core/support/SqlLobValue.java",
-            "spring-messaging/src/test/java/org/springframework/messaging/simp/stomp/AbstractStompBrokerRelayIntegrationTests.java",
-            "spring-test/src/main/java/org/springframework/test/web/client/match/ContentRequestMatchers.java",
-            "spring-web/src/main/java/org/springframework/web/multipart/support/ByteArrayMultipartFileEditor.java",
-            # Jolt parser gap: relational expressions whose left side is a
-            # selector, array access, or call, for example
-            # `this.index < this.items.size()`.
-            "spring-aop/src/main/java/org/springframework/aop/target/dynamic/AbstractRefreshableTargetSource.java",
-            "spring-beans/src/testFixtures/java/org/springframework/beans/testfixture/beans/DerivedTestBean.java",
-            "spring-context/src/main/java/org/springframework/scripting/support/ResourceScriptSource.java",
-            "spring-core/src/jmh/java/org/springframework/util/ConcurrentLruCacheBenchmark.java",
-            "spring-core/src/main/java/org/springframework/cglib/proxy/MethodProxy.java",
-            "spring-core/src/main/java/org/springframework/core/MethodParameter.java",
-            "spring-core/src/main/java/org/springframework/core/annotation/TypeMappedAnnotations.java",
-            "spring-core/src/main/java/org/springframework/core/convert/support/GenericConversionService.java",
-            "spring-core/src/main/java/org/springframework/core/io/buffer/LimitedDataBufferList.java",
-            "spring-core/src/main/java/org/springframework/core/io/buffer/NettyDataBuffer.java",
-            "spring-core/src/main/java/org/springframework/util/FastByteArrayOutputStream.java",
-            "spring-core/src/main/java/org/springframework/util/backoff/ExponentialBackOff.java",
-            "spring-core/src/main/java/org/springframework/util/unit/DataSize.java",
-            "spring-core/src/main/java/org/springframework/util/xml/ListBasedXMLEventReader.java",
-            "spring-expression/src/main/java/org/springframework/expression/spel/ast/CompoundExpression.java",
-            "spring-expression/src/main/java/org/springframework/expression/spel/ast/OpMinus.java",
-            "spring-expression/src/main/java/org/springframework/expression/spel/ast/OpPlus.java",
-            "spring-expression/src/main/java/org/springframework/expression/spel/ast/TypeReference.java",
-            "spring-expression/src/main/java/org/springframework/expression/spel/standard/Tokenizer.java",
-            "spring-jdbc/src/main/java/org/springframework/jdbc/core/JdbcTemplate.java",
-            "spring-jdbc/src/main/java/org/springframework/jdbc/core/simple/AbstractJdbcInsert.java",
-            "spring-jdbc/src/main/java/org/springframework/jdbc/support/incrementer/AbstractIdentityColumnMaxValueIncrementer.java",
-            "spring-messaging/src/main/java/org/springframework/messaging/simp/stomp/StompHeaderAccessor.java",
-            "spring-messaging/src/main/java/org/springframework/messaging/support/MessageHeaderAccessor.java",
-            "spring-web/src/main/java/org/springframework/http/client/support/ProxyFactoryBean.java",
-            "spring-web/src/main/java/org/springframework/http/codec/protobuf/ProtobufDecoder.java",
-            "spring-web/src/main/java/org/springframework/web/util/HtmlCharacterEntityDecoder.java",
-            "spring-web/src/main/java/org/springframework/web/util/RfcUriParser.java",
-            "spring-web/src/main/java/org/springframework/web/util/WhatWgUrlParser.java",
-            "spring-web/src/main/java/org/springframework/web/util/pattern/InternalPathPatternParser.java",
-            "spring-webflux/src/main/java/org/springframework/web/reactive/socket/adapter/JettyWebSocketSession.java",
-            "spring-webflux/src/test/java/org/springframework/web/reactive/result/method/annotation/MessageReaderArgumentResolverTests.java",
-        ],
+        "exclude": [],
     },
 }
 
@@ -230,7 +150,10 @@ def prepare_baseline(name: str, tool_keys: tuple[ToolKey, ...]) -> None:
     copy_corpus(corpus, baseline_dir(name))
     (WORK / name).mkdir(parents=True, exist_ok=True)
     if "prettier-java" in tool_keys:
-        (WORK / name / "prettier.ignore").write_text("", encoding="utf-8")
+        (WORK / name / "prettier.ignore").write_text(
+            "\n".join(corpus.get("tool_exclude", {}).get("prettier-java", ())),
+            encoding="utf-8",
+        )
     if "dprint-jolt" in tool_keys:
         (WORK / name / "dprint.json").write_text(
             json.dumps(

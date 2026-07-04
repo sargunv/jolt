@@ -28,13 +28,12 @@ CompilationUnit
                       LiteralExpression
                         IntegerLiteral "0" @ 137..138
               Semicolon ";" @ 138..139
-            ErrorNode
-              ConstructorInvocation
-                ThisKw "this" @ 160..164 leading=[Newline "\n", Whitespace "                    "]
-                ArgumentList
-                  LParen "(" @ 164..165
-                  RParen ")" @ 165..166
-                Semicolon ";" @ 166..167
+            ConstructorInvocation
+              ThisKw "this" @ 160..164 leading=[Newline "\n", Whitespace "                    "]
+              ArgumentList
+                LParen "(" @ 164..165
+                RParen ")" @ 165..166
+              Semicolon ";" @ 166..167
             ErrorNode
               ConstructorInvocation
                 SuperKw "super" @ 188..193 leading=[Newline "\n", Whitespace "                    "]
@@ -47,5 +46,4 @@ CompilationUnit
   Eof "" @ 237..237 leading=[Newline "\n", Whitespace "        "]
 
 diagnostics:
-  code=java.parse.misplaced_constructor_invocation severity=Error stage=Parser range=160..164 message="explicit constructor invocation must be first in constructor body"
-  code=java.parse.misplaced_constructor_invocation severity=Error stage=Parser range=188..193 message="explicit constructor invocation must be first in constructor body"
+  code=java.parse.misplaced_constructor_invocation severity=Error stage=Parser range=188..193 message="constructor body must have at most one explicit constructor invocation"

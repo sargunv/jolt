@@ -8,6 +8,15 @@ class Example extends Base {
     <String>this(value, 0); // delegate
   }
 
+  Example(String configLocation) {
+    this(new String[] { configLocation }, true, null);
+  }
+
+  Example(Object text) {
+    int value = Integer.parseInt(text.toString());
+    super(value);
+  }
+
   Example(User user, Account account, Settings settings) {
     this(
       user.profile().displayName(),

@@ -135,11 +135,6 @@ fn allows_syntax_diagnostics(path: &Path) -> bool {
         "prettier-java/input/member_chain/member_chain.java",
         "prettier-java/input/try_catch/try_catch.java",
 
-        // Unsupported Java 22-preview syntax, finalized in Java 25: flexible
-        // constructor bodies allow statements before explicit constructor
-        // invocations.
-        "prettier-java/input/constructors/constructors.java",
-
         // Parser backlog plus fixture fragments: these lambda fixtures mix
         // standalone lambda snippets with Java 14 switch-rule lambda results;
         // one case also uses a Java 21 pattern-switch guard.

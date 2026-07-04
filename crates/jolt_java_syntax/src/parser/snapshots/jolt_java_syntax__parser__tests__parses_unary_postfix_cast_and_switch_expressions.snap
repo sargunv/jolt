@@ -116,18 +116,45 @@ CompilationUnit
                         RBrace "}" @ 404..405 leading=[Newline "\n", Whitespace "                        "]
                     SwitchRule
                       SwitchLabel
-                        DefaultKw "default" @ 430..437 leading=[Newline "\n", Whitespace "                        "] trailing=[Whitespace " "]
-                      Arrow "->" @ 438..440 trailing=[Whitespace " "]
+                        CaseKw "case" @ 430..434 leading=[Newline "\n", Whitespace "                        "] trailing=[Whitespace " "]
+                        CasePattern
+                          TypePattern
+                            LocalVariableDeclaration
+                              ClassType
+                                Name
+                                  Identifier "Character" @ 435..444 trailing=[Whitespace " "]
+                              VariableDeclaratorList
+                                VariableDeclarator
+                                  Identifier "c" @ 445..446 trailing=[Whitespace " "]
+                      Arrow "->" @ 447..449 trailing=[Whitespace " "]
+                      Block
+                        LBrace "{" @ 450..451
+                        BlockStatement
+                          YieldStatement
+                            Identifier "yield" @ 480..485 leading=[Newline "\n", Whitespace "                            "] trailing=[Whitespace " "]
+                            CastExpression
+                              LParen "(" @ 486..487
+                              PrimitiveType
+                                CharKw "char" @ 487..491
+                              RParen ")" @ 491..492 trailing=[Whitespace " "]
+                              NameExpression
+                                Identifier "c" @ 493..494
+                            Semicolon ";" @ 494..495
+                        RBrace "}" @ 520..521 leading=[Newline "\n", Whitespace "                        "]
+                    SwitchRule
+                      SwitchLabel
+                        DefaultKw "default" @ 546..553 leading=[Newline "\n", Whitespace "                        "] trailing=[Whitespace " "]
+                      Arrow "->" @ 554..556 trailing=[Whitespace " "]
                       UnaryExpression
-                        Minus "-" @ 441..442
+                        Minus "-" @ 557..558
                         NameExpression
-                          Identifier "i" @ 442..443
-                      Semicolon ";" @ 443..444
-                    RBrace "}" @ 465..466 leading=[Newline "\n", Whitespace "                    "]
-                Semicolon ";" @ 466..467
-            RBrace "}" @ 484..485 leading=[Newline "\n", Whitespace "                "]
-      RBrace "}" @ 498..499 leading=[Newline "\n", Whitespace "            "]
-  Eof "" @ 508..508 leading=[Newline "\n", Whitespace "        "]
+                          Identifier "i" @ 558..559
+                      Semicolon ";" @ 559..560
+                    RBrace "}" @ 581..582 leading=[Newline "\n", Whitespace "                    "]
+                Semicolon ";" @ 582..583
+            RBrace "}" @ 600..601 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 614..615 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 624..624 leading=[Newline "\n", Whitespace "        "]
 
 diagnostics:
   (none)

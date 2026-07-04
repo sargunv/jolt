@@ -270,7 +270,8 @@ CompilationUnit
                           Identifier "x" @ 651..652 trailing=[Whitespace " "]
                         InstanceofKw "instanceof" @ 653..663 trailing=[Whitespace " "]
                         ErrorNode
-                          IntKw "int" @ 664..667
+                          PrimitiveType
+                            IntKw "int" @ 664..667
               Semicolon ";" @ 667..668
             RBrace "}" @ 685..686 leading=[Newline "\n", Whitespace "                "]
       RBrace "}" @ 699..700 leading=[Newline "\n", Whitespace "            "]
@@ -292,4 +293,4 @@ diagnostics:
   code=java.parse.unexpected_syntax severity=Error stage=Parser range=409..410 message="type arguments in class instance creation must appear on the final type segment"
   code=java.parse.unexpected_syntax severity=Error stage=Parser range=546..547 message="sized array dimension cannot follow unsized dimensions"
   code=java.parse.unexpected_syntax severity=Error stage=Parser range=593..594 message="array initializer cannot follow dimension expressions"
-  code=java.parse.expected_syntax severity=Error stage=Parser range=664..667 message="expected class or interface type"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=667..668 message="expected reference type"

@@ -10,6 +10,10 @@ class Example {
         """;
   }
 
+  String template(String name) {
+    return STR."Hello \{name}";
+  }
+
   int numeric() {
     return 1_000 + 0x0f;
   }

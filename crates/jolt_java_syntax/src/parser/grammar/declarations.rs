@@ -606,21 +606,20 @@ impl Parser<'_> {
     pub(super) fn parse_constructor_block(&mut self) {
         let block = self.start();
         self.expect(JavaSyntaxKind::LBrace, "expected constructor body");
-        let mut allow_constructor_invocation = true;
+        let mut saw_constructor_invocation = false;
         while !self.at_eof() && !self.at(JavaSyntaxKind::RBrace) {
-            if allow_constructor_invocation && self.starts_constructor_invocation_statement() {
+            if self.starts_constructor_invocation_statement() && !saw_constructor_invocation {
                 self.parse_constructor_invocation();
-                allow_constructor_invocation = false;
+                saw_constructor_invocation = true;
             } else if self.starts_constructor_invocation_statement() {
                 let error = self.start();
                 self.misplaced_constructor_invocation_here(
-                    "explicit constructor invocation must be first in constructor body",
+                    "constructor body must have at most one explicit constructor invocation",
                 );
                 self.parse_constructor_invocation();
                 self.complete(error, JavaSyntaxKind::ErrorNode);
             } else {
                 self.parse_block_statement();
-                allow_constructor_invocation = false;
             }
         }
         self.expect(

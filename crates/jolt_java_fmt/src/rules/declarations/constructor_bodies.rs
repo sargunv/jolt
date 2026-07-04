@@ -102,14 +102,17 @@ fn format_constructor_body_close_dangling_comments(
 fn constructor_body_elements<'source>(
     body: &jolt_java_syntax::ConstructorBody<'source>,
 ) -> Vec<ConstructorBodyElement<'source>> {
-    body.invocation()
+    let mut elements = body
+        .invocation()
         .into_iter()
         .map(ConstructorBodyElement::Invocation)
         .chain(
             body.block_statements()
                 .map(ConstructorBodyElement::BlockStatement),
         )
-        .collect()
+        .collect::<Vec<_>>();
+    elements.sort_by_key(ConstructorBodyElement::start_offset);
+    elements
 }
 
 fn constructor_body_element_token_range(
@@ -191,6 +194,11 @@ enum ConstructorBodyElement<'source> {
 }
 
 impl<'source> ConstructorBodyElement<'source> {
+    fn start_offset(&self) -> usize {
+        self.first_token()
+            .map_or(usize::MAX, |token| token.text_range().start().get())
+    }
+
     fn first_token(&self) -> Option<jolt_java_syntax::JavaSyntaxToken<'source>> {
         match self {
             Self::Invocation(invocation) => invocation.first_token(),

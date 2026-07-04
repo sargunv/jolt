@@ -1,0 +1,158 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "GenericArrayConstructorReference" @ 19..51 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 52..53
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 70..74 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+          Identifier "method" @ 75..81
+          LParen "(" @ 81..82
+          FormalParameterList
+            FormalParameter
+              ClassType
+                QualifiedName
+                  Identifier "java" @ 82..86
+                  Dot "." @ 86..87
+                  Identifier "util" @ 87..91
+                  Dot "." @ 91..92
+                  Identifier "Set" @ 92..95
+                TypeArgumentList
+                  Lt "<" @ 95..96
+                  TypeArgument
+                    ClassType
+                      Name
+                        Identifier "Class" @ 96..101
+                      TypeArgumentList
+                        Lt "<" @ 101..102
+                        TypeArgument
+                          WildcardType
+                            Question "?" @ 102..103
+                        Gt ">" @ 103..104
+                  Gt ">" @ 104..105 trailing=[Whitespace " "]
+              Identifier "classes" @ 106..113
+          RParen ")" @ 113..114 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 115..116
+            BlockStatement
+              LocalVariableDeclaration
+                ArrayType
+                  ClassType
+                    Name
+                      Identifier "Class" @ 137..142 leading=[Newline "\n", Whitespace "                    "]
+                    TypeArgumentList
+                      Lt "<" @ 142..143
+                      TypeArgument
+                        WildcardType
+                          Question "?" @ 143..144
+                      Gt ">" @ 144..145
+                  ArrayDimensions
+                    ArrayDimension
+                      LBracket "[" @ 145..146
+                      RBracket "]" @ 146..147 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "copied" @ 148..154 trailing=[Whitespace " "]
+                    Assign "=" @ 155..156 trailing=[Whitespace " "]
+                    VariableInitializer
+                      MethodInvocationExpression
+                        NameExpression
+                          Identifier "classes" @ 157..164
+                        Dot "." @ 164..165
+                        Identifier "toArray" @ 165..172
+                        ArgumentList
+                          LParen "(" @ 172..173
+                          MethodReferenceExpression
+                            ArrayType
+                              ClassType
+                                Name
+                                  Identifier "Class" @ 173..178
+                                TypeArgumentList
+                                  Lt "<" @ 178..179
+                                  TypeArgument
+                                    WildcardType
+                                      Question "?" @ 179..180
+                                  Gt ">" @ 180..181
+                              ArrayDimensions
+                                ArrayDimension
+                                  LBracket "[" @ 181..182
+                                  RBracket "]" @ 182..183
+                            DoubleColon "::" @ 183..185
+                            NewKw "new" @ 185..188
+                          RParen ")" @ 188..189
+              Semicolon ";" @ 189..190
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 211..215 leading=[Newline "\n", Whitespace "                    "]
+                    Dot "." @ 215..216
+                    Identifier "util" @ 216..220
+                    Dot "." @ 220..221
+                    Identifier "function" @ 221..229
+                    Dot "." @ 229..230
+                    Identifier "IntFunction" @ 230..241
+                  TypeArgumentList
+                    Lt "<" @ 241..242
+                    TypeArgument
+                      ArrayType
+                        ClassType
+                          QualifiedName
+                            Identifier "java" @ 242..246
+                            Dot "." @ 246..247
+                            Identifier "util" @ 247..251
+                            Dot "." @ 251..252
+                            Identifier "List" @ 252..256
+                          TypeArgumentList
+                            Lt "<" @ 256..257
+                            TypeArgument
+                              ClassType
+                                Name
+                                  Identifier "String" @ 257..263
+                            Gt ">" @ 263..264
+                        ArrayDimensions
+                          ArrayDimension
+                            LBracket "[" @ 264..265
+                            RBracket "]" @ 265..266
+                    Gt ">" @ 266..267 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "factory" @ 268..275 trailing=[Whitespace " "]
+                    Assign "=" @ 276..277
+                    VariableInitializer
+                      MethodReferenceExpression
+                        ArrayType
+                          ClassType
+                            QualifiedName
+                              Identifier "java" @ 302..306 leading=[Newline "\n", Whitespace "                        "]
+                              Dot "." @ 306..307
+                              Identifier "util" @ 307..311
+                              Dot "." @ 311..312
+                              Identifier "List" @ 312..316
+                            TypeArgumentList
+                              Lt "<" @ 316..317
+                              TypeArgument
+                                ClassType
+                                  Name
+                                    Identifier "String" @ 317..323
+                              Gt ">" @ 323..324
+                          ArrayDimensions
+                            ArrayDimension
+                              LBracket "[" @ 324..325
+                              RBracket "]" @ 325..326
+                        DoubleColon "::" @ 326..328
+                        NewKw "new" @ 328..331
+              Semicolon ";" @ 331..332
+            RBrace "}" @ 349..350 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 363..364 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 373..373 leading=[Newline "\n", Whitespace "        "]
+
+diagnostics:
+  (none)

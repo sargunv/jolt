@@ -18,4 +18,13 @@ class Example {
       }
     };
   }
+
+  Object scope(int value) {
+    return switch (value) {
+      case 1 -> {
+        yield (value != 0 ? String.valueOf(value) : null);
+      }
+      default -> "other";
+    };
+  }
 }

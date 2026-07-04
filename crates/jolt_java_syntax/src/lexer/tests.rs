@@ -1501,6 +1501,16 @@ fn recognizes_escape_sequences_in_character_and_string_literals() {
 }
 
 #[test]
+fn recognizes_template_embedded_expression_escape() {
+    // Spec: Java 22 preview string templates use `\{` to begin an embedded
+    // expression inside template literals.
+    let source = r#""Hello \{name}""#;
+    let lexed = lex(source);
+    assert_eq!(real_tokens(source), vec![JavaSyntaxKind::StringLiteral]);
+    assert_eq!(lexed.diagnostics, vec![]);
+}
+
+#[test]
 fn recognizes_empty_string_literals() {
     // Spec: JLS 3.10.5 String Literals.
     let source = "\"\"";

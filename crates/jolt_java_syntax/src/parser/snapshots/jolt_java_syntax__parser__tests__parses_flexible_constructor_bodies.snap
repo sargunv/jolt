@@ -1,0 +1,82 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "Base" @ 19..23 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 24..25
+      ClassBodyDeclaration
+        ConstructorDeclaration
+          Identifier "Base" @ 42..46 leading=[Newline "\n", Whitespace "                "]
+          LParen "(" @ 46..47
+          FormalParameterList
+            FormalParameter
+              PrimitiveType
+                IntKw "int" @ 47..50 trailing=[Whitespace " "]
+              Identifier "value" @ 51..56
+          RParen ")" @ 56..57 trailing=[Whitespace " "]
+          ConstructorBody
+            LBrace "{" @ 58..59
+            RBrace "}" @ 59..60
+      RBrace "}" @ 73..74 leading=[Newline "\n", Whitespace "            "]
+  ClassDeclaration
+    ClassKw "class" @ 88..93 leading=[Newline "\n", Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "FlexibleConstructor" @ 94..113 trailing=[Whitespace " "]
+    ExtendsClause
+      ExtendsKw "extends" @ 114..121 trailing=[Whitespace " "]
+      ClassType
+        Name
+          Identifier "Base" @ 122..126 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 127..128
+      ClassBodyDeclaration
+        ConstructorDeclaration
+          Identifier "FlexibleConstructor" @ 145..164 leading=[Newline "\n", Whitespace "                "]
+          LParen "(" @ 164..165
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "String" @ 165..171 trailing=[Whitespace " "]
+              Identifier "text" @ 172..176
+          RParen ")" @ 176..177 trailing=[Whitespace " "]
+          ConstructorBody
+            LBrace "{" @ 178..179
+            BlockStatement
+              LocalVariableDeclaration
+                PrimitiveType
+                  IntKw "int" @ 200..203 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "value" @ 204..209 trailing=[Whitespace " "]
+                    Assign "=" @ 210..211 trailing=[Whitespace " "]
+                    VariableInitializer
+                      MethodInvocationExpression
+                        NameExpression
+                          Identifier "Integer" @ 212..219
+                        Dot "." @ 219..220
+                        Identifier "parseInt" @ 220..228
+                        ArgumentList
+                          LParen "(" @ 228..229
+                          NameExpression
+                            Identifier "text" @ 229..233
+                          RParen ")" @ 233..234
+              Semicolon ";" @ 234..235
+            ConstructorInvocation
+              SuperKw "super" @ 256..261 leading=[Newline "\n", Whitespace "                    "]
+              ArgumentList
+                LParen "(" @ 261..262
+                NameExpression
+                  Identifier "value" @ 262..267
+                RParen ")" @ 267..268
+              Semicolon ";" @ 268..269
+            RBrace "}" @ 286..287 leading=[Newline "\n", Whitespace "                "]
+      RBrace "}" @ 300..301 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 310..310 leading=[Newline "\n", Whitespace "        "]
+
+diagnostics:
+  (none)

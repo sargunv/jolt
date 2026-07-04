@@ -57,6 +57,17 @@ impl Parser<'_> {
         }
     }
 
+    pub(super) fn parse_reference_type(&mut self) -> jolt_syntax::CompletedMarker {
+        let ty = self.parse_type();
+        if JavaSyntaxKind::from_raw(ty.kind()) == Some(JavaSyntaxKind::PrimitiveType) {
+            let error = self.precede(ty);
+            self.expected_here("expected reference type");
+            self.complete(error, JavaSyntaxKind::ErrorNode)
+        } else {
+            ty
+        }
+    }
+
     pub(super) fn parse_intersection_type(&mut self) -> jolt_syntax::CompletedMarker {
         let ty = self.parse_type();
         if !self.at(JavaSyntaxKind::Amp) {

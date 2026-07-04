@@ -468,7 +468,7 @@ fn parses_method_invocation_primary_qualified_super_constructor_invocations() {
 #[test]
 fn diagnoses_misplaced_explicit_constructor_invocations() {
     // Spec: JLS 19 ConstructorBody permits at most one
-    // ExplicitConstructorInvocation, and only before BlockStatements.
+    // ExplicitConstructorInvocation.
     assert_parse_snapshot(
         "diagnoses_misplaced_explicit_constructor_invocations",
         r"
@@ -478,6 +478,45 @@ fn diagnoses_misplaced_explicit_constructor_invocations() {
                     this();
                     super();
                 }
+            }
+        ",
+    );
+}
+
+#[test]
+fn parses_flexible_constructor_bodies() {
+    // Spec: JLS 19 ConstructorBody permits BlockStatements before an
+    // ExplicitConstructorInvocation.
+    assert_parse_snapshot(
+        "parses_flexible_constructor_bodies",
+        r"
+            class Base {
+                Base(int value) {}
+            }
+
+            class FlexibleConstructor extends Base {
+                FlexibleConstructor(String text) {
+                    int value = Integer.parseInt(text);
+                    super(value);
+                }
+            }
+        ",
+    );
+}
+
+#[test]
+fn parses_constructor_invocation_arguments_with_nested_initializers() {
+    // Spec: JLS 19 ExplicitConstructorInvocation arguments are full
+    // expressions; nested array initializers must not hide the invocation.
+    assert_parse_snapshot(
+        "parses_constructor_invocation_arguments_with_nested_initializers",
+        r"
+            class ConstructorInvocationArguments {
+                ConstructorInvocationArguments(String value) {
+                    this(new String[] {value}, true, null);
+                }
+
+                ConstructorInvocationArguments(String[] values, boolean flag, Object extra) {}
             }
         ",
     );
@@ -1172,6 +1211,25 @@ fn switch_case_pattern_label_items_are_structured_with_guards() {
 }
 
 #[test]
+fn parses_guarded_switch_rule_lambda_results() {
+    // Spec: JLS 19 SwitchRule permits an expression after `->`; the guard
+    // expression must not consume the switch-rule arrow as a lambda arrow.
+    assert_parse_snapshot(
+        "parses_guarded_switch_rule_lambda_results",
+        r"
+            class GuardedSwitchRuleLambdaResults {
+                java.util.function.Function<Integer, Integer> method(Object value) {
+                    return switch (value) {
+                        case Boolean enabled when enabled -> x -> x + 1;
+                        default -> x -> x;
+                    };
+                }
+            }
+        ",
+    );
+}
+
+#[test]
 fn disambiguates_when_in_switch_labels() {
     // Spec: JLS 19 `when` starts a Guard only after a CasePattern.
     assert_parse_snapshot(
@@ -1763,6 +1821,24 @@ fn parses_primitive_array_method_reference() {
 }
 
 #[test]
+fn parses_generic_array_constructor_references() {
+    // Spec: JLS 19 MethodReference permits array-constructor references whose
+    // ReferenceType has a parameterized component type.
+    assert_parse_snapshot(
+        "parses_generic_array_constructor_references",
+        r"
+            class GenericArrayConstructorReference {
+                void method(java.util.Set<Class<?>> classes) {
+                    Class<?>[] copied = classes.toArray(Class<?>[]::new);
+                    java.util.function.IntFunction<java.util.List<String>[]> factory =
+                        java.util.List<String>[]::new;
+                }
+            }
+        ",
+    );
+}
+
+#[test]
 fn parses_annotated_expression_type_uses() {
     // Spec: JLS 19 permits type-use annotations in casts, constructor type
     // arguments, and method reference reference types/type arguments.
@@ -1880,6 +1956,27 @@ fn parses_lambda_assignment_conditional_and_operator_expressions() {
 }
 
 #[test]
+fn parses_selector_relational_expressions() {
+    // Spec: JLS 19 RelationalExpression operands may be selector, array access,
+    // or method invocation expressions; `<` after those operands is an operator.
+    assert_parse_snapshot(
+        "parses_selector_relational_expressions",
+        r"
+            class SelectorRelationalExpressions {
+                int index;
+                java.util.List<String> items;
+
+                boolean method(String[] names) {
+                    return this.index < names.length
+                        && names[0].length() < this.items.size()
+                        && this.items.size() < names.length;
+                }
+            }
+        ",
+    );
+}
+
+#[test]
 fn parses_compound_assignment_operators() {
     // Spec: JLS 19 AssignmentOperator includes compound assignment operators.
     assert_parse_snapshot(
@@ -1960,11 +2057,30 @@ fn parses_unary_postfix_cast_and_switch_expressions() {
                         case Integer n -> {
                             yield n;
                         }
+                        case Character c -> {
+                            yield (char) c;
+                        }
                         default -> -i;
                     };
                 }
             }
         ",
+    );
+}
+
+#[test]
+fn parses_string_template_expressions() {
+    // Spec: Java 22 preview StringTemplateExpression is a processor expression
+    // followed by `.` and a template literal.
+    assert_parse_snapshot(
+        "parses_string_template_expressions",
+        r#"
+            class StringTemplates {
+                String greeting(String name) {
+                    return STR."Hello \{name}";
+                }
+            }
+        "#,
     );
 }
 
@@ -2002,7 +2118,10 @@ fn parses_instanceof_reference_type_and_pattern_forms() {
         r"
             class InstanceofForms {
                 boolean method(Object value) {
-                    return value instanceof java.util.List<?> || value instanceof String text;
+                    return value instanceof byte[]
+                        || value instanceof String[]
+                        || value instanceof java.util.List<?>
+                        || value instanceof String text;
                 }
             }
         ",

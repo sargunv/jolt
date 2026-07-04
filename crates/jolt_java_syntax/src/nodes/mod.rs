@@ -723,6 +723,7 @@ java_cst! {
         Name => Name,
         QualifiedName => QualifiedName,
         LiteralExpression => LiteralExpression,
+        TemplateExpression => TemplateExpression,
         NameExpression => NameExpression,
         ThisExpression => ThisExpression,
         SuperExpression => SuperExpression,
@@ -783,6 +784,7 @@ java_cst! {
 
         Expression =
             LiteralExpression |
+            TemplateExpression |
             NameExpression |
             ThisExpression |
             SuperExpression |
@@ -889,6 +891,7 @@ java_cst! {
 
         VariableInitializerValue =
             LiteralExpression |
+            TemplateExpression |
             NameExpression |
             ThisExpression |
             SuperExpression |

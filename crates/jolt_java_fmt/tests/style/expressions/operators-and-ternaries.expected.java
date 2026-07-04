@@ -16,6 +16,12 @@ class Example {
       && auditPolicy.allows(user);
   }
 
+  boolean hasMore(String[] names) {
+    return this.index < names.length
+      && names[0].length() < items.size()
+      && items.size() < names.length;
+  }
+
   void guarded() {
     if (
       user.isActive()

@@ -199,6 +199,9 @@ pub(crate) fn format_variable_initializer_value<'source>(
         VariableInitializerValue::LiteralExpression(expression) => {
             format_expression(&expression.into(), formatter)
         }
+        VariableInitializerValue::TemplateExpression(expression) => {
+            format_expression(&expression.into(), formatter)
+        }
         VariableInitializerValue::NameExpression(expression) => {
             format_expression(&expression.into(), formatter)
         }

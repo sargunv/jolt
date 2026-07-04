@@ -88,6 +88,11 @@ impl Parser<'_> {
             self.kind_at(index),
             JavaSyntaxKind::Eof | JavaSyntaxKind::Semicolon | JavaSyntaxKind::RBrace
         ) {
+            if let Some(next) = self.skip_balanced_delimiter_at(index) {
+                index = next;
+                continue;
+            }
+
             if matches!(
                 self.kind_at(index),
                 JavaSyntaxKind::LBrace | JavaSyntaxKind::RParen | JavaSyntaxKind::RBracket

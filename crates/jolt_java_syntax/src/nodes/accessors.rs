@@ -33,16 +33,16 @@ use super::{
     StatementBody, StatementExpressionEntry, StatementExpressionList, StaticInitializer,
     SuperExpression, SwitchBlock, SwitchBlockEntry, SwitchBlockStatementGroup,
     SwitchBlockStatementGroupLabel, SwitchExpression, SwitchLabel, SwitchLabelCaseEntry,
-    SwitchLabelCaseItem, SwitchRule, SwitchStatement, SynchronizedStatement, ThisExpression,
-    ThrowStatement, ThrowsClause, ThrowsClauseEntry, TryStatement, TryWithResourcesStatement, Type,
-    TypeArgument, TypeArgumentList, TypeArgumentListEntry, TypeBoundList, TypeClauseEntry,
-    TypeDeclaration, TypeParameter, TypeParameterList, TypeParameterListEntry, TypePattern,
-    UnaryExpression, UnionType, UnionTypeEntry, UsesDirective, VariableAccess, VariableDeclarator,
-    VariableDeclaratorEntry, VariableDeclaratorList, VariableInitializer, VariableInitializerValue,
-    VoidType, WhileStatement, WildcardBound, WildcardType, YieldStatement,
-    assignment_operator_kind, binary_operator_kind, child, child_family, child_token,
-    child_token_in, children, children_family, children_tokens_matching, nth_child_family,
-    nth_child_token, starts_after_blank_line,
+    SwitchLabelCaseItem, SwitchRule, SwitchStatement, SynchronizedStatement, TemplateExpression,
+    ThisExpression, ThrowStatement, ThrowsClause, ThrowsClauseEntry, TryStatement,
+    TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList, TypeArgumentListEntry,
+    TypeBoundList, TypeClauseEntry, TypeDeclaration, TypeParameter, TypeParameterList,
+    TypeParameterListEntry, TypePattern, UnaryExpression, UnionType, UnionTypeEntry, UsesDirective,
+    VariableAccess, VariableDeclarator, VariableDeclaratorEntry, VariableDeclaratorList,
+    VariableInitializer, VariableInitializerValue, VoidType, WhileStatement, WildcardBound,
+    WildcardType, YieldStatement, assignment_operator_kind, binary_operator_kind, child,
+    child_family, child_token, child_token_in, children, children_family, children_tokens_matching,
+    nth_child_family, nth_child_token, starts_after_blank_line,
 };
 use crate::{JavaSyntaxNode, language::JavaLanguage};
 use jolt_syntax::SyntaxElement;
@@ -1977,6 +1977,23 @@ impl<'source> TypeArgumentList<'source> {
             TypeArgument::cast,
             |argument, comma| TypeArgumentListEntry { argument, comma },
         )
+    }
+}
+
+impl<'source> TemplateExpression<'source> {
+    #[must_use]
+    pub fn processor(&self) -> Option<Expression<'source>> {
+        nth_child_family(&self.syntax, 0)
+    }
+
+    #[must_use]
+    pub fn dot_token(&self) -> Option<JavaSyntaxToken<'source>> {
+        child_token(&self.syntax, JavaSyntaxKind::Dot)
+    }
+
+    #[must_use]
+    pub fn template(&self) -> Option<LiteralExpression<'source>> {
+        child(&self.syntax)
     }
 }
 

@@ -1,8 +1,8 @@
 use super::{
     ClassLiteralExpression, Doc, Expression, InlineLeadingTrivia, JavaFormatter, JavaSyntaxToken,
     LeadingComments, LeadingTrivia, LiteralExpression, NameExpression, SuperExpression,
-    ThisExpression, TrailingTrivia, concat, format_annotation, format_array_dimensions,
-    format_expression, format_member_dot, format_token,
+    TemplateExpression, ThisExpression, TrailingTrivia, concat, format_annotation,
+    format_array_dimensions, format_expression, format_member_dot, format_token,
     format_token_after_relocated_leading_comments, format_token_with_inline_leading_comments,
     format_void_type, hard_line, text,
 };
@@ -16,6 +16,25 @@ pub(super) fn format_literal_expression<'source>(
         .map_or_else(jolt_fmt_ir::nil, |token| {
             format_leaf_token(&token, leading_comments)
         })
+}
+
+pub(super) fn format_template_expression<'source>(
+    expression: &TemplateExpression<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
+    concat([
+        expression
+            .processor()
+            .map_or_else(jolt_fmt_ir::nil, |processor| {
+                format_expression(&processor, formatter)
+            }),
+        format_member_dot(expression.dot_token().as_ref()),
+        expression
+            .template()
+            .map_or_else(jolt_fmt_ir::nil, |template| {
+                format_literal_expression(&template, LeadingComments::Preserve)
+            }),
+    ])
 }
 
 pub(super) fn format_name_expression<'source>(

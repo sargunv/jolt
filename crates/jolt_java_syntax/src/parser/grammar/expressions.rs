@@ -78,6 +78,28 @@ impl Parser<'_> {
         }
     }
 
+    pub(super) fn parse_expression_until_without_leading_lambda<'a>(
+        &mut self,
+        stops: impl Into<StopSet<'a>>,
+    ) {
+        let stops = stops.into();
+        if self.at_eof() || stops.contains(self.current_kind()) {
+            let error = self.start();
+            self.expected_here("expected expression");
+            self.complete(error, JavaSyntaxKind::ErrorNode);
+            return;
+        }
+
+        self.parse_assignment_expression_without_leading_lambda();
+
+        while !self.at_eof() && !stops.contains(self.current_kind()) {
+            let error = self.start();
+            self.unexpected_here("unexpected token in expression");
+            self.bump();
+            self.complete(error, JavaSyntaxKind::ErrorNode);
+        }
+    }
+
     pub(super) fn parse_expression(&mut self) -> jolt_syntax::CompletedMarker {
         self.parse_assignment_expression()
     }
@@ -87,6 +109,32 @@ impl Parser<'_> {
             return self.parse_lambda_expression();
         }
 
+        let lhs = self.parse_conditional_expression();
+        let Some(operator_len) = self.assignment_operator_len() else {
+            return lhs;
+        };
+
+        let lhs = if Self::is_assignment_left_hand_side(lhs.kind())
+            || Self::completed_is_error_node(&lhs)
+        {
+            lhs
+        } else {
+            let error = self.precede(lhs);
+            self.expected_here("expected assignment left-hand side");
+            self.complete(error, JavaSyntaxKind::ErrorNode)
+        };
+
+        let assignment = self.precede(lhs);
+        for _ in 0..operator_len {
+            self.bump();
+        }
+        self.parse_assignment_expression();
+        self.complete(assignment, JavaSyntaxKind::AssignmentExpression)
+    }
+
+    pub(super) fn parse_assignment_expression_without_leading_lambda(
+        &mut self,
+    ) -> jolt_syntax::CompletedMarker {
         let lhs = self.parse_conditional_expression();
         let Some(operator_len) = self.assignment_operator_len() else {
             return lhs;
@@ -164,7 +212,7 @@ impl Parser<'_> {
                         JavaSyntaxKind::Colon,
                     ]);
                 } else {
-                    self.parse_class_type();
+                    self.parse_reference_type();
                 }
             } else {
                 self.parse_binary_expression(operator_info.precedence + 1);
@@ -313,9 +361,19 @@ impl Parser<'_> {
             return self.complete(suffix, JavaSyntaxKind::SuperExpression);
         }
 
+        if matches!(
+            self.current_kind(),
+            JavaSyntaxKind::StringLiteral | JavaSyntaxKind::TextBlockLiteral
+        ) {
+            self.parse_literal_expression(false);
+            return self.complete(suffix, JavaSyntaxKind::TemplateExpression);
+        }
+
         self.parse_optional_type_argument_list();
         self.expect_method_identifier("expected member name");
-        self.parse_optional_type_argument_list();
+        if self.at(JavaSyntaxKind::Lt) && self.type_arguments_are_followed_by_double_colon() {
+            self.parse_optional_type_argument_list();
+        }
         if self.at(JavaSyntaxKind::LParen) {
             self.parse_argument_list();
             self.complete(suffix, JavaSyntaxKind::MethodInvocationExpression)
@@ -372,8 +430,8 @@ impl Parser<'_> {
             return self.complete(parenthesized, JavaSyntaxKind::ParenthesizedExpression);
         }
 
-        if self.starts_primitive_array_method_reference_type() {
-            return self.parse_primitive_array_method_reference_type();
+        if self.starts_array_method_reference_type() {
+            return self.parse_array_method_reference_type();
         }
 
         if self.starts_primitive_or_void_class_literal() {
@@ -415,32 +473,31 @@ impl Parser<'_> {
         self.complete(error, JavaSyntaxKind::ErrorNode)
     }
 
-    pub(super) fn starts_primitive_array_method_reference_type(&mut self) -> bool {
-        if !self.at_primitive_type() {
+    pub(super) fn starts_array_method_reference_type(&mut self) -> bool {
+        let mut lookahead = self.lookahead();
+        if !lookahead.at_non_void_type_start() || !lookahead.skip_type_base() {
             return false;
         }
 
-        let mut index = self.position() + 1;
         let mut saw_array_dimensions = false;
-        while self.kind_at(index) == JavaSyntaxKind::LBracket
-            && self.kind_at(index + 1) == JavaSyntaxKind::RBracket
-        {
-            saw_array_dimensions = true;
-            index += 2;
+        loop {
+            lookahead.skip_annotations();
+            if lookahead.at(JavaSyntaxKind::LBracket)
+                && lookahead.nth_kind(1) == JavaSyntaxKind::RBracket
+            {
+                saw_array_dimensions = true;
+                lookahead.bump();
+                lookahead.bump();
+            } else {
+                break;
+            }
         }
 
-        saw_array_dimensions && self.kind_at(index) == JavaSyntaxKind::DoubleColon
+        saw_array_dimensions && lookahead.at(JavaSyntaxKind::DoubleColon)
     }
 
-    pub(super) fn parse_primitive_array_method_reference_type(
-        &mut self,
-    ) -> jolt_syntax::CompletedMarker {
-        let primitive = self.start();
-        self.bump();
-        let completed = self.complete(primitive, JavaSyntaxKind::PrimitiveType);
-        let array = self.precede(completed);
-        self.parse_array_dimensions();
-        self.complete(array, JavaSyntaxKind::ArrayType)
+    pub(super) fn parse_array_method_reference_type(&mut self) -> jolt_syntax::CompletedMarker {
+        self.parse_type()
     }
 
     pub(super) fn parse_lambda_expression(&mut self) -> jolt_syntax::CompletedMarker {

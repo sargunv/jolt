@@ -1,0 +1,87 @@
+---
+source: crates/jolt_java_syntax/src/parser/tests.rs
+expression: "&parse"
+---
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+    Identifier "ConstructorInvocationArguments" @ 19..49 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 50..51
+      ClassBodyDeclaration
+        ConstructorDeclaration
+          Identifier "ConstructorInvocationArguments" @ 68..98 leading=[Newline "\n", Whitespace "                "]
+          LParen "(" @ 98..99
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "String" @ 99..105 trailing=[Whitespace " "]
+              Identifier "value" @ 106..111
+          RParen ")" @ 111..112 trailing=[Whitespace " "]
+          ConstructorBody
+            LBrace "{" @ 113..114
+            ConstructorInvocation
+              ThisKw "this" @ 135..139 leading=[Newline "\n", Whitespace "                    "]
+              ArgumentList
+                LParen "(" @ 139..140
+                ArrayCreationExpression
+                  NewKw "new" @ 140..143 trailing=[Whitespace " "]
+                  ArrayType
+                    ClassType
+                      Name
+                        Identifier "String" @ 144..150
+                    ArrayDimensions
+                      ArrayDimension
+                        LBracket "[" @ 150..151
+                        RBracket "]" @ 151..152 trailing=[Whitespace " "]
+                  ArrayInitializer
+                    LBrace "{" @ 153..154
+                    NameExpression
+                      Identifier "value" @ 154..159
+                    RBrace "}" @ 159..160
+                Comma "," @ 160..161 trailing=[Whitespace " "]
+                LiteralExpression
+                  BooleanLiteral "true" @ 162..166
+                Comma "," @ 166..167 trailing=[Whitespace " "]
+                LiteralExpression
+                  NullLiteral "null" @ 168..172
+                RParen ")" @ 172..173
+              Semicolon ";" @ 173..174
+            RBrace "}" @ 191..192 leading=[Newline "\n", Whitespace "                "]
+      ClassBodyDeclaration
+        ConstructorDeclaration
+          Identifier "ConstructorInvocationArguments" @ 210..240 leading=[Newline "\n", Newline "\n", Whitespace "                "]
+          LParen "(" @ 240..241
+          FormalParameterList
+            FormalParameter
+              ArrayType
+                ClassType
+                  Name
+                    Identifier "String" @ 241..247
+                ArrayDimensions
+                  ArrayDimension
+                    LBracket "[" @ 247..248
+                    RBracket "]" @ 248..249 trailing=[Whitespace " "]
+              Identifier "values" @ 250..256
+            Comma "," @ 256..257 trailing=[Whitespace " "]
+            FormalParameter
+              PrimitiveType
+                BooleanKw "boolean" @ 258..265 trailing=[Whitespace " "]
+              Identifier "flag" @ 266..270
+            Comma "," @ 270..271 trailing=[Whitespace " "]
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "Object" @ 272..278 trailing=[Whitespace " "]
+              Identifier "extra" @ 279..284
+          RParen ")" @ 284..285 trailing=[Whitespace " "]
+          ConstructorBody
+            LBrace "{" @ 286..287
+            RBrace "}" @ 287..288
+      RBrace "}" @ 301..302 leading=[Newline "\n", Whitespace "            "]
+  Eof "" @ 311..311 leading=[Newline "\n", Whitespace "        "]
+
+diagnostics:
+  (none)
