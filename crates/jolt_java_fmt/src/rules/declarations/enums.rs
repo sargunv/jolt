@@ -7,10 +7,10 @@ use super::{
     ClassBodyMember, Doc, EnumConstant, FormattedMember, JavaFormatter, JavaSyntaxToken,
     braced_body, comment_forces_line, comment_is_star_block, comments_from_tokens, concat,
     format_argument_list, format_class_body, format_comment, format_dangling_comments,
-    format_leading_comments, format_modifier_prefix_from_parts, format_removed_comments,
-    format_token_with_comments, formatter_ignore_ranges, hard_line, is_formatter_control_marker,
-    text,
+    format_modifier_prefix_from_parts, format_removed_comments, format_token_with_comments,
+    formatter_ignore_ranges, hard_line, is_formatter_control_marker, text,
 };
+use crate::helpers::comments::format_leading_comments;
 
 struct FormattedEnumConstant<'source> {
     doc: Doc<'source>,
@@ -115,6 +115,7 @@ pub(super) fn format_enum_body_contents<'source>(
         }
         (Some(constants), None) => Some(constants),
         (None, Some(members)) if has_body_declarations => {
+            // Intentional synthesized token: enum body declarations require the separator.
             Some(concat([text(";"), jolt_fmt_ir::empty_line(), members]))
         }
         (None, Some(members)) => Some(members),
@@ -138,10 +139,14 @@ fn format_enum_constant_separator<'source>(
     include_trailing_comments: bool,
 ) -> Doc<'source> {
     comma.map_or_else(
-        || text(separator),
+        || {
+            // Intentional synthesized token: enum constants need the selected separator.
+            text(separator)
+        },
         |comma| {
             concat([
                 format_leading_comments(comma),
+                // Intentional synthesized token: normalize comma vs semicolon before enum members.
                 text(separator),
                 if include_trailing_comments {
                     format_enum_separator_inline_trailing_comments(comma)

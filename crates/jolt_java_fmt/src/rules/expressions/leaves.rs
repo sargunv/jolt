@@ -67,10 +67,9 @@ pub(super) fn format_this_expression<'source>(
     format_qualified_keyword_expression(
         expression.qualifier(),
         dot.as_ref(),
-        expression.keyword().map_or_else(
-            || text("this"),
-            |token| format_leaf_token(&token, leading_comments),
-        ),
+        expression.keyword().map_or_else(jolt_fmt_ir::nil, |token| {
+            format_leaf_token(&token, leading_comments)
+        }),
         formatter,
     )
 }
@@ -85,10 +84,9 @@ pub(super) fn format_super_expression<'source>(
     format_qualified_keyword_expression(
         expression.qualifier(),
         dot.as_ref(),
-        expression.keyword().map_or_else(
-            || text("super"),
-            |token| format_leaf_token(&token, leading_comments),
-        ),
+        expression.keyword().map_or_else(jolt_fmt_ir::nil, |token| {
+            format_leaf_token(&token, leading_comments)
+        }),
         formatter,
     )
 }

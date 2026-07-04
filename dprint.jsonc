@@ -6,7 +6,7 @@
   "newLineKind": "lf",
   "json": { "preferSingleLine": true },
   "markdown": { "textWrap": "always" },
-  "ruff": { "indentStyle": "space", "indentWidth": 4 },
+  "ruff": { "indentStyle": "space", "indentWidth": 4, "lineLength": 80 },
   "exec": {
     "commands": [
       { "command": "rustfmt --edition 2024", "exts": ["rs"] },

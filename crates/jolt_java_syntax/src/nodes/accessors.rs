@@ -21,28 +21,28 @@ use super::{
     InterfaceBodyMember, InterfaceDeclaration, IntersectionType, IntersectionTypeEntry, JavaFamily,
     JavaNode, JavaOperator, JavaOperatorKind, JavaOperatorPattern, JavaSyntaxKind, JavaSyntaxToken,
     LabeledStatement, LambdaExpression, LambdaParameter, LambdaParameterList, LiteralExpression,
-    LocalClassOrInterfaceDeclaration, LocalVariableDeclaration, MatchAllPattern, MemberChain,
-    MemberChainSuffix, MethodDeclaration, MethodInvocationExpression, MethodReferenceExpression,
-    ModifierEntry, ModifierList, ModuleDeclaration, ModuleDirective, ModuleDirectiveNode,
-    ModuleDirectiveRole, ModuleNameListEntry, NameExpression, NameSegment, NameSyntax,
-    ObjectCreationExpression, OpensDirective, PackageDeclaration, ParenthesizedExpression, Pattern,
-    PermitsClause, PermitsClauseEntry, PostfixExpression, PrimitiveType, ProvidesDirective,
-    ReceiverParameter, RecordBody, RecordComponent, RecordComponentList, RecordComponentListEntry,
-    RecordDeclaration, RecordPattern, RecordPatternComponentEntry, RequiresDirective, Resource,
-    ResourceList, ResourceListEntry, ResourceSpecification, ReturnStatement, Statement,
-    StatementBody, StatementExpressionEntry, StatementExpressionList, StaticInitializer,
-    SuperExpression, SwitchBlock, SwitchBlockEntry, SwitchBlockStatementGroup,
-    SwitchBlockStatementGroupLabel, SwitchExpression, SwitchLabel, SwitchLabelCaseEntry,
-    SwitchLabelCaseItem, SwitchRule, SwitchStatement, SynchronizedStatement, TemplateExpression,
-    ThisExpression, ThrowStatement, ThrowsClause, ThrowsClauseEntry, TryStatement,
-    TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList, TypeArgumentListEntry,
-    TypeBoundList, TypeClauseEntry, TypeDeclaration, TypeParameter, TypeParameterList,
-    TypeParameterListEntry, TypePattern, UnaryExpression, UnionType, UnionTypeEntry, UsesDirective,
-    VariableAccess, VariableDeclarator, VariableDeclaratorEntry, VariableDeclaratorList,
-    VariableInitializer, VariableInitializerValue, VoidType, WhileStatement, WildcardBound,
-    WildcardType, YieldStatement, assignment_operator_kind, binary_operator_kind, child,
-    child_family, child_token, child_token_in, children, children_family, children_tokens_matching,
-    nth_child_family, nth_child_token, starts_after_blank_line,
+    LocalClassOrInterfaceDeclaration, LocalVariableDeclaration, MatchAllPattern, MethodDeclaration,
+    MethodInvocationExpression, MethodReferenceExpression, ModifierEntry, ModifierList,
+    ModuleDeclaration, ModuleDirective, ModuleDirectiveNode, ModuleDirectiveRole,
+    ModuleNameListEntry, NameExpression, NameSegment, NameSyntax, ObjectCreationExpression,
+    OpensDirective, PackageDeclaration, ParenthesizedExpression, Pattern, PermitsClause,
+    PermitsClauseEntry, PostfixExpression, PrimitiveType, ProvidesDirective, ReceiverParameter,
+    RecordBody, RecordComponent, RecordComponentList, RecordComponentListEntry, RecordDeclaration,
+    RecordPattern, RecordPatternComponentEntry, RequiresDirective, Resource, ResourceList,
+    ResourceListEntry, ResourceSpecification, ReturnStatement, Statement, StatementBody,
+    StatementExpressionEntry, StatementExpressionList, StaticInitializer, SuperExpression,
+    SwitchBlock, SwitchBlockEntry, SwitchBlockStatementGroup, SwitchBlockStatementGroupLabel,
+    SwitchExpression, SwitchLabel, SwitchLabelCaseEntry, SwitchLabelCaseItem, SwitchRule,
+    SwitchStatement, SynchronizedStatement, TemplateExpression, ThisExpression, ThrowStatement,
+    ThrowsClause, ThrowsClauseEntry, TryStatement, TryWithResourcesStatement, Type, TypeArgument,
+    TypeArgumentList, TypeArgumentListEntry, TypeBoundList, TypeClauseEntry, TypeDeclaration,
+    TypeParameter, TypeParameterList, TypeParameterListEntry, TypePattern, UnaryExpression,
+    UnionType, UnionTypeEntry, UsesDirective, VariableAccess, VariableDeclarator,
+    VariableDeclaratorEntry, VariableDeclaratorList, VariableInitializer, VariableInitializerValue,
+    VoidType, WhileStatement, WildcardBound, WildcardType, YieldStatement,
+    assignment_operator_kind, binary_operator_kind, child, child_family, child_token,
+    child_token_in, children, children_family, children_tokens_matching, nth_child_family,
+    nth_child_token, starts_after_blank_line,
 };
 use crate::{JavaSyntaxNode, language::JavaLanguage};
 use jolt_syntax::SyntaxElement;
@@ -162,14 +162,9 @@ impl<'source> ImportDeclaration<'source> {
 
     fn is_module(&self) -> bool {
         let name_start = self.name().map(|name| name.text_range().start());
-        self.contextual_keyword("module").is_some_and(|token| {
+        contextual_keyword_in(&self.syntax, "module").is_some_and(|token| {
             name_start.is_some_and(|name_start| token.token_text_range().end() <= name_start)
         })
-    }
-
-    fn contextual_keyword(&self, text: &str) -> Option<JavaSyntaxToken<'source>> {
-        children_tokens_matching(&self.syntax, |kind| kind == JavaSyntaxKind::Identifier)
-            .find(|token| token.text() == text)
     }
 }
 
@@ -296,11 +291,13 @@ impl<'source> RecordDeclaration<'source> {
     #[must_use]
     pub fn open_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LParen)
+            .or_else(|| previous_sibling_token(&self.syntax, JavaSyntaxKind::LParen))
     }
 
     #[must_use]
     pub fn close_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RParen)
+            .or_else(|| next_sibling_token(&self.syntax, JavaSyntaxKind::RParen))
     }
 
     #[must_use]
@@ -1094,6 +1091,16 @@ impl<'source> MethodDeclaration<'source> {
     }
 
     #[must_use]
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'source>> {
+        child_token(&self.syntax, JavaSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'source>> {
+        child_token(&self.syntax, JavaSyntaxKind::RParen)
+    }
+
+    #[must_use]
     pub fn throws_clause(&self) -> Option<ThrowsClause<'source>> {
         child(&self.syntax)
     }
@@ -1128,6 +1135,16 @@ impl<'source> ConstructorDeclaration<'source> {
     #[must_use]
     pub fn parameters(&self) -> Option<FormalParameterList<'source>> {
         child(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn open_paren(&self) -> Option<JavaSyntaxToken<'source>> {
+        child_token(&self.syntax, JavaSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<JavaSyntaxToken<'source>> {
+        child_token(&self.syntax, JavaSyntaxKind::RParen)
     }
 
     #[must_use]
@@ -1389,6 +1406,7 @@ impl<'source> VariableInitializer<'source> {
     #[must_use]
     pub fn operator(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Assign)
+            .or_else(|| previous_sibling_token(&self.syntax, JavaSyntaxKind::Assign))
     }
 
     #[must_use]
@@ -1601,12 +1619,7 @@ impl<'source> ClassLiteralExpression<'source> {
     }
 }
 
-impl<'source> Expression<'source> {
-    #[must_use]
-    pub fn member_chain(&self) -> Option<MemberChain<'source>> {
-        collect_member_chain(*self)
-    }
-
+impl Expression<'_> {
     #[must_use]
     pub fn parent_role(&self) -> Option<ExpressionParentRole> {
         let parent = self.syntax().parent()?;
@@ -1853,42 +1866,6 @@ fn role_for_binary_children(
             .into_iter()
             .any(|expression| expression_is_same(&expression, target))
             .then_some(right_role)
-    }
-}
-
-fn collect_member_chain(expression: Expression<'_>) -> Option<MemberChain<'_>> {
-    match expression {
-        Expression::FieldAccessExpression(access) => {
-            let receiver = access.receiver()?;
-            Some(append_member_chain_suffix(
-                receiver,
-                MemberChainSuffix::FieldAccess(access),
-            ))
-        }
-        Expression::MethodInvocationExpression(invocation) => {
-            invocation.direct_method_name()?;
-            let qualifier = invocation.qualifier()?;
-            Some(append_member_chain_suffix(
-                qualifier,
-                MemberChainSuffix::MethodInvocation(invocation),
-            ))
-        }
-        _ => None,
-    }
-}
-
-fn append_member_chain_suffix<'source>(
-    receiver: Expression<'source>,
-    suffix: MemberChainSuffix<'source>,
-) -> MemberChain<'source> {
-    if let Some(mut chain) = collect_member_chain(receiver) {
-        chain.suffixes.push(suffix);
-        return chain;
-    }
-
-    MemberChain {
-        root: receiver,
-        suffixes: vec![suffix],
     }
 }
 
@@ -2390,6 +2367,11 @@ impl<'source> ObjectCreationExpression<'source> {
     }
 
     #[must_use]
+    pub fn dot_token(&self) -> Option<JavaSyntaxToken<'source>> {
+        child_token(&self.syntax, JavaSyntaxKind::Dot)
+    }
+
+    #[must_use]
     pub fn constructor_type_arguments(&self) -> Option<TypeArgumentList<'source>> {
         child(&self.syntax)
     }
@@ -2570,8 +2552,10 @@ impl<'source> LambdaParameter<'source> {
 
     #[must_use]
     pub fn var_token(&self) -> Option<JavaSyntaxToken<'source>> {
-        children_tokens_matching(&self.syntax, |kind| kind == JavaSyntaxKind::Identifier)
-            .find(|token| token.text() == "var")
+        let mut identifiers =
+            children_tokens_matching(&self.syntax, |kind| kind == JavaSyntaxKind::Identifier);
+        let first = identifiers.next()?;
+        (first.text() == "var" && identifiers.next().is_some()).then_some(first)
     }
 
     #[must_use]
@@ -3635,13 +3619,13 @@ fn java_operator(
 impl<'source> ModuleDeclaration<'source> {
     #[must_use]
     pub fn open_token(&self) -> Option<JavaSyntaxToken<'source>> {
-        self.contextual_keyword("open")
+        contextual_keyword_in(&self.syntax, "open")
     }
 
     #[must_use]
     pub fn module_token(&self) -> Option<JavaSyntaxToken<'source>> {
         let name_start = self.name().map(|name| name.text_range().start());
-        self.contextual_keyword("module").filter(|token| {
+        contextual_keyword_in(&self.syntax, "module").filter(|token| {
             name_start.is_some_and(|name_start| token.token_text_range().end() <= name_start)
         })
     }
@@ -3663,11 +3647,6 @@ impl<'source> ModuleDeclaration<'source> {
 
     pub fn directives(&self) -> impl Iterator<Item = ModuleDirective<'source>> + use<'source> {
         children::<ModuleDirectiveNode>(&self.syntax).filter_map(|node| child_family(&node.syntax))
-    }
-
-    fn contextual_keyword(&self, text: &str) -> Option<JavaSyntaxToken<'source>> {
-        children_tokens_matching(&self.syntax, |kind| kind == JavaSyntaxKind::Identifier)
-            .find(|token| token.text() == text)
     }
 }
 
@@ -3712,7 +3691,7 @@ impl<'source> RequiresDirective<'source> {
 
     #[must_use]
     pub fn requires_token(&self) -> Option<JavaSyntaxToken<'source>> {
-        self.contextual_keyword("requires")
+        contextual_keyword_in(&self.syntax, "requires")
     }
 
     #[must_use]
@@ -3722,17 +3701,12 @@ impl<'source> RequiresDirective<'source> {
 
     #[must_use]
     pub fn transitive_token(&self) -> Option<JavaSyntaxToken<'source>> {
-        self.contextual_keyword("transitive")
+        contextual_keyword_in(&self.syntax, "transitive")
     }
 
     #[must_use]
     pub fn semicolon(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Semicolon)
-    }
-
-    fn contextual_keyword(&self, text: &str) -> Option<JavaSyntaxToken<'source>> {
-        children_tokens_matching(&self.syntax, |kind| kind == JavaSyntaxKind::Identifier)
-            .find(|token| token.text() == text)
     }
 }
 

@@ -41,25 +41,6 @@ pub enum FormatSinkResult<E> {
     SinkError { error: E },
 }
 
-impl<E> FormatSinkResult<E> {
-    #[must_use]
-    pub fn is_blocked(&self) -> bool {
-        matches!(self, Self::Blocked { .. })
-    }
-
-    #[must_use]
-    pub fn is_halted(&self) -> bool {
-        matches!(self, Self::Halted)
-    }
-
-    pub fn diagnostics(&self) -> &[Diagnostic] {
-        match self {
-            Self::Blocked { diagnostics } => diagnostics,
-            Self::Complete | Self::Halted | Self::SinkError { .. } => &[],
-        }
-    }
-}
-
 /// Formats source text for `language` into a render sink using `options`.
 pub fn format_source_to_sink<S: RenderSink + ?Sized>(
     source: &str,

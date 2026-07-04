@@ -20,7 +20,7 @@ pub(crate) fn format_block<'source>(
             .open_brace()
             .as_ref()
             .map_or_else(jolt_fmt_ir::nil, format_block_open_brace),
-        format_block_body(block, formatter).map_or_else(hard_line, |body| {
+        format_block_statements_body(block, formatter).map_or_else(hard_line, |body| {
             concat([
                 jolt_fmt_ir::indent(concat([hard_line(), body])),
                 hard_line(),
@@ -43,19 +43,16 @@ fn format_block_open_brace<'source>(open: &JavaSyntaxToken<'source>) -> Doc<'sou
     )
 }
 
-pub(crate) fn format_block_body<'source>(
-    block: &Block<'source>,
-    formatter: &JavaFormatter<'_>,
-) -> Option<Doc<'source>> {
-    format_block_statements_body(block, formatter)
-}
-
 fn format_block_statements_body<'source>(
     block: &Block<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Option<Doc<'source>> {
     let block_start = block.text_range().start().get();
-    let ignored_ranges = block_formatter_ignore_ranges(block);
+    let ignored_ranges = formatter_ignore_ranges(
+        block.source_text(),
+        block.text_range().start().get(),
+        block.token_iter(),
+    );
     let mut items = Vec::new();
     items.extend(format_block_open_dangling_comments(block));
     if ignored_ranges.is_empty() {
@@ -214,16 +211,6 @@ fn format_removed_empty_statement<'source>(
     statement: &jolt_java_syntax::EmptyStatement<'source>,
 ) -> Option<Doc<'source>> {
     format_removed_comments(comments_from_tokens(statement.token_iter()))
-}
-
-fn block_formatter_ignore_ranges<'source>(
-    block: &Block<'source>,
-) -> Vec<FormatterIgnoreRange<'source>> {
-    formatter_ignore_ranges(
-        block.source_text(),
-        block.text_range().start().get(),
-        block.token_iter(),
-    )
 }
 
 fn block_statement_token_range(

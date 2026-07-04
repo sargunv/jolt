@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, IndentStyle, LineEnding, RenderOptions, TextWidth};
+use jolt_fmt_ir::{Doc, IndentStyle, RenderOptions, TextWidth};
 
 use crate::format::JavaFormatOptions;
 use crate::rules::program::format_compilation_unit;
@@ -28,7 +28,6 @@ impl<'a> JavaFormatter<'a> {
             } else {
                 IndentStyle::Space
             },
-            line_ending: LineEnding::Lf,
         }
     }
 }

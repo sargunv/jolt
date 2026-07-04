@@ -83,15 +83,11 @@ fn read_i32(
 ) -> Option<i32> {
     match value {
         ConfigKeyValue::Number(value) => Some(value),
-        ConfigKeyValue::String(value) => match value.parse::<i32>() {
-            Ok(value) => Some(value),
-            Err(error) => {
-                push_diagnostic(property_name, error.to_string(), diagnostics);
-                None
-            }
-        },
         ConfigKeyValue::Null => None,
-        ConfigKeyValue::Bool(_) | ConfigKeyValue::Array(_) | ConfigKeyValue::Object(_) => {
+        ConfigKeyValue::String(_)
+        | ConfigKeyValue::Bool(_)
+        | ConfigKeyValue::Array(_)
+        | ConfigKeyValue::Object(_) => {
             push_diagnostic(
                 property_name,
                 "Expected an integer configuration value.",
@@ -109,15 +105,11 @@ fn read_bool(
 ) -> Option<bool> {
     match value {
         ConfigKeyValue::Bool(value) => Some(value),
-        ConfigKeyValue::String(value) => match value.parse::<bool>() {
-            Ok(value) => Some(value),
-            Err(error) => {
-                push_diagnostic(property_name, error.to_string(), diagnostics);
-                None
-            }
-        },
         ConfigKeyValue::Null => None,
-        ConfigKeyValue::Number(_) | ConfigKeyValue::Array(_) | ConfigKeyValue::Object(_) => {
+        ConfigKeyValue::String(_)
+        | ConfigKeyValue::Number(_)
+        | ConfigKeyValue::Array(_)
+        | ConfigKeyValue::Object(_) => {
             push_diagnostic(
                 property_name,
                 "Expected a boolean configuration value.",

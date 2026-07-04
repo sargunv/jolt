@@ -5,6 +5,13 @@ use crate::document::{Doc, DocKind, FlatLine, Group, Line, LineMode, LiteralText
 use crate::validation::validate_doc;
 use crate::width::{TextWidth, add_width};
 
+// A flat-fit probe can scan nested docs, the active render stack, and an overlay
+// stack for groups/indents. Cap the number of commands each probe can process so
+// repeated tiny groups cannot turn rendering into unbounded layout search. When
+// the budget is exhausted, the group is treated as not fitting and rendered in
+// break mode.
+const FLAT_FIT_COMMAND_BUDGET: usize = 4096;
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum IndentStyle {
     Space,
@@ -12,16 +19,10 @@ pub enum IndentStyle {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum LineEnding {
-    Lf,
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct RenderOptions {
     pub line_width: TextWidth,
     pub indent_width: u16,
     pub indent_style: IndentStyle,
-    pub line_ending: LineEnding,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -66,12 +67,6 @@ impl RenderError {
         }
     }
 
-    pub(crate) const fn invalid_literal_widths(expected: usize, actual: usize) -> Self {
-        Self {
-            kind: RenderErrorKind::InvalidLiteralWidths { expected, actual },
-        }
-    }
-
     pub(crate) const fn no_current_group() -> Self {
         Self {
             kind: RenderErrorKind::NoCurrentGroup,
@@ -82,7 +77,6 @@ impl RenderError {
 #[derive(Clone, Debug, Eq, PartialEq)]
 enum RenderErrorKind {
     InvalidText { context: &'static str },
-    InvalidLiteralWidths { expected: usize, actual: usize },
     NoCurrentGroup,
 }
 
@@ -92,10 +86,6 @@ impl fmt::Display for RenderError {
             RenderErrorKind::InvalidText { context } => {
                 write!(formatter, "{context} must not contain line terminators")
             }
-            RenderErrorKind::InvalidLiteralWidths { expected, actual } => write!(
-                formatter,
-                "literal text line width count {actual} does not match line count {expected}"
-            ),
             RenderErrorKind::NoCurrentGroup => {
                 formatter.write_str("if_break requires a current group")
             }
@@ -324,11 +314,11 @@ impl<S: RenderSink> Renderer<S> {
     fn write_literal(&mut self, literal: &LiteralText<'_>) -> Result<(), RenderToError<S::Error>> {
         self.write_str(&literal.text)?;
         let final_width = literal.final_width();
-        if literal.line_widths.len() == 1 {
-            self.add_width(final_width);
-        } else {
+        if literal.is_multiline() {
             self.column = final_width;
             self.measured_group_fits = false;
+        } else {
+            self.add_width(final_width);
         }
         Ok(())
     }
@@ -346,7 +336,7 @@ impl<S: RenderSink> Renderer<S> {
         count: u32,
     ) -> Result<(), RenderToError<S::Error>> {
         for _ in 0..count {
-            self.write_str(self.options.line_ending.as_str())?;
+            self.write_str("\n")?;
             self.column = TextWidth::ZERO;
             self.measured_group_fits = false;
         }
@@ -408,14 +398,6 @@ impl<S: RenderSink> Renderer<S> {
     }
 }
 
-impl LineEnding {
-    const fn as_str(self) -> &'static str {
-        match self {
-            Self::Lf => "\n",
-        }
-    }
-}
-
 struct FitChecker<'base> {
     options: RenderOptions,
     column: TextWidth,
@@ -423,6 +405,7 @@ struct FitChecker<'base> {
     base_group_stack: &'base [GroupFrame],
     base_group_len: usize,
     group_stack: Vec<GroupFrame>,
+    remaining_commands: usize,
 }
 
 impl<'base> FitChecker<'base> {
@@ -434,11 +417,16 @@ impl<'base> FitChecker<'base> {
             base_group_stack: &renderer.group_stack,
             base_group_len: renderer.group_stack.len(),
             group_stack: Vec::new(),
+            remaining_commands: FLAT_FIT_COMMAND_BUDGET,
         }
     }
 
     fn fits_stack(&mut self, stack: &mut FitStack<'_, '_, '_>) -> bool {
         while let Some(command) = stack.pop() {
+            let Some(remaining_commands) = self.remaining_commands.checked_sub(1) else {
+                return false;
+            };
+            self.remaining_commands = remaining_commands;
             match self.fit_command(command, stack) {
                 FitResult::Continue => {}
                 FitResult::Done => return true,
@@ -479,7 +467,7 @@ impl<'base> FitChecker<'base> {
             DocKind::Nil => FitResult::Continue,
             DocKind::Text(text) => self.width_result(text.width),
             DocKind::LiteralText(text) => {
-                if text.line_widths.len() > 1 {
+                if text.is_multiline() {
                     FitResult::No
                 } else {
                     self.width_result(text.final_width())

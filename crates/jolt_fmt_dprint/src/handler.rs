@@ -2,18 +2,20 @@
 
 use std::{convert::Infallible, fmt::Write as _, path::Path};
 
+use dprint_core::plugins::{FormatError, FormatResult};
+#[cfg(feature = "wasm")]
 use dprint_core::{
     configuration::{ConfigKeyMap, GlobalConfiguration},
     plugins::{
-        CheckConfigUpdatesMessage, ConfigChange, FormatError, FormatResult, PluginInfo,
-        PluginResolveConfigurationResult,
+        CheckConfigUpdatesMessage, ConfigChange, PluginInfo, PluginResolveConfigurationResult,
     },
 };
-use jolt_diagnostics::{Diagnostic, Severity};
+use jolt_diagnostics::{Diagnostic, DiagnosticStage, Severity};
 use jolt_fmt_core::{FormatOptions, FormatSinkResult, Language, format_source_to_sink};
 use jolt_fmt_ir::{RenderControl, RenderSink};
 use jolt_text::LineIndex;
 
+#[cfg(feature = "wasm")]
 use crate::configuration;
 
 /// dprint plugin handler that delegates formatting to `jolt_fmt_core`.
@@ -25,29 +27,6 @@ impl JoltDprintPlugin {
     #[must_use]
     pub(crate) const fn new() -> Self {
         Self
-    }
-
-    /// Resolves dprint configuration into Jolt's shared formatter options.
-    #[must_use]
-    fn resolve_jolt_config(
-        &self,
-        config: ConfigKeyMap,
-        global_config: &GlobalConfiguration,
-    ) -> PluginResolveConfigurationResult<FormatOptions> {
-        configuration::resolve_config(config, global_config)
-    }
-
-    /// Returns the plugin metadata exposed to dprint.
-    #[must_use]
-    fn jolt_plugin_info(&self) -> PluginInfo {
-        PluginInfo {
-            name: env!("CARGO_PKG_NAME").to_owned(),
-            version: env!("CARGO_PKG_VERSION").to_owned(),
-            config_key: "jolt".to_owned(),
-            help_url: env!("CARGO_PKG_REPOSITORY").to_owned(),
-            config_schema_url: String::new(),
-            update_url: None,
-        }
     }
 
     /// Formats a dprint request payload using Jolt's core engine boundary.
@@ -92,18 +71,6 @@ impl JoltDprintPlugin {
             Ok(Some(formatted))
         }
     }
-
-    /// Returns no config rewrites for the initial plugin.
-    ///
-    /// # Errors
-    ///
-    /// This implementation never returns an error.
-    fn check_jolt_config_updates(
-        &self,
-        _message: CheckConfigUpdatesMessage,
-    ) -> Result<Vec<ConfigChange>, FormatError> {
-        Ok(Vec::new())
-    }
 }
 
 #[cfg(feature = "wasm")]
@@ -113,11 +80,18 @@ impl dprint_core::plugins::SyncPluginHandler<FormatOptions> for JoltDprintPlugin
         config: ConfigKeyMap,
         global_config: &GlobalConfiguration,
     ) -> PluginResolveConfigurationResult<FormatOptions> {
-        self.resolve_jolt_config(config, global_config)
+        configuration::resolve_config(config, global_config)
     }
 
     fn plugin_info(&mut self) -> PluginInfo {
-        self.jolt_plugin_info()
+        PluginInfo {
+            name: env!("CARGO_PKG_NAME").to_owned(),
+            version: env!("CARGO_PKG_VERSION").to_owned(),
+            config_key: "jolt".to_owned(),
+            help_url: env!("CARGO_PKG_REPOSITORY").to_owned(),
+            config_schema_url: String::new(),
+            update_url: None,
+        }
     }
 
     fn license_text(&mut self) -> String {
@@ -126,9 +100,9 @@ impl dprint_core::plugins::SyncPluginHandler<FormatOptions> for JoltDprintPlugin
 
     fn check_config_updates(
         &self,
-        message: CheckConfigUpdatesMessage,
+        _message: CheckConfigUpdatesMessage,
     ) -> Result<Vec<ConfigChange>, FormatError> {
-        self.check_jolt_config_updates(message)
+        Ok(Vec::new())
     }
 
     fn format(
@@ -196,7 +170,7 @@ fn format_diagnostic(source: &str, line_index: &LineIndex, diagnostic: &Diagnost
         "code={} severity={} stage={} message={}",
         diagnostic.code.as_str(),
         severity_name(diagnostic.severity),
-        format!("{:?}", diagnostic.stage).to_ascii_lowercase(),
+        stage_name(diagnostic.stage),
         diagnostic.message
     );
 
@@ -221,6 +195,14 @@ const fn severity_name(severity: Severity) -> &'static str {
     match severity {
         Severity::InternalError => "internal-error",
         Severity::Error => "error",
+    }
+}
+
+const fn stage_name(stage: DiagnosticStage) -> &'static str {
+    match stage {
+        DiagnosticStage::Lexer => "lexer",
+        DiagnosticStage::Parser => "parser",
+        DiagnosticStage::Formatter => "formatter",
     }
 }
 

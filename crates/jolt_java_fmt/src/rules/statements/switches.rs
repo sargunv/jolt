@@ -166,7 +166,7 @@ fn format_switch_rule<'source>(
 
 fn format_switch_rule_arrow_head<'source>(rule: &SwitchRule<'source>) -> Doc<'source> {
     let Some(arrow) = rule.arrow() else {
-        return text(" ->");
+        return jolt_fmt_ir::nil();
     };
 
     let trailing_comments = arrow.trailing_comments();
@@ -198,7 +198,7 @@ fn format_switch_rule_arrow_body_separator<'source>(rule: &SwitchRule<'source>) 
 
 fn format_switch_rule_arrow<'source>(rule: &SwitchRule<'source>) -> Doc<'source> {
     let Some(arrow) = rule.arrow() else {
-        return text(" -> ");
+        return jolt_fmt_ir::nil();
     };
 
     let trailing_comments = arrow.trailing_comments();

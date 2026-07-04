@@ -2,12 +2,12 @@ use super::{
     AnnotationInterfaceDeclaration, ClassDeclaration, CommaListItem, Doc, EnumDeclaration,
     ExtendsClause, ImplementsClause, InterfaceDeclaration, JavaFormatter, JavaSyntaxToken,
     LeadingTrivia, ModifierList, PermitsClause, PermitsClauseEntry, RecordDeclaration,
-    TrailingTrivia, TypeClauseEntry, comma_list, comment_forces_line, concat,
-    declaration_with_body, format_annotation_interface_body, format_class_body,
-    format_construct_leading_comments, format_enum_body_contents, format_interface_body,
-    format_leading_comment_list, format_modifier_prefix, format_name, format_record_body,
-    format_record_component, format_token, format_token_with_comments, format_type_parameter_list,
-    format_type_without_leading_comments, group, hard_line, line, parenthesized_list, text,
+    TrailingTrivia, TypeClauseEntry, braced_body_tail, comma_list, comment_forces_line, concat,
+    format_annotation_interface_body, format_class_body, format_construct_leading_comments,
+    format_enum_body_contents, format_interface_body, format_leading_comment_list,
+    format_modifier_prefix, format_name, format_record_body, format_record_component, format_token,
+    format_token_with_comments, format_type_parameter_list, format_type_without_leading_comments,
+    group, hard_line, line, parenthesized_list, text,
 };
 use crate::helpers::comments::format_token_after_relocated_leading_comments;
 
@@ -145,7 +145,7 @@ fn format_type_declaration_with_body<'source>(
     body: Option<Doc<'source>>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    declaration_with_body(
+    concat([
         concat([
             format_leading_comment_list(
                 first_token
@@ -154,9 +154,12 @@ fn format_type_declaration_with_body<'source>(
             ),
             format_modifier_prefix(modifiers, formatter),
         ]),
-        header_tail,
-        body,
-    )
+        group(header_tail),
+        text(" "),
+        // Intentional synthesized token: member-body formatting currently returns contents only.
+        text("{"),
+        braced_body_tail(body),
+    ])
 }
 
 fn format_record_components<'source>(
@@ -254,18 +257,15 @@ fn format_permits_header_clause<'source>(
 
 fn format_header_clause_keyword<'source>(
     keyword: Option<&JavaSyntaxToken<'source>>,
-    fallback: &'static str,
+    _fallback: &'static str,
 ) -> Doc<'source> {
-    keyword.map_or_else(
-        || text(fallback),
-        |keyword| {
-            format_token(
-                keyword,
-                LeadingTrivia::Preserve,
-                TrailingTrivia::BeforeLineBreak,
-            )
-        },
-    )
+    keyword.map_or_else(jolt_fmt_ir::nil, |keyword| {
+        format_token(
+            keyword,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::BeforeLineBreak,
+        )
+    })
 }
 
 fn format_header_clause_keyword_break<'source>(

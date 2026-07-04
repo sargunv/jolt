@@ -178,22 +178,20 @@ pub(crate) fn format_receiver_parameter<'source>(
             .map_or_else(jolt_fmt_ir::nil, |qualifier| {
                 concat([
                     format_token_with_comments(&qualifier),
-                    parameter.dot().map_or_else(
-                        || text("."),
-                        |dot| {
-                            concat([
-                                format_leading_comments(&dot),
-                                format_token_text(dot.text()),
-                                format_trailing_comments(&dot),
-                            ])
-                        },
-                    ),
+                    parameter.dot().map_or_else(jolt_fmt_ir::nil, |dot| {
+                        concat([
+                            format_leading_comments(&dot),
+                            format_token_text(dot.text()),
+                            format_trailing_comments(&dot),
+                        ])
+                    }),
                 ])
             }),
-        parameter.this_token().map_or_else(
-            || text("this"),
-            |this_token| format_token_with_comments(&this_token),
-        ),
+        parameter
+            .this_token()
+            .map_or_else(jolt_fmt_ir::nil, |this_token| {
+                format_token_with_comments(&this_token)
+            }),
     ])
 }
 
@@ -270,12 +268,9 @@ fn format_variable_declarator_list<'source>(
     declarators: &VariableDeclaratorList<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    group(concat(
-        declarators
-            .entries()
-            .map(|entry| format_variable_declarator_entry(&entry, formatter))
-            .collect::<Vec<_>>(),
-    ))
+    group(concat(declarators.entries().map(|entry| {
+        format_variable_declarator_entry(&entry, formatter)
+    })))
 }
 
 fn single_declarator<'source>(
@@ -319,7 +314,7 @@ fn format_variable_declarator_entry<'source>(
         entry.comma.map_or_else(jolt_fmt_ir::nil, |comma| {
             concat([
                 format_leading_comments(&comma),
-                text(","),
+                format_token_text(comma.text()),
                 format_trailing_comments(&comma),
                 line(),
             ])
@@ -388,10 +383,11 @@ fn format_variable_initializer_split<'source>(
 fn format_variable_initializer_operator<'source>(
     initializer: &VariableInitializer<'source>,
 ) -> Doc<'source> {
-    initializer.operator().map_or_else(
-        || text("="),
-        |operator| format_token_with_comments(&operator),
-    )
+    initializer
+        .operator()
+        .map_or_else(jolt_fmt_ir::nil, |operator| {
+            format_token_with_comments(&operator)
+        })
 }
 
 fn format_variable_initializer_value_separator<'source>(

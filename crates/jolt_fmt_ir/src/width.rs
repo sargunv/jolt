@@ -33,8 +33,14 @@ pub(crate) fn display_width(text: &str) -> TextWidth {
         .fold(TextWidth::ZERO, add_width)
 }
 
-pub(crate) fn literal_line_widths(text: &str) -> Box<[TextWidth]> {
-    let mut widths = Vec::new();
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) struct LiteralTextMetrics {
+    pub(crate) final_width: TextWidth,
+    pub(crate) line_count: usize,
+}
+
+pub(crate) fn literal_text_metrics(text: &str) -> LiteralTextMetrics {
+    let mut line_count = 1;
     let mut width = TextWidth::ZERO;
     let mut chars = text.chars().peekable();
     while let Some(ch) = chars.next() {
@@ -43,36 +49,20 @@ pub(crate) fn literal_line_widths(text: &str) -> Box<[TextWidth]> {
                 if chars.peek() == Some(&'\n') {
                     chars.next();
                 }
-                widths.push(width);
+                line_count += 1;
                 width = TextWidth::ZERO;
             }
             '\n' => {
-                widths.push(width);
+                line_count += 1;
                 width = TextWidth::ZERO;
             }
             _ => width = add_width(width, char_width(ch)),
         }
     }
-    widths.push(width);
-    widths.into_boxed_slice()
-}
-
-pub(crate) fn literal_line_count(text: &str) -> usize {
-    let mut count = 1;
-    let mut chars = text.chars().peekable();
-    while let Some(ch) = chars.next() {
-        match ch {
-            '\r' => {
-                if chars.peek() == Some(&'\n') {
-                    chars.next();
-                }
-                count += 1;
-            }
-            '\n' => count += 1,
-            _ => {}
-        }
+    LiteralTextMetrics {
+        final_width: width,
+        line_count,
     }
-    count
 }
 
 fn char_width(ch: char) -> TextWidth {

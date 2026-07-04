@@ -1,14 +1,13 @@
 use super::simple::format_statement_keyword;
 use super::{
     BasicForStatement, DoStatement, Doc, EnhancedForStatement, ForInitializer, ForStatement,
-    ForUpdate, IfStatement, JavaFormatter, JavaSyntaxToken, Statement, StatementBody,
-    StatementExpressionEntry, StatementExpressionList, SynchronizedStatement, WhileStatement,
-    comment_forces_line, concat, empty_block, format_block, format_comment, format_expression,
-    format_leading_comments, format_local_variable_declaration, format_separator_with_comments,
-    format_statement_semicolon, format_token_with_comments,
-    format_trailing_comments_before_line_break, group, hard_line, indent, line, semicolon_list,
-    soft_line, statement_body_as_block, statement_body_trailing_comments_force_line, text,
-    trailing_comments_force_line,
+    ForUpdate, IfStatement, JavaFormatter, JavaSyntaxToken, LeadingTrivia, Statement,
+    StatementBody, StatementExpressionEntry, StatementExpressionList, SynchronizedStatement,
+    TrailingTrivia, WhileStatement, concat, empty_block, format_block, format_expression,
+    format_local_variable_declaration, format_separator_with_comments, format_statement_semicolon,
+    format_token, format_token_with_comments, format_trailing_comments_before_line_break, group,
+    hard_line, indent, line, soft_line, statement_body_as_block,
+    statement_body_trailing_comments_force_line, text, trailing_comments_force_line,
 };
 
 pub(super) fn format_if_statement<'source>(
@@ -71,10 +70,13 @@ pub(super) fn format_parenthesized_statement_expression<'source>(
 pub(super) fn format_condition_open_paren<'source>(
     open: Option<&JavaSyntaxToken<'source>>,
 ) -> Doc<'source> {
-    open.map_or_else(
-        || text("("),
-        |open| concat([format_leading_comments(open), text("(")]),
-    )
+    open.map_or_else(jolt_fmt_ir::nil, |open| {
+        format_token(
+            open,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::RelocatedToEnclosingContext,
+        )
+    })
 }
 
 fn format_condition_open_spacing<'source>(open: Option<&JavaSyntaxToken<'source>>) -> Doc<'source> {
@@ -106,25 +108,20 @@ fn format_condition_close_paren<'source>(close: Option<&JavaSyntaxToken<'source>
         } else {
             soft_line()
         },
-        close.map_or_else(
-            || text(")"),
-            |close| {
-                concat([
-                    if close_has_leading_comments {
-                        format_leading_comments(close)
-                    } else {
-                        jolt_fmt_ir::nil()
-                    },
-                    text(")"),
-                    format_trailing_comments_before_line_break(close),
-                    if trailing_comments_force_line(close) {
-                        hard_line()
-                    } else {
-                        jolt_fmt_ir::nil()
-                    },
-                ])
-            },
-        ),
+        close.map_or_else(jolt_fmt_ir::nil, |close| {
+            concat([
+                format_token(
+                    close,
+                    LeadingTrivia::Preserve,
+                    TrailingTrivia::BeforeLineBreak,
+                ),
+                if trailing_comments_force_line(close) {
+                    hard_line()
+                } else {
+                    jolt_fmt_ir::nil()
+                },
+            ])
+        }),
     ])
 }
 
@@ -234,11 +231,15 @@ fn format_basic_for_statement<'source>(
             format_condition_open_paren(open.as_ref()),
             indent(concat([
                 format_for_header_open_spacing(open.as_ref()),
-                semicolon_list(vec![
-                    initializer.unwrap_or_else(jolt_fmt_ir::nil),
-                    condition.unwrap_or_else(jolt_fmt_ir::nil),
-                    update.unwrap_or_else(jolt_fmt_ir::nil),
-                ]),
+                jolt_fmt_ir::join(
+                    // Intentional synthesized token: inline for headers join the three clauses.
+                    &concat([text(";"), line()]),
+                    [
+                        initializer.unwrap_or_else(jolt_fmt_ir::nil),
+                        condition.unwrap_or_else(jolt_fmt_ir::nil),
+                        update.unwrap_or_else(jolt_fmt_ir::nil),
+                    ],
+                ),
             ])),
             format_for_header_close_paren(close.as_ref()),
         ]))
@@ -308,25 +309,20 @@ fn format_inline_close_paren<'source>(close: Option<&JavaSyntaxToken<'source>>) 
         } else {
             jolt_fmt_ir::nil()
         },
-        close.map_or_else(
-            || text(")"),
-            |close| {
-                concat([
-                    if close_has_leading_comments {
-                        format_leading_comments(close)
-                    } else {
-                        jolt_fmt_ir::nil()
-                    },
-                    text(")"),
-                    format_trailing_comments_before_line_break(close),
-                    if trailing_comments_force_line(close) {
-                        hard_line()
-                    } else {
-                        jolt_fmt_ir::nil()
-                    },
-                ])
-            },
-        ),
+        close.map_or_else(jolt_fmt_ir::nil, |close| {
+            concat([
+                format_token(
+                    close,
+                    LeadingTrivia::Preserve,
+                    TrailingTrivia::BeforeLineBreak,
+                ),
+                if trailing_comments_force_line(close) {
+                    hard_line()
+                } else {
+                    jolt_fmt_ir::nil()
+                },
+            ])
+        }),
     ])
 }
 
@@ -353,33 +349,21 @@ fn format_inline_open_paren_spacing<'source>(
 
 fn format_for_header_semicolon(semicolon: Option<JavaSyntaxToken<'_>>) -> Doc<'_> {
     let Some(semicolon) = semicolon else {
-        return text(";");
+        return jolt_fmt_ir::nil();
     };
 
     concat([
-        format_for_header_semicolon_leading_comments(&semicolon),
-        text(";"),
-        format_trailing_comments_before_line_break(&semicolon),
+        format_token(
+            &semicolon,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::BeforeLineBreak,
+        ),
         if trailing_comments_force_line(&semicolon) {
             hard_line()
         } else {
             jolt_fmt_ir::nil()
         },
     ])
-}
-
-fn format_for_header_semicolon_leading_comments<'source>(
-    semicolon: &JavaSyntaxToken<'source>,
-) -> Doc<'source> {
-    let mut docs = Vec::new();
-    for comment in semicolon.leading_comments() {
-        docs.push(text(" "));
-        docs.push(format_comment(&comment));
-        if comment_forces_line(&comment) {
-            docs.push(hard_line());
-        }
-    }
-    concat(docs)
 }
 
 fn format_for_header_close_paren<'source>(
@@ -394,25 +378,20 @@ fn format_for_header_close_paren<'source>(
         } else {
             soft_line()
         },
-        close.map_or_else(
-            || text(")"),
-            |close| {
-                concat([
-                    if close_has_leading_comments {
-                        format_leading_comments(close)
-                    } else {
-                        jolt_fmt_ir::nil()
-                    },
-                    text(")"),
-                    format_trailing_comments_before_line_break(close),
-                    if trailing_comments_force_line(close) {
-                        hard_line()
-                    } else {
-                        jolt_fmt_ir::nil()
-                    },
-                ])
-            },
-        ),
+        close.map_or_else(jolt_fmt_ir::nil, |close| {
+            concat([
+                format_token(
+                    close,
+                    LeadingTrivia::Preserve,
+                    TrailingTrivia::BeforeLineBreak,
+                ),
+                if trailing_comments_force_line(close) {
+                    hard_line()
+                } else {
+                    jolt_fmt_ir::nil()
+                },
+            ])
+        }),
     ])
 }
 

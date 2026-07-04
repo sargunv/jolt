@@ -1,13 +1,12 @@
-use crate::document::{Doc, DocKind, LiteralText};
+use crate::document::{Doc, DocKind};
 use crate::render::RenderError;
-use crate::width::{has_line_terminator, literal_line_count};
+use crate::width::has_line_terminator;
 
 pub(crate) fn validate_doc(doc: &Doc<'_>) -> Result<(), RenderError> {
     let mut stack = vec![doc];
     while let Some(doc) = stack.pop() {
         match doc.kind() {
-            DocKind::Nil | DocKind::Line(_) => {}
-            DocKind::LiteralText(text) => validate_literal_text(text)?,
+            DocKind::Nil | DocKind::LiteralText(_) | DocKind::Line(_) => {}
             DocKind::Text(text) => validate_text(&text.text, "Text")?,
             DocKind::Concat(docs) => {
                 for doc in docs {
@@ -30,15 +29,5 @@ fn validate_text(text: &str, context: &'static str) -> Result<(), RenderError> {
         Err(RenderError::invalid_text(context))
     } else {
         Ok(())
-    }
-}
-
-fn validate_literal_text(text: &LiteralText<'_>) -> Result<(), RenderError> {
-    let expected = literal_line_count(&text.text);
-    let actual = text.line_widths.len();
-    if expected == actual {
-        Ok(())
-    } else {
-        Err(RenderError::invalid_literal_widths(expected, actual))
     }
 }

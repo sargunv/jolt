@@ -10,7 +10,7 @@ pub use document::{
     literal_text, nil, soft_line, text,
 };
 pub use render::{
-    IndentStyle, LineEnding, RenderControl, RenderError, RenderOptions, RenderOutcome, RenderSink,
+    IndentStyle, RenderControl, RenderError, RenderOptions, RenderOutcome, RenderSink,
     RenderToError, render_to,
 };
 pub use width::TextWidth;

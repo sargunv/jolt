@@ -2,12 +2,12 @@ use super::control_flow::{format_condition_open_paren, format_statement_header_b
 use super::simple::format_statement_keyword;
 use super::{
     CatchClause, CatchParameter, CatchTypeList, Doc, FinallyClause, JavaFormatter, JavaSyntaxToken,
-    Resource, ResourceListEntry, TryStatement, TryWithResourcesStatement, Type, concat,
-    empty_block, format_annotation, format_block, format_dangling_comments, format_expression,
-    format_local_variable_declaration, format_removed_comments, format_separator_with_comments,
-    format_statement_semicolon, format_token_with_comments,
-    format_trailing_comments_before_line_break, format_type, group, hard_line, indent, line,
-    soft_line, text, trailing_comments_force_line,
+    LeadingTrivia, Resource, ResourceListEntry, TrailingTrivia, TryStatement,
+    TryWithResourcesStatement, Type, concat, empty_block, format_annotation, format_block,
+    format_dangling_comments, format_expression, format_local_variable_declaration,
+    format_removed_comments, format_separator_with_comments, format_statement_semicolon,
+    format_token, format_token_with_comments, format_trailing_comments_before_line_break,
+    format_type, group, hard_line, indent, line, soft_line, text, trailing_comments_force_line,
 };
 
 pub(super) fn format_try_statement<'source>(
@@ -123,7 +123,7 @@ fn format_resource_open_spacing<'source>(open: Option<&JavaSyntaxToken<'source>>
 
 fn format_resource_close_paren<'source>(close: Option<&JavaSyntaxToken<'source>>) -> Doc<'source> {
     let Some(close) = close else {
-        return concat([hard_line(), text(")")]);
+        return hard_line();
     };
 
     let leading_comments = close.leading_comments();
@@ -139,8 +139,11 @@ fn format_resource_close_paren<'source>(close: Option<&JavaSyntaxToken<'source>>
                 hard_line(),
             ])
         },
-        text(")"),
-        format_trailing_comments_before_line_break(close),
+        format_token(
+            close,
+            LeadingTrivia::SuppressAlreadyHandled,
+            TrailingTrivia::BeforeLineBreak,
+        ),
         if trailing_comments_force_line(close) {
             hard_line()
         } else {
@@ -306,10 +309,9 @@ fn format_catch_type_separator<'source>(
 ) -> Doc<'source> {
     concat([
         line(),
-        separator.map_or_else(
-            || text("| "),
-            |separator| format_separator_with_comments(separator, text(" ")),
-        ),
+        separator.map_or_else(jolt_fmt_ir::nil, |separator| {
+            format_separator_with_comments(separator, text(" "))
+        }),
     ])
 }
 

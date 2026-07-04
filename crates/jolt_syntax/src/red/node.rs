@@ -4,7 +4,7 @@ use jolt_text::{TextRange, TextSize};
 
 use crate::{
     Language, RawSyntaxKind,
-    syntax_tree::{NodeId, SyntaxTree, TreeElement},
+    syntax_tree::{NodeId, SyntaxTree, TokenId, TreeElement},
 };
 
 use super::{SyntaxElement, SyntaxToken};
@@ -267,21 +267,42 @@ fn fmt_indent(f: &mut fmt::Formatter<'_>, indent: usize) -> fmt::Result {
 struct Tokens<'tree, L: Language> {
     source: &'tree str,
     tree: &'tree SyntaxTree,
-    stack: Vec<TreeElement>,
+    root: NodeId,
+    next: Option<TreeElement>,
     language: PhantomData<L>,
 }
 
 impl<'tree, L: Language> Tokens<'tree, L> {
     fn new(root: SyntaxNode<'tree, L>) -> Self {
-        let mut stack = Vec::new();
-        stack.extend(root.tree.children(root.id).iter().rev().copied());
-
         Self {
             source: root.source,
             tree: root.tree,
-            stack,
+            root: root.id,
+            next: root.tree.children(root.id).first().copied(),
             language: PhantomData,
         }
+    }
+
+    fn next_after_token(&self, id: TokenId) -> Option<TreeElement> {
+        let token = self.tree.token(id);
+        self.next_after_child(token.parent?, token.index)
+    }
+
+    fn next_after_node(&self, id: NodeId) -> Option<TreeElement> {
+        if id == self.root {
+            return None;
+        }
+
+        let node = self.tree.node(id);
+        self.next_after_child(node.parent?, node.index)
+    }
+
+    fn next_after_child(&self, parent: NodeId, index: usize) -> Option<TreeElement> {
+        if let Some(sibling) = self.tree.children(parent).get(index.saturating_add(1)) {
+            return Some(*sibling);
+        }
+
+        self.next_after_node(parent)
     }
 }
 
@@ -289,18 +310,25 @@ impl<'tree, L: Language> Iterator for Tokens<'tree, L> {
     type Item = SyntaxToken<'tree, L>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        while let Some(element) = self.stack.pop() {
+        let mut element = self.next?;
+
+        loop {
             match element {
                 TreeElement::Node(id) => {
-                    self.stack
-                        .extend(self.tree.children(id).iter().copied().rev());
+                    if let Some(child) = self.tree.children(id).first().copied() {
+                        element = child;
+                    } else if let Some(next) = self.next_after_node(id) {
+                        element = next;
+                    } else {
+                        self.next = None;
+                        return None;
+                    }
                 }
                 TreeElement::Token(id) => {
+                    self.next = self.next_after_token(id);
                     return Some(SyntaxToken::new(self.source, self.tree, id));
                 }
             }
         }
-
-        None
     }
 }

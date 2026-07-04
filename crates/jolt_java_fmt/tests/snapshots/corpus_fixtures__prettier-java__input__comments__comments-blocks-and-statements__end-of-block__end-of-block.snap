@@ -51,32 +51,55 @@ class J {
   void one() {
   }
 
-  void two() {
+  void two(
+    // alpha
+  ) {
   }
 
-  void three() {
+  void three(
+    // alpha
+    // beta
+  ) {
   }
 
-  void four() {
+  void four(
+    // alpha
+    // beta
+    /* gamma */
+  ) {
   }
 
-  void five() {
+  void five(
+    // alpha
+  ) {
   }
 
-  void fiveBis() {
+  void fiveBis(
+    // alpha
+  ) {
     int i;
   }
 
-  void six() {
+  void six(
+    /* alpha */
+  ) {
   }
 
-  void seven() {
+  void seven(
+    /* alpha */
+    /* beta */
+  ) {
   }
 
-  void eight() {
+  void eight(
+    /* alpha */
+    // beta
+  ) {
   }
 
-  void nine() {
+  void nine(
+    /* alpha */
+  ) {
   }
 
   void one(String one) {

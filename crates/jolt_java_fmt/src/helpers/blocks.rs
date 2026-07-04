@@ -22,6 +22,7 @@ impl<'source> BodyItem<'source> {
 }
 
 pub(crate) fn braced_body(body: Option<Doc<'_>>) -> Doc<'_> {
+    // Intentional synthesized token: this helper receives body contents, not brace tokens.
     concat([text("{"), braced_body_tail(body)])
 }
 
@@ -33,6 +34,7 @@ pub(crate) fn braced_body_tail(body: Option<Doc<'_>>) -> Doc<'_> {
                 hard_line(),
             ])
         }),
+        // Intentional synthesized token: this helper receives body contents, not brace tokens.
         text("}"),
     ])
 }

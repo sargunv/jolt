@@ -73,37 +73,28 @@ TOOLS: dict[ToolKey, Tool] = {
     "dprint-jolt": Tool(
         "dprint --plugins=jolt_fmt_dprint.wasm fmt --incremental=false --skip-stable-format",
         lambda corpus: (
-            f"cd {q(tool_dir(corpus, 'dprint-jolt'))} && "
-            f"dprint --plugins={q(DPRINT_PLUGIN)} fmt --incremental=false "
-            "--skip-stable-format ."
+            f"cd {q(tool_dir(corpus, 'dprint-jolt'))} && dprint --plugins={q(DPRINT_PLUGIN)} fmt --incremental=false --skip-stable-format ."
         ),
         "dprint --version",
         ((DPRINT_PLUGIN, "release dprint plugin"),),
         lambda corpus: [
-            f"cp {q(WORK / corpus / 'dprint.json')} "
-            f"{q(tool_dir(corpus, 'dprint-jolt') / 'dprint.json')}"
+            f"cp {q(WORK / corpus / 'dprint.json')} {q(tool_dir(corpus, 'dprint-jolt') / 'dprint.json')}"
         ],
     ),
     "google-java-format": Tool(
         "google-java-format --replace",
         lambda corpus: (
-            "google-java-format --replace --skip-removing-unused-imports "
-            f"@{q(WORK / corpus / 'google-java-format.args')}"
+            f"google-java-format --replace --skip-removing-unused-imports @{q(WORK / corpus / 'google-java-format.args')}"
         ),
         "google-java-format --version",
         reset_commands=lambda corpus: [
-            f"find {q(tool_dir(corpus, 'google-java-format'))} "
-            f"-name '*.java' -print > {q(WORK / corpus / 'google-java-format.args')}"
+            f"find {q(tool_dir(corpus, 'google-java-format'))} -name '*.java' -print > {q(WORK / corpus / 'google-java-format.args')}"
         ],
     ),
     "prettier-java": Tool(
         "prettier --write --plugin prettier-plugin-java",
         lambda corpus: (
-            "pnpm exec prettier --write "
-            f"{q(str(tool_dir(corpus, 'prettier-java') / '**/*.java'))} "
-            "--plugin prettier-plugin-java --print-width 80 --tab-width 2 "
-            f"--ignore-path {q(WORK / corpus / 'prettier.ignore')} "
-            "--log-level silent"
+            f"pnpm exec prettier --write {q(str(tool_dir(corpus, 'prettier-java') / '**/*.java'))} --plugin prettier-plugin-java --print-width 80 --tab-width 2 --ignore-path {q(WORK / corpus / 'prettier.ignore')} --log-level silent"
         ),
         "pnpm exec prettier --version",
         ((ROOT / "node_modules/.bin/prettier", "Prettier install"),),
@@ -241,8 +232,7 @@ def summarize(name: str, corpus: dict) -> None:
     files = list(baseline_dir(name).rglob("*.java"))
     total_bytes = sum(path.stat().st_size for path in files)
     log(
-        f"benchmarking {name} ({corpus['description']}): "
-        f"{len(files)} file(s), {total_bytes} byte(s)"
+        f"benchmarking {name} ({corpus['description']}): {len(files)} file(s), {total_bytes} byte(s)"
     )
 
 
@@ -289,8 +279,7 @@ def format_rows(rows: list[dict[str, str | int]]) -> str:
     lines = ["tool\tversion\tinput_files\tmodified_files"]
     for row in rows:
         lines.append(
-            f"{row['tool']}\t{row['version']}\t"
-            f"{row['input_files']}\t{row['modified_files']}"
+            f"{row['tool']}\t{row['version']}\t{row['input_files']}\t{row['modified_files']}"
         )
     return "\n".join(lines)
 

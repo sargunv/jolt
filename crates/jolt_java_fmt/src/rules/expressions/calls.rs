@@ -4,7 +4,7 @@ use super::{
     LeadingComments, MethodInvocationExpression, concat, format_expression,
     format_expression_with_leading_comments, format_member_chain, format_member_dot,
     format_token_with_comments, format_type_argument_list, group, is_member_chain_child,
-    parenthesized_list, text,
+    parenthesized_list,
 };
 
 pub(super) fn format_method_invocation_expression_with_leading_comments<'source>(
@@ -14,9 +14,9 @@ pub(super) fn format_method_invocation_expression_with_leading_comments<'source>
 ) -> Doc<'source> {
     let expression = Expression::from(*expression);
     if !is_member_chain_child(&expression)
-        && let Some(chain) = expression.member_chain()
+        && let Some(chain) = format_member_chain(expression, formatter)
     {
-        return format_member_chain(&chain, formatter);
+        return chain;
     }
     let Expression::MethodInvocationExpression(expression) = expression else {
         return jolt_fmt_ir::nil();
@@ -34,9 +34,9 @@ pub(super) fn format_field_access_expression<'source>(
 ) -> Doc<'source> {
     let expression = Expression::from(*expression);
     if !is_member_chain_child(&expression)
-        && let Some(chain) = expression.member_chain()
+        && let Some(chain) = format_member_chain(expression, formatter)
     {
-        return format_member_chain(&chain, formatter);
+        return chain;
     }
     let Expression::FieldAccessExpression(expression) = expression else {
         return jolt_fmt_ir::nil();
@@ -98,7 +98,7 @@ pub(crate) fn format_argument_list<'source>(
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
     let Some(arguments) = arguments else {
-        return text("()");
+        return jolt_fmt_ir::nil();
     };
     let open = arguments.open_paren();
     let close = arguments.close_paren();

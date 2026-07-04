@@ -39,7 +39,7 @@ pub(crate) fn parenthesized_list<'source>(
     close: Option<&JavaSyntaxToken<'source>>,
     items: impl IntoIterator<Item = CommaListItem<'source>>,
 ) -> Doc<'source> {
-    delimited_comma_list("(", ")", open, close, items)
+    delimited_comma_list(open, close, items)
 }
 
 pub(crate) fn angle_bracket_list<'source>(
@@ -47,7 +47,7 @@ pub(crate) fn angle_bracket_list<'source>(
     close: Option<&JavaSyntaxToken<'source>>,
     items: impl IntoIterator<Item = CommaListItem<'source>>,
 ) -> Doc<'source> {
-    delimited_comma_list("<", ">", open, close, items)
+    delimited_comma_list(open, close, items)
 }
 
 pub(crate) fn braced_comma_list_with_trailing_separator<'source>(
@@ -56,18 +56,18 @@ pub(crate) fn braced_comma_list_with_trailing_separator<'source>(
     items: Vec<CommaListItem<'source>>,
 ) -> Doc<'source> {
     if items.is_empty() {
-        return empty_delimited_list("{", "}", open, close);
+        return empty_delimited_list(open, close);
     }
 
-    let should_break = has_dangling_delimiter_comments(open, close)
+    let should_break = has_delimiter_dangling_comments(open, close)
         || items.last().is_some_and(|item| item.comma.is_some());
     let doc = concat([
-        format_open_delimiter(open, "{"),
+        format_open_delimiter(open),
         indent(concat([
             format_braced_open_spacing(open),
             comma_list_with_trailing_separator(items),
         ])),
-        format_braced_close_with_spacing(close, "}"),
+        format_braced_close_with_spacing(close),
     ]);
 
     if should_break {
@@ -77,101 +77,68 @@ pub(crate) fn braced_comma_list_with_trailing_separator<'source>(
     }
 }
 
-pub(crate) fn semicolon_list(items: Vec<Doc<'_>>) -> Doc<'_> {
-    jolt_fmt_ir::join(&concat([text(";"), line()]), items)
-}
-
 fn delimited_comma_list<'source>(
-    open_text: &'static str,
-    close_text: &'static str,
     open: Option<&JavaSyntaxToken<'source>>,
     close: Option<&JavaSyntaxToken<'source>>,
     items: impl IntoIterator<Item = CommaListItem<'source>>,
 ) -> Doc<'source> {
     let mut items = items.into_iter().peekable();
     if items.peek().is_none() {
-        return empty_delimited_list(open_text, close_text, open, close);
+        return empty_delimited_list(open, close);
     }
 
     group(concat([
         indent(concat([
-            format_open_delimiter_before_items(open, open_text),
+            format_open_delimiter_before_items(open),
             comma_list(items),
             format_close_leading_comments(close),
         ])),
-        format_close_with_spacing(close, close_text),
+        format_close_with_spacing(close),
     ]))
 }
 
 fn empty_delimited_list<'source>(
-    open_text: &'static str,
-    close_text: &'static str,
     open: Option<&JavaSyntaxToken<'source>>,
     close: Option<&JavaSyntaxToken<'source>>,
 ) -> Doc<'source> {
-    if !has_dangling_delimiter_comments(open, close) {
-        return concat([
-            format_open_delimiter(open, open_text),
-            format_close_delimiter(close, close_text),
-        ]);
+    if !has_delimiter_dangling_comments(open, close) {
+        return concat([format_open_delimiter(open), format_close_delimiter(close)]);
     }
 
     force_group(concat([
-        format_open_delimiter(open, open_text),
+        format_open_delimiter(open),
         indent(concat([
             hard_line(),
             format_delimiter_dangling_comments(open, close),
         ])),
         hard_line(),
-        format_close_delimiter_without_leading(close, close_text),
+        format_close_delimiter_without_leading(close),
     ]))
 }
 
-fn has_dangling_delimiter_comments<'source>(
-    open: Option<&JavaSyntaxToken<'source>>,
-    close: Option<&JavaSyntaxToken<'source>>,
-) -> bool {
-    has_delimiter_dangling_comments(open, close)
-}
-
-fn format_open_delimiter<'source>(
-    open: Option<&JavaSyntaxToken<'source>>,
-    fallback: &'static str,
-) -> Doc<'source> {
-    format_open_delimiter_with_trailing(open, fallback, TrailingTrivia::RelocatedToEnclosingContext)
+fn format_open_delimiter<'source>(open: Option<&JavaSyntaxToken<'source>>) -> Doc<'source> {
+    format_open_delimiter_with_trailing(open, TrailingTrivia::RelocatedToEnclosingContext)
 }
 
 fn format_open_delimiter_before_items<'source>(
     open: Option<&JavaSyntaxToken<'source>>,
-    fallback: &'static str,
 ) -> Doc<'source> {
-    open.map_or_else(
-        || concat([text(fallback), soft_line()]),
-        |open| {
-            format_open_delimiter_with_trailing(
-                Some(open),
-                fallback,
-                TrailingTrivia::BeforeSoftLine,
-            )
-        },
-    )
+    open.map_or_else(soft_line, |open| {
+        format_token_with_inline_leading_comments(
+            open,
+            InlineLeadingTrivia::BeforeToken,
+            TrailingTrivia::BeforeSoftLine,
+        )
+    })
 }
 
 fn format_open_delimiter_with_trailing<'source>(
     open: Option<&JavaSyntaxToken<'source>>,
-    fallback: &'static str,
     trailing: TrailingTrivia,
 ) -> Doc<'source> {
-    open.map_or_else(
-        || text(fallback),
-        |open| {
-            format_token_with_inline_leading_comments(
-                open,
-                InlineLeadingTrivia::BeforeToken,
-                trailing,
-            )
-        },
-    )
+    open.map_or_else(jolt_fmt_ir::nil, |open| {
+        format_token_with_inline_leading_comments(open, InlineLeadingTrivia::BeforeToken, trailing)
+    })
 }
 
 fn comma_list_with_trailing_separator(items: Vec<CommaListItem<'_>>) -> Doc<'_> {
@@ -185,6 +152,7 @@ fn comma_list_with_trailing_separator(items: Vec<CommaListItem<'_>>) -> Doc<'_> 
         } else if index + 1 < items_len {
             docs.push(line());
         } else {
+            // Intentional synthesized token: insert a trailing comma only in broken layout.
             docs.push(if_break(text(","), jolt_fmt_ir::nil()));
         }
     }
@@ -237,15 +205,11 @@ fn format_braced_open_spacing<'source>(open: Option<&JavaSyntaxToken<'source>>) 
 
 fn format_braced_close_with_spacing<'source>(
     close: Option<&JavaSyntaxToken<'source>>,
-    fallback: &'static str,
 ) -> Doc<'source> {
-    concat([line(), format_close_delimiter(close, fallback)])
+    concat([line(), format_close_delimiter(close)])
 }
 
-fn format_close_with_spacing<'source>(
-    close: Option<&JavaSyntaxToken<'source>>,
-    fallback: &'static str,
-) -> Doc<'source> {
+fn format_close_with_spacing<'source>(close: Option<&JavaSyntaxToken<'source>>) -> Doc<'source> {
     let close_has_leading_comments =
         close.is_some_and(|token| !token.leading_comments().is_empty());
 
@@ -255,7 +219,7 @@ fn format_close_with_spacing<'source>(
         } else {
             soft_line()
         },
-        format_close_delimiter_without_leading(close, fallback),
+        format_close_delimiter_without_leading(close),
     ])
 }
 
@@ -274,35 +238,27 @@ fn format_close_leading_comments<'source>(
     })
 }
 
-fn format_close_delimiter<'source>(
-    close: Option<&JavaSyntaxToken<'source>>,
-    fallback: &'static str,
-) -> Doc<'source> {
+fn format_close_delimiter<'source>(close: Option<&JavaSyntaxToken<'source>>) -> Doc<'source> {
     let close_has_leading_comments =
         close.is_some_and(|token| !token.leading_comments().is_empty());
-    close.map_or_else(
-        || text(fallback),
-        |close| {
-            concat([
-                if close_has_leading_comments {
-                    format_leading_comments(close)
-                } else {
-                    jolt_fmt_ir::nil()
-                },
-                format_token_after_relocated_leading_comments(close, TrailingTrivia::Preserve),
-            ])
-        },
-    )
+    close.map_or_else(jolt_fmt_ir::nil, |close| {
+        concat([
+            if close_has_leading_comments {
+                format_leading_comments(close)
+            } else {
+                jolt_fmt_ir::nil()
+            },
+            format_token_after_relocated_leading_comments(close, TrailingTrivia::Preserve),
+        ])
+    })
 }
 
 fn format_close_delimiter_without_leading<'source>(
     close: Option<&JavaSyntaxToken<'source>>,
-    fallback: &'static str,
 ) -> Doc<'source> {
-    close.map_or_else(
-        || text(fallback),
-        |close| format_token_after_relocated_leading_comments(close, TrailingTrivia::Preserve),
-    )
+    close.map_or_else(jolt_fmt_ir::nil, |close| {
+        format_token_after_relocated_leading_comments(close, TrailingTrivia::Preserve)
+    })
 }
 
 fn format_delimiter_dangling_comments<'source>(

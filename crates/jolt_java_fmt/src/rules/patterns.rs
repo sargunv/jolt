@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, concat, text};
+use jolt_fmt_ir::{Doc, concat};
 use jolt_java_syntax::{ComponentPattern, MatchAllPattern, Pattern, RecordPattern, TypePattern};
 
 use crate::context::JavaFormatter;
@@ -70,5 +70,5 @@ fn format_component_pattern<'source>(
 fn format_match_all_pattern<'source>(pattern: &MatchAllPattern<'source>) -> Doc<'source> {
     pattern
         .underscore()
-        .map_or_else(|| text("_"), |token| format_token_with_comments(&token))
+        .map_or_else(jolt_fmt_ir::nil, |token| format_token_with_comments(&token))
 }

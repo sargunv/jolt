@@ -25,14 +25,14 @@ impl Parser<'_> {
             return;
         };
 
-        let type_name = self.current_text().map(str::to_owned);
+        let type_name = self.current_text().map(|_| self.position());
         self.expect_type_identifier("expected type name");
         self.parse_type_declaration_header(kind);
-        self.parse_type_body(body_kind_for_type(kind), type_name.as_deref());
+        self.parse_type_body(body_kind_for_type(kind), type_name);
         self.complete(type_decl, kind);
     }
 
-    pub(super) fn parse_type_body(&mut self, kind: JavaSyntaxKind, type_name: Option<&str>) {
+    pub(super) fn parse_type_body(&mut self, kind: JavaSyntaxKind, type_name: Option<usize>) {
         if !self.at(JavaSyntaxKind::LBrace) {
             let error = self.start();
             self.expected_here("expected type body");
@@ -285,7 +285,7 @@ impl Parser<'_> {
     pub(super) fn parse_body_declaration(
         &mut self,
         body_kind: JavaSyntaxKind,
-        type_name: Option<&str>,
+        type_name: Option<usize>,
     ) {
         if self.at(JavaSyntaxKind::Semicolon) {
             self.parse_empty_declaration();
@@ -304,7 +304,7 @@ impl Parser<'_> {
     pub(super) fn parse_class_body_declaration_contents(
         &mut self,
         body_kind: JavaSyntaxKind,
-        type_name: Option<&str>,
+        type_name: Option<usize>,
     ) {
         if self.at(JavaSyntaxKind::LBrace) {
             let initializer = self.start();
@@ -330,7 +330,7 @@ impl Parser<'_> {
 
     pub(super) fn parse_member_declaration(
         &mut self,
-        type_name: Option<&str>,
+        type_name: Option<usize>,
         annotation_body: bool,
     ) {
         if self.starts_top_level_type_declaration() {
@@ -697,7 +697,7 @@ impl Parser<'_> {
         }
     }
 
-    pub(super) fn parse_enum_body_contents(&mut self, type_name: Option<&str>) {
+    pub(super) fn parse_enum_body_contents(&mut self, type_name: Option<usize>) {
         if !self.at(JavaSyntaxKind::Semicolon) && !self.at(JavaSyntaxKind::RBrace) {
             let list = self.start();
             loop {

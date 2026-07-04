@@ -2,13 +2,15 @@ use std::path::{Path, PathBuf};
 
 use ignore::WalkBuilder;
 
+use jolt_fmt_core::FormatOptions;
+
 use crate::config::{CliError, ConfigResolver, ResolvedConfig};
 
 #[derive(Clone, Debug)]
 pub(crate) struct CandidateFile {
     pub(crate) path: PathBuf,
     pub(crate) language: jolt_fmt_core::Language,
-    pub(crate) config: ResolvedConfig,
+    pub(crate) options: FormatOptions,
 }
 
 pub(crate) fn discover_files(
@@ -41,7 +43,7 @@ pub(crate) fn discover_files(
         candidates.push(CandidateFile {
             path,
             language,
-            config,
+            options: config.options,
         });
     }
 

@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::width::{TextWidth, display_width, literal_line_widths};
+use crate::width::{TextWidth, display_width, literal_text_metrics};
 
 /// Opaque formatter document node.
 ///
@@ -36,12 +36,17 @@ pub(crate) struct Text<'source> {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct LiteralText<'source> {
     pub(crate) text: Cow<'source, str>,
-    pub(crate) line_widths: Box<[TextWidth]>,
+    final_width: TextWidth,
+    line_count: usize,
 }
 
 impl LiteralText<'_> {
-    pub(crate) fn final_width(&self) -> TextWidth {
-        self.line_widths.last().copied().unwrap_or(TextWidth::ZERO)
+    pub(crate) const fn final_width(&self) -> TextWidth {
+        self.final_width
+    }
+
+    pub(crate) const fn is_multiline(&self) -> bool {
+        self.line_count > 1
     }
 }
 
@@ -99,8 +104,12 @@ pub fn text<'source>(value: impl Into<Cow<'source, str>>) -> Doc<'source> {
 #[must_use]
 pub fn literal_text<'source>(value: impl Into<Cow<'source, str>>) -> Doc<'source> {
     let text = value.into();
-    let line_widths = literal_line_widths(&text);
-    Doc(DocKind::LiteralText(LiteralText { text, line_widths }))
+    let metrics = literal_text_metrics(&text);
+    Doc(DocKind::LiteralText(LiteralText {
+        text,
+        final_width: metrics.final_width,
+        line_count: metrics.line_count,
+    }))
 }
 
 #[must_use]

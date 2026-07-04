@@ -18,7 +18,7 @@ use rayon::prelude::*;
 
 use crate::{
     args::{Cli, Command, FmtArgs},
-    config::{CliError, ConfigResolver, ResolvedConfig, absolutize, display_path},
+    config::{CliError, ConfigResolver, absolutize, display_path},
     discover::{CandidateFile, detect_language, discover_files},
 };
 
@@ -95,7 +95,7 @@ fn collect_candidates(cwd: &Path, args: &FmtArgs) -> Result<Vec<CandidateFile>, 
                 candidates.push(CandidateFile {
                     path,
                     language,
-                    config,
+                    options: config.options,
                 });
             }
             continue;
@@ -174,9 +174,9 @@ fn run_stdin(cwd: &Path, args: &FmtArgs) -> Result<(), CliError> {
     if args.check {
         let mut sink = CompareSink::new(&source);
         let result = format_source_to_sink(&source, language, &config.options, &mut sink);
-        emit_diagnostics(&label, &source, result.diagnostics())?;
+        emit_diagnostics(&label, &source, result_diagnostics(&result))?;
 
-        if result.is_blocked() {
+        if matches!(result, FormatSinkResult::Blocked { .. }) {
             return Err(CliError::new(format_check_summary(FormatRunStats {
                 total: 1,
                 failed: 1,
@@ -197,15 +197,16 @@ fn run_stdin(cwd: &Path, args: &FmtArgs) -> Result<(), CliError> {
 
     let mut sink = BufferedIoSink::new(io::stdout().lock());
     let result = format_source_to_sink(&source, language, &config.options, &mut sink);
-    emit_diagnostics(&label, &source, result.diagnostics())?;
-    if result.is_blocked() {
-        return Err(CliError::new("formatting failed"));
-    }
-    if result.is_halted() {
-        return Err(CliError::new("formatting halted before writing stdout"));
-    }
-    if matches!(result, FormatSinkResult::SinkError { .. }) {
-        unreachable!("buffered stdout sink cannot fail while rendering");
+    emit_diagnostics(&label, &source, result_diagnostics(&result))?;
+    match result {
+        FormatSinkResult::Complete => {}
+        FormatSinkResult::Blocked { .. } => return Err(CliError::new("formatting failed")),
+        FormatSinkResult::Halted => {
+            return Err(CliError::new("formatting halted before writing stdout"));
+        }
+        FormatSinkResult::SinkError { .. } => {
+            unreachable!("buffered stdout sink cannot fail while rendering");
+        }
     }
     if let Err(error) = sink.commit() {
         return Err(CliError::new(format!("failed to write stdout: {error}")));
@@ -242,7 +243,7 @@ fn format_candidate(cwd: &Path, candidate: &CandidateFile, check: bool) -> FileF
         cwd,
         &candidate.path,
         candidate.language,
-        &candidate.config,
+        candidate.options,
         check,
     )
 }
@@ -251,7 +252,7 @@ fn format_file(
     cwd: &Path,
     path: &Path,
     language: jolt_fmt_core::Language,
-    config: &ResolvedConfig,
+    options: jolt_fmt_core::FormatOptions,
     check: bool,
 ) -> FileFormatResult {
     let label = display_path(cwd, path);
@@ -265,23 +266,23 @@ fn format_file(
         }
     };
     if check {
-        return format_file_check(&label, &source, language, config);
+        return format_file_check(&label, &source, language, options);
     }
 
-    format_file_write(cwd, path, &label, &source, language, config)
+    format_file_write(cwd, path, &label, &source, language, options)
 }
 
 fn format_file_check(
     label: &str,
     source: &str,
     language: jolt_fmt_core::Language,
-    config: &ResolvedConfig,
+    options: jolt_fmt_core::FormatOptions,
 ) -> FileFormatResult {
     let mut sink = CompareSink::new(source);
-    let result = format_source_to_sink(source, language, &config.options, &mut sink);
-    let diagnostics = diagnostics_text(label, source, result.diagnostics());
+    let result = format_source_to_sink(source, language, &options, &mut sink);
+    let diagnostics = diagnostics_text(label, source, result_diagnostics(&result));
 
-    if result.is_blocked() {
+    if matches!(result, FormatSinkResult::Blocked { .. }) {
         return FileFormatResult {
             outcome: FileFormatOutcome {
                 failed: true,
@@ -319,11 +320,11 @@ fn format_file_write(
     label: &str,
     source: &str,
     language: jolt_fmt_core::Language,
-    config: &ResolvedConfig,
+    options: jolt_fmt_core::FormatOptions,
 ) -> FileFormatResult {
     let mut sink = BufferedFileSink::new(path, source);
-    let result = format_source_to_sink(source, language, &config.options, &mut sink);
-    let diagnostics = diagnostics_text(label, source, result.diagnostics());
+    let result = format_source_to_sink(source, language, &options, &mut sink);
+    let diagnostics = diagnostics_text(label, source, result_diagnostics(&result));
 
     finish_file_write(cwd, path, diagnostics, &result, sink)
 }
@@ -335,7 +336,7 @@ fn finish_file_write(
     result: &FormatSinkResult<Infallible>,
     sink: BufferedFileSink<'_>,
 ) -> FileFormatResult {
-    if result.is_blocked() {
+    if matches!(result, FormatSinkResult::Blocked { .. }) {
         return FileFormatResult {
             outcome: FileFormatOutcome {
                 failed: true,
@@ -347,7 +348,7 @@ fn finish_file_write(
         };
     }
 
-    if result.is_halted() {
+    if matches!(result, FormatSinkResult::Halted) {
         return FileFormatResult {
             outcome: FileFormatOutcome {
                 failed: true,
@@ -516,34 +517,16 @@ impl RenderSink for BufferedFileSink<'_> {
 
 fn emit_diagnostics(label: &str, source: &str, diagnostics: &[Diagnostic]) -> Result<(), CliError> {
     let mut stderr = io::stderr().lock();
-    let line_index = LineIndex::new(source);
-
-    for diagnostic in diagnostics {
-        if let Some(range) = diagnostic.range {
-            let position = line_index.line_col(TextSize::new(range.start().get()));
-            writeln!(
-                stderr,
-                "{}:{}:{}: {}: {}",
-                label,
-                position.line + 1,
-                position.column.get() + 1,
-                diagnostic.code,
-                diagnostic.message
-            )
-        } else {
-            writeln!(
-                stderr,
-                "{}: {}: {}",
-                label, diagnostic.code, diagnostic.message
-            )
-        }
-        .map_err(|error| CliError::new(format!("failed to write diagnostics: {error}")))?;
-    }
-
-    Ok(())
+    stderr
+        .write_all(diagnostics_text(label, source, diagnostics).as_bytes())
+        .map_err(|error| CliError::new(format!("failed to write diagnostics: {error}")))
 }
 
 fn diagnostics_text(label: &str, source: &str, diagnostics: &[Diagnostic]) -> String {
+    if diagnostics.is_empty() {
+        return String::new();
+    }
+
     let mut text = String::new();
     let line_index = LineIndex::new(source);
 
@@ -569,6 +552,15 @@ fn diagnostics_text(label: &str, source: &str, diagnostics: &[Diagnostic]) -> St
     }
 
     text
+}
+
+fn result_diagnostics<E>(result: &FormatSinkResult<E>) -> &[Diagnostic] {
+    match result {
+        FormatSinkResult::Blocked { diagnostics } => diagnostics,
+        FormatSinkResult::Complete
+        | FormatSinkResult::Halted
+        | FormatSinkResult::SinkError { .. } => &[],
+    }
 }
 
 #[derive(Debug, Default)]

@@ -227,7 +227,7 @@ pub fn build_syntax_tree(
         root: None,
         token_index: 0,
         diagnostics: Vec::new(),
-        skip_events: vec![false; events.len()],
+        skip_events: Vec::new(),
     };
 
     builder.build(events)
@@ -243,7 +243,7 @@ struct SyntaxTreeBuilder {
     root: Option<NodeId>,
     token_index: usize,
     diagnostics: Vec<Diagnostic>,
-    skip_events: Vec<bool>,
+    skip_events: Vec<usize>,
 }
 
 impl SyntaxTreeBuilder {
@@ -254,7 +254,7 @@ impl SyntaxTreeBuilder {
         let mut event_index = 0;
 
         while event_index < events.len() {
-            if self.skip_events[event_index] {
+            if self.skip_events.binary_search(&event_index).is_ok() {
                 event_index += 1;
                 continue;
             }
@@ -352,11 +352,14 @@ impl SyntaxTreeBuilder {
                 },
             )?;
 
-            if target <= position || target >= events.len() || self.skip_events[target] {
+            let skip_insert_index = self.skip_events.binary_search(&target).err();
+
+            if target <= position || target >= events.len() || skip_insert_index.is_none() {
                 return Err(BuildSyntaxTreeError::InvalidForwardParent { position, target });
             }
 
-            self.skip_events[target] = true;
+            self.skip_events
+                .insert(skip_insert_index.expect("checked above"), target);
             self.start_forward_parent_nodes(events, target)?;
         }
 

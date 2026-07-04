@@ -1037,30 +1037,6 @@ pub enum WildcardBound<'source> {
     Super(Type<'source>),
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct MemberChain<'source> {
-    root: Expression<'source>,
-    suffixes: Vec<MemberChainSuffix<'source>>,
-}
-
-impl<'source> MemberChain<'source> {
-    #[must_use]
-    pub fn root(&self) -> &Expression<'source> {
-        &self.root
-    }
-
-    #[must_use]
-    pub fn suffixes(&self) -> &[MemberChainSuffix<'source>] {
-        &self.suffixes
-    }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum MemberChainSuffix<'source> {
-    FieldAccess(FieldAccessExpression<'source>),
-    MethodInvocation(MethodInvocationExpression<'source>),
-}
-
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExpressionParentRole {
     ParenthesizedExpression,

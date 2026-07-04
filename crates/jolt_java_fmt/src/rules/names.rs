@@ -18,6 +18,7 @@ pub(crate) fn format_name<'source>(name: &NameSyntax<'source>) -> Doc<'source> {
     }
 
     jolt_fmt_ir::join(
+        // Intentional synthesized token: comment-free names normalize segment separators.
         &text("."),
         segments
             .into_iter()
@@ -103,7 +104,7 @@ fn format_inline_name<'source>(segments: &[NameSegment<'source>]) -> Doc<'source
                 segment
                     .dot_before
                     .as_ref()
-                    .map_or_else(|| text("."), format_name_dot),
+                    .map_or_else(jolt_fmt_ir::nil, format_name_dot),
             );
         }
         docs.push(format_inline_name_segment_identifier(
@@ -132,7 +133,7 @@ fn format_leading_dot_segment<'source>(segment: &NameSegment<'source>) -> Doc<'s
         segment
             .dot_before
             .as_ref()
-            .map_or_else(|| text("."), format_name_dot),
+            .map_or_else(jolt_fmt_ir::nil, format_name_dot),
         format_name_segment_identifier(segment),
     ])
 }

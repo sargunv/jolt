@@ -15,9 +15,10 @@ impl Parser<'_> {
 
     pub(in crate::parser::grammar) fn starts_constructor(
         &mut self,
-        type_name: Option<&str>,
+        type_name: Option<usize>,
     ) -> bool {
         let member_header_ends_with_block = self.member_header_ends_with_block();
+        let type_name = type_name.and_then(|index| self.text_at(index));
         let mut lookahead = self.lookahead();
         lookahead.skip_type_modifiers();
         if lookahead.at(JavaSyntaxKind::Lt) {
@@ -35,8 +36,9 @@ impl Parser<'_> {
 
     pub(in crate::parser::grammar) fn starts_compact_constructor(
         &mut self,
-        type_name: Option<&str>,
+        type_name: Option<usize>,
     ) -> bool {
+        let type_name = type_name.and_then(|index| self.text_at(index));
         let mut lookahead = self.lookahead();
         lookahead.skip_type_modifiers();
         matches!(type_name, Some(name) if lookahead.text() == Some(name))

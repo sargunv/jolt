@@ -15,8 +15,7 @@ pub(crate) fn modifier_prefix_from_docs<'source>(
         annotation_docs,
         modifier_entries
             .into_iter()
-            .map(|entry| format_modifier_entry(&entry, LeadingComments::Suppress))
-            .collect(),
+            .map(|entry| format_modifier_entry(&entry, LeadingComments::Suppress)),
     )
 }
 
@@ -29,21 +28,21 @@ pub(crate) fn modifier_prefix_from_token_docs<'source>(
         annotation_docs,
         modifier_tokens
             .into_iter()
-            .map(|token| format_modifier_token(&token, LeadingComments::Preserve))
-            .collect(),
+            .map(|token| format_modifier_token(&token, LeadingComments::Preserve)),
     )
 }
 
 fn modifier_prefix_from_modifier_docs<'source>(
     annotation_docs: Vec<Doc<'source>>,
-    modifier_docs: Vec<Doc<'source>>,
+    modifier_docs: impl IntoIterator<Item = Doc<'source>>,
 ) -> Doc<'source> {
     let mut docs = Vec::new();
     for annotation in annotation_docs {
         docs.push(annotation);
         docs.push(hard_line());
     }
-    if !modifier_docs.is_empty() {
+    let mut modifier_docs = modifier_docs.into_iter().peekable();
+    if modifier_docs.peek().is_some() {
         docs.push(jolt_fmt_ir::join(&text(" "), modifier_docs));
         docs.push(text(" "));
     }

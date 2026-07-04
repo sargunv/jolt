@@ -4,19 +4,19 @@ use jolt_java_syntax::{
     AssignmentExpression, BinaryExpression, CastExpression, ClassLiteralExpression,
     ConditionalExpression, DimExpression, Expression, ExpressionParentRole, FieldAccessExpression,
     InstanceofExpression, JavaSyntaxToken, LambdaExpression, LambdaParameter, LiteralExpression,
-    MemberChain, MemberChainSuffix, MethodInvocationExpression, MethodReferenceExpression,
-    NameExpression, ObjectCreationExpression, ParenthesizedExpression, PostfixExpression,
-    SuperExpression, SwitchExpression, TemplateExpression, ThisExpression, UnaryExpression,
+    MethodInvocationExpression, MethodReferenceExpression, NameExpression,
+    ObjectCreationExpression, ParenthesizedExpression, PostfixExpression, SuperExpression,
+    SwitchExpression, TemplateExpression, ThisExpression, UnaryExpression,
     VariableInitializerValue,
 };
 
 use crate::context::JavaFormatter;
 use crate::helpers::comments::{
     InlineLeadingTrivia, LeadingTrivia, TrailingTrivia, comment_forces_line,
-    format_leading_comments, format_token, format_token_after_relocated_leading_comments,
-    format_token_text, format_token_with_comments, format_token_with_inline_leading_comments,
-    format_trailing_comments, format_trailing_comments_before_line_break, token_iter_has_comments,
-    trailing_comments_force_line,
+    format_leading_comments, format_separator_with_comments, format_token,
+    format_token_after_relocated_leading_comments, format_token_text, format_token_with_comments,
+    format_token_with_inline_leading_comments, format_trailing_comments_before_line_break,
+    token_iter_has_comments, trailing_comments_force_line,
 };
 use crate::helpers::lists::{
     CommaListItem, braced_comma_list_with_trailing_separator, parenthesized_list,

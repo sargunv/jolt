@@ -1,8 +1,7 @@
 use super::{
-    Doc, JavaFormatter, MethodReferenceExpression, concat, format_array_dimensions,
-    format_expression, format_leading_comments, format_token_with_comments,
-    format_trailing_comments_before_line_break, format_type, format_type_argument_list, group,
-    hard_line, text, trailing_comments_force_line,
+    Doc, JavaFormatter, LeadingTrivia, MethodReferenceExpression, TrailingTrivia, concat,
+    format_array_dimensions, format_expression, format_token, format_token_with_comments,
+    format_type, format_type_argument_list, group, hard_line, text, trailing_comments_force_line,
 };
 
 pub(super) fn format_method_reference_expression<'source>(
@@ -20,7 +19,7 @@ pub(super) fn format_method_reference_expression<'source>(
         if expression.is_constructor_reference() {
             expression
                 .new_token()
-                .map_or_else(|| text("new"), |token| format_token_with_comments(&token))
+                .map_or_else(jolt_fmt_ir::nil, |token| format_token_with_comments(&token))
         } else {
             expression
                 .target_name()
@@ -34,14 +33,16 @@ pub(super) fn format_method_reference_expression<'source>(
 fn format_method_reference_separator<'source>(
     expression: &MethodReferenceExpression<'source>,
 ) -> Doc<'source> {
-    expression.double_colon().map_or_else(
-        || text("::"),
-        |separator| {
+    expression
+        .double_colon()
+        .map_or_else(jolt_fmt_ir::nil, |separator| {
             let has_trailing_comments = !separator.trailing_comments().is_empty();
             concat([
-                format_leading_comments(&separator),
-                text("::"),
-                format_trailing_comments_before_line_break(&separator),
+                format_token(
+                    &separator,
+                    LeadingTrivia::Preserve,
+                    TrailingTrivia::BeforeLineBreak,
+                ),
                 if trailing_comments_force_line(&separator) {
                     hard_line()
                 } else if has_trailing_comments {
@@ -50,8 +51,7 @@ fn format_method_reference_separator<'source>(
                     jolt_fmt_ir::nil()
                 },
             ])
-        },
-    )
+        })
 }
 
 fn format_method_reference_receiver<'source>(

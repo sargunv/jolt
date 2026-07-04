@@ -1,12 +1,13 @@
 use super::calls::format_argument_list;
 use super::{
     ArrayAccessExpression, ArrayCreationExpression, ArrayInitializer, CommaListItem, DimExpression,
-    Doc, InlineLeadingTrivia, JavaFormatter, JavaSyntaxToken, ObjectCreationExpression,
-    TrailingTrivia, VariableInitializerValue, braced_comma_list_with_trailing_separator,
-    comment_forces_line, concat, format_anonymous_class_body, format_expression,
-    format_leading_comments, format_token_with_inline_leading_comments,
-    format_trailing_comments_before_line_break, format_type, format_type_argument_list, group,
-    hard_line, indent, text, trailing_comments_force_line,
+    Doc, InlineLeadingTrivia, JavaFormatter, JavaSyntaxToken, LeadingTrivia,
+    ObjectCreationExpression, TrailingTrivia, VariableInitializerValue,
+    braced_comma_list_with_trailing_separator, comment_forces_line, concat,
+    format_anonymous_class_body, format_expression, format_token, format_token_with_comments,
+    format_token_with_inline_leading_comments, format_trailing_comments_before_line_break,
+    format_type, format_type_argument_list, group, hard_line, indent, text,
+    trailing_comments_force_line,
 };
 
 pub(super) fn format_array_access_expression<'source>(
@@ -38,7 +39,13 @@ pub(super) fn format_object_creation_expression<'source>(
         expression
             .qualifier()
             .map_or_else(jolt_fmt_ir::nil, |qualifier| {
-                concat([format_expression(&qualifier, formatter), text(".")])
+                concat([
+                    format_expression(&qualifier, formatter),
+                    expression
+                        .dot_token()
+                        .as_ref()
+                        .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
+                ])
             }),
         format_creation_new_keyword(expression.new_token().as_ref()),
         expression
@@ -81,21 +88,20 @@ pub(super) fn format_array_creation_expression<'source>(
 fn format_creation_new_keyword<'source>(
     keyword: Option<&JavaSyntaxToken<'source>>,
 ) -> Doc<'source> {
-    keyword.map_or_else(
-        || text("new "),
-        |keyword| {
-            concat([
-                format_leading_comments(keyword),
-                text("new"),
-                format_trailing_comments_before_line_break(keyword),
-                if trailing_comments_force_line(keyword) {
-                    hard_line()
-                } else {
-                    text(" ")
-                },
-            ])
-        },
-    )
+    keyword.map_or_else(jolt_fmt_ir::nil, |keyword| {
+        concat([
+            format_token(
+                keyword,
+                LeadingTrivia::Preserve,
+                TrailingTrivia::BeforeLineBreak,
+            ),
+            if trailing_comments_force_line(keyword) {
+                hard_line()
+            } else {
+                text(" ")
+            },
+        ])
+    })
 }
 
 fn format_dim_expression<'source>(
@@ -129,10 +135,13 @@ fn format_bracketed_expression<'source>(
 }
 
 fn format_open_bracket<'source>(open: Option<&JavaSyntaxToken<'source>>) -> Doc<'source> {
-    open.map_or_else(
-        || text("["),
-        |open| concat([format_leading_comments(open), text("[")]),
-    )
+    open.map_or_else(jolt_fmt_ir::nil, |open| {
+        format_token(
+            open,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::RelocatedToEnclosingContext,
+        )
+    })
 }
 
 fn format_open_bracket_spacing<'source>(open: Option<&JavaSyntaxToken<'source>>) -> Doc<'source> {
@@ -160,16 +169,13 @@ fn format_open_bracket_spacing<'source>(open: Option<&JavaSyntaxToken<'source>>)
 fn format_close_bracket_with_spacing<'source>(
     close: Option<&JavaSyntaxToken<'source>>,
 ) -> Doc<'source> {
-    close.map_or_else(
-        || text("]"),
-        |close| {
-            format_token_with_inline_leading_comments(
-                close,
-                InlineLeadingTrivia::AfterPreviousToken,
-                TrailingTrivia::Preserve,
-            )
-        },
-    )
+    close.map_or_else(jolt_fmt_ir::nil, |close| {
+        format_token_with_inline_leading_comments(
+            close,
+            InlineLeadingTrivia::AfterPreviousToken,
+            TrailingTrivia::Preserve,
+        )
+    })
 }
 
 fn format_array_initializer<'source>(

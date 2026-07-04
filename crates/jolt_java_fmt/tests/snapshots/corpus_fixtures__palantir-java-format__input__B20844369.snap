@@ -22,8 +22,8 @@ public class B20844369 {
       
       + ")?"; // end optional subtype
 
-  int x =
-    42
+  int x = //foo
+  42
       + //bar
        1;
 
@@ -33,7 +33,7 @@ public class B20844369 {
       + //bar
        1;
 
-  int x =
+  int x = /*foo*/
     42
       + //bar
        1;

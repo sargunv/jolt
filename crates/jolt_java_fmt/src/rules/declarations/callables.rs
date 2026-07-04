@@ -1,14 +1,14 @@
 use super::{
     AnnotationElementDeclaration, CommaListItem, Doc, FormalParameterList, JavaFormatter,
     JavaSyntaxToken, LeadingTrivia, MethodDeclaration, ThrowsClause, ThrowsClauseEntry,
-    TrailingTrivia, braced_body, comment_forces_line, concat, declaration_with_body,
-    declaration_without_body, format_annotation_element_value, format_array_dimensions,
-    format_block, format_construct_leading_comments, format_constructor_body,
-    format_formal_parameter, format_inline_annotations, format_modifier_prefix,
-    format_receiver_parameter, format_separator_with_comments, format_statement_semicolon,
-    format_token, format_token_after_construct_leading_comments, format_token_with_comments,
-    format_type, format_type_parameter_list, format_type_without_leading_comments,
-    format_typed_modifier_prefix, group, hard_line, line, parenthesized_list, text,
+    TrailingTrivia, braced_body, comment_forces_line, concat, format_annotation_element_value,
+    format_array_dimensions, format_block, format_construct_leading_comments,
+    format_constructor_body, format_formal_parameter, format_inline_annotations,
+    format_modifier_prefix, format_receiver_parameter, format_separator_with_comments,
+    format_statement_semicolon, format_token, format_token_after_construct_leading_comments,
+    format_token_with_comments, format_type, format_type_parameter_list,
+    format_type_without_leading_comments, format_typed_modifier_prefix, group, hard_line, line,
+    parenthesized_list, text,
 };
 
 pub(super) fn format_constructor_declaration<'source>(
@@ -21,9 +21,6 @@ pub(super) fn format_constructor_declaration<'source>(
         format_modifier_prefix(constructor.modifiers(), formatter),
     ]);
     let throws = constructor.throws_clause();
-    let has_throws = throws
-        .as_ref()
-        .is_some_and(|throws| throws.exceptions().next().is_some());
     let type_parameters = constructor.type_parameters();
     let has_type_parameters = type_parameters.is_some();
     let header = concat([
@@ -36,20 +33,22 @@ pub(super) fn format_constructor_declaration<'source>(
         constructor.name().map_or_else(jolt_fmt_ir::nil, |name| {
             format_token_after_construct_leading_comments(&name, constructor_first_token.as_ref())
         }),
-        format_parameters(constructor.parameters(), formatter),
+        format_parameters(
+            constructor.open_paren(),
+            constructor.close_paren(),
+            constructor.parameters(),
+            formatter,
+        ),
         format_throws_clause(throws, formatter),
     ]);
 
     match constructor.body() {
-        Some(body) if has_throws => {
-            declaration_with_body(prefix, header, format_constructor_body(&body, formatter))
-        }
         Some(body) => callable_declaration_with_body(
             prefix,
             header,
             format_constructor_body(&body, formatter),
         ),
-        None => declaration_without_body(prefix, header),
+        None => concat([prefix, group(header)]),
     }
 }
 
@@ -63,10 +62,12 @@ pub(super) fn format_compact_constructor_declaration<'source>(
         .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name));
 
     match constructor.body() {
-        Some(body) => {
-            declaration_with_body(prefix, header, format_constructor_body(&body, formatter))
-        }
-        None => declaration_without_body(prefix, header),
+        Some(body) => callable_declaration_with_body(
+            prefix,
+            header,
+            format_constructor_body(&body, formatter),
+        ),
+        None => concat([prefix, group(header)]),
     }
 }
 
@@ -80,9 +81,6 @@ pub(super) fn format_method_declaration<'source>(
         modifiers.declaration_prefix,
     ]);
     let throws = method.throws_clause();
-    let has_throws = throws
-        .as_ref()
-        .is_some_and(|throws| throws.exceptions().next().is_some());
     let type_parameters = method.type_parameters();
     let has_type_parameters = type_parameters.is_some();
     let parameters = method.parameters();
@@ -90,7 +88,12 @@ pub(super) fn format_method_declaration<'source>(
         method
             .name()
             .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name)),
-        format_parameters(parameters, formatter),
+        format_parameters(
+            method.open_paren(),
+            method.close_paren(),
+            parameters,
+            formatter,
+        ),
     ]);
     let header = concat([
         format_type_parameter_list(type_parameters, formatter),
@@ -112,9 +115,6 @@ pub(super) fn format_method_declaration<'source>(
     ]);
 
     match method.body() {
-        Some(body) if has_throws => {
-            callable_declaration_with_body_doc(prefix, header, format_block(&body, formatter))
-        }
         Some(body) => {
             callable_declaration_with_body_doc(prefix, header, format_block(&body, formatter))
         }
@@ -140,11 +140,7 @@ pub(super) fn format_annotation_element_declaration<'source>(
             element
                 .name()
                 .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name)),
-            parenthesized_list(
-                element.open_paren().as_ref(),
-                element.close_paren().as_ref(),
-                std::iter::empty(),
-            ),
+            format_empty_parameters(element.open_paren(), element.close_paren()),
             element
                 .dimensions()
                 .map_or_else(jolt_fmt_ir::nil, |dimensions| {
@@ -176,14 +172,23 @@ fn format_annotation_element_default<'source>(
 }
 
 fn format_parameters<'source>(
+    open: Option<JavaSyntaxToken<'source>>,
+    close: Option<JavaSyntaxToken<'source>>,
     parameters: Option<FormalParameterList<'source>>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
+    let open = parameters
+        .as_ref()
+        .and_then(FormalParameterList::open_paren)
+        .or(open);
+    let close = parameters
+        .as_ref()
+        .and_then(FormalParameterList::close_paren)
+        .or(close);
     let Some(parameters) = parameters else {
-        return text("()");
+        return format_empty_parameters(open, close);
     };
-    let open = parameters.open_paren();
-    let close = parameters.close_paren();
+
     parenthesized_list(
         open.as_ref(),
         close.as_ref(),
@@ -198,6 +203,17 @@ fn format_parameters<'source>(
             },
             comma: entry.comma,
         }),
+    )
+}
+
+fn format_empty_parameters<'source>(
+    open: Option<JavaSyntaxToken<'source>>,
+    close: Option<JavaSyntaxToken<'source>>,
+) -> Doc<'source> {
+    parenthesized_list(
+        open.as_ref(),
+        close.as_ref(),
+        std::iter::empty::<CommaListItem<'source>>(),
     )
 }
 
@@ -238,16 +254,13 @@ fn format_throws_clause<'source>(
 }
 
 fn format_throws_keyword<'source>(throws: &ThrowsClause<'source>) -> Doc<'source> {
-    throws.keyword().map_or_else(
-        || text("throws"),
-        |keyword| {
-            format_token(
-                &keyword,
-                LeadingTrivia::Preserve,
-                TrailingTrivia::BeforeLineBreak,
-            )
-        },
-    )
+    throws.keyword().map_or_else(jolt_fmt_ir::nil, |keyword| {
+        format_token(
+            &keyword,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::BeforeLineBreak,
+        )
+    })
 }
 
 fn format_throws_keyword_spacing<'source>(throws: &ThrowsClause<'source>) -> Doc<'source> {

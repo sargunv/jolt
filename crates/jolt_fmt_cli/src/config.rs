@@ -76,8 +76,6 @@ impl PatternList {
         let Ok(relative) = path.strip_prefix(&self.base_dir) else {
             return false;
         };
-        let relative = normalize_path(relative);
-
         self.globset.is_match(relative)
     }
 }
@@ -87,11 +85,6 @@ pub(crate) struct ResolvedConfig {
     pub(crate) options: FormatOptions,
     pub(crate) include: PatternList,
     pub(crate) excludes: Vec<PatternList>,
-}
-
-#[derive(Clone, Debug)]
-struct LoadedConfig {
-    sparse: SparseConfig,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -110,7 +103,7 @@ pub(crate) struct ConfigResolver {
     cli_options: CliFormatOptions,
     cli_include: Option<PatternList>,
     cli_exclude: Option<PatternList>,
-    explicit_config: Option<LoadedConfig>,
+    explicit_config: Option<SparseConfig>,
     no_config: bool,
     resolved_by_dir: HashMap<PathBuf, ResolvedConfig>,
 }
@@ -163,12 +156,12 @@ impl ConfigResolver {
 
         if !self.no_config {
             for config in Self::discovered_configs(&self.project_root, dir)? {
-                builder.apply_sparse(&config.sparse);
+                builder.apply_sparse(&config);
             }
         }
 
         if let Some(config) = &self.explicit_config {
-            builder.apply_sparse(&config.sparse);
+            builder.apply_sparse(config);
         }
 
         builder.apply_cli_options(self.cli_options);
@@ -186,7 +179,7 @@ impl ConfigResolver {
         Ok(resolved)
     }
 
-    fn discovered_configs(project_root: &Path, dir: &Path) -> Result<Vec<LoadedConfig>, CliError> {
+    fn discovered_configs(project_root: &Path, dir: &Path) -> Result<Vec<SparseConfig>, CliError> {
         let mut configs = Vec::new();
 
         for ancestor in ancestors_from_root_to_dir(project_root, dir) {
@@ -278,7 +271,7 @@ struct FileFormatConfig {
     exclude: Option<Vec<String>>,
 }
 
-fn load_explicit_config(cwd: &Path, path: &Path) -> Result<LoadedConfig, CliError> {
+fn load_explicit_config(cwd: &Path, path: &Path) -> Result<SparseConfig, CliError> {
     let path = absolutize(cwd, path);
     if !path.is_file() {
         return Err(CliError::new(format!(
@@ -291,13 +284,11 @@ fn load_explicit_config(cwd: &Path, path: &Path) -> Result<LoadedConfig, CliErro
     load_config_at(&path, &base_dir)
 }
 
-fn load_config_at(path: &Path, base_dir: &Path) -> Result<LoadedConfig, CliError> {
+fn load_config_at(path: &Path, base_dir: &Path) -> Result<SparseConfig, CliError> {
     let file_config = Figment::from(Toml::file(path))
         .extract::<FileConfig>()
         .map_err(|error| CliError::new(format!("{}: {error}", path.display())))?;
-    let sparse = file_config.into_sparse(path, base_dir)?;
-
-    Ok(LoadedConfig { sparse })
+    file_config.into_sparse(path, base_dir)
 }
 
 impl FileConfig {
@@ -430,11 +421,4 @@ pub(crate) fn absolutize(cwd: &Path, path: &Path) -> PathBuf {
 
 pub(crate) fn display_path(cwd: &Path, path: &Path) -> String {
     path.strip_prefix(cwd).unwrap_or(path).display().to_string()
-}
-
-fn normalize_path(path: &Path) -> String {
-    path.components()
-        .map(|component| component.as_os_str().to_string_lossy())
-        .collect::<Vec<_>>()
-        .join("/")
 }

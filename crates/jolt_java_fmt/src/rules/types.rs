@@ -155,7 +155,7 @@ fn format_class_type<'source>(
                 segment
                     .dot_before
                     .as_ref()
-                    .map_or_else(|| text("."), format_token_with_comments),
+                    .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
             );
         }
         docs.push(format_class_type_segment(
@@ -199,7 +199,7 @@ fn format_type_name<'source>(
                 segment
                     .dot_before
                     .as_ref()
-                    .map_or_else(|| text("."), format_token_with_comments),
+                    .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
             );
         }
         docs.push(format_inline_annotations(segment.annotations, formatter));
@@ -241,7 +241,7 @@ fn format_type_parameter<'source>(
                 bounds
                     .extends_token()
                     .as_ref()
-                    .map_or_else(|| text("extends"), format_token_with_comments),
+                    .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
                 text(" "),
                 format_type_bounds(&bounds, formatter),
             ])
@@ -305,17 +305,17 @@ fn format_type_operator_entries_doc<'source>(
     };
 
     let first = format_type(&ty, formatter);
-    let mut rest = Vec::new();
-
-    while let Some((ty, separator)) = entries.next() {
-        rest.push(format_type_operator_continuation(
+    let rest = std::iter::from_fn(|| {
+        let (ty, separator) = entries.next()?;
+        let doc = format_type_operator_continuation(
             previous_separator.as_ref(),
             entries.peek().is_some(),
             fallback_operator,
             format_type(&ty, formatter),
-        ));
+        );
         previous_separator = separator;
-    }
+        Some(doc)
+    });
 
     concat([first, indent(concat(rest))])
 }
@@ -404,7 +404,7 @@ fn format_wildcard_type<'source>(
     concat([
         ty.question_token()
             .as_ref()
-            .map_or_else(|| text("?"), format_token_with_comments),
+            .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
         ty.bound_clause().map_or_else(jolt_fmt_ir::nil, |bound| {
             let (keyword, bound) = match bound {
                 WildcardBound::Extends(bound) | WildcardBound::Super(bound) => {
@@ -433,11 +433,11 @@ fn format_array_dimension<'source>(
             dimension
                 .open_bracket()
                 .as_ref()
-                .map_or_else(|| text("["), format_token_with_comments),
+                .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
             dimension
                 .close_bracket()
                 .as_ref()
-                .map_or_else(|| text("]"), format_array_dimension_close_bracket),
+                .map_or_else(jolt_fmt_ir::nil, format_array_dimension_close_bracket),
         ]);
     }
 
@@ -447,11 +447,11 @@ fn format_array_dimension<'source>(
         dimension
             .open_bracket()
             .as_ref()
-            .map_or_else(|| text("["), format_token_with_comments),
+            .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
         dimension
             .close_bracket()
             .as_ref()
-            .map_or_else(|| text("]"), format_array_dimension_close_bracket),
+            .map_or_else(jolt_fmt_ir::nil, format_array_dimension_close_bracket),
     ])
 }
 

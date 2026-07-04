@@ -38,7 +38,7 @@ pub(super) fn format_conditional_expression<'source>(
             }),
         expression
             .question_token()
-            .map_or_else(|| text("?"), |token| format_token_with_comments(&token)),
+            .map_or_else(jolt_fmt_ir::nil, |token| format_token_with_comments(&token)),
         expression
             .true_expression()
             .map_or_else(jolt_fmt_ir::nil, |expression| {
@@ -46,7 +46,7 @@ pub(super) fn format_conditional_expression<'source>(
             }),
         expression
             .colon_token()
-            .map_or_else(|| text(":"), |token| format_token_with_comments(&token)),
+            .map_or_else(jolt_fmt_ir::nil, |token| format_token_with_comments(&token)),
         expression
             .false_expression()
             .map_or_else(jolt_fmt_ir::nil, |expression| {
@@ -152,6 +152,7 @@ fn format_binary_operand<'source>(
 ) -> Doc<'source> {
     let doc = format_expression(expression, formatter);
     if should_parenthesize_binary_operand(expression, parent_operator) {
+        // Intentional synthesized tokens: preserve precedence after regrouping operands.
         jolt_fmt_ir::group(concat([
             text("("),
             jolt_fmt_ir::indent(concat([jolt_fmt_ir::soft_line(), doc])),

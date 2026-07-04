@@ -1,7 +1,8 @@
 use super::{
     Doc, JavaFormatter, LambdaExpression, LambdaParameter, comment_forces_line, concat,
-    format_annotation, format_block, format_expression, format_leading_comments, format_token_text,
-    format_token_with_comments, format_trailing_comments_before_line_break, format_type, hard_line,
+    format_annotation, format_block, format_expression, format_leading_comments,
+    format_separator_with_comments, format_token_text, format_token_with_comments,
+    format_trailing_comments_before_line_break, format_type, hard_line,
     inline_modifier_prefix_from_docs, text, token_iter_has_comments,
 };
 
@@ -25,11 +26,11 @@ pub(super) fn format_lambda_expression<'source>(
 
 fn format_lambda_arrow<'source>(expression: &LambdaExpression<'source>) -> Doc<'source> {
     let Some(arrow) = expression.arrow() else {
-        return text(" -> ");
+        return jolt_fmt_ir::nil();
     };
 
     if arrow.leading_comments().is_empty() && arrow.trailing_comments().is_empty() {
-        return text(" -> ");
+        return concat([text(" "), format_separator_with_comments(&arrow, text(" "))]);
     }
 
     let forced_line = arrow
@@ -89,7 +90,7 @@ fn format_lambda_parameters<'source>(
         .is_some_and(|parameters| parameters.parameters().next().is_some());
 
     if open.is_none() && close.is_none() && !has_parameters {
-        return text("()");
+        return jolt_fmt_ir::nil();
     }
 
     concat([
@@ -99,6 +100,7 @@ fn format_lambda_parameters<'source>(
             .as_ref()
             .map_or_else(jolt_fmt_ir::nil, |parameters| {
                 jolt_fmt_ir::join(
+                    // Intentional synthesized token: implicit lambda parameters have no comma tokens.
                     &text(", "),
                     parameters
                         .parameters()

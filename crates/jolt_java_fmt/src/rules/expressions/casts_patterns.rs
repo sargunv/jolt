@@ -1,9 +1,8 @@
 use super::{
     CastExpression, Doc, InlineLeadingTrivia, InstanceofExpression, JavaFormatter, JavaSyntaxToken,
-    TrailingTrivia, concat, format_expression, format_leading_comments, format_pattern,
-    format_token_with_inline_leading_comments, format_trailing_comments,
-    format_trailing_comments_before_line_break, format_type, group, hard_line, line, text,
-    trailing_comments_force_line,
+    LeadingTrivia, TrailingTrivia, concat, format_expression, format_pattern, format_token,
+    format_token_with_comments, format_token_with_inline_leading_comments, format_type, group,
+    hard_line, line, text, trailing_comments_force_line,
 };
 
 pub(super) fn format_cast_expression<'source>(
@@ -36,16 +35,13 @@ pub(super) fn format_cast_expression<'source>(
 }
 
 fn format_cast_open_paren<'source>(open: Option<&JavaSyntaxToken<'source>>) -> Doc<'source> {
-    open.map_or_else(
-        || text("("),
-        |open| {
-            format_token_with_inline_leading_comments(
-                open,
-                InlineLeadingTrivia::BeforeToken,
-                TrailingTrivia::BeforeSpaceIfComments,
-            )
-        },
-    )
+    open.map_or_else(jolt_fmt_ir::nil, |open| {
+        format_token_with_inline_leading_comments(
+            open,
+            InlineLeadingTrivia::BeforeToken,
+            TrailingTrivia::BeforeSpaceIfComments,
+        )
+    })
 }
 
 fn format_cast_close_paren<'source>(close: Option<&JavaSyntaxToken<'source>>) -> Doc<'source> {
@@ -58,20 +54,7 @@ fn format_cast_close_paren<'source>(close: Option<&JavaSyntaxToken<'source>>) ->
         } else {
             jolt_fmt_ir::nil()
         },
-        close.map_or_else(
-            || text(")"),
-            |close| {
-                concat([
-                    if close_has_leading_comments {
-                        format_leading_comments(close)
-                    } else {
-                        jolt_fmt_ir::nil()
-                    },
-                    text(")"),
-                    format_trailing_comments(close),
-                ])
-            },
-        ),
+        close.map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
     ])
 }
 
@@ -86,10 +69,9 @@ pub(super) fn format_instanceof_expression<'source>(
                 format_expression(&expression, formatter)
             }),
         text(" "),
-        expression.instanceof_token().map_or_else(
-            || text("instanceof "),
-            |token| format_instanceof_operator(&token),
-        ),
+        expression
+            .instanceof_token()
+            .map_or_else(jolt_fmt_ir::nil, |token| format_instanceof_operator(&token)),
         expression.ty().map_or_else(
             || {
                 expression
@@ -105,9 +87,11 @@ pub(super) fn format_instanceof_expression<'source>(
 
 fn format_instanceof_operator<'source>(operator: &JavaSyntaxToken<'source>) -> Doc<'source> {
     concat([
-        format_leading_comments(operator),
-        text("instanceof"),
-        format_trailing_comments_before_line_break(operator),
+        format_token(
+            operator,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::BeforeLineBreak,
+        ),
         if trailing_comments_force_line(operator) {
             hard_line()
         } else {
