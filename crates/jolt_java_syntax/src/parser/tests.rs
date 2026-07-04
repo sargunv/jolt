@@ -16,10 +16,11 @@
 // Focused tests should not try to enumerate the combinatorial product of the
 // grammar. Each test should make one source-shape claim obvious.
 
+use jolt_diagnostics::{DiagnosticStage, Severity, SyntaxOutcome};
 use jolt_syntax::Event;
 
 use super::{finish_parse, parse_compilation_unit, source::ParseEvents};
-use crate::{DiagnosticStage, JavaSyntaxKind, Severity, SyntaxOutcome};
+use crate::JavaSyntaxKind;
 
 #[test]
 fn parser_shell_wraps_source_in_compilation_unit() {

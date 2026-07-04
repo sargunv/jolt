@@ -102,7 +102,8 @@ fn comment_anchor(token: &JavaSyntaxToken<'_>) -> CommentAnchor {
 
 #[cfg(test)]
 mod tests {
-    use jolt_java_syntax::{JavaSyntaxKind, SyntaxOutcome, parse_compilation_unit};
+    use jolt_diagnostics::SyntaxOutcome;
+    use jolt_java_syntax::{JavaSyntaxKind, parse_compilation_unit};
 
     use super::CommentMap;
 

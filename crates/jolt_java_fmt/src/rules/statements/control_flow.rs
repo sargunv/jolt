@@ -7,8 +7,8 @@ use super::{
     format_leading_comments, format_local_variable_declaration, format_separator_with_comments,
     format_statement_semicolon, format_token_with_comments,
     format_trailing_comments_before_line_break, group, hard_line, indent, line, semicolon_list,
-    soft_line, statement_body_as_block, statement_body_as_block_with_trailing_comments,
-    statement_body_trailing_comments_force_line, text, trailing_comments_force_line,
+    soft_line, statement_body_as_block, statement_body_trailing_comments_force_line, text,
+    trailing_comments_force_line,
 };
 
 pub(super) fn format_if_statement(statement: &IfStatement, formatter: &JavaFormatter<'_>) -> Doc {
@@ -32,7 +32,7 @@ pub(super) fn format_if_statement(statement: &IfStatement, formatter: &JavaForma
             close.as_ref(),
         ),
         format_statement_header_body_separator(close.as_ref()),
-        statement_body_as_block_with_trailing_comments(then_body.as_ref(), formatter),
+        statement_body_as_block(then_body.as_ref(), formatter),
         else_body.map_or_else(jolt_fmt_ir::nil, |else_body| {
             concat([
                 if then_body_trailing_comments_force_line {

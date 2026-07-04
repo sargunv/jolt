@@ -1,10 +1,10 @@
 //! Public formatter engine API for Jolt.
 
-pub use jolt_diagnostics::{
-    Diagnostic, DiagnosticCode, DiagnosticCodeId, DiagnosticStage, Severity, SyntaxOutcome,
-};
+use jolt_diagnostics::{DiagnosticCode, DiagnosticCodeId, DiagnosticStage};
+
+pub use jolt_diagnostics::{Diagnostic, Severity};
 pub use jolt_fmt_ir::{RenderControl, RenderSink};
-pub use jolt_text::{LineCol, LineIndex, TextRange, TextSize};
+pub use jolt_text::{LineIndex, TextSize};
 
 /// Source language to format.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -78,7 +78,7 @@ impl<E> FormatSinkResult<E> {
 
 /// Stable formatter diagnostic codes.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub enum FormatDiagnosticCode {
+enum FormatDiagnosticCode {
     Unimplemented,
 }
 

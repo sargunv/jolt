@@ -33,7 +33,7 @@ fn token(start: usize, end: usize) -> SyntaxTokenData {
 
 fn parse<'source>(
     source: &'source str,
-    events: &[Event],
+    events: Vec<Event>,
     tokens: Vec<SyntaxTokenData>,
 ) -> SyntaxNode<'source, TestLanguage> {
     let (tree, diagnostics) = build_syntax_tree(events, tokens, Vec::new())
@@ -57,7 +57,7 @@ fn completed_marker_can_precede_and_wrap_a_completed_node() {
     wrapper.complete(&mut events, WRAPPER);
     root.complete(&mut events, ROOT);
 
-    let root = parse("ab", &events, vec![token(0, 1), token(1, 2)]);
+    let root = parse("ab", events, vec![token(0, 1), token(1, 2)]);
     let wrapper = root.children().next().expect("wrapper node");
     let leaf = wrapper.children().next().expect("leaf node");
 
@@ -82,8 +82,8 @@ fn token_trivia_contributes_to_offsets() {
         1..2,
         &trivia,
     );
-    let events = [Event::start_node(ROOT), Event::Token, Event::FinishNode];
-    let (tree, diagnostics) = build_syntax_tree(&events, vec![token], trivia)
+    let events = vec![Event::start_node(ROOT), Event::Token, Event::FinishNode];
+    let (tree, diagnostics) = build_syntax_tree(events, vec![token], trivia)
         .unwrap()
         .into_parts();
     assert!(diagnostics.is_empty());
@@ -107,21 +107,21 @@ fn token_trivia_contributes_to_offsets() {
 
 #[test]
 fn last_token_ignores_empty_trailing_child_nodes() {
-    let events = [
+    let events = vec![
         Event::start_node(ROOT),
         Event::Token,
         Event::start_node(EMPTY),
         Event::FinishNode,
         Event::FinishNode,
     ];
-    let root = parse("a", &events, vec![token(0, 1)]);
+    let root = parse("a", events, vec![token(0, 1)]);
 
     assert_eq!(root.last_token().unwrap().text(), "a");
 }
 
 #[test]
 fn sibling_accessors_preserve_offsets() {
-    let events = [
+    let events = vec![
         Event::start_node(ROOT),
         Event::Token,
         Event::start_node(WRAPPER),
@@ -130,7 +130,7 @@ fn sibling_accessors_preserve_offsets() {
         Event::Token,
         Event::FinishNode,
     ];
-    let root = parse("abcd", &events, vec![token(0, 1), token(1, 3), token(3, 4)]);
+    let root = parse("abcd", events, vec![token(0, 1), token(1, 3), token(3, 4)]);
     let wrapper = root.children().next().unwrap();
 
     assert_eq!(wrapper.offset(), 1usize.into());
@@ -155,14 +155,14 @@ fn sibling_accessors_preserve_offsets() {
 
 #[test]
 fn syntax_node_debug_prints_tree_shape_without_parent_recursion() {
-    let events = [
+    let events = vec![
         Event::start_node(ROOT),
         Event::start_node(WRAPPER),
         Event::Token,
         Event::FinishNode,
         Event::FinishNode,
     ];
-    let root = parse("a", &events, vec![token(0, 1)]);
+    let root = parse("a", events, vec![token(0, 1)]);
 
     assert_eq!(
         format!("{root:?}"),

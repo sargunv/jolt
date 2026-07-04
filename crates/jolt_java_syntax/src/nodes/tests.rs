@@ -1,5 +1,6 @@
 use super::*;
-use crate::{SyntaxOutcome, parse_compilation_unit};
+use crate::parse_compilation_unit;
+use jolt_diagnostics::SyntaxOutcome;
 
 fn parse_clean(source: &str) -> crate::parser::JavaParse {
     let parse = parse_compilation_unit(source);

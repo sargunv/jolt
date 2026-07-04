@@ -3,7 +3,7 @@ use std::ops::Range;
 use jolt_fmt_ir::{Doc, concat, empty_line, hard_line, text};
 use jolt_java_syntax::{CompilationUnit, CompilationUnitItem, PackageDeclaration};
 
-use crate::context::{FormatRule, JavaFormatter};
+use crate::context::JavaFormatter;
 use crate::helpers::blocks::{join_empty_lines, join_hard_lines};
 use crate::helpers::comments::format_token_with_comments;
 use crate::helpers::formatter_ignore::{
@@ -16,15 +16,10 @@ use crate::rules::imports::format_imports;
 use crate::rules::modules::format_module_declaration;
 use crate::rules::names::format_name;
 
-pub(crate) struct ProgramRule;
-
-impl FormatRule<CompilationUnit<'_>> for ProgramRule {
-    fn fmt(&self, unit: &CompilationUnit<'_>, formatter: &mut JavaFormatter<'_>) -> Doc {
-        format_compilation_unit(unit, formatter)
-    }
-}
-
-fn format_compilation_unit(unit: &CompilationUnit, formatter: &mut JavaFormatter<'_>) -> Doc {
+pub(crate) fn format_compilation_unit(
+    unit: &CompilationUnit,
+    formatter: &mut JavaFormatter<'_>,
+) -> Doc {
     let items = unit.items().collect::<Vec<_>>();
     let contents = if items.is_empty() {
         format_comment_only_compilation_unit(unit)

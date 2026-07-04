@@ -122,18 +122,6 @@ impl TextRange {
     pub fn len(self) -> TextSize {
         self.end - self.start
     }
-
-    /// Returns true when the range contains no bytes.
-    #[must_use]
-    pub const fn is_empty(self) -> bool {
-        self.start.get() == self.end.get()
-    }
-
-    /// Returns true when `offset` is inside the half-open range.
-    #[must_use]
-    pub const fn contains(self, offset: TextSize) -> bool {
-        self.start.get() <= offset.get() && offset.get() < self.end.get()
-    }
 }
 
 impl fmt::Display for TextRange {
@@ -170,12 +158,6 @@ impl LineIndex {
         }
 
         Self { line_starts }
-    }
-
-    /// Returns the number of lines represented by the index.
-    #[must_use]
-    pub fn line_count(&self) -> usize {
-        self.line_starts.len()
     }
 
     /// Converts a source byte offset to a zero-based line and column.

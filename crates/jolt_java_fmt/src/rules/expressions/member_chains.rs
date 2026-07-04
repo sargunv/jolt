@@ -2,8 +2,8 @@ use super::{
     Doc, Expression, ExpressionParentRole, JavaFormatter, JavaSyntaxToken, LeadingComments,
     MemberChain, MemberChainSuffix, concat, format_argument_list,
     format_expression_with_leading_comments, format_leading_comments, format_token_with_comments,
-    format_trailing_comments_before_line_break, format_type_argument_list, hard_line, member_chain,
-    text, trailing_comments_force_line,
+    format_trailing_comments_before_line_break, format_type_argument_list, group, hard_line,
+    indent, soft_line, text, trailing_comments_force_line,
 };
 
 pub(super) fn format_member_chain(chain: &MemberChain, formatter: &JavaFormatter<'_>) -> Doc {
@@ -43,6 +43,28 @@ fn format_member_chain_units(
 
     flush_field_run(&mut units, &mut field_run);
     units
+}
+
+fn member_chain(root: Doc, suffixes: Vec<Doc>, keep_first_suffix_with_root: bool) -> Doc {
+    if suffixes.is_empty() {
+        return root;
+    }
+
+    let mut suffixes = suffixes.into_iter();
+    let head = if keep_first_suffix_with_root {
+        concat([root, suffixes.next().expect("suffixes is not empty")])
+    } else {
+        root
+    };
+    let rest = suffixes
+        .map(|suffix| concat([soft_line(), suffix]))
+        .collect::<Vec<_>>();
+
+    if rest.is_empty() {
+        return group(head);
+    }
+
+    group(concat([head, indent(concat(rest))]))
 }
 
 fn flush_field_run(units: &mut Vec<Doc>, field_run: &mut Vec<Doc>) {

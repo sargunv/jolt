@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-pub use jolt_text::TextRange;
+use jolt_text::TextRange;
 
 /// A diagnostic produced by a Jolt engine stage.
 #[derive(Clone, Debug, Eq, PartialEq)]

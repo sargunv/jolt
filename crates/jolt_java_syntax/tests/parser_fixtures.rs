@@ -3,7 +3,8 @@ use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use jolt_java_syntax::{DiagnosticStage, JavaParse, JavaSyntaxKind, parse_compilation_unit};
+use jolt_diagnostics::DiagnosticStage;
+use jolt_java_syntax::{JavaParse, JavaSyntaxKind, parse_compilation_unit};
 
 #[test]
 fn fixture_java_inputs_parse_without_loss() {

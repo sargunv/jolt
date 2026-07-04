@@ -6,9 +6,6 @@ mod lexer;
 mod nodes;
 mod parser;
 
-pub use jolt_diagnostics::{
-    Diagnostic, DiagnosticCodeId, DiagnosticStage, Severity, SyntaxOutcome,
-};
 pub use kind::JavaSyntaxKind;
 pub use lexer::{JavaLexer, Token, Trivia, TriviaKind};
 pub use nodes::*;

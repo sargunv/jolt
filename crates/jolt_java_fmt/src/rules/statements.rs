@@ -105,13 +105,6 @@ fn statement_body_as_block(body: Option<&StatementBody>, formatter: &JavaFormatt
     }
 }
 
-fn statement_body_as_block_with_trailing_comments(
-    body: Option<&StatementBody>,
-    formatter: &JavaFormatter<'_>,
-) -> Doc {
-    statement_body_as_block(body, formatter)
-}
-
 fn statement_body_trailing_comments_force_line(body: Option<&StatementBody>) -> bool {
     let Some(StatementBody::Block(block)) = body else {
         return false;

@@ -2,7 +2,9 @@ use std::ops::Range;
 
 use jolt_text::{TextRange, TextSize};
 
-use crate::{Diagnostic, Event, RawSyntaxKind};
+use jolt_diagnostics::Diagnostic;
+
+use crate::{Event, RawSyntaxKind};
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub(crate) struct NodeId(usize);
@@ -214,7 +216,7 @@ pub enum BuildSyntaxTreeError {
 /// Returns an error when the event stream is structurally invalid or does not
 /// consume the supplied tokens exactly once.
 pub fn build_syntax_tree(
-    events: &[Event],
+    events: Vec<Event>,
     tokens: Vec<SyntaxTokenData>,
     trivia: Vec<SyntaxTrivia>,
 ) -> Result<BuiltSyntaxTree, BuildSyntaxTreeError> {
@@ -246,7 +248,7 @@ struct SyntaxTreeBuilder {
 }
 
 impl SyntaxTreeBuilder {
-    fn build(mut self, events: &[Event]) -> Result<BuiltSyntaxTree, BuildSyntaxTreeError> {
+    fn build(mut self, mut events: Vec<Event>) -> Result<BuiltSyntaxTree, BuildSyntaxTreeError> {
         let mut event_index = 0;
 
         while event_index < events.len() {
@@ -257,7 +259,7 @@ impl SyntaxTreeBuilder {
 
             match &events[event_index] {
                 Event::StartNode { .. } => {
-                    for kind in start_node_kinds(events, &mut self.skip_events, event_index)?
+                    for kind in start_node_kinds(&events, &mut self.skip_events, event_index)?
                         .into_iter()
                         .rev()
                     {
@@ -270,7 +272,14 @@ impl SyntaxTreeBuilder {
                 }
                 Event::Token => self.push_token()?,
                 Event::FinishNode => self.finish_node()?,
-                Event::Error(diagnostic) => self.diagnostics.push(diagnostic.clone()),
+                Event::Error(_) => {
+                    let Event::Error(diagnostic) =
+                        std::mem::replace(&mut events[event_index], Event::Tombstone)
+                    else {
+                        unreachable!("event kind was checked before moving diagnostic")
+                    };
+                    self.diagnostics.push(diagnostic);
+                }
                 Event::Tombstone => {
                     return Err(BuildSyntaxTreeError::UnresolvedMarker {
                         position: event_index,

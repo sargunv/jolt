@@ -10,7 +10,6 @@ use jolt_java_syntax::{
 };
 
 use crate::context::JavaFormatter;
-use crate::helpers::chains::member_chain;
 use crate::helpers::comments::{
     InlineLeadingTrivia, LeadingTrivia, TrailingTrivia, comment_forces_line,
     format_leading_comments, format_token, format_token_after_relocated_leading_comments,

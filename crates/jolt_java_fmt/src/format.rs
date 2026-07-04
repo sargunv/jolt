@@ -46,7 +46,7 @@ pub enum JavaFormatSinkResult<E> {
 
 /// Stable Java formatter diagnostic codes.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub enum JavaFormatDiagnosticCode {
+enum JavaFormatDiagnosticCode {
     /// The document renderer rejected a formatter-produced document.
     RenderError,
 }

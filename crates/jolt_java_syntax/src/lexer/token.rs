@@ -42,11 +42,11 @@ pub(crate) struct LexedToken {
 }
 
 /// A lexer diagnostic with a raw source range.
-pub type LexerDiagnostic = Diagnostic;
+pub(crate) type LexerDiagnostic = Diagnostic;
 
 /// Stable Java lexer diagnostic codes.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub enum JavaLexDiagnosticCode {
+pub(crate) enum JavaLexDiagnosticCode {
     MalformedUnicodeEscape,
     UnterminatedBlockComment,
     UnterminatedCharacterLiteral,
@@ -61,7 +61,7 @@ pub enum JavaLexDiagnosticCode {
 
 impl JavaLexDiagnosticCode {
     #[must_use]
-    pub const fn message(self) -> &'static str {
+    pub(crate) const fn message(self) -> &'static str {
         match self {
             Self::MalformedUnicodeEscape => "malformed Unicode escape",
             Self::UnterminatedBlockComment => "unterminated block comment",

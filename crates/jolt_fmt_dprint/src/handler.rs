@@ -5,8 +5,8 @@ use std::{convert::Infallible, fmt::Write as _, path::Path};
 use dprint_core::{
     configuration::{ConfigKeyMap, GlobalConfiguration},
     plugins::{
-        CheckConfigUpdatesMessage, ConfigChange, FileMatchingInfo, FormatError, FormatResult,
-        PluginInfo, PluginResolveConfigurationResult,
+        CheckConfigUpdatesMessage, ConfigChange, FormatError, FormatResult, PluginInfo,
+        PluginResolveConfigurationResult,
     },
 };
 use jolt_fmt_core::{
@@ -18,18 +18,18 @@ use crate::configuration;
 
 /// dprint plugin handler that delegates formatting to `jolt_fmt_core`.
 #[derive(Debug, Default)]
-pub struct JoltDprintPlugin;
+pub(crate) struct JoltDprintPlugin;
 
 impl JoltDprintPlugin {
     /// Creates a Jolt dprint plugin handler.
     #[must_use]
-    pub const fn new() -> Self {
+    pub(crate) const fn new() -> Self {
         Self
     }
 
     /// Resolves dprint configuration into Jolt's shared formatter options.
     #[must_use]
-    pub fn resolve_jolt_config(
+    pub(crate) fn resolve_jolt_config(
         &self,
         config: ConfigKeyMap,
         global_config: &GlobalConfiguration,
@@ -39,7 +39,7 @@ impl JoltDprintPlugin {
 
     /// Returns the plugin metadata exposed to dprint.
     #[must_use]
-    pub fn jolt_plugin_info(&self) -> PluginInfo {
+    pub(crate) fn jolt_plugin_info(&self) -> PluginInfo {
         PluginInfo {
             name: env!("CARGO_PKG_NAME").to_owned(),
             version: env!("CARGO_PKG_VERSION").to_owned(),
@@ -52,17 +52,13 @@ impl JoltDprintPlugin {
 
     /// Returns the file matching declaration for resolved configs.
     #[must_use]
-    pub fn file_matching_info(&self) -> FileMatchingInfo {
-        configuration::file_matching_info()
-    }
-
     /// Formats a dprint request payload using Jolt's core engine boundary.
     ///
     /// # Errors
     ///
     /// Returns an error when the file is not UTF-8, the path is not a supported
     /// Jolt language, or the core formatter blocks without producing output.
-    pub fn format_file(
+    pub(crate) fn format_file(
         &self,
         file_path: &Path,
         file_bytes: &[u8],
@@ -105,7 +101,7 @@ impl JoltDprintPlugin {
     /// # Errors
     ///
     /// This implementation never returns an error.
-    pub fn check_jolt_config_updates(
+    pub(crate) fn check_jolt_config_updates(
         &self,
         _message: CheckConfigUpdatesMessage,
     ) -> Result<Vec<ConfigChange>, FormatError> {
@@ -227,5 +223,72 @@ const fn severity_name(severity: Severity) -> &'static str {
         Severity::Error => "error",
         Severity::Warning => "warning",
         Severity::Note => "note",
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::Path;
+
+    use dprint_core::plugins::FormatError;
+    use jolt_fmt_core::FormatOptions;
+
+    use super::JoltDprintPlugin;
+
+    #[test]
+    fn java_requests_call_the_java_formatter_and_return_changed_bytes() {
+        let result =
+            format_java("class A {}", FormatOptions::default()).expect("format should succeed");
+
+        assert_eq!(result.as_deref(), Some(b"class A {\n}\n".as_slice()));
+    }
+
+    #[test]
+    fn already_formatted_java_returns_no_change() {
+        let result =
+            format_java("class A {\n}\n", FormatOptions::default()).expect("format should succeed");
+
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn parse_errors_return_dprint_errors_without_formatted_bytes() {
+        let error = format_java("class", FormatOptions::default()).expect_err("format should fail");
+        let message = error.to_string();
+
+        assert!(message.contains("code=java.parse."));
+        assert!(message.contains("severity=error"));
+        assert!(message.contains("stage=parser"));
+        assert!(message.contains("message="));
+        assert!(message.contains("line=1"));
+        assert!(message.contains("column="));
+    }
+
+    #[test]
+    fn unsupported_associated_paths_return_errors_without_formatted_bytes() {
+        let plugin = JoltDprintPlugin::new();
+        let error = plugin
+            .format_file(
+                Path::new("Associated.kt"),
+                b"fun main() {}",
+                &FormatOptions::default(),
+            )
+            .expect_err("format should fail");
+
+        assert!(error.to_string().contains("does not support '.kt'"));
+    }
+
+    #[test]
+    fn invalid_utf8_returns_errors_without_formatted_bytes() {
+        let plugin = JoltDprintPlugin::new();
+        let error = plugin
+            .format_file(Path::new("Broken.java"), &[0xff], &FormatOptions::default())
+            .expect_err("format should fail");
+
+        assert!(error.to_string().contains("requires UTF-8 input"));
+    }
+
+    fn format_java(source: &str, options: FormatOptions) -> Result<Option<Vec<u8>>, FormatError> {
+        JoltDprintPlugin::new().format_file(Path::new("A.java"), source.as_bytes(), &options)
     }
 }

@@ -3,11 +3,7 @@ use jolt_java_syntax::CompilationUnit;
 
 use crate::comments::CommentMap;
 use crate::format::JavaFormatOptions;
-use crate::rules::program::ProgramRule;
-
-pub(crate) trait FormatRule<N> {
-    fn fmt(&self, node: &N, formatter: &mut JavaFormatter<'_>) -> Doc;
-}
+use crate::rules::program::format_compilation_unit;
 
 pub(crate) struct JavaFormatter<'a> {
     options: &'a JavaFormatOptions,
@@ -23,7 +19,7 @@ impl<'a> JavaFormatter<'a> {
     }
 
     pub(crate) fn format_compilation_unit(&mut self, unit: &CompilationUnit<'a>) -> Doc {
-        ProgramRule.fmt(unit, self)
+        format_compilation_unit(unit, self)
     }
 
     pub(crate) fn render_options(&self) -> RenderOptions {

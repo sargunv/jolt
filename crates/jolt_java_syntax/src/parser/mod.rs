@@ -156,7 +156,7 @@ fn finish_parse(
 ) -> JavaParse {
     diagnostics.extend(parse.diagnostics);
     let (tokens, trivia) = into_syntax_tokens(parse.tokens, parse.trivia);
-    let tree = match build_syntax_tree(&parse.events, tokens, trivia) {
+    let tree = match build_syntax_tree(parse.events, tokens, trivia) {
         Ok(tree) => tree,
         Err(error) => {
             diagnostics.push(invalid_event_stream_diagnostic(&error));

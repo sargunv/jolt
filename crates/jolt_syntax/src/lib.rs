@@ -8,9 +8,6 @@ mod syntax_tree;
 mod red;
 
 pub use event::{CompletedMarker, Event, Marker};
-pub use jolt_diagnostics::{
-    Diagnostic, DiagnosticCode, DiagnosticCodeId, DiagnosticStage, Severity, SyntaxOutcome,
-};
 pub use kind::RawSyntaxKind;
 pub use language::Language;
 pub use red::{SyntaxElement, SyntaxNode, SyntaxToken};

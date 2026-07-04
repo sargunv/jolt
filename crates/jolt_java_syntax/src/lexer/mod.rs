@@ -11,7 +11,8 @@ use jolt_text::{TextRange, TextSize};
 use unicode_general_category::{GeneralCategory, get_general_category};
 
 pub(crate) use token::LexedToken;
-pub use token::{JavaLexDiagnosticCode, LexerDiagnostic, Token, Trivia, TriviaKind};
+pub(crate) use token::{JavaLexDiagnosticCode, LexerDiagnostic};
+pub use token::{Token, Trivia, TriviaKind};
 pub(crate) use unicode::normalize_unicode_escapes;
 
 /// A Java lexer that produces tokens on demand.

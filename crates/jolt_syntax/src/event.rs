@@ -1,7 +1,9 @@
-use crate::{Diagnostic, RawSyntaxKind};
+use jolt_diagnostics::Diagnostic;
+
+use crate::RawSyntaxKind;
 
 /// A parser event consumed by the shared syntax tree builder.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum Event {
     /// Starts a syntax node with the supplied raw kind.
     StartNode {
@@ -21,7 +23,7 @@ pub enum Event {
 }
 
 /// A placeholder for a syntax node whose kind is not known yet.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct Marker {
     position: usize,
 }
@@ -81,19 +83,13 @@ impl Marker {
 }
 
 /// A completed parser marker.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct CompletedMarker {
     position: usize,
     kind: RawSyntaxKind,
 }
 
 impl CompletedMarker {
-    /// Returns the start event position for this completed marker.
-    #[must_use]
-    pub const fn position(&self) -> usize {
-        self.position
-    }
-
     /// Returns the completed node kind.
     #[must_use]
     pub const fn kind(&self) -> RawSyntaxKind {
