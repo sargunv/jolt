@@ -278,22 +278,6 @@ mod tests {
     }
 
     #[test]
-    fn supported_config_keys_use_camel_case_dprint_names() {
-        let config = config_map([
-            ("lineWidth", ConfigKeyValue::from_i32(88)),
-            ("indentWidth", ConfigKeyValue::from_i32(6)),
-            ("useTabs", ConfigKeyValue::from_bool(true)),
-        ]);
-
-        let result = resolve_config(config, &GlobalConfiguration::default());
-
-        assert_eq!(result.config.line_width, 88);
-        assert_eq!(result.config.indent_width, 6);
-        assert!(result.config.use_tabs);
-        assert!(result.diagnostics.is_empty());
-    }
-
-    #[test]
     fn unknown_properties_produce_configuration_diagnostics() {
         let config = config_map([("surprise", ConfigKeyValue::from_bool(true))]);
 

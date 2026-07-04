@@ -152,18 +152,15 @@ impl<'source> ImportDeclaration<'source> {
         child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 
-    #[must_use]
-    pub fn is_static(&self) -> bool {
+    fn is_static(&self) -> bool {
         child_token(&self.syntax, JavaSyntaxKind::StaticKw).is_some()
     }
 
-    #[must_use]
-    pub fn is_star(&self) -> bool {
+    fn is_star(&self) -> bool {
         child_token(&self.syntax, JavaSyntaxKind::Star).is_some()
     }
 
-    #[must_use]
-    pub fn is_module(&self) -> bool {
+    fn is_module(&self) -> bool {
         let name_start = self.name().map(|name| name.text_range().start());
         self.contextual_keyword("module").is_some_and(|token| {
             name_start.is_some_and(|name_start| token.token_text_range().end() <= name_start)
@@ -4110,11 +4107,6 @@ fn java_operator(
 
 impl<'source> ModuleDeclaration<'source> {
     #[must_use]
-    pub fn is_open(&self) -> bool {
-        self.open_token().is_some()
-    }
-
-    #[must_use]
     pub fn open_token(&self) -> Option<JavaSyntaxToken<'source>> {
         self.contextual_keyword("open")
     }
@@ -4174,11 +4166,6 @@ impl<'source> ModuleDirective<'source> {
     pub fn names(&self) -> impl Iterator<Item = NameSyntax<'source>> + use<'source> {
         children_family(self.syntax())
     }
-
-    #[must_use]
-    pub fn primary_name(&self) -> Option<NameSyntax<'source>> {
-        self.names().next()
-    }
 }
 
 impl<'source> RequiresDirective<'source> {
@@ -4186,8 +4173,8 @@ impl<'source> RequiresDirective<'source> {
     pub fn directive_role(&self) -> Option<ModuleDirectiveRole<'source>> {
         Some(ModuleDirectiveRole::Requires {
             module: self.module_name()?,
-            is_static: self.has_static_modifier(),
-            is_transitive: self.has_transitive_modifier(),
+            is_static: self.static_token().is_some(),
+            is_transitive: self.transitive_token().is_some(),
         })
     }
 
@@ -4214,16 +4201,6 @@ impl<'source> RequiresDirective<'source> {
     #[must_use]
     pub fn semicolon(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Semicolon)
-    }
-
-    #[must_use]
-    pub fn has_static_modifier(&self) -> bool {
-        self.static_token().is_some()
-    }
-
-    #[must_use]
-    pub fn has_transitive_modifier(&self) -> bool {
-        self.transitive_token().is_some()
     }
 
     fn contextual_keyword(&self, text: &str) -> Option<JavaSyntaxToken<'source>> {
@@ -4333,10 +4310,6 @@ impl<'source> ProvidesDirective<'source> {
     #[must_use]
     pub fn service_name(&self) -> Option<NameSyntax<'source>> {
         self.names().next()
-    }
-
-    pub fn implementation_names(&self) -> impl Iterator<Item = NameSyntax<'source>> + use<'source> {
-        self.names().skip(1)
     }
 
     pub fn implementation_entries(&self) -> impl Iterator<Item = ModuleNameListEntry<'source>> {

@@ -27,7 +27,7 @@ pub(crate) fn validate_doc(doc: &Doc<'_>) -> Result<(), RenderError> {
 
 fn validate_text(text: &str, context: &'static str) -> Result<(), RenderError> {
     if has_line_terminator(text) {
-        Err(RenderError::InvalidText { context })
+        Err(RenderError::invalid_text(context))
     } else {
         Ok(())
     }
@@ -39,6 +39,6 @@ fn validate_literal_text(text: &LiteralText<'_>) -> Result<(), RenderError> {
     if expected == actual {
         Ok(())
     } else {
-        Err(RenderError::InvalidLiteralWidths { expected, actual })
+        Err(RenderError::invalid_literal_widths(expected, actual))
     }
 }

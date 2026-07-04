@@ -12,17 +12,32 @@ pub(super) fn format_constructor_body<'source>(
     formatter: &JavaFormatter<'_>,
 ) -> Option<Doc<'source>> {
     let elements = constructor_body_elements(body);
+    let ignored_ranges = formatter_ignore_ranges(
+        body.source_text(),
+        body.text_range().start().get(),
+        body.token_iter(),
+    );
+    if ignored_ranges.is_empty() {
+        let mut items = Vec::new();
+        items.extend(format_constructor_body_open_dangling_comments(
+            body.open_brace(),
+        ));
+        items.extend(
+            elements
+                .iter()
+                .filter_map(|element| format_constructor_body_element(element, formatter)),
+        );
+        items.extend(format_constructor_body_close_dangling_comments(
+            body.close_brace(),
+        ));
+        return (!items.is_empty()).then(|| join_body_items(items));
+    }
     let element_ranges = elements
         .iter()
         .map(|element| {
             constructor_body_element_token_range(element, body.text_range().start().get())
         })
         .collect::<Vec<_>>();
-    let ignored_ranges = formatter_ignore_ranges(
-        body.source_text(),
-        body.text_range().start().get(),
-        body.token_iter(),
-    );
     let ignored_runs = formatter_ignore_runs(&ignored_ranges, &element_ranges);
     let mut items = Vec::new();
     items.extend(format_constructor_body_open_dangling_comments(

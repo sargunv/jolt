@@ -14,7 +14,6 @@ pub enum IndentStyle {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum LineEnding {
     Lf,
-    CrLf,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -56,7 +55,32 @@ impl<T: RenderSink + ?Sized> RenderSink for &mut T {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum RenderError {
+pub struct RenderError {
+    kind: RenderErrorKind,
+}
+
+impl RenderError {
+    pub(crate) const fn invalid_text(context: &'static str) -> Self {
+        Self {
+            kind: RenderErrorKind::InvalidText { context },
+        }
+    }
+
+    pub(crate) const fn invalid_literal_widths(expected: usize, actual: usize) -> Self {
+        Self {
+            kind: RenderErrorKind::InvalidLiteralWidths { expected, actual },
+        }
+    }
+
+    pub(crate) const fn no_current_group() -> Self {
+        Self {
+            kind: RenderErrorKind::NoCurrentGroup,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+enum RenderErrorKind {
     InvalidText { context: &'static str },
     InvalidLiteralWidths { expected: usize, actual: usize },
     NoCurrentGroup,
@@ -64,15 +88,17 @@ pub enum RenderError {
 
 impl fmt::Display for RenderError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::InvalidText { context } => {
+        match self.kind {
+            RenderErrorKind::InvalidText { context } => {
                 write!(formatter, "{context} must not contain line terminators")
             }
-            Self::InvalidLiteralWidths { expected, actual } => write!(
+            RenderErrorKind::InvalidLiteralWidths { expected, actual } => write!(
                 formatter,
                 "literal text line width count {actual} does not match line count {expected}"
             ),
-            Self::NoCurrentGroup => formatter.write_str("if_break requires a current group"),
+            RenderErrorKind::NoCurrentGroup => {
+                formatter.write_str("if_break requires a current group")
+            }
         }
     }
 }
@@ -286,7 +312,7 @@ impl<S: RenderSink> Renderer<S> {
         self.group_stack
             .last()
             .map(|frame| frame.is_broken)
-            .ok_or(RenderError::NoCurrentGroup)
+            .ok_or_else(RenderError::no_current_group)
     }
 
     fn write_text(&mut self, text: &str, width: TextWidth) -> Result<(), RenderToError<S::Error>> {
@@ -386,7 +412,6 @@ impl LineEnding {
     const fn as_str(self) -> &'static str {
         match self {
             Self::Lf => "\n",
-            Self::CrLf => "\r\n",
         }
     }
 }
@@ -546,7 +571,7 @@ impl<'base> FitChecker<'base> {
             .last()
             .or_else(|| self.base_group_stack[..self.base_group_len].last())
             .map(|frame| frame.is_broken)
-            .ok_or(RenderError::NoCurrentGroup)
+            .ok_or_else(RenderError::no_current_group)
     }
 
     fn width_result(&mut self, width: TextWidth) -> FitResult {

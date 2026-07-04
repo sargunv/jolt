@@ -89,6 +89,13 @@ fn format_block_statement_items<'source>(
     ignored_ranges: &[FormatterIgnoreRange<'source>],
     formatter: &JavaFormatter<'_>,
 ) -> Vec<BodyItem<'source>> {
+    if ignored_ranges.is_empty() {
+        return statements
+            .iter()
+            .filter_map(|statement| format_block_statement_item(statement, formatter))
+            .collect();
+    }
+
     let statement_ranges = statements
         .iter()
         .map(|statement| block_statement_token_range(statement, block_start))

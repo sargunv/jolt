@@ -69,19 +69,18 @@ fn format_module_directives<'source>(module: &ModuleDeclaration<'source>) -> Opt
         module.text_range().start().get(),
         module.token_iter(),
     );
+    if ignored_ranges.is_empty() {
+        return Some(format_module_directive_segments(directives));
+    }
     let directive_ranges = directives
         .iter()
         .map(|directive| module_directive_token_range(directive, module.text_range().start().get()))
         .collect::<Vec<_>>();
     let ignored_runs = formatter_ignore_runs(&ignored_ranges, &directive_ranges);
-    if !ignored_runs.is_empty() {
-        return Some(format_module_directives_with_ignored(
-            directives,
-            &ignored_runs,
-        ));
-    }
-
-    Some(format_module_directive_segments(directives))
+    Some(format_module_directives_with_ignored(
+        directives,
+        &ignored_runs,
+    ))
 }
 
 fn format_module_directives_with_ignored<'source>(

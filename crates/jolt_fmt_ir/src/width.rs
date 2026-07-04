@@ -4,15 +4,15 @@ use unicode_width::UnicodeWidthChar;
 pub struct TextWidth(u32);
 
 impl TextWidth {
-    pub const ZERO: Self = Self(0);
+    pub(crate) const ZERO: Self = Self(0);
 
     #[must_use]
-    pub const fn new(width: u32) -> Self {
+    pub(crate) const fn new(width: u32) -> Self {
         Self(width)
     }
 
     #[must_use]
-    pub const fn get(self) -> u32 {
+    pub(crate) const fn get(self) -> u32 {
         self.0
     }
 }
@@ -20,12 +20,6 @@ impl TextWidth {
 impl From<u16> for TextWidth {
     fn from(value: u16) -> Self {
         Self(u32::from(value))
-    }
-}
-
-impl From<u32> for TextWidth {
-    fn from(value: u32) -> Self {
-        Self(value)
     }
 }
 

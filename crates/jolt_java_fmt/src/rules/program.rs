@@ -29,16 +29,18 @@ pub(crate) fn format_compilation_unit<'source>(
             unit.text_range().start().get(),
             unit.token_iter(),
         );
+        if ignored_ranges.is_empty() {
+            return concat([
+                format_compilation_unit_items(items, formatter).unwrap_or_else(jolt_fmt_ir::nil),
+                hard_line(),
+            ]);
+        }
         let item_ranges = items
             .iter()
             .map(compilation_unit_item_token_range)
             .collect::<Vec<_>>();
         let ignored_runs = formatter_ignore_runs(&ignored_ranges, &item_ranges);
-        if ignored_runs.is_empty() {
-            format_compilation_unit_items(items, formatter).unwrap_or_else(jolt_fmt_ir::nil)
-        } else {
-            format_compilation_unit_items_with_ignored(items, &ignored_runs, formatter)
-        }
+        format_compilation_unit_items_with_ignored(items, &ignored_runs, formatter)
     };
 
     concat([contents, hard_line()])

@@ -18,6 +18,7 @@ use crate::helpers::comments::{
     format_dangling_comments, format_leading_comment_list, format_leading_comments,
     format_removed_comments, format_removed_token_comments, format_separator_with_comments,
     format_token, format_token_after_construct_leading_comments, format_token_with_comments,
+    has_removed_comments,
 };
 use crate::helpers::declarations::{declaration_with_body, declaration_without_body};
 use crate::helpers::formatter_ignore::{

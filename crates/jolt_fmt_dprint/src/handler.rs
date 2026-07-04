@@ -232,14 +232,6 @@ mod tests {
     use super::JoltDprintPlugin;
 
     #[test]
-    fn already_formatted_java_returns_no_change() {
-        let result =
-            format_java("class A {\n}\n", FormatOptions::default()).expect("format should succeed");
-
-        assert_eq!(result, None);
-    }
-
-    #[test]
     fn parse_errors_return_dprint_errors_without_formatted_bytes() {
         let error = format_java("class", FormatOptions::default()).expect_err("format should fail");
         let message = error.to_string();

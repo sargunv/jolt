@@ -1,8 +1,7 @@
+use std::borrow::Cow;
 use std::ops::Range;
 
-use std::borrow::Cow;
-
-use jolt_fmt_ir::{Doc, concat, hard_line, literal_text};
+use jolt_fmt_ir::{Doc, concat, hard_line, text as doc_text};
 use jolt_java_syntax::{JavaComment, JavaSyntaxToken};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -116,7 +115,7 @@ pub(crate) fn formatter_ignore_run_doc<'source>(run: &FormatterIgnoreRun<'source
                 if !docs.is_empty() {
                     docs.push(hard_line());
                 }
-                docs.push(literal_text(line));
+                docs.push(doc_text(line));
             }
         }
         Cow::Owned(text) => {
@@ -124,7 +123,7 @@ pub(crate) fn formatter_ignore_run_doc<'source>(run: &FormatterIgnoreRun<'source
                 if !docs.is_empty() {
                     docs.push(hard_line());
                 }
-                docs.push(literal_text(line.to_owned()));
+                docs.push(doc_text(line.to_owned()));
             }
         }
     }
@@ -151,16 +150,19 @@ fn formatter_ignore_run<'source>(
     range: &FormatterIgnoreRange<'source>,
     item_ranges: &[Option<Range<usize>>],
 ) -> FormatterIgnoreRun<'source> {
-    let skipped = item_ranges
-        .iter()
-        .enumerate()
-        .filter_map(|(index, item_range)| {
-            let item_range = item_range.as_ref()?;
-            range.interior.contains(&item_range.start).then_some(index)
-        })
-        .collect::<Vec<_>>();
+    let mut first_skipped = None;
+    let mut last_skipped = None;
+    for (index, item_range) in item_ranges.iter().enumerate() {
+        let Some(item_range) = item_range.as_ref() else {
+            continue;
+        };
+        if range.interior.contains(&item_range.start) {
+            first_skipped.get_or_insert(index);
+            last_skipped = Some(index);
+        }
+    }
 
-    let insert_index = skipped.first().copied().unwrap_or_else(|| {
+    let insert_index = first_skipped.unwrap_or_else(|| {
         item_ranges
             .iter()
             .position(|item_range| {
@@ -170,8 +172,8 @@ fn formatter_ignore_run<'source>(
             })
             .unwrap_or(item_ranges.len())
     });
-    let skip_start = skipped.first().copied().unwrap_or(insert_index);
-    let skip_end = skipped.last().map_or(skip_start, |last| last + 1);
+    let skip_start = first_skipped.unwrap_or(insert_index);
+    let skip_end = last_skipped.map_or(skip_start, |last| last + 1);
     let include_on_marker = !item_ranges.iter().any(|item_range| {
         item_range
             .as_ref()

@@ -1031,23 +1031,26 @@ fn is_valid_escape_tail(ch: char) -> bool {
 }
 
 fn underscores_are_between_digits(text: &str) -> bool {
-    let chars: Vec<char> = text.chars().collect();
-    let mut pos = 0usize;
-    while pos < chars.len() {
-        if chars[pos] != '_' {
-            pos += 1;
+    let mut chars = text.chars().peekable();
+    let mut previous = None;
+
+    while let Some(ch) = chars.next() {
+        if ch != '_' {
+            previous = Some(ch);
             continue;
         }
 
-        let start = pos;
-        while pos < chars.len() && chars[pos] == '_' {
-            pos += 1;
+        if !previous.is_some_and(|previous| is_numeric_digit_for_literal(text, previous)) {
+            return false;
         }
 
-        if start == 0
-            || pos == chars.len()
-            || !is_numeric_digit_for_literal(text, chars[start - 1])
-            || !is_numeric_digit_for_literal(text, chars[pos])
+        while chars.peek() == Some(&'_') {
+            chars.next();
+        }
+
+        if !chars
+            .peek()
+            .is_some_and(|next| is_numeric_digit_for_literal(text, *next))
         {
             return false;
         }

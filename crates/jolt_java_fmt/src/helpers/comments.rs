@@ -44,6 +44,14 @@ pub(crate) fn comments_from_tokens<'source>(
         .flat_map(|token| token.leading_comments().chain(token.trailing_comments()))
 }
 
+pub(crate) fn has_removed_comments<'source>(
+    comments: impl IntoIterator<Item = JavaComment<'source>>,
+) -> bool {
+    comments
+        .into_iter()
+        .any(|comment| !is_formatter_control_marker(comment.text()))
+}
+
 pub(crate) fn format_construct_leading_comments<'source>(
     token: Option<&JavaSyntaxToken<'source>>,
 ) -> Doc<'source> {
@@ -385,23 +393,26 @@ fn is_star_block_comment(comment: &str) -> bool {
 
 fn normalize_star_block_comment(comment: &str) -> Vec<String> {
     let content = strip_block_comment_delimiters(comment);
-    let body = content
-        .lines()
-        .map(normalize_star_block_body_line)
-        .collect::<Vec<_>>();
-    let first_content = body.iter().position(|line| !line.is_empty());
-    let last_content = body.iter().rposition(|line| !line.is_empty());
-
     let mut lines = vec!["/**".to_owned()];
-    if let (Some(first), Some(last)) = (first_content, last_content) {
-        for line in &body[first..=last] {
-            if line.is_empty() {
-                lines.push(" *".to_owned());
-            } else {
-                lines.push(format!(" * {line}"));
+
+    let mut has_content = false;
+    let mut pending_blank_lines = 0;
+    for line in content.lines().map(normalize_star_block_body_line) {
+        if line.is_empty() {
+            if has_content {
+                pending_blank_lines += 1;
             }
+            continue;
         }
+
+        has_content = true;
+        for _ in 0..pending_blank_lines {
+            lines.push(" *".to_owned());
+        }
+        pending_blank_lines = 0;
+        lines.push(format!(" * {line}"));
     }
+
     lines.push(" */".to_owned());
     lines
 }
@@ -422,9 +433,8 @@ fn strip_block_comment_delimiters(comment: &str) -> &str {
         })
 }
 
-fn normalize_star_block_body_line(line: &str) -> String {
-    line.trim_start().strip_prefix('*').map_or_else(
-        || line.trim().to_owned(),
-        |line| line.trim_start().to_owned(),
-    )
+fn normalize_star_block_body_line(line: &str) -> &str {
+    line.trim_start()
+        .strip_prefix('*')
+        .map_or_else(|| line.trim(), str::trim_start)
 }
