@@ -78,17 +78,6 @@ fn reconstructed(source: &str) -> String {
 }
 
 #[test]
-fn lexer_rewind_restores_diagnostics() {
-    let mut lexer = JavaLexer::new("/* unterminated");
-    let checkpoint = lexer.checkpoint();
-
-    assert_eq!(lexer.next_token().kind, JavaSyntaxKind::Eof);
-    lexer.rewind(checkpoint);
-    assert_eq!(lexer.next_token().kind, JavaSyntaxKind::Eof);
-    assert_eq!(lexer.finish().len(), 1);
-}
-
-#[test]
 fn uses_longest_match_for_decimal_floats_before_dots() {
     // Spec: JLS 3.2 Lexical Translations.
     assert_eq!(

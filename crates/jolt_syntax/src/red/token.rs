@@ -2,27 +2,23 @@ use std::fmt;
 
 use jolt_text::{TextRange, TextSize};
 
-use crate::{GreenToken, GreenTrivia, Language, RawSyntaxKind};
+use crate::{
+    GreenTrivia, Language, RawSyntaxKind,
+    green::{GreenElement, GreenToken},
+};
 
-use super::{SyntaxElement, SyntaxNode};
+use super::SyntaxNode;
 
 /// A parent-aware cursor over a green token.
 pub struct SyntaxToken<L: Language> {
-    green: GreenToken,
     parent: SyntaxNode<L>,
     offset: TextSize,
     index: usize,
 }
 
 impl<L: Language> SyntaxToken<L> {
-    pub(super) const fn new(
-        green: GreenToken,
-        parent: SyntaxNode<L>,
-        offset: TextSize,
-        index: usize,
-    ) -> Self {
+    pub(super) const fn new(parent: SyntaxNode<L>, offset: TextSize, index: usize) -> Self {
         Self {
-            green,
             parent,
             offset,
             index,
@@ -31,8 +27,11 @@ impl<L: Language> SyntaxToken<L> {
 
     /// Returns the raw green token backing this red token.
     #[must_use]
-    pub const fn green(&self) -> &GreenToken {
-        &self.green
+    pub(crate) fn green(&self) -> &GreenToken {
+        match &self.parent.green().children()[self.index] {
+            GreenElement::Token(token) => token,
+            GreenElement::Node(_) => unreachable!("syntax token index must point to a token"),
+        }
     }
 
     /// Returns the language-specific kind for this token.
@@ -43,20 +42,8 @@ impl<L: Language> SyntaxToken<L> {
 
     /// Returns the raw kind for this token.
     #[must_use]
-    pub fn raw_kind(&self) -> RawSyntaxKind {
+    pub(crate) fn raw_kind(&self) -> RawSyntaxKind {
         self.green().kind()
-    }
-
-    /// Returns this token's parent node.
-    #[must_use]
-    pub fn parent(&self) -> SyntaxNode<L> {
-        self.parent.clone()
-    }
-
-    /// Returns this token's index among its parent's green children.
-    #[must_use]
-    pub const fn index(&self) -> usize {
-        self.index
     }
 
     /// Returns the byte offset where this token starts, including leading trivia.
@@ -73,7 +60,7 @@ impl<L: Language> SyntaxToken<L> {
 
     /// Returns the byte length covered by this token, including attached trivia.
     #[must_use]
-    pub fn text_len(&self) -> TextSize {
+    pub(crate) fn text_len(&self) -> TextSize {
         self.green().text_len()
     }
 
@@ -102,36 +89,11 @@ impl<L: Language> SyntaxToken<L> {
     pub fn trailing(&self) -> &[GreenTrivia] {
         self.green().trailing()
     }
-
-    /// Returns the next sibling node.
-    #[must_use]
-    pub fn next_sibling(&self) -> Option<SyntaxNode<L>> {
-        self.parent.next_child_node_after(self.index())
-    }
-
-    /// Returns the next sibling node or token.
-    #[must_use]
-    pub fn next_sibling_or_token(&self) -> Option<SyntaxElement<L>> {
-        self.parent.child_element_at(self.index().saturating_add(1))
-    }
-
-    /// Returns the previous sibling node.
-    #[must_use]
-    pub fn prev_sibling(&self) -> Option<SyntaxNode<L>> {
-        self.parent.prev_child_node_before(self.index())
-    }
-
-    /// Returns the previous sibling node or token.
-    #[must_use]
-    pub fn prev_sibling_or_token(&self) -> Option<SyntaxElement<L>> {
-        self.parent.child_element_at(self.index().checked_sub(1)?)
-    }
 }
 
 impl<L: Language> Clone for SyntaxToken<L> {
     fn clone(&self) -> Self {
         Self {
-            green: self.green.clone(),
             parent: self.parent.clone(),
             offset: self.offset,
             index: self.index,

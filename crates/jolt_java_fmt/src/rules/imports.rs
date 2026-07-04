@@ -19,8 +19,9 @@ pub(crate) fn format_imports(
     }
 
     let runs = split_leading_comment_barrier_runs(imports, |import| {
-        let tokens = import.tokens();
-        formatter.comments().has_leading_comment_for_tokens(&tokens)
+        import
+            .first_token()
+            .is_some_and(|token| formatter.comments().has_leading_comment_for_token(&token))
     });
 
     Some(join_empty_lines(
@@ -90,15 +91,16 @@ impl FormattedImport {
             .import_kind()
             .expect("clean import declaration should expose an import kind");
         let (is_static, path, path_doc) = format_import_kind(import, kind);
-        let tokens = import.tokens();
+        let first_token = import.first_token();
+        let last_token = import.last_token();
         Self {
             leading_comments: formatter
                 .comments()
-                .leading_comments_for_tokens(&tokens)
+                .leading_comments_for_token_option(first_token.as_ref())
                 .to_vec(),
             trailing_comments: formatter
                 .comments()
-                .trailing_comments_for_tokens(&tokens)
+                .trailing_comments_for_token_option(last_token.as_ref())
                 .to_vec(),
             is_static,
             path,

@@ -25,19 +25,32 @@ pub(crate) enum InlineLeadingTrivia {
     BeforeToken,
 }
 
-pub(crate) fn tokens_have_comments(tokens: &[JavaSyntaxToken]) -> bool {
-    tokens.iter().any(token_has_comments)
-}
-
 pub(crate) fn token_has_comments(token: &JavaSyntaxToken) -> bool {
     !token.leading_comments().is_empty() || !token.trailing_comments().is_empty()
 }
 
+pub(crate) fn token_iter_has_comments(tokens: impl IntoIterator<Item = JavaSyntaxToken>) -> bool {
+    tokens.into_iter().any(|token| token_has_comments(&token))
+}
+
+pub(crate) fn comments_from_tokens(
+    tokens: impl IntoIterator<Item = JavaSyntaxToken>,
+) -> Vec<JavaComment> {
+    tokens
+        .into_iter()
+        .flat_map(|token| {
+            let mut comments = token.leading_comments();
+            comments.extend(token.trailing_comments());
+            comments
+        })
+        .collect()
+}
+
 pub(crate) fn format_construct_leading_comments(
     comments: &CommentMap,
-    tokens: &[JavaSyntaxToken],
+    token: Option<&JavaSyntaxToken>,
 ) -> Doc {
-    format_leading_comment_list(comments.leading_comments_for_tokens(tokens))
+    format_leading_comment_list(comments.leading_comments_for_token_option(token))
 }
 
 pub(crate) fn format_leading_comment_list(comments: &[JavaComment]) -> Doc {
@@ -65,6 +78,10 @@ pub(crate) fn format_removed_token_comments(tokens: &[JavaSyntaxToken]) -> Optio
             comments
         })
         .collect();
+    format_removed_comments(comments)
+}
+
+pub(crate) fn format_removed_comments(comments: Vec<JavaComment>) -> Option<Doc> {
     let comments = non_formatter_control_comments(comments);
 
     (!comments.is_empty()).then(|| format_dangling_comments(comments))
@@ -230,9 +247,9 @@ pub(crate) fn format_token_with_inline_leading_comments(
 
 pub(crate) fn format_token_after_construct_leading_comments(
     token: &JavaSyntaxToken,
-    construct_tokens: &[JavaSyntaxToken],
+    construct_first_token: Option<&JavaSyntaxToken>,
 ) -> Doc {
-    if construct_tokens.first() == Some(token) {
+    if construct_first_token == Some(token) {
         format_token_after_relocated_leading_comments(token, TrailingTrivia::Preserve)
     } else {
         format_token_with_comments(token)

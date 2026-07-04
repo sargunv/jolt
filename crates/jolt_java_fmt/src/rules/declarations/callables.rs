@@ -15,8 +15,9 @@ pub(super) fn format_constructor_declaration(
     constructor: &jolt_java_syntax::ConstructorDeclaration,
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
+    let constructor_first_token = constructor.first_token();
     let prefix = concat([
-        format_construct_leading_comments(formatter.comments(), &constructor.tokens()),
+        format_construct_leading_comments(formatter.comments(), constructor_first_token.as_ref()),
         format_modifier_prefix(constructor.modifiers(), formatter),
     ]);
     let throws = constructor.throws_clause();
@@ -33,7 +34,7 @@ pub(super) fn format_constructor_declaration(
             jolt_fmt_ir::nil()
         },
         constructor.name().map_or_else(jolt_fmt_ir::nil, |name| {
-            format_token_after_construct_leading_comments(&name, &constructor.tokens())
+            format_token_after_construct_leading_comments(&name, constructor_first_token.as_ref())
         }),
         format_parameters(constructor.parameters(), formatter),
         format_throws_clause(throws, formatter),
@@ -75,7 +76,7 @@ pub(super) fn format_method_declaration(
 ) -> Doc {
     let modifiers = format_typed_modifier_prefix(method.modifiers(), formatter);
     let prefix = concat([
-        format_construct_leading_comments(formatter.comments(), &method.tokens()),
+        format_construct_leading_comments(formatter.comments(), method.first_token().as_ref()),
         modifiers.declaration_prefix,
     ]);
     let throws = method.throws_clause();

@@ -1,4 +1,4 @@
-use crate::{GreenElement, GreenNode, GreenToken};
+use crate::green::{GreenElement, GreenNode, GreenToken};
 
 /// Reconstructs the exact source text represented by a green tree.
 #[must_use]

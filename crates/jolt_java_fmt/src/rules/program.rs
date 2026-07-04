@@ -7,7 +7,7 @@ use crate::context::{FormatRule, JavaFormatter};
 use crate::helpers::blocks::{join_empty_lines, join_hard_lines};
 use crate::helpers::comments::format_token_with_comments;
 use crate::helpers::formatter_ignore::{
-    formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs, token_range,
+    formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs, token_range_between,
 };
 use crate::rules::annotations::format_annotation;
 use crate::rules::comments::format_comment_only_compilation_unit;
@@ -176,14 +176,10 @@ struct ProgramSection {
 }
 
 fn compilation_unit_item_token_range(item: &CompilationUnitItem) -> Option<Range<usize>> {
-    let tokens = match item {
-        CompilationUnitItem::Package(item) => item.tokens(),
-        CompilationUnitItem::Import(item) => item.tokens(),
-        CompilationUnitItem::Module(item) => item.tokens(),
-        CompilationUnitItem::Type(item) => item.tokens(),
-        CompilationUnitItem::EmptyDeclaration(item) => item.tokens(),
-    };
-    token_range(&tokens)
+    Some(token_range_between(
+        &item.first_token()?,
+        &item.last_token()?,
+    ))
 }
 
 fn format_package_declaration(package: &PackageDeclaration, formatter: &JavaFormatter<'_>) -> Doc {

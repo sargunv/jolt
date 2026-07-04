@@ -28,7 +28,7 @@ pub(crate) fn format_field_declaration(
 ) -> Doc {
     let modifiers = format_typed_modifier_prefix(field.modifiers(), formatter);
     let declaration_prefix = concat([
-        format_construct_leading_comments(formatter.comments(), &field.tokens()),
+        format_construct_leading_comments(formatter.comments(), field.first_token().as_ref()),
         modifiers.declaration_prefix,
     ]);
     let ty = field.ty().map_or_else(jolt_fmt_ir::nil, |ty| {
@@ -103,7 +103,10 @@ pub(crate) fn format_formal_parameter(
 ) -> Doc {
     format_named_typed_declaration(
         concat([
-            format_construct_leading_comments(formatter.comments(), &parameter.tokens()),
+            format_construct_leading_comments(
+                formatter.comments(),
+                parameter.first_token().as_ref(),
+            ),
             inline_modifier_prefix_from_docs(
                 format_construct_prefix_annotations(parameter.prefix_annotations(), formatter),
                 parameter.modifier_tokens().collect(),
@@ -134,7 +137,10 @@ pub(crate) fn format_record_component(
 ) -> Doc {
     format_named_typed_declaration(
         concat([
-            format_construct_leading_comments(formatter.comments(), &component.tokens()),
+            format_construct_leading_comments(
+                formatter.comments(),
+                component.first_token().as_ref(),
+            ),
             inline_modifier_prefix_from_docs(
                 format_construct_prefix_annotations(component.prefix_annotations(), formatter),
                 component.modifier_tokens().collect(),
@@ -164,7 +170,7 @@ pub(crate) fn format_receiver_parameter(
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
     concat([
-        format_construct_leading_comments(formatter.comments(), &parameter.tokens()),
+        format_construct_leading_comments(formatter.comments(), parameter.first_token().as_ref()),
         inline_modifier_prefix_from_docs(
             format_construct_prefix_annotations(parameter.annotations(), formatter),
             Vec::new(),
@@ -411,7 +417,6 @@ fn initializer_value_has_leading_comments(
     value: &jolt_java_syntax::VariableInitializerValue,
 ) -> bool {
     value
-        .tokens()
-        .first()
+        .first_token()
         .is_some_and(|token| !token.leading_comments().is_empty())
 }

@@ -49,28 +49,9 @@ impl<'source> JavaLexer<'source> {
         }
     }
 
-    /// Creates a checkpoint that can be restored with [`Self::rewind`].
-    #[must_use]
-    pub fn checkpoint(&self) -> JavaLexerCheckpoint {
-        JavaLexerCheckpoint {
-            pos: self.scanner.pos,
-            diagnostics_len: self.scanner.diagnostics.len(),
-            emitted_eof: self.emitted_eof,
-        }
-    }
-
-    /// Restores the lexer to a previous checkpoint.
-    pub fn rewind(&mut self, checkpoint: JavaLexerCheckpoint) {
-        self.scanner.pos = checkpoint.pos;
-        self.scanner
-            .diagnostics
-            .truncate(checkpoint.diagnostics_len);
-        self.emitted_eof = checkpoint.emitted_eof;
-    }
-
     /// Drains the remaining source and returns all lexer diagnostics.
     #[must_use]
-    pub fn finish(mut self) -> Vec<LexerDiagnostic> {
+    pub(crate) fn finish(mut self) -> Vec<LexerDiagnostic> {
         while !self.emitted_eof {
             self.next_token();
         }
@@ -85,14 +66,6 @@ impl<'source> JavaLexer<'source> {
             trailing: Vec::new(),
         }
     }
-}
-
-/// A checkpoint for [`JavaLexer`].
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct JavaLexerCheckpoint {
-    pos: usize,
-    diagnostics_len: usize,
-    emitted_eof: bool,
 }
 
 struct Scanner<'source> {

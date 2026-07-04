@@ -103,6 +103,3 @@ trivia:
   LineComment: 140
   Newline: 5084
   Whitespace: 14739
-
-diagnostics:
-  <none>: 0

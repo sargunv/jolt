@@ -55,9 +55,8 @@ fn flush_field_run(units: &mut Vec<Doc>, field_run: &mut Vec<Doc>) {
 
 fn format_expression_leading_comments(expression: &Expression) -> Doc {
     expression
-        .tokens()
-        .first()
-        .map_or_else(jolt_fmt_ir::nil, format_leading_comments)
+        .first_token()
+        .map_or_else(jolt_fmt_ir::nil, |token| format_leading_comments(&token))
 }
 
 fn format_member_chain_suffix(suffix: &MemberChainSuffix, formatter: &JavaFormatter<'_>) -> Doc {

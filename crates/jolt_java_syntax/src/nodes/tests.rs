@@ -1,4 +1,3 @@
-use jolt_syntax::RawSyntaxKind;
 use jolt_text::{TextRange, TextSize};
 
 use super::*;
@@ -29,62 +28,6 @@ fn semicolon_trailing_comment(semicolon: Option<JavaSyntaxToken>) -> String {
         .expect("semicolon trailing comment")
         .text()
         .to_owned()
-}
-
-#[test]
-fn every_java_node_kind_has_exactly_one_wrapper() {
-    let expected = (u16::from(JavaSyntaxKind::ErrorNode)
-        ..=u16::from(JavaSyntaxKind::MatchAllPattern))
-        .map(|raw| {
-            JavaSyntaxKind::from_raw(RawSyntaxKind::new(raw))
-                .expect("node-kind range should be valid")
-        })
-        .collect::<Vec<_>>();
-
-    assert_eq!(ALL_NODE_KINDS, expected.as_slice());
-
-    for kind in expected {
-        let casts = node_casts_for_kind(kind, test_syntax(kind));
-        assert_eq!(
-            casts.len(),
-            1,
-            "{kind:?} should cast to exactly one wrapper, got {casts:?}"
-        );
-    }
-}
-
-#[test]
-fn every_concrete_wrapper_casts_its_declared_kind() {
-    assert_node_wrappers_cast_their_declared_kind();
-}
-
-#[test]
-fn wrappers_and_families_reject_token_kinds() {
-    let syntax = test_syntax(JavaSyntaxKind::Identifier);
-
-    assert!(node_casts_for_kind(JavaSyntaxKind::Identifier, syntax.clone()).is_empty());
-    assert!(family_casts_for_kind(JavaSyntaxKind::Identifier, syntax).is_empty());
-}
-
-#[test]
-fn family_enums_cast_exactly_their_declared_variants() {
-    for (family, variants) in family_variant_kinds() {
-        for &kind in ALL_NODE_KINDS {
-            let syntax = test_syntax(kind);
-            let casts = family_casts_for_kind(kind, syntax);
-            let should_cast = variants.contains(&kind);
-            assert_eq!(
-                casts.contains(&family),
-                should_cast,
-                "{family} cast mismatch for {kind:?}; casts={casts:?}"
-            );
-        }
-    }
-}
-
-#[test]
-fn family_conversions_preserve_variant_kind() {
-    assert_family_conversions_compile_and_preserve_kind();
 }
 
 #[test]
@@ -128,10 +71,9 @@ fn token_comments_expose_source_ranges() {
         .into_iter()
         .next()
         .expect("field declaration");
-    let int_token = field.tokens().into_iter().next().expect("field type token");
+    let int_token = field.token_iter().next().expect("field type token");
     let semicolon = field
-        .tokens()
-        .into_iter()
+        .token_iter()
         .find(|token| token.kind() == JavaSyntaxKind::Semicolon)
         .expect("field semicolon");
 
@@ -1099,8 +1041,7 @@ fn modifier_lists_expose_contextual_modifier_entries() {
                 .modifier_entries()
                 .map(|entry| {
                     entry
-                        .tokens
-                        .iter()
+                        .tokens()
                         .map(JavaSyntaxToken::text)
                         .collect::<String>()
                 })

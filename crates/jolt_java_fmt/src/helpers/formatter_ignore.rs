@@ -123,18 +123,17 @@ pub(crate) fn formatter_ignore_run_doc(run: &FormatterIgnoreRun) -> Doc {
     concat(docs)
 }
 
-pub(crate) fn token_range(tokens: &[JavaSyntaxToken]) -> Option<Range<usize>> {
-    let first = tokens.first()?;
-    let last = tokens.last()?;
-    Some(first.token_text_range().start().get()..last.token_text_range().end().get())
+pub(crate) fn token_range_between(first: &JavaSyntaxToken, last: &JavaSyntaxToken) -> Range<usize> {
+    first.token_text_range().start().get()..last.token_text_range().end().get()
 }
 
-pub(crate) fn relative_token_range(
-    tokens: &[JavaSyntaxToken],
+pub(crate) fn relative_token_range_between(
+    first: &JavaSyntaxToken,
+    last: &JavaSyntaxToken,
     base_start: usize,
-) -> Option<Range<usize>> {
-    let range = token_range(tokens)?;
-    Some(range.start - base_start..range.end - base_start)
+) -> Range<usize> {
+    let range = token_range_between(first, last);
+    range.start - base_start..range.end - base_start
 }
 
 fn formatter_ignore_run(

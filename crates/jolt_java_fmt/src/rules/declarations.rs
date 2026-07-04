@@ -13,16 +13,17 @@ use jolt_java_syntax::{
 use crate::context::JavaFormatter;
 use crate::helpers::blocks::{BodyItem, braced_body, join_body_items};
 use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, comment_forces_line, comment_is_star_block, format_comment,
-    format_construct_leading_comments, format_dangling_comments, format_leading_comment_list,
-    format_leading_comments, format_removed_token_comments, format_separator_with_comments,
+    LeadingTrivia, TrailingTrivia, comment_forces_line, comment_is_star_block,
+    comments_from_tokens, format_comment, format_construct_leading_comments,
+    format_dangling_comments, format_leading_comment_list, format_leading_comments,
+    format_removed_comments, format_removed_token_comments, format_separator_with_comments,
     format_token, format_token_after_construct_leading_comments, format_token_with_comments,
     non_formatter_control_comments,
 };
 use crate::helpers::declarations::{declaration_with_body, declaration_without_body};
 use crate::helpers::formatter_ignore::{
     formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
-    is_formatter_control_marker, relative_token_range,
+    is_formatter_control_marker, relative_token_range_between,
 };
 use crate::helpers::lists::{CommaListItem, parenthesized_list};
 use crate::helpers::member_body::{

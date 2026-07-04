@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use jolt_text::TextSize;
 
 use crate::RawSyntaxKind;
@@ -8,12 +6,9 @@ use super::GreenTrivia;
 
 /// An immutable green token.
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
-pub struct GreenToken(Arc<GreenTokenData>);
-
-#[derive(Debug, Eq, Hash, PartialEq)]
-struct GreenTokenData {
+pub struct GreenToken {
     kind: RawSyntaxKind,
-    text: Arc<str>,
+    text: Box<str>,
     token_text_len: TextSize,
     text_len: TextSize,
     leading: Box<[GreenTrivia]>,
@@ -21,17 +16,11 @@ struct GreenTokenData {
 }
 
 impl GreenToken {
-    /// Creates a green token without trivia.
-    #[must_use]
-    pub fn new(kind: RawSyntaxKind, text: impl Into<Arc<str>>) -> Self {
-        Self::with_trivia(kind, text, [], [])
-    }
-
     /// Creates a green token with leading and trailing trivia.
     #[must_use]
-    pub fn with_trivia(
+    pub(crate) fn with_trivia(
         kind: RawSyntaxKind,
-        text: impl Into<Arc<str>>,
+        text: impl Into<Box<str>>,
         leading: impl IntoIterator<Item = GreenTrivia>,
         trailing: impl IntoIterator<Item = GreenTrivia>,
     ) -> Self {
@@ -41,56 +30,56 @@ impl GreenToken {
         let trailing = trailing.into_iter().collect::<Box<[_]>>();
         let text_len = token_text_len + trivia_text_len(&leading) + trivia_text_len(&trailing);
 
-        Self(Arc::new(GreenTokenData {
+        Self {
             kind,
             text,
             token_text_len,
             text_len,
             leading,
             trailing,
-        }))
+        }
     }
 
     /// Returns the token kind.
     #[must_use]
-    pub fn kind(&self) -> RawSyntaxKind {
-        self.0.kind
+    pub(crate) fn kind(&self) -> RawSyntaxKind {
+        self.kind
     }
 
     /// Returns the token text without attached trivia.
     #[must_use]
-    pub fn text(&self) -> &str {
-        &self.0.text
+    pub(crate) fn text(&self) -> &str {
+        self.text.as_ref()
     }
 
     /// Returns the byte length of this token including attached trivia.
     #[must_use]
-    pub fn text_len(&self) -> TextSize {
-        self.0.text_len
+    pub(crate) fn text_len(&self) -> TextSize {
+        self.text_len
     }
 
     /// Returns the byte length of this token excluding attached trivia.
     #[must_use]
-    pub fn token_text_len(&self) -> TextSize {
-        self.0.token_text_len
+    pub(crate) fn token_text_len(&self) -> TextSize {
+        self.token_text_len
     }
 
     /// Returns trivia attached before this token.
     #[must_use]
-    pub fn leading(&self) -> &[GreenTrivia] {
-        &self.0.leading
+    pub(crate) fn leading(&self) -> &[GreenTrivia] {
+        &self.leading
     }
 
     /// Returns trivia attached after this token.
     #[must_use]
-    pub fn trailing(&self) -> &[GreenTrivia] {
-        &self.0.trailing
+    pub(crate) fn trailing(&self) -> &[GreenTrivia] {
+        &self.trailing
     }
 
     /// Returns true if both handles point at the same green token allocation.
     #[must_use]
-    pub fn ptr_eq(&self, other: &Self) -> bool {
-        Arc::ptr_eq(&self.0, &other.0)
+    pub(crate) fn ptr_eq(&self, other: &Self) -> bool {
+        std::ptr::eq(self, other)
     }
 }
 

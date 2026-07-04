@@ -10,9 +10,6 @@ pub use jolt_diagnostics::{
     Diagnostic, DiagnosticCodeId, DiagnosticStage, Severity, SyntaxOutcome,
 };
 pub use kind::JavaSyntaxKind;
-pub use lexer::{
-    JavaLexDiagnosticCode, JavaLexer, JavaLexerCheckpoint, LexerDiagnostic, Token, Trivia,
-    TriviaKind,
-};
+pub use lexer::{JavaLexer, Token, Trivia, TriviaKind};
 pub use nodes::*;
-pub use parser::{JavaParse, JavaParseDiagnosticCode, parse_compilation_unit};
+pub use parser::{JavaParse, parse_compilation_unit};

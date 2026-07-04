@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use jolt_text::TextSize;
 
 /// A trivia kind stored in shared green tokens.
@@ -23,14 +21,14 @@ pub enum TriviaKind {
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct GreenTrivia {
     kind: TriviaKind,
-    text: Arc<str>,
+    text: Box<str>,
     text_len: TextSize,
 }
 
 impl GreenTrivia {
     /// Creates a green trivia piece.
     #[must_use]
-    pub fn new(kind: TriviaKind, text: impl Into<Arc<str>>) -> Self {
+    pub(crate) fn new(kind: TriviaKind, text: impl Into<Box<str>>) -> Self {
         let text = text.into();
         let text_len = TextSize::new(text.len());
 
@@ -50,7 +48,7 @@ impl GreenTrivia {
     /// Returns the raw trivia text.
     #[must_use]
     pub fn text(&self) -> &str {
-        &self.text
+        self.text.as_ref()
     }
 
     /// Returns the byte length of the raw trivia text.

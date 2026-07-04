@@ -1,4 +1,5 @@
 use super::*;
+use crate::green::{GreenElement, GreenToken};
 
 const ROOT: RawSyntaxKind = RawSyntaxKind::new(0);
 const WRAPPER: RawSyntaxKind = RawSyntaxKind::new(1);
@@ -46,6 +47,10 @@ impl GreenTokenSource for TestTokenSource {
     }
 }
 
+fn token(kind: RawSyntaxKind, text: &'static str) -> GreenToken {
+    GreenToken::with_trivia(kind, text, [], [])
+}
+
 #[test]
 fn completed_marker_can_precede_and_wrap_a_completed_node() {
     let mut events = Vec::new();
@@ -66,11 +71,17 @@ fn completed_marker_can_precede_and_wrap_a_completed_node() {
         },
     )
     .unwrap();
-    let root = tree.root();
-    let wrapper = root.children()[0].as_node().unwrap();
-    let leaf = wrapper.children()[0].as_node().unwrap();
+    let (root, _) = tree.into_parts();
+    let wrapper = match &root.children()[0] {
+        GreenElement::Node(node) => node,
+        GreenElement::Token(_) => panic!("expected wrapper node"),
+    };
+    let leaf = match &wrapper.children()[0] {
+        GreenElement::Node(node) => node,
+        GreenElement::Token(_) => panic!("expected leaf node"),
+    };
 
-    assert_eq!(green_text(root), "ab");
+    assert_eq!(green_text(&root), "ab");
     assert_eq!(wrapper.kind(), WRAPPER);
     assert_eq!(leaf.kind(), LEAF);
 }
@@ -108,7 +119,8 @@ fn token_source_supplies_borrowed_trivia_pieces() {
     let events = [Event::start_node(ROOT), Event::Token, Event::FinishNode];
     let tree = build_green_tree(&events, &TriviaTokenSource).unwrap();
 
-    assert_eq!(green_text(tree.root()), "  token// trailing");
+    let (root, _) = tree.into_parts();
+    assert_eq!(green_text(&root), "  token// trailing");
 }
 
 #[test]
@@ -128,10 +140,7 @@ fn green_token_text_len_includes_trivia() {
 fn last_token_ignores_empty_trailing_child_nodes() {
     let root = GreenNode::new(
         ROOT,
-        [
-            GreenToken::new(TOKEN, "a").into(),
-            GreenNode::new(EMPTY, []).into(),
-        ],
+        [token(TOKEN, "a").into(), GreenNode::new(EMPTY, []).into()],
     );
     let root = SyntaxNode::<TestLanguage>::new_root(root);
 
@@ -143,15 +152,14 @@ fn sibling_accessors_preserve_offsets() {
     let root = GreenNode::new(
         ROOT,
         [
-            GreenToken::new(TOKEN, "a").into(),
-            GreenNode::new(WRAPPER, [GreenToken::new(TOKEN, "bc").into()]).into(),
-            GreenToken::new(TOKEN, "d").into(),
+            token(TOKEN, "a").into(),
+            GreenNode::new(WRAPPER, [token(TOKEN, "bc").into()]).into(),
+            token(TOKEN, "d").into(),
         ],
     );
     let root = SyntaxNode::<TestLanguage>::new_root(root);
 
-    let first_token = root.first_token().unwrap();
-    let wrapper = first_token.next_sibling().unwrap();
+    let wrapper = root.children().next().unwrap();
 
     assert_eq!(wrapper.offset(), 1usize.into());
     assert_eq!(
@@ -175,15 +183,13 @@ fn sibling_accessors_preserve_offsets() {
         }
         SyntaxElement::Node(_) => panic!("expected next token"),
     }
-
-    assert_eq!(root.last_token().unwrap().prev_sibling().unwrap(), wrapper);
 }
 
 #[test]
 fn syntax_node_debug_prints_tree_shape_without_parent_recursion() {
     let root = GreenNode::new(
         ROOT,
-        [GreenNode::new(WRAPPER, [GreenToken::new(TOKEN, "a").into()]).into()],
+        [GreenNode::new(WRAPPER, [token(TOKEN, "a").into()]).into()],
     );
     let root = SyntaxNode::<TestLanguage>::new_root(root);
 

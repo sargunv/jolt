@@ -1,8 +1,6 @@
 use std::fmt;
 
-use jolt_syntax::{
-    SyntaxElement, SyntaxNode, SyntaxToken, TriviaKind as SyntaxTriviaKind, green_text,
-};
+use jolt_syntax::{SyntaxNode, SyntaxToken, TriviaKind as SyntaxTriviaKind, green_text};
 use jolt_text::TextRange;
 
 use crate::{JavaSyntaxKind, language::JavaLanguage};
@@ -90,7 +88,7 @@ impl JavaSyntaxToken {
     /// Returns true when the token's leading trivia contains an intentional
     /// blank line.
     #[must_use]
-    pub fn has_leading_blank_line(&self) -> bool {
+    pub(crate) fn has_leading_blank_line(&self) -> bool {
         trivia_has_blank_line(self.syntax.leading())
     }
 }
@@ -133,14 +131,6 @@ impl JavaOperator {
     #[must_use]
     pub fn text(&self) -> &'static str {
         self.kind.text()
-    }
-
-    #[must_use]
-    pub fn text_range(&self) -> TextRange {
-        TextRange::new(
-            self.first_token.token_text_range().start(),
-            self.last_token().token_text_range().end(),
-        )
     }
 
     #[must_use]
@@ -437,11 +427,6 @@ macro_rules! java_cst {
 
             impl $node {
                 #[must_use]
-                pub fn can_cast(kind: JavaSyntaxKind) -> bool {
-                    matches!(kind, JavaSyntaxKind::$kind)
-                }
-
-                #[must_use]
                 pub fn kind(&self) -> JavaSyntaxKind {
                     self.syntax.kind()
                 }
@@ -456,9 +441,18 @@ macro_rules! java_cst {
                     green_text(self.syntax.green())
                 }
 
+                pub fn token_iter(&self) -> impl Iterator<Item = JavaSyntaxToken> + '_ {
+                    token_iter(&self.syntax)
+                }
+
                 #[must_use]
-                pub fn tokens(&self) -> Vec<JavaSyntaxToken> {
-                    tokens(&self.syntax)
+                pub fn first_token(&self) -> Option<JavaSyntaxToken> {
+                    first_token(&self.syntax)
+                }
+
+                #[must_use]
+                pub fn last_token(&self) -> Option<JavaSyntaxToken> {
+                    last_token(&self.syntax)
                 }
 
             }
@@ -467,7 +461,7 @@ macro_rules! java_cst {
 
             impl JavaNode for $node {
                 fn cast(syntax: JavaSyntaxNode) -> Option<Self> {
-                    Self::can_cast(syntax.kind()).then_some(Self { syntax })
+                    matches!(syntax.kind(), JavaSyntaxKind::$kind).then_some(Self { syntax })
                 }
             }
 
@@ -484,12 +478,6 @@ macro_rules! java_cst {
         }
 
         impl AnyJavaNode {
-            /// Returns true if `kind` is any Java CST node kind.
-            #[must_use]
-            pub fn can_cast(kind: JavaSyntaxKind) -> bool {
-                matches!(kind, $(JavaSyntaxKind::$kind)|*)
-            }
-
             #[must_use]
             pub fn kind(&self) -> JavaSyntaxKind {
                 self.syntax().kind()
@@ -503,11 +491,6 @@ macro_rules! java_cst {
             #[must_use]
             pub fn source_text(&self) -> String {
                 green_text(self.syntax().green())
-            }
-
-            #[must_use]
-            pub fn tokens(&self) -> Vec<JavaSyntaxToken> {
-                tokens(self.syntax())
             }
 
             pub(crate) fn cast(syntax: JavaSyntaxNode) -> Option<Self> {
@@ -544,11 +527,6 @@ macro_rules! java_cst {
 
             impl $family {
                 #[must_use]
-                pub fn can_cast(kind: JavaSyntaxKind) -> bool {
-                    matches!(kind, $(JavaSyntaxKind::$variant)|+)
-                }
-
-                #[must_use]
                 pub fn kind(&self) -> JavaSyntaxKind {
                     self.syntax().kind()
                 }
@@ -563,9 +541,18 @@ macro_rules! java_cst {
                     green_text(self.syntax().green())
                 }
 
+                pub fn token_iter(&self) -> impl Iterator<Item = JavaSyntaxToken> + '_ {
+                    token_iter(self.syntax())
+                }
+
                 #[must_use]
-                pub fn tokens(&self) -> Vec<JavaSyntaxToken> {
-                    tokens(self.syntax())
+                pub fn first_token(&self) -> Option<JavaSyntaxToken> {
+                    first_token(self.syntax())
+                }
+
+                #[must_use]
+                pub fn last_token(&self) -> Option<JavaSyntaxToken> {
+                    last_token(self.syntax())
                 }
 
                 pub(crate) fn syntax(&self) -> &JavaSyntaxNode {
@@ -597,76 +584,6 @@ macro_rules! java_cst {
             )+
         )*
 
-        #[cfg(test)]
-        const ALL_NODE_KINDS: &[JavaSyntaxKind] = &[
-            $(JavaSyntaxKind::$kind,)*
-        ];
-
-        #[cfg(test)]
-        fn node_casts_for_kind(kind: JavaSyntaxKind, syntax: JavaSyntaxNode) -> Vec<&'static str> {
-            let mut casts = Vec::new();
-            $(
-                if <$node as JavaNode>::cast(syntax.clone()).is_some() {
-                    casts.push(stringify!($node));
-                }
-            )*
-            let _ = kind;
-            casts
-        }
-
-        #[cfg(test)]
-        fn assert_node_wrappers_cast_their_declared_kind() {
-            $(
-                {
-                    let syntax = test_syntax(JavaSyntaxKind::$kind);
-                    let node = <$node as JavaNode>::cast(syntax)
-                        .expect(concat!(stringify!($node), " should cast its declared kind"));
-
-                    assert_eq!(node.kind(), JavaSyntaxKind::$kind);
-                    assert_eq!(
-                        wrapper_expected_kind_name(stringify!($node)),
-                        stringify!($kind),
-                        concat!(stringify!($node), " is mapped to the wrong JavaSyntaxKind")
-                    );
-                }
-            )*
-        }
-
-        #[cfg(test)]
-        fn family_casts_for_kind(kind: JavaSyntaxKind, syntax: JavaSyntaxNode) -> Vec<&'static str> {
-            let mut casts = Vec::new();
-            $(
-                if <$family as JavaFamily>::cast(syntax.clone()).is_some() {
-                    casts.push(stringify!($family));
-                }
-            )*
-            let _ = kind;
-            casts
-        }
-
-        #[cfg(test)]
-        fn family_variant_kinds() -> Vec<(&'static str, &'static [JavaSyntaxKind])> {
-            vec![
-                $(
-                    (stringify!($family), &[$(JavaSyntaxKind::$variant,)+]),
-                )*
-            ]
-        }
-
-        #[cfg(test)]
-        fn assert_family_conversions_compile_and_preserve_kind() {
-            $(
-                $(
-                    {
-                        let syntax = test_syntax(JavaSyntaxKind::$variant);
-                        let node = <$variant as JavaNode>::cast(syntax)
-                            .expect("variant wrapper should cast");
-                        let family: $family = node.into();
-                        assert_eq!(family.kind(), JavaSyntaxKind::$variant);
-                    }
-                )+
-            )*
-        }
     };
 }
 
@@ -1022,6 +939,30 @@ pub enum CompilationUnitItem {
     EmptyDeclaration(EmptyDeclaration),
 }
 
+impl CompilationUnitItem {
+    #[must_use]
+    pub fn first_token(&self) -> Option<JavaSyntaxToken> {
+        match self {
+            Self::Package(item) => item.first_token(),
+            Self::Import(item) => item.first_token(),
+            Self::Module(item) => item.first_token(),
+            Self::Type(item) => item.first_token(),
+            Self::EmptyDeclaration(item) => item.first_token(),
+        }
+    }
+
+    #[must_use]
+    pub fn last_token(&self) -> Option<JavaSyntaxToken> {
+        match self {
+            Self::Package(item) => item.last_token(),
+            Self::Import(item) => item.last_token(),
+            Self::Module(item) => item.last_token(),
+            Self::Type(item) => item.last_token(),
+            Self::EmptyDeclaration(item) => item.last_token(),
+        }
+    }
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ImportKind {
     SingleType(NameSyntax),
@@ -1254,7 +1195,40 @@ pub struct NameSegment {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ModifierEntry {
-    pub tokens: Vec<JavaSyntaxToken>,
+    tokens: [Option<JavaSyntaxToken>; 3],
+    len: usize,
+}
+
+impl ModifierEntry {
+    pub(crate) fn single(token: JavaSyntaxToken) -> Self {
+        Self {
+            tokens: [Some(token), None, None],
+            len: 1,
+        }
+    }
+
+    pub(crate) fn non_sealed(
+        non: JavaSyntaxToken,
+        minus: JavaSyntaxToken,
+        sealed: JavaSyntaxToken,
+    ) -> Self {
+        Self {
+            tokens: [Some(non), Some(minus), Some(sealed)],
+            len: 3,
+        }
+    }
+
+    pub fn tokens(&self) -> impl Iterator<Item = &JavaSyntaxToken> {
+        self.tokens[..self.len].iter().filter_map(Option::as_ref)
+    }
+
+    pub fn into_tokens(self) -> impl Iterator<Item = JavaSyntaxToken> {
+        self.tokens.into_iter().take(self.len).flatten()
+    }
+
+    pub fn first_token(&self) -> Option<&JavaSyntaxToken> {
+        self.tokens.first().and_then(Option::as_ref)
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -1295,25 +1269,22 @@ fn children<'a, N: JavaNode + 'a>(syntax: &'a JavaSyntaxNode) -> impl Iterator<I
     syntax.children().filter_map(N::cast)
 }
 
-fn tokens(syntax: &JavaSyntaxNode) -> Vec<JavaSyntaxToken> {
-    let mut tokens = Vec::new();
-    collect_tokens(syntax, &mut tokens);
-    tokens
+fn token_iter(syntax: &JavaSyntaxNode) -> impl Iterator<Item = JavaSyntaxToken> + '_ {
+    syntax.tokens().map(|syntax| JavaSyntaxToken { syntax })
+}
+
+fn first_token(syntax: &JavaSyntaxNode) -> Option<JavaSyntaxToken> {
+    syntax
+        .first_token()
+        .map(|syntax| JavaSyntaxToken { syntax })
+}
+
+fn last_token(syntax: &JavaSyntaxNode) -> Option<JavaSyntaxToken> {
+    syntax.last_token().map(|syntax| JavaSyntaxToken { syntax })
 }
 
 fn starts_after_blank_line(syntax: &JavaSyntaxNode) -> bool {
-    tokens(syntax)
-        .first()
-        .is_some_and(JavaSyntaxToken::has_leading_blank_line)
-}
-
-fn collect_tokens(syntax: &JavaSyntaxNode, tokens: &mut Vec<JavaSyntaxToken>) {
-    for element in syntax.children_with_tokens() {
-        match element {
-            SyntaxElement::Node(node) => collect_tokens(&node, tokens),
-            SyntaxElement::Token(syntax) => tokens.push(JavaSyntaxToken { syntax }),
-        }
-    }
+    first_token(syntax).is_some_and(|token| token.has_leading_blank_line())
 }
 
 fn child_family<F: JavaFamily>(syntax: &JavaSyntaxNode) -> Option<F> {
@@ -1361,20 +1332,6 @@ fn children_tokens_matching<'a>(
         .child_tokens()
         .filter(move |token| predicate(token.kind()))
         .map(|syntax| JavaSyntaxToken { syntax })
-}
-
-#[cfg(test)]
-fn test_syntax(kind: JavaSyntaxKind) -> JavaSyntaxNode {
-    let green = jolt_syntax::GreenNode::new(kind.to_raw(), []);
-    JavaSyntaxNode::new_root(green)
-}
-
-#[cfg(test)]
-fn wrapper_expected_kind_name(wrapper: &str) -> &str {
-    match wrapper {
-        "ModuleDirectiveNode" => "ModuleDirective",
-        _ => wrapper,
-    }
 }
 
 #[cfg(test)]

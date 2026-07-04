@@ -16,7 +16,8 @@ use crate::helpers::comments::{
     format_leading_comments, format_token, format_token_after_relocated_leading_comments,
     format_token_text_after_trivia_relocated, format_token_with_comments,
     format_token_with_inline_leading_comments, format_trailing_comments,
-    format_trailing_comments_before_line_break, tokens_have_comments, trailing_comments_force_line,
+    format_trailing_comments_before_line_break, token_iter_has_comments,
+    trailing_comments_force_line,
 };
 use crate::helpers::lists::{
     CommaListItem, braced_comma_list_with_trailing_separator, parenthesized_list,

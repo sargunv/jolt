@@ -22,7 +22,7 @@ use self::source::{Parser, ParserToken};
 
 /// Stable Java parser diagnostic codes.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub enum JavaParseDiagnosticCode {
+pub(crate) enum JavaParseDiagnosticCode {
     ExpectedSyntax,
     UnexpectedSyntax,
     InvalidStatementExpression,

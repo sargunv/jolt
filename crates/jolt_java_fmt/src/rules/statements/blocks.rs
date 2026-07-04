@@ -1,10 +1,10 @@
 use super::{
     Block, BlockItem, BlockStatement, BodyItem, Doc, FormatterIgnoreRange, JavaFormatter,
-    JavaSyntaxToken, Range, TrailingTrivia, concat, format_dangling_comments,
-    format_local_variable_declaration, format_removed_token_comments, format_statement,
+    JavaSyntaxToken, Range, TrailingTrivia, comments_from_tokens, concat, format_dangling_comments,
+    format_local_variable_declaration, format_removed_comments, format_statement,
     format_statement_semicolon, format_type_declaration, formatter_ignore_ranges,
     formatter_ignore_run_doc, formatter_ignore_runs, hard_line, join_body_items,
-    relative_token_range,
+    relative_token_range_between,
 };
 use crate::helpers::comments::{
     InlineLeadingTrivia, format_token_after_relocated_leading_comments,
@@ -190,7 +190,7 @@ fn format_block_item_doc(
 }
 
 fn format_removed_empty_statement(statement: &jolt_java_syntax::EmptyStatement) -> Option<Doc> {
-    format_removed_token_comments(&statement.tokens())
+    format_removed_comments(comments_from_tokens(statement.token_iter()))
 }
 
 fn block_formatter_ignore_ranges(block: &Block) -> Vec<FormatterIgnoreRange> {
@@ -201,6 +201,9 @@ fn block_statement_token_range(
     statement: &BlockStatement,
     block_start: usize,
 ) -> Option<Range<usize>> {
-    let tokens = statement.tokens();
-    relative_token_range(&tokens, block_start)
+    Some(relative_token_range_between(
+        &statement.first_token()?,
+        &statement.last_token()?,
+        block_start,
+    ))
 }

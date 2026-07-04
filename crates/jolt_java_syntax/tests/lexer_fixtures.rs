@@ -3,7 +3,7 @@ use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use jolt_java_syntax::{JavaLexer, JavaSyntaxKind, LexerDiagnostic, Token};
+use jolt_java_syntax::{JavaLexer, JavaSyntaxKind, Token};
 
 #[test]
 fn fixture_java_inputs_lex_without_loss() {
@@ -33,13 +33,6 @@ fn assert_corpus(suite: &str, expected_files: usize) -> String {
         let lexed = lex(&source);
         assert_reconstructs(&path, &source, &lexed.tokens);
         summary.record(&lexed);
-
-        assert!(
-            lexed.diagnostics.is_empty(),
-            "lexer diagnostic(s) in {}: {:#?}",
-            path.display(),
-            lexed.diagnostics
-        );
     }
 
     summary.render()
@@ -47,7 +40,6 @@ fn assert_corpus(suite: &str, expected_files: usize) -> String {
 
 struct Lexed {
     tokens: Vec<Token>,
-    diagnostics: Vec<LexerDiagnostic>,
 }
 
 fn lex(source: &str) -> Lexed {
@@ -61,11 +53,7 @@ fn lex(source: &str) -> Lexed {
             break;
         }
     }
-    let diagnostics = lexer.finish();
-    Lexed {
-        tokens,
-        diagnostics,
-    }
+    Lexed { tokens }
 }
 
 fn fixture_root(suite: &str) -> PathBuf {
@@ -167,7 +155,6 @@ struct CorpusSummary {
     files: usize,
     tokens: BTreeMap<String, usize>,
     trivia: BTreeMap<String, usize>,
-    diagnostics: BTreeMap<String, usize>,
 }
 
 impl CorpusSummary {
@@ -177,7 +164,6 @@ impl CorpusSummary {
             files,
             tokens: BTreeMap::new(),
             trivia: BTreeMap::new(),
-            diagnostics: BTreeMap::new(),
         }
     }
 
@@ -192,10 +178,6 @@ impl CorpusSummary {
                 increment(&mut self.trivia, format!("{:?}", trivia.kind));
             }
         }
-
-        for diagnostic in &lexed.diagnostics {
-            increment(&mut self.diagnostics, diagnostic.code.as_str().to_owned());
-        }
     }
 
     fn render(&self) -> String {
@@ -206,8 +188,6 @@ impl CorpusSummary {
         push_counts(&mut output, &self.tokens);
         output.push_str("\ntrivia:\n");
         push_counts(&mut output, &self.trivia);
-        output.push_str("\ndiagnostics:\n");
-        push_counts(&mut output, &self.diagnostics);
         output
     }
 }

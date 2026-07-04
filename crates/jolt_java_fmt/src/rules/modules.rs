@@ -14,7 +14,8 @@ use crate::helpers::comments::{
     format_token_with_comments, split_leading_comment_barrier_runs, token_has_comments,
 };
 use crate::helpers::formatter_ignore::{
-    formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs, relative_token_range,
+    formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
+    relative_token_range_between,
 };
 use crate::rules::names::{format_name, name_key};
 
@@ -175,8 +176,9 @@ fn format_module_directive_segments(
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
     let runs = split_leading_comment_barrier_runs(directives, |directive| {
-        let tokens = directive.tokens();
-        formatter.comments().has_leading_comment_for_tokens(&tokens)
+        directive
+            .first_token()
+            .is_some_and(|token| formatter.comments().has_leading_comment_for_token(&token))
     });
 
     join_empty_lines(
@@ -198,8 +200,11 @@ fn module_directive_token_range(
     directive: &ModuleDirective,
     module_start: usize,
 ) -> Option<Range<usize>> {
-    let tokens = directive.tokens();
-    relative_token_range(&tokens, module_start)
+    Some(relative_token_range_between(
+        &directive.first_token()?,
+        &directive.last_token()?,
+        module_start,
+    ))
 }
 
 fn format_module_directive_run(directives: Vec<FormattedModuleDirective>) -> Doc {
@@ -255,15 +260,16 @@ impl FormattedModuleDirective {
         let kind_order = module_directive_kind_order(&role);
         let doc = format_module_directive_doc(directive, &role, formatter);
 
-        let tokens = directive.tokens();
+        let first_token = directive.first_token();
+        let last_token = directive.last_token();
         Self {
             leading_comments: formatter
                 .comments()
-                .leading_comments_for_tokens(&tokens)
+                .leading_comments_for_token_option(first_token.as_ref())
                 .to_vec(),
             trailing_comments: formatter
                 .comments()
-                .trailing_comments_for_tokens(&tokens)
+                .trailing_comments_for_token_option(last_token.as_ref())
                 .to_vec(),
             kind_order,
             primary_name,
@@ -446,7 +452,10 @@ fn format_module_name_entries_broken(
 
     for (index, entry) in entries.into_iter().enumerate() {
         docs.push(concat([
-            format_construct_leading_comments(formatter.comments(), &entry.name.tokens()),
+            format_construct_leading_comments(
+                formatter.comments(),
+                entry.name.first_token().as_ref(),
+            ),
             format_name(&entry.name),
         ]));
         if let Some(comma) = entry.comma {
@@ -460,9 +469,8 @@ fn format_module_name_entries_broken(
 }
 
 fn name_has_leading_comments(name: &NameSyntax, formatter: &JavaFormatter<'_>) -> bool {
-    formatter
-        .comments()
-        .has_leading_comment_for_tokens(&name.tokens())
+    name.first_token()
+        .is_some_and(|token| formatter.comments().has_leading_comment_for_token(&token))
 }
 
 fn module_directive_primary_name(role: &ModuleDirectiveRole) -> String {

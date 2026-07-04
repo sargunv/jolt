@@ -3,7 +3,7 @@ use super::{
     format_annotation, format_block, format_expression, format_leading_comments,
     format_token_text_after_trivia_relocated, format_token_with_comments,
     format_trailing_comments_before_line_break, format_type, hard_line,
-    inline_modifier_prefix_from_docs, text, tokens_have_comments,
+    inline_modifier_prefix_from_docs, text, token_iter_has_comments,
 };
 
 pub(super) fn format_lambda_expression(
@@ -49,8 +49,7 @@ fn format_lambda_parameters(expression: &LambdaExpression, formatter: &JavaForma
     if let Some(parameter) = expression.concise_parameter()
         && is_simple_untyped_lambda_parameter(&parameter)
     {
-        let tokens = parameter.tokens();
-        if tokens_have_comments(&tokens) {
+        if token_iter_has_comments(parameter.token_iter()) {
             return format_lambda_parameter(&parameter, formatter);
         }
         return parameter
@@ -67,8 +66,7 @@ fn format_lambda_parameters(expression: &LambdaExpression, formatter: &JavaForma
     if let [parameter] = parameters.as_slice()
         && is_simple_untyped_lambda_parameter(parameter)
     {
-        let tokens = parameter.tokens();
-        if tokens_have_comments(&tokens) {
+        if token_iter_has_comments(parameter.token_iter()) {
             return format_lambda_parameter(parameter, formatter);
         }
         return parameter

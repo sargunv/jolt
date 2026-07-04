@@ -77,7 +77,7 @@ fn sorted_modifier_tokens(mut tokens: Vec<JavaSyntaxToken>) -> Vec<JavaSyntaxTok
 fn sorted_modifier_entries(mut entries: Vec<ModifierEntry>) -> Vec<ModifierEntry> {
     sort_modifier_runs(
         &mut entries,
-        |entry| entry.tokens.iter().any(token_has_comments),
+        |entry| entry.tokens().any(token_has_comments),
         |run| run.sort_by_key(modifier_entry_order),
     );
     entries
@@ -112,21 +112,19 @@ fn modifier_entry_order(entry: &ModifierEntry) -> u8 {
         "sealed" => 11,
         "non-sealed" => 12,
         _ => entry
-            .tokens
-            .first()
+            .first_token()
             .map_or(u8::MAX, |token| modifier_order(token.kind())),
     }
 }
 
 fn modifier_entry_text(entry: &ModifierEntry) -> String {
-    entry.tokens.iter().map(JavaSyntaxToken::text).collect()
+    entry.tokens().map(JavaSyntaxToken::text).collect()
 }
 
 fn format_modifier_entry(entry: &ModifierEntry, leading_comments: LeadingComments) -> Doc {
     concat(
         entry
-            .tokens
-            .iter()
+            .tokens()
             .map(|token| format_modifier_token(token, leading_comments)),
     )
 }

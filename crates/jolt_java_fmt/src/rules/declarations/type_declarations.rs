@@ -17,7 +17,7 @@ pub(super) fn format_class_declaration(
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
     format_type_declaration_with_body(
-        &class.tokens(),
+        class.first_token().as_ref(),
         class.modifiers(),
         concat([
             format_keyword_with_space(class.keyword()),
@@ -41,7 +41,7 @@ pub(super) fn format_interface_declaration(
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
     format_type_declaration_with_body(
-        &interface.tokens(),
+        interface.first_token().as_ref(),
         interface.modifiers(),
         concat([
             format_keyword_with_space(interface.keyword()),
@@ -64,7 +64,7 @@ pub(super) fn format_record_declaration(
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
     format_type_declaration_with_body(
-        &record.tokens(),
+        record.first_token().as_ref(),
         record.modifiers(),
         group(concat([
             format_keyword_with_space(record.keyword()),
@@ -101,7 +101,7 @@ pub(super) fn format_enum_declaration(
         .and_then(|body| format_enum_body_contents(constants, &body, formatter));
 
     format_type_declaration_with_body(
-        &enum_.tokens(),
+        enum_.first_token().as_ref(),
         enum_.modifiers(),
         concat([
             format_keyword_with_space(enum_.keyword()),
@@ -120,7 +120,7 @@ pub(super) fn format_annotation_interface_declaration(
     formatter: &JavaFormatter<'_>,
 ) -> Doc {
     format_type_declaration_with_body(
-        &annotation.tokens(),
+        annotation.first_token().as_ref(),
         annotation.modifiers(),
         concat([
             annotation
@@ -150,7 +150,7 @@ fn format_keyword_with_space(keyword: Option<JavaSyntaxToken>) -> Doc {
 }
 
 fn format_type_declaration_with_body(
-    tokens: &[jolt_java_syntax::JavaSyntaxToken],
+    first_token: Option<&jolt_java_syntax::JavaSyntaxToken>,
     modifiers: Option<ModifierList>,
     header_tail: Doc,
     body: Option<Doc>,
@@ -158,7 +158,11 @@ fn format_type_declaration_with_body(
 ) -> Doc {
     declaration_with_body(
         concat([
-            format_leading_comment_list(formatter.comments().leading_comments_for_tokens(tokens)),
+            format_leading_comment_list(
+                formatter
+                    .comments()
+                    .leading_comments_for_token_option(first_token),
+            ),
             format_modifier_prefix(modifiers, formatter),
         ]),
         header_tail,
@@ -304,7 +308,10 @@ fn format_type_clause_entries_broken(
 
     for (index, entry) in entries.into_iter().enumerate() {
         docs.push(concat([
-            format_construct_leading_comments(formatter.comments(), &entry.ty.tokens()),
+            format_construct_leading_comments(
+                formatter.comments(),
+                entry.ty.first_token().as_ref(),
+            ),
             format_type_without_leading_comments(&entry.ty, formatter),
         ]));
         if let Some(comma) = entry.comma {
@@ -326,7 +333,10 @@ fn format_permits_clause_entries_broken(
 
     for (index, entry) in entries.into_iter().enumerate() {
         docs.push(concat([
-            format_construct_leading_comments(formatter.comments(), &entry.name.tokens()),
+            format_construct_leading_comments(
+                formatter.comments(),
+                entry.name.first_token().as_ref(),
+            ),
             format_name(&entry.name),
         ]));
         if let Some(comma) = entry.comma {

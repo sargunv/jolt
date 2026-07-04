@@ -42,7 +42,7 @@ use super::{
     VoidType, WhileStatement, WildcardBound, WildcardType, YieldStatement,
     assignment_operator_kind, binary_operator_kind, child, child_family, child_token,
     child_token_in, children, children_family, children_tokens_matching, nth_child_family,
-    nth_child_token, starts_after_blank_line, tokens,
+    nth_child_token, starts_after_blank_line,
 };
 use crate::JavaSyntaxNode;
 use jolt_syntax::{SyntaxElement, TriviaKind};
@@ -536,8 +536,7 @@ impl ModifierList {
             .modifier_entries()
             .filter_map(|entry| {
                 entry
-                    .tokens
-                    .first()
+                    .first_token()
                     .map(|token| token.token_text_range().start())
             })
             .min();
@@ -552,8 +551,7 @@ impl ModifierList {
             .modifier_entries()
             .filter_map(|entry| {
                 entry
-                    .tokens
-                    .first()
+                    .first_token()
                     .map(|token| token.token_text_range().start())
             })
             .min();
@@ -564,8 +562,7 @@ impl ModifierList {
     }
 
     pub fn modifier_tokens(&self) -> impl Iterator<Item = JavaSyntaxToken> + '_ {
-        self.modifier_entries()
-            .flat_map(|entry| entry.tokens.into_iter())
+        self.modifier_entries().flat_map(ModifierEntry::into_tokens)
     }
 
     pub fn modifier_entries(&self) -> impl Iterator<Item = ModifierEntry> + '_ {
@@ -1273,25 +1270,6 @@ impl MethodDeclaration {
     pub fn semicolon(&self) -> Option<JavaSyntaxToken> {
         child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
-
-    #[must_use]
-    pub fn header_tokens(&self) -> Vec<JavaSyntaxToken> {
-        let header_end = self
-            .body()
-            .map_or_else(|| self.text_range().end(), |body| body.text_range().start());
-        let mut header_tokens = tokens(&self.syntax)
-            .into_iter()
-            .filter(|token| token.token_text_range().start() < header_end)
-            .collect::<Vec<_>>();
-        if self.body().is_none()
-            && header_tokens
-                .last()
-                .is_some_and(|token| token.kind() == JavaSyntaxKind::Semicolon)
-        {
-            header_tokens.pop();
-        }
-        header_tokens
-    }
 }
 
 impl ConstructorDeclaration {
@@ -1323,17 +1301,6 @@ impl ConstructorDeclaration {
     #[must_use]
     pub fn body(&self) -> Option<ConstructorBody> {
         child(&self.syntax)
-    }
-
-    #[must_use]
-    pub fn header_tokens(&self) -> Vec<JavaSyntaxToken> {
-        let header_end = self
-            .body()
-            .map_or_else(|| self.text_range().end(), |body| body.text_range().start());
-        tokens(&self.syntax)
-            .into_iter()
-            .filter(|token| token.token_text_range().start() < header_end)
-            .collect()
     }
 }
 
@@ -4053,45 +4020,44 @@ fn is_modifier_token(kind: JavaSyntaxKind) -> bool {
 }
 
 fn modifier_entries(syntax: &JavaSyntaxNode) -> impl Iterator<Item = ModifierEntry> {
-    let tokens = syntax
+    let mut tokens = syntax
         .children_with_tokens()
         .filter_map(|element| match element {
             SyntaxElement::Token(token) => Some(JavaSyntaxToken { syntax: token }),
             SyntaxElement::Node(_) => None,
-        })
-        .collect::<Vec<_>>();
+        });
 
     let mut entries = Vec::new();
-    let mut index = 0;
-    while index < tokens.len() {
-        if is_non_sealed_modifier_at(&tokens, index) {
-            entries.push(ModifierEntry {
-                tokens: tokens[index..index + 3].to_vec(),
-            });
-            index += 3;
+    let mut pending = None;
+    while let Some(token) = pending.take().or_else(|| tokens.next()) {
+        if token.text() == "non" {
+            let Some(minus) = tokens.next() else {
+                continue;
+            };
+
+            if minus.kind() != JavaSyntaxKind::Minus {
+                pending = Some(minus);
+                continue;
+            }
+
+            let Some(sealed) = tokens.next() else {
+                continue;
+            };
+
+            if sealed.text() == "sealed" {
+                entries.push(ModifierEntry::non_sealed(token, minus, sealed));
+            } else {
+                pending = Some(sealed);
+            }
             continue;
         }
 
-        let token = &tokens[index];
         if is_modifier_token(token.kind()) || token.text() == "sealed" {
-            entries.push(ModifierEntry {
-                tokens: vec![token.clone()],
-            });
+            entries.push(ModifierEntry::single(token));
         }
-        index += 1;
     }
 
     entries.into_iter()
-}
-
-fn is_non_sealed_modifier_at(tokens: &[JavaSyntaxToken], index: usize) -> bool {
-    tokens.get(index).is_some_and(|token| token.text() == "non")
-        && tokens
-            .get(index + 1)
-            .is_some_and(|token| token.kind() == JavaSyntaxKind::Minus)
-        && tokens
-            .get(index + 2)
-            .is_some_and(|token| token.text() == "sealed")
 }
 
 fn assignment_operator(syntax: &JavaSyntaxNode) -> Option<JavaOperator> {

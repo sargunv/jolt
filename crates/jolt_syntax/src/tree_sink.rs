@@ -1,5 +1,6 @@
 use crate::{
-    Diagnostic, Event, GreenElement, GreenNode, GreenToken, GreenTrivia, RawSyntaxKind, TriviaKind,
+    Diagnostic, Event, GreenNode, GreenTrivia, RawSyntaxKind, TriviaKind,
+    green::{GreenElement, GreenToken},
 };
 
 /// A borrowed trivia piece supplied by a token source.
@@ -57,20 +58,8 @@ pub struct GreenTree {
 impl GreenTree {
     /// Creates a green tree parse result.
     #[must_use]
-    pub fn new(root: GreenNode, diagnostics: Vec<Diagnostic>) -> Self {
+    fn new(root: GreenNode, diagnostics: Vec<Diagnostic>) -> Self {
         Self { root, diagnostics }
-    }
-
-    /// Returns the root green node.
-    #[must_use]
-    pub const fn root(&self) -> &GreenNode {
-        &self.root
-    }
-
-    /// Returns parser diagnostics collected during tree construction.
-    #[must_use]
-    pub fn diagnostics(&self) -> &[Diagnostic] {
-        &self.diagnostics
     }
 
     /// Splits this result into its root node and diagnostics.

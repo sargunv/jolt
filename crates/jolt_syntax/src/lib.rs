@@ -6,11 +6,11 @@ mod language;
 mod text;
 mod tree_sink;
 
-pub mod green;
-pub mod red;
+mod green;
+mod red;
 
 pub use event::{CompletedMarker, Event, Marker};
-pub use green::{GreenElement, GreenNode, GreenToken, GreenTrivia, TriviaKind};
+pub use green::{GreenNode, GreenTrivia, TriviaKind};
 pub use jolt_diagnostics::{
     Diagnostic, DiagnosticCode, DiagnosticCodeId, DiagnosticStage, Severity, SyntaxOutcome,
 };
