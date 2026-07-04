@@ -3,10 +3,10 @@ use super::{
     LabeledStatement, LeadingTrivia, ReturnStatement, ThrowStatement, YieldStatement,
     comment_forces_line, concat, format_expression, format_statement,
     format_token_before_relocated_trailing_comments, format_token_with_comments,
-    format_trailing_comments_before_line_break, hard_line, indent, text,
-    trailing_comments_force_line,
+    format_trailing_comments_before_line_break, hard_line, indent, trailing_comments_force_line,
 };
 use crate::helpers::comments::{comment_is_star_block, format_comment, format_token_text};
+use jolt_fmt_ir::space;
 use jolt_java_syntax::JavaComment;
 
 pub(super) fn format_labeled_statement<'source>(
@@ -49,7 +49,7 @@ pub(super) fn format_assert_statement<'source>(
 ) -> Doc<'source> {
     concat([
         format_statement_keyword(statement.keyword(), "assert"),
-        text(" "),
+        space(),
         statement
             .condition()
             .map_or_else(jolt_fmt_ir::nil, |condition| {
@@ -57,12 +57,12 @@ pub(super) fn format_assert_statement<'source>(
             }),
         statement.detail().map_or_else(jolt_fmt_ir::nil, |detail| {
             concat([
-                text(" "),
+                space(),
                 statement
                     .colon()
                     .as_ref()
                     .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
-                text(" "),
+                space(),
                 format_expression(&detail, formatter),
             ])
         }),
@@ -139,11 +139,11 @@ fn format_keyword_expression_separator<'source>(
     keyword: Option<&JavaSyntaxToken<'source>>,
 ) -> Doc<'source> {
     let Some(keyword) = keyword else {
-        return text(" ");
+        return space();
     };
 
     if keyword.trailing_comments().is_empty() {
-        return text(" ");
+        return space();
     }
 
     concat([
@@ -151,7 +151,7 @@ fn format_keyword_expression_separator<'source>(
         if trailing_comments_force_line(keyword) {
             hard_line()
         } else {
-            text(" ")
+            space()
         },
     ])
 }
@@ -165,7 +165,7 @@ pub(super) fn format_jump_statement<'source>(
     concat([
         format_statement_keyword(keyword, fallback),
         label.map_or_else(jolt_fmt_ir::nil, |label| {
-            concat([text(" "), format_token_with_comments(&label)])
+            concat([space(), format_token_with_comments(&label)])
         }),
         format_statement_semicolon(semicolon),
     ])
@@ -188,7 +188,7 @@ fn format_semicolon_leading_comments<'source>(
 ) -> Doc<'source> {
     let mut docs = Vec::new();
     for comment in semicolon.leading_comments() {
-        docs.push(text(" "));
+        docs.push(space());
         docs.push(format_comment(&comment));
         if comment_forces_line(&comment) {
             docs.push(hard_line());
@@ -203,7 +203,7 @@ fn format_terminator_trailing_comments<'source>(token: &JavaSyntaxToken<'source>
         if terminator_comment_starts_next_line(&comment) {
             docs.push(hard_line());
         } else {
-            docs.push(text(" "));
+            docs.push(space());
         }
         docs.push(format_comment(&comment));
     }

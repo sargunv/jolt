@@ -1,3 +1,4 @@
+use jolt_fmt_ir::space;
 use jolt_fmt_ir::{Doc, concat, group, hard_line, indent, line, text};
 use jolt_java_syntax::{
     Annotation, ArrayDimension, ArrayDimensions, ClassType, IntersectionType, JavaSyntaxToken,
@@ -237,12 +238,12 @@ fn format_type_parameter<'source>(
             .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name)),
         parameter.bounds().map_or_else(jolt_fmt_ir::nil, |bounds| {
             concat([
-                text(" "),
+                space(),
                 bounds
                     .extends_token()
                     .as_ref()
                     .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
-                text(" "),
+                space(),
                 format_type_bounds(&bounds, formatter),
             ])
         }),
@@ -365,7 +366,7 @@ fn format_type_operator_separator<'source>(
     concat([
         line(),
         separator.map_or_else(
-            || concat([text(fallback_operator), text(" ")]),
+            || concat([text(fallback_operator), space()]),
             |separator| {
                 let forces_line = separator
                     .trailing_comments()
@@ -377,7 +378,7 @@ fn format_type_operator_separator<'source>(
                     if forces_line {
                         jolt_fmt_ir::nil()
                     } else {
-                        text(" ")
+                        space()
                     },
                 ])
             },
@@ -412,11 +413,11 @@ fn format_wildcard_type<'source>(
                 }
             };
             concat([
-                text(" "),
+                space(),
                 keyword
                     .as_ref()
                     .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
-                text(" "),
+                space(),
                 format_type(&bound, formatter),
             ])
         }),
@@ -442,7 +443,7 @@ fn format_array_dimension<'source>(
     }
 
     concat([
-        text(" "),
+        space(),
         format_inline_annotations(annotations, formatter),
         dimension
             .open_bracket()
@@ -474,9 +475,9 @@ pub(crate) fn format_inline_annotations<'source>(
 
     concat([
         jolt_fmt_ir::join(
-            &text(" "),
+            &space(),
             annotations.map(|annotation| format_annotation(&annotation, formatter)),
         ),
-        text(" "),
+        space(),
     ])
 }

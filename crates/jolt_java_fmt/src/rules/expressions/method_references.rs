@@ -1,8 +1,9 @@
 use super::{
     Doc, JavaFormatter, LeadingTrivia, MethodReferenceExpression, TrailingTrivia, concat,
     format_array_dimensions, format_expression, format_token, format_token_with_comments,
-    format_type, format_type_argument_list, group, hard_line, text, trailing_comments_force_line,
+    format_type, format_type_argument_list, group, hard_line, trailing_comments_force_line,
 };
+use jolt_fmt_ir::space;
 
 pub(super) fn format_method_reference_expression<'source>(
     expression: &MethodReferenceExpression<'source>,
@@ -46,7 +47,7 @@ fn format_method_reference_separator<'source>(
                 if trailing_comments_force_line(&separator) {
                     hard_line()
                 } else if has_trailing_comments {
-                    text(" ")
+                    space()
                 } else {
                     jolt_fmt_ir::nil()
                 },

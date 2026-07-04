@@ -2,8 +2,9 @@ use super::{
     CastExpression, Doc, InlineLeadingTrivia, InstanceofExpression, JavaFormatter, JavaSyntaxToken,
     LeadingTrivia, TrailingTrivia, concat, format_expression, format_pattern, format_token,
     format_token_with_comments, format_token_with_inline_leading_comments, format_type, group,
-    hard_line, line, text, trailing_comments_force_line,
+    hard_line, line, trailing_comments_force_line,
 };
+use jolt_fmt_ir::space;
 
 pub(super) fn format_cast_expression<'source>(
     expression: &CastExpression<'source>,
@@ -24,7 +25,7 @@ pub(super) fn format_cast_expression<'source>(
         {
             jolt_fmt_ir::nil()
         } else {
-            text(" ")
+            space()
         },
         expression
             .expression()
@@ -68,7 +69,7 @@ pub(super) fn format_instanceof_expression<'source>(
             .map_or_else(jolt_fmt_ir::nil, |expression| {
                 format_expression(&expression, formatter)
             }),
-        text(" "),
+        space(),
         expression
             .instanceof_token()
             .map_or_else(jolt_fmt_ir::nil, |token| format_instanceof_operator(&token)),
@@ -95,7 +96,7 @@ fn format_instanceof_operator<'source>(operator: &JavaSyntaxToken<'source>) -> D
         if trailing_comments_force_line(operator) {
             hard_line()
         } else {
-            text(" ")
+            space()
         },
     ])
 }

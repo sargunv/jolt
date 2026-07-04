@@ -2,19 +2,30 @@ use super::{
     AnnotationInterfaceDeclaration, ClassDeclaration, CommaListItem, Doc, EnumDeclaration,
     ExtendsClause, ImplementsClause, InterfaceDeclaration, JavaFormatter, JavaSyntaxToken,
     LeadingTrivia, ModifierList, PermitsClause, PermitsClauseEntry, RecordDeclaration,
-    TrailingTrivia, TypeClauseEntry, braced_body_tail, comma_list, comment_forces_line, concat,
+    TrailingTrivia, TypeClauseEntry, comma_list, comment_forces_line, concat,
     format_annotation_interface_body, format_class_body, format_construct_leading_comments,
     format_enum_body_contents, format_interface_body, format_leading_comment_list,
     format_modifier_prefix, format_name, format_record_body, format_record_component, format_token,
     format_token_with_comments, format_type_parameter_list, format_type_without_leading_comments,
-    group, hard_line, line, parenthesized_list, text,
+    group, hard_line, line, parenthesized_list, source_braced_body,
 };
 use crate::helpers::comments::format_token_after_relocated_leading_comments;
+use jolt_fmt_ir::space;
 
 pub(super) fn format_class_declaration<'source>(
     class: &ClassDeclaration<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
+    let body = class.body();
+    let open = body
+        .as_ref()
+        .and_then(jolt_java_syntax::ClassBody::open_brace);
+    let close = body
+        .as_ref()
+        .and_then(jolt_java_syntax::ClassBody::close_brace);
+    let body_doc = body
+        .as_ref()
+        .and_then(|body| format_class_body(body, formatter));
     format_type_declaration_with_body(
         class.first_token().as_ref(),
         class.modifiers(),
@@ -28,9 +39,9 @@ pub(super) fn format_class_declaration<'source>(
             format_implements_clause(class.implements_clause(), formatter),
             format_permits_clause(class.permits_clause()),
         ]),
-        class
-            .body()
-            .and_then(|body| format_class_body(&body, formatter)),
+        open,
+        close,
+        body_doc,
         formatter,
     )
 }
@@ -39,6 +50,16 @@ pub(super) fn format_interface_declaration<'source>(
     interface: &InterfaceDeclaration<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
+    let body = interface.body();
+    let open = body
+        .as_ref()
+        .and_then(jolt_java_syntax::InterfaceBody::open_brace);
+    let close = body
+        .as_ref()
+        .and_then(jolt_java_syntax::InterfaceBody::close_brace);
+    let body_doc = body
+        .as_ref()
+        .and_then(|body| format_interface_body(body, formatter));
     format_type_declaration_with_body(
         interface.first_token().as_ref(),
         interface.modifiers(),
@@ -51,9 +72,9 @@ pub(super) fn format_interface_declaration<'source>(
             format_extends_clause(interface.extends_clause(), formatter),
             format_permits_clause(interface.permits_clause()),
         ]),
-        interface
-            .body()
-            .and_then(|body| format_interface_body(&body, formatter)),
+        open,
+        close,
+        body_doc,
         formatter,
     )
 }
@@ -62,6 +83,16 @@ pub(super) fn format_record_declaration<'source>(
     record: &RecordDeclaration<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
+    let body = record.body();
+    let open = body
+        .as_ref()
+        .and_then(jolt_java_syntax::RecordBody::open_brace);
+    let close = body
+        .as_ref()
+        .and_then(jolt_java_syntax::RecordBody::close_brace);
+    let body_doc = body
+        .as_ref()
+        .and_then(|body| format_record_body(body, formatter));
     format_type_declaration_with_body(
         record.first_token().as_ref(),
         record.modifiers(),
@@ -74,9 +105,9 @@ pub(super) fn format_record_declaration<'source>(
             format_record_components(record, formatter),
             format_implements_clause(record.implements_clause(), formatter),
         ])),
-        record
-            .body()
-            .and_then(|body| format_record_body(&body, formatter)),
+        open,
+        close,
+        body_doc,
         formatter,
     )
 }
@@ -85,9 +116,16 @@ pub(super) fn format_enum_declaration<'source>(
     enum_: &EnumDeclaration<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    let body_doc = enum_
-        .body()
-        .and_then(|body| format_enum_body_contents(&body, formatter));
+    let body = enum_.body();
+    let open = body
+        .as_ref()
+        .and_then(jolt_java_syntax::EnumBody::open_brace);
+    let close = body
+        .as_ref()
+        .and_then(jolt_java_syntax::EnumBody::close_brace);
+    let body_doc = body
+        .as_ref()
+        .and_then(|body| format_enum_body_contents(body, formatter));
 
     format_type_declaration_with_body(
         enum_.first_token().as_ref(),
@@ -99,6 +137,8 @@ pub(super) fn format_enum_declaration<'source>(
                 .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name)),
             format_implements_clause(enum_.implements_clause(), formatter),
         ]),
+        open,
+        close,
         body_doc,
         formatter,
     )
@@ -108,6 +148,17 @@ pub(super) fn format_annotation_interface_declaration<'source>(
     annotation: &AnnotationInterfaceDeclaration<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
+    let body = annotation.body();
+    let open = body
+        .as_ref()
+        .and_then(jolt_java_syntax::AnnotationInterfaceBody::open_brace);
+    let close = body
+        .as_ref()
+        .and_then(jolt_java_syntax::AnnotationInterfaceBody::close_brace);
+    let body_doc = body
+        .as_ref()
+        .and_then(|body| format_annotation_interface_body(body, formatter));
+
     format_type_declaration_with_body(
         annotation.first_token().as_ref(),
         annotation.modifiers(),
@@ -122,9 +173,9 @@ pub(super) fn format_annotation_interface_declaration<'source>(
                 .name()
                 .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name)),
         ]),
-        annotation
-            .body()
-            .and_then(|body| format_annotation_interface_body(&body, formatter)),
+        open,
+        close,
+        body_doc,
         formatter,
     )
 }
@@ -133,7 +184,7 @@ fn format_keyword_with_space(keyword: Option<JavaSyntaxToken<'_>>) -> Doc<'_> {
     keyword.map_or_else(jolt_fmt_ir::nil, |keyword| {
         concat([
             format_token_after_relocated_leading_comments(&keyword, TrailingTrivia::Preserve),
-            text(" "),
+            space(),
         ])
     })
 }
@@ -142,6 +193,8 @@ fn format_type_declaration_with_body<'source>(
     first_token: Option<&jolt_java_syntax::JavaSyntaxToken<'source>>,
     modifiers: Option<ModifierList<'source>>,
     header_tail: Doc<'source>,
+    open_brace: Option<JavaSyntaxToken<'source>>,
+    close_brace: Option<JavaSyntaxToken<'source>>,
     body: Option<Doc<'source>>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
@@ -155,10 +208,8 @@ fn format_type_declaration_with_body<'source>(
             format_modifier_prefix(modifiers, formatter),
         ]),
         group(header_tail),
-        text(" "),
-        // Intentional synthesized token: member-body formatting currently returns contents only.
-        text("{"),
-        braced_body_tail(body),
+        space(),
+        source_braced_body(open_brace.as_ref(), close_brace.as_ref(), body),
     ])
 }
 

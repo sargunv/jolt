@@ -1,6 +1,7 @@
+use jolt_fmt_ir::space;
 use std::ops::Range;
 
-use jolt_fmt_ir::{Doc, concat, empty_line, hard_line, text};
+use jolt_fmt_ir::{Doc, concat, empty_line, hard_line};
 use jolt_java_syntax::{CompilationUnit, CompilationUnitItem, PackageDeclaration};
 
 use crate::context::JavaFormatter;
@@ -195,7 +196,7 @@ fn format_package_declaration<'source>(
         package
             .package_token()
             .map_or_else(jolt_fmt_ir::nil, |token| {
-                concat([format_token_with_comments(&token), text(" ")])
+                concat([format_token_with_comments(&token), space()])
             }),
         package
             .name()

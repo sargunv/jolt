@@ -1,12 +1,14 @@
+use jolt_fmt_ir::space;
 use std::cmp::Ordering;
 
-use jolt_fmt_ir::{Doc, concat, hard_line, indent, text};
+use jolt_fmt_ir::{Doc, concat, hard_line, indent};
 use jolt_java_syntax::{JavaComment, JavaSyntaxToken, NameSegment, NameSyntax};
 
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, comment_forces_line, format_comment, format_token,
     format_token_text, format_token_with_comments,
 };
+use crate::helpers::syntax_tokens::{NormalizedSyntaxToken, normalized_syntax_token};
 
 pub(crate) fn format_name<'source>(name: &NameSyntax<'source>) -> Doc<'source> {
     let segments = name.segments_with_annotations().collect::<Vec<_>>();
@@ -18,8 +20,7 @@ pub(crate) fn format_name<'source>(name: &NameSyntax<'source>) -> Doc<'source> {
     }
 
     jolt_fmt_ir::join(
-        // Intentional synthesized token: comment-free names normalize segment separators.
-        &text("."),
+        &normalized_syntax_token(".", NormalizedSyntaxToken::NameSeparator),
         segments
             .into_iter()
             .map(|segment| format_token_with_comments(&segment.identifier)),
@@ -174,7 +175,7 @@ fn format_leading_dot_comments<'source>(
 ) -> Doc<'source> {
     let mut docs = Vec::new();
     for comment in comments {
-        docs.push(text(" "));
+        docs.push(space());
         docs.push(format_comment(&comment));
         if comment_forces_line(&comment) {
             docs.push(hard_line());
@@ -188,12 +189,12 @@ fn format_inline_comments<'source>(
 ) -> Doc<'source> {
     let mut docs = Vec::new();
     for comment in comments {
-        docs.push(text(" "));
+        docs.push(space());
         docs.push(format_comment(&comment));
         if comment_forces_line(&comment) {
             docs.push(hard_line());
         } else {
-            docs.push(text(" "));
+            docs.push(space());
         }
     }
     concat(docs)

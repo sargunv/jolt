@@ -7,8 +7,9 @@ use super::{
     format_local_variable_declaration, format_separator_with_comments, format_statement_semicolon,
     format_token, format_token_with_comments, format_trailing_comments_before_line_break, group,
     hard_line, indent, line, soft_line, statement_body_as_block,
-    statement_body_trailing_comments_force_line, text, trailing_comments_force_line,
+    statement_body_trailing_comments_force_line, trailing_comments_force_line,
 };
+use jolt_fmt_ir::space;
 
 pub(super) fn format_if_statement<'source>(
     statement: &IfStatement<'source>,
@@ -23,7 +24,7 @@ pub(super) fn format_if_statement<'source>(
 
     concat([
         format_statement_keyword(statement.keyword(), "if"),
-        text(" "),
+        space(),
         format_parenthesized_statement_expression(
             open.as_ref(),
             statement
@@ -40,10 +41,10 @@ pub(super) fn format_if_statement<'source>(
                 if then_body_trailing_comments_force_line {
                     jolt_fmt_ir::nil()
                 } else {
-                    text(" ")
+                    space()
                 },
                 format_statement_keyword(statement.else_keyword(), "else"),
-                text(" "),
+                space(),
                 match else_body {
                     StatementBody::Unbraced(Statement::IfStatement(else_if)) => {
                         format_if_statement(&else_if, formatter)
@@ -93,7 +94,7 @@ fn format_condition_open_spacing<'source>(open: Option<&JavaSyntaxToken<'source>
         if trailing_comments_force_line(open) {
             hard_line()
         } else {
-            text(" ")
+            space()
         },
     ])
 }
@@ -131,7 +132,7 @@ pub(super) fn format_statement_header_body_separator<'source>(
     if close.is_some_and(trailing_comments_force_line) {
         jolt_fmt_ir::nil()
     } else {
-        text(" ")
+        space()
     }
 }
 
@@ -143,7 +144,7 @@ pub(super) fn format_while_statement<'source>(
     let close = statement.close_paren();
     concat([
         format_statement_keyword(statement.keyword(), "while"),
-        text(" "),
+        space(),
         format_parenthesized_statement_expression(
             open.as_ref(),
             statement
@@ -166,11 +167,11 @@ pub(super) fn format_do_statement<'source>(
     let close = statement.close_paren();
     concat([
         format_statement_keyword(statement.keyword(), "do"),
-        text(" "),
+        space(),
         statement_body_as_block(statement.statement_body().as_ref(), formatter),
-        text(" "),
+        space(),
         format_statement_keyword(statement.while_keyword(), "while"),
-        text(" "),
+        space(),
         format_parenthesized_statement_expression(
             open.as_ref(),
             statement
@@ -217,7 +218,7 @@ fn format_basic_for_statement<'source>(
     let header = if is_empty_header {
         concat([
             format_statement_keyword(statement.keyword(), "for"),
-            text(" "),
+            space(),
             format_condition_open_paren(open.as_ref()),
             format_inline_open_paren_spacing(open.as_ref()),
             format_for_header_semicolon(statement.first_semicolon()),
@@ -227,18 +228,16 @@ fn format_basic_for_statement<'source>(
     } else {
         group(concat([
             format_statement_keyword(statement.keyword(), "for"),
-            text(" "),
+            space(),
             format_condition_open_paren(open.as_ref()),
             indent(concat([
                 format_for_header_open_spacing(open.as_ref()),
-                jolt_fmt_ir::join(
-                    // Intentional synthesized token: inline for headers join the three clauses.
-                    &concat([text(";"), line()]),
-                    [
-                        initializer.unwrap_or_else(jolt_fmt_ir::nil),
-                        condition.unwrap_or_else(jolt_fmt_ir::nil),
-                        update.unwrap_or_else(jolt_fmt_ir::nil),
-                    ],
+                format_basic_for_header_clauses(
+                    initializer,
+                    statement.first_semicolon(),
+                    condition,
+                    statement.second_semicolon(),
+                    update,
                 ),
             ])),
             format_for_header_close_paren(close.as_ref()),
@@ -252,6 +251,26 @@ fn format_basic_for_statement<'source>(
     ])
 }
 
+fn format_basic_for_header_clauses<'source>(
+    initializer: Option<Doc<'source>>,
+    first_semicolon: Option<JavaSyntaxToken<'source>>,
+    condition: Option<Doc<'source>>,
+    second_semicolon: Option<JavaSyntaxToken<'source>>,
+    update: Option<Doc<'source>>,
+) -> Doc<'source> {
+    concat([
+        initializer.unwrap_or_else(jolt_fmt_ir::nil),
+        first_semicolon.map_or_else(jolt_fmt_ir::nil, |semicolon| {
+            format_separator_with_comments(&semicolon, line())
+        }),
+        condition.unwrap_or_else(jolt_fmt_ir::nil),
+        second_semicolon.map_or_else(jolt_fmt_ir::nil, |semicolon| {
+            format_separator_with_comments(&semicolon, line())
+        }),
+        update.unwrap_or_else(jolt_fmt_ir::nil),
+    ])
+}
+
 fn format_enhanced_for_statement<'source>(
     statement: &EnhancedForStatement<'source>,
     formatter: &JavaFormatter<'_>,
@@ -260,7 +279,7 @@ fn format_enhanced_for_statement<'source>(
     let close = statement.close_paren();
     concat([
         format_statement_keyword(statement.keyword(), "for"),
-        text(" "),
+        space(),
         group(concat([
             format_condition_open_paren(open.as_ref()),
             indent(concat([
@@ -270,12 +289,12 @@ fn format_enhanced_for_statement<'source>(
                     .map_or_else(jolt_fmt_ir::nil, |variable| {
                         format_local_variable_declaration(&variable, formatter)
                     }),
-                text(" "),
+                space(),
                 statement
                     .colon()
                     .as_ref()
                     .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
-                text(" "),
+                space(),
                 statement
                     .iterable()
                     .map_or_else(jolt_fmt_ir::nil, |iterable| {
@@ -342,7 +361,7 @@ fn format_inline_open_paren_spacing<'source>(
         if trailing_comments_force_line(open) {
             hard_line()
         } else {
-            text(" ")
+            space()
         },
     ])
 }
@@ -437,7 +456,7 @@ fn format_statement_expression_entries<'source>(
     for (index, entry) in entries.into_iter().enumerate() {
         docs.push(format_expression(&entry.expression, formatter));
         if let Some(comma) = entry.comma {
-            docs.push(format_separator_with_comments(&comma, text(" ")));
+            docs.push(format_separator_with_comments(&comma, space()));
         } else if index + 1 < entries_len {
             docs.push(line());
         }
@@ -454,7 +473,7 @@ pub(super) fn format_synchronized_statement<'source>(
     let close = statement.close_paren();
     concat([
         format_statement_keyword(statement.keyword(), "synchronized"),
-        text(" "),
+        space(),
         format_parenthesized_statement_expression(
             open.as_ref(),
             statement

@@ -3,8 +3,9 @@ use super::{
     format_annotation, format_block, format_expression, format_leading_comments,
     format_separator_with_comments, format_token_text, format_token_with_comments,
     format_trailing_comments_before_line_break, format_type, hard_line,
-    inline_modifier_prefix_from_docs, text, token_iter_has_comments,
+    inline_modifier_prefix_from_docs, token_iter_has_comments,
 };
+use jolt_fmt_ir::space;
 
 pub(super) fn format_lambda_expression<'source>(
     expression: &LambdaExpression<'source>,
@@ -30,7 +31,7 @@ fn format_lambda_arrow<'source>(expression: &LambdaExpression<'source>) -> Doc<'
     };
 
     if arrow.leading_comments().is_empty() && arrow.trailing_comments().is_empty() {
-        return concat([text(" "), format_separator_with_comments(&arrow, text(" "))]);
+        return concat([space(), format_separator_with_comments(&arrow, space())]);
     }
 
     let forced_line = arrow
@@ -38,11 +39,11 @@ fn format_lambda_arrow<'source>(expression: &LambdaExpression<'source>) -> Doc<'
         .any(|comment| comment_forces_line(&comment));
 
     concat([
-        text(" "),
+        space(),
         format_leading_comments(&arrow),
         format_token_text(arrow.text()),
         format_trailing_comments_before_line_break(&arrow),
-        if forced_line { hard_line() } else { text(" ") },
+        if forced_line { hard_line() } else { space() },
     ])
 }
 
@@ -99,18 +100,29 @@ fn format_lambda_parameters<'source>(
         parameter_list
             .as_ref()
             .map_or_else(jolt_fmt_ir::nil, |parameters| {
-                jolt_fmt_ir::join(
-                    // Intentional synthesized token: implicit lambda parameters have no comma tokens.
-                    &text(", "),
-                    parameters
-                        .parameters()
-                        .map(|parameter| format_lambda_parameter(&parameter, formatter)),
-                )
+                format_lambda_parameter_entries(parameters, formatter)
             }),
         close
             .as_ref()
             .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
     ])
+}
+
+fn format_lambda_parameter_entries<'source>(
+    parameters: &jolt_java_syntax::LambdaParameterList<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
+    let mut docs = Vec::new();
+    let mut entries = parameters.entries().peekable();
+    while let Some(entry) = entries.next() {
+        docs.push(format_lambda_parameter(&entry.parameter, formatter));
+        if let Some(comma) = entry.comma {
+            docs.push(format_separator_with_comments(&comma, space()));
+        } else if entries.peek().is_some() {
+            docs.push(space());
+        }
+    }
+    concat(docs)
 }
 
 fn is_simple_untyped_lambda_parameter(parameter: &LambdaParameter<'_>) -> bool {
@@ -161,20 +173,20 @@ fn format_lambda_parameter<'source>(
         if parameter.is_variable_arity() {
             if let Some(ellipsis) = parameter.ellipsis_token() {
                 if varargs_annotations.is_empty() {
-                    concat([format_token_with_comments(&ellipsis), text(" ")])
+                    concat([format_token_with_comments(&ellipsis), space()])
                 } else {
                     concat([
-                        text(" "),
+                        space(),
                         inline_modifier_prefix_from_docs(varargs_annotations, Vec::new()),
                         format_token_with_comments(&ellipsis),
-                        text(" "),
+                        space(),
                     ])
                 }
             } else {
                 jolt_fmt_ir::nil()
             }
         } else {
-            text(" ")
+            space()
         },
         name,
     ])

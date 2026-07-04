@@ -5,12 +5,19 @@ use super::member_bodies::{
 };
 use super::{
     ClassBodyMember, Doc, EnumConstant, FormattedMember, JavaFormatter, JavaSyntaxToken,
-    braced_body, comment_forces_line, comment_is_star_block, comments_from_tokens, concat,
-    format_argument_list, format_class_body, format_comment, format_dangling_comments,
-    format_modifier_prefix_from_parts, format_removed_comments, format_token_with_comments,
-    formatter_ignore_ranges, hard_line, is_formatter_control_marker, text,
+    comment_forces_line, comment_is_star_block, comments_from_tokens, concat, format_argument_list,
+    format_class_body, format_comment, format_dangling_comments, format_modifier_prefix_from_parts,
+    format_removed_comments, format_token_with_comments, formatter_ignore_ranges, hard_line,
+    is_formatter_control_marker, source_braced_body,
 };
-use crate::helpers::comments::format_leading_comments;
+use crate::helpers::comments::{
+    LeadingTrivia, TrailingTrivia, format_leading_comments, format_token,
+};
+use crate::helpers::syntax_tokens::{
+    InsertedSyntaxToken, NormalizedSyntaxToken, format_token_with_normalized_text,
+    inserted_syntax_token,
+};
+use jolt_fmt_ir::space;
 
 struct FormattedEnumConstant<'source> {
     doc: Doc<'source>,
@@ -31,6 +38,7 @@ pub(super) fn format_enum_body_contents<'source>(
     let has_body_declarations = body
         .members()
         .any(|member| !matches!(member, ClassBodyMember::EmptyDeclaration(_)));
+    let body_declaration_separator = body.body_declaration_separator();
     let open_comments = combine_comment_members(
         combine_comment_members(
             format_body_open_dangling_comments(body.open_brace()),
@@ -88,6 +96,9 @@ pub(super) fn format_enum_body_contents<'source>(
                 entry.doc,
                 format_enum_constant_separator(
                     entry.comma.as_ref(),
+                    (has_body_declarations && is_last_constant)
+                        .then_some(body_declaration_separator.as_ref())
+                        .flatten(),
                     separator,
                     !has_body_declarations || !is_last_constant,
                 ),
@@ -114,10 +125,11 @@ pub(super) fn format_enum_body_contents<'source>(
             Some(concat([constants, jolt_fmt_ir::empty_line(), members]))
         }
         (Some(constants), None) => Some(constants),
-        (None, Some(members)) if has_body_declarations => {
-            // Intentional synthesized token: enum body declarations require the separator.
-            Some(concat([text(";"), jolt_fmt_ir::empty_line(), members]))
-        }
+        (None, Some(members)) if has_body_declarations => Some(concat([
+            format_enum_body_declaration_separator(body_declaration_separator.as_ref()),
+            jolt_fmt_ir::empty_line(),
+            members,
+        ])),
         (None, Some(members)) => Some(members),
         (None, None) => None,
     }
@@ -135,25 +147,54 @@ fn format_enum_constant_entry<'source>(
 
 fn format_enum_constant_separator<'source>(
     comma: Option<&JavaSyntaxToken<'source>>,
+    body_declaration_separator: Option<&JavaSyntaxToken<'source>>,
     separator: &'static str,
     include_trailing_comments: bool,
 ) -> Doc<'source> {
-    comma.map_or_else(
-        || {
-            // Intentional synthesized token: enum constants need the selected separator.
-            text(separator)
+    if let Some(body_declaration_separator) = body_declaration_separator {
+        return format_enum_body_declaration_separator(Some(body_declaration_separator));
+    }
+
+    let Some(comma) = comma else {
+        return inserted_syntax_token(separator, InsertedSyntaxToken::MissingSource);
+    };
+
+    concat([
+        format_leading_comments(comma),
+        if comma.text() == separator {
+            format_token(
+                comma,
+                LeadingTrivia::SuppressAlreadyHandled,
+                TrailingTrivia::RelocatedToEnclosingContext,
+            )
+        } else {
+            format_token_with_normalized_text(
+                comma,
+                separator,
+                NormalizedSyntaxToken::EnumSeparator,
+                LeadingTrivia::SuppressAlreadyHandled,
+                TrailingTrivia::RelocatedToEnclosingContext,
+            )
         },
-        |comma| {
-            concat([
-                format_leading_comments(comma),
-                // Intentional synthesized token: normalize comma vs semicolon before enum members.
-                text(separator),
-                if include_trailing_comments {
-                    format_enum_separator_inline_trailing_comments(comma)
-                } else {
-                    jolt_fmt_ir::nil()
-                },
-            ])
+        if include_trailing_comments {
+            format_enum_separator_inline_trailing_comments(comma)
+        } else {
+            jolt_fmt_ir::nil()
+        },
+    ])
+}
+
+fn format_enum_body_declaration_separator<'source>(
+    separator: Option<&JavaSyntaxToken<'source>>,
+) -> Doc<'source> {
+    separator.map_or_else(
+        || inserted_syntax_token(";", InsertedSyntaxToken::MissingSource),
+        |separator| {
+            format_token(
+                separator,
+                LeadingTrivia::SuppressAlreadyHandled,
+                TrailingTrivia::RelocatedToEnclosingContext,
+            )
         },
     )
 }
@@ -166,7 +207,7 @@ fn format_enum_separator_inline_trailing_comments<'source>(
         .trailing_comments()
         .filter(|comment| !enum_separator_comment_moves(comment))
     {
-        docs.push(text(" "));
+        docs.push(space());
         docs.push(format_comment(&comment));
     }
     concat(docs)
@@ -202,7 +243,16 @@ fn format_enum_constant<'source>(
                 format_argument_list(Some(arguments), formatter)
             }),
         constant.body().map_or_else(jolt_fmt_ir::nil, |body| {
-            concat([text(" "), braced_body(format_class_body(&body, formatter))])
+            let open = body.open_brace();
+            let close = body.close_brace();
+            concat([
+                space(),
+                source_braced_body(
+                    open.as_ref(),
+                    close.as_ref(),
+                    format_class_body(&body, formatter),
+                ),
+            ])
         }),
     ])
 }

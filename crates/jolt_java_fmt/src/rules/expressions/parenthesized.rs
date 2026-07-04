@@ -1,8 +1,9 @@
 use super::{
     Doc, JavaFormatter, LeadingTrivia, ParenthesizedExpression, TrailingTrivia,
     comment_forces_line, concat, format_expression, format_token, format_token_with_comments,
-    format_trailing_comments_before_line_break, group, hard_line, indent, line, soft_line, text,
+    format_trailing_comments_before_line_break, group, hard_line, indent, line, soft_line,
 };
+use jolt_fmt_ir::space;
 
 pub(super) fn format_parenthesized_expression<'source>(
     expression: &ParenthesizedExpression<'source>,
@@ -55,7 +56,7 @@ fn format_open_parenthesized_expression_spacing<'source>(
         {
             hard_line()
         } else {
-            text(" ")
+            space()
         },
     ])
 }

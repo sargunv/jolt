@@ -3,8 +3,9 @@ use super::{
     LeadingComments, LeadingTrivia, MethodInvocationExpression, TrailingTrivia, concat,
     format_argument_list, format_expression_with_leading_comments, format_leading_comments,
     format_token, format_token_with_comments, format_type_argument_list, group, hard_line, indent,
-    soft_line, text, trailing_comments_force_line,
+    soft_line, trailing_comments_force_line,
 };
+use jolt_fmt_ir::space;
 
 struct MemberChainBuilder<'source> {
     root: Option<Expression<'source>>,
@@ -189,7 +190,7 @@ pub(super) fn format_member_dot<'source>(dot: Option<&JavaSyntaxToken<'source>>)
             } else if dot.trailing_comments().is_empty() {
                 jolt_fmt_ir::nil()
             } else {
-                text(" ")
+                space()
             },
         ])
     })

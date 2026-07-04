@@ -4,8 +4,9 @@ use super::{
     TemplateExpression, ThisExpression, TrailingTrivia, concat, format_annotation,
     format_array_dimensions, format_expression, format_member_dot, format_token,
     format_token_after_relocated_leading_comments, format_token_with_inline_leading_comments,
-    format_void_type, hard_line, text,
+    format_void_type, hard_line,
 };
+use jolt_fmt_ir::space;
 
 pub(super) fn format_literal_expression<'source>(
     expression: &LiteralExpression<'source>,
@@ -53,7 +54,7 @@ pub(super) fn format_name_expression<'source>(
     if annotations.is_empty() {
         name
     } else {
-        concat([jolt_fmt_ir::join(&text(" "), annotations), text(" "), name])
+        concat([jolt_fmt_ir::join(&space(), annotations), space(), name])
     }
 }
 
@@ -175,7 +176,7 @@ fn format_class_literal_dot<'source>(dot: &JavaSyntaxToken<'source>) -> Doc<'sou
         } else if dot.trailing_comments().is_empty() {
             jolt_fmt_ir::nil()
         } else {
-            text(" ")
+            space()
         },
     ])
 }

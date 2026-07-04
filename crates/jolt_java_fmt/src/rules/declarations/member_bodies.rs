@@ -8,8 +8,9 @@ use super::{
     format_method_declaration, format_record_declaration, format_removed_comments,
     format_token_with_comments, formatter_ignore_ranges, formatter_ignore_run_doc,
     formatter_ignore_runs, hard_line, has_removed_comments, join_member_docs,
-    relative_token_range_between, text,
+    relative_token_range_between,
 };
+use jolt_fmt_ir::space;
 
 pub(super) fn format_class_body<'source>(
     body: &ClassBody<'source>,
@@ -468,7 +469,7 @@ impl<'source> FormattedMember<'source> {
                         .static_token()
                         .as_ref()
                         .map_or_else(jolt_fmt_ir::nil, |token| {
-                            concat([format_token_with_comments(token), text(" ")])
+                            concat([format_token_with_comments(token), space()])
                         }),
                     member
                         .body()

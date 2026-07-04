@@ -1,4 +1,5 @@
-use jolt_fmt_ir::{Doc, concat, empty_line, hard_line, text};
+use jolt_fmt_ir::space;
+use jolt_fmt_ir::{Doc, concat, empty_line, hard_line};
 use jolt_java_syntax::{ImportDeclaration, ImportKind};
 
 use crate::helpers::blocks::join_hard_lines;
@@ -103,18 +104,18 @@ impl<'source> FormattedImport<'source> {
                             token,
                             TrailingTrivia::Preserve,
                         ),
-                        text(" "),
+                        space(),
                     ])
                 }),
             self.module_token
                 .as_ref()
                 .map_or_else(jolt_fmt_ir::nil, |token| {
-                    concat([format_token_with_comments(token), text(" ")])
+                    concat([format_token_with_comments(token), space()])
                 }),
             self.static_token
                 .as_ref()
                 .map_or_else(jolt_fmt_ir::nil, |token| {
-                    concat([format_token_with_comments(token), text(" ")])
+                    concat([format_token_with_comments(token), space()])
                 }),
             self.path_doc,
             self.semicolon

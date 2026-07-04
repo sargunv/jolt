@@ -6,9 +6,9 @@ use super::{
     braced_comma_list_with_trailing_separator, comment_forces_line, concat,
     format_anonymous_class_body, format_expression, format_token, format_token_with_comments,
     format_token_with_inline_leading_comments, format_trailing_comments_before_line_break,
-    format_type, format_type_argument_list, group, hard_line, indent, text,
-    trailing_comments_force_line,
+    format_type, format_type_argument_list, group, hard_line, indent, trailing_comments_force_line,
 };
+use jolt_fmt_ir::space;
 
 pub(super) fn format_array_access_expression<'source>(
     expression: &ArrayAccessExpression<'source>,
@@ -51,14 +51,14 @@ pub(super) fn format_object_creation_expression<'source>(
         expression
             .constructor_type_arguments()
             .map_or_else(jolt_fmt_ir::nil, |arguments| {
-                concat([format_type_argument_list(&arguments, formatter), text(" ")])
+                concat([format_type_argument_list(&arguments, formatter), space()])
             }),
         expression
             .ty()
             .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty, formatter)),
         format_argument_list(expression.arguments(), formatter),
         expression.body().map_or_else(jolt_fmt_ir::nil, |body| {
-            concat([text(" "), format_anonymous_class_body(&body, formatter)])
+            concat([space(), format_anonymous_class_body(&body, formatter)])
         }),
     ]))
 }
@@ -80,7 +80,7 @@ pub(super) fn format_array_creation_expression<'source>(
         expression
             .initializer()
             .map_or_else(jolt_fmt_ir::nil, |initializer| {
-                concat([text(" "), format_array_initializer(&initializer, formatter)])
+                concat([space(), format_array_initializer(&initializer, formatter)])
             }),
     ]))
 }
@@ -98,7 +98,7 @@ fn format_creation_new_keyword<'source>(
             if trailing_comments_force_line(keyword) {
                 hard_line()
             } else {
-                text(" ")
+                space()
             },
         ])
     })
@@ -161,7 +161,7 @@ fn format_open_bracket_spacing<'source>(open: Option<&JavaSyntaxToken<'source>>)
         {
             hard_line()
         } else {
-            text(" ")
+            space()
         },
     ])
 }

@@ -1,15 +1,16 @@
 use super::{
     AnnotationElementDeclaration, CommaListItem, Doc, FormalParameterList, JavaFormatter,
     JavaSyntaxToken, LeadingTrivia, MethodDeclaration, ThrowsClause, ThrowsClauseEntry,
-    TrailingTrivia, braced_body, comment_forces_line, concat, format_annotation_element_value,
+    TrailingTrivia, comment_forces_line, concat, format_annotation_element_value,
     format_array_dimensions, format_block, format_construct_leading_comments,
     format_constructor_body, format_formal_parameter, format_inline_annotations,
     format_modifier_prefix, format_receiver_parameter, format_separator_with_comments,
     format_statement_semicolon, format_token, format_token_after_construct_leading_comments,
     format_token_with_comments, format_type, format_type_parameter_list,
     format_type_without_leading_comments, format_typed_modifier_prefix, group, hard_line, line,
-    parenthesized_list, text,
+    parenthesized_list, source_braced_body,
 };
+use jolt_fmt_ir::space;
 
 pub(super) fn format_constructor_declaration<'source>(
     constructor: &jolt_java_syntax::ConstructorDeclaration<'source>,
@@ -26,7 +27,7 @@ pub(super) fn format_constructor_declaration<'source>(
     let header = concat([
         format_type_parameter_list(type_parameters, formatter),
         if has_type_parameters {
-            text(" ")
+            space()
         } else {
             jolt_fmt_ir::nil()
         },
@@ -43,11 +44,17 @@ pub(super) fn format_constructor_declaration<'source>(
     ]);
 
     match constructor.body() {
-        Some(body) => callable_declaration_with_body(
-            prefix,
-            header,
-            format_constructor_body(&body, formatter),
-        ),
+        Some(body) => {
+            let open = body.open_brace();
+            let close = body.close_brace();
+            callable_declaration_with_body(
+                prefix,
+                header,
+                open.as_ref(),
+                close.as_ref(),
+                format_constructor_body(&body, formatter),
+            )
+        }
         None => concat([prefix, group(header)]),
     }
 }
@@ -62,11 +69,17 @@ pub(super) fn format_compact_constructor_declaration<'source>(
         .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name));
 
     match constructor.body() {
-        Some(body) => callable_declaration_with_body(
-            prefix,
-            header,
-            format_constructor_body(&body, formatter),
-        ),
+        Some(body) => {
+            let open = body.open_brace();
+            let close = body.close_brace();
+            callable_declaration_with_body(
+                prefix,
+                header,
+                open.as_ref(),
+                close.as_ref(),
+                format_constructor_body(&body, formatter),
+            )
+        }
         None => concat([prefix, group(header)]),
     }
 }
@@ -98,7 +111,7 @@ pub(super) fn format_method_declaration<'source>(
     let header = concat([
         format_type_parameter_list(type_parameters, formatter),
         if has_type_parameters {
-            text(" ")
+            space()
         } else {
             jolt_fmt_ir::nil()
         },
@@ -109,7 +122,7 @@ pub(super) fn format_method_declaration<'source>(
             .map_or_else(jolt_fmt_ir::nil, |return_type| {
                 format_type_without_leading_comments(&return_type, formatter)
             }),
-        text(" "),
+        space(),
         name_and_parameters,
         format_throws_clause(throws, formatter),
     ]);
@@ -136,7 +149,7 @@ pub(super) fn format_annotation_element_declaration<'source>(
             element
                 .ty()
                 .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty, formatter)),
-            text(" "),
+            space(),
             element
                 .name()
                 .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name)),
@@ -158,11 +171,11 @@ fn format_annotation_element_default<'source>(
 ) -> Doc<'source> {
     default.map_or_else(jolt_fmt_ir::nil, |default| {
         concat([
-            text(" "),
+            space(),
             default
                 .default_token()
                 .map_or_else(jolt_fmt_ir::nil, |token| {
-                    concat([format_token_with_comments(&token), text(" ")])
+                    concat([format_token_with_comments(&token), space()])
                 }),
             default.value().map_or_else(jolt_fmt_ir::nil, |value| {
                 format_annotation_element_value(&value, formatter)
@@ -220,9 +233,16 @@ fn format_empty_parameters<'source>(
 fn callable_declaration_with_body<'source>(
     prefix: Doc<'source>,
     header: Doc<'source>,
+    open: Option<&JavaSyntaxToken<'source>>,
+    close: Option<&JavaSyntaxToken<'source>>,
     body: Option<Doc<'source>>,
 ) -> Doc<'source> {
-    concat([prefix, group(header), text(" "), braced_body(body)])
+    concat([
+        prefix,
+        group(header),
+        space(),
+        source_braced_body(open, close, body),
+    ])
 }
 
 fn callable_declaration_with_body_doc<'source>(
@@ -230,7 +250,7 @@ fn callable_declaration_with_body_doc<'source>(
     header: Doc<'source>,
     body: Doc<'source>,
 ) -> Doc<'source> {
-    concat([prefix, group(header), text(" "), body])
+    concat([prefix, group(header), space(), body])
 }
 
 fn format_throws_clause<'source>(
@@ -271,7 +291,7 @@ fn format_throws_keyword_spacing<'source>(throws: &ThrowsClause<'source>) -> Doc
     }) {
         hard_line()
     } else {
-        text(" ")
+        space()
     }
 }
 

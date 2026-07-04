@@ -1,4 +1,5 @@
-use jolt_fmt_ir::{Doc, concat, text};
+use jolt_fmt_ir::space;
+use jolt_fmt_ir::{Doc, concat};
 use jolt_java_syntax::{
     Annotation, AnnotationArgument, AnnotationArgumentList, AnnotationArrayInitializer,
     AnnotationElementValue, AnnotationElementValuePair,
@@ -100,10 +101,10 @@ fn format_annotation_element_value_pair<'source>(
     concat([
         pair.name()
             .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name)),
-        text(" "),
+        space(),
         pair.equals_token()
             .map_or_else(jolt_fmt_ir::nil, |token| format_token_with_comments(&token)),
-        text(" "),
+        space(),
         pair.value().map_or_else(jolt_fmt_ir::nil, |value| {
             format_annotation_element_value(&value, formatter)
         }),

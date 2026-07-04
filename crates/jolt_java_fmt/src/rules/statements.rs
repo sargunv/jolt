@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, concat, group, hard_line, indent, line, soft_line, text};
+use jolt_fmt_ir::{Doc, concat, group, hard_line, indent, line, soft_line};
 use jolt_java_syntax::{
     AssertStatement, BasicForStatement, Block, BlockItem, BlockStatement, CatchClause,
     CatchParameter, CatchTypeList, DoStatement, EnhancedForStatement, Expression,
@@ -13,7 +13,7 @@ use std::ops::Range;
 
 use crate::context::JavaFormatter;
 use crate::helpers::blocks::{
-    BodyItem, braced_body, empty_block, join_body_items, join_hard_lines,
+    BodyItem, empty_block, inserted_braced_body, join_body_items, join_hard_lines,
 };
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, comment_forces_line, comments_from_tokens,
@@ -103,7 +103,7 @@ fn statement_body_as_block<'source>(
         Some(StatementBody::Block(block)) => format_block(block, formatter),
         Some(StatementBody::Empty(_)) | None => empty_block(),
         Some(StatementBody::Unbraced(statement)) => {
-            braced_body(Some(format_statement(statement, formatter)))
+            inserted_braced_body(Some(format_statement(statement, formatter)))
         }
     }
 }

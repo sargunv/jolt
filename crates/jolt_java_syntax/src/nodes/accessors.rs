@@ -20,29 +20,30 @@ use super::{
     ImportDeclaration, ImportKind, InstanceInitializer, InstanceofExpression, InterfaceBody,
     InterfaceBodyMember, InterfaceDeclaration, IntersectionType, IntersectionTypeEntry, JavaFamily,
     JavaNode, JavaOperator, JavaOperatorKind, JavaOperatorPattern, JavaSyntaxKind, JavaSyntaxToken,
-    LabeledStatement, LambdaExpression, LambdaParameter, LambdaParameterList, LiteralExpression,
-    LocalClassOrInterfaceDeclaration, LocalVariableDeclaration, MatchAllPattern, MethodDeclaration,
-    MethodInvocationExpression, MethodReferenceExpression, ModifierEntry, ModifierList,
-    ModuleDeclaration, ModuleDirective, ModuleDirectiveNode, ModuleDirectiveRole,
-    ModuleNameListEntry, NameExpression, NameSegment, NameSyntax, ObjectCreationExpression,
-    OpensDirective, PackageDeclaration, ParenthesizedExpression, Pattern, PermitsClause,
-    PermitsClauseEntry, PostfixExpression, PrimitiveType, ProvidesDirective, ReceiverParameter,
-    RecordBody, RecordComponent, RecordComponentList, RecordComponentListEntry, RecordDeclaration,
-    RecordPattern, RecordPatternComponentEntry, RequiresDirective, Resource, ResourceList,
-    ResourceListEntry, ResourceSpecification, ReturnStatement, Statement, StatementBody,
-    StatementExpressionEntry, StatementExpressionList, StaticInitializer, SuperExpression,
-    SwitchBlock, SwitchBlockEntry, SwitchBlockStatementGroup, SwitchBlockStatementGroupLabel,
-    SwitchExpression, SwitchLabel, SwitchLabelCaseEntry, SwitchLabelCaseItem, SwitchRule,
-    SwitchStatement, SynchronizedStatement, TemplateExpression, ThisExpression, ThrowStatement,
-    ThrowsClause, ThrowsClauseEntry, TryStatement, TryWithResourcesStatement, Type, TypeArgument,
-    TypeArgumentList, TypeArgumentListEntry, TypeBoundList, TypeClauseEntry, TypeDeclaration,
-    TypeParameter, TypeParameterList, TypeParameterListEntry, TypePattern, UnaryExpression,
-    UnionType, UnionTypeEntry, UsesDirective, VariableAccess, VariableDeclarator,
-    VariableDeclaratorEntry, VariableDeclaratorList, VariableInitializer, VariableInitializerValue,
-    VoidType, WhileStatement, WildcardBound, WildcardType, YieldStatement,
-    assignment_operator_kind, binary_operator_kind, child, child_family, child_token,
-    child_token_in, children, children_family, children_tokens_matching, nth_child_family,
-    nth_child_token, starts_after_blank_line,
+    LabeledStatement, LambdaExpression, LambdaParameter, LambdaParameterList,
+    LambdaParameterListEntry, LiteralExpression, LocalClassOrInterfaceDeclaration,
+    LocalVariableDeclaration, MatchAllPattern, MethodDeclaration, MethodInvocationExpression,
+    MethodReferenceExpression, ModifierEntry, ModifierList, ModuleDeclaration, ModuleDirective,
+    ModuleDirectiveNode, ModuleDirectiveRole, ModuleNameListEntry, NameExpression, NameSegment,
+    NameSyntax, ObjectCreationExpression, OpensDirective, PackageDeclaration,
+    ParenthesizedExpression, Pattern, PermitsClause, PermitsClauseEntry, PostfixExpression,
+    PrimitiveType, ProvidesDirective, ReceiverParameter, RecordBody, RecordComponent,
+    RecordComponentList, RecordComponentListEntry, RecordDeclaration, RecordPattern,
+    RecordPatternComponentEntry, RequiresDirective, Resource, ResourceList, ResourceListEntry,
+    ResourceSpecification, ReturnStatement, Statement, StatementBody, StatementExpressionEntry,
+    StatementExpressionList, StaticInitializer, SuperExpression, SwitchBlock, SwitchBlockEntry,
+    SwitchBlockStatementGroup, SwitchBlockStatementGroupLabel, SwitchExpression, SwitchLabel,
+    SwitchLabelCaseEntry, SwitchLabelCaseItem, SwitchRule, SwitchStatement, SynchronizedStatement,
+    TemplateExpression, ThisExpression, ThrowStatement, ThrowsClause, ThrowsClauseEntry,
+    TryStatement, TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList,
+    TypeArgumentListEntry, TypeBoundList, TypeClauseEntry, TypeDeclaration, TypeParameter,
+    TypeParameterList, TypeParameterListEntry, TypePattern, UnaryExpression, UnionType,
+    UnionTypeEntry, UsesDirective, VariableAccess, VariableDeclarator, VariableDeclaratorEntry,
+    VariableDeclaratorList, VariableInitializer, VariableInitializerValue, VoidType,
+    WhileStatement, WildcardBound, WildcardType, YieldStatement, assignment_operator_kind,
+    binary_operator_kind, child, child_family, child_token, child_token_in, children,
+    children_family, children_tokens_matching, nth_child_family, nth_child_token,
+    starts_after_blank_line,
 };
 use crate::{JavaSyntaxNode, language::JavaLanguage};
 use jolt_syntax::SyntaxElement;
@@ -291,13 +292,11 @@ impl<'source> RecordDeclaration<'source> {
     #[must_use]
     pub fn open_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LParen)
-            .or_else(|| previous_sibling_token(&self.syntax, JavaSyntaxKind::LParen))
     }
 
     #[must_use]
     pub fn close_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RParen)
-            .or_else(|| next_sibling_token(&self.syntax, JavaSyntaxKind::RParen))
     }
 
     #[must_use]
@@ -921,11 +920,13 @@ impl<'source> AnnotationElementDeclaration<'source> {
     #[must_use]
     pub fn open_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LParen)
+            .or_else(|| previous_sibling_token(&self.syntax, JavaSyntaxKind::LParen))
     }
 
     #[must_use]
     pub fn close_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RParen)
+            .or_else(|| next_sibling_token(&self.syntax, JavaSyntaxKind::RParen))
     }
 
     #[must_use]
@@ -985,6 +986,11 @@ impl<'source> EnumBody<'source> {
         &self,
     ) -> impl Iterator<Item = JavaSyntaxToken<'source>> + use<'source> {
         children_tokens_matching(&self.syntax, |kind| kind == JavaSyntaxKind::Semicolon)
+    }
+
+    #[must_use]
+    pub fn body_declaration_separator(&self) -> Option<JavaSyntaxToken<'source>> {
+        child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 }
 
@@ -2525,15 +2531,28 @@ impl<'source> LambdaParameterList<'source> {
     #[must_use]
     pub fn open_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LParen)
+            .or_else(|| previous_sibling_token(&self.syntax, JavaSyntaxKind::LParen))
     }
 
     #[must_use]
     pub fn close_paren(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::RParen)
+            .or_else(|| next_sibling_token(&self.syntax, JavaSyntaxKind::RParen))
     }
 
     pub fn parameters(&self) -> impl Iterator<Item = LambdaParameter<'source>> + use<'source> {
         children(&self.syntax)
+    }
+
+    pub fn entries(
+        &self,
+    ) -> impl Iterator<Item = LambdaParameterListEntry<'source>> + use<'source, '_> {
+        separated_entries(
+            self.syntax.children_with_tokens(),
+            JavaSyntaxKind::Comma,
+            LambdaParameter::cast,
+            |parameter, comma| LambdaParameterListEntry { parameter, comma },
+        )
     }
 }
 

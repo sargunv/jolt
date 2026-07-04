@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-use jolt_fmt_ir::{Doc, concat, group, hard_line, line, text};
+use jolt_fmt_ir::{Doc, concat, group, hard_line, line};
 use jolt_java_syntax::{
     AnnotationElementDeclaration, AnnotationInterfaceBodyMember, AnnotationInterfaceDeclaration,
     BlockStatement, ClassBody, ClassBodyMember, ClassDeclaration, ConstructorInvocation,
@@ -11,7 +11,7 @@ use jolt_java_syntax::{
 };
 
 use crate::context::JavaFormatter;
-use crate::helpers::blocks::{BodyItem, braced_body, braced_body_tail, join_body_items};
+use crate::helpers::blocks::{BodyItem, join_body_items, source_braced_body};
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, comment_forces_line, comment_is_star_block,
     comments_from_tokens, format_comment, format_construct_leading_comments,
@@ -87,5 +87,11 @@ pub(crate) fn format_anonymous_class_body<'source>(
     body: &ClassBody<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    braced_body(format_class_body(body, formatter))
+    let open = body.open_brace();
+    let close = body.close_brace();
+    source_braced_body(
+        open.as_ref(),
+        close.as_ref(),
+        format_class_body(body, formatter),
+    )
 }

@@ -1,6 +1,5 @@
-use jolt_fmt_ir::{
-    Doc, concat, force_group, group, hard_line, if_break, indent, line, soft_line, text,
-};
+use jolt_fmt_ir::space;
+use jolt_fmt_ir::{Doc, concat, force_group, group, hard_line, if_break, indent, line, soft_line};
 use jolt_java_syntax::JavaSyntaxToken;
 
 use crate::helpers::comments::{
@@ -10,6 +9,7 @@ use crate::helpers::comments::{
     format_token_with_inline_leading_comments, has_delimiter_dangling_comments,
     trailing_comments_force_line,
 };
+use crate::helpers::syntax_tokens::{InsertedSyntaxToken, inserted_syntax_token};
 
 pub(crate) struct CommaListItem<'source> {
     pub(crate) doc: Doc<'source>,
@@ -152,8 +152,10 @@ fn comma_list_with_trailing_separator(items: Vec<CommaListItem<'_>>) -> Doc<'_> 
         } else if index + 1 < items_len {
             docs.push(line());
         } else {
-            // Intentional synthesized token: insert a trailing comma only in broken layout.
-            docs.push(if_break(text(","), jolt_fmt_ir::nil()));
+            docs.push(if_break(
+                inserted_syntax_token(",", InsertedSyntaxToken::TrailingComma),
+                jolt_fmt_ir::nil(),
+            ));
         }
     }
 
@@ -176,14 +178,14 @@ fn trailing_comma_separator<'source>(
         ),
         if is_last {
             if has_trailing_comments && !force_line {
-                text(" ")
+                space()
             } else {
                 jolt_fmt_ir::nil()
             }
         } else if force_line {
             hard_line()
         } else if has_trailing_comments {
-            text(" ")
+            space()
         } else {
             line()
         },

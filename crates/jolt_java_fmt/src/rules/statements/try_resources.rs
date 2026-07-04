@@ -7,8 +7,9 @@ use super::{
     format_dangling_comments, format_expression, format_local_variable_declaration,
     format_removed_comments, format_separator_with_comments, format_statement_semicolon,
     format_token, format_token_with_comments, format_trailing_comments_before_line_break,
-    format_type, group, hard_line, indent, line, soft_line, text, trailing_comments_force_line,
+    format_type, group, hard_line, indent, line, soft_line, trailing_comments_force_line,
 };
+use jolt_fmt_ir::space;
 
 pub(super) fn format_try_statement<'source>(
     statement: &TryStatement<'source>,
@@ -20,7 +21,7 @@ pub(super) fn format_try_statement<'source>(
 
     concat([
         format_statement_keyword(statement.keyword(), "try"),
-        text(" "),
+        space(),
         statement
             .body()
             .map_or_else(empty_block, |body| format_block(&body, formatter)),
@@ -44,7 +45,7 @@ pub(super) fn format_try_with_resources_statement<'source>(
 
     concat([
         format_statement_keyword(statement.keyword(), "try"),
-        text(" "),
+        space(),
         format_resource_specification(statement, formatter),
         format_statement_header_body_separator(close_paren.as_ref()),
         statement
@@ -199,9 +200,9 @@ fn format_catch_clause<'source>(
     let open = clause.open_paren();
     let close = clause.close_paren();
     concat([
-        text(" "),
+        space(),
         format_statement_keyword(clause.keyword(), "catch"),
-        text(" "),
+        space(),
         clause
             .parameter()
             .map_or_else(jolt_fmt_ir::nil, |parameter| {
@@ -212,7 +213,7 @@ fn format_catch_clause<'source>(
                     formatter,
                 )
             }),
-        text(" "),
+        space(),
         clause
             .body()
             .map_or_else(empty_block, |body| format_block(&body, formatter)),
@@ -265,7 +266,7 @@ fn format_catch_modifier_prefix<'source>(
     if docs.is_empty() {
         jolt_fmt_ir::nil()
     } else {
-        concat([jolt_fmt_ir::join(&text(" "), docs), text(" ")])
+        concat([jolt_fmt_ir::join(&space(), docs), space()])
     }
 }
 
@@ -281,11 +282,7 @@ fn format_catch_type_list<'source>(
         return name;
     };
 
-    let last = concat([
-        format_catch_type(&last_entry.ty, formatter),
-        text(" "),
-        name,
-    ]);
+    let last = concat([format_catch_type(&last_entry.ty, formatter), space(), name]);
     if entries.is_empty() {
         return last;
     }
@@ -310,7 +307,7 @@ fn format_catch_type_separator<'source>(
     concat([
         line(),
         separator.map_or_else(jolt_fmt_ir::nil, |separator| {
-            format_separator_with_comments(separator, text(" "))
+            format_separator_with_comments(separator, space())
         }),
     ])
 }
@@ -324,9 +321,9 @@ fn format_finally_clause<'source>(
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
     concat([
-        text(" "),
+        space(),
         format_statement_keyword(clause.keyword(), "finally"),
-        text(" "),
+        space(),
         clause
             .body()
             .map_or_else(empty_block, |body| format_block(&body, formatter)),

@@ -4,6 +4,8 @@ use super::{
     text,
 };
 use crate::helpers::comments::{comment_forces_line, format_comment, token_has_comments};
+use crate::helpers::syntax_tokens::{InsertedSyntaxToken, inserted_syntax_token};
+use jolt_fmt_ir::space;
 use jolt_fmt_ir::{force_group, group, indent, line};
 use jolt_java_syntax::{ExpressionParentRole, JavaOperator};
 
@@ -152,12 +154,11 @@ fn format_binary_operand<'source>(
 ) -> Doc<'source> {
     let doc = format_expression(expression, formatter);
     if should_parenthesize_binary_operand(expression, parent_operator) {
-        // Intentional synthesized tokens: preserve precedence after regrouping operands.
         jolt_fmt_ir::group(concat([
-            text("("),
+            inserted_syntax_token("(", InsertedSyntaxToken::PrecedenceParenthesis),
             jolt_fmt_ir::indent(concat([jolt_fmt_ir::soft_line(), doc])),
             jolt_fmt_ir::soft_line(),
-            text(")"),
+            inserted_syntax_token(")", InsertedSyntaxToken::PrecedenceParenthesis),
         ]))
     } else {
         doc
@@ -272,7 +273,7 @@ fn format_operator_leading_comments<'source>(operator: &JavaOperator<'source>) -
 fn format_operator_trailing_comments<'source>(operator: &JavaOperator<'source>) -> Doc<'source> {
     let mut docs = Vec::new();
     for comment in operator.trailing_comments() {
-        docs.push(text(" "));
+        docs.push(space());
         docs.push(format_comment(&comment));
         if comment_forces_line(&comment) {
             docs.push(jolt_fmt_ir::hard_line());
@@ -286,7 +287,7 @@ fn assignment_expression<'source>(
     operator: Doc<'source>,
     right: Doc<'source>,
 ) -> Doc<'source> {
-    group(concat([left, text(" "), operator, assignment_rhs(right)]))
+    group(concat([left, space(), operator, assignment_rhs(right)]))
 }
 
 fn assignment_rhs(right: Doc<'_>) -> Doc<'_> {
@@ -304,7 +305,7 @@ fn binary_chain<'source>(
     group(concat([
         first,
         indent(concat(rest.into_iter().map(|(operator, operand)| {
-            concat([line(), operator, text(" "), operand])
+            concat([line(), operator, space(), operand])
         }))),
     ]))
 }
@@ -322,11 +323,11 @@ fn ternary_expression<'source>(
         indent(concat([
             line(),
             question,
-            text(" "),
+            space(),
             consequence,
             line(),
             colon,
-            text(" "),
+            space(),
             alternative,
         ])),
     ]);

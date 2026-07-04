@@ -1,4 +1,5 @@
-use jolt_fmt_ir::{Doc, concat, hard_line, text};
+use jolt_fmt_ir::space;
+use jolt_fmt_ir::{Doc, concat, hard_line};
 use jolt_java_syntax::{JavaSyntaxKind, JavaSyntaxToken, ModifierEntry};
 
 use crate::helpers::comments::{
@@ -43,8 +44,8 @@ fn modifier_prefix_from_modifier_docs<'source>(
     }
     let mut modifier_docs = modifier_docs.into_iter().peekable();
     if modifier_docs.peek().is_some() {
-        docs.push(jolt_fmt_ir::join(&text(" "), modifier_docs));
-        docs.push(text(" "));
+        docs.push(jolt_fmt_ir::join(&space(), modifier_docs));
+        docs.push(space());
     }
 
     concat(docs)
@@ -65,7 +66,7 @@ pub(crate) fn inline_modifier_prefix_from_docs<'source>(
     if docs.is_empty() {
         jolt_fmt_ir::nil()
     } else {
-        concat([jolt_fmt_ir::join(&text(" "), docs), text(" ")])
+        concat([jolt_fmt_ir::join(&space(), docs), space()])
     }
 }
 

@@ -1,6 +1,7 @@
+use jolt_fmt_ir::space;
 use std::ops::Range;
 
-use jolt_fmt_ir::{Doc, concat, empty_line, hard_line, text};
+use jolt_fmt_ir::{Doc, concat, empty_line, hard_line};
 use jolt_java_syntax::{
     ModuleDeclaration, ModuleDirective, ModuleDirectiveRole, ModuleNameListEntry, NameSyntax,
 };
@@ -27,13 +28,13 @@ pub(crate) fn format_module_declaration<'source>(
             .open_token()
             .as_ref()
             .map_or_else(jolt_fmt_ir::nil, |token| {
-                concat([format_token_with_comments(token), text(" ")])
+                concat([format_token_with_comments(token), space()])
             }),
         module
             .module_token()
             .as_ref()
             .map_or_else(jolt_fmt_ir::nil, |token| {
-                concat([format_token_with_comments(token), text(" ")])
+                concat([format_token_with_comments(token), space()])
             }),
         module
             .name()
@@ -42,7 +43,7 @@ pub(crate) fn format_module_declaration<'source>(
             .open_brace()
             .as_ref()
             .map_or_else(jolt_fmt_ir::nil, |token| {
-                concat([text(" "), format_token_with_comments(token)])
+                concat([space(), format_token_with_comments(token)])
             }),
         indent_module_body(format_module_directives(module)),
         hard_line(),
@@ -362,7 +363,7 @@ fn format_directive_head<'source>(
     token.map_or_else(jolt_fmt_ir::nil, |token| {
         concat([
             format_token_after_relocated_leading_comments(token, TrailingTrivia::Preserve),
-            text(" "),
+            space(),
         ])
     })
 }
@@ -371,7 +372,7 @@ fn format_directive_middle_token<'source>(
     token: Option<&jolt_java_syntax::JavaSyntaxToken<'source>>,
 ) -> Doc<'source> {
     token.map_or_else(jolt_fmt_ir::nil, |token| {
-        concat([format_token_with_comments(token), text(" ")])
+        concat([format_token_with_comments(token), space()])
     })
 }
 
@@ -401,7 +402,7 @@ fn format_module_name_list_directive<'source>(
     concat([
         format_directive_head(keyword),
         format_name(subject),
-        text(" "),
+        space(),
         connective.map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
         entries,
         format_directive_semicolon(semicolon),
@@ -431,7 +432,7 @@ fn format_module_name_list<'source>(
             format_module_name_entries_broken(items),
         ]))
     } else {
-        concat([text(" "), format_module_name_entries_inline(items)])
+        concat([space(), format_module_name_entries_inline(items)])
     })
 }
 
@@ -446,7 +447,7 @@ fn format_module_name_entries_inline(entries: Vec<FormattedModuleNameEntry<'_>>)
     for entry in entries {
         docs.push(entry.name);
         if let Some(comma) = entry.comma {
-            docs.push(format_separator_with_comments(&comma, text(" ")));
+            docs.push(format_separator_with_comments(&comma, space()));
         }
     }
     concat(docs)

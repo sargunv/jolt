@@ -102,6 +102,11 @@ pub fn text<'source>(value: impl Into<Cow<'source, str>>) -> Doc<'source> {
 }
 
 #[must_use]
+pub fn space<'source>() -> Doc<'source> {
+    text(" ")
+}
+
+#[must_use]
 pub fn literal_text<'source>(value: impl Into<Cow<'source, str>>) -> Doc<'source> {
     let text = value.into();
     let metrics = literal_text_metrics(&text);

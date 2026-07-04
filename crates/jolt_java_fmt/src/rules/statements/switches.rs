@@ -8,8 +8,9 @@ use super::{
     SwitchStatement, TrailingTrivia, comment_forces_line, concat, empty_block, format_block,
     format_block_statement_item, format_expression, format_pattern, format_separator_with_comments,
     format_statement_semicolon, format_throw_statement, format_token, format_token_with_comments,
-    group, hard_line, indent, join_body_items, join_hard_lines, line, text,
+    group, hard_line, indent, join_body_items, join_hard_lines, line,
 };
+use jolt_fmt_ir::space;
 
 pub(super) fn format_switch_statement<'source>(
     statement: &SwitchStatement<'source>,
@@ -19,7 +20,7 @@ pub(super) fn format_switch_statement<'source>(
     let close = statement.close_paren();
     concat([
         format_statement_keyword(statement.keyword(), "switch"),
-        text(" "),
+        space(),
         format_parenthesized_statement_expression(
             open.as_ref(),
             statement
@@ -130,7 +131,7 @@ fn format_single_block_switch_statement_group<'source>(
 
     Some(concat([
         labels.pop()?,
-        text(" "),
+        space(),
         format_block(&block, formatter),
     ]))
 }
@@ -171,11 +172,11 @@ fn format_switch_rule_arrow_head<'source>(rule: &SwitchRule<'source>) -> Doc<'so
 
     let trailing_comments = arrow.trailing_comments();
     if trailing_comments.is_empty() {
-        return concat([text(" "), format_token_with_comments(&arrow)]);
+        return concat([space(), format_token_with_comments(&arrow)]);
     }
 
     concat([
-        text(" "),
+        space(),
         format_token(
             &arrow,
             LeadingTrivia::Preserve,
@@ -203,21 +204,21 @@ fn format_switch_rule_arrow<'source>(rule: &SwitchRule<'source>) -> Doc<'source>
 
     let trailing_comments = arrow.trailing_comments();
     if trailing_comments.is_empty() {
-        return concat([text(" "), format_token_with_comments(&arrow), text(" ")]);
+        return concat([space(), format_token_with_comments(&arrow), space()]);
     }
 
     let forced_line = arrow
         .trailing_comments()
         .any(|comment| comment_forces_line(&comment));
     let mut docs = vec![
-        text(" "),
+        space(),
         format_token(
             &arrow,
             LeadingTrivia::Preserve,
             TrailingTrivia::BeforeLineBreak,
         ),
     ];
-    docs.push(if forced_line { hard_line() } else { text(" ") });
+    docs.push(if forced_line { hard_line() } else { space() });
     concat(docs)
 }
 
@@ -239,17 +240,17 @@ fn format_switch_label<'source>(
             .case_token()
             .as_ref()
             .map_or_else(jolt_fmt_ir::nil, |token| {
-                concat([format_token_with_comments(token), text(" ")])
+                concat([format_token_with_comments(token), space()])
             }),
         group(indent(format_switch_label_case_entries(entries, formatter))),
         label.guard().map_or_else(jolt_fmt_ir::nil, |guard| {
             concat([
-                text(" "),
+                space(),
                 guard
                     .when_token()
                     .as_ref()
                     .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
-                text(" "),
+                space(),
                 guard
                     .expression()
                     .map_or_else(jolt_fmt_ir::nil, |expression| {

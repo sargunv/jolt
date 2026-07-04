@@ -1,4 +1,5 @@
-use jolt_fmt_ir::{Doc, concat, group, hard_line, indent, line, text};
+use jolt_fmt_ir::space;
+use jolt_fmt_ir::{Doc, concat, group, hard_line, indent, line};
 use jolt_java_syntax::{
     FieldDeclaration, FormalParameter, LocalVariableDeclaration, ReceiverParameter,
     RecordComponent, VariableDeclarator, VariableDeclaratorEntry, VariableDeclaratorList,
@@ -52,7 +53,7 @@ pub(crate) fn format_field_declaration<'source>(
         declaration_prefix,
         modifiers.type_use_prefix,
         ty,
-        text(" "),
+        space(),
         field
             .declarators()
             .map_or_else(jolt_fmt_ir::nil, |declarators| {
@@ -88,7 +89,7 @@ pub(crate) fn format_local_variable_declaration<'source>(
         modifiers.declaration_prefix,
         modifiers.type_use_prefix,
         ty,
-        text(" "),
+        space(),
         declaration
             .declarators()
             .map_or_else(jolt_fmt_ir::nil, |declarators| {
@@ -172,7 +173,7 @@ pub(crate) fn format_receiver_parameter<'source>(
         parameter.ty().map_or_else(jolt_fmt_ir::nil, |ty| {
             format_type_without_leading_comments(&ty, formatter)
         }),
-        text(" "),
+        space(),
         parameter
             .qualifier()
             .map_or_else(jolt_fmt_ir::nil, |qualifier| {
@@ -234,7 +235,7 @@ fn format_named_typed_declaration<'source>(
             jolt_fmt_ir::nil()
         },
         if ellipsis.is_some() {
-            text(" ")
+            space()
         } else {
             jolt_fmt_ir::nil()
         },
@@ -244,7 +245,7 @@ fn format_named_typed_declaration<'source>(
     let type_name_separator = if ellipsis.is_some() && !has_varargs_annotations {
         jolt_fmt_ir::nil()
     } else {
-        text(" ")
+        space()
     };
 
     concat([modifiers, ty, type_name_separator, name])
@@ -292,12 +293,12 @@ fn format_single_variable_declaration<'source>(
 ) -> Doc<'source> {
     let name = format_variable_declarator_name_and_dimensions(declarator, formatter);
     let Some(initializer) = declarator.initializer() else {
-        return concat([typed_prefix, text(" "), name]);
+        return concat([typed_prefix, space(), name]);
     };
 
     concat([
         typed_prefix,
-        text(" "),
+        space(),
         group(concat([
             name,
             format_variable_initializer_split(&initializer, formatter),
@@ -367,11 +368,11 @@ fn format_variable_initializer_split<'source>(
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
     let Some(value) = initializer.value() else {
-        return text(" =");
+        return concat([space(), format_variable_initializer_operator(initializer)]);
     };
 
     concat([
-        text(" "),
+        space(),
         format_variable_initializer_operator(initializer),
         indent(concat([
             format_variable_initializer_value_separator(initializer, &value),

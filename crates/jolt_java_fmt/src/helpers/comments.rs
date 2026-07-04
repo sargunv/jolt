@@ -1,3 +1,4 @@
+use jolt_fmt_ir::space;
 use std::borrow::Cow;
 
 use jolt_fmt_ir::{Doc, concat, empty_line, hard_line, literal_text, soft_line, text};
@@ -134,7 +135,7 @@ pub(crate) fn format_leading_comments<'source>(token: &JavaSyntaxToken<'source>)
 pub(crate) fn format_trailing_comments<'source>(token: &JavaSyntaxToken<'source>) -> Doc<'source> {
     let mut docs = Vec::new();
     for comment in token.trailing_comments() {
-        docs.push(text(" "));
+        docs.push(space());
         docs.push(format_comment(&comment));
         if comment_forces_line(&comment) {
             docs.push(hard_line());
@@ -150,7 +151,7 @@ pub(crate) fn format_trailing_comments_before_line_break<'source>(
     let mut docs = Vec::new();
 
     while let Some(comment) = comments.next() {
-        docs.push(text(" "));
+        docs.push(space());
         docs.push(format_comment(&comment));
         if comments.peek().is_some() && comment_forces_line(&comment) {
             docs.push(hard_line());
@@ -166,7 +167,7 @@ pub(crate) fn format_inline_trailing_comment_list<'source>(
     concat(
         comments
             .into_iter()
-            .map(|comment| concat([text(" "), format_comment(&comment)])),
+            .map(|comment| concat([space(), format_comment(&comment)])),
     )
 }
 
@@ -279,7 +280,7 @@ pub(crate) fn format_token<'source>(
                         if trailing_comments_force_line(token) {
                             hard_line()
                         } else {
-                            text(" ")
+                            space()
                         },
                     ])
                 }
@@ -300,10 +301,10 @@ pub(crate) fn format_token_with_inline_leading_comments<'source>(
             jolt_fmt_ir::nil()
         } else {
             let comments =
-                jolt_fmt_ir::join(&text(" "), leading.map(|comment| format_comment(&comment)));
+                jolt_fmt_ir::join(&space(), leading.map(|comment| format_comment(&comment)));
             match placement {
-                InlineLeadingTrivia::AfterPreviousToken => concat([text(" "), comments]),
-                InlineLeadingTrivia::BeforeToken => concat([comments, text(" ")]),
+                InlineLeadingTrivia::AfterPreviousToken => concat([space(), comments]),
+                InlineLeadingTrivia::BeforeToken => concat([comments, space()]),
             }
         },
         format_token_after_relocated_leading_comments(token, trailing),

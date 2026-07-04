@@ -1,4 +1,11 @@
-use jolt_fmt_ir::{Doc, concat, empty_line, hard_line, join, text};
+use jolt_fmt_ir::{Doc, concat, empty_line, hard_line, join};
+use jolt_java_syntax::JavaSyntaxToken;
+
+use crate::helpers::comments::{
+    LeadingTrivia, TrailingTrivia, format_token_after_relocated_leading_comments,
+    format_token_before_relocated_trailing_comments,
+};
+use crate::helpers::syntax_tokens::{InsertedSyntaxToken, inserted_syntax_token};
 
 pub(crate) struct BodyItem<'source> {
     doc: Doc<'source>,
@@ -21,12 +28,25 @@ impl<'source> BodyItem<'source> {
     }
 }
 
-pub(crate) fn braced_body(body: Option<Doc<'_>>) -> Doc<'_> {
-    // Intentional synthesized token: this helper receives body contents, not brace tokens.
-    concat([text("{"), braced_body_tail(body)])
+pub(crate) fn inserted_braced_body(body: Option<Doc<'_>>) -> Doc<'_> {
+    concat([
+        inserted_syntax_token("{", InsertedSyntaxToken::BlockBrace),
+        inserted_braced_body_tail(body),
+    ])
 }
 
-pub(crate) fn braced_body_tail(body: Option<Doc<'_>>) -> Doc<'_> {
+pub(crate) fn source_braced_body<'source>(
+    open: Option<&JavaSyntaxToken<'source>>,
+    close: Option<&JavaSyntaxToken<'source>>,
+    body: Option<Doc<'source>>,
+) -> Doc<'source> {
+    concat([
+        format_source_open_brace(open),
+        source_braced_body_tail(close, body),
+    ])
+}
+
+pub(crate) fn inserted_braced_body_tail(body: Option<Doc<'_>>) -> Doc<'_> {
     concat([
         body.map_or_else(hard_line, |body| {
             concat([
@@ -34,13 +54,27 @@ pub(crate) fn braced_body_tail(body: Option<Doc<'_>>) -> Doc<'_> {
                 hard_line(),
             ])
         }),
-        // Intentional synthesized token: this helper receives body contents, not brace tokens.
-        text("}"),
+        inserted_syntax_token("}", InsertedSyntaxToken::BlockBrace),
+    ])
+}
+
+pub(crate) fn source_braced_body_tail<'source>(
+    close: Option<&JavaSyntaxToken<'source>>,
+    body: Option<Doc<'source>>,
+) -> Doc<'source> {
+    concat([
+        body.map_or_else(hard_line, |body| {
+            concat([
+                jolt_fmt_ir::indent(concat([hard_line(), body])),
+                hard_line(),
+            ])
+        }),
+        format_source_close_brace(close),
     ])
 }
 
 pub(crate) fn empty_block<'source>() -> Doc<'source> {
-    braced_body(None)
+    inserted_braced_body(None)
 }
 
 pub(crate) fn join_hard_lines<'source>(
@@ -68,4 +102,18 @@ pub(crate) fn join_body_items(items: Vec<BodyItem<'_>>) -> Doc<'_> {
         joined.push(item.doc);
     }
     concat(joined)
+}
+
+fn format_source_open_brace<'source>(open: Option<&JavaSyntaxToken<'source>>) -> Doc<'source> {
+    open.map_or_else(
+        || inserted_syntax_token("{", InsertedSyntaxToken::MissingSource),
+        |open| format_token_before_relocated_trailing_comments(open, LeadingTrivia::Preserve),
+    )
+}
+
+fn format_source_close_brace<'source>(close: Option<&JavaSyntaxToken<'source>>) -> Doc<'source> {
+    close.map_or_else(
+        || inserted_syntax_token("}", InsertedSyntaxToken::MissingSource),
+        |close| format_token_after_relocated_leading_comments(close, TrailingTrivia::Preserve),
+    )
 }

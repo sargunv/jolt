@@ -1153,6 +1153,12 @@ pub struct EnumConstantListEntry<'source> {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct LambdaParameterListEntry<'source> {
+    pub parameter: LambdaParameter<'source>,
+    pub comma: Option<JavaSyntaxToken<'source>>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct RecordPatternComponentEntry<'source> {
     pub component: ComponentPattern<'source>,
     pub comma: Option<JavaSyntaxToken<'source>>,
