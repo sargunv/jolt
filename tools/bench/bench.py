@@ -21,7 +21,7 @@ JOLT = ROOT / "target/release/jolt"
 DPRINT_PLUGIN = (
     ROOT / "target/wasm32-unknown-unknown/release/jolt_fmt_dprint.wasm"
 )
-HYPERFINE_RUNS = 3
+HYPERFINE_RUNS = 10
 HYPERFINE_WARMUP = 1
 
 CORPORA = {

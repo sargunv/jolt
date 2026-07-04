@@ -3,7 +3,8 @@ use super::{
     PostfixExpression, UnaryExpression, assignment_expression, binary_chain, concat,
     format_expression, format_token_with_comments, ternary_expression, text,
 };
-use jolt_java_syntax::{ExpressionParentRole, JavaSyntaxToken};
+use crate::helpers::comments::{comment_forces_line, format_comment};
+use jolt_java_syntax::{ExpressionParentRole, JavaOperator, JavaSyntaxToken};
 
 pub(super) fn format_assignment_expression(
     expression: &AssignmentExpression,
@@ -16,7 +17,7 @@ pub(super) fn format_assignment_expression(
         expression
             .operator()
             .map_or_else(jolt_fmt_ir::nil, |operator| {
-                format_token_with_comments(&operator)
+                format_operator_with_comments(&operator)
             }),
         expression.right().map_or_else(jolt_fmt_ir::nil, |right| {
             format_expression(&right, formatter)
@@ -136,7 +137,7 @@ fn flatten_binary_expression(
         .zip(operands)
         .map(|(operator, operand)| {
             (
-                format_token_with_comments(&operator),
+                format_operator_with_comments(&operator),
                 format_binary_operand(&operand, operator.text(), formatter),
             )
         })
@@ -166,14 +167,14 @@ fn format_binary_operand(
 fn unflattened_binary_expression(
     expression: &BinaryExpression,
     formatter: &JavaFormatter<'_>,
-    operator: &JavaSyntaxToken,
+    operator: &JavaOperator,
 ) -> (Expression, Vec<(Doc, Doc)>) {
     (
         expression
             .left()
             .unwrap_or_else(|| Expression::from(expression.clone())),
         vec![(
-            format_token_with_comments(operator),
+            format_operator_with_comments(operator),
             expression.right().map_or_else(jolt_fmt_ir::nil, |right| {
                 format_expression(&right, formatter)
             }),
@@ -184,7 +185,7 @@ fn unflattened_binary_expression(
 fn collect_binary_chain(
     expression: &Expression,
     operands: &mut Vec<Expression>,
-    operators: &mut Vec<JavaSyntaxToken>,
+    operators: &mut Vec<JavaOperator>,
 ) {
     let Some(binary) = binary_for_chain(expression) else {
         operands.push(expression.clone());
@@ -208,7 +209,7 @@ fn collect_binary_left(
     expression: &Expression,
     parent_operator: &str,
     operands: &mut Vec<Expression>,
-    operators: &mut Vec<JavaSyntaxToken>,
+    operators: &mut Vec<JavaOperator>,
 ) {
     let Some(binary) = binary_for_chain(expression) else {
         operands.push(expression.clone());
@@ -249,6 +250,39 @@ fn binary_for_chain(expression: &Expression) -> Option<BinaryExpression> {
 
 fn token_has_comments(token: &JavaSyntaxToken) -> bool {
     !token.leading_comments().is_empty() || !token.trailing_comments().is_empty()
+}
+
+fn format_operator_with_comments(operator: &JavaOperator) -> Doc {
+    if let Some(token) = operator.as_single_token() {
+        return format_token_with_comments(token);
+    }
+
+    concat([
+        format_operator_leading_comments(operator),
+        text(operator.text()),
+        format_operator_trailing_comments(operator),
+    ])
+}
+
+fn format_operator_leading_comments(operator: &JavaOperator) -> Doc {
+    let mut docs = Vec::new();
+    for comment in operator.leading_comments() {
+        docs.push(format_comment(&comment));
+        docs.push(jolt_fmt_ir::hard_line());
+    }
+    concat(docs)
+}
+
+fn format_operator_trailing_comments(operator: &JavaOperator) -> Doc {
+    let mut docs = Vec::new();
+    for comment in operator.trailing_comments() {
+        docs.push(text(" "));
+        docs.push(format_comment(&comment));
+        if comment_forces_line(&comment) {
+            docs.push(jolt_fmt_ir::hard_line());
+        }
+    }
+    concat(docs)
 }
 
 fn should_force_conditional_break(expression: &ConditionalExpression) -> bool {

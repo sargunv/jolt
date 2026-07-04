@@ -1,48 +1,60 @@
 // Provides a markerless grammar scanner over the same logical tokens as the parser.
 use super::{JavaSyntaxKind, Parser};
-use crate::parser::source::TokenCursor;
+use crate::parser::source::{TokenBuffer, TokenCursor};
 
-impl Parser<'_> {
-    pub(in crate::parser::grammar) fn lookahead(&self) -> JavaLookahead<'_> {
-        JavaLookahead::new(self.fork_cursor())
+impl<'source> Parser<'source> {
+    pub(in crate::parser::grammar) fn lookahead(&mut self) -> JavaLookahead<'_, 'source> {
+        let source = self.source;
+        let cursor = self.fork_cursor();
+        JavaLookahead::new(source, &mut self.buffer, cursor)
     }
 }
 
-pub(in crate::parser::grammar) struct JavaLookahead<'source> {
-    cursor: TokenCursor<'source>,
+pub(in crate::parser::grammar) struct JavaLookahead<'buffer, 'source> {
+    source: &'source str,
+    buffer: &'buffer mut TokenBuffer<'source>,
+    cursor: TokenCursor,
 }
 
-impl<'source> JavaLookahead<'source> {
-    fn new(cursor: TokenCursor<'source>) -> Self {
-        Self { cursor }
+impl<'buffer, 'source> JavaLookahead<'buffer, 'source> {
+    fn new(
+        source: &'source str,
+        buffer: &'buffer mut TokenBuffer<'source>,
+        cursor: TokenCursor,
+    ) -> Self {
+        Self {
+            source,
+            buffer,
+            cursor,
+        }
     }
 
-    pub(in crate::parser::grammar) fn kind(&self) -> JavaSyntaxKind {
-        self.cursor.kind()
+    pub(in crate::parser::grammar) fn kind(&mut self) -> JavaSyntaxKind {
+        self.cursor.kind(self.buffer)
     }
 
-    pub(in crate::parser::grammar) fn nth_kind(&self, n: usize) -> JavaSyntaxKind {
-        self.cursor.nth_kind(n)
+    pub(in crate::parser::grammar) fn nth_kind(&mut self, n: usize) -> JavaSyntaxKind {
+        self.cursor.nth_kind(self.buffer, n)
     }
 
-    pub(in crate::parser::grammar) fn text(&self) -> Option<&'source str> {
-        self.cursor.text()
+    pub(in crate::parser::grammar) fn text(&mut self) -> Option<&'source str> {
+        self.cursor.text(self.source, self.buffer)
     }
 
-    pub(in crate::parser::grammar) fn at(&self, kind: JavaSyntaxKind) -> bool {
+    pub(in crate::parser::grammar) fn at(&mut self, kind: JavaSyntaxKind) -> bool {
         self.kind() == kind
     }
 
-    pub(in crate::parser::grammar) fn at_contextual(&self, text: &str) -> bool {
+    pub(in crate::parser::grammar) fn at_contextual(&mut self, text: &str) -> bool {
         self.at(JavaSyntaxKind::Identifier) && self.text() == Some(text)
     }
 
-    pub(in crate::parser::grammar) fn at_eof(&self) -> bool {
+    pub(in crate::parser::grammar) fn at_eof(&mut self) -> bool {
         self.at(JavaSyntaxKind::Eof)
     }
 
     pub(in crate::parser::grammar) fn bump(&mut self) {
-        self.cursor.advance();
+        self.cursor.advance(self.buffer);
     }
 
     pub(in crate::parser::grammar) fn eat(&mut self, kind: JavaSyntaxKind) -> bool {
@@ -259,37 +271,34 @@ impl<'source> JavaLookahead<'source> {
         }
     }
 
-    pub(in crate::parser::grammar) fn at_type_argument_close(&self) -> bool {
-        matches!(
-            self.kind(),
-            JavaSyntaxKind::Gt | JavaSyntaxKind::RShift | JavaSyntaxKind::UnsignedRShift
-        )
+    pub(in crate::parser::grammar) fn at_type_argument_close(&mut self) -> bool {
+        self.kind() == JavaSyntaxKind::Gt
     }
 
     pub(in crate::parser::grammar) fn eat_type_argument_close(&mut self) -> bool {
-        self.cursor.bump_split_gt().is_some()
+        self.eat(JavaSyntaxKind::Gt)
     }
 
-    pub(in crate::parser::grammar) fn at_name_segment(&self) -> bool {
+    pub(in crate::parser::grammar) fn at_name_segment(&mut self) -> bool {
         self.kind() == JavaSyntaxKind::Identifier
     }
 
-    pub(in crate::parser::grammar) fn at_variable_identifier(&self) -> bool {
+    pub(in crate::parser::grammar) fn at_variable_identifier(&mut self) -> bool {
         matches!(
             self.kind(),
             JavaSyntaxKind::Identifier | JavaSyntaxKind::UnderscoreKw
         )
     }
 
-    pub(in crate::parser::grammar) fn at_type_start(&self) -> bool {
+    pub(in crate::parser::grammar) fn at_type_start(&mut self) -> bool {
         self.at_non_void_type_start() || self.at(JavaSyntaxKind::VoidKw)
     }
 
-    pub(in crate::parser::grammar) fn at_non_void_type_start(&self) -> bool {
+    pub(in crate::parser::grammar) fn at_non_void_type_start(&mut self) -> bool {
         self.at_name_segment() || self.at_primitive_type_start()
     }
 
-    pub(in crate::parser::grammar) fn at_primitive_type_start(&self) -> bool {
+    pub(in crate::parser::grammar) fn at_primitive_type_start(&mut self) -> bool {
         matches!(
             self.kind(),
             JavaSyntaxKind::BooleanKw
@@ -303,7 +312,7 @@ impl<'source> JavaLookahead<'source> {
         )
     }
 
-    pub(in crate::parser::grammar) fn at_type_modifier(&self) -> bool {
+    pub(in crate::parser::grammar) fn at_type_modifier(&mut self) -> bool {
         matches!(
             self.kind(),
             JavaSyntaxKind::PublicKw
@@ -321,13 +330,15 @@ impl<'source> JavaLookahead<'source> {
         ) || self.at_contextual("sealed")
             || (self.at_contextual("non")
                 && self.nth_kind(1) == JavaSyntaxKind::Minus
-                && self.cursor.text_at(self.cursor.position() + 2) == Some("sealed"))
+                && TokenCursor::text_at(self.source, self.buffer, self.cursor.position() + 2)
+                    == Some("sealed"))
     }
 
     fn skip_type_modifier(&mut self) {
         if self.at_contextual("non")
             && self.nth_kind(1) == JavaSyntaxKind::Minus
-            && self.cursor.text_at(self.cursor.position() + 2) == Some("sealed")
+            && TokenCursor::text_at(self.source, self.buffer, self.cursor.position() + 2)
+                == Some("sealed")
         {
             self.bump();
             self.bump();
@@ -337,7 +348,7 @@ impl<'source> JavaLookahead<'source> {
         }
     }
 
-    pub(in crate::parser::grammar) fn starts_expression(&self) -> bool {
+    pub(in crate::parser::grammar) fn starts_expression(&mut self) -> bool {
         matches!(
             self.kind(),
             JavaSyntaxKind::Identifier
@@ -363,12 +374,12 @@ impl<'source> JavaLookahead<'source> {
         ) || self.starts_primitive_or_void_class_literal()
     }
 
-    pub(in crate::parser::grammar) fn starts_expression_not_plus_minus(&self) -> bool {
+    pub(in crate::parser::grammar) fn starts_expression_not_plus_minus(&mut self) -> bool {
         self.starts_expression()
             && !matches!(self.kind(), JavaSyntaxKind::Plus | JavaSyntaxKind::Minus)
     }
 
-    pub(in crate::parser::grammar) fn starts_literal_expression(&self) -> bool {
+    pub(in crate::parser::grammar) fn starts_literal_expression(&mut self) -> bool {
         matches!(
             self.kind(),
             JavaSyntaxKind::IntegerLiteral
@@ -381,7 +392,7 @@ impl<'source> JavaLookahead<'source> {
         )
     }
 
-    fn starts_primitive_or_void_class_literal(&self) -> bool {
+    fn starts_primitive_or_void_class_literal(&mut self) -> bool {
         if !matches!(
             self.kind(),
             JavaSyntaxKind::BooleanKw
@@ -398,14 +409,15 @@ impl<'source> JavaLookahead<'source> {
         }
 
         let mut cursor = self.cursor.fork();
-        cursor.bump();
-        while cursor.kind() == JavaSyntaxKind::LBracket
-            && cursor.nth_kind(1) == JavaSyntaxKind::RBracket
+        cursor.bump(self.buffer);
+        while cursor.kind(self.buffer) == JavaSyntaxKind::LBracket
+            && cursor.nth_kind(self.buffer, 1) == JavaSyntaxKind::RBracket
         {
-            cursor.bump();
-            cursor.bump();
+            cursor.bump(self.buffer);
+            cursor.bump(self.buffer);
         }
 
-        cursor.kind() == JavaSyntaxKind::Dot && cursor.nth_kind(1) == JavaSyntaxKind::ClassKw
+        cursor.kind(self.buffer) == JavaSyntaxKind::Dot
+            && cursor.nth_kind(self.buffer, 1) == JavaSyntaxKind::ClassKw
     }
 }

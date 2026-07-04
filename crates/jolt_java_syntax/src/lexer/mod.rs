@@ -3,8 +3,6 @@ mod tests;
 mod token;
 mod unicode;
 
-use std::collections::VecDeque;
-
 use crate::JavaSyntaxKind;
 use jolt_diagnostics::{Diagnostic, DiagnosticCode, DiagnosticStage, Severity};
 use jolt_text::{TextRange, TextSize};
@@ -95,88 +93,6 @@ pub struct JavaLexerCheckpoint {
     pos: usize,
     diagnostics_len: usize,
     emitted_eof: bool,
-}
-
-/// Parser-facing token source with lookahead and rewind support.
-pub struct JavaTokenSource<'source> {
-    lexer: JavaLexer<'source>,
-    current: Token,
-    lookahead: VecDeque<Token>,
-}
-
-impl<'source> JavaTokenSource<'source> {
-    /// Creates a token source and positions it at the first token.
-    #[must_use]
-    pub fn new(source: &'source str) -> Self {
-        let mut lexer = JavaLexer::new(source);
-        let current = lexer.next_token();
-        Self {
-            lexer,
-            current,
-            lookahead: VecDeque::new(),
-        }
-    }
-
-    /// Returns the current token.
-    #[must_use]
-    pub fn current(&self) -> &Token {
-        &self.current
-    }
-
-    /// Advances to the next token.
-    pub fn bump(&mut self) {
-        self.current = self
-            .lookahead
-            .pop_front()
-            .unwrap_or_else(|| self.lexer.next_token());
-    }
-
-    /// Returns the nth token from the current token, where zero is current.
-    pub fn nth(&mut self, n: usize) -> &Token {
-        if n == 0 {
-            return &self.current;
-        }
-
-        while self.lookahead.len() < n {
-            self.lookahead.push_back(self.lexer.next_token());
-        }
-
-        &self.lookahead[n - 1]
-    }
-
-    /// Creates a checkpoint that can be restored with [`Self::rewind`].
-    #[must_use]
-    pub fn checkpoint(&self) -> JavaTokenSourceCheckpoint {
-        JavaTokenSourceCheckpoint {
-            lexer: self.lexer.checkpoint(),
-            current: self.current.clone(),
-            lookahead: self.lookahead.clone(),
-        }
-    }
-
-    /// Restores the token source to a previous checkpoint.
-    pub fn rewind(&mut self, checkpoint: JavaTokenSourceCheckpoint) {
-        self.lexer.rewind(checkpoint.lexer);
-        self.current = checkpoint.current;
-        self.lookahead = checkpoint.lookahead;
-    }
-
-    /// Drains the remaining source and returns all lexer diagnostics.
-    #[must_use]
-    pub fn finish(mut self) -> Vec<LexerDiagnostic> {
-        while self.current.kind != JavaSyntaxKind::Eof {
-            self.bump();
-        }
-        self.lexer.finish()
-    }
-}
-
-/// A checkpoint for [`JavaTokenSource`].
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct JavaTokenSourceCheckpoint {
-    lexer: JavaLexerCheckpoint,
-    current: Token,
-    lookahead: VecDeque<Token>,
 }
 
 struct Scanner<'source> {

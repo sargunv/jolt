@@ -11,8 +11,8 @@ pub use jolt_diagnostics::{
 };
 pub use kind::JavaSyntaxKind;
 pub use lexer::{
-    JavaLexDiagnosticCode, JavaLexer, JavaLexerCheckpoint, JavaTokenSource,
-    JavaTokenSourceCheckpoint, LexerDiagnostic, Token, Trivia, TriviaKind,
+    JavaLexDiagnosticCode, JavaLexer, JavaLexerCheckpoint, LexerDiagnostic, Token, Trivia,
+    TriviaKind,
 };
 pub use nodes::*;
 pub use parser::{JavaParse, JavaParseDiagnosticCode, parse_compilation_unit};

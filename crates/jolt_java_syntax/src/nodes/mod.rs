@@ -101,6 +101,259 @@ impl fmt::Debug for JavaSyntaxToken {
     }
 }
 
+/// A Java operator, which may span multiple syntax tokens in ambiguous `>` forms.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct JavaOperator {
+    kind: JavaOperatorKind,
+    first_token: JavaSyntaxToken,
+    last_token: Option<JavaSyntaxToken>,
+}
+
+impl JavaOperator {
+    pub(crate) fn single(kind: JavaOperatorKind, token: JavaSyntaxToken) -> Self {
+        Self {
+            kind,
+            first_token: token,
+            last_token: None,
+        }
+    }
+
+    pub(crate) fn composite(
+        kind: JavaOperatorKind,
+        first_token: JavaSyntaxToken,
+        last_token: JavaSyntaxToken,
+    ) -> Self {
+        Self {
+            kind,
+            first_token,
+            last_token: Some(last_token),
+        }
+    }
+
+    #[must_use]
+    pub fn text(&self) -> &'static str {
+        self.kind.text()
+    }
+
+    #[must_use]
+    pub fn text_range(&self) -> TextRange {
+        TextRange::new(
+            self.first_token.token_text_range().start(),
+            self.last_token().token_text_range().end(),
+        )
+    }
+
+    #[must_use]
+    pub fn leading_comments(&self) -> Vec<JavaComment> {
+        self.first_token.leading_comments()
+    }
+
+    #[must_use]
+    pub fn trailing_comments(&self) -> Vec<JavaComment> {
+        self.last_token().trailing_comments()
+    }
+
+    #[must_use]
+    pub fn as_single_token(&self) -> Option<&JavaSyntaxToken> {
+        if self.last_token.is_none() {
+            Some(&self.first_token)
+        } else {
+            None
+        }
+    }
+
+    fn last_token(&self) -> &JavaSyntaxToken {
+        self.last_token.as_ref().unwrap_or(&self.first_token)
+    }
+}
+
+/// Logical Java operator kinds used to reconstruct composite operator text.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub(crate) enum JavaOperatorKind {
+    Assign,
+    PlusEq,
+    MinusEq,
+    StarEq,
+    SlashEq,
+    AmpEq,
+    BarEq,
+    CaretEq,
+    PercentEq,
+    LShiftEq,
+    RShiftEq,
+    UnsignedRShiftEq,
+    Instanceof,
+    OrOr,
+    AndAnd,
+    Bar,
+    Caret,
+    Amp,
+    EqEq,
+    BangEq,
+    Lt,
+    Gt,
+    LtEq,
+    GtEq,
+    LShift,
+    RShift,
+    UnsignedRShift,
+    Plus,
+    Minus,
+    Star,
+    Slash,
+    Percent,
+}
+
+impl JavaOperatorKind {
+    #[must_use]
+    pub const fn text(self) -> &'static str {
+        match self {
+            Self::Assign => "=",
+            Self::PlusEq => "+=",
+            Self::MinusEq => "-=",
+            Self::StarEq => "*=",
+            Self::SlashEq => "/=",
+            Self::AmpEq => "&=",
+            Self::BarEq => "|=",
+            Self::CaretEq => "^=",
+            Self::PercentEq => "%=",
+            Self::LShiftEq => "<<=",
+            Self::RShiftEq => ">>=",
+            Self::UnsignedRShiftEq => ">>>=",
+            Self::Instanceof => "instanceof",
+            Self::OrOr => "||",
+            Self::AndAnd => "&&",
+            Self::Bar => "|",
+            Self::Caret => "^",
+            Self::Amp => "&",
+            Self::EqEq => "==",
+            Self::BangEq => "!=",
+            Self::Lt => "<",
+            Self::Gt => ">",
+            Self::LtEq => "<=",
+            Self::GtEq => ">=",
+            Self::LShift => "<<",
+            Self::RShift => ">>",
+            Self::UnsignedRShift => ">>>",
+            Self::Plus => "+",
+            Self::Minus => "-",
+            Self::Star => "*",
+            Self::Slash => "/",
+            Self::Percent => "%",
+        }
+    }
+}
+
+pub(crate) struct JavaOperatorPattern {
+    pub(crate) kind: JavaOperatorKind,
+    pub(crate) tokens: &'static [JavaSyntaxKind],
+}
+
+pub(crate) const COMPOSITE_ASSIGNMENT_OPERATORS: &[JavaOperatorPattern] = &[
+    JavaOperatorPattern {
+        kind: JavaOperatorKind::UnsignedRShiftEq,
+        tokens: &[
+            JavaSyntaxKind::Gt,
+            JavaSyntaxKind::Gt,
+            JavaSyntaxKind::Gt,
+            JavaSyntaxKind::Assign,
+        ],
+    },
+    JavaOperatorPattern {
+        kind: JavaOperatorKind::RShiftEq,
+        tokens: &[
+            JavaSyntaxKind::Gt,
+            JavaSyntaxKind::Gt,
+            JavaSyntaxKind::Assign,
+        ],
+    },
+];
+
+pub(crate) const COMPOSITE_BINARY_OPERATORS: &[JavaOperatorPattern] = &[
+    JavaOperatorPattern {
+        kind: JavaOperatorKind::GtEq,
+        tokens: &[JavaSyntaxKind::Gt, JavaSyntaxKind::Assign],
+    },
+    JavaOperatorPattern {
+        kind: JavaOperatorKind::UnsignedRShift,
+        tokens: &[JavaSyntaxKind::Gt, JavaSyntaxKind::Gt, JavaSyntaxKind::Gt],
+    },
+    JavaOperatorPattern {
+        kind: JavaOperatorKind::RShift,
+        tokens: &[JavaSyntaxKind::Gt, JavaSyntaxKind::Gt],
+    },
+];
+
+pub(crate) fn assignment_operator_kind(kind: JavaSyntaxKind) -> Option<JavaOperatorKind> {
+    Some(match kind {
+        JavaSyntaxKind::Assign => JavaOperatorKind::Assign,
+        JavaSyntaxKind::PlusEq => JavaOperatorKind::PlusEq,
+        JavaSyntaxKind::MinusEq => JavaOperatorKind::MinusEq,
+        JavaSyntaxKind::StarEq => JavaOperatorKind::StarEq,
+        JavaSyntaxKind::SlashEq => JavaOperatorKind::SlashEq,
+        JavaSyntaxKind::AmpEq => JavaOperatorKind::AmpEq,
+        JavaSyntaxKind::BarEq => JavaOperatorKind::BarEq,
+        JavaSyntaxKind::CaretEq => JavaOperatorKind::CaretEq,
+        JavaSyntaxKind::PercentEq => JavaOperatorKind::PercentEq,
+        JavaSyntaxKind::LShiftEq => JavaOperatorKind::LShiftEq,
+        _ => return None,
+    })
+}
+
+pub(crate) fn binary_operator_kind(kind: JavaSyntaxKind) -> Option<JavaOperatorKind> {
+    Some(match kind {
+        JavaSyntaxKind::OrOr => JavaOperatorKind::OrOr,
+        JavaSyntaxKind::AndAnd => JavaOperatorKind::AndAnd,
+        JavaSyntaxKind::Bar => JavaOperatorKind::Bar,
+        JavaSyntaxKind::Caret => JavaOperatorKind::Caret,
+        JavaSyntaxKind::Amp => JavaOperatorKind::Amp,
+        JavaSyntaxKind::EqEq => JavaOperatorKind::EqEq,
+        JavaSyntaxKind::BangEq => JavaOperatorKind::BangEq,
+        JavaSyntaxKind::Lt => JavaOperatorKind::Lt,
+        JavaSyntaxKind::Gt => JavaOperatorKind::Gt,
+        JavaSyntaxKind::LtEq => JavaOperatorKind::LtEq,
+        JavaSyntaxKind::LShift => JavaOperatorKind::LShift,
+        JavaSyntaxKind::Plus => JavaOperatorKind::Plus,
+        JavaSyntaxKind::Minus => JavaOperatorKind::Minus,
+        JavaSyntaxKind::Star => JavaOperatorKind::Star,
+        JavaSyntaxKind::Slash => JavaOperatorKind::Slash,
+        JavaSyntaxKind::Percent => JavaOperatorKind::Percent,
+        JavaSyntaxKind::InstanceofKw => JavaOperatorKind::Instanceof,
+        _ => return None,
+    })
+}
+
+pub(crate) fn binary_operator_precedence(kind: JavaOperatorKind) -> Option<u8> {
+    Some(match kind {
+        JavaOperatorKind::OrOr => 1,
+        JavaOperatorKind::AndAnd => 2,
+        JavaOperatorKind::Bar => 3,
+        JavaOperatorKind::Caret => 4,
+        JavaOperatorKind::Amp => 5,
+        JavaOperatorKind::EqEq | JavaOperatorKind::BangEq => 6,
+        JavaOperatorKind::Lt
+        | JavaOperatorKind::Gt
+        | JavaOperatorKind::LtEq
+        | JavaOperatorKind::GtEq
+        | JavaOperatorKind::Instanceof => 7,
+        JavaOperatorKind::LShift | JavaOperatorKind::RShift | JavaOperatorKind::UnsignedRShift => 8,
+        JavaOperatorKind::Plus | JavaOperatorKind::Minus => 9,
+        JavaOperatorKind::Star | JavaOperatorKind::Slash | JavaOperatorKind::Percent => 10,
+        JavaOperatorKind::Assign
+        | JavaOperatorKind::PlusEq
+        | JavaOperatorKind::MinusEq
+        | JavaOperatorKind::StarEq
+        | JavaOperatorKind::SlashEq
+        | JavaOperatorKind::AmpEq
+        | JavaOperatorKind::BarEq
+        | JavaOperatorKind::CaretEq
+        | JavaOperatorKind::PercentEq
+        | JavaOperatorKind::LShiftEq
+        | JavaOperatorKind::RShiftEq
+        | JavaOperatorKind::UnsignedRShiftEq => return None,
+    })
+}
+
 fn comments_from_trivia(
     trivia: &[jolt_syntax::GreenTrivia],
     start: jolt_text::TextSize,

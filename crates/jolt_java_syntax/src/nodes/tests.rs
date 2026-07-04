@@ -2469,8 +2469,8 @@ fn expression_and_statement_accessors_expose_layout_roles() {
         .find(|assignment| assignment.source_text().contains("+="))
         .expect("compound assignment");
     assert_eq!(
-        assignment.operator().expect("assignment operator").kind(),
-        JavaSyntaxKind::PlusEq
+        assignment.operator().expect("assignment operator").text(),
+        "+="
     );
     assert_eq!(
         assignment
@@ -2522,10 +2522,7 @@ fn expression_and_statement_accessors_expose_layout_roles() {
         .into_iter()
         .find(|binary| binary.source_text().contains('*'))
         .expect("binary expression");
-    assert_eq!(
-        binary.operator().expect("binary operator").kind(),
-        JavaSyntaxKind::Star
-    );
+    assert_eq!(binary.operator().expect("binary operator").text(), "*");
     assert!(matches!(
         binary.left().expect("binary lhs"),
         Expression::ParenthesizedExpression(_)

@@ -772,7 +772,7 @@ enum ModifierContext {
 }
 
 impl ModifierContext {
-    fn allows(self, parser: &Parser<'_>) -> bool {
+    fn allows(self, parser: &mut Parser<'_>) -> bool {
         match self {
             Self::Type => true,
             Self::Field => matches!(

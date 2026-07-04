@@ -88,9 +88,9 @@ impl Parser<'_> {
         }
 
         let lhs = self.parse_conditional_expression();
-        if !self.at_assignment_operator() {
+        let Some(operator_len) = self.assignment_operator_len() else {
             return lhs;
-        }
+        };
 
         let lhs = if Self::is_assignment_left_hand_side(lhs.kind())
             || Self::completed_is_error_node(&lhs)
@@ -103,7 +103,9 @@ impl Parser<'_> {
         };
 
         let assignment = self.precede(lhs);
-        self.bump();
+        for _ in 0..operator_len {
+            self.bump();
+        }
         self.parse_assignment_expression();
         self.complete(assignment, JavaSyntaxKind::AssignmentExpression)
     }
@@ -141,14 +143,16 @@ impl Parser<'_> {
     ) -> jolt_syntax::CompletedMarker {
         let mut lhs = self.parse_unary_expression();
 
-        while let Some(precedence) = self.binary_operator_precedence() {
-            if precedence < minimum_precedence {
+        while let Some(operator_info) = self.binary_operator() {
+            if operator_info.precedence < minimum_precedence {
                 break;
             }
 
             let binary = self.precede(lhs);
             let operator = self.current_kind();
-            self.bump();
+            for _ in 0..operator_info.len {
+                self.bump();
+            }
 
             if operator == JavaSyntaxKind::InstanceofKw {
                 if self.starts_pattern() {
@@ -163,7 +167,7 @@ impl Parser<'_> {
                     self.parse_class_type();
                 }
             } else {
-                self.parse_binary_expression(precedence + 1);
+                self.parse_binary_expression(operator_info.precedence + 1);
             }
 
             let expression_kind = if operator == JavaSyntaxKind::InstanceofKw {
@@ -411,7 +415,7 @@ impl Parser<'_> {
         self.complete(error, JavaSyntaxKind::ErrorNode)
     }
 
-    pub(super) fn starts_primitive_array_method_reference_type(&self) -> bool {
+    pub(super) fn starts_primitive_array_method_reference_type(&mut self) -> bool {
         if !self.at_primitive_type() {
             return false;
         }
@@ -543,7 +547,7 @@ impl Parser<'_> {
         ParsedLambdaParameter { style, varargs }
     }
 
-    pub(super) fn current_lambda_parameter_style(&self) -> LambdaParameterStyle {
+    pub(super) fn current_lambda_parameter_style(&mut self) -> LambdaParameterStyle {
         if !self.starts_typed_lambda_parameter() {
             return LambdaParameterStyle::Implicit;
         }
@@ -753,7 +757,7 @@ impl Parser<'_> {
         self.complete(literal, JavaSyntaxKind::LiteralExpression)
     }
 
-    pub(super) fn at_decimal_integer_boundary_literal(&self) -> bool {
+    pub(super) fn at_decimal_integer_boundary_literal(&mut self) -> bool {
         if self.current_kind() != JavaSyntaxKind::IntegerLiteral {
             return false;
         }

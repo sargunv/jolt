@@ -20,10 +20,7 @@
 use jolt_diagnostics::{DiagnosticCode, DiagnosticCodeId, DiagnosticStage, Severity};
 use jolt_text::{TextRange, TextSize};
 
-use super::{
-    JavaLexDiagnosticCode, JavaLexer, JavaSyntaxKind, JavaTokenSource, LexerDiagnostic, Token,
-    TriviaKind,
-};
+use super::{JavaLexDiagnosticCode, JavaLexer, JavaSyntaxKind, LexerDiagnostic, Token, TriviaKind};
 
 struct Lexed {
     tokens: Vec<Token>,
@@ -78,36 +75,6 @@ fn reconstructed(source: &str) -> String {
         }
     }
     out
-}
-
-#[test]
-fn token_source_supports_lookahead_without_bumping() {
-    let mut source = JavaTokenSource::new("class A {}");
-
-    assert_eq!(source.current().kind, JavaSyntaxKind::ClassKw);
-    assert_eq!(source.nth(1).kind, JavaSyntaxKind::Identifier);
-    assert_eq!(source.nth(2).kind, JavaSyntaxKind::LBrace);
-    assert_eq!(source.current().kind, JavaSyntaxKind::ClassKw);
-
-    source.bump();
-    assert_eq!(source.current().kind, JavaSyntaxKind::Identifier);
-    source.bump();
-    assert_eq!(source.current().kind, JavaSyntaxKind::LBrace);
-}
-
-#[test]
-fn token_source_can_rewind_to_checkpoint() {
-    let mut source = JavaTokenSource::new("class A {}");
-    let checkpoint = source.checkpoint();
-
-    assert_eq!(source.nth(2).kind, JavaSyntaxKind::LBrace);
-    source.bump();
-    source.bump();
-    assert_eq!(source.current().kind, JavaSyntaxKind::LBrace);
-
-    source.rewind(checkpoint);
-    assert_eq!(source.current().kind, JavaSyntaxKind::ClassKw);
-    assert_eq!(source.nth(1).kind, JavaSyntaxKind::Identifier);
 }
 
 #[test]

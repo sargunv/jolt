@@ -6,42 +6,43 @@ use super::{
     AnyJavaNode, ArgumentList, ArgumentListEntry, ArrayAccessExpression, ArrayCreationExpression,
     ArrayDimension, ArrayDimensions, ArrayInitializer, ArrayInitializerEntry, ArrayType,
     AssertStatement, AssignmentExpression, BasicForStatement, BinaryExpression, Block, BlockItem,
-    BlockStatement, BreakStatement, CaseConstant, CasePattern, CastExpression, CatchClause,
-    CatchParameter, CatchTypeList, ClassBody, ClassBodyDeclaration, ClassBodyMember,
-    ClassDeclaration, ClassLiteralExpression, ClassType, ClassTypeSegment,
-    CompactConstructorDeclaration, CompilationUnit, CompilationUnitItem, ComponentPattern,
-    ConditionalExpression, ConstructorBody, ConstructorDeclaration, ConstructorInvocation,
-    ContinueStatement, DefaultValue, DimExpression, DoStatement, EmptyDeclaration,
-    EnhancedForStatement, EnumBody, EnumConstant, EnumConstantList, EnumConstantListEntry,
-    EnumDeclaration, ExportsDirective, Expression, ExpressionParentRole, ExpressionStatement,
-    ExtendsClause, FieldAccessExpression, FieldDeclaration, FinallyClause, ForInitializer,
-    ForStatement, ForUpdate, FormalParameter, FormalParameterList, FormalParameterListEntry,
-    FormalParameterListItem, Guard, IfStatement, ImplementsClause, ImportDeclaration, ImportKind,
-    InstanceInitializer, InstanceofExpression, InterfaceBody, InterfaceBodyMember,
-    InterfaceDeclaration, IntersectionType, IntersectionTypeEntry, JavaFamily, JavaNode,
-    JavaSyntaxKind, JavaSyntaxToken, LabeledStatement, LambdaExpression, LambdaParameter,
-    LambdaParameterList, LiteralExpression, LocalClassOrInterfaceDeclaration,
-    LocalVariableDeclaration, MatchAllPattern, MemberChain, MemberChainSuffix, MethodDeclaration,
-    MethodInvocationExpression, MethodReferenceExpression, ModifierEntry, ModifierList,
-    ModuleDeclaration, ModuleDirective, ModuleDirectiveNode, ModuleDirectiveRole,
-    ModuleNameListEntry, NameExpression, NameSegment, NameSyntax, ObjectCreationExpression,
-    OpensDirective, PackageDeclaration, ParenthesizedExpression, Pattern, PermitsClause,
-    PermitsClauseEntry, PostfixExpression, PrimitiveType, ProvidesDirective, ReceiverParameter,
-    RecordBody, RecordComponent, RecordComponentList, RecordComponentListEntry, RecordDeclaration,
-    RecordPattern, RecordPatternComponentEntry, RequiresDirective, Resource, ResourceList,
-    ResourceListEntry, ResourceSpecification, ReturnStatement, Statement, StatementBody,
-    StatementExpressionEntry, StatementExpressionList, StaticInitializer, SuperExpression,
-    SwitchBlock, SwitchBlockEntry, SwitchBlockStatementGroup, SwitchBlockStatementGroupLabel,
-    SwitchExpression, SwitchLabel, SwitchLabelCaseEntry, SwitchLabelCaseItem, SwitchRule,
-    SwitchStatement, SynchronizedStatement, ThisExpression, ThrowStatement, ThrowsClause,
-    ThrowsClauseEntry, TryStatement, TryWithResourcesStatement, Type, TypeArgument,
-    TypeArgumentList, TypeArgumentListEntry, TypeBoundList, TypeClauseEntry, TypeDeclaration,
-    TypeParameter, TypeParameterList, TypeParameterListEntry, TypePattern, UnaryExpression,
-    UnionType, UnionTypeEntry, UsesDirective, VariableAccess, VariableDeclarator,
+    BlockStatement, BreakStatement, COMPOSITE_ASSIGNMENT_OPERATORS, COMPOSITE_BINARY_OPERATORS,
+    CaseConstant, CasePattern, CastExpression, CatchClause, CatchParameter, CatchTypeList,
+    ClassBody, ClassBodyDeclaration, ClassBodyMember, ClassDeclaration, ClassLiteralExpression,
+    ClassType, ClassTypeSegment, CompactConstructorDeclaration, CompilationUnit,
+    CompilationUnitItem, ComponentPattern, ConditionalExpression, ConstructorBody,
+    ConstructorDeclaration, ConstructorInvocation, ContinueStatement, DefaultValue, DimExpression,
+    DoStatement, EmptyDeclaration, EnhancedForStatement, EnumBody, EnumConstant, EnumConstantList,
+    EnumConstantListEntry, EnumDeclaration, ExportsDirective, Expression, ExpressionParentRole,
+    ExpressionStatement, ExtendsClause, FieldAccessExpression, FieldDeclaration, FinallyClause,
+    ForInitializer, ForStatement, ForUpdate, FormalParameter, FormalParameterList,
+    FormalParameterListEntry, FormalParameterListItem, Guard, IfStatement, ImplementsClause,
+    ImportDeclaration, ImportKind, InstanceInitializer, InstanceofExpression, InterfaceBody,
+    InterfaceBodyMember, InterfaceDeclaration, IntersectionType, IntersectionTypeEntry, JavaFamily,
+    JavaNode, JavaOperator, JavaOperatorKind, JavaOperatorPattern, JavaSyntaxKind, JavaSyntaxToken,
+    LabeledStatement, LambdaExpression, LambdaParameter, LambdaParameterList, LiteralExpression,
+    LocalClassOrInterfaceDeclaration, LocalVariableDeclaration, MatchAllPattern, MemberChain,
+    MemberChainSuffix, MethodDeclaration, MethodInvocationExpression, MethodReferenceExpression,
+    ModifierEntry, ModifierList, ModuleDeclaration, ModuleDirective, ModuleDirectiveNode,
+    ModuleDirectiveRole, ModuleNameListEntry, NameExpression, NameSegment, NameSyntax,
+    ObjectCreationExpression, OpensDirective, PackageDeclaration, ParenthesizedExpression, Pattern,
+    PermitsClause, PermitsClauseEntry, PostfixExpression, PrimitiveType, ProvidesDirective,
+    ReceiverParameter, RecordBody, RecordComponent, RecordComponentList, RecordComponentListEntry,
+    RecordDeclaration, RecordPattern, RecordPatternComponentEntry, RequiresDirective, Resource,
+    ResourceList, ResourceListEntry, ResourceSpecification, ReturnStatement, Statement,
+    StatementBody, StatementExpressionEntry, StatementExpressionList, StaticInitializer,
+    SuperExpression, SwitchBlock, SwitchBlockEntry, SwitchBlockStatementGroup,
+    SwitchBlockStatementGroupLabel, SwitchExpression, SwitchLabel, SwitchLabelCaseEntry,
+    SwitchLabelCaseItem, SwitchRule, SwitchStatement, SynchronizedStatement, ThisExpression,
+    ThrowStatement, ThrowsClause, ThrowsClauseEntry, TryStatement, TryWithResourcesStatement, Type,
+    TypeArgument, TypeArgumentList, TypeArgumentListEntry, TypeBoundList, TypeClauseEntry,
+    TypeDeclaration, TypeParameter, TypeParameterList, TypeParameterListEntry, TypePattern,
+    UnaryExpression, UnionType, UnionTypeEntry, UsesDirective, VariableAccess, VariableDeclarator,
     VariableDeclaratorEntry, VariableDeclaratorList, VariableInitializer, VariableInitializerValue,
-    VoidType, WhileStatement, WildcardBound, WildcardType, YieldStatement, child, child_family,
-    child_token, child_token_in, children, children_family, children_tokens_matching,
-    nth_child_family, nth_child_token, starts_after_blank_line, tokens,
+    VoidType, WhileStatement, WildcardBound, WildcardType, YieldStatement,
+    assignment_operator_kind, binary_operator_kind, child, child_family, child_token,
+    child_token_in, children, children_family, children_tokens_matching, nth_child_family,
+    nth_child_token, starts_after_blank_line, tokens,
 };
 use crate::JavaSyntaxNode;
 use jolt_syntax::{SyntaxElement, TriviaKind};
@@ -2602,8 +2603,8 @@ impl AssignmentExpression {
     }
 
     #[must_use]
-    pub fn operator(&self) -> Option<JavaSyntaxToken> {
-        child_token_in(&self.syntax, ASSIGNMENT_OPERATORS)
+    pub fn operator(&self) -> Option<JavaOperator> {
+        assignment_operator(&self.syntax)
     }
 
     #[must_use]
@@ -2646,8 +2647,8 @@ impl BinaryExpression {
     }
 
     #[must_use]
-    pub fn operator(&self) -> Option<JavaSyntaxToken> {
-        child_token_in(&self.syntax, BINARY_OPERATORS)
+    pub fn operator(&self) -> Option<JavaOperator> {
+        binary_operator(&self.syntax)
     }
 
     #[must_use]
@@ -4093,43 +4094,78 @@ fn is_non_sealed_modifier_at(tokens: &[JavaSyntaxToken], index: usize) -> bool {
             .is_some_and(|token| token.text() == "sealed")
 }
 
-const ASSIGNMENT_OPERATORS: &[JavaSyntaxKind] = &[
-    JavaSyntaxKind::Assign,
-    JavaSyntaxKind::PlusEq,
-    JavaSyntaxKind::MinusEq,
-    JavaSyntaxKind::StarEq,
-    JavaSyntaxKind::SlashEq,
-    JavaSyntaxKind::AmpEq,
-    JavaSyntaxKind::BarEq,
-    JavaSyntaxKind::CaretEq,
-    JavaSyntaxKind::PercentEq,
-    JavaSyntaxKind::LShiftEq,
-    JavaSyntaxKind::RShiftEq,
-    JavaSyntaxKind::UnsignedRShiftEq,
-];
+fn assignment_operator(syntax: &JavaSyntaxNode) -> Option<JavaOperator> {
+    operator_from_direct_child_tokens(
+        syntax,
+        COMPOSITE_ASSIGNMENT_OPERATORS,
+        assignment_operator_kind,
+    )
+}
 
-const BINARY_OPERATORS: &[JavaSyntaxKind] = &[
-    JavaSyntaxKind::InstanceofKw,
-    JavaSyntaxKind::OrOr,
-    JavaSyntaxKind::AndAnd,
-    JavaSyntaxKind::Bar,
-    JavaSyntaxKind::Caret,
-    JavaSyntaxKind::Amp,
-    JavaSyntaxKind::EqEq,
-    JavaSyntaxKind::BangEq,
-    JavaSyntaxKind::Lt,
-    JavaSyntaxKind::Gt,
-    JavaSyntaxKind::LtEq,
-    JavaSyntaxKind::GtEq,
-    JavaSyntaxKind::LShift,
-    JavaSyntaxKind::RShift,
-    JavaSyntaxKind::UnsignedRShift,
-    JavaSyntaxKind::Plus,
-    JavaSyntaxKind::Minus,
-    JavaSyntaxKind::Star,
-    JavaSyntaxKind::Slash,
-    JavaSyntaxKind::Percent,
-];
+fn binary_operator(syntax: &JavaSyntaxNode) -> Option<JavaOperator> {
+    operator_from_direct_child_tokens(syntax, COMPOSITE_BINARY_OPERATORS, binary_operator_kind)
+}
+
+fn operator_from_direct_child_tokens(
+    syntax: &JavaSyntaxNode,
+    composite_patterns: &[JavaOperatorPattern],
+    single_kind: fn(JavaSyntaxKind) -> Option<JavaOperatorKind>,
+) -> Option<JavaOperator> {
+    let tokens = direct_child_token_prefix(syntax);
+
+    let (kind, len) = composite_patterns
+        .iter()
+        .find(|pattern| token_sequence_matches(&tokens, pattern.tokens))
+        .map(|pattern| (pattern.kind, pattern.tokens.len()))
+        .or_else(|| {
+            let first = tokens[0].as_ref()?;
+            Some((single_kind(first.kind())?, 1))
+        })?;
+
+    java_operator(kind, tokens, len)
+}
+
+fn direct_child_token_prefix(syntax: &JavaSyntaxNode) -> [Option<JavaSyntaxToken>; 4] {
+    let mut tokens = std::array::from_fn(|_| None);
+    for (index, syntax) in syntax.child_tokens().take(4).enumerate() {
+        tokens[index] = Some(JavaSyntaxToken { syntax });
+    }
+
+    tokens
+}
+
+fn token_sequence_matches(tokens: &[Option<JavaSyntaxToken>; 4], kinds: &[JavaSyntaxKind]) -> bool {
+    kinds.iter().enumerate().all(|(index, kind)| {
+        tokens[index]
+            .as_ref()
+            .is_some_and(|token| token.kind() == *kind)
+    }) && (1..kinds.len()).all(|index| {
+        let Some(left) = tokens[index - 1].as_ref() else {
+            return false;
+        };
+        let Some(right) = tokens[index].as_ref() else {
+            return false;
+        };
+
+        left.token_text_range().end() == right.token_text_range().start()
+            && left.syntax.trailing().is_empty()
+            && right.syntax.leading().is_empty()
+    })
+}
+
+fn java_operator(
+    kind: JavaOperatorKind,
+    mut tokens: [Option<JavaSyntaxToken>; 4],
+    len: usize,
+) -> Option<JavaOperator> {
+    let first = tokens[0].take()?;
+    if len == 1 {
+        return Some(JavaOperator::single(kind, first));
+    }
+
+    let last = tokens.get_mut(len.checked_sub(1)?)?.take()?;
+    Some(JavaOperator::composite(kind, first, last))
+}
 
 impl ModuleDeclaration {
     #[must_use]

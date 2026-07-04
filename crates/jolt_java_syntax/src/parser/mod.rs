@@ -14,7 +14,7 @@ use jolt_syntax::{
 };
 
 use crate::{
-    CompilationUnit, JavaLexer, JavaSyntaxKind, Token, Trivia,
+    CompilationUnit, Trivia,
     nodes::{JavaSyntaxNode, cast_compilation_unit},
 };
 
@@ -146,16 +146,12 @@ fn fmt_diagnostic(f: &mut fmt::Formatter<'_>, diagnostic: &Diagnostic) -> fmt::R
 /// Parses a Java compilation unit.
 #[must_use]
 pub fn parse_compilation_unit(source: &str) -> JavaParse {
-    let (tokens, diagnostics) = lex_tokens(source);
-    let parse = Parser::new(source, tokens).parse_compilation_unit();
-    finish_parse(source, diagnostics, &parse)
+    let parse = Parser::new(source).parse_compilation_unit();
+    finish_parse(source, parse)
 }
 
-fn finish_parse(
-    source: &str,
-    mut diagnostics: Vec<Diagnostic>,
-    parse: &source::ParseEvents,
-) -> JavaParse {
+fn finish_parse(source: &str, parse: source::ParseEvents) -> JavaParse {
+    let mut diagnostics = parse.diagnostics;
     let token_source = JavaGreenTokenSource::new(source, &parse.tokens);
     let tree = match build_green_tree(&parse.events, &token_source) {
         Ok(tree) => tree,
@@ -204,25 +200,6 @@ fn invalid_event_stream_diagnostic(error: &jolt_syntax::BuildGreenTreeError) -> 
         message: format!("Jolt parser produced an invalid event stream: {error:?}"),
         range: None,
     }
-}
-
-fn lex_tokens(source: &str) -> (Vec<Token>, Vec<Diagnostic>) {
-    let mut lexer = JavaLexer::new(source);
-    let mut tokens = Vec::new();
-
-    loop {
-        let token = lexer.next_token();
-        let at_eof = token.kind == JavaSyntaxKind::Eof;
-        tokens.push(token);
-
-        if at_eof {
-            break;
-        }
-    }
-
-    let diagnostics = lexer.finish();
-
-    (tokens, diagnostics)
 }
 
 struct JavaGreenTokenSource<'source> {

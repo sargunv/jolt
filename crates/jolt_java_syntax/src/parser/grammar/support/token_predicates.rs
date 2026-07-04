@@ -2,11 +2,11 @@
 use super::{JavaSyntaxKind, Parser};
 
 impl Parser<'_> {
-    pub(in crate::parser::grammar) fn at_type_modifier(&self) -> bool {
+    pub(in crate::parser::grammar) fn at_type_modifier(&mut self) -> bool {
         self.is_type_modifier_at(self.position())
     }
 
-    pub(in crate::parser::grammar) fn is_type_modifier_at(&self, index: usize) -> bool {
+    pub(in crate::parser::grammar) fn is_type_modifier_at(&mut self, index: usize) -> bool {
         matches!(
             self.kind_at(index),
             JavaSyntaxKind::PublicKw
@@ -27,7 +27,7 @@ impl Parser<'_> {
                 && self.text_at(index + 2) == Some("sealed"))
     }
 
-    pub(in crate::parser::grammar) fn skip_type_modifier_at(&self, index: usize) -> usize {
+    pub(in crate::parser::grammar) fn skip_type_modifier_at(&mut self, index: usize) -> usize {
         if self.text_at(index) == Some("non")
             && self.kind_at(index + 1) == JavaSyntaxKind::Minus
             && self.text_at(index + 2) == Some("sealed")
@@ -45,35 +45,35 @@ impl Parser<'_> {
         }
     }
 
-    pub(in crate::parser::grammar) fn at_name_segment(&self) -> bool {
+    pub(in crate::parser::grammar) fn at_name_segment(&mut self) -> bool {
         self.is_name_segment_at(self.position())
     }
 
-    pub(in crate::parser::grammar) fn nth_is_name_segment(&self, n: usize) -> bool {
+    pub(in crate::parser::grammar) fn nth_is_name_segment(&mut self, n: usize) -> bool {
         self.is_name_segment_at(self.position() + n)
     }
 
-    pub(in crate::parser::grammar) fn is_name_segment_at(&self, index: usize) -> bool {
+    pub(in crate::parser::grammar) fn is_name_segment_at(&mut self, index: usize) -> bool {
         self.kind_at(index) == JavaSyntaxKind::Identifier
     }
 
-    pub(in crate::parser::grammar) fn at_primitive_type(&self) -> bool {
+    pub(in crate::parser::grammar) fn at_primitive_type(&mut self) -> bool {
         self.is_primitive_type_start_at(self.position())
     }
 
-    pub(in crate::parser::grammar) fn starts_array_dimensions(&self) -> bool {
+    pub(in crate::parser::grammar) fn starts_array_dimensions(&mut self) -> bool {
         let mut lookahead = self.lookahead();
         lookahead.skip_annotations();
         lookahead.at(JavaSyntaxKind::LBracket) && lookahead.nth_kind(1) == JavaSyntaxKind::RBracket
     }
 
-    pub(in crate::parser::grammar) fn starts_dim_expression(&self) -> bool {
+    pub(in crate::parser::grammar) fn starts_dim_expression(&mut self) -> bool {
         let mut lookahead = self.lookahead();
         lookahead.skip_annotations();
         lookahead.at(JavaSyntaxKind::LBracket) && lookahead.nth_kind(1) != JavaSyntaxKind::RBracket
     }
 
-    pub(in crate::parser::grammar) fn is_primitive_type_start_at(&self, index: usize) -> bool {
+    pub(in crate::parser::grammar) fn is_primitive_type_start_at(&mut self, index: usize) -> bool {
         matches!(
             self.kind_at(index),
             JavaSyntaxKind::BooleanKw

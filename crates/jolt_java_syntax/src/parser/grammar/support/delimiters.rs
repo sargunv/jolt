@@ -3,7 +3,7 @@ use super::{JavaSyntaxKind, Parser};
 
 impl Parser<'_> {
     pub(in crate::parser::grammar) fn skip_balanced_from(
-        &self,
+        &mut self,
         mut index: usize,
         open: JavaSyntaxKind,
         close: JavaSyntaxKind,
@@ -26,7 +26,7 @@ impl Parser<'_> {
     }
 
     pub(in crate::parser::grammar) fn skip_balanced_delimiter_at(
-        &self,
+        &mut self,
         index: usize,
     ) -> Option<usize> {
         match self.kind_at(index) {

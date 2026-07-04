@@ -64,12 +64,12 @@ impl Parser<'_> {
         true
     }
 
-    pub(in crate::parser::grammar) fn at_variable_identifier(&self) -> bool {
+    pub(in crate::parser::grammar) fn at_variable_identifier(&mut self) -> bool {
         self.is_variable_identifier_at_offset(self.position())
     }
 
     pub(in crate::parser::grammar) fn is_variable_identifier_at_offset(
-        &self,
+        &mut self,
         index: usize,
     ) -> bool {
         matches!(
@@ -78,7 +78,7 @@ impl Parser<'_> {
         )
     }
 
-    pub(in crate::parser::grammar) fn at_type_identifier(&self) -> bool {
+    pub(in crate::parser::grammar) fn at_type_identifier(&mut self) -> bool {
         self.current_kind() == JavaSyntaxKind::Identifier
             && !matches!(
                 self.current_text(),

@@ -44,10 +44,10 @@ fn parser_shell_preserves_source_text() {
 fn invalid_event_stream_aborts_without_syntax() {
     let parse = finish_parse(
         "",
-        Vec::new(),
-        &ParseEvents {
+        ParseEvents {
             events: vec![Event::Token],
             tokens: Vec::new(),
+            diagnostics: Vec::new(),
         },
     );
 
@@ -2255,33 +2255,11 @@ fn parses_class_type_type_arguments_outside_name_nodes() {
 }
 
 #[test]
-fn split_right_shift_type_close_maps_virtual_gt_tokens_to_source_characters() {
-    // Spec: JLS 3.5 contextual tokenization and parser-design decision 2.
-    // Splitting a `>>` token in type context must preserve each `>` character's
-    // own source range and keep trivia on the outside split tokens only.
+fn recovers_malformed_nested_generic_member() {
+    // Regression coverage for recovery after a nested generic type closes with
+    // adjacent `>` characters but the member declaration is still malformed.
     assert_parse_snapshot(
-        "split_right_shift_type_close_maps_virtual_gt_tokens_to_source_characters",
-        "class SplitRightShiftTypeClose {\n    java.util.Map<String, java.util.List<Integer\n            >> /*trail*/ value;\n}\n",
-    );
-}
-
-#[test]
-fn split_unsigned_right_shift_type_close_maps_virtual_gt_tokens_to_source_characters() {
-    // Spec: JLS 3.5 contextual tokenization and parser-design decision 2.
-    // Splitting a `>>>` token in type context follows the same source mapping
-    // and trivia policy across all three virtual `>` tokens.
-    assert_parse_snapshot(
-        "split_unsigned_right_shift_type_close_maps_virtual_gt_tokens_to_source_characters",
-        "class SplitUnsignedRightShiftTypeClose {\n    java.util.Map<String, java.util.Map<Integer, java.util.List<Long\n            >>> /*trail*/ value;\n}\n",
-    );
-}
-
-#[test]
-fn recovers_malformed_generic_close_with_split_shift_token() {
-    // Regression coverage for recovery after a nested generic type consumes a
-    // split `>>` token but the member declaration is still malformed.
-    assert_parse_snapshot(
-        "recovers_malformed_generic_close_with_split_shift_token",
+        "recovers_malformed_nested_generic_member",
         r"
             class MalformedGenericClose {
                 java.util.Map<String, java.util.List<Integer>>;
@@ -2293,8 +2271,8 @@ fn recovers_malformed_generic_close_with_split_shift_token() {
 
 #[test]
 fn parses_mixed_generic_close_and_relational_greater_than() {
-    // Spec: JLS 3.5 contextual tokenization splits adjacent `>` characters
-    // when a type context consumes only part of a `>>` token.
+    // Spec: JLS 3.5 contextual tokenization lets adjacent `>` characters close
+    // generic types and still participate in the surrounding expression.
     assert_parse_snapshot(
         "parses_mixed_generic_close_and_relational_greater_than",
         r"
@@ -2309,8 +2287,8 @@ fn parses_mixed_generic_close_and_relational_greater_than() {
 
 #[test]
 fn parses_mixed_deep_generic_close_and_relational_greater_than() {
-    // Spec: JLS 3.5 contextual tokenization can split `>>>` so two `>`
-    // characters close nested type arguments and one remains relational.
+    // Spec: JLS 3.5 contextual tokenization lets two adjacent `>` characters
+    // close nested type arguments while the next remains relational.
     assert_parse_snapshot(
         "parses_mixed_deep_generic_close_and_relational_greater_than",
         r"
