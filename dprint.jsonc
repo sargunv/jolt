@@ -6,9 +6,12 @@
   "newLineKind": "lf",
   "json": { "preferSingleLine": true },
   "markdown": { "textWrap": "always" },
-  "ruff": { "indentStyle": "space", "indentWidth": 4, "lineLength": 80 },
+  "ruff": { "indentStyle": "space", "indentWidth": 4 },
   "exec": {
-    "commands": [{ "command": "rustfmt --edition 2024", "exts": ["rs"] }]
+    "commands": [
+      { "command": "rustfmt --edition 2024", "exts": ["rs"] },
+      { "command": "mise fmt -s", "fileNames": ["mise.toml"] }
+    ]
   },
   "excludes": ["crates/**/*.java"],
   "plugins": [
