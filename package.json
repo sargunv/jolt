@@ -1,5 +1,16 @@
 {
   "private": true,
   "packageManager": "pnpm@11.9.0",
-  "devDependencies": { "prettier": "3.9.4", "prettier-plugin-java": "2.10.2" }
+  "scripts": {
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
+  },
+  "devDependencies": {
+    "chart.js": "^4.5.1",
+    "prettier": "3.9.4",
+    "prettier-plugin-java": "2.10.2",
+    "vitepress": "^1.6.4",
+    "vue-chartjs": "^5.3.3"
+  }
 }

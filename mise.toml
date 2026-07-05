@@ -43,6 +43,15 @@ run = "cargo machete"
 [tasks.build]
 depends = ["build:jolt", "build:dprint-plugin"]
 
+[tasks."docs:dev"]
+run = "pnpm docs:dev"
+
+[tasks."docs:build"]
+run = "pnpm docs:build"
+
+[tasks."docs:preview"]
+run = "pnpm docs:preview"
+
 [tasks."build:jolt"]
 usage = '''
 flag "--mode <mode>" help="Cargo build mode" {

@@ -3,7 +3,15 @@
   "formatter": {
     "external": {
       "command": "mise",
-      "arguments": ["x", "--", "dprint", "fmt", "--stdin", "{buffer_path}"]
+      "arguments": [
+        "x",
+        "--silent",
+        "--",
+        "dprint",
+        "fmt",
+        "--stdin",
+        "{buffer_path}"
+      ]
     }
   },
   "file_scan_exclusions": [".git", "tools/import/.imports"]

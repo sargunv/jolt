@@ -1,27 +1,22 @@
 # Jolt
 
 Jolt is a simple, portable, and extremely fast formatter for Java source, with a
-consistent, predictable, opinionated style similar to other modern formatters.
+predictable and opinionated style similar to other modern formatters.
 
 ## Performance
 
 Formatting the
 [Spring Framework](https://github.com/spring-projects/spring-framework) Java
-sources (~9,200 files). Representative numbers from the
-[in-repo benchmark](./tools/bench/) on a Ryzen AI Max+ 395; lower is better.
+sources (~9,200 files) on a Ryzen AI Max+ 395. Lower is better.
 
-```mermaid
----
-config:
-    xyChart:
-        height: 300
-        chartOrientation: horizontal
----
-xychart
-    x-axis ["jolt (native)", "jolt (dprint)", "google-java-format", "prettier-java"]
-    y-axis "Seconds" 0 --> 30
-    bar [0.4, 0.5, 11, 28]
-```
+| Formatter          | Time |
+| ------------------ | ---: |
+| jolt (native)      | 0.4s |
+| jolt (dprint)      | 0.5s |
+| google-java-format |  11s |
+| prettier-java      |  28s |
+
+See the [benchmark script](./tools/bench/) for how these numbers are produced.
 
 Jolt formats the whole repo in under half a second—about 20× faster than
 `google-java-format`.
@@ -84,8 +79,8 @@ and tabs vs. spaces. Configure them in `jolt.toml`:
 root = true
 
 [format]
-line-width = 100
-indent-width = 4
+line-width = 80
+indent-width = 2
 tabs = false
 include = ["**/*.java"]
 exclude = ["generated/**"]
