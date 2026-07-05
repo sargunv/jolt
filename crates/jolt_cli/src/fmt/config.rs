@@ -76,7 +76,7 @@ pub(crate) struct ResolvedConfig {
 struct SparseConfig {
     line_width: Option<u16>,
     indent_width: Option<u8>,
-    tabs: Option<bool>,
+    use_tabs: Option<bool>,
     include: Option<PatternList>,
     exclude: Vec<PatternList>,
 }
@@ -84,7 +84,6 @@ struct SparseConfig {
 #[derive(Clone, Debug)]
 pub(crate) struct ConfigResolver {
     invocation_root: PathBuf,
-    project_root: PathBuf,
     cli_options: CliFormatOptions,
     cli_include: Option<PatternList>,
     cli_exclude: Option<PatternList>,
@@ -114,15 +113,8 @@ impl ConfigResolver {
         let explicit_config = explicit_config
             .map(|path| load_explicit_config(cwd, path))
             .transpose()?;
-        let project_root = if no_config {
-            invocation_root.clone()
-        } else {
-            find_project_root(&invocation_root)?
-        };
-
         Ok(Self {
             invocation_root,
-            project_root,
             cli_options,
             cli_include,
             cli_exclude,
@@ -139,8 +131,9 @@ impl ConfigResolver {
 
         let mut builder = ConfigBuilder::new(&self.invocation_root)?;
 
-        if !self.no_config {
-            for config in Self::discovered_configs(&self.project_root, dir)? {
+        if self.explicit_config.is_none() && !self.no_config {
+            let project_root = find_project_root(dir, &self.invocation_root)?;
+            for config in Self::discovered_configs(&project_root, dir)? {
                 builder.apply_sparse(&config);
             }
         }
@@ -202,8 +195,8 @@ impl ConfigBuilder {
         if let Some(indent_width) = sparse.indent_width {
             self.options.indent_width = indent_width;
         }
-        if let Some(tabs) = sparse.tabs {
-            self.options.use_tabs = tabs;
+        if let Some(use_tabs) = sparse.use_tabs {
+            self.options.use_tabs = use_tabs;
         }
         if let Some(include) = &sparse.include {
             self.include = include.clone();
@@ -218,8 +211,8 @@ impl ConfigBuilder {
         if let Some(indent_width) = options.indent_width {
             self.options.indent_width = indent_width;
         }
-        if let Some(tabs) = options.tabs {
-            self.options.use_tabs = tabs;
+        if let Some(use_tabs) = options.use_tabs {
+            self.options.use_tabs = use_tabs;
         }
     }
 
@@ -238,6 +231,7 @@ struct FileConfig {
     #[serde(rename = "root")]
     _root: Option<bool>,
     format: Option<FileFormatConfig>,
+    files: Option<FileSelectionConfig>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -251,7 +245,12 @@ struct ProjectRootConfig {
 struct FileFormatConfig {
     line_width: Option<u16>,
     indent_width: Option<u8>,
-    tabs: Option<bool>,
+    use_tabs: Option<bool>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
+struct FileSelectionConfig {
     include: Option<Vec<String>>,
     exclude: Option<Vec<String>>,
 }
@@ -278,34 +277,35 @@ fn load_config_at(path: &Path, base_dir: &Path) -> Result<SparseConfig, CliError
 
 impl FileConfig {
     fn into_sparse(self, path: &Path, base_dir: &Path) -> Result<SparseConfig, CliError> {
-        let FileConfig { format, .. } = self;
-        let Some(format) = format else {
-            return Ok(SparseConfig::default());
-        };
+        let FileConfig { format, files, .. } = self;
 
         let sparse_options = CliFormatOptions {
-            line_width: format.line_width,
-            indent_width: format.indent_width,
-            tabs: format.tabs,
+            line_width: format.as_ref().and_then(|format| format.line_width),
+            indent_width: format.as_ref().and_then(|format| format.indent_width),
+            use_tabs: format.as_ref().and_then(|format| format.use_tabs),
         };
         validate_options(sparse_options, &path.display().to_string())?;
 
-        let include = format
-            .include
+        let include = files
+            .as_ref()
+            .and_then(|files| files.include.as_ref())
+            .cloned()
             .map(|patterns| PatternList::new(base_dir, &patterns))
             .transpose()
             .map_err(|error| error.with_source(path))?;
-        let exclude = format
-            .exclude
+        let exclude = files
+            .as_ref()
+            .and_then(|files| files.exclude.as_ref())
+            .cloned()
             .map(|patterns| PatternList::new(base_dir, &patterns).map(|list| vec![list]))
             .transpose()
             .map_err(|error| error.with_source(path))?
             .unwrap_or_default();
 
         Ok(SparseConfig {
-            line_width: format.line_width,
-            indent_width: format.indent_width,
-            tabs: format.tabs,
+            line_width: sparse_options.line_width,
+            indent_width: sparse_options.indent_width,
+            use_tabs: sparse_options.use_tabs,
             include,
             exclude,
         })
@@ -355,14 +355,14 @@ fn config_paths_for_dir(dir: &Path) -> Vec<ConfigPath> {
     ]
 }
 
-fn find_project_root(invocation_root: &Path) -> Result<PathBuf, CliError> {
-    for ancestor in invocation_root.ancestors() {
+fn find_project_root(dir: &Path, fallback: &Path) -> Result<PathBuf, CliError> {
+    for ancestor in dir.ancestors() {
         if has_vcs_marker(ancestor) || has_root_config(ancestor)? {
             return Ok(ancestor.to_path_buf());
         }
     }
 
-    Ok(invocation_root.to_path_buf())
+    Ok(fallback.to_path_buf())
 }
 
 fn has_vcs_marker(dir: &Path) -> bool {

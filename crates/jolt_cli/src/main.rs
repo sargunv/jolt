@@ -3,6 +3,7 @@ use std::process::ExitCode;
 use clap::Parser as _;
 
 mod cli;
+mod config_schema;
 mod error;
 mod fmt;
 

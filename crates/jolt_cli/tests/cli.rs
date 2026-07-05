@@ -34,6 +34,7 @@ fn completions_generate_shell_script() {
     assert_success(&output);
     assert!(stdout(&output).contains("_jolt()"));
     assert!(stdout(&output).contains("completions"));
+    assert!(stdout(&output).contains("config"));
     assert!(stdout(&output).contains("format"));
 }
 
@@ -47,6 +48,33 @@ fn manpage_generates_roff_document() {
     assert!(stdout(&output).contains(".SH NAME"));
     assert!(stdout(&output).contains("jolt \\- Fast, opinionated JVM"));
     assert!(stdout(&output).contains(".SH SYNOPSIS"));
+}
+
+#[test]
+fn config_schema_prints_jolt_schema() {
+    let temp = TempDir::new().expect("tempdir should be created");
+    let output = jolt(temp.path(), ["config", "schema"], "");
+
+    assert_success(&output);
+    let schema = stdout(&output);
+    assert!(schema.contains(r#""title": "Jolt configuration""#));
+    assert!(schema.contains(r#""line-width""#));
+    assert!(schema.contains(r#""files""#));
+    assert!(schema.contains(r#""minimum": 1.0"#));
+    assert!(schema.contains(r#""additionalProperties": false"#));
+}
+
+#[test]
+fn config_schema_prints_dprint_schema() {
+    let temp = TempDir::new().expect("tempdir should be created");
+    let output = jolt(temp.path(), ["config", "schema", "--dprint"], "");
+
+    assert_success(&output);
+    let schema = stdout(&output);
+    assert!(schema.contains(r#""title": "dprint jolt plugin configuration""#));
+    assert!(schema.contains(r#""lineWidth""#));
+    assert!(schema.contains(r#""useTabs""#));
+    assert!(schema.contains(r#""additionalProperties": true"#));
 }
 
 #[test]
@@ -207,12 +235,20 @@ fn cli_format_options_reach_core() {
     assert_success(&indent_width);
     assert_nested_uses_four_spaces(&stdout(&indent_width));
 
-    let tabs = jolt(temp.path(), ["fmt", "--tabs", "-"], NESTED_INPUT);
+    let tabs = jolt(
+        temp.path(),
+        ["fmt", "--use-tabs", "true", "-"],
+        NESTED_INPUT,
+    );
     assert_success(&tabs);
     assert_nested_uses_tabs(&stdout(&tabs));
 
-    write(temp.path().join("jolt.toml"), "[format]\ntabs = true\n");
-    let spaces = jolt(temp.path(), ["fmt", "--spaces", "-"], NESTED_INPUT);
+    write(temp.path().join("jolt.toml"), "[format]\nuse-tabs = true\n");
+    let spaces = jolt(
+        temp.path(),
+        ["fmt", "--use-tabs", "false", "-"],
+        NESTED_INPUT,
+    );
     assert_success(&spaces);
     assert_nested_uses_two_spaces(&stdout(&spaces));
 }
@@ -285,7 +321,7 @@ fn nested_configs_apply_with_threads() {
 #[test]
 fn child_invocations_discover_configs_up_to_vcs_root() {
     let temp = TempDir::new().expect("tempdir should be created");
-    write(temp.path().join("jolt.toml"), "[format]\ntabs = true\n");
+    write(temp.path().join("jolt.toml"), "[format]\nuse-tabs = true\n");
     fs::create_dir_all(temp.path().join("project/.git")).expect("git dir should be created");
     fs::create_dir_all(temp.path().join("project/module")).expect("module dir should be created");
     write(
@@ -306,7 +342,7 @@ fn child_invocations_discover_configs_up_to_vcs_root() {
 #[test]
 fn root_true_config_defines_project_boundary_without_vcs_marker() {
     let temp = TempDir::new().expect("tempdir should be created");
-    write(temp.path().join("jolt.toml"), "[format]\ntabs = true\n");
+    write(temp.path().join("jolt.toml"), "[format]\nuse-tabs = true\n");
     fs::create_dir_all(temp.path().join("project/module")).expect("module dir should be created");
     write(
         temp.path().join("project/jolt.toml"),
@@ -325,7 +361,7 @@ fn root_true_config_defines_project_boundary_without_vcs_marker() {
     let dot_config = TempDir::new().expect("tempdir should be created");
     write(
         dot_config.path().join("jolt.toml"),
-        "[format]\ntabs = true\n",
+        "[format]\nuse-tabs = true\n",
     );
     fs::create_dir_all(dot_config.path().join("project/.config/jolt"))
         .expect("config dir should be created");
@@ -344,6 +380,25 @@ fn root_true_config_defines_project_boundary_without_vcs_marker() {
 
     assert_success(&output);
     assert_nested_uses_four_spaces(&stdout(&output));
+}
+
+#[test]
+fn root_true_config_stops_parent_config_inheritance() {
+    let temp = TempDir::new().expect("tempdir should be created");
+    write(temp.path().join("jolt.toml"), "[format]\nuse-tabs = true\n");
+    fs::create_dir_all(temp.path().join("project/module")).expect("module dir should be created");
+    write(
+        temp.path().join("project/jolt.toml"),
+        "root = true\n[format]\nindent-width = 4\n",
+    );
+    write(temp.path().join("Root.java"), NESTED_INPUT);
+    write(temp.path().join("project/module/Module.java"), NESTED_INPUT);
+
+    let output = jolt(temp.path(), ["fmt", "."], "");
+
+    assert_success(&output);
+    assert_nested_uses_tabs(&read(temp.path().join("Root.java")));
+    assert_nested_uses_four_spaces(&read(temp.path().join("project/module/Module.java")));
 }
 
 #[test]
@@ -407,6 +462,19 @@ fn config_file_errors_and_no_config_behavior() {
     assert_success(&no_config);
     assert_nested_uses_two_spaces(&stdout(&no_config));
 
+    write(
+        temp.path().join("explicit.toml"),
+        "[format]\nindent-width = 4\n",
+    );
+    write(temp.path().join("jolt.toml"), "[format]\nline-wdith = 80\n");
+    let explicit_config = jolt(
+        temp.path(),
+        ["fmt", "--config", "explicit.toml", "-"],
+        NESTED_INPUT,
+    );
+    assert_success(&explicit_config);
+    assert_nested_uses_four_spaces(&stdout(&explicit_config));
+
     write(temp.path().join("jolt.toml"), "[format]\nline-wdith = 80\n");
     let unknown_key = jolt(temp.path(), ["fmt", "-"], SIMPLE_INPUT);
     assert_failure(&unknown_key);
@@ -422,7 +490,7 @@ fn config_file_errors_and_no_config_behavior() {
 
     write(
         temp.path().join("jolt.toml"),
-        "[format]\ninclude = [\"[\"]\n",
+        "[files]\ninclude = [\"[\"]\n",
     );
     let invalid_glob = jolt(temp.path(), ["fmt", "-"], SIMPLE_INPUT);
     assert_failure(&invalid_glob);
@@ -456,7 +524,7 @@ fn include_replacement_selects_candidates() {
     fs::create_dir_all(temp.path().join("other")).expect("other dir should be created");
     write(
         temp.path().join("jolt.toml"),
-        "[format]\ninclude = [\"selected/**/*.java\"]\n",
+        "[files]\ninclude = [\"selected/**/*.java\"]\n",
     );
     write(temp.path().join("selected/A.java"), SIMPLE_INPUT);
     write(temp.path().join("other/B.java"), SIMPLE_INPUT);
@@ -482,7 +550,7 @@ fn exclude_patterns_stack_across_config_and_cli() {
     fs::create_dir_all(temp.path().join("generated")).expect("generated dir should be created");
     write(
         temp.path().join("jolt.toml"),
-        "[format]\nexclude = [\"generated/**\"]\n",
+        "[files]\nexclude = [\"generated/**\"]\n",
     );
     write(temp.path().join("src/A.java"), SIMPLE_INPUT);
     write(temp.path().join("src/Internal.java"), SIMPLE_INPUT);

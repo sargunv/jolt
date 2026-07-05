@@ -2,4 +2,8 @@
 source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
 expression: formatted
 ---
+String greeting = "Hello, World!";
 
+void main() {
+  System.out.println(greeting);
+}

@@ -89,7 +89,11 @@ impl dprint_core::plugins::SyncPluginHandler<FormatOptions> for JoltDprintPlugin
             version: env!("CARGO_PKG_VERSION").to_owned(),
             config_key: "jolt".to_owned(),
             help_url: env!("CARGO_PKG_REPOSITORY").to_owned(),
-            config_schema_url: String::new(),
+            config_schema_url: format!(
+                "{}/releases/download/{}/dprint-schema.json",
+                env!("CARGO_PKG_REPOSITORY"),
+                env!("CARGO_PKG_VERSION"),
+            ),
             update_url: None,
         }
     }

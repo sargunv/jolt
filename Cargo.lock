@@ -407,7 +407,9 @@ dependencies = [
  "jolt_formatter",
  "jolt_text",
  "rayon",
+ "schemars",
  "serde",
+ "serde_json",
  "tempfile",
 ]
 
@@ -419,18 +421,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "jolt_dprint_schema_gen"
-version = "0.0.0"
-dependencies = [
- "jolt_formatter",
- "schemars",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "jolt_fmt_dprint"
-version = "0.0.0"
+version = "0.20260705.0"
 dependencies = [
  "dprint-core",
  "jolt_diagnostics",

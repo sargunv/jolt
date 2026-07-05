@@ -26,7 +26,9 @@ jolt_fmt_ir = { path = "../jolt_fmt_ir" }
 jolt_formatter = { path = "../jolt_formatter" }
 jolt_text = { path = "../jolt_text" }
 rayon = "1.10"
+schemars = { version = "0.8", default-features = false, features = ["derive"] }
 serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 
 [dev-dependencies]
 assert_cmd = "2.0"

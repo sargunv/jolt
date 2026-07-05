@@ -81,13 +81,15 @@ root = true
 [format]
 line-width = 80
 indent-width = 2
-tabs = false
+use-tabs = false
+
+[files]
 include = ["**/*.java"]
 exclude = ["generated/**"]
 ```
 
 Jolt discovers config by walking from the project root down to each file's
-directory, reading the first of:
+directory, layering any config files found at these locations:
 
 - `jolt.toml`
 - `.config/jolt.toml`
@@ -99,3 +101,6 @@ The project root is the nearest ancestor with a VCS marker (`.git`, `.hg`,
 For the dprint plugin, the same options go under the `jolt` key in
 `dprint.jsonc` using dprint-style names: `lineWidth`, `indentWidth`, and
 `useTabs`.
+
+Run `jolt config schema` for the `jolt.toml` JSON schema, or
+`jolt config schema --dprint` for the dprint plugin schema.

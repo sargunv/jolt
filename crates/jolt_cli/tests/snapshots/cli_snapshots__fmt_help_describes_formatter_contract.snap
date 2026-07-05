@@ -18,16 +18,14 @@ Options:
           Preferred maximum rendered line width
       --indent-width <INDENT_WIDTH>
           Number of spaces per indentation level when using spaces
-      --tabs
-          Use tabs for indentation
-      --spaces
-          Use spaces for indentation
+      --use-tabs <USE_TABS>
+          Whether to use tabs for indentation [possible values: true, false]
       --include <INCLUDE>
           Include source files matching this glob
       --exclude <EXCLUDE>
           Exclude source files matching this glob
       --config <CONFIG>
-          Load an explicit config file after discovered project configs
+          Load only this explicit config file
       --no-config
           Disable discovered project configs
       --stdin-filename <STDIN_FILENAME>

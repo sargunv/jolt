@@ -1,6 +1,6 @@
 use std::{num::NonZeroUsize, path::PathBuf};
 
-use clap::{ArgAction, Args as ClapArgs};
+use clap::Args as ClapArgs;
 
 #[derive(Debug, ClapArgs)]
 #[allow(clippy::struct_excessive_bools)]
@@ -17,13 +17,9 @@ pub(crate) struct Args {
     #[arg(long)]
     pub(crate) indent_width: Option<u8>,
 
-    /// Use tabs for indentation.
-    #[arg(long, action = ArgAction::SetTrue, conflicts_with = "spaces")]
-    pub(crate) tabs: bool,
-
-    /// Use spaces for indentation.
-    #[arg(long, action = ArgAction::SetTrue, conflicts_with = "tabs")]
-    pub(crate) spaces: bool,
+    /// Whether to use tabs for indentation.
+    #[arg(long)]
+    pub(crate) use_tabs: Option<bool>,
 
     /// Include source files matching this glob.
     #[arg(long)]
@@ -33,8 +29,8 @@ pub(crate) struct Args {
     #[arg(long)]
     pub(crate) exclude: Vec<String>,
 
-    /// Load an explicit config file after discovered project configs.
-    #[arg(long, conflicts_with = "no_config")]
+    /// Load only this explicit config file.
+    #[arg(long)]
     pub(crate) config: Option<PathBuf>,
 
     /// Disable discovered project configs.
@@ -57,23 +53,15 @@ pub(crate) struct Args {
 pub(crate) struct CliFormatOptions {
     pub(crate) line_width: Option<u16>,
     pub(crate) indent_width: Option<u8>,
-    pub(crate) tabs: Option<bool>,
+    pub(crate) use_tabs: Option<bool>,
 }
 
 impl Args {
     pub(crate) fn format_options(&self) -> CliFormatOptions {
-        let tabs = if self.tabs {
-            Some(true)
-        } else if self.spaces {
-            Some(false)
-        } else {
-            None
-        };
-
         CliFormatOptions {
             line_width: self.line_width,
             indent_width: self.indent_width,
-            tabs,
+            use_tabs: self.use_tabs,
         }
     }
 }

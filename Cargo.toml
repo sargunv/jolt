@@ -2,7 +2,6 @@
 members = [
   "crates/jolt_cli",
   "crates/jolt_diagnostics",
-  "crates/jolt_dprint_schema_gen",
   "crates/jolt_fmt_dprint",
   "crates/jolt_fmt_ir",
   "crates/jolt_formatter",

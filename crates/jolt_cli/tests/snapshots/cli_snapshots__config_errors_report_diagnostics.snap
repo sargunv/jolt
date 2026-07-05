@@ -6,6 +6,6 @@ status: 1
 stdout:
 <empty>
 stderr:
-$TEMP/jolt.toml: indent-width must be greater than zero
+/private$TEMP/jolt.toml: indent-width must be greater than zero
 files:
 <none>

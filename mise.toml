@@ -124,7 +124,7 @@ version="0.$today.$n"
 tag="$version"
 
 echo "About to cut $tag"
-echo "  - bump crates/jolt_cli/Cargo.toml to $version"
+echo "  - bump crates/jolt_cli/Cargo.toml and crates/jolt_fmt_dprint/Cargo.toml to $version"
 echo "  - sync Cargo.lock"
 echo "  - git commit -m \"chore: release jolt $version\""
 echo "  - git tag -m \"jolt $version\" $tag"
@@ -136,11 +136,12 @@ case "$reply" in
   *) echo "Aborted"; exit 1 ;;
 esac
 
-toml=crates/jolt_cli/Cargo.toml
-awk -v v="$version" '/^version = / && !done { print "version = \"" v "\""; done=1; next } { print }' "$toml" > "$toml.tmp" && mv "$toml.tmp" "$toml"
+for toml in crates/jolt_cli/Cargo.toml crates/jolt_fmt_dprint/Cargo.toml; do
+  awk -v v="$version" '/^version = / && !done { print "version = \"" v "\""; done=1; next } { print }' "$toml" > "$toml.tmp" && mv "$toml.tmp" "$toml"
+done
 cargo metadata --format-version=1 >/dev/null
 
-git add "$toml" Cargo.lock
+git add crates/jolt_cli/Cargo.toml crates/jolt_fmt_dprint/Cargo.toml Cargo.lock
 git commit -m "chore: release jolt $version"
 git tag -m "jolt $version" "$tag"
 git push --atomic origin HEAD "$tag"
