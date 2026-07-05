@@ -8,10 +8,10 @@ hero:
   actions:
     - theme: brand
       text: What is Jolt?
-      link: /what-is-jolt
+      link: /guides/what-is-jolt
     - theme: alt
       text: Get Started
-      link: /installation
+      link: /guides/installation
     - theme: alt
       text: View on GitHub
       link: https://github.com/sargunv/jolt

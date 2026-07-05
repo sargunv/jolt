@@ -20,10 +20,19 @@ export default defineConfig({
   },
   themeConfig: {
     sidebar: [
-      { text: "What is Jolt?", link: "/what-is-jolt" },
-      { text: "Installation", link: "/installation" },
-      { text: "Configuration", link: "/configuration" },
-      { text: "Integrations", link: "/integrations" },
+      {
+        text: "Guides",
+        items: [
+          { text: "What is Jolt?", link: "/guides/what-is-jolt" },
+          { text: "Installation", link: "/guides/installation" },
+          { text: "Configuration", link: "/guides/configuration" },
+          { text: "Integrations", link: "/guides/integrations" },
+        ],
+      },
+      {
+        text: "Reference",
+        items: [{ text: "CLI", link: "/reference/cli" }],
+      },
     ],
     socialLinks: [{ icon: "github", link: "https://github.com/sargunv/jolt" }],
   },
