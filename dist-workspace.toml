@@ -20,6 +20,12 @@ precise-builds = true
 pr-run-mode = "upload"
 source-tarball = false
 
+# cargo-dist defaults this target to cargo-xwin, whose container can lag our MSRV.
+# cargo-dist documents using a Windows runner for this target:
+# https://github.com/axodotdev/cargo-dist/blob/v0.32.0/CHANGELOG.md#support-cross-compiling-from-windows-to-windows
+[dist.github-custom-runners.aarch64-pc-windows-msvc]
+runner = "windows-2025"
+
 [[dist.extra-artifacts]]
 artifacts = ["plugin.wasm", "schema.json"]
 build = [
