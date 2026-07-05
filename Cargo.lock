@@ -483,6 +483,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "jolt_kotlin_syntax"
+version = "0.0.0"
+dependencies = [
+ "insta",
+ "jolt_diagnostics",
+ "jolt_syntax",
+ "jolt_text",
+ "num_enum",
+]
+
+[[package]]
 name = "jolt_syntax"
 version = "0.0.0"
 dependencies = [

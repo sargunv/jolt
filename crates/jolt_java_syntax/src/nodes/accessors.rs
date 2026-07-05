@@ -63,6 +63,12 @@ impl<'source> CompilationUnit<'source> {
             if let Some(declaration) = TypeDeclaration::cast(syntax) {
                 return Some(CompilationUnitItem::Type(declaration));
             }
+            if let Some(declaration) = FieldDeclaration::cast(syntax) {
+                return Some(CompilationUnitItem::Field(declaration));
+            }
+            if let Some(declaration) = MethodDeclaration::cast(syntax) {
+                return Some(CompilationUnitItem::Method(declaration));
+            }
             EmptyDeclaration::cast(syntax).map(CompilationUnitItem::EmptyDeclaration)
         })
     }

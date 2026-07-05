@@ -947,6 +947,8 @@ pub enum CompilationUnitItem<'source> {
     Import(ImportDeclaration<'source>),
     Module(ModuleDeclaration<'source>),
     Type(TypeDeclaration<'source>),
+    Field(FieldDeclaration<'source>),
+    Method(MethodDeclaration<'source>),
     EmptyDeclaration(EmptyDeclaration<'source>),
 }
 
@@ -958,6 +960,8 @@ impl<'source> CompilationUnitItem<'source> {
             Self::Import(item) => item.first_token(),
             Self::Module(item) => item.first_token(),
             Self::Type(item) => item.first_token(),
+            Self::Field(item) => item.first_token(),
+            Self::Method(item) => item.first_token(),
             Self::EmptyDeclaration(item) => item.first_token(),
         }
     }
@@ -969,6 +973,8 @@ impl<'source> CompilationUnitItem<'source> {
             Self::Import(item) => item.last_token(),
             Self::Module(item) => item.last_token(),
             Self::Type(item) => item.last_token(),
+            Self::Field(item) => item.last_token(),
+            Self::Method(item) => item.last_token(),
             Self::EmptyDeclaration(item) => item.last_token(),
         }
     }

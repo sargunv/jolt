@@ -12,10 +12,11 @@ use crate::helpers::formatter_ignore::{
 };
 use crate::rules::annotations::format_annotation;
 use crate::rules::comments::format_comment_only_compilation_unit;
-use crate::rules::declarations::format_type_declaration;
+use crate::rules::declarations::{format_method_declaration, format_type_declaration};
 use crate::rules::imports::format_imports;
 use crate::rules::modules::format_module_declaration;
 use crate::rules::names::format_name;
+use crate::rules::variables::format_field_declaration;
 
 pub(crate) fn format_compilation_unit<'source>(
     unit: &CompilationUnit<'source>,
@@ -55,14 +56,22 @@ fn format_compilation_unit_items<'source>(
     let mut package = None;
     let mut imports = Vec::new();
     let mut module = None;
-    let mut types = Vec::new();
+    let mut declarations = Vec::new();
 
     for item in items {
         match item {
             CompilationUnitItem::Package(declaration) => package = Some(declaration),
             CompilationUnitItem::Import(declaration) => imports.push(declaration),
             CompilationUnitItem::Module(declaration) => module = Some(declaration),
-            CompilationUnitItem::Type(declaration) => types.push(declaration),
+            CompilationUnitItem::Type(declaration) => {
+                declarations.push(format_type_declaration(&declaration, formatter));
+            }
+            CompilationUnitItem::Field(declaration) => {
+                declarations.push(format_field_declaration(&declaration, formatter));
+            }
+            CompilationUnitItem::Method(declaration) => {
+                declarations.push(format_method_declaration(&declaration, formatter));
+            }
             CompilationUnitItem::EmptyDeclaration(_) => {}
         }
     }
@@ -80,12 +89,8 @@ fn format_compilation_unit_items<'source>(
         sections.push(format_module_declaration(&module));
     }
 
-    let types = types
-        .into_iter()
-        .map(|declaration| format_type_declaration(&declaration, formatter))
-        .collect::<Vec<_>>();
-    if !types.is_empty() {
-        sections.push(join_empty_lines(types));
+    if !declarations.is_empty() {
+        sections.push(join_empty_lines(declarations));
     }
 
     (!sections.is_empty()).then(|| join_empty_lines(sections))

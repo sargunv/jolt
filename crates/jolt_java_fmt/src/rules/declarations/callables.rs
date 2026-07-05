@@ -84,7 +84,7 @@ pub(super) fn format_compact_constructor_declaration<'source>(
     }
 }
 
-pub(super) fn format_method_declaration<'source>(
+pub(crate) fn format_method_declaration<'source>(
     method: &MethodDeclaration<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {

@@ -52,9 +52,11 @@ mod enums;
 mod member_bodies;
 mod type_declarations;
 
+pub(crate) use callables::format_method_declaration;
+
 use callables::{
     format_annotation_element_declaration, format_compact_constructor_declaration,
-    format_constructor_declaration, format_method_declaration,
+    format_constructor_declaration,
 };
 use constructor_bodies::format_constructor_body;
 use enums::format_enum_body_contents;

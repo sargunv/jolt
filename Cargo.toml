@@ -8,6 +8,7 @@ members = [
   "crates/jolt_formatter",
   "crates/jolt_java_fmt",
   "crates/jolt_java_syntax",
+  "crates/jolt_kotlin_syntax",
   "crates/jolt_syntax",
   "crates/jolt_text",
 ]
