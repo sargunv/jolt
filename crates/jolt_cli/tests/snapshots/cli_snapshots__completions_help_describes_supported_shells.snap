@@ -1,0 +1,19 @@
+---
+source: crates/jolt_cli/tests/cli_snapshots.rs
+expression: "snapshot(&output, &[])"
+---
+status: 0
+stdout:
+Generate shell completions
+
+Usage: jolt completions <SHELL>
+
+Arguments:
+  <SHELL>  Shell to generate completions for [possible values: bash, elvish, fish, powershell, zsh]
+
+Options:
+  -h, --help  Print help
+stderr:
+<empty>
+files:
+<none>

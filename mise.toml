@@ -98,25 +98,21 @@ depends = [
 ]
 run = 'python tools/bench/bench.py ${usage_tools:-}'
 
-[tasks."release:plan"]
-usage = 'arg "[tag]" help="Tag to plan for, e.g. v0.20260704.0"'
-run = 'dist plan --tag="${usage_tag:-v0.0.0-plan.0}"'
-
-[tasks."release:snapshot"]
-run = 'dist build --tag="v0.0.0-snapshot.$(git rev-parse --short HEAD)"'
+[tasks."release:build"]
+run = "dist build"
 
 [tasks."release:cut"]
 run = '''
 set -eu
 today=$(date -u +%Y%m%d)
-latest=$(git tag -l "v0.$today.*" | sort -V | tail -1)
+latest=$(git tag -l "0.$today.*" | sort -V | tail -1)
 if [ -n "$latest" ]; then
   n=$(( ${latest##*.} + 1 ))
 else
   n=0
 fi
 version="0.$today.$n"
-tag="v$version"
+tag="$version"
 
 echo "About to cut $tag"
 echo "  - bump crates/jolt_cli/Cargo.toml to $version"

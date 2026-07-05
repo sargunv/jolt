@@ -1,4 +1,4 @@
-use std::{error::Error, fmt};
+use std::{error::Error, fmt, io};
 
 #[derive(Debug)]
 pub(crate) struct CliError {
@@ -24,3 +24,9 @@ impl fmt::Display for CliError {
 }
 
 impl Error for CliError {}
+
+impl From<io::Error> for CliError {
+    fn from(error: io::Error) -> Self {
+        Self::new(error.to_string())
+    }
+}

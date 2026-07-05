@@ -3,3 +3,5 @@ __pycache__/
 node_modules/
 .imports/
 .ruff_cache/
+/plugin.wasm
+/schema.json

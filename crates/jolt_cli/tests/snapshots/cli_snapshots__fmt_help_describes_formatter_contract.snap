@@ -6,7 +6,7 @@ status: 0
 stdout:
 Format source files
 
-Usage: jolt fmt [OPTIONS] [PATHS]...
+Usage: jolt format [OPTIONS] [PATHS]...
 
 Arguments:
   [PATHS]...  Files or directories to format. Use '-' to read stdin

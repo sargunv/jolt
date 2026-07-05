@@ -1,0 +1,16 @@
+---
+source: crates/jolt_cli/tests/cli_snapshots.rs
+expression: "snapshot(&output, &[])"
+---
+status: 0
+stdout:
+Generate a roff manpage
+
+Usage: jolt manpage
+
+Options:
+  -h, --help  Print help
+stderr:
+<empty>
+files:
+<none>

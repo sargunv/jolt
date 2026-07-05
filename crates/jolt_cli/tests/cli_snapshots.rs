@@ -32,6 +32,27 @@ fn fmt_help_describes_formatter_contract() {
 }
 
 #[test]
+fn completions_help_describes_supported_shells() {
+    let temp = TempDir::new().expect("tempdir should be created");
+
+    let output = jolt(temp.path(), ["completions", "--help"], "");
+
+    insta::assert_snapshot!(
+        "completions_help_describes_supported_shells",
+        snapshot(&output, &[])
+    );
+}
+
+#[test]
+fn manpage_help_describes_roff_output() {
+    let temp = TempDir::new().expect("tempdir should be created");
+
+    let output = jolt(temp.path(), ["manpage", "--help"], "");
+
+    insta::assert_snapshot!("manpage_help_describes_roff_output", snapshot(&output, &[]));
+}
+
+#[test]
 fn stdin_formats_to_stdout() {
     let temp = TempDir::new().expect("tempdir should be created");
 

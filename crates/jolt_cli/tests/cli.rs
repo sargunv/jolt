@@ -18,6 +18,38 @@ fn stdin_formats_to_stdout() {
 }
 
 #[test]
+fn fmt_alias_formats_stdin_to_stdout() {
+    let temp = TempDir::new().expect("tempdir should be created");
+    let output = jolt(temp.path(), ["fmt", "-"], SIMPLE_INPUT);
+
+    assert_success(&output);
+    assert_eq!(stdout(&output), SIMPLE_FORMATTED);
+}
+
+#[test]
+fn completions_generate_shell_script() {
+    let temp = TempDir::new().expect("tempdir should be created");
+    let output = jolt(temp.path(), ["completions", "bash"], "");
+
+    assert_success(&output);
+    assert!(stdout(&output).contains("_jolt()"));
+    assert!(stdout(&output).contains("completions"));
+    assert!(stdout(&output).contains("format"));
+}
+
+#[test]
+fn manpage_generates_roff_document() {
+    let temp = TempDir::new().expect("tempdir should be created");
+    let output = jolt(temp.path(), ["manpage"], "");
+
+    assert_success(&output);
+    assert!(stdout(&output).contains(".TH jolt 1"));
+    assert!(stdout(&output).contains(".SH NAME"));
+    assert!(stdout(&output).contains("jolt \\- Fast, opinionated JVM"));
+    assert!(stdout(&output).contains(".SH SYNOPSIS"));
+}
+
+#[test]
 fn stdin_filename_is_used_for_diagnostics() {
     let temp = TempDir::new().expect("tempdir should be created");
     let output = jolt(

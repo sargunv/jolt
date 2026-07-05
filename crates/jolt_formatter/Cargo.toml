@@ -10,10 +10,12 @@ rust-version.workspace = true
 jolt_diagnostics = { path = "../jolt_diagnostics" }
 jolt_fmt_ir = { version = "0.0.0", path = "../jolt_fmt_ir" }
 jolt_java_fmt = { path = "../jolt_java_fmt" }
+schemars = { version = "0.8", optional = true, default-features = false, features = ["derive"] }
 serde = { version = "1.0", features = ["derive"], optional = true }
 
 [features]
 serde = ["dep:serde"]
+schema = ["serde", "dep:schemars"]
 
 [lints]
 workspace = true
