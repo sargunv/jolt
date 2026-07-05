@@ -15,12 +15,12 @@ export function joltEditorTheme(isDark: boolean) {
         lineHeight: "1.6",
       },
       ".cm-gutters": {
-        backgroundColor: "transparent",
+        backgroundColor: "var(--vp-c-bg-soft)",
         borderRight: "1px solid var(--vp-c-divider)",
         color: "var(--vp-c-text-3)",
       },
       ".cm-activeLineGutter": {
-        backgroundColor: "transparent",
+        backgroundColor: "var(--vp-c-bg-soft)",
       },
       ".cm-content": {
         caretColor: "var(--vp-c-brand-1)",

@@ -17,7 +17,7 @@ directory, reading the first matching file:
 The project root is the nearest ancestor with a VCS marker (`.git`, `.hg`,
 `.jj`, `.svn`) or a config file containing `root = true`.
 
-The [dprint plugin](./dprint-plugin) reads configuration from `dprint.jsonc`
+The [dprint integration](./integrations) reads configuration from `dprint.jsonc`
 rather than a Jolt config file.
 
 ## Example

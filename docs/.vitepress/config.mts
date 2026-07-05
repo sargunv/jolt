@@ -23,7 +23,7 @@ export default defineConfig({
       { text: "What is Jolt?", link: "/what-is-jolt" },
       { text: "Installation", link: "/installation" },
       { text: "Configuration", link: "/configuration" },
-      { text: "dprint Plugin", link: "/dprint-plugin" },
+      { text: "Integrations", link: "/integrations" },
     ],
     socialLinks: [{ icon: "github", link: "https://github.com/sargunv/jolt" }],
   },

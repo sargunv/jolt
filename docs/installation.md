@@ -1,7 +1,7 @@
 # Installation
 
 This page covers the standalone `jolt` CLI. To use Jolt through
-[dprint](https://dprint.dev) instead, see the [dprint plugin](./dprint-plugin).
+[dprint](https://dprint.dev) instead, see [Integrations](./integrations).
 
 ## Releases
 
