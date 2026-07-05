@@ -1,0 +1,68 @@
+import {
+  createContext,
+  type ContextFormatter,
+  type FormatterContext,
+} from "@dprint/formatter";
+import { ref, shallowRef } from "vue";
+import type { PlaygroundFormatConfig } from "../playgroundConfig";
+
+const JOLT_WASM_URL = `${import.meta.env.BASE_URL}jolt-plugin.wasm`;
+
+const context = shallowRef<FormatterContext | null>(null);
+const plugin = shallowRef<ContextFormatter | null>(null);
+const loading = ref(false);
+const loadError = ref<string | null>(null);
+
+let loadPromise: Promise<ContextFormatter> | null = null;
+
+async function ensureReady(): Promise<ContextFormatter> {
+  if (plugin.value) {
+    return plugin.value;
+  }
+
+  if (loadPromise) {
+    return loadPromise;
+  }
+
+  loading.value = true;
+  loadError.value = null;
+
+  loadPromise = (async () => {
+    const ctx = createContext();
+    const formatter = await ctx.addPluginStreaming(fetch(JOLT_WASM_URL));
+    context.value = ctx;
+    plugin.value = formatter;
+    return formatter;
+  })()
+    .catch((error: unknown) => {
+      loadPromise = null;
+      loadError.value =
+        error instanceof Error ? error.message : String(error);
+      throw error;
+    })
+    .finally(() => {
+      loading.value = false;
+    });
+
+  return loadPromise;
+}
+
+async function formatJava(
+  source: string,
+  config: PlaygroundFormatConfig,
+): Promise<string> {
+  const formatter = await ensureReady();
+  return formatter.formatText({
+    filePath: "Example.java",
+    fileText: source,
+    overrideConfig: {
+      lineWidth: config.lineWidth,
+      indentWidth: config.indentWidth,
+      useTabs: config.useTabs,
+    },
+  });
+}
+
+export function useJoltFormatter() {
+  return { loading, loadError, ensureReady, formatJava };
+}

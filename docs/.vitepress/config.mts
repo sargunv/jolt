@@ -4,6 +4,17 @@ export default defineConfig({
   title: "Jolt",
   description:
     "Fast, opinionated JVM and Kotlin Multiplatform project tooling.",
+  vite: {
+    optimizeDeps: {
+      include: [
+        "@codemirror/lang-java",
+        "@codemirror/lint",
+        "@dprint/formatter",
+        "codemirror",
+        "vue-codemirror6",
+      ],
+    },
+  },
   themeConfig: {
     sidebar: [
       { text: "What is Jolt?", link: "/what-is-jolt" },

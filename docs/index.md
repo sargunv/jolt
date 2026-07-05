@@ -23,4 +23,6 @@ features:
     details: Style is inspired by other modern formatters like Prettier and Ruff.
   - title: Tool Friendly
     details: Use Jolt from the native CLI or as a dprint Wasm plugin.
+
+markdownStyles: false
 ---
