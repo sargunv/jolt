@@ -1,24 +1,10 @@
 use std::{num::NonZeroUsize, path::PathBuf};
 
-use clap::{ArgAction, Args, Parser, Subcommand};
+use clap::{ArgAction, Args as ClapArgs};
 
-#[derive(Debug, Parser)]
-#[command(name = "jolt", version)]
-#[command(about = "Simple, predictable, and opinionated Java formatter.")]
-pub(crate) struct Cli {
-    #[command(subcommand)]
-    pub(crate) command: Command,
-}
-
-#[derive(Debug, Subcommand)]
-pub(crate) enum Command {
-    /// Format source files.
-    Fmt(FmtArgs),
-}
-
-#[derive(Debug, Args)]
+#[derive(Debug, ClapArgs)]
 #[allow(clippy::struct_excessive_bools)]
-pub(crate) struct FmtArgs {
+pub(crate) struct Args {
     /// Check whether files are formatted without writing changes.
     #[arg(long)]
     pub(crate) check: bool,
@@ -74,7 +60,7 @@ pub(crate) struct CliFormatOptions {
     pub(crate) tabs: Option<bool>,
 }
 
-impl FmtArgs {
+impl Args {
     pub(crate) fn format_options(&self) -> CliFormatOptions {
         let tabs = if self.tabs {
             Some(true)

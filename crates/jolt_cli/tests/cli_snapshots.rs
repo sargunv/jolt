@@ -8,14 +8,60 @@ use assert_cmd::{Command, cargo::cargo_bin};
 use tempfile::TempDir;
 
 #[test]
-fn write_mode_rewrites_changed_file_without_user_output() {
+fn top_level_help_describes_product_cli() {
+    let temp = TempDir::new().expect("tempdir should be created");
+
+    let output = jolt(temp.path(), ["--help"], "");
+
+    insta::assert_snapshot!(
+        "top_level_help_describes_product_cli",
+        snapshot(&output, &[])
+    );
+}
+
+#[test]
+fn fmt_help_describes_formatter_contract() {
+    let temp = TempDir::new().expect("tempdir should be created");
+
+    let output = jolt(temp.path(), ["fmt", "--help"], "");
+
+    insta::assert_snapshot!(
+        "fmt_help_describes_formatter_contract",
+        snapshot(&output, &[])
+    );
+}
+
+#[test]
+fn stdin_formats_to_stdout() {
+    let temp = TempDir::new().expect("tempdir should be created");
+
+    let output = jolt(temp.path(), ["fmt", "-"], "class A {}\n");
+
+    insta::assert_snapshot!("stdin_formats_to_stdout", snapshot(&output, &[]));
+}
+
+#[test]
+fn write_mode_rewrites_changed_file_and_reports_summary() {
     let temp = TempDir::new().expect("tempdir should be created");
     write(temp.path().join("A.java"), "class A {}\n");
 
     let output = jolt(temp.path(), ["fmt", "A.java"], "");
 
     insta::assert_snapshot!(
-        "write_mode_rewrites_changed_file_without_user_output",
+        "write_mode_rewrites_changed_file_and_reports_summary",
+        snapshot(&output, &[temp.path().join("A.java")])
+    );
+}
+
+#[test]
+fn write_mode_counts_clean_files_as_formatted() {
+    let temp = TempDir::new().expect("tempdir should be created");
+    write(temp.path().join("A.java"), "class A {\n}\n");
+
+    let output = jolt(temp.path(), ["fmt", "A.java"], "");
+
+    insta::assert_snapshot!(
+        "write_mode_counts_clean_files_as_formatted",
         snapshot(&output, &[temp.path().join("A.java")])
     );
 }
@@ -30,6 +76,22 @@ fn check_mode_reports_changed_file_without_writing() {
     insta::assert_snapshot!(
         "check_mode_reports_changed_file_without_writing",
         snapshot(&output, &[temp.path().join("A.java")])
+    );
+}
+
+#[test]
+fn check_mode_reports_changed_stdin_filename() {
+    let temp = TempDir::new().expect("tempdir should be created");
+
+    let output = jolt(
+        temp.path(),
+        ["fmt", "--check", "--stdin-filename", "src/Main.java", "-"],
+        "class A {}\n",
+    );
+
+    insta::assert_snapshot!(
+        "check_mode_reports_changed_stdin_filename",
+        snapshot(&output, &[])
     );
 }
 
@@ -56,15 +118,60 @@ fn check_mode_reports_all_changed_files_with_summary_count() {
 }
 
 #[test]
-fn check_mode_accepts_formatted_file_without_user_output() {
+fn check_mode_reports_mixed_changed_and_failed_files() {
+    let temp = TempDir::new().expect("tempdir should be created");
+    write(temp.path().join("Changed.java"), "class Changed {}\n");
+    write(temp.path().join("Bad.java"), "class {\n");
+
+    let output = jolt(temp.path(), ["fmt", "--check", "."], "");
+
+    insta::assert_snapshot!(
+        "check_mode_reports_mixed_changed_and_failed_files",
+        snapshot(
+            &output,
+            &[
+                temp.path().join("Bad.java"),
+                temp.path().join("Changed.java"),
+            ],
+        )
+    );
+}
+
+#[test]
+fn check_mode_accepts_formatted_file_and_reports_summary() {
     let temp = TempDir::new().expect("tempdir should be created");
     write(temp.path().join("A.java"), "class A {\n}\n");
 
     let output = jolt(temp.path(), ["fmt", "--check", "A.java"], "");
 
     insta::assert_snapshot!(
-        "check_mode_accepts_formatted_file_without_user_output",
+        "check_mode_accepts_formatted_file_and_reports_summary",
         snapshot(&output, &[temp.path().join("A.java")])
+    );
+}
+
+#[test]
+fn invalid_flags_report_usage_errors() {
+    let temp = TempDir::new().expect("tempdir should be created");
+
+    let output = jolt(temp.path(), ["fmt", "--threads", "0", "-"], "");
+
+    insta::assert_snapshot!("invalid_flags_report_usage_errors", snapshot(&output, &[]));
+}
+
+#[test]
+fn config_errors_report_diagnostics() {
+    let temp = TempDir::new().expect("tempdir should be created");
+    write(
+        temp.path().join("jolt.toml"),
+        "[format]\nindent-width = 0\n",
+    );
+
+    let output = jolt(temp.path(), ["fmt", "-"], "class A {}\n");
+
+    insta::assert_snapshot!(
+        "config_errors_report_diagnostics",
+        snapshot_normalized(&output, &[], temp.path())
     );
 }
 
@@ -166,6 +273,10 @@ fn snapshot(output: &Output, files: &[PathBuf]) -> String {
     rendered
 }
 
+fn snapshot_normalized(output: &Output, files: &[PathBuf], temp: &Path) -> String {
+    snapshot(output, files).replace(&temp.display().to_string(), "$TEMP")
+}
+
 fn push_stream(rendered: &mut String, label: &str, bytes: &[u8]) {
     rendered.push_str(label);
     rendered.push_str(":\n");
@@ -173,7 +284,28 @@ fn push_stream(rendered: &mut String, label: &str, bytes: &[u8]) {
         rendered.push_str("<empty>\n");
         return;
     }
-    rendered.push_str(&String::from_utf8_lossy(bytes));
+    let text = String::from_utf8_lossy(bytes);
+    if label == "stderr" {
+        rendered.push_str(&normalize_summary_duration(&text));
+    } else {
+        rendered.push_str(&text);
+    }
+}
+
+fn normalize_summary_duration(text: &str) -> String {
+    let mut normalized = String::new();
+    for line in text.lines() {
+        if let Some((prefix, _)) = line.rsplit_once(" in ")
+            && (prefix.starts_with("Formatted ") || prefix.starts_with("Checked "))
+        {
+            normalized.push_str(prefix);
+            normalized.push_str(" in $TIME\n");
+            continue;
+        }
+        normalized.push_str(line);
+        normalized.push('\n');
+    }
+    normalized
 }
 
 fn write(path: impl AsRef<Path>, contents: &str) {

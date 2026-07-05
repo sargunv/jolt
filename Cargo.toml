@@ -1,10 +1,10 @@
 [workspace]
 members = [
+  "crates/jolt_cli",
   "crates/jolt_diagnostics",
-  "crates/jolt_fmt_cli",
-  "crates/jolt_fmt_core",
   "crates/jolt_fmt_dprint",
   "crates/jolt_fmt_ir",
+  "crates/jolt_formatter",
   "crates/jolt_java_fmt",
   "crates/jolt_java_syntax",
   "crates/jolt_syntax",

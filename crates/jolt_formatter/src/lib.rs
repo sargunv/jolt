@@ -1,4 +1,4 @@
-//! Shared formatter engine boundary for Jolt's CLI and dprint plugin.
+//! Shared formatter facade for Jolt's CLI and dprint plugin.
 
 use jolt_diagnostics::Diagnostic;
 use jolt_fmt_ir::RenderSink;

@@ -1,0 +1,13 @@
+---
+source: crates/jolt_cli/tests/cli_snapshots.rs
+expression: "snapshot(&output, &[temp.path().join(\"A.java\")])"
+---
+status: 0
+stdout:
+<empty>
+stderr:
+Formatted 1 file in $TIME
+files:
+-- A.java --
+class A {
+}

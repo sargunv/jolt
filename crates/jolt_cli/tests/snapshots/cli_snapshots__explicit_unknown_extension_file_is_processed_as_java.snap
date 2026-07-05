@@ -1,12 +1,12 @@
 ---
-source: crates/jolt_fmt_cli/tests/cli_snapshots.rs
+source: crates/jolt_cli/tests/cli_snapshots.rs
 expression: "snapshot(&output, &[temp.path().join(\"README.md\")])"
 ---
 status: 0
 stdout:
 <empty>
 stderr:
-<empty>
+Formatted 1 file in $TIME
 files:
 -- README.md --
 class Readme {

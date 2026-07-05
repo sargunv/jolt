@@ -51,7 +51,7 @@ run = "cargo llvm-lines --workspace"
 run = '''
 for manifest in \
   crates/jolt_diagnostics/Cargo.toml \
-  crates/jolt_fmt_core/Cargo.toml \
+  crates/jolt_formatter/Cargo.toml \
   crates/jolt_fmt_ir/Cargo.toml \
   crates/jolt_java_fmt/Cargo.toml \
   crates/jolt_java_syntax/Cargo.toml \
@@ -78,14 +78,14 @@ flag "--mode <mode>" help="Cargo build mode" {
 '''
 run = '''
 case "${usage_mode?}" in
-  debug) cargo build --package jolt_fmt_cli ;;
-  release) cargo build --package jolt_fmt_cli --release ;;
+  debug) cargo build --package jolt_cli ;;
+  release) cargo build --package jolt_cli --release ;;
 esac
 '''
 
 [tasks."jolt"]
 raw_args = true
-run = "cargo run -p jolt_fmt_cli --"
+run = "cargo run -p jolt_cli --"
 
 [tasks."build:dprint-plugin"]
 usage = '''

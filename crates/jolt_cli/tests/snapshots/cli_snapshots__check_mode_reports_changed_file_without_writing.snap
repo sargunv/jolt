@@ -1,12 +1,13 @@
 ---
-source: crates/jolt_fmt_cli/tests/cli_snapshots.rs
+source: crates/jolt_cli/tests/cli_snapshots.rs
 expression: "snapshot(&output, &[temp.path().join(\"A.java\")])"
 ---
 status: 1
 stdout:
 A.java
 stderr:
-1 of 1 file is not formatted
+Checked 1 file in $TIME
+1 file needs formatting
 files:
 -- A.java --
 class A {}

@@ -8,27 +8,25 @@ use std::{
     num::NonZeroUsize,
     path::{Path, PathBuf},
     thread,
+    time::Instant,
 };
 
+use humanize_duration::{Truncate, prelude::DurationExt as _};
 use jolt_diagnostics::Diagnostic;
-use jolt_fmt_core::{FormatOptions, FormatSinkResult, Language, format_source_to_sink};
 use jolt_fmt_ir::{RenderControl, RenderSink};
+use jolt_formatter::{FormatOptions, FormatSinkResult, Language, format_source_to_sink};
 use jolt_text::{LineIndex, TextSize};
 use rayon::prelude::*;
 
-use crate::{
-    args::{Cli, Command, FmtArgs},
-    config::{CliError, ConfigResolver, absolutize},
+use crate::error::CliError;
+
+use super::{
+    Args,
+    config::{ConfigResolver, absolutize},
     discover::{CandidateFile, detect_language, discover_files},
 };
 
-pub(crate) fn run(cli: Cli) -> Result<(), CliError> {
-    match cli.command {
-        Command::Fmt(args) => run_fmt(&args),
-    }
-}
-
-fn run_fmt(args: &FmtArgs) -> Result<(), CliError> {
+pub(crate) fn run(args: &Args) -> Result<(), CliError> {
     let cwd = env::current_dir()
         .map_err(|error| CliError::new(format!("failed to read current directory: {error}")))?;
 
@@ -42,6 +40,7 @@ fn run_fmt(args: &FmtArgs) -> Result<(), CliError> {
         ));
     }
 
+    let started_at = Instant::now();
     let candidates = collect_candidates(&cwd, args)?;
     let results = format_candidates(&cwd, args, &candidates)?;
 
@@ -51,18 +50,28 @@ fn run_fmt(args: &FmtArgs) -> Result<(), CliError> {
         stats.record(result.outcome);
     }
 
-    if args.check && (stats.failed > 0 || stats.changed > 0) {
-        return Err(CliError::new(format_check_summary(stats)));
+    if args.check && stats.has_check_failures() {
+        emit_run_summary("Checked", stats.total, started_at.elapsed())?;
+        return Err(CliError::new(format_check_summary(
+            stats.changed,
+            stats.failed,
+        )));
     }
 
     if stats.failed > 0 {
         return Err(CliError::new("formatting failed"));
     }
 
+    if args.check {
+        emit_run_summary("Checked", stats.total, started_at.elapsed())?;
+    } else {
+        emit_run_summary("Formatted", stats.total, started_at.elapsed())?;
+    }
+
     Ok(())
 }
 
-fn collect_candidates(cwd: &Path, args: &FmtArgs) -> Result<Vec<CandidateFile>, CliError> {
+fn collect_candidates(cwd: &Path, args: &Args) -> Result<Vec<CandidateFile>, CliError> {
     let paths: Vec<PathBuf> = if args.paths.is_empty() {
         vec![cwd.to_path_buf()]
     } else {
@@ -128,7 +137,7 @@ fn collect_candidates(cwd: &Path, args: &FmtArgs) -> Result<Vec<CandidateFile>, 
     Ok(candidates)
 }
 
-fn run_stdin(cwd: &Path, args: &FmtArgs) -> Result<(), CliError> {
+fn run_stdin(cwd: &Path, args: &Args) -> Result<(), CliError> {
     if args.paths.len() != 1 {
         return Err(CliError::new(
             "'-' cannot be combined with filesystem paths in milestone 10",
@@ -177,20 +186,12 @@ fn run_stdin(cwd: &Path, args: &FmtArgs) -> Result<(), CliError> {
         emit_diagnostics(&label, &source, result_diagnostics(&result))?;
 
         if matches!(result, FormatSinkResult::Blocked { .. }) {
-            return Err(CliError::new(format_check_summary(FormatRunStats {
-                total: 1,
-                failed: 1,
-                changed: 0,
-            })));
+            return Err(CliError::new(format_check_summary(0, 1)));
         }
 
         if sink.is_changed() {
             println!("{label}");
-            return Err(CliError::new(format_check_summary(FormatRunStats {
-                total: 1,
-                failed: 0,
-                changed: 1,
-            })));
+            return Err(CliError::new(format_check_summary(1, 0)));
         }
         return Ok(());
     }
@@ -217,7 +218,7 @@ fn run_stdin(cwd: &Path, args: &FmtArgs) -> Result<(), CliError> {
 
 fn format_candidates(
     cwd: &Path,
-    args: &FmtArgs,
+    args: &Args,
     candidates: &[CandidateFile],
 ) -> Result<Vec<FileFormatResult>, CliError> {
     let threads = args.threads.unwrap_or_else(default_thread_count).get();
@@ -607,6 +608,21 @@ impl FileFormatResult {
     }
 }
 
+fn emit_run_summary(
+    action: &str,
+    count: usize,
+    elapsed: std::time::Duration,
+) -> Result<(), CliError> {
+    let mut stderr = io::stderr().lock();
+    writeln!(
+        stderr,
+        "{action} {count} {} in {}",
+        plural(count, "file", "files"),
+        elapsed.human(Truncate::Millis),
+    )
+    .map_err(|error| CliError::new(format!("failed to write summary: {error}")))
+}
+
 #[derive(Clone, Copy, Debug, Default)]
 struct FileFormatOutcome {
     failed: bool,
@@ -626,31 +642,59 @@ impl FormatRunStats {
         self.failed += usize::from(outcome.failed);
         self.changed += usize::from(outcome.changed);
     }
+
+    const fn has_check_failures(self) -> bool {
+        self.failed > 0 || self.changed > 0
+    }
 }
 
-fn format_check_summary(stats: FormatRunStats) -> String {
-    match (stats.changed, stats.failed) {
-        (changed, 0) => format!(
-            "{changed} of {total} {files} {verb} not formatted",
-            total = stats.total,
-            files = plural(stats.total, "file", "files"),
-            verb = if changed == 1 { "is" } else { "are" },
-        ),
-        (0, failed) => format!(
-            "format check failed: {failed} of {total} {files} could not be formatted",
-            total = stats.total,
-            files = plural(stats.total, "file", "files"),
-        ),
-        (changed, failed) => format!(
-            "format check failed: {changed} of {total} {files} {verb} not formatted; {failed} {failed_files} could not be formatted",
-            total = stats.total,
-            files = plural(stats.total, "file", "files"),
-            verb = if changed == 1 { "is" } else { "are" },
-            failed_files = plural(failed, "file", "files"),
-        ),
+fn format_check_summary(changed: usize, failed: usize) -> String {
+    let mut details = Vec::new();
+    if changed > 0 {
+        details.push(format!(
+            "{changed} {} {} formatting",
+            plural(changed, "file", "files"),
+            if changed == 1 { "needs" } else { "need" },
+        ));
+    }
+    if failed > 0 {
+        details.push(format!(
+            "{failed} {} could not be formatted",
+            plural(failed, "file", "files"),
+        ));
+    }
+
+    let details = details.join("\n");
+    if failed == 0 {
+        details
+    } else if changed == 0 {
+        format!("format check failed: {details}")
+    } else {
+        format!("format check failed:\n{details}")
     }
 }
 
 const fn plural(count: usize, singular: &'static str, plural: &'static str) -> &'static str {
     if count == 1 { singular } else { plural }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::time::Duration;
+
+    use humanize_duration::{Truncate, prelude::DurationExt as _};
+
+    #[test]
+    fn duration_summary_truncates_to_milliseconds() {
+        assert_eq!(
+            Duration::from_nanos(34_974_117)
+                .human(Truncate::Millis)
+                .to_string(),
+            "34ms"
+        );
+        assert_eq!(
+            Duration::from_secs(119).human(Truncate::Millis).to_string(),
+            "1m 59s"
+        );
+    }
 }

@@ -1,0 +1,19 @@
+---
+source: crates/jolt_cli/tests/cli_snapshots.rs
+expression: "snapshot(&output,\n&[temp.path().join(\"Bad.java\"), temp.path().join(\"Changed.java\"),],)"
+---
+status: 1
+stdout:
+Changed.java
+stderr:
+Bad.java:1:7: java.parse.expected_syntax: expected type name
+Bad.java:2:1: java.parse.expected_syntax: expected `}` after type body
+Checked 2 files in $TIME
+format check failed:
+1 file needs formatting
+1 file could not be formatted
+files:
+-- Bad.java --
+class {
+-- Changed.java --
+class Changed {}

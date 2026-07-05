@@ -20,4 +20,4 @@ use handler::JoltDprintPlugin;
 dprint_core::generate_plugin_code!(JoltDprintPlugin, JoltDprintPlugin::new(), FormatOptions);
 
 #[cfg(all(feature = "wasm", target_arch = "wasm32", target_os = "unknown"))]
-type FormatOptions = jolt_fmt_core::FormatOptions;
+type FormatOptions = jolt_formatter::FormatOptions;

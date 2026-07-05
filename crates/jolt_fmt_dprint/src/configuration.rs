@@ -7,7 +7,7 @@ use dprint_core::{
     },
     plugins::{FileMatchingInfo, PluginResolveConfigurationResult},
 };
-use jolt_fmt_core::FormatOptions;
+use jolt_formatter::FormatOptions;
 
 /// Resolves dprint global and plugin configuration into Jolt's shared options.
 #[must_use]
@@ -210,7 +210,7 @@ fn push_diagnostic(
 #[cfg(test)]
 mod tests {
     use dprint_core::configuration::{ConfigKeyMap, ConfigKeyValue, GlobalConfiguration};
-    use jolt_fmt_core::FormatOptions;
+    use jolt_formatter::FormatOptions;
 
     use super::resolve_config;
 

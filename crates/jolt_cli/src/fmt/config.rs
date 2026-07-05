@@ -1,7 +1,5 @@
 use std::{
     collections::HashMap,
-    error::Error,
-    fmt,
     path::{Path, PathBuf},
 };
 
@@ -10,38 +8,25 @@ use figment::{
     providers::{Format, Toml},
 };
 use globset::{GlobBuilder, GlobSet, GlobSetBuilder};
-use jolt_fmt_core::FormatOptions;
+use jolt_formatter::FormatOptions;
 use serde::Deserialize;
 
-use crate::args::CliFormatOptions;
+use crate::error::CliError;
+
+use super::CliFormatOptions;
 
 const DEFAULT_INCLUDE: &[&str] = &["**/*.java"];
 const VCS_MARKERS: &[&str] = &[".git", ".hg", ".jj", ".svn"];
 
-#[derive(Debug)]
-pub(crate) struct CliError {
-    message: String,
+trait WithConfigSource {
+    fn with_source(self, source: &Path) -> Self;
 }
 
-impl CliError {
-    pub(crate) fn new(message: impl Into<String>) -> Self {
-        Self {
-            message: message.into(),
-        }
-    }
-
+impl WithConfigSource for CliError {
     fn with_source(self, source: &Path) -> Self {
-        Self::new(format!("{}: {}", source.display(), self.message))
+        self.with_prefix(source.display())
     }
 }
-
-impl fmt::Display for CliError {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        formatter.write_str(&self.message)
-    }
-}
-
-impl Error for CliError {}
 
 #[derive(Clone, Debug)]
 pub(crate) struct PatternList {

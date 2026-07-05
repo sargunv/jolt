@@ -1,0 +1,13 @@
+---
+source: crates/jolt_cli/tests/cli_snapshots.rs
+expression: "snapshot(&output, &[])"
+---
+status: 2
+stdout:
+<empty>
+stderr:
+error: invalid value '0' for '--threads <THREADS>': number would be zero for non-zero type
+
+For more information, try '--help'.
+files:
+<none>

@@ -11,14 +11,14 @@ use dprint_core::{
     },
 };
 use jolt_diagnostics::{Diagnostic, DiagnosticStage, Severity};
-use jolt_fmt_core::{FormatOptions, FormatSinkResult, Language, format_source_to_sink};
 use jolt_fmt_ir::{RenderControl, RenderSink};
+use jolt_formatter::{FormatOptions, FormatSinkResult, Language, format_source_to_sink};
 use jolt_text::LineIndex;
 
 #[cfg(feature = "wasm")]
 use crate::configuration;
 
-/// dprint plugin handler that delegates formatting to `jolt_fmt_core`.
+/// dprint plugin handler that delegates formatting to `jolt_formatter`.
 #[derive(Debug, Default)]
 pub(crate) struct JoltDprintPlugin;
 
@@ -29,7 +29,7 @@ impl JoltDprintPlugin {
         Self
     }
 
-    /// Formats a dprint request payload using Jolt's core engine boundary.
+    /// Formats a dprint request payload using Jolt's shared formatter facade.
     ///
     /// # Errors
     ///
@@ -211,7 +211,7 @@ mod tests {
     use std::path::Path;
 
     use dprint_core::plugins::FormatError;
-    use jolt_fmt_core::FormatOptions;
+    use jolt_formatter::FormatOptions;
 
     use super::JoltDprintPlugin;
 

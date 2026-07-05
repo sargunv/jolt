@@ -1,0 +1,42 @@
+---
+source: crates/jolt_cli/tests/cli_snapshots.rs
+expression: "snapshot(&output, &[])"
+---
+status: 0
+stdout:
+Format source files
+
+Usage: jolt fmt [OPTIONS] [PATHS]...
+
+Arguments:
+  [PATHS]...  Files or directories to format. Use '-' to read stdin
+
+Options:
+      --check
+          Check whether files are formatted without writing changes
+      --line-width <LINE_WIDTH>
+          Preferred maximum rendered line width
+      --indent-width <INDENT_WIDTH>
+          Number of spaces per indentation level when using spaces
+      --tabs
+          Use tabs for indentation
+      --spaces
+          Use spaces for indentation
+      --include <INCLUDE>
+          Include source files matching this glob
+      --exclude <EXCLUDE>
+          Exclude source files matching this glob
+      --config <CONFIG>
+          Load an explicit config file after discovered project configs
+      --no-config
+          Disable discovered project configs
+      --stdin-filename <STDIN_FILENAME>
+          Path-like name used for stdin language detection and diagnostics
+      --threads <THREADS>
+          Number of formatter worker threads to use for filesystem paths
+  -h, --help
+          Print help
+stderr:
+<empty>
+files:
+<none>

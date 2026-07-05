@@ -6,8 +6,8 @@ use std::{
     sync::OnceLock,
 };
 
-use jolt_fmt_core::{FormatOptions, FormatSinkResult, Language, format_source_to_sink};
 use jolt_fmt_ir::{RenderControl, RenderSink};
+use jolt_formatter::{FormatOptions, FormatSinkResult, Language, format_source_to_sink};
 use tempfile::TempDir;
 
 static PLUGIN_PATH: OnceLock<PathBuf> = OnceLock::new();

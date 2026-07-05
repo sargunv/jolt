@@ -2,9 +2,11 @@ use std::path::{Path, PathBuf};
 
 use ignore::WalkBuilder;
 
-use jolt_fmt_core::{FormatOptions, Language};
+use jolt_formatter::{FormatOptions, Language};
 
-use crate::config::{CliError, ConfigResolver, ResolvedConfig};
+use crate::error::CliError;
+
+use super::config::{ConfigResolver, ResolvedConfig};
 
 #[derive(Clone, Debug)]
 pub(crate) struct CandidateFile {

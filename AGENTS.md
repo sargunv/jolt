@@ -37,3 +37,7 @@ Run `mise tasks ls --all` for the full task list.
 - Algorithms must remain linear or explicitly bounded; do not add unbounded
   layout search, best-fitting, or conditional-group behavior without a
   documented finite cost model and proven need.
+- A formatter must not synthesize tokens to repair invalid syntax or where
+  source tokens (with trivia) are available. Synthesized tokens are allowed in
+  very specific cases, like normalizing separators, braces, or parentheses where
+  semantics don't change and trivia won't be lost.

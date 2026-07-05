@@ -2,15 +2,14 @@ use std::process::ExitCode;
 
 use clap::Parser as _;
 
-mod args;
-mod config;
-mod discover;
-mod run;
+mod cli;
+mod error;
+mod fmt;
 
 fn main() -> ExitCode {
-    let cli = args::Cli::parse();
+    let cli = cli::Cli::parse();
 
-    match run::run(cli) {
+    match cli::run(cli) {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
             eprintln!("{error}");
