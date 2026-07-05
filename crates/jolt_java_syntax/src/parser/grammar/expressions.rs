@@ -361,6 +361,8 @@ impl Parser<'_> {
             return self.complete(suffix, JavaSyntaxKind::SuperExpression);
         }
 
+        // Java string templates were preview syntax in JDK 21/22 and withdrawn
+        // for JDK 23. Keep this parser shape for legacy preview sources only.
         if matches!(
             self.current_kind(),
             JavaSyntaxKind::StringLiteral | JavaSyntaxKind::TextBlockLiteral

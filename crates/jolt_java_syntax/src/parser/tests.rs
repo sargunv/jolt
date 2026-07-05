@@ -2070,8 +2070,8 @@ fn parses_unary_postfix_cast_and_switch_expressions() {
 
 #[test]
 fn parses_string_template_expressions() {
-    // Spec: Java 22 preview StringTemplateExpression is a processor expression
-    // followed by `.` and a template literal.
+    // Withdrawn preview syntax: Java 21/22 StringTemplateExpression was a
+    // processor expression followed by `.` and a template literal.
     assert_parse_snapshot(
         "parses_string_template_expressions",
         r#"
