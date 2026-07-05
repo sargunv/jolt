@@ -8,7 +8,7 @@ native CLI and `dprint.jsonc` when running Jolt as a dprint plugin.
 Create `jolt.toml` at the project root:
 
 ```sh
-jolt init
+jolt config init
 ```
 
 This writes a root config with a `#:schema` directive for TOML language servers

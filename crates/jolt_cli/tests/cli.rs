@@ -54,7 +54,7 @@ fn manpage_generates_roff_document() {
 fn init_creates_root_config_with_schema_directive() {
     let temp = TempDir::new().expect("tempdir should be created");
 
-    let output = jolt(temp.path(), ["init"], "");
+    let output = jolt(temp.path(), ["config", "init"], "");
 
     assert_success(&output);
     assert!(stderr(&output).contains("Created"));
@@ -72,7 +72,7 @@ fn init_creates_root_config_with_schema_directive() {
 fn init_refuses_existing_config_locations() {
     let root_config = TempDir::new().expect("tempdir should be created");
     write(root_config.path().join("jolt.toml"), "root = true\n");
-    let output = jolt(root_config.path(), ["init"], "");
+    let output = jolt(root_config.path(), ["config", "init"], "");
     assert_failure(&output);
     assert!(stderr(&output).contains("jolt.toml: config already exists"));
 
@@ -83,7 +83,7 @@ fn init_refuses_existing_config_locations() {
         dot_config.path().join(".config/jolt/config.toml"),
         "root = true\n",
     );
-    let output = jolt(dot_config.path(), ["init"], "");
+    let output = jolt(dot_config.path(), ["config", "init"], "");
     assert_failure(&output);
     assert!(stderr(&output).contains("config already exists"));
     assert!(!dot_config.path().join("jolt.toml").exists());

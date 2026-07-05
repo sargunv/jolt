@@ -38,9 +38,6 @@ enum Command {
     #[command(visible_alias = "fmt")]
     Format(fmt::Args),
 
-    /// Create a root Jolt config in the working directory.
-    Init,
-
     /// Inspect Jolt configuration.
     Config {
         #[command(subcommand)]
@@ -59,6 +56,9 @@ enum Command {
 
 #[derive(Debug, Subcommand)]
 enum ConfigCommand {
+    /// Create a root Jolt config in the working directory.
+    Init,
+
     /// List config files that apply to a path.
     List(ConfigTargetArgs),
 
@@ -85,8 +85,8 @@ struct ConfigSchemaArgs {
 pub(crate) fn run(cli: Cli) -> Result<(), CliError> {
     match cli.command {
         Command::Format(args) => fmt::run(&args),
-        Command::Init => init_config(),
         Command::Config { command } => match command {
+            ConfigCommand::Init => init_config(),
             ConfigCommand::List(args) => config_list(&args),
             ConfigCommand::Resolve(args) => config_resolve(&args),
             ConfigCommand::Schema(args) => {

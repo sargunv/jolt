@@ -30,9 +30,9 @@ dprint add sargunv/jolt
 ## Usage
 
 ```sh
-jolt init
-jolt fmt
-jolt fmt --check
+jolt config init
+jolt format
+jolt format --check
 ```
 
 ## Docs

@@ -9,6 +9,7 @@ Inspect Jolt configuration
 Usage: jolt config <COMMAND>
 
 Commands:
+  init     Create a root Jolt config in the working directory
   list     List config files that apply to a path
   resolve  Print the effective config for a path
   schema   Print a JSON schema for configuration files
