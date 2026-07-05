@@ -129,15 +129,6 @@ fn completions_help_describes_supported_shells() {
 }
 
 #[test]
-fn manpage_help_describes_roff_output() {
-    let temp = TempDir::new().expect("tempdir should be created");
-
-    let output = jolt(temp.path(), ["manpage", "--help"], "");
-
-    insta::assert_snapshot!("manpage_help_describes_roff_output", snapshot(&output, &[]));
-}
-
-#[test]
 fn stdin_formats_to_stdout() {
     let temp = TempDir::new().expect("tempdir should be created");
 
@@ -167,13 +158,26 @@ fn completions_generate_shell_script() {
     insta::assert_snapshot!("completions_generate_shell_script", snapshot(&output, &[]));
 }
 
+#[cfg(feature = "docs-generation")]
 #[test]
-fn manpage_generates_roff_document() {
+fn docs_manpages_generate_cohesive_set() {
     let temp = TempDir::new().expect("tempdir should be created");
+    let out_dir = temp.path().join("man1");
+    let out_dir_arg = out_dir
+        .to_str()
+        .expect("temp path should be valid unicode for test args");
 
-    let output = jolt(temp.path(), ["manpage"], "");
+    let output = jolt(temp.path(), ["__docs", "manpages", out_dir_arg], "");
+    let mut files = fs::read_dir(&out_dir)
+        .expect("manpage directory should be readable")
+        .map(|entry| entry.expect("manpage entry should be readable").path())
+        .collect::<Vec<_>>();
+    files.sort();
 
-    insta::assert_snapshot!("manpage_generates_roff_document", snapshot(&output, &[]));
+    insta::assert_snapshot!(
+        "docs_manpages_generate_cohesive_set",
+        snapshot(&output, &files)
+    );
 }
 
 #[test]
@@ -400,10 +404,10 @@ fn snapshot(output: &Output, files: &[PathBuf]) -> String {
                     .expect("snapshot file should have a file name")
                     .to_string_lossy()
             ));
-            rendered.push_str(
+            rendered.push_str(&normalize_commit_hashes(
                 &fs::read_to_string(file)
                     .unwrap_or_else(|error| panic!("file should be readable: {error}")),
-            );
+            ));
         }
     }
     rendered
@@ -425,11 +429,12 @@ fn push_stream(rendered: &mut String, label: &str, bytes: &[u8]) {
         return;
     }
     let text = String::from_utf8_lossy(bytes);
-    if label == "stderr" {
-        rendered.push_str(&normalize_summary_duration(&text));
+    let text = if label == "stderr" {
+        normalize_summary_duration(&text)
     } else {
-        rendered.push_str(&text);
-    }
+        text.into_owned()
+    };
+    rendered.push_str(&normalize_commit_hashes(&text));
 }
 
 fn normalize_summary_duration(text: &str) -> String {
@@ -445,6 +450,29 @@ fn normalize_summary_duration(text: &str) -> String {
         normalized.push_str(line);
         normalized.push('\n');
     }
+    normalized
+}
+
+fn normalize_commit_hashes(text: &str) -> String {
+    let mut normalized = String::with_capacity(text.len());
+    let mut rest = text;
+    while let Some(start) = rest.find('(') {
+        normalized.push_str(&rest[..start]);
+        let after_open = &rest[start + 1..];
+        if after_open.len() >= 8 {
+            let candidate = &after_open[..7];
+            if candidate.bytes().all(|byte| byte.is_ascii_hexdigit())
+                && after_open.as_bytes()[7] == b')'
+            {
+                normalized.push_str("($COMMIT)");
+                rest = &after_open[8..];
+                continue;
+            }
+        }
+        normalized.push('(');
+        rest = after_open;
+    }
+    normalized.push_str(rest);
     normalized
 }
 

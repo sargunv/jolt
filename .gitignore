@@ -9,5 +9,6 @@ node_modules/
 /docs/.vitepress/dist/
 /docs/.vitepress/.temp/
 /docs/public/jolt-plugin.wasm
+/docs/public/man/
 /docs/public/schemas/
 /docs/reference/

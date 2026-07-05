@@ -5,10 +5,13 @@ import { spawnSync } from "node:child_process";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const referenceDir = join(root, "docs/reference");
+const manDir = join(root, "docs/public/man/man1");
 const schemaDir = join(root, "docs/public/schemas");
 
 rmSync(referenceDir, { recursive: true, force: true });
+rmSync(manDir, { recursive: true, force: true });
 mkdirSync(referenceDir, { recursive: true });
+mkdirSync(manDir, { recursive: true });
 mkdirSync(schemaDir, { recursive: true });
 
 writeText(
@@ -25,6 +28,19 @@ writeText(
     "cli-reference",
   ]),
 );
+
+run("cargo", [
+  "run",
+  "--quiet",
+  "--package",
+  "jolt_cli",
+  "--features",
+  "docs-generation",
+  "--",
+  "__docs",
+  "manpages",
+  manDir,
+]);
 
 const joltSchemaPath = join(schemaDir, "jolt-schema.json");
 const dprintSchemaPath = join(schemaDir, "dprint-schema.json");

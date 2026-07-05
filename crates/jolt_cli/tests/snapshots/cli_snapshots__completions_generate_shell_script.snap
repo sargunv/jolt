@@ -37,9 +37,6 @@ _jolt() {
             jolt,help)
                 cmd="jolt__subcmd__help"
                 ;;
-            jolt,manpage)
-                cmd="jolt__subcmd__manpage"
-                ;;
             jolt__subcmd__config,help)
                 cmd="jolt__subcmd__config__subcmd__help"
                 ;;
@@ -82,9 +79,6 @@ _jolt() {
             jolt__subcmd__help,help)
                 cmd="jolt__subcmd__help__subcmd__help"
                 ;;
-            jolt__subcmd__help,manpage)
-                cmd="jolt__subcmd__help__subcmd__manpage"
-                ;;
             jolt__subcmd__help__subcmd__config,init)
                 cmd="jolt__subcmd__help__subcmd__config__subcmd__init"
                 ;;
@@ -104,7 +98,7 @@ _jolt() {
 
     case "${cmd}" in
         jolt)
-            opts="-h -V --help --version format fmt config completions manpage help"
+            opts="-h -V --help --version format fmt config completions help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -332,7 +326,7 @@ _jolt() {
             return 0
             ;;
         jolt__subcmd__help)
-            opts="format config completions manpage help"
+            opts="format config completions help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -446,34 +440,6 @@ _jolt() {
         jolt__subcmd__help__subcmd__help)
             opts=""
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
-                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
-                return 0
-            fi
-            case "${prev}" in
-                *)
-                    COMPREPLY=()
-                    ;;
-            esac
-            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
-            return 0
-            ;;
-        jolt__subcmd__help__subcmd__manpage)
-            opts=""
-            if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
-                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
-                return 0
-            fi
-            case "${prev}" in
-                *)
-                    COMPREPLY=()
-                    ;;
-            esac
-            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
-            return 0
-            ;;
-        jolt__subcmd__manpage)
-            opts="-h --help"
-            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
             fi

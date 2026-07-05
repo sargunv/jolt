@@ -6,7 +6,6 @@ use std::{
 
 use clap::{Args as ClapArgs, CommandFactory as _, Parser, Subcommand};
 use clap_complete::{Shell, generate};
-use clap_mangen::Man;
 
 use crate::{
     config_schema::{self, SchemaKind},
@@ -49,9 +48,6 @@ enum Command {
         /// Shell to generate completions for.
         shell: Shell,
     },
-
-    /// Generate a roff manpage.
-    Manpage,
 }
 
 #[derive(Debug, Subcommand)]
@@ -104,14 +100,6 @@ pub(crate) fn run(cli: Cli) -> Result<(), CliError> {
         Command::Completions { shell } => {
             let mut command = Cli::command();
             generate(shell, &mut command, "jolt", &mut io::stdout());
-            Ok(())
-        }
-        Command::Manpage => {
-            let command = Cli::command();
-            let man = Man::new(command);
-            let mut stdout = io::stdout().lock();
-            man.render(&mut stdout)?;
-            stdout.flush()?;
             Ok(())
         }
     }
