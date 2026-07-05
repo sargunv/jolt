@@ -20,6 +20,10 @@ const { Layout } = DefaultTheme;
 </template>
 
 <style>
+.Layout:has(.VPContent.is-home) {
+  min-height: 100dvh;
+}
+
 .VPContent.is-home {
   display: flex;
   flex-direction: column;
@@ -33,6 +37,16 @@ const { Layout } = DefaultTheme;
   flex: 1;
   min-height: 0;
   margin-bottom: 0 !important;
+}
+
+.VPContent.is-home .VPHomeHero,
+.VPContent.is-home .VPHomeFeatures {
+  flex-shrink: 0;
+}
+
+.VPContent.is-home .VPHome > .jolt-playground {
+  flex: 1 1 auto;
+  min-height: 320px;
 }
 
 /* Empty markdown wrapper after the playground slot. */

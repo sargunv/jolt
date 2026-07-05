@@ -5,6 +5,7 @@ import { linter, type Diagnostic as LintDiagnostic } from "@codemirror/lint";
 import CodeMirror from "vue-codemirror6";
 import { useData } from "vitepress";
 import { joltEditorTheme } from "../javaEditorTheme";
+import { javaSyntaxHighlighting } from "../javaHighlightStyle";
 
 const props = defineProps<{
   modelValue: string;
@@ -33,7 +34,9 @@ const editorStyle = computed(() =>
 );
 
 const extensions = computed(() => {
+  const highlight = javaSyntaxHighlighting(isDark.value);
   const extras = [joltEditorTheme(isDark.value)];
+  if (highlight) extras.unshift(highlight);
 
   if (props.lintDiagnostics?.length) {
     const diagnostics = props.lintDiagnostics;
@@ -61,11 +64,14 @@ const extensions = computed(() => {
 
 <style scoped>
 .java-editor {
-  height: 100%;
+  position: absolute;
+  inset: 0;
 }
 
+.java-editor :deep(.vue-codemirror),
 .java-editor :deep(.cm-editor) {
   height: 100%;
+  max-height: 100%;
   outline: none;
 }
 

@@ -7,21 +7,14 @@ import {
   PLAYGROUND_DEFAULT_CONFIG,
   type PlaygroundFormatConfig,
 } from "../playgroundConfig";
+import { PLAYGROUND_SAMPLE_JAVA } from "../playgroundSample";
 import {
   formatErrorSummary,
   parseFormatError,
   toLintDiagnostics,
 } from "../parseFormatError";
 
-const SAMPLE_INPUT = `class Example extends Base {
-Example(){super( 1,2 ); // base args
-int x=3;}
-Example(String value){<String>this(value,0); // delegate
-}
-Example(User user, Account account, Settings settings){this(user.profile().displayName(),account.permissions().primaryRole(),settings.region().identifier());}
-}`;
-
-const input = ref(SAMPLE_INPUT);
+const input = ref(PLAYGROUND_SAMPLE_JAVA);
 const output = ref("");
 const formatError = ref<string | null>(null);
 const formatOk = ref(false);
@@ -193,6 +186,7 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow: hidden;
   width: 100%;
   padding: 24px var(--jolt-playground-gap) var(--jolt-playground-gap);
 }
@@ -274,15 +268,17 @@ onMounted(async () => {
 .jolt-playground-panels {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-template-rows: minmax(220px, 1fr);
   gap: var(--jolt-playground-gap);
   flex: 1;
   min-height: 280px;
+  overflow: hidden;
 }
 
 @media (max-width: 768px) {
   .jolt-playground-panels {
     grid-template-columns: 1fr;
-    grid-template-rows: 1fr 1fr;
+    grid-template-rows: minmax(220px, 1fr) minmax(220px, 1fr);
     min-height: 480px;
   }
 }
@@ -341,8 +337,10 @@ onMounted(async () => {
 }
 
 .jolt-playground-editor {
+  position: relative;
   flex: 1;
   min-height: 220px;
+  overflow: hidden;
 }
 
 .jolt-playground-loading {

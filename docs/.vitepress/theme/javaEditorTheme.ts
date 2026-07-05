@@ -6,8 +6,10 @@ export function joltEditorTheme(isDark: boolean) {
       "&": {
         backgroundColor: "transparent",
         height: "100%",
+        maxHeight: "100%",
       },
       ".cm-scroller": {
+        overflow: "auto",
         fontFamily: "var(--vp-font-family-mono)",
         fontSize: "13px",
         lineHeight: "1.6",
@@ -31,7 +33,7 @@ export function joltEditorTheme(isDark: boolean) {
         backgroundColor: "var(--vp-c-brand-soft) !important",
       },
       ".cm-activeLine": {
-        backgroundColor: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)",
+        backgroundColor: isDark ? "#6699ff0b" : "rgba(0,0,0,0.03)",
       },
     },
     { dark: isDark },

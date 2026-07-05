@@ -6,7 +6,7 @@ export type PlaygroundFormatConfig = {
 
 /** Demo default; Jolt itself defaults to 80 columns. */
 export const PLAYGROUND_DEFAULT_CONFIG: PlaygroundFormatConfig = {
-  lineWidth: 60,
+  lineWidth: 80,
   indentWidth: 2,
   useTabs: false,
 };
