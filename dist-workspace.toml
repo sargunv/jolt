@@ -1,0 +1,17 @@
+[workspace]
+members = ["cargo:crates/jolt_cli"]
+
+[dist]
+cargo-dist-version = "0.32.0"
+packages = ["jolt_cli"]
+installers = ["shell", "powershell"]
+targets = [
+  "aarch64-apple-darwin",
+  "aarch64-unknown-linux-musl",
+  "aarch64-pc-windows-msvc",
+  "x86_64-apple-darwin",
+  "x86_64-unknown-linux-musl",
+  "x86_64-pc-windows-msvc",
+]
+github-attestations = true
+cargo-auditable = true

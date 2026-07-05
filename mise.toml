@@ -16,10 +16,7 @@ lockfile = true
 "core:node" = "24.18.0"
 "cargo:cargo-machete" = "0.9.2"
 "cargo:cargo-nextest" = "0.9.138"
-"cargo:cargo-llvm-lines" = "0.4.46"
-"cargo:cargo-public-api" = "0.52.0"
-"cargo:cargo-udeps" = "0.1.61"
-"aqua:cargo-bins/cargo-binstall" = "1.20.1"
+"cargo:cargo-dist" = "0.32.0"
 
 [deps.pnpm]
 auto = true
@@ -35,36 +32,13 @@ run = "hk check --all"
 
 [tasks.test]
 usage = 'flag "--update" help="Update insta snapshots"'
-run = 'INSTA_UPDATE="$([ "${usage_update:-false}" = "true" ] && printf always || printf no)" cargo test --workspace'
+run = 'INSTA_UPDATE="$([ "${usage_update:-false}" = "true" ] && printf always || printf no)" cargo nextest run --workspace'
 
 [tasks.nextest]
 run = "cargo nextest run --workspace"
 
 [tasks.machete]
 run = "cargo machete"
-
-[tasks."llvm-lines"]
-raw_args = true
-run = "cargo llvm-lines --workspace"
-
-[tasks."public-api"]
-run = '''
-for manifest in \
-  crates/jolt_diagnostics/Cargo.toml \
-  crates/jolt_formatter/Cargo.toml \
-  crates/jolt_fmt_ir/Cargo.toml \
-  crates/jolt_java_fmt/Cargo.toml \
-  crates/jolt_java_syntax/Cargo.toml \
-  crates/jolt_syntax/Cargo.toml \
-  crates/jolt_text/Cargo.toml
-do
-  printf '\n## %s\n' "$manifest"
-  mise x rust@nightly -- cargo public-api --manifest-path "$manifest" -sss
-done
-'''
-
-[tasks.udeps]
-run = "mise x rust@nightly -- cargo udeps --workspace --all-targets"
 
 [tasks.build]
 depends = ["build:jolt", "build:dprint-plugin"]
@@ -123,6 +97,49 @@ depends = [
   ] },
 ]
 run = 'python tools/bench/bench.py ${usage_tools:-}'
+
+[tasks."release:plan"]
+usage = 'arg "[tag]" help="Tag to plan for, e.g. v0.20260704.0"'
+run = 'dist plan --tag="${usage_tag:-v0.0.0-plan.0}"'
+
+[tasks."release:snapshot"]
+run = 'dist build --tag="v0.0.0-snapshot.$(git rev-parse --short HEAD)"'
+
+[tasks."release:cut"]
+run = '''
+set -eu
+today=$(date -u +%Y%m%d)
+latest=$(git tag -l "v0.$today.*" | sort -V | tail -1)
+if [ -n "$latest" ]; then
+  n=$(( ${latest##*.} + 1 ))
+else
+  n=0
+fi
+version="0.$today.$n"
+tag="v$version"
+
+echo "About to cut $tag"
+echo "  - bump crates/jolt_cli/Cargo.toml to $version"
+echo "  - git commit -m \"chore: release jolt $version\""
+echo "  - git tag $tag"
+echo "  - git push --atomic origin HEAD $tag"
+printf "Proceed? [y/N] "
+read -r reply
+case "$reply" in
+  y|Y|yes|YES) ;;
+  *) echo "Aborted"; exit 1 ;;
+esac
+
+toml=crates/jolt_cli/Cargo.toml
+awk -v v="$version" '/^version = / && !done { print "version = \"" v "\""; done=1; next } { print }' "$toml" > "$toml.tmp" && mv "$toml.tmp" "$toml"
+
+git add "$toml"
+git commit -m "chore: release jolt $version"
+git tag "$tag"
+git push --atomic origin HEAD "$tag"
+
+echo "Released $tag"
+'''
 
 [tasks.fix]
 run = "hk fix --all"
