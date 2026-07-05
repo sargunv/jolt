@@ -9,7 +9,7 @@ use crate::helpers::comments::{
     format_token_with_inline_leading_comments, has_delimiter_dangling_comments,
     trailing_comments_force_line,
 };
-use crate::helpers::syntax_tokens::{InsertedSyntaxToken, inserted_syntax_token};
+use crate::helpers::syntax_tokens::{FormatterInsertedToken, inserted_syntax_token};
 
 pub(crate) struct CommaListItem<'source> {
     pub(crate) doc: Doc<'source>,
@@ -153,7 +153,9 @@ fn comma_list_with_trailing_separator(items: Vec<CommaListItem<'_>>) -> Doc<'_> 
             docs.push(line());
         } else {
             docs.push(if_break(
-                inserted_syntax_token(",", InsertedSyntaxToken::TrailingComma),
+                // Intentional synthesized token: trailing comma policy adds a
+                // comma only when the list breaks across lines.
+                inserted_syntax_token(",", FormatterInsertedToken::TrailingComma),
                 jolt_fmt_ir::nil(),
             ));
         }

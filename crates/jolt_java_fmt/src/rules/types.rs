@@ -1,5 +1,4 @@
-use jolt_fmt_ir::space;
-use jolt_fmt_ir::{Doc, concat, group, hard_line, indent, line, text};
+use jolt_fmt_ir::{Doc, concat, group, hard_line, indent, join, line, space};
 use jolt_java_syntax::{
     Annotation, ArrayDimension, ArrayDimensions, ClassType, IntersectionType, JavaSyntaxToken,
     NameSyntax, PrimitiveType, Type, TypeArgument, TypeArgumentList, TypeBoundList, TypeParameter,
@@ -256,7 +255,6 @@ fn format_type_bounds<'source>(
 ) -> Doc<'source> {
     format_type_operator_entries_doc(
         bounds.entries().map(|entry| (entry.ty, entry.separator)),
-        "&",
         formatter,
     )
 }
@@ -267,7 +265,6 @@ fn format_intersection_entries<'source>(
 ) -> Doc<'source> {
     format_type_operator_entries(
         entries.into_iter().map(|entry| (entry.ty, entry.separator)),
-        "&",
         formatter,
     )
 }
@@ -278,26 +275,19 @@ fn format_union_entries<'source>(
 ) -> Doc<'source> {
     format_type_operator_entries(
         entries.into_iter().map(|entry| (entry.ty, entry.separator)),
-        "|",
         formatter,
     )
 }
 
 fn format_type_operator_entries<'source>(
     entries: impl IntoIterator<Item = (Type<'source>, Option<JavaSyntaxToken<'source>>)>,
-    fallback_operator: &'static str,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    group(format_type_operator_entries_doc(
-        entries,
-        fallback_operator,
-        formatter,
-    ))
+    group(format_type_operator_entries_doc(entries, formatter))
 }
 
 fn format_type_operator_entries_doc<'source>(
     entries: impl IntoIterator<Item = (Type<'source>, Option<JavaSyntaxToken<'source>>)>,
-    fallback_operator: &'static str,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
     let mut entries = entries.into_iter().peekable();
@@ -310,8 +300,6 @@ fn format_type_operator_entries_doc<'source>(
         let (ty, separator) = entries.next()?;
         let doc = format_type_operator_continuation(
             previous_separator.as_ref(),
-            entries.peek().is_some(),
-            fallback_operator,
             format_type(&ty, formatter),
         );
         previous_separator = separator;
@@ -331,12 +319,9 @@ fn type_operator_separator_forces_line(separator: Option<&JavaSyntaxToken<'_>>) 
 
 fn format_type_operator_continuation<'source>(
     separator: Option<&JavaSyntaxToken<'source>>,
-    has_next: bool,
-    fallback_operator: &'static str,
     operand: Doc<'source>,
 ) -> Doc<'source> {
-    let separator_doc =
-        format_type_operator_separator_before_operand(separator, has_next, fallback_operator);
+    let separator_doc = format_type_operator_separator_before_operand(separator);
 
     if type_operator_separator_forces_line(separator) {
         concat([separator_doc, indent(concat([hard_line(), operand]))])
@@ -347,43 +332,30 @@ fn format_type_operator_continuation<'source>(
 
 fn format_type_operator_separator_before_operand<'source>(
     separator: Option<&JavaSyntaxToken<'source>>,
-    has_next: bool,
-    fallback_operator: &'static str,
 ) -> Doc<'source> {
     if let Some(separator) = separator {
-        format_type_operator_separator(Some(separator), fallback_operator)
-    } else if has_next {
-        format_type_operator_separator(None, fallback_operator)
+        format_type_operator_separator(separator)
     } else {
-        jolt_fmt_ir::nil()
+        line()
     }
 }
 
-fn format_type_operator_separator<'source>(
-    separator: Option<&JavaSyntaxToken<'source>>,
-    fallback_operator: &'static str,
-) -> Doc<'source> {
-    concat([
-        line(),
-        separator.map_or_else(
-            || concat([text(fallback_operator), space()]),
-            |separator| {
-                let forces_line = separator
-                    .trailing_comments()
-                    .any(|comment| comment_forces_line(&comment));
-                concat([
-                    format_leading_comments(separator),
-                    format_token_text(separator.text()),
-                    format_trailing_comments_before_line_break(separator),
-                    if forces_line {
-                        jolt_fmt_ir::nil()
-                    } else {
-                        space()
-                    },
-                ])
+fn format_type_operator_separator<'source>(separator: &JavaSyntaxToken<'source>) -> Doc<'source> {
+    concat([line(), {
+        let forces_line = separator
+            .trailing_comments()
+            .any(|comment| comment_forces_line(&comment));
+        concat([
+            format_leading_comments(separator),
+            format_token_text(separator.text()),
+            format_trailing_comments_before_line_break(separator),
+            if forces_line {
+                jolt_fmt_ir::nil()
+            } else {
+                space()
             },
-        ),
-    ])
+        ])
+    }])
 }
 
 fn format_type_argument<'source>(
@@ -474,7 +446,7 @@ pub(crate) fn format_inline_annotations<'source>(
     }
 
     concat([
-        jolt_fmt_ir::join(
+        join(
             &space(),
             annotations.map(|annotation| format_annotation(&annotation, formatter)),
         ),

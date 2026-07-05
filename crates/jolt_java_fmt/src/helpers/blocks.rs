@@ -5,7 +5,7 @@ use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_token_after_relocated_leading_comments,
     format_token_before_relocated_trailing_comments,
 };
-use crate::helpers::syntax_tokens::{InsertedSyntaxToken, inserted_syntax_token};
+use crate::helpers::syntax_tokens::{FormatterInsertedToken, inserted_syntax_token};
 
 pub(crate) struct BodyItem<'source> {
     doc: Doc<'source>,
@@ -30,7 +30,9 @@ impl<'source> BodyItem<'source> {
 
 pub(crate) fn inserted_braced_body(body: Option<Doc<'_>>) -> Doc<'_> {
     concat([
-        inserted_syntax_token("{", InsertedSyntaxToken::BlockBrace),
+        // Intentional synthesized token: normalized braced bodies add braces
+        // around source statements that did not have a block.
+        inserted_syntax_token("{", FormatterInsertedToken::BlockBrace),
         inserted_braced_body_tail(body),
     ])
 }
@@ -46,7 +48,7 @@ pub(crate) fn source_braced_body<'source>(
     ])
 }
 
-pub(crate) fn inserted_braced_body_tail(body: Option<Doc<'_>>) -> Doc<'_> {
+fn inserted_braced_body_tail(body: Option<Doc<'_>>) -> Doc<'_> {
     concat([
         body.map_or_else(hard_line, |body| {
             concat([
@@ -54,11 +56,13 @@ pub(crate) fn inserted_braced_body_tail(body: Option<Doc<'_>>) -> Doc<'_> {
                 hard_line(),
             ])
         }),
-        inserted_syntax_token("}", InsertedSyntaxToken::BlockBrace),
+        // Intentional synthesized token: closes the formatter-owned block
+        // opened by `inserted_braced_body`.
+        inserted_syntax_token("}", FormatterInsertedToken::BlockBrace),
     ])
 }
 
-pub(crate) fn source_braced_body_tail<'source>(
+fn source_braced_body_tail<'source>(
     close: Option<&JavaSyntaxToken<'source>>,
     body: Option<Doc<'source>>,
 ) -> Doc<'source> {
@@ -105,15 +109,13 @@ pub(crate) fn join_body_items(items: Vec<BodyItem<'_>>) -> Doc<'_> {
 }
 
 fn format_source_open_brace<'source>(open: Option<&JavaSyntaxToken<'source>>) -> Doc<'source> {
-    open.map_or_else(
-        || inserted_syntax_token("{", InsertedSyntaxToken::MissingSource),
-        |open| format_token_before_relocated_trailing_comments(open, LeadingTrivia::Preserve),
-    )
+    open.map_or_else(jolt_fmt_ir::nil, |open| {
+        format_token_before_relocated_trailing_comments(open, LeadingTrivia::Preserve)
+    })
 }
 
 fn format_source_close_brace<'source>(close: Option<&JavaSyntaxToken<'source>>) -> Doc<'source> {
-    close.map_or_else(
-        || inserted_syntax_token("}", InsertedSyntaxToken::MissingSource),
-        |close| format_token_after_relocated_leading_comments(close, TrailingTrivia::Preserve),
-    )
+    close.map_or_else(jolt_fmt_ir::nil, |close| {
+        format_token_after_relocated_leading_comments(close, TrailingTrivia::Preserve)
+    })
 }

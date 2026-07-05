@@ -46,7 +46,7 @@ pub(crate) fn format_typed_modifier_prefix<'source>(
     )
 }
 
-pub(crate) fn format_typed_modifier_prefix_from_split_parts<'source>(
+fn format_typed_modifier_prefix_from_split_parts<'source>(
     declaration_annotations: Vec<Annotation<'source>>,
     type_use_annotations: Vec<Annotation<'source>>,
     modifier_entries: Vec<ModifierEntry<'source>>,

@@ -1,10 +1,10 @@
 use super::{
     AssignmentExpression, BinaryExpression, ConditionalExpression, Doc, Expression, JavaFormatter,
     PostfixExpression, UnaryExpression, concat, format_expression, format_token_with_comments,
-    text,
 };
-use crate::helpers::comments::{comment_forces_line, format_comment, token_has_comments};
-use crate::helpers::syntax_tokens::{InsertedSyntaxToken, inserted_syntax_token};
+use crate::helpers::comments::token_has_comments;
+use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_token};
+use crate::helpers::syntax_tokens::{FormatterInsertedToken, inserted_syntax_token};
 use jolt_fmt_ir::space;
 use jolt_fmt_ir::{force_group, group, indent, line};
 use jolt_java_syntax::{ExpressionParentRole, JavaOperator};
@@ -155,10 +155,14 @@ fn format_binary_operand<'source>(
     let doc = format_expression(expression, formatter);
     if should_parenthesize_binary_operand(expression, parent_operator) {
         jolt_fmt_ir::group(concat([
-            inserted_syntax_token("(", InsertedSyntaxToken::PrecedenceParenthesis),
+            // Intentional synthesized token: readability parentheses preserve
+            // the parsed precedence while making mixed binary precedence clear.
+            inserted_syntax_token("(", FormatterInsertedToken::PrecedenceParenthesis),
             jolt_fmt_ir::indent(concat([jolt_fmt_ir::soft_line(), doc])),
             jolt_fmt_ir::soft_line(),
-            inserted_syntax_token(")", InsertedSyntaxToken::PrecedenceParenthesis),
+            // Intentional synthesized token: closes the formatter-owned
+            // readability parenthesis above.
+            inserted_syntax_token(")", FormatterInsertedToken::PrecedenceParenthesis),
         ]))
     } else {
         doc
@@ -254,32 +258,25 @@ fn format_operator_with_comments<'source>(operator: &JavaOperator<'source>) -> D
         return format_token_with_comments(token);
     }
 
-    concat([
-        format_operator_leading_comments(operator),
-        text(operator.text()),
-        format_operator_trailing_comments(operator),
-    ])
-}
-
-fn format_operator_leading_comments<'source>(operator: &JavaOperator<'source>) -> Doc<'source> {
-    let mut docs = Vec::new();
-    for comment in operator.leading_comments() {
-        docs.push(format_comment(&comment));
-        docs.push(jolt_fmt_ir::hard_line());
-    }
-    concat(docs)
-}
-
-fn format_operator_trailing_comments<'source>(operator: &JavaOperator<'source>) -> Doc<'source> {
-    let mut docs = Vec::new();
-    for comment in operator.trailing_comments() {
-        docs.push(space());
-        docs.push(format_comment(&comment));
-        if comment_forces_line(&comment) {
-            docs.push(jolt_fmt_ir::hard_line());
-        }
-    }
-    concat(docs)
+    let mut tokens = operator.tokens().enumerate().peekable();
+    concat(std::iter::from_fn(|| {
+        let (index, token) = tokens.next()?;
+        let is_first = index == 0;
+        let is_last = tokens.peek().is_none();
+        Some(format_token(
+            &token,
+            if is_first {
+                LeadingTrivia::Preserve
+            } else {
+                LeadingTrivia::SuppressAlreadyHandled
+            },
+            if is_last {
+                TrailingTrivia::Preserve
+            } else {
+                TrailingTrivia::RelocatedToEnclosingContext
+            },
+        ))
+    }))
 }
 
 fn assignment_expression<'source>(

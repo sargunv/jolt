@@ -6,6 +6,8 @@ use crate::context::JavaFormatter;
 
 /// Java formatter options consumed by the Java layout builder.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
 pub struct JavaFormatOptions {
     /// Preferred maximum rendered line width.
     pub line_width: u16,

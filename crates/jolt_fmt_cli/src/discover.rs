@@ -2,14 +2,14 @@ use std::path::{Path, PathBuf};
 
 use ignore::WalkBuilder;
 
-use jolt_fmt_core::FormatOptions;
+use jolt_fmt_core::{FormatOptions, Language};
 
 use crate::config::{CliError, ConfigResolver, ResolvedConfig};
 
 #[derive(Clone, Debug)]
 pub(crate) struct CandidateFile {
     pub(crate) path: PathBuf,
-    pub(crate) language: jolt_fmt_core::Language,
+    pub(crate) language: Language,
     pub(crate) options: FormatOptions,
 }
 
@@ -55,9 +55,9 @@ fn matches_selection(path: &Path, config: &ResolvedConfig) -> bool {
     config.include.matches(path) && !config.excludes.iter().any(|exclude| exclude.matches(path))
 }
 
-pub(crate) fn detect_language(path: &Path) -> Option<jolt_fmt_core::Language> {
+pub(crate) fn detect_language(path: &Path) -> Option<Language> {
     match path.extension().and_then(|extension| extension.to_str()) {
-        Some("java") => Some(jolt_fmt_core::Language::Java),
+        Some("java") => Some(Language::Java),
         _ => None,
     }
 }

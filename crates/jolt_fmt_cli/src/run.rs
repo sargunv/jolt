@@ -11,14 +11,14 @@ use std::{
 };
 
 use jolt_diagnostics::Diagnostic;
-use jolt_fmt_core::{FormatSinkResult, format_source_to_sink};
+use jolt_fmt_core::{FormatOptions, FormatSinkResult, Language, format_source_to_sink};
 use jolt_fmt_ir::{RenderControl, RenderSink};
 use jolt_text::{LineIndex, TextSize};
 use rayon::prelude::*;
 
 use crate::{
     args::{Cli, Command, FmtArgs},
-    config::{CliError, ConfigResolver, absolutize, display_path},
+    config::{CliError, ConfigResolver, absolutize},
     discover::{CandidateFile, detect_language, discover_files},
 };
 
@@ -77,7 +77,7 @@ fn collect_candidates(cwd: &Path, args: &FmtArgs) -> Result<Vec<CandidateFile>, 
 
     for path in paths {
         if path.is_file() {
-            let language = detect_language(&path).unwrap_or(jolt_fmt_core::Language::Java);
+            let language = detect_language(&path).unwrap_or(Language::Java);
             let root = path
                 .parent()
                 .map_or_else(|| cwd.to_path_buf(), Path::to_path_buf);
@@ -142,7 +142,7 @@ fn run_stdin(cwd: &Path, args: &FmtArgs) -> Result<(), CliError> {
                 path.display()
             ))
         })?,
-        None => jolt_fmt_core::Language::Java,
+        None => Language::Java,
     };
 
     let pseudo_parent = args
@@ -238,6 +238,10 @@ fn default_thread_count() -> NonZeroUsize {
     thread::available_parallelism().unwrap_or(NonZeroUsize::MIN)
 }
 
+fn display_path(cwd: &Path, path: &Path) -> String {
+    path.strip_prefix(cwd).unwrap_or(path).display().to_string()
+}
+
 fn format_candidate(cwd: &Path, candidate: &CandidateFile, check: bool) -> FileFormatResult {
     format_file(
         cwd,
@@ -251,8 +255,8 @@ fn format_candidate(cwd: &Path, candidate: &CandidateFile, check: bool) -> FileF
 fn format_file(
     cwd: &Path,
     path: &Path,
-    language: jolt_fmt_core::Language,
-    options: jolt_fmt_core::FormatOptions,
+    language: Language,
+    options: FormatOptions,
     check: bool,
 ) -> FileFormatResult {
     let label = display_path(cwd, path);
@@ -275,8 +279,8 @@ fn format_file(
 fn format_file_check(
     label: &str,
     source: &str,
-    language: jolt_fmt_core::Language,
-    options: jolt_fmt_core::FormatOptions,
+    language: Language,
+    options: FormatOptions,
 ) -> FileFormatResult {
     let mut sink = CompareSink::new(source);
     let result = format_source_to_sink(source, language, &options, &mut sink);
@@ -319,8 +323,8 @@ fn format_file_write(
     path: &Path,
     label: &str,
     source: &str,
-    language: jolt_fmt_core::Language,
-    options: jolt_fmt_core::FormatOptions,
+    language: Language,
+    options: FormatOptions,
 ) -> FileFormatResult {
     let mut sink = BufferedFileSink::new(path, source);
     let result = format_source_to_sink(source, language, &options, &mut sink);

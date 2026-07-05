@@ -888,17 +888,6 @@ impl<'source> AnnotationElementList<'source> {
     ) -> impl Iterator<Item = AnnotationInterfaceBodyMember<'source>> + use<'source> {
         children_family(&self.syntax)
     }
-
-    pub fn argument_entries(
-        &self,
-    ) -> impl Iterator<Item = AnnotationArgumentListEntry<'source>> + use<'source> {
-        separated_entries(
-            self.syntax.children_with_tokens(),
-            JavaSyntaxKind::Comma,
-            AnnotationArgument::cast,
-            |argument, comma| AnnotationArgumentListEntry { argument, comma },
-        )
-    }
 }
 
 impl<'source> AnnotationElementDeclaration<'source> {
@@ -1743,8 +1732,8 @@ fn access_parent_role(
             .is_same_expression(expression)
             .then_some(ExpressionParentRole::SwitchExpressionSelector),
         AnyJavaNode::ArgumentList(parent) => parent
-            .arguments()
-            .any(|argument| expression_is_same(&argument, expression))
+            .entries()
+            .any(|entry| expression_is_same(&entry.argument, expression))
             .then_some(ExpressionParentRole::Argument),
         AnyJavaNode::AnnotationElementValue(parent) => parent
             .expression()
@@ -1922,10 +1911,6 @@ impl<'source> ArgumentList<'source> {
         child_token(&self.syntax, JavaSyntaxKind::RParen)
     }
 
-    pub fn arguments(&self) -> impl Iterator<Item = Expression<'source>> + use<'source> {
-        children_family(&self.syntax)
-    }
-
     pub fn entries(&self) -> impl Iterator<Item = ArgumentListEntry<'source>> + use<'source, '_> {
         separated_entries(
             self.syntax.children_with_tokens(),
@@ -1945,10 +1930,6 @@ impl<'source> TypeArgumentList<'source> {
     #[must_use]
     pub fn close_angle(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Gt)
-    }
-
-    pub fn arguments(&self) -> impl Iterator<Item = TypeArgument<'source>> + use<'source> {
-        children(&self.syntax)
     }
 
     pub fn entries(
@@ -2141,7 +2122,14 @@ impl<'source> AnnotationArgumentList<'source> {
     pub fn entries(&self) -> impl Iterator<Item = AnnotationArgumentListEntry<'source>> {
         child::<AnnotationElementList>(&self.syntax)
             .into_iter()
-            .flat_map(|list| list.argument_entries())
+            .flat_map(|list| {
+                separated_entries(
+                    list.syntax.children_with_tokens(),
+                    JavaSyntaxKind::Comma,
+                    AnnotationArgument::cast,
+                    |argument, comma| AnnotationArgumentListEntry { argument, comma },
+                )
+            })
     }
 }
 
@@ -3191,10 +3179,6 @@ impl<'source> ForUpdate<'source> {
 }
 
 impl<'source> StatementExpressionList<'source> {
-    pub fn expressions(&self) -> impl Iterator<Item = Expression<'source>> + use<'source> {
-        children_family(&self.syntax)
-    }
-
     pub fn entries(
         &self,
     ) -> impl Iterator<Item = StatementExpressionEntry<'source>> + use<'source, '_> {
@@ -3623,16 +3607,16 @@ fn token_sequence_matches(
 
 fn java_operator(
     kind: JavaOperatorKind,
-    mut tokens: [Option<JavaSyntaxToken<'_>>; 4],
+    tokens: [Option<JavaSyntaxToken<'_>>; 4],
     len: usize,
 ) -> Option<JavaOperator<'_>> {
-    let first = tokens[0].take()?;
+    let first = tokens[0]?;
     if len == 1 {
         return Some(JavaOperator::single(kind, first));
     }
 
-    let last = tokens.get_mut(len.checked_sub(1)?)?.take()?;
-    Some(JavaOperator::composite(kind, first, last))
+    tokens.get(len.checked_sub(1)?)?.as_ref()?;
+    Some(JavaOperator::composite(kind, tokens, len))
 }
 
 impl<'source> ModuleDeclaration<'source> {

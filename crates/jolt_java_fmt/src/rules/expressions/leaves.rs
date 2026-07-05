@@ -6,7 +6,7 @@ use super::{
     format_token_after_relocated_leading_comments, format_token_with_inline_leading_comments,
     format_void_type, hard_line,
 };
-use jolt_fmt_ir::space;
+use jolt_fmt_ir::{join, space};
 
 pub(super) fn format_literal_expression<'source>(
     expression: &LiteralExpression<'source>,
@@ -43,18 +43,18 @@ pub(super) fn format_name_expression<'source>(
     leading_comments: LeadingComments,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    let annotations = expression
+    let mut annotations = expression
         .annotations()
         .map(|annotation| format_annotation(&annotation, formatter))
-        .collect::<Vec<_>>();
+        .peekable();
     let name = expression.name().map_or_else(jolt_fmt_ir::nil, |name| {
         format_leaf_token(&name, leading_comments)
     });
 
-    if annotations.is_empty() {
+    if annotations.peek().is_none() {
         name
     } else {
-        concat([jolt_fmt_ir::join(&space(), annotations), space(), name])
+        concat([join(&space(), annotations), space(), name])
     }
 }
 

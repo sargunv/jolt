@@ -211,7 +211,7 @@ impl<S: RenderSink> Renderer<S> {
         match doc.kind() {
             DocKind::Nil => Ok(()),
             DocKind::Text(text) => {
-                self.write_text(&text.text, text.width)?;
+                self.write_measured_str(&text.text, text.width)?;
                 Ok(())
             }
             DocKind::LiteralText(text) => {
@@ -305,7 +305,11 @@ impl<S: RenderSink> Renderer<S> {
             .ok_or_else(RenderError::no_current_group)
     }
 
-    fn write_text(&mut self, text: &str, width: TextWidth) -> Result<(), RenderToError<S::Error>> {
+    fn write_measured_str(
+        &mut self,
+        text: &str,
+        width: TextWidth,
+    ) -> Result<(), RenderToError<S::Error>> {
         self.write_str(text)?;
         self.add_width(width);
         Ok(())
@@ -326,7 +330,7 @@ impl<S: RenderSink> Renderer<S> {
     fn write_flat_line(&mut self, flat: &FlatLine) -> Result<(), RenderToError<S::Error>> {
         match flat {
             FlatLine::Empty => Ok(()),
-            FlatLine::Space => self.write_text(" ", TextWidth::new(1)),
+            FlatLine::Space => self.write_measured_str(" ", TextWidth::new(1)),
         }
     }
 

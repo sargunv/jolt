@@ -8,29 +8,16 @@ use crate::helpers::comments::{
 };
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum InsertedSyntaxToken {
+pub(crate) enum FormatterInsertedToken {
     BlockBrace,
-    MissingSource,
     PrecedenceParenthesis,
     TrailingComma,
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum NormalizedSyntaxToken {
     EnumSeparator,
-    NameSeparator,
 }
 
 pub(crate) fn inserted_syntax_token<'source>(
     spelling: &'static str,
-    _reason: InsertedSyntaxToken,
-) -> Doc<'source> {
-    text(spelling)
-}
-
-pub(crate) fn normalized_syntax_token<'source>(
-    spelling: &'static str,
-    _reason: NormalizedSyntaxToken,
+    _reason: FormatterInsertedToken,
 ) -> Doc<'source> {
     text(spelling)
 }
@@ -38,7 +25,7 @@ pub(crate) fn normalized_syntax_token<'source>(
 pub(crate) fn format_token_with_normalized_text<'source>(
     token: &JavaSyntaxToken<'source>,
     spelling: &'static str,
-    reason: NormalizedSyntaxToken,
+    reason: FormatterInsertedToken,
     leading: LeadingTrivia,
     trailing: TrailingTrivia,
 ) -> Doc<'source> {
@@ -47,7 +34,9 @@ pub(crate) fn format_token_with_normalized_text<'source>(
             LeadingTrivia::Preserve => format_leading_comments(token),
             LeadingTrivia::SuppressAlreadyHandled => jolt_fmt_ir::nil(),
         },
-        normalized_syntax_token(spelling, reason),
+        // Source-backed normalized token: the source token provides trivia;
+        // formatter policy provides the printed spelling.
+        inserted_syntax_token(spelling, reason),
         match trailing {
             TrailingTrivia::Preserve => format_trailing_comments(token),
             TrailingTrivia::BeforeLineBreak => format_trailing_comments_before_line_break(token),

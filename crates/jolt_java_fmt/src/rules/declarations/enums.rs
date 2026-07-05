@@ -14,8 +14,7 @@ use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_leading_comments, format_token,
 };
 use crate::helpers::syntax_tokens::{
-    InsertedSyntaxToken, NormalizedSyntaxToken, format_token_with_normalized_text,
-    inserted_syntax_token,
+    FormatterInsertedToken, format_token_with_normalized_text, inserted_syntax_token,
 };
 use jolt_fmt_ir::space;
 
@@ -96,7 +95,7 @@ pub(super) fn format_enum_body_contents<'source>(
                 entry.doc,
                 format_enum_constant_separator(
                     entry.comma.as_ref(),
-                    (has_body_declarations && is_last_constant)
+                    is_last_constant
                         .then_some(body_declaration_separator.as_ref())
                         .flatten(),
                     separator,
@@ -151,33 +150,41 @@ fn format_enum_constant_separator<'source>(
     separator: &'static str,
     include_trailing_comments: bool,
 ) -> Doc<'source> {
-    if let Some(body_declaration_separator) = body_declaration_separator {
+    if let Some(body_declaration_separator) = body_declaration_separator
+        && separator == ";"
+    {
         return format_enum_body_declaration_separator(Some(body_declaration_separator));
     }
 
-    let Some(comma) = comma else {
-        return inserted_syntax_token(separator, InsertedSyntaxToken::MissingSource);
+    let Some(separator_token) = body_declaration_separator.or(comma) else {
+        return if separator == "," {
+            // Intentional synthesized token: multiline enum constants use a
+            // formatter-owned trailing comma even when the source omitted one.
+            inserted_syntax_token(",", FormatterInsertedToken::TrailingComma)
+        } else {
+            jolt_fmt_ir::nil()
+        };
     };
 
     concat([
-        format_leading_comments(comma),
-        if comma.text() == separator {
+        format_leading_comments(separator_token),
+        if separator_token.text() == separator {
             format_token(
-                comma,
+                separator_token,
                 LeadingTrivia::SuppressAlreadyHandled,
                 TrailingTrivia::RelocatedToEnclosingContext,
             )
         } else {
             format_token_with_normalized_text(
-                comma,
+                separator_token,
                 separator,
-                NormalizedSyntaxToken::EnumSeparator,
+                FormatterInsertedToken::EnumSeparator,
                 LeadingTrivia::SuppressAlreadyHandled,
                 TrailingTrivia::RelocatedToEnclosingContext,
             )
         },
         if include_trailing_comments {
-            format_enum_separator_inline_trailing_comments(comma)
+            format_enum_separator_inline_trailing_comments(separator_token)
         } else {
             jolt_fmt_ir::nil()
         },
@@ -187,16 +194,13 @@ fn format_enum_constant_separator<'source>(
 fn format_enum_body_declaration_separator<'source>(
     separator: Option<&JavaSyntaxToken<'source>>,
 ) -> Doc<'source> {
-    separator.map_or_else(
-        || inserted_syntax_token(";", InsertedSyntaxToken::MissingSource),
-        |separator| {
-            format_token(
-                separator,
-                LeadingTrivia::SuppressAlreadyHandled,
-                TrailingTrivia::RelocatedToEnclosingContext,
-            )
-        },
-    )
+    separator.map_or_else(jolt_fmt_ir::nil, |separator| {
+        format_token(
+            separator,
+            LeadingTrivia::SuppressAlreadyHandled,
+            TrailingTrivia::RelocatedToEnclosingContext,
+        )
+    })
 }
 
 fn format_enum_separator_inline_trailing_comments<'source>(

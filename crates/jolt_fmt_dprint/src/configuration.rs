@@ -23,18 +23,12 @@ pub(crate) fn resolve_config(
     diagnostics.extend(get_unknown_property_diagnostics(config));
 
     PluginResolveConfigurationResult {
-        file_matching: file_matching_info(),
+        file_matching: FileMatchingInfo {
+            file_extensions: vec!["java".to_owned()],
+            file_names: Vec::new(),
+        },
         diagnostics,
         config: options,
-    }
-}
-
-/// Returns the file matching declaration for the initial Jolt plugin.
-#[must_use]
-fn file_matching_info() -> FileMatchingInfo {
-    FileMatchingInfo {
-        file_extensions: vec!["java".to_owned()],
-        file_names: Vec::new(),
     }
 }
 
@@ -282,19 +276,33 @@ mod tests {
 
     #[test]
     fn zero_numeric_values_produce_configuration_diagnostics() {
+        let global = GlobalConfiguration {
+            line_width: Some(100),
+            indent_width: Some(4),
+            use_tabs: Some(true),
+            new_line_kind: None,
+        };
         let config = config_map([
             ("lineWidth", ConfigKeyValue::from_i32(0)),
             ("indentWidth", ConfigKeyValue::from_i32(0)),
         ]);
 
-        let result = resolve_config(config, &GlobalConfiguration::default());
+        let result = resolve_config(config, &global);
 
-        assert_eq!(diagnostic_properties(&result), ["lineWidth", "indentWidth"]);
-        assert_eq!(result.config, FormatOptions::default());
+        assert_diagnostic_properties(&result, ["indentWidth", "lineWidth"]);
+        assert_eq!(result.config.line_width, 100);
+        assert_eq!(result.config.indent_width, 4);
+        assert!(result.config.use_tabs);
     }
 
     #[test]
     fn out_of_range_numeric_values_produce_configuration_diagnostics() {
+        let global = GlobalConfiguration {
+            line_width: Some(100),
+            indent_width: Some(4),
+            use_tabs: Some(true),
+            new_line_kind: None,
+        };
         let config = config_map([
             (
                 "lineWidth",
@@ -306,14 +314,21 @@ mod tests {
             ),
         ]);
 
-        let result = resolve_config(config, &GlobalConfiguration::default());
+        let result = resolve_config(config, &global);
 
-        assert_eq!(diagnostic_properties(&result), ["lineWidth", "indentWidth"]);
-        assert_eq!(result.config, FormatOptions::default());
+        assert_diagnostic_properties(&result, ["indentWidth", "lineWidth"]);
+        assert_eq!(result.config.line_width, 100);
+        assert_eq!(result.config.indent_width, 4);
+        assert!(result.config.use_tabs);
     }
 
     #[test]
     fn invalid_global_numeric_values_produce_configuration_diagnostics() {
+        let config = config_map([
+            ("lineWidth", ConfigKeyValue::from_i32(100)),
+            ("indentWidth", ConfigKeyValue::from_i32(4)),
+            ("useTabs", ConfigKeyValue::from_bool(true)),
+        ]);
         let global = GlobalConfiguration {
             line_width: Some(u32::from(u16::MAX) + 1),
             indent_width: Some(0),
@@ -321,10 +336,12 @@ mod tests {
             new_line_kind: None,
         };
 
-        let result = resolve_config(ConfigKeyMap::new(), &global);
+        let result = resolve_config(config, &global);
 
-        assert_eq!(diagnostic_properties(&result), ["lineWidth", "indentWidth"]);
-        assert_eq!(result.config, FormatOptions::default());
+        assert_diagnostic_properties(&result, ["indentWidth", "lineWidth"]);
+        assert_eq!(result.config.line_width, 100);
+        assert_eq!(result.config.indent_width, 4);
+        assert!(result.config.use_tabs);
     }
 
     fn config_map<const N: usize>(entries: [(&str, ConfigKeyValue); N]) -> ConfigKeyMap {
@@ -334,13 +351,20 @@ mod tests {
             .collect()
     }
 
-    fn diagnostic_properties(
+    fn assert_diagnostic_properties<const N: usize>(
         result: &dprint_core::plugins::PluginResolveConfigurationResult<FormatOptions>,
-    ) -> Vec<&str> {
-        result
+        expected: [&str; N],
+    ) {
+        let mut actual = result
             .diagnostics
             .iter()
             .map(|diagnostic| diagnostic.property_name.as_str())
-            .collect()
+            .collect::<Vec<_>>();
+        actual.sort_unstable();
+
+        let mut expected = expected;
+        expected.sort_unstable();
+
+        assert_eq!(actual, expected);
     }
 }

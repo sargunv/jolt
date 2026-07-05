@@ -170,29 +170,25 @@ impl fmt::Debug for JavaSyntaxToken<'_> {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct JavaOperator<'source> {
     kind: JavaOperatorKind,
-    first_token: JavaSyntaxToken<'source>,
-    last_token: Option<JavaSyntaxToken<'source>>,
+    tokens: [Option<JavaSyntaxToken<'source>>; 4],
+    len: usize,
 }
 
 impl<'source> JavaOperator<'source> {
     pub(crate) fn single(kind: JavaOperatorKind, token: JavaSyntaxToken<'source>) -> Self {
         Self {
             kind,
-            first_token: token,
-            last_token: None,
+            tokens: [Some(token), None, None, None],
+            len: 1,
         }
     }
 
     pub(crate) fn composite(
         kind: JavaOperatorKind,
-        first_token: JavaSyntaxToken<'source>,
-        last_token: JavaSyntaxToken<'source>,
+        tokens: [Option<JavaSyntaxToken<'source>>; 4],
+        len: usize,
     ) -> Self {
-        Self {
-            kind,
-            first_token,
-            last_token: Some(last_token),
-        }
+        Self { kind, tokens, len }
     }
 
     #[must_use]
@@ -201,26 +197,16 @@ impl<'source> JavaOperator<'source> {
     }
 
     #[must_use]
-    pub fn leading_comments(&self) -> JavaComments<'source> {
-        self.first_token.leading_comments()
-    }
-
-    #[must_use]
-    pub fn trailing_comments(&self) -> JavaComments<'source> {
-        self.last_token().trailing_comments()
-    }
-
-    #[must_use]
     pub fn as_single_token(&self) -> Option<&JavaSyntaxToken<'source>> {
-        if self.last_token.is_none() {
-            Some(&self.first_token)
+        if self.len == 1 {
+            self.tokens[0].as_ref()
         } else {
             None
         }
     }
 
-    fn last_token(&self) -> &JavaSyntaxToken<'source> {
-        self.last_token.as_ref().unwrap_or(&self.first_token)
+    pub fn tokens(&self) -> impl Iterator<Item = JavaSyntaxToken<'source>> + '_ {
+        self.tokens.iter().take(self.len).flatten().copied()
     }
 }
 

@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, concat, group, hard_line, indent, line, soft_line, text};
+use jolt_fmt_ir::{Doc, concat, group, hard_line, indent, line, soft_line};
 use jolt_java_syntax::{
     ArgumentList, ArrayAccessExpression, ArrayCreationExpression, ArrayInitializer,
     AssignmentExpression, BinaryExpression, CastExpression, ClassLiteralExpression,

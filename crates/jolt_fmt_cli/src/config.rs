@@ -418,7 +418,3 @@ pub(crate) fn absolutize(cwd: &Path, path: &Path) -> PathBuf {
         cwd.join(path)
     }
 }
-
-pub(crate) fn display_path(cwd: &Path, path: &Path) -> String {
-    path.strip_prefix(cwd).unwrap_or(path).display().to_string()
-}

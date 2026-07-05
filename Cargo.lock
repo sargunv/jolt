@@ -413,6 +413,7 @@ dependencies = [
  "jolt_diagnostics",
  "jolt_fmt_ir",
  "jolt_java_syntax",
+ "serde",
 ]
 
 [[package]]

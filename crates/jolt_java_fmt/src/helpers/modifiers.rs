@@ -1,5 +1,4 @@
-use jolt_fmt_ir::space;
-use jolt_fmt_ir::{Doc, concat, hard_line};
+use jolt_fmt_ir::{Doc, concat, hard_line, join, space};
 use jolt_java_syntax::{JavaSyntaxKind, JavaSyntaxToken, ModifierEntry};
 
 use crate::helpers::comments::{
@@ -44,7 +43,7 @@ fn modifier_prefix_from_modifier_docs<'source>(
     }
     let mut modifier_docs = modifier_docs.into_iter().peekable();
     if modifier_docs.peek().is_some() {
-        docs.push(jolt_fmt_ir::join(&space(), modifier_docs));
+        docs.push(join(&space(), modifier_docs));
         docs.push(space());
     }
 
@@ -56,17 +55,21 @@ pub(crate) fn inline_modifier_prefix_from_docs<'source>(
     modifier_tokens: Vec<JavaSyntaxToken<'source>>,
 ) -> Doc<'source> {
     let modifier_tokens = sorted_modifier_tokens(modifier_tokens);
-    let mut docs = annotation_docs;
-    docs.extend(
-        modifier_tokens
-            .into_iter()
-            .map(|token| format_modifier_token(&token, LeadingComments::Preserve)),
-    );
-
-    if docs.is_empty() {
-        jolt_fmt_ir::nil()
+    let has_docs = !annotation_docs.is_empty() || !modifier_tokens.is_empty();
+    if has_docs {
+        concat([
+            join(
+                &space(),
+                annotation_docs.into_iter().chain(
+                    modifier_tokens
+                        .into_iter()
+                        .map(|token| format_modifier_token(&token, LeadingComments::Preserve)),
+                ),
+            ),
+            space(),
+        ])
     } else {
-        concat([jolt_fmt_ir::join(&space(), docs), space()])
+        jolt_fmt_ir::nil()
     }
 }
 

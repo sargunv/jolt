@@ -6,25 +6,15 @@ use jolt_java_syntax::{JavaComment, JavaSyntaxToken, NameSegment, NameSyntax};
 
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, comment_forces_line, format_comment, format_token,
-    format_token_text, format_token_with_comments,
+    format_token_text,
 };
-use crate::helpers::syntax_tokens::{NormalizedSyntaxToken, normalized_syntax_token};
 
 pub(crate) fn format_name<'source>(name: &NameSyntax<'source>) -> Doc<'source> {
-    let segments = name.segments_with_annotations().collect::<Vec<_>>();
-    if segments_have_line_comments(&segments) {
-        return format_multiline_name(segments);
-    }
-    if segments_have_comments(&segments) {
-        return format_inline_name(&segments);
+    if segments_have_line_comments(name.segments_with_annotations()) {
+        return format_multiline_name(name.segments_with_annotations());
     }
 
-    jolt_fmt_ir::join(
-        &normalized_syntax_token(".", NormalizedSyntaxToken::NameSeparator),
-        segments
-            .into_iter()
-            .map(|segment| format_token_with_comments(&segment.identifier)),
-    )
+    format_inline_name(name.segments_with_annotations())
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -68,15 +58,10 @@ impl PartialOrd for NameSortKey<'_> {
     }
 }
 
-fn segments_have_comments(segments: &[NameSegment<'_>]) -> bool {
-    segments.iter().any(|segment| {
-        token_has_comments(&segment.identifier)
-            || segment.dot_before.as_ref().is_some_and(token_has_comments)
-    })
-}
-
-fn segments_have_line_comments(segments: &[NameSegment<'_>]) -> bool {
-    segments.iter().any(|segment| {
+fn segments_have_line_comments<'source>(
+    segments: impl IntoIterator<Item = NameSegment<'source>>,
+) -> bool {
+    segments.into_iter().any(|segment| {
         token_has_line_comments(&segment.identifier)
             || segment
                 .dot_before
@@ -92,14 +77,13 @@ fn token_has_line_comments(token: &JavaSyntaxToken<'_>) -> bool {
         .any(|comment| comment_forces_line(&comment))
 }
 
-fn token_has_comments(token: &JavaSyntaxToken<'_>) -> bool {
-    !token.leading_comments().is_empty() || !token.trailing_comments().is_empty()
-}
-
-fn format_inline_name<'source>(segments: &[NameSegment<'source>]) -> Doc<'source> {
+fn format_inline_name<'source>(
+    segments: impl IntoIterator<Item = NameSegment<'source>>,
+) -> Doc<'source> {
     let mut docs = Vec::new();
-    let segments_len = segments.len();
-    for (index, segment) in segments.iter().enumerate() {
+    let mut segments = segments.into_iter().peekable();
+    let mut index = 0;
+    while let Some(segment) = segments.next() {
         if index > 0 {
             docs.push(
                 segment
@@ -109,24 +93,28 @@ fn format_inline_name<'source>(segments: &[NameSegment<'source>]) -> Doc<'source
             );
         }
         docs.push(format_inline_name_segment_identifier(
-            segment,
-            index + 1 < segments_len,
+            &segment,
+            segments.peek().is_some(),
         ));
+        index += 1;
     }
     concat(docs)
 }
 
-fn format_multiline_name(segments: Vec<NameSegment<'_>>) -> Doc<'_> {
+fn format_multiline_name<'source>(
+    segments: impl IntoIterator<Item = NameSegment<'source>>,
+) -> Doc<'source> {
     let mut segments = segments.into_iter();
     let Some(first) = segments.next() else {
         return jolt_fmt_ir::nil();
     };
 
-    let rest = segments
-        .map(|segment| concat([hard_line(), format_leading_dot_segment(&segment)]))
-        .collect::<Vec<_>>();
-
-    concat([format_name_segment_identifier(&first), indent(concat(rest))])
+    concat([
+        format_name_segment_identifier(&first),
+        indent(concat(segments.map(|segment| {
+            concat([hard_line(), format_leading_dot_segment(&segment)])
+        }))),
+    ])
 }
 
 fn format_leading_dot_segment<'source>(segment: &NameSegment<'source>) -> Doc<'source> {

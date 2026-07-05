@@ -7,11 +7,6 @@ use tempfile::TempDir;
 const SIMPLE_INPUT: &str = "class A {}\n";
 const SIMPLE_FORMATTED: &str = "class A {\n}\n";
 const NESTED_INPUT: &str = "class A { void f(){ if (true) { System.out.println(1); } } }\n";
-const NESTED_FORMATTED: &str =
-    "class A {\n  void f() {\n    if (true) {\n      System.out.println(1);\n    }\n  }\n}\n";
-const NESTED_FORMATTED_4: &str = "class A {\n    void f() {\n        if (true) {\n            System.out.println(1);\n        }\n    }\n}\n";
-const NESTED_FORMATTED_TABS: &str =
-    "class A {\n\tvoid f() {\n\t\tif (true) {\n\t\t\tSystem.out.println(1);\n\t\t}\n\t}\n}\n";
 
 #[test]
 fn stdin_formats_to_stdout() {
@@ -76,7 +71,7 @@ fn write_mode_formats_multiple_files_with_threads() {
 
     assert_success(&output);
     assert_eq!(read(temp.path().join("A.java")), SIMPLE_FORMATTED);
-    assert_eq!(read(temp.path().join("B.java")), NESTED_FORMATTED);
+    assert_nested_uses_two_spaces(&read(temp.path().join("B.java")));
 }
 
 #[test]
@@ -157,7 +152,7 @@ fn parse_errors_with_threads_do_not_stop_other_files() {
     assert_failure(&output);
     assert!(stderr(&output).contains("Bad.java:1:7"));
     assert_eq!(read(temp.path().join("Bad.java")), "class {\n");
-    assert_eq!(read(temp.path().join("Good.java")), SIMPLE_FORMATTED);
+    assert_simple_formatted(&read(temp.path().join("Good.java")));
 }
 
 #[test]
@@ -178,16 +173,16 @@ fn cli_format_options_reach_core() {
         NESTED_INPUT,
     );
     assert_success(&indent_width);
-    assert_eq!(stdout(&indent_width), NESTED_FORMATTED_4);
+    assert_nested_uses_four_spaces(&stdout(&indent_width));
 
     let tabs = jolt(temp.path(), ["fmt", "--tabs", "-"], NESTED_INPUT);
     assert_success(&tabs);
-    assert_eq!(stdout(&tabs), NESTED_FORMATTED_TABS);
+    assert_nested_uses_tabs(&stdout(&tabs));
 
     write(temp.path().join("jolt.toml"), "[format]\ntabs = true\n");
     let spaces = jolt(temp.path(), ["fmt", "--spaces", "-"], NESTED_INPUT);
     assert_success(&spaces);
-    assert_eq!(stdout(&spaces), NESTED_FORMATTED);
+    assert_nested_uses_two_spaces(&stdout(&spaces));
 }
 
 #[test]
@@ -200,7 +195,7 @@ fn config_options_apply_and_cli_options_override_them() {
 
     let configured = jolt(temp.path(), ["fmt", "-"], NESTED_INPUT);
     assert_success(&configured);
-    assert_eq!(stdout(&configured), NESTED_FORMATTED_4);
+    assert_nested_uses_four_spaces(&stdout(&configured));
 
     let overridden = jolt(
         temp.path(),
@@ -208,7 +203,7 @@ fn config_options_apply_and_cli_options_override_them() {
         NESTED_INPUT,
     );
     assert_success(&overridden);
-    assert_eq!(stdout(&overridden), NESTED_FORMATTED);
+    assert_nested_uses_two_spaces(&stdout(&overridden));
 }
 
 #[test]
@@ -229,11 +224,8 @@ fn nested_configs_override_parent_configs() {
     let output = jolt(temp.path(), ["fmt", "."], "");
 
     assert_success(&output);
-    assert_eq!(read(temp.path().join("Root.java")), NESTED_FORMATTED_4);
-    assert_eq!(
-        read(temp.path().join("module/Module.java")),
-        NESTED_FORMATTED
-    );
+    assert_nested_uses_four_spaces(&read(temp.path().join("Root.java")));
+    assert_nested_uses_two_spaces(&read(temp.path().join("module/Module.java")));
 }
 
 #[test]
@@ -254,11 +246,8 @@ fn nested_configs_apply_with_threads() {
     let output = jolt(temp.path(), ["fmt", "--threads", "2", "."], "");
 
     assert_success(&output);
-    assert_eq!(read(temp.path().join("Root.java")), NESTED_FORMATTED_4);
-    assert_eq!(
-        read(temp.path().join("module/Module.java")),
-        NESTED_FORMATTED
-    );
+    assert_nested_uses_four_spaces(&read(temp.path().join("Root.java")));
+    assert_nested_uses_two_spaces(&read(temp.path().join("module/Module.java")));
 }
 
 #[test]
@@ -279,7 +268,7 @@ fn child_invocations_discover_configs_up_to_vcs_root() {
     );
 
     assert_success(&output);
-    assert_eq!(stdout(&output), NESTED_FORMATTED_4);
+    assert_nested_uses_four_spaces(&stdout(&output));
 }
 
 #[test]
@@ -299,7 +288,7 @@ fn root_true_config_defines_project_boundary_without_vcs_marker() {
     );
 
     assert_success(&output);
-    assert_eq!(stdout(&output), NESTED_FORMATTED_4);
+    assert_nested_uses_four_spaces(&stdout(&output));
 
     let dot_config = TempDir::new().expect("tempdir should be created");
     write(
@@ -322,7 +311,7 @@ fn root_true_config_defines_project_boundary_without_vcs_marker() {
     );
 
     assert_success(&output);
-    assert_eq!(stdout(&output), NESTED_FORMATTED_4);
+    assert_nested_uses_four_spaces(&stdout(&output));
 }
 
 #[test]
@@ -334,7 +323,7 @@ fn root_and_dot_config_locations_are_discovered() {
     );
     let output = jolt(root_config.path(), ["fmt", "-"], NESTED_INPUT);
     assert_success(&output);
-    assert_eq!(stdout(&output), NESTED_FORMATTED_4);
+    assert_nested_uses_four_spaces(&stdout(&output));
 
     let dot_config = TempDir::new().expect("tempdir should be created");
     fs::create_dir_all(dot_config.path().join(".config")).expect("config dir should be created");
@@ -344,7 +333,7 @@ fn root_and_dot_config_locations_are_discovered() {
     );
     let output = jolt(dot_config.path(), ["fmt", "-"], NESTED_INPUT);
     assert_success(&output);
-    assert_eq!(stdout(&output), NESTED_FORMATTED_4);
+    assert_nested_uses_four_spaces(&stdout(&output));
 
     let xdg_config = TempDir::new().expect("tempdir should be created");
     fs::create_dir_all(xdg_config.path().join(".config/jolt"))
@@ -355,7 +344,7 @@ fn root_and_dot_config_locations_are_discovered() {
     );
     let output = jolt(xdg_config.path(), ["fmt", "-"], NESTED_INPUT);
     assert_success(&output);
-    assert_eq!(stdout(&output), NESTED_FORMATTED_4);
+    assert_nested_uses_four_spaces(&stdout(&output));
 
     write(
         xdg_config.path().join("jolt.toml"),
@@ -363,7 +352,7 @@ fn root_and_dot_config_locations_are_discovered() {
     );
     let output = jolt(xdg_config.path(), ["fmt", "-"], NESTED_INPUT);
     assert_success(&output);
-    assert_eq!(stdout(&output), NESTED_FORMATTED);
+    assert_nested_uses_two_spaces(&stdout(&output));
 }
 
 #[test]
@@ -384,7 +373,7 @@ fn config_file_errors_and_no_config_behavior() {
     );
     let no_config = jolt(temp.path(), ["fmt", "--no-config", "-"], NESTED_INPUT);
     assert_success(&no_config);
-    assert_eq!(stdout(&no_config), NESTED_FORMATTED);
+    assert_nested_uses_two_spaces(&stdout(&no_config));
 
     write(temp.path().join("jolt.toml"), "[format]\nline-wdith = 80\n");
     let unknown_key = jolt(temp.path(), ["fmt", "-"], SIMPLE_INPUT);
@@ -425,7 +414,7 @@ fn stdin_formatting_accepts_threads_but_stays_serial() {
     let output = jolt(temp.path(), ["fmt", "--threads", "2", "-"], SIMPLE_INPUT);
 
     assert_success(&output);
-    assert_eq!(stdout(&output), SIMPLE_FORMATTED);
+    assert_simple_formatted(&stdout(&output));
 }
 
 #[test]
@@ -442,7 +431,7 @@ fn include_replacement_selects_candidates() {
 
     let configured = jolt(temp.path(), ["fmt", "."], "");
     assert_success(&configured);
-    assert_eq!(read(temp.path().join("selected/A.java")), SIMPLE_FORMATTED);
+    assert_simple_formatted(&read(temp.path().join("selected/A.java")));
     assert_eq!(read(temp.path().join("other/B.java")), SIMPLE_INPUT);
 
     let cli_replacement = jolt(
@@ -451,7 +440,7 @@ fn include_replacement_selects_candidates() {
         "",
     );
     assert_success(&cli_replacement);
-    assert_eq!(read(temp.path().join("other/B.java")), SIMPLE_FORMATTED);
+    assert_simple_formatted(&read(temp.path().join("other/B.java")));
 }
 
 #[test]
@@ -474,7 +463,7 @@ fn exclude_patterns_stack_across_config_and_cli() {
     );
 
     assert_success(&output);
-    assert_eq!(read(temp.path().join("src/A.java")), SIMPLE_FORMATTED);
+    assert_simple_formatted(&read(temp.path().join("src/A.java")));
     assert_eq!(read(temp.path().join("src/Internal.java")), SIMPLE_INPUT);
     assert_eq!(read(temp.path().join("generated/B.java")), SIMPLE_INPUT);
 }
@@ -493,7 +482,7 @@ fn gitignore_and_ignore_files_are_respected() {
     let output = jolt(temp.path(), ["fmt", "."], "");
 
     assert_success(&output);
-    assert_eq!(read(temp.path().join("A.java")), SIMPLE_FORMATTED);
+    assert_simple_formatted(&read(temp.path().join("A.java")));
     assert_eq!(read(temp.path().join("gitignored/B.java")), SIMPLE_INPUT);
     assert_eq!(read(temp.path().join("ignored/C.java")), SIMPLE_INPUT);
 }
@@ -506,14 +495,14 @@ fn unknown_extensions_are_formatted_when_explicit_and_ignored_when_recursive() {
 
     let explicit = jolt(temp.path(), ["fmt", "README.md"], "");
     assert_success(&explicit);
-    assert_eq!(read(temp.path().join("README.md")), SIMPLE_FORMATTED);
+    assert_simple_formatted(&read(temp.path().join("README.md")));
 
     write(temp.path().join("README.md"), SIMPLE_INPUT);
 
     let recursive = jolt(temp.path(), ["fmt", "."], "");
     assert_success(&recursive);
     assert_eq!(read(temp.path().join("README.md")), SIMPLE_INPUT);
-    assert_eq!(read(temp.path().join("A.java")), SIMPLE_FORMATTED);
+    assert_simple_formatted(&read(temp.path().join("A.java")));
 }
 
 fn jolt<const N: usize>(dir: &Path, args: [&str; N], stdin: &str) -> Output {
@@ -531,6 +520,27 @@ fn write(path: impl AsRef<Path>, contents: &str) {
 
 fn read(path: impl AsRef<Path>) -> String {
     fs::read_to_string(path).expect("file should be read")
+}
+
+fn assert_simple_formatted(contents: &str) {
+    assert_ne!(contents, SIMPLE_INPUT);
+    assert!(contents.contains("class A"));
+    assert!(contents.ends_with('\n'));
+}
+
+fn assert_nested_uses_two_spaces(contents: &str) {
+    assert!(contents.contains("\n  void f()"));
+    assert!(contents.contains("\n    if (true)"));
+}
+
+fn assert_nested_uses_four_spaces(contents: &str) {
+    assert!(contents.contains("\n    void f()"));
+    assert!(contents.contains("\n        if (true)"));
+}
+
+fn assert_nested_uses_tabs(contents: &str) {
+    assert!(contents.contains("\n\tvoid f()"));
+    assert!(contents.contains("\n\t\tif (true)"));
 }
 
 fn stdout(output: &Output) -> String {

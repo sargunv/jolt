@@ -1,10 +1,13 @@
 use std::{
+    convert::Infallible,
     fs,
     path::{Path, PathBuf},
     process::Command,
     sync::OnceLock,
 };
 
+use jolt_fmt_core::{FormatOptions, FormatSinkResult, Language, format_source_to_sink};
+use jolt_fmt_ir::{RenderControl, RenderSink};
 use tempfile::TempDir;
 
 static PLUGIN_PATH: OnceLock<PathBuf> = OnceLock::new();
@@ -17,7 +20,10 @@ fn dprint_fmt_loads_local_wasm_plugin_and_formats_java() {
 
     project.run_dprint(["fmt", "A.java"]).assert_success();
 
-    assert_eq!(project.read_file("A.java"), "class A {\n}\n");
+    assert_eq!(
+        project.read_file("A.java"),
+        direct_java_format("class A {}")
+    );
 }
 
 #[test]
@@ -137,6 +143,31 @@ impl DprintProject {
 
 struct CommandOutput {
     output: std::process::Output,
+}
+
+fn direct_java_format(source: &str) -> String {
+    let mut sink = StringSink::default();
+    match format_source_to_sink(source, Language::Java, &FormatOptions::default(), &mut sink) {
+        FormatSinkResult::Complete | FormatSinkResult::Halted => sink.text,
+        FormatSinkResult::Blocked { diagnostics } => {
+            panic!("direct Java formatting blocked: {diagnostics:?}")
+        }
+        FormatSinkResult::SinkError { error } => match error {},
+    }
+}
+
+#[derive(Default)]
+struct StringSink {
+    text: String,
+}
+
+impl RenderSink for StringSink {
+    type Error = Infallible;
+
+    fn write_str(&mut self, text: &str) -> Result<RenderControl, Self::Error> {
+        self.text.push_str(text);
+        Ok(RenderControl::Continue)
+    }
 }
 
 impl CommandOutput {

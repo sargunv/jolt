@@ -1,7 +1,8 @@
-use jolt_fmt_ir::space;
 use std::borrow::Cow;
 
-use jolt_fmt_ir::{Doc, concat, empty_line, hard_line, literal_text, soft_line, text};
+use jolt_fmt_ir::{
+    Doc, concat, empty_line, hard_line, join, literal_text as literal, soft_line, space, text,
+};
 use jolt_java_syntax::{JavaComment, JavaCommentKind, JavaSyntaxToken};
 
 use crate::helpers::formatter_ignore::is_formatter_control_marker;
@@ -300,8 +301,7 @@ pub(crate) fn format_token_with_inline_leading_comments<'source>(
         if leading.is_empty() {
             jolt_fmt_ir::nil()
         } else {
-            let comments =
-                jolt_fmt_ir::join(&space(), leading.map(|comment| format_comment(&comment)));
+            let comments = join(&space(), leading.map(|comment| format_comment(&comment)));
             match placement {
                 InlineLeadingTrivia::AfterPreviousToken => concat([space(), comments]),
                 InlineLeadingTrivia::BeforeToken => concat([comments, space()]),
@@ -335,7 +335,7 @@ pub(crate) fn format_comment<'source>(comment: &JavaComment<'source>) -> Doc<'so
 
 pub(crate) fn format_token_text(token_text: &str) -> Doc<'_> {
     if token_text.contains(['\n', '\r']) {
-        literal_text(token_text)
+        literal(token_text)
     } else {
         text(token_text)
     }
@@ -370,8 +370,37 @@ fn format_block_comment(comment: &str) -> Doc<'_> {
     format_comment_lines(preserved_comment_lines(comment))
 }
 
-fn format_star_block_comment<'source>(comment: &str) -> Doc<'source> {
-    format_comment_lines(normalize_star_block_comment(comment))
+fn format_star_block_comment(comment: &str) -> Doc<'_> {
+    let content = strip_block_comment_delimiters(comment);
+    let mut docs = vec![literal("/**")];
+
+    let mut has_content = false;
+    let mut pending_blank_lines = 0;
+    for line in content.lines().map(normalize_star_block_body_line) {
+        if line.is_empty() {
+            if has_content {
+                pending_blank_lines += 1;
+            }
+            continue;
+        }
+
+        has_content = true;
+        for _ in 0..pending_blank_lines {
+            push_comment_line(&mut docs, literal(" *"));
+        }
+        pending_blank_lines = 0;
+        push_comment_line(&mut docs, concat([literal(" * "), text(line)]));
+    }
+
+    push_comment_line(&mut docs, literal(" */"));
+    concat(docs)
+}
+
+fn push_comment_line<'source>(docs: &mut Vec<Doc<'source>>, line: Doc<'source>) {
+    if !docs.is_empty() {
+        docs.push(hard_line());
+    }
+    docs.push(line);
 }
 
 fn preserved_comment_lines(comment: &str) -> impl Iterator<Item = &str> {
@@ -391,32 +420,6 @@ fn is_star_block_comment(comment: &str) -> bool {
     body.lines()
         .find(|line| !line.trim().is_empty())
         .is_some_and(|line| line.trim_start().starts_with('*'))
-}
-
-fn normalize_star_block_comment(comment: &str) -> Vec<String> {
-    let content = strip_block_comment_delimiters(comment);
-    let mut lines = vec!["/**".to_owned()];
-
-    let mut has_content = false;
-    let mut pending_blank_lines = 0;
-    for line in content.lines().map(normalize_star_block_body_line) {
-        if line.is_empty() {
-            if has_content {
-                pending_blank_lines += 1;
-            }
-            continue;
-        }
-
-        has_content = true;
-        for _ in 0..pending_blank_lines {
-            lines.push(" *".to_owned());
-        }
-        pending_blank_lines = 0;
-        lines.push(format!(" * {line}"));
-    }
-
-    lines.push(" */".to_owned());
-    lines
 }
 
 fn strip_block_comment_delimiters(comment: &str) -> &str {

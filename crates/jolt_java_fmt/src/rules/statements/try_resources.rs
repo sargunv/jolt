@@ -9,7 +9,7 @@ use super::{
     format_token, format_token_with_comments, format_trailing_comments_before_line_break,
     format_type, group, hard_line, indent, line, soft_line, trailing_comments_force_line,
 };
-use jolt_fmt_ir::space;
+use jolt_fmt_ir::{join, space};
 
 pub(super) fn format_try_statement<'source>(
     statement: &TryStatement<'source>,
@@ -77,33 +77,30 @@ fn format_resource_specification<'source>(
     let close_paren = specification
         .as_ref()
         .and_then(jolt_java_syntax::ResourceSpecification::close_paren);
-    let resources = specification
+    let resource_list = specification
         .as_ref()
-        .and_then(jolt_java_syntax::ResourceSpecification::list)
-        .map(|list| {
+        .and_then(jolt_java_syntax::ResourceSpecification::list);
+    let mut resources = resource_list
+        .as_ref()
+        .into_iter()
+        .flat_map(|list| {
             list.entries()
                 .map(|entry| format_resource_entry(&entry, formatter))
-                .collect::<Vec<_>>()
         })
-        .unwrap_or_default();
+        .peekable();
 
-    if resources.is_empty() {
+    if resources.peek().is_none() {
         return concat([
             format_condition_open_paren(open_paren.as_ref()),
             format_resource_close_paren(close_paren.as_ref()),
         ]);
     }
 
-    let trailing_comments = [removed_trailing_separator_comments]
-        .into_iter()
-        .flatten()
-        .collect::<Vec<_>>();
-
     concat([
         format_condition_open_paren(open_paren.as_ref()),
         jolt_fmt_ir::indent(concat([
             format_resource_open_spacing(open_paren.as_ref()),
-            join_resource_lines(resources, trailing_comments),
+            join_resource_lines(resources, removed_trailing_separator_comments),
         ])),
         format_resource_close_paren(close_paren.as_ref()),
     ])
@@ -256,17 +253,17 @@ fn format_catch_modifier_prefix<'source>(
     let mut docs = parameter
         .annotations()
         .map(|annotation| format_annotation(&annotation, formatter))
-        .collect::<Vec<_>>();
-    docs.extend(
-        parameter
-            .modifier_tokens()
-            .map(|token| format_token_with_comments(&token)),
-    );
+        .chain(
+            parameter
+                .modifier_tokens()
+                .map(|token| format_token_with_comments(&token)),
+        )
+        .peekable();
 
-    if docs.is_empty() {
+    if docs.peek().is_none() {
         jolt_fmt_ir::nil()
     } else {
-        concat([jolt_fmt_ir::join(&space(), docs), space()])
+        concat([join(&space(), docs), space()])
     }
 }
 
@@ -275,30 +272,27 @@ fn format_catch_type_list<'source>(
     name: Option<jolt_java_syntax::JavaSyntaxToken<'source>>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    let mut entries = types.entries().collect::<Vec<_>>();
     let name = name.map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name));
+    let mut entries = types.entries();
 
-    let Some(last_entry) = entries.pop() else {
+    let Some(mut current) = entries.next() else {
         return name;
     };
 
-    let last = concat([format_catch_type(&last_entry.ty, formatter), space(), name]);
-    if entries.is_empty() {
+    let mut docs = Vec::new();
+    for next in entries {
+        docs.push(format_catch_type(&current.ty, formatter));
+        docs.push(format_catch_type_separator(current.separator.as_ref()));
+        current = next;
+    }
+
+    let last = concat([format_catch_type(&current.ty, formatter), space(), name]);
+    if docs.is_empty() {
         return last;
     }
 
-    let first = entries.remove(0);
-    group(concat([
-        format_catch_type(&first.ty, formatter),
-        format_catch_type_separator(first.separator.as_ref()),
-        concat(entries.into_iter().map(|entry| {
-            concat([
-                format_catch_type(&entry.ty, formatter),
-                format_catch_type_separator(entry.separator.as_ref()),
-            ])
-        })),
-        last,
-    ]))
+    docs.push(last);
+    group(concat(docs))
 }
 
 fn format_catch_type_separator<'source>(
@@ -331,18 +325,15 @@ fn format_finally_clause<'source>(
 }
 
 fn join_resource_lines<'source>(
-    resources: Vec<FormattedResource<'source>>,
-    trailing_comments: Vec<Doc<'source>>,
+    mut resources: std::iter::Peekable<impl Iterator<Item = FormattedResource<'source>>>,
+    trailing_comments: Option<Doc<'source>>,
 ) -> Doc<'source> {
     let mut joined = Vec::new();
-    let resource_count = resources.len();
-    let mut trailing_comments = trailing_comments.into_iter();
-    for (index, resource) in resources.into_iter().enumerate() {
-        let is_last = index + 1 == resource_count;
-
+    let mut trailing_comments = trailing_comments;
+    while let Some(resource) = resources.next() {
         joined.push(resource.resource);
-        if is_last {
-            for comments in trailing_comments.by_ref() {
+        if resources.peek().is_none() {
+            if let Some(comments) = trailing_comments.take() {
                 joined.push(hard_line());
                 joined.push(comments);
             }
