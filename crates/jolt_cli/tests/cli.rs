@@ -51,6 +51,45 @@ fn manpage_generates_roff_document() {
 }
 
 #[test]
+fn init_creates_root_config_with_schema_directive() {
+    let temp = TempDir::new().expect("tempdir should be created");
+
+    let output = jolt(temp.path(), ["init"], "");
+
+    assert_success(&output);
+    assert!(stderr(&output).contains("Created"));
+    let contents = read(temp.path().join("jolt.toml"));
+    assert!(contents.starts_with("#:schema https://github.com/sargunv/jolt/releases/download/"));
+    assert!(contents.contains("/jolt-schema.json\n"));
+    assert!(contents.contains("root = true\n"));
+    assert!(contents.contains("[format]\n"));
+    assert!(contents.contains("use-tabs = false\n"));
+    assert!(contents.contains("[files]\n"));
+    assert!(contents.contains("include = [\"**/*.java\"]\n"));
+}
+
+#[test]
+fn init_refuses_existing_config_locations() {
+    let root_config = TempDir::new().expect("tempdir should be created");
+    write(root_config.path().join("jolt.toml"), "root = true\n");
+    let output = jolt(root_config.path(), ["init"], "");
+    assert_failure(&output);
+    assert!(stderr(&output).contains("jolt.toml: config already exists"));
+
+    let dot_config = TempDir::new().expect("tempdir should be created");
+    fs::create_dir_all(dot_config.path().join(".config/jolt"))
+        .expect("config dir should be created");
+    write(
+        dot_config.path().join(".config/jolt/config.toml"),
+        "root = true\n",
+    );
+    let output = jolt(dot_config.path(), ["init"], "");
+    assert_failure(&output);
+    assert!(stderr(&output).contains("config already exists"));
+    assert!(!dot_config.path().join("jolt.toml").exists());
+}
+
+#[test]
 fn config_schema_prints_jolt_schema() {
     let temp = TempDir::new().expect("tempdir should be created");
     let output = jolt(temp.path(), ["config", "schema"], "");

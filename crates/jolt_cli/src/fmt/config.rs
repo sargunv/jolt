@@ -9,7 +9,7 @@ use figment::{
 };
 use globset::{GlobBuilder, GlobSet, GlobSetBuilder};
 use jolt_formatter::FormatOptions;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::error::CliError;
 
@@ -17,6 +17,23 @@ use super::CliFormatOptions;
 
 const DEFAULT_INCLUDE: &[&str] = &["**/*.java"];
 const VCS_MARKERS: &[&str] = &[".git", ".hg", ".jj", ".svn"];
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(crate) struct DefaultConfig {
+    pub(crate) options: FormatOptions,
+    pub(crate) include: Vec<String>,
+}
+
+pub(crate) fn default_config() -> DefaultConfig {
+    DefaultConfig {
+        options: FormatOptions::default(),
+        include: default_include_patterns(),
+    }
+}
+
+pub(crate) fn default_file_config() -> FileConfig {
+    FileConfig::from_default_config(default_config())
+}
 
 trait WithConfigSource {
     fn with_source(self, source: &Path) -> Self;
@@ -181,9 +198,10 @@ struct ConfigBuilder {
 
 impl ConfigBuilder {
     fn new(invocation_root: &Path) -> Result<Self, CliError> {
+        let default = default_config();
         Ok(Self {
-            options: FormatOptions::default(),
-            include: PatternList::new(invocation_root, &default_include_patterns())?,
+            options: default.options,
+            include: PatternList::new(invocation_root, &default.include)?,
             excludes: Vec::new(),
         })
     }
@@ -225,12 +243,14 @@ impl ConfigBuilder {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case", deny_unknown_fields)]
-struct FileConfig {
-    #[serde(rename = "root")]
-    _root: Option<bool>,
+pub(crate) struct FileConfig {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    root: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     format: Option<FileFormatConfig>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     files: Option<FileSelectionConfig>,
 }
 
@@ -240,18 +260,23 @@ struct ProjectRootConfig {
     root: Option<bool>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case", deny_unknown_fields)]
 struct FileFormatConfig {
+    #[serde(skip_serializing_if = "Option::is_none")]
     line_width: Option<u16>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     indent_width: Option<u8>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     use_tabs: Option<bool>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case", deny_unknown_fields)]
 struct FileSelectionConfig {
+    #[serde(skip_serializing_if = "Option::is_none")]
     include: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     exclude: Option<Vec<String>>,
 }
 
@@ -276,6 +301,21 @@ fn load_config_at(path: &Path, base_dir: &Path) -> Result<SparseConfig, CliError
 }
 
 impl FileConfig {
+    fn from_default_config(default: DefaultConfig) -> Self {
+        Self {
+            root: Some(true),
+            format: Some(FileFormatConfig {
+                line_width: Some(default.options.line_width),
+                indent_width: Some(default.options.indent_width),
+                use_tabs: Some(default.options.use_tabs),
+            }),
+            files: Some(FileSelectionConfig {
+                include: Some(default.include),
+                exclude: None,
+            }),
+        }
+    }
+
     fn into_sparse(self, path: &Path, base_dir: &Path) -> Result<SparseConfig, CliError> {
         let FileConfig { format, files, .. } = self;
 

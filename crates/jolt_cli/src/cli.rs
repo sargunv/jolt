@@ -1,4 +1,8 @@
-use std::io::{self, Write as _};
+use std::{
+    env, fs,
+    io::{self, Write as _},
+    path::{Path, PathBuf},
+};
 
 use clap::{Args as ClapArgs, CommandFactory as _, Parser, Subcommand};
 use clap_complete::{Shell, generate};
@@ -7,7 +11,7 @@ use clap_mangen::Man;
 use crate::{
     config_schema::{self, SchemaKind},
     error::CliError,
-    fmt,
+    fmt::{self, config::default_file_config},
 };
 
 pub(crate) const VERSION: &str = concat!(
@@ -30,6 +34,9 @@ enum Command {
     /// Format source files.
     #[command(visible_alias = "fmt")]
     Format(fmt::Args),
+
+    /// Create a root Jolt config in the working directory.
+    Init,
 
     /// Inspect Jolt configuration.
     Config {
@@ -63,6 +70,7 @@ struct ConfigSchemaArgs {
 pub(crate) fn run(cli: Cli) -> Result<(), CliError> {
     match cli.command {
         Command::Format(args) => fmt::run(&args),
+        Command::Init => init_config(),
         Command::Config { command } => match command {
             ConfigCommand::Schema(args) => {
                 let kind = if args.dprint {
@@ -90,4 +98,51 @@ pub(crate) fn run(cli: Cli) -> Result<(), CliError> {
             Ok(())
         }
     }
+}
+
+fn init_config() -> Result<(), CliError> {
+    let cwd = env::current_dir()
+        .map_err(|error| CliError::new(format!("failed to read current directory: {error}")))?;
+    if let Some(existing) = existing_config_path(&cwd) {
+        return Err(CliError::new(format!(
+            "{}: config already exists",
+            existing.display()
+        )));
+    }
+
+    let path = cwd.join("jolt.toml");
+    fs::write(&path, initial_config_contents()?)?;
+    eprintln!("Created {}", path.display());
+    Ok(())
+}
+
+fn existing_config_path(cwd: &Path) -> Option<PathBuf> {
+    [
+        cwd.join("jolt.toml"),
+        cwd.join(".config/jolt.toml"),
+        cwd.join(".config/jolt/config.toml"),
+    ]
+    .into_iter()
+    .find(|path| path.exists())
+}
+
+fn initial_config_contents() -> Result<String, CliError> {
+    let config = default_file_config();
+    let toml = toml_edit::ser::to_string_pretty(&config)
+        .map_err(|error| CliError::new(format!("failed to serialize default config: {error}")))?;
+    let mut document = toml
+        .parse::<toml_edit::DocumentMut>()
+        .map_err(|error| CliError::new(format!("failed to parse default config: {error}")))?;
+    document
+        .decor_mut()
+        .set_prefix(format!("#:schema {}\n", jolt_schema_url()));
+    Ok(document.to_string())
+}
+
+fn jolt_schema_url() -> String {
+    format!(
+        "{}/releases/download/{}/jolt-schema.json",
+        env!("CARGO_PKG_REPOSITORY"),
+        env!("CARGO_PKG_VERSION"),
+    )
 }

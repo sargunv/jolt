@@ -26,7 +26,17 @@ rather than a Jolt config file.
 
 Create `jolt.toml` at the project root:
 
-```toml
+```sh
+jolt init
+```
+
+This writes a `#:schema` directive for TOML language servers that support JSON
+Schema association, such as Taplo and Tombi.
+
+The generated file is equivalent to:
+
+```text
+#:schema https://github.com/sargunv/jolt/releases/download/<version>/jolt-schema.json
 root = true
 
 [format]

@@ -55,6 +55,7 @@ dprint add sargunv/jolt
 ## Usage
 
 ```sh
+jolt init             # create jolt.toml in the current directory
 jolt fmt              # format Java files in the project
 jolt fmt --check      # exit non-zero if files aren't formatted (for CI)
 ```
@@ -75,7 +76,8 @@ jolt manpage | man -l -
 Jolt is opinionated: the only formatting options are line width, indent width,
 and tabs vs. spaces. Configure them in `jolt.toml`:
 
-```toml
+```text
+#:schema https://github.com/sargunv/jolt/releases/download/<version>/jolt-schema.json
 root = true
 
 [format]

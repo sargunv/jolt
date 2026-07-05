@@ -1,5 +1,5 @@
 mod args;
-mod config;
+pub(crate) mod config;
 mod discover;
 mod run;
 

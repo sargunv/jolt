@@ -10,6 +10,7 @@ Usage: jolt <COMMAND>
 
 Commands:
   format       Format source files [aliases: fmt]
+  init         Create a root Jolt config in the working directory
   config       Inspect Jolt configuration
   completions  Generate shell completions
   manpage      Generate a roff manpage
