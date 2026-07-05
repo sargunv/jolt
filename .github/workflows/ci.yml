@@ -24,5 +24,10 @@ jobs:
         with:
           cache: true
           cache_key_prefix: mise-v1
+      # The mise action may restore Rust install metadata without the rustup
+      # toolchain, components, or cross targets from mise.toml. Reinstall rust
+      # from mise config before hk starts parallel cargo commands.
+      - name: Ensure Rust toolchain
+        run: MISE_NO_HOOKS=1 mise install --force rust
       - run: mise run check
       - run: mise run test
