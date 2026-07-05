@@ -9,48 +9,6 @@ const SIMPLE_FORMATTED: &str = "class A {\n}\n";
 const NESTED_INPUT: &str = "class A { void f(){ if (true) { System.out.println(1); } } }\n";
 
 #[test]
-fn stdin_formats_to_stdout() {
-    let temp = TempDir::new().expect("tempdir should be created");
-    let output = jolt(temp.path(), ["fmt", "-"], SIMPLE_INPUT);
-
-    assert_success(&output);
-    assert_eq!(stdout(&output), SIMPLE_FORMATTED);
-}
-
-#[test]
-fn fmt_alias_formats_stdin_to_stdout() {
-    let temp = TempDir::new().expect("tempdir should be created");
-    let output = jolt(temp.path(), ["fmt", "-"], SIMPLE_INPUT);
-
-    assert_success(&output);
-    assert_eq!(stdout(&output), SIMPLE_FORMATTED);
-}
-
-#[test]
-fn completions_generate_shell_script() {
-    let temp = TempDir::new().expect("tempdir should be created");
-    let output = jolt(temp.path(), ["completions", "bash"], "");
-
-    assert_success(&output);
-    assert!(stdout(&output).contains("_jolt()"));
-    assert!(stdout(&output).contains("completions"));
-    assert!(stdout(&output).contains("config"));
-    assert!(stdout(&output).contains("format"));
-}
-
-#[test]
-fn manpage_generates_roff_document() {
-    let temp = TempDir::new().expect("tempdir should be created");
-    let output = jolt(temp.path(), ["manpage"], "");
-
-    assert_success(&output);
-    assert!(stdout(&output).contains(".TH jolt 1"));
-    assert!(stdout(&output).contains(".SH NAME"));
-    assert!(stdout(&output).contains("jolt \\- Fast, opinionated JVM"));
-    assert!(stdout(&output).contains(".SH SYNOPSIS"));
-}
-
-#[test]
 fn init_creates_root_config_with_schema_directive() {
     let temp = TempDir::new().expect("tempdir should be created");
 
@@ -87,30 +45,6 @@ fn init_refuses_existing_config_locations() {
     assert_failure(&output);
     assert!(stderr(&output).contains("config already exists"));
     assert!(!dot_config.path().join("jolt.toml").exists());
-}
-
-#[test]
-fn stdin_filename_is_used_for_diagnostics() {
-    let temp = TempDir::new().expect("tempdir should be created");
-    let output = jolt(
-        temp.path(),
-        ["fmt", "--stdin-filename", "src/Main.java", "-"],
-        "class {\n",
-    );
-
-    assert_failure(&output);
-    assert!(stderr(&output).contains("src/Main.java:1:7"));
-}
-
-#[test]
-fn write_mode_rewrites_changed_java_files() {
-    let temp = TempDir::new().expect("tempdir should be created");
-    write(temp.path().join("A.java"), SIMPLE_INPUT);
-
-    let output = jolt(temp.path(), ["fmt", "A.java"], "");
-
-    assert_success(&output);
-    assert_eq!(read(temp.path().join("A.java")), SIMPLE_FORMATTED);
 }
 
 #[cfg(unix)]
@@ -164,29 +98,6 @@ fn write_mode_leaves_unchanged_java_files_untouched() {
 }
 
 #[test]
-fn check_mode_succeeds_when_files_are_formatted() {
-    let temp = TempDir::new().expect("tempdir should be created");
-    write(temp.path().join("A.java"), SIMPLE_FORMATTED);
-
-    let output = jolt(temp.path(), ["fmt", "--check", "."], "");
-
-    assert_success(&output);
-    assert_eq!(stdout(&output), "");
-}
-
-#[test]
-fn check_mode_fails_when_files_would_change_without_writing() {
-    let temp = TempDir::new().expect("tempdir should be created");
-    write(temp.path().join("A.java"), SIMPLE_INPUT);
-
-    let output = jolt(temp.path(), ["fmt", "--check", "."], "");
-
-    assert_failure(&output);
-    assert_eq!(stdout(&output), "A.java\n");
-    assert_eq!(read(temp.path().join("A.java")), SIMPLE_INPUT);
-}
-
-#[test]
 fn check_mode_with_threads_prints_changed_paths_in_order_without_writing() {
     let temp = TempDir::new().expect("tempdir should be created");
     fs::create_dir_all(temp.path().join("src")).expect("src dir should be created");
@@ -199,18 +110,6 @@ fn check_mode_with_threads_prints_changed_paths_in_order_without_writing() {
     assert_eq!(stdout(&output), "src/A.java\nsrc/B.java\n");
     assert_eq!(read(temp.path().join("src/A.java")), SIMPLE_INPUT);
     assert_eq!(read(temp.path().join("src/B.java")), SIMPLE_INPUT);
-}
-
-#[test]
-fn parse_errors_do_not_write_files() {
-    let temp = TempDir::new().expect("tempdir should be created");
-    write(temp.path().join("A.java"), "class {\n");
-
-    let output = jolt(temp.path(), ["fmt", "A.java"], "");
-
-    assert_failure(&output);
-    assert!(stderr(&output).contains("A.java:1:7"));
-    assert_eq!(read(temp.path().join("A.java")), "class {\n");
 }
 
 #[test]
@@ -507,16 +406,6 @@ fn config_file_errors_and_no_config_behavior() {
     let invalid_glob = jolt(temp.path(), ["fmt", "-"], SIMPLE_INPUT);
     assert_failure(&invalid_glob);
     assert!(stderr(&invalid_glob).contains("jolt.toml: invalid glob pattern"));
-}
-
-#[test]
-fn threads_zero_fails_argument_parsing() {
-    let temp = TempDir::new().expect("tempdir should be created");
-
-    let output = jolt(temp.path(), ["fmt", "--threads", "0", "-"], SIMPLE_INPUT);
-
-    assert_failure(&output);
-    assert!(stderr(&output).contains("--threads"));
 }
 
 #[test]

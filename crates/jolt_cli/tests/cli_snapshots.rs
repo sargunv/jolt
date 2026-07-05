@@ -147,6 +147,36 @@ fn stdin_formats_to_stdout() {
 }
 
 #[test]
+fn format_command_formats_stdin_to_stdout() {
+    let temp = TempDir::new().expect("tempdir should be created");
+
+    let output = jolt(temp.path(), ["format", "-"], "class A {}\n");
+
+    insta::assert_snapshot!(
+        "format_command_formats_stdin_to_stdout",
+        snapshot(&output, &[])
+    );
+}
+
+#[test]
+fn completions_generate_shell_script() {
+    let temp = TempDir::new().expect("tempdir should be created");
+
+    let output = jolt(temp.path(), ["completions", "bash"], "");
+
+    insta::assert_snapshot!("completions_generate_shell_script", snapshot(&output, &[]));
+}
+
+#[test]
+fn manpage_generates_roff_document() {
+    let temp = TempDir::new().expect("tempdir should be created");
+
+    let output = jolt(temp.path(), ["manpage"], "");
+
+    insta::assert_snapshot!("manpage_generates_roff_document", snapshot(&output, &[]));
+}
+
+#[test]
 fn write_mode_rewrites_changed_file_and_reports_summary() {
     let temp = TempDir::new().expect("tempdir should be created");
     write(temp.path().join("A.java"), "class A {}\n");

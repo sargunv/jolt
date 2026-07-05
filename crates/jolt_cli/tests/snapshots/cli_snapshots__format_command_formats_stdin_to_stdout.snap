@@ -1,0 +1,12 @@
+---
+source: crates/jolt_cli/tests/cli_snapshots.rs
+expression: "snapshot(&output, &[])"
+---
+status: 0
+stdout:
+class A {
+}
+stderr:
+<empty>
+files:
+<none>
