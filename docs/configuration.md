@@ -74,6 +74,24 @@ jolt fmt --line-width 100 --indent-width 4 --use-tabs false .
 Use `--config <path>` to load only an explicit config file. Use `--no-config` to
 disable discovered project configs and rely on defaults plus CLI options.
 
+## Inspecting Configs
+
+List the config files that apply to the current directory or a path:
+
+```sh
+jolt config list [path]
+```
+
+Print the effective config for the current directory or a path:
+
+```sh
+jolt config resolve [path]
+```
+
+`resolve` prints TOML with comments showing which config supplied each value.
+When the path is a file or a future `.java` file, it also reports whether that
+file is selected by the resolved include/exclude patterns.
+
 ## Schemas
 
 Print the JSON schema for `jolt.toml`:

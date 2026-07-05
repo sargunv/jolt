@@ -90,33 +90,6 @@ fn init_refuses_existing_config_locations() {
 }
 
 #[test]
-fn config_schema_prints_jolt_schema() {
-    let temp = TempDir::new().expect("tempdir should be created");
-    let output = jolt(temp.path(), ["config", "schema"], "");
-
-    assert_success(&output);
-    let schema = stdout(&output);
-    assert!(schema.contains(r#""title": "Jolt configuration""#));
-    assert!(schema.contains(r#""line-width""#));
-    assert!(schema.contains(r#""files""#));
-    assert!(schema.contains(r#""minimum": 1.0"#));
-    assert!(schema.contains(r#""additionalProperties": false"#));
-}
-
-#[test]
-fn config_schema_prints_dprint_schema() {
-    let temp = TempDir::new().expect("tempdir should be created");
-    let output = jolt(temp.path(), ["config", "schema", "--dprint"], "");
-
-    assert_success(&output);
-    let schema = stdout(&output);
-    assert!(schema.contains(r#""title": "dprint jolt plugin configuration""#));
-    assert!(schema.contains(r#""lineWidth""#));
-    assert!(schema.contains(r#""useTabs""#));
-    assert!(schema.contains(r#""additionalProperties": true"#));
-}
-
-#[test]
 fn stdin_filename_is_used_for_diagnostics() {
     let temp = TempDir::new().expect("tempdir should be created");
     let output = jolt(
@@ -627,16 +600,15 @@ fn gitignore_and_ignore_files_are_respected() {
 }
 
 #[test]
-fn unknown_extensions_are_formatted_when_explicit_and_ignored_when_recursive() {
+fn unknown_extensions_are_rejected_when_explicit_and_ignored_when_recursive() {
     let temp = TempDir::new().expect("tempdir should be created");
     write(temp.path().join("README.md"), SIMPLE_INPUT);
     write(temp.path().join("A.java"), SIMPLE_INPUT);
 
     let explicit = jolt(temp.path(), ["fmt", "README.md"], "");
-    assert_success(&explicit);
-    assert_simple_formatted(&read(temp.path().join("README.md")));
-
-    write(temp.path().join("README.md"), SIMPLE_INPUT);
+    assert_failure(&explicit);
+    assert!(stderr(&explicit).contains("README.md: unsupported file extension"));
+    assert_eq!(read(temp.path().join("README.md")), SIMPLE_INPUT);
 
     let recursive = jolt(temp.path(), ["fmt", "."], "");
     assert_success(&recursive);

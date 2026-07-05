@@ -1,0 +1,66 @@
+---
+source: crates/jolt_cli/tests/cli_snapshots.rs
+expression: "snapshot(&output, &[])"
+---
+status: 0
+stdout:
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "dprint jolt plugin configuration",
+  "description": "Outer schema shape for dprint's `dprint.jsonc`: plugin options nested under the `jolt` config key, with all other dprint global keys permitted.",
+  "type": "object",
+  "properties": {
+    "jolt": {
+      "description": "Jolt-specific options; dprint global options (`lineWidth`, etc.) are applied as defaults when these are absent.",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/DprintFormatConfig"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "additionalProperties": true,
+  "definitions": {
+    "DprintFormatConfig": {
+      "description": "Jolt-specific dprint plugin options.",
+      "type": "object",
+      "properties": {
+        "indentWidth": {
+          "description": "Number of spaces per indentation level when `useTabs` is false.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint8",
+          "maximum": 255.0,
+          "minimum": 1.0
+        },
+        "lineWidth": {
+          "description": "Preferred maximum rendered line width.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint16",
+          "maximum": 65535.0,
+          "minimum": 1.0
+        },
+        "useTabs": {
+          "description": "Whether indentation should use tabs instead of spaces.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
+stderr:
+<empty>
+files:
+<none>

@@ -2,12 +2,11 @@
 source: crates/jolt_cli/tests/cli_snapshots.rs
 expression: "snapshot(&output, &[temp.path().join(\"README.md\")])"
 ---
-status: 0
+status: 1
 stdout:
 <empty>
 stderr:
-Formatted 1 file in $TIME
+README.md: unsupported file extension
 files:
 -- README.md --
-class Readme {
-}
+class Readme {}

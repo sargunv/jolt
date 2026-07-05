@@ -1,0 +1,22 @@
+---
+source: crates/jolt_cli/tests/cli_snapshots.rs
+expression: "snapshot(&output, &[])"
+---
+status: 0
+stdout:
+Inspect Jolt configuration
+
+Usage: jolt config <COMMAND>
+
+Commands:
+  list     List config files that apply to a path
+  resolve  Print the effective config for a path
+  schema   Print a JSON schema for configuration files
+  help     Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help  Print help
+stderr:
+<empty>
+files:
+<none>

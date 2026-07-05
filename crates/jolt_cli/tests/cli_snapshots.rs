@@ -32,6 +32,91 @@ fn fmt_help_describes_formatter_contract() {
 }
 
 #[test]
+fn config_help_describes_inspection_commands() {
+    let temp = TempDir::new().expect("tempdir should be created");
+
+    let output = jolt(temp.path(), ["config", "--help"], "");
+
+    insta::assert_snapshot!(
+        "config_help_describes_inspection_commands",
+        snapshot(&output, &[])
+    );
+}
+
+#[test]
+fn config_list_reports_discovered_configs() {
+    let temp = TempDir::new().expect("tempdir should be created");
+    fs::create_dir_all(temp.path().join("src/nested")).expect("nested dir should be created");
+    write(temp.path().join("jolt.toml"), "root = true\n");
+    write(
+        temp.path().join("src/jolt.toml"),
+        "[format]\nline-width = 100\n",
+    );
+
+    let output = jolt(temp.path(), ["config", "list", "src/nested/A.java"], "");
+
+    insta::assert_snapshot!(
+        "config_list_reports_discovered_configs",
+        snapshot_normalized(&output, &[], temp.path())
+    );
+}
+
+#[test]
+fn config_list_reports_no_configs() {
+    let temp = TempDir::new().expect("tempdir should be created");
+
+    let output = jolt(temp.path(), ["config", "list"], "");
+
+    insta::assert_snapshot!("config_list_reports_no_configs", snapshot(&output, &[]));
+}
+
+#[test]
+fn config_resolve_reports_effective_config() {
+    let temp = TempDir::new().expect("tempdir should be created");
+    fs::create_dir_all(temp.path().join("src/nested")).expect("nested dir should be created");
+    write(
+        temp.path().join("jolt.toml"),
+        "root = true\n[format]\nline-width = 100\n[files]\nexclude = [\"generated/**\"]\n",
+    );
+    write(
+        temp.path().join("src/jolt.toml"),
+        "[format]\nuse-tabs = true\n[files]\ninclude = [\"**/*.java\"]\nexclude = [\"**/Internal.java\"]\n",
+    );
+
+    let output = jolt(
+        temp.path(),
+        ["config", "resolve", "src/nested/Internal.java"],
+        "",
+    );
+
+    insta::assert_snapshot!(
+        "config_resolve_reports_effective_config",
+        snapshot_normalized(&output, &[], temp.path())
+    );
+}
+
+#[test]
+fn config_schema_reports_jolt_schema() {
+    let temp = TempDir::new().expect("tempdir should be created");
+
+    let output = jolt(temp.path(), ["config", "schema"], "");
+
+    insta::assert_snapshot!("config_schema_reports_jolt_schema", snapshot(&output, &[]));
+}
+
+#[test]
+fn config_schema_reports_dprint_schema() {
+    let temp = TempDir::new().expect("tempdir should be created");
+
+    let output = jolt(temp.path(), ["config", "schema", "--dprint"], "");
+
+    insta::assert_snapshot!(
+        "config_schema_reports_dprint_schema",
+        snapshot(&output, &[])
+    );
+}
+
+#[test]
 fn completions_help_describes_supported_shells() {
     let temp = TempDir::new().expect("tempdir should be created");
 
@@ -239,14 +324,14 @@ fn stdin_parse_errors_use_stdin_filename_in_diagnostics() {
 }
 
 #[test]
-fn explicit_unknown_extension_file_is_processed_as_java() {
+fn explicit_unknown_extension_file_reports_unsupported_extension() {
     let temp = TempDir::new().expect("tempdir should be created");
     write(temp.path().join("README.md"), "class Readme {}\n");
 
     let output = jolt(temp.path(), ["fmt", "README.md"], "");
 
     insta::assert_snapshot!(
-        "explicit_unknown_extension_file_is_processed_as_java",
+        "explicit_unknown_extension_file_reports_unsupported_extension",
         snapshot(&output, &[temp.path().join("README.md")])
     );
 }
@@ -295,7 +380,11 @@ fn snapshot(output: &Output, files: &[PathBuf]) -> String {
 }
 
 fn snapshot_normalized(output: &Output, files: &[PathBuf], temp: &Path) -> String {
-    snapshot(output, files).replace(&temp.display().to_string(), "$TEMP")
+    let mut rendered = snapshot(output, files);
+    if let Ok(canonical) = fs::canonicalize(temp) {
+        rendered = rendered.replace(&canonical.display().to_string(), "$TEMP");
+    }
+    rendered.replace(&temp.display().to_string(), "$TEMP")
 }
 
 fn push_stream(rendered: &mut String, label: &str, bytes: &[u8]) {

@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    fmt::Write as _,
     path::{Path, PathBuf},
 };
 
@@ -10,6 +11,7 @@ use figment::{
 use globset::{GlobBuilder, GlobSet, GlobSetBuilder};
 use jolt_formatter::FormatOptions;
 use serde::{Deserialize, Serialize};
+use toml_edit::DocumentMut;
 
 use crate::error::CliError;
 
@@ -48,15 +50,17 @@ impl WithConfigSource for CliError {
 #[derive(Clone, Debug)]
 pub(crate) struct PatternList {
     base_dir: PathBuf,
+    patterns: Vec<String>,
     globset: GlobSet,
 }
 
 impl PatternList {
     pub(crate) fn new(base_dir: impl Into<PathBuf>, patterns: &[String]) -> Result<Self, CliError> {
         let base_dir = base_dir.into();
+        let patterns = patterns.to_vec();
         let mut builder = GlobSetBuilder::new();
 
-        for pattern in patterns {
+        for pattern in &patterns {
             let glob = GlobBuilder::new(pattern)
                 .literal_separator(true)
                 .backslash_escape(true)
@@ -71,7 +75,11 @@ impl PatternList {
             .build()
             .map_err(|error| CliError::new(format!("invalid glob set: {error}")))?;
 
-        Ok(Self { base_dir, globset })
+        Ok(Self {
+            base_dir,
+            patterns,
+            globset,
+        })
     }
 
     pub(crate) fn matches(&self, path: &Path) -> bool {
@@ -80,6 +88,10 @@ impl PatternList {
         };
         self.globset.is_match(relative)
     }
+
+    pub(crate) fn patterns(&self) -> &[String] {
+        &self.patterns
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -87,15 +99,60 @@ pub(crate) struct ResolvedConfig {
     pub(crate) options: FormatOptions,
     pub(crate) include: PatternList,
     pub(crate) excludes: Vec<PatternList>,
+    sources: ResolvedConfigSources,
+}
+
+impl ResolvedConfig {
+    pub(crate) fn matches_path(&self, path: &Path) -> bool {
+        self.include.matches(path) && !self.excludes.iter().any(|exclude| exclude.matches(path))
+    }
 }
 
 #[derive(Clone, Debug, Default)]
 struct SparseConfig {
-    line_width: Option<u16>,
-    indent_width: Option<u8>,
-    use_tabs: Option<bool>,
-    include: Option<PatternList>,
-    exclude: Vec<PatternList>,
+    line_width: Option<SourceValue<u16>>,
+    indent_width: Option<SourceValue<u8>>,
+    use_tabs: Option<SourceValue<bool>>,
+    include: Option<SourceValue<PatternList>>,
+    exclude: Vec<SourceValue<PatternList>>,
+}
+
+#[derive(Clone, Debug)]
+struct SourceValue<T> {
+    value: T,
+    source: ValueSource,
+}
+
+impl<T> SourceValue<T> {
+    fn new(value: T, source: ValueSource) -> Self {
+        Self { value, source }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+enum ValueSource {
+    Default,
+    Config(PathBuf),
+    Cli,
+}
+
+impl ValueSource {
+    fn label(&self) -> String {
+        match self {
+            Self::Default => "default".to_owned(),
+            Self::Config(path) => path.display().to_string(),
+            Self::Cli => "CLI".to_owned(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+struct ResolvedConfigSources {
+    line_width: ValueSource,
+    indent_width: ValueSource,
+    use_tabs: ValueSource,
+    include: ValueSource,
+    excludes: Vec<ValueSource>,
 }
 
 #[derive(Clone, Debug)]
@@ -162,10 +219,12 @@ impl ConfigResolver {
         builder.apply_cli_options(self.cli_options);
 
         if let Some(include) = &self.cli_include {
-            builder.include = include.clone();
+            builder.include = SourceValue::new(include.clone(), ValueSource::Cli);
         }
         if let Some(exclude) = &self.cli_exclude {
-            builder.excludes.push(exclude.clone());
+            builder
+                .excludes
+                .push(SourceValue::new(exclude.clone(), ValueSource::Cli));
         }
 
         let resolved = builder.finish();
@@ -177,12 +236,8 @@ impl ConfigResolver {
     fn discovered_configs(project_root: &Path, dir: &Path) -> Result<Vec<SparseConfig>, CliError> {
         let mut configs = Vec::new();
 
-        for ancestor in ancestors_from_root_to_dir(project_root, dir) {
-            for config_path in config_paths_for_dir(&ancestor) {
-                if config_path.path.is_file() {
-                    configs.push(load_config_at(&config_path.path, &config_path.base_dir)?);
-                }
-            }
+        for config_path in discovered_config_paths(project_root, dir) {
+            configs.push(load_config_at(&config_path.path, &config_path.base_dir)?);
         }
 
         Ok(configs)
@@ -191,30 +246,37 @@ impl ConfigResolver {
 
 #[derive(Clone, Debug)]
 struct ConfigBuilder {
-    options: FormatOptions,
-    include: PatternList,
-    excludes: Vec<PatternList>,
+    line_width: SourceValue<u16>,
+    indent_width: SourceValue<u8>,
+    use_tabs: SourceValue<bool>,
+    include: SourceValue<PatternList>,
+    excludes: Vec<SourceValue<PatternList>>,
 }
 
 impl ConfigBuilder {
     fn new(invocation_root: &Path) -> Result<Self, CliError> {
         let default = default_config();
         Ok(Self {
-            options: default.options,
-            include: PatternList::new(invocation_root, &default.include)?,
+            line_width: SourceValue::new(default.options.line_width, ValueSource::Default),
+            indent_width: SourceValue::new(default.options.indent_width, ValueSource::Default),
+            use_tabs: SourceValue::new(default.options.use_tabs, ValueSource::Default),
+            include: SourceValue::new(
+                PatternList::new(invocation_root, &default.include)?,
+                ValueSource::Default,
+            ),
             excludes: Vec::new(),
         })
     }
 
     fn apply_sparse(&mut self, sparse: &SparseConfig) {
-        if let Some(line_width) = sparse.line_width {
-            self.options.line_width = line_width;
+        if let Some(line_width) = &sparse.line_width {
+            self.line_width = line_width.clone();
         }
-        if let Some(indent_width) = sparse.indent_width {
-            self.options.indent_width = indent_width;
+        if let Some(indent_width) = &sparse.indent_width {
+            self.indent_width = indent_width.clone();
         }
-        if let Some(use_tabs) = sparse.use_tabs {
-            self.options.use_tabs = use_tabs;
+        if let Some(use_tabs) = &sparse.use_tabs {
+            self.use_tabs = use_tabs.clone();
         }
         if let Some(include) = &sparse.include {
             self.include = include.clone();
@@ -224,21 +286,48 @@ impl ConfigBuilder {
 
     fn apply_cli_options(&mut self, options: CliFormatOptions) {
         if let Some(line_width) = options.line_width {
-            self.options.line_width = line_width;
+            self.line_width = SourceValue::new(line_width, ValueSource::Cli);
         }
         if let Some(indent_width) = options.indent_width {
-            self.options.indent_width = indent_width;
+            self.indent_width = SourceValue::new(indent_width, ValueSource::Cli);
         }
         if let Some(use_tabs) = options.use_tabs {
-            self.options.use_tabs = use_tabs;
+            self.use_tabs = SourceValue::new(use_tabs, ValueSource::Cli);
         }
     }
 
     fn finish(self) -> ResolvedConfig {
+        let SourceValue {
+            value: include,
+            source: include_source,
+        } = self.include;
+        let options = FormatOptions {
+            line_width: self.line_width.value,
+            indent_width: self.indent_width.value,
+            use_tabs: self.use_tabs.value,
+        };
+        let excludes = self
+            .excludes
+            .iter()
+            .map(|exclude| exclude.value.clone())
+            .collect();
+        let sources = ResolvedConfigSources {
+            line_width: self.line_width.source,
+            indent_width: self.indent_width.source,
+            use_tabs: self.use_tabs.source,
+            include: include_source,
+            excludes: self
+                .excludes
+                .into_iter()
+                .map(|exclude| exclude.source)
+                .collect(),
+        };
+
         ResolvedConfig {
-            options: self.options,
-            include: self.include,
-            excludes: self.excludes,
+            options,
+            include,
+            excludes,
+            sources,
         }
     }
 }
@@ -318,6 +407,7 @@ impl FileConfig {
 
     fn into_sparse(self, path: &Path, base_dir: &Path) -> Result<SparseConfig, CliError> {
         let FileConfig { format, files, .. } = self;
+        let source = ValueSource::Config(path.to_path_buf());
 
         let sparse_options = CliFormatOptions {
             line_width: format.as_ref().and_then(|format| format.line_width),
@@ -330,22 +420,34 @@ impl FileConfig {
             .as_ref()
             .and_then(|files| files.include.as_ref())
             .cloned()
-            .map(|patterns| PatternList::new(base_dir, &patterns))
+            .map(|patterns| {
+                PatternList::new(base_dir, &patterns)
+                    .map(|list| SourceValue::new(list, source.clone()))
+            })
             .transpose()
             .map_err(|error| error.with_source(path))?;
         let exclude = files
             .as_ref()
             .and_then(|files| files.exclude.as_ref())
             .cloned()
-            .map(|patterns| PatternList::new(base_dir, &patterns).map(|list| vec![list]))
+            .map(|patterns| {
+                PatternList::new(base_dir, &patterns)
+                    .map(|list| vec![SourceValue::new(list, source.clone())])
+            })
             .transpose()
             .map_err(|error| error.with_source(path))?
             .unwrap_or_default();
 
         Ok(SparseConfig {
-            line_width: sparse_options.line_width,
-            indent_width: sparse_options.indent_width,
-            use_tabs: sparse_options.use_tabs,
+            line_width: sparse_options
+                .line_width
+                .map(|value| SourceValue::new(value, source.clone())),
+            indent_width: sparse_options
+                .indent_width
+                .map(|value| SourceValue::new(value, source.clone())),
+            use_tabs: sparse_options
+                .use_tabs
+                .map(|value| SourceValue::new(value, source.clone())),
             include,
             exclude,
         })
@@ -375,6 +477,127 @@ fn default_include_patterns() -> Vec<String> {
 struct ConfigPath {
     path: PathBuf,
     base_dir: PathBuf,
+}
+
+pub(crate) fn discovered_config_paths_for_dir(
+    invocation_root: &Path,
+    dir: &Path,
+) -> Result<Vec<PathBuf>, CliError> {
+    let project_root = find_project_root(dir, invocation_root)?;
+    Ok(discovered_config_paths(&project_root, dir)
+        .into_iter()
+        .map(|config_path| config_path.path)
+        .collect())
+}
+
+pub(crate) fn render_resolved_config(
+    config: &ResolvedConfig,
+    target_file: Option<&Path>,
+) -> Result<String, CliError> {
+    let render_config = RenderFileConfig {
+        format: RenderFormatConfig {
+            line_width: config.options.line_width,
+            indent_width: config.options.indent_width,
+            use_tabs: config.options.use_tabs,
+        },
+        files: RenderFileSelectionConfig {
+            include: config.include.patterns().to_vec(),
+            exclude: config
+                .excludes
+                .iter()
+                .flat_map(|exclude| exclude.patterns().iter().cloned())
+                .collect(),
+        },
+    };
+    let toml = toml_edit::ser::to_string_pretty(&render_config)
+        .map_err(|error| CliError::new(format!("failed to serialize resolved config: {error}")))?;
+    let mut document = toml
+        .parse::<DocumentMut>()
+        .map_err(|error| CliError::new(format!("failed to parse resolved config: {error}")))?;
+
+    if let Some(format) = document["format"].as_table_mut() {
+        set_key_source_comment(format, "line-width", &[&config.sources.line_width]);
+        set_key_source_comment(format, "indent-width", &[&config.sources.indent_width]);
+        set_key_source_comment(format, "use-tabs", &[&config.sources.use_tabs]);
+    }
+    if let Some(files) = document["files"].as_table_mut() {
+        set_key_source_comment(files, "include", &[&config.sources.include]);
+        let exclude_sources = config
+            .sources
+            .excludes
+            .iter()
+            .collect::<Vec<&ValueSource>>();
+        if !exclude_sources.is_empty() {
+            set_key_source_comment(files, "exclude", &exclude_sources);
+        }
+    }
+
+    if let Some(path) = target_file {
+        let status = if config.matches_path(path) {
+            "selected"
+        } else {
+            "not selected"
+        };
+        document.set_trailing(format!("\n# target {} is {status}\n", path.display()));
+    }
+
+    Ok(document.to_string())
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "kebab-case")]
+struct RenderFileConfig {
+    format: RenderFormatConfig,
+    files: RenderFileSelectionConfig,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "kebab-case")]
+struct RenderFormatConfig {
+    line_width: u16,
+    indent_width: u8,
+    use_tabs: bool,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "kebab-case")]
+struct RenderFileSelectionConfig {
+    include: Vec<String>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    exclude: Vec<String>,
+}
+
+fn set_key_source_comment(table: &mut toml_edit::Table, key: &str, sources: &[&ValueSource]) {
+    let Some(mut key) = table.key_mut(key) else {
+        return;
+    };
+
+    let mut labels = Vec::<String>::new();
+    for source in sources {
+        let label = source.label();
+        if !labels.contains(&label) {
+            labels.push(label);
+        }
+    }
+    let mut comment = String::new();
+    for label in labels {
+        writeln!(&mut comment, "# from {label}").expect("writing to a String cannot fail");
+    }
+    key.leaf_decor_mut().set_prefix(comment);
+}
+
+fn discovered_config_paths(project_root: &Path, dir: &Path) -> Vec<ConfigPath> {
+    let mut configs = Vec::new();
+
+    for ancestor in ancestors_from_root_to_dir(project_root, dir) {
+        for config_path in config_paths_for_dir(&ancestor) {
+            if config_path.path.is_file() {
+                configs.push(config_path);
+            }
+        }
+    }
+
+    configs
 }
 
 fn config_paths_for_dir(dir: &Path) -> Vec<ConfigPath> {

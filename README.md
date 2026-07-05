@@ -105,4 +105,6 @@ For the dprint plugin, the same options go under the `jolt` key in
 `useTabs`.
 
 Run `jolt config schema` for the `jolt.toml` JSON schema, or
-`jolt config schema --dprint` for the dprint plugin schema.
+`jolt config schema --dprint` for the dprint plugin schema. Run
+`jolt config list [path]` or `jolt config resolve [path]` to inspect the configs
+that apply to a file or directory.

@@ -86,7 +86,12 @@ fn collect_candidates(cwd: &Path, args: &Args) -> Result<Vec<CandidateFile>, Cli
 
     for path in paths {
         if path.is_file() {
-            let language = detect_language(&path).unwrap_or(Language::Java);
+            let language = detect_language(&path).ok_or_else(|| {
+                CliError::new(format!(
+                    "{}: unsupported file extension",
+                    display_path(cwd, &path)
+                ))
+            })?;
             let root = path
                 .parent()
                 .map_or_else(|| cwd.to_path_buf(), Path::to_path_buf);

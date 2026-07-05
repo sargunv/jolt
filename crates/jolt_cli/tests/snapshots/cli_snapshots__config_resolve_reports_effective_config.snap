@@ -1,0 +1,29 @@
+---
+source: crates/jolt_cli/tests/cli_snapshots.rs
+expression: "snapshot_normalized(&output, &[], temp.path())"
+---
+status: 0
+stdout:
+[format]
+# from $TEMP/jolt.toml
+line-width = 100
+# from default
+indent-width = 2
+# from $TEMP/src/jolt.toml
+use-tabs = true
+
+[files]
+# from $TEMP/src/jolt.toml
+include = ["**/*.java"]
+# from $TEMP/jolt.toml
+# from $TEMP/src/jolt.toml
+exclude = [
+    "generated/**",
+    "**/Internal.java",
+]
+
+# target $TEMP/src/nested/Internal.java is not selected
+stderr:
+<empty>
+files:
+<none>

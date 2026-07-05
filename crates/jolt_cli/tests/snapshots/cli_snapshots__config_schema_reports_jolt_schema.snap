@@ -1,0 +1,111 @@
+---
+source: crates/jolt_cli/tests/cli_snapshots.rs
+expression: "snapshot(&output, &[])"
+---
+status: 0
+stdout:
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Jolt configuration",
+  "description": "Schema shape for `jolt.toml`.",
+  "type": "object",
+  "properties": {
+    "files": {
+      "description": "File discovery options.",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/JoltFilesConfig"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "format": {
+      "description": "Formatting options.",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/JoltFormatConfig"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "root": {
+      "description": "Marks this config as the project root when set to true.",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "JoltFilesConfig": {
+      "description": "Jolt file discovery options.",
+      "type": "object",
+      "properties": {
+        "exclude": {
+          "description": "Source file globs to exclude.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "include": {
+          "description": "Source file globs to include.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "JoltFormatConfig": {
+      "description": "Jolt formatter options.",
+      "type": "object",
+      "properties": {
+        "indent-width": {
+          "description": "Number of spaces per indentation level when `use-tabs` is false.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint8",
+          "maximum": 255.0,
+          "minimum": 1.0
+        },
+        "line-width": {
+          "description": "Preferred maximum rendered line width.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint16",
+          "maximum": 65535.0,
+          "minimum": 1.0
+        },
+        "use-tabs": {
+          "description": "Whether indentation should use tabs instead of spaces.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
+stderr:
+<empty>
+files:
+<none>

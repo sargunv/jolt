@@ -2,10 +2,11 @@
 source: crates/jolt_cli/tests/cli_snapshots.rs
 expression: "snapshot_normalized(&output, &[], temp.path())"
 ---
-status: 1
+status: 0
 stdout:
-<empty>
+$TEMP/jolt.toml
+$TEMP/src/jolt.toml
 stderr:
-$TEMP/jolt.toml: indent-width must be greater than zero
+<empty>
 files:
 <none>

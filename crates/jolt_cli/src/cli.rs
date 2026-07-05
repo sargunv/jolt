@@ -11,7 +11,10 @@ use clap_mangen::Man;
 use crate::{
     config_schema::{self, SchemaKind},
     error::CliError,
-    fmt::{self, config::default_file_config},
+    fmt::{
+        self, CliFormatOptions,
+        config::{self as fmt_config, default_file_config},
+    },
 };
 
 pub(crate) const VERSION: &str = concat!(
@@ -56,8 +59,20 @@ enum Command {
 
 #[derive(Debug, Subcommand)]
 enum ConfigCommand {
+    /// List config files that apply to a path.
+    List(ConfigTargetArgs),
+
+    /// Print the effective config for a path.
+    Resolve(ConfigTargetArgs),
+
     /// Print a JSON schema for configuration files.
     Schema(ConfigSchemaArgs),
+}
+
+#[derive(Debug, ClapArgs)]
+struct ConfigTargetArgs {
+    /// File or directory to inspect.
+    path: Option<PathBuf>,
 }
 
 #[derive(Debug, ClapArgs)]
@@ -72,6 +87,8 @@ pub(crate) fn run(cli: Cli) -> Result<(), CliError> {
         Command::Format(args) => fmt::run(&args),
         Command::Init => init_config(),
         Command::Config { command } => match command {
+            ConfigCommand::List(args) => config_list(&args),
+            ConfigCommand::Resolve(args) => config_resolve(&args),
             ConfigCommand::Schema(args) => {
                 let kind = if args.dprint {
                     SchemaKind::Dprint
@@ -100,9 +117,42 @@ pub(crate) fn run(cli: Cli) -> Result<(), CliError> {
     }
 }
 
+fn config_list(args: &ConfigTargetArgs) -> Result<(), CliError> {
+    let cwd = current_dir()?;
+    let target = ConfigTarget::new(&cwd, args.path.as_deref());
+    let paths = fmt_config::discovered_config_paths_for_dir(&target.dir, &target.dir)?;
+
+    let mut stdout = io::stdout().lock();
+    for path in paths {
+        writeln!(stdout, "{}", path.display())?;
+    }
+    stdout.flush()?;
+    Ok(())
+}
+
+fn config_resolve(args: &ConfigTargetArgs) -> Result<(), CliError> {
+    let cwd = current_dir()?;
+    let target = ConfigTarget::new(&cwd, args.path.as_deref());
+    let mut resolver = fmt_config::ConfigResolver::new(
+        &cwd,
+        target.dir.clone(),
+        CliFormatOptions::default(),
+        &[],
+        &[],
+        None,
+        false,
+    )?;
+    let config = resolver.resolve_for_dir(&target.dir)?;
+    let rendered = fmt_config::render_resolved_config(&config, target.file.as_deref())?;
+
+    let mut stdout = io::stdout().lock();
+    stdout.write_all(rendered.as_bytes())?;
+    stdout.flush()?;
+    Ok(())
+}
+
 fn init_config() -> Result<(), CliError> {
-    let cwd = env::current_dir()
-        .map_err(|error| CliError::new(format!("failed to read current directory: {error}")))?;
+    let cwd = current_dir()?;
     if let Some(existing) = existing_config_path(&cwd) {
         return Err(CliError::new(format!(
             "{}: config already exists",
@@ -114,6 +164,46 @@ fn init_config() -> Result<(), CliError> {
     fs::write(&path, initial_config_contents()?)?;
     eprintln!("Created {}", path.display());
     Ok(())
+}
+
+fn current_dir() -> Result<PathBuf, CliError> {
+    env::current_dir()
+        .map_err(|error| CliError::new(format!("failed to read current directory: {error}")))
+}
+
+struct ConfigTarget {
+    dir: PathBuf,
+    file: Option<PathBuf>,
+}
+
+impl ConfigTarget {
+    fn new(cwd: &Path, path: Option<&Path>) -> Self {
+        let path = path.map_or_else(
+            || cwd.to_path_buf(),
+            |path| fmt_config::absolutize(cwd, path),
+        );
+
+        if path.is_file() || is_supported_source_path(&path) {
+            let dir = path
+                .parent()
+                .map_or_else(|| cwd.to_path_buf(), Path::to_path_buf);
+            return Self {
+                dir,
+                file: Some(path),
+            };
+        }
+
+        Self {
+            dir: path,
+            file: None,
+        }
+    }
+}
+
+fn is_supported_source_path(path: &Path) -> bool {
+    path.extension()
+        .and_then(|extension| extension.to_str())
+        .is_some_and(|extension| extension == "java")
 }
 
 fn existing_config_path(cwd: &Path) -> Option<PathBuf> {
