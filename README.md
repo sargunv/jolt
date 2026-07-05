@@ -97,4 +97,5 @@ The project root is the nearest ancestor with a VCS marker (`.git`, `.hg`,
 `.jj`, `.svn`) or a config file containing `root = true`.
 
 For the dprint plugin, the same options go under the `jolt` key in
-`dprint.jsonc`.
+`dprint.jsonc` using dprint-style names: `lineWidth`, `indentWidth`, and
+`useTabs`.

@@ -28,6 +28,6 @@ does.
 ```jsonc
 {
   "plugins": ["https://plugins.dprint.dev/sargunv/jolt/latest.wasm"],
-  "jolt": { "lineWidth": 80, "indentWidth": 2, "tabs": false }
+  "jolt": { "lineWidth": 80, "indentWidth": 2, "useTabs": false }
 }
 ```

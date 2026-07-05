@@ -46,6 +46,9 @@ exclude = ["generated/**"]
 - `format.exclude`: source file globs to exclude. `.gitignore` and `.ignore`
   files are always respected as well.
 
+For dprint, put formatter options under the `jolt` key in `dprint.jsonc` using
+dprint-style camelCase names: `lineWidth`, `indentWidth`, and `useTabs`.
+
 ## CLI overrides
 
 The `jolt fmt` command can override formatting settings for one run:
