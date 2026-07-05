@@ -3,6 +3,7 @@ members = ["cargo:crates/jolt_cli"]
 
 [dist]
 cargo-dist-version = "0.32.0"
+ci = ["github"]
 packages = ["jolt_cli"]
 installers = ["shell", "powershell"]
 targets = [
