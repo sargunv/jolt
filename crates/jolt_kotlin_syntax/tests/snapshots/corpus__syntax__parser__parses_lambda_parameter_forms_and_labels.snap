@@ -10,6 +10,19 @@ fun lambdas(values: List<String>) {
         if (it.isEmpty()) return@label
         consume(it)
     }
+    val block = {
+        val maxLine: (String) -> Int = { text ->
+            if (text.indexOf(' ') == -1) {
+                0
+            } else {
+                text.length
+            }
+        }
+        maxLine
+    }
+    val functionTyped = values.map { transform: (String) -> Int ->
+        transform("value")
+    }
 }
 
 syntax:
@@ -138,8 +151,131 @@ KotlinFile
                               Identifier "it" @ 237..239
                           RParen ")" @ 239..240
               RBrace "}" @ 245..246 leading=[Newline "\n", Whitespace "    "]
-      RBrace "}" @ 247..248 leading=[Newline "\n"]
-  Eof "" @ 249..249 leading=[Newline "\n"]
+      PropertyDeclaration
+        ValKw "val" @ 251..254 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "block" @ 255..260 trailing=[Whitespace " "]
+        Assign "=" @ 261..262 trailing=[Whitespace " "]
+        LambdaExpression
+          LBrace "{" @ 263..264
+          PropertyDeclaration
+            ValKw "val" @ 273..276 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+            Identifier "maxLine" @ 277..284
+            Colon ":" @ 284..285 trailing=[Whitespace " "]
+            TypeReference
+              FunctionType
+                ParenthesizedType
+                  LParen "(" @ 286..287
+                  TypeReference
+                    UserType
+                      Identifier "String" @ 287..293
+                  RParen ")" @ 293..294 trailing=[Whitespace " "]
+                Arrow "->" @ 295..297 trailing=[Whitespace " "]
+                UserType
+                  Identifier "Int" @ 298..301 trailing=[Whitespace " "]
+            Assign "=" @ 302..303 trailing=[Whitespace " "]
+            LambdaExpression
+              LBrace "{" @ 304..305 trailing=[Whitespace " "]
+              LambdaParameterList
+                LambdaParameter
+                  Name
+                    Identifier "text" @ 306..310 trailing=[Whitespace " "]
+                Arrow "->" @ 311..313
+              Statement
+                ExpressionStatement
+                  IfExpression
+                    IfKw "if" @ 326..328 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                    ParenthesizedExpression
+                      LParen "(" @ 329..330
+                      BinaryExpression
+                        CallExpression
+                          NavigationExpression
+                            NameExpression
+                              Identifier "text" @ 330..334
+                            Dot "." @ 334..335
+                            Identifier "indexOf" @ 335..342
+                          ValueArgumentList
+                            LParen "(" @ 342..343
+                            ValueArgument
+                              LiteralExpression
+                                CharacterLiteral "' '" @ 343..346
+                            RParen ")" @ 346..347 trailing=[Whitespace " "]
+                        EqEq "==" @ 348..350 trailing=[Whitespace " "]
+                        UnaryExpression
+                          Minus "-" @ 351..352
+                          LiteralExpression
+                            IntegerLiteral "1" @ 352..353
+                      RParen ")" @ 353..354 trailing=[Whitespace " "]
+                    LambdaExpression
+                      LBrace "{" @ 355..356
+                      Statement
+                        ExpressionStatement
+                          LiteralExpression
+                            IntegerLiteral "0" @ 373..374 leading=[Newline "\n", Whitespace "                "]
+                      RBrace "}" @ 387..388 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                    ElseKw "else" @ 389..393 trailing=[Whitespace " "]
+                    LambdaExpression
+                      LBrace "{" @ 394..395
+                      Statement
+                        ExpressionStatement
+                          NavigationExpression
+                            NameExpression
+                              Identifier "text" @ 412..416 leading=[Newline "\n", Whitespace "                "]
+                            Dot "." @ 416..417
+                            Identifier "length" @ 417..423
+                      RBrace "}" @ 436..437 leading=[Newline "\n", Whitespace "            "]
+              RBrace "}" @ 446..447 leading=[Newline "\n", Whitespace "        "]
+          Statement
+            ExpressionStatement
+              NameExpression
+                Identifier "maxLine" @ 456..463 leading=[Newline "\n", Whitespace "        "]
+          RBrace "}" @ 468..469 leading=[Newline "\n", Whitespace "    "]
+      PropertyDeclaration
+        ValKw "val" @ 474..477 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "functionTyped" @ 478..491 trailing=[Whitespace " "]
+        Assign "=" @ 492..493 trailing=[Whitespace " "]
+        CallExpression
+          NavigationExpression
+            NameExpression
+              Identifier "values" @ 494..500
+            Dot "." @ 500..501
+            Identifier "map" @ 501..504 trailing=[Whitespace " "]
+          LambdaExpression
+            LBrace "{" @ 505..506 trailing=[Whitespace " "]
+            LambdaParameterList
+              LambdaParameter
+                Name
+                  Identifier "transform" @ 507..516
+                Colon ":" @ 516..517 trailing=[Whitespace " "]
+                TypeReference
+                  FunctionType
+                    ParenthesizedType
+                      LParen "(" @ 518..519
+                      TypeReference
+                        UserType
+                          Identifier "String" @ 519..525
+                      RParen ")" @ 525..526 trailing=[Whitespace " "]
+                    Arrow "->" @ 527..529 trailing=[Whitespace " "]
+                    UserType
+                      Identifier "Int" @ 530..533 trailing=[Whitespace " "]
+              Arrow "->" @ 534..536
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "transform" @ 545..554 leading=[Newline "\n", Whitespace "        "]
+                  ValueArgumentList
+                    LParen "(" @ 554..555
+                    ValueArgument
+                      StringTemplateExpression
+                        StringTemplateEntry
+                          OpenQuote "\"" @ 555..556
+                        StringTemplateEntry
+                          RegularStringPart "value" @ 556..561
+                        ClosingQuote "\"" @ 561..562
+                    RParen ")" @ 562..563
+            RBrace "}" @ 568..569 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 570..571 leading=[Newline "\n"]
+  Eof "" @ 572..572 leading=[Newline "\n"]
 
 diagnostics:
   (none)

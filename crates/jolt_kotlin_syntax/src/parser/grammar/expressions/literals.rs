@@ -11,6 +11,7 @@ impl Parser<'_> {
         if self.lambda_has_parameter_arrow() {
             let params = self.start();
             while !matches!(self.current_kind(), K::Arrow | K::RBrace | K::Eof) {
+                let before = self.position();
                 if self.eat(K::Comma) {
                     continue;
                 }
@@ -20,12 +21,15 @@ impl Parser<'_> {
                     self.parse_type_reference_until(&[K::Comma, K::Arrow]);
                 }
                 self.complete(parameter, K::LambdaParameter);
+                self.ensure_progress(before, "expected lambda parameter");
             }
             self.expect(K::Arrow, "expected '->' after lambda parameters");
             self.complete(params, K::LambdaParameterList);
         }
         while !matches!(self.current_kind(), K::RBrace | K::Eof) {
+            let before = self.position();
             self.parse_declaration_or_statement();
+            self.ensure_progress(before, "expected lambda body statement");
         }
         self.expect(K::RBrace, "expected '}' after lambda");
         self.complete(marker, K::LambdaExpression)
@@ -54,6 +58,7 @@ impl Parser<'_> {
             match self.kind_at(index) {
                 K::Arrow if depth == 0 => return true,
                 K::RBrace if depth == 0 => return false,
+                kind if depth == 0 && is_lambda_body_declaration_start(kind) => return false,
                 K::LParen | K::LBracket | K::LBrace => depth += 1,
                 K::RParen | K::RBracket | K::RBrace => depth = depth.saturating_sub(1),
                 K::Eof => return false,
@@ -63,4 +68,11 @@ impl Parser<'_> {
 
         false
     }
+}
+
+fn is_lambda_body_declaration_start(kind: K) -> bool {
+    matches!(
+        kind,
+        K::ClassKw | K::InterfaceKw | K::ObjectKw | K::FunKw | K::ValKw | K::VarKw | K::TypeAliasKw
+    )
 }

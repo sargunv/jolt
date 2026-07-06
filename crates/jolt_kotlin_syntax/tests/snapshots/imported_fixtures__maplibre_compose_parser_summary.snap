@@ -1,0 +1,12 @@
+---
+source: crates/jolt_kotlin_syntax/tests/imported_fixtures.rs
+expression: maplibre_summary.render()
+---
+suite: maplibre-compose
+files: 484
+reconstructed changed: 0
+
+diagnostics:
+  Parser:kotlin.parse.expected_syntax: 117
+  Parser:kotlin.parse.malformed_type_argument_list: 1
+  Parser:kotlin.parse.unexpected_syntax: 459

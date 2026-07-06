@@ -18,7 +18,9 @@ impl Parser<'_> {
             if self.at_eof() {
                 break;
             }
+            let before = self.position();
             self.parse_declaration_or_statement();
+            self.ensure_progress(before, "expected declaration or statement");
         }
 
         self.expect(K::Eof, "expected end of file");

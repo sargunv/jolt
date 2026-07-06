@@ -40,7 +40,9 @@ impl Parser<'_> {
         }
         if self.eat(K::LBrace) {
             while !matches!(self.current_kind(), K::RBrace | K::Eof) {
+                let before = self.position();
                 self.parse_when_entry(has_subject);
+                self.ensure_progress(before, "expected when entry");
             }
             self.expect(K::RBrace, "expected '}' after when");
         }

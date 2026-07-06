@@ -50,6 +50,7 @@ impl Parser<'_> {
             }
             if self.position() == before {
                 self.recover_class_member();
+                self.ensure_progress(before, "expected class member");
             }
             self.complete(member, K::ClassMemberDeclaration);
             if self.at(K::Comma) {

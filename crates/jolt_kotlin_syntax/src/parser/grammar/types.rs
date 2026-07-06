@@ -21,7 +21,10 @@ impl Parser<'_> {
         let mut ty = self.parse_type_atom(stops);
 
         loop {
-            if self.at_type_stop(stops) || self.at_eof() {
+            let is_function_type_arrow = self.current_kind() == K::Arrow
+                && stops.contains(&K::Arrow)
+                && type_can_continue_with_arrow(ty.kind());
+            if (self.at_type_stop(stops) && !is_function_type_arrow) || self.at_eof() {
                 break;
             }
             if self.newline_before_current()
@@ -207,4 +210,8 @@ fn is_literal_kind(kind: K) -> bool {
             | K::TrueKw
             | K::FalseKw
     )
+}
+
+fn type_can_continue_with_arrow(kind: jolt_syntax::RawSyntaxKind) -> bool {
+    kind == K::ParenthesizedType.to_raw() || kind == K::ReceiverType.to_raw()
 }

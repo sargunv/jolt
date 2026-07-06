@@ -156,6 +156,15 @@ impl<'source> Parser<'source> {
         self.error_here(KotlinParseDiagnosticCode::UnexpectedSyntax, message);
     }
 
+    pub(super) fn ensure_progress(&mut self, before: usize, message: &str) {
+        if self.position() == before {
+            self.unexpected_here(message);
+            if !self.at_eof() {
+                self.bump();
+            }
+        }
+    }
+
     pub(super) fn invalid_assignment_target_here(&mut self, message: &str) {
         self.error_here(KotlinParseDiagnosticCode::InvalidAssignmentTarget, message);
     }

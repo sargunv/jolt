@@ -20,7 +20,9 @@ impl Parser<'_> {
         let marker = self.start();
         self.expect(K::LBrace, "expected block");
         while !matches!(self.current_kind(), K::RBrace | K::Eof) {
+            let before = self.position();
             self.parse_declaration_or_statement();
+            self.ensure_progress(before, "expected statement");
         }
         self.expect(K::RBrace, "expected '}' after block");
         self.complete(marker, K::Block);

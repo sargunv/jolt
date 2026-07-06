@@ -159,6 +159,7 @@ impl Parser<'_> {
         self.expect_soft_keyword("context", "expected context");
         self.expect(K::LParen, "expected '(' after context");
         while !matches!(self.current_kind(), K::RParen | K::Eof) {
+            let before = self.position();
             if self.eat(K::Comma) {
                 continue;
             }
@@ -168,6 +169,7 @@ impl Parser<'_> {
                 self.parse_type_reference_until(&[K::Comma, K::RParen]);
             }
             self.complete(parameter, K::ContextParameter);
+            self.ensure_progress(before, "expected context parameter");
         }
         self.expect(K::RParen, "expected ')' after context parameters");
         self.complete(marker, K::ContextParameterClause);
