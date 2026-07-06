@@ -1,0 +1,69 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class ArrayTypePerDimensionDims {
+    String @A [] @B [] names;
+}
+
+@interface A {}
+@interface B {}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "ArrayTypePerDimensionDims" @ 6..31 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 32..33
+      ClassBodyDeclaration
+        FieldDeclaration
+          ArrayType
+            ClassType
+              Name
+                Identifier "String" @ 38..44 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            ArrayDimensions
+              ArrayDimension
+                Annotation
+                  At "@" @ 45..46
+                  Name
+                    Identifier "A" @ 46..47 trailing=[Whitespace " "]
+                LBracket "[" @ 48..49
+                RBracket "]" @ 49..50 trailing=[Whitespace " "]
+              ArrayDimension
+                Annotation
+                  At "@" @ 51..52
+                  Name
+                    Identifier "B" @ 52..53 trailing=[Whitespace " "]
+                LBracket "[" @ 54..55
+                RBracket "]" @ 55..56 trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "names" @ 57..62
+          Semicolon ";" @ 62..63
+      RBrace "}" @ 64..65 leading=[Newline "\n"]
+  AnnotationInterfaceDeclaration
+    At "@" @ 67..68 leading=[Newline "\n", Newline "\n"]
+    InterfaceKw "interface" @ 68..77 trailing=[Whitespace " "]
+    Identifier "A" @ 78..79 trailing=[Whitespace " "]
+    AnnotationInterfaceBody
+      LBrace "{" @ 80..81
+      AnnotationElementList
+      RBrace "}" @ 81..82
+  AnnotationInterfaceDeclaration
+    At "@" @ 83..84 leading=[Newline "\n"]
+    InterfaceKw "interface" @ 84..93 trailing=[Whitespace " "]
+    Identifier "B" @ 94..95 trailing=[Whitespace " "]
+    AnnotationInterfaceBody
+      LBrace "{" @ 96..97
+      AnnotationElementList
+      RBrace "}" @ 97..98
+  Eof "" @ 99..99 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

@@ -1,0 +1,32 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+;
+class A {}
+;
+;
+
+syntax:
+syntax:
+CompilationUnit
+  EmptyDeclaration
+    Semicolon ";" @ 0..1
+  ClassDeclaration
+    ClassKw "class" @ 2..7 leading=[Newline "\n"] trailing=[Whitespace " "]
+    Identifier "A" @ 8..9 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 10..11
+      RBrace "}" @ 11..12
+  EmptyDeclaration
+    Semicolon ";" @ 13..14 leading=[Newline "\n"]
+  EmptyDeclaration
+    Semicolon ";" @ 15..16 leading=[Newline "\n"]
+  Eof "" @ 17..17 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

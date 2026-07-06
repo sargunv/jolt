@@ -1,0 +1,71 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class MixedGenericCloseAndGreaterThan {
+    boolean method(Object value, Object limit) {
+        return value instanceof Box<String>> limit;
+    }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "MixedGenericCloseAndGreaterThan" @ 6..37 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 38..39
+      ClassBodyDeclaration
+        MethodDeclaration
+          PrimitiveType
+            BooleanKw "boolean" @ 44..51 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "method" @ 52..58
+          LParen "(" @ 58..59
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "Object" @ 59..65 trailing=[Whitespace " "]
+              Identifier "value" @ 66..71
+            Comma "," @ 71..72 trailing=[Whitespace " "]
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "Object" @ 73..79 trailing=[Whitespace " "]
+              Identifier "limit" @ 80..85
+          RParen ")" @ 85..86 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 87..88
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 97..103 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                BinaryExpression
+                  InstanceofExpression
+                    NameExpression
+                      Identifier "value" @ 104..109 trailing=[Whitespace " "]
+                    InstanceofKw "instanceof" @ 110..120 trailing=[Whitespace " "]
+                    ClassType
+                      Name
+                        Identifier "Box" @ 121..124
+                      TypeArgumentList
+                        Lt "<" @ 124..125
+                        TypeArgument
+                          ClassType
+                            Name
+                              Identifier "String" @ 125..131
+                        Gt ">" @ 131..132
+                  Gt ">" @ 132..133 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "limit" @ 134..139
+                Semicolon ";" @ 139..140
+            RBrace "}" @ 145..146 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 147..148 leading=[Newline "\n"]
+  Eof "" @ 149..149 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

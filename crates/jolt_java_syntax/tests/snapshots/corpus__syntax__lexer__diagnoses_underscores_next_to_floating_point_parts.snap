@@ -1,0 +1,48 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+1e+ 1_f 1_e2 1.0_f 1_.0 1._0 0x1_.p0 0x1._p0 1e_2 1e+_2
+
+syntax:
+syntax:
+CompilationUnit
+  ErrorNode
+    FloatingPointLiteral "1e+" @ 0..3 trailing=[Whitespace " "]
+    FloatingPointLiteral "1_f" @ 4..7 trailing=[Whitespace " "]
+    FloatingPointLiteral "1_e2" @ 8..12 trailing=[Whitespace " "]
+    FloatingPointLiteral "1.0_f" @ 13..18 trailing=[Whitespace " "]
+    FloatingPointLiteral "1_.0" @ 19..23 trailing=[Whitespace " "]
+    FloatingPointLiteral "1._0" @ 24..28 trailing=[Whitespace " "]
+    FloatingPointLiteral "0x1_.p0" @ 29..36 trailing=[Whitespace " "]
+    FloatingPointLiteral "0x1._p0" @ 37..44 trailing=[Whitespace " "]
+    FloatingPointLiteral "1e_2" @ 45..49 trailing=[Whitespace " "]
+    FloatingPointLiteral "1e+_2" @ 50..55
+  Eof "" @ 55..55
+
+diagnostics:
+  code=java.lex.invalid_numeric_literal severity=Error stage=Lexer range=0..3 message="invalid numeric literal"
+  code=java.lex.invalid_numeric_literal severity=Error stage=Lexer range=4..7 message="invalid numeric literal"
+  code=java.lex.invalid_numeric_literal severity=Error stage=Lexer range=8..12 message="invalid numeric literal"
+  code=java.lex.invalid_numeric_literal severity=Error stage=Lexer range=13..18 message="invalid numeric literal"
+  code=java.lex.invalid_numeric_literal severity=Error stage=Lexer range=19..23 message="invalid numeric literal"
+  code=java.lex.invalid_numeric_literal severity=Error stage=Lexer range=24..28 message="invalid numeric literal"
+  code=java.lex.invalid_numeric_literal severity=Error stage=Lexer range=29..36 message="invalid numeric literal"
+  code=java.lex.invalid_numeric_literal severity=Error stage=Lexer range=37..44 message="invalid numeric literal"
+  code=java.lex.invalid_numeric_literal severity=Error stage=Lexer range=45..49 message="invalid numeric literal"
+  code=java.lex.invalid_numeric_literal severity=Error stage=Lexer range=50..55 message="invalid numeric literal"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=0..3 message="unexpected token at top level"
+
+diagnostics:
+code=java.lex.invalid_numeric_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(0), end: TextSize(3) }) message=invalid numeric literal
+code=java.lex.invalid_numeric_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(4), end: TextSize(7) }) message=invalid numeric literal
+code=java.lex.invalid_numeric_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(8), end: TextSize(12) }) message=invalid numeric literal
+code=java.lex.invalid_numeric_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(13), end: TextSize(18) }) message=invalid numeric literal
+code=java.lex.invalid_numeric_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(19), end: TextSize(23) }) message=invalid numeric literal
+code=java.lex.invalid_numeric_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(24), end: TextSize(28) }) message=invalid numeric literal
+code=java.lex.invalid_numeric_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(29), end: TextSize(36) }) message=invalid numeric literal
+code=java.lex.invalid_numeric_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(37), end: TextSize(44) }) message=invalid numeric literal
+code=java.lex.invalid_numeric_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(45), end: TextSize(49) }) message=invalid numeric literal
+code=java.lex.invalid_numeric_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(50), end: TextSize(55) }) message=invalid numeric literal
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(3) }) message=unexpected token at top level

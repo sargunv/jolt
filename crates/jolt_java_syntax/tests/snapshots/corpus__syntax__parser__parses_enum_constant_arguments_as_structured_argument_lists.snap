@@ -1,0 +1,52 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+enum StructuredEnumArguments {
+    VALUE(1 + helper("x"), new Box())
+}
+
+syntax:
+syntax:
+CompilationUnit
+  EnumDeclaration
+    EnumKw "enum" @ 0..4 trailing=[Whitespace " "]
+    Identifier "StructuredEnumArguments" @ 5..28 trailing=[Whitespace " "]
+    EnumBody
+      LBrace "{" @ 29..30
+      EnumConstantList
+        EnumConstant
+          Identifier "VALUE" @ 35..40 leading=[Newline "\n", Whitespace "    "]
+          ArgumentList
+            LParen "(" @ 40..41
+            BinaryExpression
+              LiteralExpression
+                IntegerLiteral "1" @ 41..42 trailing=[Whitespace " "]
+              Plus "+" @ 43..44 trailing=[Whitespace " "]
+              MethodInvocationExpression
+                NameExpression
+                  Identifier "helper" @ 45..51
+                ArgumentList
+                  LParen "(" @ 51..52
+                  LiteralExpression
+                    StringLiteral "\"x\"" @ 52..55
+                  RParen ")" @ 55..56
+            Comma "," @ 56..57 trailing=[Whitespace " "]
+            ObjectCreationExpression
+              NewKw "new" @ 58..61 trailing=[Whitespace " "]
+              ClassType
+                Name
+                  Identifier "Box" @ 62..65
+              ArgumentList
+                LParen "(" @ 65..66
+                RParen ")" @ 66..67
+            RParen ")" @ 67..68
+      RBrace "}" @ 69..70 leading=[Newline "\n"]
+  Eof "" @ 71..71 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

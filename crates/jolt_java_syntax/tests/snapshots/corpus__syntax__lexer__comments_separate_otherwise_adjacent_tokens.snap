@@ -1,0 +1,24 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+static/**/void a-/*x*/=b
+
+syntax:
+syntax:
+CompilationUnit
+  ErrorNode
+    StaticKw "static" @ 0..6 trailing=[BlockComment "/**/"]
+    VoidKw "void" @ 10..14 trailing=[Whitespace " "]
+    Identifier "a" @ 15..16
+    Minus "-" @ 16..17 trailing=[BlockComment "/*x*/"]
+    Assign "=" @ 22..23
+    Identifier "b" @ 23..24
+  Eof "" @ 24..24
+
+diagnostics:
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=0..6 message="unexpected token at top level"
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(6) }) message=unexpected token at top level

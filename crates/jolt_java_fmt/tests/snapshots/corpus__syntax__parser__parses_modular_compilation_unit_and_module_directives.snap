@@ -1,0 +1,21 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+import java.lang.annotation.Native;
+
+open module example.module {
+  requires static transitive java.sql;
+
+  exports example.api to friend.module;
+
+  opens example.internal to friend.module;
+
+  uses example.Service;
+
+  provides example.Service with example.ServiceImpl;
+}
+
+diagnostics:
+(none)

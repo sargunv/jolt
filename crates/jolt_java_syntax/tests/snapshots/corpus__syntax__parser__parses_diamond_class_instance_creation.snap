@@ -1,0 +1,63 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class DiamondCreation {
+    void method() {
+        Object list = new java.util.ArrayList<>();
+    }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "DiamondCreation" @ 6..21 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 22..23
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 28..32 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "method" @ 33..39
+          LParen "(" @ 39..40
+          RParen ")" @ 40..41 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 42..43
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  Name
+                    Identifier "Object" @ 52..58 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "list" @ 59..63 trailing=[Whitespace " "]
+                    Assign "=" @ 64..65 trailing=[Whitespace " "]
+                    VariableInitializer
+                      ObjectCreationExpression
+                        NewKw "new" @ 66..69 trailing=[Whitespace " "]
+                        ClassType
+                          QualifiedName
+                            Identifier "java" @ 70..74
+                            Dot "." @ 74..75
+                            Identifier "util" @ 75..79
+                            Dot "." @ 79..80
+                            Identifier "ArrayList" @ 80..89
+                          TypeArgumentList
+                            Lt "<" @ 89..90
+                            Gt ">" @ 90..91
+                        ArgumentList
+                          LParen "(" @ 91..92
+                          RParen ")" @ 92..93
+              Semicolon ";" @ 93..94
+            RBrace "}" @ 99..100 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 101..102 leading=[Newline "\n"]
+  Eof "" @ 103..103 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

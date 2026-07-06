@@ -1,0 +1,16 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class Example {
+  void run() {
+    int value = 1;
+    // keep marker
+    /* keep trailing marker */
+    value++;
+  }
+}
+
+diagnostics:
+(none)

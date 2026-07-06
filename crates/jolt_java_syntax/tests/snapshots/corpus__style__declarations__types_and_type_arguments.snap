@@ -1,0 +1,161 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class Types</* params */ @Marker T extends Number & // numeric
+Comparable<T>, // first
+U
+// before params close
+> { java.util.@Marker List<@Marker String> @Marker [] names; void use(java.util.Map</* args */ String, // key
+? super T
+// before args close
+> value) {} void read(java.util.List<? extends Number> numbers) {} }
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "Types" @ 6..11
+    TypeParameterList
+      Lt "<" @ 11..12 trailing=[BlockComment "/* params */", Whitespace " "]
+      TypeParameter
+        Annotation
+          At "@" @ 25..26
+          Name
+            Identifier "Marker" @ 26..32 trailing=[Whitespace " "]
+        Identifier "T" @ 33..34 trailing=[Whitespace " "]
+        TypeBoundList
+          ExtendsKw "extends" @ 35..42 trailing=[Whitespace " "]
+          IntersectionType
+            ClassType
+              Name
+                Identifier "Number" @ 43..49 trailing=[Whitespace " "]
+            Amp "&" @ 50..51 trailing=[Whitespace " ", LineComment "// numeric"]
+            ClassType
+              Name
+                Identifier "Comparable" @ 63..73 leading=[Newline "\n"]
+              TypeArgumentList
+                Lt "<" @ 73..74
+                TypeArgument
+                  ClassType
+                    Name
+                      Identifier "T" @ 74..75
+                Gt ">" @ 75..76
+      Comma "," @ 76..77 trailing=[Whitespace " ", LineComment "// first"]
+      TypeParameter
+        Identifier "U" @ 87..88 leading=[Newline "\n"]
+      Gt ">" @ 112..113 leading=[Newline "\n", LineComment "// before params close", Newline "\n"] trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 114..115 trailing=[Whitespace " "]
+      ClassBodyDeclaration
+        FieldDeclaration
+          ArrayType
+            ClassType
+              QualifiedName
+                Identifier "java" @ 116..120
+                Dot "." @ 120..121
+                Identifier "util" @ 121..125
+                Dot "." @ 125..126
+                Annotation
+                  At "@" @ 126..127
+                  Name
+                    Identifier "Marker" @ 127..133 trailing=[Whitespace " "]
+                Identifier "List" @ 134..138
+              TypeArgumentList
+                Lt "<" @ 138..139
+                TypeArgument
+                  Annotation
+                    At "@" @ 139..140
+                    Name
+                      Identifier "Marker" @ 140..146 trailing=[Whitespace " "]
+                  ClassType
+                    Name
+                      Identifier "String" @ 147..153
+                Gt ">" @ 153..154 trailing=[Whitespace " "]
+            ArrayDimensions
+              ArrayDimension
+                Annotation
+                  At "@" @ 155..156
+                  Name
+                    Identifier "Marker" @ 156..162 trailing=[Whitespace " "]
+                LBracket "[" @ 163..164
+                RBracket "]" @ 164..165 trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "names" @ 166..171
+          Semicolon ";" @ 171..172 trailing=[Whitespace " "]
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 173..177 trailing=[Whitespace " "]
+          Identifier "use" @ 178..181
+          LParen "(" @ 181..182
+          FormalParameterList
+            FormalParameter
+              ClassType
+                QualifiedName
+                  Identifier "java" @ 182..186
+                  Dot "." @ 186..187
+                  Identifier "util" @ 187..191
+                  Dot "." @ 191..192
+                  Identifier "Map" @ 192..195
+                TypeArgumentList
+                  Lt "<" @ 195..196 trailing=[BlockComment "/* args */", Whitespace " "]
+                  TypeArgument
+                    ClassType
+                      Name
+                        Identifier "String" @ 207..213
+                  Comma "," @ 213..214 trailing=[Whitespace " ", LineComment "// key"]
+                  TypeArgument
+                    WildcardType
+                      Question "?" @ 222..223 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      SuperKw "super" @ 224..229 trailing=[Whitespace " "]
+                      ClassType
+                        Name
+                          Identifier "T" @ 230..231
+                  Gt ">" @ 253..254 leading=[Newline "\n", LineComment "// before args close", Newline "\n"] trailing=[Whitespace " "]
+              Identifier "value" @ 255..260
+          RParen ")" @ 260..261 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 262..263
+            RBrace "}" @ 263..264 trailing=[Whitespace " "]
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 265..269 trailing=[Whitespace " "]
+          Identifier "read" @ 270..274
+          LParen "(" @ 274..275
+          FormalParameterList
+            FormalParameter
+              ClassType
+                QualifiedName
+                  Identifier "java" @ 275..279
+                  Dot "." @ 279..280
+                  Identifier "util" @ 280..284
+                  Dot "." @ 284..285
+                  Identifier "List" @ 285..289
+                TypeArgumentList
+                  Lt "<" @ 289..290
+                  TypeArgument
+                    WildcardType
+                      Question "?" @ 290..291 trailing=[Whitespace " "]
+                      ExtendsKw "extends" @ 292..299 trailing=[Whitespace " "]
+                      ClassType
+                        Name
+                          Identifier "Number" @ 300..306
+                  Gt ">" @ 306..307 trailing=[Whitespace " "]
+              Identifier "numbers" @ 308..315
+          RParen ")" @ 315..316 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 317..318
+            RBrace "}" @ 318..319 trailing=[Whitespace " "]
+      RBrace "}" @ 320..321
+  Eof "" @ 322..322 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

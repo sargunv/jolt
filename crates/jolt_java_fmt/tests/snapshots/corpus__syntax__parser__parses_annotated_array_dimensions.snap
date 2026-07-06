@@ -1,0 +1,14 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class AnnotatedDims {
+  String @Marker [] @Marker [] names;
+}
+
+@interface Marker {
+}
+
+diagnostics:
+(none)

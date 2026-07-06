@@ -1,0 +1,147 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class Statements {
+    void method(Object o) {
+        ;
+        class LocalClass {}
+        interface LocalInterface {}
+        final var local = o;
+        label: if (local == null) ;
+        if (local instanceof String s) s.trim(); else local.toString();
+        assert local != null : local;
+    }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "Statements" @ 6..16 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 17..18
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 23..27 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "method" @ 28..34
+          LParen "(" @ 34..35
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "Object" @ 35..41 trailing=[Whitespace " "]
+              Identifier "o" @ 42..43
+          RParen ")" @ 43..44 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 45..46
+            BlockStatement
+              EmptyStatement
+                Semicolon ";" @ 55..56 leading=[Newline "\n", Whitespace "        "]
+            BlockStatement
+              LocalClassOrInterfaceDeclaration
+                ClassDeclaration
+                  ClassKw "class" @ 65..70 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  Identifier "LocalClass" @ 71..81 trailing=[Whitespace " "]
+                  ClassBody
+                    LBrace "{" @ 82..83
+                    RBrace "}" @ 83..84
+            BlockStatement
+              LocalClassOrInterfaceDeclaration
+                InterfaceDeclaration
+                  InterfaceKw "interface" @ 93..102 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  Identifier "LocalInterface" @ 103..117 trailing=[Whitespace " "]
+                  InterfaceBody
+                    LBrace "{" @ 118..119
+                    RBrace "}" @ 119..120
+            BlockStatement
+              LocalVariableDeclaration
+                FinalKw "final" @ 129..134 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                Identifier "var" @ 135..138 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "local" @ 139..144 trailing=[Whitespace " "]
+                    Assign "=" @ 145..146 trailing=[Whitespace " "]
+                    VariableInitializer
+                      NameExpression
+                        Identifier "o" @ 147..148
+              Semicolon ";" @ 148..149
+            BlockStatement
+              LabeledStatement
+                Identifier "label" @ 158..163 leading=[Newline "\n", Whitespace "        "]
+                Colon ":" @ 163..164 trailing=[Whitespace " "]
+                IfStatement
+                  IfKw "if" @ 165..167 trailing=[Whitespace " "]
+                  LParen "(" @ 168..169
+                  BinaryExpression
+                    NameExpression
+                      Identifier "local" @ 169..174 trailing=[Whitespace " "]
+                    EqEq "==" @ 175..177 trailing=[Whitespace " "]
+                    LiteralExpression
+                      NullLiteral "null" @ 178..182
+                  RParen ")" @ 182..183 trailing=[Whitespace " "]
+                  EmptyStatement
+                    Semicolon ";" @ 184..185
+            BlockStatement
+              IfStatement
+                IfKw "if" @ 194..196 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                LParen "(" @ 197..198
+                InstanceofExpression
+                  NameExpression
+                    Identifier "local" @ 198..203 trailing=[Whitespace " "]
+                  InstanceofKw "instanceof" @ 204..214 trailing=[Whitespace " "]
+                  TypePattern
+                    LocalVariableDeclaration
+                      ClassType
+                        Name
+                          Identifier "String" @ 215..221 trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "s" @ 222..223
+                RParen ")" @ 223..224 trailing=[Whitespace " "]
+                ExpressionStatement
+                  MethodInvocationExpression
+                    NameExpression
+                      Identifier "s" @ 225..226
+                    Dot "." @ 226..227
+                    Identifier "trim" @ 227..231
+                    ArgumentList
+                      LParen "(" @ 231..232
+                      RParen ")" @ 232..233
+                  Semicolon ";" @ 233..234 trailing=[Whitespace " "]
+                ElseKw "else" @ 235..239 trailing=[Whitespace " "]
+                ExpressionStatement
+                  MethodInvocationExpression
+                    NameExpression
+                      Identifier "local" @ 240..245
+                    Dot "." @ 245..246
+                    Identifier "toString" @ 246..254
+                    ArgumentList
+                      LParen "(" @ 254..255
+                      RParen ")" @ 255..256
+                  Semicolon ";" @ 256..257
+            BlockStatement
+              AssertStatement
+                AssertKw "assert" @ 266..272 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                BinaryExpression
+                  NameExpression
+                    Identifier "local" @ 273..278 trailing=[Whitespace " "]
+                  BangEq "!=" @ 279..281 trailing=[Whitespace " "]
+                  LiteralExpression
+                    NullLiteral "null" @ 282..286 trailing=[Whitespace " "]
+                Colon ":" @ 287..288 trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "local" @ 289..294
+                Semicolon ";" @ 294..295
+            RBrace "}" @ 300..301 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 302..303 leading=[Newline "\n"]
+  Eof "" @ 304..304 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

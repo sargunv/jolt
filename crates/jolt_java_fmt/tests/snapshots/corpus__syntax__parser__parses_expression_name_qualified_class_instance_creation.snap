@@ -1,0 +1,20 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class QualifiedCreation {
+  Outer outer;
+
+  void method() {
+    Object inner = outer.new Inner();
+  }
+}
+
+class Outer {
+  class Inner {
+  }
+}
+
+diagnostics:
+(none)

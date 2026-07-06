@@ -1,0 +1,80 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class ExpressionTryWithResource {
+    void method() throws Exception {
+        try (open()) {}
+    }
+
+    AutoCloseable open() { return null; }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "ExpressionTryWithResource" @ 6..31 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 32..33
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 38..42 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "method" @ 43..49
+          LParen "(" @ 49..50
+          RParen ")" @ 50..51 trailing=[Whitespace " "]
+          ThrowsClause
+            ThrowsKw "throws" @ 52..58 trailing=[Whitespace " "]
+            ClassType
+              Name
+                Identifier "Exception" @ 59..68 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 69..70
+            BlockStatement
+              TryStatement
+                TryWithResourcesStatement
+                  TryKw "try" @ 79..82 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  ResourceSpecification
+                    LParen "(" @ 83..84
+                    ResourceList
+                      Resource
+                        ErrorNode
+                          MethodInvocationExpression
+                            NameExpression
+                              Identifier "open" @ 84..88
+                            ArgumentList
+                              LParen "(" @ 88..89
+                              RParen ")" @ 89..90
+                    RParen ")" @ 90..91 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 92..93
+                    RBrace "}" @ 93..94
+            RBrace "}" @ 99..100 leading=[Newline "\n", Whitespace "    "]
+      ClassBodyDeclaration
+        MethodDeclaration
+          ClassType
+            Name
+              Identifier "AutoCloseable" @ 106..119 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "open" @ 120..124
+          LParen "(" @ 124..125
+          RParen ")" @ 125..126 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 127..128 trailing=[Whitespace " "]
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 129..135 trailing=[Whitespace " "]
+                LiteralExpression
+                  NullLiteral "null" @ 136..140
+                Semicolon ";" @ 140..141 trailing=[Whitespace " "]
+            RBrace "}" @ 142..143
+      RBrace "}" @ 144..145 leading=[Newline "\n"]
+  Eof "" @ 146..146 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.invalid_resource_variable_access severity=Error stage=Parser range=90..91 message="expected resource variable declaration or variable access"
+
+diagnostics:
+code=java.parse.invalid_resource_variable_access severity=Error stage=Parser range=Some(TextRange { start: TextSize(90), end: TextSize(91) }) message=expected resource variable declaration or variable access

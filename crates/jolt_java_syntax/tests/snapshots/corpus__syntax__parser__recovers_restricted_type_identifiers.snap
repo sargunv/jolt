@@ -1,0 +1,71 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class var {}
+class record {}
+class permits {}
+record sealed(int value) {}
+interface yield {}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    ErrorNode
+      Identifier "var" @ 6..9 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 10..11
+      RBrace "}" @ 11..12
+  ClassDeclaration
+    ClassKw "class" @ 13..18 leading=[Newline "\n"] trailing=[Whitespace " "]
+    ErrorNode
+      Identifier "record" @ 19..25 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 26..27
+      RBrace "}" @ 27..28
+  ClassDeclaration
+    ClassKw "class" @ 29..34 leading=[Newline "\n"] trailing=[Whitespace " "]
+    ErrorNode
+      Identifier "permits" @ 35..42 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 43..44
+      RBrace "}" @ 44..45
+  RecordDeclaration
+    Identifier "record" @ 46..52 leading=[Newline "\n"] trailing=[Whitespace " "]
+    ErrorNode
+      Identifier "sealed" @ 53..59
+    LParen "(" @ 59..60
+    RecordComponentList
+      RecordComponent
+        PrimitiveType
+          IntKw "int" @ 60..63 trailing=[Whitespace " "]
+        Identifier "value" @ 64..69
+    RParen ")" @ 69..70 trailing=[Whitespace " "]
+    RecordBody
+      LBrace "{" @ 71..72
+      RBrace "}" @ 72..73
+  InterfaceDeclaration
+    InterfaceKw "interface" @ 74..83 leading=[Newline "\n"] trailing=[Whitespace " "]
+    ErrorNode
+      Identifier "yield" @ 84..89 trailing=[Whitespace " "]
+    InterfaceBody
+      LBrace "{" @ 90..91
+      RBrace "}" @ 91..92
+  Eof "" @ 93..93 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.restricted_type_identifier severity=Error stage=Parser range=6..9 message="expected type name"
+  code=java.parse.restricted_type_identifier severity=Error stage=Parser range=19..25 message="expected type name"
+  code=java.parse.restricted_type_identifier severity=Error stage=Parser range=35..42 message="expected type name"
+  code=java.parse.restricted_type_identifier severity=Error stage=Parser range=53..59 message="expected type name"
+  code=java.parse.restricted_type_identifier severity=Error stage=Parser range=84..89 message="expected type name"
+
+diagnostics:
+code=java.parse.restricted_type_identifier severity=Error stage=Parser range=Some(TextRange { start: TextSize(6), end: TextSize(9) }) message=expected type name
+code=java.parse.restricted_type_identifier severity=Error stage=Parser range=Some(TextRange { start: TextSize(19), end: TextSize(25) }) message=expected type name
+code=java.parse.restricted_type_identifier severity=Error stage=Parser range=Some(TextRange { start: TextSize(35), end: TextSize(42) }) message=expected type name
+code=java.parse.restricted_type_identifier severity=Error stage=Parser range=Some(TextRange { start: TextSize(53), end: TextSize(59) }) message=expected type name
+code=java.parse.restricted_type_identifier severity=Error stage=Parser range=Some(TextRange { start: TextSize(84), end: TextSize(89) }) message=expected type name

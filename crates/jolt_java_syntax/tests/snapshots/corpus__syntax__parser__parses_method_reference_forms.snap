@@ -1,0 +1,659 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class MethodReferences extends Base {
+    <T> T id(T value) { return value; }
+
+    void method(MethodReferences target, String value) {
+        java.util.function.Supplier<Integer> expressionName = value::length;
+        java.util.function.Supplier<String> primary = (value)::trim;
+        java.util.function.Function<String, Integer> referenceType = String::length;
+        java.util.function.Supplier<String> superReference = super::toString;
+        java.util.function.Supplier<String> qualifiedSuper = MethodReferences.super::toString;
+        java.util.function.Supplier<MethodReferences> constructor = MethodReferences::new;
+        java.util.function.IntFunction<String[]> arrayConstructor = String[]::new;
+        java.util.function.Function<String, String> expressionNameGeneric = target::<String>id;
+        java.util.function.Function<String, String> primaryGeneric = this::<String>id;
+        java.util.function.Function<String, String> referenceTypeGeneric = MethodReferences::<String>staticId;
+        java.util.function.Function<String, String> superGeneric = super::<String>baseId;
+        java.util.function.Function<String, String> qualifiedSuperGeneric = MethodReferences.super::<String>baseId;
+        java.util.function.Supplier<java.util.ArrayList<String>> constructorGeneric = java.util.ArrayList<String>::<String>new;
+    }
+
+    static <T> T staticId(T value) { return value; }
+}
+
+class Base {
+    <T> T baseId(T value) { return value; }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "MethodReferences" @ 6..22 trailing=[Whitespace " "]
+    ExtendsClause
+      ExtendsKw "extends" @ 23..30 trailing=[Whitespace " "]
+      ClassType
+        Name
+          Identifier "Base" @ 31..35 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 36..37
+      ClassBodyDeclaration
+        MethodDeclaration
+          TypeParameterList
+            Lt "<" @ 42..43 leading=[Newline "\n", Whitespace "    "]
+            TypeParameter
+              Identifier "T" @ 43..44
+            Gt ">" @ 44..45 trailing=[Whitespace " "]
+          ClassType
+            Name
+              Identifier "T" @ 46..47 trailing=[Whitespace " "]
+          Identifier "id" @ 48..50
+          LParen "(" @ 50..51
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "T" @ 51..52 trailing=[Whitespace " "]
+              Identifier "value" @ 53..58
+          RParen ")" @ 58..59 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 60..61 trailing=[Whitespace " "]
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 62..68 trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "value" @ 69..74
+                Semicolon ";" @ 74..75 trailing=[Whitespace " "]
+            RBrace "}" @ 76..77
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 83..87 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "method" @ 88..94
+          LParen "(" @ 94..95
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "MethodReferences" @ 95..111 trailing=[Whitespace " "]
+              Identifier "target" @ 112..118
+            Comma "," @ 118..119 trailing=[Whitespace " "]
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "String" @ 120..126 trailing=[Whitespace " "]
+              Identifier "value" @ 127..132
+          RParen ")" @ 132..133 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 134..135
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 144..148 leading=[Newline "\n", Whitespace "        "]
+                    Dot "." @ 148..149
+                    Identifier "util" @ 149..153
+                    Dot "." @ 153..154
+                    Identifier "function" @ 154..162
+                    Dot "." @ 162..163
+                    Identifier "Supplier" @ 163..171
+                  TypeArgumentList
+                    Lt "<" @ 171..172
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "Integer" @ 172..179
+                    Gt ">" @ 179..180 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "expressionName" @ 181..195 trailing=[Whitespace " "]
+                    Assign "=" @ 196..197 trailing=[Whitespace " "]
+                    VariableInitializer
+                      MethodReferenceExpression
+                        NameExpression
+                          Identifier "value" @ 198..203
+                        DoubleColon "::" @ 203..205
+                        Identifier "length" @ 205..211
+              Semicolon ";" @ 211..212
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 221..225 leading=[Newline "\n", Whitespace "        "]
+                    Dot "." @ 225..226
+                    Identifier "util" @ 226..230
+                    Dot "." @ 230..231
+                    Identifier "function" @ 231..239
+                    Dot "." @ 239..240
+                    Identifier "Supplier" @ 240..248
+                  TypeArgumentList
+                    Lt "<" @ 248..249
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "String" @ 249..255
+                    Gt ">" @ 255..256 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "primary" @ 257..264 trailing=[Whitespace " "]
+                    Assign "=" @ 265..266 trailing=[Whitespace " "]
+                    VariableInitializer
+                      MethodReferenceExpression
+                        ParenthesizedExpression
+                          LParen "(" @ 267..268
+                          NameExpression
+                            Identifier "value" @ 268..273
+                          RParen ")" @ 273..274
+                        DoubleColon "::" @ 274..276
+                        Identifier "trim" @ 276..280
+              Semicolon ";" @ 280..281
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 290..294 leading=[Newline "\n", Whitespace "        "]
+                    Dot "." @ 294..295
+                    Identifier "util" @ 295..299
+                    Dot "." @ 299..300
+                    Identifier "function" @ 300..308
+                    Dot "." @ 308..309
+                    Identifier "Function" @ 309..317
+                  TypeArgumentList
+                    Lt "<" @ 317..318
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "String" @ 318..324
+                    Comma "," @ 324..325 trailing=[Whitespace " "]
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "Integer" @ 326..333
+                    Gt ">" @ 333..334 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "referenceType" @ 335..348 trailing=[Whitespace " "]
+                    Assign "=" @ 349..350 trailing=[Whitespace " "]
+                    VariableInitializer
+                      MethodReferenceExpression
+                        NameExpression
+                          Identifier "String" @ 351..357
+                        DoubleColon "::" @ 357..359
+                        Identifier "length" @ 359..365
+              Semicolon ";" @ 365..366
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 375..379 leading=[Newline "\n", Whitespace "        "]
+                    Dot "." @ 379..380
+                    Identifier "util" @ 380..384
+                    Dot "." @ 384..385
+                    Identifier "function" @ 385..393
+                    Dot "." @ 393..394
+                    Identifier "Supplier" @ 394..402
+                  TypeArgumentList
+                    Lt "<" @ 402..403
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "String" @ 403..409
+                    Gt ">" @ 409..410 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "superReference" @ 411..425 trailing=[Whitespace " "]
+                    Assign "=" @ 426..427 trailing=[Whitespace " "]
+                    VariableInitializer
+                      MethodReferenceExpression
+                        SuperExpression
+                          SuperKw "super" @ 428..433
+                        DoubleColon "::" @ 433..435
+                        Identifier "toString" @ 435..443
+              Semicolon ";" @ 443..444
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 453..457 leading=[Newline "\n", Whitespace "        "]
+                    Dot "." @ 457..458
+                    Identifier "util" @ 458..462
+                    Dot "." @ 462..463
+                    Identifier "function" @ 463..471
+                    Dot "." @ 471..472
+                    Identifier "Supplier" @ 472..480
+                  TypeArgumentList
+                    Lt "<" @ 480..481
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "String" @ 481..487
+                    Gt ">" @ 487..488 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "qualifiedSuper" @ 489..503 trailing=[Whitespace " "]
+                    Assign "=" @ 504..505 trailing=[Whitespace " "]
+                    VariableInitializer
+                      MethodReferenceExpression
+                        SuperExpression
+                          NameExpression
+                            Identifier "MethodReferences" @ 506..522
+                          Dot "." @ 522..523
+                          SuperKw "super" @ 523..528
+                        DoubleColon "::" @ 528..530
+                        Identifier "toString" @ 530..538
+              Semicolon ";" @ 538..539
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 548..552 leading=[Newline "\n", Whitespace "        "]
+                    Dot "." @ 552..553
+                    Identifier "util" @ 553..557
+                    Dot "." @ 557..558
+                    Identifier "function" @ 558..566
+                    Dot "." @ 566..567
+                    Identifier "Supplier" @ 567..575
+                  TypeArgumentList
+                    Lt "<" @ 575..576
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "MethodReferences" @ 576..592
+                    Gt ">" @ 592..593 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "constructor" @ 594..605 trailing=[Whitespace " "]
+                    Assign "=" @ 606..607 trailing=[Whitespace " "]
+                    VariableInitializer
+                      MethodReferenceExpression
+                        NameExpression
+                          Identifier "MethodReferences" @ 608..624
+                        DoubleColon "::" @ 624..626
+                        NewKw "new" @ 626..629
+              Semicolon ";" @ 629..630
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 639..643 leading=[Newline "\n", Whitespace "        "]
+                    Dot "." @ 643..644
+                    Identifier "util" @ 644..648
+                    Dot "." @ 648..649
+                    Identifier "function" @ 649..657
+                    Dot "." @ 657..658
+                    Identifier "IntFunction" @ 658..669
+                  TypeArgumentList
+                    Lt "<" @ 669..670
+                    TypeArgument
+                      ArrayType
+                        ClassType
+                          Name
+                            Identifier "String" @ 670..676
+                        ArrayDimensions
+                          ArrayDimension
+                            LBracket "[" @ 676..677
+                            RBracket "]" @ 677..678
+                    Gt ">" @ 678..679 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "arrayConstructor" @ 680..696 trailing=[Whitespace " "]
+                    Assign "=" @ 697..698 trailing=[Whitespace " "]
+                    VariableInitializer
+                      MethodReferenceExpression
+                        ArrayType
+                          ClassType
+                            Name
+                              Identifier "String" @ 699..705
+                          ArrayDimensions
+                            ArrayDimension
+                              LBracket "[" @ 705..706
+                              RBracket "]" @ 706..707
+                        DoubleColon "::" @ 707..709
+                        NewKw "new" @ 709..712
+              Semicolon ";" @ 712..713
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 722..726 leading=[Newline "\n", Whitespace "        "]
+                    Dot "." @ 726..727
+                    Identifier "util" @ 727..731
+                    Dot "." @ 731..732
+                    Identifier "function" @ 732..740
+                    Dot "." @ 740..741
+                    Identifier "Function" @ 741..749
+                  TypeArgumentList
+                    Lt "<" @ 749..750
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "String" @ 750..756
+                    Comma "," @ 756..757 trailing=[Whitespace " "]
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "String" @ 758..764
+                    Gt ">" @ 764..765 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "expressionNameGeneric" @ 766..787 trailing=[Whitespace " "]
+                    Assign "=" @ 788..789 trailing=[Whitespace " "]
+                    VariableInitializer
+                      MethodReferenceExpression
+                        NameExpression
+                          Identifier "target" @ 790..796
+                        DoubleColon "::" @ 796..798
+                        TypeArgumentList
+                          Lt "<" @ 798..799
+                          TypeArgument
+                            ClassType
+                              Name
+                                Identifier "String" @ 799..805
+                          Gt ">" @ 805..806
+                        Identifier "id" @ 806..808
+              Semicolon ";" @ 808..809
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 818..822 leading=[Newline "\n", Whitespace "        "]
+                    Dot "." @ 822..823
+                    Identifier "util" @ 823..827
+                    Dot "." @ 827..828
+                    Identifier "function" @ 828..836
+                    Dot "." @ 836..837
+                    Identifier "Function" @ 837..845
+                  TypeArgumentList
+                    Lt "<" @ 845..846
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "String" @ 846..852
+                    Comma "," @ 852..853 trailing=[Whitespace " "]
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "String" @ 854..860
+                    Gt ">" @ 860..861 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "primaryGeneric" @ 862..876 trailing=[Whitespace " "]
+                    Assign "=" @ 877..878 trailing=[Whitespace " "]
+                    VariableInitializer
+                      MethodReferenceExpression
+                        ThisExpression
+                          ThisKw "this" @ 879..883
+                        DoubleColon "::" @ 883..885
+                        TypeArgumentList
+                          Lt "<" @ 885..886
+                          TypeArgument
+                            ClassType
+                              Name
+                                Identifier "String" @ 886..892
+                          Gt ">" @ 892..893
+                        Identifier "id" @ 893..895
+              Semicolon ";" @ 895..896
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 905..909 leading=[Newline "\n", Whitespace "        "]
+                    Dot "." @ 909..910
+                    Identifier "util" @ 910..914
+                    Dot "." @ 914..915
+                    Identifier "function" @ 915..923
+                    Dot "." @ 923..924
+                    Identifier "Function" @ 924..932
+                  TypeArgumentList
+                    Lt "<" @ 932..933
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "String" @ 933..939
+                    Comma "," @ 939..940 trailing=[Whitespace " "]
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "String" @ 941..947
+                    Gt ">" @ 947..948 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "referenceTypeGeneric" @ 949..969 trailing=[Whitespace " "]
+                    Assign "=" @ 970..971 trailing=[Whitespace " "]
+                    VariableInitializer
+                      MethodReferenceExpression
+                        NameExpression
+                          Identifier "MethodReferences" @ 972..988
+                        DoubleColon "::" @ 988..990
+                        TypeArgumentList
+                          Lt "<" @ 990..991
+                          TypeArgument
+                            ClassType
+                              Name
+                                Identifier "String" @ 991..997
+                          Gt ">" @ 997..998
+                        Identifier "staticId" @ 998..1006
+              Semicolon ";" @ 1006..1007
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 1016..1020 leading=[Newline "\n", Whitespace "        "]
+                    Dot "." @ 1020..1021
+                    Identifier "util" @ 1021..1025
+                    Dot "." @ 1025..1026
+                    Identifier "function" @ 1026..1034
+                    Dot "." @ 1034..1035
+                    Identifier "Function" @ 1035..1043
+                  TypeArgumentList
+                    Lt "<" @ 1043..1044
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "String" @ 1044..1050
+                    Comma "," @ 1050..1051 trailing=[Whitespace " "]
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "String" @ 1052..1058
+                    Gt ">" @ 1058..1059 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "superGeneric" @ 1060..1072 trailing=[Whitespace " "]
+                    Assign "=" @ 1073..1074 trailing=[Whitespace " "]
+                    VariableInitializer
+                      MethodReferenceExpression
+                        SuperExpression
+                          SuperKw "super" @ 1075..1080
+                        DoubleColon "::" @ 1080..1082
+                        TypeArgumentList
+                          Lt "<" @ 1082..1083
+                          TypeArgument
+                            ClassType
+                              Name
+                                Identifier "String" @ 1083..1089
+                          Gt ">" @ 1089..1090
+                        Identifier "baseId" @ 1090..1096
+              Semicolon ";" @ 1096..1097
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 1106..1110 leading=[Newline "\n", Whitespace "        "]
+                    Dot "." @ 1110..1111
+                    Identifier "util" @ 1111..1115
+                    Dot "." @ 1115..1116
+                    Identifier "function" @ 1116..1124
+                    Dot "." @ 1124..1125
+                    Identifier "Function" @ 1125..1133
+                  TypeArgumentList
+                    Lt "<" @ 1133..1134
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "String" @ 1134..1140
+                    Comma "," @ 1140..1141 trailing=[Whitespace " "]
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "String" @ 1142..1148
+                    Gt ">" @ 1148..1149 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "qualifiedSuperGeneric" @ 1150..1171 trailing=[Whitespace " "]
+                    Assign "=" @ 1172..1173 trailing=[Whitespace " "]
+                    VariableInitializer
+                      MethodReferenceExpression
+                        SuperExpression
+                          NameExpression
+                            Identifier "MethodReferences" @ 1174..1190
+                          Dot "." @ 1190..1191
+                          SuperKw "super" @ 1191..1196
+                        DoubleColon "::" @ 1196..1198
+                        TypeArgumentList
+                          Lt "<" @ 1198..1199
+                          TypeArgument
+                            ClassType
+                              Name
+                                Identifier "String" @ 1199..1205
+                          Gt ">" @ 1205..1206
+                        Identifier "baseId" @ 1206..1212
+              Semicolon ";" @ 1212..1213
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 1222..1226 leading=[Newline "\n", Whitespace "        "]
+                    Dot "." @ 1226..1227
+                    Identifier "util" @ 1227..1231
+                    Dot "." @ 1231..1232
+                    Identifier "function" @ 1232..1240
+                    Dot "." @ 1240..1241
+                    Identifier "Supplier" @ 1241..1249
+                  TypeArgumentList
+                    Lt "<" @ 1249..1250
+                    TypeArgument
+                      ClassType
+                        QualifiedName
+                          Identifier "java" @ 1250..1254
+                          Dot "." @ 1254..1255
+                          Identifier "util" @ 1255..1259
+                          Dot "." @ 1259..1260
+                          Identifier "ArrayList" @ 1260..1269
+                        TypeArgumentList
+                          Lt "<" @ 1269..1270
+                          TypeArgument
+                            ClassType
+                              Name
+                                Identifier "String" @ 1270..1276
+                          Gt ">" @ 1276..1277
+                    Gt ">" @ 1277..1278 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "constructorGeneric" @ 1279..1297 trailing=[Whitespace " "]
+                    Assign "=" @ 1298..1299 trailing=[Whitespace " "]
+                    VariableInitializer
+                      MethodReferenceExpression
+                        FieldAccessExpression
+                          FieldAccessExpression
+                            NameExpression
+                              Identifier "java" @ 1300..1304
+                            Dot "." @ 1304..1305
+                            Identifier "util" @ 1305..1309
+                          Dot "." @ 1309..1310
+                          Identifier "ArrayList" @ 1310..1319
+                          TypeArgumentList
+                            Lt "<" @ 1319..1320
+                            TypeArgument
+                              ClassType
+                                Name
+                                  Identifier "String" @ 1320..1326
+                            Gt ">" @ 1326..1327
+                        DoubleColon "::" @ 1327..1329
+                        TypeArgumentList
+                          Lt "<" @ 1329..1330
+                          TypeArgument
+                            ClassType
+                              Name
+                                Identifier "String" @ 1330..1336
+                          Gt ">" @ 1336..1337
+                        NewKw "new" @ 1337..1340
+              Semicolon ";" @ 1340..1341
+            RBrace "}" @ 1346..1347 leading=[Newline "\n", Whitespace "    "]
+      ClassBodyDeclaration
+        MethodDeclaration
+          ModifierList
+            StaticKw "static" @ 1353..1359 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          TypeParameterList
+            Lt "<" @ 1360..1361
+            TypeParameter
+              Identifier "T" @ 1361..1362
+            Gt ">" @ 1362..1363 trailing=[Whitespace " "]
+          ClassType
+            Name
+              Identifier "T" @ 1364..1365 trailing=[Whitespace " "]
+          Identifier "staticId" @ 1366..1374
+          LParen "(" @ 1374..1375
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "T" @ 1375..1376 trailing=[Whitespace " "]
+              Identifier "value" @ 1377..1382
+          RParen ")" @ 1382..1383 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 1384..1385 trailing=[Whitespace " "]
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 1386..1392 trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "value" @ 1393..1398
+                Semicolon ";" @ 1398..1399 trailing=[Whitespace " "]
+            RBrace "}" @ 1400..1401
+      RBrace "}" @ 1402..1403 leading=[Newline "\n"]
+  ClassDeclaration
+    ClassKw "class" @ 1405..1410 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "Base" @ 1411..1415 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 1416..1417
+      ClassBodyDeclaration
+        MethodDeclaration
+          TypeParameterList
+            Lt "<" @ 1422..1423 leading=[Newline "\n", Whitespace "    "]
+            TypeParameter
+              Identifier "T" @ 1423..1424
+            Gt ">" @ 1424..1425 trailing=[Whitespace " "]
+          ClassType
+            Name
+              Identifier "T" @ 1426..1427 trailing=[Whitespace " "]
+          Identifier "baseId" @ 1428..1434
+          LParen "(" @ 1434..1435
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "T" @ 1435..1436 trailing=[Whitespace " "]
+              Identifier "value" @ 1437..1442
+          RParen ")" @ 1442..1443 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 1444..1445 trailing=[Whitespace " "]
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 1446..1452 trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "value" @ 1453..1458
+                Semicolon ";" @ 1458..1459 trailing=[Whitespace " "]
+            RBrace "}" @ 1460..1461
+      RBrace "}" @ 1462..1463 leading=[Newline "\n"]
+  Eof "" @ 1464..1464 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

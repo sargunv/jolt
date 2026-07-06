@@ -1,0 +1,82 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class PrimaryQualifiedCreation {
+    void method() {
+        Object inner = new Outer().new Inner();
+    }
+}
+
+class Outer {
+    class Inner {}
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "PrimaryQualifiedCreation" @ 6..30 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 31..32
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 37..41 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "method" @ 42..48
+          LParen "(" @ 48..49
+          RParen ")" @ 49..50 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 51..52
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  Name
+                    Identifier "Object" @ 61..67 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "inner" @ 68..73 trailing=[Whitespace " "]
+                    Assign "=" @ 74..75 trailing=[Whitespace " "]
+                    VariableInitializer
+                      ObjectCreationExpression
+                        ObjectCreationExpression
+                          NewKw "new" @ 76..79 trailing=[Whitespace " "]
+                          ClassType
+                            Name
+                              Identifier "Outer" @ 80..85
+                          ArgumentList
+                            LParen "(" @ 85..86
+                            RParen ")" @ 86..87
+                        Dot "." @ 87..88
+                        NewKw "new" @ 88..91 trailing=[Whitespace " "]
+                        ClassType
+                          Name
+                            Identifier "Inner" @ 92..97
+                        ArgumentList
+                          LParen "(" @ 97..98
+                          RParen ")" @ 98..99
+              Semicolon ";" @ 99..100
+            RBrace "}" @ 105..106 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 107..108 leading=[Newline "\n"]
+  ClassDeclaration
+    ClassKw "class" @ 110..115 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "Outer" @ 116..121 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 122..123
+      ClassBodyDeclaration
+        ClassDeclaration
+          ClassKw "class" @ 128..133 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "Inner" @ 134..139 trailing=[Whitespace " "]
+          ClassBody
+            LBrace "{" @ 140..141
+            RBrace "}" @ 141..142
+      RBrace "}" @ 143..144 leading=[Newline "\n"]
+  Eof "" @ 145..145 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

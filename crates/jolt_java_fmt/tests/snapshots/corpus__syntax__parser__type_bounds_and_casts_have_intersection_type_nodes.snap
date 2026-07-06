@@ -1,0 +1,19 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+interface A {
+}
+
+interface B {
+}
+
+class IntersectionTypeShapes<T extends A & B> {
+  Object method(Object value) {
+    return (A & B) value;
+  }
+}
+
+diagnostics:
+(none)

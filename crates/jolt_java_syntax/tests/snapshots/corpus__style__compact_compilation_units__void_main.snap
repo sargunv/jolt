@@ -1,0 +1,41 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+void main() {
+    IO.println("Hello World!");
+}
+
+syntax:
+syntax:
+CompilationUnit
+  MethodDeclaration
+    VoidType
+      VoidKw "void" @ 0..4 trailing=[Whitespace " "]
+    Identifier "main" @ 5..9
+    LParen "(" @ 9..10
+    RParen ")" @ 10..11 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 12..13
+      BlockStatement
+        ExpressionStatement
+          MethodInvocationExpression
+            NameExpression
+              Identifier "IO" @ 18..20 leading=[Newline "\n", Whitespace "    "]
+            Dot "." @ 20..21
+            Identifier "println" @ 21..28
+            ArgumentList
+              LParen "(" @ 28..29
+              LiteralExpression
+                StringLiteral "\"Hello World!\"" @ 29..43
+              RParen ")" @ 43..44
+          Semicolon ";" @ 44..45
+      RBrace "}" @ 46..47 leading=[Newline "\n"]
+  Eof "" @ 48..48 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

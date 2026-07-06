@@ -15,6 +15,7 @@ unicode-general-category = "1.1"
 
 [dev-dependencies]
 insta = "1.48"
+jolt_test_support = { path = "../jolt_test_support" }
 
 [lints]
 workspace = true

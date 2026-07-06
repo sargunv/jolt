@@ -67,8 +67,7 @@ fn dprint_configuration_influences_line_width_indent_width_and_tabs() {
 
 #[test]
 fn dprint_smoke_formats_a_committed_fixture_input() {
-    let fixture = repo_root()
-        .join("crates/jolt_java_fmt/tests/style/declarations/body-blank-lines.input.java");
+    let fixture = repo_root().join("fixtures/java/style/declarations/body-blank-lines.java");
     assert!(
         fixture.is_file(),
         "required committed fixture is missing: {}",

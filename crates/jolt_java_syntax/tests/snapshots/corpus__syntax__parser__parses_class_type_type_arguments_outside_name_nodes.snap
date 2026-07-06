@@ -1,0 +1,55 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class ClassTypeTypeArgumentsOutsideNameNodes {
+    java.util.Map<String>.Entry<Integer> value;
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "ClassTypeTypeArgumentsOutsideNameNodes" @ 6..44 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 45..46
+      ClassBodyDeclaration
+        FieldDeclaration
+          ClassType
+            QualifiedName
+              Identifier "java" @ 51..55 leading=[Newline "\n", Whitespace "    "]
+              Dot "." @ 55..56
+              Identifier "util" @ 56..60
+              Dot "." @ 60..61
+              Identifier "Map" @ 61..64
+            TypeArgumentList
+              Lt "<" @ 64..65
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "String" @ 65..71
+              Gt ">" @ 71..72
+            Dot "." @ 72..73
+            Name
+              Identifier "Entry" @ 73..78
+            TypeArgumentList
+              Lt "<" @ 78..79
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "Integer" @ 79..86
+              Gt ">" @ 86..87 trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "value" @ 88..93
+          Semicolon ";" @ 93..94
+      RBrace "}" @ 95..96 leading=[Newline "\n"]
+  Eof "" @ 97..97 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

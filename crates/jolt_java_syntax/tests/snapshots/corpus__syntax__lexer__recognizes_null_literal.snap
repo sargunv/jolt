@@ -1,0 +1,19 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+null
+
+syntax:
+syntax:
+CompilationUnit
+  ErrorNode
+    NullLiteral "null" @ 0..4
+  Eof "" @ 4..4
+
+diagnostics:
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=0..4 message="unexpected token at top level"
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(4) }) message=unexpected token at top level

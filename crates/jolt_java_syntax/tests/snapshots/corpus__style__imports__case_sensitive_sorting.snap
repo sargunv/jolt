@@ -1,0 +1,52 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+import com.beta.Beta;
+import com.Example;
+import com.alpha.Alpha;
+
+class A {}
+
+syntax:
+syntax:
+CompilationUnit
+  ImportDeclaration
+    ImportKw "import" @ 0..6 trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "com" @ 7..10
+      Dot "." @ 10..11
+      Identifier "beta" @ 11..15
+      Dot "." @ 15..16
+      Identifier "Beta" @ 16..20
+    Semicolon ";" @ 20..21
+  ImportDeclaration
+    ImportKw "import" @ 22..28 leading=[Newline "\n"] trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "com" @ 29..32
+      Dot "." @ 32..33
+      Identifier "Example" @ 33..40
+    Semicolon ";" @ 40..41
+  ImportDeclaration
+    ImportKw "import" @ 42..48 leading=[Newline "\n"] trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "com" @ 49..52
+      Dot "." @ 52..53
+      Identifier "alpha" @ 53..58
+      Dot "." @ 58..59
+      Identifier "Alpha" @ 59..64
+    Semicolon ";" @ 64..65
+  ClassDeclaration
+    ClassKw "class" @ 67..72 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "A" @ 73..74 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 75..76
+      RBrace "}" @ 76..77
+  Eof "" @ 78..78 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

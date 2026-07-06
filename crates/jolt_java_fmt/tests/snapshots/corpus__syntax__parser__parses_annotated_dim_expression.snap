@@ -1,0 +1,16 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class AnnotatedDimExpression {
+  void method(int n) {
+    int[] values = new int[n];
+  }
+}
+
+@interface Marker {
+}
+
+diagnostics:
+(none)

@@ -1,0 +1,21 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+"b
+
+syntax:
+syntax:
+CompilationUnit
+  ErrorNode
+    StringLiteral "\"b" @ 0..2
+  Eof "" @ 3..3 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.lex.unterminated_string_literal severity=Error stage=Lexer range=0..2 message="unterminated string literal"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=0..2 message="unexpected token at top level"
+
+diagnostics:
+code=java.lex.unterminated_string_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(0), end: TextSize(2) }) message=unterminated string literal
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(2) }) message=unexpected token at top level

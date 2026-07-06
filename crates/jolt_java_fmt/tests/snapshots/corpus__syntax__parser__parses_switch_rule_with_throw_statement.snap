@@ -1,0 +1,16 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class ThrowSwitchRule {
+  int method(Object value) {
+    return switch (value) {
+      case null -> throw new IllegalArgumentException();
+      default -> 0;
+    };
+  }
+}
+
+diagnostics:
+(none)

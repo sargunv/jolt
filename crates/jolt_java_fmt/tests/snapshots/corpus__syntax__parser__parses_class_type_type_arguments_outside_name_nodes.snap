@@ -1,0 +1,11 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class ClassTypeTypeArgumentsOutsideNameNodes {
+  java.util.Map<String>.Entry<Integer> value;
+}
+
+diagnostics:
+(none)

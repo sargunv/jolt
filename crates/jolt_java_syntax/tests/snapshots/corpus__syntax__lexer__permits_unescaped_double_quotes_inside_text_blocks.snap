@@ -1,0 +1,21 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+"""
+"Bob"
+"""
+
+syntax:
+syntax:
+CompilationUnit
+  ErrorNode
+    TextBlockLiteral "\"\"\"\n\"Bob\"\n\"\"\"" @ 0..13
+  Eof "" @ 13..13
+
+diagnostics:
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=0..13 message="unexpected token at top level"
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(13) }) message=unexpected token at top level

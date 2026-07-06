@@ -1,0 +1,335 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class InvalidExpressions {
+    void method(Object x, C c) {
+        (f)();
+        this();
+        new C()();
+        1 = x;
+        a + b = c;
+        (a) = b;
+        new C;
+        new C {};
+        new int();
+        Object invalidQualifiedCreation = new Outer<String>.Inner();
+        Object validQualifiedCreation = new Outer.Inner<String>();
+        int[] xs = new int[][3];
+        int[] ys = new int[3] {1, 2};
+        boolean primitiveInstanceof = x instanceof int;
+    }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "InvalidExpressions" @ 6..24 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 25..26
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 31..35 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "method" @ 36..42
+          LParen "(" @ 42..43
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "Object" @ 43..49 trailing=[Whitespace " "]
+              Identifier "x" @ 50..51
+            Comma "," @ 51..52 trailing=[Whitespace " "]
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "C" @ 53..54 trailing=[Whitespace " "]
+              Identifier "c" @ 55..56
+          RParen ")" @ 56..57 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 58..59
+            BlockStatement
+              ExpressionStatement
+                ErrorNode
+                  CastExpression
+                    LParen "(" @ 68..69 leading=[Newline "\n", Whitespace "        "]
+                    ClassType
+                      Name
+                        Identifier "f" @ 69..70
+                    RParen ")" @ 70..71
+                    ParenthesizedExpression
+                      LParen "(" @ 71..72
+                      RParen ")" @ 72..73
+                Semicolon ";" @ 73..74
+            BlockStatement
+              ExpressionStatement
+                ErrorNode
+                  ThisExpression
+                    ThisKw "this" @ 83..87 leading=[Newline "\n", Whitespace "        "]
+                ErrorNode
+                  LParen "(" @ 87..88
+                ErrorNode
+                  RParen ")" @ 88..89
+                Semicolon ";" @ 89..90
+            BlockStatement
+              ExpressionStatement
+                ObjectCreationExpression
+                  NewKw "new" @ 99..102 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  ClassType
+                    Name
+                      Identifier "C" @ 103..104
+                  ArgumentList
+                    LParen "(" @ 104..105
+                    RParen ")" @ 105..106
+                ErrorNode
+                  LParen "(" @ 106..107
+                ErrorNode
+                  RParen ")" @ 107..108
+                Semicolon ";" @ 108..109
+            BlockStatement
+              ExpressionStatement
+                AssignmentExpression
+                  ErrorNode
+                    LiteralExpression
+                      IntegerLiteral "1" @ 118..119 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  Assign "=" @ 120..121 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "x" @ 122..123
+                Semicolon ";" @ 123..124
+            BlockStatement
+              ExpressionStatement
+                AssignmentExpression
+                  ErrorNode
+                    BinaryExpression
+                      NameExpression
+                        Identifier "a" @ 133..134 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      Plus "+" @ 135..136 trailing=[Whitespace " "]
+                      NameExpression
+                        Identifier "b" @ 137..138 trailing=[Whitespace " "]
+                  Assign "=" @ 139..140 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "c" @ 141..142
+                Semicolon ";" @ 142..143
+            BlockStatement
+              ExpressionStatement
+                AssignmentExpression
+                  ErrorNode
+                    ParenthesizedExpression
+                      LParen "(" @ 152..153 leading=[Newline "\n", Whitespace "        "]
+                      NameExpression
+                        Identifier "a" @ 153..154
+                      RParen ")" @ 154..155 trailing=[Whitespace " "]
+                  Assign "=" @ 156..157 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "b" @ 158..159
+                Semicolon ";" @ 159..160
+            BlockStatement
+              ExpressionStatement
+                ObjectCreationExpression
+                  NewKw "new" @ 169..172 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  ClassType
+                    Name
+                      Identifier "C" @ 173..174
+                  ErrorNode
+                Semicolon ";" @ 174..175
+            BlockStatement
+              ExpressionStatement
+                ObjectCreationExpression
+                  NewKw "new" @ 184..187 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  ClassType
+                    Name
+                      Identifier "C" @ 188..189 trailing=[Whitespace " "]
+                  ErrorNode
+                  ClassBody
+                    LBrace "{" @ 190..191
+                    RBrace "}" @ 191..192
+                Semicolon ";" @ 192..193
+            BlockStatement
+              ExpressionStatement
+                ObjectCreationExpression
+                  NewKw "new" @ 202..205 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  ErrorNode
+                    IntKw "int" @ 206..209
+                  ArgumentList
+                    LParen "(" @ 209..210
+                    RParen ")" @ 210..211
+                Semicolon ";" @ 211..212
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  Name
+                    Identifier "Object" @ 221..227 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "invalidQualifiedCreation" @ 228..252 trailing=[Whitespace " "]
+                    Assign "=" @ 253..254 trailing=[Whitespace " "]
+                    VariableInitializer
+                      ObjectCreationExpression
+                        NewKw "new" @ 255..258 trailing=[Whitespace " "]
+                        ClassType
+                          QualifiedName
+                            Identifier "Outer" @ 259..264
+                            ErrorNode
+                              TypeArgumentList
+                                Lt "<" @ 264..265
+                                TypeArgument
+                                  ClassType
+                                    Name
+                                      Identifier "String" @ 265..271
+                                Gt ">" @ 271..272
+                            Dot "." @ 272..273
+                            Identifier "Inner" @ 273..278
+                        ArgumentList
+                          LParen "(" @ 278..279
+                          RParen ")" @ 279..280
+              Semicolon ";" @ 280..281
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  Name
+                    Identifier "Object" @ 290..296 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "validQualifiedCreation" @ 297..319 trailing=[Whitespace " "]
+                    Assign "=" @ 320..321 trailing=[Whitespace " "]
+                    VariableInitializer
+                      ObjectCreationExpression
+                        NewKw "new" @ 322..325 trailing=[Whitespace " "]
+                        ClassType
+                          QualifiedName
+                            Identifier "Outer" @ 326..331
+                            Dot "." @ 331..332
+                            Identifier "Inner" @ 332..337
+                          TypeArgumentList
+                            Lt "<" @ 337..338
+                            TypeArgument
+                              ClassType
+                                Name
+                                  Identifier "String" @ 338..344
+                            Gt ">" @ 344..345
+                        ArgumentList
+                          LParen "(" @ 345..346
+                          RParen ")" @ 346..347
+              Semicolon ";" @ 347..348
+            BlockStatement
+              LocalVariableDeclaration
+                ArrayType
+                  PrimitiveType
+                    IntKw "int" @ 357..360 leading=[Newline "\n", Whitespace "        "]
+                  ArrayDimensions
+                    ArrayDimension
+                      LBracket "[" @ 360..361
+                      RBracket "]" @ 361..362 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "xs" @ 363..365 trailing=[Whitespace " "]
+                    Assign "=" @ 366..367 trailing=[Whitespace " "]
+                    VariableInitializer
+                      ArrayCreationExpression
+                        NewKw "new" @ 368..371 trailing=[Whitespace " "]
+                        ArrayType
+                          PrimitiveType
+                            IntKw "int" @ 372..375
+                          ArrayDimensions
+                            ArrayDimension
+                              LBracket "[" @ 375..376
+                              RBracket "]" @ 376..377
+                        ErrorNode
+                          DimExpression
+                            LBracket "[" @ 377..378
+                            LiteralExpression
+                              IntegerLiteral "3" @ 378..379
+                            RBracket "]" @ 379..380
+              Semicolon ";" @ 380..381
+            BlockStatement
+              LocalVariableDeclaration
+                ArrayType
+                  PrimitiveType
+                    IntKw "int" @ 390..393 leading=[Newline "\n", Whitespace "        "]
+                  ArrayDimensions
+                    ArrayDimension
+                      LBracket "[" @ 393..394
+                      RBracket "]" @ 394..395 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "ys" @ 396..398 trailing=[Whitespace " "]
+                    Assign "=" @ 399..400 trailing=[Whitespace " "]
+                    VariableInitializer
+                      ArrayCreationExpression
+                        NewKw "new" @ 401..404 trailing=[Whitespace " "]
+                        PrimitiveType
+                          IntKw "int" @ 405..408
+                        DimExpression
+                          LBracket "[" @ 408..409
+                          LiteralExpression
+                            IntegerLiteral "3" @ 409..410
+                          RBracket "]" @ 410..411 trailing=[Whitespace " "]
+                        ErrorNode
+                          ArrayInitializer
+                            LBrace "{" @ 412..413
+                            LiteralExpression
+                              IntegerLiteral "1" @ 413..414
+                            Comma "," @ 414..415 trailing=[Whitespace " "]
+                            LiteralExpression
+                              IntegerLiteral "2" @ 416..417
+                            RBrace "}" @ 417..418
+              Semicolon ";" @ 418..419
+            BlockStatement
+              LocalVariableDeclaration
+                PrimitiveType
+                  BooleanKw "boolean" @ 428..435 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "primitiveInstanceof" @ 436..455 trailing=[Whitespace " "]
+                    Assign "=" @ 456..457 trailing=[Whitespace " "]
+                    VariableInitializer
+                      InstanceofExpression
+                        NameExpression
+                          Identifier "x" @ 458..459 trailing=[Whitespace " "]
+                        InstanceofKw "instanceof" @ 460..470 trailing=[Whitespace " "]
+                        ErrorNode
+                          PrimitiveType
+                            IntKw "int" @ 471..474
+              Semicolon ";" @ 474..475
+            RBrace "}" @ 480..481 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 482..483 leading=[Newline "\n"]
+  Eof "" @ 484..484 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=73..74 message="expected statement expression"
+  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=87..88 message="expected statement expression"
+  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=87..88 message="unexpected token in statement expression"
+  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=88..89 message="unexpected token in statement expression"
+  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=106..107 message="unexpected token in statement expression"
+  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=107..108 message="unexpected token in statement expression"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=120..121 message="expected assignment left-hand side"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=139..140 message="expected assignment left-hand side"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=156..157 message="expected assignment left-hand side"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=174..175 message="expected constructor arguments"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=190..191 message="expected constructor arguments"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=206..209 message="expected class type in object creation"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=264..265 message="type arguments in class instance creation must appear on the final type segment"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=377..378 message="sized array dimension cannot follow unsized dimensions"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=412..413 message="array initializer cannot follow dimension expressions"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=474..475 message="expected reference type"
+
+diagnostics:
+code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(73), end: TextSize(74) }) message=expected statement expression
+code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(87), end: TextSize(88) }) message=expected statement expression
+code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(87), end: TextSize(88) }) message=unexpected token in statement expression
+code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(88), end: TextSize(89) }) message=unexpected token in statement expression
+code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(106), end: TextSize(107) }) message=unexpected token in statement expression
+code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(107), end: TextSize(108) }) message=unexpected token in statement expression
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(120), end: TextSize(121) }) message=expected assignment left-hand side
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(139), end: TextSize(140) }) message=expected assignment left-hand side
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(156), end: TextSize(157) }) message=expected assignment left-hand side
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(174), end: TextSize(175) }) message=expected constructor arguments
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(190), end: TextSize(191) }) message=expected constructor arguments
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(206), end: TextSize(209) }) message=expected class type in object creation
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(264), end: TextSize(265) }) message=type arguments in class instance creation must appear on the final type segment
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(377), end: TextSize(378) }) message=sized array dimension cannot follow unsized dimensions
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(412), end: TextSize(413) }) message=array initializer cannot follow dimension expressions
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(474), end: TextSize(475) }) message=expected reference type

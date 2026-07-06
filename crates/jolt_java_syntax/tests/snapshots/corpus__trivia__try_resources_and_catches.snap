@@ -1,0 +1,194 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class TryTrivia {
+  void run() throws Exception {
+    try ( /* JOLT-TRIVIA:try-open */
+        Resource first = open() /* JOLT-TRIVIA:resource-first */;
+        Resource second = open() /* JOLT-TRIVIA:resource-second */) {
+      first.close();
+    } catch ( /* JOLT-TRIVIA:catch-open */ java.io.IOException
+        | /* JOLT-TRIVIA:catch-union */ IllegalStateException ex /* JOLT-TRIVIA:catch-param */) {
+      throw ex;
+    } finally /* JOLT-TRIVIA:finally-tail */ {
+      cleanup();
+    }
+  }
+
+  Resource open() {
+    return null;
+  }
+
+  void cleanup() {}
+}
+
+interface Resource extends AutoCloseable {}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "TryTrivia" @ 6..15 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 16..17
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 20..24 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          Identifier "run" @ 25..28
+          LParen "(" @ 28..29
+          RParen ")" @ 29..30 trailing=[Whitespace " "]
+          ThrowsClause
+            ThrowsKw "throws" @ 31..37 trailing=[Whitespace " "]
+            ClassType
+              Name
+                Identifier "Exception" @ 38..47 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 48..49
+            BlockStatement
+              TryStatement
+                TryWithResourcesStatement
+                  TryKw "try" @ 54..57 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  ResourceSpecification
+                    LParen "(" @ 58..59 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:try-open */"]
+                    ResourceList
+                      Resource
+                        LocalVariableDeclaration
+                          ClassType
+                            Name
+                              Identifier "Resource" @ 95..103 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                          VariableDeclaratorList
+                            VariableDeclarator
+                              Identifier "first" @ 104..109 trailing=[Whitespace " "]
+                              Assign "=" @ 110..111 trailing=[Whitespace " "]
+                              VariableInitializer
+                                MethodInvocationExpression
+                                  NameExpression
+                                    Identifier "open" @ 112..116
+                                  ArgumentList
+                                    LParen "(" @ 116..117
+                                    RParen ")" @ 117..118 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:resource-first */"]
+                      Semicolon ";" @ 151..152
+                      Resource
+                        LocalVariableDeclaration
+                          ClassType
+                            Name
+                              Identifier "Resource" @ 161..169 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                          VariableDeclaratorList
+                            VariableDeclarator
+                              Identifier "second" @ 170..176 trailing=[Whitespace " "]
+                              Assign "=" @ 177..178 trailing=[Whitespace " "]
+                              VariableInitializer
+                                MethodInvocationExpression
+                                  NameExpression
+                                    Identifier "open" @ 179..183
+                                  ArgumentList
+                                    LParen "(" @ 183..184
+                                    RParen ")" @ 184..185 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:resource-second */"]
+                    RParen ")" @ 219..220 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 221..222
+                    BlockStatement
+                      ExpressionStatement
+                        MethodInvocationExpression
+                          NameExpression
+                            Identifier "first" @ 229..234 leading=[Newline "\n", Whitespace "      "]
+                          Dot "." @ 234..235
+                          Identifier "close" @ 235..240
+                          ArgumentList
+                            LParen "(" @ 240..241
+                            RParen ")" @ 241..242
+                        Semicolon ";" @ 242..243
+                    RBrace "}" @ 248..249 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  CatchClause
+                    CatchKw "catch" @ 250..255 trailing=[Whitespace " "]
+                    LParen "(" @ 256..257 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:catch-open */", Whitespace " "]
+                    CatchParameter
+                      CatchTypeList
+                        UnionType
+                          ClassType
+                            QualifiedName
+                              Identifier "java" @ 287..291
+                              Dot "." @ 291..292
+                              Identifier "io" @ 292..294
+                              Dot "." @ 294..295
+                              Identifier "IOException" @ 295..306
+                          Bar "|" @ 315..316 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:catch-union */", Whitespace " "]
+                          ClassType
+                            Name
+                              Identifier "IllegalStateException" @ 347..368 trailing=[Whitespace " "]
+                      Identifier "ex" @ 369..371 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:catch-param */"]
+                    RParen ")" @ 401..402 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 403..404
+                      BlockStatement
+                        ThrowStatement
+                          ThrowKw "throw" @ 411..416 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+                          NameExpression
+                            Identifier "ex" @ 417..419
+                          Semicolon ";" @ 419..420
+                      RBrace "}" @ 425..426 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  FinallyClause
+                    FinallyKw "finally" @ 427..434 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:finally-tail */", Whitespace " "]
+                    Block
+                      LBrace "{" @ 466..467
+                      BlockStatement
+                        ExpressionStatement
+                          MethodInvocationExpression
+                            NameExpression
+                              Identifier "cleanup" @ 474..481 leading=[Newline "\n", Whitespace "      "]
+                            ArgumentList
+                              LParen "(" @ 481..482
+                              RParen ")" @ 482..483
+                          Semicolon ";" @ 483..484
+                      RBrace "}" @ 489..490 leading=[Newline "\n", Whitespace "    "]
+            RBrace "}" @ 493..494 leading=[Newline "\n", Whitespace "  "]
+      ClassBodyDeclaration
+        MethodDeclaration
+          ClassType
+            Name
+              Identifier "Resource" @ 498..506 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          Identifier "open" @ 507..511
+          LParen "(" @ 511..512
+          RParen ")" @ 512..513 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 514..515
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 520..526 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                LiteralExpression
+                  NullLiteral "null" @ 527..531
+                Semicolon ";" @ 531..532
+            RBrace "}" @ 535..536 leading=[Newline "\n", Whitespace "  "]
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 540..544 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          Identifier "cleanup" @ 545..552
+          LParen "(" @ 552..553
+          RParen ")" @ 553..554 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 555..556
+            RBrace "}" @ 556..557
+      RBrace "}" @ 558..559 leading=[Newline "\n"]
+  InterfaceDeclaration
+    InterfaceKw "interface" @ 561..570 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "Resource" @ 571..579 trailing=[Whitespace " "]
+    ExtendsClause
+      ExtendsKw "extends" @ 580..587 trailing=[Whitespace " "]
+      ClassType
+        Name
+          Identifier "AutoCloseable" @ 588..601 trailing=[Whitespace " "]
+    InterfaceBody
+      LBrace "{" @ 602..603
+      RBrace "}" @ 603..604
+  Eof "" @ 605..605 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

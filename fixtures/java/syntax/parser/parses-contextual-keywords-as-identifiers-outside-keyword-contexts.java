@@ -1,0 +1,25 @@
+class ContextualKeywordIdentifiers {
+    int module;
+    int open;
+    int opens;
+    int requires;
+    int transitive;
+    int exports;
+    int to;
+    int uses;
+    int provides;
+    int with;
+    int when;
+    int permits;
+    int sealed;
+    int record;
+    int var;
+
+    void when() {}
+    void requires() {}
+    void method() {
+        int when = this.when;
+        record = "name";
+        this.requires();
+    }
+}

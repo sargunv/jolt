@@ -1,0 +1,28 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+2147483647 2147483648 2147483649 0xffff_ffff 0x1_0000_0000 9223372036854775807L 9223372036854775808L 9223372036854775809L 0xffff_ffff_ffff_ffffL 0x1_0000_0000_0000_0000L
+
+syntax:
+syntax:
+CompilationUnit
+  ErrorNode
+    IntegerLiteral "2147483647" @ 0..10 trailing=[Whitespace " "]
+    IntegerLiteral "2147483648" @ 11..21 trailing=[Whitespace " "]
+    IntegerLiteral "2147483649" @ 22..32 trailing=[Whitespace " "]
+    IntegerLiteral "0xffff_ffff" @ 33..44 trailing=[Whitespace " "]
+    IntegerLiteral "0x1_0000_0000" @ 45..58 trailing=[Whitespace " "]
+    IntegerLiteral "9223372036854775807L" @ 59..79 trailing=[Whitespace " "]
+    IntegerLiteral "9223372036854775808L" @ 80..100 trailing=[Whitespace " "]
+    IntegerLiteral "9223372036854775809L" @ 101..121 trailing=[Whitespace " "]
+    IntegerLiteral "0xffff_ffff_ffff_ffffL" @ 122..144 trailing=[Whitespace " "]
+    IntegerLiteral "0x1_0000_0000_0000_0000L" @ 145..169
+  Eof "" @ 169..169
+
+diagnostics:
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=0..10 message="unexpected token at top level"
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(10) }) message=unexpected token at top level

@@ -1,0 +1,13 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+import java.util.List;
+
+void main() {
+  System.out.println(List.of());
+}
+
+diagnostics:
+(none)

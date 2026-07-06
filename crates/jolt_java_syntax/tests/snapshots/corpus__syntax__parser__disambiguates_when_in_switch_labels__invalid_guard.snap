@@ -1,0 +1,71 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class SwitchInvalidGuard {
+    void method(int value) {
+        switch (value) {
+            case 1 when true:
+                break;
+        }
+    }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "SwitchInvalidGuard" @ 6..24 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 25..26
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 31..35 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "method" @ 36..42
+          LParen "(" @ 42..43
+          FormalParameterList
+            FormalParameter
+              PrimitiveType
+                IntKw "int" @ 43..46 trailing=[Whitespace " "]
+              Identifier "value" @ 47..52
+          RParen ")" @ 52..53 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 54..55
+            BlockStatement
+              SwitchStatement
+                SwitchKw "switch" @ 64..70 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                LParen "(" @ 71..72
+                NameExpression
+                  Identifier "value" @ 72..77
+                RParen ")" @ 77..78 trailing=[Whitespace " "]
+                SwitchBlock
+                  LBrace "{" @ 79..80
+                  SwitchBlockStatementGroup
+                    SwitchLabel
+                      CaseKw "case" @ 93..97 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                      CaseConstant
+                        LiteralExpression
+                          IntegerLiteral "1" @ 98..99 trailing=[Whitespace " "]
+                      ErrorNode
+                        Guard
+                          Identifier "when" @ 100..104 trailing=[Whitespace " "]
+                          LiteralExpression
+                            BooleanLiteral "true" @ 105..109
+                    Colon ":" @ 109..110
+                    BlockStatement
+                      BreakStatement
+                        BreakKw "break" @ 127..132 leading=[Newline "\n", Whitespace "                "]
+                        Semicolon ";" @ 132..133
+                  RBrace "}" @ 142..143 leading=[Newline "\n", Whitespace "        "]
+            RBrace "}" @ 148..149 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 150..151 leading=[Newline "\n"]
+  Eof "" @ 152..152 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.invalid_switch_guard severity=Error stage=Parser range=100..104 message="switch guard requires a pattern"
+
+diagnostics:
+code=java.parse.invalid_switch_guard severity=Error stage=Parser range=Some(TextRange { start: TextSize(100), end: TextSize(104) }) message=switch guard requires a pattern

@@ -1,0 +1,25 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+\uD835\uDC82
+
+syntax:
+syntax:
+CompilationUnit
+  FieldDeclaration
+    ClassType
+      Name
+        Identifier "𝒂" @ 0..4
+    VariableDeclaratorList
+      VariableDeclarator
+  Eof "" @ 4..4
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=4..4 message="expected variable name"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=4..4 message="expected `;` after field declaration"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(4), end: TextSize(4) }) message=expected variable name
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(4), end: TextSize(4) }) message=expected `;` after field declaration

@@ -1,0 +1,42 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class FloatingPointTypes {
+    float single;
+    double wide;
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "FloatingPointTypes" @ 6..24 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 25..26
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            FloatKw "float" @ 31..36 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "single" @ 37..43
+          Semicolon ";" @ 43..44
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            DoubleKw "double" @ 49..55 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "wide" @ 56..60
+          Semicolon ";" @ 60..61
+      RBrace "}" @ 62..63 leading=[Newline "\n"]
+  Eof "" @ 64..64 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

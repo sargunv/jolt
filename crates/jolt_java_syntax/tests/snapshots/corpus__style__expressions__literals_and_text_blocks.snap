@@ -1,0 +1,124 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class Example {
+String escaped() {
+return "line\\n" + '\t';
+}
+String block() {
+return """
+        alpha
+          beta
+        """;
+}
+String template(String name) {
+return STR."Hello \{name}";
+}
+int numeric() {
+return 1_000 + 0x0f;
+}
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "Example" @ 6..13 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 14..15
+      ClassBodyDeclaration
+        MethodDeclaration
+          ClassType
+            Name
+              Identifier "String" @ 16..22 leading=[Newline "\n"] trailing=[Whitespace " "]
+          Identifier "escaped" @ 23..30
+          LParen "(" @ 30..31
+          RParen ")" @ 31..32 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 33..34
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 35..41 leading=[Newline "\n"] trailing=[Whitespace " "]
+                BinaryExpression
+                  LiteralExpression
+                    StringLiteral "\"line\\\\n\"" @ 42..51 trailing=[Whitespace " "]
+                  Plus "+" @ 52..53 trailing=[Whitespace " "]
+                  LiteralExpression
+                    CharacterLiteral "'\\t'" @ 54..58
+                Semicolon ";" @ 58..59
+            RBrace "}" @ 60..61 leading=[Newline "\n"]
+      ClassBodyDeclaration
+        MethodDeclaration
+          ClassType
+            Name
+              Identifier "String" @ 62..68 leading=[Newline "\n"] trailing=[Whitespace " "]
+          Identifier "block" @ 69..74
+          LParen "(" @ 74..75
+          RParen ")" @ 75..76 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 77..78
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 79..85 leading=[Newline "\n"] trailing=[Whitespace " "]
+                LiteralExpression
+                  TextBlockLiteral "\"\"\"\n        alpha\n          beta\n        \"\"\"" @ 86..130
+                Semicolon ";" @ 130..131
+            RBrace "}" @ 132..133 leading=[Newline "\n"]
+      ClassBodyDeclaration
+        MethodDeclaration
+          ClassType
+            Name
+              Identifier "String" @ 134..140 leading=[Newline "\n"] trailing=[Whitespace " "]
+          Identifier "template" @ 141..149
+          LParen "(" @ 149..150
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "String" @ 150..156 trailing=[Whitespace " "]
+              Identifier "name" @ 157..161
+          RParen ")" @ 161..162 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 163..164
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 165..171 leading=[Newline "\n"] trailing=[Whitespace " "]
+                TemplateExpression
+                  NameExpression
+                    Identifier "STR" @ 172..175
+                  Dot "." @ 175..176
+                  LiteralExpression
+                    StringLiteral "\"Hello \\{name}\"" @ 176..191
+                Semicolon ";" @ 191..192
+            RBrace "}" @ 193..194 leading=[Newline "\n"]
+      ClassBodyDeclaration
+        MethodDeclaration
+          PrimitiveType
+            IntKw "int" @ 195..198 leading=[Newline "\n"] trailing=[Whitespace " "]
+          Identifier "numeric" @ 199..206
+          LParen "(" @ 206..207
+          RParen ")" @ 207..208 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 209..210
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 211..217 leading=[Newline "\n"] trailing=[Whitespace " "]
+                BinaryExpression
+                  LiteralExpression
+                    IntegerLiteral "1_000" @ 218..223 trailing=[Whitespace " "]
+                  Plus "+" @ 224..225 trailing=[Whitespace " "]
+                  LiteralExpression
+                    IntegerLiteral "0x0f" @ 226..230
+                Semicolon ";" @ 230..231
+            RBrace "}" @ 232..233 leading=[Newline "\n"]
+      RBrace "}" @ 234..235 leading=[Newline "\n"]
+  Eof "" @ 236..236 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

@@ -1,0 +1,48 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class ThrowsContinuation {
+void read() throws FirstCheckedException, SecondCheckedException, ThirdCheckedException {}
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "ThrowsContinuation" @ 6..24 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 25..26
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 27..31 leading=[Newline "\n"] trailing=[Whitespace " "]
+          Identifier "read" @ 32..36
+          LParen "(" @ 36..37
+          RParen ")" @ 37..38 trailing=[Whitespace " "]
+          ThrowsClause
+            ThrowsKw "throws" @ 39..45 trailing=[Whitespace " "]
+            ClassType
+              Name
+                Identifier "FirstCheckedException" @ 46..67
+            Comma "," @ 67..68 trailing=[Whitespace " "]
+            ClassType
+              Name
+                Identifier "SecondCheckedException" @ 69..91
+            Comma "," @ 91..92 trailing=[Whitespace " "]
+            ClassType
+              Name
+                Identifier "ThirdCheckedException" @ 93..114 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 115..116
+            RBrace "}" @ 116..117
+      RBrace "}" @ 118..119 leading=[Newline "\n"]
+  Eof "" @ 120..120 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

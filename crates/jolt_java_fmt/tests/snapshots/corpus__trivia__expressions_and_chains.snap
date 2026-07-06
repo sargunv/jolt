@@ -1,0 +1,40 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class ExpressionTrivia {
+  void run(Service service, Object value) {
+    int total =
+      1 /* JOLT-TRIVIA:binary-left */
+        + /* JOLT-TRIVIA:binary-operator */ 2
+          * /* JOLT-TRIVIA:multiply-operator */ 3;
+    String text =
+      service /* JOLT-TRIVIA:chain-target */.first( /* JOLT-TRIVIA:first-open */
+        total /* JOLT-TRIVIA:first-arg */
+      )
+        .second() /* JOLT-TRIVIA:after-second */
+        .third(value /* JOLT-TRIVIA:third-arg */);
+    boolean ok =
+      value instanceof String /* JOLT-TRIVIA:instanceof-type */ s
+        && ((String) /* JOLT-TRIVIA:after-cast */ value).isEmpty();
+    Runnable r =
+      () /* JOLT-TRIVIA:lambda-arrow-left */ -> /* JOLT-TRIVIA:lambda-arrow-right */ service.accept(
+        text,
+        ok
+      );
+  }
+}
+
+interface Service {
+  Service first(int value);
+
+  Service second();
+
+  String third(Object value);
+
+  void accept(String text, boolean ok);
+}
+
+diagnostics:
+(none)

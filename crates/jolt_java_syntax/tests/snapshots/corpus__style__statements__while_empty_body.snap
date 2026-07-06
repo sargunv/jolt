@@ -1,0 +1,44 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class Example {
+  void run() { while (ready) ; }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "Example" @ 6..13 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 14..15
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 18..22 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          Identifier "run" @ 23..26
+          LParen "(" @ 26..27
+          RParen ")" @ 27..28 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 29..30 trailing=[Whitespace " "]
+            BlockStatement
+              WhileStatement
+                WhileKw "while" @ 31..36 trailing=[Whitespace " "]
+                LParen "(" @ 37..38
+                NameExpression
+                  Identifier "ready" @ 38..43
+                RParen ")" @ 43..44 trailing=[Whitespace " "]
+                EmptyStatement
+                  Semicolon ";" @ 45..46 trailing=[Whitespace " "]
+            RBrace "}" @ 47..48
+      RBrace "}" @ 49..50 leading=[Newline "\n"]
+  Eof "" @ 51..51 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

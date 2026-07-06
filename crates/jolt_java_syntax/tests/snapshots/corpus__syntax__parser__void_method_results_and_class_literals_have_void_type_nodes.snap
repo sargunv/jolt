@@ -1,0 +1,53 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class VoidTypeShapes {
+    void method() {
+        Object literal = void.class;
+    }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "VoidTypeShapes" @ 6..20 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 21..22
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 27..31 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "method" @ 32..38
+          LParen "(" @ 38..39
+          RParen ")" @ 39..40 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 41..42
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  Name
+                    Identifier "Object" @ 51..57 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "literal" @ 58..65 trailing=[Whitespace " "]
+                    Assign "=" @ 66..67 trailing=[Whitespace " "]
+                    VariableInitializer
+                      ClassLiteralExpression
+                        VoidType
+                          VoidKw "void" @ 68..72
+                        Dot "." @ 72..73
+                        ClassKw "class" @ 73..78
+              Semicolon ";" @ 78..79
+            RBrace "}" @ 84..85 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 86..87 leading=[Newline "\n"]
+  Eof "" @ 88..88 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

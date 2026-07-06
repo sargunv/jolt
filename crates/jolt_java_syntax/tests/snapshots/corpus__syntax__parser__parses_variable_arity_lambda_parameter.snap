@@ -1,0 +1,88 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class VarargsLambdaParameter {
+    void method() {
+        java.util.function.Function<String[], Integer> lengths =
+            (String... values) -> values.length;
+    }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "VarargsLambdaParameter" @ 6..28 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 29..30
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 35..39 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "method" @ 40..46
+          LParen "(" @ 46..47
+          RParen ")" @ 47..48 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 49..50
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 59..63 leading=[Newline "\n", Whitespace "        "]
+                    Dot "." @ 63..64
+                    Identifier "util" @ 64..68
+                    Dot "." @ 68..69
+                    Identifier "function" @ 69..77
+                    Dot "." @ 77..78
+                    Identifier "Function" @ 78..86
+                  TypeArgumentList
+                    Lt "<" @ 86..87
+                    TypeArgument
+                      ArrayType
+                        ClassType
+                          Name
+                            Identifier "String" @ 87..93
+                        ArrayDimensions
+                          ArrayDimension
+                            LBracket "[" @ 93..94
+                            RBracket "]" @ 94..95
+                    Comma "," @ 95..96 trailing=[Whitespace " "]
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "Integer" @ 97..104
+                    Gt ">" @ 104..105 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "lengths" @ 106..113 trailing=[Whitespace " "]
+                    Assign "=" @ 114..115
+                    VariableInitializer
+                      LambdaExpression
+                        LParen "(" @ 128..129 leading=[Newline "\n", Whitespace "            "]
+                        LambdaParameterList
+                          LambdaParameter
+                            ClassType
+                              Name
+                                Identifier "String" @ 129..135
+                            Ellipsis "..." @ 135..138 trailing=[Whitespace " "]
+                            Identifier "values" @ 139..145
+                        RParen ")" @ 145..146 trailing=[Whitespace " "]
+                        Arrow "->" @ 147..149 trailing=[Whitespace " "]
+                        FieldAccessExpression
+                          NameExpression
+                            Identifier "values" @ 150..156
+                          Dot "." @ 156..157
+                          Identifier "length" @ 157..163
+              Semicolon ";" @ 163..164
+            RBrace "}" @ 169..170 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 171..172 leading=[Newline "\n"]
+  Eof "" @ 173..173 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

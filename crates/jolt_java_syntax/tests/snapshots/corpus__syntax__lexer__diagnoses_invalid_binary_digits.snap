@@ -1,0 +1,27 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+0b2 0b10_2 0B102
+
+syntax:
+syntax:
+CompilationUnit
+  ErrorNode
+    IntegerLiteral "0b2" @ 0..3 trailing=[Whitespace " "]
+    IntegerLiteral "0b10_2" @ 4..10 trailing=[Whitespace " "]
+    IntegerLiteral "0B102" @ 11..16
+  Eof "" @ 16..16
+
+diagnostics:
+  code=java.lex.invalid_numeric_literal severity=Error stage=Lexer range=0..3 message="invalid numeric literal"
+  code=java.lex.invalid_numeric_literal severity=Error stage=Lexer range=4..10 message="invalid numeric literal"
+  code=java.lex.invalid_numeric_literal severity=Error stage=Lexer range=11..16 message="invalid numeric literal"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=0..3 message="unexpected token at top level"
+
+diagnostics:
+code=java.lex.invalid_numeric_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(0), end: TextSize(3) }) message=invalid numeric literal
+code=java.lex.invalid_numeric_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(4), end: TextSize(10) }) message=invalid numeric literal
+code=java.lex.invalid_numeric_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(11), end: TextSize(16) }) message=invalid numeric literal
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(3) }) message=unexpected token at top level

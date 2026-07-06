@@ -1,0 +1,16 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+enum Mode {
+  BASIC,
+  @Marker
+  SPECIAL(helper(1), new Box()) {
+    void run() {
+    }
+  },
+}
+
+diagnostics:
+(none)

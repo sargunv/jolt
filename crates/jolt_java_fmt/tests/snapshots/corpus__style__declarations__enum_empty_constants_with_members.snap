@@ -1,0 +1,13 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+enum Values {
+  ;
+
+  public static final String ONE = "ONE";
+}
+
+diagnostics:
+(none)

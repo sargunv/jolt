@@ -1,0 +1,33 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+publicstatic truex falsex nullx
+
+syntax:
+syntax:
+CompilationUnit
+  FieldDeclaration
+    ClassType
+      Name
+        Identifier "publicstatic" @ 0..12 trailing=[Whitespace " "]
+    VariableDeclaratorList
+      VariableDeclarator
+        Identifier "truex" @ 13..18 trailing=[Whitespace " "]
+  FieldDeclaration
+    ClassType
+      Name
+        Identifier "falsex" @ 19..25 trailing=[Whitespace " "]
+    VariableDeclaratorList
+      VariableDeclarator
+        Identifier "nullx" @ 26..31
+  Eof "" @ 31..31
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=19..25 message="expected `;` after field declaration"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=31..31 message="expected `;` after field declaration"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(19), end: TextSize(25) }) message=expected `;` after field declaration
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(31), end: TextSize(31) }) message=expected `;` after field declaration

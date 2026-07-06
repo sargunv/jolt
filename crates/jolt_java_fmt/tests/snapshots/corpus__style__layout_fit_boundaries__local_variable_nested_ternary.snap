@@ -1,0 +1,14 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class Example {
+  void method() {
+    boolean value =
+      xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx ? true : false;
+  }
+}
+
+diagnostics:
+(none)

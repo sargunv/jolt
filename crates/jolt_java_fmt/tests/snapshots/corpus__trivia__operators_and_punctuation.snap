@@ -1,0 +1,30 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class OperatorsAndPunctuation {
+  void run(boolean flag, int a, int b, int c) {
+    int ternary =
+      flag /* JOLT-TRIVIA:ternary-condition */
+        ? /* JOLT-TRIVIA:before-question-result */ a
+        : /* JOLT-TRIVIA:before-colon-result */ b /* JOLT-TRIVIA:ternary-before-semi */;
+    int shifted =
+      (a /* JOLT-TRIVIA:shift-left */ << /* JOLT-TRIVIA:shift-operator */ b)
+        >> /* JOLT-TRIVIA:shift-right-operator */ c /* JOLT-TRIVIA:shift-before-semi */;
+    boolean logic =
+      (a /* JOLT-TRIVIA:comparison-left */ < /* JOLT-TRIVIA:comparison-op */ b)
+        && /* JOLT-TRIVIA:logic-op */ (
+          b >= c /* JOLT-TRIVIA:comparison-tail */
+        );
+    count /* JOLT-TRIVIA:compound-target */ += /* JOLT-TRIVIA:compound-op */
+      ternary;
+    ++ /* JOLT-TRIVIA:prefix-op */count;
+    count /* JOLT-TRIVIA:postfix-target */++ /* JOLT-TRIVIA:postfix-before-semi */;
+  }
+
+  int count;
+}
+
+diagnostics:
+(none)

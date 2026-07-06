@@ -1,0 +1,48 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package demo;
+
+// @formatter:off
+class Raw {int x=1+2;}
+// @formatter:on
+
+syntax:
+syntax:
+CompilationUnit
+  PackageDeclaration
+    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+    Name
+      Identifier "demo" @ 8..12
+    Semicolon ";" @ 12..13
+  ClassDeclaration
+    ClassKw "class" @ 33..38 leading=[Newline "\n", Newline "\n", LineComment "// @formatter:off", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "Raw" @ 39..42 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 43..44
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 44..47 trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "x" @ 48..49
+              Assign "=" @ 49..50
+              VariableInitializer
+                BinaryExpression
+                  LiteralExpression
+                    IntegerLiteral "1" @ 50..51
+                  Plus "+" @ 51..52
+                  LiteralExpression
+                    IntegerLiteral "2" @ 52..53
+          Semicolon ";" @ 53..54
+      RBrace "}" @ 54..55
+  Eof "" @ 73..73 leading=[Newline "\n", LineComment "// @formatter:on", Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

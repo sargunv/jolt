@@ -1,0 +1,56 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class Broken {
+    void method( {
+        int value = ;
+    }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "Broken" @ 6..12 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 13..14
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 19..23 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "method" @ 24..30
+          LParen "(" @ 30..31 trailing=[Whitespace " "]
+          FormalParameterList
+            FormalParameter
+              ErrorNode
+          Block
+            LBrace "{" @ 32..33
+            BlockStatement
+              LocalVariableDeclaration
+                PrimitiveType
+                  IntKw "int" @ 42..45 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "value" @ 46..51 trailing=[Whitespace " "]
+                    Assign "=" @ 52..53 trailing=[Whitespace " "]
+                    VariableInitializer
+                      ErrorNode
+              Semicolon ";" @ 54..55
+            RBrace "}" @ 60..61 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 62..63 leading=[Newline "\n"]
+  Eof "" @ 64..64 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=32..33 message="expected type"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=32..33 message="expected parameter name"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=32..33 message="expected `)` after parameters"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=54..55 message="expected expression"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(32), end: TextSize(33) }) message=expected type
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(32), end: TextSize(33) }) message=expected parameter name
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(32), end: TextSize(33) }) message=expected `)` after parameters
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(54), end: TextSize(55) }) message=expected expression

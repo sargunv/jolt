@@ -1,0 +1,17 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class SwitchCaseConstants {
+  static final int NAME = 3;
+
+  void method(int value) {
+    switch (value) {
+      case 1, -2, NAME -> value++;
+    }
+  }
+}
+
+diagnostics:
+(none)

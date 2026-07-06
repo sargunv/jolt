@@ -1,0 +1,22 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+́a
+
+syntax:
+syntax:
+CompilationUnit
+  ErrorNode
+    Unknown "\u{301}" @ 0..2
+    Identifier "a" @ 2..3
+  Eof "" @ 3..3
+
+diagnostics:
+  code=java.lex.unknown_character severity=Error stage=Lexer range=0..2 message="unknown character"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=0..2 message="unexpected token at top level"
+
+diagnostics:
+code=java.lex.unknown_character severity=Error stage=Lexer range=Some(TextRange { start: TextSize(0), end: TextSize(2) }) message=unknown character
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(2) }) message=unexpected token at top level

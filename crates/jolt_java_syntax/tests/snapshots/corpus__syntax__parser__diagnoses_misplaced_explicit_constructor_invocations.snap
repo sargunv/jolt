@@ -1,0 +1,62 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class MisplacedConstructorInvocations {
+    MisplacedConstructorInvocations() {
+        int value = 0;
+        this();
+        super();
+    }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "MisplacedConstructorInvocations" @ 6..37 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 38..39
+      ClassBodyDeclaration
+        ConstructorDeclaration
+          Identifier "MisplacedConstructorInvocations" @ 44..75 leading=[Newline "\n", Whitespace "    "]
+          LParen "(" @ 75..76
+          RParen ")" @ 76..77 trailing=[Whitespace " "]
+          ConstructorBody
+            LBrace "{" @ 78..79
+            BlockStatement
+              LocalVariableDeclaration
+                PrimitiveType
+                  IntKw "int" @ 88..91 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "value" @ 92..97 trailing=[Whitespace " "]
+                    Assign "=" @ 98..99 trailing=[Whitespace " "]
+                    VariableInitializer
+                      LiteralExpression
+                        IntegerLiteral "0" @ 100..101
+              Semicolon ";" @ 101..102
+            ConstructorInvocation
+              ThisKw "this" @ 111..115 leading=[Newline "\n", Whitespace "        "]
+              ArgumentList
+                LParen "(" @ 115..116
+                RParen ")" @ 116..117
+              Semicolon ";" @ 117..118
+            ErrorNode
+              ConstructorInvocation
+                SuperKw "super" @ 127..132 leading=[Newline "\n", Whitespace "        "]
+                ArgumentList
+                  LParen "(" @ 132..133
+                  RParen ")" @ 133..134
+                Semicolon ";" @ 134..135
+            RBrace "}" @ 140..141 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 142..143 leading=[Newline "\n"]
+  Eof "" @ 144..144 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.misplaced_constructor_invocation severity=Error stage=Parser range=127..132 message="constructor body must have at most one explicit constructor invocation"
+
+diagnostics:
+code=java.parse.misplaced_constructor_invocation severity=Error stage=Parser range=Some(TextRange { start: TextSize(127), end: TextSize(132) }) message=constructor body must have at most one explicit constructor invocation

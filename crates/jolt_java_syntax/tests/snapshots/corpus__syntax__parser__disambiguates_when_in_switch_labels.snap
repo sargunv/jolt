@@ -1,0 +1,66 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class SwitchWhenIdentifier {
+    void method(int when) {
+        switch (when) {
+            case when:
+                break;
+        }
+    }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "SwitchWhenIdentifier" @ 6..26 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 27..28
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 33..37 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "method" @ 38..44
+          LParen "(" @ 44..45
+          FormalParameterList
+            FormalParameter
+              PrimitiveType
+                IntKw "int" @ 45..48 trailing=[Whitespace " "]
+              Identifier "when" @ 49..53
+          RParen ")" @ 53..54 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 55..56
+            BlockStatement
+              SwitchStatement
+                SwitchKw "switch" @ 65..71 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                LParen "(" @ 72..73
+                NameExpression
+                  Identifier "when" @ 73..77
+                RParen ")" @ 77..78 trailing=[Whitespace " "]
+                SwitchBlock
+                  LBrace "{" @ 79..80
+                  SwitchBlockStatementGroup
+                    SwitchLabel
+                      CaseKw "case" @ 93..97 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                      CaseConstant
+                        NameExpression
+                          Identifier "when" @ 98..102
+                    Colon ":" @ 102..103
+                    BlockStatement
+                      BreakStatement
+                        BreakKw "break" @ 120..125 leading=[Newline "\n", Whitespace "                "]
+                        Semicolon ";" @ 125..126
+                  RBrace "}" @ 135..136 leading=[Newline "\n", Whitespace "        "]
+            RBrace "}" @ 141..142 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 143..144 leading=[Newline "\n"]
+  Eof "" @ 145..145 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

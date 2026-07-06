@@ -1,0 +1,27 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+١ 0xＡ 1Ｆ
+
+syntax:
+syntax:
+CompilationUnit
+  ErrorNode
+    Unknown "١" @ 0..2 trailing=[Whitespace " "]
+    IntegerLiteral "0x" @ 3..5
+    Identifier "Ａ" @ 5..8 trailing=[Whitespace " "]
+    IntegerLiteral "1" @ 9..10
+    Identifier "Ｆ" @ 10..13
+  Eof "" @ 13..13
+
+diagnostics:
+  code=java.lex.unknown_character severity=Error stage=Lexer range=0..2 message="unknown character"
+  code=java.lex.invalid_numeric_literal severity=Error stage=Lexer range=3..5 message="invalid numeric literal"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=0..2 message="unexpected token at top level"
+
+diagnostics:
+code=java.lex.unknown_character severity=Error stage=Lexer range=Some(TextRange { start: TextSize(0), end: TextSize(2) }) message=unknown character
+code=java.lex.invalid_numeric_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(3), end: TextSize(5) }) message=invalid numeric literal
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(2) }) message=unexpected token at top level

@@ -1,0 +1,21 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+module demo {
+  exports com.example.api to
+    partner.one, // first export
+    partner.two;
+
+  opens com.example.internal to
+    friend.one, // first open
+    friend.two;
+
+  provides com.example.Plugin with
+    com.example.impl.PluginImpl, // first impl
+    com.example.impl.PluginFallback;
+}
+
+diagnostics:
+(none)

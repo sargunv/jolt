@@ -41,3 +41,7 @@ Run `mise tasks ls --all` for the full task list.
   source tokens (with trivia) are available. Synthesized tokens are allowed in
   very specific cases, like normalizing separators, braces, or parentheses where
   semantics don't change and trivia won't be lost.
+- All new Java edge-case coverage goes in `fixtures/java/`; do not add inline
+  Java snippet tests in crate `tests.rs` files.
+- Imported external Java corpora are smoke-tested with summary snapshots only;
+  do not add per-file snapshots for those imported suites.

@@ -1,0 +1,33 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+import module java.base;
+
+class ModuleImport {}
+
+syntax:
+syntax:
+CompilationUnit
+  ImportDeclaration
+    ImportKw "import" @ 0..6 trailing=[Whitespace " "]
+    Identifier "module" @ 7..13 trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "java" @ 14..18
+      Dot "." @ 18..19
+      Identifier "base" @ 19..23
+    Semicolon ";" @ 23..24
+  ClassDeclaration
+    ClassKw "class" @ 26..31 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "ModuleImport" @ 32..44 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 45..46
+      RBrace "}" @ 46..47
+  Eof "" @ 48..48 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

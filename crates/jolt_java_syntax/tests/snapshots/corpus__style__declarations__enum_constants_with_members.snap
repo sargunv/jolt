@@ -1,0 +1,56 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+enum Color { RED, GREEN, BLUE; private final int code; public int code() {} }
+
+syntax:
+syntax:
+CompilationUnit
+  EnumDeclaration
+    EnumKw "enum" @ 0..4 trailing=[Whitespace " "]
+    Identifier "Color" @ 5..10 trailing=[Whitespace " "]
+    EnumBody
+      LBrace "{" @ 11..12 trailing=[Whitespace " "]
+      EnumConstantList
+        EnumConstant
+          Identifier "RED" @ 13..16
+        Comma "," @ 16..17 trailing=[Whitespace " "]
+        EnumConstant
+          Identifier "GREEN" @ 18..23
+        Comma "," @ 23..24 trailing=[Whitespace " "]
+        EnumConstant
+          Identifier "BLUE" @ 25..29
+      Semicolon ";" @ 29..30 trailing=[Whitespace " "]
+      ClassBodyDeclaration
+        FieldDeclaration
+          ModifierList
+            PrivateKw "private" @ 31..38 trailing=[Whitespace " "]
+            FinalKw "final" @ 39..44 trailing=[Whitespace " "]
+          PrimitiveType
+            IntKw "int" @ 45..48 trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "code" @ 49..53
+          Semicolon ";" @ 53..54 trailing=[Whitespace " "]
+      ClassBodyDeclaration
+        MethodDeclaration
+          ModifierList
+            PublicKw "public" @ 55..61 trailing=[Whitespace " "]
+          PrimitiveType
+            IntKw "int" @ 62..65 trailing=[Whitespace " "]
+          Identifier "code" @ 66..70
+          LParen "(" @ 70..71
+          RParen ")" @ 71..72 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 73..74
+            RBrace "}" @ 74..75 trailing=[Whitespace " "]
+      RBrace "}" @ 76..77
+  Eof "" @ 78..78 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

@@ -1,0 +1,20 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+"/* not a comment */" "// not a comment"
+
+syntax:
+syntax:
+CompilationUnit
+  ErrorNode
+    StringLiteral "\"/* not a comment */\"" @ 0..21 trailing=[Whitespace " "]
+    StringLiteral "\"// not a comment\"" @ 22..40
+  Eof "" @ 40..40
+
+diagnostics:
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=0..21 message="unexpected token at top level"
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(21) }) message=unexpected token at top level

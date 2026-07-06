@@ -1,0 +1,22 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class A;
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "A" @ 6..7
+    ErrorNode
+      Semicolon ";" @ 7..8
+  Eof "" @ 8..8
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=7..8 message="expected type body"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(7), end: TextSize(8) }) message=expected type body

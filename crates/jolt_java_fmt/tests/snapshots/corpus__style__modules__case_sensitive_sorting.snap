@@ -1,0 +1,13 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+module demo {
+  requires A.lib;
+  requires a.lib;
+  requires z.lib;
+}
+
+diagnostics:
+(none)

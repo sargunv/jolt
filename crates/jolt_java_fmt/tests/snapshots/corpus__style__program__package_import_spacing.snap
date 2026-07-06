@@ -1,0 +1,17 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+@Beta
+@Generated("tool")
+package com.example.demo;
+
+import a.Alpha;
+import z.Zed;
+
+class A {
+}
+
+diagnostics:
+(none)

@@ -1,0 +1,258 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class SymbolCrevices
+    extends java /* JOLT-TRIVIA:extends-fqn-1 */ . lang /* JOLT-TRIVIA:extends-fqn-2 */ . Object
+    implements java /* JOLT-TRIVIA:implements-fqn-1 */ . io /* JOLT-TRIVIA:implements-fqn-2 */ . Serializable {
+  java /* JOLT-TRIVIA:field-type-fqn-1 */ . util /* JOLT-TRIVIA:field-type-fqn-2 */ . Map<
+          String /* JOLT-TRIVIA:generic-before-comma */,
+          java /* JOLT-TRIVIA:nested-fqn-1 */ . util /* JOLT-TRIVIA:nested-fqn-2 */ . List<
+              ? /* JOLT-TRIVIA:wildcard-before-extends */ extends Number /* JOLT-TRIVIA:wildcard-bound */>>
+      /* JOLT-TRIVIA:between-type-and-name */ values /* JOLT-TRIVIA:between-name-and-semi */;
+
+  int /* JOLT-TRIVIA:primitive-type-name */ count /* JOLT-TRIVIA:var-before-equals */ =
+      1 /* JOLT-TRIVIA:var-before-comma */,
+      other /* JOLT-TRIVIA:second-var-before-semi */;
+
+  SymbolCrevices /* JOLT-TRIVIA:ctor-name-before-paren */ () {
+    this /* JOLT-TRIVIA:this-before-dot */ . count = 1 /* JOLT-TRIVIA:assignment-before-semi */;
+  }
+
+  void method /* JOLT-TRIVIA:method-name-before-paren */ (
+      java /* JOLT-TRIVIA:param-fqn-1 */ . lang /* JOLT-TRIVIA:param-fqn-2 */ . String
+          /* JOLT-TRIVIA:param-type-name */ name /* JOLT-TRIVIA:param-name-before-comma */,
+      int... /* JOLT-TRIVIA:varargs-before-name */ numbers /* JOLT-TRIVIA:param-name-before-close */)
+      throws java /* JOLT-TRIVIA:throws-fqn-1 */ . io /* JOLT-TRIVIA:throws-fqn-2 */ . IOException
+          /* JOLT-TRIVIA:throws-before-body */ {
+    ; /* JOLT-TRIVIA:empty-statement-after-semi */
+    helper /* JOLT-TRIVIA:call-name-before-paren */ (
+        name /* JOLT-TRIVIA:call-arg-before-comma */,
+        numbers /* JOLT-TRIVIA:call-arg-before-close */) /* JOLT-TRIVIA:call-before-semi */;
+    int[] array =
+        new int /* JOLT-TRIVIA:new-array-type-before-dim */ [
+            /* JOLT-TRIVIA:new-array-open-bracket */ /* JOLT-TRIVIA:new-array-before-close */]
+            /* JOLT-TRIVIA:new-array-before-init */ {
+              1 /* JOLT-TRIVIA:initializer-before-comma */,
+              2 /* JOLT-TRIVIA:initializer-before-close */
+            } /* JOLT-TRIVIA:array-before-semi */;
+  }
+
+  void helper(String name, int... numbers) {}
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "SymbolCrevices" @ 6..20
+    ExtendsClause
+      ExtendsKw "extends" @ 25..32 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+      ClassType
+        QualifiedName
+          Identifier "java" @ 33..37 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:extends-fqn-1 */", Whitespace " "]
+          Dot "." @ 70..71 trailing=[Whitespace " "]
+          Identifier "lang" @ 72..76 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:extends-fqn-2 */", Whitespace " "]
+          Dot "." @ 109..110 trailing=[Whitespace " "]
+          Identifier "Object" @ 111..117
+    ImplementsClause
+      ImplementsKw "implements" @ 122..132 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+      ClassType
+        QualifiedName
+          Identifier "java" @ 133..137 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:implements-fqn-1 */", Whitespace " "]
+          Dot "." @ 173..174 trailing=[Whitespace " "]
+          Identifier "io" @ 175..177 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:implements-fqn-2 */", Whitespace " "]
+          Dot "." @ 213..214 trailing=[Whitespace " "]
+          Identifier "Serializable" @ 215..227 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 228..229
+      ClassBodyDeclaration
+        FieldDeclaration
+          ClassType
+            QualifiedName
+              Identifier "java" @ 232..236 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:field-type-fqn-1 */", Whitespace " "]
+              Dot "." @ 272..273 trailing=[Whitespace " "]
+              Identifier "util" @ 274..278 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:field-type-fqn-2 */", Whitespace " "]
+              Dot "." @ 314..315 trailing=[Whitespace " "]
+              Identifier "Map" @ 316..319
+            TypeArgumentList
+              Lt "<" @ 319..320
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "String" @ 331..337 leading=[Newline "\n", Whitespace "          "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:generic-before-comma */"]
+              Comma "," @ 376..377
+              TypeArgument
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 388..392 leading=[Newline "\n", Whitespace "          "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:nested-fqn-1 */", Whitespace " "]
+                    Dot "." @ 424..425 trailing=[Whitespace " "]
+                    Identifier "util" @ 426..430 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:nested-fqn-2 */", Whitespace " "]
+                    Dot "." @ 462..463 trailing=[Whitespace " "]
+                    Identifier "List" @ 464..468
+                  TypeArgumentList
+                    Lt "<" @ 468..469
+                    TypeArgument
+                      WildcardType
+                        Question "?" @ 484..485 leading=[Newline "\n", Whitespace "              "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:wildcard-before-extends */", Whitespace " "]
+                        ExtendsKw "extends" @ 528..535 trailing=[Whitespace " "]
+                        ClassType
+                          Name
+                            Identifier "Number" @ 536..542 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:wildcard-bound */"]
+                    Gt ">" @ 575..576
+              Gt ">" @ 576..577
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "values" @ 624..630 leading=[Newline "\n", Whitespace "      ", BlockComment "/* JOLT-TRIVIA:between-type-and-name */", Whitespace " "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:between-name-and-semi */"]
+          Semicolon ";" @ 670..671
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 675..678 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:primitive-type-name */", Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "count" @ 717..722 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:var-before-equals */", Whitespace " "]
+              Assign "=" @ 759..760
+              VariableInitializer
+                LiteralExpression
+                  IntegerLiteral "1" @ 767..768 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:var-before-comma */"]
+            Comma "," @ 803..804
+            VariableDeclarator
+              Identifier "other" @ 811..816 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:second-var-before-semi */"]
+          Semicolon ";" @ 857..858
+      ClassBodyDeclaration
+        ConstructorDeclaration
+          Identifier "SymbolCrevices" @ 862..876 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:ctor-name-before-paren */", Whitespace " "]
+          LParen "(" @ 918..919
+          RParen ")" @ 919..920 trailing=[Whitespace " "]
+          ConstructorBody
+            LBrace "{" @ 921..922
+            BlockStatement
+              ExpressionStatement
+                AssignmentExpression
+                  FieldAccessExpression
+                    ThisExpression
+                      ThisKw "this" @ 927..931 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:this-before-dot */", Whitespace " "]
+                    Dot "." @ 966..967 trailing=[Whitespace " "]
+                    Identifier "count" @ 968..973 trailing=[Whitespace " "]
+                  Assign "=" @ 974..975 trailing=[Whitespace " "]
+                  LiteralExpression
+                    IntegerLiteral "1" @ 976..977 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:assignment-before-semi */"]
+                Semicolon ";" @ 1018..1019
+            RBrace "}" @ 1022..1023 leading=[Newline "\n", Whitespace "  "]
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 1027..1031 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          Identifier "method" @ 1032..1038 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:method-name-before-paren */", Whitespace " "]
+          LParen "(" @ 1082..1083
+          FormalParameterList
+            FormalParameter
+              ClassType
+                QualifiedName
+                  Identifier "java" @ 1090..1094 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:param-fqn-1 */", Whitespace " "]
+                  Dot "." @ 1125..1126 trailing=[Whitespace " "]
+                  Identifier "lang" @ 1127..1131 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:param-fqn-2 */", Whitespace " "]
+                  Dot "." @ 1162..1163 trailing=[Whitespace " "]
+                  Identifier "String" @ 1164..1170
+              Identifier "name" @ 1215..1219 leading=[Newline "\n", Whitespace "          ", BlockComment "/* JOLT-TRIVIA:param-type-name */", Whitespace " "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:param-name-before-comma */"]
+            Comma "," @ 1261..1262
+            FormalParameter
+              PrimitiveType
+                IntKw "int" @ 1269..1272 leading=[Newline "\n", Whitespace "      "]
+              Ellipsis "..." @ 1272..1275 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:varargs-before-name */", Whitespace " "]
+              Identifier "numbers" @ 1314..1321 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:param-name-before-close */"]
+          RParen ")" @ 1363..1364
+          ThrowsClause
+            ThrowsKw "throws" @ 1371..1377 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+            ClassType
+              QualifiedName
+                Identifier "java" @ 1378..1382 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:throws-fqn-1 */", Whitespace " "]
+                Dot "." @ 1414..1415 trailing=[Whitespace " "]
+                Identifier "io" @ 1416..1418 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:throws-fqn-2 */", Whitespace " "]
+                Dot "." @ 1450..1451 trailing=[Whitespace " "]
+                Identifier "IOException" @ 1452..1463
+          Block
+            LBrace "{" @ 1511..1512 leading=[Newline "\n", Whitespace "          ", BlockComment "/* JOLT-TRIVIA:throws-before-body */", Whitespace " "]
+            BlockStatement
+              EmptyStatement
+                Semicolon ";" @ 1517..1518 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:empty-statement-after-semi */"]
+            BlockStatement
+              ExpressionStatement
+                MethodInvocationExpression
+                  NameExpression
+                    Identifier "helper" @ 1568..1574 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:call-name-before-paren */", Whitespace " "]
+                  ArgumentList
+                    LParen "(" @ 1616..1617
+                    NameExpression
+                      Identifier "name" @ 1626..1630 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:call-arg-before-comma */"]
+                    Comma "," @ 1670..1671
+                    NameExpression
+                      Identifier "numbers" @ 1680..1687 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:call-arg-before-close */"]
+                    RParen ")" @ 1727..1728 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:call-before-semi */"]
+                Semicolon ";" @ 1763..1764
+            BlockStatement
+              LocalVariableDeclaration
+                ArrayType
+                  PrimitiveType
+                    IntKw "int" @ 1769..1772 leading=[Newline "\n", Whitespace "    "]
+                  ArrayDimensions
+                    ArrayDimension
+                      LBracket "[" @ 1772..1773
+                      RBracket "]" @ 1773..1774 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "array" @ 1775..1780 trailing=[Whitespace " "]
+                    Assign "=" @ 1781..1782
+                    VariableInitializer
+                      ArrayCreationExpression
+                        NewKw "new" @ 1791..1794 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                        ArrayType
+                          PrimitiveType
+                            IntKw "int" @ 1795..1798 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:new-array-type-before-dim */", Whitespace " "]
+                          ArrayDimensions
+                            ArrayDimension
+                              LBracket "[" @ 1843..1844
+                              RBracket "]" @ 1938..1939 leading=[Newline "\n", Whitespace "            ", BlockComment "/* JOLT-TRIVIA:new-array-open-bracket */", Whitespace " ", BlockComment "/* JOLT-TRIVIA:new-array-before-close */"]
+                        ArrayInitializer
+                          LBrace "{" @ 1992..1993 leading=[Newline "\n", Whitespace "            ", BlockComment "/* JOLT-TRIVIA:new-array-before-init */", Whitespace " "]
+                          LiteralExpression
+                            IntegerLiteral "1" @ 2008..2009 leading=[Newline "\n", Whitespace "              "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:initializer-before-comma */"]
+                          Comma "," @ 2052..2053
+                          LiteralExpression
+                            IntegerLiteral "2" @ 2068..2069 leading=[Newline "\n", Whitespace "              "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:initializer-before-close */"]
+                          RBrace "}" @ 2125..2126 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:array-before-semi */"]
+              Semicolon ";" @ 2162..2163
+            RBrace "}" @ 2166..2167 leading=[Newline "\n", Whitespace "  "]
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 2171..2175 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          Identifier "helper" @ 2176..2182
+          LParen "(" @ 2182..2183
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "String" @ 2183..2189 trailing=[Whitespace " "]
+              Identifier "name" @ 2190..2194
+            Comma "," @ 2194..2195 trailing=[Whitespace " "]
+            FormalParameter
+              PrimitiveType
+                IntKw "int" @ 2196..2199
+              Ellipsis "..." @ 2199..2202 trailing=[Whitespace " "]
+              Identifier "numbers" @ 2203..2210
+          RParen ")" @ 2210..2211 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 2212..2213
+            RBrace "}" @ 2213..2214
+      RBrace "}" @ 2215..2216 leading=[Newline "\n"]
+  Eof "" @ 2217..2217 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

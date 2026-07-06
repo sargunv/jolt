@@ -17,6 +17,7 @@ serde = ["dep:serde"]
 
 [dev-dependencies]
 insta = "1.48"
+jolt_test_support = { path = "../jolt_test_support" }
 
 [lints]
 workspace = true

@@ -1,0 +1,98 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class CatchUnionTypeShape {
+    void method() {
+        try {
+            risky();
+        } catch (java.io.IOException | RuntimeException ex) {
+        }
+    }
+
+    void risky() throws java.io.IOException {}
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "CatchUnionTypeShape" @ 6..25 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 26..27
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 32..36 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "method" @ 37..43
+          LParen "(" @ 43..44
+          RParen ")" @ 44..45 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 46..47
+            BlockStatement
+              TryStatement
+                TryKw "try" @ 56..59 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                Block
+                  LBrace "{" @ 60..61
+                  BlockStatement
+                    ExpressionStatement
+                      MethodInvocationExpression
+                        NameExpression
+                          Identifier "risky" @ 74..79 leading=[Newline "\n", Whitespace "            "]
+                        ArgumentList
+                          LParen "(" @ 79..80
+                          RParen ")" @ 80..81
+                      Semicolon ";" @ 81..82
+                  RBrace "}" @ 91..92 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                CatchClause
+                  CatchKw "catch" @ 93..98 trailing=[Whitespace " "]
+                  LParen "(" @ 99..100
+                  CatchParameter
+                    CatchTypeList
+                      UnionType
+                        ClassType
+                          QualifiedName
+                            Identifier "java" @ 100..104
+                            Dot "." @ 104..105
+                            Identifier "io" @ 105..107
+                            Dot "." @ 107..108
+                            Identifier "IOException" @ 108..119 trailing=[Whitespace " "]
+                        Bar "|" @ 120..121 trailing=[Whitespace " "]
+                        ClassType
+                          Name
+                            Identifier "RuntimeException" @ 122..138 trailing=[Whitespace " "]
+                    Identifier "ex" @ 139..141
+                  RParen ")" @ 141..142 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 143..144
+                    RBrace "}" @ 153..154 leading=[Newline "\n", Whitespace "        "]
+            RBrace "}" @ 159..160 leading=[Newline "\n", Whitespace "    "]
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 166..170 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "risky" @ 171..176
+          LParen "(" @ 176..177
+          RParen ")" @ 177..178 trailing=[Whitespace " "]
+          ThrowsClause
+            ThrowsKw "throws" @ 179..185 trailing=[Whitespace " "]
+            ClassType
+              QualifiedName
+                Identifier "java" @ 186..190
+                Dot "." @ 190..191
+                Identifier "io" @ 191..193
+                Dot "." @ 193..194
+                Identifier "IOException" @ 194..205 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 206..207
+            RBrace "}" @ 207..208
+      RBrace "}" @ 209..210 leading=[Newline "\n"]
+  Eof "" @ 211..211 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

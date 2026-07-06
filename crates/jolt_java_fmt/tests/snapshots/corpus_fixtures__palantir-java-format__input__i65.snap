@@ -1,9 +1,0 @@
----
-source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
-expression: formatted
----
-import org.checkerframework.checker.nullness.qual.*;
-
-class UnannoPrimitives {
-  Object ar = new @Nullable byte[] { 4 };
-}

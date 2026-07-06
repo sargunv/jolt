@@ -1,9 +1,0 @@
----
-source: crates/jolt_java_fmt/tests/corpus_fixtures.rs
-expression: formatted
----
-class B36194204 {
-  {
-    Function<String[], String> f = (String... s) -> s[0];
-  }
-}

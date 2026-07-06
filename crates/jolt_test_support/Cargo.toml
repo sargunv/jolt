@@ -1,0 +1,14 @@
+[package]
+name = "jolt_test_support"
+version = "0.0.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+jolt_diagnostics = { path = "../jolt_diagnostics" }
+jolt_fmt_ir = { path = "../jolt_fmt_ir" }
+
+[lints]
+workspace = true

@@ -1,0 +1,13 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class MixedDeepGenericCloseAndGreaterThan {
+  boolean method(Object value, Object limit) {
+    return value instanceof Box<List<String>> > limit;
+  }
+}
+
+diagnostics:
+(none)

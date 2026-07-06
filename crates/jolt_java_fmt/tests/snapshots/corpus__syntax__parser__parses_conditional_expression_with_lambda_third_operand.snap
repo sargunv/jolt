@@ -1,0 +1,15 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class ConditionalLambda {
+  void method(boolean flag) {
+    java.util.function.Function<Integer, Integer> existing = null;
+    java.util.function.Function<Integer, Integer> chosen =
+      flag ? existing : x -> x;
+  }
+}
+
+diagnostics:
+(none)

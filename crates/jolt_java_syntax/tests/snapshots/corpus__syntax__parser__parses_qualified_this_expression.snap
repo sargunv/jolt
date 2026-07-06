@@ -1,0 +1,56 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class QualifiedThis {
+    class Inner {
+        Object method() {
+            return QualifiedThis.this;
+        }
+    }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "QualifiedThis" @ 6..19 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 20..21
+      ClassBodyDeclaration
+        ClassDeclaration
+          ClassKw "class" @ 26..31 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "Inner" @ 32..37 trailing=[Whitespace " "]
+          ClassBody
+            LBrace "{" @ 38..39
+            ClassBodyDeclaration
+              MethodDeclaration
+                ClassType
+                  Name
+                    Identifier "Object" @ 48..54 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                Identifier "method" @ 55..61
+                LParen "(" @ 61..62
+                RParen ")" @ 62..63 trailing=[Whitespace " "]
+                Block
+                  LBrace "{" @ 64..65
+                  BlockStatement
+                    ReturnStatement
+                      ReturnKw "return" @ 78..84 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                      ThisExpression
+                        NameExpression
+                          Identifier "QualifiedThis" @ 85..98
+                        Dot "." @ 98..99
+                        ThisKw "this" @ 99..103
+                      Semicolon ";" @ 103..104
+                  RBrace "}" @ 113..114 leading=[Newline "\n", Whitespace "        "]
+            RBrace "}" @ 119..120 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 121..122 leading=[Newline "\n"]
+  Eof "" @ 123..123 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

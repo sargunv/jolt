@@ -1,0 +1,16 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+import z.Zed;
+
+// Used by generated adapters.
+import a.Adapter;
+import m.Middle;
+
+class A {
+}
+
+diagnostics:
+(none)

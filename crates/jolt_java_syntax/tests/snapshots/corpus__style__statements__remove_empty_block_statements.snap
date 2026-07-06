@@ -1,0 +1,68 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class Example {
+  void run() { ; int value = 1; ; // keep marker
+    ; /* keep trailing marker */
+    value++; ; }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "Example" @ 6..13 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 14..15
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 18..22 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          Identifier "run" @ 23..26
+          LParen "(" @ 26..27
+          RParen ")" @ 27..28 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 29..30 trailing=[Whitespace " "]
+            BlockStatement
+              EmptyStatement
+                Semicolon ";" @ 31..32 trailing=[Whitespace " "]
+            BlockStatement
+              LocalVariableDeclaration
+                PrimitiveType
+                  IntKw "int" @ 33..36 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "value" @ 37..42 trailing=[Whitespace " "]
+                    Assign "=" @ 43..44 trailing=[Whitespace " "]
+                    VariableInitializer
+                      LiteralExpression
+                        IntegerLiteral "1" @ 45..46
+              Semicolon ";" @ 46..47 trailing=[Whitespace " "]
+            BlockStatement
+              EmptyStatement
+                Semicolon ";" @ 48..49 trailing=[Whitespace " ", LineComment "// keep marker"]
+            BlockStatement
+              EmptyStatement
+                Semicolon ";" @ 69..70 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* keep trailing marker */"]
+            BlockStatement
+              ExpressionStatement
+                PostfixExpression
+                  NameExpression
+                    Identifier "value" @ 102..107 leading=[Newline "\n", Whitespace "    "]
+                  PlusPlus "++" @ 107..109
+                Semicolon ";" @ 109..110 trailing=[Whitespace " "]
+            BlockStatement
+              EmptyStatement
+                Semicolon ";" @ 111..112 trailing=[Whitespace " "]
+            RBrace "}" @ 113..114
+      RBrace "}" @ 115..116 leading=[Newline "\n"]
+  Eof "" @ 117..117 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

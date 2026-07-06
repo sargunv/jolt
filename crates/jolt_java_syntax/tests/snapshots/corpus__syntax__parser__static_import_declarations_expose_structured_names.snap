@@ -1,0 +1,50 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+import static java.util.Collections.emptyList;
+import static java.util.Collections.*;
+
+class StaticImports {}
+
+syntax:
+syntax:
+CompilationUnit
+  ImportDeclaration
+    ImportKw "import" @ 0..6 trailing=[Whitespace " "]
+    StaticKw "static" @ 7..13 trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "java" @ 14..18
+      Dot "." @ 18..19
+      Identifier "util" @ 19..23
+      Dot "." @ 23..24
+      Identifier "Collections" @ 24..35
+      Dot "." @ 35..36
+      Identifier "emptyList" @ 36..45
+    Semicolon ";" @ 45..46
+  ImportDeclaration
+    ImportKw "import" @ 47..53 leading=[Newline "\n"] trailing=[Whitespace " "]
+    StaticKw "static" @ 54..60 trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "java" @ 61..65
+      Dot "." @ 65..66
+      Identifier "util" @ 66..70
+      Dot "." @ 70..71
+      Identifier "Collections" @ 71..82
+    Dot "." @ 82..83
+    Star "*" @ 83..84
+    Semicolon ";" @ 84..85
+  ClassDeclaration
+    ClassKw "class" @ 87..92 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "StaticImports" @ 93..106 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 107..108
+      RBrace "}" @ 108..109
+  Eof "" @ 110..110 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

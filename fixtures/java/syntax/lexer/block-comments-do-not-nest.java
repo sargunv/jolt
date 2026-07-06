@@ -1,0 +1,1 @@
+int a; /* outer /* inner */ int b;

@@ -1,0 +1,67 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class IntersectionCast {
+    void method(Object value) {
+        Runnable runnable = (Runnable & AutoCloseable) value;
+    }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "IntersectionCast" @ 6..22 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 23..24
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 29..33 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "method" @ 34..40
+          LParen "(" @ 40..41
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "Object" @ 41..47 trailing=[Whitespace " "]
+              Identifier "value" @ 48..53
+          RParen ")" @ 53..54 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 55..56
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  Name
+                    Identifier "Runnable" @ 65..73 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "runnable" @ 74..82 trailing=[Whitespace " "]
+                    Assign "=" @ 83..84 trailing=[Whitespace " "]
+                    VariableInitializer
+                      CastExpression
+                        LParen "(" @ 85..86
+                        IntersectionType
+                          ClassType
+                            Name
+                              Identifier "Runnable" @ 86..94 trailing=[Whitespace " "]
+                          Amp "&" @ 95..96 trailing=[Whitespace " "]
+                          ClassType
+                            Name
+                              Identifier "AutoCloseable" @ 97..110
+                        RParen ")" @ 110..111 trailing=[Whitespace " "]
+                        NameExpression
+                          Identifier "value" @ 112..117
+              Semicolon ";" @ 117..118
+            RBrace "}" @ 123..124 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 125..126 leading=[Newline "\n"]
+  Eof "" @ 127..127 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

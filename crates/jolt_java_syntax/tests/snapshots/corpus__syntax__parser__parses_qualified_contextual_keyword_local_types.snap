@@ -1,0 +1,60 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class QualifiedContextualKeywordLocalTypes {
+    void method() {
+        var.Type x;
+        yield.Type y;
+    }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "QualifiedContextualKeywordLocalTypes" @ 6..42 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 43..44
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 49..53 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "method" @ 54..60
+          LParen "(" @ 60..61
+          RParen ")" @ 61..62 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 63..64
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "var" @ 73..76 leading=[Newline "\n", Whitespace "        "]
+                    Dot "." @ 76..77
+                    Identifier "Type" @ 77..81 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "x" @ 82..83
+              Semicolon ";" @ 83..84
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "yield" @ 93..98 leading=[Newline "\n", Whitespace "        "]
+                    Dot "." @ 98..99
+                    Identifier "Type" @ 99..103 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "y" @ 104..105
+              Semicolon ";" @ 105..106
+            RBrace "}" @ 111..112 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 113..114 leading=[Newline "\n"]
+  Eof "" @ 115..115 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

@@ -1,0 +1,42 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+\u12G4 \u \u123 \uu12
+
+syntax:
+syntax:
+CompilationUnit
+  ErrorNode
+    Unknown "\\" @ 0..1
+    Identifier "u12G4" @ 1..6 trailing=[Whitespace " "]
+    Unknown "\\" @ 7..8
+    Identifier "u" @ 8..9 trailing=[Whitespace " "]
+    Unknown "\\" @ 10..11
+    Identifier "u123" @ 11..15 trailing=[Whitespace " "]
+    Unknown "\\" @ 16..17
+    Identifier "uu12" @ 17..21
+  Eof "" @ 21..21
+
+diagnostics:
+  code=java.lex.malformed_unicode_escape severity=Error stage=Lexer range=0..2 message="malformed Unicode escape"
+  code=java.lex.malformed_unicode_escape severity=Error stage=Lexer range=7..9 message="malformed Unicode escape"
+  code=java.lex.malformed_unicode_escape severity=Error stage=Lexer range=10..12 message="malformed Unicode escape"
+  code=java.lex.malformed_unicode_escape severity=Error stage=Lexer range=16..19 message="malformed Unicode escape"
+  code=java.lex.unknown_character severity=Error stage=Lexer range=0..1 message="unknown character"
+  code=java.lex.unknown_character severity=Error stage=Lexer range=7..8 message="unknown character"
+  code=java.lex.unknown_character severity=Error stage=Lexer range=10..11 message="unknown character"
+  code=java.lex.unknown_character severity=Error stage=Lexer range=16..17 message="unknown character"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=0..1 message="unexpected token at top level"
+
+diagnostics:
+code=java.lex.malformed_unicode_escape severity=Error stage=Lexer range=Some(TextRange { start: TextSize(0), end: TextSize(2) }) message=malformed Unicode escape
+code=java.lex.malformed_unicode_escape severity=Error stage=Lexer range=Some(TextRange { start: TextSize(7), end: TextSize(9) }) message=malformed Unicode escape
+code=java.lex.malformed_unicode_escape severity=Error stage=Lexer range=Some(TextRange { start: TextSize(10), end: TextSize(12) }) message=malformed Unicode escape
+code=java.lex.malformed_unicode_escape severity=Error stage=Lexer range=Some(TextRange { start: TextSize(16), end: TextSize(19) }) message=malformed Unicode escape
+code=java.lex.unknown_character severity=Error stage=Lexer range=Some(TextRange { start: TextSize(0), end: TextSize(1) }) message=unknown character
+code=java.lex.unknown_character severity=Error stage=Lexer range=Some(TextRange { start: TextSize(7), end: TextSize(8) }) message=unknown character
+code=java.lex.unknown_character severity=Error stage=Lexer range=Some(TextRange { start: TextSize(10), end: TextSize(11) }) message=unknown character
+code=java.lex.unknown_character severity=Error stage=Lexer range=Some(TextRange { start: TextSize(16), end: TextSize(17) }) message=unknown character
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(1) }) message=unexpected token at top level

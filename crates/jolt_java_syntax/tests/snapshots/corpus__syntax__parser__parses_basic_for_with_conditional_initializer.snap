@@ -1,0 +1,94 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class BasicForConditionalInitializer {
+    void method(boolean flag, int n) {
+        int i;
+        for (i = flag ? 1 : 2; i < n; i++) {}
+    }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "BasicForConditionalInitializer" @ 6..36 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 37..38
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 43..47 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "method" @ 48..54
+          LParen "(" @ 54..55
+          FormalParameterList
+            FormalParameter
+              PrimitiveType
+                BooleanKw "boolean" @ 55..62 trailing=[Whitespace " "]
+              Identifier "flag" @ 63..67
+            Comma "," @ 67..68 trailing=[Whitespace " "]
+            FormalParameter
+              PrimitiveType
+                IntKw "int" @ 69..72 trailing=[Whitespace " "]
+              Identifier "n" @ 73..74
+          RParen ")" @ 74..75 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 76..77
+            BlockStatement
+              LocalVariableDeclaration
+                PrimitiveType
+                  IntKw "int" @ 86..89 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "i" @ 90..91
+              Semicolon ";" @ 91..92
+            BlockStatement
+              ForStatement
+                BasicForStatement
+                  ForKw "for" @ 101..104 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  LParen "(" @ 105..106
+                  ForInitializer
+                    StatementExpressionList
+                      AssignmentExpression
+                        NameExpression
+                          Identifier "i" @ 106..107 trailing=[Whitespace " "]
+                        Assign "=" @ 108..109 trailing=[Whitespace " "]
+                        ConditionalExpression
+                          NameExpression
+                            Identifier "flag" @ 110..114 trailing=[Whitespace " "]
+                          Question "?" @ 115..116 trailing=[Whitespace " "]
+                          LiteralExpression
+                            IntegerLiteral "1" @ 117..118 trailing=[Whitespace " "]
+                          Colon ":" @ 119..120 trailing=[Whitespace " "]
+                          LiteralExpression
+                            IntegerLiteral "2" @ 121..122
+                  Semicolon ";" @ 122..123 trailing=[Whitespace " "]
+                  BinaryExpression
+                    NameExpression
+                      Identifier "i" @ 124..125 trailing=[Whitespace " "]
+                    Lt "<" @ 126..127 trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "n" @ 128..129
+                  Semicolon ";" @ 129..130 trailing=[Whitespace " "]
+                  ForUpdate
+                    StatementExpressionList
+                      PostfixExpression
+                        NameExpression
+                          Identifier "i" @ 131..132
+                        PlusPlus "++" @ 132..134
+                  RParen ")" @ 134..135 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 136..137
+                    RBrace "}" @ 137..138
+            RBrace "}" @ 143..144 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 145..146 leading=[Newline "\n"]
+  Eof "" @ 147..147 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

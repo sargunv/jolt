@@ -1,0 +1,64 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class VarLambdaParameter {
+    void method() {
+        java.util.function.IntUnaryOperator identity = (var x) -> x;
+    }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "VarLambdaParameter" @ 6..24 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 25..26
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 31..35 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "method" @ 36..42
+          LParen "(" @ 42..43
+          RParen ")" @ 43..44 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 45..46
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 55..59 leading=[Newline "\n", Whitespace "        "]
+                    Dot "." @ 59..60
+                    Identifier "util" @ 60..64
+                    Dot "." @ 64..65
+                    Identifier "function" @ 65..73
+                    Dot "." @ 73..74
+                    Identifier "IntUnaryOperator" @ 74..90 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "identity" @ 91..99 trailing=[Whitespace " "]
+                    Assign "=" @ 100..101 trailing=[Whitespace " "]
+                    VariableInitializer
+                      LambdaExpression
+                        LParen "(" @ 102..103
+                        LambdaParameterList
+                          LambdaParameter
+                            Identifier "var" @ 103..106 trailing=[Whitespace " "]
+                            Identifier "x" @ 107..108
+                        RParen ")" @ 108..109 trailing=[Whitespace " "]
+                        Arrow "->" @ 110..112 trailing=[Whitespace " "]
+                        NameExpression
+                          Identifier "x" @ 113..114
+              Semicolon ";" @ 114..115
+            RBrace "}" @ 120..121 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 122..123 leading=[Newline "\n"]
+  Eof "" @ 124..124 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

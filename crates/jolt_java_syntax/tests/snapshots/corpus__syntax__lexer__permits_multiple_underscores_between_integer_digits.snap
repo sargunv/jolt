@@ -1,0 +1,21 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+1__2 0x1__2 0b1__0
+
+syntax:
+syntax:
+CompilationUnit
+  ErrorNode
+    IntegerLiteral "1__2" @ 0..4 trailing=[Whitespace " "]
+    IntegerLiteral "0x1__2" @ 5..11 trailing=[Whitespace " "]
+    IntegerLiteral "0b1__0" @ 12..18
+  Eof "" @ 18..18
+
+diagnostics:
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=0..4 message="unexpected token at top level"
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(4) }) message=unexpected token at top level

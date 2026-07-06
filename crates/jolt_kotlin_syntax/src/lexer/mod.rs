@@ -1,5 +1,3 @@
-#[cfg(test)]
-mod tests;
 mod token;
 
 use std::ops::Range;

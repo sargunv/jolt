@@ -1,0 +1,98 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class ForExpressionLists {
+    void method() {
+        int i;
+        int j;
+        for (i = 0, j = 0; i < 10; i++, j++) {}
+    }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "ForExpressionLists" @ 6..24 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 25..26
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 31..35 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "method" @ 36..42
+          LParen "(" @ 42..43
+          RParen ")" @ 43..44 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 45..46
+            BlockStatement
+              LocalVariableDeclaration
+                PrimitiveType
+                  IntKw "int" @ 55..58 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "i" @ 59..60
+              Semicolon ";" @ 60..61
+            BlockStatement
+              LocalVariableDeclaration
+                PrimitiveType
+                  IntKw "int" @ 70..73 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "j" @ 74..75
+              Semicolon ";" @ 75..76
+            BlockStatement
+              ForStatement
+                BasicForStatement
+                  ForKw "for" @ 85..88 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  LParen "(" @ 89..90
+                  ForInitializer
+                    StatementExpressionList
+                      AssignmentExpression
+                        NameExpression
+                          Identifier "i" @ 90..91 trailing=[Whitespace " "]
+                        Assign "=" @ 92..93 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "0" @ 94..95
+                      Comma "," @ 95..96 trailing=[Whitespace " "]
+                      AssignmentExpression
+                        NameExpression
+                          Identifier "j" @ 97..98 trailing=[Whitespace " "]
+                        Assign "=" @ 99..100 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "0" @ 101..102
+                  Semicolon ";" @ 102..103 trailing=[Whitespace " "]
+                  BinaryExpression
+                    NameExpression
+                      Identifier "i" @ 104..105 trailing=[Whitespace " "]
+                    Lt "<" @ 106..107 trailing=[Whitespace " "]
+                    LiteralExpression
+                      IntegerLiteral "10" @ 108..110
+                  Semicolon ";" @ 110..111 trailing=[Whitespace " "]
+                  ForUpdate
+                    StatementExpressionList
+                      PostfixExpression
+                        NameExpression
+                          Identifier "i" @ 112..113
+                        PlusPlus "++" @ 113..115
+                      Comma "," @ 115..116 trailing=[Whitespace " "]
+                      PostfixExpression
+                        NameExpression
+                          Identifier "j" @ 117..118
+                        PlusPlus "++" @ 118..120
+                  RParen ")" @ 120..121 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 122..123
+                    RBrace "}" @ 123..124
+            RBrace "}" @ 129..130 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 131..132 leading=[Newline "\n"]
+  Eof "" @ 133..133 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

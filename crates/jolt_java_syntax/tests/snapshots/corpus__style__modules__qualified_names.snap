@@ -1,0 +1,79 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+open module com . example . app {
+  provides com . example . Service with com . example . impl . ServiceImpl;
+  exports com . example . api to z . Module, a . Module;
+  requires java . base;
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ModuleDeclaration
+    Identifier "open" @ 0..4 trailing=[Whitespace " "]
+    Identifier "module" @ 5..11 trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "com" @ 12..15 trailing=[Whitespace " "]
+      Dot "." @ 16..17 trailing=[Whitespace " "]
+      Identifier "example" @ 18..25 trailing=[Whitespace " "]
+      Dot "." @ 26..27 trailing=[Whitespace " "]
+      Identifier "app" @ 28..31 trailing=[Whitespace " "]
+    LBrace "{" @ 32..33
+    ModuleDirective
+      ProvidesDirective
+        Identifier "provides" @ 36..44 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+        QualifiedName
+          Identifier "com" @ 45..48 trailing=[Whitespace " "]
+          Dot "." @ 49..50 trailing=[Whitespace " "]
+          Identifier "example" @ 51..58 trailing=[Whitespace " "]
+          Dot "." @ 59..60 trailing=[Whitespace " "]
+          Identifier "Service" @ 61..68 trailing=[Whitespace " "]
+        Identifier "with" @ 69..73 trailing=[Whitespace " "]
+        QualifiedName
+          Identifier "com" @ 74..77 trailing=[Whitespace " "]
+          Dot "." @ 78..79 trailing=[Whitespace " "]
+          Identifier "example" @ 80..87 trailing=[Whitespace " "]
+          Dot "." @ 88..89 trailing=[Whitespace " "]
+          Identifier "impl" @ 90..94 trailing=[Whitespace " "]
+          Dot "." @ 95..96 trailing=[Whitespace " "]
+          Identifier "ServiceImpl" @ 97..108
+        Semicolon ";" @ 108..109
+    ModuleDirective
+      ExportsDirective
+        Identifier "exports" @ 112..119 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+        QualifiedName
+          Identifier "com" @ 120..123 trailing=[Whitespace " "]
+          Dot "." @ 124..125 trailing=[Whitespace " "]
+          Identifier "example" @ 126..133 trailing=[Whitespace " "]
+          Dot "." @ 134..135 trailing=[Whitespace " "]
+          Identifier "api" @ 136..139 trailing=[Whitespace " "]
+        Identifier "to" @ 140..142 trailing=[Whitespace " "]
+        QualifiedName
+          Identifier "z" @ 143..144 trailing=[Whitespace " "]
+          Dot "." @ 145..146 trailing=[Whitespace " "]
+          Identifier "Module" @ 147..153
+        Comma "," @ 153..154 trailing=[Whitespace " "]
+        QualifiedName
+          Identifier "a" @ 155..156 trailing=[Whitespace " "]
+          Dot "." @ 157..158 trailing=[Whitespace " "]
+          Identifier "Module" @ 159..165
+        Semicolon ";" @ 165..166
+    ModuleDirective
+      RequiresDirective
+        Identifier "requires" @ 169..177 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+        QualifiedName
+          Identifier "java" @ 178..182 trailing=[Whitespace " "]
+          Dot "." @ 183..184 trailing=[Whitespace " "]
+          Identifier "base" @ 185..189
+        Semicolon ";" @ 189..190
+    RBrace "}" @ 191..192 leading=[Newline "\n"]
+  Eof "" @ 193..193 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

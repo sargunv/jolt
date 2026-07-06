@@ -1,0 +1,171 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+@Flag( /* JOLT-TRIVIA:annotation-open */ value = "type" /* JOLT-TRIVIA:annotation-value */)
+class TypeTrivia<
+    T /* JOLT-TRIVIA:type-param-name */ extends Comparable<
+            /* JOLT-TRIVIA:nested-type-arg-leading */ T /* JOLT-TRIVIA:nested-type-arg-trailing */>
+        & java.io.Serializable /* JOLT-TRIVIA:second-bound */> {
+  java.util.Map<
+          /* JOLT-TRIVIA:map-key-leading */ String /* JOLT-TRIVIA:map-key-trailing */,
+          java.util.List<Integer /* JOLT-TRIVIA:list-arg-trailing */> /* JOLT-TRIVIA:map-value-trailing */>
+      values;
+
+  <U /* JOLT-TRIVIA:method-type-param */> U convert(U value)
+      throws /* JOLT-TRIVIA:throws-leading */ java.io.IOException /* JOLT-TRIVIA:throws-trailing */ {
+    return value;
+  }
+}
+
+@interface Flag {
+  String value();
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ModifierList
+      Annotation
+        At "@" @ 0..1
+        Name
+          Identifier "Flag" @ 1..5
+        AnnotationArgumentList
+          LParen "(" @ 5..6 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:annotation-open */", Whitespace " "]
+          AnnotationElementList
+            AnnotationElementValuePair
+              Identifier "value" @ 41..46 trailing=[Whitespace " "]
+              Assign "=" @ 47..48 trailing=[Whitespace " "]
+              AnnotationElementValue
+                LiteralExpression
+                  StringLiteral "\"type\"" @ 49..55 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:annotation-value */"]
+          RParen ")" @ 90..91
+    ClassKw "class" @ 92..97 leading=[Newline "\n"] trailing=[Whitespace " "]
+    Identifier "TypeTrivia" @ 98..108
+    TypeParameterList
+      Lt "<" @ 108..109
+      TypeParameter
+        Identifier "T" @ 114..115 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:type-param-name */", Whitespace " "]
+        TypeBoundList
+          ExtendsKw "extends" @ 150..157 trailing=[Whitespace " "]
+          IntersectionType
+            ClassType
+              Name
+                Identifier "Comparable" @ 158..168
+              TypeArgumentList
+                Lt "<" @ 168..169
+                TypeArgument
+                  ClassType
+                    Name
+                      Identifier "T" @ 224..225 leading=[Newline "\n", Whitespace "            ", BlockComment "/* JOLT-TRIVIA:nested-type-arg-leading */", Whitespace " "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:nested-type-arg-trailing */"]
+                Gt ">" @ 268..269
+            Amp "&" @ 278..279 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+            ClassType
+              QualifiedName
+                Identifier "java" @ 280..284
+                Dot "." @ 284..285
+                Identifier "io" @ 285..287
+                Dot "." @ 287..288
+                Identifier "Serializable" @ 288..300 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:second-bound */"]
+      Gt ">" @ 331..332 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 333..334
+      ClassBodyDeclaration
+        FieldDeclaration
+          ClassType
+            QualifiedName
+              Identifier "java" @ 337..341 leading=[Newline "\n", Whitespace "  "]
+              Dot "." @ 341..342
+              Identifier "util" @ 342..346
+              Dot "." @ 346..347
+              Identifier "Map" @ 347..350
+            TypeArgumentList
+              Lt "<" @ 350..351
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "String" @ 396..402 leading=[Newline "\n", Whitespace "          ", BlockComment "/* JOLT-TRIVIA:map-key-leading */", Whitespace " "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:map-key-trailing */"]
+              Comma "," @ 437..438
+              TypeArgument
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 449..453 leading=[Newline "\n", Whitespace "          "]
+                    Dot "." @ 453..454
+                    Identifier "util" @ 454..458
+                    Dot "." @ 458..459
+                    Identifier "List" @ 459..463
+                  TypeArgumentList
+                    Lt "<" @ 463..464
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "Integer" @ 464..471 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:list-arg-trailing */"]
+                    Gt ">" @ 507..508 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:map-value-trailing */"]
+              Gt ">" @ 545..546
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "values" @ 553..559 leading=[Newline "\n", Whitespace "      "]
+          Semicolon ";" @ 559..560
+      ClassBodyDeclaration
+        MethodDeclaration
+          TypeParameterList
+            Lt "<" @ 564..565 leading=[Newline "\n", Newline "\n", Whitespace "  "]
+            TypeParameter
+              Identifier "U" @ 565..566 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:method-type-param */"]
+            Gt ">" @ 602..603 trailing=[Whitespace " "]
+          ClassType
+            Name
+              Identifier "U" @ 604..605 trailing=[Whitespace " "]
+          Identifier "convert" @ 606..613
+          LParen "(" @ 613..614
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "U" @ 614..615 trailing=[Whitespace " "]
+              Identifier "value" @ 616..621
+          RParen ")" @ 621..622
+          ThrowsClause
+            ThrowsKw "throws" @ 629..635 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:throws-leading */", Whitespace " "]
+            ClassType
+              QualifiedName
+                Identifier "java" @ 669..673
+                Dot "." @ 673..674
+                Identifier "io" @ 674..676
+                Dot "." @ 676..677
+                Identifier "IOException" @ 677..688 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:throws-trailing */", Whitespace " "]
+          Block
+            LBrace "{" @ 723..724
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 729..735 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "value" @ 736..741
+                Semicolon ";" @ 741..742
+            RBrace "}" @ 745..746 leading=[Newline "\n", Whitespace "  "]
+      RBrace "}" @ 747..748 leading=[Newline "\n"]
+  AnnotationInterfaceDeclaration
+    At "@" @ 750..751 leading=[Newline "\n", Newline "\n"]
+    InterfaceKw "interface" @ 751..760 trailing=[Whitespace " "]
+    Identifier "Flag" @ 761..765 trailing=[Whitespace " "]
+    AnnotationInterfaceBody
+      LBrace "{" @ 766..767
+      AnnotationElementList
+        AnnotationElementDeclaration
+          ClassType
+            Name
+              Identifier "String" @ 770..776 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          Identifier "value" @ 777..782
+          LParen "(" @ 782..783
+          RParen ")" @ 783..784
+          Semicolon ";" @ 784..785
+      RBrace "}" @ 786..787 leading=[Newline "\n"]
+  Eof "" @ 788..788 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

@@ -1,0 +1,17 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+
+
+syntax:
+syntax:
+CompilationUnit
+  Eof "" @ 1..1 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

@@ -1,0 +1,57 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class UnqualifiedYield {
+    void method() {
+        yield();
+    }
+
+    void yield() {}
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "UnqualifiedYield" @ 6..22 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 23..24
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 29..33 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "method" @ 34..40
+          LParen "(" @ 40..41
+          RParen ")" @ 41..42 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 43..44
+            BlockStatement
+              ExpressionStatement
+                ErrorNode
+                  Identifier "yield" @ 53..58 leading=[Newline "\n", Whitespace "        "]
+                  ArgumentList
+                    LParen "(" @ 58..59
+                    RParen ")" @ 59..60
+                Semicolon ";" @ 60..61
+            RBrace "}" @ 66..67 leading=[Newline "\n", Whitespace "    "]
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 73..77 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "yield" @ 78..83
+          LParen "(" @ 83..84
+          RParen ")" @ 84..85 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 86..87
+            RBrace "}" @ 87..88
+      RBrace "}" @ 89..90 leading=[Newline "\n"]
+  Eof "" @ 91..91 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.unqualified_yield_method_invocation severity=Error stage=Parser range=53..58 message="unqualified `yield` method invocation is not allowed"
+
+diagnostics:
+code=java.parse.unqualified_yield_method_invocation severity=Error stage=Parser range=Some(TextRange { start: TextSize(53), end: TextSize(58) }) message=unqualified `yield` method invocation is not allowed

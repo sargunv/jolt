@@ -1,0 +1,34 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+import java.util.List;
+
+class OrdinaryImport {}
+
+syntax:
+syntax:
+CompilationUnit
+  ImportDeclaration
+    ImportKw "import" @ 0..6 trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "java" @ 7..11
+      Dot "." @ 11..12
+      Identifier "util" @ 12..16
+      Dot "." @ 16..17
+      Identifier "List" @ 17..21
+    Semicolon ";" @ 21..22
+  ClassDeclaration
+    ClassKw "class" @ 24..29 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "OrdinaryImport" @ 30..44 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 45..46
+      RBrace "}" @ 46..47
+  Eof "" @ 48..48 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

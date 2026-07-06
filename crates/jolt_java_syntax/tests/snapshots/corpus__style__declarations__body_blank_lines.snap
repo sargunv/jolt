@@ -1,0 +1,284 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class Groups {
+  int first;
+
+
+  int second;
+  int third;
+  Groups() {}
+  Groups(int value) {}
+  static { initialize(); }
+  { warm(); }
+  void a() {}
+  void b() {}
+  class Nested {}
+  interface NestedApi {}
+}
+record Range(int start, int end) {
+  public Range { if (end < start) throw new IllegalArgumentException(); }
+}
+interface Api {
+  int VERSION = 1;
+  String name();
+  String label();
+  class Helper {}
+}
+@interface Contract {
+  String value();
+  boolean enabled();
+  class Helper {}
+  @interface Nested {}
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "Groups" @ 6..12 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 13..14
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 17..20 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "first" @ 21..26
+          Semicolon ";" @ 26..27
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 32..35 leading=[Newline "\n", Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "second" @ 36..42
+          Semicolon ";" @ 42..43
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 46..49 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "third" @ 50..55
+          Semicolon ";" @ 55..56
+      ClassBodyDeclaration
+        ConstructorDeclaration
+          Identifier "Groups" @ 59..65 leading=[Newline "\n", Whitespace "  "]
+          LParen "(" @ 65..66
+          RParen ")" @ 66..67 trailing=[Whitespace " "]
+          ConstructorBody
+            LBrace "{" @ 68..69
+            RBrace "}" @ 69..70
+      ClassBodyDeclaration
+        ConstructorDeclaration
+          Identifier "Groups" @ 73..79 leading=[Newline "\n", Whitespace "  "]
+          LParen "(" @ 79..80
+          FormalParameterList
+            FormalParameter
+              PrimitiveType
+                IntKw "int" @ 80..83 trailing=[Whitespace " "]
+              Identifier "value" @ 84..89
+          RParen ")" @ 89..90 trailing=[Whitespace " "]
+          ConstructorBody
+            LBrace "{" @ 91..92
+            RBrace "}" @ 92..93
+      ClassBodyDeclaration
+        StaticInitializer
+          StaticKw "static" @ 96..102 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 103..104 trailing=[Whitespace " "]
+            BlockStatement
+              ExpressionStatement
+                MethodInvocationExpression
+                  NameExpression
+                    Identifier "initialize" @ 105..115
+                  ArgumentList
+                    LParen "(" @ 115..116
+                    RParen ")" @ 116..117
+                Semicolon ";" @ 117..118 trailing=[Whitespace " "]
+            RBrace "}" @ 119..120
+      ClassBodyDeclaration
+        InstanceInitializer
+          Block
+            LBrace "{" @ 123..124 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            BlockStatement
+              ExpressionStatement
+                MethodInvocationExpression
+                  NameExpression
+                    Identifier "warm" @ 125..129
+                  ArgumentList
+                    LParen "(" @ 129..130
+                    RParen ")" @ 130..131
+                Semicolon ";" @ 131..132 trailing=[Whitespace " "]
+            RBrace "}" @ 133..134
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 137..141 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          Identifier "a" @ 142..143
+          LParen "(" @ 143..144
+          RParen ")" @ 144..145 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 146..147
+            RBrace "}" @ 147..148
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 151..155 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          Identifier "b" @ 156..157
+          LParen "(" @ 157..158
+          RParen ")" @ 158..159 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 160..161
+            RBrace "}" @ 161..162
+      ClassBodyDeclaration
+        ClassDeclaration
+          ClassKw "class" @ 165..170 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          Identifier "Nested" @ 171..177 trailing=[Whitespace " "]
+          ClassBody
+            LBrace "{" @ 178..179
+            RBrace "}" @ 179..180
+      ClassBodyDeclaration
+        InterfaceDeclaration
+          InterfaceKw "interface" @ 183..192 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          Identifier "NestedApi" @ 193..202 trailing=[Whitespace " "]
+          InterfaceBody
+            LBrace "{" @ 203..204
+            RBrace "}" @ 204..205
+      RBrace "}" @ 206..207 leading=[Newline "\n"]
+  RecordDeclaration
+    Identifier "record" @ 208..214 leading=[Newline "\n"] trailing=[Whitespace " "]
+    Identifier "Range" @ 215..220
+    LParen "(" @ 220..221
+    RecordComponentList
+      RecordComponent
+        PrimitiveType
+          IntKw "int" @ 221..224 trailing=[Whitespace " "]
+        Identifier "start" @ 225..230
+      Comma "," @ 230..231 trailing=[Whitespace " "]
+      RecordComponent
+        PrimitiveType
+          IntKw "int" @ 232..235 trailing=[Whitespace " "]
+        Identifier "end" @ 236..239
+    RParen ")" @ 239..240 trailing=[Whitespace " "]
+    RecordBody
+      LBrace "{" @ 241..242
+      ClassBodyDeclaration
+        CompactConstructorDeclaration
+          ModifierList
+            PublicKw "public" @ 245..251 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          Identifier "Range" @ 252..257 trailing=[Whitespace " "]
+          ConstructorBody
+            LBrace "{" @ 258..259 trailing=[Whitespace " "]
+            BlockStatement
+              IfStatement
+                IfKw "if" @ 260..262 trailing=[Whitespace " "]
+                LParen "(" @ 263..264
+                BinaryExpression
+                  NameExpression
+                    Identifier "end" @ 264..267 trailing=[Whitespace " "]
+                  Lt "<" @ 268..269 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "start" @ 270..275
+                RParen ")" @ 275..276 trailing=[Whitespace " "]
+                ThrowStatement
+                  ThrowKw "throw" @ 277..282 trailing=[Whitespace " "]
+                  ObjectCreationExpression
+                    NewKw "new" @ 283..286 trailing=[Whitespace " "]
+                    ClassType
+                      Name
+                        Identifier "IllegalArgumentException" @ 287..311
+                    ArgumentList
+                      LParen "(" @ 311..312
+                      RParen ")" @ 312..313
+                  Semicolon ";" @ 313..314 trailing=[Whitespace " "]
+            RBrace "}" @ 315..316
+      RBrace "}" @ 317..318 leading=[Newline "\n"]
+  InterfaceDeclaration
+    InterfaceKw "interface" @ 319..328 leading=[Newline "\n"] trailing=[Whitespace " "]
+    Identifier "Api" @ 329..332 trailing=[Whitespace " "]
+    InterfaceBody
+      LBrace "{" @ 333..334
+      FieldDeclaration
+        PrimitiveType
+          IntKw "int" @ 337..340 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+        VariableDeclaratorList
+          VariableDeclarator
+            Identifier "VERSION" @ 341..348 trailing=[Whitespace " "]
+            Assign "=" @ 349..350 trailing=[Whitespace " "]
+            VariableInitializer
+              LiteralExpression
+                IntegerLiteral "1" @ 351..352
+        Semicolon ";" @ 352..353
+      MethodDeclaration
+        ClassType
+          Name
+            Identifier "String" @ 356..362 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+        Identifier "name" @ 363..367
+        LParen "(" @ 367..368
+        RParen ")" @ 368..369
+        Semicolon ";" @ 369..370
+      MethodDeclaration
+        ClassType
+          Name
+            Identifier "String" @ 373..379 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+        Identifier "label" @ 380..385
+        LParen "(" @ 385..386
+        RParen ")" @ 386..387
+        Semicolon ";" @ 387..388
+      ClassDeclaration
+        ClassKw "class" @ 391..396 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+        Identifier "Helper" @ 397..403 trailing=[Whitespace " "]
+        ClassBody
+          LBrace "{" @ 404..405
+          RBrace "}" @ 405..406
+      RBrace "}" @ 407..408 leading=[Newline "\n"]
+  AnnotationInterfaceDeclaration
+    At "@" @ 409..410 leading=[Newline "\n"]
+    InterfaceKw "interface" @ 410..419 trailing=[Whitespace " "]
+    Identifier "Contract" @ 420..428 trailing=[Whitespace " "]
+    AnnotationInterfaceBody
+      LBrace "{" @ 429..430
+      AnnotationElementList
+        AnnotationElementDeclaration
+          ClassType
+            Name
+              Identifier "String" @ 433..439 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          Identifier "value" @ 440..445
+          LParen "(" @ 445..446
+          RParen ")" @ 446..447
+          Semicolon ";" @ 447..448
+        AnnotationElementDeclaration
+          PrimitiveType
+            BooleanKw "boolean" @ 451..458 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          Identifier "enabled" @ 459..466
+          LParen "(" @ 466..467
+          RParen ")" @ 467..468
+          Semicolon ";" @ 468..469
+        ClassDeclaration
+          ClassKw "class" @ 472..477 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          Identifier "Helper" @ 478..484 trailing=[Whitespace " "]
+          ClassBody
+            LBrace "{" @ 485..486
+            RBrace "}" @ 486..487
+        AnnotationInterfaceDeclaration
+          At "@" @ 490..491 leading=[Newline "\n", Whitespace "  "]
+          InterfaceKw "interface" @ 491..500 trailing=[Whitespace " "]
+          Identifier "Nested" @ 501..507 trailing=[Whitespace " "]
+          AnnotationInterfaceBody
+            LBrace "{" @ 508..509
+            AnnotationElementList
+            RBrace "}" @ 509..510
+      RBrace "}" @ 511..512 leading=[Newline "\n"]
+  Eof "" @ 513..513 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

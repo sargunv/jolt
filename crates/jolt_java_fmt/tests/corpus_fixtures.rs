@@ -1,78 +1,76 @@
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::collections::BTreeMap;
+use std::fmt::Write as _;
+use std::path::PathBuf;
 
 use jolt_diagnostics::DiagnosticStage;
-use jolt_java_fmt::JavaFormatOptions;
-
-mod support;
+use jolt_java_fmt::{JavaFormatOptions, JavaFormatSinkResult, format_source_to_sink};
 use jolt_java_syntax::parse_compilation_unit;
-use support::format_source;
+use jolt_test_support::{StringSink, collect_java_files, read_to_string, workspace_root};
 
 #[test]
 fn imported_fixture_inputs_format_idempotently_and_parse() {
-    assert_corpus("google-java-format", 209);
-    assert_corpus("palantir-java-format", 226);
-    assert_corpus("prettier-java", 86);
+    let google_summary = assert_corpus("google-java-format", 209);
+    let palantir_summary = assert_corpus("palantir-java-format", 226);
+    let prettier_summary = assert_corpus("prettier-java", 86);
+
+    insta::assert_snapshot!(
+        "google_java_format_formatter_summary",
+        google_summary.render()
+    );
+    insta::assert_snapshot!(
+        "palantir_java_format_formatter_summary",
+        palantir_summary.render()
+    );
+    insta::assert_snapshot!("prettier_java_formatter_summary", prettier_summary.render());
 }
 
-fn assert_corpus(suite: &str, expected_files: usize) {
+fn assert_corpus(suite: &str, expected_files: usize) -> ImportedFormatterSummary {
     let root = fixture_root(suite);
-    let mut files = Vec::new();
-    collect_java_files(&root, &mut files);
+    let files = collect_java_files(&root);
 
-    files.sort();
     assert_eq!(
         files.len(),
         expected_files,
         "expected the pinned {suite} Java input fixture corpus"
     );
 
+    let mut summary = ImportedFormatterSummary::new(suite, files.len());
+    let options = JavaFormatOptions::default();
+
     for path in files {
-        let source = fs::read_to_string(&path)
-            .unwrap_or_else(|error| panic!("failed to read {}: {error}", path.display()));
-        let first = format_source(&source, &JavaFormatOptions::default());
+        let source = read_to_string(&path);
+        let parse = parse_compilation_unit(&source);
+        let syntax = parse
+            .syntax()
+            .unwrap_or_else(|| panic!("parser aborted in {}", path.display()));
+        if syntax.source_text() != source {
+            summary.reconstructed_changed += 1;
+        }
+        summary.record_diagnostics(parse.diagnostics());
 
-        assert!(
-            first
-                .diagnostics
-                .iter()
-                .all(|diagnostic| diagnostic.stage != DiagnosticStage::Formatter),
-            "formatter diagnostic(s) in {}: {:#?}",
-            path.display(),
-            first.diagnostics
-        );
-
-        if allows_syntax_diagnostics(&path) {
-            assert!(
-                first.diagnostics.iter().any(|diagnostic| matches!(
-                    diagnostic.stage,
-                    DiagnosticStage::Lexer | DiagnosticStage::Parser
-                )),
-                "allowlisted syntax diagnostic fixture parsed cleanly and should be removed from the allowlist: {}",
-                path.display()
-            );
-            assert!(
-                first.formatted_source.is_none(),
-                "invalid syntax fixture should not produce formatted output in {}",
-                path.display()
-            );
+        if !parse.diagnostics().is_empty() {
+            summary.syntax_blocked += 1;
             continue;
         }
 
-        assert!(
-            first.diagnostics.is_empty(),
-            "diagnostic(s) in {}: {:#?}",
-            path.display(),
-            first.diagnostics
-        );
+        let formatted = match format_source(&source, &options) {
+            Ok(formatted) => formatted,
+            Err(diagnostics) => {
+                assert!(
+                    diagnostics
+                        .iter()
+                        .all(|diagnostic| diagnostic.stage == DiagnosticStage::Formatter),
+                    "non-formatter diagnostic(s) after clean parse in {}: {diagnostics:#?}",
+                    path.display()
+                );
+                summary.record_diagnostics(&diagnostics);
+                summary.formatter_blocked += 1;
+                continue;
+            }
+        };
+        summary.formatted += 1;
 
-        let formatted = first
-            .formatted_source
-            .as_deref()
-            .unwrap_or_else(|| panic!("formatter produced no output for {}", path.display()));
-        insta::assert_snapshot!(snapshot_name(&path), formatted);
-
-        let formatted_parse = parse_compilation_unit(formatted);
+        let formatted_parse = parse_compilation_unit(&formatted);
         assert!(
             formatted_parse.diagnostics().is_empty(),
             "formatted output did not parse cleanly for {}: {:#?}\n{}",
@@ -86,118 +84,107 @@ fn assert_corpus(suite: &str, expected_files: usize) {
             path.display()
         );
 
-        let formatted_again = format_source(formatted, &JavaFormatOptions::default());
-        assert!(
-            formatted_again.diagnostics.is_empty(),
-            "formatted output was not accepted by formatter for {}: {:#?}",
-            path.display(),
-            formatted_again.diagnostics
-        );
+        let formatted_again = format_source(&formatted, &options).unwrap_or_else(|diagnostics| {
+            panic!(
+                "formatted output was not accepted by formatter for {}: {diagnostics:#?}",
+                path.display()
+            )
+        });
         assert_eq!(
-            formatted_again.formatted_source.as_deref(),
-            Some(formatted),
+            formatted_again,
+            formatted,
             "formatted output was not idempotent for {}",
             path.display()
         );
 
-        let repeated = format_source(&source, &JavaFormatOptions::default());
-        assert!(
-            repeated.diagnostics.is_empty(),
-            "repeated formatting produced diagnostic(s) for {}: {:#?}",
-            path.display(),
-            repeated.diagnostics
-        );
+        let repeated = format_source(&source, &options).unwrap_or_else(|diagnostics| {
+            panic!(
+                "repeated formatting produced diagnostic(s) for {}: {diagnostics:#?}",
+                path.display()
+            )
+        });
         assert_eq!(
-            repeated.formatted_source.as_deref(),
-            Some(formatted),
+            repeated,
+            formatted,
             "formatting was not deterministic for {}",
             path.display()
         );
     }
+
+    summary
 }
 
-fn allows_syntax_diagnostics(path: &Path) -> bool {
-    [
-        // Intentionally invalid upstream Java: explicit constructor
-        // invocations appear outside their valid constructor-body position.
-        "google-java-format/input/B26952926.java",
-        "palantir-java-format/input/B26952926.java",
-        "palantir-java-format/input/palantir-expression-lambda-2.java",
-
-        // Prettier expression-focused fixtures contain standalone expressions
-        // that are not Java statement expressions.
-        "prettier-java/input/binary_expressions/operator-position-end/operator-position-end.java",
-        "prettier-java/input/binary_expressions/operator-position-start/operator-position-start.java",
-        "prettier-java/input/comments/expression/expression.java",
-        "prettier-java/input/conditional-expression/spaces/spaces.java",
-        "prettier-java/input/conditional-expression/tabs/tabs.java",
-        "prettier-java/input/expressions/expressions.java",
-        "prettier-java/input/member_chain/member_chain.java",
-        "prettier-java/input/try_catch/try_catch.java",
-
-        // Parser backlog plus fixture fragments: these lambda fixtures mix
-        // standalone lambda snippets with Java 14 switch-rule lambda results;
-        // one case also uses a Java 21 pattern-switch guard.
-        "prettier-java/input/lambda/arrow-parens-always/arrow-parens-always.java",
-        "prettier-java/input/lambda/arrow-parens-avoid/arrow-parens-avoid.java",
-
-        // Intentionally invalid upstream Java: extra semicolons split the
-        // import section before later import declarations.
-        "prettier-java/input/package_and_imports/classWithMixedImports/classWithMixedImports.java",
-        "prettier-java/input/package_and_imports/classWithOnlyNonStaticImports/classWithOnlyNonStaticImports.java",
-        "prettier-java/input/package_and_imports/classWithOnlyStaticImports/classWithOnlyStaticImports.java",
-        "prettier-java/input/package_and_imports/moduleWithMixedImports/moduleWithMixedImports.java",
-        "prettier-java/input/package_and_imports/moduleWithOnlyNonStaticImports/moduleWithOnlyNonStaticImports.java",
-        "prettier-java/input/package_and_imports/moduleWithOnlyStaticImports/moduleWithOnlyStaticImports.java",
-
-        // Unsupported Java 21/22-preview syntax: string templates are not
-        // tokenized or parsed by the Java syntax crate yet.
-        "prettier-java/input/template-expression/template-expression.java",
-
-        // Intentionally invalid upstream Java: unqualified `yield` method
-        // invocations are rejected by the Java grammar.
-        "prettier-java/input/yield-statement/yield-statement.java",
-    ]
-    .iter()
-    .any(|suffix| path.ends_with(suffix))
-}
-
-fn snapshot_name(path: &Path) -> String {
-    let fixture_root = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../..")
-        .join("tools/import/.imports");
-    path.strip_prefix(&fixture_root)
-        .unwrap_or(path)
-        .with_extension("")
-        .components()
-        .map(|component| component.as_os_str().to_string_lossy())
-        .collect::<Vec<_>>()
-        .join("__")
+fn format_source(
+    source: &str,
+    options: &JavaFormatOptions,
+) -> Result<String, Vec<jolt_diagnostics::Diagnostic>> {
+    let mut sink = StringSink::default();
+    match format_source_to_sink(source, options, &mut sink) {
+        JavaFormatSinkResult::Complete | JavaFormatSinkResult::Halted => Ok(sink.into_string()),
+        JavaFormatSinkResult::Blocked { diagnostics } => Err(diagnostics),
+        JavaFormatSinkResult::SinkError { error } => match error {},
+    }
 }
 
 fn fixture_root(suite: &str) -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../..")
+    workspace_root(env!("CARGO_MANIFEST_DIR"))
         .join("tools/import/.imports")
         .join(suite)
         .join("input")
 }
 
-fn collect_java_files(root: &Path, files: &mut Vec<PathBuf>) {
-    for entry in fs::read_dir(root).unwrap_or_else(|error| {
-        panic!(
-            "failed to read fixture directory {}: {error}",
-            root.display()
-        )
-    }) {
-        let path = entry.expect("valid directory entry").path();
-        if path.is_dir() {
-            collect_java_files(&path, files);
-        } else if path
-            .extension()
-            .is_some_and(|extension| extension == "java")
-        {
-            files.push(path);
+struct ImportedFormatterSummary {
+    suite: String,
+    files: usize,
+    formatted: usize,
+    syntax_blocked: usize,
+    formatter_blocked: usize,
+    reconstructed_changed: usize,
+    diagnostics: BTreeMap<String, usize>,
+}
+
+impl ImportedFormatterSummary {
+    fn new(suite: &str, files: usize) -> Self {
+        Self {
+            suite: suite.to_owned(),
+            files,
+            formatted: 0,
+            syntax_blocked: 0,
+            formatter_blocked: 0,
+            reconstructed_changed: 0,
+            diagnostics: BTreeMap::new(),
         }
+    }
+
+    fn record_diagnostics(&mut self, diagnostics: &[jolt_diagnostics::Diagnostic]) {
+        for diagnostic in diagnostics {
+            let key = format!("{:?}:{}", diagnostic.stage, diagnostic.code.as_str());
+            *self.diagnostics.entry(key).or_default() += 1;
+        }
+    }
+
+    fn render(&self) -> String {
+        let mut output = String::new();
+        writeln!(&mut output, "suite: {}", self.suite).expect("write summary");
+        writeln!(&mut output, "files: {}", self.files).expect("write summary");
+        writeln!(&mut output, "formatted: {}", self.formatted).expect("write summary");
+        writeln!(&mut output, "syntax blocked: {}", self.syntax_blocked).expect("write summary");
+        writeln!(&mut output, "formatter blocked: {}", self.formatter_blocked)
+            .expect("write summary");
+        writeln!(
+            &mut output,
+            "reconstructed changed: {}",
+            self.reconstructed_changed
+        )
+        .expect("write summary");
+        output.push_str("\ndiagnostics:\n");
+        if self.diagnostics.is_empty() {
+            output.push_str("  <none>: 0\n");
+        } else {
+            for (kind, count) in &self.diagnostics {
+                writeln!(&mut output, "  {kind}: {count}").expect("write summary");
+            }
+        }
+        output
     }
 }

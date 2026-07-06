@@ -1,0 +1,28 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+"hello\
+world"
+
+syntax:
+syntax:
+CompilationUnit
+  ErrorNode
+    StringLiteral "\"hello\\" @ 0..7
+    Identifier "world" @ 8..13 leading=[Newline "\n"]
+    StringLiteral "\"" @ 13..14
+  Eof "" @ 14..14
+
+diagnostics:
+  code=java.lex.invalid_escape_sequence severity=Error stage=Lexer range=7..8 message="invalid escape sequence"
+  code=java.lex.unterminated_string_literal severity=Error stage=Lexer range=0..7 message="unterminated string literal"
+  code=java.lex.unterminated_string_literal severity=Error stage=Lexer range=13..14 message="unterminated string literal"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=0..7 message="unexpected token at top level"
+
+diagnostics:
+code=java.lex.invalid_escape_sequence severity=Error stage=Lexer range=Some(TextRange { start: TextSize(7), end: TextSize(8) }) message=invalid escape sequence
+code=java.lex.unterminated_string_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(0), end: TextSize(7) }) message=unterminated string literal
+code=java.lex.unterminated_string_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(13), end: TextSize(14) }) message=unterminated string literal
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(7) }) message=unexpected token at top level

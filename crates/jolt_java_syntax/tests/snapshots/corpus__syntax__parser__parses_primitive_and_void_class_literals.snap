@@ -1,0 +1,85 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class PrimitiveClassLiterals {
+    void method() {
+        Object intClass = int.class;
+        Object booleanClass = boolean.class;
+        Object voidClass = void.class;
+    }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "PrimitiveClassLiterals" @ 6..28 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 29..30
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 35..39 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "method" @ 40..46
+          LParen "(" @ 46..47
+          RParen ")" @ 47..48 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 49..50
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  Name
+                    Identifier "Object" @ 59..65 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "intClass" @ 66..74 trailing=[Whitespace " "]
+                    Assign "=" @ 75..76 trailing=[Whitespace " "]
+                    VariableInitializer
+                      ClassLiteralExpression
+                        IntKw "int" @ 77..80
+                        Dot "." @ 80..81
+                        ClassKw "class" @ 81..86
+              Semicolon ";" @ 86..87
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  Name
+                    Identifier "Object" @ 96..102 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "booleanClass" @ 103..115 trailing=[Whitespace " "]
+                    Assign "=" @ 116..117 trailing=[Whitespace " "]
+                    VariableInitializer
+                      ClassLiteralExpression
+                        BooleanKw "boolean" @ 118..125
+                        Dot "." @ 125..126
+                        ClassKw "class" @ 126..131
+              Semicolon ";" @ 131..132
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  Name
+                    Identifier "Object" @ 141..147 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "voidClass" @ 148..157 trailing=[Whitespace " "]
+                    Assign "=" @ 158..159 trailing=[Whitespace " "]
+                    VariableInitializer
+                      ClassLiteralExpression
+                        VoidType
+                          VoidKw "void" @ 160..164
+                        Dot "." @ 164..165
+                        ClassKw "class" @ 165..170
+              Semicolon ";" @ 170..171
+            RBrace "}" @ 176..177 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 178..179 leading=[Newline "\n"]
+  Eof "" @ 180..180 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

@@ -1,0 +1,100 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+exports opens requires uses yield module permits sealed var non-sealed provides to when open record transitive with varfilename yieldx non-sealedclass
+
+syntax:
+syntax:
+CompilationUnit
+  FieldDeclaration
+    ClassType
+      Name
+        Identifier "exports" @ 0..7 trailing=[Whitespace " "]
+    VariableDeclaratorList
+      VariableDeclarator
+        Identifier "opens" @ 8..13 trailing=[Whitespace " "]
+  FieldDeclaration
+    ClassType
+      Name
+        Identifier "requires" @ 14..22 trailing=[Whitespace " "]
+    VariableDeclaratorList
+      VariableDeclarator
+        Identifier "uses" @ 23..27 trailing=[Whitespace " "]
+  FieldDeclaration
+    ClassType
+      Name
+        Identifier "yield" @ 28..33 trailing=[Whitespace " "]
+    VariableDeclaratorList
+      VariableDeclarator
+        Identifier "module" @ 34..40 trailing=[Whitespace " "]
+  FieldDeclaration
+    ClassType
+      Name
+        Identifier "permits" @ 41..48 trailing=[Whitespace " "]
+    VariableDeclaratorList
+      VariableDeclarator
+        Identifier "sealed" @ 49..55 trailing=[Whitespace " "]
+  FieldDeclaration
+    ClassType
+      Name
+        Identifier "var" @ 56..59 trailing=[Whitespace " "]
+    VariableDeclaratorList
+      VariableDeclarator
+        Identifier "non" @ 60..63
+  ErrorNode
+    Minus "-" @ 63..64
+    Identifier "sealed" @ 64..70 trailing=[Whitespace " "]
+    Identifier "provides" @ 71..79 trailing=[Whitespace " "]
+    Identifier "to" @ 80..82 trailing=[Whitespace " "]
+    Identifier "when" @ 83..87 trailing=[Whitespace " "]
+    Identifier "open" @ 88..92 trailing=[Whitespace " "]
+  RecordDeclaration
+    Identifier "record" @ 93..99 trailing=[Whitespace " "]
+    Identifier "transitive" @ 100..110 trailing=[Whitespace " "]
+    ErrorNode
+  FieldDeclaration
+    ClassType
+      Name
+        Identifier "with" @ 111..115 trailing=[Whitespace " "]
+    VariableDeclaratorList
+      VariableDeclarator
+        Identifier "varfilename" @ 116..127 trailing=[Whitespace " "]
+  FieldDeclaration
+    ClassType
+      Name
+        Identifier "yieldx" @ 128..134 trailing=[Whitespace " "]
+    VariableDeclaratorList
+      VariableDeclarator
+        Identifier "non" @ 135..138
+  ErrorNode
+    Minus "-" @ 138..139
+    Identifier "sealedclass" @ 139..150
+  Eof "" @ 150..150
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=14..22 message="expected `;` after field declaration"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=28..33 message="expected `;` after field declaration"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=41..48 message="expected `;` after field declaration"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=56..59 message="expected `;` after field declaration"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=63..64 message="expected `;` after field declaration"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=63..64 message="unexpected token at top level"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=111..115 message="expected record header"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=111..115 message="expected type body"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=128..134 message="expected `;` after field declaration"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=138..139 message="expected `;` after field declaration"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=138..139 message="unexpected token at top level"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(14), end: TextSize(22) }) message=expected `;` after field declaration
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(28), end: TextSize(33) }) message=expected `;` after field declaration
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(41), end: TextSize(48) }) message=expected `;` after field declaration
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(56), end: TextSize(59) }) message=expected `;` after field declaration
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(63), end: TextSize(64) }) message=expected `;` after field declaration
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(63), end: TextSize(64) }) message=unexpected token at top level
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(111), end: TextSize(115) }) message=expected record header
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(111), end: TextSize(115) }) message=expected type body
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(128), end: TextSize(134) }) message=expected `;` after field declaration
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(138), end: TextSize(139) }) message=expected `;` after field declaration
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(138), end: TextSize(139) }) message=unexpected token at top level

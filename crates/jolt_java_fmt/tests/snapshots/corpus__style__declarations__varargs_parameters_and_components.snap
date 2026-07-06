@@ -1,0 +1,27 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class Args {
+  void call(String... names) {
+  }
+
+  void mix(final int count, Object... values) {
+  }
+
+  void annotated(@Nonnull String name, String @Marker ... labels) {
+  }
+
+  void unnamed(Object _) {
+  }
+}
+
+record Values(String name, int... flags) {
+}
+
+record AnnotatedValues(@Nonnull String name, String @Marker ... labels) {
+}
+
+diagnostics:
+(none)

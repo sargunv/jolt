@@ -1,0 +1,25 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+0x1p0 0x1.p-1 0x.1P+2 0X1.8p1F 0x1p0f 0x1p0d 0x1p0D
+
+syntax:
+syntax:
+CompilationUnit
+  ErrorNode
+    FloatingPointLiteral "0x1p0" @ 0..5 trailing=[Whitespace " "]
+    FloatingPointLiteral "0x1.p-1" @ 6..13 trailing=[Whitespace " "]
+    FloatingPointLiteral "0x.1P+2" @ 14..21 trailing=[Whitespace " "]
+    FloatingPointLiteral "0X1.8p1F" @ 22..30 trailing=[Whitespace " "]
+    FloatingPointLiteral "0x1p0f" @ 31..37 trailing=[Whitespace " "]
+    FloatingPointLiteral "0x1p0d" @ 38..44 trailing=[Whitespace " "]
+    FloatingPointLiteral "0x1p0D" @ 45..51
+  Eof "" @ 51..51
+
+diagnostics:
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=0..5 message="unexpected token at top level"
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(5) }) message=unexpected token at top level

@@ -1,0 +1,19 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+interface Api {
+}
+
+record User(String name, int age) {
+}
+
+enum Color {
+}
+
+@interface Marker {
+}
+
+diagnostics:
+(none)

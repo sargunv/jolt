@@ -1,0 +1,80 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class Example {
+  void run() {
+    first();
+
+
+    second();
+    third();
+
+    // keep with fourth
+    fourth();
+  }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "Example" @ 6..13 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 14..15
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 18..22 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          Identifier "run" @ 23..26
+          LParen "(" @ 26..27
+          RParen ")" @ 27..28 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 29..30
+            BlockStatement
+              ExpressionStatement
+                MethodInvocationExpression
+                  NameExpression
+                    Identifier "first" @ 35..40 leading=[Newline "\n", Whitespace "    "]
+                  ArgumentList
+                    LParen "(" @ 40..41
+                    RParen ")" @ 41..42
+                Semicolon ";" @ 42..43
+            BlockStatement
+              ExpressionStatement
+                MethodInvocationExpression
+                  NameExpression
+                    Identifier "second" @ 50..56 leading=[Newline "\n", Newline "\n", Newline "\n", Whitespace "    "]
+                  ArgumentList
+                    LParen "(" @ 56..57
+                    RParen ")" @ 57..58
+                Semicolon ";" @ 58..59
+            BlockStatement
+              ExpressionStatement
+                MethodInvocationExpression
+                  NameExpression
+                    Identifier "third" @ 64..69 leading=[Newline "\n", Whitespace "    "]
+                  ArgumentList
+                    LParen "(" @ 69..70
+                    RParen ")" @ 70..71
+                Semicolon ";" @ 71..72
+            BlockStatement
+              ExpressionStatement
+                MethodInvocationExpression
+                  NameExpression
+                    Identifier "fourth" @ 102..108 leading=[Newline "\n", Newline "\n", Whitespace "    ", LineComment "// keep with fourth", Newline "\n", Whitespace "    "]
+                  ArgumentList
+                    LParen "(" @ 108..109
+                    RParen ")" @ 109..110
+                Semicolon ";" @ 110..111
+            RBrace "}" @ 114..115 leading=[Newline "\n", Whitespace "  "]
+      RBrace "}" @ 116..117 leading=[Newline "\n"]
+  Eof "" @ 118..118 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

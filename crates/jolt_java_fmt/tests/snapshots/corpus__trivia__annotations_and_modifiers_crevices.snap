@@ -1,0 +1,26 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+@ /* JOLT-TRIVIA:between-at-and-annotation */Deprecated
+public /* JOLT-TRIVIA:public-final-gap */ final /* JOLT-TRIVIA:final-class-gap */ class AnnotationsAndModifiersCrevices {
+  @SuppressWarnings /* JOLT-TRIVIA:annotation-name-before-paren */ (
+    /* JOLT-TRIVIA:annotation-arg-leading */
+    "unchecked" /* JOLT-TRIVIA:annotation-arg-before-close */
+  )
+  private /* JOLT-TRIVIA:private-static-gap */ static /* JOLT-TRIVIA:static-final-gap */ final String /* JOLT-TRIVIA:const-type-name */ VALUE /* JOLT-TRIVIA:const-name-equals */ =
+    "x";
+
+  @Deprecated /* JOLT-TRIVIA:method-annotation-tail */ 
+  public <
+    T /* JOLT-TRIVIA:annotated-method-type-param */
+  > T identity /* JOLT-TRIVIA:generic-method-name-before-paren */(
+    final /* JOLT-TRIVIA:param-final-type-gap */ T /* JOLT-TRIVIA:param-type-name-gap */ value
+  ) /* JOLT-TRIVIA:method-close-before-body */ {
+    return value /* JOLT-TRIVIA:return-expression-before-semi */;
+  }
+}
+
+diagnostics:
+(none)

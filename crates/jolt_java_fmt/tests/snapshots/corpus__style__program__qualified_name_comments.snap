@@ -1,0 +1,16 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+package com // root
+  .example
+  .app;
+
+import z /* dot */.Z;
+
+class Names {
+}
+
+diagnostics:
+(none)

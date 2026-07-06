@@ -1,0 +1,93 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class SwitchCaseConstants {
+    static final int NAME = 3;
+
+    void method(int value) {
+        switch (value) {
+            case 1, -2, NAME -> value++;
+        }
+    }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "SwitchCaseConstants" @ 6..25 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 26..27
+      ClassBodyDeclaration
+        FieldDeclaration
+          ModifierList
+            StaticKw "static" @ 32..38 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            FinalKw "final" @ 39..44 trailing=[Whitespace " "]
+          PrimitiveType
+            IntKw "int" @ 45..48 trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "NAME" @ 49..53 trailing=[Whitespace " "]
+              Assign "=" @ 54..55 trailing=[Whitespace " "]
+              VariableInitializer
+                LiteralExpression
+                  IntegerLiteral "3" @ 56..57
+          Semicolon ";" @ 57..58
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 64..68 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "method" @ 69..75
+          LParen "(" @ 75..76
+          FormalParameterList
+            FormalParameter
+              PrimitiveType
+                IntKw "int" @ 76..79 trailing=[Whitespace " "]
+              Identifier "value" @ 80..85
+          RParen ")" @ 85..86 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 87..88
+            BlockStatement
+              SwitchStatement
+                SwitchKw "switch" @ 97..103 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                LParen "(" @ 104..105
+                NameExpression
+                  Identifier "value" @ 105..110
+                RParen ")" @ 110..111 trailing=[Whitespace " "]
+                SwitchBlock
+                  LBrace "{" @ 112..113
+                  SwitchRule
+                    SwitchLabel
+                      CaseKw "case" @ 126..130 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                      CaseConstant
+                        LiteralExpression
+                          IntegerLiteral "1" @ 131..132
+                      Comma "," @ 132..133 trailing=[Whitespace " "]
+                      CaseConstant
+                        UnaryExpression
+                          Minus "-" @ 134..135
+                          LiteralExpression
+                            IntegerLiteral "2" @ 135..136
+                      Comma "," @ 136..137 trailing=[Whitespace " "]
+                      CaseConstant
+                        NameExpression
+                          Identifier "NAME" @ 138..142 trailing=[Whitespace " "]
+                    Arrow "->" @ 143..145 trailing=[Whitespace " "]
+                    PostfixExpression
+                      NameExpression
+                        Identifier "value" @ 146..151
+                      PlusPlus "++" @ 151..153
+                    Semicolon ";" @ 153..154
+                  RBrace "}" @ 163..164 leading=[Newline "\n", Whitespace "        "]
+            RBrace "}" @ 169..170 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 171..172 leading=[Newline "\n"]
+  Eof "" @ 173..173 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

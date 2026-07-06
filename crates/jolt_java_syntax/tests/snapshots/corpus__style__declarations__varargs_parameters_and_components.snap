@@ -1,0 +1,167 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class Args {
+  void call(String... names) {}
+  void mix(final int count, Object... values) {}
+  void annotated(@Nonnull String name, String @Marker ... labels) {}
+  void unnamed(Object _) {}
+}
+
+record Values(String name, int... flags) {}
+record AnnotatedValues(@Nonnull String name, String @Marker ... labels) {}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "Args" @ 6..10 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 11..12
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 15..19 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          Identifier "call" @ 20..24
+          LParen "(" @ 24..25
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "String" @ 25..31
+              Ellipsis "..." @ 31..34 trailing=[Whitespace " "]
+              Identifier "names" @ 35..40
+          RParen ")" @ 40..41 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 42..43
+            RBrace "}" @ 43..44
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 47..51 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          Identifier "mix" @ 52..55
+          LParen "(" @ 55..56
+          FormalParameterList
+            FormalParameter
+              FinalKw "final" @ 56..61 trailing=[Whitespace " "]
+              PrimitiveType
+                IntKw "int" @ 62..65 trailing=[Whitespace " "]
+              Identifier "count" @ 66..71
+            Comma "," @ 71..72 trailing=[Whitespace " "]
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "Object" @ 73..79
+              Ellipsis "..." @ 79..82 trailing=[Whitespace " "]
+              Identifier "values" @ 83..89
+          RParen ")" @ 89..90 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 91..92
+            RBrace "}" @ 92..93
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 96..100 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          Identifier "annotated" @ 101..110
+          LParen "(" @ 110..111
+          FormalParameterList
+            FormalParameter
+              Annotation
+                At "@" @ 111..112
+                Name
+                  Identifier "Nonnull" @ 112..119 trailing=[Whitespace " "]
+              ClassType
+                Name
+                  Identifier "String" @ 120..126 trailing=[Whitespace " "]
+              Identifier "name" @ 127..131
+            Comma "," @ 131..132 trailing=[Whitespace " "]
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "String" @ 133..139 trailing=[Whitespace " "]
+              Annotation
+                At "@" @ 140..141
+                Name
+                  Identifier "Marker" @ 141..147 trailing=[Whitespace " "]
+              Ellipsis "..." @ 148..151 trailing=[Whitespace " "]
+              Identifier "labels" @ 152..158
+          RParen ")" @ 158..159 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 160..161
+            RBrace "}" @ 161..162
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 165..169 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          Identifier "unnamed" @ 170..177
+          LParen "(" @ 177..178
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "Object" @ 178..184 trailing=[Whitespace " "]
+              UnderscoreKw "_" @ 185..186
+          RParen ")" @ 186..187 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 188..189
+            RBrace "}" @ 189..190
+      RBrace "}" @ 191..192 leading=[Newline "\n"]
+  RecordDeclaration
+    Identifier "record" @ 194..200 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "Values" @ 201..207
+    LParen "(" @ 207..208
+    RecordComponentList
+      RecordComponent
+        ClassType
+          Name
+            Identifier "String" @ 208..214 trailing=[Whitespace " "]
+        Identifier "name" @ 215..219
+      Comma "," @ 219..220 trailing=[Whitespace " "]
+      RecordComponent
+        PrimitiveType
+          IntKw "int" @ 221..224
+        Ellipsis "..." @ 224..227 trailing=[Whitespace " "]
+        Identifier "flags" @ 228..233
+    RParen ")" @ 233..234 trailing=[Whitespace " "]
+    RecordBody
+      LBrace "{" @ 235..236
+      RBrace "}" @ 236..237
+  RecordDeclaration
+    Identifier "record" @ 238..244 leading=[Newline "\n"] trailing=[Whitespace " "]
+    Identifier "AnnotatedValues" @ 245..260
+    LParen "(" @ 260..261
+    RecordComponentList
+      RecordComponent
+        Annotation
+          At "@" @ 261..262
+          Name
+            Identifier "Nonnull" @ 262..269 trailing=[Whitespace " "]
+        ClassType
+          Name
+            Identifier "String" @ 270..276 trailing=[Whitespace " "]
+        Identifier "name" @ 277..281
+      Comma "," @ 281..282 trailing=[Whitespace " "]
+      RecordComponent
+        ClassType
+          Name
+            Identifier "String" @ 283..289 trailing=[Whitespace " "]
+        Annotation
+          At "@" @ 290..291
+          Name
+            Identifier "Marker" @ 291..297 trailing=[Whitespace " "]
+        Ellipsis "..." @ 298..301 trailing=[Whitespace " "]
+        Identifier "labels" @ 302..308
+    RParen ")" @ 308..309 trailing=[Whitespace " "]
+    RecordBody
+      LBrace "{" @ 310..311
+      RBrace "}" @ 311..312
+  Eof "" @ 313..313 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

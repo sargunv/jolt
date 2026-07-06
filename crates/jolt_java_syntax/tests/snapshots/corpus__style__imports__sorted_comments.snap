@@ -1,0 +1,61 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+import z.Zed; // zed
+import a.Alpha; // alpha
+import static z.Tools.zed; // static zed
+import static a.Tools.alpha; // static alpha
+class A {}
+
+syntax:
+syntax:
+CompilationUnit
+  ImportDeclaration
+    ImportKw "import" @ 0..6 trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "z" @ 7..8
+      Dot "." @ 8..9
+      Identifier "Zed" @ 9..12
+    Semicolon ";" @ 12..13 trailing=[Whitespace " ", LineComment "// zed"]
+  ImportDeclaration
+    ImportKw "import" @ 21..27 leading=[Newline "\n"] trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "a" @ 28..29
+      Dot "." @ 29..30
+      Identifier "Alpha" @ 30..35
+    Semicolon ";" @ 35..36 trailing=[Whitespace " ", LineComment "// alpha"]
+  ImportDeclaration
+    ImportKw "import" @ 46..52 leading=[Newline "\n"] trailing=[Whitespace " "]
+    StaticKw "static" @ 53..59 trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "z" @ 60..61
+      Dot "." @ 61..62
+      Identifier "Tools" @ 62..67
+      Dot "." @ 67..68
+      Identifier "zed" @ 68..71
+    Semicolon ";" @ 71..72 trailing=[Whitespace " ", LineComment "// static zed"]
+  ImportDeclaration
+    ImportKw "import" @ 87..93 leading=[Newline "\n"] trailing=[Whitespace " "]
+    StaticKw "static" @ 94..100 trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "a" @ 101..102
+      Dot "." @ 102..103
+      Identifier "Tools" @ 103..108
+      Dot "." @ 108..109
+      Identifier "alpha" @ 109..114
+    Semicolon ";" @ 114..115 trailing=[Whitespace " ", LineComment "// static alpha"]
+  ClassDeclaration
+    ClassKw "class" @ 132..137 leading=[Newline "\n"] trailing=[Whitespace " "]
+    Identifier "A" @ 138..139 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 140..141
+      RBrace "}" @ 141..142
+  Eof "" @ 143..143 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

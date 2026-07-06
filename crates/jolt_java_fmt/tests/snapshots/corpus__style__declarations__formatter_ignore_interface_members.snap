@@ -1,0 +1,16 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+interface Example {
+  int before = 1;
+  // @formatter:off
+  int raw=1+2;
+  String label="x";
+  // @formatter:on
+  int after = 2;
+}
+
+diagnostics:
+(none)

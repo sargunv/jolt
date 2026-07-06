@@ -1,0 +1,41 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+enum Values { ; public static final String ONE = "ONE"; }
+
+syntax:
+syntax:
+CompilationUnit
+  EnumDeclaration
+    EnumKw "enum" @ 0..4 trailing=[Whitespace " "]
+    Identifier "Values" @ 5..11 trailing=[Whitespace " "]
+    EnumBody
+      LBrace "{" @ 12..13 trailing=[Whitespace " "]
+      Semicolon ";" @ 14..15 trailing=[Whitespace " "]
+      ClassBodyDeclaration
+        FieldDeclaration
+          ModifierList
+            PublicKw "public" @ 16..22 trailing=[Whitespace " "]
+            StaticKw "static" @ 23..29 trailing=[Whitespace " "]
+            FinalKw "final" @ 30..35 trailing=[Whitespace " "]
+          ClassType
+            Name
+              Identifier "String" @ 36..42 trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "ONE" @ 43..46 trailing=[Whitespace " "]
+              Assign "=" @ 47..48 trailing=[Whitespace " "]
+              VariableInitializer
+                LiteralExpression
+                  StringLiteral "\"ONE\"" @ 49..54
+          Semicolon ";" @ 54..55 trailing=[Whitespace " "]
+      RBrace "}" @ 56..57
+  Eof "" @ 58..58 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

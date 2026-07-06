@@ -1,0 +1,48 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+static void
+classinterface
+enum	assertwhile
+
+syntax:
+syntax:
+CompilationUnit
+  ErrorNode
+    StaticKw "static" @ 0..6 trailing=[Whitespace " "]
+    VoidKw "void" @ 7..11
+  ClassDeclaration
+    ClassKw "class" @ 12..17 leading=[Newline "\n"]
+    ErrorNode
+  InterfaceDeclaration
+    InterfaceKw "interface" @ 18..27 leading=[Newline "\r"]
+    ErrorNode
+  EnumDeclaration
+    EnumKw "enum" @ 29..33 leading=[Newline "\r\n"] trailing=[Whitespace "\t"]
+    ErrorNode
+  ErrorNode
+    AssertKw "assert" @ 34..40 trailing=[Whitespace "\u{c}"]
+    WhileKw "while" @ 41..46
+  Eof "" @ 46..46
+
+diagnostics:
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=0..6 message="unexpected token at top level"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=18..27 message="expected type name"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=18..27 message="expected type body"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=29..33 message="expected type name"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=29..33 message="expected type body"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=34..40 message="expected type name"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=34..40 message="expected type body"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=34..40 message="unexpected token at top level"
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(6) }) message=unexpected token at top level
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(18), end: TextSize(27) }) message=expected type name
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(18), end: TextSize(27) }) message=expected type body
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(29), end: TextSize(33) }) message=expected type name
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(29), end: TextSize(33) }) message=expected type body
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(34), end: TextSize(40) }) message=expected type name
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(34), end: TextSize(40) }) message=expected type body
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(34), end: TextSize(40) }) message=unexpected token at top level

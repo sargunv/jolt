@@ -1,0 +1,14 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class Example {
+  void run() {
+    while (ready) {
+    }
+  }
+}
+
+diagnostics:
+(none)

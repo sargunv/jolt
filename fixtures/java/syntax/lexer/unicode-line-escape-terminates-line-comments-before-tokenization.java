@@ -1,0 +1,1 @@
+int a; // comment \u000a int b;

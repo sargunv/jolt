@@ -1,0 +1,15 @@
+sealed interface Shape extends Drawable permits Circle {
+    int SIDES = 0;
+
+    private static void helper() {}
+
+    void draw();
+}
+
+non-sealed interface Circle extends Shape {}
+interface Drawable {}
+
+@interface JsonName {
+    String value() default "";
+    int[] flags() default {1, 2};
+}

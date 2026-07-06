@@ -1,0 +1,42 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class AnnotatedTypeParameter<@Marker T> {}
+
+@interface Marker {}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "AnnotatedTypeParameter" @ 6..28
+    TypeParameterList
+      Lt "<" @ 28..29
+      TypeParameter
+        Annotation
+          At "@" @ 29..30
+          Name
+            Identifier "Marker" @ 30..36 trailing=[Whitespace " "]
+        Identifier "T" @ 37..38
+      Gt ">" @ 38..39 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 40..41
+      RBrace "}" @ 41..42
+  AnnotationInterfaceDeclaration
+    At "@" @ 44..45 leading=[Newline "\n", Newline "\n"]
+    InterfaceKw "interface" @ 45..54 trailing=[Whitespace " "]
+    Identifier "Marker" @ 55..61 trailing=[Whitespace " "]
+    AnnotationInterfaceBody
+      LBrace "{" @ 62..63
+      AnnotationElementList
+      RBrace "}" @ 63..64
+  Eof "" @ 65..65 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

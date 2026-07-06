@@ -1,0 +1,24 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class Example {
+  /**
+   * Gets the name.
+   *
+   * @return the name
+   */
+  String name() {
+    return "Ada";
+  }
+
+  /**
+   * Runs the task.
+   */
+  void run() {
+  }
+}
+
+diagnostics:
+(none)

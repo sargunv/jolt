@@ -1,0 +1,60 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class ConstructorInvocations extends Base {
+  ConstructorInvocations() {
+    this(0);
+  }
+
+  ConstructorInvocations(String value) {
+    <String>this(value, 0);
+  }
+
+  <T> ConstructorInvocations(T value, int marker) {
+    super(value);
+  }
+
+  ConstructorInvocations(int value) {
+    super(value);
+  }
+
+  class Inner extends Base {
+    Inner(ConstructorInvocations outer) {
+      outer.super(0);
+    }
+
+    Inner(ConstructorInvocations outer, String value) {
+      outer.<String>super(value);
+    }
+
+    Inner() {
+      (new ConstructorInvocations()).super(0);
+    }
+
+    Inner(String value) {
+      (new ConstructorInvocations()).<String>super(value);
+    }
+  }
+
+  class GenericSuper extends Base {
+    GenericSuper() {
+      <String>super("value");
+    }
+  }
+}
+
+class Base {
+  Base() {
+  }
+
+  Base(int value) {
+  }
+
+  <T> Base(T value) {
+  }
+}
+
+diagnostics:
+(none)

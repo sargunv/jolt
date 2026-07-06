@@ -1,0 +1,11 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class NestedGenericClose {
+  java.util.Map<String, java.util.List<Integer>> value;
+}
+
+diagnostics:
+(none)

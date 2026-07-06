@@ -1,0 +1,87 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+/* JOLT-TRIVIA:file-header */
+package com /* JOLT-TRIVIA:package-mid */ .example.trivia; // JOLT-TRIVIA:package-tail
+
+// JOLT-TRIVIA:before-imports
+import java.util.List; /* JOLT-TRIVIA:list-import */
+import static java.util.Collections /* JOLT-TRIVIA:static-import-mid */ .emptyList;
+// JOLT-TRIVIA:after-imports
+
+class ImportTrivia {
+  List<String> names = emptyList();
+}
+
+syntax:
+syntax:
+CompilationUnit
+  PackageDeclaration
+    PackageKw "package" @ 30..37 leading=[BlockComment "/* JOLT-TRIVIA:file-header */", Newline "\n"] trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "com" @ 38..41 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:package-mid */", Whitespace " "]
+      Dot "." @ 72..73
+      Identifier "example" @ 73..80
+      Dot "." @ 80..81
+      Identifier "trivia" @ 81..87
+    Semicolon ";" @ 87..88 trailing=[Whitespace " ", LineComment "// JOLT-TRIVIA:package-tail"]
+  ImportDeclaration
+    ImportKw "import" @ 148..154 leading=[Newline "\n", Newline "\n", LineComment "// JOLT-TRIVIA:before-imports", Newline "\n"] trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "java" @ 155..159
+      Dot "." @ 159..160
+      Identifier "util" @ 160..164
+      Dot "." @ 164..165
+      Identifier "List" @ 165..169
+    Semicolon ";" @ 169..170 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:list-import */"]
+  ImportDeclaration
+    ImportKw "import" @ 201..207 leading=[Newline "\n"] trailing=[Whitespace " "]
+    StaticKw "static" @ 208..214 trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "java" @ 215..219
+      Dot "." @ 219..220
+      Identifier "util" @ 220..224
+      Dot "." @ 224..225
+      Identifier "Collections" @ 225..236 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:static-import-mid */", Whitespace " "]
+      Dot "." @ 273..274
+      Identifier "emptyList" @ 274..283
+    Semicolon ";" @ 283..284
+  ClassDeclaration
+    ClassKw "class" @ 315..320 leading=[Newline "\n", LineComment "// JOLT-TRIVIA:after-imports", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "ImportTrivia" @ 321..333 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 334..335
+      ClassBodyDeclaration
+        FieldDeclaration
+          ClassType
+            Name
+              Identifier "List" @ 338..342 leading=[Newline "\n", Whitespace "  "]
+            TypeArgumentList
+              Lt "<" @ 342..343
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "String" @ 343..349
+              Gt ">" @ 349..350 trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "names" @ 351..356 trailing=[Whitespace " "]
+              Assign "=" @ 357..358 trailing=[Whitespace " "]
+              VariableInitializer
+                MethodInvocationExpression
+                  NameExpression
+                    Identifier "emptyList" @ 359..368
+                  ArgumentList
+                    LParen "(" @ 368..369
+                    RParen ")" @ 369..370
+          Semicolon ";" @ 370..371
+      RBrace "}" @ 372..373 leading=[Newline "\n"]
+  Eof "" @ 374..374 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

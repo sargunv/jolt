@@ -1,0 +1,84 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class User {
+  final private String name; // user name
+  static public int count; // shared count
+  User() {}
+  public void run() {}
+  public void stop() {}
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "User" @ 6..10 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 11..12
+      ClassBodyDeclaration
+        FieldDeclaration
+          ModifierList
+            FinalKw "final" @ 15..20 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            PrivateKw "private" @ 21..28 trailing=[Whitespace " "]
+          ClassType
+            Name
+              Identifier "String" @ 29..35 trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "name" @ 36..40
+          Semicolon ";" @ 40..41 trailing=[Whitespace " ", LineComment "// user name"]
+      ClassBodyDeclaration
+        FieldDeclaration
+          ModifierList
+            StaticKw "static" @ 57..63 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            PublicKw "public" @ 64..70 trailing=[Whitespace " "]
+          PrimitiveType
+            IntKw "int" @ 71..74 trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "count" @ 75..80
+          Semicolon ";" @ 80..81 trailing=[Whitespace " ", LineComment "// shared count"]
+      ClassBodyDeclaration
+        ConstructorDeclaration
+          Identifier "User" @ 100..104 leading=[Newline "\n", Whitespace "  "]
+          LParen "(" @ 104..105
+          RParen ")" @ 105..106 trailing=[Whitespace " "]
+          ConstructorBody
+            LBrace "{" @ 107..108
+            RBrace "}" @ 108..109
+      ClassBodyDeclaration
+        MethodDeclaration
+          ModifierList
+            PublicKw "public" @ 112..118 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          VoidType
+            VoidKw "void" @ 119..123 trailing=[Whitespace " "]
+          Identifier "run" @ 124..127
+          LParen "(" @ 127..128
+          RParen ")" @ 128..129 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 130..131
+            RBrace "}" @ 131..132
+      ClassBodyDeclaration
+        MethodDeclaration
+          ModifierList
+            PublicKw "public" @ 135..141 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          VoidType
+            VoidKw "void" @ 142..146 trailing=[Whitespace " "]
+          Identifier "stop" @ 147..151
+          LParen "(" @ 151..152
+          RParen ")" @ 152..153 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 154..155
+            RBrace "}" @ 155..156
+      RBrace "}" @ 157..158 leading=[Newline "\n"]
+  Eof "" @ 159..159 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

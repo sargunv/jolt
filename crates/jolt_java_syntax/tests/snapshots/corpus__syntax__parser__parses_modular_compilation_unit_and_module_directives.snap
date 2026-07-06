@@ -1,0 +1,107 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+import java.lang.annotation.Native;
+
+@Deprecated
+open module example.module {
+    requires transitive static java.sql;
+    exports example.api to friend.module;
+    opens example.internal to friend.module;
+    uses example.Service;
+    provides example.Service with example.ServiceImpl;
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ImportDeclaration
+    ImportKw "import" @ 0..6 trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "java" @ 7..11
+      Dot "." @ 11..12
+      Identifier "lang" @ 12..16
+      Dot "." @ 16..17
+      Identifier "annotation" @ 17..27
+      Dot "." @ 27..28
+      Identifier "Native" @ 28..34
+    Semicolon ";" @ 34..35
+  ModuleDeclaration
+    Annotation
+      At "@" @ 37..38 leading=[Newline "\n", Newline "\n"]
+      Name
+        Identifier "Deprecated" @ 38..48
+    Identifier "open" @ 49..53 leading=[Newline "\n"] trailing=[Whitespace " "]
+    Identifier "module" @ 54..60 trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "example" @ 61..68
+      Dot "." @ 68..69
+      Identifier "module" @ 69..75 trailing=[Whitespace " "]
+    LBrace "{" @ 76..77
+    ModuleDirective
+      RequiresDirective
+        Identifier "requires" @ 82..90 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "transitive" @ 91..101 trailing=[Whitespace " "]
+        StaticKw "static" @ 102..108 trailing=[Whitespace " "]
+        QualifiedName
+          Identifier "java" @ 109..113
+          Dot "." @ 113..114
+          Identifier "sql" @ 114..117
+        Semicolon ";" @ 117..118
+    ModuleDirective
+      ExportsDirective
+        Identifier "exports" @ 123..130 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        QualifiedName
+          Identifier "example" @ 131..138
+          Dot "." @ 138..139
+          Identifier "api" @ 139..142 trailing=[Whitespace " "]
+        Identifier "to" @ 143..145 trailing=[Whitespace " "]
+        QualifiedName
+          Identifier "friend" @ 146..152
+          Dot "." @ 152..153
+          Identifier "module" @ 153..159
+        Semicolon ";" @ 159..160
+    ModuleDirective
+      OpensDirective
+        Identifier "opens" @ 165..170 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        QualifiedName
+          Identifier "example" @ 171..178
+          Dot "." @ 178..179
+          Identifier "internal" @ 179..187 trailing=[Whitespace " "]
+        Identifier "to" @ 188..190 trailing=[Whitespace " "]
+        QualifiedName
+          Identifier "friend" @ 191..197
+          Dot "." @ 197..198
+          Identifier "module" @ 198..204
+        Semicolon ";" @ 204..205
+    ModuleDirective
+      UsesDirective
+        Identifier "uses" @ 210..214 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        QualifiedName
+          Identifier "example" @ 215..222
+          Dot "." @ 222..223
+          Identifier "Service" @ 223..230
+        Semicolon ";" @ 230..231
+    ModuleDirective
+      ProvidesDirective
+        Identifier "provides" @ 236..244 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        QualifiedName
+          Identifier "example" @ 245..252
+          Dot "." @ 252..253
+          Identifier "Service" @ 253..260 trailing=[Whitespace " "]
+        Identifier "with" @ 261..265 trailing=[Whitespace " "]
+        QualifiedName
+          Identifier "example" @ 266..273
+          Dot "." @ 273..274
+          Identifier "ServiceImpl" @ 274..285
+        Semicolon ";" @ 285..286
+    RBrace "}" @ 287..288 leading=[Newline "\n"]
+  Eof "" @ 289..289 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

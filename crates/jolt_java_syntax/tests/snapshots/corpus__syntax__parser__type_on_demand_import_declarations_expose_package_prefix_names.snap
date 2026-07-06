@@ -1,0 +1,34 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+import java.util.*;
+
+class OnDemandImport {}
+
+syntax:
+syntax:
+CompilationUnit
+  ImportDeclaration
+    ImportKw "import" @ 0..6 trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "java" @ 7..11
+      Dot "." @ 11..12
+      Identifier "util" @ 12..16
+    Dot "." @ 16..17
+    Star "*" @ 17..18
+    Semicolon ";" @ 18..19
+  ClassDeclaration
+    ClassKw "class" @ 21..26 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "OnDemandImport" @ 27..41 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 42..43
+      RBrace "}" @ 43..44
+  Eof "" @ 45..45 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

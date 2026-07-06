@@ -1,0 +1,51 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+module demo {
+  requires z.lib;
+  requires a.lib;
+  requires A.lib;
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ModuleDeclaration
+    Identifier "module" @ 0..6 trailing=[Whitespace " "]
+    Name
+      Identifier "demo" @ 7..11 trailing=[Whitespace " "]
+    LBrace "{" @ 12..13
+    ModuleDirective
+      RequiresDirective
+        Identifier "requires" @ 16..24 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+        QualifiedName
+          Identifier "z" @ 25..26
+          Dot "." @ 26..27
+          Identifier "lib" @ 27..30
+        Semicolon ";" @ 30..31
+    ModuleDirective
+      RequiresDirective
+        Identifier "requires" @ 34..42 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+        QualifiedName
+          Identifier "a" @ 43..44
+          Dot "." @ 44..45
+          Identifier "lib" @ 45..48
+        Semicolon ";" @ 48..49
+    ModuleDirective
+      RequiresDirective
+        Identifier "requires" @ 52..60 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+        QualifiedName
+          Identifier "A" @ 61..62
+          Dot "." @ 62..63
+          Identifier "lib" @ 63..66
+        Semicolon ";" @ 66..67
+    RBrace "}" @ 68..69 leading=[Newline "\n"]
+  Eof "" @ 70..70 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

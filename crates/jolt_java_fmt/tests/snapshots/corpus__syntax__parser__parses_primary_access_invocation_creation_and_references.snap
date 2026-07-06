@@ -1,0 +1,38 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class Expressions extends Base {
+  Object field;
+
+  void method(String[] values) {
+    Object classLiteral = String[][].class;
+    Object created = new Outer<String>().new Inner(1);
+    Object anonymous =
+      new Runnable() {
+        public void run() {
+        }
+      };
+    Object literal = null;
+    Object parenthesized = (created);
+    Object fieldAccess = this.field;
+    Object superAccess = super.toString();
+    Object arrayAccess = values[0];
+    Object invocation = created.toString();
+    java.util.function.Function<String, Integer> ref = String::length;
+  }
+}
+
+class Base {
+}
+
+class Outer<T> {
+  class Inner {
+    Inner(int value) {
+    }
+  }
+}
+
+diagnostics:
+(none)

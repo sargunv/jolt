@@ -1,0 +1,24 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+non-sealedclass MissingSpace {}
+
+syntax:
+syntax:
+CompilationUnit
+  ErrorNode
+    Identifier "non" @ 0..3
+    Minus "-" @ 3..4
+    Identifier "sealedclass" @ 4..15 trailing=[Whitespace " "]
+    Identifier "MissingSpace" @ 16..28 trailing=[Whitespace " "]
+    LBrace "{" @ 29..30
+    RBrace "}" @ 30..31
+  Eof "" @ 32..32 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=0..3 message="unexpected token at top level"
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(3) }) message=unexpected token at top level

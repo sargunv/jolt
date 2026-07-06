@@ -1,0 +1,60 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class Example { void method() { call(xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx ? true : false); next(); } }
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "Example" @ 6..13 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 14..15 trailing=[Whitespace " "]
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 16..20 trailing=[Whitespace " "]
+          Identifier "method" @ 21..27
+          LParen "(" @ 27..28
+          RParen ")" @ 28..29 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 30..31 trailing=[Whitespace " "]
+            BlockStatement
+              ExpressionStatement
+                MethodInvocationExpression
+                  NameExpression
+                    Identifier "call" @ 32..36
+                  ArgumentList
+                    LParen "(" @ 36..37
+                    ConditionalExpression
+                      NameExpression
+                        Identifier "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" @ 37..91 trailing=[Whitespace " "]
+                      Question "?" @ 92..93 trailing=[Whitespace " "]
+                      LiteralExpression
+                        BooleanLiteral "true" @ 94..98 trailing=[Whitespace " "]
+                      Colon ":" @ 99..100 trailing=[Whitespace " "]
+                      LiteralExpression
+                        BooleanLiteral "false" @ 101..106
+                    RParen ")" @ 106..107
+                Semicolon ";" @ 107..108 trailing=[Whitespace " "]
+            BlockStatement
+              ExpressionStatement
+                MethodInvocationExpression
+                  NameExpression
+                    Identifier "next" @ 109..113
+                  ArgumentList
+                    LParen "(" @ 113..114
+                    RParen ")" @ 114..115
+                Semicolon ";" @ 115..116 trailing=[Whitespace " "]
+            RBrace "}" @ 117..118 trailing=[Whitespace " "]
+      RBrace "}" @ 119..120
+  Eof "" @ 121..121 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

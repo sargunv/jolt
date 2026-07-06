@@ -1,0 +1,23 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+"""
+\q
+"""
+
+syntax:
+syntax:
+CompilationUnit
+  ErrorNode
+    TextBlockLiteral "\"\"\"\n\\q\n\"\"\"" @ 0..10
+  Eof "" @ 10..10
+
+diagnostics:
+  code=java.lex.invalid_escape_sequence severity=Error stage=Lexer range=5..6 message="invalid escape sequence"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=0..10 message="unexpected token at top level"
+
+diagnostics:
+code=java.lex.invalid_escape_sequence severity=Error stage=Lexer range=Some(TextRange { start: TextSize(5), end: TextSize(6) }) message=invalid escape sequence
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(10) }) message=unexpected token at top level

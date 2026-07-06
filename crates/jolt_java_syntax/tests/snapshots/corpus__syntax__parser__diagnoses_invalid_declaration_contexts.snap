@@ -1,0 +1,318 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class InvalidDeclarationContexts<T extends int> {
+    void method(Object x, java.util.List<String> values) throws int {
+        for (String value = null : values) {}
+        for (String first, second : values) {}
+        try (AutoCloseable missing, second = open()) {}
+        try (AutoCloseable first = open(), second = open()) {}
+        try {
+            risky();
+        } catch (int ex) {
+        }
+    }
+
+    AutoCloseable open() { return null; }
+    void risky() throws Exception {}
+    transient void transientMethod() {}
+    volatile InvalidDeclarationContexts() {}
+    synchronized int synchronizedField;
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "InvalidDeclarationContexts" @ 6..32
+    TypeParameterList
+      Lt "<" @ 32..33
+      TypeParameter
+        Identifier "T" @ 33..34 trailing=[Whitespace " "]
+        TypeBoundList
+          ExtendsKw "extends" @ 35..42 trailing=[Whitespace " "]
+          ErrorNode
+            IntKw "int" @ 43..46
+      Gt ">" @ 46..47 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 48..49
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 54..58 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "method" @ 59..65
+          LParen "(" @ 65..66
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "Object" @ 66..72 trailing=[Whitespace " "]
+              Identifier "x" @ 73..74
+            Comma "," @ 74..75 trailing=[Whitespace " "]
+            FormalParameter
+              ClassType
+                QualifiedName
+                  Identifier "java" @ 76..80
+                  Dot "." @ 80..81
+                  Identifier "util" @ 81..85
+                  Dot "." @ 85..86
+                  Identifier "List" @ 86..90
+                TypeArgumentList
+                  Lt "<" @ 90..91
+                  TypeArgument
+                    ClassType
+                      Name
+                        Identifier "String" @ 91..97
+                  Gt ">" @ 97..98 trailing=[Whitespace " "]
+              Identifier "values" @ 99..105
+          RParen ")" @ 105..106 trailing=[Whitespace " "]
+          ThrowsClause
+            ThrowsKw "throws" @ 107..113 trailing=[Whitespace " "]
+            ErrorNode
+              IntKw "int" @ 114..117 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 118..119
+            BlockStatement
+              ForStatement
+                EnhancedForStatement
+                  ForKw "for" @ 128..131 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  LParen "(" @ 132..133
+                  LocalVariableDeclaration
+                    ClassType
+                      Name
+                        Identifier "String" @ 133..139 trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "value" @ 140..145 trailing=[Whitespace " "]
+                        Assign "=" @ 146..147 trailing=[Whitespace " "]
+                        ErrorNode
+                          VariableInitializer
+                            LiteralExpression
+                              NullLiteral "null" @ 148..152 trailing=[Whitespace " "]
+                  Colon ":" @ 153..154 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "values" @ 155..161
+                  RParen ")" @ 161..162 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 163..164
+                    RBrace "}" @ 164..165
+            BlockStatement
+              ForStatement
+                EnhancedForStatement
+                  ForKw "for" @ 174..177 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  LParen "(" @ 178..179
+                  LocalVariableDeclaration
+                    ClassType
+                      Name
+                        Identifier "String" @ 179..185 trailing=[Whitespace " "]
+                    VariableDeclaratorList
+                      VariableDeclarator
+                        Identifier "first" @ 186..191
+                      ErrorNode
+                        Comma "," @ 191..192 trailing=[Whitespace " "]
+                        VariableDeclarator
+                          Identifier "second" @ 193..199 trailing=[Whitespace " "]
+                  Colon ":" @ 200..201 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "values" @ 202..208
+                  RParen ")" @ 208..209 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 210..211
+                    RBrace "}" @ 211..212
+            BlockStatement
+              TryStatement
+                TryWithResourcesStatement
+                  TryKw "try" @ 221..224 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  ResourceSpecification
+                    LParen "(" @ 225..226
+                    ResourceList
+                      Resource
+                        LocalVariableDeclaration
+                          ClassType
+                            Name
+                              Identifier "AutoCloseable" @ 226..239 trailing=[Whitespace " "]
+                          VariableDeclaratorList
+                            VariableDeclarator
+                              Identifier "missing" @ 240..247
+                              ErrorNode
+                            ErrorNode
+                              Comma "," @ 247..248 trailing=[Whitespace " "]
+                              VariableDeclarator
+                                Identifier "second" @ 249..255 trailing=[Whitespace " "]
+                                Assign "=" @ 256..257 trailing=[Whitespace " "]
+                                VariableInitializer
+                                  MethodInvocationExpression
+                                    NameExpression
+                                      Identifier "open" @ 258..262
+                                    ArgumentList
+                                      LParen "(" @ 262..263
+                                      RParen ")" @ 263..264
+                    RParen ")" @ 264..265 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 266..267
+                    RBrace "}" @ 267..268
+            BlockStatement
+              TryStatement
+                TryWithResourcesStatement
+                  TryKw "try" @ 277..280 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  ResourceSpecification
+                    LParen "(" @ 281..282
+                    ResourceList
+                      Resource
+                        LocalVariableDeclaration
+                          ClassType
+                            Name
+                              Identifier "AutoCloseable" @ 282..295 trailing=[Whitespace " "]
+                          VariableDeclaratorList
+                            VariableDeclarator
+                              Identifier "first" @ 296..301 trailing=[Whitespace " "]
+                              Assign "=" @ 302..303 trailing=[Whitespace " "]
+                              VariableInitializer
+                                MethodInvocationExpression
+                                  NameExpression
+                                    Identifier "open" @ 304..308
+                                  ArgumentList
+                                    LParen "(" @ 308..309
+                                    RParen ")" @ 309..310
+                            ErrorNode
+                              Comma "," @ 310..311 trailing=[Whitespace " "]
+                              VariableDeclarator
+                                Identifier "second" @ 312..318 trailing=[Whitespace " "]
+                                Assign "=" @ 319..320 trailing=[Whitespace " "]
+                                VariableInitializer
+                                  MethodInvocationExpression
+                                    NameExpression
+                                      Identifier "open" @ 321..325
+                                    ArgumentList
+                                      LParen "(" @ 325..326
+                                      RParen ")" @ 326..327
+                    RParen ")" @ 327..328 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 329..330
+                    RBrace "}" @ 330..331
+            BlockStatement
+              TryStatement
+                TryKw "try" @ 340..343 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                Block
+                  LBrace "{" @ 344..345
+                  BlockStatement
+                    ExpressionStatement
+                      MethodInvocationExpression
+                        NameExpression
+                          Identifier "risky" @ 358..363 leading=[Newline "\n", Whitespace "            "]
+                        ArgumentList
+                          LParen "(" @ 363..364
+                          RParen ")" @ 364..365
+                      Semicolon ";" @ 365..366
+                  RBrace "}" @ 375..376 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                CatchClause
+                  CatchKw "catch" @ 377..382 trailing=[Whitespace " "]
+                  LParen "(" @ 383..384
+                  CatchParameter
+                    CatchTypeList
+                      ErrorNode
+                        IntKw "int" @ 384..387 trailing=[Whitespace " "]
+                    Identifier "ex" @ 388..390
+                  RParen ")" @ 390..391 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 392..393
+                    RBrace "}" @ 402..403 leading=[Newline "\n", Whitespace "        "]
+            RBrace "}" @ 408..409 leading=[Newline "\n", Whitespace "    "]
+      ClassBodyDeclaration
+        MethodDeclaration
+          ClassType
+            Name
+              Identifier "AutoCloseable" @ 415..428 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "open" @ 429..433
+          LParen "(" @ 433..434
+          RParen ")" @ 434..435 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 436..437 trailing=[Whitespace " "]
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 438..444 trailing=[Whitespace " "]
+                LiteralExpression
+                  NullLiteral "null" @ 445..449
+                Semicolon ";" @ 449..450 trailing=[Whitespace " "]
+            RBrace "}" @ 451..452
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 457..461 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "risky" @ 462..467
+          LParen "(" @ 467..468
+          RParen ")" @ 468..469 trailing=[Whitespace " "]
+          ThrowsClause
+            ThrowsKw "throws" @ 470..476 trailing=[Whitespace " "]
+            ClassType
+              Name
+                Identifier "Exception" @ 477..486 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 487..488
+            RBrace "}" @ 488..489
+      ClassBodyDeclaration
+        MethodDeclaration
+          ModifierList
+            ErrorNode
+              TransientKw "transient" @ 494..503 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          VoidType
+            VoidKw "void" @ 504..508 trailing=[Whitespace " "]
+          Identifier "transientMethod" @ 509..524
+          LParen "(" @ 524..525
+          RParen ")" @ 525..526 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 527..528
+            RBrace "}" @ 528..529
+      ClassBodyDeclaration
+        ConstructorDeclaration
+          ModifierList
+            ErrorNode
+              VolatileKw "volatile" @ 534..542 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "InvalidDeclarationContexts" @ 543..569
+          LParen "(" @ 569..570
+          RParen ")" @ 570..571 trailing=[Whitespace " "]
+          ConstructorBody
+            LBrace "{" @ 572..573
+            RBrace "}" @ 573..574
+      ClassBodyDeclaration
+        FieldDeclaration
+          ModifierList
+            ErrorNode
+              SynchronizedKw "synchronized" @ 579..591 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          PrimitiveType
+            IntKw "int" @ 592..595 trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "synchronizedField" @ 596..613
+          Semicolon ";" @ 613..614
+      RBrace "}" @ 615..616 leading=[Newline "\n"]
+  Eof "" @ 617..617 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=43..46 message="expected class or interface type"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=114..117 message="expected class or interface type"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=148..152 message="enhanced for variable must not have an initializer"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=191..192 message="enhanced for statement must declare a single variable"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=247..248 message="expected resource initializer"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=247..248 message="resource declaration must declare a single variable"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=310..311 message="resource declaration must declare a single variable"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=384..387 message="expected class or interface type"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=494..503 message="invalid method modifier"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=534..542 message="invalid constructor modifier"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=579..591 message="invalid field modifier"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(43), end: TextSize(46) }) message=expected class or interface type
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(114), end: TextSize(117) }) message=expected class or interface type
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(148), end: TextSize(152) }) message=enhanced for variable must not have an initializer
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(191), end: TextSize(192) }) message=enhanced for statement must declare a single variable
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(247), end: TextSize(248) }) message=expected resource initializer
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(247), end: TextSize(248) }) message=resource declaration must declare a single variable
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(310), end: TextSize(311) }) message=resource declaration must declare a single variable
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(384), end: TextSize(387) }) message=expected class or interface type
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(494), end: TextSize(503) }) message=invalid method modifier
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(534), end: TextSize(542) }) message=invalid constructor modifier
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(579), end: TextSize(591) }) message=invalid field modifier

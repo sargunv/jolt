@@ -1,0 +1,18 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class LongArrayDimensions {
+  int[][][][][][][][][][][][][][][][][][][][][][][][] values[][][][][][][][][][][][];
+  int[][] compactValues;
+  String @Readonly [] @Frozen [] @Stable [] @Shared [] @Large [] @Huge [] @Wide [] @Deep [] labels;
+
+  void consume(
+    int[][][][][][][][][][][][][][][][][][][][][][][][] values[][][][][][][][][][][][]
+  ) {
+  }
+}
+
+diagnostics:
+(none)

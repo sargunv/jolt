@@ -1,0 +1,26 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+0xG 0XCAFE_Z
+
+syntax:
+syntax:
+CompilationUnit
+  ErrorNode
+    IntegerLiteral "0x" @ 0..2
+    Identifier "G" @ 2..3 trailing=[Whitespace " "]
+    IntegerLiteral "0XCAFE_" @ 4..11
+    Identifier "Z" @ 11..12
+  Eof "" @ 12..12
+
+diagnostics:
+  code=java.lex.invalid_numeric_literal severity=Error stage=Lexer range=0..2 message="invalid numeric literal"
+  code=java.lex.invalid_numeric_literal severity=Error stage=Lexer range=4..11 message="invalid numeric literal"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=0..2 message="unexpected token at top level"
+
+diagnostics:
+code=java.lex.invalid_numeric_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(0), end: TextSize(2) }) message=invalid numeric literal
+code=java.lex.invalid_numeric_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(4), end: TextSize(11) }) message=invalid numeric literal
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(2) }) message=unexpected token at top level

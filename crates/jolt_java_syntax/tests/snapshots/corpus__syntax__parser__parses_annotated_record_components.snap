@@ -1,0 +1,55 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+record AnnotatedRecordComponents(@Marker int x, String @Marker ... labels) {}
+
+@interface Marker {}
+
+syntax:
+syntax:
+CompilationUnit
+  RecordDeclaration
+    Identifier "record" @ 0..6 trailing=[Whitespace " "]
+    Identifier "AnnotatedRecordComponents" @ 7..32
+    LParen "(" @ 32..33
+    RecordComponentList
+      RecordComponent
+        Annotation
+          At "@" @ 33..34
+          Name
+            Identifier "Marker" @ 34..40 trailing=[Whitespace " "]
+        PrimitiveType
+          IntKw "int" @ 41..44 trailing=[Whitespace " "]
+        Identifier "x" @ 45..46
+      Comma "," @ 46..47 trailing=[Whitespace " "]
+      RecordComponent
+        ClassType
+          Name
+            Identifier "String" @ 48..54 trailing=[Whitespace " "]
+        Annotation
+          At "@" @ 55..56
+          Name
+            Identifier "Marker" @ 56..62 trailing=[Whitespace " "]
+        Ellipsis "..." @ 63..66 trailing=[Whitespace " "]
+        Identifier "labels" @ 67..73
+    RParen ")" @ 73..74 trailing=[Whitespace " "]
+    RecordBody
+      LBrace "{" @ 75..76
+      RBrace "}" @ 76..77
+  AnnotationInterfaceDeclaration
+    At "@" @ 79..80 leading=[Newline "\n", Newline "\n"]
+    InterfaceKw "interface" @ 80..89 trailing=[Whitespace " "]
+    Identifier "Marker" @ 90..96 trailing=[Whitespace " "]
+    AnnotationInterfaceBody
+      LBrace "{" @ 97..98
+      AnnotationElementList
+      RBrace "}" @ 98..99
+  Eof "" @ 100..100 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

@@ -1,0 +1,61 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class NestedGenericClose {
+    java.util.Map<String, java.util.List<Integer>> value;
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "NestedGenericClose" @ 6..24 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 25..26
+      ClassBodyDeclaration
+        FieldDeclaration
+          ClassType
+            QualifiedName
+              Identifier "java" @ 31..35 leading=[Newline "\n", Whitespace "    "]
+              Dot "." @ 35..36
+              Identifier "util" @ 36..40
+              Dot "." @ 40..41
+              Identifier "Map" @ 41..44
+            TypeArgumentList
+              Lt "<" @ 44..45
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "String" @ 45..51
+              Comma "," @ 51..52 trailing=[Whitespace " "]
+              TypeArgument
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 53..57
+                    Dot "." @ 57..58
+                    Identifier "util" @ 58..62
+                    Dot "." @ 62..63
+                    Identifier "List" @ 63..67
+                  TypeArgumentList
+                    Lt "<" @ 67..68
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "Integer" @ 68..75
+                    Gt ">" @ 75..76
+              Gt ">" @ 76..77 trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "value" @ 78..83
+          Semicolon ";" @ 83..84
+      RBrace "}" @ 85..86 leading=[Newline "\n"]
+  Eof "" @ 87..87 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

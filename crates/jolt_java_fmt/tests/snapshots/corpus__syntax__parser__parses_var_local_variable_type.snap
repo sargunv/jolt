@@ -1,0 +1,13 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class VarLocalVariable {
+  void method(Object value) {
+    final var local = value;
+  }
+}
+
+diagnostics:
+(none)

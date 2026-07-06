@@ -1,0 +1,81 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+@interface Example {
+int before=1;
+  // @formatter:off
+  int raw=1+2;
+  String label="x";
+  // @formatter:on
+int after=2;
+}
+
+syntax:
+syntax:
+CompilationUnit
+  AnnotationInterfaceDeclaration
+    At "@" @ 0..1
+    InterfaceKw "interface" @ 1..10 trailing=[Whitespace " "]
+    Identifier "Example" @ 11..18 trailing=[Whitespace " "]
+    AnnotationInterfaceBody
+      LBrace "{" @ 19..20
+      AnnotationElementList
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 21..24 leading=[Newline "\n"] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "before" @ 25..31
+              Assign "=" @ 31..32
+              VariableInitializer
+                LiteralExpression
+                  IntegerLiteral "1" @ 32..33
+          Semicolon ";" @ 33..34
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 57..60 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "raw" @ 61..64
+              Assign "=" @ 64..65
+              VariableInitializer
+                BinaryExpression
+                  LiteralExpression
+                    IntegerLiteral "1" @ 65..66
+                  Plus "+" @ 66..67
+                  LiteralExpression
+                    IntegerLiteral "2" @ 67..68
+          Semicolon ";" @ 68..69
+        FieldDeclaration
+          ClassType
+            Name
+              Identifier "String" @ 72..78 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "label" @ 79..84
+              Assign "=" @ 84..85
+              VariableInitializer
+                LiteralExpression
+                  StringLiteral "\"x\"" @ 85..88
+          Semicolon ";" @ 88..89
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 109..112 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n"] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "after" @ 113..118
+              Assign "=" @ 118..119
+              VariableInitializer
+                LiteralExpression
+                  IntegerLiteral "2" @ 119..120
+          Semicolon ";" @ 120..121
+      RBrace "}" @ 122..123 leading=[Newline "\n"]
+  Eof "" @ 124..124 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

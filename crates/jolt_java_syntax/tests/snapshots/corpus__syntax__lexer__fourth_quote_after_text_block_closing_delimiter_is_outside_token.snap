@@ -1,0 +1,24 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+"""
+text
+""""
+
+syntax:
+syntax:
+CompilationUnit
+  ErrorNode
+    TextBlockLiteral "\"\"\"\ntext\n\"\"\"" @ 0..12
+    StringLiteral "\"" @ 12..13
+  Eof "" @ 13..13
+
+diagnostics:
+  code=java.lex.unterminated_string_literal severity=Error stage=Lexer range=12..13 message="unterminated string literal"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=0..12 message="unexpected token at top level"
+
+diagnostics:
+code=java.lex.unterminated_string_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(12), end: TextSize(13) }) message=unterminated string literal
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(12) }) message=unexpected token at top level

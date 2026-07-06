@@ -1,0 +1,24 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+/* 𝒂 */ int x;
+
+syntax:
+syntax:
+CompilationUnit
+  FieldDeclaration
+    PrimitiveType
+      IntKw "int" @ 11..14 leading=[BlockComment "/* 𝒂 */", Whitespace " "] trailing=[Whitespace " "]
+    VariableDeclaratorList
+      VariableDeclarator
+        Identifier "x" @ 15..16
+    Semicolon ";" @ 16..17
+  Eof "" @ 17..17
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

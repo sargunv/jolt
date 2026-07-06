@@ -1,0 +1,14 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+enum StructuredEnumClassBodyArguments {
+  SPECIAL(helper(1)) {
+    void run() {
+    }
+  },
+}
+
+diagnostics:
+(none)

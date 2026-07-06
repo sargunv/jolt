@@ -1,0 +1,37 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+a\x b\U0061
+
+syntax:
+syntax:
+CompilationUnit
+  FieldDeclaration
+    ClassType
+      Name
+        Identifier "a" @ 0..1
+    VariableDeclaratorList
+      VariableDeclarator
+  ErrorNode
+    Unknown "\\" @ 1..2
+    Identifier "x" @ 2..3 trailing=[Whitespace " "]
+    Identifier "b" @ 4..5
+    Unknown "\\" @ 5..6
+    Identifier "U0061" @ 6..11
+  Eof "" @ 11..11
+
+diagnostics:
+  code=java.lex.unknown_character severity=Error stage=Lexer range=1..2 message="unknown character"
+  code=java.lex.unknown_character severity=Error stage=Lexer range=5..6 message="unknown character"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=1..2 message="expected variable name"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=1..2 message="expected `;` after field declaration"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=1..2 message="unexpected token at top level"
+
+diagnostics:
+code=java.lex.unknown_character severity=Error stage=Lexer range=Some(TextRange { start: TextSize(1), end: TextSize(2) }) message=unknown character
+code=java.lex.unknown_character severity=Error stage=Lexer range=Some(TextRange { start: TextSize(5), end: TextSize(6) }) message=unknown character
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1), end: TextSize(2) }) message=expected variable name
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1), end: TextSize(2) }) message=expected `;` after field declaration
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1), end: TextSize(2) }) message=unexpected token at top level

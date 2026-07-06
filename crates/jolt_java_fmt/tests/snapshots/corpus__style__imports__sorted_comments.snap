@@ -1,0 +1,16 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+import a.Alpha; // alpha
+import z.Zed; // zed
+
+import static a.Tools.alpha; // static alpha
+import static z.Tools.zed; // static zed
+
+class A {
+}
+
+diagnostics:
+(none)

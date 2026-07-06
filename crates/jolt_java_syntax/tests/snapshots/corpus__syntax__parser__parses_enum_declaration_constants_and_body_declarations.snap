@@ -1,0 +1,111 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+enum Planet {
+    MERCURY(1),
+    VENUS(2) {
+        void override() {}
+    };
+
+    final int order;
+
+    Planet(int order) {
+        this.order = order;
+    }
+
+    void override() {}
+}
+
+syntax:
+syntax:
+CompilationUnit
+  EnumDeclaration
+    EnumKw "enum" @ 0..4 trailing=[Whitespace " "]
+    Identifier "Planet" @ 5..11 trailing=[Whitespace " "]
+    EnumBody
+      LBrace "{" @ 12..13
+      EnumConstantList
+        EnumConstant
+          Identifier "MERCURY" @ 18..25 leading=[Newline "\n", Whitespace "    "]
+          ArgumentList
+            LParen "(" @ 25..26
+            LiteralExpression
+              IntegerLiteral "1" @ 26..27
+            RParen ")" @ 27..28
+        Comma "," @ 28..29
+        EnumConstant
+          Identifier "VENUS" @ 34..39 leading=[Newline "\n", Whitespace "    "]
+          ArgumentList
+            LParen "(" @ 39..40
+            LiteralExpression
+              IntegerLiteral "2" @ 40..41
+            RParen ")" @ 41..42 trailing=[Whitespace " "]
+          ClassBody
+            LBrace "{" @ 43..44
+            ClassBodyDeclaration
+              MethodDeclaration
+                VoidType
+                  VoidKw "void" @ 53..57 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                Identifier "override" @ 58..66
+                LParen "(" @ 66..67
+                RParen ")" @ 67..68 trailing=[Whitespace " "]
+                Block
+                  LBrace "{" @ 69..70
+                  RBrace "}" @ 70..71
+            RBrace "}" @ 76..77 leading=[Newline "\n", Whitespace "    "]
+      Semicolon ";" @ 77..78
+      ClassBodyDeclaration
+        FieldDeclaration
+          ModifierList
+            FinalKw "final" @ 84..89 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          PrimitiveType
+            IntKw "int" @ 90..93 trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "order" @ 94..99
+          Semicolon ";" @ 99..100
+      ClassBodyDeclaration
+        ConstructorDeclaration
+          Identifier "Planet" @ 106..112 leading=[Newline "\n", Newline "\n", Whitespace "    "]
+          LParen "(" @ 112..113
+          FormalParameterList
+            FormalParameter
+              PrimitiveType
+                IntKw "int" @ 113..116 trailing=[Whitespace " "]
+              Identifier "order" @ 117..122
+          RParen ")" @ 122..123 trailing=[Whitespace " "]
+          ConstructorBody
+            LBrace "{" @ 124..125
+            BlockStatement
+              ExpressionStatement
+                AssignmentExpression
+                  FieldAccessExpression
+                    ThisExpression
+                      ThisKw "this" @ 134..138 leading=[Newline "\n", Whitespace "        "]
+                    Dot "." @ 138..139
+                    Identifier "order" @ 139..144 trailing=[Whitespace " "]
+                  Assign "=" @ 145..146 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "order" @ 147..152
+                Semicolon ";" @ 152..153
+            RBrace "}" @ 158..159 leading=[Newline "\n", Whitespace "    "]
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 165..169 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "override" @ 170..178
+          LParen "(" @ 178..179
+          RParen ")" @ 179..180 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 181..182
+            RBrace "}" @ 182..183
+      RBrace "}" @ 184..185 leading=[Newline "\n"]
+  Eof "" @ 186..186 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

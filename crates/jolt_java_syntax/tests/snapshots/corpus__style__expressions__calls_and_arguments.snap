@@ -1,0 +1,421 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class Example {
+Result build(User user, Account account) {
+return create(user.profile().displayName(),account.permissions().primaryRole(),settings.region().identifier());
+}
+void run(Target target, User user, Account account) {
+print(user.name(),account.id());
+target.accept((user) -> user.name(),account.hasPermission("write"));
+this.<String>convert(user.name());
+target.accept(user.profile().displayName(),account.permissions().primaryRole(),settings.region().identifier());
+target.accept(user.profile().displayName(),
+
+account.permissions().primaryRole(),
+
+settings.region().identifier());
+log(/* nothing */);
+log(user /* selected */);
+log(user,/* account */account);
+log(user, // selected
+account);
+log(user
+// before close
+);
+log(
+// no args
+);
+}
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "Example" @ 6..13 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 14..15
+      ClassBodyDeclaration
+        MethodDeclaration
+          ClassType
+            Name
+              Identifier "Result" @ 16..22 leading=[Newline "\n"] trailing=[Whitespace " "]
+          Identifier "build" @ 23..28
+          LParen "(" @ 28..29
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "User" @ 29..33 trailing=[Whitespace " "]
+              Identifier "user" @ 34..38
+            Comma "," @ 38..39 trailing=[Whitespace " "]
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "Account" @ 40..47 trailing=[Whitespace " "]
+              Identifier "account" @ 48..55
+          RParen ")" @ 55..56 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 57..58
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 59..65 leading=[Newline "\n"] trailing=[Whitespace " "]
+                MethodInvocationExpression
+                  NameExpression
+                    Identifier "create" @ 66..72
+                  ArgumentList
+                    LParen "(" @ 72..73
+                    MethodInvocationExpression
+                      MethodInvocationExpression
+                        NameExpression
+                          Identifier "user" @ 73..77
+                        Dot "." @ 77..78
+                        Identifier "profile" @ 78..85
+                        ArgumentList
+                          LParen "(" @ 85..86
+                          RParen ")" @ 86..87
+                      Dot "." @ 87..88
+                      Identifier "displayName" @ 88..99
+                      ArgumentList
+                        LParen "(" @ 99..100
+                        RParen ")" @ 100..101
+                    Comma "," @ 101..102
+                    MethodInvocationExpression
+                      MethodInvocationExpression
+                        NameExpression
+                          Identifier "account" @ 102..109
+                        Dot "." @ 109..110
+                        Identifier "permissions" @ 110..121
+                        ArgumentList
+                          LParen "(" @ 121..122
+                          RParen ")" @ 122..123
+                      Dot "." @ 123..124
+                      Identifier "primaryRole" @ 124..135
+                      ArgumentList
+                        LParen "(" @ 135..136
+                        RParen ")" @ 136..137
+                    Comma "," @ 137..138
+                    MethodInvocationExpression
+                      MethodInvocationExpression
+                        NameExpression
+                          Identifier "settings" @ 138..146
+                        Dot "." @ 146..147
+                        Identifier "region" @ 147..153
+                        ArgumentList
+                          LParen "(" @ 153..154
+                          RParen ")" @ 154..155
+                      Dot "." @ 155..156
+                      Identifier "identifier" @ 156..166
+                      ArgumentList
+                        LParen "(" @ 166..167
+                        RParen ")" @ 167..168
+                    RParen ")" @ 168..169
+                Semicolon ";" @ 169..170
+            RBrace "}" @ 171..172 leading=[Newline "\n"]
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 173..177 leading=[Newline "\n"] trailing=[Whitespace " "]
+          Identifier "run" @ 178..181
+          LParen "(" @ 181..182
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "Target" @ 182..188 trailing=[Whitespace " "]
+              Identifier "target" @ 189..195
+            Comma "," @ 195..196 trailing=[Whitespace " "]
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "User" @ 197..201 trailing=[Whitespace " "]
+              Identifier "user" @ 202..206
+            Comma "," @ 206..207 trailing=[Whitespace " "]
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "Account" @ 208..215 trailing=[Whitespace " "]
+              Identifier "account" @ 216..223
+          RParen ")" @ 223..224 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 225..226
+            BlockStatement
+              ExpressionStatement
+                MethodInvocationExpression
+                  NameExpression
+                    Identifier "print" @ 227..232 leading=[Newline "\n"]
+                  ArgumentList
+                    LParen "(" @ 232..233
+                    MethodInvocationExpression
+                      NameExpression
+                        Identifier "user" @ 233..237
+                      Dot "." @ 237..238
+                      Identifier "name" @ 238..242
+                      ArgumentList
+                        LParen "(" @ 242..243
+                        RParen ")" @ 243..244
+                    Comma "," @ 244..245
+                    MethodInvocationExpression
+                      NameExpression
+                        Identifier "account" @ 245..252
+                      Dot "." @ 252..253
+                      Identifier "id" @ 253..255
+                      ArgumentList
+                        LParen "(" @ 255..256
+                        RParen ")" @ 256..257
+                    RParen ")" @ 257..258
+                Semicolon ";" @ 258..259
+            BlockStatement
+              ExpressionStatement
+                MethodInvocationExpression
+                  NameExpression
+                    Identifier "target" @ 260..266 leading=[Newline "\n"]
+                  Dot "." @ 266..267
+                  Identifier "accept" @ 267..273
+                  ArgumentList
+                    LParen "(" @ 273..274
+                    LambdaExpression
+                      LParen "(" @ 274..275
+                      LambdaParameterList
+                        LambdaParameter
+                          Identifier "user" @ 275..279
+                      RParen ")" @ 279..280 trailing=[Whitespace " "]
+                      Arrow "->" @ 281..283 trailing=[Whitespace " "]
+                      MethodInvocationExpression
+                        NameExpression
+                          Identifier "user" @ 284..288
+                        Dot "." @ 288..289
+                        Identifier "name" @ 289..293
+                        ArgumentList
+                          LParen "(" @ 293..294
+                          RParen ")" @ 294..295
+                    Comma "," @ 295..296
+                    MethodInvocationExpression
+                      NameExpression
+                        Identifier "account" @ 296..303
+                      Dot "." @ 303..304
+                      Identifier "hasPermission" @ 304..317
+                      ArgumentList
+                        LParen "(" @ 317..318
+                        LiteralExpression
+                          StringLiteral "\"write\"" @ 318..325
+                        RParen ")" @ 325..326
+                    RParen ")" @ 326..327
+                Semicolon ";" @ 327..328
+            BlockStatement
+              ExpressionStatement
+                MethodInvocationExpression
+                  ThisExpression
+                    ThisKw "this" @ 329..333 leading=[Newline "\n"]
+                  Dot "." @ 333..334
+                  TypeArgumentList
+                    Lt "<" @ 334..335
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "String" @ 335..341
+                    Gt ">" @ 341..342
+                  Identifier "convert" @ 342..349
+                  ArgumentList
+                    LParen "(" @ 349..350
+                    MethodInvocationExpression
+                      NameExpression
+                        Identifier "user" @ 350..354
+                      Dot "." @ 354..355
+                      Identifier "name" @ 355..359
+                      ArgumentList
+                        LParen "(" @ 359..360
+                        RParen ")" @ 360..361
+                    RParen ")" @ 361..362
+                Semicolon ";" @ 362..363
+            BlockStatement
+              ExpressionStatement
+                MethodInvocationExpression
+                  NameExpression
+                    Identifier "target" @ 364..370 leading=[Newline "\n"]
+                  Dot "." @ 370..371
+                  Identifier "accept" @ 371..377
+                  ArgumentList
+                    LParen "(" @ 377..378
+                    MethodInvocationExpression
+                      MethodInvocationExpression
+                        NameExpression
+                          Identifier "user" @ 378..382
+                        Dot "." @ 382..383
+                        Identifier "profile" @ 383..390
+                        ArgumentList
+                          LParen "(" @ 390..391
+                          RParen ")" @ 391..392
+                      Dot "." @ 392..393
+                      Identifier "displayName" @ 393..404
+                      ArgumentList
+                        LParen "(" @ 404..405
+                        RParen ")" @ 405..406
+                    Comma "," @ 406..407
+                    MethodInvocationExpression
+                      MethodInvocationExpression
+                        NameExpression
+                          Identifier "account" @ 407..414
+                        Dot "." @ 414..415
+                        Identifier "permissions" @ 415..426
+                        ArgumentList
+                          LParen "(" @ 426..427
+                          RParen ")" @ 427..428
+                      Dot "." @ 428..429
+                      Identifier "primaryRole" @ 429..440
+                      ArgumentList
+                        LParen "(" @ 440..441
+                        RParen ")" @ 441..442
+                    Comma "," @ 442..443
+                    MethodInvocationExpression
+                      MethodInvocationExpression
+                        NameExpression
+                          Identifier "settings" @ 443..451
+                        Dot "." @ 451..452
+                        Identifier "region" @ 452..458
+                        ArgumentList
+                          LParen "(" @ 458..459
+                          RParen ")" @ 459..460
+                      Dot "." @ 460..461
+                      Identifier "identifier" @ 461..471
+                      ArgumentList
+                        LParen "(" @ 471..472
+                        RParen ")" @ 472..473
+                    RParen ")" @ 473..474
+                Semicolon ";" @ 474..475
+            BlockStatement
+              ExpressionStatement
+                MethodInvocationExpression
+                  NameExpression
+                    Identifier "target" @ 476..482 leading=[Newline "\n"]
+                  Dot "." @ 482..483
+                  Identifier "accept" @ 483..489
+                  ArgumentList
+                    LParen "(" @ 489..490
+                    MethodInvocationExpression
+                      MethodInvocationExpression
+                        NameExpression
+                          Identifier "user" @ 490..494
+                        Dot "." @ 494..495
+                        Identifier "profile" @ 495..502
+                        ArgumentList
+                          LParen "(" @ 502..503
+                          RParen ")" @ 503..504
+                      Dot "." @ 504..505
+                      Identifier "displayName" @ 505..516
+                      ArgumentList
+                        LParen "(" @ 516..517
+                        RParen ")" @ 517..518
+                    Comma "," @ 518..519
+                    MethodInvocationExpression
+                      MethodInvocationExpression
+                        NameExpression
+                          Identifier "account" @ 521..528 leading=[Newline "\n", Newline "\n"]
+                        Dot "." @ 528..529
+                        Identifier "permissions" @ 529..540
+                        ArgumentList
+                          LParen "(" @ 540..541
+                          RParen ")" @ 541..542
+                      Dot "." @ 542..543
+                      Identifier "primaryRole" @ 543..554
+                      ArgumentList
+                        LParen "(" @ 554..555
+                        RParen ")" @ 555..556
+                    Comma "," @ 556..557
+                    MethodInvocationExpression
+                      MethodInvocationExpression
+                        NameExpression
+                          Identifier "settings" @ 559..567 leading=[Newline "\n", Newline "\n"]
+                        Dot "." @ 567..568
+                        Identifier "region" @ 568..574
+                        ArgumentList
+                          LParen "(" @ 574..575
+                          RParen ")" @ 575..576
+                      Dot "." @ 576..577
+                      Identifier "identifier" @ 577..587
+                      ArgumentList
+                        LParen "(" @ 587..588
+                        RParen ")" @ 588..589
+                    RParen ")" @ 589..590
+                Semicolon ";" @ 590..591
+            BlockStatement
+              ExpressionStatement
+                MethodInvocationExpression
+                  NameExpression
+                    Identifier "log" @ 592..595 leading=[Newline "\n"]
+                  ArgumentList
+                    LParen "(" @ 595..596 trailing=[BlockComment "/* nothing */"]
+                    RParen ")" @ 609..610
+                Semicolon ";" @ 610..611
+            BlockStatement
+              ExpressionStatement
+                MethodInvocationExpression
+                  NameExpression
+                    Identifier "log" @ 612..615 leading=[Newline "\n"]
+                  ArgumentList
+                    LParen "(" @ 615..616
+                    NameExpression
+                      Identifier "user" @ 616..620 trailing=[Whitespace " ", BlockComment "/* selected */"]
+                    RParen ")" @ 635..636
+                Semicolon ";" @ 636..637
+            BlockStatement
+              ExpressionStatement
+                MethodInvocationExpression
+                  NameExpression
+                    Identifier "log" @ 638..641 leading=[Newline "\n"]
+                  ArgumentList
+                    LParen "(" @ 641..642
+                    NameExpression
+                      Identifier "user" @ 642..646
+                    Comma "," @ 646..647 trailing=[BlockComment "/* account */"]
+                    NameExpression
+                      Identifier "account" @ 660..667
+                    RParen ")" @ 667..668
+                Semicolon ";" @ 668..669
+            BlockStatement
+              ExpressionStatement
+                MethodInvocationExpression
+                  NameExpression
+                    Identifier "log" @ 670..673 leading=[Newline "\n"]
+                  ArgumentList
+                    LParen "(" @ 673..674
+                    NameExpression
+                      Identifier "user" @ 674..678
+                    Comma "," @ 678..679 trailing=[Whitespace " ", LineComment "// selected"]
+                    NameExpression
+                      Identifier "account" @ 692..699 leading=[Newline "\n"]
+                    RParen ")" @ 699..700
+                Semicolon ";" @ 700..701
+            BlockStatement
+              ExpressionStatement
+                MethodInvocationExpression
+                  NameExpression
+                    Identifier "log" @ 702..705 leading=[Newline "\n"]
+                  ArgumentList
+                    LParen "(" @ 705..706
+                    NameExpression
+                      Identifier "user" @ 706..710
+                    RParen ")" @ 727..728 leading=[Newline "\n", LineComment "// before close", Newline "\n"]
+                Semicolon ";" @ 728..729
+            BlockStatement
+              ExpressionStatement
+                MethodInvocationExpression
+                  NameExpression
+                    Identifier "log" @ 730..733 leading=[Newline "\n"]
+                  ArgumentList
+                    LParen "(" @ 733..734
+                    RParen ")" @ 746..747 leading=[Newline "\n", LineComment "// no args", Newline "\n"]
+                Semicolon ";" @ 747..748
+            RBrace "}" @ 749..750 leading=[Newline "\n"]
+      RBrace "}" @ 751..752 leading=[Newline "\n"]
+  Eof "" @ 753..753 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

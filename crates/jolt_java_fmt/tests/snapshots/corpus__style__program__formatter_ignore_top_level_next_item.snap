@@ -1,0 +1,14 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+// @formatter:off
+class Raw {int x=1+2;}
+// @formatter:on
+class After {
+  int y = 3;
+}
+
+diagnostics:
+(none)

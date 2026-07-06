@@ -1,0 +1,31 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+int a; /* outer /* inner */ int b;
+
+syntax:
+syntax:
+CompilationUnit
+  FieldDeclaration
+    PrimitiveType
+      IntKw "int" @ 0..3 trailing=[Whitespace " "]
+    VariableDeclaratorList
+      VariableDeclarator
+        Identifier "a" @ 4..5
+    Semicolon ";" @ 5..6 trailing=[Whitespace " ", BlockComment "/* outer /* inner */", Whitespace " "]
+  FieldDeclaration
+    PrimitiveType
+      IntKw "int" @ 28..31 trailing=[Whitespace " "]
+    VariableDeclaratorList
+      VariableDeclarator
+        Identifier "b" @ 32..33
+    Semicolon ";" @ 33..34
+  Eof "" @ 34..34
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

@@ -1,0 +1,18 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+@interface Contract {
+  String value() default "x";
+
+  int[] flags() default { 1, 2 };
+
+  Nested nested() default @Nested;
+}
+
+@interface Nested {
+}
+
+diagnostics:
+(none)

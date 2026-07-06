@@ -1,0 +1,116 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class A {
+  ;
+  // keep class marker
+  ;
+  ; /* keep trailing class marker */
+  ;
+}
+interface Api {
+  ; // keep interface marker
+  void call(); // call marker
+}
+@interface Marker {
+  /* keep annotation marker */ ;
+  String value();
+}
+enum Mode {
+  A;
+  // keep enum marker
+  ;
+  void run() {}
+}
+enum EmptyEnum {
+  ; // keep empty enum marker
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "A" @ 6..7 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 8..9
+      EmptyDeclaration
+        Semicolon ";" @ 12..13 leading=[Newline "\n", Whitespace "  "]
+      EmptyDeclaration
+        Semicolon ";" @ 39..40 leading=[Newline "\n", Whitespace "  ", LineComment "// keep class marker", Newline "\n", Whitespace "  "]
+      EmptyDeclaration
+        Semicolon ";" @ 43..44 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " ", BlockComment "/* keep trailing class marker */"]
+      EmptyDeclaration
+        Semicolon ";" @ 80..81 leading=[Newline "\n", Whitespace "  "]
+      RBrace "}" @ 82..83 leading=[Newline "\n"]
+  InterfaceDeclaration
+    InterfaceKw "interface" @ 84..93 leading=[Newline "\n"] trailing=[Whitespace " "]
+    Identifier "Api" @ 94..97 trailing=[Whitespace " "]
+    InterfaceBody
+      LBrace "{" @ 98..99
+      EmptyDeclaration
+        Semicolon ";" @ 102..103 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " ", LineComment "// keep interface marker"]
+      MethodDeclaration
+        VoidType
+          VoidKw "void" @ 131..135 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+        Identifier "call" @ 136..140
+        LParen "(" @ 140..141
+        RParen ")" @ 141..142
+        Semicolon ";" @ 142..143 trailing=[Whitespace " ", LineComment "// call marker"]
+      RBrace "}" @ 159..160 leading=[Newline "\n"]
+  AnnotationInterfaceDeclaration
+    At "@" @ 161..162 leading=[Newline "\n"]
+    InterfaceKw "interface" @ 162..171 trailing=[Whitespace " "]
+    Identifier "Marker" @ 172..178 trailing=[Whitespace " "]
+    AnnotationInterfaceBody
+      LBrace "{" @ 179..180
+      AnnotationElementList
+        EmptyDeclaration
+          Semicolon ";" @ 212..213 leading=[Newline "\n", Whitespace "  ", BlockComment "/* keep annotation marker */", Whitespace " "]
+        AnnotationElementDeclaration
+          ClassType
+            Name
+              Identifier "String" @ 216..222 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          Identifier "value" @ 223..228
+          LParen "(" @ 228..229
+          RParen ")" @ 229..230
+          Semicolon ";" @ 230..231
+      RBrace "}" @ 232..233 leading=[Newline "\n"]
+  EnumDeclaration
+    EnumKw "enum" @ 234..238 leading=[Newline "\n"] trailing=[Whitespace " "]
+    Identifier "Mode" @ 239..243 trailing=[Whitespace " "]
+    EnumBody
+      LBrace "{" @ 244..245
+      EnumConstantList
+        EnumConstant
+          Identifier "A" @ 248..249 leading=[Newline "\n", Whitespace "  "]
+      Semicolon ";" @ 249..250
+      EmptyDeclaration
+        Semicolon ";" @ 275..276 leading=[Newline "\n", Whitespace "  ", LineComment "// keep enum marker", Newline "\n", Whitespace "  "]
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 279..283 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          Identifier "run" @ 284..287
+          LParen "(" @ 287..288
+          RParen ")" @ 288..289 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 290..291
+            RBrace "}" @ 291..292
+      RBrace "}" @ 293..294 leading=[Newline "\n"]
+  EnumDeclaration
+    EnumKw "enum" @ 295..299 leading=[Newline "\n"] trailing=[Whitespace " "]
+    Identifier "EmptyEnum" @ 300..309 trailing=[Whitespace " "]
+    EnumBody
+      LBrace "{" @ 310..311
+      Semicolon ";" @ 314..315 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " ", LineComment "// keep empty enum marker"]
+      RBrace "}" @ 342..343 leading=[Newline "\n"]
+  Eof "" @ 344..344 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

@@ -1,0 +1,78 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class InstanceofExpressionShape {
+    boolean method(Object value) {
+        return value instanceof java.util.List<?> || value instanceof String text;
+    }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "InstanceofExpressionShape" @ 6..31 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 32..33
+      ClassBodyDeclaration
+        MethodDeclaration
+          PrimitiveType
+            BooleanKw "boolean" @ 38..45 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "method" @ 46..52
+          LParen "(" @ 52..53
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "Object" @ 53..59 trailing=[Whitespace " "]
+              Identifier "value" @ 60..65
+          RParen ")" @ 65..66 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 67..68
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 77..83 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                BinaryExpression
+                  InstanceofExpression
+                    NameExpression
+                      Identifier "value" @ 84..89 trailing=[Whitespace " "]
+                    InstanceofKw "instanceof" @ 90..100 trailing=[Whitespace " "]
+                    ClassType
+                      QualifiedName
+                        Identifier "java" @ 101..105
+                        Dot "." @ 105..106
+                        Identifier "util" @ 106..110
+                        Dot "." @ 110..111
+                        Identifier "List" @ 111..115
+                      TypeArgumentList
+                        Lt "<" @ 115..116
+                        TypeArgument
+                          WildcardType
+                            Question "?" @ 116..117
+                        Gt ">" @ 117..118 trailing=[Whitespace " "]
+                  OrOr "||" @ 119..121 trailing=[Whitespace " "]
+                  InstanceofExpression
+                    NameExpression
+                      Identifier "value" @ 122..127 trailing=[Whitespace " "]
+                    InstanceofKw "instanceof" @ 128..138 trailing=[Whitespace " "]
+                    TypePattern
+                      LocalVariableDeclaration
+                        ClassType
+                          Name
+                            Identifier "String" @ 139..145 trailing=[Whitespace " "]
+                        VariableDeclaratorList
+                          VariableDeclarator
+                            Identifier "text" @ 146..150
+                Semicolon ";" @ 150..151
+            RBrace "}" @ 156..157 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 158..159 leading=[Newline "\n"]
+  Eof "" @ 160..160 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

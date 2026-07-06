@@ -1,0 +1,49 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class Example {
+  void run() throws Exception {
+    try (
+      var declared = open(); // declared resource
+      existing
+      // trailing resource semicolon
+    ) {
+      use(declared);
+    } catch (Exception ex) {
+      recover(ex);
+    } finally {
+      cleanup();
+    }
+  }
+
+  void annotated() throws Exception {
+    try (
+      @Nonnull
+      AutoCloseable declared = open();
+      this.existing
+    ) {
+      use(declared);
+    }
+  }
+
+  void blockCommented() throws Exception {
+    try (
+      var declared = open();
+      existing
+      /* trailing resource semicolon */
+    ) {
+      use(declared);
+    }
+  }
+
+  AutoCloseable open() {
+    return null;
+  }
+
+  AutoCloseable existing;
+}
+
+diagnostics:
+(none)

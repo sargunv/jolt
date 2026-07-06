@@ -1,0 +1,13 @@
+class UnnamedVariableDeclarators {
+    void method(Object _, java.util.List<String> values) throws Exception {
+        var _ = values;
+        try (AutoCloseable _ = open()) {
+        } catch (Exception _) {
+        }
+        java.util.function.IntUnaryOperator zero = (int _) -> 0;
+    }
+
+    AutoCloseable open() {
+        return null;
+    }
+}

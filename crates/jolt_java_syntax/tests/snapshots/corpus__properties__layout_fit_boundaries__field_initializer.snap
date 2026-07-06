@@ -1,0 +1,44 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class Example {
+  boolean value = xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx ? true : false;
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "Example" @ 6..13 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 14..15
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            BooleanKw "boolean" @ 18..25 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "value" @ 26..31 trailing=[Whitespace " "]
+              Assign "=" @ 32..33 trailing=[Whitespace " "]
+              VariableInitializer
+                ConditionalExpression
+                  NameExpression
+                    Identifier "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" @ 34..81 trailing=[Whitespace " "]
+                  Question "?" @ 82..83 trailing=[Whitespace " "]
+                  LiteralExpression
+                    BooleanLiteral "true" @ 84..88 trailing=[Whitespace " "]
+                  Colon ":" @ 89..90 trailing=[Whitespace " "]
+                  LiteralExpression
+                    BooleanLiteral "false" @ 91..96
+          Semicolon ";" @ 96..97
+      RBrace "}" @ 98..99 leading=[Newline "\n"]
+  Eof "" @ 100..100 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

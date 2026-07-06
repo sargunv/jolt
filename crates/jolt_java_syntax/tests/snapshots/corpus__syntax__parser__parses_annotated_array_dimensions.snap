@@ -1,0 +1,60 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class AnnotatedDims {
+    String @Marker [] @Marker [] names;
+}
+
+@interface Marker {}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "AnnotatedDims" @ 6..19 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 20..21
+      ClassBodyDeclaration
+        FieldDeclaration
+          ArrayType
+            ClassType
+              Name
+                Identifier "String" @ 26..32 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            ArrayDimensions
+              ArrayDimension
+                Annotation
+                  At "@" @ 33..34
+                  Name
+                    Identifier "Marker" @ 34..40 trailing=[Whitespace " "]
+                LBracket "[" @ 41..42
+                RBracket "]" @ 42..43 trailing=[Whitespace " "]
+              ArrayDimension
+                Annotation
+                  At "@" @ 44..45
+                  Name
+                    Identifier "Marker" @ 45..51 trailing=[Whitespace " "]
+                LBracket "[" @ 52..53
+                RBracket "]" @ 53..54 trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "names" @ 55..60
+          Semicolon ";" @ 60..61
+      RBrace "}" @ 62..63 leading=[Newline "\n"]
+  AnnotationInterfaceDeclaration
+    At "@" @ 65..66 leading=[Newline "\n", Newline "\n"]
+    InterfaceKw "interface" @ 66..75 trailing=[Whitespace " "]
+    Identifier "Marker" @ 76..82 trailing=[Whitespace " "]
+    AnnotationInterfaceBody
+      LBrace "{" @ 83..84
+      AnnotationElementList
+      RBrace "}" @ 84..85
+  Eof "" @ 86..86 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

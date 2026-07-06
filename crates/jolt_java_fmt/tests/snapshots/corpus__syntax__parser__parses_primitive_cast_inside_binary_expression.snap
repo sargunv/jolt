@@ -1,0 +1,13 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class PrimitiveCastBinaryExpression {
+  int method(Object x) {
+    return (int) x + 1;
+  }
+}
+
+diagnostics:
+(none)

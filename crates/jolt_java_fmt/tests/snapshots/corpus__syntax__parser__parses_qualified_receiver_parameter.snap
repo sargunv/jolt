@@ -1,0 +1,14 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class ReceiverOuter {
+  class ReceiverInner {
+    void method(ReceiverOuter ReceiverOuter.this) {
+    }
+  }
+}
+
+diagnostics:
+(none)

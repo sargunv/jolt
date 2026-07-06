@@ -1,0 +1,117 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class GuardedSwitchRuleLambdaResults {
+    java.util.function.Function<Integer, Integer> method(Object value) {
+        return switch (value) {
+            case Boolean enabled when enabled -> x -> x + 1;
+            default -> x -> x;
+        };
+    }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "GuardedSwitchRuleLambdaResults" @ 6..36 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 37..38
+      ClassBodyDeclaration
+        MethodDeclaration
+          ClassType
+            QualifiedName
+              Identifier "java" @ 43..47 leading=[Newline "\n", Whitespace "    "]
+              Dot "." @ 47..48
+              Identifier "util" @ 48..52
+              Dot "." @ 52..53
+              Identifier "function" @ 53..61
+              Dot "." @ 61..62
+              Identifier "Function" @ 62..70
+            TypeArgumentList
+              Lt "<" @ 70..71
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "Integer" @ 71..78
+              Comma "," @ 78..79 trailing=[Whitespace " "]
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "Integer" @ 80..87
+              Gt ">" @ 87..88 trailing=[Whitespace " "]
+          Identifier "method" @ 89..95
+          LParen "(" @ 95..96
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "Object" @ 96..102 trailing=[Whitespace " "]
+              Identifier "value" @ 103..108
+          RParen ")" @ 108..109 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 110..111
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 120..126 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                SwitchExpression
+                  SwitchKw "switch" @ 127..133 trailing=[Whitespace " "]
+                  LParen "(" @ 134..135
+                  NameExpression
+                    Identifier "value" @ 135..140
+                  RParen ")" @ 140..141 trailing=[Whitespace " "]
+                  SwitchBlock
+                    LBrace "{" @ 142..143
+                    SwitchRule
+                      SwitchLabel
+                        CaseKw "case" @ 156..160 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                        CasePattern
+                          TypePattern
+                            LocalVariableDeclaration
+                              ClassType
+                                Name
+                                  Identifier "Boolean" @ 161..168 trailing=[Whitespace " "]
+                              VariableDeclaratorList
+                                VariableDeclarator
+                                  Identifier "enabled" @ 169..176 trailing=[Whitespace " "]
+                        Guard
+                          Identifier "when" @ 177..181 trailing=[Whitespace " "]
+                          NameExpression
+                            Identifier "enabled" @ 182..189 trailing=[Whitespace " "]
+                      Arrow "->" @ 190..192 trailing=[Whitespace " "]
+                      LambdaExpression
+                        LambdaParameter
+                          Identifier "x" @ 193..194 trailing=[Whitespace " "]
+                        Arrow "->" @ 195..197 trailing=[Whitespace " "]
+                        BinaryExpression
+                          NameExpression
+                            Identifier "x" @ 198..199 trailing=[Whitespace " "]
+                          Plus "+" @ 200..201 trailing=[Whitespace " "]
+                          LiteralExpression
+                            IntegerLiteral "1" @ 202..203
+                      Semicolon ";" @ 203..204
+                    SwitchRule
+                      SwitchLabel
+                        DefaultKw "default" @ 217..224 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                      Arrow "->" @ 225..227 trailing=[Whitespace " "]
+                      LambdaExpression
+                        LambdaParameter
+                          Identifier "x" @ 228..229 trailing=[Whitespace " "]
+                        Arrow "->" @ 230..232 trailing=[Whitespace " "]
+                        NameExpression
+                          Identifier "x" @ 233..234
+                      Semicolon ";" @ 234..235
+                    RBrace "}" @ 244..245 leading=[Newline "\n", Whitespace "        "]
+                Semicolon ";" @ 245..246
+            RBrace "}" @ 251..252 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 253..254 leading=[Newline "\n"]
+  Eof "" @ 255..255 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

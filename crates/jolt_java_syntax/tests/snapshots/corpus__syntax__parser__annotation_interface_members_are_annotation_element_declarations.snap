@@ -1,0 +1,92 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+@interface Contract {
+    String value() default "x";
+    int[] flags() default {1, 2};
+    Nested nested() default @Nested;
+}
+
+@interface Nested {}
+
+syntax:
+syntax:
+CompilationUnit
+  AnnotationInterfaceDeclaration
+    At "@" @ 0..1
+    InterfaceKw "interface" @ 1..10 trailing=[Whitespace " "]
+    Identifier "Contract" @ 11..19 trailing=[Whitespace " "]
+    AnnotationInterfaceBody
+      LBrace "{" @ 20..21
+      AnnotationElementList
+        AnnotationElementDeclaration
+          ClassType
+            Name
+              Identifier "String" @ 26..32 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "value" @ 33..38
+          LParen "(" @ 38..39
+          RParen ")" @ 39..40 trailing=[Whitespace " "]
+          DefaultValue
+            DefaultKw "default" @ 41..48 trailing=[Whitespace " "]
+            AnnotationElementValue
+              LiteralExpression
+                StringLiteral "\"x\"" @ 49..52
+          Semicolon ";" @ 52..53
+        AnnotationElementDeclaration
+          ArrayType
+            PrimitiveType
+              IntKw "int" @ 58..61 leading=[Newline "\n", Whitespace "    "]
+            ArrayDimensions
+              ArrayDimension
+                LBracket "[" @ 61..62
+                RBracket "]" @ 62..63 trailing=[Whitespace " "]
+          Identifier "flags" @ 64..69
+          LParen "(" @ 69..70
+          RParen ")" @ 70..71 trailing=[Whitespace " "]
+          DefaultValue
+            DefaultKw "default" @ 72..79 trailing=[Whitespace " "]
+            AnnotationElementValue
+              AnnotationArrayInitializer
+                LBrace "{" @ 80..81
+                AnnotationElementValue
+                  LiteralExpression
+                    IntegerLiteral "1" @ 81..82
+                Comma "," @ 82..83 trailing=[Whitespace " "]
+                AnnotationElementValue
+                  LiteralExpression
+                    IntegerLiteral "2" @ 84..85
+                RBrace "}" @ 85..86
+          Semicolon ";" @ 86..87
+        AnnotationElementDeclaration
+          ClassType
+            Name
+              Identifier "Nested" @ 92..98 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "nested" @ 99..105
+          LParen "(" @ 105..106
+          RParen ")" @ 106..107 trailing=[Whitespace " "]
+          DefaultValue
+            DefaultKw "default" @ 108..115 trailing=[Whitespace " "]
+            AnnotationElementValue
+              Annotation
+                At "@" @ 116..117
+                Name
+                  Identifier "Nested" @ 117..123
+          Semicolon ";" @ 123..124
+      RBrace "}" @ 125..126 leading=[Newline "\n"]
+  AnnotationInterfaceDeclaration
+    At "@" @ 128..129 leading=[Newline "\n", Newline "\n"]
+    InterfaceKw "interface" @ 129..138 trailing=[Whitespace " "]
+    Identifier "Nested" @ 139..145 trailing=[Whitespace " "]
+    AnnotationInterfaceBody
+      LBrace "{" @ 146..147
+      AnnotationElementList
+      RBrace "}" @ 147..148
+  Eof "" @ 149..149 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

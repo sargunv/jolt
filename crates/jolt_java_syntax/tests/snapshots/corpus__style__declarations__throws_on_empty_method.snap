@@ -1,0 +1,46 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class Task {
+  public void run() throws IOException, TimeoutException {}
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "Task" @ 6..10 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 11..12
+      ClassBodyDeclaration
+        MethodDeclaration
+          ModifierList
+            PublicKw "public" @ 15..21 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          VoidType
+            VoidKw "void" @ 22..26 trailing=[Whitespace " "]
+          Identifier "run" @ 27..30
+          LParen "(" @ 30..31
+          RParen ")" @ 31..32 trailing=[Whitespace " "]
+          ThrowsClause
+            ThrowsKw "throws" @ 33..39 trailing=[Whitespace " "]
+            ClassType
+              Name
+                Identifier "IOException" @ 40..51
+            Comma "," @ 51..52 trailing=[Whitespace " "]
+            ClassType
+              Name
+                Identifier "TimeoutException" @ 53..69 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 70..71
+            RBrace "}" @ 71..72
+      RBrace "}" @ 73..74 leading=[Newline "\n"]
+  Eof "" @ 75..75 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

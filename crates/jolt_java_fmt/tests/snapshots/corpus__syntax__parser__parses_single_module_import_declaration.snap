@@ -1,0 +1,12 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+import module java.base;
+
+class ModuleImport {
+}
+
+diagnostics:
+(none)

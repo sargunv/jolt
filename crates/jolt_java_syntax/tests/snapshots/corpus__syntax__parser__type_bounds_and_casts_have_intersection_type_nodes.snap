@@ -1,0 +1,91 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+interface A {}
+interface B {}
+
+class IntersectionTypeShapes<T extends A & B> {
+    Object method(Object value) {
+        return (A & B) value;
+    }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  InterfaceDeclaration
+    InterfaceKw "interface" @ 0..9 trailing=[Whitespace " "]
+    Identifier "A" @ 10..11 trailing=[Whitespace " "]
+    InterfaceBody
+      LBrace "{" @ 12..13
+      RBrace "}" @ 13..14
+  InterfaceDeclaration
+    InterfaceKw "interface" @ 15..24 leading=[Newline "\n"] trailing=[Whitespace " "]
+    Identifier "B" @ 25..26 trailing=[Whitespace " "]
+    InterfaceBody
+      LBrace "{" @ 27..28
+      RBrace "}" @ 28..29
+  ClassDeclaration
+    ClassKw "class" @ 31..36 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "IntersectionTypeShapes" @ 37..59
+    TypeParameterList
+      Lt "<" @ 59..60
+      TypeParameter
+        Identifier "T" @ 60..61 trailing=[Whitespace " "]
+        TypeBoundList
+          ExtendsKw "extends" @ 62..69 trailing=[Whitespace " "]
+          IntersectionType
+            ClassType
+              Name
+                Identifier "A" @ 70..71 trailing=[Whitespace " "]
+            Amp "&" @ 72..73 trailing=[Whitespace " "]
+            ClassType
+              Name
+                Identifier "B" @ 74..75
+      Gt ">" @ 75..76 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 77..78
+      ClassBodyDeclaration
+        MethodDeclaration
+          ClassType
+            Name
+              Identifier "Object" @ 83..89 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "method" @ 90..96
+          LParen "(" @ 96..97
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "Object" @ 97..103 trailing=[Whitespace " "]
+              Identifier "value" @ 104..109
+          RParen ")" @ 109..110 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 111..112
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 121..127 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                CastExpression
+                  LParen "(" @ 128..129
+                  IntersectionType
+                    ClassType
+                      Name
+                        Identifier "A" @ 129..130 trailing=[Whitespace " "]
+                    Amp "&" @ 131..132 trailing=[Whitespace " "]
+                    ClassType
+                      Name
+                        Identifier "B" @ 133..134
+                  RParen ")" @ 134..135 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "value" @ 136..141
+                Semicolon ";" @ 141..142
+            RBrace "}" @ 147..148 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 149..150 leading=[Newline "\n"]
+  Eof "" @ 151..151 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

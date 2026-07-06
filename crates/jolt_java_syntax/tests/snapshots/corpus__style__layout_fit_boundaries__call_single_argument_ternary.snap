@@ -1,0 +1,51 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class Example { void method() { call(xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx ? true : false); } }
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "Example" @ 6..13 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 14..15 trailing=[Whitespace " "]
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 16..20 trailing=[Whitespace " "]
+          Identifier "method" @ 21..27
+          LParen "(" @ 27..28
+          RParen ")" @ 28..29 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 30..31 trailing=[Whitespace " "]
+            BlockStatement
+              ExpressionStatement
+                MethodInvocationExpression
+                  NameExpression
+                    Identifier "call" @ 32..36
+                  ArgumentList
+                    LParen "(" @ 36..37
+                    ConditionalExpression
+                      NameExpression
+                        Identifier "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" @ 37..92 trailing=[Whitespace " "]
+                      Question "?" @ 93..94 trailing=[Whitespace " "]
+                      LiteralExpression
+                        BooleanLiteral "true" @ 95..99 trailing=[Whitespace " "]
+                      Colon ":" @ 100..101 trailing=[Whitespace " "]
+                      LiteralExpression
+                        BooleanLiteral "false" @ 102..107
+                    RParen ")" @ 107..108
+                Semicolon ";" @ 108..109 trailing=[Whitespace " "]
+            RBrace "}" @ 110..111 trailing=[Whitespace " "]
+      RBrace "}" @ 112..113
+  Eof "" @ 114..114 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

@@ -1,0 +1,196 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class BinaryPrecedence {
+    void method(int a, int b, int c) {
+        boolean logical = a < b && b < c || c == a;
+        int arithmetic = a + b * c - a / b % c;
+        int left = a << 1;
+        int right = b >> 1;
+        int unsigned = c >>> 1;
+        int bits = a | b ^ c & a;
+    }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "BinaryPrecedence" @ 6..22 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 23..24
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 29..33 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "method" @ 34..40
+          LParen "(" @ 40..41
+          FormalParameterList
+            FormalParameter
+              PrimitiveType
+                IntKw "int" @ 41..44 trailing=[Whitespace " "]
+              Identifier "a" @ 45..46
+            Comma "," @ 46..47 trailing=[Whitespace " "]
+            FormalParameter
+              PrimitiveType
+                IntKw "int" @ 48..51 trailing=[Whitespace " "]
+              Identifier "b" @ 52..53
+            Comma "," @ 53..54 trailing=[Whitespace " "]
+            FormalParameter
+              PrimitiveType
+                IntKw "int" @ 55..58 trailing=[Whitespace " "]
+              Identifier "c" @ 59..60
+          RParen ")" @ 60..61 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 62..63
+            BlockStatement
+              LocalVariableDeclaration
+                PrimitiveType
+                  BooleanKw "boolean" @ 72..79 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "logical" @ 80..87 trailing=[Whitespace " "]
+                    Assign "=" @ 88..89 trailing=[Whitespace " "]
+                    VariableInitializer
+                      BinaryExpression
+                        BinaryExpression
+                          BinaryExpression
+                            NameExpression
+                              Identifier "a" @ 90..91 trailing=[Whitespace " "]
+                            Lt "<" @ 92..93 trailing=[Whitespace " "]
+                            NameExpression
+                              Identifier "b" @ 94..95 trailing=[Whitespace " "]
+                          AndAnd "&&" @ 96..98 trailing=[Whitespace " "]
+                          BinaryExpression
+                            NameExpression
+                              Identifier "b" @ 99..100 trailing=[Whitespace " "]
+                            Lt "<" @ 101..102 trailing=[Whitespace " "]
+                            NameExpression
+                              Identifier "c" @ 103..104 trailing=[Whitespace " "]
+                        OrOr "||" @ 105..107 trailing=[Whitespace " "]
+                        BinaryExpression
+                          NameExpression
+                            Identifier "c" @ 108..109 trailing=[Whitespace " "]
+                          EqEq "==" @ 110..112 trailing=[Whitespace " "]
+                          NameExpression
+                            Identifier "a" @ 113..114
+              Semicolon ";" @ 114..115
+            BlockStatement
+              LocalVariableDeclaration
+                PrimitiveType
+                  IntKw "int" @ 124..127 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "arithmetic" @ 128..138 trailing=[Whitespace " "]
+                    Assign "=" @ 139..140 trailing=[Whitespace " "]
+                    VariableInitializer
+                      BinaryExpression
+                        BinaryExpression
+                          NameExpression
+                            Identifier "a" @ 141..142 trailing=[Whitespace " "]
+                          Plus "+" @ 143..144 trailing=[Whitespace " "]
+                          BinaryExpression
+                            NameExpression
+                              Identifier "b" @ 145..146 trailing=[Whitespace " "]
+                            Star "*" @ 147..148 trailing=[Whitespace " "]
+                            NameExpression
+                              Identifier "c" @ 149..150 trailing=[Whitespace " "]
+                        Minus "-" @ 151..152 trailing=[Whitespace " "]
+                        BinaryExpression
+                          BinaryExpression
+                            NameExpression
+                              Identifier "a" @ 153..154 trailing=[Whitespace " "]
+                            Slash "/" @ 155..156 trailing=[Whitespace " "]
+                            NameExpression
+                              Identifier "b" @ 157..158 trailing=[Whitespace " "]
+                          Percent "%" @ 159..160 trailing=[Whitespace " "]
+                          NameExpression
+                            Identifier "c" @ 161..162
+              Semicolon ";" @ 162..163
+            BlockStatement
+              LocalVariableDeclaration
+                PrimitiveType
+                  IntKw "int" @ 172..175 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "left" @ 176..180 trailing=[Whitespace " "]
+                    Assign "=" @ 181..182 trailing=[Whitespace " "]
+                    VariableInitializer
+                      BinaryExpression
+                        NameExpression
+                          Identifier "a" @ 183..184 trailing=[Whitespace " "]
+                        LShift "<<" @ 185..187 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "1" @ 188..189
+              Semicolon ";" @ 189..190
+            BlockStatement
+              LocalVariableDeclaration
+                PrimitiveType
+                  IntKw "int" @ 199..202 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "right" @ 203..208 trailing=[Whitespace " "]
+                    Assign "=" @ 209..210 trailing=[Whitespace " "]
+                    VariableInitializer
+                      BinaryExpression
+                        NameExpression
+                          Identifier "b" @ 211..212 trailing=[Whitespace " "]
+                        Gt ">" @ 213..214
+                        Gt ">" @ 214..215 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "1" @ 216..217
+              Semicolon ";" @ 217..218
+            BlockStatement
+              LocalVariableDeclaration
+                PrimitiveType
+                  IntKw "int" @ 227..230 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "unsigned" @ 231..239 trailing=[Whitespace " "]
+                    Assign "=" @ 240..241 trailing=[Whitespace " "]
+                    VariableInitializer
+                      BinaryExpression
+                        NameExpression
+                          Identifier "c" @ 242..243 trailing=[Whitespace " "]
+                        Gt ">" @ 244..245
+                        Gt ">" @ 245..246
+                        Gt ">" @ 246..247 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "1" @ 248..249
+              Semicolon ";" @ 249..250
+            BlockStatement
+              LocalVariableDeclaration
+                PrimitiveType
+                  IntKw "int" @ 259..262 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "bits" @ 263..267 trailing=[Whitespace " "]
+                    Assign "=" @ 268..269 trailing=[Whitespace " "]
+                    VariableInitializer
+                      BinaryExpression
+                        NameExpression
+                          Identifier "a" @ 270..271 trailing=[Whitespace " "]
+                        Bar "|" @ 272..273 trailing=[Whitespace " "]
+                        BinaryExpression
+                          NameExpression
+                            Identifier "b" @ 274..275 trailing=[Whitespace " "]
+                          Caret "^" @ 276..277 trailing=[Whitespace " "]
+                          BinaryExpression
+                            NameExpression
+                              Identifier "c" @ 278..279 trailing=[Whitespace " "]
+                            Amp "&" @ 280..281 trailing=[Whitespace " "]
+                            NameExpression
+                              Identifier "a" @ 282..283
+              Semicolon ";" @ 283..284
+            RBrace "}" @ 289..290 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 291..292 leading=[Newline "\n"]
+  Eof "" @ 293..293 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

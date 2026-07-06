@@ -1,0 +1,61 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+import java.util.List;
+
+void main() {
+    System.out.println(List.of());
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ImportDeclaration
+    ImportKw "import" @ 0..6 trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "java" @ 7..11
+      Dot "." @ 11..12
+      Identifier "util" @ 12..16
+      Dot "." @ 16..17
+      Identifier "List" @ 17..21
+    Semicolon ";" @ 21..22
+  MethodDeclaration
+    VoidType
+      VoidKw "void" @ 24..28 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "main" @ 29..33
+    LParen "(" @ 33..34
+    RParen ")" @ 34..35 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 36..37
+      BlockStatement
+        ExpressionStatement
+          MethodInvocationExpression
+            FieldAccessExpression
+              NameExpression
+                Identifier "System" @ 42..48 leading=[Newline "\n", Whitespace "    "]
+              Dot "." @ 48..49
+              Identifier "out" @ 49..52
+            Dot "." @ 52..53
+            Identifier "println" @ 53..60
+            ArgumentList
+              LParen "(" @ 60..61
+              MethodInvocationExpression
+                NameExpression
+                  Identifier "List" @ 61..65
+                Dot "." @ 65..66
+                Identifier "of" @ 66..68
+                ArgumentList
+                  LParen "(" @ 68..69
+                  RParen ")" @ 69..70
+              RParen ")" @ 70..71
+          Semicolon ";" @ 71..72
+      RBrace "}" @ 73..74 leading=[Newline "\n"]
+  Eof "" @ 75..75 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

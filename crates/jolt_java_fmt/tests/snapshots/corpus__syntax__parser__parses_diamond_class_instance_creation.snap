@@ -1,0 +1,13 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class DiamondCreation {
+  void method() {
+    Object list = new java.util.ArrayList<>();
+  }
+}
+
+diagnostics:
+(none)

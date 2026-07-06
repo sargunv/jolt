@@ -1,0 +1,100 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+@Deprecated
+package example.parser;
+
+import java.util.List;
+import java.util.*;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.*;
+import module java.base;
+
+class A {}
+interface B {}
+
+syntax:
+syntax:
+CompilationUnit
+  PackageDeclaration
+    Annotation
+      At "@" @ 0..1
+      Name
+        Identifier "Deprecated" @ 1..11
+    PackageKw "package" @ 12..19 leading=[Newline "\n"] trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "example" @ 20..27
+      Dot "." @ 27..28
+      Identifier "parser" @ 28..34
+    Semicolon ";" @ 34..35
+  ImportDeclaration
+    ImportKw "import" @ 37..43 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "java" @ 44..48
+      Dot "." @ 48..49
+      Identifier "util" @ 49..53
+      Dot "." @ 53..54
+      Identifier "List" @ 54..58
+    Semicolon ";" @ 58..59
+  ImportDeclaration
+    ImportKw "import" @ 60..66 leading=[Newline "\n"] trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "java" @ 67..71
+      Dot "." @ 71..72
+      Identifier "util" @ 72..76
+    Dot "." @ 76..77
+    Star "*" @ 77..78
+    Semicolon ";" @ 78..79
+  ImportDeclaration
+    ImportKw "import" @ 80..86 leading=[Newline "\n"] trailing=[Whitespace " "]
+    StaticKw "static" @ 87..93 trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "java" @ 94..98
+      Dot "." @ 98..99
+      Identifier "util" @ 99..103
+      Dot "." @ 103..104
+      Identifier "Collections" @ 104..115
+      Dot "." @ 115..116
+      Identifier "emptyList" @ 116..125
+    Semicolon ";" @ 125..126
+  ImportDeclaration
+    ImportKw "import" @ 127..133 leading=[Newline "\n"] trailing=[Whitespace " "]
+    StaticKw "static" @ 134..140 trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "java" @ 141..145
+      Dot "." @ 145..146
+      Identifier "util" @ 146..150
+      Dot "." @ 150..151
+      Identifier "Collections" @ 151..162
+    Dot "." @ 162..163
+    Star "*" @ 163..164
+    Semicolon ";" @ 164..165
+  ImportDeclaration
+    ImportKw "import" @ 166..172 leading=[Newline "\n"] trailing=[Whitespace " "]
+    Identifier "module" @ 173..179 trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "java" @ 180..184
+      Dot "." @ 184..185
+      Identifier "base" @ 185..189
+    Semicolon ";" @ 189..190
+  ClassDeclaration
+    ClassKw "class" @ 192..197 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "A" @ 198..199 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 200..201
+      RBrace "}" @ 201..202
+  InterfaceDeclaration
+    InterfaceKw "interface" @ 203..212 leading=[Newline "\n"] trailing=[Whitespace " "]
+    Identifier "B" @ 213..214 trailing=[Whitespace " "]
+    InterfaceBody
+      LBrace "{" @ 215..216
+      RBrace "}" @ 216..217
+  Eof "" @ 218..218 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

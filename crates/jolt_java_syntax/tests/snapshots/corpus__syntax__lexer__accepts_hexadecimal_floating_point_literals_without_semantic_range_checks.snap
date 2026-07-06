@@ -1,0 +1,26 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+0x1.fffffeP+127f 0x1.0P-149f 0x1.f_ffff_ffff_ffffP+1023 0x1.0P-1074 0x1.0p128f 0x1.0p-150f 0x1.0p1024 0x1.0p-1075
+
+syntax:
+syntax:
+CompilationUnit
+  ErrorNode
+    FloatingPointLiteral "0x1.fffffeP+127f" @ 0..16 trailing=[Whitespace " "]
+    FloatingPointLiteral "0x1.0P-149f" @ 17..28 trailing=[Whitespace " "]
+    FloatingPointLiteral "0x1.f_ffff_ffff_ffffP+1023" @ 29..55 trailing=[Whitespace " "]
+    FloatingPointLiteral "0x1.0P-1074" @ 56..67 trailing=[Whitespace " "]
+    FloatingPointLiteral "0x1.0p128f" @ 68..78 trailing=[Whitespace " "]
+    FloatingPointLiteral "0x1.0p-150f" @ 79..90 trailing=[Whitespace " "]
+    FloatingPointLiteral "0x1.0p1024" @ 91..101 trailing=[Whitespace " "]
+    FloatingPointLiteral "0x1.0p-1075" @ 102..113
+  Eof "" @ 113..113
+
+diagnostics:
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=0..16 message="unexpected token at top level"
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(16) }) message=unexpected token at top level

@@ -1,0 +1,20 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+record Point(@Deprecated int x, String... labels) implements Named {
+  Point {
+    labels = labels.clone();
+  }
+
+  public String name() {
+    return labels[0];
+  }
+}
+
+interface Named {
+}
+
+diagnostics:
+(none)

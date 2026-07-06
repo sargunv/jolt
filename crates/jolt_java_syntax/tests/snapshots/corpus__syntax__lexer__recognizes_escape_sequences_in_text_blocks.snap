@@ -1,0 +1,21 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+"""
+\b\s\t\n\f\r\"\'\\\0\77\377
+"""
+
+syntax:
+syntax:
+CompilationUnit
+  ErrorNode
+    TextBlockLiteral "\"\"\"\n\\b\\s\\t\\n\\f\\r\\\"\\'\\\\\\0\\77\\377\n\"\"\"" @ 0..35
+  Eof "" @ 35..35
+
+diagnostics:
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=0..35 message="unexpected token at top level"
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(35) }) message=unexpected token at top level

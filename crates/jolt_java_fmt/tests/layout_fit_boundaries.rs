@@ -1,90 +1,25 @@
-use jolt_java_fmt::JavaFormatOptions;
+use std::path::Path;
 
-mod support;
-use support::format_source;
-
-#[test]
-fn expression_statement_semicolon_participates_in_assignment_fit() {
-    assert_no_line_exceeds_width(
-        r#"
-class Example {
-  void method() {
-    currentEstimate = (currentEstimate + xxxxxxxxxxxxx / currentEstimate) / 2.0f;
-  }
-}
-"#,
-        80,
-    );
-}
+use jolt_java_fmt::{JavaFormatOptions, JavaFormatSinkResult, format_source_to_sink};
+use jolt_test_support::{StringSink, read_to_string, workspace_root};
 
 #[test]
-fn return_statement_semicolon_participates_in_ternary_fit() {
-    assert_no_line_exceeds_width(
-        &format!(
-            r#"
-class Example {{
-  boolean method() {{
-    return {} ? true : false;
-  }}
-}}
-"#,
-            ident(54)
-        ),
-        80,
-    );
+fn layout_fit_boundary_fixtures_stay_within_width() {
+    let root = workspace_root(env!("CARGO_MANIFEST_DIR")).join("fixtures/java");
+    for name in [
+        "properties/layout-fit-boundaries/expression-statement-assignment.java",
+        "properties/layout-fit-boundaries/return-statement-ternary.java",
+        "style/layout-fit-boundaries/local-variable-nested-ternary.java",
+        "properties/layout-fit-boundaries/field-initializer.java",
+        "style/layout-fit-boundaries/call-single-argument-ternary.java",
+    ] {
+        assert_no_line_exceeds_width(&root.join(name), 80);
+    }
 }
 
-#[test]
-fn local_variable_semicolon_participates_in_initializer_fit() {
-    assert_no_line_exceeds_width(
-        &format!(
-            r#"
-class Example {{
-  void method() {{
-    boolean value = {} ? true : false;
-  }}
-}}
-"#,
-            ident(45)
-        ),
-        80,
-    );
-}
-
-#[test]
-fn field_semicolon_participates_in_initializer_fit() {
-    assert_no_line_exceeds_width(
-        &format!(
-            r#"
-class Example {{
-  boolean value = {} ? true : false;
-}}
-"#,
-            ident(47)
-        ),
-        80,
-    );
-}
-
-#[test]
-fn expression_statement_semicolon_participates_in_call_fit() {
-    assert_no_line_exceeds_width(
-        &format!(
-            r#"
-class Example {{
-  void method() {{
-    call({} ? true : false);
-  }}
-}}
-"#,
-            ident(55)
-        ),
-        80,
-    );
-}
-
-fn assert_no_line_exceeds_width(source: &str, line_width: u16) {
-    let formatted = format_or_panic(source, line_width);
+fn assert_no_line_exceeds_width(path: &Path, line_width: u16) {
+    let source = read_to_string(path);
+    let formatted = format_or_panic(&source, line_width);
     let offending = formatted
         .lines()
         .enumerate()
@@ -93,7 +28,8 @@ fn assert_no_line_exceeds_width(source: &str, line_width: u16) {
 
     assert!(
         offending.is_none(),
-        "formatted line exceeded width {line_width}:\n{}\nfirst offending line: {:?}",
+        "formatted line exceeded width {line_width} in {}:\n{}\nfirst offending line: {:?}",
+        path.display(),
         formatted,
         offending
     );
@@ -104,19 +40,13 @@ fn format_or_panic(source: &str, line_width: u16) -> String {
         line_width,
         ..JavaFormatOptions::default()
     };
-    let result = format_source(source, &options);
+    let mut sink = StringSink::default();
 
-    assert!(
-        result.diagnostics.is_empty(),
-        "formatter diagnostics: {:#?}",
-        result.diagnostics
-    );
-
-    result
-        .formatted_source
-        .expect("formatter should produce output")
-}
-
-fn ident(width: usize) -> String {
-    "x".repeat(width)
+    match format_source_to_sink(source, &options, &mut sink) {
+        JavaFormatSinkResult::Complete | JavaFormatSinkResult::Halted => sink.into_string(),
+        JavaFormatSinkResult::Blocked { diagnostics } => {
+            panic!("formatter diagnostics: {diagnostics:#?}")
+        }
+        JavaFormatSinkResult::SinkError { error } => match error {},
+    }
 }

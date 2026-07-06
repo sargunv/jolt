@@ -1,0 +1,13 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+import static java.util.Collections.*;
+import static java.util.Collections.emptyList;
+
+class StaticImports {
+}
+
+diagnostics:
+(none)

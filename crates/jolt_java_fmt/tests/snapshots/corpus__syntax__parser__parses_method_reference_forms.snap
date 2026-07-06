@@ -1,0 +1,48 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class MethodReferences extends Base {
+  <T> T id(T value) {
+    return value;
+  }
+
+  void method(MethodReferences target, String value) {
+    java.util.function.Supplier<Integer> expressionName = value::length;
+    java.util.function.Supplier<String> primary = (value)::trim;
+    java.util.function.Function<String, Integer> referenceType = String::length;
+    java.util.function.Supplier<String> superReference = super::toString;
+    java.util.function.Supplier<String> qualifiedSuper =
+      MethodReferences.super::toString;
+    java.util.function.Supplier<MethodReferences> constructor =
+      MethodReferences::new;
+    java.util.function.IntFunction<String[]> arrayConstructor = String[]::new;
+    java.util.function.Function<String, String> expressionNameGeneric =
+      target::<String>id;
+    java.util.function.Function<String, String> primaryGeneric =
+      this::<String>id;
+    java.util.function.Function<String, String> referenceTypeGeneric =
+      MethodReferences::<String>staticId;
+    java.util.function.Function<String, String> superGeneric =
+      super::<String>baseId;
+    java.util.function.Function<String, String> qualifiedSuperGeneric =
+      MethodReferences.super::<String>baseId;
+    java.util.function.Supplier<
+      java.util.ArrayList<String>
+    > constructorGeneric = java.util.ArrayList<String>::<String>new;
+  }
+
+  static <T> T staticId(T value) {
+    return value;
+  }
+}
+
+class Base {
+  <T> T baseId(T value) {
+    return value;
+  }
+}
+
+diagnostics:
+(none)

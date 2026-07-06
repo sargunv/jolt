@@ -470,6 +470,7 @@ dependencies = [
  "jolt_diagnostics",
  "jolt_fmt_ir",
  "jolt_java_syntax",
+ "jolt_test_support",
  "serde",
 ]
 
@@ -480,6 +481,7 @@ dependencies = [
  "insta",
  "jolt_diagnostics",
  "jolt_syntax",
+ "jolt_test_support",
  "jolt_text",
  "num_enum",
  "unicode-general-category",
@@ -502,6 +504,14 @@ version = "0.0.0"
 dependencies = [
  "jolt_diagnostics",
  "jolt_text",
+]
+
+[[package]]
+name = "jolt_test_support"
+version = "0.0.0"
+dependencies = [
+ "jolt_diagnostics",
+ "jolt_fmt_ir",
 ]
 
 [[package]]

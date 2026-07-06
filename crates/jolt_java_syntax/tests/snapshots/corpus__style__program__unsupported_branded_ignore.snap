@@ -1,0 +1,41 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+// prettier-ignore
+// jolt-ignore
+class Raw {int x=1+2;}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 34..39 leading=[LineComment "// prettier-ignore", Newline "\n", LineComment "// jolt-ignore", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "Raw" @ 40..43 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 44..45
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 45..48 trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "x" @ 49..50
+              Assign "=" @ 50..51
+              VariableInitializer
+                BinaryExpression
+                  LiteralExpression
+                    IntegerLiteral "1" @ 51..52
+                  Plus "+" @ 52..53
+                  LiteralExpression
+                    IntegerLiteral "2" @ 53..54
+          Semicolon ";" @ 54..55
+      RBrace "}" @ 55..56
+  Eof "" @ 57..57 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

@@ -1,0 +1,57 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+;
+
+class EmptyDeclarations {
+    ;
+}
+
+interface EmptyInterface {
+    ;
+}
+
+@interface EmptyAnnotation {
+    ;
+}
+
+syntax:
+syntax:
+CompilationUnit
+  EmptyDeclaration
+    Semicolon ";" @ 0..1
+  ClassDeclaration
+    ClassKw "class" @ 3..8 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "EmptyDeclarations" @ 9..26 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 27..28
+      EmptyDeclaration
+        Semicolon ";" @ 33..34 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 35..36 leading=[Newline "\n"]
+  InterfaceDeclaration
+    InterfaceKw "interface" @ 38..47 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "EmptyInterface" @ 48..62 trailing=[Whitespace " "]
+    InterfaceBody
+      LBrace "{" @ 63..64
+      EmptyDeclaration
+        Semicolon ";" @ 69..70 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 71..72 leading=[Newline "\n"]
+  AnnotationInterfaceDeclaration
+    At "@" @ 74..75 leading=[Newline "\n", Newline "\n"]
+    InterfaceKw "interface" @ 75..84 trailing=[Whitespace " "]
+    Identifier "EmptyAnnotation" @ 85..100 trailing=[Whitespace " "]
+    AnnotationInterfaceBody
+      LBrace "{" @ 101..102
+      AnnotationElementList
+        EmptyDeclaration
+          Semicolon ";" @ 107..108 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 109..110 leading=[Newline "\n"]
+  Eof "" @ 111..111 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

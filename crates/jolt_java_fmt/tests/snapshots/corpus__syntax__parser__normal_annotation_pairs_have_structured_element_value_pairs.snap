@@ -1,0 +1,22 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+@Normal(name = "test", nested = @Marker, values = { 1, 2 })
+class Annotated {
+}
+
+@interface Normal {
+  String name();
+
+  Marker nested();
+
+  int[] values();
+}
+
+@interface Marker {
+}
+
+diagnostics:
+(none)

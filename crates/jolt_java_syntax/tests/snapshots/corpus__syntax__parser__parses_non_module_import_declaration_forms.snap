@@ -1,0 +1,70 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+import java.util.List;
+import java.util.*;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.*;
+
+class Imports {}
+
+syntax:
+syntax:
+CompilationUnit
+  ImportDeclaration
+    ImportKw "import" @ 0..6 trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "java" @ 7..11
+      Dot "." @ 11..12
+      Identifier "util" @ 12..16
+      Dot "." @ 16..17
+      Identifier "List" @ 17..21
+    Semicolon ";" @ 21..22
+  ImportDeclaration
+    ImportKw "import" @ 23..29 leading=[Newline "\n"] trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "java" @ 30..34
+      Dot "." @ 34..35
+      Identifier "util" @ 35..39
+    Dot "." @ 39..40
+    Star "*" @ 40..41
+    Semicolon ";" @ 41..42
+  ImportDeclaration
+    ImportKw "import" @ 43..49 leading=[Newline "\n"] trailing=[Whitespace " "]
+    StaticKw "static" @ 50..56 trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "java" @ 57..61
+      Dot "." @ 61..62
+      Identifier "util" @ 62..66
+      Dot "." @ 66..67
+      Identifier "Collections" @ 67..78
+      Dot "." @ 78..79
+      Identifier "emptyList" @ 79..88
+    Semicolon ";" @ 88..89
+  ImportDeclaration
+    ImportKw "import" @ 90..96 leading=[Newline "\n"] trailing=[Whitespace " "]
+    StaticKw "static" @ 97..103 trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "java" @ 104..108
+      Dot "." @ 108..109
+      Identifier "util" @ 109..113
+      Dot "." @ 113..114
+      Identifier "Collections" @ 114..125
+    Dot "." @ 125..126
+    Star "*" @ 126..127
+    Semicolon ";" @ 127..128
+  ClassDeclaration
+    ClassKw "class" @ 130..135 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "Imports" @ 136..143 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 144..145
+      RBrace "}" @ 145..146
+  Eof "" @ 147..147 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

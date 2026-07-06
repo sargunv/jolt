@@ -1,0 +1,112 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+enum ModifiedEnum {
+    @Marker VALUE
+}
+
+class ModifiedConstructor {
+    public ModifiedConstructor() {}
+}
+
+interface ModifiedInterface {
+    public static final int X = 1;
+}
+
+@interface ModifiedAnnotation {
+    @Marker String value();
+}
+
+@interface Marker {}
+
+syntax:
+syntax:
+CompilationUnit
+  EnumDeclaration
+    EnumKw "enum" @ 0..4 trailing=[Whitespace " "]
+    Identifier "ModifiedEnum" @ 5..17 trailing=[Whitespace " "]
+    EnumBody
+      LBrace "{" @ 18..19
+      EnumConstantList
+        EnumConstant
+          Annotation
+            At "@" @ 24..25 leading=[Newline "\n", Whitespace "    "]
+            Name
+              Identifier "Marker" @ 25..31 trailing=[Whitespace " "]
+          Identifier "VALUE" @ 32..37
+      RBrace "}" @ 38..39 leading=[Newline "\n"]
+  ClassDeclaration
+    ClassKw "class" @ 41..46 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "ModifiedConstructor" @ 47..66 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 67..68
+      ClassBodyDeclaration
+        ConstructorDeclaration
+          ModifierList
+            PublicKw "public" @ 73..79 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "ModifiedConstructor" @ 80..99
+          LParen "(" @ 99..100
+          RParen ")" @ 100..101 trailing=[Whitespace " "]
+          ConstructorBody
+            LBrace "{" @ 102..103
+            RBrace "}" @ 103..104
+      RBrace "}" @ 105..106 leading=[Newline "\n"]
+  InterfaceDeclaration
+    InterfaceKw "interface" @ 108..117 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "ModifiedInterface" @ 118..135 trailing=[Whitespace " "]
+    InterfaceBody
+      LBrace "{" @ 136..137
+      FieldDeclaration
+        ModifierList
+          PublicKw "public" @ 142..148 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          StaticKw "static" @ 149..155 trailing=[Whitespace " "]
+          FinalKw "final" @ 156..161 trailing=[Whitespace " "]
+        PrimitiveType
+          IntKw "int" @ 162..165 trailing=[Whitespace " "]
+        VariableDeclaratorList
+          VariableDeclarator
+            Identifier "X" @ 166..167 trailing=[Whitespace " "]
+            Assign "=" @ 168..169 trailing=[Whitespace " "]
+            VariableInitializer
+              LiteralExpression
+                IntegerLiteral "1" @ 170..171
+        Semicolon ";" @ 171..172
+      RBrace "}" @ 173..174 leading=[Newline "\n"]
+  AnnotationInterfaceDeclaration
+    At "@" @ 176..177 leading=[Newline "\n", Newline "\n"]
+    InterfaceKw "interface" @ 177..186 trailing=[Whitespace " "]
+    Identifier "ModifiedAnnotation" @ 187..205 trailing=[Whitespace " "]
+    AnnotationInterfaceBody
+      LBrace "{" @ 206..207
+      AnnotationElementList
+        AnnotationElementDeclaration
+          ModifierList
+            Annotation
+              At "@" @ 212..213 leading=[Newline "\n", Whitespace "    "]
+              Name
+                Identifier "Marker" @ 213..219 trailing=[Whitespace " "]
+          ClassType
+            Name
+              Identifier "String" @ 220..226 trailing=[Whitespace " "]
+          Identifier "value" @ 227..232
+          LParen "(" @ 232..233
+          RParen ")" @ 233..234
+          Semicolon ";" @ 234..235
+      RBrace "}" @ 236..237 leading=[Newline "\n"]
+  AnnotationInterfaceDeclaration
+    At "@" @ 239..240 leading=[Newline "\n", Newline "\n"]
+    InterfaceKw "interface" @ 240..249 trailing=[Whitespace " "]
+    Identifier "Marker" @ 250..256 trailing=[Whitespace " "]
+    AnnotationInterfaceBody
+      LBrace "{" @ 257..258
+      AnnotationElementList
+      RBrace "}" @ 258..259
+  Eof "" @ 260..260 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

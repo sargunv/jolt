@@ -1,0 +1,13 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class VarLambdaParameter {
+  void method() {
+    java.util.function.IntUnaryOperator identity = (var x) -> x;
+  }
+}
+
+diagnostics:
+(none)

@@ -1,0 +1,25 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+'\u000a' '\u000d'
+
+syntax:
+syntax:
+CompilationUnit
+  ErrorNode
+    CharacterLiteral "'" @ 0..1
+    CharacterLiteral "' '" @ 2..5 leading=[Newline "\n"]
+    CharacterLiteral "'" @ 6..7 leading=[Newline "\r"]
+  Eof "" @ 7..7
+
+diagnostics:
+  code=java.lex.unterminated_character_literal severity=Error stage=Lexer range=0..1 message="unterminated character literal"
+  code=java.lex.unterminated_character_literal severity=Error stage=Lexer range=6..7 message="unterminated character literal"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=0..1 message="unexpected token at top level"
+
+diagnostics:
+code=java.lex.unterminated_character_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(0), end: TextSize(1) }) message=unterminated character literal
+code=java.lex.unterminated_character_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(6), end: TextSize(7) }) message=unterminated character literal
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(1) }) message=unexpected token at top level

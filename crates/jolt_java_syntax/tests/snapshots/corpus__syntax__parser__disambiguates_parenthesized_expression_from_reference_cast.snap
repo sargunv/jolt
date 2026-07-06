@@ -1,0 +1,66 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class CastAmbiguity {
+    void method(int x, int y) {
+        int value = (x) - y;
+    }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "CastAmbiguity" @ 6..19 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 20..21
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 26..30 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "method" @ 31..37
+          LParen "(" @ 37..38
+          FormalParameterList
+            FormalParameter
+              PrimitiveType
+                IntKw "int" @ 38..41 trailing=[Whitespace " "]
+              Identifier "x" @ 42..43
+            Comma "," @ 43..44 trailing=[Whitespace " "]
+            FormalParameter
+              PrimitiveType
+                IntKw "int" @ 45..48 trailing=[Whitespace " "]
+              Identifier "y" @ 49..50
+          RParen ")" @ 50..51 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 52..53
+            BlockStatement
+              LocalVariableDeclaration
+                PrimitiveType
+                  IntKw "int" @ 62..65 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "value" @ 66..71 trailing=[Whitespace " "]
+                    Assign "=" @ 72..73 trailing=[Whitespace " "]
+                    VariableInitializer
+                      BinaryExpression
+                        ParenthesizedExpression
+                          LParen "(" @ 74..75
+                          NameExpression
+                            Identifier "x" @ 75..76
+                          RParen ")" @ 76..77 trailing=[Whitespace " "]
+                        Minus "-" @ 78..79 trailing=[Whitespace " "]
+                        NameExpression
+                          Identifier "y" @ 80..81
+              Semicolon ";" @ 81..82
+            RBrace "}" @ 87..88 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 89..90 leading=[Newline "\n"]
+  Eof "" @ 91..91 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

@@ -1,0 +1,1 @@
+int a; /* // not a line comment */ int b;

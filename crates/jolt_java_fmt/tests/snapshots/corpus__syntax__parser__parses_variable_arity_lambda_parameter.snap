@@ -1,0 +1,14 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class VarargsLambdaParameter {
+  void method() {
+    java.util.function.Function<String[], Integer> lengths =
+      (String... values) -> values.length;
+  }
+}
+
+diagnostics:
+(none)

@@ -1,0 +1,20 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+'\uFFFF' '\uD800'
+
+syntax:
+syntax:
+CompilationUnit
+  ErrorNode
+    CharacterLiteral "'\u{ffff}'" @ 0..5 trailing=[Whitespace " "]
+    CharacterLiteral "'�'" @ 6..11
+  Eof "" @ 11..11
+
+diagnostics:
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=0..5 message="unexpected token at top level"
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(5) }) message=unexpected token at top level

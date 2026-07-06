@@ -1,0 +1,18 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+interface CloseRunnable extends Runnable, AutoCloseable {
+}
+
+class IntersectionCastLambda {
+  void method() {
+    CloseRunnable runnable =
+      (Runnable & AutoCloseable) () -> {
+      };
+  }
+}
+
+diagnostics:
+(none)

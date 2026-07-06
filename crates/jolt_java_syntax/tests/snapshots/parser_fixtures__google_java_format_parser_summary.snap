@@ -4,9 +4,7 @@ expression: google_summary.render()
 ---
 suite: google-java-format
 files: 209
+reconstructed changed: 0
 
-parser diagnostics:
-  java.parse.invalid_statement_expression: 20
-
-lexer diagnostics:
-  <none>: 0
+diagnostics:
+  Parser:java.parse.invalid_statement_expression: 20

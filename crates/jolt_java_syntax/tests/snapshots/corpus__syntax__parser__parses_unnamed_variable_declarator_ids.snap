@@ -1,0 +1,169 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class UnnamedVariableDeclarators {
+    void method(Object _, java.util.List<String> values) throws Exception {
+        var _ = values;
+        try (AutoCloseable _ = open()) {
+        } catch (Exception _) {
+        }
+        java.util.function.IntUnaryOperator zero = (int _) -> 0;
+    }
+
+    AutoCloseable open() {
+        return null;
+    }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "UnnamedVariableDeclarators" @ 6..32 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 33..34
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 39..43 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "method" @ 44..50
+          LParen "(" @ 50..51
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "Object" @ 51..57 trailing=[Whitespace " "]
+              UnderscoreKw "_" @ 58..59
+            Comma "," @ 59..60 trailing=[Whitespace " "]
+            FormalParameter
+              ClassType
+                QualifiedName
+                  Identifier "java" @ 61..65
+                  Dot "." @ 65..66
+                  Identifier "util" @ 66..70
+                  Dot "." @ 70..71
+                  Identifier "List" @ 71..75
+                TypeArgumentList
+                  Lt "<" @ 75..76
+                  TypeArgument
+                    ClassType
+                      Name
+                        Identifier "String" @ 76..82
+                  Gt ">" @ 82..83 trailing=[Whitespace " "]
+              Identifier "values" @ 84..90
+          RParen ")" @ 90..91 trailing=[Whitespace " "]
+          ThrowsClause
+            ThrowsKw "throws" @ 92..98 trailing=[Whitespace " "]
+            ClassType
+              Name
+                Identifier "Exception" @ 99..108 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 109..110
+            BlockStatement
+              LocalVariableDeclaration
+                Identifier "var" @ 119..122 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    UnderscoreKw "_" @ 123..124 trailing=[Whitespace " "]
+                    Assign "=" @ 125..126 trailing=[Whitespace " "]
+                    VariableInitializer
+                      NameExpression
+                        Identifier "values" @ 127..133
+              Semicolon ";" @ 133..134
+            BlockStatement
+              TryStatement
+                TryWithResourcesStatement
+                  TryKw "try" @ 143..146 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  ResourceSpecification
+                    LParen "(" @ 147..148
+                    ResourceList
+                      Resource
+                        LocalVariableDeclaration
+                          ClassType
+                            Name
+                              Identifier "AutoCloseable" @ 148..161 trailing=[Whitespace " "]
+                          VariableDeclaratorList
+                            VariableDeclarator
+                              UnderscoreKw "_" @ 162..163 trailing=[Whitespace " "]
+                              Assign "=" @ 164..165 trailing=[Whitespace " "]
+                              VariableInitializer
+                                MethodInvocationExpression
+                                  NameExpression
+                                    Identifier "open" @ 166..170
+                                  ArgumentList
+                                    LParen "(" @ 170..171
+                                    RParen ")" @ 171..172
+                    RParen ")" @ 172..173 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 174..175
+                    RBrace "}" @ 184..185 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  CatchClause
+                    CatchKw "catch" @ 186..191 trailing=[Whitespace " "]
+                    LParen "(" @ 192..193
+                    CatchParameter
+                      CatchTypeList
+                        ClassType
+                          Name
+                            Identifier "Exception" @ 193..202 trailing=[Whitespace " "]
+                      UnderscoreKw "_" @ 203..204
+                    RParen ")" @ 204..205 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 206..207
+                      RBrace "}" @ 216..217 leading=[Newline "\n", Whitespace "        "]
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 226..230 leading=[Newline "\n", Whitespace "        "]
+                    Dot "." @ 230..231
+                    Identifier "util" @ 231..235
+                    Dot "." @ 235..236
+                    Identifier "function" @ 236..244
+                    Dot "." @ 244..245
+                    Identifier "IntUnaryOperator" @ 245..261 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "zero" @ 262..266 trailing=[Whitespace " "]
+                    Assign "=" @ 267..268 trailing=[Whitespace " "]
+                    VariableInitializer
+                      LambdaExpression
+                        LParen "(" @ 269..270
+                        LambdaParameterList
+                          LambdaParameter
+                            PrimitiveType
+                              IntKw "int" @ 270..273 trailing=[Whitespace " "]
+                            UnderscoreKw "_" @ 274..275
+                        RParen ")" @ 275..276 trailing=[Whitespace " "]
+                        Arrow "->" @ 277..279 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "0" @ 280..281
+              Semicolon ";" @ 281..282
+            RBrace "}" @ 287..288 leading=[Newline "\n", Whitespace "    "]
+      ClassBodyDeclaration
+        MethodDeclaration
+          ClassType
+            Name
+              Identifier "AutoCloseable" @ 294..307 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "open" @ 308..312
+          LParen "(" @ 312..313
+          RParen ")" @ 313..314 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 315..316
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 325..331 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                LiteralExpression
+                  NullLiteral "null" @ 332..336
+                Semicolon ";" @ 336..337
+            RBrace "}" @ 342..343 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 344..345 leading=[Newline "\n"]
+  Eof "" @ 346..346 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

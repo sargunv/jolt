@@ -1,0 +1,894 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class Example {
+java.util.function.Supplier<String> supplier() {
+return () -> "ready";
+}
+java.lang.Runnable runnable() {
+return () -> { run(); };
+}
+java.util.function.Function<User, String> mapper() {
+return (user) -> user.name();
+}
+java.util.function.Function<User, String> typedMapper() {
+return (User user) -> user.name();
+}
+java.util.function.Function<User, User> varMapper() {
+return (var user) -> user;
+}
+java.util.function.BiFunction<Integer, Integer, Integer> adder() {
+return (left,right) -> left + right;
+}
+java.util.function.Function<String[], Integer> lengths() {
+return (String... values) -> values.length;
+}
+java.util.function.Function<User, User> annotatedMapper() {
+return (@Nonnull User user) -> user;
+}
+java.util.function.Function<User, User> finalMapper() {
+return (final User user) -> user;
+}
+java.util.function.Function<String[], Integer> annotatedLengths() {
+return (String @Marker ... values) -> values.length;
+}
+java.util.function.IntUnaryOperator unnamed() {
+return (_) -> 0;
+}
+java.util.function.Function<User, String> commentedMapper() {
+return user /* selected */ -> user.name();
+}
+java.util.function.Function<User, String> commentedArrowMapper() {
+return user -> /* body */ user.name();
+}
+java.util.function.Function<User, String> commentedTypedMapper() {
+return (User user /* selected */) -> user.name();
+}
+java.util.function.Function<String[], Integer> commentedLengths() {
+return (String... values /* all */) -> values.length;
+}
+void configure(Project project) {
+project.getPluginManager().withPlugin("maven-publish", plugin -> { project.getExtensions().getByType(PublishingExtension.class).getPublications().withType(MavenPublication.class).configureEach(publication -> publication.versionMapping(mapping -> { mapping.allVariants(VariantVersionMappingStrategy::fromResolutionResult); })); });
+}
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "Example" @ 6..13 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 14..15
+      ClassBodyDeclaration
+        MethodDeclaration
+          ClassType
+            QualifiedName
+              Identifier "java" @ 16..20 leading=[Newline "\n"]
+              Dot "." @ 20..21
+              Identifier "util" @ 21..25
+              Dot "." @ 25..26
+              Identifier "function" @ 26..34
+              Dot "." @ 34..35
+              Identifier "Supplier" @ 35..43
+            TypeArgumentList
+              Lt "<" @ 43..44
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "String" @ 44..50
+              Gt ">" @ 50..51 trailing=[Whitespace " "]
+          Identifier "supplier" @ 52..60
+          LParen "(" @ 60..61
+          RParen ")" @ 61..62 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 63..64
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 65..71 leading=[Newline "\n"] trailing=[Whitespace " "]
+                LambdaExpression
+                  LParen "(" @ 72..73
+                  LambdaParameterList
+                  RParen ")" @ 73..74 trailing=[Whitespace " "]
+                  Arrow "->" @ 75..77 trailing=[Whitespace " "]
+                  LiteralExpression
+                    StringLiteral "\"ready\"" @ 78..85
+                Semicolon ";" @ 85..86
+            RBrace "}" @ 87..88 leading=[Newline "\n"]
+      ClassBodyDeclaration
+        MethodDeclaration
+          ClassType
+            QualifiedName
+              Identifier "java" @ 89..93 leading=[Newline "\n"]
+              Dot "." @ 93..94
+              Identifier "lang" @ 94..98
+              Dot "." @ 98..99
+              Identifier "Runnable" @ 99..107 trailing=[Whitespace " "]
+          Identifier "runnable" @ 108..116
+          LParen "(" @ 116..117
+          RParen ")" @ 117..118 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 119..120
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 121..127 leading=[Newline "\n"] trailing=[Whitespace " "]
+                LambdaExpression
+                  LParen "(" @ 128..129
+                  LambdaParameterList
+                  RParen ")" @ 129..130 trailing=[Whitespace " "]
+                  Arrow "->" @ 131..133 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 134..135 trailing=[Whitespace " "]
+                    BlockStatement
+                      ExpressionStatement
+                        MethodInvocationExpression
+                          NameExpression
+                            Identifier "run" @ 136..139
+                          ArgumentList
+                            LParen "(" @ 139..140
+                            RParen ")" @ 140..141
+                        Semicolon ";" @ 141..142 trailing=[Whitespace " "]
+                    RBrace "}" @ 143..144
+                Semicolon ";" @ 144..145
+            RBrace "}" @ 146..147 leading=[Newline "\n"]
+      ClassBodyDeclaration
+        MethodDeclaration
+          ClassType
+            QualifiedName
+              Identifier "java" @ 148..152 leading=[Newline "\n"]
+              Dot "." @ 152..153
+              Identifier "util" @ 153..157
+              Dot "." @ 157..158
+              Identifier "function" @ 158..166
+              Dot "." @ 166..167
+              Identifier "Function" @ 167..175
+            TypeArgumentList
+              Lt "<" @ 175..176
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "User" @ 176..180
+              Comma "," @ 180..181 trailing=[Whitespace " "]
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "String" @ 182..188
+              Gt ">" @ 188..189 trailing=[Whitespace " "]
+          Identifier "mapper" @ 190..196
+          LParen "(" @ 196..197
+          RParen ")" @ 197..198 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 199..200
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 201..207 leading=[Newline "\n"] trailing=[Whitespace " "]
+                LambdaExpression
+                  LParen "(" @ 208..209
+                  LambdaParameterList
+                    LambdaParameter
+                      Identifier "user" @ 209..213
+                  RParen ")" @ 213..214 trailing=[Whitespace " "]
+                  Arrow "->" @ 215..217 trailing=[Whitespace " "]
+                  MethodInvocationExpression
+                    NameExpression
+                      Identifier "user" @ 218..222
+                    Dot "." @ 222..223
+                    Identifier "name" @ 223..227
+                    ArgumentList
+                      LParen "(" @ 227..228
+                      RParen ")" @ 228..229
+                Semicolon ";" @ 229..230
+            RBrace "}" @ 231..232 leading=[Newline "\n"]
+      ClassBodyDeclaration
+        MethodDeclaration
+          ClassType
+            QualifiedName
+              Identifier "java" @ 233..237 leading=[Newline "\n"]
+              Dot "." @ 237..238
+              Identifier "util" @ 238..242
+              Dot "." @ 242..243
+              Identifier "function" @ 243..251
+              Dot "." @ 251..252
+              Identifier "Function" @ 252..260
+            TypeArgumentList
+              Lt "<" @ 260..261
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "User" @ 261..265
+              Comma "," @ 265..266 trailing=[Whitespace " "]
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "String" @ 267..273
+              Gt ">" @ 273..274 trailing=[Whitespace " "]
+          Identifier "typedMapper" @ 275..286
+          LParen "(" @ 286..287
+          RParen ")" @ 287..288 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 289..290
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 291..297 leading=[Newline "\n"] trailing=[Whitespace " "]
+                LambdaExpression
+                  LParen "(" @ 298..299
+                  LambdaParameterList
+                    LambdaParameter
+                      ClassType
+                        Name
+                          Identifier "User" @ 299..303 trailing=[Whitespace " "]
+                      Identifier "user" @ 304..308
+                  RParen ")" @ 308..309 trailing=[Whitespace " "]
+                  Arrow "->" @ 310..312 trailing=[Whitespace " "]
+                  MethodInvocationExpression
+                    NameExpression
+                      Identifier "user" @ 313..317
+                    Dot "." @ 317..318
+                    Identifier "name" @ 318..322
+                    ArgumentList
+                      LParen "(" @ 322..323
+                      RParen ")" @ 323..324
+                Semicolon ";" @ 324..325
+            RBrace "}" @ 326..327 leading=[Newline "\n"]
+      ClassBodyDeclaration
+        MethodDeclaration
+          ClassType
+            QualifiedName
+              Identifier "java" @ 328..332 leading=[Newline "\n"]
+              Dot "." @ 332..333
+              Identifier "util" @ 333..337
+              Dot "." @ 337..338
+              Identifier "function" @ 338..346
+              Dot "." @ 346..347
+              Identifier "Function" @ 347..355
+            TypeArgumentList
+              Lt "<" @ 355..356
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "User" @ 356..360
+              Comma "," @ 360..361 trailing=[Whitespace " "]
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "User" @ 362..366
+              Gt ">" @ 366..367 trailing=[Whitespace " "]
+          Identifier "varMapper" @ 368..377
+          LParen "(" @ 377..378
+          RParen ")" @ 378..379 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 380..381
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 382..388 leading=[Newline "\n"] trailing=[Whitespace " "]
+                LambdaExpression
+                  LParen "(" @ 389..390
+                  LambdaParameterList
+                    LambdaParameter
+                      Identifier "var" @ 390..393 trailing=[Whitespace " "]
+                      Identifier "user" @ 394..398
+                  RParen ")" @ 398..399 trailing=[Whitespace " "]
+                  Arrow "->" @ 400..402 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "user" @ 403..407
+                Semicolon ";" @ 407..408
+            RBrace "}" @ 409..410 leading=[Newline "\n"]
+      ClassBodyDeclaration
+        MethodDeclaration
+          ClassType
+            QualifiedName
+              Identifier "java" @ 411..415 leading=[Newline "\n"]
+              Dot "." @ 415..416
+              Identifier "util" @ 416..420
+              Dot "." @ 420..421
+              Identifier "function" @ 421..429
+              Dot "." @ 429..430
+              Identifier "BiFunction" @ 430..440
+            TypeArgumentList
+              Lt "<" @ 440..441
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "Integer" @ 441..448
+              Comma "," @ 448..449 trailing=[Whitespace " "]
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "Integer" @ 450..457
+              Comma "," @ 457..458 trailing=[Whitespace " "]
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "Integer" @ 459..466
+              Gt ">" @ 466..467 trailing=[Whitespace " "]
+          Identifier "adder" @ 468..473
+          LParen "(" @ 473..474
+          RParen ")" @ 474..475 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 476..477
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 478..484 leading=[Newline "\n"] trailing=[Whitespace " "]
+                LambdaExpression
+                  LParen "(" @ 485..486
+                  LambdaParameterList
+                    LambdaParameter
+                      Identifier "left" @ 486..490
+                    Comma "," @ 490..491
+                    LambdaParameter
+                      Identifier "right" @ 491..496
+                  RParen ")" @ 496..497 trailing=[Whitespace " "]
+                  Arrow "->" @ 498..500 trailing=[Whitespace " "]
+                  BinaryExpression
+                    NameExpression
+                      Identifier "left" @ 501..505 trailing=[Whitespace " "]
+                    Plus "+" @ 506..507 trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "right" @ 508..513
+                Semicolon ";" @ 513..514
+            RBrace "}" @ 515..516 leading=[Newline "\n"]
+      ClassBodyDeclaration
+        MethodDeclaration
+          ClassType
+            QualifiedName
+              Identifier "java" @ 517..521 leading=[Newline "\n"]
+              Dot "." @ 521..522
+              Identifier "util" @ 522..526
+              Dot "." @ 526..527
+              Identifier "function" @ 527..535
+              Dot "." @ 535..536
+              Identifier "Function" @ 536..544
+            TypeArgumentList
+              Lt "<" @ 544..545
+              TypeArgument
+                ArrayType
+                  ClassType
+                    Name
+                      Identifier "String" @ 545..551
+                  ArrayDimensions
+                    ArrayDimension
+                      LBracket "[" @ 551..552
+                      RBracket "]" @ 552..553
+              Comma "," @ 553..554 trailing=[Whitespace " "]
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "Integer" @ 555..562
+              Gt ">" @ 562..563 trailing=[Whitespace " "]
+          Identifier "lengths" @ 564..571
+          LParen "(" @ 571..572
+          RParen ")" @ 572..573 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 574..575
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 576..582 leading=[Newline "\n"] trailing=[Whitespace " "]
+                LambdaExpression
+                  LParen "(" @ 583..584
+                  LambdaParameterList
+                    LambdaParameter
+                      ClassType
+                        Name
+                          Identifier "String" @ 584..590
+                      Ellipsis "..." @ 590..593 trailing=[Whitespace " "]
+                      Identifier "values" @ 594..600
+                  RParen ")" @ 600..601 trailing=[Whitespace " "]
+                  Arrow "->" @ 602..604 trailing=[Whitespace " "]
+                  FieldAccessExpression
+                    NameExpression
+                      Identifier "values" @ 605..611
+                    Dot "." @ 611..612
+                    Identifier "length" @ 612..618
+                Semicolon ";" @ 618..619
+            RBrace "}" @ 620..621 leading=[Newline "\n"]
+      ClassBodyDeclaration
+        MethodDeclaration
+          ClassType
+            QualifiedName
+              Identifier "java" @ 622..626 leading=[Newline "\n"]
+              Dot "." @ 626..627
+              Identifier "util" @ 627..631
+              Dot "." @ 631..632
+              Identifier "function" @ 632..640
+              Dot "." @ 640..641
+              Identifier "Function" @ 641..649
+            TypeArgumentList
+              Lt "<" @ 649..650
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "User" @ 650..654
+              Comma "," @ 654..655 trailing=[Whitespace " "]
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "User" @ 656..660
+              Gt ">" @ 660..661 trailing=[Whitespace " "]
+          Identifier "annotatedMapper" @ 662..677
+          LParen "(" @ 677..678
+          RParen ")" @ 678..679 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 680..681
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 682..688 leading=[Newline "\n"] trailing=[Whitespace " "]
+                LambdaExpression
+                  LParen "(" @ 689..690
+                  LambdaParameterList
+                    LambdaParameter
+                      Annotation
+                        At "@" @ 690..691
+                        Name
+                          Identifier "Nonnull" @ 691..698 trailing=[Whitespace " "]
+                      ClassType
+                        Name
+                          Identifier "User" @ 699..703 trailing=[Whitespace " "]
+                      Identifier "user" @ 704..708
+                  RParen ")" @ 708..709 trailing=[Whitespace " "]
+                  Arrow "->" @ 710..712 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "user" @ 713..717
+                Semicolon ";" @ 717..718
+            RBrace "}" @ 719..720 leading=[Newline "\n"]
+      ClassBodyDeclaration
+        MethodDeclaration
+          ClassType
+            QualifiedName
+              Identifier "java" @ 721..725 leading=[Newline "\n"]
+              Dot "." @ 725..726
+              Identifier "util" @ 726..730
+              Dot "." @ 730..731
+              Identifier "function" @ 731..739
+              Dot "." @ 739..740
+              Identifier "Function" @ 740..748
+            TypeArgumentList
+              Lt "<" @ 748..749
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "User" @ 749..753
+              Comma "," @ 753..754 trailing=[Whitespace " "]
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "User" @ 755..759
+              Gt ">" @ 759..760 trailing=[Whitespace " "]
+          Identifier "finalMapper" @ 761..772
+          LParen "(" @ 772..773
+          RParen ")" @ 773..774 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 775..776
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 777..783 leading=[Newline "\n"] trailing=[Whitespace " "]
+                LambdaExpression
+                  LParen "(" @ 784..785
+                  LambdaParameterList
+                    LambdaParameter
+                      FinalKw "final" @ 785..790 trailing=[Whitespace " "]
+                      ClassType
+                        Name
+                          Identifier "User" @ 791..795 trailing=[Whitespace " "]
+                      Identifier "user" @ 796..800
+                  RParen ")" @ 800..801 trailing=[Whitespace " "]
+                  Arrow "->" @ 802..804 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "user" @ 805..809
+                Semicolon ";" @ 809..810
+            RBrace "}" @ 811..812 leading=[Newline "\n"]
+      ClassBodyDeclaration
+        MethodDeclaration
+          ClassType
+            QualifiedName
+              Identifier "java" @ 813..817 leading=[Newline "\n"]
+              Dot "." @ 817..818
+              Identifier "util" @ 818..822
+              Dot "." @ 822..823
+              Identifier "function" @ 823..831
+              Dot "." @ 831..832
+              Identifier "Function" @ 832..840
+            TypeArgumentList
+              Lt "<" @ 840..841
+              TypeArgument
+                ArrayType
+                  ClassType
+                    Name
+                      Identifier "String" @ 841..847
+                  ArrayDimensions
+                    ArrayDimension
+                      LBracket "[" @ 847..848
+                      RBracket "]" @ 848..849
+              Comma "," @ 849..850 trailing=[Whitespace " "]
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "Integer" @ 851..858
+              Gt ">" @ 858..859 trailing=[Whitespace " "]
+          Identifier "annotatedLengths" @ 860..876
+          LParen "(" @ 876..877
+          RParen ")" @ 877..878 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 879..880
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 881..887 leading=[Newline "\n"] trailing=[Whitespace " "]
+                LambdaExpression
+                  LParen "(" @ 888..889
+                  LambdaParameterList
+                    LambdaParameter
+                      ClassType
+                        Name
+                          Identifier "String" @ 889..895 trailing=[Whitespace " "]
+                      Annotation
+                        At "@" @ 896..897
+                        Name
+                          Identifier "Marker" @ 897..903 trailing=[Whitespace " "]
+                      Ellipsis "..." @ 904..907 trailing=[Whitespace " "]
+                      Identifier "values" @ 908..914
+                  RParen ")" @ 914..915 trailing=[Whitespace " "]
+                  Arrow "->" @ 916..918 trailing=[Whitespace " "]
+                  FieldAccessExpression
+                    NameExpression
+                      Identifier "values" @ 919..925
+                    Dot "." @ 925..926
+                    Identifier "length" @ 926..932
+                Semicolon ";" @ 932..933
+            RBrace "}" @ 934..935 leading=[Newline "\n"]
+      ClassBodyDeclaration
+        MethodDeclaration
+          ClassType
+            QualifiedName
+              Identifier "java" @ 936..940 leading=[Newline "\n"]
+              Dot "." @ 940..941
+              Identifier "util" @ 941..945
+              Dot "." @ 945..946
+              Identifier "function" @ 946..954
+              Dot "." @ 954..955
+              Identifier "IntUnaryOperator" @ 955..971 trailing=[Whitespace " "]
+          Identifier "unnamed" @ 972..979
+          LParen "(" @ 979..980
+          RParen ")" @ 980..981 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 982..983
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 984..990 leading=[Newline "\n"] trailing=[Whitespace " "]
+                LambdaExpression
+                  LParen "(" @ 991..992
+                  LambdaParameterList
+                    LambdaParameter
+                      UnderscoreKw "_" @ 992..993
+                  RParen ")" @ 993..994 trailing=[Whitespace " "]
+                  Arrow "->" @ 995..997 trailing=[Whitespace " "]
+                  LiteralExpression
+                    IntegerLiteral "0" @ 998..999
+                Semicolon ";" @ 999..1000
+            RBrace "}" @ 1001..1002 leading=[Newline "\n"]
+      ClassBodyDeclaration
+        MethodDeclaration
+          ClassType
+            QualifiedName
+              Identifier "java" @ 1003..1007 leading=[Newline "\n"]
+              Dot "." @ 1007..1008
+              Identifier "util" @ 1008..1012
+              Dot "." @ 1012..1013
+              Identifier "function" @ 1013..1021
+              Dot "." @ 1021..1022
+              Identifier "Function" @ 1022..1030
+            TypeArgumentList
+              Lt "<" @ 1030..1031
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "User" @ 1031..1035
+              Comma "," @ 1035..1036 trailing=[Whitespace " "]
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "String" @ 1037..1043
+              Gt ">" @ 1043..1044 trailing=[Whitespace " "]
+          Identifier "commentedMapper" @ 1045..1060
+          LParen "(" @ 1060..1061
+          RParen ")" @ 1061..1062 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 1063..1064
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 1065..1071 leading=[Newline "\n"] trailing=[Whitespace " "]
+                LambdaExpression
+                  LambdaParameter
+                    Identifier "user" @ 1072..1076 trailing=[Whitespace " ", BlockComment "/* selected */", Whitespace " "]
+                  Arrow "->" @ 1092..1094 trailing=[Whitespace " "]
+                  MethodInvocationExpression
+                    NameExpression
+                      Identifier "user" @ 1095..1099
+                    Dot "." @ 1099..1100
+                    Identifier "name" @ 1100..1104
+                    ArgumentList
+                      LParen "(" @ 1104..1105
+                      RParen ")" @ 1105..1106
+                Semicolon ";" @ 1106..1107
+            RBrace "}" @ 1108..1109 leading=[Newline "\n"]
+      ClassBodyDeclaration
+        MethodDeclaration
+          ClassType
+            QualifiedName
+              Identifier "java" @ 1110..1114 leading=[Newline "\n"]
+              Dot "." @ 1114..1115
+              Identifier "util" @ 1115..1119
+              Dot "." @ 1119..1120
+              Identifier "function" @ 1120..1128
+              Dot "." @ 1128..1129
+              Identifier "Function" @ 1129..1137
+            TypeArgumentList
+              Lt "<" @ 1137..1138
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "User" @ 1138..1142
+              Comma "," @ 1142..1143 trailing=[Whitespace " "]
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "String" @ 1144..1150
+              Gt ">" @ 1150..1151 trailing=[Whitespace " "]
+          Identifier "commentedArrowMapper" @ 1152..1172
+          LParen "(" @ 1172..1173
+          RParen ")" @ 1173..1174 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 1175..1176
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 1177..1183 leading=[Newline "\n"] trailing=[Whitespace " "]
+                LambdaExpression
+                  LambdaParameter
+                    Identifier "user" @ 1184..1188 trailing=[Whitespace " "]
+                  Arrow "->" @ 1189..1191 trailing=[Whitespace " ", BlockComment "/* body */", Whitespace " "]
+                  MethodInvocationExpression
+                    NameExpression
+                      Identifier "user" @ 1203..1207
+                    Dot "." @ 1207..1208
+                    Identifier "name" @ 1208..1212
+                    ArgumentList
+                      LParen "(" @ 1212..1213
+                      RParen ")" @ 1213..1214
+                Semicolon ";" @ 1214..1215
+            RBrace "}" @ 1216..1217 leading=[Newline "\n"]
+      ClassBodyDeclaration
+        MethodDeclaration
+          ClassType
+            QualifiedName
+              Identifier "java" @ 1218..1222 leading=[Newline "\n"]
+              Dot "." @ 1222..1223
+              Identifier "util" @ 1223..1227
+              Dot "." @ 1227..1228
+              Identifier "function" @ 1228..1236
+              Dot "." @ 1236..1237
+              Identifier "Function" @ 1237..1245
+            TypeArgumentList
+              Lt "<" @ 1245..1246
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "User" @ 1246..1250
+              Comma "," @ 1250..1251 trailing=[Whitespace " "]
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "String" @ 1252..1258
+              Gt ">" @ 1258..1259 trailing=[Whitespace " "]
+          Identifier "commentedTypedMapper" @ 1260..1280
+          LParen "(" @ 1280..1281
+          RParen ")" @ 1281..1282 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 1283..1284
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 1285..1291 leading=[Newline "\n"] trailing=[Whitespace " "]
+                LambdaExpression
+                  LParen "(" @ 1292..1293
+                  LambdaParameterList
+                    LambdaParameter
+                      ClassType
+                        Name
+                          Identifier "User" @ 1293..1297 trailing=[Whitespace " "]
+                      Identifier "user" @ 1298..1302 trailing=[Whitespace " ", BlockComment "/* selected */"]
+                  RParen ")" @ 1317..1318 trailing=[Whitespace " "]
+                  Arrow "->" @ 1319..1321 trailing=[Whitespace " "]
+                  MethodInvocationExpression
+                    NameExpression
+                      Identifier "user" @ 1322..1326
+                    Dot "." @ 1326..1327
+                    Identifier "name" @ 1327..1331
+                    ArgumentList
+                      LParen "(" @ 1331..1332
+                      RParen ")" @ 1332..1333
+                Semicolon ";" @ 1333..1334
+            RBrace "}" @ 1335..1336 leading=[Newline "\n"]
+      ClassBodyDeclaration
+        MethodDeclaration
+          ClassType
+            QualifiedName
+              Identifier "java" @ 1337..1341 leading=[Newline "\n"]
+              Dot "." @ 1341..1342
+              Identifier "util" @ 1342..1346
+              Dot "." @ 1346..1347
+              Identifier "function" @ 1347..1355
+              Dot "." @ 1355..1356
+              Identifier "Function" @ 1356..1364
+            TypeArgumentList
+              Lt "<" @ 1364..1365
+              TypeArgument
+                ArrayType
+                  ClassType
+                    Name
+                      Identifier "String" @ 1365..1371
+                  ArrayDimensions
+                    ArrayDimension
+                      LBracket "[" @ 1371..1372
+                      RBracket "]" @ 1372..1373
+              Comma "," @ 1373..1374 trailing=[Whitespace " "]
+              TypeArgument
+                ClassType
+                  Name
+                    Identifier "Integer" @ 1375..1382
+              Gt ">" @ 1382..1383 trailing=[Whitespace " "]
+          Identifier "commentedLengths" @ 1384..1400
+          LParen "(" @ 1400..1401
+          RParen ")" @ 1401..1402 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 1403..1404
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 1405..1411 leading=[Newline "\n"] trailing=[Whitespace " "]
+                LambdaExpression
+                  LParen "(" @ 1412..1413
+                  LambdaParameterList
+                    LambdaParameter
+                      ClassType
+                        Name
+                          Identifier "String" @ 1413..1419
+                      Ellipsis "..." @ 1419..1422 trailing=[Whitespace " "]
+                      Identifier "values" @ 1423..1429 trailing=[Whitespace " ", BlockComment "/* all */"]
+                  RParen ")" @ 1439..1440 trailing=[Whitespace " "]
+                  Arrow "->" @ 1441..1443 trailing=[Whitespace " "]
+                  FieldAccessExpression
+                    NameExpression
+                      Identifier "values" @ 1444..1450
+                    Dot "." @ 1450..1451
+                    Identifier "length" @ 1451..1457
+                Semicolon ";" @ 1457..1458
+            RBrace "}" @ 1459..1460 leading=[Newline "\n"]
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 1461..1465 leading=[Newline "\n"] trailing=[Whitespace " "]
+          Identifier "configure" @ 1466..1475
+          LParen "(" @ 1475..1476
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "Project" @ 1476..1483 trailing=[Whitespace " "]
+              Identifier "project" @ 1484..1491
+          RParen ")" @ 1491..1492 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 1493..1494
+            BlockStatement
+              ExpressionStatement
+                MethodInvocationExpression
+                  MethodInvocationExpression
+                    NameExpression
+                      Identifier "project" @ 1495..1502 leading=[Newline "\n"]
+                    Dot "." @ 1502..1503
+                    Identifier "getPluginManager" @ 1503..1519
+                    ArgumentList
+                      LParen "(" @ 1519..1520
+                      RParen ")" @ 1520..1521
+                  Dot "." @ 1521..1522
+                  Identifier "withPlugin" @ 1522..1532
+                  ArgumentList
+                    LParen "(" @ 1532..1533
+                    LiteralExpression
+                      StringLiteral "\"maven-publish\"" @ 1533..1548
+                    Comma "," @ 1548..1549 trailing=[Whitespace " "]
+                    LambdaExpression
+                      LambdaParameter
+                        Identifier "plugin" @ 1550..1556 trailing=[Whitespace " "]
+                      Arrow "->" @ 1557..1559 trailing=[Whitespace " "]
+                      Block
+                        LBrace "{" @ 1560..1561 trailing=[Whitespace " "]
+                        BlockStatement
+                          ExpressionStatement
+                            MethodInvocationExpression
+                              MethodInvocationExpression
+                                MethodInvocationExpression
+                                  MethodInvocationExpression
+                                    MethodInvocationExpression
+                                      NameExpression
+                                        Identifier "project" @ 1562..1569
+                                      Dot "." @ 1569..1570
+                                      Identifier "getExtensions" @ 1570..1583
+                                      ArgumentList
+                                        LParen "(" @ 1583..1584
+                                        RParen ")" @ 1584..1585
+                                    Dot "." @ 1585..1586
+                                    Identifier "getByType" @ 1586..1595
+                                    ArgumentList
+                                      LParen "(" @ 1595..1596
+                                      ClassLiteralExpression
+                                        NameExpression
+                                          Identifier "PublishingExtension" @ 1596..1615
+                                        Dot "." @ 1615..1616
+                                        ClassKw "class" @ 1616..1621
+                                      RParen ")" @ 1621..1622
+                                  Dot "." @ 1622..1623
+                                  Identifier "getPublications" @ 1623..1638
+                                  ArgumentList
+                                    LParen "(" @ 1638..1639
+                                    RParen ")" @ 1639..1640
+                                Dot "." @ 1640..1641
+                                Identifier "withType" @ 1641..1649
+                                ArgumentList
+                                  LParen "(" @ 1649..1650
+                                  ClassLiteralExpression
+                                    NameExpression
+                                      Identifier "MavenPublication" @ 1650..1666
+                                    Dot "." @ 1666..1667
+                                    ClassKw "class" @ 1667..1672
+                                  RParen ")" @ 1672..1673
+                              Dot "." @ 1673..1674
+                              Identifier "configureEach" @ 1674..1687
+                              ArgumentList
+                                LParen "(" @ 1687..1688
+                                LambdaExpression
+                                  LambdaParameter
+                                    Identifier "publication" @ 1688..1699 trailing=[Whitespace " "]
+                                  Arrow "->" @ 1700..1702 trailing=[Whitespace " "]
+                                  MethodInvocationExpression
+                                    NameExpression
+                                      Identifier "publication" @ 1703..1714
+                                    Dot "." @ 1714..1715
+                                    Identifier "versionMapping" @ 1715..1729
+                                    ArgumentList
+                                      LParen "(" @ 1729..1730
+                                      LambdaExpression
+                                        LambdaParameter
+                                          Identifier "mapping" @ 1730..1737 trailing=[Whitespace " "]
+                                        Arrow "->" @ 1738..1740 trailing=[Whitespace " "]
+                                        Block
+                                          LBrace "{" @ 1741..1742 trailing=[Whitespace " "]
+                                          BlockStatement
+                                            ExpressionStatement
+                                              MethodInvocationExpression
+                                                NameExpression
+                                                  Identifier "mapping" @ 1743..1750
+                                                Dot "." @ 1750..1751
+                                                Identifier "allVariants" @ 1751..1762
+                                                ArgumentList
+                                                  LParen "(" @ 1762..1763
+                                                  MethodReferenceExpression
+                                                    NameExpression
+                                                      Identifier "VariantVersionMappingStrategy" @ 1763..1792
+                                                    DoubleColon "::" @ 1792..1794
+                                                    Identifier "fromResolutionResult" @ 1794..1814
+                                                  RParen ")" @ 1814..1815
+                                              Semicolon ";" @ 1815..1816 trailing=[Whitespace " "]
+                                          RBrace "}" @ 1817..1818
+                                      RParen ")" @ 1818..1819
+                                RParen ")" @ 1819..1820
+                            Semicolon ";" @ 1820..1821 trailing=[Whitespace " "]
+                        RBrace "}" @ 1822..1823
+                    RParen ")" @ 1823..1824
+                Semicolon ";" @ 1824..1825
+            RBrace "}" @ 1826..1827 leading=[Newline "\n"]
+      RBrace "}" @ 1828..1829 leading=[Newline "\n"]
+  Eof "" @ 1830..1830 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

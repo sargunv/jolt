@@ -1,0 +1,75 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class Comments {
+  void run(/* params */
+    String name, // user name
+    int count /* kept */
+    // before params close
+  ) {}
+}
+
+record Person(/* components */
+  String displayName, // display name
+  int age /* years */
+  // before components close
+) {}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "Comments" @ 6..14 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 15..16
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 19..23 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          Identifier "run" @ 24..27
+          LParen "(" @ 27..28 trailing=[BlockComment "/* params */"]
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "String" @ 45..51 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Identifier "name" @ 52..56
+            Comma "," @ 56..57 trailing=[Whitespace " ", LineComment "// user name"]
+            FormalParameter
+              PrimitiveType
+                IntKw "int" @ 75..78 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Identifier "count" @ 79..84 trailing=[Whitespace " ", BlockComment "/* kept */"]
+          RParen ")" @ 125..126 leading=[Newline "\n", Whitespace "    ", LineComment "// before params close", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 127..128
+            RBrace "}" @ 128..129
+      RBrace "}" @ 130..131 leading=[Newline "\n"]
+  RecordDeclaration
+    Identifier "record" @ 133..139 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "Person" @ 140..146
+    LParen "(" @ 146..147 trailing=[BlockComment "/* components */"]
+    RecordComponentList
+      RecordComponent
+        ClassType
+          Name
+            Identifier "String" @ 166..172 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+        Identifier "displayName" @ 173..184
+      Comma "," @ 184..185 trailing=[Whitespace " ", LineComment "// display name"]
+      RecordComponent
+        PrimitiveType
+          IntKw "int" @ 204..207 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+        Identifier "age" @ 208..211 trailing=[Whitespace " ", BlockComment "/* years */"]
+    RParen ")" @ 253..254 leading=[Newline "\n", Whitespace "  ", LineComment "// before components close", Newline "\n"] trailing=[Whitespace " "]
+    RecordBody
+      LBrace "{" @ 255..256
+      RBrace "}" @ 256..257
+  Eof "" @ 258..258 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

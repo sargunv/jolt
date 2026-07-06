@@ -1,0 +1,19 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+"™"
+
+syntax:
+syntax:
+CompilationUnit
+  ErrorNode
+    StringLiteral "\"™\"" @ 0..5
+  Eof "" @ 5..5
+
+diagnostics:
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=0..5 message="unexpected token at top level"
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(5) }) message=unexpected token at top level

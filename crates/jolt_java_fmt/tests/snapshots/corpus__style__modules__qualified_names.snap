@@ -1,0 +1,15 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+open module com.example.app {
+  requires java.base;
+
+  exports com.example.api to z.Module, a.Module;
+
+  provides com.example.Service with com.example.impl.ServiceImpl;
+}
+
+diagnostics:
+(none)

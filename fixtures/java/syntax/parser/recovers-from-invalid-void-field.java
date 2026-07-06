@@ -1,0 +1,1 @@
+class InvalidVoidField { void x; }

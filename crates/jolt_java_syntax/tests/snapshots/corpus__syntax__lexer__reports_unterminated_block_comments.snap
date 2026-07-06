@@ -1,0 +1,17 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+/* c
+
+syntax:
+syntax:
+CompilationUnit
+  Eof "" @ 4..4 leading=[BlockComment "/* c"]
+
+diagnostics:
+  code=java.lex.unterminated_block_comment severity=Error stage=Lexer range=0..1 message="unterminated block comment"
+
+diagnostics:
+code=java.lex.unterminated_block_comment severity=Error stage=Lexer range=Some(TextRange { start: TextSize(0), end: TextSize(1) }) message=unterminated block comment

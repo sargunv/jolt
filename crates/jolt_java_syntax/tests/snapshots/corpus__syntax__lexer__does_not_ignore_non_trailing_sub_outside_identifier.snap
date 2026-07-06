@@ -1,0 +1,32 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+a;  b;
+
+syntax:
+syntax:
+CompilationUnit
+  FieldDeclaration
+    ClassType
+      Name
+        Identifier "a" @ 0..1
+    VariableDeclaratorList
+      VariableDeclarator
+    Semicolon ";" @ 1..2 trailing=[Whitespace " "]
+  ErrorNode
+    Unknown "\u{1a}" @ 3..4 trailing=[Whitespace " "]
+    Identifier "b" @ 5..6
+    Semicolon ";" @ 6..7
+  Eof "" @ 7..7
+
+diagnostics:
+  code=java.lex.unknown_character severity=Error stage=Lexer range=3..4 message="unknown character"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=1..2 message="expected variable name"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=3..4 message="unexpected token at top level"
+
+diagnostics:
+code=java.lex.unknown_character severity=Error stage=Lexer range=Some(TextRange { start: TextSize(3), end: TextSize(4) }) message=unknown character
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1), end: TextSize(2) }) message=expected variable name
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(3), end: TextSize(4) }) message=unexpected token at top level

@@ -1,0 +1,50 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class Example {
+  boolean method() {
+    return xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx ? true : false;
+  }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "Example" @ 6..13 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 14..15
+      ClassBodyDeclaration
+        MethodDeclaration
+          PrimitiveType
+            BooleanKw "boolean" @ 18..25 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          Identifier "method" @ 26..32
+          LParen "(" @ 32..33
+          RParen ")" @ 33..34 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 35..36
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 41..47 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                ConditionalExpression
+                  NameExpression
+                    Identifier "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" @ 48..102 trailing=[Whitespace " "]
+                  Question "?" @ 103..104 trailing=[Whitespace " "]
+                  LiteralExpression
+                    BooleanLiteral "true" @ 105..109 trailing=[Whitespace " "]
+                  Colon ":" @ 110..111 trailing=[Whitespace " "]
+                  LiteralExpression
+                    BooleanLiteral "false" @ 112..117
+                Semicolon ";" @ 117..118
+            RBrace "}" @ 121..122 leading=[Newline "\n", Whitespace "  "]
+      RBrace "}" @ 123..124 leading=[Newline "\n"]
+  Eof "" @ 125..125 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

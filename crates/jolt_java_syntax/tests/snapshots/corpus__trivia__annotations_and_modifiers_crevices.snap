@@ -1,0 +1,107 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+@ /* JOLT-TRIVIA:between-at-and-annotation */ Deprecated
+public /* JOLT-TRIVIA:public-final-gap */ final /* JOLT-TRIVIA:final-class-gap */ class AnnotationsAndModifiersCrevices {
+  @SuppressWarnings /* JOLT-TRIVIA:annotation-name-before-paren */ (
+      /* JOLT-TRIVIA:annotation-arg-leading */ "unchecked" /* JOLT-TRIVIA:annotation-arg-before-close */)
+  private /* JOLT-TRIVIA:private-static-gap */ static /* JOLT-TRIVIA:static-final-gap */ final
+      String /* JOLT-TRIVIA:const-type-name */ VALUE /* JOLT-TRIVIA:const-name-equals */ = "x";
+
+  @Deprecated /* JOLT-TRIVIA:method-annotation-tail */
+  public <T /* JOLT-TRIVIA:annotated-method-type-param */>
+      T identity /* JOLT-TRIVIA:generic-method-name-before-paren */ (
+          final /* JOLT-TRIVIA:param-final-type-gap */ T /* JOLT-TRIVIA:param-type-name-gap */ value)
+      /* JOLT-TRIVIA:method-close-before-body */ {
+    return value /* JOLT-TRIVIA:return-expression-before-semi */;
+  }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ModifierList
+      Annotation
+        At "@" @ 0..1 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:between-at-and-annotation */", Whitespace " "]
+        Name
+          Identifier "Deprecated" @ 46..56
+      PublicKw "public" @ 57..63 leading=[Newline "\n"] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:public-final-gap */", Whitespace " "]
+      FinalKw "final" @ 99..104 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:final-class-gap */", Whitespace " "]
+    ClassKw "class" @ 139..144 trailing=[Whitespace " "]
+    Identifier "AnnotationsAndModifiersCrevices" @ 145..176 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 177..178
+      ClassBodyDeclaration
+        FieldDeclaration
+          ModifierList
+            Annotation
+              At "@" @ 181..182 leading=[Newline "\n", Whitespace "  "]
+              Name
+                Identifier "SuppressWarnings" @ 182..198 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:annotation-name-before-paren */", Whitespace " "]
+              AnnotationArgumentList
+                LParen "(" @ 246..247
+                AnnotationElementList
+                  AnnotationElementValue
+                    LiteralExpression
+                      StringLiteral "\"unchecked\"" @ 295..306 leading=[Newline "\n", Whitespace "      ", BlockComment "/* JOLT-TRIVIA:annotation-arg-leading */", Whitespace " "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:annotation-arg-before-close */"]
+                RParen ")" @ 352..353
+            PrivateKw "private" @ 356..363 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:private-static-gap */", Whitespace " "]
+            StaticKw "static" @ 401..407 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:static-final-gap */", Whitespace " "]
+            FinalKw "final" @ 443..448
+          ClassType
+            Name
+              Identifier "String" @ 455..461 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:const-type-name */", Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "VALUE" @ 496..501 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:const-name-equals */", Whitespace " "]
+              Assign "=" @ 538..539 trailing=[Whitespace " "]
+              VariableInitializer
+                LiteralExpression
+                  StringLiteral "\"x\"" @ 540..543
+          Semicolon ";" @ 543..544
+      ClassBodyDeclaration
+        MethodDeclaration
+          ModifierList
+            Annotation
+              At "@" @ 548..549 leading=[Newline "\n", Newline "\n", Whitespace "  "]
+              Name
+                Identifier "Deprecated" @ 549..559 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:method-annotation-tail */"]
+            PublicKw "public" @ 603..609 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          TypeParameterList
+            Lt "<" @ 610..611
+            TypeParameter
+              Identifier "T" @ 611..612 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:annotated-method-type-param */"]
+            Gt ">" @ 658..659
+          ClassType
+            Name
+              Identifier "T" @ 666..667 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+          Identifier "identity" @ 668..676 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:generic-method-name-before-paren */", Whitespace " "]
+          LParen "(" @ 728..729
+          FormalParameterList
+            FormalParameter
+              FinalKw "final" @ 740..745 leading=[Newline "\n", Whitespace "          "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:param-final-type-gap */", Whitespace " "]
+              ClassType
+                Name
+                  Identifier "T" @ 785..786 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:param-type-name-gap */", Whitespace " "]
+              Identifier "value" @ 825..830
+          RParen ")" @ 830..831
+          Block
+            LBrace "{" @ 881..882 leading=[Newline "\n", Whitespace "      ", BlockComment "/* JOLT-TRIVIA:method-close-before-body */", Whitespace " "]
+            BlockStatement
+              ReturnStatement
+                ReturnKw "return" @ 887..893 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "value" @ 894..899 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:return-expression-before-semi */"]
+                Semicolon ";" @ 947..948
+            RBrace "}" @ 951..952 leading=[Newline "\n", Whitespace "  "]
+      RBrace "}" @ 953..954 leading=[Newline "\n"]
+  Eof "" @ 955..955 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

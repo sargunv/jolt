@@ -1,0 +1,88 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package true;
+
+class InvalidIdentifiers {
+    int false;
+    int _;
+    true value;
+    void null() {}
+}
+
+syntax:
+syntax:
+CompilationUnit
+  PackageDeclaration
+    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+  ErrorNode
+    BooleanLiteral "true" @ 8..12
+    Semicolon ";" @ 12..13
+  ClassDeclaration
+    ClassKw "class" @ 15..20 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "InvalidIdentifiers" @ 21..39 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 40..41
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 46..49 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+      ClassBodyDeclaration
+        ErrorNode
+          BooleanLiteral "false" @ 50..55
+          Semicolon ";" @ 55..56
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 61..64 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+      ClassBodyDeclaration
+        ErrorNode
+          UnderscoreKw "_" @ 65..66
+          Semicolon ";" @ 66..67
+      ClassBodyDeclaration
+        ErrorNode
+          BooleanLiteral "true" @ 72..76 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "value" @ 77..82
+          Semicolon ";" @ 82..83
+      ClassBodyDeclaration
+        ErrorNode
+          VoidKw "void" @ 88..92 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          NullLiteral "null" @ 93..97
+          LParen "(" @ 97..98
+          RParen ")" @ 98..99 trailing=[Whitespace " "]
+          LBrace "{" @ 100..101
+          RBrace "}" @ 101..102
+      RBrace "}" @ 103..104 leading=[Newline "\n"]
+  Eof "" @ 105..105 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=8..12 message="expected identifier"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=8..12 message="expected `;` after package declaration"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=8..12 message="unexpected token at top level"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=50..55 message="expected variable name"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=50..55 message="expected `;` after field declaration"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=50..55 message="unexpected token in type body"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=65..66 message="expected variable name"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=65..66 message="expected `;` after field declaration"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=65..66 message="unexpected token in type body"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=72..76 message="unexpected token in type body"
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=88..92 message="unexpected token in type body"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(8), end: TextSize(12) }) message=expected identifier
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(8), end: TextSize(12) }) message=expected `;` after package declaration
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(8), end: TextSize(12) }) message=unexpected token at top level
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(50), end: TextSize(55) }) message=expected variable name
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(50), end: TextSize(55) }) message=expected `;` after field declaration
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(50), end: TextSize(55) }) message=unexpected token in type body
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(65), end: TextSize(66) }) message=expected variable name
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(65), end: TextSize(66) }) message=expected `;` after field declaration
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(65), end: TextSize(66) }) message=unexpected token in type body
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(72), end: TextSize(76) }) message=unexpected token in type body
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(88), end: TextSize(92) }) message=unexpected token in type body

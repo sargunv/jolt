@@ -1,0 +1,23 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+"""
+a\
+b\c\
+d
+"""
+
+syntax:
+syntax:
+CompilationUnit
+  ErrorNode
+    TextBlockLiteral "\"\"\"\na\\\nb\\\rc\\\r\nd\n\"\"\"" @ 0..19
+  Eof "" @ 19..19
+
+diagnostics:
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=0..19 message="unexpected token at top level"
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(19) }) message=unexpected token at top level

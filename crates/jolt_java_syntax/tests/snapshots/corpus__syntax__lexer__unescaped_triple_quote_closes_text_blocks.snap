@@ -1,0 +1,21 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+"""
+text """ tail
+
+syntax:
+syntax:
+CompilationUnit
+  ErrorNode
+    TextBlockLiteral "\"\"\"\ntext \"\"\"" @ 0..12 trailing=[Whitespace " "]
+    Identifier "tail" @ 13..17
+  Eof "" @ 17..17
+
+diagnostics:
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=0..12 message="unexpected token at top level"
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(12) }) message=unexpected token at top level

@@ -1,0 +1,18 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+enum Color {
+  RED,
+  GREEN,
+  BLUE;
+
+  private final int code;
+
+  public int code() {
+  }
+}
+
+diagnostics:
+(none)

@@ -1,0 +1,77 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class ConciseLambdaParameterList {
+    void method() {
+        java.util.function.BinaryOperator<Integer> add = (x, y) -> x + y;
+    }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "ConciseLambdaParameterList" @ 6..32 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 33..34
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 39..43 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "method" @ 44..50
+          LParen "(" @ 50..51
+          RParen ")" @ 51..52 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 53..54
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 63..67 leading=[Newline "\n", Whitespace "        "]
+                    Dot "." @ 67..68
+                    Identifier "util" @ 68..72
+                    Dot "." @ 72..73
+                    Identifier "function" @ 73..81
+                    Dot "." @ 81..82
+                    Identifier "BinaryOperator" @ 82..96
+                  TypeArgumentList
+                    Lt "<" @ 96..97
+                    TypeArgument
+                      ClassType
+                        Name
+                          Identifier "Integer" @ 97..104
+                    Gt ">" @ 104..105 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "add" @ 106..109 trailing=[Whitespace " "]
+                    Assign "=" @ 110..111 trailing=[Whitespace " "]
+                    VariableInitializer
+                      LambdaExpression
+                        LParen "(" @ 112..113
+                        LambdaParameterList
+                          LambdaParameter
+                            Identifier "x" @ 113..114
+                          Comma "," @ 114..115 trailing=[Whitespace " "]
+                          LambdaParameter
+                            Identifier "y" @ 116..117
+                        RParen ")" @ 117..118 trailing=[Whitespace " "]
+                        Arrow "->" @ 119..121 trailing=[Whitespace " "]
+                        BinaryExpression
+                          NameExpression
+                            Identifier "x" @ 122..123 trailing=[Whitespace " "]
+                          Plus "+" @ 124..125 trailing=[Whitespace " "]
+                          NameExpression
+                            Identifier "y" @ 126..127
+              Semicolon ";" @ 127..128
+            RBrace "}" @ 133..134 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 135..136 leading=[Newline "\n"]
+  Eof "" @ 137..137 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

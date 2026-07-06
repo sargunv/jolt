@@ -1,0 +1,18 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class SelectorRelationalExpressions {
+  int index;
+  java.util.List<String> items;
+
+  boolean method(String[] names) {
+    return this.index < names.length
+      && names[0].length() < this.items.size()
+      && this.items.size() < names.length;
+  }
+}
+
+diagnostics:
+(none)

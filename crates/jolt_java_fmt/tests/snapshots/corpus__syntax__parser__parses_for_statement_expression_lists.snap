@@ -1,0 +1,16 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class ForExpressionLists {
+  void method() {
+    int i;
+    int j;
+    for (i = 0, j = 0; i < 10; i++, j++) {
+    }
+  }
+}
+
+diagnostics:
+(none)

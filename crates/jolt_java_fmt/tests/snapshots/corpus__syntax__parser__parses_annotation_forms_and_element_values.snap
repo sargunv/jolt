@@ -1,0 +1,13 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+@Marker
+@Single("value")
+@Normal(name = "test", nested = @Marker, values = { 1, 2, 3 })
+class Annotated {
+}
+
+diagnostics:
+(none)

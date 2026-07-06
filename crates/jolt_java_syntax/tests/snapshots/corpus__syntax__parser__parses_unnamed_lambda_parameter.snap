@@ -1,0 +1,60 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class UnnamedLambdaParameter {
+    void method() {
+        java.util.function.IntUnaryOperator zero = _ -> 0;
+    }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "UnnamedLambdaParameter" @ 6..28 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 29..30
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 35..39 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "method" @ 40..46
+          LParen "(" @ 46..47
+          RParen ")" @ 47..48 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 49..50
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  QualifiedName
+                    Identifier "java" @ 59..63 leading=[Newline "\n", Whitespace "        "]
+                    Dot "." @ 63..64
+                    Identifier "util" @ 64..68
+                    Dot "." @ 68..69
+                    Identifier "function" @ 69..77
+                    Dot "." @ 77..78
+                    Identifier "IntUnaryOperator" @ 78..94 trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "zero" @ 95..99 trailing=[Whitespace " "]
+                    Assign "=" @ 100..101 trailing=[Whitespace " "]
+                    VariableInitializer
+                      LambdaExpression
+                        LambdaParameter
+                          UnderscoreKw "_" @ 102..103 trailing=[Whitespace " "]
+                        Arrow "->" @ 104..106 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "0" @ 107..108
+              Semicolon ";" @ 108..109
+            RBrace "}" @ 114..115 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 116..117 leading=[Newline "\n"]
+  Eof "" @ 118..118 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

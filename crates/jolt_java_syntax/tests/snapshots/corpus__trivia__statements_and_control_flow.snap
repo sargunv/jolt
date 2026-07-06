@@ -1,0 +1,180 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class StatementTrivia {
+  void run(int value) {
+    if ( /* JOLT-TRIVIA:if-open */ value > 0 /* JOLT-TRIVIA:if-condition */) /* JOLT-TRIVIA:if-before-body */ {
+      return; // JOLT-TRIVIA:return-tail
+    } else /* JOLT-TRIVIA:else-tail */ if (value == 0) {
+      throw new IllegalStateException(); /* JOLT-TRIVIA:throw-tail */
+    }
+
+    for (int i = 0 /* JOLT-TRIVIA:for-init */; i < value /* JOLT-TRIVIA:for-test */; i++ /* JOLT-TRIVIA:for-update */) {
+      continue /* JOLT-TRIVIA:continue-before-semicolon */;
+    }
+
+    switch (value /* JOLT-TRIVIA:switch-selector */) {
+      case 1 /* JOLT-TRIVIA:case-label */ -> /* JOLT-TRIVIA:case-arrow */ run(value - 1);
+      default /* JOLT-TRIVIA:default-label */ -> {
+        break; /* JOLT-TRIVIA:break-tail */
+      }
+    }
+  }
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "StatementTrivia" @ 6..21 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 22..23
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 26..30 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          Identifier "run" @ 31..34
+          LParen "(" @ 34..35
+          FormalParameterList
+            FormalParameter
+              PrimitiveType
+                IntKw "int" @ 35..38 trailing=[Whitespace " "]
+              Identifier "value" @ 39..44
+          RParen ")" @ 44..45 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 46..47
+            BlockStatement
+              IfStatement
+                IfKw "if" @ 52..54 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                LParen "(" @ 55..56 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:if-open */", Whitespace " "]
+                BinaryExpression
+                  NameExpression
+                    Identifier "value" @ 83..88 trailing=[Whitespace " "]
+                  Gt ">" @ 89..90 trailing=[Whitespace " "]
+                  LiteralExpression
+                    IntegerLiteral "0" @ 91..92 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:if-condition */"]
+                RParen ")" @ 123..124 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:if-before-body */", Whitespace " "]
+                Block
+                  LBrace "{" @ 158..159
+                  BlockStatement
+                    ReturnStatement
+                      ReturnKw "return" @ 166..172 leading=[Newline "\n", Whitespace "      "]
+                      Semicolon ";" @ 172..173 trailing=[Whitespace " ", LineComment "// JOLT-TRIVIA:return-tail"]
+                  RBrace "}" @ 205..206 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                ElseKw "else" @ 207..211 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:else-tail */", Whitespace " "]
+                IfStatement
+                  IfKw "if" @ 240..242 trailing=[Whitespace " "]
+                  LParen "(" @ 243..244
+                  BinaryExpression
+                    NameExpression
+                      Identifier "value" @ 244..249 trailing=[Whitespace " "]
+                    EqEq "==" @ 250..252 trailing=[Whitespace " "]
+                    LiteralExpression
+                      IntegerLiteral "0" @ 253..254
+                  RParen ")" @ 254..255 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 256..257
+                    BlockStatement
+                      ThrowStatement
+                        ThrowKw "throw" @ 264..269 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+                        ObjectCreationExpression
+                          NewKw "new" @ 270..273 trailing=[Whitespace " "]
+                          ClassType
+                            Name
+                              Identifier "IllegalStateException" @ 274..295
+                          ArgumentList
+                            LParen "(" @ 295..296
+                            RParen ")" @ 296..297
+                        Semicolon ";" @ 297..298 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:throw-tail */"]
+                    RBrace "}" @ 332..333 leading=[Newline "\n", Whitespace "    "]
+            BlockStatement
+              ForStatement
+                BasicForStatement
+                  ForKw "for" @ 339..342 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                  LParen "(" @ 343..344
+                  ForInitializer
+                    LocalVariableDeclaration
+                      PrimitiveType
+                        IntKw "int" @ 344..347 trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "i" @ 348..349 trailing=[Whitespace " "]
+                          Assign "=" @ 350..351 trailing=[Whitespace " "]
+                          VariableInitializer
+                            LiteralExpression
+                              IntegerLiteral "0" @ 352..353 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:for-init */"]
+                  Semicolon ";" @ 380..381 trailing=[Whitespace " "]
+                  BinaryExpression
+                    NameExpression
+                      Identifier "i" @ 382..383 trailing=[Whitespace " "]
+                    Lt "<" @ 384..385 trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "value" @ 386..391 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:for-test */"]
+                  Semicolon ";" @ 418..419 trailing=[Whitespace " "]
+                  ForUpdate
+                    StatementExpressionList
+                      PostfixExpression
+                        NameExpression
+                          Identifier "i" @ 420..421
+                        PlusPlus "++" @ 421..423 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:for-update */"]
+                  RParen ")" @ 452..453 trailing=[Whitespace " "]
+                  Block
+                    LBrace "{" @ 454..455
+                    BlockStatement
+                      ContinueStatement
+                        ContinueKw "continue" @ 462..470 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:continue-before-semicolon */"]
+                        Semicolon ";" @ 514..515
+                    RBrace "}" @ 520..521 leading=[Newline "\n", Whitespace "    "]
+            BlockStatement
+              SwitchStatement
+                SwitchKw "switch" @ 527..533 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                LParen "(" @ 534..535
+                NameExpression
+                  Identifier "value" @ 535..540 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:switch-selector */"]
+                RParen ")" @ 574..575 trailing=[Whitespace " "]
+                SwitchBlock
+                  LBrace "{" @ 576..577
+                  SwitchRule
+                    SwitchLabel
+                      CaseKw "case" @ 584..588 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+                      CaseConstant
+                        LiteralExpression
+                          IntegerLiteral "1" @ 589..590 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:case-label */", Whitespace " "]
+                    Arrow "->" @ 620..622 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:case-arrow */", Whitespace " "]
+                    MethodInvocationExpression
+                      NameExpression
+                        Identifier "run" @ 652..655
+                      ArgumentList
+                        LParen "(" @ 655..656
+                        BinaryExpression
+                          NameExpression
+                            Identifier "value" @ 656..661 trailing=[Whitespace " "]
+                          Minus "-" @ 662..663 trailing=[Whitespace " "]
+                          LiteralExpression
+                            IntegerLiteral "1" @ 664..665
+                        RParen ")" @ 665..666
+                    Semicolon ";" @ 666..667
+                  SwitchRule
+                    SwitchLabel
+                      DefaultKw "default" @ 674..681 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:default-label */", Whitespace " "]
+                    Arrow "->" @ 714..716 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 717..718
+                      BlockStatement
+                        BreakStatement
+                          BreakKw "break" @ 727..732 leading=[Newline "\n", Whitespace "        "]
+                          Semicolon ";" @ 732..733 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:break-tail */"]
+                      RBrace "}" @ 769..770 leading=[Newline "\n", Whitespace "      "]
+                  RBrace "}" @ 775..776 leading=[Newline "\n", Whitespace "    "]
+            RBrace "}" @ 779..780 leading=[Newline "\n", Whitespace "  "]
+      RBrace "}" @ 781..782 leading=[Newline "\n"]
+  Eof "" @ 783..783 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

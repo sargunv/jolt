@@ -1,0 +1,251 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class ExpressionTrivia {
+  void run(Service service, Object value) {
+    int total =
+        1 /* JOLT-TRIVIA:binary-left */ + /* JOLT-TRIVIA:binary-operator */ 2
+            * /* JOLT-TRIVIA:multiply-operator */ 3;
+    String text =
+        service /* JOLT-TRIVIA:chain-target */
+            .first( /* JOLT-TRIVIA:first-open */ total /* JOLT-TRIVIA:first-arg */)
+            .second() /* JOLT-TRIVIA:after-second */
+            .third(value /* JOLT-TRIVIA:third-arg */);
+    boolean ok =
+        value instanceof String /* JOLT-TRIVIA:instanceof-type */ s
+            && ((String) /* JOLT-TRIVIA:after-cast */ value).isEmpty();
+    Runnable r = () /* JOLT-TRIVIA:lambda-arrow-left */ -> /* JOLT-TRIVIA:lambda-arrow-right */ service.accept(text, ok);
+  }
+}
+
+interface Service {
+  Service first(int value);
+  Service second();
+  String third(Object value);
+  void accept(String text, boolean ok);
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "ExpressionTrivia" @ 6..22 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 23..24
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 27..31 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          Identifier "run" @ 32..35
+          LParen "(" @ 35..36
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "Service" @ 36..43 trailing=[Whitespace " "]
+              Identifier "service" @ 44..51
+            Comma "," @ 51..52 trailing=[Whitespace " "]
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "Object" @ 53..59 trailing=[Whitespace " "]
+              Identifier "value" @ 60..65
+          RParen ")" @ 65..66 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 67..68
+            BlockStatement
+              LocalVariableDeclaration
+                PrimitiveType
+                  IntKw "int" @ 73..76 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "total" @ 77..82 trailing=[Whitespace " "]
+                    Assign "=" @ 83..84
+                    VariableInitializer
+                      BinaryExpression
+                        LiteralExpression
+                          IntegerLiteral "1" @ 93..94 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:binary-left */", Whitespace " "]
+                        Plus "+" @ 125..126 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:binary-operator */", Whitespace " "]
+                        BinaryExpression
+                          LiteralExpression
+                            IntegerLiteral "2" @ 161..162
+                          Star "*" @ 175..176 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:multiply-operator */", Whitespace " "]
+                          LiteralExpression
+                            IntegerLiteral "3" @ 213..214
+              Semicolon ";" @ 214..215
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  Name
+                    Identifier "String" @ 220..226 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "text" @ 227..231 trailing=[Whitespace " "]
+                    Assign "=" @ 232..233
+                    VariableInitializer
+                      MethodInvocationExpression
+                        MethodInvocationExpression
+                          MethodInvocationExpression
+                            NameExpression
+                              Identifier "service" @ 242..249 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:chain-target */"]
+                            Dot "." @ 293..294 leading=[Newline "\n", Whitespace "            "]
+                            Identifier "first" @ 294..299
+                            ArgumentList
+                              LParen "(" @ 299..300 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:first-open */", Whitespace " "]
+                              NameExpression
+                                Identifier "total" @ 330..335 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:first-arg */"]
+                              RParen ")" @ 363..364
+                          Dot "." @ 377..378 leading=[Newline "\n", Whitespace "            "]
+                          Identifier "second" @ 378..384
+                          ArgumentList
+                            LParen "(" @ 384..385
+                            RParen ")" @ 385..386 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:after-second */"]
+                        Dot "." @ 430..431 leading=[Newline "\n", Whitespace "            "]
+                        Identifier "third" @ 431..436
+                        ArgumentList
+                          LParen "(" @ 436..437
+                          NameExpression
+                            Identifier "value" @ 437..442 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:third-arg */"]
+                          RParen ")" @ 470..471
+              Semicolon ";" @ 471..472
+            BlockStatement
+              LocalVariableDeclaration
+                PrimitiveType
+                  BooleanKw "boolean" @ 477..484 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "ok" @ 485..487 trailing=[Whitespace " "]
+                    Assign "=" @ 488..489
+                    VariableInitializer
+                      BinaryExpression
+                        InstanceofExpression
+                          NameExpression
+                            Identifier "value" @ 498..503 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                          InstanceofKw "instanceof" @ 504..514 trailing=[Whitespace " "]
+                          TypePattern
+                            LocalVariableDeclaration
+                              ClassType
+                                Name
+                                  Identifier "String" @ 515..521 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:instanceof-type */", Whitespace " "]
+                              VariableDeclaratorList
+                                VariableDeclarator
+                                  Identifier "s" @ 556..557
+                        AndAnd "&&" @ 570..572 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                        MethodInvocationExpression
+                          ParenthesizedExpression
+                            LParen "(" @ 573..574
+                            CastExpression
+                              LParen "(" @ 574..575
+                              ClassType
+                                Name
+                                  Identifier "String" @ 575..581
+                              RParen ")" @ 581..582 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:after-cast */", Whitespace " "]
+                              NameExpression
+                                Identifier "value" @ 612..617
+                            RParen ")" @ 617..618
+                          Dot "." @ 618..619
+                          Identifier "isEmpty" @ 619..626
+                          ArgumentList
+                            LParen "(" @ 626..627
+                            RParen ")" @ 627..628
+              Semicolon ";" @ 628..629
+            BlockStatement
+              LocalVariableDeclaration
+                ClassType
+                  Name
+                    Identifier "Runnable" @ 634..642 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "r" @ 643..644 trailing=[Whitespace " "]
+                    Assign "=" @ 645..646 trailing=[Whitespace " "]
+                    VariableInitializer
+                      LambdaExpression
+                        LParen "(" @ 647..648
+                        LambdaParameterList
+                        RParen ")" @ 648..649 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:lambda-arrow-left */", Whitespace " "]
+                        Arrow "->" @ 686..688 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:lambda-arrow-right */", Whitespace " "]
+                        MethodInvocationExpression
+                          NameExpression
+                            Identifier "service" @ 726..733
+                          Dot "." @ 733..734
+                          Identifier "accept" @ 734..740
+                          ArgumentList
+                            LParen "(" @ 740..741
+                            NameExpression
+                              Identifier "text" @ 741..745
+                            Comma "," @ 745..746 trailing=[Whitespace " "]
+                            NameExpression
+                              Identifier "ok" @ 747..749
+                            RParen ")" @ 749..750
+              Semicolon ";" @ 750..751
+            RBrace "}" @ 754..755 leading=[Newline "\n", Whitespace "  "]
+      RBrace "}" @ 756..757 leading=[Newline "\n"]
+  InterfaceDeclaration
+    InterfaceKw "interface" @ 759..768 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "Service" @ 769..776 trailing=[Whitespace " "]
+    InterfaceBody
+      LBrace "{" @ 777..778
+      MethodDeclaration
+        ClassType
+          Name
+            Identifier "Service" @ 781..788 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+        Identifier "first" @ 789..794
+        LParen "(" @ 794..795
+        FormalParameterList
+          FormalParameter
+            PrimitiveType
+              IntKw "int" @ 795..798 trailing=[Whitespace " "]
+            Identifier "value" @ 799..804
+        RParen ")" @ 804..805
+        Semicolon ";" @ 805..806
+      MethodDeclaration
+        ClassType
+          Name
+            Identifier "Service" @ 809..816 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+        Identifier "second" @ 817..823
+        LParen "(" @ 823..824
+        RParen ")" @ 824..825
+        Semicolon ";" @ 825..826
+      MethodDeclaration
+        ClassType
+          Name
+            Identifier "String" @ 829..835 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+        Identifier "third" @ 836..841
+        LParen "(" @ 841..842
+        FormalParameterList
+          FormalParameter
+            ClassType
+              Name
+                Identifier "Object" @ 842..848 trailing=[Whitespace " "]
+            Identifier "value" @ 849..854
+        RParen ")" @ 854..855
+        Semicolon ";" @ 855..856
+      MethodDeclaration
+        VoidType
+          VoidKw "void" @ 859..863 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+        Identifier "accept" @ 864..870
+        LParen "(" @ 870..871
+        FormalParameterList
+          FormalParameter
+            ClassType
+              Name
+                Identifier "String" @ 871..877 trailing=[Whitespace " "]
+            Identifier "text" @ 878..882
+          Comma "," @ 882..883 trailing=[Whitespace " "]
+          FormalParameter
+            PrimitiveType
+              BooleanKw "boolean" @ 884..891 trailing=[Whitespace " "]
+            Identifier "ok" @ 892..894
+        RParen ")" @ 894..895
+        Semicolon ";" @ 895..896
+      RBrace "}" @ 897..898 leading=[Newline "\n"]
+  Eof "" @ 899..899 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

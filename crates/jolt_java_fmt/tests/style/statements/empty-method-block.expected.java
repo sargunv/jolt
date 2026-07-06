@@ -1,4 +1,0 @@
-class Example {
-  void run() {
-  }
-}

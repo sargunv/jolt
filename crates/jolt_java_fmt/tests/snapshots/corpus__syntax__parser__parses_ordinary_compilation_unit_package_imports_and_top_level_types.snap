@@ -1,0 +1,23 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+@Deprecated
+package example.parser;
+
+import module java.base;
+import java.util.*;
+import java.util.List;
+
+import static java.util.Collections.*;
+import static java.util.Collections.emptyList;
+
+class A {
+}
+
+interface B {
+}
+
+diagnostics:
+(none)

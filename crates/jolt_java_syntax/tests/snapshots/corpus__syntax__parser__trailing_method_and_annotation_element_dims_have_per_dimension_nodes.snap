@@ -1,0 +1,105 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+abstract class TrailingMethodPerDimensionDims {
+    abstract int values() @A [] @B [];
+}
+
+@interface TrailingAnnotationElementPerDimensionDims {
+    int values() @A [] @B [];
+}
+
+@interface A {}
+@interface B {}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ModifierList
+      AbstractKw "abstract" @ 0..8 trailing=[Whitespace " "]
+    ClassKw "class" @ 9..14 trailing=[Whitespace " "]
+    Identifier "TrailingMethodPerDimensionDims" @ 15..45 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 46..47
+      ClassBodyDeclaration
+        MethodDeclaration
+          ModifierList
+            AbstractKw "abstract" @ 52..60 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          PrimitiveType
+            IntKw "int" @ 61..64 trailing=[Whitespace " "]
+          Identifier "values" @ 65..71
+          LParen "(" @ 71..72
+          RParen ")" @ 72..73 trailing=[Whitespace " "]
+          ArrayDimensions
+            ArrayDimension
+              Annotation
+                At "@" @ 74..75
+                Name
+                  Identifier "A" @ 75..76 trailing=[Whitespace " "]
+              LBracket "[" @ 77..78
+              RBracket "]" @ 78..79 trailing=[Whitespace " "]
+            ArrayDimension
+              Annotation
+                At "@" @ 80..81
+                Name
+                  Identifier "B" @ 81..82 trailing=[Whitespace " "]
+              LBracket "[" @ 83..84
+              RBracket "]" @ 84..85
+          Semicolon ";" @ 85..86
+      RBrace "}" @ 87..88 leading=[Newline "\n"]
+  AnnotationInterfaceDeclaration
+    At "@" @ 90..91 leading=[Newline "\n", Newline "\n"]
+    InterfaceKw "interface" @ 91..100 trailing=[Whitespace " "]
+    Identifier "TrailingAnnotationElementPerDimensionDims" @ 101..142 trailing=[Whitespace " "]
+    AnnotationInterfaceBody
+      LBrace "{" @ 143..144
+      AnnotationElementList
+        AnnotationElementDeclaration
+          PrimitiveType
+            IntKw "int" @ 149..152 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "values" @ 153..159
+          LParen "(" @ 159..160
+          RParen ")" @ 160..161 trailing=[Whitespace " "]
+          ArrayDimensions
+            ArrayDimension
+              Annotation
+                At "@" @ 162..163
+                Name
+                  Identifier "A" @ 163..164 trailing=[Whitespace " "]
+              LBracket "[" @ 165..166
+              RBracket "]" @ 166..167 trailing=[Whitespace " "]
+            ArrayDimension
+              Annotation
+                At "@" @ 168..169
+                Name
+                  Identifier "B" @ 169..170 trailing=[Whitespace " "]
+              LBracket "[" @ 171..172
+              RBracket "]" @ 172..173
+          Semicolon ";" @ 173..174
+      RBrace "}" @ 175..176 leading=[Newline "\n"]
+  AnnotationInterfaceDeclaration
+    At "@" @ 178..179 leading=[Newline "\n", Newline "\n"]
+    InterfaceKw "interface" @ 179..188 trailing=[Whitespace " "]
+    Identifier "A" @ 189..190 trailing=[Whitespace " "]
+    AnnotationInterfaceBody
+      LBrace "{" @ 191..192
+      AnnotationElementList
+      RBrace "}" @ 192..193
+  AnnotationInterfaceDeclaration
+    At "@" @ 194..195 leading=[Newline "\n"]
+    InterfaceKw "interface" @ 195..204 trailing=[Whitespace " "]
+    Identifier "B" @ 205..206 trailing=[Whitespace " "]
+    AnnotationInterfaceBody
+      LBrace "{" @ 207..208
+      AnnotationElementList
+      RBrace "}" @ 208..209
+  Eof "" @ 210..210 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

@@ -1,0 +1,21 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+static	voidform
+
+syntax:
+syntax:
+CompilationUnit
+  ErrorNode
+    StaticKw "static" @ 0..6 trailing=[Whitespace "\t"]
+    VoidKw "void" @ 7..11 trailing=[Whitespace "\u{c}"]
+    Identifier "form" @ 12..16
+  Eof "" @ 16..16
+
+diagnostics:
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=0..6 message="unexpected token at top level"
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(6) }) message=unexpected token at top level

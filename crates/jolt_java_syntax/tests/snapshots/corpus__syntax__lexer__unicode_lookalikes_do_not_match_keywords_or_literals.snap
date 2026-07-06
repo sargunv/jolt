@@ -1,0 +1,34 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+ｉｆ ｔｒｕｅ ｎｕｌｌ
+
+syntax:
+syntax:
+CompilationUnit
+  FieldDeclaration
+    ClassType
+      Name
+        Identifier "ｉｆ" @ 0..6 trailing=[Whitespace " "]
+    VariableDeclaratorList
+      VariableDeclarator
+        Identifier "ｔｒｕｅ" @ 7..19 trailing=[Whitespace " "]
+  FieldDeclaration
+    ClassType
+      Name
+        Identifier "ｎｕｌｌ" @ 20..32
+    VariableDeclaratorList
+      VariableDeclarator
+  Eof "" @ 32..32
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=20..32 message="expected `;` after field declaration"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=32..32 message="expected variable name"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=32..32 message="expected `;` after field declaration"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(20), end: TextSize(32) }) message=expected `;` after field declaration
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(32), end: TextSize(32) }) message=expected variable name
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(32), end: TextSize(32) }) message=expected `;` after field declaration

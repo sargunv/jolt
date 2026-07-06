@@ -1,0 +1,206 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+@interface Contract { String value() default "x"; // value marker
+int[] flags() default {/* start */ 1, // one
+2, /* two */ 3, // trailing
+}; Nested nested() default @Nested(name="demo", enabled=true); public abstract Class<?> type()[]; class Helper { String name() { return "helper"; } } enum Mode { AUTO, MANUAL } @interface Meta { String label(); } }
+
+@interface Nested { String name(); boolean enabled() default false; // enabled marker
+}
+
+syntax:
+syntax:
+CompilationUnit
+  AnnotationInterfaceDeclaration
+    At "@" @ 0..1
+    InterfaceKw "interface" @ 1..10 trailing=[Whitespace " "]
+    Identifier "Contract" @ 11..19 trailing=[Whitespace " "]
+    AnnotationInterfaceBody
+      LBrace "{" @ 20..21 trailing=[Whitespace " "]
+      AnnotationElementList
+        AnnotationElementDeclaration
+          ClassType
+            Name
+              Identifier "String" @ 22..28 trailing=[Whitespace " "]
+          Identifier "value" @ 29..34
+          LParen "(" @ 34..35
+          RParen ")" @ 35..36 trailing=[Whitespace " "]
+          DefaultValue
+            DefaultKw "default" @ 37..44 trailing=[Whitespace " "]
+            AnnotationElementValue
+              LiteralExpression
+                StringLiteral "\"x\"" @ 45..48
+          Semicolon ";" @ 48..49 trailing=[Whitespace " ", LineComment "// value marker"]
+        AnnotationElementDeclaration
+          ArrayType
+            PrimitiveType
+              IntKw "int" @ 66..69 leading=[Newline "\n"]
+            ArrayDimensions
+              ArrayDimension
+                LBracket "[" @ 69..70
+                RBracket "]" @ 70..71 trailing=[Whitespace " "]
+          Identifier "flags" @ 72..77
+          LParen "(" @ 77..78
+          RParen ")" @ 78..79 trailing=[Whitespace " "]
+          DefaultValue
+            DefaultKw "default" @ 80..87 trailing=[Whitespace " "]
+            AnnotationElementValue
+              AnnotationArrayInitializer
+                LBrace "{" @ 88..89 trailing=[BlockComment "/* start */", Whitespace " "]
+                AnnotationElementValue
+                  LiteralExpression
+                    IntegerLiteral "1" @ 101..102
+                Comma "," @ 102..103 trailing=[Whitespace " ", LineComment "// one"]
+                AnnotationElementValue
+                  LiteralExpression
+                    IntegerLiteral "2" @ 111..112 leading=[Newline "\n"]
+                Comma "," @ 112..113 trailing=[Whitespace " ", BlockComment "/* two */", Whitespace " "]
+                AnnotationElementValue
+                  LiteralExpression
+                    IntegerLiteral "3" @ 124..125
+                Comma "," @ 125..126 trailing=[Whitespace " ", LineComment "// trailing"]
+                RBrace "}" @ 139..140 leading=[Newline "\n"]
+          Semicolon ";" @ 140..141 trailing=[Whitespace " "]
+        AnnotationElementDeclaration
+          ClassType
+            Name
+              Identifier "Nested" @ 142..148 trailing=[Whitespace " "]
+          Identifier "nested" @ 149..155
+          LParen "(" @ 155..156
+          RParen ")" @ 156..157 trailing=[Whitespace " "]
+          DefaultValue
+            DefaultKw "default" @ 158..165 trailing=[Whitespace " "]
+            AnnotationElementValue
+              Annotation
+                At "@" @ 166..167
+                Name
+                  Identifier "Nested" @ 167..173
+                AnnotationArgumentList
+                  LParen "(" @ 173..174
+                  AnnotationElementList
+                    AnnotationElementValuePair
+                      Identifier "name" @ 174..178
+                      Assign "=" @ 178..179
+                      AnnotationElementValue
+                        LiteralExpression
+                          StringLiteral "\"demo\"" @ 179..185
+                    Comma "," @ 185..186 trailing=[Whitespace " "]
+                    AnnotationElementValuePair
+                      Identifier "enabled" @ 187..194
+                      Assign "=" @ 194..195
+                      AnnotationElementValue
+                        LiteralExpression
+                          BooleanLiteral "true" @ 195..199
+                  RParen ")" @ 199..200
+          Semicolon ";" @ 200..201 trailing=[Whitespace " "]
+        AnnotationElementDeclaration
+          ModifierList
+            PublicKw "public" @ 202..208 trailing=[Whitespace " "]
+            AbstractKw "abstract" @ 209..217 trailing=[Whitespace " "]
+          ClassType
+            Name
+              Identifier "Class" @ 218..223
+            TypeArgumentList
+              Lt "<" @ 223..224
+              TypeArgument
+                WildcardType
+                  Question "?" @ 224..225
+              Gt ">" @ 225..226 trailing=[Whitespace " "]
+          Identifier "type" @ 227..231
+          LParen "(" @ 231..232
+          RParen ")" @ 232..233
+          ArrayDimensions
+            ArrayDimension
+              LBracket "[" @ 233..234
+              RBracket "]" @ 234..235
+          Semicolon ";" @ 235..236 trailing=[Whitespace " "]
+        ClassDeclaration
+          ClassKw "class" @ 237..242 trailing=[Whitespace " "]
+          Identifier "Helper" @ 243..249 trailing=[Whitespace " "]
+          ClassBody
+            LBrace "{" @ 250..251 trailing=[Whitespace " "]
+            ClassBodyDeclaration
+              MethodDeclaration
+                ClassType
+                  Name
+                    Identifier "String" @ 252..258 trailing=[Whitespace " "]
+                Identifier "name" @ 259..263
+                LParen "(" @ 263..264
+                RParen ")" @ 264..265 trailing=[Whitespace " "]
+                Block
+                  LBrace "{" @ 266..267 trailing=[Whitespace " "]
+                  BlockStatement
+                    ReturnStatement
+                      ReturnKw "return" @ 268..274 trailing=[Whitespace " "]
+                      LiteralExpression
+                        StringLiteral "\"helper\"" @ 275..283
+                      Semicolon ";" @ 283..284 trailing=[Whitespace " "]
+                  RBrace "}" @ 285..286 trailing=[Whitespace " "]
+            RBrace "}" @ 287..288 trailing=[Whitespace " "]
+        EnumDeclaration
+          EnumKw "enum" @ 289..293 trailing=[Whitespace " "]
+          Identifier "Mode" @ 294..298 trailing=[Whitespace " "]
+          EnumBody
+            LBrace "{" @ 299..300 trailing=[Whitespace " "]
+            EnumConstantList
+              EnumConstant
+                Identifier "AUTO" @ 301..305
+              Comma "," @ 305..306 trailing=[Whitespace " "]
+              EnumConstant
+                Identifier "MANUAL" @ 307..313 trailing=[Whitespace " "]
+            RBrace "}" @ 314..315 trailing=[Whitespace " "]
+        AnnotationInterfaceDeclaration
+          At "@" @ 316..317
+          InterfaceKw "interface" @ 317..326 trailing=[Whitespace " "]
+          Identifier "Meta" @ 327..331 trailing=[Whitespace " "]
+          AnnotationInterfaceBody
+            LBrace "{" @ 332..333 trailing=[Whitespace " "]
+            AnnotationElementList
+              AnnotationElementDeclaration
+                ClassType
+                  Name
+                    Identifier "String" @ 334..340 trailing=[Whitespace " "]
+                Identifier "label" @ 341..346
+                LParen "(" @ 346..347
+                RParen ")" @ 347..348
+                Semicolon ";" @ 348..349 trailing=[Whitespace " "]
+            RBrace "}" @ 350..351 trailing=[Whitespace " "]
+      RBrace "}" @ 352..353
+  AnnotationInterfaceDeclaration
+    At "@" @ 355..356 leading=[Newline "\n", Newline "\n"]
+    InterfaceKw "interface" @ 356..365 trailing=[Whitespace " "]
+    Identifier "Nested" @ 366..372 trailing=[Whitespace " "]
+    AnnotationInterfaceBody
+      LBrace "{" @ 373..374 trailing=[Whitespace " "]
+      AnnotationElementList
+        AnnotationElementDeclaration
+          ClassType
+            Name
+              Identifier "String" @ 375..381 trailing=[Whitespace " "]
+          Identifier "name" @ 382..386
+          LParen "(" @ 386..387
+          RParen ")" @ 387..388
+          Semicolon ";" @ 388..389 trailing=[Whitespace " "]
+        AnnotationElementDeclaration
+          PrimitiveType
+            BooleanKw "boolean" @ 390..397 trailing=[Whitespace " "]
+          Identifier "enabled" @ 398..405
+          LParen "(" @ 405..406
+          RParen ")" @ 406..407 trailing=[Whitespace " "]
+          DefaultValue
+            DefaultKw "default" @ 408..415 trailing=[Whitespace " "]
+            AnnotationElementValue
+              LiteralExpression
+                BooleanLiteral "false" @ 416..421
+          Semicolon ";" @ 421..422 trailing=[Whitespace " ", LineComment "// enabled marker"]
+      RBrace "}" @ 441..442 leading=[Newline "\n"]
+  Eof "" @ 443..443 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)
