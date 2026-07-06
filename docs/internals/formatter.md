@@ -77,8 +77,8 @@ Java source:
 foo(first, second, third)
 ```
 
-Lowered to a document—a group wrapping the call, with break points (·) between
-the arguments:
+Lowered to a document with a group wrapping the call, with break points (·)
+between the arguments:
 
 ```
 group( "foo(" indent( first · second · third ) ")" )
@@ -105,17 +105,12 @@ of it.
 
 ## Further reading
 
-- [Wadler, "A prettier printer"](https://homepages.inf.ed.ac.uk/wadler/papers/prettier/prettier.pdf)
-  —the document-IR tradition Jolt's `Doc` follows.
-- [Prettier, "Technical details"](https://prettier.io/docs/technical-details) —
+- [Wadler, "A prettier printer"](https://homepages.inf.ed.ac.uk/wadler/papers/prettier/prettier.pdf),
+  the document-IR tradition Jolt's `Doc` follows.
+- [Prettier, "Technical details"](https://prettier.io/docs/technical-details),
   the practical IR and layout algorithm that popularized Wadler's approach.
-- [Biome, "Architecture"](https://biomejs.dev/internals/architecture/)—the
+- [Biome, "Architecture"](https://biomejs.dev/internals/architecture/), the
   lossless-CST and trivia model Jolt's tree is kin to.
 - [Oxfmt](https://oxc.rs/docs/guide/usage/formatter.html) and
-  [Ruff formatter](https://docs.astral.sh/ruff/formatter/)—practical IR design
+  [Ruff formatter](https://docs.astral.sh/ruff/formatter/), practical IR design
   and option philosophy.
-- [Oxc, "Pursuit of Performance"](https://oxc.rs/docs/learn/performance.html) —
-  a model for a future deeper performance writeup.
-
-```
-```
