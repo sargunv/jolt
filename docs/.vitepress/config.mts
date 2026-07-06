@@ -33,6 +33,10 @@ export default defineConfig({
         text: "Reference",
         items: [{ text: "CLI", link: "/reference/cli" }],
       },
+      {
+        text: "Internals",
+        items: [{ text: "Formatter", link: "/internals/formatter" }],
+      },
     ],
     socialLinks: [{ icon: "github", link: "https://github.com/sargunv/jolt" }],
   },

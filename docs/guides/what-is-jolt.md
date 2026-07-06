@@ -35,16 +35,7 @@ Measured on a Ryzen AI Max+ 395. Lower is better.
 In native mode, Jolt formats the full corpus in under half a second—about 20×
 faster than `google-java-format` in the same run.
 
-## Acknowledgements
-
-Jolt’s formatter is built around a document IR in the
+Jolt’s formatter builds on the
 [Wadler/Prettier](https://homepages.inf.ed.ac.uk/wadler/papers/prettier/prettier.pdf)
-tradition, with practical influence from
-[Biome](https://biomejs.dev/formatter/),
-[Oxfmt](https://oxc.rs/docs/guide/usage/formatter.html), and
-[Ruff](https://docs.astral.sh/ruff/formatter/). Its renderer uses local flat-fit
-probing for grouped documents, with an explicit boundedness guard inspired by
-the
-[Oppen](http://i.stanford.edu/pub/cstr/reports/cs/tr/79/770/CS-TR-79-770.pdf)
-lineage and later work on linear, bounded pretty-printing by
-[Swierstra and Chitil](https://kar.kent.ac.uk/24041/1/LinearOlaf.pdf).
+document-IR tradition; see [how the formatter works](/internals/formatter) for
+details and full references.
