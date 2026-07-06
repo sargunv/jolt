@@ -11,46 +11,66 @@ const { Layout } = DefaultTheme;
 
 <template>
   <Layout>
-    <template #home-features-after>
+    <template #home-hero-after>
       <ClientOnly>
-        <JoltPlayground />
+        <JoltPlayground id="playground" />
       </ClientOnly>
     </template>
   </Layout>
 </template>
 
 <style>
-.Layout:has(.VPContent.is-home) {
-  min-height: 100dvh;
-}
-
-.VPContent.is-home {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: calc(100dvh - var(--vp-nav-height, 64px));
-}
-
 .VPContent.is-home .VPHome {
   display: flex;
   flex-direction: column;
-  flex: 1;
-  min-height: 0;
+  min-height: calc(100dvh - var(--vp-nav-height, 64px));
   margin-bottom: 0 !important;
 }
 
-.VPContent.is-home .VPHomeHero,
-.VPContent.is-home .VPHomeFeatures {
+.Layout:has(.VPContent.is-home) .VPNavBarTitle {
+  visibility: hidden;
+}
+
+.VPContent.is-home .VPHomeHero {
   flex-shrink: 0;
+  padding: 64px 24px 24px;
+}
+
+.VPContent.is-home .VPHomeHero .main {
+  max-width: 720px;
+}
+
+.VPContent.is-home .VPHomeHero .name,
+.VPContent.is-home .VPHomeHero .text {
+  max-width: 720px;
+}
+
+.VPContent.is-home .VPHomeHero .tagline {
+  max-width: 620px;
 }
 
 .VPContent.is-home .VPHome > .jolt-playground {
   flex: 1 1 auto;
-  min-height: 320px;
+  width: min(100%, 1440px);
+  min-height: 760px;
+  margin: 0 auto;
+  padding-top: 0;
 }
 
-/* Empty markdown wrapper after the playground slot. */
-.VPContent.is-home .VPHome > div[style*="position"] {
-  display: none;
+@media (min-width: 960px) {
+  .VPContent.is-home .VPHomeHero .container {
+    align-items: flex-end;
+  }
+}
+
+@media (max-width: 768px) {
+  .VPContent.is-home .VPHomeHero {
+    padding: 32px 24px 18px;
+  }
+
+  .VPContent.is-home .VPHome > .jolt-playground {
+    min-height: 900px;
+    padding-inline: 12px;
+  }
 }
 </style>
