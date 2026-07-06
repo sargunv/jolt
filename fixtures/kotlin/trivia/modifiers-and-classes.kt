@@ -1,0 +1,13 @@
+package com.example.trivia
+
+public /* JOLT-TRIVIA:public-modifier */ sealed class Node {
+    data /* JOLT-TRIVIA:data-modifier */ class Leaf(
+        private /* JOLT-TRIVIA:private-modifier */ val value: String,
+    ) : Node()
+
+    protected /* JOLT-TRIVIA:protected-modifier */ abstract class Branch : Node()
+}
+
+internal /* JOLT-TRIVIA:internal-modifier */ object Registry {
+    lateinit /* JOLT-TRIVIA:lateinit-modifier */ var current: Node
+}

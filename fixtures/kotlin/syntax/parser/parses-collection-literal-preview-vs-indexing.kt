@@ -1,0 +1,5 @@
+fun collectionLiteralVsIndexing(values: List<List<Int>>): Any {
+    val literal = [values[0], values[1]]
+    val indexed = literal[0][1]
+    return [indexed, values[0]]
+}

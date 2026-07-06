@@ -1,0 +1,8 @@
+package com.example.properties
+
+fun describe(code: Int): String =
+    when (code) {
+        200 -> "request completed successfully with a compact success response"
+        404 -> "resource was not found in the active workspace"
+        else -> "unexpected status code returned from the service"
+    }

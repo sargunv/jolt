@@ -1,0 +1,11 @@
+fun jumps(values: List<Int>): Int {
+    loop@ for (value in values) {
+        if (value < 0) continue@loop
+        if (value == 0) break@loop
+        values.forEach inner@{
+            if (it == value) return@inner
+        }
+        return value
+    }
+    return -1
+}

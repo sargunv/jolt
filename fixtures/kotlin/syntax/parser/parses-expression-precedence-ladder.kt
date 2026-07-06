@@ -1,0 +1,5 @@
+fun precedence(a: Int, b: Int, c: Int, d: Int): Boolean {
+    val arithmetic = a + b * c - d / 2 % 3
+    val shifted = arithmetic shl 1 and 255
+    return arithmetic > shifted && shifted != 0 || a == b
+}

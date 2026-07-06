@@ -1,0 +1,12 @@
+package com.example.trivia
+
+sealed interface Event {
+    data class Click(val button: Int) : Event
+    data object Idle : Event
+}
+
+fun describe(event: Event): String =
+    when /* JOLT-TRIVIA:when-keyword */ (event) {
+        is Event.Click /* JOLT-TRIVIA:when-condition */ if event.button == 1 /* JOLT-TRIVIA:when-guard */ -> "primary"
+        Event.Idle /* JOLT-TRIVIA:object-case */ -> /* JOLT-TRIVIA:arrow-right */ "idle"
+    }

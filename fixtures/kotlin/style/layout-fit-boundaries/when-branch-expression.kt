@@ -1,0 +1,8 @@
+package com.example.boundaries
+
+fun branch(value: Int): String =
+    when (value) {
+        0 -> "zero"
+        1 -> "one"
+        else -> "value-${value.toString().padStart(4, '0')}"
+    }

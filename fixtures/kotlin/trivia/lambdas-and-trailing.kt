@@ -1,0 +1,13 @@
+package com.example.trivia
+
+fun consume(block: (String) -> Unit) {}
+fun transform(value: String, block: (String) -> String): String = block(value)
+
+fun lambdas() {
+    consume /* JOLT-TRIVIA:trailing-lambda-call */ { value /* JOLT-TRIVIA:lambda-param */ ->
+        println(value)
+    }
+    val upper = transform("name") /* JOLT-TRIVIA:before-trailing */ {
+        it /* JOLT-TRIVIA:implicit-it */ .uppercase()
+    }
+}

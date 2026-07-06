@@ -1,0 +1,1 @@
+1L 1u 1U 1uL 0xFFUL 0b10ul

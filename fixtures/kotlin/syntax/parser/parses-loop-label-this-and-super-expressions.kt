@@ -1,0 +1,15 @@
+open class Parent {
+    open fun visit() {}
+}
+
+class Child : Parent() {
+    inner class Walker {
+        fun walk(items: List<String>) {
+            outer@ for (item in items) {
+                if (item.isEmpty()) continue@outer
+                this@Child.visit()
+                super<Parent>.visit()
+            }
+        }
+    }
+}

@@ -1,0 +1,13 @@
+package com.example.trivia
+
+interface Source<T>
+interface Sink<T>
+
+class Pipe<
+    /* JOLT-TRIVIA:type-param-leading */ T : Any,
+    R /* JOLT-TRIVIA:type-param-name */ ,
+> where
+    T : Source<R> /* JOLT-TRIVIA:where-first */ ,
+    T : Sink<R> /* JOLT-TRIVIA:where-second */
+
+fun <T /* JOLT-TRIVIA:function-type-param */> echo(value: T): T where T : CharSequence = value

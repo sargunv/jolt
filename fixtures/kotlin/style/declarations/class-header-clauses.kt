@@ -1,0 +1,10 @@
+package com.example.declarations
+
+interface Readable
+interface Writable
+
+class Repository<T : Any>(
+    private val name: String,
+    private val items: MutableList<T>,
+) : Readable,
+    Writable

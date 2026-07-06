@@ -1,0 +1,12 @@
+package com.example.trivia
+
+class Accessors {
+    var count: Int = 0
+        get /* JOLT-TRIVIA:get-keyword */ () = field /* JOLT-TRIVIA:get-field */
+        private set /* JOLT-TRIVIA:set-modifier */ (value) {
+            field /* JOLT-TRIVIA:set-field */ = value.coerceAtLeast(0)
+        }
+
+    val empty: Boolean
+        get() /* JOLT-TRIVIA:expression-accessor */ = count == 0
+}
