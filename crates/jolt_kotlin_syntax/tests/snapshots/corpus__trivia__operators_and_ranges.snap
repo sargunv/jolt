@@ -1,0 +1,117 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package com.example.trivia
+
+fun operators(values: List<Int>): Boolean {
+    val range = 1 /* JOLT-TRIVIA:range-left */ .. /* JOLT-TRIVIA:range-op */ 10
+    val indexed = values[0 /* JOLT-TRIVIA:index-value */]
+    return indexed in /* JOLT-TRIVIA:in-operator */ range && indexed !in /* JOLT-TRIVIA:not-in-operator */ setOf<Int>()
+}
+
+syntax:
+syntax:
+KotlinFile
+  PackageHeader
+    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+    QualifiedName
+      Name
+        Identifier "com" @ 8..11
+      Dot "." @ 11..12
+      Name
+        Identifier "example" @ 12..19
+      Dot "." @ 19..20
+      Name
+        Identifier "trivia" @ 20..26
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 28..31 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "operators" @ 32..41
+    ValueParameterList
+      LParen "(" @ 41..42
+      ValueParameter
+        Name
+          Identifier "values" @ 42..48
+        Colon ":" @ 48..49 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "List" @ 50..54
+            TypeArgumentList
+              Lt "<" @ 54..55
+              TypeProjectionList
+                TypeArgument
+                  TypeProjection
+                    TypeReference
+                      UserType
+                        Identifier "Int" @ 55..58
+              Gt ">" @ 58..59
+      RParen ")" @ 59..60
+    Colon ":" @ 60..61 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "Boolean" @ 62..69 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 70..71
+      PropertyDeclaration
+        ValKw "val" @ 76..79 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "range" @ 80..85 trailing=[Whitespace " "]
+        Assign "=" @ 86..87 trailing=[Whitespace " "]
+        BinaryExpression
+          LiteralExpression
+            IntegerLiteral "1" @ 88..89 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:range-left */", Whitespace " "]
+          Range ".." @ 119..121 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:range-op */", Whitespace " "]
+          LiteralExpression
+            IntegerLiteral "10" @ 149..151
+      PropertyDeclaration
+        ValKw "val" @ 156..159 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "indexed" @ 160..167 trailing=[Whitespace " "]
+        Assign "=" @ 168..169 trailing=[Whitespace " "]
+        IndexExpression
+          NameExpression
+            Identifier "values" @ 170..176
+          LBracket "[" @ 176..177
+          ValueArgument
+            LiteralExpression
+              IntegerLiteral "0" @ 177..178 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:index-value */"]
+          RBracket "]" @ 208..209
+      Statement
+        ExpressionStatement
+          JumpExpression
+            ReturnKw "return" @ 214..220 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            BinaryExpression
+              BinaryExpression
+                NameExpression
+                  Identifier "indexed" @ 221..228 trailing=[Whitespace " "]
+                InKw "in" @ 229..231 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:in-operator */", Whitespace " "]
+                NameExpression
+                  Identifier "range" @ 262..267 trailing=[Whitespace " "]
+              AndAnd "&&" @ 268..270 trailing=[Whitespace " "]
+              BinaryExpression
+                NameExpression
+                  Identifier "indexed" @ 271..278 trailing=[Whitespace " "]
+                NotIn "!in" @ 279..282 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:not-in-operator */", Whitespace " "]
+                CallExpression
+                  NameExpression
+                    Identifier "setOf" @ 317..322
+                  TypeArgumentList
+                    Lt "<" @ 322..323
+                    TypeProjectionList
+                      TypeArgument
+                        TypeProjection
+                          TypeReference
+                            UserType
+                              Identifier "Int" @ 323..326
+                    Gt ">" @ 326..327
+                  ValueArgumentList
+                    LParen "(" @ 327..328
+                    RParen ")" @ 328..329
+      RBrace "}" @ 330..331 leading=[Newline "\n"]
+  Eof "" @ 332..332 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

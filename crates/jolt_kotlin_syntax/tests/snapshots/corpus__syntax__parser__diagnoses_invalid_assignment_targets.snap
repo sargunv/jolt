@@ -1,0 +1,94 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun invalidAssignmentTargets(value: Int) {
+    1 = value
+    value + 1 = value
+    (value) = 2
+    value() = 3
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    Identifier "invalidAssignmentTargets" @ 4..28
+    ValueParameterList
+      LParen "(" @ 28..29
+      ValueParameter
+        Name
+          Identifier "value" @ 29..34
+        Colon ":" @ 34..35 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Int" @ 36..39
+      RParen ")" @ 39..40 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 41..42
+      Statement
+        ExpressionStatement
+          AssignmentExpression
+            ErrorNode
+              LiteralExpression
+                IntegerLiteral "1" @ 47..48 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            Assign "=" @ 49..50 trailing=[Whitespace " "]
+            NameExpression
+              Identifier "value" @ 51..56
+      Statement
+        ModifierList
+          Identifier "value" @ 61..66 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        ExpressionStatement
+          AssignmentExpression
+            ErrorNode
+              UnaryExpression
+                Plus "+" @ 67..68 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "1" @ 69..70 trailing=[Whitespace " "]
+            Assign "=" @ 71..72 trailing=[Whitespace " "]
+            NameExpression
+              Identifier "value" @ 73..78
+          ErrorNode
+            LParen "(" @ 83..84 leading=[Newline "\n", Whitespace "    "]
+          ErrorNode
+            Identifier "value" @ 84..89
+          ErrorNode
+            RParen ")" @ 89..90 trailing=[Whitespace " "]
+          ErrorNode
+            Assign "=" @ 91..92 trailing=[Whitespace " "]
+          ErrorNode
+            IntegerLiteral "2" @ 93..94
+      Statement
+        ModifierList
+          Identifier "value" @ 99..104 leading=[Newline "\n", Whitespace "    "]
+        ExpressionStatement
+          AssignmentExpression
+            ParenthesizedExpression
+              LParen "(" @ 104..105
+              RParen ")" @ 105..106 trailing=[Whitespace " "]
+            Assign "=" @ 107..108 trailing=[Whitespace " "]
+            LiteralExpression
+              IntegerLiteral "3" @ 109..110
+      RBrace "}" @ 111..112 leading=[Newline "\n"]
+  Eof "" @ 113..113 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.invalid_assignment_target severity=Error stage=Parser range=49..50 message="invalid assignment target"
+  code=kotlin.parse.invalid_assignment_target severity=Error stage=Parser range=71..72 message="invalid assignment target"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=83..84 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=84..89 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=89..90 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=91..92 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=93..94 message="unexpected token in expression"
+
+diagnostics:
+code=kotlin.parse.invalid_assignment_target severity=Error stage=Parser range=Some(TextRange { start: TextSize(49), end: TextSize(50) }) message=invalid assignment target
+code=kotlin.parse.invalid_assignment_target severity=Error stage=Parser range=Some(TextRange { start: TextSize(71), end: TextSize(72) }) message=invalid assignment target
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(83), end: TextSize(84) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(84), end: TextSize(89) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(89), end: TextSize(90) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(91), end: TextSize(92) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(93), end: TextSize(94) }) message=unexpected token in expression

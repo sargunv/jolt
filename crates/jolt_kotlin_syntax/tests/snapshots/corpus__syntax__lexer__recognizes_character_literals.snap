@@ -1,0 +1,36 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+'a' '\n' '\'' '\\' '\u0041'
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  Statement
+    ExpressionStatement
+      LiteralExpression
+        CharacterLiteral "'a'" @ 0..3 trailing=[Whitespace " "]
+      ErrorNode
+        CharacterLiteral "'\\n'" @ 4..8 trailing=[Whitespace " "]
+      ErrorNode
+        CharacterLiteral "'\\''" @ 9..13 trailing=[Whitespace " "]
+      ErrorNode
+        CharacterLiteral "'\\\\'" @ 14..18 trailing=[Whitespace " "]
+      ErrorNode
+        CharacterLiteral "'\\u0041'" @ 19..27
+  Eof "" @ 28..28 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=4..8 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=9..13 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=14..18 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=19..27 message="unexpected token in expression"
+
+diagnostics:
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(4), end: TextSize(8) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(9), end: TextSize(13) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(14), end: TextSize(18) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(19), end: TextSize(27) }) message=unexpected token in expression

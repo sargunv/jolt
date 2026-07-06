@@ -1,0 +1,24 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+val/**/x=1
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  PropertyDeclaration
+    ValKw "val" @ 0..3 trailing=[BlockComment "/**/"]
+    Identifier "x" @ 7..8
+    Assign "=" @ 8..9
+    LiteralExpression
+      IntegerLiteral "1" @ 9..10
+  Eof "" @ 11..11 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

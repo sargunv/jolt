@@ -494,6 +494,7 @@ dependencies = [
  "insta",
  "jolt_diagnostics",
  "jolt_syntax",
+ "jolt_test_support",
  "jolt_text",
  "num_enum",
  "unicode-general-category",

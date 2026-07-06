@@ -1,0 +1,112 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package com.example.docs
+
+fun describe(value: Any): String =
+    when (value) {
+        is String -> "text with ${value.length} chars"
+        is Int -> "number $value"
+        else -> "unknown"
+    }
+
+syntax:
+syntax:
+KotlinFile
+  PackageHeader
+    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+    QualifiedName
+      Name
+        Identifier "com" @ 8..11
+      Dot "." @ 11..12
+      Name
+        Identifier "example" @ 12..19
+      Dot "." @ 19..20
+      Name
+        Identifier "docs" @ 20..24
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 26..29 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "describe" @ 30..38
+    ValueParameterList
+      LParen "(" @ 38..39
+      ValueParameter
+        Name
+          Identifier "value" @ 39..44
+        Colon ":" @ 44..45 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Any" @ 46..49
+      RParen ")" @ 49..50
+    Colon ":" @ 50..51 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "String" @ 52..58 trailing=[Whitespace " "]
+    Assign "=" @ 59..60
+    WhenExpression
+      WhenKw "when" @ 65..69 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+      WhenSubject
+        LParen "(" @ 70..71
+        NameExpression
+          Identifier "value" @ 71..76
+        RParen ")" @ 76..77 trailing=[Whitespace " "]
+      LBrace "{" @ 78..79
+      WhenEntry
+        WhenCondition
+          IsKw "is" @ 88..90 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "String" @ 91..97 trailing=[Whitespace " "]
+        Arrow "->" @ 98..100 trailing=[Whitespace " "]
+        StringTemplateExpression
+          StringTemplateEntry
+            OpenQuote "\"" @ 101..102
+          StringTemplateEntry
+            RegularStringPart "text with " @ 102..112
+          StringTemplateEntry
+            LongTemplateEntryStart "${" @ 112..114
+            NavigationExpression
+              NameExpression
+                Identifier "value" @ 114..119
+              Dot "." @ 119..120
+              Identifier "length" @ 120..126
+            LongTemplateEntryEnd "}" @ 126..127
+          StringTemplateEntry
+            RegularStringPart " chars" @ 127..133
+          ClosingQuote "\"" @ 133..134
+      WhenEntry
+        WhenCondition
+          IsKw "is" @ 143..145 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "Int" @ 146..149 trailing=[Whitespace " "]
+        Arrow "->" @ 150..152 trailing=[Whitespace " "]
+        StringTemplateExpression
+          StringTemplateEntry
+            OpenQuote "\"" @ 153..154
+          StringTemplateEntry
+            RegularStringPart "number " @ 154..161
+          StringTemplateEntry
+            ShortTemplateEntryStart "$" @ 161..162
+          StringTemplateEntry
+            Identifier "value" @ 162..167
+          ClosingQuote "\"" @ 167..168
+      WhenEntry
+        ElseKw "else" @ 177..181 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+        Arrow "->" @ 182..184 trailing=[Whitespace " "]
+        StringTemplateExpression
+          StringTemplateEntry
+            OpenQuote "\"" @ 185..186
+          StringTemplateEntry
+            RegularStringPart "unknown" @ 186..193
+          ClosingQuote "\"" @ 193..194
+      RBrace "}" @ 199..200 leading=[Newline "\n", Whitespace "    "]
+  Eof "" @ 201..201 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

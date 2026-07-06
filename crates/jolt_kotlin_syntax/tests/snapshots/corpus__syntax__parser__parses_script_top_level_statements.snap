@@ -1,0 +1,90 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+#!/usr/bin/env kotlin
+
+val scriptName = "jolt"
+println("running $scriptName")
+if (scriptName.isNotEmpty()) {
+    println(scriptName.uppercase())
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  PropertyDeclaration
+    ValKw "val" @ 23..26 leading=[ShebangComment "#!/usr/bin/env kotlin", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "scriptName" @ 27..37 trailing=[Whitespace " "]
+    Assign "=" @ 38..39 trailing=[Whitespace " "]
+    StringTemplateExpression
+      StringTemplateEntry
+        OpenQuote "\"" @ 40..41
+      StringTemplateEntry
+        RegularStringPart "jolt" @ 41..45
+      ClosingQuote "\"" @ 45..46
+  Statement
+    ExpressionStatement
+      CallExpression
+        NameExpression
+          Identifier "println" @ 47..54 leading=[Newline "\n"]
+        ValueArgumentList
+          LParen "(" @ 54..55
+          ValueArgument
+            StringTemplateExpression
+              StringTemplateEntry
+                OpenQuote "\"" @ 55..56
+              StringTemplateEntry
+                RegularStringPart "running " @ 56..64
+              StringTemplateEntry
+                ShortTemplateEntryStart "$" @ 64..65
+              StringTemplateEntry
+                Identifier "scriptName" @ 65..75
+              ClosingQuote "\"" @ 75..76
+          RParen ")" @ 76..77
+  Statement
+    ExpressionStatement
+      IfExpression
+        IfKw "if" @ 78..80 leading=[Newline "\n"] trailing=[Whitespace " "]
+        ParenthesizedExpression
+          LParen "(" @ 81..82
+          CallExpression
+            NavigationExpression
+              NameExpression
+                Identifier "scriptName" @ 82..92
+              Dot "." @ 92..93
+              Identifier "isNotEmpty" @ 93..103
+            ValueArgumentList
+              LParen "(" @ 103..104
+              RParen ")" @ 104..105
+          RParen ")" @ 105..106 trailing=[Whitespace " "]
+        LambdaExpression
+          LBrace "{" @ 107..108
+          Statement
+            ExpressionStatement
+              CallExpression
+                NameExpression
+                  Identifier "println" @ 113..120 leading=[Newline "\n", Whitespace "    "]
+                ValueArgumentList
+                  LParen "(" @ 120..121
+                  ValueArgument
+                    CallExpression
+                      NavigationExpression
+                        NameExpression
+                          Identifier "scriptName" @ 121..131
+                        Dot "." @ 131..132
+                        Identifier "uppercase" @ 132..141
+                      ValueArgumentList
+                        LParen "(" @ 141..142
+                        RParen ")" @ 142..143
+                  RParen ")" @ 143..144
+          RBrace "}" @ 145..146 leading=[Newline "\n"]
+  Eof "" @ 147..147 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

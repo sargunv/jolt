@@ -1,0 +1,112 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun softKeywords(context: Int, field: String, value: Boolean): String {
+    val where = context + 1
+    val by = field.length
+    val all = value && where > by
+    return if (all) field else "none"
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    Identifier "softKeywords" @ 4..16
+    ValueParameterList
+      LParen "(" @ 16..17
+      ValueParameter
+        Name
+          Identifier "context" @ 17..24
+        Colon ":" @ 24..25 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Int" @ 26..29
+      Comma "," @ 29..30 trailing=[Whitespace " "]
+      ValueParameter
+        Name
+          Identifier "field" @ 31..36
+        Colon ":" @ 36..37 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "String" @ 38..44
+      Comma "," @ 44..45 trailing=[Whitespace " "]
+      ValueParameter
+        Name
+          Identifier "value" @ 46..51
+        Colon ":" @ 51..52 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Boolean" @ 53..60
+      RParen ")" @ 60..61
+    Colon ":" @ 61..62 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "String" @ 63..69 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 70..71
+      PropertyDeclaration
+        ValKw "val" @ 76..79 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "where" @ 80..85 trailing=[Whitespace " "]
+        Assign "=" @ 86..87 trailing=[Whitespace " "]
+        BinaryExpression
+          NameExpression
+            Identifier "context" @ 88..95 trailing=[Whitespace " "]
+          Plus "+" @ 96..97 trailing=[Whitespace " "]
+          LiteralExpression
+            IntegerLiteral "1" @ 98..99
+      PropertyDeclaration
+        ValKw "val" @ 104..107 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "by" @ 108..110 trailing=[Whitespace " "]
+        Assign "=" @ 111..112 trailing=[Whitespace " "]
+        NavigationExpression
+          NameExpression
+            Identifier "field" @ 113..118
+          Dot "." @ 118..119
+          Identifier "length" @ 119..125
+      PropertyDeclaration
+        ValKw "val" @ 130..133 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "all" @ 134..137 trailing=[Whitespace " "]
+        Assign "=" @ 138..139 trailing=[Whitespace " "]
+        BinaryExpression
+          NameExpression
+            Identifier "value" @ 140..145 trailing=[Whitespace " "]
+          AndAnd "&&" @ 146..148 trailing=[Whitespace " "]
+          BinaryExpression
+            NameExpression
+              Identifier "where" @ 149..154 trailing=[Whitespace " "]
+            Gt ">" @ 155..156 trailing=[Whitespace " "]
+            NameExpression
+              Identifier "by" @ 157..159
+      Statement
+        ExpressionStatement
+          JumpExpression
+            ReturnKw "return" @ 164..170 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            IfExpression
+              IfKw "if" @ 171..173 trailing=[Whitespace " "]
+              ParenthesizedExpression
+                LParen "(" @ 174..175
+                NameExpression
+                  Identifier "all" @ 175..178
+                RParen ")" @ 178..179 trailing=[Whitespace " "]
+              NameExpression
+                Identifier "field" @ 180..185 trailing=[Whitespace " "]
+              ElseKw "else" @ 186..190 trailing=[Whitespace " "]
+              StringTemplateExpression
+                StringTemplateEntry
+                  OpenQuote "\"" @ 191..192
+                StringTemplateEntry
+                  RegularStringPart "none" @ 192..196
+                ClosingQuote "\"" @ 196..197
+      RBrace "}" @ 198..199 leading=[Newline "\n"]
+  Eof "" @ 200..200 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

@@ -1,0 +1,145 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package com.example.declarations
+
+object Registry {
+    private val values = mutableMapOf<String, String>()
+
+    fun put(key: String, value: String) {
+        values[key] = value
+    }
+}
+
+class WithCompanion {
+    companion object {
+        const val KIND = "fixture"
+    }
+}
+
+syntax:
+syntax:
+KotlinFile
+  PackageHeader
+    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+    QualifiedName
+      Name
+        Identifier "com" @ 8..11
+      Dot "." @ 11..12
+      Name
+        Identifier "example" @ 12..19
+      Dot "." @ 19..20
+      Name
+        Identifier "declarations" @ 20..32
+  ImportList
+  ObjectDeclaration
+    ObjectKw "object" @ 34..40 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "Registry" @ 41..49 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 50..51
+      ClassMemberDeclaration
+        PropertyDeclaration
+          ModifierList
+            Identifier "private" @ 56..63 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          ValKw "val" @ 64..67 trailing=[Whitespace " "]
+          Identifier "values" @ 68..74 trailing=[Whitespace " "]
+          Assign "=" @ 75..76 trailing=[Whitespace " "]
+          CallExpression
+            NameExpression
+              Identifier "mutableMapOf" @ 77..89
+            TypeArgumentList
+              Lt "<" @ 89..90
+              TypeProjectionList
+                TypeArgument
+                  TypeProjection
+                    TypeReference
+                      UserType
+                        Identifier "String" @ 90..96
+                Comma "," @ 96..97 trailing=[Whitespace " "]
+                TypeArgument
+                  TypeProjection
+                    TypeReference
+                      UserType
+                        Identifier "String" @ 98..104
+              Gt ">" @ 104..105
+            ValueArgumentList
+              LParen "(" @ 105..106
+              RParen ")" @ 106..107
+      ClassMemberDeclaration
+        FunctionDeclaration
+          FunKw "fun" @ 113..116 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "put" @ 117..120
+          ValueParameterList
+            LParen "(" @ 120..121
+            ValueParameter
+              Name
+                Identifier "key" @ 121..124
+              Colon ":" @ 124..125 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  Identifier "String" @ 126..132
+            Comma "," @ 132..133 trailing=[Whitespace " "]
+            ValueParameter
+              Name
+                Identifier "value" @ 134..139
+              Colon ":" @ 139..140 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  Identifier "String" @ 141..147
+            RParen ")" @ 147..148 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 149..150
+            Statement
+              ExpressionStatement
+                AssignmentExpression
+                  IndexExpression
+                    NameExpression
+                      Identifier "values" @ 159..165 leading=[Newline "\n", Whitespace "        "]
+                    LBracket "[" @ 165..166
+                    ValueArgument
+                      NameExpression
+                        Identifier "key" @ 166..169
+                    RBracket "]" @ 169..170 trailing=[Whitespace " "]
+                  Assign "=" @ 171..172 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "value" @ 173..178
+            RBrace "}" @ 183..184 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 185..186 leading=[Newline "\n"]
+  ClassDeclaration
+    ClassKw "class" @ 188..193 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "WithCompanion" @ 194..207 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 208..209
+      ClassMemberDeclaration
+        ObjectDeclaration
+          ModifierList
+            Identifier "companion" @ 214..223 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          ObjectKw "object" @ 224..230 trailing=[Whitespace " "]
+          ClassBody
+            LBrace "{" @ 231..232
+            ClassMemberDeclaration
+              PropertyDeclaration
+                ModifierList
+                  Identifier "const" @ 241..246 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                ValKw "val" @ 247..250 trailing=[Whitespace " "]
+                Identifier "KIND" @ 251..255 trailing=[Whitespace " "]
+                Assign "=" @ 256..257 trailing=[Whitespace " "]
+                StringTemplateExpression
+                  StringTemplateEntry
+                    OpenQuote "\"" @ 258..259
+                  StringTemplateEntry
+                    RegularStringPart "fixture" @ 259..266
+                  ClosingQuote "\"" @ 266..267
+            RBrace "}" @ 272..273 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 274..275 leading=[Newline "\n"]
+  Eof "" @ 276..276 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

@@ -1,0 +1,152 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+annotation class Mark(val value: String = "")
+
+class TargetedAnnotations {
+    @delegate:Mark("lazy")
+    val cached: String by lazy { "ready" }
+
+    @set:Mark("setter")
+    @setparam:Mark("value")
+    var name: String = ""
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  ClassDeclaration
+    ModifierList
+      Identifier "annotation" @ 0..10 trailing=[Whitespace " "]
+    ClassKw "class" @ 11..16 trailing=[Whitespace " "]
+    Name
+      Identifier "Mark" @ 17..21
+    PrimaryConstructor
+      ValueParameterList
+        LParen "(" @ 21..22
+        ValueParameter
+          ValKw "val" @ 22..25 trailing=[Whitespace " "]
+          Name
+            Identifier "value" @ 26..31
+          Colon ":" @ 31..32 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "String" @ 33..39 trailing=[Whitespace " "]
+          Assign "=" @ 40..41 trailing=[Whitespace " "]
+          StringTemplateExpression
+            StringTemplateEntry
+              OpenQuote "\"" @ 42..43
+            ClosingQuote "\"" @ 43..44
+        RParen ")" @ 44..45
+  ClassDeclaration
+    ClassKw "class" @ 47..52 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "TargetedAnnotations" @ 53..72 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 73..74
+      ClassMemberDeclaration
+        PropertyDeclaration
+          ModifierList
+            Annotation
+              At "@" @ 79..80 leading=[Newline "\n", Whitespace "    "]
+              AnnotationUseSiteTarget
+                Identifier "delegate" @ 80..88
+                Colon ":" @ 88..89
+              QualifiedName
+                Name
+                  Identifier "Mark" @ 89..93
+              AnnotationArgumentList
+                LParen "(" @ 93..94
+                ValueArgument
+                  StringTemplateExpression
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 94..95
+                    StringTemplateEntry
+                      RegularStringPart "lazy" @ 95..99
+                    ClosingQuote "\"" @ 99..100
+                RParen ")" @ 100..101
+          ValKw "val" @ 106..109 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "cached" @ 110..116
+          Colon ":" @ 116..117 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "String" @ 118..124 trailing=[Whitespace " "]
+      ClassMemberDeclaration
+        Statement
+          ExpressionStatement
+            BinaryExpression
+              NameExpression
+                Identifier "by" @ 125..127 trailing=[Whitespace " "]
+              Identifier "lazy" @ 128..132 trailing=[Whitespace " "]
+              LambdaExpression
+                LBrace "{" @ 133..134 trailing=[Whitespace " "]
+                Statement
+                  ExpressionStatement
+                    StringTemplateExpression
+                      StringTemplateEntry
+                        OpenQuote "\"" @ 135..136
+                      StringTemplateEntry
+                        RegularStringPart "ready" @ 136..141
+                      ClosingQuote "\"" @ 141..142 trailing=[Whitespace " "]
+                RBrace "}" @ 143..144
+      ClassMemberDeclaration
+        PropertyDeclaration
+          ModifierList
+            Annotation
+              At "@" @ 150..151 leading=[Newline "\n", Newline "\n", Whitespace "    "]
+              AnnotationUseSiteTarget
+                Identifier "set" @ 151..154
+                Colon ":" @ 154..155
+              QualifiedName
+                Name
+                  Identifier "Mark" @ 155..159
+              AnnotationArgumentList
+                LParen "(" @ 159..160
+                ValueArgument
+                  StringTemplateExpression
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 160..161
+                    StringTemplateEntry
+                      RegularStringPart "setter" @ 161..167
+                    ClosingQuote "\"" @ 167..168
+                RParen ")" @ 168..169
+            Annotation
+              At "@" @ 174..175 leading=[Newline "\n", Whitespace "    "]
+              AnnotationUseSiteTarget
+                Identifier "setparam" @ 175..183
+                Colon ":" @ 183..184
+              QualifiedName
+                Name
+                  Identifier "Mark" @ 184..188
+              AnnotationArgumentList
+                LParen "(" @ 188..189
+                ValueArgument
+                  StringTemplateExpression
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 189..190
+                    StringTemplateEntry
+                      RegularStringPart "value" @ 190..195
+                    ClosingQuote "\"" @ 195..196
+                RParen ")" @ 196..197
+          VarKw "var" @ 202..205 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "name" @ 206..210
+          Colon ":" @ 210..211 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "String" @ 212..218 trailing=[Whitespace " "]
+          Assign "=" @ 219..220 trailing=[Whitespace " "]
+          StringTemplateExpression
+            StringTemplateEntry
+              OpenQuote "\"" @ 221..222
+            ClosingQuote "\"" @ 222..223
+      RBrace "}" @ 224..225 leading=[Newline "\n"]
+  Eof "" @ 226..226 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

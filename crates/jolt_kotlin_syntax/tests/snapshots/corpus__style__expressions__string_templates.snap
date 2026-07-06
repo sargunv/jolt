@@ -1,0 +1,119 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package com.example.expressions
+
+fun label(name: String, count: Int): String {
+    val plural = if (count == 1) "item" else "items"
+    return "$name has ${count + 1} $plural"
+}
+
+syntax:
+syntax:
+KotlinFile
+  PackageHeader
+    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+    QualifiedName
+      Name
+        Identifier "com" @ 8..11
+      Dot "." @ 11..12
+      Name
+        Identifier "example" @ 12..19
+      Dot "." @ 19..20
+      Name
+        Identifier "expressions" @ 20..31
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 33..36 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "label" @ 37..42
+    ValueParameterList
+      LParen "(" @ 42..43
+      ValueParameter
+        Name
+          Identifier "name" @ 43..47
+        Colon ":" @ 47..48 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "String" @ 49..55
+      Comma "," @ 55..56 trailing=[Whitespace " "]
+      ValueParameter
+        Name
+          Identifier "count" @ 57..62
+        Colon ":" @ 62..63 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Int" @ 64..67
+      RParen ")" @ 67..68
+    Colon ":" @ 68..69 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "String" @ 70..76 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 77..78
+      PropertyDeclaration
+        ValKw "val" @ 83..86 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "plural" @ 87..93 trailing=[Whitespace " "]
+        Assign "=" @ 94..95 trailing=[Whitespace " "]
+        IfExpression
+          IfKw "if" @ 96..98 trailing=[Whitespace " "]
+          ParenthesizedExpression
+            LParen "(" @ 99..100
+            BinaryExpression
+              NameExpression
+                Identifier "count" @ 100..105 trailing=[Whitespace " "]
+              EqEq "==" @ 106..108 trailing=[Whitespace " "]
+              LiteralExpression
+                IntegerLiteral "1" @ 109..110
+            RParen ")" @ 110..111 trailing=[Whitespace " "]
+          StringTemplateExpression
+            StringTemplateEntry
+              OpenQuote "\"" @ 112..113
+            StringTemplateEntry
+              RegularStringPart "item" @ 113..117
+            ClosingQuote "\"" @ 117..118 trailing=[Whitespace " "]
+          ElseKw "else" @ 119..123 trailing=[Whitespace " "]
+          StringTemplateExpression
+            StringTemplateEntry
+              OpenQuote "\"" @ 124..125
+            StringTemplateEntry
+              RegularStringPart "items" @ 125..130
+            ClosingQuote "\"" @ 130..131
+      Statement
+        ExpressionStatement
+          JumpExpression
+            ReturnKw "return" @ 136..142 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            StringTemplateExpression
+              StringTemplateEntry
+                OpenQuote "\"" @ 143..144
+              StringTemplateEntry
+                ShortTemplateEntryStart "$" @ 144..145
+              StringTemplateEntry
+                Identifier "name" @ 145..149
+              StringTemplateEntry
+                RegularStringPart " has " @ 149..154
+              StringTemplateEntry
+                LongTemplateEntryStart "${" @ 154..156
+                BinaryExpression
+                  NameExpression
+                    Identifier "count" @ 156..161 trailing=[Whitespace " "]
+                  Plus "+" @ 162..163 trailing=[Whitespace " "]
+                  LiteralExpression
+                    IntegerLiteral "1" @ 164..165
+                LongTemplateEntryEnd "}" @ 165..166
+              StringTemplateEntry
+                RegularStringPart " " @ 166..167
+              StringTemplateEntry
+                ShortTemplateEntryStart "$" @ 167..168
+              StringTemplateEntry
+                Identifier "plural" @ 168..174
+              ClosingQuote "\"" @ 174..175
+      RBrace "}" @ 176..177 leading=[Newline "\n"]
+  Eof "" @ 178..178 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

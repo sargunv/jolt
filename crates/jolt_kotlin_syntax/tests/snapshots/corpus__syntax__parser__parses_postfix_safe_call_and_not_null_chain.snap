@@ -1,0 +1,73 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun safeChain(node: Node?): String {
+    return node
+        ?.parent
+        ?.children
+        ?.get(0)
+        ?.name!!
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    Identifier "safeChain" @ 4..13
+    ValueParameterList
+      LParen "(" @ 13..14
+      ValueParameter
+        Name
+          Identifier "node" @ 14..18
+        Colon ":" @ 18..19 trailing=[Whitespace " "]
+        TypeReference
+          NullableType
+            UserType
+              Identifier "Node" @ 20..24
+            Question "?" @ 24..25
+      RParen ")" @ 25..26
+    Colon ":" @ 26..27 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "String" @ 28..34 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 35..36
+      Statement
+        ExpressionStatement
+          JumpExpression
+            ReturnKw "return" @ 41..47 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            PostfixExpression
+              NavigationExpression
+                CallExpression
+                  NavigationExpression
+                    NavigationExpression
+                      NavigationExpression
+                        NameExpression
+                          Identifier "node" @ 48..52
+                        SafeAccess "?." @ 61..63 leading=[Newline "\n", Whitespace "        "]
+                        Identifier "parent" @ 63..69
+                      SafeAccess "?." @ 78..80 leading=[Newline "\n", Whitespace "        "]
+                      Identifier "children" @ 80..88
+                    SafeAccess "?." @ 97..99 leading=[Newline "\n", Whitespace "        "]
+                    Identifier "get" @ 99..102
+                  ValueArgumentList
+                    LParen "(" @ 102..103
+                    ValueArgument
+                      LiteralExpression
+                        IntegerLiteral "0" @ 103..104
+                    RParen ")" @ 104..105
+                SafeAccess "?." @ 114..116 leading=[Newline "\n", Whitespace "        "]
+                Identifier "name" @ 116..120
+              BangBang "!!" @ 120..122
+      RBrace "}" @ 123..124 leading=[Newline "\n"]
+  Eof "" @ 125..125 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

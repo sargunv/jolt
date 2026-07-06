@@ -1,0 +1,26 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+`class` `two words` `operator+`
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  Statement
+    ExpressionStatement
+      BinaryExpression
+        NameExpression
+          Identifier "`class`" @ 0..7 trailing=[Whitespace " "]
+        Identifier "`two words`" @ 8..19 trailing=[Whitespace " "]
+        NameExpression
+          Identifier "`operator+`" @ 20..31
+  Eof "" @ 32..32 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

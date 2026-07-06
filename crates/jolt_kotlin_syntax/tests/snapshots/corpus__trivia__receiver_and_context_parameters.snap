@@ -1,0 +1,122 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package com.example.trivia
+
+class HtmlScope {
+    fun text(value: String) {}
+}
+
+context(/* JOLT-TRIVIA:context-open */ scope: HtmlScope /* JOLT-TRIVIA:context-param */)
+fun String /* JOLT-TRIVIA:receiver-type */ .render(/* JOLT-TRIVIA:receiver-dot */) {
+    scope.text(this)
+}
+
+val HtmlScope /* JOLT-TRIVIA:property-receiver */ .title: String
+    get() = "ready"
+
+syntax:
+syntax:
+KotlinFile
+  PackageHeader
+    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+    QualifiedName
+      Name
+        Identifier "com" @ 8..11
+      Dot "." @ 11..12
+      Name
+        Identifier "example" @ 12..19
+      Dot "." @ 19..20
+      Name
+        Identifier "trivia" @ 20..26
+  ImportList
+  ClassDeclaration
+    ClassKw "class" @ 28..33 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "HtmlScope" @ 34..43 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 44..45
+      ClassMemberDeclaration
+        FunctionDeclaration
+          FunKw "fun" @ 50..53 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "text" @ 54..58
+          ValueParameterList
+            LParen "(" @ 58..59
+            ValueParameter
+              Name
+                Identifier "value" @ 59..64
+              Colon ":" @ 64..65 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  Identifier "String" @ 66..72
+            RParen ")" @ 72..73 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 74..75
+            RBrace "}" @ 75..76
+      RBrace "}" @ 77..78 leading=[Newline "\n"]
+  FunctionDeclaration
+    ContextParameterClause
+      Identifier "context" @ 80..87 leading=[Newline "\n", Newline "\n"]
+      LParen "(" @ 87..88 trailing=[BlockComment "/* JOLT-TRIVIA:context-open */", Whitespace " "]
+      ContextParameter
+        Name
+          Identifier "scope" @ 119..124
+        Colon ":" @ 124..125 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "HtmlScope" @ 126..135 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:context-param */"]
+      RParen ")" @ 167..168
+    FunKw "fun" @ 169..172 leading=[Newline "\n"] trailing=[Whitespace " "]
+    Identifier "String" @ 173..179 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:receiver-type */", Whitespace " "]
+    Dot "." @ 212..213
+    Identifier "render" @ 213..219
+    ValueParameterList
+      LParen "(" @ 219..220 trailing=[BlockComment "/* JOLT-TRIVIA:receiver-dot */"]
+      RParen ")" @ 250..251 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 252..253
+      Statement
+        ExpressionStatement
+          CallExpression
+            NavigationExpression
+              NameExpression
+                Identifier "scope" @ 258..263 leading=[Newline "\n", Whitespace "    "]
+              Dot "." @ 263..264
+              Identifier "text" @ 264..268
+            ValueArgumentList
+              LParen "(" @ 268..269
+              ValueArgument
+                ThisExpression
+                  ThisKw "this" @ 269..273
+              RParen ")" @ 273..274
+      RBrace "}" @ 275..276 leading=[Newline "\n"]
+  PropertyDeclaration
+    ValKw "val" @ 278..281 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "HtmlScope" @ 282..291 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:property-receiver */", Whitespace " "]
+    Dot "." @ 328..329
+    Identifier "title" @ 329..334
+    Colon ":" @ 334..335 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "String" @ 336..342
+    PropertyAccessor
+      Identifier "get" @ 347..350 leading=[Newline "\n", Whitespace "    "]
+      ValueParameterList
+        LParen "(" @ 350..351
+        RParen ")" @ 351..352 trailing=[Whitespace " "]
+      Assign "=" @ 353..354 trailing=[Whitespace " "]
+      StringTemplateExpression
+        StringTemplateEntry
+          OpenQuote "\"" @ 355..356
+        StringTemplateEntry
+          RegularStringPart "ready" @ 356..361
+        ClosingQuote "\"" @ 361..362
+  Eof "" @ 363..363 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

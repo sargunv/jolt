@@ -1,0 +1,125 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+typealias Suspended = suspend (String) -> Int
+
+typealias ReceiverBlock = String.(Int) -> Unit
+
+typealias NullableCallback = ((String?) -> Unit)?
+
+val receiverBlock: ReceiverBlock = { count -> repeat(count) { trim() } }
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  TypeAliasDeclaration
+    TypeAliasKw "typealias" @ 0..9 trailing=[Whitespace " "]
+    Name
+      Identifier "Suspended" @ 10..19 trailing=[Whitespace " "]
+    Assign "=" @ 20..21 trailing=[Whitespace " "]
+    TypeReference
+      FunctionType
+        Identifier "suspend" @ 22..29 trailing=[Whitespace " "]
+        FunctionType
+          ParenthesizedType
+            LParen "(" @ 30..31
+            TypeReference
+              UserType
+                Identifier "String" @ 31..37
+            RParen ")" @ 37..38 trailing=[Whitespace " "]
+          Arrow "->" @ 39..41 trailing=[Whitespace " "]
+          UserType
+            Identifier "Int" @ 42..45
+  TypeAliasDeclaration
+    TypeAliasKw "typealias" @ 47..56 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "ReceiverBlock" @ 57..70 trailing=[Whitespace " "]
+    Assign "=" @ 71..72 trailing=[Whitespace " "]
+    TypeReference
+      FunctionType
+        ReceiverType
+          UserType
+            Identifier "String" @ 73..79
+          Dot "." @ 79..80
+          ParenthesizedType
+            LParen "(" @ 80..81
+            TypeReference
+              UserType
+                Identifier "Int" @ 81..84
+            RParen ")" @ 84..85 trailing=[Whitespace " "]
+        Arrow "->" @ 86..88 trailing=[Whitespace " "]
+        UserType
+          Identifier "Unit" @ 89..93
+  TypeAliasDeclaration
+    TypeAliasKw "typealias" @ 95..104 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "NullableCallback" @ 105..121 trailing=[Whitespace " "]
+    Assign "=" @ 122..123 trailing=[Whitespace " "]
+    TypeReference
+      NullableType
+        ParenthesizedType
+          LParen "(" @ 124..125
+          TypeReference
+            FunctionType
+              ParenthesizedType
+                LParen "(" @ 125..126
+                TypeReference
+                  NullableType
+                    UserType
+                      Identifier "String" @ 126..132
+                    Question "?" @ 132..133
+                RParen ")" @ 133..134 trailing=[Whitespace " "]
+              Arrow "->" @ 135..137 trailing=[Whitespace " "]
+              UserType
+                Identifier "Unit" @ 138..142
+          RParen ")" @ 142..143
+        Question "?" @ 143..144
+  PropertyDeclaration
+    ValKw "val" @ 146..149 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "receiverBlock" @ 150..163
+    Colon ":" @ 163..164 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "ReceiverBlock" @ 165..178 trailing=[Whitespace " "]
+    Assign "=" @ 179..180 trailing=[Whitespace " "]
+    LambdaExpression
+      LBrace "{" @ 181..182 trailing=[Whitespace " "]
+      LambdaParameterList
+        LambdaParameter
+          Name
+            Identifier "count" @ 183..188 trailing=[Whitespace " "]
+        Arrow "->" @ 189..191 trailing=[Whitespace " "]
+      Statement
+        ExpressionStatement
+          CallExpression
+            CallExpression
+              NameExpression
+                Identifier "repeat" @ 192..198
+              ValueArgumentList
+                LParen "(" @ 198..199
+                ValueArgument
+                  NameExpression
+                    Identifier "count" @ 199..204
+                RParen ")" @ 204..205 trailing=[Whitespace " "]
+            LambdaExpression
+              LBrace "{" @ 206..207 trailing=[Whitespace " "]
+              Statement
+                ExpressionStatement
+                  CallExpression
+                    NameExpression
+                      Identifier "trim" @ 208..212
+                    ValueArgumentList
+                      LParen "(" @ 212..213
+                      RParen ")" @ 213..214 trailing=[Whitespace " "]
+              RBrace "}" @ 215..216 trailing=[Whitespace " "]
+      RBrace "}" @ 217..218
+  Eof "" @ 219..219 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

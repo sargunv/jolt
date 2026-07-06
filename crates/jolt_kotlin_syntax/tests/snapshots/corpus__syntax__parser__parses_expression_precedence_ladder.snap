@@ -1,0 +1,132 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun precedence(a: Int, b: Int, c: Int, d: Int): Boolean {
+    val arithmetic = a + b * c - d / 2 % 3
+    val shifted = arithmetic shl 1 and 255
+    return arithmetic > shifted && shifted != 0 || a == b
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    Identifier "precedence" @ 4..14
+    ValueParameterList
+      LParen "(" @ 14..15
+      ValueParameter
+        Name
+          Identifier "a" @ 15..16
+        Colon ":" @ 16..17 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Int" @ 18..21
+      Comma "," @ 21..22 trailing=[Whitespace " "]
+      ValueParameter
+        Name
+          Identifier "b" @ 23..24
+        Colon ":" @ 24..25 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Int" @ 26..29
+      Comma "," @ 29..30 trailing=[Whitespace " "]
+      ValueParameter
+        Name
+          Identifier "c" @ 31..32
+        Colon ":" @ 32..33 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Int" @ 34..37
+      Comma "," @ 37..38 trailing=[Whitespace " "]
+      ValueParameter
+        Name
+          Identifier "d" @ 39..40
+        Colon ":" @ 40..41 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Int" @ 42..45
+      RParen ")" @ 45..46
+    Colon ":" @ 46..47 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "Boolean" @ 48..55 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 56..57
+      PropertyDeclaration
+        ValKw "val" @ 62..65 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "arithmetic" @ 66..76 trailing=[Whitespace " "]
+        Assign "=" @ 77..78 trailing=[Whitespace " "]
+        BinaryExpression
+          BinaryExpression
+            NameExpression
+              Identifier "a" @ 79..80 trailing=[Whitespace " "]
+            Plus "+" @ 81..82 trailing=[Whitespace " "]
+            BinaryExpression
+              NameExpression
+                Identifier "b" @ 83..84 trailing=[Whitespace " "]
+              Star "*" @ 85..86 trailing=[Whitespace " "]
+              NameExpression
+                Identifier "c" @ 87..88 trailing=[Whitespace " "]
+          Minus "-" @ 89..90 trailing=[Whitespace " "]
+          BinaryExpression
+            BinaryExpression
+              NameExpression
+                Identifier "d" @ 91..92 trailing=[Whitespace " "]
+              Slash "/" @ 93..94 trailing=[Whitespace " "]
+              LiteralExpression
+                IntegerLiteral "2" @ 95..96 trailing=[Whitespace " "]
+            Percent "%" @ 97..98 trailing=[Whitespace " "]
+            LiteralExpression
+              IntegerLiteral "3" @ 99..100
+      PropertyDeclaration
+        ValKw "val" @ 105..108 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "shifted" @ 109..116 trailing=[Whitespace " "]
+        Assign "=" @ 117..118 trailing=[Whitespace " "]
+        BinaryExpression
+          BinaryExpression
+            NameExpression
+              Identifier "arithmetic" @ 119..129 trailing=[Whitespace " "]
+            Identifier "shl" @ 130..133 trailing=[Whitespace " "]
+            LiteralExpression
+              IntegerLiteral "1" @ 134..135 trailing=[Whitespace " "]
+          Identifier "and" @ 136..139 trailing=[Whitespace " "]
+          LiteralExpression
+            IntegerLiteral "255" @ 140..143
+      Statement
+        ExpressionStatement
+          JumpExpression
+            ReturnKw "return" @ 148..154 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            BinaryExpression
+              BinaryExpression
+                BinaryExpression
+                  NameExpression
+                    Identifier "arithmetic" @ 155..165 trailing=[Whitespace " "]
+                  Gt ">" @ 166..167 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "shifted" @ 168..175 trailing=[Whitespace " "]
+                AndAnd "&&" @ 176..178 trailing=[Whitespace " "]
+                BinaryExpression
+                  NameExpression
+                    Identifier "shifted" @ 179..186 trailing=[Whitespace " "]
+                  BangEq "!=" @ 187..189 trailing=[Whitespace " "]
+                  LiteralExpression
+                    IntegerLiteral "0" @ 190..191 trailing=[Whitespace " "]
+              OrOr "||" @ 192..194 trailing=[Whitespace " "]
+              BinaryExpression
+                NameExpression
+                  Identifier "a" @ 195..196 trailing=[Whitespace " "]
+                EqEq "==" @ 197..199 trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "b" @ 200..201
+      RBrace "}" @ 202..203 leading=[Newline "\n"]
+  Eof "" @ 204..204 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

@@ -1,0 +1,108 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package com.example.expressions
+
+class User(val profile: Profile?)
+class Profile(val email: String?)
+
+fun email(user: User?): String =
+    user?.profile?.email
+        ?: "missing@example.com"
+
+syntax:
+syntax:
+KotlinFile
+  PackageHeader
+    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+    QualifiedName
+      Name
+        Identifier "com" @ 8..11
+      Dot "." @ 11..12
+      Name
+        Identifier "example" @ 12..19
+      Dot "." @ 19..20
+      Name
+        Identifier "expressions" @ 20..31
+  ImportList
+  ClassDeclaration
+    ClassKw "class" @ 33..38 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "User" @ 39..43
+    PrimaryConstructor
+      ValueParameterList
+        LParen "(" @ 43..44
+        ValueParameter
+          ValKw "val" @ 44..47 trailing=[Whitespace " "]
+          Name
+            Identifier "profile" @ 48..55
+          Colon ":" @ 55..56 trailing=[Whitespace " "]
+          TypeReference
+            NullableType
+              UserType
+                Identifier "Profile" @ 57..64
+              Question "?" @ 64..65
+        RParen ")" @ 65..66
+  ClassDeclaration
+    ClassKw "class" @ 67..72 leading=[Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "Profile" @ 73..80
+    PrimaryConstructor
+      ValueParameterList
+        LParen "(" @ 80..81
+        ValueParameter
+          ValKw "val" @ 81..84 trailing=[Whitespace " "]
+          Name
+            Identifier "email" @ 85..90
+          Colon ":" @ 90..91 trailing=[Whitespace " "]
+          TypeReference
+            NullableType
+              UserType
+                Identifier "String" @ 92..98
+              Question "?" @ 98..99
+        RParen ")" @ 99..100
+  FunctionDeclaration
+    FunKw "fun" @ 102..105 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "email" @ 106..111
+    ValueParameterList
+      LParen "(" @ 111..112
+      ValueParameter
+        Name
+          Identifier "user" @ 112..116
+        Colon ":" @ 116..117 trailing=[Whitespace " "]
+        TypeReference
+          NullableType
+            UserType
+              Identifier "User" @ 118..122
+            Question "?" @ 122..123
+      RParen ")" @ 123..124
+    Colon ":" @ 124..125 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "String" @ 126..132 trailing=[Whitespace " "]
+    Assign "=" @ 133..134
+    BinaryExpression
+      NavigationExpression
+        NavigationExpression
+          NameExpression
+            Identifier "user" @ 139..143 leading=[Newline "\n", Whitespace "    "]
+          SafeAccess "?." @ 143..145
+          Identifier "profile" @ 145..152
+        SafeAccess "?." @ 152..154
+        Identifier "email" @ 154..159
+      Elvis "?:" @ 168..170 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+      StringTemplateExpression
+        StringTemplateEntry
+          OpenQuote "\"" @ 171..172
+        StringTemplateEntry
+          RegularStringPart "missing@example.com" @ 172..191
+        ClosingQuote "\"" @ 191..192
+  Eof "" @ 193..193 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

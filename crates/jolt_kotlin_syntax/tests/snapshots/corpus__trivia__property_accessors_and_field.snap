@@ -1,0 +1,117 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package com.example.trivia
+
+class Accessors {
+    var count: Int = 0
+        get /* JOLT-TRIVIA:get-keyword */ () = field /* JOLT-TRIVIA:get-field */
+        private set /* JOLT-TRIVIA:set-modifier */ (value) {
+            field /* JOLT-TRIVIA:set-field */ = value.coerceAtLeast(0)
+        }
+
+    val empty: Boolean
+        get() /* JOLT-TRIVIA:expression-accessor */ = count == 0
+}
+
+syntax:
+syntax:
+KotlinFile
+  PackageHeader
+    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+    QualifiedName
+      Name
+        Identifier "com" @ 8..11
+      Dot "." @ 11..12
+      Name
+        Identifier "example" @ 12..19
+      Dot "." @ 19..20
+      Name
+        Identifier "trivia" @ 20..26
+  ImportList
+  ClassDeclaration
+    ClassKw "class" @ 28..33 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "Accessors" @ 34..43 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 44..45
+      ClassMemberDeclaration
+        PropertyDeclaration
+          VarKw "var" @ 50..53 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "count" @ 54..59
+          Colon ":" @ 59..60 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "Int" @ 61..64 trailing=[Whitespace " "]
+          Assign "=" @ 65..66 trailing=[Whitespace " "]
+          LiteralExpression
+            IntegerLiteral "0" @ 67..68
+          PropertyAccessor
+            Identifier "get" @ 77..80 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:get-keyword */", Whitespace " "]
+            ValueParameterList
+              LParen "(" @ 111..112
+              RParen ")" @ 112..113 trailing=[Whitespace " "]
+            Assign "=" @ 114..115 trailing=[Whitespace " "]
+            NameExpression
+              Identifier "field" @ 116..121 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:get-field */"]
+          PropertyAccessor
+            ModifierList
+              Identifier "private" @ 158..165 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+            Identifier "set" @ 166..169 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:set-modifier */", Whitespace " "]
+            ValueParameterList
+              LParen "(" @ 201..202
+              ValueParameter
+                Name
+                  Identifier "value" @ 202..207
+              RParen ")" @ 207..208 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 209..210
+              Statement
+                ExpressionStatement
+                  AssignmentExpression
+                    NameExpression
+                      Identifier "field" @ 223..228 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:set-field */", Whitespace " "]
+                    Assign "=" @ 257..258 trailing=[Whitespace " "]
+                    CallExpression
+                      NavigationExpression
+                        NameExpression
+                          Identifier "value" @ 259..264
+                        Dot "." @ 264..265
+                        Identifier "coerceAtLeast" @ 265..278
+                      ValueArgumentList
+                        LParen "(" @ 278..279
+                        ValueArgument
+                          LiteralExpression
+                            IntegerLiteral "0" @ 279..280
+                        RParen ")" @ 280..281
+              RBrace "}" @ 290..291 leading=[Newline "\n", Whitespace "        "]
+      ClassMemberDeclaration
+        PropertyDeclaration
+          ValKw "val" @ 297..300 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "empty" @ 301..306
+          Colon ":" @ 306..307 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "Boolean" @ 308..315
+          PropertyAccessor
+            Identifier "get" @ 324..327 leading=[Newline "\n", Whitespace "        "]
+            ValueParameterList
+              LParen "(" @ 327..328
+              RParen ")" @ 328..329 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:expression-accessor */", Whitespace " "]
+            Assign "=" @ 368..369 trailing=[Whitespace " "]
+            BinaryExpression
+              NameExpression
+                Identifier "count" @ 370..375 trailing=[Whitespace " "]
+              EqEq "==" @ 376..378 trailing=[Whitespace " "]
+              LiteralExpression
+                IntegerLiteral "0" @ 379..380
+      RBrace "}" @ 381..382 leading=[Newline "\n"]
+  Eof "" @ 383..383 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

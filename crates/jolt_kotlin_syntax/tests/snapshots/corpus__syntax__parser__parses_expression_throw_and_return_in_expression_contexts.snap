@@ -1,0 +1,93 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun expressionJumps(value: String?): String {
+    val checked = value ?: throw MissingValue()
+    return checked.takeIf { it.isNotEmpty() } ?: return "empty"
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    Identifier "expressionJumps" @ 4..19
+    ValueParameterList
+      LParen "(" @ 19..20
+      ValueParameter
+        Name
+          Identifier "value" @ 20..25
+        Colon ":" @ 25..26 trailing=[Whitespace " "]
+        TypeReference
+          NullableType
+            UserType
+              Identifier "String" @ 27..33
+            Question "?" @ 33..34
+      RParen ")" @ 34..35
+    Colon ":" @ 35..36 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "String" @ 37..43 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 44..45
+      PropertyDeclaration
+        ValKw "val" @ 50..53 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "checked" @ 54..61 trailing=[Whitespace " "]
+        Assign "=" @ 62..63 trailing=[Whitespace " "]
+        BinaryExpression
+          NameExpression
+            Identifier "value" @ 64..69 trailing=[Whitespace " "]
+          Elvis "?:" @ 70..72 trailing=[Whitespace " "]
+          ThrowExpression
+            ThrowKw "throw" @ 73..78 trailing=[Whitespace " "]
+            CallExpression
+              NameExpression
+                Identifier "MissingValue" @ 79..91
+              ValueArgumentList
+                LParen "(" @ 91..92
+                RParen ")" @ 92..93
+      Statement
+        ExpressionStatement
+          JumpExpression
+            ReturnKw "return" @ 98..104 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            BinaryExpression
+              CallExpression
+                NavigationExpression
+                  NameExpression
+                    Identifier "checked" @ 105..112
+                  Dot "." @ 112..113
+                  Identifier "takeIf" @ 113..119 trailing=[Whitespace " "]
+                LambdaExpression
+                  LBrace "{" @ 120..121 trailing=[Whitespace " "]
+                  Statement
+                    ExpressionStatement
+                      CallExpression
+                        NavigationExpression
+                          NameExpression
+                            Identifier "it" @ 122..124
+                          Dot "." @ 124..125
+                          Identifier "isNotEmpty" @ 125..135
+                        ValueArgumentList
+                          LParen "(" @ 135..136
+                          RParen ")" @ 136..137 trailing=[Whitespace " "]
+                  RBrace "}" @ 138..139 trailing=[Whitespace " "]
+              Elvis "?:" @ 140..142 trailing=[Whitespace " "]
+              JumpExpression
+                ReturnKw "return" @ 143..149 trailing=[Whitespace " "]
+                StringTemplateExpression
+                  StringTemplateEntry
+                    OpenQuote "\"" @ 150..151
+                  StringTemplateEntry
+                    RegularStringPart "empty" @ 151..156
+                  ClosingQuote "\"" @ 156..157
+      RBrace "}" @ 158..159 leading=[Newline "\n"]
+  Eof "" @ 160..160 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

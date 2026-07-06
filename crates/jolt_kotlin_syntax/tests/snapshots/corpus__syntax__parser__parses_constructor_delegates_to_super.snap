@@ -1,0 +1,76 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+open class Base(val name: String)
+
+class Child : Base {
+    constructor(name: String) : super(name)
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  ClassDeclaration
+    ModifierList
+      Identifier "open" @ 0..4 trailing=[Whitespace " "]
+    ClassKw "class" @ 5..10 trailing=[Whitespace " "]
+    Name
+      Identifier "Base" @ 11..15
+    PrimaryConstructor
+      ValueParameterList
+        LParen "(" @ 15..16
+        ValueParameter
+          ValKw "val" @ 16..19 trailing=[Whitespace " "]
+          Name
+            Identifier "name" @ 20..24
+          Colon ":" @ 24..25 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "String" @ 26..32
+        RParen ")" @ 32..33
+  ClassDeclaration
+    ClassKw "class" @ 35..40 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "Child" @ 41..46 trailing=[Whitespace " "]
+    Colon ":" @ 47..48 trailing=[Whitespace " "]
+    DelegationSpecifierList
+      DelegationSpecifier
+        NameExpression
+          Identifier "Base" @ 49..53 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 54..55
+      ClassMemberDeclaration
+        SecondaryConstructor
+          Identifier "constructor" @ 60..71 leading=[Newline "\n", Whitespace "    "]
+          ValueParameterList
+            LParen "(" @ 71..72
+            ValueParameter
+              Name
+                Identifier "name" @ 72..76
+              Colon ":" @ 76..77 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  Identifier "String" @ 78..84
+            RParen ")" @ 84..85 trailing=[Whitespace " "]
+          Colon ":" @ 86..87 trailing=[Whitespace " "]
+          ConstructorDelegationCall
+            CallExpression
+              SuperExpression
+                SuperKw "super" @ 88..93
+              ValueArgumentList
+                LParen "(" @ 93..94
+                ValueArgument
+                  NameExpression
+                    Identifier "name" @ 94..98
+                RParen ")" @ 98..99
+      RBrace "}" @ 100..101 leading=[Newline "\n"]
+  Eof "" @ 102..102 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

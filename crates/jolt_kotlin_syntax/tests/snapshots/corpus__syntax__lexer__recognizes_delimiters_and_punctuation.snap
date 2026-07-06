@@ -1,0 +1,71 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+[ ] { } ( ) . ? :: : ; ;; .. ..< = # @ ,
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  Statement
+    ExpressionStatement
+      NavigationExpression
+        CallExpression
+          CallExpression
+            CollectionLiteralExpression
+              LBracket "[" @ 0..1 trailing=[Whitespace " "]
+              RBracket "]" @ 2..3 trailing=[Whitespace " "]
+            LambdaExpression
+              LBrace "{" @ 4..5 trailing=[Whitespace " "]
+              RBrace "}" @ 6..7 trailing=[Whitespace " "]
+          ValueArgumentList
+            LParen "(" @ 8..9 trailing=[Whitespace " "]
+            RParen ")" @ 10..11 trailing=[Whitespace " "]
+        Dot "." @ 12..13 trailing=[Whitespace " "]
+      ErrorNode
+        Question "?" @ 14..15 trailing=[Whitespace " "]
+      ErrorNode
+        ColonColon "::" @ 16..18 trailing=[Whitespace " "]
+      ErrorNode
+        Colon ":" @ 19..20 trailing=[Whitespace " "]
+    Semicolon ";" @ 21..22 trailing=[Whitespace " "]
+    DoubleSemicolon ";;" @ 23..25 trailing=[Whitespace " "]
+  Statement
+    ExpressionStatement
+      BinaryExpression
+        ErrorNode
+          Range ".." @ 26..28 trailing=[Whitespace " "]
+        RangeUntil "..<" @ 29..32 trailing=[Whitespace " "]
+        ErrorNode
+          Assign "=" @ 33..34 trailing=[Whitespace " "]
+      ErrorNode
+        Hash "#" @ 35..36 trailing=[Whitespace " "]
+      ErrorNode
+        At "@" @ 37..38 trailing=[Whitespace " "]
+      ErrorNode
+        Comma "," @ 39..40
+  Eof "" @ 41..41 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=14..15 message="expected member name"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=14..15 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=16..18 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=19..20 message="unexpected token in expression"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=26..28 message="expected expression"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=33..34 message="expected expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=35..36 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=37..38 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=39..40 message="unexpected token in expression"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(14), end: TextSize(15) }) message=expected member name
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(14), end: TextSize(15) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(16), end: TextSize(18) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(19), end: TextSize(20) }) message=unexpected token in expression
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(26), end: TextSize(28) }) message=expected expression
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(33), end: TextSize(34) }) message=expected expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(35), end: TextSize(36) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(37), end: TextSize(38) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(39), end: TextSize(40) }) message=unexpected token in expression

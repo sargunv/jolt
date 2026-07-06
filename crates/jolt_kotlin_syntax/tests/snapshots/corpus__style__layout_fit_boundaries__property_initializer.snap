@@ -1,0 +1,42 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package com.example.boundaries
+
+val endpoint =
+    "https://example.test/api/v1/projects/default/environments/development/resources/current"
+
+syntax:
+syntax:
+KotlinFile
+  PackageHeader
+    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+    QualifiedName
+      Name
+        Identifier "com" @ 8..11
+      Dot "." @ 11..12
+      Name
+        Identifier "example" @ 12..19
+      Dot "." @ 19..20
+      Name
+        Identifier "boundaries" @ 20..30
+  ImportList
+  PropertyDeclaration
+    ValKw "val" @ 32..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "endpoint" @ 36..44 trailing=[Whitespace " "]
+    Assign "=" @ 45..46
+    StringTemplateExpression
+      StringTemplateEntry
+        OpenQuote "\"" @ 51..52 leading=[Newline "\n", Whitespace "    "]
+      StringTemplateEntry
+        RegularStringPart "https://example.test/api/v1/projects/default/environments/development/resources/current" @ 52..139
+      ClosingQuote "\"" @ 139..140
+  Eof "" @ 141..141 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

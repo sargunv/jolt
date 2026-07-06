@@ -1,0 +1,134 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun templates(user: User, count: Int): String {
+    val simple = "Hello, $user"
+    val braced = "Next count is ${count + 1}"
+    val nested = "Name: ${user.name ?: "anonymous"}"
+    return "$simple; $braced; $nested"
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    Identifier "templates" @ 4..13
+    ValueParameterList
+      LParen "(" @ 13..14
+      ValueParameter
+        Name
+          Identifier "user" @ 14..18
+        Colon ":" @ 18..19 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "User" @ 20..24
+      Comma "," @ 24..25 trailing=[Whitespace " "]
+      ValueParameter
+        Name
+          Identifier "count" @ 26..31
+        Colon ":" @ 31..32 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Int" @ 33..36
+      RParen ")" @ 36..37
+    Colon ":" @ 37..38 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "String" @ 39..45 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 46..47
+      PropertyDeclaration
+        ValKw "val" @ 52..55 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "simple" @ 56..62 trailing=[Whitespace " "]
+        Assign "=" @ 63..64 trailing=[Whitespace " "]
+        StringTemplateExpression
+          StringTemplateEntry
+            OpenQuote "\"" @ 65..66
+          StringTemplateEntry
+            RegularStringPart "Hello, " @ 66..73
+          StringTemplateEntry
+            ShortTemplateEntryStart "$" @ 73..74
+          StringTemplateEntry
+            Identifier "user" @ 74..78
+          ClosingQuote "\"" @ 78..79
+      PropertyDeclaration
+        ValKw "val" @ 84..87 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "braced" @ 88..94 trailing=[Whitespace " "]
+        Assign "=" @ 95..96 trailing=[Whitespace " "]
+        StringTemplateExpression
+          StringTemplateEntry
+            OpenQuote "\"" @ 97..98
+          StringTemplateEntry
+            RegularStringPart "Next count is " @ 98..112
+          StringTemplateEntry
+            LongTemplateEntryStart "${" @ 112..114
+            BinaryExpression
+              NameExpression
+                Identifier "count" @ 114..119 trailing=[Whitespace " "]
+              Plus "+" @ 120..121 trailing=[Whitespace " "]
+              LiteralExpression
+                IntegerLiteral "1" @ 122..123
+            LongTemplateEntryEnd "}" @ 123..124
+          ClosingQuote "\"" @ 124..125
+      PropertyDeclaration
+        ValKw "val" @ 130..133 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "nested" @ 134..140 trailing=[Whitespace " "]
+        Assign "=" @ 141..142 trailing=[Whitespace " "]
+        StringTemplateExpression
+          StringTemplateEntry
+            OpenQuote "\"" @ 143..144
+          StringTemplateEntry
+            RegularStringPart "Name: " @ 144..150
+          StringTemplateEntry
+            LongTemplateEntryStart "${" @ 150..152
+            BinaryExpression
+              NavigationExpression
+                NameExpression
+                  Identifier "user" @ 152..156
+                Dot "." @ 156..157
+                Identifier "name" @ 157..161 trailing=[Whitespace " "]
+              Elvis "?:" @ 162..164 trailing=[Whitespace " "]
+              StringTemplateExpression
+                StringTemplateEntry
+                  OpenQuote "\"" @ 165..166
+                StringTemplateEntry
+                  RegularStringPart "anonymous" @ 166..175
+                ClosingQuote "\"" @ 175..176
+            LongTemplateEntryEnd "}" @ 176..177
+          ClosingQuote "\"" @ 177..178
+      Statement
+        ExpressionStatement
+          JumpExpression
+            ReturnKw "return" @ 183..189 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            StringTemplateExpression
+              StringTemplateEntry
+                OpenQuote "\"" @ 190..191
+              StringTemplateEntry
+                ShortTemplateEntryStart "$" @ 191..192
+              StringTemplateEntry
+                Identifier "simple" @ 192..198
+              StringTemplateEntry
+                RegularStringPart "; " @ 198..200
+              StringTemplateEntry
+                ShortTemplateEntryStart "$" @ 200..201
+              StringTemplateEntry
+                Identifier "braced" @ 201..207
+              StringTemplateEntry
+                RegularStringPart "; " @ 207..209
+              StringTemplateEntry
+                ShortTemplateEntryStart "$" @ 209..210
+              StringTemplateEntry
+                Identifier "nested" @ 210..216
+              ClosingQuote "\"" @ 216..217
+      RBrace "}" @ 218..219 leading=[Newline "\n"]
+  Eof "" @ 220..220 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

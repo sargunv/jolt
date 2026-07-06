@@ -1,0 +1,94 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun callableReferences() {
+    val top = ::topLevel
+    val member = String::trim
+    val bound = "value"::length
+    val klass = String::class
+    consume(top, member, bound, klass)
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    Identifier "callableReferences" @ 4..22
+    ValueParameterList
+      LParen "(" @ 22..23
+      RParen ")" @ 23..24 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 25..26
+      PropertyDeclaration
+        ValKw "val" @ 31..34 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "top" @ 35..38 trailing=[Whitespace " "]
+        Assign "=" @ 39..40 trailing=[Whitespace " "]
+        CallableReferenceExpression
+          ColonColon "::" @ 41..43
+          Identifier "topLevel" @ 43..51
+      PropertyDeclaration
+        ValKw "val" @ 56..59 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "member" @ 60..66 trailing=[Whitespace " "]
+        Assign "=" @ 67..68 trailing=[Whitespace " "]
+        CallableReferenceExpression
+          NameExpression
+            Identifier "String" @ 69..75
+          ColonColon "::" @ 75..77
+          Identifier "trim" @ 77..81
+      PropertyDeclaration
+        ValKw "val" @ 86..89 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "bound" @ 90..95 trailing=[Whitespace " "]
+        Assign "=" @ 96..97 trailing=[Whitespace " "]
+        CallableReferenceExpression
+          StringTemplateExpression
+            StringTemplateEntry
+              OpenQuote "\"" @ 98..99
+            StringTemplateEntry
+              RegularStringPart "value" @ 99..104
+            ClosingQuote "\"" @ 104..105
+          ColonColon "::" @ 105..107
+          Identifier "length" @ 107..113
+      PropertyDeclaration
+        ValKw "val" @ 118..121 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "klass" @ 122..127 trailing=[Whitespace " "]
+        Assign "=" @ 128..129 trailing=[Whitespace " "]
+        CallableReferenceExpression
+          NameExpression
+            Identifier "String" @ 130..136
+          ColonColon "::" @ 136..138
+          ClassKw "class" @ 138..143
+      Statement
+        ExpressionStatement
+          CallExpression
+            NameExpression
+              Identifier "consume" @ 148..155 leading=[Newline "\n", Whitespace "    "]
+            ValueArgumentList
+              LParen "(" @ 155..156
+              ValueArgument
+                NameExpression
+                  Identifier "top" @ 156..159
+              Comma "," @ 159..160 trailing=[Whitespace " "]
+              ValueArgument
+                NameExpression
+                  Identifier "member" @ 161..167
+              Comma "," @ 167..168 trailing=[Whitespace " "]
+              ValueArgument
+                NameExpression
+                  Identifier "bound" @ 169..174
+              Comma "," @ 174..175 trailing=[Whitespace " "]
+              ValueArgument
+                NameExpression
+                  Identifier "klass" @ 176..181
+              RParen ")" @ 181..182
+      RBrace "}" @ 183..184 leading=[Newline "\n"]
+  Eof "" @ 185..185 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

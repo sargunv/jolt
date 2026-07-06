@@ -1,0 +1,149 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package com.example.trivia
+
+class Builder {
+    fun first(value: String) = this
+    fun second() = this
+    fun done(): String = "done"
+}
+
+fun chain(builder: Builder?, value: String): String? =
+    builder /* JOLT-TRIVIA:chain-target */
+        ?.first( /* JOLT-TRIVIA:safe-call-open */ value /* JOLT-TRIVIA:first-arg */)
+        ?.second() /* JOLT-TRIVIA:after-second */
+        ?.done /* JOLT-TRIVIA:callable-ref-gap */ ()
+
+syntax:
+syntax:
+KotlinFile
+  PackageHeader
+    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+    QualifiedName
+      Name
+        Identifier "com" @ 8..11
+      Dot "." @ 11..12
+      Name
+        Identifier "example" @ 12..19
+      Dot "." @ 19..20
+      Name
+        Identifier "trivia" @ 20..26
+  ImportList
+  ClassDeclaration
+    ClassKw "class" @ 28..33 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "Builder" @ 34..41 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 42..43
+      ClassMemberDeclaration
+        FunctionDeclaration
+          FunKw "fun" @ 48..51 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "first" @ 52..57
+          ValueParameterList
+            LParen "(" @ 57..58
+            ValueParameter
+              Name
+                Identifier "value" @ 58..63
+              Colon ":" @ 63..64 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  Identifier "String" @ 65..71
+            RParen ")" @ 71..72 trailing=[Whitespace " "]
+          Assign "=" @ 73..74 trailing=[Whitespace " "]
+          ThisExpression
+            ThisKw "this" @ 75..79
+      ClassMemberDeclaration
+        FunctionDeclaration
+          FunKw "fun" @ 84..87 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "second" @ 88..94
+          ValueParameterList
+            LParen "(" @ 94..95
+            RParen ")" @ 95..96 trailing=[Whitespace " "]
+          Assign "=" @ 97..98 trailing=[Whitespace " "]
+          ThisExpression
+            ThisKw "this" @ 99..103
+      ClassMemberDeclaration
+        FunctionDeclaration
+          FunKw "fun" @ 108..111 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "done" @ 112..116
+          ValueParameterList
+            LParen "(" @ 116..117
+            RParen ")" @ 117..118
+          Colon ":" @ 118..119 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "String" @ 120..126 trailing=[Whitespace " "]
+          Assign "=" @ 127..128 trailing=[Whitespace " "]
+          StringTemplateExpression
+            StringTemplateEntry
+              OpenQuote "\"" @ 129..130
+            StringTemplateEntry
+              RegularStringPart "done" @ 130..134
+            ClosingQuote "\"" @ 134..135
+      RBrace "}" @ 136..137 leading=[Newline "\n"]
+  FunctionDeclaration
+    FunKw "fun" @ 139..142 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "chain" @ 143..148
+    ValueParameterList
+      LParen "(" @ 148..149
+      ValueParameter
+        Name
+          Identifier "builder" @ 149..156
+        Colon ":" @ 156..157 trailing=[Whitespace " "]
+        TypeReference
+          NullableType
+            UserType
+              Identifier "Builder" @ 158..165
+            Question "?" @ 165..166
+      Comma "," @ 166..167 trailing=[Whitespace " "]
+      ValueParameter
+        Name
+          Identifier "value" @ 168..173
+        Colon ":" @ 173..174 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "String" @ 175..181
+      RParen ")" @ 181..182
+    Colon ":" @ 182..183 trailing=[Whitespace " "]
+    TypeReference
+      NullableType
+        UserType
+          Identifier "String" @ 184..190
+        Question "?" @ 190..191 trailing=[Whitespace " "]
+    Assign "=" @ 192..193
+    CallExpression
+      NavigationExpression
+        CallExpression
+          NavigationExpression
+            CallExpression
+              NavigationExpression
+                NameExpression
+                  Identifier "builder" @ 198..205 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:chain-target */"]
+                SafeAccess "?." @ 245..247 leading=[Newline "\n", Whitespace "        "]
+                Identifier "first" @ 247..252
+              ValueArgumentList
+                LParen "(" @ 252..253 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:safe-call-open */", Whitespace " "]
+                ValueArgument
+                  NameExpression
+                    Identifier "value" @ 287..292 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:first-arg */"]
+                RParen ")" @ 320..321
+            SafeAccess "?." @ 330..332 leading=[Newline "\n", Whitespace "        "]
+            Identifier "second" @ 332..338
+          ValueArgumentList
+            LParen "(" @ 338..339
+            RParen ")" @ 339..340 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:after-second */"]
+        SafeAccess "?." @ 380..382 leading=[Newline "\n", Whitespace "        "]
+        Identifier "done" @ 382..386 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:callable-ref-gap */", Whitespace " "]
+      ValueArgumentList
+        LParen "(" @ 422..423
+        RParen ")" @ 423..424
+  Eof "" @ 425..425 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

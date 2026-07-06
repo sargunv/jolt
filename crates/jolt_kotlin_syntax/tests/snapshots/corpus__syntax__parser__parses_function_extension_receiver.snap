@@ -1,0 +1,57 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun String.surrounded(prefix: String, suffix: String): String =
+    prefix + this + suffix
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    Identifier "String" @ 4..10
+    Dot "." @ 10..11
+    Identifier "surrounded" @ 11..21
+    ValueParameterList
+      LParen "(" @ 21..22
+      ValueParameter
+        Name
+          Identifier "prefix" @ 22..28
+        Colon ":" @ 28..29 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "String" @ 30..36
+      Comma "," @ 36..37 trailing=[Whitespace " "]
+      ValueParameter
+        Name
+          Identifier "suffix" @ 38..44
+        Colon ":" @ 44..45 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "String" @ 46..52
+      RParen ")" @ 52..53
+    Colon ":" @ 53..54 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "String" @ 55..61 trailing=[Whitespace " "]
+    Assign "=" @ 62..63
+    BinaryExpression
+      BinaryExpression
+        NameExpression
+          Identifier "prefix" @ 68..74 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Plus "+" @ 75..76 trailing=[Whitespace " "]
+        ThisExpression
+          ThisKw "this" @ 77..81 trailing=[Whitespace " "]
+      Plus "+" @ 82..83 trailing=[Whitespace " "]
+      NameExpression
+        Identifier "suffix" @ 84..90
+  Eof "" @ 91..91 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

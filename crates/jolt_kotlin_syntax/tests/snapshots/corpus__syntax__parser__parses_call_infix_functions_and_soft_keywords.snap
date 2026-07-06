@@ -1,0 +1,83 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun infixCalls(bits: Bits, mask: Bits): Bits {
+    val combined = bits or mask and Bits.Enabled
+    val named = combined context mask
+    return named
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    Identifier "infixCalls" @ 4..14
+    ValueParameterList
+      LParen "(" @ 14..15
+      ValueParameter
+        Name
+          Identifier "bits" @ 15..19
+        Colon ":" @ 19..20 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Bits" @ 21..25
+      Comma "," @ 25..26 trailing=[Whitespace " "]
+      ValueParameter
+        Name
+          Identifier "mask" @ 27..31
+        Colon ":" @ 31..32 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Bits" @ 33..37
+      RParen ")" @ 37..38
+    Colon ":" @ 38..39 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "Bits" @ 40..44 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 45..46
+      PropertyDeclaration
+        ValKw "val" @ 51..54 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "combined" @ 55..63 trailing=[Whitespace " "]
+        Assign "=" @ 64..65 trailing=[Whitespace " "]
+        BinaryExpression
+          BinaryExpression
+            NameExpression
+              Identifier "bits" @ 66..70 trailing=[Whitespace " "]
+            Identifier "or" @ 71..73 trailing=[Whitespace " "]
+            NameExpression
+              Identifier "mask" @ 74..78 trailing=[Whitespace " "]
+          Identifier "and" @ 79..82 trailing=[Whitespace " "]
+          NavigationExpression
+            NameExpression
+              Identifier "Bits" @ 83..87
+            Dot "." @ 87..88
+            Identifier "Enabled" @ 88..95
+      PropertyDeclaration
+        ValKw "val" @ 100..103 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "named" @ 104..109 trailing=[Whitespace " "]
+        Assign "=" @ 110..111 trailing=[Whitespace " "]
+        BinaryExpression
+          NameExpression
+            Identifier "combined" @ 112..120 trailing=[Whitespace " "]
+          Identifier "context" @ 121..128 trailing=[Whitespace " "]
+          NameExpression
+            Identifier "mask" @ 129..133
+      Statement
+        ExpressionStatement
+          JumpExpression
+            ReturnKw "return" @ 138..144 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            NameExpression
+              Identifier "named" @ 145..150
+      RBrace "}" @ 151..152 leading=[Newline "\n"]
+  Eof "" @ 153..153 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

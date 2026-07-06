@@ -1,0 +1,117 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package com.example.imports
+
+import com.example.tools.Factory as ToolFactory
+import com.example.tools.*
+import kotlin.io.println as say
+
+fun aliases(factory: ToolFactory) {
+    say(factory.toString())
+}
+
+syntax:
+syntax:
+KotlinFile
+  PackageHeader
+    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+    QualifiedName
+      Name
+        Identifier "com" @ 8..11
+      Dot "." @ 11..12
+      Name
+        Identifier "example" @ 12..19
+      Dot "." @ 19..20
+      Name
+        Identifier "imports" @ 20..27
+  ImportList
+    ImportDirective
+      Identifier "import" @ 29..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        Name
+          Identifier "com" @ 36..39
+        Dot "." @ 39..40
+        Name
+          Identifier "example" @ 40..47
+        Dot "." @ 47..48
+        Name
+          Identifier "tools" @ 48..53
+        Dot "." @ 53..54
+        Name
+          Identifier "Factory" @ 54..61 trailing=[Whitespace " "]
+      ImportAlias
+        AsKw "as" @ 62..64 trailing=[Whitespace " "]
+        Name
+          Identifier "ToolFactory" @ 65..76
+    ImportDirective
+      Identifier "import" @ 77..83 leading=[Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        Name
+          Identifier "com" @ 84..87
+        Dot "." @ 87..88
+        Name
+          Identifier "example" @ 88..95
+        Dot "." @ 95..96
+        Name
+          Identifier "tools" @ 96..101
+        Dot "." @ 101..102
+      Star "*" @ 102..103
+    ImportDirective
+      Identifier "import" @ 104..110 leading=[Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        Name
+          Identifier "kotlin" @ 111..117
+        Dot "." @ 117..118
+        Name
+          Identifier "io" @ 118..120
+        Dot "." @ 120..121
+        Name
+          Identifier "println" @ 121..128 trailing=[Whitespace " "]
+      ImportAlias
+        AsKw "as" @ 129..131 trailing=[Whitespace " "]
+        Name
+          Identifier "say" @ 132..135
+  FunctionDeclaration
+    FunKw "fun" @ 137..140 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "aliases" @ 141..148
+    ValueParameterList
+      LParen "(" @ 148..149
+      ValueParameter
+        Name
+          Identifier "factory" @ 149..156
+        Colon ":" @ 156..157 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "ToolFactory" @ 158..169
+      RParen ")" @ 169..170 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 171..172
+      Statement
+        ExpressionStatement
+          CallExpression
+            NameExpression
+              Identifier "say" @ 177..180 leading=[Newline "\n", Whitespace "    "]
+            ValueArgumentList
+              LParen "(" @ 180..181
+              ValueArgument
+                CallExpression
+                  NavigationExpression
+                    NameExpression
+                      Identifier "factory" @ 181..188
+                    Dot "." @ 188..189
+                    Identifier "toString" @ 189..197
+                  ValueArgumentList
+                    LParen "(" @ 197..198
+                    RParen ")" @ 198..199
+              RParen ")" @ 199..200
+      RBrace "}" @ 201..202 leading=[Newline "\n"]
+  Eof "" @ 203..203 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

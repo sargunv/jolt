@@ -1,0 +1,140 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package com.example.trivia
+
+fun destructure(entries: List<Pair<String, Int>>) {
+    for ((name /* JOLT-TRIVIA:first-component */ , count) in /* JOLT-TRIVIA:in-keyword */ entries) {
+        val (first, second /* JOLT-TRIVIA:second-component */) = name to count
+        println("$first:$second")
+    }
+}
+
+syntax:
+syntax:
+KotlinFile
+  PackageHeader
+    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+    QualifiedName
+      Name
+        Identifier "com" @ 8..11
+      Dot "." @ 11..12
+      Name
+        Identifier "example" @ 12..19
+      Dot "." @ 19..20
+      Name
+        Identifier "trivia" @ 20..26
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 28..31 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "destructure" @ 32..43
+    ValueParameterList
+      LParen "(" @ 43..44
+      ValueParameter
+        Name
+          Identifier "entries" @ 44..51
+        Colon ":" @ 51..52 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "List" @ 53..57
+            TypeArgumentList
+              Lt "<" @ 57..58
+              TypeProjectionList
+                TypeArgument
+                  TypeProjection
+                    TypeReference
+                      UserType
+                        Identifier "Pair" @ 58..62
+                        TypeArgumentList
+                          Lt "<" @ 62..63
+                          TypeProjectionList
+                            TypeArgument
+                              TypeProjection
+                                TypeReference
+                                  UserType
+                                    Identifier "String" @ 63..69
+                            Comma "," @ 69..70 trailing=[Whitespace " "]
+                            TypeArgument
+                              TypeProjection
+                                TypeReference
+                                  UserType
+                                    Identifier "Int" @ 71..74
+                          Gt ">" @ 74..75
+              Gt ">" @ 75..76
+      RParen ")" @ 76..77 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 78..79
+      Statement
+        ExpressionStatement
+          ForStatement
+            ForKw "for" @ 84..87 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            LParen "(" @ 88..89
+            DestructuringDeclaration
+              LParen "(" @ 89..90
+              DestructuringEntry
+                Name
+                  Identifier "name" @ 90..94 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:first-component */", Whitespace " "]
+              Comma "," @ 129..130 trailing=[Whitespace " "]
+              DestructuringEntry
+                Name
+                  Identifier "count" @ 131..136
+              RParen ")" @ 136..137 trailing=[Whitespace " "]
+            InKw "in" @ 138..140 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:in-keyword */", Whitespace " "]
+            NameExpression
+              Identifier "entries" @ 170..177
+            RParen ")" @ 177..178 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 179..180
+              PropertyDeclaration
+                ValKw "val" @ 189..192 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                DestructuringDeclaration
+                  LParen "(" @ 193..194
+                  DestructuringEntry
+                    Name
+                      Identifier "first" @ 194..199
+                  Comma "," @ 199..200 trailing=[Whitespace " "]
+                  DestructuringEntry
+                    Name
+                      Identifier "second" @ 201..207 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:second-component */"]
+                  RParen ")" @ 242..243 trailing=[Whitespace " "]
+                Assign "=" @ 244..245 trailing=[Whitespace " "]
+                BinaryExpression
+                  NameExpression
+                    Identifier "name" @ 246..250 trailing=[Whitespace " "]
+                  Identifier "to" @ 251..253 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "count" @ 254..259
+              Statement
+                ExpressionStatement
+                  CallExpression
+                    NameExpression
+                      Identifier "println" @ 268..275 leading=[Newline "\n", Whitespace "        "]
+                    ValueArgumentList
+                      LParen "(" @ 275..276
+                      ValueArgument
+                        StringTemplateExpression
+                          StringTemplateEntry
+                            OpenQuote "\"" @ 276..277
+                          StringTemplateEntry
+                            ShortTemplateEntryStart "$" @ 277..278
+                          StringTemplateEntry
+                            Identifier "first" @ 278..283
+                          StringTemplateEntry
+                            RegularStringPart ":" @ 283..284
+                          StringTemplateEntry
+                            ShortTemplateEntryStart "$" @ 284..285
+                          StringTemplateEntry
+                            Identifier "second" @ 285..291
+                          ClosingQuote "\"" @ 291..292
+                      RParen ")" @ 292..293
+              RBrace "}" @ 298..299 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 300..301 leading=[Newline "\n"]
+  Eof "" @ 302..302 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

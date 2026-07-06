@@ -1,0 +1,151 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun squareDestructuring(record: Record, rows: List<Record>) {
+    val [first, second, third] = record
+    var [left, right] = record.bounds
+    for ([name, value] in rows) {
+        consume(first, second, third, left, right, name, value)
+    }
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    Identifier "squareDestructuring" @ 4..23
+    ValueParameterList
+      LParen "(" @ 23..24
+      ValueParameter
+        Name
+          Identifier "record" @ 24..30
+        Colon ":" @ 30..31 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Record" @ 32..38
+      Comma "," @ 38..39 trailing=[Whitespace " "]
+      ValueParameter
+        Name
+          Identifier "rows" @ 40..44
+        Colon ":" @ 44..45 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "List" @ 46..50
+            TypeArgumentList
+              Lt "<" @ 50..51
+              TypeProjectionList
+                TypeArgument
+                  TypeProjection
+                    TypeReference
+                      UserType
+                        Identifier "Record" @ 51..57
+              Gt ">" @ 57..58
+      RParen ")" @ 58..59 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 60..61
+      PropertyDeclaration
+        ValKw "val" @ 66..69 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        DestructuringDeclaration
+          LBracket "[" @ 70..71
+          DestructuringEntry
+            Name
+              Identifier "first" @ 71..76
+          Comma "," @ 76..77 trailing=[Whitespace " "]
+          DestructuringEntry
+            Name
+              Identifier "second" @ 78..84
+          Comma "," @ 84..85 trailing=[Whitespace " "]
+          DestructuringEntry
+            Name
+              Identifier "third" @ 86..91
+          RBracket "]" @ 91..92 trailing=[Whitespace " "]
+        Assign "=" @ 93..94 trailing=[Whitespace " "]
+        NameExpression
+          Identifier "record" @ 95..101
+      PropertyDeclaration
+        VarKw "var" @ 106..109 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        DestructuringDeclaration
+          LBracket "[" @ 110..111
+          DestructuringEntry
+            Name
+              Identifier "left" @ 111..115
+          Comma "," @ 115..116 trailing=[Whitespace " "]
+          DestructuringEntry
+            Name
+              Identifier "right" @ 117..122
+          RBracket "]" @ 122..123 trailing=[Whitespace " "]
+        Assign "=" @ 124..125 trailing=[Whitespace " "]
+        NavigationExpression
+          NameExpression
+            Identifier "record" @ 126..132
+          Dot "." @ 132..133
+          Identifier "bounds" @ 133..139
+      Statement
+        ExpressionStatement
+          ForStatement
+            ForKw "for" @ 144..147 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            LParen "(" @ 148..149
+            DestructuringDeclaration
+              LBracket "[" @ 149..150
+              DestructuringEntry
+                Name
+                  Identifier "name" @ 150..154
+              Comma "," @ 154..155 trailing=[Whitespace " "]
+              DestructuringEntry
+                Name
+                  Identifier "value" @ 156..161
+              RBracket "]" @ 161..162 trailing=[Whitespace " "]
+            InKw "in" @ 163..165 trailing=[Whitespace " "]
+            NameExpression
+              Identifier "rows" @ 166..170
+            RParen ")" @ 170..171 trailing=[Whitespace " "]
+            Block
+              LBrace "{" @ 172..173
+              Statement
+                ExpressionStatement
+                  CallExpression
+                    NameExpression
+                      Identifier "consume" @ 182..189 leading=[Newline "\n", Whitespace "        "]
+                    ValueArgumentList
+                      LParen "(" @ 189..190
+                      ValueArgument
+                        NameExpression
+                          Identifier "first" @ 190..195
+                      Comma "," @ 195..196 trailing=[Whitespace " "]
+                      ValueArgument
+                        NameExpression
+                          Identifier "second" @ 197..203
+                      Comma "," @ 203..204 trailing=[Whitespace " "]
+                      ValueArgument
+                        NameExpression
+                          Identifier "third" @ 205..210
+                      Comma "," @ 210..211 trailing=[Whitespace " "]
+                      ValueArgument
+                        NameExpression
+                          Identifier "left" @ 212..216
+                      Comma "," @ 216..217 trailing=[Whitespace " "]
+                      ValueArgument
+                        NameExpression
+                          Identifier "right" @ 218..223
+                      Comma "," @ 223..224 trailing=[Whitespace " "]
+                      ValueArgument
+                        NameExpression
+                          Identifier "name" @ 225..229
+                      Comma "," @ 229..230 trailing=[Whitespace " "]
+                      ValueArgument
+                        NameExpression
+                          Identifier "value" @ 231..236
+                      RParen ")" @ 236..237
+              RBrace "}" @ 242..243 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 244..245 leading=[Newline "\n"]
+  Eof "" @ 246..246 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

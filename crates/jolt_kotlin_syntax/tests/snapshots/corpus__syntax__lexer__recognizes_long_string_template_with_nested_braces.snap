@@ -1,0 +1,46 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+"sum ${list.map { it + 1 }}"
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  Statement
+    ExpressionStatement
+      StringTemplateExpression
+        StringTemplateEntry
+          OpenQuote "\"" @ 0..1
+        StringTemplateEntry
+          RegularStringPart "sum " @ 1..5
+        StringTemplateEntry
+          LongTemplateEntryStart "${" @ 5..7
+          CallExpression
+            NavigationExpression
+              NameExpression
+                Identifier "list" @ 7..11
+              Dot "." @ 11..12
+              Identifier "map" @ 12..15 trailing=[Whitespace " "]
+            LambdaExpression
+              LBrace "{" @ 16..17 trailing=[Whitespace " "]
+              Statement
+                ExpressionStatement
+                  BinaryExpression
+                    NameExpression
+                      Identifier "it" @ 18..20 trailing=[Whitespace " "]
+                    Plus "+" @ 21..22 trailing=[Whitespace " "]
+                    LiteralExpression
+                      IntegerLiteral "1" @ 23..24 trailing=[Whitespace " "]
+              RBrace "}" @ 25..26
+          LongTemplateEntryEnd "}" @ 26..27
+        ClosingQuote "\"" @ 27..28
+  Eof "" @ 29..29 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

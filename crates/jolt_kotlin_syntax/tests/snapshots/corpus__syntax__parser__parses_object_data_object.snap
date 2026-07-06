@@ -1,0 +1,24 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+data object EndOfStream
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  ObjectDeclaration
+    ModifierList
+      Identifier "data" @ 0..4 trailing=[Whitespace " "]
+    ObjectKw "object" @ 5..11 trailing=[Whitespace " "]
+    Name
+      Identifier "EndOfStream" @ 12..23
+  Eof "" @ 24..24 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

@@ -1,0 +1,77 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class AllTarget(
+    @all:Label("user")
+    val name: String,
+)
+
+annotation class Label(val value: String)
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Name
+      Identifier "AllTarget" @ 6..15
+    PrimaryConstructor
+      ValueParameterList
+        LParen "(" @ 15..16
+        ValueParameter
+          ModifierList
+            Annotation
+              At "@" @ 21..22 leading=[Newline "\n", Whitespace "    "]
+              AnnotationUseSiteTarget
+                Identifier "all" @ 22..25
+                Colon ":" @ 25..26
+              QualifiedName
+                Name
+                  Identifier "Label" @ 26..31
+              AnnotationArgumentList
+                LParen "(" @ 31..32
+                ValueArgument
+                  StringTemplateExpression
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 32..33
+                    StringTemplateEntry
+                      RegularStringPart "user" @ 33..37
+                    ClosingQuote "\"" @ 37..38
+                RParen ")" @ 38..39
+          ValKw "val" @ 44..47 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Name
+            Identifier "name" @ 48..52
+          Colon ":" @ 52..53 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "String" @ 54..60
+        Comma "," @ 60..61
+        RParen ")" @ 62..63 leading=[Newline "\n"]
+  ClassDeclaration
+    ModifierList
+      Identifier "annotation" @ 65..75 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    ClassKw "class" @ 76..81 trailing=[Whitespace " "]
+    Name
+      Identifier "Label" @ 82..87
+    PrimaryConstructor
+      ValueParameterList
+        LParen "(" @ 87..88
+        ValueParameter
+          ValKw "val" @ 88..91 trailing=[Whitespace " "]
+          Name
+            Identifier "value" @ 92..97
+          Colon ":" @ 97..98 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "String" @ 99..105
+        RParen ")" @ 105..106
+  Eof "" @ 107..107 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

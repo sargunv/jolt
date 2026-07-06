@@ -1,0 +1,55 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class Factory {
+    companion object {
+        fun create(): Factory = Factory()
+    }
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Name
+      Identifier "Factory" @ 6..13 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 14..15
+      ClassMemberDeclaration
+        ObjectDeclaration
+          ModifierList
+            Identifier "companion" @ 20..29 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          ObjectKw "object" @ 30..36 trailing=[Whitespace " "]
+          ClassBody
+            LBrace "{" @ 37..38
+            ClassMemberDeclaration
+              FunctionDeclaration
+                FunKw "fun" @ 47..50 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                Identifier "create" @ 51..57
+                ValueParameterList
+                  LParen "(" @ 57..58
+                  RParen ")" @ 58..59
+                Colon ":" @ 59..60 trailing=[Whitespace " "]
+                TypeReference
+                  UserType
+                    Identifier "Factory" @ 61..68 trailing=[Whitespace " "]
+                Assign "=" @ 69..70 trailing=[Whitespace " "]
+                CallExpression
+                  NameExpression
+                    Identifier "Factory" @ 71..78
+                  ValueArgumentList
+                    LParen "(" @ 78..79
+                    RParen ")" @ 79..80
+            RBrace "}" @ 85..86 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 87..88 leading=[Newline "\n"]
+  Eof "" @ 89..89 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

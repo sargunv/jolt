@@ -1,0 +1,96 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun callArguments(items: Array<String>) {
+    target(
+        first = "one",
+        second = compute(),
+        *items,
+        last = true,
+    )
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    Identifier "callArguments" @ 4..17
+    ValueParameterList
+      LParen "(" @ 17..18
+      ValueParameter
+        Name
+          Identifier "items" @ 18..23
+        Colon ":" @ 23..24 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Array" @ 25..30
+            TypeArgumentList
+              Lt "<" @ 30..31
+              TypeProjectionList
+                TypeArgument
+                  TypeProjection
+                    TypeReference
+                      UserType
+                        Identifier "String" @ 31..37
+              Gt ">" @ 37..38
+      RParen ")" @ 38..39 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 40..41
+      Statement
+        ExpressionStatement
+          CallExpression
+            NameExpression
+              Identifier "target" @ 46..52 leading=[Newline "\n", Whitespace "    "]
+            ValueArgumentList
+              LParen "(" @ 52..53
+              ValueArgument
+                AssignmentExpression
+                  NameExpression
+                    Identifier "first" @ 62..67 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  Assign "=" @ 68..69 trailing=[Whitespace " "]
+                  StringTemplateExpression
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 70..71
+                    StringTemplateEntry
+                      RegularStringPart "one" @ 71..74
+                    ClosingQuote "\"" @ 74..75
+              Comma "," @ 75..76
+              ValueArgument
+                AssignmentExpression
+                  NameExpression
+                    Identifier "second" @ 85..91 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  Assign "=" @ 92..93 trailing=[Whitespace " "]
+                  CallExpression
+                    NameExpression
+                      Identifier "compute" @ 94..101
+                    ValueArgumentList
+                      LParen "(" @ 101..102
+                      RParen ")" @ 102..103
+              Comma "," @ 103..104
+              ValueArgument
+                UnaryExpression
+                  Star "*" @ 113..114 leading=[Newline "\n", Whitespace "        "]
+                  NameExpression
+                    Identifier "items" @ 114..119
+              Comma "," @ 119..120
+              ValueArgument
+                AssignmentExpression
+                  NameExpression
+                    Identifier "last" @ 129..133 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  Assign "=" @ 134..135 trailing=[Whitespace " "]
+                  LiteralExpression
+                    TrueKw "true" @ 136..140
+              Comma "," @ 140..141
+              RParen ")" @ 146..147 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 148..149 leading=[Newline "\n"]
+  Eof "" @ 150..150 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

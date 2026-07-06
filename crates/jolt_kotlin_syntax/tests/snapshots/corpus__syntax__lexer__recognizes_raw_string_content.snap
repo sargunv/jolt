@@ -1,0 +1,39 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+"""one " quote
+two \ slash"""
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  Statement
+    ExpressionStatement
+      StringTemplateExpression
+        StringTemplateEntry
+          OpenQuote "\"\"\"" @ 0..3
+        StringTemplateEntry
+          RegularStringPart "one " @ 3..7
+        StringTemplateEntry
+          RegularStringPart "\"" @ 7..8
+        StringTemplateEntry
+          RegularStringPart " quote" @ 8..14
+        StringTemplateEntry
+          RegularStringPart "\n" @ 14..15
+        StringTemplateEntry
+          RegularStringPart "two " @ 15..19
+        StringTemplateEntry
+          RegularStringPart "\\" @ 19..20
+        StringTemplateEntry
+          RegularStringPart " slash" @ 20..26
+        ClosingQuote "\"\"\"" @ 26..29
+  Eof "" @ 30..30 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

@@ -1,0 +1,86 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+interface Provider {
+    fun provide(): String
+}
+
+class WithCompanion {
+    companion object Defaults : Provider {
+        override fun provide(): String = "default"
+    }
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  InterfaceDeclaration
+    InterfaceKw "interface" @ 0..9 trailing=[Whitespace " "]
+    Name
+      Identifier "Provider" @ 10..18 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 19..20
+      ClassMemberDeclaration
+        FunctionDeclaration
+          FunKw "fun" @ 25..28 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "provide" @ 29..36
+          ValueParameterList
+            LParen "(" @ 36..37
+            RParen ")" @ 37..38
+          Colon ":" @ 38..39 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "String" @ 40..46
+      RBrace "}" @ 47..48 leading=[Newline "\n"]
+  ClassDeclaration
+    ClassKw "class" @ 50..55 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "WithCompanion" @ 56..69 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 70..71
+      ClassMemberDeclaration
+        ObjectDeclaration
+          ModifierList
+            Identifier "companion" @ 76..85 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          ObjectKw "object" @ 86..92 trailing=[Whitespace " "]
+          Name
+            Identifier "Defaults" @ 93..101 trailing=[Whitespace " "]
+          Colon ":" @ 102..103 trailing=[Whitespace " "]
+          DelegationSpecifierList
+            DelegationSpecifier
+              NameExpression
+                Identifier "Provider" @ 104..112 trailing=[Whitespace " "]
+          ClassBody
+            LBrace "{" @ 113..114
+            ClassMemberDeclaration
+              FunctionDeclaration
+                ModifierList
+                  Identifier "override" @ 123..131 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                FunKw "fun" @ 132..135 trailing=[Whitespace " "]
+                Identifier "provide" @ 136..143
+                ValueParameterList
+                  LParen "(" @ 143..144
+                  RParen ")" @ 144..145
+                Colon ":" @ 145..146 trailing=[Whitespace " "]
+                TypeReference
+                  UserType
+                    Identifier "String" @ 147..153 trailing=[Whitespace " "]
+                Assign "=" @ 154..155 trailing=[Whitespace " "]
+                StringTemplateExpression
+                  StringTemplateEntry
+                    OpenQuote "\"" @ 156..157
+                  StringTemplateEntry
+                    RegularStringPart "default" @ 157..164
+                  ClosingQuote "\"" @ 164..165
+            RBrace "}" @ 170..171 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 172..173 leading=[Newline "\n"]
+  Eof "" @ 174..174 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

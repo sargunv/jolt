@@ -1,0 +1,87 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class Injected @Inject constructor(
+    @Named("id") val id: String,
+)
+
+annotation class Inject
+annotation class Named(val value: String)
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Name
+      Identifier "Injected" @ 6..14 trailing=[Whitespace " "]
+  SecondaryConstructor
+    ModifierList
+      Annotation
+        At "@" @ 15..16
+        QualifiedName
+          Name
+            Identifier "Inject" @ 16..22 trailing=[Whitespace " "]
+    Identifier "constructor" @ 23..34
+    ValueParameterList
+      LParen "(" @ 34..35
+      ValueParameter
+        ModifierList
+          Annotation
+            At "@" @ 40..41 leading=[Newline "\n", Whitespace "    "]
+            QualifiedName
+              Name
+                Identifier "Named" @ 41..46
+            AnnotationArgumentList
+              LParen "(" @ 46..47
+              ValueArgument
+                StringTemplateExpression
+                  StringTemplateEntry
+                    OpenQuote "\"" @ 47..48
+                  StringTemplateEntry
+                    RegularStringPart "id" @ 48..50
+                  ClosingQuote "\"" @ 50..51
+              RParen ")" @ 51..52 trailing=[Whitespace " "]
+        ValKw "val" @ 53..56 trailing=[Whitespace " "]
+        Name
+          Identifier "id" @ 57..59
+        Colon ":" @ 59..60 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "String" @ 61..67
+      Comma "," @ 67..68
+      RParen ")" @ 69..70 leading=[Newline "\n"]
+  ClassDeclaration
+    ModifierList
+      Identifier "annotation" @ 72..82 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    ClassKw "class" @ 83..88 trailing=[Whitespace " "]
+    Name
+      Identifier "Inject" @ 89..95
+  ClassDeclaration
+    ModifierList
+      Identifier "annotation" @ 96..106 leading=[Newline "\n"] trailing=[Whitespace " "]
+    ClassKw "class" @ 107..112 trailing=[Whitespace " "]
+    Name
+      Identifier "Named" @ 113..118
+    PrimaryConstructor
+      ValueParameterList
+        LParen "(" @ 118..119
+        ValueParameter
+          ValKw "val" @ 119..122 trailing=[Whitespace " "]
+          Name
+            Identifier "value" @ 123..128
+          Colon ":" @ 128..129 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "String" @ 130..136
+        RParen ")" @ 136..137
+  Eof "" @ 138..138 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

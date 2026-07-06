@@ -1,0 +1,110 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun collectionLiterals(): Any {
+    val empty = []
+    val numbers = [1, 2, 3]
+    val nested = [[1], [2, 3], []]
+    return [empty, numbers, nested]
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    Identifier "collectionLiterals" @ 4..22
+    ValueParameterList
+      LParen "(" @ 22..23
+      RParen ")" @ 23..24
+    Colon ":" @ 24..25 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "Any" @ 26..29 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 30..31
+      PropertyDeclaration
+        ValKw "val" @ 36..39 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "empty" @ 40..45 trailing=[Whitespace " "]
+        Assign "=" @ 46..47 trailing=[Whitespace " "]
+        CollectionLiteralExpression
+          LBracket "[" @ 48..49
+          RBracket "]" @ 49..50
+      PropertyDeclaration
+        ValKw "val" @ 55..58 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "numbers" @ 59..66 trailing=[Whitespace " "]
+        Assign "=" @ 67..68 trailing=[Whitespace " "]
+        CollectionLiteralExpression
+          LBracket "[" @ 69..70
+          ValueArgument
+            LiteralExpression
+              IntegerLiteral "1" @ 70..71
+          Comma "," @ 71..72 trailing=[Whitespace " "]
+          ValueArgument
+            LiteralExpression
+              IntegerLiteral "2" @ 73..74
+          Comma "," @ 74..75 trailing=[Whitespace " "]
+          ValueArgument
+            LiteralExpression
+              IntegerLiteral "3" @ 76..77
+          RBracket "]" @ 77..78
+      PropertyDeclaration
+        ValKw "val" @ 83..86 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "nested" @ 87..93 trailing=[Whitespace " "]
+        Assign "=" @ 94..95 trailing=[Whitespace " "]
+        CollectionLiteralExpression
+          LBracket "[" @ 96..97
+          ValueArgument
+            CollectionLiteralExpression
+              LBracket "[" @ 97..98
+              ValueArgument
+                LiteralExpression
+                  IntegerLiteral "1" @ 98..99
+              RBracket "]" @ 99..100
+          Comma "," @ 100..101 trailing=[Whitespace " "]
+          ValueArgument
+            CollectionLiteralExpression
+              LBracket "[" @ 102..103
+              ValueArgument
+                LiteralExpression
+                  IntegerLiteral "2" @ 103..104
+              Comma "," @ 104..105 trailing=[Whitespace " "]
+              ValueArgument
+                LiteralExpression
+                  IntegerLiteral "3" @ 106..107
+              RBracket "]" @ 107..108
+          Comma "," @ 108..109 trailing=[Whitespace " "]
+          ValueArgument
+            CollectionLiteralExpression
+              LBracket "[" @ 110..111
+              RBracket "]" @ 111..112
+          RBracket "]" @ 112..113
+      Statement
+        ExpressionStatement
+          JumpExpression
+            ReturnKw "return" @ 118..124 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            CollectionLiteralExpression
+              LBracket "[" @ 125..126
+              ValueArgument
+                NameExpression
+                  Identifier "empty" @ 126..131
+              Comma "," @ 131..132 trailing=[Whitespace " "]
+              ValueArgument
+                NameExpression
+                  Identifier "numbers" @ 133..140
+              Comma "," @ 140..141 trailing=[Whitespace " "]
+              ValueArgument
+                NameExpression
+                  Identifier "nested" @ 142..148
+              RBracket "]" @ 148..149
+      RBrace "}" @ 150..151 leading=[Newline "\n"]
+  Eof "" @ 152..152 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

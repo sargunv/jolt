@@ -1,0 +1,114 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package com.example.trivia
+
+fun references(values: List<String>) {
+    val member = String /* JOLT-TRIVIA:callable-reference-receiver */ :: /* JOLT-TRIVIA:callable-reference-operator */ trim
+    values.forEach outer@ /* JOLT-TRIVIA:lambda-label */ {
+        if (it.isBlank()) return@outer /* JOLT-TRIVIA:labeled-return */
+        member(it)
+    }
+}
+
+syntax:
+syntax:
+KotlinFile
+  PackageHeader
+    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+    QualifiedName
+      Name
+        Identifier "com" @ 8..11
+      Dot "." @ 11..12
+      Name
+        Identifier "example" @ 12..19
+      Dot "." @ 19..20
+      Name
+        Identifier "trivia" @ 20..26
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 28..31 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "references" @ 32..42
+    ValueParameterList
+      LParen "(" @ 42..43
+      ValueParameter
+        Name
+          Identifier "values" @ 43..49
+        Colon ":" @ 49..50 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "List" @ 51..55
+            TypeArgumentList
+              Lt "<" @ 55..56
+              TypeProjectionList
+                TypeArgument
+                  TypeProjection
+                    TypeReference
+                      UserType
+                        Identifier "String" @ 56..62
+              Gt ">" @ 62..63
+      RParen ")" @ 63..64 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 65..66
+      PropertyDeclaration
+        ValKw "val" @ 71..74 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "member" @ 75..81 trailing=[Whitespace " "]
+        Assign "=" @ 82..83 trailing=[Whitespace " "]
+        CallableReferenceExpression
+          NameExpression
+            Identifier "String" @ 84..90 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:callable-reference-receiver */", Whitespace " "]
+          ColonColon "::" @ 137..139 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:callable-reference-operator */", Whitespace " "]
+          Identifier "trim" @ 186..190
+      Statement
+        ExpressionStatement
+          CallExpression
+            NavigationExpression
+              NameExpression
+                Identifier "values" @ 195..201 leading=[Newline "\n", Whitespace "    "]
+              Dot "." @ 201..202
+              Identifier "forEach" @ 202..209 trailing=[Whitespace " "]
+            LambdaExpression
+              Identifier "outer" @ 210..215
+              At "@" @ 215..216 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:lambda-label */", Whitespace " "]
+              LambdaExpression
+                LBrace "{" @ 248..249
+                Statement
+                  ExpressionStatement
+                    IfExpression
+                      IfKw "if" @ 258..260 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      ParenthesizedExpression
+                        LParen "(" @ 261..262
+                        CallExpression
+                          NavigationExpression
+                            NameExpression
+                              Identifier "it" @ 262..264
+                            Dot "." @ 264..265
+                            Identifier "isBlank" @ 265..272
+                          ValueArgumentList
+                            LParen "(" @ 272..273
+                            RParen ")" @ 273..274
+                        RParen ")" @ 274..275 trailing=[Whitespace " "]
+                      JumpExpression
+                        ReturnKw "return" @ 276..282
+                        At "@" @ 282..283
+                        Identifier "outer" @ 283..288 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:labeled-return */"]
+                        CallExpression
+                          NameExpression
+                            Identifier "member" @ 330..336 leading=[Newline "\n", Whitespace "        "]
+                          ValueArgumentList
+                            LParen "(" @ 336..337
+                            ValueArgument
+                              NameExpression
+                                Identifier "it" @ 337..339
+                            RParen ")" @ 339..340
+                RBrace "}" @ 345..346 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 347..348 leading=[Newline "\n"]
+  Eof "" @ 349..349 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

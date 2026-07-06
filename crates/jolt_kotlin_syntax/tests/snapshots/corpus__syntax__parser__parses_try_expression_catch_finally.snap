@@ -1,0 +1,130 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun tryExpression(path: String): String {
+    return try {
+        read(path)
+    } catch (missing: MissingFile) {
+        "missing"
+    } catch (error: Throwable) {
+        "error"
+    } finally {
+        close(path)
+    }
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    Identifier "tryExpression" @ 4..17
+    ValueParameterList
+      LParen "(" @ 17..18
+      ValueParameter
+        Name
+          Identifier "path" @ 18..22
+        Colon ":" @ 22..23 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "String" @ 24..30
+      RParen ")" @ 30..31
+    Colon ":" @ 31..32 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "String" @ 33..39 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 40..41
+      Statement
+        ExpressionStatement
+          JumpExpression
+            ReturnKw "return" @ 46..52 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            TryExpression
+              TryKw "try" @ 53..56 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 57..58
+                Statement
+                  ExpressionStatement
+                    CallExpression
+                      NameExpression
+                        Identifier "read" @ 67..71 leading=[Newline "\n", Whitespace "        "]
+                      ValueArgumentList
+                        LParen "(" @ 71..72
+                        ValueArgument
+                          NameExpression
+                            Identifier "path" @ 72..76
+                        RParen ")" @ 76..77
+                RBrace "}" @ 82..83 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              CatchClause
+                Identifier "catch" @ 84..89 trailing=[Whitespace " "]
+                ValueParameterList
+                  LParen "(" @ 90..91
+                  ValueParameter
+                    Name
+                      Identifier "missing" @ 91..98
+                    Colon ":" @ 98..99 trailing=[Whitespace " "]
+                    TypeReference
+                      UserType
+                        Identifier "MissingFile" @ 100..111
+                  RParen ")" @ 111..112 trailing=[Whitespace " "]
+                Block
+                  LBrace "{" @ 113..114
+                  Statement
+                    ExpressionStatement
+                      StringTemplateExpression
+                        StringTemplateEntry
+                          OpenQuote "\"" @ 123..124 leading=[Newline "\n", Whitespace "        "]
+                        StringTemplateEntry
+                          RegularStringPart "missing" @ 124..131
+                        ClosingQuote "\"" @ 131..132
+                  RBrace "}" @ 137..138 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              CatchClause
+                Identifier "catch" @ 139..144 trailing=[Whitespace " "]
+                ValueParameterList
+                  LParen "(" @ 145..146
+                  ValueParameter
+                    Name
+                      Identifier "error" @ 146..151
+                    Colon ":" @ 151..152 trailing=[Whitespace " "]
+                    TypeReference
+                      UserType
+                        Identifier "Throwable" @ 153..162
+                  RParen ")" @ 162..163 trailing=[Whitespace " "]
+                Block
+                  LBrace "{" @ 164..165
+                  Statement
+                    ExpressionStatement
+                      StringTemplateExpression
+                        StringTemplateEntry
+                          OpenQuote "\"" @ 174..175 leading=[Newline "\n", Whitespace "        "]
+                        StringTemplateEntry
+                          RegularStringPart "error" @ 175..180
+                        ClosingQuote "\"" @ 180..181
+                  RBrace "}" @ 186..187 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              FinallyClause
+                Identifier "finally" @ 188..195 trailing=[Whitespace " "]
+                Block
+                  LBrace "{" @ 196..197
+                  Statement
+                    ExpressionStatement
+                      CallExpression
+                        NameExpression
+                          Identifier "close" @ 206..211 leading=[Newline "\n", Whitespace "        "]
+                        ValueArgumentList
+                          LParen "(" @ 211..212
+                          ValueArgument
+                            NameExpression
+                              Identifier "path" @ 212..216
+                          RParen ")" @ 216..217
+                  RBrace "}" @ 222..223 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 224..225 leading=[Newline "\n"]
+  Eof "" @ 226..226 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

@@ -1,0 +1,36 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+"a\n\t\"\\\u0041"
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  Statement
+    ExpressionStatement
+      StringTemplateExpression
+        StringTemplateEntry
+          OpenQuote "\"" @ 0..1
+        StringTemplateEntry
+          RegularStringPart "a" @ 1..2
+        StringTemplateEntry
+          EscapeSequence "\\n" @ 2..4
+        StringTemplateEntry
+          EscapeSequence "\\t" @ 4..6
+        StringTemplateEntry
+          EscapeSequence "\\\"" @ 6..8
+        StringTemplateEntry
+          EscapeSequence "\\\\" @ 8..10
+        StringTemplateEntry
+          EscapeSequence "\\u0041" @ 10..16
+        ClosingQuote "\"" @ 16..17
+  Eof "" @ 18..18 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

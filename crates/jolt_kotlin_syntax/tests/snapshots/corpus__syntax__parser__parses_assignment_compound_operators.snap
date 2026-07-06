@@ -1,0 +1,126 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun compoundAssignment(counter: Counter, values: MutableList<Int>) {
+    var total = 0
+    total += counter.next()
+    total -= 1
+    total *= 2
+    total /= 3
+    total %= 4
+    values[0] += total
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    Identifier "compoundAssignment" @ 4..22
+    ValueParameterList
+      LParen "(" @ 22..23
+      ValueParameter
+        Name
+          Identifier "counter" @ 23..30
+        Colon ":" @ 30..31 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Counter" @ 32..39
+      Comma "," @ 39..40 trailing=[Whitespace " "]
+      ValueParameter
+        Name
+          Identifier "values" @ 41..47
+        Colon ":" @ 47..48 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "MutableList" @ 49..60
+            TypeArgumentList
+              Lt "<" @ 60..61
+              TypeProjectionList
+                TypeArgument
+                  TypeProjection
+                    TypeReference
+                      UserType
+                        Identifier "Int" @ 61..64
+              Gt ">" @ 64..65
+      RParen ")" @ 65..66 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 67..68
+      PropertyDeclaration
+        VarKw "var" @ 73..76 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "total" @ 77..82 trailing=[Whitespace " "]
+        Assign "=" @ 83..84 trailing=[Whitespace " "]
+        LiteralExpression
+          IntegerLiteral "0" @ 85..86
+      Statement
+        ExpressionStatement
+          AssignmentExpression
+            NameExpression
+              Identifier "total" @ 91..96 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            PlusEq "+=" @ 97..99 trailing=[Whitespace " "]
+            CallExpression
+              NavigationExpression
+                NameExpression
+                  Identifier "counter" @ 100..107
+                Dot "." @ 107..108
+                Identifier "next" @ 108..112
+              ValueArgumentList
+                LParen "(" @ 112..113
+                RParen ")" @ 113..114
+      Statement
+        ExpressionStatement
+          AssignmentExpression
+            NameExpression
+              Identifier "total" @ 119..124 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            MinusEq "-=" @ 125..127 trailing=[Whitespace " "]
+            LiteralExpression
+              IntegerLiteral "1" @ 128..129
+      Statement
+        ExpressionStatement
+          AssignmentExpression
+            NameExpression
+              Identifier "total" @ 134..139 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            StarEq "*=" @ 140..142 trailing=[Whitespace " "]
+            LiteralExpression
+              IntegerLiteral "2" @ 143..144
+      Statement
+        ExpressionStatement
+          AssignmentExpression
+            NameExpression
+              Identifier "total" @ 149..154 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            SlashEq "/=" @ 155..157 trailing=[Whitespace " "]
+            LiteralExpression
+              IntegerLiteral "3" @ 158..159
+      Statement
+        ExpressionStatement
+          AssignmentExpression
+            NameExpression
+              Identifier "total" @ 164..169 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            PercentEq "%=" @ 170..172 trailing=[Whitespace " "]
+            LiteralExpression
+              IntegerLiteral "4" @ 173..174
+      Statement
+        ExpressionStatement
+          AssignmentExpression
+            IndexExpression
+              NameExpression
+                Identifier "values" @ 179..185 leading=[Newline "\n", Whitespace "    "]
+              LBracket "[" @ 185..186
+              ValueArgument
+                LiteralExpression
+                  IntegerLiteral "0" @ 186..187
+              RBracket "]" @ 187..188 trailing=[Whitespace " "]
+            PlusEq "+=" @ 189..191 trailing=[Whitespace " "]
+            NameExpression
+              Identifier "total" @ 192..197
+      RBrace "}" @ 198..199 leading=[Newline "\n"]
+  Eof "" @ 200..200 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

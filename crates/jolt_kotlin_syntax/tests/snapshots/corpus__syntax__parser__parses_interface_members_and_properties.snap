@@ -1,0 +1,51 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+interface Named {
+    val name: String
+
+    fun display(): String = name
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  InterfaceDeclaration
+    InterfaceKw "interface" @ 0..9 trailing=[Whitespace " "]
+    Name
+      Identifier "Named" @ 10..15 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 16..17
+      ClassMemberDeclaration
+        PropertyDeclaration
+          ValKw "val" @ 22..25 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "name" @ 26..30
+          Colon ":" @ 30..31 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "String" @ 32..38
+      ClassMemberDeclaration
+        FunctionDeclaration
+          FunKw "fun" @ 44..47 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "display" @ 48..55
+          ValueParameterList
+            LParen "(" @ 55..56
+            RParen ")" @ 56..57
+          Colon ":" @ 57..58 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "String" @ 59..65 trailing=[Whitespace " "]
+          Assign "=" @ 66..67 trailing=[Whitespace " "]
+          NameExpression
+            Identifier "name" @ 68..72
+      RBrace "}" @ 73..74 leading=[Newline "\n"]
+  Eof "" @ 75..75 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

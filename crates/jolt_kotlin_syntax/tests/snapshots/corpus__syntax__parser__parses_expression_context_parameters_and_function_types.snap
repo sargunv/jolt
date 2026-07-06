@@ -1,0 +1,120 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+context(logger: Logger)
+fun withContextParameter(value: String): Unit = logger.info(value)
+
+typealias Handler = context(Session) (String) -> Unit
+
+fun functionType(handler: Handler) {
+    handler("ready")
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    ContextParameterClause
+      Identifier "context" @ 0..7
+      LParen "(" @ 7..8
+      ContextParameter
+        Name
+          Identifier "logger" @ 8..14
+        Colon ":" @ 14..15 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Logger" @ 16..22
+      RParen ")" @ 22..23
+    FunKw "fun" @ 24..27 leading=[Newline "\n"] trailing=[Whitespace " "]
+    Identifier "withContextParameter" @ 28..48
+    ValueParameterList
+      LParen "(" @ 48..49
+      ValueParameter
+        Name
+          Identifier "value" @ 49..54
+        Colon ":" @ 54..55 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "String" @ 56..62
+      RParen ")" @ 62..63
+    Colon ":" @ 63..64 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "Unit" @ 65..69 trailing=[Whitespace " "]
+    Assign "=" @ 70..71 trailing=[Whitespace " "]
+    CallExpression
+      NavigationExpression
+        NameExpression
+          Identifier "logger" @ 72..78
+        Dot "." @ 78..79
+        Identifier "info" @ 79..83
+      ValueArgumentList
+        LParen "(" @ 83..84
+        ValueArgument
+          NameExpression
+            Identifier "value" @ 84..89
+        RParen ")" @ 89..90
+  TypeAliasDeclaration
+    TypeAliasKw "typealias" @ 92..101 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "Handler" @ 102..109 trailing=[Whitespace " "]
+    Assign "=" @ 110..111 trailing=[Whitespace " "]
+    TypeReference
+      ContextFunctionType
+        Identifier "context" @ 112..119
+        LParen "(" @ 119..120
+        TypeReference
+          UserType
+            Identifier "Session" @ 120..127
+        RParen ")" @ 127..128 trailing=[Whitespace " "]
+        FunctionType
+          ParenthesizedType
+            LParen "(" @ 129..130
+            TypeReference
+              UserType
+                Identifier "String" @ 130..136
+            RParen ")" @ 136..137 trailing=[Whitespace " "]
+          Arrow "->" @ 138..140 trailing=[Whitespace " "]
+          UserType
+            Identifier "Unit" @ 141..145
+  FunctionDeclaration
+    FunKw "fun" @ 147..150 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "functionType" @ 151..163
+    ValueParameterList
+      LParen "(" @ 163..164
+      ValueParameter
+        Name
+          Identifier "handler" @ 164..171
+        Colon ":" @ 171..172 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Handler" @ 173..180
+      RParen ")" @ 180..181 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 182..183
+      Statement
+        ExpressionStatement
+          CallExpression
+            NameExpression
+              Identifier "handler" @ 188..195 leading=[Newline "\n", Whitespace "    "]
+            ValueArgumentList
+              LParen "(" @ 195..196
+              ValueArgument
+                StringTemplateExpression
+                  StringTemplateEntry
+                    OpenQuote "\"" @ 196..197
+                  StringTemplateEntry
+                    RegularStringPart "ready" @ 197..202
+                  ClosingQuote "\"" @ 202..203
+              RParen ")" @ 203..204
+      RBrace "}" @ 205..206 leading=[Newline "\n"]
+  Eof "" @ 207..207 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

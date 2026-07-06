@@ -1,0 +1,32 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+0 1 123 1_000
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  Statement
+    ExpressionStatement
+      LiteralExpression
+        IntegerLiteral "0" @ 0..1 trailing=[Whitespace " "]
+      ErrorNode
+        IntegerLiteral "1" @ 2..3 trailing=[Whitespace " "]
+      ErrorNode
+        IntegerLiteral "123" @ 4..7 trailing=[Whitespace " "]
+      ErrorNode
+        IntegerLiteral "1_000" @ 8..13
+  Eof "" @ 14..14 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=2..3 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=4..7 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=8..13 message="unexpected token in expression"
+
+diagnostics:
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(2), end: TextSize(3) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(4), end: TextSize(7) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(8), end: TextSize(13) }) message=unexpected token in expression

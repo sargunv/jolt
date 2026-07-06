@@ -1,0 +1,58 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun sum(left: Int, right: Int): Int {
+    return left + right
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    Identifier "sum" @ 4..7
+    ValueParameterList
+      LParen "(" @ 7..8
+      ValueParameter
+        Name
+          Identifier "left" @ 8..12
+        Colon ":" @ 12..13 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Int" @ 14..17
+      Comma "," @ 17..18 trailing=[Whitespace " "]
+      ValueParameter
+        Name
+          Identifier "right" @ 19..24
+        Colon ":" @ 24..25 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Int" @ 26..29
+      RParen ")" @ 29..30
+    Colon ":" @ 30..31 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "Int" @ 32..35 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 36..37
+      Statement
+        ExpressionStatement
+          JumpExpression
+            ReturnKw "return" @ 42..48 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            BinaryExpression
+              NameExpression
+                Identifier "left" @ 49..53 trailing=[Whitespace " "]
+              Plus "+" @ 54..55 trailing=[Whitespace " "]
+              NameExpression
+                Identifier "right" @ 56..61
+      RBrace "}" @ 62..63 leading=[Newline "\n"]
+  Eof "" @ 64..64 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

@@ -1,0 +1,28 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+café Δelta 名称 _привет
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  Statement
+    ExpressionStatement
+      BinaryExpression
+        NameExpression
+          Identifier "café" @ 0..5 trailing=[Whitespace " "]
+        Identifier "Δelta" @ 6..12 trailing=[Whitespace " "]
+        NameExpression
+          Identifier "名称" @ 13..19 trailing=[Whitespace " "]
+      ErrorNode
+        Identifier "_привет" @ 20..33
+  Eof "" @ 34..34 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=20..33 message="unexpected token in expression"
+
+diagnostics:
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(20), end: TextSize(33) }) message=unexpected token in expression

@@ -13,7 +13,13 @@
       { "command": "mise fmt -s", "fileNames": ["mise.toml"] }
     ]
   },
-  "excludes": ["crates/**/*.java", ".github/workflows/release.yml"],
+  "excludes": [
+    "**/*.snap",
+    "crates/**/*.java",
+    "fixtures/java/**",
+    "fixtures/kotlin/**",
+    ".github/workflows/release.yml"
+  ],
   "plugins": [
     "https://plugins.dprint.dev/json-0.22.0.wasm",
     "https://plugins.dprint.dev/markdown-0.22.1.wasm",

@@ -1,0 +1,88 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun brokenWhen(value: Int): String {
+    return when (value) {
+        0 "zero"
+        1 ->
+        else -> "other"
+    }
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    Identifier "brokenWhen" @ 4..14
+    ValueParameterList
+      LParen "(" @ 14..15
+      ValueParameter
+        Name
+          Identifier "value" @ 15..20
+        Colon ":" @ 20..21 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Int" @ 22..25
+      RParen ")" @ 25..26
+    Colon ":" @ 26..27 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "String" @ 28..34 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 35..36
+      Statement
+        ExpressionStatement
+          JumpExpression
+            ReturnKw "return" @ 41..47 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            WhenExpression
+              WhenKw "when" @ 48..52 trailing=[Whitespace " "]
+              WhenSubject
+                LParen "(" @ 53..54
+                NameExpression
+                  Identifier "value" @ 54..59
+                RParen ")" @ 59..60 trailing=[Whitespace " "]
+              LBrace "{" @ 61..62
+              WhenEntry
+                WhenCondition
+                  LiteralExpression
+                    IntegerLiteral "0" @ 71..72 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                  ErrorNode
+                    OpenQuote "\"" @ 73..74
+                  ErrorNode
+                    RegularStringPart "zero" @ 74..78
+                  ErrorNode
+                    ClosingQuote "\"" @ 78..79
+                LiteralExpression
+                  IntegerLiteral "1" @ 88..89 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                ErrorNode
+                  Arrow "->" @ 90..92
+              WhenEntry
+                ElseKw "else" @ 101..105 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                Arrow "->" @ 106..108 trailing=[Whitespace " "]
+                StringTemplateExpression
+                  StringTemplateEntry
+                    OpenQuote "\"" @ 109..110
+                  StringTemplateEntry
+                    RegularStringPart "other" @ 110..115
+                  ClosingQuote "\"" @ 115..116
+              RBrace "}" @ 121..122 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 123..124 leading=[Newline "\n"]
+  Eof "" @ 125..125 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=73..74 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=74..78 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=78..79 message="unexpected token in expression"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=88..89 message="expected '->' in when entry"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=90..92 message="unexpected token in expression"
+
+diagnostics:
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(73), end: TextSize(74) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(74), end: TextSize(78) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(78), end: TextSize(79) }) message=unexpected token in expression
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(88), end: TextSize(89) }) message=expected '->' in when entry
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(90), end: TextSize(92) }) message=unexpected token in expression

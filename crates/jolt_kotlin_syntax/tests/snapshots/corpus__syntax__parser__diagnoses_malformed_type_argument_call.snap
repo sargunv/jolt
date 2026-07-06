@@ -1,0 +1,118 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun malformedTypeArgumentCall(value: String) {
+    val broken = factory.create<String,, Int>(value)
+    val missing = factory.create<List<String>(value)
+    consume(broken, missing)
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    Identifier "malformedTypeArgumentCall" @ 4..29
+    ValueParameterList
+      LParen "(" @ 29..30
+      ValueParameter
+        Name
+          Identifier "value" @ 30..35
+        Colon ":" @ 35..36 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "String" @ 37..43
+      RParen ")" @ 43..44 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 45..46
+      PropertyDeclaration
+        ValKw "val" @ 51..54 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "broken" @ 55..61 trailing=[Whitespace " "]
+        Assign "=" @ 62..63 trailing=[Whitespace " "]
+        CallExpression
+          NavigationExpression
+            NameExpression
+              Identifier "factory" @ 64..71
+            Dot "." @ 71..72
+            Identifier "create" @ 72..78
+          TypeArgumentList
+            Lt "<" @ 78..79
+            TypeProjectionList
+              TypeArgument
+                TypeProjection
+                  TypeReference
+                    UserType
+                      Identifier "String" @ 79..85
+              Comma "," @ 85..86
+              Comma "," @ 86..87 trailing=[Whitespace " "]
+              ErrorNode
+              TypeArgument
+                TypeProjection
+                  TypeReference
+                    UserType
+                      Identifier "Int" @ 88..91
+            Gt ">" @ 91..92
+          ValueArgumentList
+            LParen "(" @ 92..93
+            ValueArgument
+              NameExpression
+                Identifier "value" @ 93..98
+            RParen ")" @ 98..99
+      PropertyDeclaration
+        ValKw "val" @ 104..107 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "missing" @ 108..115 trailing=[Whitespace " "]
+        Assign "=" @ 116..117 trailing=[Whitespace " "]
+        BinaryExpression
+          NavigationExpression
+            NameExpression
+              Identifier "factory" @ 118..125
+            Dot "." @ 125..126
+            Identifier "create" @ 126..132
+          ErrorNode
+          Lt "<" @ 132..133
+          CallExpression
+            NameExpression
+              Identifier "List" @ 133..137
+            TypeArgumentList
+              Lt "<" @ 137..138
+              TypeProjectionList
+                TypeArgument
+                  TypeProjection
+                    TypeReference
+                      UserType
+                        Identifier "String" @ 138..144
+              Gt ">" @ 144..145
+            ValueArgumentList
+              LParen "(" @ 145..146
+              ValueArgument
+                NameExpression
+                  Identifier "value" @ 146..151
+              RParen ")" @ 151..152
+      Statement
+        ExpressionStatement
+          CallExpression
+            NameExpression
+              Identifier "consume" @ 157..164 leading=[Newline "\n", Whitespace "    "]
+            ValueArgumentList
+              LParen "(" @ 164..165
+              ValueArgument
+                NameExpression
+                  Identifier "broken" @ 165..171
+              Comma "," @ 171..172 trailing=[Whitespace " "]
+              ValueArgument
+                NameExpression
+                  Identifier "missing" @ 173..180
+              RParen ")" @ 180..181
+      RBrace "}" @ 182..183 leading=[Newline "\n"]
+  Eof "" @ 184..184 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.malformed_type_argument_list severity=Error stage=Parser range=88..91 message="malformed type argument list"
+  code=kotlin.parse.malformed_type_argument_list severity=Error stage=Parser range=132..133 message="malformed type argument list"
+
+diagnostics:
+code=kotlin.parse.malformed_type_argument_list severity=Error stage=Parser range=Some(TextRange { start: TextSize(88), end: TextSize(91) }) message=malformed type argument list
+code=kotlin.parse.malformed_type_argument_list severity=Error stage=Parser range=Some(TextRange { start: TextSize(132), end: TextSize(133) }) message=malformed type argument list

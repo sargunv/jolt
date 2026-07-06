@@ -1,0 +1,82 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun newlineSelectors(receiver: Receiver) {
+    val selected = receiver
+        .child
+        .call()
+
+    receiver
+    standalone()
+
+    consume(selected)
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    Identifier "newlineSelectors" @ 4..20
+    ValueParameterList
+      LParen "(" @ 20..21
+      ValueParameter
+        Name
+          Identifier "receiver" @ 21..29
+        Colon ":" @ 29..30 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Receiver" @ 31..39
+      RParen ")" @ 39..40 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 41..42
+      PropertyDeclaration
+        ValKw "val" @ 47..50 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "selected" @ 51..59 trailing=[Whitespace " "]
+        Assign "=" @ 60..61 trailing=[Whitespace " "]
+        CallExpression
+          NavigationExpression
+            NavigationExpression
+              NameExpression
+                Identifier "receiver" @ 62..70
+              Dot "." @ 79..80 leading=[Newline "\n", Whitespace "        "]
+              Identifier "child" @ 80..85
+            Dot "." @ 94..95 leading=[Newline "\n", Whitespace "        "]
+            Identifier "call" @ 95..99
+          ValueArgumentList
+            LParen "(" @ 99..100
+            RParen ")" @ 100..101
+      Statement
+        ExpressionStatement
+          NameExpression
+            Identifier "receiver" @ 107..115 leading=[Newline "\n", Newline "\n", Whitespace "    "]
+      Statement
+        ExpressionStatement
+          CallExpression
+            NameExpression
+              Identifier "standalone" @ 120..130 leading=[Newline "\n", Whitespace "    "]
+            ValueArgumentList
+              LParen "(" @ 130..131
+              RParen ")" @ 131..132
+      Statement
+        ExpressionStatement
+          CallExpression
+            NameExpression
+              Identifier "consume" @ 138..145 leading=[Newline "\n", Newline "\n", Whitespace "    "]
+            ValueArgumentList
+              LParen "(" @ 145..146
+              ValueArgument
+                NameExpression
+                  Identifier "selected" @ 146..154
+              RParen ")" @ 154..155
+      RBrace "}" @ 156..157 leading=[Newline "\n"]
+  Eof "" @ 158..158 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

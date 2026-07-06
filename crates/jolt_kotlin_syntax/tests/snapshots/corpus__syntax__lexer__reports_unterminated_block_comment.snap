@@ -1,0 +1,24 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+val x = 1 /* nope
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  PropertyDeclaration
+    ValKw "val" @ 0..3 trailing=[Whitespace " "]
+    Identifier "x" @ 4..5 trailing=[Whitespace " "]
+    Assign "=" @ 6..7 trailing=[Whitespace " "]
+    LiteralExpression
+      IntegerLiteral "1" @ 8..9 trailing=[Whitespace " "]
+  Eof "" @ 18..18 leading=[BlockComment "/* nope\n"]
+
+diagnostics:
+  code=kotlin.lex.unterminated_block_comment severity=Error stage=Lexer range=10..18 message="unterminated block comment"
+
+diagnostics:
+code=kotlin.lex.unterminated_block_comment severity=Error stage=Lexer range=Some(TextRange { start: TextSize(10), end: TextSize(18) }) message=unterminated block comment

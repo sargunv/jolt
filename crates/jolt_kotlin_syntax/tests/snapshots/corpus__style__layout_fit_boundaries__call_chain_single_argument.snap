@@ -1,0 +1,156 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package com.example.boundaries
+
+fun boundary(source: Sequence<String>): List<String> =
+    source.map { it.trim().lowercase().replace("-", "_").removePrefix("tmp_") }.filter { it.isNotEmpty() }.toList()
+
+syntax:
+syntax:
+KotlinFile
+  PackageHeader
+    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+    QualifiedName
+      Name
+        Identifier "com" @ 8..11
+      Dot "." @ 11..12
+      Name
+        Identifier "example" @ 12..19
+      Dot "." @ 19..20
+      Name
+        Identifier "boundaries" @ 20..30
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 32..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "boundary" @ 36..44
+    ValueParameterList
+      LParen "(" @ 44..45
+      ValueParameter
+        Name
+          Identifier "source" @ 45..51
+        Colon ":" @ 51..52 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Sequence" @ 53..61
+            TypeArgumentList
+              Lt "<" @ 61..62
+              TypeProjectionList
+                TypeArgument
+                  TypeProjection
+                    TypeReference
+                      UserType
+                        Identifier "String" @ 62..68
+              Gt ">" @ 68..69
+      RParen ")" @ 69..70
+    Colon ":" @ 70..71 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "List" @ 72..76
+        TypeArgumentList
+          Lt "<" @ 76..77
+          TypeProjectionList
+            TypeArgument
+              TypeProjection
+                TypeReference
+                  UserType
+                    Identifier "String" @ 77..83
+          Gt ">" @ 83..84 trailing=[Whitespace " "]
+    Assign "=" @ 85..86
+    CallExpression
+      NavigationExpression
+        CallExpression
+          NavigationExpression
+            CallExpression
+              NavigationExpression
+                NameExpression
+                  Identifier "source" @ 91..97 leading=[Newline "\n", Whitespace "    "]
+                Dot "." @ 97..98
+                Identifier "map" @ 98..101 trailing=[Whitespace " "]
+              LambdaExpression
+                LBrace "{" @ 102..103 trailing=[Whitespace " "]
+                Statement
+                  ExpressionStatement
+                    CallExpression
+                      NavigationExpression
+                        CallExpression
+                          NavigationExpression
+                            CallExpression
+                              NavigationExpression
+                                CallExpression
+                                  NavigationExpression
+                                    NameExpression
+                                      Identifier "it" @ 104..106
+                                    Dot "." @ 106..107
+                                    Identifier "trim" @ 107..111
+                                  ValueArgumentList
+                                    LParen "(" @ 111..112
+                                    RParen ")" @ 112..113
+                                Dot "." @ 113..114
+                                Identifier "lowercase" @ 114..123
+                              ValueArgumentList
+                                LParen "(" @ 123..124
+                                RParen ")" @ 124..125
+                            Dot "." @ 125..126
+                            Identifier "replace" @ 126..133
+                          ValueArgumentList
+                            LParen "(" @ 133..134
+                            ValueArgument
+                              StringTemplateExpression
+                                StringTemplateEntry
+                                  OpenQuote "\"" @ 134..135
+                                StringTemplateEntry
+                                  RegularStringPart "-" @ 135..136
+                                ClosingQuote "\"" @ 136..137
+                            Comma "," @ 137..138 trailing=[Whitespace " "]
+                            ValueArgument
+                              StringTemplateExpression
+                                StringTemplateEntry
+                                  OpenQuote "\"" @ 139..140
+                                StringTemplateEntry
+                                  RegularStringPart "_" @ 140..141
+                                ClosingQuote "\"" @ 141..142
+                            RParen ")" @ 142..143
+                        Dot "." @ 143..144
+                        Identifier "removePrefix" @ 144..156
+                      ValueArgumentList
+                        LParen "(" @ 156..157
+                        ValueArgument
+                          StringTemplateExpression
+                            StringTemplateEntry
+                              OpenQuote "\"" @ 157..158
+                            StringTemplateEntry
+                              RegularStringPart "tmp_" @ 158..162
+                            ClosingQuote "\"" @ 162..163
+                        RParen ")" @ 163..164 trailing=[Whitespace " "]
+                RBrace "}" @ 165..166
+            Dot "." @ 166..167
+            Identifier "filter" @ 167..173 trailing=[Whitespace " "]
+          LambdaExpression
+            LBrace "{" @ 174..175 trailing=[Whitespace " "]
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NavigationExpression
+                    NameExpression
+                      Identifier "it" @ 176..178
+                    Dot "." @ 178..179
+                    Identifier "isNotEmpty" @ 179..189
+                  ValueArgumentList
+                    LParen "(" @ 189..190
+                    RParen ")" @ 190..191 trailing=[Whitespace " "]
+            RBrace "}" @ 192..193
+        Dot "." @ 193..194
+        Identifier "toList" @ 194..200
+      ValueArgumentList
+        LParen "(" @ 200..201
+        RParen ")" @ 201..202
+  Eof "" @ 203..203 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

@@ -1,0 +1,78 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+typealias Callback = context(Logger) (String?) -> Unit
+
+val callback: Callback = { value -> println(value) }
+
+interface Logger
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  TypeAliasDeclaration
+    TypeAliasKw "typealias" @ 0..9 trailing=[Whitespace " "]
+    Name
+      Identifier "Callback" @ 10..18 trailing=[Whitespace " "]
+    Assign "=" @ 19..20 trailing=[Whitespace " "]
+    TypeReference
+      ContextFunctionType
+        Identifier "context" @ 21..28
+        LParen "(" @ 28..29
+        TypeReference
+          UserType
+            Identifier "Logger" @ 29..35
+        RParen ")" @ 35..36 trailing=[Whitespace " "]
+        FunctionType
+          ParenthesizedType
+            LParen "(" @ 37..38
+            TypeReference
+              NullableType
+                UserType
+                  Identifier "String" @ 38..44
+                Question "?" @ 44..45
+            RParen ")" @ 45..46 trailing=[Whitespace " "]
+          Arrow "->" @ 47..49 trailing=[Whitespace " "]
+          UserType
+            Identifier "Unit" @ 50..54
+  PropertyDeclaration
+    ValKw "val" @ 56..59 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "callback" @ 60..68
+    Colon ":" @ 68..69 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "Callback" @ 70..78 trailing=[Whitespace " "]
+    Assign "=" @ 79..80 trailing=[Whitespace " "]
+    LambdaExpression
+      LBrace "{" @ 81..82 trailing=[Whitespace " "]
+      LambdaParameterList
+        LambdaParameter
+          Name
+            Identifier "value" @ 83..88 trailing=[Whitespace " "]
+        Arrow "->" @ 89..91 trailing=[Whitespace " "]
+      Statement
+        ExpressionStatement
+          CallExpression
+            NameExpression
+              Identifier "println" @ 92..99
+            ValueArgumentList
+              LParen "(" @ 99..100
+              ValueArgument
+                NameExpression
+                  Identifier "value" @ 100..105
+              RParen ")" @ 105..106 trailing=[Whitespace " "]
+      RBrace "}" @ 107..108
+  InterfaceDeclaration
+    InterfaceKw "interface" @ 110..119 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "Logger" @ 120..126
+  Eof "" @ 127..127 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

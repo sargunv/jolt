@@ -1,0 +1,63 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package com.example.trivia
+
+typealias Callback =
+    context(Logger /* JOLT-TRIVIA:context-function-type */) (String? /* JOLT-TRIVIA:nullable-parameter */) -> /* JOLT-TRIVIA:function-arrow */ Unit
+
+interface Logger
+
+syntax:
+syntax:
+KotlinFile
+  PackageHeader
+    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+    QualifiedName
+      Name
+        Identifier "com" @ 8..11
+      Dot "." @ 11..12
+      Name
+        Identifier "example" @ 12..19
+      Dot "." @ 19..20
+      Name
+        Identifier "trivia" @ 20..26
+  ImportList
+  TypeAliasDeclaration
+    TypeAliasKw "typealias" @ 28..37 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "Callback" @ 38..46 trailing=[Whitespace " "]
+    Assign "=" @ 47..48
+    TypeReference
+      ContextFunctionType
+        Identifier "context" @ 53..60 leading=[Newline "\n", Whitespace "    "]
+        LParen "(" @ 60..61
+        TypeReference
+          UserType
+            Identifier "Logger" @ 61..67 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:context-function-type */"]
+        RParen ")" @ 107..108 trailing=[Whitespace " "]
+        FunctionType
+          ParenthesizedType
+            LParen "(" @ 109..110
+            TypeReference
+              NullableType
+                UserType
+                  Identifier "String" @ 110..116
+                Question "?" @ 116..117 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:nullable-parameter */"]
+            RParen ")" @ 154..155 trailing=[Whitespace " "]
+          Arrow "->" @ 156..158 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:function-arrow */", Whitespace " "]
+          UserType
+            Identifier "Unit" @ 192..196
+  InterfaceDeclaration
+    InterfaceKw "interface" @ 198..207 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "Logger" @ 208..214
+  Eof "" @ 215..215 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

@@ -1,0 +1,96 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class SecondaryConstructor private constructor(val name: String) {
+    constructor() : this("default")
+
+    constructor(id: Int) : this(id.toString())
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Name
+      Identifier "SecondaryConstructor" @ 6..26 trailing=[Whitespace " "]
+    PrimaryConstructor
+      ModifierList
+        Identifier "private" @ 27..34 trailing=[Whitespace " "]
+      Identifier "constructor" @ 35..46
+      ValueParameterList
+        LParen "(" @ 46..47
+        ValueParameter
+          ValKw "val" @ 47..50 trailing=[Whitespace " "]
+          Name
+            Identifier "name" @ 51..55
+          Colon ":" @ 55..56 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "String" @ 57..63
+        RParen ")" @ 63..64 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 65..66
+      ClassMemberDeclaration
+        SecondaryConstructor
+          Identifier "constructor" @ 71..82 leading=[Newline "\n", Whitespace "    "]
+          ValueParameterList
+            LParen "(" @ 82..83
+            RParen ")" @ 83..84 trailing=[Whitespace " "]
+          Colon ":" @ 85..86 trailing=[Whitespace " "]
+          ConstructorDelegationCall
+            CallExpression
+              ThisExpression
+                ThisKw "this" @ 87..91
+              ValueArgumentList
+                LParen "(" @ 91..92
+                ValueArgument
+                  StringTemplateExpression
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 92..93
+                    StringTemplateEntry
+                      RegularStringPart "default" @ 93..100
+                    ClosingQuote "\"" @ 100..101
+                RParen ")" @ 101..102
+      ClassMemberDeclaration
+        SecondaryConstructor
+          Identifier "constructor" @ 108..119 leading=[Newline "\n", Newline "\n", Whitespace "    "]
+          ValueParameterList
+            LParen "(" @ 119..120
+            ValueParameter
+              Name
+                Identifier "id" @ 120..122
+              Colon ":" @ 122..123 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  Identifier "Int" @ 124..127
+            RParen ")" @ 127..128 trailing=[Whitespace " "]
+          Colon ":" @ 129..130 trailing=[Whitespace " "]
+          ConstructorDelegationCall
+            CallExpression
+              ThisExpression
+                ThisKw "this" @ 131..135
+              ValueArgumentList
+                LParen "(" @ 135..136
+                ValueArgument
+                  CallExpression
+                    NavigationExpression
+                      NameExpression
+                        Identifier "id" @ 136..138
+                      Dot "." @ 138..139
+                      Identifier "toString" @ 139..147
+                    ValueArgumentList
+                      LParen "(" @ 147..148
+                      RParen ")" @ 148..149
+                RParen ")" @ 149..150
+      RBrace "}" @ 151..152 leading=[Newline "\n"]
+  Eof "" @ 153..153 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

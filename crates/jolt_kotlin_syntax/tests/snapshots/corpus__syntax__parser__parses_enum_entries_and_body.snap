@@ -1,0 +1,105 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+enum class Direction(val dx: Int, val dy: Int) {
+    North(0, -1),
+    South(0, 1);
+
+    fun vertical(): Boolean = dx == 0
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  ClassDeclaration
+    ModifierList
+      Identifier "enum" @ 0..4 trailing=[Whitespace " "]
+    ClassKw "class" @ 5..10 trailing=[Whitespace " "]
+    Name
+      Identifier "Direction" @ 11..20
+    PrimaryConstructor
+      ValueParameterList
+        LParen "(" @ 20..21
+        ValueParameter
+          ValKw "val" @ 21..24 trailing=[Whitespace " "]
+          Name
+            Identifier "dx" @ 25..27
+          Colon ":" @ 27..28 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "Int" @ 29..32
+        Comma "," @ 32..33 trailing=[Whitespace " "]
+        ValueParameter
+          ValKw "val" @ 34..37 trailing=[Whitespace " "]
+          Name
+            Identifier "dy" @ 38..40
+          Colon ":" @ 40..41 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "Int" @ 42..45
+        RParen ")" @ 45..46 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 47..48
+      ClassMemberDeclaration
+        EnumEntry
+          CallExpression
+            NameExpression
+              Identifier "North" @ 53..58 leading=[Newline "\n", Whitespace "    "]
+            ValueArgumentList
+              LParen "(" @ 58..59
+              ValueArgument
+                LiteralExpression
+                  IntegerLiteral "0" @ 59..60
+              Comma "," @ 60..61 trailing=[Whitespace " "]
+              ValueArgument
+                UnaryExpression
+                  Minus "-" @ 62..63
+                  LiteralExpression
+                    IntegerLiteral "1" @ 63..64
+              RParen ")" @ 64..65
+      Comma "," @ 65..66
+      ClassMemberDeclaration
+        EnumEntry
+          CallExpression
+            NameExpression
+              Identifier "South" @ 71..76 leading=[Newline "\n", Whitespace "    "]
+            ValueArgumentList
+              LParen "(" @ 76..77
+              ValueArgument
+                LiteralExpression
+                  IntegerLiteral "0" @ 77..78
+              Comma "," @ 78..79 trailing=[Whitespace " "]
+              ValueArgument
+                LiteralExpression
+                  IntegerLiteral "1" @ 80..81
+              RParen ")" @ 81..82
+      Semicolon ";" @ 82..83
+      ClassMemberDeclaration
+        FunctionDeclaration
+          FunKw "fun" @ 89..92 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "vertical" @ 93..101
+          ValueParameterList
+            LParen "(" @ 101..102
+            RParen ")" @ 102..103
+          Colon ":" @ 103..104 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "Boolean" @ 105..112 trailing=[Whitespace " "]
+          Assign "=" @ 113..114 trailing=[Whitespace " "]
+          BinaryExpression
+            NameExpression
+              Identifier "dx" @ 115..117 trailing=[Whitespace " "]
+            EqEq "==" @ 118..120 trailing=[Whitespace " "]
+            LiteralExpression
+              IntegerLiteral "0" @ 121..122
+      RBrace "}" @ 123..124 leading=[Newline "\n"]
+  Eof "" @ 125..125 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

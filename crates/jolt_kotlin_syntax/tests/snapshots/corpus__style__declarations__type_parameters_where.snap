@@ -1,0 +1,137 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package com.example.declarations
+
+interface Source<T>
+interface Sink<T>
+
+fun <T, R> connect(source: T, value: R): R
+    where T : Source<R>,
+          T : Sink<R> {
+    return value
+}
+
+syntax:
+syntax:
+KotlinFile
+  PackageHeader
+    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+    QualifiedName
+      Name
+        Identifier "com" @ 8..11
+      Dot "." @ 11..12
+      Name
+        Identifier "example" @ 12..19
+      Dot "." @ 19..20
+      Name
+        Identifier "declarations" @ 20..32
+  ImportList
+  InterfaceDeclaration
+    InterfaceKw "interface" @ 34..43 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "Source" @ 44..50
+    TypeParameterList
+      Lt "<" @ 50..51
+      TypeParameter
+        Name
+          Identifier "T" @ 51..52
+      Gt ">" @ 52..53
+  InterfaceDeclaration
+    InterfaceKw "interface" @ 54..63 leading=[Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "Sink" @ 64..68
+    TypeParameterList
+      Lt "<" @ 68..69
+      TypeParameter
+        Name
+          Identifier "T" @ 69..70
+      Gt ">" @ 70..71
+  FunctionDeclaration
+    FunKw "fun" @ 73..76 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    TypeParameterList
+      Lt "<" @ 77..78
+      TypeParameter
+        Name
+          Identifier "T" @ 78..79
+      Comma "," @ 79..80 trailing=[Whitespace " "]
+      TypeParameter
+        Name
+          Identifier "R" @ 81..82
+      Gt ">" @ 82..83 trailing=[Whitespace " "]
+    Identifier "connect" @ 84..91
+    ValueParameterList
+      LParen "(" @ 91..92
+      ValueParameter
+        Name
+          Identifier "source" @ 92..98
+        Colon ":" @ 98..99 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "T" @ 100..101
+      Comma "," @ 101..102 trailing=[Whitespace " "]
+      ValueParameter
+        Name
+          Identifier "value" @ 103..108
+        Colon ":" @ 108..109 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "R" @ 110..111
+      RParen ")" @ 111..112
+    Colon ":" @ 112..113 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "R" @ 114..115
+    TypeConstraintList
+      Identifier "where" @ 120..125 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+      TypeConstraint
+        Name
+          Identifier "T" @ 126..127 trailing=[Whitespace " "]
+        Colon ":" @ 128..129 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Source" @ 130..136
+            TypeArgumentList
+              Lt "<" @ 136..137
+              TypeProjectionList
+                TypeArgument
+                  TypeProjection
+                    TypeReference
+                      UserType
+                        Identifier "R" @ 137..138
+              Gt ">" @ 138..139
+      Comma "," @ 139..140
+      TypeConstraint
+        Name
+          Identifier "T" @ 151..152 leading=[Newline "\n", Whitespace "          "] trailing=[Whitespace " "]
+        Colon ":" @ 153..154 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Sink" @ 155..159
+            TypeArgumentList
+              Lt "<" @ 159..160
+              TypeProjectionList
+                TypeArgument
+                  TypeProjection
+                    TypeReference
+                      UserType
+                        Identifier "R" @ 160..161
+              Gt ">" @ 161..162 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 163..164
+      Statement
+        ExpressionStatement
+          JumpExpression
+            ReturnKw "return" @ 169..175 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            NameExpression
+              Identifier "value" @ 176..181
+      RBrace "}" @ 182..183 leading=[Newline "\n"]
+  Eof "" @ 184..184 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

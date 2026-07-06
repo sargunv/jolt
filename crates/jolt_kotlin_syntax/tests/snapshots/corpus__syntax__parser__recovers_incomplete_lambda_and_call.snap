@@ -1,0 +1,88 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun incompleteLambda(values: List<Int>) {
+    values.map { value ->
+        value + 1
+    values.filter(
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    Identifier "incompleteLambda" @ 4..20
+    ValueParameterList
+      LParen "(" @ 20..21
+      ValueParameter
+        Name
+          Identifier "values" @ 21..27
+        Colon ":" @ 27..28 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "List" @ 29..33
+            TypeArgumentList
+              Lt "<" @ 33..34
+              TypeProjectionList
+                TypeArgument
+                  TypeProjection
+                    TypeReference
+                      UserType
+                        Identifier "Int" @ 34..37
+              Gt ">" @ 37..38
+      RParen ")" @ 38..39 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 40..41
+      Statement
+        ExpressionStatement
+          CallExpression
+            NavigationExpression
+              NameExpression
+                Identifier "values" @ 46..52 leading=[Newline "\n", Whitespace "    "]
+              Dot "." @ 52..53
+              Identifier "map" @ 53..56 trailing=[Whitespace " "]
+            LambdaExpression
+              LBrace "{" @ 57..58 trailing=[Whitespace " "]
+              LambdaParameterList
+                LambdaParameter
+                  Name
+                    Identifier "value" @ 59..64 trailing=[Whitespace " "]
+                Arrow "->" @ 65..67
+              Statement
+                ModifierList
+                  Identifier "value" @ 76..81 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                ExpressionStatement
+                  UnaryExpression
+                    Plus "+" @ 82..83 trailing=[Whitespace " "]
+                    LiteralExpression
+                      IntegerLiteral "1" @ 84..85
+              Statement
+                ExpressionStatement
+                  CallExpression
+                    NavigationExpression
+                      NameExpression
+                        Identifier "values" @ 90..96 leading=[Newline "\n", Whitespace "    "]
+                      Dot "." @ 96..97
+                      Identifier "filter" @ 97..103
+                    ValueArgumentList
+                      LParen "(" @ 103..104
+                      ValueArgument
+                        ErrorNode
+                          RBrace "}" @ 105..106 leading=[Newline "\n"]
+  Eof "" @ 107..107 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=105..106 message="expected expression"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=107..107 message="expected ')' after arguments"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=107..107 message="expected '}' after lambda"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=107..107 message="expected '}' after block"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(105), end: TextSize(106) }) message=expected expression
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(107), end: TextSize(107) }) message=expected ')' after arguments
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(107), end: TextSize(107) }) message=expected '}' after lambda
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(107), end: TextSize(107) }) message=expected '}' after block

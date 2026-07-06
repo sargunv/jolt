@@ -1,0 +1,26 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+"\q"
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  Statement
+    ExpressionStatement
+      StringTemplateExpression
+        StringTemplateEntry
+          OpenQuote "\"" @ 0..1
+        StringTemplateEntry
+          EscapeSequence "\\q" @ 1..3
+        ClosingQuote "\"" @ 3..4
+  Eof "" @ 5..5 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.lex.invalid_escape_sequence severity=Error stage=Lexer range=1..3 message="invalid escape sequence"
+
+diagnostics:
+code=kotlin.lex.invalid_escape_sequence severity=Error stage=Lexer range=Some(TextRange { start: TextSize(1), end: TextSize(3) }) message=invalid escape sequence

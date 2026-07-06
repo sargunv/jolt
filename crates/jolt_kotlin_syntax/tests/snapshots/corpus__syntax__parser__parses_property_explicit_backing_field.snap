@@ -1,0 +1,45 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class ExplicitBackingField {
+    val city: String
+        field = "Paris"
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Name
+      Identifier "ExplicitBackingField" @ 6..26 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 27..28
+      ClassMemberDeclaration
+        PropertyDeclaration
+          ValKw "val" @ 33..36 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "city" @ 37..41
+          Colon ":" @ 41..42 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "String" @ 43..49
+          ExplicitBackingField
+            Identifier "field" @ 58..63 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+            Assign "=" @ 64..65 trailing=[Whitespace " "]
+            StringTemplateExpression
+              StringTemplateEntry
+                OpenQuote "\"" @ 66..67
+              StringTemplateEntry
+                RegularStringPart "Paris" @ 67..72
+              ClosingQuote "\"" @ 72..73
+      RBrace "}" @ 74..75 leading=[Newline "\n"]
+  Eof "" @ 76..76 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

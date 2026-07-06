@@ -1,0 +1,123 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package com.example.declarations
+
+@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
+annotation class Generated(val by: String)
+
+@Generated("fixture") sealed class Result
+
+data class Success(val value: String) : Result()
+
+syntax:
+syntax:
+KotlinFile
+  PackageHeader
+    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+    QualifiedName
+      Name
+        Identifier "com" @ 8..11
+      Dot "." @ 11..12
+      Name
+        Identifier "example" @ 12..19
+      Dot "." @ 19..20
+      Name
+        Identifier "declarations" @ 20..32
+  ImportList
+  ClassDeclaration
+    ModifierList
+      Annotation
+        At "@" @ 34..35 leading=[Newline "\n", Newline "\n"]
+        QualifiedName
+          Name
+            Identifier "Target" @ 35..41
+        AnnotationArgumentList
+          LParen "(" @ 41..42
+          ValueArgument
+            NavigationExpression
+              NameExpression
+                Identifier "AnnotationTarget" @ 42..58
+              Dot "." @ 58..59
+              Identifier "CLASS" @ 59..64
+          Comma "," @ 64..65 trailing=[Whitespace " "]
+          ValueArgument
+            NavigationExpression
+              NameExpression
+                Identifier "AnnotationTarget" @ 66..82
+              Dot "." @ 82..83
+              Identifier "FUNCTION" @ 83..91
+          RParen ")" @ 91..92
+      Identifier "annotation" @ 93..103 leading=[Newline "\n"] trailing=[Whitespace " "]
+    ClassKw "class" @ 104..109 trailing=[Whitespace " "]
+    Name
+      Identifier "Generated" @ 110..119
+    PrimaryConstructor
+      ValueParameterList
+        LParen "(" @ 119..120
+        ValueParameter
+          ValKw "val" @ 120..123 trailing=[Whitespace " "]
+          Name
+            Identifier "by" @ 124..126
+          Colon ":" @ 126..127 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "String" @ 128..134
+        RParen ")" @ 134..135
+  ClassDeclaration
+    ModifierList
+      Annotation
+        At "@" @ 137..138 leading=[Newline "\n", Newline "\n"]
+        QualifiedName
+          Name
+            Identifier "Generated" @ 138..147
+        AnnotationArgumentList
+          LParen "(" @ 147..148
+          ValueArgument
+            StringTemplateExpression
+              StringTemplateEntry
+                OpenQuote "\"" @ 148..149
+              StringTemplateEntry
+                RegularStringPart "fixture" @ 149..156
+              ClosingQuote "\"" @ 156..157
+          RParen ")" @ 157..158 trailing=[Whitespace " "]
+      Identifier "sealed" @ 159..165 trailing=[Whitespace " "]
+    ClassKw "class" @ 166..171 trailing=[Whitespace " "]
+    Name
+      Identifier "Result" @ 172..178
+  ClassDeclaration
+    ModifierList
+      Identifier "data" @ 180..184 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    ClassKw "class" @ 185..190 trailing=[Whitespace " "]
+    Name
+      Identifier "Success" @ 191..198
+    PrimaryConstructor
+      ValueParameterList
+        LParen "(" @ 198..199
+        ValueParameter
+          ValKw "val" @ 199..202 trailing=[Whitespace " "]
+          Name
+            Identifier "value" @ 203..208
+          Colon ":" @ 208..209 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "String" @ 210..216
+        RParen ")" @ 216..217 trailing=[Whitespace " "]
+    Colon ":" @ 218..219 trailing=[Whitespace " "]
+    DelegationSpecifierList
+      DelegationSpecifier
+        CallExpression
+          NameExpression
+            Identifier "Result" @ 220..226
+          ValueArgumentList
+            LParen "(" @ 226..227
+            RParen ")" @ 227..228
+  Eof "" @ 229..229 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

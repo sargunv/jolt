@@ -1,0 +1,32 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+val x = 1 | 2
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  PropertyDeclaration
+    ValKw "val" @ 0..3 trailing=[Whitespace " "]
+    Identifier "x" @ 4..5 trailing=[Whitespace " "]
+    Assign "=" @ 6..7 trailing=[Whitespace " "]
+    LiteralExpression
+      IntegerLiteral "1" @ 8..9 trailing=[Whitespace " "]
+    ErrorNode
+      Unknown "|" @ 10..11 trailing=[Whitespace " "]
+    ErrorNode
+      IntegerLiteral "2" @ 12..13
+  Eof "" @ 14..14 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.lex.unknown_character severity=Error stage=Lexer range=10..11 message="unknown character"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=10..11 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=12..13 message="unexpected token in expression"
+
+diagnostics:
+code=kotlin.lex.unknown_character severity=Error stage=Lexer range=Some(TextRange { start: TextSize(10), end: TextSize(11) }) message=unknown character
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(10), end: TextSize(11) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(12), end: TextSize(13) }) message=unexpected token in expression

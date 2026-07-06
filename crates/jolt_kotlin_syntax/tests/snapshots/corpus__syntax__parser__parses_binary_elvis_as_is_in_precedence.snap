@@ -1,0 +1,132 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun binaryKinds(input: Any?, names: List<String>): String {
+    val name = input as? String ?: "guest"
+    val present = name in names
+    val typed = input is CharSequence && input !is StringBuilder
+    return if (present && typed) name else "missing"
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    Identifier "binaryKinds" @ 4..15
+    ValueParameterList
+      LParen "(" @ 15..16
+      ValueParameter
+        Name
+          Identifier "input" @ 16..21
+        Colon ":" @ 21..22 trailing=[Whitespace " "]
+        TypeReference
+          NullableType
+            UserType
+              Identifier "Any" @ 23..26
+            Question "?" @ 26..27
+      Comma "," @ 27..28 trailing=[Whitespace " "]
+      ValueParameter
+        Name
+          Identifier "names" @ 29..34
+        Colon ":" @ 34..35 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "List" @ 36..40
+            TypeArgumentList
+              Lt "<" @ 40..41
+              TypeProjectionList
+                TypeArgument
+                  TypeProjection
+                    TypeReference
+                      UserType
+                        Identifier "String" @ 41..47
+              Gt ">" @ 47..48
+      RParen ")" @ 48..49
+    Colon ":" @ 49..50 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "String" @ 51..57 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 58..59
+      PropertyDeclaration
+        ValKw "val" @ 64..67 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "name" @ 68..72 trailing=[Whitespace " "]
+        Assign "=" @ 73..74 trailing=[Whitespace " "]
+        BinaryExpression
+          NameExpression
+            Identifier "input" @ 75..80 trailing=[Whitespace " "]
+          AsSafe "as?" @ 81..84 trailing=[Whitespace " "]
+          BinaryExpression
+            NameExpression
+              Identifier "String" @ 85..91 trailing=[Whitespace " "]
+            Elvis "?:" @ 92..94 trailing=[Whitespace " "]
+            StringTemplateExpression
+              StringTemplateEntry
+                OpenQuote "\"" @ 95..96
+              StringTemplateEntry
+                RegularStringPart "guest" @ 96..101
+              ClosingQuote "\"" @ 101..102
+      PropertyDeclaration
+        ValKw "val" @ 107..110 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "present" @ 111..118 trailing=[Whitespace " "]
+        Assign "=" @ 119..120 trailing=[Whitespace " "]
+        BinaryExpression
+          NameExpression
+            Identifier "name" @ 121..125 trailing=[Whitespace " "]
+          InKw "in" @ 126..128 trailing=[Whitespace " "]
+          NameExpression
+            Identifier "names" @ 129..134
+      PropertyDeclaration
+        ValKw "val" @ 139..142 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "typed" @ 143..148 trailing=[Whitespace " "]
+        Assign "=" @ 149..150 trailing=[Whitespace " "]
+        BinaryExpression
+          BinaryExpression
+            NameExpression
+              Identifier "input" @ 151..156 trailing=[Whitespace " "]
+            IsKw "is" @ 157..159 trailing=[Whitespace " "]
+            NameExpression
+              Identifier "CharSequence" @ 160..172 trailing=[Whitespace " "]
+          AndAnd "&&" @ 173..175 trailing=[Whitespace " "]
+          BinaryExpression
+            NameExpression
+              Identifier "input" @ 176..181 trailing=[Whitespace " "]
+            NotIs "!is" @ 182..185 trailing=[Whitespace " "]
+            NameExpression
+              Identifier "StringBuilder" @ 186..199
+      Statement
+        ExpressionStatement
+          JumpExpression
+            ReturnKw "return" @ 204..210 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            IfExpression
+              IfKw "if" @ 211..213 trailing=[Whitespace " "]
+              ParenthesizedExpression
+                LParen "(" @ 214..215
+                BinaryExpression
+                  NameExpression
+                    Identifier "present" @ 215..222 trailing=[Whitespace " "]
+                  AndAnd "&&" @ 223..225 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "typed" @ 226..231
+                RParen ")" @ 231..232 trailing=[Whitespace " "]
+              NameExpression
+                Identifier "name" @ 233..237 trailing=[Whitespace " "]
+              ElseKw "else" @ 238..242 trailing=[Whitespace " "]
+              StringTemplateExpression
+                StringTemplateEntry
+                  OpenQuote "\"" @ 243..244
+                StringTemplateEntry
+                  RegularStringPart "missing" @ 244..251
+                ClosingQuote "\"" @ 251..252
+      RBrace "}" @ 253..254 leading=[Newline "\n"]
+  Eof "" @ 255..255 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

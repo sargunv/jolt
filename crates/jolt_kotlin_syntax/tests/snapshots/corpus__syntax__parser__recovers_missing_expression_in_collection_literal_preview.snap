@@ -1,0 +1,56 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun missingCollectionElement(): Any {
+    val values = [1, , 3]
+    return values
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    Identifier "missingCollectionElement" @ 4..28
+    ValueParameterList
+      LParen "(" @ 28..29
+      RParen ")" @ 29..30
+    Colon ":" @ 30..31 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "Any" @ 32..35 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 36..37
+      PropertyDeclaration
+        ValKw "val" @ 42..45 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "values" @ 46..52 trailing=[Whitespace " "]
+        Assign "=" @ 53..54 trailing=[Whitespace " "]
+        CollectionLiteralExpression
+          LBracket "[" @ 55..56
+          ValueArgument
+            LiteralExpression
+              IntegerLiteral "1" @ 56..57
+          Comma "," @ 57..58 trailing=[Whitespace " "]
+          Comma "," @ 59..60 trailing=[Whitespace " "]
+          ErrorNode
+          ValueArgument
+            LiteralExpression
+              IntegerLiteral "3" @ 61..62
+          RBracket "]" @ 62..63
+      Statement
+        ExpressionStatement
+          JumpExpression
+            ReturnKw "return" @ 68..74 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            NameExpression
+              Identifier "values" @ 75..81
+      RBrace "}" @ 82..83 leading=[Newline "\n"]
+  Eof "" @ 84..84 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=61..62 message="expected list item"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(61), end: TextSize(62) }) message=expected list item

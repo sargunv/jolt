@@ -1,0 +1,40 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+object Settings {
+    const val Name = "jolt"
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  ObjectDeclaration
+    ObjectKw "object" @ 0..6 trailing=[Whitespace " "]
+    Name
+      Identifier "Settings" @ 7..15 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 16..17
+      ClassMemberDeclaration
+        PropertyDeclaration
+          ModifierList
+            Identifier "const" @ 22..27 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          ValKw "val" @ 28..31 trailing=[Whitespace " "]
+          Identifier "Name" @ 32..36 trailing=[Whitespace " "]
+          Assign "=" @ 37..38 trailing=[Whitespace " "]
+          StringTemplateExpression
+            StringTemplateEntry
+              OpenQuote "\"" @ 39..40
+            StringTemplateEntry
+              RegularStringPart "jolt" @ 40..44
+            ClosingQuote "\"" @ 44..45
+      RBrace "}" @ 46..47 leading=[Newline "\n"]
+  Eof "" @ 48..48 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

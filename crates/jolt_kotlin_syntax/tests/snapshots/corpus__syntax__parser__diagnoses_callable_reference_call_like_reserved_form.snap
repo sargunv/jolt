@@ -1,0 +1,97 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun invalidCallableReferenceCall() {
+    val direct = String::trim(" value ")
+    val generic = Box::create<String>("value")
+    consume(direct, generic)
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    Identifier "invalidCallableReferenceCall" @ 4..32
+    ValueParameterList
+      LParen "(" @ 32..33
+      RParen ")" @ 33..34 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 35..36
+      PropertyDeclaration
+        ValKw "val" @ 41..44 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "direct" @ 45..51 trailing=[Whitespace " "]
+        Assign "=" @ 52..53 trailing=[Whitespace " "]
+        CallExpression
+          CallableReferenceExpression
+            NameExpression
+              Identifier "String" @ 54..60
+            ColonColon "::" @ 60..62
+            Identifier "trim" @ 62..66
+          ValueArgumentList
+            LParen "(" @ 66..67
+            ValueArgument
+              StringTemplateExpression
+                StringTemplateEntry
+                  OpenQuote "\"" @ 67..68
+                StringTemplateEntry
+                  RegularStringPart " value " @ 68..75
+                ClosingQuote "\"" @ 75..76
+            RParen ")" @ 76..77
+      PropertyDeclaration
+        ValKw "val" @ 82..85 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "generic" @ 86..93 trailing=[Whitespace " "]
+        Assign "=" @ 94..95 trailing=[Whitespace " "]
+        CallExpression
+          CallableReferenceExpression
+            NameExpression
+              Identifier "Box" @ 96..99
+            ColonColon "::" @ 99..101
+            Identifier "create" @ 101..107
+            TypeArgumentList
+              Lt "<" @ 107..108
+              TypeProjectionList
+                TypeArgument
+                  TypeProjection
+                    TypeReference
+                      UserType
+                        Identifier "String" @ 108..114
+              Gt ">" @ 114..115
+          ValueArgumentList
+            LParen "(" @ 115..116
+            ValueArgument
+              StringTemplateExpression
+                StringTemplateEntry
+                  OpenQuote "\"" @ 116..117
+                StringTemplateEntry
+                  RegularStringPart "value" @ 117..122
+                ClosingQuote "\"" @ 122..123
+            RParen ")" @ 123..124
+      Statement
+        ExpressionStatement
+          CallExpression
+            NameExpression
+              Identifier "consume" @ 129..136 leading=[Newline "\n", Whitespace "    "]
+            ValueArgumentList
+              LParen "(" @ 136..137
+              ValueArgument
+                NameExpression
+                  Identifier "direct" @ 137..143
+              Comma "," @ 143..144 trailing=[Whitespace " "]
+              ValueArgument
+                NameExpression
+                  Identifier "generic" @ 145..152
+              RParen ")" @ 152..153
+      RBrace "}" @ 154..155 leading=[Newline "\n"]
+  Eof "" @ 156..156 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.reserved_callable_reference_call severity=Error stage=Parser range=66..67 message="callable reference call syntax is reserved"
+  code=kotlin.parse.reserved_callable_reference_call severity=Error stage=Parser range=115..116 message="callable reference call syntax is reserved"
+
+diagnostics:
+code=kotlin.parse.reserved_callable_reference_call severity=Error stage=Parser range=Some(TextRange { start: TextSize(66), end: TextSize(67) }) message=callable reference call syntax is reserved
+code=kotlin.parse.reserved_callable_reference_call severity=Error stage=Parser range=Some(TextRange { start: TextSize(115), end: TextSize(116) }) message=callable reference call syntax is reserved

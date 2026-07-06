@@ -1,0 +1,103 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+interface Service {
+    fun call(): String
+}
+
+class ServiceImpl : Service {
+    override fun call(): String = "ok"
+}
+
+class DelegatingService(private val service: Service) : Service by service
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  InterfaceDeclaration
+    InterfaceKw "interface" @ 0..9 trailing=[Whitespace " "]
+    Name
+      Identifier "Service" @ 10..17 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 18..19
+      ClassMemberDeclaration
+        FunctionDeclaration
+          FunKw "fun" @ 24..27 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "call" @ 28..32
+          ValueParameterList
+            LParen "(" @ 32..33
+            RParen ")" @ 33..34
+          Colon ":" @ 34..35 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "String" @ 36..42
+      RBrace "}" @ 43..44 leading=[Newline "\n"]
+  ClassDeclaration
+    ClassKw "class" @ 46..51 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "ServiceImpl" @ 52..63 trailing=[Whitespace " "]
+    Colon ":" @ 64..65 trailing=[Whitespace " "]
+    DelegationSpecifierList
+      DelegationSpecifier
+        NameExpression
+          Identifier "Service" @ 66..73 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 74..75
+      ClassMemberDeclaration
+        FunctionDeclaration
+          ModifierList
+            Identifier "override" @ 80..88 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          FunKw "fun" @ 89..92 trailing=[Whitespace " "]
+          Identifier "call" @ 93..97
+          ValueParameterList
+            LParen "(" @ 97..98
+            RParen ")" @ 98..99
+          Colon ":" @ 99..100 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "String" @ 101..107 trailing=[Whitespace " "]
+          Assign "=" @ 108..109 trailing=[Whitespace " "]
+          StringTemplateExpression
+            StringTemplateEntry
+              OpenQuote "\"" @ 110..111
+            StringTemplateEntry
+              RegularStringPart "ok" @ 111..113
+            ClosingQuote "\"" @ 113..114
+      RBrace "}" @ 115..116 leading=[Newline "\n"]
+  ClassDeclaration
+    ClassKw "class" @ 118..123 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "DelegatingService" @ 124..141
+    PrimaryConstructor
+      ValueParameterList
+        LParen "(" @ 141..142
+        ValueParameter
+          ModifierList
+            Identifier "private" @ 142..149 trailing=[Whitespace " "]
+          ValKw "val" @ 150..153 trailing=[Whitespace " "]
+          Name
+            Identifier "service" @ 154..161
+          Colon ":" @ 161..162 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "Service" @ 163..170
+        RParen ")" @ 170..171 trailing=[Whitespace " "]
+    Colon ":" @ 172..173 trailing=[Whitespace " "]
+    DelegationSpecifierList
+      DelegationSpecifier
+        BinaryExpression
+          NameExpression
+            Identifier "Service" @ 174..181 trailing=[Whitespace " "]
+          Identifier "by" @ 182..184 trailing=[Whitespace " "]
+          NameExpression
+            Identifier "service" @ 185..192
+  Eof "" @ 193..193 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

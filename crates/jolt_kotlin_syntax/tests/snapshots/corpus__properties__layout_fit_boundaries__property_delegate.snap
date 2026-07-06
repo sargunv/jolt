@@ -1,0 +1,86 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package com.example.properties
+
+val settings by lazy {
+    mapOf(
+        "environment" to "development",
+        "feature" to "layout-fit-boundary",
+    )
+}
+
+syntax:
+syntax:
+KotlinFile
+  PackageHeader
+    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+    QualifiedName
+      Name
+        Identifier "com" @ 8..11
+      Dot "." @ 11..12
+      Name
+        Identifier "example" @ 12..19
+      Dot "." @ 19..20
+      Name
+        Identifier "properties" @ 20..30
+  ImportList
+  PropertyDeclaration
+    ValKw "val" @ 32..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "settings" @ 36..44 trailing=[Whitespace " "]
+    Identifier "by" @ 45..47 trailing=[Whitespace " "]
+    Identifier "lazy" @ 48..52 trailing=[Whitespace " "]
+  Statement
+    ExpressionStatement
+      LambdaExpression
+        LBrace "{" @ 53..54
+        Statement
+          ExpressionStatement
+            CallExpression
+              NameExpression
+                Identifier "mapOf" @ 59..64 leading=[Newline "\n", Whitespace "    "]
+              ValueArgumentList
+                LParen "(" @ 64..65
+                ValueArgument
+                  BinaryExpression
+                    StringTemplateExpression
+                      StringTemplateEntry
+                        OpenQuote "\"" @ 74..75 leading=[Newline "\n", Whitespace "        "]
+                      StringTemplateEntry
+                        RegularStringPart "environment" @ 75..86
+                      ClosingQuote "\"" @ 86..87 trailing=[Whitespace " "]
+                    Identifier "to" @ 88..90 trailing=[Whitespace " "]
+                    StringTemplateExpression
+                      StringTemplateEntry
+                        OpenQuote "\"" @ 91..92
+                      StringTemplateEntry
+                        RegularStringPart "development" @ 92..103
+                      ClosingQuote "\"" @ 103..104
+                Comma "," @ 104..105
+                ValueArgument
+                  BinaryExpression
+                    StringTemplateExpression
+                      StringTemplateEntry
+                        OpenQuote "\"" @ 114..115 leading=[Newline "\n", Whitespace "        "]
+                      StringTemplateEntry
+                        RegularStringPart "feature" @ 115..122
+                      ClosingQuote "\"" @ 122..123 trailing=[Whitespace " "]
+                    Identifier "to" @ 124..126 trailing=[Whitespace " "]
+                    StringTemplateExpression
+                      StringTemplateEntry
+                        OpenQuote "\"" @ 127..128
+                      StringTemplateEntry
+                        RegularStringPart "layout-fit-boundary" @ 128..147
+                      ClosingQuote "\"" @ 147..148
+                Comma "," @ 148..149
+                RParen ")" @ 154..155 leading=[Newline "\n", Whitespace "    "]
+        RBrace "}" @ 156..157 leading=[Newline "\n"]
+  Eof "" @ 158..158 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

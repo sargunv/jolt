@@ -1,0 +1,94 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+const val BuildName = "dev"
+
+var mutableCount: Int = 0
+
+context(config: Config)
+val configuredName: String
+    get() = config.name
+
+interface Config {
+    val name: String
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  PropertyDeclaration
+    ModifierList
+      Identifier "const" @ 0..5 trailing=[Whitespace " "]
+    ValKw "val" @ 6..9 trailing=[Whitespace " "]
+    Identifier "BuildName" @ 10..19 trailing=[Whitespace " "]
+    Assign "=" @ 20..21 trailing=[Whitespace " "]
+    StringTemplateExpression
+      StringTemplateEntry
+        OpenQuote "\"" @ 22..23
+      StringTemplateEntry
+        RegularStringPart "dev" @ 23..26
+      ClosingQuote "\"" @ 26..27
+  PropertyDeclaration
+    VarKw "var" @ 29..32 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "mutableCount" @ 33..45
+    Colon ":" @ 45..46 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "Int" @ 47..50 trailing=[Whitespace " "]
+    Assign "=" @ 51..52 trailing=[Whitespace " "]
+    LiteralExpression
+      IntegerLiteral "0" @ 53..54
+  PropertyDeclaration
+    ContextParameterClause
+      Identifier "context" @ 56..63 leading=[Newline "\n", Newline "\n"]
+      LParen "(" @ 63..64
+      ContextParameter
+        Name
+          Identifier "config" @ 64..70
+        Colon ":" @ 70..71 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Config" @ 72..78
+      RParen ")" @ 78..79
+    ValKw "val" @ 80..83 leading=[Newline "\n"] trailing=[Whitespace " "]
+    Identifier "configuredName" @ 84..98
+    Colon ":" @ 98..99 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "String" @ 100..106
+    PropertyAccessor
+      Identifier "get" @ 111..114 leading=[Newline "\n", Whitespace "    "]
+      ValueParameterList
+        LParen "(" @ 114..115
+        RParen ")" @ 115..116 trailing=[Whitespace " "]
+      Assign "=" @ 117..118 trailing=[Whitespace " "]
+      NavigationExpression
+        NameExpression
+          Identifier "config" @ 119..125
+        Dot "." @ 125..126
+        Identifier "name" @ 126..130
+  InterfaceDeclaration
+    InterfaceKw "interface" @ 132..141 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "Config" @ 142..148 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 149..150
+      ClassMemberDeclaration
+        PropertyDeclaration
+          ValKw "val" @ 155..158 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "name" @ 159..163
+          Colon ":" @ 163..164 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "String" @ 165..171
+      RBrace "}" @ 172..173 leading=[Newline "\n"]
+  Eof "" @ 174..174 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

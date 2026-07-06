@@ -1,0 +1,124 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package com.example.expressions
+
+fun callChains(source: Sequence<String>): List<String> =
+    source
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+        .sorted()
+        .toList()
+
+syntax:
+syntax:
+KotlinFile
+  PackageHeader
+    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+    QualifiedName
+      Name
+        Identifier "com" @ 8..11
+      Dot "." @ 11..12
+      Name
+        Identifier "example" @ 12..19
+      Dot "." @ 19..20
+      Name
+        Identifier "expressions" @ 20..31
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 33..36 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "callChains" @ 37..47
+    ValueParameterList
+      LParen "(" @ 47..48
+      ValueParameter
+        Name
+          Identifier "source" @ 48..54
+        Colon ":" @ 54..55 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Sequence" @ 56..64
+            TypeArgumentList
+              Lt "<" @ 64..65
+              TypeProjectionList
+                TypeArgument
+                  TypeProjection
+                    TypeReference
+                      UserType
+                        Identifier "String" @ 65..71
+              Gt ">" @ 71..72
+      RParen ")" @ 72..73
+    Colon ":" @ 73..74 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "List" @ 75..79
+        TypeArgumentList
+          Lt "<" @ 79..80
+          TypeProjectionList
+            TypeArgument
+              TypeProjection
+                TypeReference
+                  UserType
+                    Identifier "String" @ 80..86
+          Gt ">" @ 86..87 trailing=[Whitespace " "]
+    Assign "=" @ 88..89
+    CallExpression
+      NavigationExpression
+        CallExpression
+          NavigationExpression
+            CallExpression
+              NavigationExpression
+                CallExpression
+                  NavigationExpression
+                    NameExpression
+                      Identifier "source" @ 94..100 leading=[Newline "\n", Whitespace "    "]
+                    Dot "." @ 109..110 leading=[Newline "\n", Whitespace "        "]
+                    Identifier "map" @ 110..113 trailing=[Whitespace " "]
+                  LambdaExpression
+                    LBrace "{" @ 114..115 trailing=[Whitespace " "]
+                    Statement
+                      ExpressionStatement
+                        CallExpression
+                          NavigationExpression
+                            NameExpression
+                              Identifier "it" @ 116..118
+                            Dot "." @ 118..119
+                            Identifier "trim" @ 119..123
+                          ValueArgumentList
+                            LParen "(" @ 123..124
+                            RParen ")" @ 124..125 trailing=[Whitespace " "]
+                    RBrace "}" @ 126..127
+                Dot "." @ 136..137 leading=[Newline "\n", Whitespace "        "]
+                Identifier "filter" @ 137..143 trailing=[Whitespace " "]
+              LambdaExpression
+                LBrace "{" @ 144..145 trailing=[Whitespace " "]
+                Statement
+                  ExpressionStatement
+                    CallExpression
+                      NavigationExpression
+                        NameExpression
+                          Identifier "it" @ 146..148
+                        Dot "." @ 148..149
+                        Identifier "isNotEmpty" @ 149..159
+                      ValueArgumentList
+                        LParen "(" @ 159..160
+                        RParen ")" @ 160..161 trailing=[Whitespace " "]
+                RBrace "}" @ 162..163
+            Dot "." @ 172..173 leading=[Newline "\n", Whitespace "        "]
+            Identifier "sorted" @ 173..179
+          ValueArgumentList
+            LParen "(" @ 179..180
+            RParen ")" @ 180..181
+        Dot "." @ 190..191 leading=[Newline "\n", Whitespace "        "]
+        Identifier "toList" @ 191..197
+      ValueArgumentList
+        LParen "(" @ 197..198
+        RParen ")" @ 198..199
+  Eof "" @ 200..200 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

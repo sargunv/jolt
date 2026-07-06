@@ -1,0 +1,107 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package com.example.very.long.packageName.withManySegments
+
+fun useQualifiedName() {
+    val name = kotlin.collections.mutableMapOf<String, kotlin.collections.List<String>>()
+    println(name)
+}
+
+syntax:
+syntax:
+KotlinFile
+  PackageHeader
+    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+    QualifiedName
+      Name
+        Identifier "com" @ 8..11
+      Dot "." @ 11..12
+      Name
+        Identifier "example" @ 12..19
+      Dot "." @ 19..20
+      Name
+        Identifier "very" @ 20..24
+      Dot "." @ 24..25
+      Name
+        Identifier "long" @ 25..29
+      Dot "." @ 29..30
+      Name
+        Identifier "packageName" @ 30..41
+      Dot "." @ 41..42
+      Name
+        Identifier "withManySegments" @ 42..58
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 60..63 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "useQualifiedName" @ 64..80
+    ValueParameterList
+      LParen "(" @ 80..81
+      RParen ")" @ 81..82 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 83..84
+      PropertyDeclaration
+        ValKw "val" @ 89..92 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "name" @ 93..97 trailing=[Whitespace " "]
+        Assign "=" @ 98..99 trailing=[Whitespace " "]
+        CallExpression
+          NavigationExpression
+            NavigationExpression
+              NameExpression
+                Identifier "kotlin" @ 100..106
+              Dot "." @ 106..107
+              Identifier "collections" @ 107..118
+            Dot "." @ 118..119
+            Identifier "mutableMapOf" @ 119..131
+          TypeArgumentList
+            Lt "<" @ 131..132
+            TypeProjectionList
+              TypeArgument
+                TypeProjection
+                  TypeReference
+                    UserType
+                      Identifier "String" @ 132..138
+              Comma "," @ 138..139 trailing=[Whitespace " "]
+              TypeArgument
+                TypeProjection
+                  TypeReference
+                    UserType
+                      Identifier "kotlin" @ 140..146
+                      Dot "." @ 146..147
+                      Identifier "collections" @ 147..158
+                      Dot "." @ 158..159
+                      Identifier "List" @ 159..163
+                      TypeArgumentList
+                        Lt "<" @ 163..164
+                        TypeProjectionList
+                          TypeArgument
+                            TypeProjection
+                              TypeReference
+                                UserType
+                                  Identifier "String" @ 164..170
+                        Gt ">" @ 170..171
+            Gt ">" @ 171..172
+          ValueArgumentList
+            LParen "(" @ 172..173
+            RParen ")" @ 173..174
+      Statement
+        ExpressionStatement
+          CallExpression
+            NameExpression
+              Identifier "println" @ 179..186 leading=[Newline "\n", Whitespace "    "]
+            ValueArgumentList
+              LParen "(" @ 186..187
+              ValueArgument
+                NameExpression
+                  Identifier "name" @ 187..191
+              RParen ")" @ 191..192
+      RBrace "}" @ 193..194 leading=[Newline "\n"]
+  Eof "" @ 195..195 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

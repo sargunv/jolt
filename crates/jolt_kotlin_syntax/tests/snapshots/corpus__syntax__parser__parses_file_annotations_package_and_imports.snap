@@ -1,0 +1,119 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+@file:FileMarker("parser")
+@file:Suppress("unused")
+
+package samples.structure
+
+import kotlin.collections.List
+
+class FilePreamble
+
+@Target(AnnotationTarget.FILE)
+annotation class FileMarker(val value: String)
+
+syntax:
+syntax:
+KotlinFile
+  Annotation
+    At "@" @ 0..1
+    AnnotationUseSiteTarget
+      Identifier "file" @ 1..5
+      Colon ":" @ 5..6
+    QualifiedName
+      Name
+        Identifier "FileMarker" @ 6..16
+    AnnotationArgumentList
+      LParen "(" @ 16..17
+      ValueArgument
+        StringTemplateExpression
+          StringTemplateEntry
+            OpenQuote "\"" @ 17..18
+          StringTemplateEntry
+            RegularStringPart "parser" @ 18..24
+          ClosingQuote "\"" @ 24..25
+      RParen ")" @ 25..26
+  Annotation
+    At "@" @ 27..28 leading=[Newline "\n"]
+    AnnotationUseSiteTarget
+      Identifier "file" @ 28..32
+      Colon ":" @ 32..33
+    QualifiedName
+      Name
+        Identifier "Suppress" @ 33..41
+    AnnotationArgumentList
+      LParen "(" @ 41..42
+      ValueArgument
+        StringTemplateExpression
+          StringTemplateEntry
+            OpenQuote "\"" @ 42..43
+          StringTemplateEntry
+            RegularStringPart "unused" @ 43..49
+          ClosingQuote "\"" @ 49..50
+      RParen ")" @ 50..51
+  PackageHeader
+    PackageKw "package" @ 53..60 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    QualifiedName
+      Name
+        Identifier "samples" @ 61..68
+      Dot "." @ 68..69
+      Name
+        Identifier "structure" @ 69..78
+  ImportList
+    ImportDirective
+      Identifier "import" @ 80..86 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        Name
+          Identifier "kotlin" @ 87..93
+        Dot "." @ 93..94
+        Name
+          Identifier "collections" @ 94..105
+        Dot "." @ 105..106
+        Name
+          Identifier "List" @ 106..110
+  ClassDeclaration
+    ClassKw "class" @ 112..117 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "FilePreamble" @ 118..130
+  ClassDeclaration
+    ModifierList
+      Annotation
+        At "@" @ 132..133 leading=[Newline "\n", Newline "\n"]
+        QualifiedName
+          Name
+            Identifier "Target" @ 133..139
+        AnnotationArgumentList
+          LParen "(" @ 139..140
+          ValueArgument
+            NavigationExpression
+              NameExpression
+                Identifier "AnnotationTarget" @ 140..156
+              Dot "." @ 156..157
+              Identifier "FILE" @ 157..161
+          RParen ")" @ 161..162
+      Identifier "annotation" @ 163..173 leading=[Newline "\n"] trailing=[Whitespace " "]
+    ClassKw "class" @ 174..179 trailing=[Whitespace " "]
+    Name
+      Identifier "FileMarker" @ 180..190
+    PrimaryConstructor
+      ValueParameterList
+        LParen "(" @ 190..191
+        ValueParameter
+          ValKw "val" @ 191..194 trailing=[Whitespace " "]
+          Name
+            Identifier "value" @ 195..200
+          Colon ":" @ 200..201 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "String" @ 202..208
+        RParen ")" @ 208..209
+  Eof "" @ 210..210 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

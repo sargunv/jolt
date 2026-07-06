@@ -1,0 +1,62 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+as? a?.b a ?: b T? ::ref
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  Statement
+    ExpressionStatement
+      ErrorNode
+        AsSafe "as?" @ 0..3 trailing=[Whitespace " "]
+      ErrorNode
+        Identifier "a" @ 4..5
+      ErrorNode
+        SafeAccess "?." @ 5..7
+      ErrorNode
+        Identifier "b" @ 7..8 trailing=[Whitespace " "]
+      ErrorNode
+        Identifier "a" @ 9..10 trailing=[Whitespace " "]
+      ErrorNode
+        Elvis "?:" @ 11..13 trailing=[Whitespace " "]
+      ErrorNode
+        Identifier "b" @ 14..15 trailing=[Whitespace " "]
+      ErrorNode
+        Identifier "T" @ 16..17
+      ErrorNode
+        Question "?" @ 17..18 trailing=[Whitespace " "]
+      ErrorNode
+        ColonColon "::" @ 19..21
+      ErrorNode
+        Identifier "ref" @ 21..24
+  Eof "" @ 25..25 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=0..3 message="expected expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=4..5 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=5..7 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=7..8 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=9..10 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=11..13 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=14..15 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=16..17 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=17..18 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=19..21 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=21..24 message="unexpected token in expression"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(3) }) message=expected expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(4), end: TextSize(5) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(5), end: TextSize(7) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(7), end: TextSize(8) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(9), end: TextSize(10) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(11), end: TextSize(13) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(14), end: TextSize(15) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(16), end: TextSize(17) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(17), end: TextSize(18) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(19), end: TextSize(21) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(21), end: TextSize(24) }) message=unexpected token in expression

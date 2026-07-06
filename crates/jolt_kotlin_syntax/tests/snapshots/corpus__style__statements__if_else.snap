@@ -1,0 +1,119 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package com.example.statements
+
+fun choose(value: Int): String {
+    if (value < 0) {
+        return "negative"
+    } else if (value == 0) {
+        return "zero"
+    }
+    return "positive"
+}
+
+syntax:
+syntax:
+KotlinFile
+  PackageHeader
+    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+    QualifiedName
+      Name
+        Identifier "com" @ 8..11
+      Dot "." @ 11..12
+      Name
+        Identifier "example" @ 12..19
+      Dot "." @ 19..20
+      Name
+        Identifier "statements" @ 20..30
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 32..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "choose" @ 36..42
+    ValueParameterList
+      LParen "(" @ 42..43
+      ValueParameter
+        Name
+          Identifier "value" @ 43..48
+        Colon ":" @ 48..49 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Int" @ 50..53
+      RParen ")" @ 53..54
+    Colon ":" @ 54..55 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "String" @ 56..62 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 63..64
+      Statement
+        ExpressionStatement
+          IfExpression
+            IfKw "if" @ 69..71 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            ParenthesizedExpression
+              LParen "(" @ 72..73
+              BinaryExpression
+                NameExpression
+                  Identifier "value" @ 73..78 trailing=[Whitespace " "]
+                Lt "<" @ 79..80 trailing=[Whitespace " "]
+                LiteralExpression
+                  IntegerLiteral "0" @ 81..82
+              RParen ")" @ 82..83 trailing=[Whitespace " "]
+            LambdaExpression
+              LBrace "{" @ 84..85
+              Statement
+                ExpressionStatement
+                  JumpExpression
+                    ReturnKw "return" @ 94..100 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    StringTemplateExpression
+                      StringTemplateEntry
+                        OpenQuote "\"" @ 101..102
+                      StringTemplateEntry
+                        RegularStringPart "negative" @ 102..110
+                      ClosingQuote "\"" @ 110..111
+              RBrace "}" @ 116..117 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            ElseKw "else" @ 118..122 trailing=[Whitespace " "]
+            IfExpression
+              IfKw "if" @ 123..125 trailing=[Whitespace " "]
+              ParenthesizedExpression
+                LParen "(" @ 126..127
+                BinaryExpression
+                  NameExpression
+                    Identifier "value" @ 127..132 trailing=[Whitespace " "]
+                  EqEq "==" @ 133..135 trailing=[Whitespace " "]
+                  LiteralExpression
+                    IntegerLiteral "0" @ 136..137
+                RParen ")" @ 137..138 trailing=[Whitespace " "]
+              LambdaExpression
+                LBrace "{" @ 139..140
+                Statement
+                  ExpressionStatement
+                    JumpExpression
+                      ReturnKw "return" @ 149..155 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      StringTemplateExpression
+                        StringTemplateEntry
+                          OpenQuote "\"" @ 156..157
+                        StringTemplateEntry
+                          RegularStringPart "zero" @ 157..161
+                        ClosingQuote "\"" @ 161..162
+                RBrace "}" @ 167..168 leading=[Newline "\n", Whitespace "    "]
+      Statement
+        ExpressionStatement
+          JumpExpression
+            ReturnKw "return" @ 173..179 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            StringTemplateExpression
+              StringTemplateEntry
+                OpenQuote "\"" @ 180..181
+              StringTemplateEntry
+                RegularStringPart "positive" @ 181..189
+              ClosingQuote "\"" @ 189..190
+      RBrace "}" @ 191..192 leading=[Newline "\n"]
+  Eof "" @ 193..193 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

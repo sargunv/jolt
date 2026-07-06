@@ -1,0 +1,83 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun invalidGuardWithoutSubject(value: Int): String {
+    return when {
+        value > 0 if value < 10 -> "small"
+        else -> "other"
+    }
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    Identifier "invalidGuardWithoutSubject" @ 4..30
+    ValueParameterList
+      LParen "(" @ 30..31
+      ValueParameter
+        Name
+          Identifier "value" @ 31..36
+        Colon ":" @ 36..37 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Int" @ 38..41
+      RParen ")" @ 41..42
+    Colon ":" @ 42..43 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "String" @ 44..50 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 51..52
+      Statement
+        ExpressionStatement
+          JumpExpression
+            ReturnKw "return" @ 57..63 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            WhenExpression
+              WhenKw "when" @ 64..68 trailing=[Whitespace " "]
+              LBrace "{" @ 69..70
+              WhenEntry
+                WhenCondition
+                  BinaryExpression
+                    NameExpression
+                      Identifier "value" @ 79..84 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    Gt ">" @ 85..86 trailing=[Whitespace " "]
+                    LiteralExpression
+                      IntegerLiteral "0" @ 87..88 trailing=[Whitespace " "]
+                WhenGuard
+                  IfKw "if" @ 89..91 trailing=[Whitespace " "]
+                  BinaryExpression
+                    NameExpression
+                      Identifier "value" @ 92..97 trailing=[Whitespace " "]
+                    Lt "<" @ 98..99 trailing=[Whitespace " "]
+                    LiteralExpression
+                      IntegerLiteral "10" @ 100..102 trailing=[Whitespace " "]
+                Arrow "->" @ 103..105 trailing=[Whitespace " "]
+                StringTemplateExpression
+                  StringTemplateEntry
+                    OpenQuote "\"" @ 106..107
+                  StringTemplateEntry
+                    RegularStringPart "small" @ 107..112
+                  ClosingQuote "\"" @ 112..113
+              WhenEntry
+                ElseKw "else" @ 122..126 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                Arrow "->" @ 127..129 trailing=[Whitespace " "]
+                StringTemplateExpression
+                  StringTemplateEntry
+                    OpenQuote "\"" @ 130..131
+                  StringTemplateEntry
+                    RegularStringPart "other" @ 131..136
+                  ClosingQuote "\"" @ 136..137
+              RBrace "}" @ 142..143 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 144..145 leading=[Newline "\n"]
+  Eof "" @ 146..146 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.invalid_when_guard severity=Error stage=Parser range=89..91 message="when guard requires a subject"
+
+diagnostics:
+code=kotlin.parse.invalid_when_guard severity=Error stage=Parser range=Some(TextRange { start: TextSize(89), end: TextSize(91) }) message=when guard requires a subject

@@ -1,0 +1,129 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class Counter(val value: Int) {
+    operator fun plus(other: Counter): Counter = Counter(value + other.value)
+
+    infix fun above(other: Counter): Boolean = value > other.value
+}
+
+suspend fun fetchValue(): String = "value"
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Name
+      Identifier "Counter" @ 6..13
+    PrimaryConstructor
+      ValueParameterList
+        LParen "(" @ 13..14
+        ValueParameter
+          ValKw "val" @ 14..17 trailing=[Whitespace " "]
+          Name
+            Identifier "value" @ 18..23
+          Colon ":" @ 23..24 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "Int" @ 25..28
+        RParen ")" @ 28..29 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 30..31
+      ClassMemberDeclaration
+        FunctionDeclaration
+          ModifierList
+            Identifier "operator" @ 36..44 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          FunKw "fun" @ 45..48 trailing=[Whitespace " "]
+          Identifier "plus" @ 49..53
+          ValueParameterList
+            LParen "(" @ 53..54
+            ValueParameter
+              Name
+                Identifier "other" @ 54..59
+              Colon ":" @ 59..60 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  Identifier "Counter" @ 61..68
+            RParen ")" @ 68..69
+          Colon ":" @ 69..70 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "Counter" @ 71..78 trailing=[Whitespace " "]
+          Assign "=" @ 79..80 trailing=[Whitespace " "]
+          CallExpression
+            NameExpression
+              Identifier "Counter" @ 81..88
+            ValueArgumentList
+              LParen "(" @ 88..89
+              ValueArgument
+                BinaryExpression
+                  NameExpression
+                    Identifier "value" @ 89..94 trailing=[Whitespace " "]
+                  Plus "+" @ 95..96 trailing=[Whitespace " "]
+                  NavigationExpression
+                    NameExpression
+                      Identifier "other" @ 97..102
+                    Dot "." @ 102..103
+                    Identifier "value" @ 103..108
+              RParen ")" @ 108..109
+      ClassMemberDeclaration
+        FunctionDeclaration
+          ModifierList
+            Identifier "infix" @ 115..120 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          FunKw "fun" @ 121..124 trailing=[Whitespace " "]
+          Identifier "above" @ 125..130
+          ValueParameterList
+            LParen "(" @ 130..131
+            ValueParameter
+              Name
+                Identifier "other" @ 131..136
+              Colon ":" @ 136..137 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  Identifier "Counter" @ 138..145
+            RParen ")" @ 145..146
+          Colon ":" @ 146..147 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "Boolean" @ 148..155 trailing=[Whitespace " "]
+          Assign "=" @ 156..157 trailing=[Whitespace " "]
+          BinaryExpression
+            NameExpression
+              Identifier "value" @ 158..163 trailing=[Whitespace " "]
+            Gt ">" @ 164..165 trailing=[Whitespace " "]
+            NavigationExpression
+              NameExpression
+                Identifier "other" @ 166..171
+              Dot "." @ 171..172
+              Identifier "value" @ 172..177
+      RBrace "}" @ 178..179 leading=[Newline "\n"]
+  FunctionDeclaration
+    ModifierList
+      Identifier "suspend" @ 181..188 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    FunKw "fun" @ 189..192 trailing=[Whitespace " "]
+    Identifier "fetchValue" @ 193..203
+    ValueParameterList
+      LParen "(" @ 203..204
+      RParen ")" @ 204..205
+    Colon ":" @ 205..206 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "String" @ 207..213 trailing=[Whitespace " "]
+    Assign "=" @ 214..215 trailing=[Whitespace " "]
+    StringTemplateExpression
+      StringTemplateEntry
+        OpenQuote "\"" @ 216..217
+      StringTemplateEntry
+        RegularStringPart "value" @ 217..222
+      ClosingQuote "\"" @ 222..223
+  Eof "" @ 224..224 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

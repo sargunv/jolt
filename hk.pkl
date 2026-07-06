@@ -20,7 +20,9 @@ local lintSteps = new Mapping<String, Step> {
         check = "cargo machete"
         fix = "cargo machete --fix"
     }
-    ["dprint"] = (Builtins.dprint)
+    ["dprint"] = (Builtins.dprint) {
+        exclude = List("**/*.snap", "fixtures/java/**", "fixtures/kotlin/**")
+    }
 }
 
 hooks {

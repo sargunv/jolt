@@ -1,0 +1,28 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+١abc
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  Statement
+    ExpressionStatement
+      ErrorNode
+        Unknown "١" @ 0..2
+      ErrorNode
+        Identifier "abc" @ 2..5
+  Eof "" @ 6..6 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.lex.unknown_character severity=Error stage=Lexer range=0..2 message="unknown character"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=0..2 message="expected expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=2..5 message="unexpected token in expression"
+
+diagnostics:
+code=kotlin.lex.unknown_character severity=Error stage=Lexer range=Some(TextRange { start: TextSize(0), end: TextSize(2) }) message=unknown character
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(2) }) message=expected expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(2), end: TextSize(5) }) message=unexpected token in expression

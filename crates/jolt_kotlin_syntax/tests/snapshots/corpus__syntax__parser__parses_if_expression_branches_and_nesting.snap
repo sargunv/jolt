@@ -1,0 +1,107 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun choose(a: Int, b: Int, c: Int): Int {
+    return if (a > b)
+        if (a > c) a else c
+    else
+        if (b > c) b else c
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    Identifier "choose" @ 4..10
+    ValueParameterList
+      LParen "(" @ 10..11
+      ValueParameter
+        Name
+          Identifier "a" @ 11..12
+        Colon ":" @ 12..13 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Int" @ 14..17
+      Comma "," @ 17..18 trailing=[Whitespace " "]
+      ValueParameter
+        Name
+          Identifier "b" @ 19..20
+        Colon ":" @ 20..21 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Int" @ 22..25
+      Comma "," @ 25..26 trailing=[Whitespace " "]
+      ValueParameter
+        Name
+          Identifier "c" @ 27..28
+        Colon ":" @ 28..29 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Int" @ 30..33
+      RParen ")" @ 33..34
+    Colon ":" @ 34..35 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "Int" @ 36..39 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 40..41
+      Statement
+        ExpressionStatement
+          JumpExpression
+            ReturnKw "return" @ 46..52 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            IfExpression
+              IfKw "if" @ 53..55 trailing=[Whitespace " "]
+              ParenthesizedExpression
+                LParen "(" @ 56..57
+                BinaryExpression
+                  NameExpression
+                    Identifier "a" @ 57..58 trailing=[Whitespace " "]
+                  Gt ">" @ 59..60 trailing=[Whitespace " "]
+                  NameExpression
+                    Identifier "b" @ 61..62
+                RParen ")" @ 62..63
+              IfExpression
+                IfKw "if" @ 72..74 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                ParenthesizedExpression
+                  LParen "(" @ 75..76
+                  BinaryExpression
+                    NameExpression
+                      Identifier "a" @ 76..77 trailing=[Whitespace " "]
+                    Gt ">" @ 78..79 trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "c" @ 80..81
+                  RParen ")" @ 81..82 trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "a" @ 83..84 trailing=[Whitespace " "]
+                ElseKw "else" @ 85..89 trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "c" @ 90..91
+              ElseKw "else" @ 96..100 leading=[Newline "\n", Whitespace "    "]
+              IfExpression
+                IfKw "if" @ 109..111 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                ParenthesizedExpression
+                  LParen "(" @ 112..113
+                  BinaryExpression
+                    NameExpression
+                      Identifier "b" @ 113..114 trailing=[Whitespace " "]
+                    Gt ">" @ 115..116 trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "c" @ 117..118
+                  RParen ")" @ 118..119 trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "b" @ 120..121 trailing=[Whitespace " "]
+                ElseKw "else" @ 122..126 trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "c" @ 127..128
+      RBrace "}" @ 129..130 leading=[Newline "\n"]
+  Eof "" @ 131..131 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

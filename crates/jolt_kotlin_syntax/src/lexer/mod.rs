@@ -661,7 +661,12 @@ impl<'source> Scanner<'source> {
         let valid_unicode_escape = self.current_char() == Some('u')
             && (1..=4).all(|n| self.peek_char(n).is_some_and(|ch| ch.is_ascii_hexdigit()));
 
-        if self.current_char() == Some('u') && !valid_unicode_escape {
+        let valid_simple_escape = matches!(
+            self.current_char(),
+            Some('t' | 'b' | 'r' | 'n' | '\'' | '"' | '\\' | '$')
+        );
+
+        if !valid_unicode_escape && !valid_simple_escape {
             let end = self.current_range().expect("escape tail exists").end();
             self.diagnostics.push(lexer_diagnostic(
                 KotlinLexDiagnosticCode::InvalidEscapeSequence,

@@ -1,0 +1,76 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package samples.imports
+
+import kotlin.collections.MutableMap as KMutableMap
+
+class ImportAlias(val values: KMutableMap<String, Int>)
+
+syntax:
+syntax:
+KotlinFile
+  PackageHeader
+    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+    QualifiedName
+      Name
+        Identifier "samples" @ 8..15
+      Dot "." @ 15..16
+      Name
+        Identifier "imports" @ 16..23
+  ImportList
+    ImportDirective
+      Identifier "import" @ 25..31 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        Name
+          Identifier "kotlin" @ 32..38
+        Dot "." @ 38..39
+        Name
+          Identifier "collections" @ 39..50
+        Dot "." @ 50..51
+        Name
+          Identifier "MutableMap" @ 51..61 trailing=[Whitespace " "]
+      ImportAlias
+        AsKw "as" @ 62..64 trailing=[Whitespace " "]
+        Name
+          Identifier "KMutableMap" @ 65..76
+  ClassDeclaration
+    ClassKw "class" @ 78..83 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "ImportAlias" @ 84..95
+    PrimaryConstructor
+      ValueParameterList
+        LParen "(" @ 95..96
+        ValueParameter
+          ValKw "val" @ 96..99 trailing=[Whitespace " "]
+          Name
+            Identifier "values" @ 100..106
+          Colon ":" @ 106..107 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "KMutableMap" @ 108..119
+              TypeArgumentList
+                Lt "<" @ 119..120
+                TypeProjectionList
+                  TypeArgument
+                    TypeProjection
+                      TypeReference
+                        UserType
+                          Identifier "String" @ 120..126
+                  Comma "," @ 126..127 trailing=[Whitespace " "]
+                  TypeArgument
+                    TypeProjection
+                      TypeReference
+                        UserType
+                          Identifier "Int" @ 128..131
+                Gt ">" @ 131..132
+        RParen ")" @ 132..133
+  Eof "" @ 134..134 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

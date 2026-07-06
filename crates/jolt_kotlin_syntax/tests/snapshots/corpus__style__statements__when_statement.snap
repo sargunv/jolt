@@ -1,0 +1,115 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package com.example.statements
+
+fun log(value: Any?) {
+    when (value) {
+        null -> println("null")
+        is String -> println(value.length)
+        else -> println(value)
+    }
+}
+
+syntax:
+syntax:
+KotlinFile
+  PackageHeader
+    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+    QualifiedName
+      Name
+        Identifier "com" @ 8..11
+      Dot "." @ 11..12
+      Name
+        Identifier "example" @ 12..19
+      Dot "." @ 19..20
+      Name
+        Identifier "statements" @ 20..30
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 32..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "log" @ 36..39
+    ValueParameterList
+      LParen "(" @ 39..40
+      ValueParameter
+        Name
+          Identifier "value" @ 40..45
+        Colon ":" @ 45..46 trailing=[Whitespace " "]
+        TypeReference
+          NullableType
+            UserType
+              Identifier "Any" @ 47..50
+            Question "?" @ 50..51
+      RParen ")" @ 51..52 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 53..54
+      Statement
+        ExpressionStatement
+          WhenExpression
+            WhenKw "when" @ 59..63 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            WhenSubject
+              LParen "(" @ 64..65
+              NameExpression
+                Identifier "value" @ 65..70
+              RParen ")" @ 70..71 trailing=[Whitespace " "]
+            LBrace "{" @ 72..73
+            WhenEntry
+              WhenCondition
+                LiteralExpression
+                  NullKw "null" @ 82..86 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+              Arrow "->" @ 87..89 trailing=[Whitespace " "]
+              CallExpression
+                NameExpression
+                  Identifier "println" @ 90..97
+                ValueArgumentList
+                  LParen "(" @ 97..98
+                  ValueArgument
+                    StringTemplateExpression
+                      StringTemplateEntry
+                        OpenQuote "\"" @ 98..99
+                      StringTemplateEntry
+                        RegularStringPart "null" @ 99..103
+                      ClosingQuote "\"" @ 103..104
+                  RParen ")" @ 104..105
+            WhenEntry
+              WhenCondition
+                IsKw "is" @ 114..116 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                TypeReference
+                  UserType
+                    Identifier "String" @ 117..123 trailing=[Whitespace " "]
+              Arrow "->" @ 124..126 trailing=[Whitespace " "]
+              CallExpression
+                NameExpression
+                  Identifier "println" @ 127..134
+                ValueArgumentList
+                  LParen "(" @ 134..135
+                  ValueArgument
+                    NavigationExpression
+                      NameExpression
+                        Identifier "value" @ 135..140
+                      Dot "." @ 140..141
+                      Identifier "length" @ 141..147
+                  RParen ")" @ 147..148
+            WhenEntry
+              ElseKw "else" @ 157..161 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+              Arrow "->" @ 162..164 trailing=[Whitespace " "]
+              CallExpression
+                NameExpression
+                  Identifier "println" @ 165..172
+                ValueArgumentList
+                  LParen "(" @ 172..173
+                  ValueArgument
+                    NameExpression
+                      Identifier "value" @ 173..178
+                  RParen ")" @ 178..179
+            RBrace "}" @ 184..185 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 186..187 leading=[Newline "\n"]
+  Eof "" @ 188..188 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

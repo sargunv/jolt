@@ -1,0 +1,70 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class Container {
+    interface Entry {
+        val key: String
+    }
+
+    enum class Kind {
+        First,
+        Second,
+    }
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Name
+      Identifier "Container" @ 6..15 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 16..17
+      ClassMemberDeclaration
+        InterfaceDeclaration
+          InterfaceKw "interface" @ 22..31 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Name
+            Identifier "Entry" @ 32..37 trailing=[Whitespace " "]
+          ClassBody
+            LBrace "{" @ 38..39
+            ClassMemberDeclaration
+              PropertyDeclaration
+                ValKw "val" @ 48..51 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                Identifier "key" @ 52..55
+                Colon ":" @ 55..56 trailing=[Whitespace " "]
+                TypeReference
+                  UserType
+                    Identifier "String" @ 57..63
+            RBrace "}" @ 68..69 leading=[Newline "\n", Whitespace "    "]
+      ClassMemberDeclaration
+        ClassDeclaration
+          ModifierList
+            Identifier "enum" @ 75..79 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          ClassKw "class" @ 80..85 trailing=[Whitespace " "]
+          Name
+            Identifier "Kind" @ 86..90 trailing=[Whitespace " "]
+          ClassBody
+            LBrace "{" @ 91..92
+            ClassMemberDeclaration
+              EnumEntry
+                NameExpression
+                  Identifier "First" @ 101..106 leading=[Newline "\n", Whitespace "        "]
+            Comma "," @ 106..107
+            ClassMemberDeclaration
+              EnumEntry
+                NameExpression
+                  Identifier "Second" @ 116..122 leading=[Newline "\n", Whitespace "        "]
+            Comma "," @ 122..123
+            RBrace "}" @ 128..129 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 130..131 leading=[Newline "\n"]
+  Eof "" @ 132..132 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

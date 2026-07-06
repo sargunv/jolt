@@ -1,0 +1,31 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+"""hello ${name}"""
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  Statement
+    ExpressionStatement
+      StringTemplateExpression
+        StringTemplateEntry
+          OpenQuote "\"\"\"" @ 0..3
+        StringTemplateEntry
+          RegularStringPart "hello " @ 3..9
+        StringTemplateEntry
+          LongTemplateEntryStart "${" @ 9..11
+          NameExpression
+            Identifier "name" @ 11..15
+          LongTemplateEntryEnd "}" @ 15..16
+        ClosingQuote "\"\"\"" @ 16..19
+  Eof "" @ 20..20 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

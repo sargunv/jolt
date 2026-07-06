@@ -1,0 +1,149 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package com.example.expressions
+
+sealed interface Status {
+    data object Ready : Status
+    data class Failed(val reason: String) : Status
+}
+
+fun message(status: Status): String =
+    when (status) {
+        Status.Ready -> "ready"
+        is Status.Failed -> "failed: ${status.reason}"
+    }
+
+syntax:
+syntax:
+KotlinFile
+  PackageHeader
+    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+    QualifiedName
+      Name
+        Identifier "com" @ 8..11
+      Dot "." @ 11..12
+      Name
+        Identifier "example" @ 12..19
+      Dot "." @ 19..20
+      Name
+        Identifier "expressions" @ 20..31
+  ImportList
+  InterfaceDeclaration
+    ModifierList
+      Identifier "sealed" @ 33..39 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    InterfaceKw "interface" @ 40..49 trailing=[Whitespace " "]
+    Name
+      Identifier "Status" @ 50..56 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 57..58
+      ClassMemberDeclaration
+        ObjectDeclaration
+          ModifierList
+            Identifier "data" @ 63..67 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          ObjectKw "object" @ 68..74 trailing=[Whitespace " "]
+          Name
+            Identifier "Ready" @ 75..80 trailing=[Whitespace " "]
+          Colon ":" @ 81..82 trailing=[Whitespace " "]
+          DelegationSpecifierList
+            DelegationSpecifier
+              NameExpression
+                Identifier "Status" @ 83..89
+      ClassMemberDeclaration
+        ClassDeclaration
+          ModifierList
+            Identifier "data" @ 94..98 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          ClassKw "class" @ 99..104 trailing=[Whitespace " "]
+          Name
+            Identifier "Failed" @ 105..111
+          PrimaryConstructor
+            ValueParameterList
+              LParen "(" @ 111..112
+              ValueParameter
+                ValKw "val" @ 112..115 trailing=[Whitespace " "]
+                Name
+                  Identifier "reason" @ 116..122
+                Colon ":" @ 122..123 trailing=[Whitespace " "]
+                TypeReference
+                  UserType
+                    Identifier "String" @ 124..130
+              RParen ")" @ 130..131 trailing=[Whitespace " "]
+          Colon ":" @ 132..133 trailing=[Whitespace " "]
+          DelegationSpecifierList
+            DelegationSpecifier
+              NameExpression
+                Identifier "Status" @ 134..140
+      RBrace "}" @ 141..142 leading=[Newline "\n"]
+  FunctionDeclaration
+    FunKw "fun" @ 144..147 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "message" @ 148..155
+    ValueParameterList
+      LParen "(" @ 155..156
+      ValueParameter
+        Name
+          Identifier "status" @ 156..162
+        Colon ":" @ 162..163 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Status" @ 164..170
+      RParen ")" @ 170..171
+    Colon ":" @ 171..172 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "String" @ 173..179 trailing=[Whitespace " "]
+    Assign "=" @ 180..181
+    WhenExpression
+      WhenKw "when" @ 186..190 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+      WhenSubject
+        LParen "(" @ 191..192
+        NameExpression
+          Identifier "status" @ 192..198
+        RParen ")" @ 198..199 trailing=[Whitespace " "]
+      LBrace "{" @ 200..201
+      WhenEntry
+        WhenCondition
+          NavigationExpression
+            NameExpression
+              Identifier "Status" @ 210..216 leading=[Newline "\n", Whitespace "        "]
+            Dot "." @ 216..217
+            Identifier "Ready" @ 217..222 trailing=[Whitespace " "]
+        Arrow "->" @ 223..225 trailing=[Whitespace " "]
+        StringTemplateExpression
+          StringTemplateEntry
+            OpenQuote "\"" @ 226..227
+          StringTemplateEntry
+            RegularStringPart "ready" @ 227..232
+          ClosingQuote "\"" @ 232..233
+      WhenEntry
+        WhenCondition
+          IsKw "is" @ 242..244 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "Status" @ 245..251
+              Dot "." @ 251..252
+              Identifier "Failed" @ 252..258 trailing=[Whitespace " "]
+        Arrow "->" @ 259..261 trailing=[Whitespace " "]
+        StringTemplateExpression
+          StringTemplateEntry
+            OpenQuote "\"" @ 262..263
+          StringTemplateEntry
+            RegularStringPart "failed: " @ 263..271
+          StringTemplateEntry
+            LongTemplateEntryStart "${" @ 271..273
+            NavigationExpression
+              NameExpression
+                Identifier "status" @ 273..279
+              Dot "." @ 279..280
+              Identifier "reason" @ 280..286
+            LongTemplateEntryEnd "}" @ 286..287
+          ClosingQuote "\"" @ 287..288
+      RBrace "}" @ 293..294 leading=[Newline "\n", Whitespace "    "]
+  Eof "" @ 295..295 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

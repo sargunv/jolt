@@ -1,0 +1,66 @@
+use jolt_syntax::CompletedMarker;
+
+use crate::KotlinSyntaxKind as K;
+
+use super::super::Parser;
+
+impl Parser<'_> {
+    pub(super) fn parse_lambda_expression(&mut self) -> CompletedMarker {
+        let marker = self.start();
+        self.expect(K::LBrace, "expected lambda");
+        if self.lambda_has_parameter_arrow() {
+            let params = self.start();
+            while !matches!(self.current_kind(), K::Arrow | K::RBrace | K::Eof) {
+                if self.eat(K::Comma) {
+                    continue;
+                }
+                let parameter = self.start();
+                self.parse_name_or_destructuring();
+                if self.eat(K::Colon) {
+                    self.parse_type_reference_until(&[K::Comma, K::Arrow]);
+                }
+                self.complete(parameter, K::LambdaParameter);
+            }
+            self.expect(K::Arrow, "expected '->' after lambda parameters");
+            self.complete(params, K::LambdaParameterList);
+        }
+        while !matches!(self.current_kind(), K::RBrace | K::Eof) {
+            self.parse_declaration_or_statement();
+        }
+        self.expect(K::RBrace, "expected '}' after lambda");
+        self.complete(marker, K::LambdaExpression)
+    }
+
+    pub(super) fn parse_labeled_lambda_expression(&mut self) -> CompletedMarker {
+        let marker = self.start();
+        self.parse_optional_label_definition();
+        self.parse_lambda_expression();
+        self.complete(marker, K::LambdaExpression)
+    }
+
+    pub(super) fn parse_collection_literal_expression(&mut self) -> CompletedMarker {
+        let marker = self.start();
+        self.expect(K::LBracket, "expected collection literal");
+        self.parse_comma_separated_until(K::RBracket, K::ValueArgument);
+        self.expect(K::RBracket, "expected ']' after collection literal");
+        self.complete(marker, K::CollectionLiteralExpression)
+    }
+
+    fn lambda_has_parameter_arrow(&mut self) -> bool {
+        const MAX_LAMBDA_PARAMETER_LOOKAHEAD: usize = 256;
+
+        let mut depth = 0usize;
+        for index in (self.position()..).take(MAX_LAMBDA_PARAMETER_LOOKAHEAD) {
+            match self.kind_at(index) {
+                K::Arrow if depth == 0 => return true,
+                K::RBrace if depth == 0 => return false,
+                K::LParen | K::LBracket | K::LBrace => depth += 1,
+                K::RParen | K::RBracket | K::RBrace => depth = depth.saturating_sub(1),
+                K::Eof => return false,
+                _ => {}
+            }
+        }
+
+        false
+    }
+}

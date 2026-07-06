@@ -1,0 +1,19 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+// Copyright 2026 Example
+// A comment-only Kotlin file with a final newline.
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  Eof "" @ 78..78 leading=[LineComment "// Copyright 2026 Example", Newline "\n", LineComment "// A comment-only Kotlin file with a final newline.", Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

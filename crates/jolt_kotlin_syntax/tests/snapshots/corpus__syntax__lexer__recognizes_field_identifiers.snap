@@ -1,0 +1,24 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+$field $`strange field`
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  Statement
+    ExpressionStatement
+      NameExpression
+        FieldIdentifier "$field" @ 0..6 trailing=[Whitespace " "]
+      ErrorNode
+        FieldIdentifier "$`strange field`" @ 7..23
+  Eof "" @ 24..24 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=7..23 message="unexpected token in expression"
+
+diagnostics:
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(7), end: TextSize(23) }) message=unexpected token in expression

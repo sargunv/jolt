@@ -1,0 +1,28 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+`unterminated
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  Statement
+    ExpressionStatement
+      ErrorNode
+        Unknown "`" @ 0..1
+      ErrorNode
+        Identifier "unterminated" @ 1..13
+  Eof "" @ 14..14 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.lex.unterminated_backtick_identifier severity=Error stage=Lexer range=0..1 message="unterminated backtick identifier"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=0..1 message="expected expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=1..13 message="unexpected token in expression"
+
+diagnostics:
+code=kotlin.lex.unterminated_backtick_identifier severity=Error stage=Lexer range=Some(TextRange { start: TextSize(0), end: TextSize(1) }) message=unterminated backtick identifier
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(0), end: TextSize(1) }) message=expected expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(1), end: TextSize(13) }) message=unexpected token in expression

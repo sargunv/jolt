@@ -1,0 +1,59 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class Outer {
+    class Inner
+
+    object NestedObject
+
+    fun build(): Inner = Inner()
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Name
+      Identifier "Outer" @ 6..11 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 12..13
+      ClassMemberDeclaration
+        ClassDeclaration
+          ClassKw "class" @ 18..23 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Name
+            Identifier "Inner" @ 24..29
+      ClassMemberDeclaration
+        ObjectDeclaration
+          ObjectKw "object" @ 35..41 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Name
+            Identifier "NestedObject" @ 42..54
+      ClassMemberDeclaration
+        FunctionDeclaration
+          FunKw "fun" @ 60..63 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Identifier "build" @ 64..69
+          ValueParameterList
+            LParen "(" @ 69..70
+            RParen ")" @ 70..71
+          Colon ":" @ 71..72 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "Inner" @ 73..78 trailing=[Whitespace " "]
+          Assign "=" @ 79..80 trailing=[Whitespace " "]
+          CallExpression
+            NameExpression
+              Identifier "Inner" @ 81..86
+            ValueArgumentList
+              LParen "(" @ 86..87
+              RParen ")" @ 87..88
+      RBrace "}" @ 89..90 leading=[Newline "\n"]
+  Eof "" @ 91..91 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

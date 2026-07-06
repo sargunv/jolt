@@ -1,0 +1,58 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun missingElvisOperand(value: String?): String {
+    val chosen = value ?:
+    return chosen
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    Identifier "missingElvisOperand" @ 4..23
+    ValueParameterList
+      LParen "(" @ 23..24
+      ValueParameter
+        Name
+          Identifier "value" @ 24..29
+        Colon ":" @ 29..30 trailing=[Whitespace " "]
+        TypeReference
+          NullableType
+            UserType
+              Identifier "String" @ 31..37
+            Question "?" @ 37..38
+      RParen ")" @ 38..39
+    Colon ":" @ 39..40 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "String" @ 41..47 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 48..49
+      PropertyDeclaration
+        ValKw "val" @ 54..57 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        Identifier "chosen" @ 58..64 trailing=[Whitespace " "]
+        Assign "=" @ 65..66 trailing=[Whitespace " "]
+        BinaryExpression
+          NameExpression
+            Identifier "value" @ 67..72 trailing=[Whitespace " "]
+          Elvis "?:" @ 73..75
+          ErrorNode
+      Statement
+        ExpressionStatement
+          JumpExpression
+            ReturnKw "return" @ 80..86 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            NameExpression
+              Identifier "chosen" @ 87..93
+      RBrace "}" @ 94..95 leading=[Newline "\n"]
+  Eof "" @ 96..96 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=73..75 message="expected expression after operator"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(73), end: TextSize(75) }) message=expected expression after operator

@@ -1,0 +1,22 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+'abc
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  Statement
+    ExpressionStatement
+      LiteralExpression
+        CharacterLiteral "'abc" @ 0..4
+  Eof "" @ 5..5 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.lex.unterminated_character_literal severity=Error stage=Lexer range=0..4 message="unterminated character literal"
+
+diagnostics:
+code=kotlin.lex.unterminated_character_literal severity=Error stage=Lexer range=Some(TextRange { start: TextSize(0), end: TextSize(4) }) message=unterminated character literal
