@@ -496,6 +496,7 @@ dependencies = [
  "jolt_syntax",
  "jolt_text",
  "num_enum",
+ "unicode-general-category",
 ]
 
 [[package]]

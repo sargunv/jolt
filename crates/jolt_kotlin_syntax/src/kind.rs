@@ -140,6 +140,7 @@ pub enum KotlinSyntaxKind {
     Hash,
     At,
     Comma,
+    EolOrSemicolon,
 
     // Operators.
     PlusPlus,

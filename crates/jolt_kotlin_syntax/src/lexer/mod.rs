@@ -5,6 +5,7 @@ use std::ops::Range;
 use jolt_diagnostics::{Diagnostic, DiagnosticStage, Severity};
 use jolt_syntax::{SyntaxTrivia, TriviaKind as SyntaxTriviaKind};
 use jolt_text::{TextRange, TextSize};
+use unicode_general_category::{GeneralCategory, get_general_category};
 
 use crate::KotlinSyntaxKind;
 
@@ -710,18 +711,16 @@ impl<'source> Scanner<'source> {
             .current_range()
             .expect("identifier starts before EOF")
             .start();
-        self.bump();
-        if self
-            .current_char()
-            .is_none_or(|ch| matches!(ch, '`' | '\r' | '\n'))
-        {
+        if !self.valid_escaped_identifier_at(0) {
+            self.bump();
             self.diagnostics.push(lexer_diagnostic(
                 KotlinLexDiagnosticCode::UnterminatedBacktickIdentifier,
-                TextRange::new(start, self.previous_end_or_source_end()),
+                TextRange::new(start, self.previous_end()),
             ));
             return KotlinSyntaxKind::Unknown;
         }
 
+        self.bump();
         while let Some(ch) = self.current_char() {
             match ch {
                 '`' => {
@@ -732,11 +731,7 @@ impl<'source> Scanner<'source> {
                 _ => self.bump(),
             }
         }
-        self.diagnostics.push(lexer_diagnostic(
-            KotlinLexDiagnosticCode::UnterminatedBacktickIdentifier,
-            TextRange::new(start, self.previous_end_or_source_end()),
-        ));
-        KotlinSyntaxKind::Unknown
+        unreachable!("valid escaped identifier must contain a closing backtick")
     }
 
     fn character_literal(&mut self) -> KotlinSyntaxKind {
@@ -883,56 +878,6 @@ impl<'source> Scanner<'source> {
             "when" => KotlinSyntaxKind::WhenKw,
             "interface" => KotlinSyntaxKind::InterfaceKw,
             "typeof" => KotlinSyntaxKind::TypeOfKw,
-            "all" => KotlinSyntaxKind::AllKw,
-            "file" => KotlinSyntaxKind::FileKw,
-            "field" => KotlinSyntaxKind::FieldKw,
-            "property" => KotlinSyntaxKind::PropertyKw,
-            "receiver" => KotlinSyntaxKind::ReceiverKw,
-            "param" => KotlinSyntaxKind::ParamKw,
-            "setparam" => KotlinSyntaxKind::SetParamKw,
-            "delegate" => KotlinSyntaxKind::DelegateKw,
-            "import" => KotlinSyntaxKind::ImportKw,
-            "where" => KotlinSyntaxKind::WhereKw,
-            "by" => KotlinSyntaxKind::ByKw,
-            "get" => KotlinSyntaxKind::GetKw,
-            "set" => KotlinSyntaxKind::SetKw,
-            "constructor" => KotlinSyntaxKind::ConstructorKw,
-            "init" => KotlinSyntaxKind::InitKw,
-            "context" => KotlinSyntaxKind::ContextKw,
-            "catch" => KotlinSyntaxKind::CatchKw,
-            "dynamic" => KotlinSyntaxKind::DynamicKw,
-            "finally" => KotlinSyntaxKind::FinallyKw,
-            "abstract" => KotlinSyntaxKind::AbstractKw,
-            "enum" => KotlinSyntaxKind::EnumKw,
-            "contract" => KotlinSyntaxKind::ContractKw,
-            "open" => KotlinSyntaxKind::OpenKw,
-            "inner" => KotlinSyntaxKind::InnerKw,
-            "override" => KotlinSyntaxKind::OverrideKw,
-            "private" => KotlinSyntaxKind::PrivateKw,
-            "public" => KotlinSyntaxKind::PublicKw,
-            "internal" => KotlinSyntaxKind::InternalKw,
-            "protected" => KotlinSyntaxKind::ProtectedKw,
-            "out" => KotlinSyntaxKind::OutKw,
-            "vararg" => KotlinSyntaxKind::VarargKw,
-            "reified" => KotlinSyntaxKind::ReifiedKw,
-            "companion" => KotlinSyntaxKind::CompanionKw,
-            "sealed" => KotlinSyntaxKind::SealedKw,
-            "final" => KotlinSyntaxKind::FinalKw,
-            "lateinit" => KotlinSyntaxKind::LateinitKw,
-            "data" => KotlinSyntaxKind::DataKw,
-            "value" => KotlinSyntaxKind::ValueKw,
-            "inline" => KotlinSyntaxKind::InlineKw,
-            "noinline" => KotlinSyntaxKind::NoinlineKw,
-            "tailrec" => KotlinSyntaxKind::TailrecKw,
-            "external" => KotlinSyntaxKind::ExternalKw,
-            "annotation" => KotlinSyntaxKind::AnnotationKw,
-            "crossinline" => KotlinSyntaxKind::CrossinlineKw,
-            "operator" => KotlinSyntaxKind::OperatorKw,
-            "infix" => KotlinSyntaxKind::InfixKw,
-            "const" => KotlinSyntaxKind::ConstKw,
-            "suspend" => KotlinSyntaxKind::SuspendKw,
-            "expect" => KotlinSyntaxKind::ExpectKw,
-            "actual" => KotlinSyntaxKind::ActualKw,
             _ => KotlinSyntaxKind::Identifier,
         }
     }
@@ -1230,9 +1175,17 @@ fn find_nested_block_comment_end(source: &str, start: usize) -> Option<usize> {
 }
 
 fn is_kotlin_identifier_start(ch: char) -> bool {
-    ch == '_' || ch.is_alphabetic()
+    ch == '_'
+        || matches!(
+            get_general_category(ch),
+            GeneralCategory::UppercaseLetter
+                | GeneralCategory::LowercaseLetter
+                | GeneralCategory::TitlecaseLetter
+                | GeneralCategory::ModifierLetter
+                | GeneralCategory::OtherLetter
+        )
 }
 
 fn is_kotlin_identifier_part(ch: char) -> bool {
-    ch == '_' || ch.is_alphanumeric()
+    is_kotlin_identifier_start(ch) || get_general_category(ch) == GeneralCategory::DecimalNumber
 }

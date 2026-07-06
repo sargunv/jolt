@@ -11,6 +11,7 @@ jolt_diagnostics = { path = "../jolt_diagnostics" }
 jolt_syntax = { path = "../jolt_syntax" }
 jolt_text = { path = "../jolt_text" }
 num_enum = "0.7.6"
+unicode-general-category = "1.1"
 
 [dev-dependencies]
 insta = "1.48"
