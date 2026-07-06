@@ -43,6 +43,7 @@ impl<'source> JavaComments<'source> {
             !matches!(
                 trivia.kind(),
                 SyntaxTriviaKind::LineComment
+                    | SyntaxTriviaKind::ShebangComment
                     | SyntaxTriviaKind::BlockComment
                     | SyntaxTriviaKind::DocComment
             )
@@ -58,7 +59,9 @@ impl<'source> Iterator for JavaComments<'source> {
             let text_range = TextRange::new(self.offset, self.offset + trivia.text_len());
             self.offset = text_range.end();
             let kind = match trivia.kind() {
-                SyntaxTriviaKind::LineComment => JavaCommentKind::Line,
+                SyntaxTriviaKind::LineComment | SyntaxTriviaKind::ShebangComment => {
+                    JavaCommentKind::Line
+                }
                 SyntaxTriviaKind::BlockComment => JavaCommentKind::Block,
                 SyntaxTriviaKind::DocComment => JavaCommentKind::Doc,
                 SyntaxTriviaKind::Whitespace
@@ -409,6 +412,7 @@ fn trivia_has_blank_line(trivia: &[SyntaxTrivia]) -> bool {
             }
             SyntaxTriviaKind::Whitespace | SyntaxTriviaKind::Ignored => {}
             SyntaxTriviaKind::LineComment
+            | SyntaxTriviaKind::ShebangComment
             | SyntaxTriviaKind::BlockComment
             | SyntaxTriviaKind::DocComment => {
                 line_breaks_since_content = 0;

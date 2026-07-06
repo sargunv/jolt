@@ -47,6 +47,8 @@ pub enum TriviaKind {
     Newline,
     /// A `//` comment.
     LineComment,
+    /// A shebang comment at the start of a file.
+    ShebangComment,
     /// A `/* */` comment that is not documentation.
     BlockComment,
     /// A documentation comment.

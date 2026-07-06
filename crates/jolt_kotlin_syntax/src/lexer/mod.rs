@@ -317,7 +317,7 @@ impl<'source> Scanner<'source> {
     }
 
     fn shebang_comment(&mut self) -> SyntaxTrivia {
-        self.line_comment_like(SyntaxTriviaKind::LineComment)
+        self.line_comment_like(SyntaxTriviaKind::ShebangComment)
     }
 
     fn horizontal_whitespace(&mut self) -> SyntaxTrivia {
@@ -359,10 +359,7 @@ impl<'source> Scanner<'source> {
             .start();
         self.bump();
         self.bump();
-        while self
-            .current_char()
-            .is_some_and(|ch| ch != '\r' && ch != '\n')
-        {
+        while self.current_char().is_some_and(|ch| ch != '\n') {
             self.bump();
         }
         SyntaxTrivia::new(kind, TextRange::new(start, self.previous_end()).len())
@@ -490,7 +487,7 @@ impl<'source> Scanner<'source> {
                 self.modes.pop();
                 KotlinSyntaxKind::ClosingQuote
             }
-            '\r' | '\n' => {
+            '\n' => {
                 self.diagnostics.push(lexer_diagnostic(
                     KotlinLexDiagnosticCode::UnterminatedStringLiteral,
                     TextRange::new(
@@ -652,7 +649,7 @@ impl<'source> Scanner<'source> {
             return KotlinSyntaxKind::EscapeSequence;
         }
 
-        if self.current_char().is_some_and(is_line_terminator_start) {
+        if self.current_char() == Some('\n') {
             let range = self.current_range().expect("line terminator exists");
             self.diagnostics.push(lexer_diagnostic(
                 KotlinLexDiagnosticCode::InvalidEscapeSequence,
@@ -686,7 +683,7 @@ impl<'source> Scanner<'source> {
 
     fn line_string_part(&mut self) -> KotlinSyntaxKind {
         while let Some(ch) = self.current_char() {
-            if matches!(ch, '\\' | '"' | '$' | '\r' | '\n') {
+            if matches!(ch, '\\' | '"' | '$' | '\n') {
                 break;
             }
             self.bump();
@@ -695,10 +692,13 @@ impl<'source> Scanner<'source> {
     }
 
     fn raw_string_part(&mut self) -> KotlinSyntaxKind {
+        if matches!(self.current_char(), Some('\n' | '"' | '\\')) {
+            self.bump();
+            return KotlinSyntaxKind::RegularStringPart;
+        }
+
         while let Some(ch) = self.current_char() {
-            if ch == '$'
-                || (ch == '"' && self.peek_char(1) == Some('"') && self.peek_char(2) == Some('"'))
-            {
+            if ch == '$' || matches!(ch, '\n' | '"' | '\\') {
                 break;
             }
             self.bump();
@@ -727,7 +727,7 @@ impl<'source> Scanner<'source> {
                     self.bump();
                     return KotlinSyntaxKind::Identifier;
                 }
-                '\r' | '\n' => break,
+                '\n' => break,
                 _ => self.bump(),
             }
         }
@@ -749,8 +749,7 @@ impl<'source> Scanner<'source> {
                 '\r' | '\n' => break,
                 '\\' => {
                     self.bump();
-                    if !self.at_end() && !self.current_char().is_some_and(is_line_terminator_start)
-                    {
+                    if !self.at_end() && self.current_char() != Some('\n') {
                         self.bump();
                     }
                 }
@@ -1032,7 +1031,7 @@ impl<'source> Scanner<'source> {
         for ch in self.source[offset..].chars().skip(1) {
             match ch {
                 '`' => return saw_content,
-                '\r' | '\n' => return false,
+                '\n' => return false,
                 _ => saw_content = true,
             }
         }
