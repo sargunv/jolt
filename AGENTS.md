@@ -41,7 +41,9 @@ Run `mise tasks ls --all` for the full task list.
   source tokens (with trivia) are available. Synthesized tokens are allowed in
   very specific cases, like normalizing separators, braces, or parentheses where
   semantics don't change and trivia won't be lost.
-- All new Java edge-case coverage goes in `fixtures/java/`; do not add inline
-  Java snippet tests in crate `tests.rs` files.
-- Imported external Java corpora are smoke-tested with summary snapshots only;
-  do not add per-file snapshots for those imported suites.
+- Prefer integration tests with `insta` snapshots over inline tests and
+  assertions where practical. Inline focused tests should be reserved only for
+  important regressions and edge cases that are not possible to test with the
+  integration pattern. For example, a single Java fixture corpus is used as
+  input to the syntax and formatter crates, and their outputs are snapshotted
+  with `insta`.
