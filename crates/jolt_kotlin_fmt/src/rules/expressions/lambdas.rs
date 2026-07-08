@@ -1,15 +1,17 @@
 use jolt_fmt_ir::{Doc, concat, group, hard_line, if_break, indent, space};
 use jolt_kotlin_syntax::{
-    BlockItem, DestructuringDeclaration, KotlinSyntaxKind, KotlinSyntaxToken, LambdaExpression,
-    LambdaParameter, LambdaParameterList,
+    BlockItem, DestructuringDeclaration, LambdaExpression, LambdaParameter, LambdaParameterList,
+    RecoveredSeparatedListEntry,
 };
 
 use crate::helpers::blocks::join_hard_lines;
 use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, format_token, format_token_sequence, token_has_comments,
+    LeadingTrivia, TrailingTrivia, format_separator_with_comments, format_token,
+    format_token_sequence, token_has_comments,
 };
-use crate::helpers::lists::{CommaListItem, compact_parenthesized_list};
-use crate::helpers::source::source_gap_is_trivia;
+use crate::helpers::lists::{
+    CommaListItem, compact_parenthesized_list, recovered_comma_list_items,
+};
 use crate::rules::names::format_name;
 use crate::rules::statements::format_block_item;
 use crate::rules::types::format_type_reference;
@@ -102,22 +104,24 @@ fn format_lambda_parameter_prefix<'source>(
     parameter_list: &LambdaParameterList<'source>,
 ) -> Option<Doc<'source>> {
     let arrow = parameter_list.arrow_token()?;
-    let parameters = parameter_list.parameters().collect::<Vec<_>>();
-    let commas = comma_tokens_after_parameters(parameter_list, &parameters);
+    let mut entries =
+        recovered_comma_list_items(parameter_list.parameter_entries_with_recovered(), |entry| {
+            CommaListItem {
+                doc: format_lambda_parameter(&entry.parameter),
+                comma: entry.comma,
+            }
+        })
+        .into_iter()
+        .peekable();
     let mut docs = Vec::new();
 
-    for (index, parameter) in parameters.iter().enumerate() {
-        if index > 0 {
-            if let Some(comma) = commas.get(index - 1).copied().flatten() {
-                docs.push(format_token(
-                    &comma,
-                    LeadingTrivia::Preserve,
-                    TrailingTrivia::RelocatedToEnclosingContext,
-                ));
-            }
+    while let Some(entry) = entries.next() {
+        docs.push(entry.doc);
+        if let Some(comma) = entry.comma {
+            docs.push(format_separator_with_comments(&comma, space()));
+        } else if entries.peek().is_some() {
             docs.push(space());
         }
-        docs.push(format_lambda_parameter(parameter));
     }
 
     if !docs.is_empty() {
@@ -164,126 +168,60 @@ fn format_destructuring_declaration<'source>(
     compact_parenthesized_list(
         declaration.open_delimiter().as_ref(),
         declaration.close_delimiter().as_ref(),
-        declaration
-            .entries_with_commas()
-            .map(|entry| CommaListItem {
+        recovered_comma_list_items(declaration.entries_with_recovered(), |entry| {
+            CommaListItem {
                 doc: entry
                     .entry
                     .name()
                     .map_or_else(jolt_fmt_ir::nil, |name| format_name(&name)),
                 comma: entry.comma,
-            })
-            .collect(),
+            }
+        }),
     )
 }
 
-fn comma_tokens_after_parameters<'source>(
-    list: &LambdaParameterList<'source>,
-    parameters: &[LambdaParameter<'source>],
-) -> Vec<Option<jolt_kotlin_syntax::KotlinSyntaxToken<'source>>> {
-    parameters
-        .iter()
-        .enumerate()
-        .map(|(index, parameter)| {
-            let end = parameter.text_range().end();
-            let next_start = parameters.get(index + 1).map_or_else(
-                || list.text_range().end(),
-                |parameter| parameter.text_range().start(),
-            );
-            list.token_iter().find(|token| {
-                token.kind() == KotlinSyntaxKind::Comma
-                    && token.text_range().start() >= end
-                    && token.text_range().start() < next_start
-            })
-        })
-        .collect()
-}
-
-fn lambda_body_docs<'source>(
+pub(super) fn lambda_body_docs<'source>(
     lambda: &LambdaExpression<'source>,
     items: &[BlockItem<'source>],
 ) -> Vec<Doc<'source>> {
-    let Some(open) = lambda.open_brace() else {
-        return items.iter().map(format_block_item).collect();
-    };
-    let body_end = lambda.close_brace().map_or_else(
-        || lambda.text_range().end().get(),
-        |close| close.token_text_range().start().get(),
-    );
-    let tokens = lambda.token_iter().collect::<Vec<_>>();
-    let mut token_cursor = 0;
     let mut docs = Vec::new();
-    let mut covered_until = lambda
-        .parameter_list()
-        .and_then(|parameters| parameters.arrow_token())
-        .map_or_else(
-            || open.token_text_range().end().get(),
-            |arrow| arrow.token_text_range().end().get(),
-        );
+    let mut recovered_docs = Vec::new();
 
-    for item in items {
-        push_uncovered_lambda_tokens(
-            &mut docs,
-            lambda,
-            &tokens,
-            &mut token_cursor,
-            covered_until,
-            item.text_range().start().get(),
-        );
-        docs.push(format_block_item(item));
-        covered_until = item.text_range().end().get();
+    for entry in lambda.body_items_with_recovered() {
+        match entry {
+            RecoveredSeparatedListEntry::Entry(item) => {
+                push_recovered_lambda_docs(&mut docs, &mut recovered_docs);
+                docs.push(format_block_item(&item));
+            }
+            RecoveredSeparatedListEntry::Token(token) => recovered_docs.push(
+                format_token_sequence(std::iter::once(token), LeadingTrivia::Preserve),
+            ),
+            RecoveredSeparatedListEntry::Error(error) => recovered_docs.push(
+                format_token_sequence(error.token_iter(), LeadingTrivia::Preserve),
+            ),
+            RecoveredSeparatedListEntry::Node(node) => recovered_docs.push(format_token_sequence(
+                node.token_iter(),
+                LeadingTrivia::Preserve,
+            )),
+        }
     }
 
-    push_uncovered_lambda_tokens(
-        &mut docs,
-        lambda,
-        &tokens,
-        &mut token_cursor,
-        covered_until,
-        body_end,
-    );
+    push_recovered_lambda_docs(&mut docs, &mut recovered_docs);
+
+    if docs.is_empty() {
+        return items.iter().map(format_block_item).collect();
+    }
+
     docs
 }
 
-fn push_uncovered_lambda_tokens<'source>(
+fn push_recovered_lambda_docs<'source>(
     docs: &mut Vec<Doc<'source>>,
-    lambda: &LambdaExpression<'source>,
-    tokens: &[KotlinSyntaxToken<'source>],
-    token_cursor: &mut usize,
-    start: usize,
-    end: usize,
+    recovered_docs: &mut Vec<Doc<'source>>,
 ) {
-    if source_gap_is_trivia(
-        lambda.source_text(),
-        lambda.text_range().start().get(),
-        tokens.iter().copied(),
-        start,
-        end,
-    ) {
+    if recovered_docs.is_empty() {
         return;
     }
 
-    let mut gap_tokens = Vec::new();
-    while *token_cursor < tokens.len() {
-        let range = tokens[*token_cursor].token_text_range();
-        if range.end().get() <= start {
-            *token_cursor += 1;
-            continue;
-        }
-        if range.start().get() >= end {
-            break;
-        }
-        if range.start().get() >= start && range.end().get() <= end {
-            gap_tokens.push(tokens[*token_cursor]);
-            *token_cursor += 1;
-            continue;
-        }
-        break;
-    }
-
-    if gap_tokens.is_empty() {
-        return;
-    }
-
-    docs.push(format_token_sequence(gap_tokens, LeadingTrivia::Preserve));
+    docs.push(concat(std::mem::take(recovered_docs)));
 }

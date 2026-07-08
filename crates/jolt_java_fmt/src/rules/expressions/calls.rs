@@ -6,6 +6,7 @@ use super::{
     format_token_with_comments, format_type_argument_list, group, is_member_chain_child,
     parenthesized_list,
 };
+use crate::helpers::lists::recovered_comma_list_items;
 
 pub(super) fn format_method_invocation_expression_with_leading_comments<'source>(
     expression: &MethodInvocationExpression<'source>,
@@ -66,24 +67,51 @@ fn format_method_invocation_callee<'source>(
     leading_comments: LeadingComments,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    if let Some(name) = expression.direct_method_name() {
-        let dot = expression.dot_token();
-        return concat([
+    let dot = expression.dot_token();
+    let qualified_callee = concat([
+        expression
+            .qualifier()
+            .map_or_else(jolt_fmt_ir::nil, |qualifier| {
+                concat([
+                    format_expression(&qualifier, formatter),
+                    format_member_dot(dot.as_ref()),
+                ])
+            }),
+        if expression.qualifier().is_none()
+            && expression.direct_method_name().is_none()
+            && (expression.dot_token().is_some() || expression.type_arguments().is_some())
+        {
             expression
-                .qualifier()
-                .map_or_else(jolt_fmt_ir::nil, |qualifier| {
-                    concat([
-                        format_expression(&qualifier, formatter),
-                        format_member_dot(dot.as_ref()),
-                    ])
-                }),
-            expression
-                .type_arguments()
-                .map_or_else(jolt_fmt_ir::nil, |arguments| {
-                    format_type_argument_list(&arguments, formatter)
-                }),
-            format_leaf_token(&name, leading_comments),
-        ]);
+                .simple_name_expression()
+                .map_or_else(jolt_fmt_ir::nil, |name| {
+                    format_expression_with_leading_comments(&name, leading_comments, formatter)
+                })
+        } else {
+            jolt_fmt_ir::nil()
+        },
+        expression
+            .type_arguments()
+            .map_or_else(jolt_fmt_ir::nil, |arguments| {
+                format_type_argument_list(&arguments, formatter)
+            }),
+        expression
+            .direct_method_name()
+            .map_or_else(jolt_fmt_ir::nil, |name| {
+                format_leaf_token(&name, leading_comments)
+            }),
+        if expression.qualifier().is_none() {
+            format_member_dot(dot.as_ref())
+        } else {
+            jolt_fmt_ir::nil()
+        },
+    ]);
+
+    if expression.qualifier().is_some()
+        || expression.type_arguments().is_some()
+        || expression.direct_method_name().is_some()
+        || expression.dot_token().is_some()
+    {
+        return qualified_callee;
     }
 
     expression
@@ -102,12 +130,16 @@ pub(crate) fn format_argument_list<'source>(
     };
     let open = arguments.open_paren();
     let close = arguments.close_paren();
-    parenthesized_list(
-        open.as_ref(),
-        close.as_ref(),
-        arguments.entries().map(|entry| CommaListItem {
-            doc: format_expression(&entry.argument, formatter),
-            comma: entry.comma,
-        }),
-    )
+    let items = argument_list_items(&arguments, formatter);
+    parenthesized_list(open.as_ref(), close.as_ref(), items)
+}
+
+fn argument_list_items<'source, 'fmt>(
+    arguments: &'fmt ArgumentList<'source>,
+    formatter: &'fmt JavaFormatter<'_>,
+) -> impl Iterator<Item = CommaListItem<'source>> + use<'source, 'fmt> {
+    recovered_comma_list_items(arguments.entries_with_recovered(), |entry| CommaListItem {
+        doc: format_expression(&entry.argument, formatter),
+        comma: entry.comma,
+    })
 }

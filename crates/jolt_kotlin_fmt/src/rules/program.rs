@@ -499,6 +499,43 @@ mod tests {
     }
 
     #[test]
+    fn recovered_block_with_formatter_ignore_preserves_orphan_tokens() {
+        let source = concat!(
+            "fun demo() {\n",
+            "  val before = 1\n",
+            "  // @formatter:off\n",
+            "  val raw=1+2\n",
+            "  // @formatter:on\n",
+            "  /* block */ val after = value\n",
+            "}\n",
+        );
+        let formatted = format(source);
+
+        assert!(formatted.contains("val raw=1+2"), "{formatted}");
+        assert!(formatted.contains("/* block */"), "{formatted}");
+        assert!(formatted.contains("after"), "{formatted}");
+        assert!(formatted.contains("value"), "{formatted}");
+    }
+
+    #[test]
+    fn recovered_class_body_with_formatter_ignore_preserves_orphan_tokens() {
+        let source = concat!(
+            "class Demo {\n",
+            "  fun before() {}\n",
+            "  // @formatter:off\n",
+            "  fun raw(){ }\n",
+            "  // @formatter:on\n",
+            "  /* member */ +\n",
+            "}\n",
+        );
+        let formatted = format(source);
+
+        assert!(formatted.contains("fun raw(){ }"));
+        assert!(formatted.contains("/* member */"));
+        assert!(formatted.contains("+"));
+    }
+
+    #[test]
     fn recovered_navigation_without_receiver_preserves_selector_tokens() {
         let formatted = format("fun demo() { .next }\n");
 
@@ -547,13 +584,57 @@ mod tests {
     }
 
     #[test]
+    fn recovered_context_function_type_preserves_parameter_commas() {
+        let source = "typealias Handler = context(First, /* orphan */ , Second) () -> Unit\n";
+        let formatted = format(source);
+
+        assert!(formatted.contains("context"));
+        assert!(formatted.contains("First"));
+        assert!(formatted.contains("/* orphan */"));
+        assert!(formatted.contains("Second"));
+        assert!(formatted.contains("Unit"));
+    }
+
+    #[test]
+    fn recovered_lambda_parameter_list_preserves_orphan_separators() {
+        let formatted = format("fun demo() { { first, /* orphan */ , second -> first } }\n");
+
+        assert!(formatted.contains("first"));
+        assert!(formatted.contains("/* orphan */"));
+        assert!(formatted.contains("second"));
+        assert!(formatted.contains("->"));
+    }
+
+    #[test]
+    fn explicit_backing_field_formats_available_represented_pieces() {
+        let formatted = format("val value: Int field = /* backing */ compute()\n");
+
+        assert!(formatted.contains("value"));
+        assert!(formatted.contains("field"));
+        assert!(formatted.contains("="));
+        assert!(formatted.contains("/* backing */"));
+        assert!(formatted.contains("compute"));
+    }
+
+    #[test]
+    fn import_suffixes_use_structured_alias_and_star_tokens() {
+        let formatted = format("import sample.deep.*\nimport sample.Name as Alias\n");
+
+        assert!(formatted.contains("sample.deep"));
+        assert!(formatted.contains("*"));
+        assert!(formatted.contains("sample.Name"));
+        assert!(formatted.contains("as"));
+        assert!(formatted.contains("Alias"));
+    }
+
+    #[test]
     fn recovered_declaration_tails_preserve_dangling_tokens() {
         let formatted = format("fun value() =\nval answer =\nval delegated by\n");
 
-        assert!(formatted.contains("fun value()"));
-        assert!(formatted.contains("="));
-        assert!(formatted.contains("answer"));
-        assert!(formatted.contains("by"));
+        assert!(formatted.contains("fun value()"), "{formatted}");
+        assert!(formatted.contains("="), "{formatted}");
+        assert!(formatted.contains("answer"), "{formatted}");
+        assert!(formatted.contains("by"), "{formatted}");
     }
 
     #[test]
@@ -569,12 +650,49 @@ mod tests {
     }
 
     #[test]
+    fn recovered_lambda_branch_preserves_body_orphan_tokens() {
+        let formatted =
+            format("fun demo(flag: Boolean) { if (flag) { run(/* branch */ value)\nnext() } }\n");
+
+        assert!(formatted.contains("/* branch */"), "{formatted}");
+        assert!(formatted.contains("value"), "{formatted}");
+        assert!(formatted.contains("next"), "{formatted}");
+    }
+
+    #[test]
     fn recovered_annotation_argument_list_preserves_orphan_tokens_and_comments() {
         let formatted = format("@Anno(/* orphan */ , value)\nclass Demo\n");
 
         assert!(formatted.contains("Anno"));
         assert!(formatted.contains("/* orphan */"));
         assert!(formatted.contains("value"));
+    }
+
+    #[test]
+    fn recovered_type_constraints_preserve_orphan_tokens_and_comments() {
+        let formatted = format("fun <T> demo() where T : Any, /* orphan */ , T : Closeable {}\n");
+
+        assert!(formatted.contains("T : Any"), "{formatted}");
+        assert!(formatted.contains("/* orphan */"), "{formatted}");
+        assert!(formatted.contains("Closeable"), "{formatted}");
+    }
+
+    #[test]
+    fn recovered_destructuring_preserves_orphan_tokens_and_comments() {
+        let formatted = format("val (first, /* orphan */ , second) = pair\n");
+
+        assert!(formatted.contains("first"));
+        assert!(formatted.contains("/* orphan */"));
+        assert!(formatted.contains("second"));
+    }
+
+    #[test]
+    fn recovered_object_delegation_preserves_orphan_tokens_and_comments() {
+        let formatted = format("val value = object : First, /* orphan */ , Second {}\n");
+
+        assert!(formatted.contains("First"));
+        assert!(formatted.contains("/* orphan */"));
+        assert!(formatted.contains("Second"));
     }
 
     fn format(source: &str) -> String {

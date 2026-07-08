@@ -1,11 +1,11 @@
 use jolt_fmt_ir::{Doc, concat, force_group, group, hard_line, indent, line, soft_line};
-use jolt_kotlin_syntax::KotlinSyntaxToken;
+use jolt_kotlin_syntax::{KotlinSyntaxToken, RecoveredSeparatedListEntry};
 
 use crate::helpers::comments::{
-    InlineLeadingTrivia, TrailingTrivia, delimiter_dangling_comments, format_dangling_comments,
-    format_leading_comments, format_separator_with_comments,
-    format_token_after_relocated_leading_comments, format_token_with_inline_leading_comments,
-    has_delimiter_dangling_comments,
+    InlineLeadingTrivia, LeadingTrivia, TrailingTrivia, delimiter_dangling_comments,
+    format_dangling_comments, format_leading_comments, format_separator_with_comments,
+    format_token, format_token_after_relocated_leading_comments, format_token_sequence,
+    format_token_with_inline_leading_comments, has_delimiter_dangling_comments,
 };
 
 pub(crate) struct CommaListItem<'source> {
@@ -128,6 +128,30 @@ pub(crate) fn comma_list(items: Vec<CommaListItem<'_>>) -> Doc<'_> {
     }
 
     concat(docs)
+}
+
+pub(crate) fn recovered_comma_list_items<'source, Entry>(
+    entries: impl IntoIterator<Item = RecoveredSeparatedListEntry<'source, Entry>>,
+    mut format_entry: impl FnMut(Entry) -> CommaListItem<'source>,
+) -> Vec<CommaListItem<'source>> {
+    entries
+        .into_iter()
+        .map(move |entry| match entry {
+            RecoveredSeparatedListEntry::Entry(entry) => format_entry(entry),
+            RecoveredSeparatedListEntry::Token(token) => CommaListItem {
+                doc: format_token(&token, LeadingTrivia::Preserve, TrailingTrivia::Preserve),
+                comma: None,
+            },
+            RecoveredSeparatedListEntry::Error(error) => CommaListItem {
+                doc: format_token_sequence(error.token_iter(), LeadingTrivia::Preserve),
+                comma: None,
+            },
+            RecoveredSeparatedListEntry::Node(node) => CommaListItem {
+                doc: format_token_sequence(node.token_iter(), LeadingTrivia::Preserve),
+                comma: None,
+            },
+        })
+        .collect()
 }
 
 fn format_open_delimiter<'source>(token: Option<&KotlinSyntaxToken<'source>>) -> Doc<'source> {

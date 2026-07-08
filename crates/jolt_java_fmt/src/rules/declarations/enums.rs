@@ -11,7 +11,7 @@ use super::{
     is_formatter_control_marker, source_braced_body,
 };
 use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, format_leading_comments, format_token,
+    LeadingTrivia, TrailingTrivia, format_leading_comments, format_token, format_token_sequence,
 };
 use crate::helpers::syntax_tokens::{
     FormatterInsertedToken, format_token_with_normalized_text, inserted_syntax_token,
@@ -21,19 +21,19 @@ use jolt_fmt_ir::space;
 struct FormattedEnumConstant<'source> {
     doc: Doc<'source>,
     comma: Option<JavaSyntaxToken<'source>>,
+    is_recovered: bool,
 }
 
 pub(super) fn format_enum_body_contents<'source>(
     body: &jolt_java_syntax::EnumBody<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Option<Doc<'source>> {
-    let mut constants = body
+    let constants = body
         .constants()
         .into_iter()
-        .flat_map(|constants| constants.entries())
-        .map(|entry| format_enum_constant_entry(&entry, formatter))
-        .peekable();
-    let has_constants = constants.peek().is_some();
+        .flat_map(|constants| enum_constant_entries(constants, formatter))
+        .collect::<Vec<_>>();
+    let has_constants = constants.iter().any(|constant| !constant.is_recovered);
     let has_body_declarations = body
         .members()
         .any(|member| !matches!(member, ClassBodyMember::EmptyDeclaration(_)));
@@ -55,7 +55,7 @@ pub(super) fn format_enum_body_contents<'source>(
     let members_doc = format_class_member_body(
         body.text_range().start().get(),
         &ignored_ranges,
-        body.members(),
+        body.members_with_recovered(),
         open_comments,
         close_comments,
         formatter,
@@ -68,22 +68,31 @@ pub(super) fn format_enum_body_contents<'source>(
     let constants_doc = has_constants.then(|| {
         let mut pending_constant_comments = Vec::new();
         let mut constant_lines = Vec::new();
-        while let Some(entry) = constants.next() {
+        for (index, entry) in constants.iter().enumerate() {
             if !pending_constant_comments.is_empty() {
                 constant_lines.push(format_dangling_comments(std::mem::take(
                     &mut pending_constant_comments,
                 )));
             }
 
-            let is_last_constant = constants.peek().is_none();
+            if entry.is_recovered {
+                constant_lines.push(entry.doc.clone());
+                continue;
+            }
+
+            let is_last_constant = !constants[index + 1..]
+                .iter()
+                .any(|constant| !constant.is_recovered);
             let separator = if !has_body_declarations || !is_last_constant {
                 ","
             } else {
                 ";"
             };
-            if let Some(comma) = entry.comma {
-                let moved_comments =
-                    enum_separator_moved_comments(comma, has_body_declarations && is_last_constant);
+            if let Some(comma) = entry.comma.as_ref() {
+                let moved_comments = enum_separator_moved_comments(
+                    *comma,
+                    has_body_declarations && is_last_constant,
+                );
                 if has_body_declarations && is_last_constant {
                     moved_member_comments.extend(moved_comments);
                 } else {
@@ -92,7 +101,7 @@ pub(super) fn format_enum_body_contents<'source>(
             }
 
             constant_lines.push(concat([
-                entry.doc,
+                entry.doc.clone(),
                 format_enum_constant_separator(
                     entry.comma.as_ref(),
                     is_last_constant
@@ -134,6 +143,34 @@ pub(super) fn format_enum_body_contents<'source>(
     }
 }
 
+fn enum_constant_entries<'source, 'fmt>(
+    constants: jolt_java_syntax::EnumConstantList<'source>,
+    formatter: &'fmt JavaFormatter<'_>,
+) -> impl Iterator<Item = FormattedEnumConstant<'source>> + use<'source, 'fmt> {
+    constants
+        .entries_with_recovered()
+        .map(move |entry| match entry {
+            jolt_java_syntax::RecoveredSeparatedListEntry::Entry(entry) => {
+                format_enum_constant_entry(&entry, formatter)
+            }
+            jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => FormattedEnumConstant {
+                doc: format_token(&token, LeadingTrivia::Preserve, TrailingTrivia::Preserve),
+                comma: None,
+                is_recovered: true,
+            },
+            jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => FormattedEnumConstant {
+                doc: format_token_sequence(error.token_iter(), LeadingTrivia::Preserve),
+                comma: None,
+                is_recovered: true,
+            },
+            jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => FormattedEnumConstant {
+                doc: format_token_sequence(node.token_iter(), LeadingTrivia::Preserve),
+                comma: None,
+                is_recovered: true,
+            },
+        })
+}
+
 fn format_enum_constant_entry<'source>(
     entry: &jolt_java_syntax::EnumConstantListEntry<'source>,
     formatter: &JavaFormatter<'_>,
@@ -141,6 +178,7 @@ fn format_enum_constant_entry<'source>(
     FormattedEnumConstant {
         doc: format_enum_constant(&entry.constant, formatter),
         comma: entry.comma,
+        is_recovered: false,
     }
 }
 

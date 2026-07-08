@@ -4,11 +4,10 @@ expression: "snapshot(&output, &[temp.path().join(\"A.java\")])"
 ---
 status: 1
 stdout:
-<empty>
+A.java
 stderr:
-A.java:1:7: java.parse.expected_syntax: expected type name
-A.java:2:1: java.parse.expected_syntax: expected `}` after type body
-formatting failed
+Checked 1 file in $TIME
+1 file needs formatting
 files:
 -- A.java --
 class {

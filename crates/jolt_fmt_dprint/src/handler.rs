@@ -221,16 +221,11 @@ mod tests {
     use super::JoltDprintPlugin;
 
     #[test]
-    fn parse_errors_return_dprint_errors_without_formatted_bytes() {
-        let error = format_java("class", FormatOptions::default()).expect_err("format should fail");
-        let message = error.to_string();
+    fn recovered_parse_returns_formatted_bytes() {
+        let formatted =
+            format_java("class", FormatOptions::default()).expect("format should complete");
 
-        assert!(message.contains("code=java.parse."));
-        assert!(message.contains("severity=error"));
-        assert!(message.contains("stage=parser"));
-        assert!(message.contains("message="));
-        assert!(message.contains("line=1"));
-        assert!(message.contains("column="));
+        assert_eq!(formatted, Some(b"class  \n\n".to_vec()));
     }
 
     #[test]

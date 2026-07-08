@@ -8,15 +8,16 @@ use super::{
     CompanionObject, ConstructorDelegationCall, ContextFunctionType, ContextParameter,
     ContextParameterClause, Declaration, DefinitelyNonNullableType, DelegationSpecifier,
     DelegationSpecifierList, DestructuringDeclaration, DestructuringEntry,
-    DestructuringPatternEntry, DoWhileStatement, EnumEntry, ExplicitBackingField, Expression,
-    ExpressionParentRole, ExpressionStatement, FinallyClause, ForStatement, FunctionDeclaration,
-    FunctionType, FunctionTypeParameter, IfExpression, ImportDirective, ImportList,
-    IndexExpression, InitializerBlock, InterfaceDeclaration, JumpExpression, KotlinFile,
-    KotlinFileItem, KotlinNode, KotlinSyntaxKind, KotlinSyntaxNode, KotlinSyntaxToken,
-    LambdaExpression, LambdaParameter, LambdaParameterList, LiteralExpression, LocalDeclaration,
-    ModifierList, Name, NameExpression, NavigationExpression, NullableType, ObjectDeclaration,
-    ObjectExpression, PackageHeader, ParenthesizedExpression, ParenthesizedType, PostfixExpression,
-    PrimaryConstructor, PropertyAccessor, PropertyDeclaration, QualifiedName, ReceiverType,
+    DestructuringPatternEntry, DoWhileStatement, EnumEntry, ErrorNode, ExplicitBackingField,
+    Expression, ExpressionParentRole, ExpressionStatement, FinallyClause, ForStatement,
+    FunctionDeclaration, FunctionType, FunctionTypeParameter, IfExpression, ImportAlias,
+    ImportDirective, ImportList, IndexExpression, InitializerBlock, InterfaceDeclaration,
+    JumpExpression, KotlinFile, KotlinFileItem, KotlinNode, KotlinSyntaxKind, KotlinSyntaxNode,
+    KotlinSyntaxToken, LambdaExpression, LambdaParameter, LambdaParameterList, LiteralExpression,
+    LocalDeclaration, LoopExpression, ModifierList, Name, NameExpression, NavigationExpression,
+    NullableType, ObjectDeclaration, ObjectExpression, PackageHeader, ParenthesizedExpression,
+    ParenthesizedType, PostfixExpression, PrimaryConstructor, PropertyAccessor,
+    PropertyDeclaration, QualifiedName, ReceiverType, RecoveredNode, RecoveredSeparatedListEntry,
     SecondaryConstructor, Statement, StatementSyntax, StringTemplateEntry,
     StringTemplateExpression, StringTemplatePart, SuperExpression, ThisExpression, ThrowExpression,
     TryExpression, TypeAliasDeclaration, TypeArgument, TypeArgumentList, TypeConstraint,
@@ -26,6 +27,81 @@ use super::{
     WhenExpression, WhenGuard, WhenSubject, WhileStatement, child, child_family, child_token,
     child_tokens, children, children_family,
 };
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum NavigationOperatorTokens<'source> {
+    Missing,
+    Single(KotlinSyntaxToken<'source>),
+    QuestionDot {
+        question: KotlinSyntaxToken<'source>,
+        dot: KotlinSyntaxToken<'source>,
+    },
+}
+
+impl<'source> NavigationOperatorTokens<'source> {
+    #[must_use]
+    pub fn is_empty(self) -> bool {
+        matches!(self, Self::Missing)
+    }
+
+    #[must_use]
+    pub fn len(self) -> usize {
+        match self {
+            Self::Missing => 0,
+            Self::Single(_) => 1,
+            Self::QuestionDot { .. } => 2,
+        }
+    }
+
+    #[must_use]
+    pub fn first(self) -> Option<KotlinSyntaxToken<'source>> {
+        match self {
+            Self::Missing => None,
+            Self::Single(token) => Some(token),
+            Self::QuestionDot { question, .. } => Some(question),
+        }
+    }
+
+    #[must_use]
+    pub fn last(self) -> Option<KotlinSyntaxToken<'source>> {
+        match self {
+            Self::Missing => None,
+            Self::Single(token) => Some(token),
+            Self::QuestionDot { dot, .. } => Some(dot),
+        }
+    }
+
+    #[must_use]
+    pub fn iter(self) -> NavigationOperatorTokensIter<'source> {
+        match self {
+            Self::Missing => NavigationOperatorTokensIter {
+                first: None,
+                second: None,
+            },
+            Self::Single(token) => NavigationOperatorTokensIter {
+                first: Some(token),
+                second: None,
+            },
+            Self::QuestionDot { question, dot } => NavigationOperatorTokensIter {
+                first: Some(question),
+                second: Some(dot),
+            },
+        }
+    }
+}
+
+pub struct NavigationOperatorTokensIter<'source> {
+    first: Option<KotlinSyntaxToken<'source>>,
+    second: Option<KotlinSyntaxToken<'source>>,
+}
+
+impl<'source> Iterator for NavigationOperatorTokensIter<'source> {
+    type Item = KotlinSyntaxToken<'source>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.first.take().or_else(|| self.second.take())
+    }
+}
 
 impl<'source> KotlinFile<'source> {
     pub fn annotations(&self) -> impl Iterator<Item = Annotation<'source>> + use<'source> {
@@ -79,12 +155,39 @@ impl<'source> ImportList<'source> {
 
 impl<'source> ImportDirective<'source> {
     #[must_use]
+    pub fn import_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::ImportKw).or_else(|| self.first_token())
+    }
+
+    #[must_use]
     pub fn name(&self) -> Option<QualifiedName<'source>> {
         child(self.syntax())
     }
 
     #[must_use]
+    pub fn star_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Star)
+    }
+
+    #[must_use]
+    pub fn alias_keyword_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child::<ImportAlias<'source>>(self.syntax()).and_then(|alias| alias.alias_keyword_token())
+    }
+
+    #[must_use]
     pub fn alias(&self) -> Option<Name<'source>> {
+        child::<ImportAlias<'source>>(self.syntax()).and_then(|alias| alias.name())
+    }
+}
+
+impl<'source> ImportAlias<'source> {
+    #[must_use]
+    pub fn alias_keyword_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_tokens(self.syntax()).find(|token| token.text() == "as")
+    }
+
+    #[must_use]
+    pub fn name(&self) -> Option<Name<'source>> {
         child(self.syntax())
     }
 }
@@ -331,6 +434,25 @@ impl<'source> FunctionDeclaration<'source> {
     pub fn expression(&self) -> Option<Expression<'source>> {
         child_family(self.syntax())
     }
+
+    #[must_use]
+    pub fn tail_is_trivia_between(&self, start: usize, end: usize) -> bool {
+        source_gap_is_trivia(
+            self.source_text(),
+            self.text_range().start().get(),
+            self.token_iter(),
+            start,
+            end,
+        )
+    }
+
+    pub fn tail_tokens_between(
+        &self,
+        start: usize,
+        end: usize,
+    ) -> impl Iterator<Item = KotlinSyntaxToken<'source>> + use<'source, '_> {
+        tokens_between(self.token_iter(), start, end)
+    }
 }
 
 impl<'source> CallableName<'source> {
@@ -382,6 +504,37 @@ impl<'source> ContextParameterClause<'source> {
         separated_entries(self.syntax(), ContextParameter::cast, |parameter, comma| {
             ContextParameterClauseEntry { parameter, comma }
         })
+    }
+
+    pub fn entries_with_recovered(
+        &self,
+    ) -> impl Iterator<
+        Item = RecoveredSeparatedListEntry<'source, ContextParameterClauseEntry<'source>>,
+    > + use<'source, '_> {
+        let mut in_parameters = false;
+        let elements =
+            self.syntax()
+                .children_with_tokens()
+                .filter_map(move |element| match element {
+                    SyntaxElement::Token(token) if token.kind() == KotlinSyntaxKind::LParen => {
+                        in_parameters = true;
+                        None
+                    }
+                    SyntaxElement::Token(token) if token.kind() == KotlinSyntaxKind::RParen => {
+                        in_parameters = false;
+                        None
+                    }
+                    _ if in_parameters => Some(element),
+                    _ => None,
+                });
+
+        recovered_separated_elements(
+            elements,
+            |kind| kind == KotlinSyntaxKind::ContextParameter,
+            |syntax| ContextParameter { syntax },
+            |parameter, comma| ContextParameterClauseEntry { parameter, comma },
+            |_| false,
+        )
     }
 }
 
@@ -526,6 +679,25 @@ impl<'source> PropertyDeclaration<'source> {
     #[must_use]
     pub fn expression(&self) -> Option<Expression<'source>> {
         child_family(self.syntax())
+    }
+
+    #[must_use]
+    pub fn tail_is_trivia_between(&self, start: usize, end: usize) -> bool {
+        source_gap_is_trivia(
+            self.source_text(),
+            self.text_range().start().get(),
+            self.token_iter(),
+            start,
+            end,
+        )
+    }
+
+    pub fn tail_tokens_between(
+        &self,
+        start: usize,
+        end: usize,
+    ) -> impl Iterator<Item = KotlinSyntaxToken<'source>> + use<'source, '_> {
+        tokens_between(self.token_iter(), start, end)
     }
 
     #[must_use]
@@ -744,6 +916,24 @@ impl<'source> AnnotationArgumentList<'source> {
         })
     }
 
+    pub fn entries_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, ValueArgumentEntry<'source>>>
+    + use<'source, '_> {
+        recovered_separated_entries(
+            self.syntax(),
+            |kind| kind == KotlinSyntaxKind::ValueArgument,
+            |syntax| ValueArgument { syntax },
+            |argument, comma| ValueArgumentEntry { argument, comma },
+            |token| {
+                matches!(
+                    token.kind(),
+                    KotlinSyntaxKind::LParen | KotlinSyntaxKind::RParen
+                )
+            },
+        )
+    }
+
     #[must_use]
     pub fn open_paren(&self) -> Option<KotlinSyntaxToken<'source>> {
         child_token(self.syntax(), KotlinSyntaxKind::LParen)
@@ -813,6 +1003,37 @@ impl<'source> ParenthesizedType<'source> {
             self.syntax(),
             FunctionTypeParameter::cast,
             |parameter, comma| FunctionTypeParameterEntry { parameter, comma },
+        )
+    }
+
+    pub fn entries_with_recovered(
+        &self,
+    ) -> impl Iterator<
+        Item = RecoveredSeparatedListEntry<'source, FunctionTypeParameterEntry<'source>>,
+    > + use<'source, '_> {
+        let mut in_parameters = false;
+        let elements =
+            self.syntax()
+                .children_with_tokens()
+                .filter_map(move |element| match element {
+                    SyntaxElement::Token(token) if token.kind() == KotlinSyntaxKind::LParen => {
+                        in_parameters = true;
+                        None
+                    }
+                    SyntaxElement::Token(token) if token.kind() == KotlinSyntaxKind::RParen => {
+                        in_parameters = false;
+                        None
+                    }
+                    _ if in_parameters => Some(element),
+                    _ => None,
+                });
+
+        recovered_separated_elements(
+            elements,
+            |kind| kind == KotlinSyntaxKind::FunctionTypeParameter,
+            |syntax| FunctionTypeParameter { syntax },
+            |parameter, comma| FunctionTypeParameterEntry { parameter, comma },
+            |_| false,
         )
     }
 
@@ -906,6 +1127,47 @@ impl<'source> ContextFunctionType<'source> {
             .filter_map(|parameter| parameter.ty())
     }
 
+    pub fn context_parameter_entries(
+        &self,
+    ) -> impl Iterator<Item = ContextFunctionTypeParameterEntry<'source>> + use<'source, '_> {
+        separated_entries(
+            self.syntax(),
+            FunctionTypeParameter::cast,
+            |parameter, comma| ContextFunctionTypeParameterEntry { parameter, comma },
+        )
+    }
+
+    pub fn context_parameter_entries_with_recovered(
+        &self,
+    ) -> impl Iterator<
+        Item = RecoveredSeparatedListEntry<'source, ContextFunctionTypeParameterEntry<'source>>,
+    > + use<'source, '_> {
+        let mut in_parameters = false;
+        let elements =
+            self.syntax()
+                .children_with_tokens()
+                .filter_map(move |element| match element {
+                    SyntaxElement::Token(token) if token.kind() == KotlinSyntaxKind::LParen => {
+                        in_parameters = true;
+                        None
+                    }
+                    SyntaxElement::Token(token) if token.kind() == KotlinSyntaxKind::RParen => {
+                        in_parameters = false;
+                        None
+                    }
+                    _ if in_parameters => Some(element),
+                    _ => None,
+                });
+
+        recovered_separated_elements(
+            elements,
+            |kind| kind == KotlinSyntaxKind::FunctionTypeParameter,
+            |syntax| FunctionTypeParameter { syntax },
+            |parameter, comma| ContextFunctionTypeParameterEntry { parameter, comma },
+            |_| false,
+        )
+    }
+
     #[must_use]
     pub fn function_type(&self) -> Option<FunctionType<'source>> {
         child(self.syntax())
@@ -958,6 +1220,18 @@ pub struct FunctionTypeParameterEntry<'source> {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ContextFunctionTypeParameterEntry<'source> {
+    pub parameter: FunctionTypeParameter<'source>,
+    pub comma: Option<KotlinSyntaxToken<'source>>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct LambdaParameterListEntry<'source> {
+    pub parameter: LambdaParameter<'source>,
+    pub comma: Option<KotlinSyntaxToken<'source>>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ValueArgumentEntry<'source> {
     pub argument: ValueArgument<'source>,
     pub comma: Option<KotlinSyntaxToken<'source>>,
@@ -988,6 +1262,12 @@ pub struct ContextParameterClauseEntry<'source> {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ValueParameterListEntry<'source> {
+    pub parameter: ValueParameter<'source>,
+    pub comma: Option<KotlinSyntaxToken<'source>>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct WhenConditionEntry<'source> {
     pub condition: WhenCondition<'source>,
     pub comma: Option<KotlinSyntaxToken<'source>>,
@@ -1004,6 +1284,19 @@ impl<'source> TypeParameterList<'source> {
         separated_entries(self.syntax(), TypeParameter::cast, |parameter, comma| {
             TypeParameterListEntry { parameter, comma }
         })
+    }
+
+    pub fn entries_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, TypeParameterListEntry<'source>>>
+    + use<'source, '_> {
+        recovered_separated_entries(
+            self.syntax(),
+            |kind| kind == KotlinSyntaxKind::TypeParameter,
+            |syntax| TypeParameter { syntax },
+            |parameter, comma| TypeParameterListEntry { parameter, comma },
+            |token| matches!(token.kind(), KotlinSyntaxKind::Lt | KotlinSyntaxKind::Gt),
+        )
     }
 
     #[must_use]
@@ -1057,6 +1350,19 @@ impl<'source> TypeConstraintList<'source> {
         })
     }
 
+    pub fn entries_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, TypeConstraintListEntry<'source>>>
+    + use<'source, '_> {
+        recovered_separated_entries(
+            self.syntax(),
+            |kind| kind == KotlinSyntaxKind::TypeConstraint,
+            |syntax| TypeConstraint { syntax },
+            |constraint, comma| TypeConstraintListEntry { constraint, comma },
+            |token| token.text() == "where",
+        )
+    }
+
     #[must_use]
     pub fn where_token(&self) -> Option<KotlinSyntaxToken<'source>> {
         child_tokens(self.syntax()).find(|token| token.text() == "where")
@@ -1094,6 +1400,20 @@ impl<'source> DelegationSpecifierList<'source> {
             |specifier, comma| DelegationSpecifierListEntry { specifier, comma },
         )
     }
+
+    pub fn entries_with_recovered(
+        &self,
+    ) -> impl Iterator<
+        Item = RecoveredSeparatedListEntry<'source, DelegationSpecifierListEntry<'source>>,
+    > + use<'source, '_> {
+        recovered_separated_entries(
+            self.syntax(),
+            |kind| kind == KotlinSyntaxKind::DelegationSpecifier,
+            |syntax| DelegationSpecifier { syntax },
+            |specifier, comma| DelegationSpecifierListEntry { specifier, comma },
+            |_| false,
+        )
+    }
 }
 
 impl<'source> DelegationSpecifier<'source> {
@@ -1127,34 +1447,390 @@ where
     N: KotlinNode<'source>,
     F: Fn(N, Option<KotlinSyntaxToken<'source>>) -> T + Copy,
 {
-    let mut entries = Vec::new();
+    let mut elements = syntax.children_with_tokens();
     let mut current = None;
+    let mut done = false;
 
-    for child in syntax.children_with_tokens() {
-        match child {
-            SyntaxElement::Node(node) => {
-                if let Some(node) = cast(node)
-                    && let Some(node) = current.replace(node)
-                {
-                    entries.push(make_entry(node, None));
+    std::iter::from_fn(move || {
+        if done {
+            return None;
+        }
+
+        for child in elements.by_ref() {
+            match child {
+                SyntaxElement::Node(node) => {
+                    if let Some(node) = cast(node)
+                        && let Some(node) = current.replace(node)
+                    {
+                        return Some(make_entry(node, None));
+                    }
                 }
-            }
-            SyntaxElement::Token(token) => {
-                let token = KotlinSyntaxToken { syntax: token };
-                if token.kind() == KotlinSyntaxKind::Comma
-                    && let Some(node) = current.take()
-                {
-                    entries.push(make_entry(node, Some(token)));
+                SyntaxElement::Token(token) => {
+                    let token = KotlinSyntaxToken { syntax: token };
+                    if token.kind() == KotlinSyntaxKind::Comma
+                        && let Some(node) = current.take()
+                    {
+                        return Some(make_entry(node, Some(token)));
+                    }
                 }
             }
         }
+
+        done = true;
+        current.take().map(|node| make_entry(node, None))
+    })
+}
+
+fn recovered_node_entry<Entry>(
+    node: KotlinSyntaxNode<'_>,
+) -> RecoveredSeparatedListEntry<'_, Entry> {
+    if node.kind() == KotlinSyntaxKind::ErrorNode {
+        RecoveredSeparatedListEntry::Error(ErrorNode { syntax: node })
+    } else {
+        RecoveredSeparatedListEntry::Node(RecoveredNode::new(node))
+    }
+}
+
+fn recovered_separated_entries<'source, N, T, K, C, F, S>(
+    syntax: &KotlinSyntaxNode<'source>,
+    is_entry_kind: K,
+    make_node: C,
+    make_entry: F,
+    skip_token: S,
+) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, T>> + use<'source, N, T, K, C, F, S>
+where
+    K: FnMut(KotlinSyntaxKind) -> bool,
+    C: Fn(KotlinSyntaxNode<'source>) -> N + Copy,
+    F: Fn(N, Option<KotlinSyntaxToken<'source>>) -> T + Copy,
+    S: FnMut(&KotlinSyntaxToken<'source>) -> bool,
+{
+    recovered_separated_elements(
+        syntax.children_with_tokens(),
+        is_entry_kind,
+        make_node,
+        make_entry,
+        skip_token,
+    )
+}
+
+fn recovered_separated_elements<'source, Elements, N, T, K, C, F, S>(
+    elements: Elements,
+    mut is_entry_kind: K,
+    make_node: C,
+    make_entry: F,
+    mut skip_token: S,
+) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, T>>
++ use<'source, Elements, N, T, K, C, F, S>
+where
+    Elements: Iterator<Item = SyntaxElement<'source, crate::language::KotlinLanguage>>,
+    K: FnMut(KotlinSyntaxKind) -> bool,
+    C: Fn(KotlinSyntaxNode<'source>) -> N + Copy,
+    F: Fn(N, Option<KotlinSyntaxToken<'source>>) -> T + Copy,
+    S: FnMut(&KotlinSyntaxToken<'source>) -> bool,
+{
+    let mut elements = elements;
+    let mut current = None;
+    let mut queued = None;
+    let mut done = false;
+
+    std::iter::from_fn(move || {
+        loop {
+            if let Some(entry) = queued.take() {
+                return Some(entry);
+            }
+
+            if done {
+                return None;
+            }
+
+            let Some(child) = elements.next() else {
+                done = true;
+                return current
+                    .take()
+                    .map(|node| RecoveredSeparatedListEntry::Entry(make_entry(node, None)));
+            };
+
+            match child {
+                SyntaxElement::Node(node) => {
+                    if is_entry_kind(node.kind()) {
+                        let item = make_node(node);
+                        if let Some(previous) = current.replace(item) {
+                            return Some(RecoveredSeparatedListEntry::Entry(make_entry(
+                                previous, None,
+                            )));
+                        }
+                    } else {
+                        let recovered = recovered_node_entry(node);
+                        if let Some(previous) = current.take() {
+                            queued = Some(recovered);
+                            return Some(RecoveredSeparatedListEntry::Entry(make_entry(
+                                previous, None,
+                            )));
+                        }
+                        return Some(recovered);
+                    }
+                }
+                SyntaxElement::Token(token) => {
+                    let token = KotlinSyntaxToken { syntax: token };
+                    if token.kind() == KotlinSyntaxKind::Comma {
+                        if let Some(node) = current.take() {
+                            return Some(RecoveredSeparatedListEntry::Entry(make_entry(
+                                node,
+                                Some(token),
+                            )));
+                        }
+                        return Some(RecoveredSeparatedListEntry::Token(token));
+                    }
+                    if skip_token(&token) {
+                        continue;
+                    }
+                    if let Some(previous) = current.take() {
+                        queued = Some(RecoveredSeparatedListEntry::Token(token));
+                        return Some(RecoveredSeparatedListEntry::Entry(make_entry(
+                            previous, None,
+                        )));
+                    }
+                    return Some(RecoveredSeparatedListEntry::Token(token));
+                }
+            }
+        }
+    })
+}
+
+fn recovered_body_entries<'source, Entry, C, S>(
+    syntax: &KotlinSyntaxNode<'source>,
+    mut classify: C,
+    mut skip_token: S,
+) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, Entry>> + use<'source, Entry, C, S>
+where
+    C: FnMut(KotlinSyntaxNode<'source>) -> Result<Entry, KotlinSyntaxNode<'source>>,
+    S: FnMut(KotlinSyntaxKind) -> bool,
+{
+    syntax
+        .children_with_tokens()
+        .filter_map(move |element| match element {
+            SyntaxElement::Node(node) => Some(match classify(node) {
+                Ok(entry) => RecoveredSeparatedListEntry::Entry(entry),
+                Err(node) => recovered_node_entry(node),
+            }),
+            SyntaxElement::Token(token) => {
+                let token = KotlinSyntaxToken { syntax: token };
+                (!skip_token(token.kind())).then_some(RecoveredSeparatedListEntry::Token(token))
+            }
+        })
+}
+
+fn tokens_between<'source>(
+    tokens: impl IntoIterator<Item = KotlinSyntaxToken<'source>>,
+    start: usize,
+    end: usize,
+) -> impl Iterator<Item = KotlinSyntaxToken<'source>> {
+    tokens.into_iter().filter(move |token| {
+        token.token_text_range().start().get() >= start
+            && token.token_text_range().end().get() <= end
+    })
+}
+
+fn source_gap_is_trivia<'source>(
+    source: &'source str,
+    source_start: usize,
+    tokens: impl IntoIterator<Item = KotlinSyntaxToken<'source>>,
+    start: usize,
+    end: usize,
+) -> bool {
+    let mut comment_ranges = tokens
+        .into_iter()
+        .flat_map(|token| token.leading_comments().chain(token.trailing_comments()))
+        .filter_map(|comment| {
+            let range = comment.text_range();
+            let comment_start = range.start().get();
+            let comment_end = range.end().get();
+            (comment_start >= start && comment_end <= end).then_some((comment_start, comment_end))
+        })
+        .collect::<Vec<_>>();
+    comment_ranges.sort_unstable();
+
+    let mut cursor = start;
+    for (comment_start, comment_end) in comment_ranges {
+        if comment_start < cursor {
+            if comment_end > cursor {
+                cursor = comment_end;
+            }
+            continue;
+        }
+        if !source_slice_is_whitespace(source, source_start, cursor, comment_start) {
+            return false;
+        }
+        cursor = comment_end;
     }
 
-    if let Some(node) = current {
-        entries.push(make_entry(node, None));
-    }
+    source_slice_is_whitespace(source, source_start, cursor, end)
+}
 
-    entries.into_iter()
+fn source_slice_is_whitespace(source: &str, source_start: usize, start: usize, end: usize) -> bool {
+    let Some(slice_start) = start.checked_sub(source_start) else {
+        return false;
+    };
+    let Some(slice_end) = end.checked_sub(source_start) else {
+        return false;
+    };
+    let Some(slice) = source.get(slice_start..slice_end) else {
+        return false;
+    };
+
+    slice.chars().all(char::is_whitespace)
+}
+
+fn classify_block_item(node: KotlinSyntaxNode<'_>) -> Result<BlockItem<'_>, KotlinSyntaxNode<'_>> {
+    match node.kind() {
+        KotlinSyntaxKind::Statement => Ok(BlockItem::Statement(Statement { syntax: node })),
+        KotlinSyntaxKind::ExpressionStatement => {
+            Ok(BlockItem::ExpressionStatement(ExpressionStatement {
+                syntax: node,
+            }))
+        }
+        KotlinSyntaxKind::LocalDeclaration => Ok(BlockItem::LocalDeclaration(LocalDeclaration {
+            syntax: node,
+        })),
+        KotlinSyntaxKind::Block => Ok(BlockItem::Block(Block { syntax: node })),
+        KotlinSyntaxKind::ClassDeclaration => Ok(BlockItem::ClassDeclaration(ClassDeclaration {
+            syntax: node,
+        })),
+        KotlinSyntaxKind::InterfaceDeclaration => {
+            Ok(BlockItem::InterfaceDeclaration(InterfaceDeclaration {
+                syntax: node,
+            }))
+        }
+        KotlinSyntaxKind::ObjectDeclaration => {
+            Ok(BlockItem::ObjectDeclaration(ObjectDeclaration {
+                syntax: node,
+            }))
+        }
+        KotlinSyntaxKind::FunctionDeclaration => {
+            Ok(BlockItem::FunctionDeclaration(FunctionDeclaration {
+                syntax: node,
+            }))
+        }
+        KotlinSyntaxKind::PropertyDeclaration => {
+            Ok(BlockItem::PropertyDeclaration(PropertyDeclaration {
+                syntax: node,
+            }))
+        }
+        KotlinSyntaxKind::TypeAliasDeclaration => {
+            Ok(BlockItem::TypeAliasDeclaration(TypeAliasDeclaration {
+                syntax: node,
+            }))
+        }
+        KotlinSyntaxKind::SecondaryConstructor => {
+            Ok(BlockItem::SecondaryConstructor(SecondaryConstructor {
+                syntax: node,
+            }))
+        }
+        KotlinSyntaxKind::InitializerBlock => Ok(BlockItem::InitializerBlock(InitializerBlock {
+            syntax: node,
+        })),
+        _ => Err(node),
+    }
+}
+
+fn classify_expression(node: KotlinSyntaxNode<'_>) -> Result<Expression<'_>, KotlinSyntaxNode<'_>> {
+    match node.kind() {
+        KotlinSyntaxKind::AssignmentExpression => {
+            Ok(Expression::AssignmentExpression(AssignmentExpression {
+                syntax: node,
+            }))
+        }
+        KotlinSyntaxKind::BinaryExpression => Ok(Expression::BinaryExpression(BinaryExpression {
+            syntax: node,
+        })),
+        KotlinSyntaxKind::UnaryExpression => Ok(Expression::UnaryExpression(UnaryExpression {
+            syntax: node,
+        })),
+        KotlinSyntaxKind::PostfixExpression => {
+            Ok(Expression::PostfixExpression(PostfixExpression {
+                syntax: node,
+            }))
+        }
+        KotlinSyntaxKind::CallExpression => {
+            Ok(Expression::CallExpression(CallExpression { syntax: node }))
+        }
+        KotlinSyntaxKind::IndexExpression => Ok(Expression::IndexExpression(IndexExpression {
+            syntax: node,
+        })),
+        KotlinSyntaxKind::NavigationExpression => {
+            Ok(Expression::NavigationExpression(NavigationExpression {
+                syntax: node,
+            }))
+        }
+        KotlinSyntaxKind::CallableReferenceExpression => Ok(
+            Expression::CallableReferenceExpression(CallableReferenceExpression { syntax: node }),
+        ),
+        KotlinSyntaxKind::LiteralExpression => {
+            Ok(Expression::LiteralExpression(LiteralExpression {
+                syntax: node,
+            }))
+        }
+        KotlinSyntaxKind::StringTemplateExpression => Ok(Expression::StringTemplateExpression(
+            StringTemplateExpression { syntax: node },
+        )),
+        KotlinSyntaxKind::NameExpression => {
+            Ok(Expression::NameExpression(NameExpression { syntax: node }))
+        }
+        KotlinSyntaxKind::ThisExpression => {
+            Ok(Expression::ThisExpression(ThisExpression { syntax: node }))
+        }
+        KotlinSyntaxKind::SuperExpression => Ok(Expression::SuperExpression(SuperExpression {
+            syntax: node,
+        })),
+        KotlinSyntaxKind::ParenthesizedExpression => Ok(Expression::ParenthesizedExpression(
+            ParenthesizedExpression { syntax: node },
+        )),
+        KotlinSyntaxKind::AnnotatedExpression => {
+            Ok(Expression::AnnotatedExpression(AnnotatedExpression {
+                syntax: node,
+            }))
+        }
+        KotlinSyntaxKind::IfExpression => {
+            Ok(Expression::IfExpression(IfExpression { syntax: node }))
+        }
+        KotlinSyntaxKind::WhenExpression => {
+            Ok(Expression::WhenExpression(WhenExpression { syntax: node }))
+        }
+        KotlinSyntaxKind::TryExpression => {
+            Ok(Expression::TryExpression(TryExpression { syntax: node }))
+        }
+        KotlinSyntaxKind::LoopExpression => {
+            Ok(Expression::LoopExpression(LoopExpression { syntax: node }))
+        }
+        KotlinSyntaxKind::ForStatement => {
+            Ok(Expression::ForStatement(ForStatement { syntax: node }))
+        }
+        KotlinSyntaxKind::WhileStatement => {
+            Ok(Expression::WhileStatement(WhileStatement { syntax: node }))
+        }
+        KotlinSyntaxKind::DoWhileStatement => Ok(Expression::DoWhileStatement(DoWhileStatement {
+            syntax: node,
+        })),
+        KotlinSyntaxKind::JumpExpression => {
+            Ok(Expression::JumpExpression(JumpExpression { syntax: node }))
+        }
+        KotlinSyntaxKind::ThrowExpression => Ok(Expression::ThrowExpression(ThrowExpression {
+            syntax: node,
+        })),
+        KotlinSyntaxKind::LambdaExpression => Ok(Expression::LambdaExpression(LambdaExpression {
+            syntax: node,
+        })),
+        KotlinSyntaxKind::AnonymousFunctionExpression => Ok(
+            Expression::AnonymousFunctionExpression(AnonymousFunctionExpression { syntax: node }),
+        ),
+        KotlinSyntaxKind::ObjectExpression => Ok(Expression::ObjectExpression(ObjectExpression {
+            syntax: node,
+        })),
+        KotlinSyntaxKind::CollectionLiteralExpression => Ok(
+            Expression::CollectionLiteralExpression(CollectionLiteralExpression { syntax: node }),
+        ),
+        _ => Err(node),
+    }
 }
 
 impl<'source> PrimaryConstructor<'source> {
@@ -1177,6 +1853,32 @@ impl<'source> PrimaryConstructor<'source> {
 impl<'source> ValueParameterList<'source> {
     pub fn entries(&self) -> impl Iterator<Item = ValueParameter<'source>> + use<'source> {
         children(self.syntax())
+    }
+
+    pub fn parameter_entries(
+        &self,
+    ) -> impl Iterator<Item = ValueParameterListEntry<'source>> + use<'source, '_> {
+        separated_entries(self.syntax(), ValueParameter::cast, |parameter, comma| {
+            ValueParameterListEntry { parameter, comma }
+        })
+    }
+
+    pub fn parameter_entries_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, ValueParameterListEntry<'source>>>
+    + use<'source, '_> {
+        recovered_separated_entries(
+            self.syntax(),
+            |kind| kind == KotlinSyntaxKind::ValueParameter,
+            |syntax| ValueParameter { syntax },
+            |parameter, comma| ValueParameterListEntry { parameter, comma },
+            |token| {
+                matches!(
+                    token.kind(),
+                    KotlinSyntaxKind::LParen | KotlinSyntaxKind::RParen
+                )
+            },
+        )
     }
 
     #[must_use]
@@ -1247,6 +1949,25 @@ impl<'source> ClassBody<'source> {
         )
     }
 
+    pub fn member_declaration_entries_with_recovered(
+        &self,
+    ) -> impl Iterator<
+        Item = RecoveredSeparatedListEntry<'source, ClassMemberDeclarationEntry<'source>>,
+    > + use<'source, '_> {
+        recovered_separated_entries(
+            self.syntax(),
+            |kind| kind == KotlinSyntaxKind::ClassMemberDeclaration,
+            |syntax| ClassMemberDeclaration { syntax },
+            |member, comma| ClassMemberDeclarationEntry { member, comma },
+            |token| {
+                matches!(
+                    token.kind(),
+                    KotlinSyntaxKind::LBrace | KotlinSyntaxKind::RBrace
+                )
+            },
+        )
+    }
+
     #[must_use]
     pub fn open_brace(&self) -> Option<KotlinSyntaxToken<'source>> {
         child_token(self.syntax(), KotlinSyntaxKind::LBrace)
@@ -1293,6 +2014,15 @@ impl<'source> Block<'source> {
     pub fn items(&self) -> impl Iterator<Item = BlockItem<'source>> + use<'source> {
         children_family(self.syntax())
     }
+
+    pub fn items_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, BlockItem<'source>>> + use<'source, '_>
+    {
+        recovered_body_entries(self.syntax(), classify_block_item, |kind| {
+            matches!(kind, KotlinSyntaxKind::LBrace | KotlinSyntaxKind::RBrace)
+        })
+    }
 }
 
 impl<'source> ValueArgumentList<'source> {
@@ -1300,6 +2030,24 @@ impl<'source> ValueArgumentList<'source> {
         separated_entries(self.syntax(), ValueArgument::cast, |argument, comma| {
             ValueArgumentEntry { argument, comma }
         })
+    }
+
+    pub fn entries_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, ValueArgumentEntry<'source>>>
+    + use<'source, '_> {
+        recovered_separated_entries(
+            self.syntax(),
+            |kind| kind == KotlinSyntaxKind::ValueArgument,
+            |syntax| ValueArgument { syntax },
+            |argument, comma| ValueArgumentEntry { argument, comma },
+            |token| {
+                matches!(
+                    token.kind(),
+                    KotlinSyntaxKind::LParen | KotlinSyntaxKind::RParen
+                )
+            },
+        )
     }
 
     #[must_use]
@@ -1314,6 +2062,27 @@ impl<'source> ValueArgumentList<'source> {
 }
 
 impl<'source> ValueArgument<'source> {
+    #[must_use]
+    pub fn name(&self) -> Option<Name<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn assign_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Assign)
+    }
+
+    pub fn prefix_tokens(
+        &self,
+    ) -> impl Iterator<Item = KotlinSyntaxToken<'source>> + use<'source, '_> {
+        let expression_start = self.expression().map_or_else(
+            || self.text_range().end(),
+            |expression| expression.text_range().start(),
+        );
+        child_tokens(self.syntax())
+            .filter(move |token| token.token_text_range().end() <= expression_start)
+    }
+
     #[must_use]
     pub fn expression(&self) -> Option<Expression<'source>> {
         child_family(self.syntax())
@@ -1344,6 +2113,19 @@ impl<'source> TypeProjectionList<'source> {
         separated_entries(self.syntax(), TypeArgument::cast, |argument, comma| {
             TypeProjectionListEntry { argument, comma }
         })
+    }
+
+    pub fn entries_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, TypeProjectionListEntry<'source>>>
+    + use<'source, '_> {
+        recovered_separated_entries(
+            self.syntax(),
+            |kind| kind == KotlinSyntaxKind::TypeArgument,
+            |syntax| TypeArgument { syntax },
+            |argument, comma| TypeProjectionListEntry { argument, comma },
+            |_| false,
+        )
     }
 }
 
@@ -1646,6 +2428,36 @@ impl<'source> IndexExpression<'source> {
         })
     }
 
+    pub fn entries_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, ValueArgumentEntry<'source>>>
+    + use<'source, '_> {
+        let mut in_arguments = false;
+        let elements =
+            self.syntax()
+                .children_with_tokens()
+                .filter_map(move |element| match element {
+                    SyntaxElement::Token(token) if token.kind() == KotlinSyntaxKind::LBracket => {
+                        in_arguments = true;
+                        None
+                    }
+                    SyntaxElement::Token(token) if token.kind() == KotlinSyntaxKind::RBracket => {
+                        in_arguments = false;
+                        None
+                    }
+                    _ if in_arguments => Some(element),
+                    _ => None,
+                });
+
+        recovered_separated_elements(
+            elements,
+            |kind| kind == KotlinSyntaxKind::ValueArgument,
+            |syntax| ValueArgument { syntax },
+            |argument, comma| ValueArgumentEntry { argument, comma },
+            |_| false,
+        )
+    }
+
     #[must_use]
     pub fn open_bracket(&self) -> Option<KotlinSyntaxToken<'source>> {
         child_token(self.syntax(), KotlinSyntaxKind::LBracket)
@@ -1716,6 +2528,24 @@ impl<'source> CollectionLiteralExpression<'source> {
         })
     }
 
+    pub fn entries_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, ValueArgumentEntry<'source>>>
+    + use<'source, '_> {
+        recovered_separated_entries(
+            self.syntax(),
+            |kind| kind == KotlinSyntaxKind::ValueArgument,
+            |syntax| ValueArgument { syntax },
+            |argument, comma| ValueArgumentEntry { argument, comma },
+            |token| {
+                matches!(
+                    token.kind(),
+                    KotlinSyntaxKind::LBracket | KotlinSyntaxKind::RBracket
+                )
+            },
+        )
+    }
+
     #[must_use]
     pub fn open_bracket(&self) -> Option<KotlinSyntaxToken<'source>> {
         child_token(self.syntax(), KotlinSyntaxKind::LBracket)
@@ -1735,40 +2565,48 @@ impl<'source> NavigationExpression<'source> {
 
     #[must_use]
     pub fn operator_token(&self) -> Option<KotlinSyntaxToken<'source>> {
-        self.operator_tokens().into_iter().next()
+        self.operator_tokens().first()
     }
 
     #[must_use]
-    pub fn operator_tokens(&self) -> Vec<KotlinSyntaxToken<'source>> {
-        let tokens = child_tokens(self.syntax()).collect::<Vec<_>>();
-        tokens
-            .windows(2)
-            .find(|window| {
-                window[0].kind() == KotlinSyntaxKind::Question
-                    && window[1].kind() == KotlinSyntaxKind::Dot
-                    && tokens_are_adjacent(window[0], window[1])
-            })
-            .map(|window| window.to_vec())
-            .or_else(|| {
-                tokens
-                    .iter()
-                    .find(|token| {
-                        matches!(
-                            token.kind(),
-                            KotlinSyntaxKind::Dot
-                                | KotlinSyntaxKind::SafeAccess
-                                | KotlinSyntaxKind::ColonColon
-                        )
-                    })
-                    .copied()
-                    .map(|token| vec![token])
-            })
-            .unwrap_or_default()
+    pub fn operator_tokens(&self) -> NavigationOperatorTokens<'source> {
+        let mut first_single = None;
+        let mut previous_question = None;
+
+        for token in child_tokens(self.syntax()) {
+            if token.kind() == KotlinSyntaxKind::Dot
+                && let Some(question) = previous_question
+                && tokens_are_adjacent(question, token)
+            {
+                return NavigationOperatorTokens::QuestionDot {
+                    question,
+                    dot: token,
+                };
+            }
+
+            if first_single.is_none()
+                && matches!(
+                    token.kind(),
+                    KotlinSyntaxKind::Dot
+                        | KotlinSyntaxKind::SafeAccess
+                        | KotlinSyntaxKind::ColonColon
+                )
+            {
+                first_single = Some(token);
+            }
+
+            previous_question = (token.kind() == KotlinSyntaxKind::Question).then_some(token);
+        }
+
+        first_single.map_or(
+            NavigationOperatorTokens::Missing,
+            NavigationOperatorTokens::Single,
+        )
     }
 
     #[must_use]
     pub fn operator_last_token(&self) -> Option<KotlinSyntaxToken<'source>> {
-        self.operator_tokens().into_iter().last()
+        self.operator_tokens().last()
     }
 
     #[must_use]
@@ -1877,11 +2715,62 @@ impl<'source> LambdaExpression<'source> {
     pub fn body_items(&self) -> impl Iterator<Item = BlockItem<'source>> + use<'source> {
         children_family(self.syntax())
     }
+
+    pub fn body_items_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, BlockItem<'source>>> + use<'source, '_>
+    {
+        self.syntax()
+            .children_with_tokens()
+            .filter_map(|element| match element {
+                SyntaxElement::Node(node)
+                    if node.kind() == KotlinSyntaxKind::LambdaParameterList =>
+                {
+                    None
+                }
+                SyntaxElement::Node(node) => Some(match classify_block_item(node) {
+                    Ok(item) => RecoveredSeparatedListEntry::Entry(item),
+                    Err(node) => recovered_node_entry(node),
+                }),
+                SyntaxElement::Token(token) => {
+                    let token = KotlinSyntaxToken { syntax: token };
+                    (!matches!(
+                        token.kind(),
+                        KotlinSyntaxKind::LBrace
+                            | KotlinSyntaxKind::RBrace
+                            | KotlinSyntaxKind::Arrow
+                    ))
+                    .then_some(RecoveredSeparatedListEntry::Token(token))
+                }
+            })
+    }
 }
 
 impl<'source> LambdaParameterList<'source> {
     pub fn parameters(&self) -> impl Iterator<Item = LambdaParameter<'source>> + use<'source> {
         children(self.syntax())
+    }
+
+    pub fn parameter_entries(
+        &self,
+    ) -> impl Iterator<Item = LambdaParameterListEntry<'source>> + use<'source, '_> {
+        separated_entries(self.syntax(), LambdaParameter::cast, |parameter, comma| {
+            LambdaParameterListEntry { parameter, comma }
+        })
+    }
+
+    pub fn parameter_entries_with_recovered(
+        &self,
+    ) -> impl Iterator<
+        Item = RecoveredSeparatedListEntry<'source, LambdaParameterListEntry<'source>>,
+    > + use<'source, '_> {
+        recovered_separated_entries(
+            self.syntax(),
+            |kind| kind == KotlinSyntaxKind::LambdaParameter,
+            |syntax| LambdaParameter { syntax },
+            |parameter, comma| LambdaParameterListEntry { parameter, comma },
+            |token| token.kind() == KotlinSyntaxKind::Arrow,
+        )
     }
 
     #[must_use]
@@ -1980,6 +2869,41 @@ impl<'source> WhenEntry<'source> {
         separated_entries(self.syntax(), WhenCondition::cast, |condition, comma| {
             WhenConditionEntry { condition, comma }
         })
+    }
+
+    pub fn condition_entries_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, WhenConditionEntry<'source>>>
+    + use<'source, '_> {
+        let mut before_body = true;
+        let elements =
+            self.syntax()
+                .children_with_tokens()
+                .filter_map(move |element| match element {
+                    SyntaxElement::Token(token)
+                        if matches!(
+                            token.kind(),
+                            KotlinSyntaxKind::Arrow | KotlinSyntaxKind::ElseKw
+                        ) =>
+                    {
+                        before_body = false;
+                        None
+                    }
+                    SyntaxElement::Node(node) if node.kind() == KotlinSyntaxKind::WhenGuard => {
+                        before_body = false;
+                        None
+                    }
+                    _ if before_body => Some(element),
+                    _ => None,
+                });
+
+        recovered_separated_elements(
+            elements,
+            |kind| kind == KotlinSyntaxKind::WhenCondition,
+            |syntax| WhenCondition { syntax },
+            |condition, comma| WhenConditionEntry { condition, comma },
+            |_| false,
+        )
     }
 
     #[must_use]
@@ -2318,6 +3242,28 @@ impl<'source> DestructuringDeclaration<'source> {
         })
     }
 
+    pub fn entries_with_recovered(
+        &self,
+    ) -> impl Iterator<
+        Item = RecoveredSeparatedListEntry<'source, DestructuringDeclarationEntry<'source>>,
+    > + use<'source, '_> {
+        recovered_separated_entries(
+            self.syntax(),
+            |kind| kind == KotlinSyntaxKind::DestructuringEntry,
+            |syntax| DestructuringEntry { syntax },
+            |entry, comma| DestructuringDeclarationEntry { entry, comma },
+            |token| {
+                matches!(
+                    token.kind(),
+                    KotlinSyntaxKind::LParen
+                        | KotlinSyntaxKind::RParen
+                        | KotlinSyntaxKind::LBracket
+                        | KotlinSyntaxKind::RBracket
+                )
+            },
+        )
+    }
+
     #[must_use]
     pub fn open_delimiter(&self) -> Option<KotlinSyntaxToken<'source>> {
         child_token(self.syntax(), KotlinSyntaxKind::LParen)
@@ -2375,6 +3321,13 @@ impl<'source> ExpressionStatement<'source> {
     #[must_use]
     pub fn expression(&self) -> Option<Expression<'source>> {
         child_family(self.syntax())
+    }
+
+    pub fn entries_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, Expression<'source>>> + use<'source, '_>
+    {
+        recovered_body_entries(self.syntax(), classify_expression, |_| false)
     }
 }
 

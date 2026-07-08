@@ -1,11 +1,11 @@
 use super::{
     AssertStatement, Doc, Expression, ExpressionStatement, JavaFormatter, JavaSyntaxToken,
-    LabeledStatement, LeadingTrivia, ReturnStatement, ThrowStatement, YieldStatement,
-    comment_forces_line, concat, format_expression, format_statement,
+    LabeledStatement, LeadingTrivia, ReturnStatement, ThrowStatement, TrailingTrivia,
+    YieldStatement, comment_forces_line, concat, format_expression, format_statement, format_token,
     format_token_before_relocated_trailing_comments, format_token_with_comments,
     format_trailing_comments_before_line_break, hard_line, indent, trailing_comments_force_line,
 };
-use crate::helpers::comments::{comment_is_star_block, format_comment, format_token_text};
+use crate::helpers::comments::{comment_is_star_block, format_comment, format_token_sequence};
 use jolt_fmt_ir::space;
 use jolt_java_syntax::JavaComment;
 
@@ -34,12 +34,12 @@ pub(super) fn format_expression_statement<'source>(
     statement: &ExpressionStatement<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
+    let Some(expression) = statement.expression() else {
+        return format_token_sequence(statement.token_iter(), LeadingTrivia::Preserve);
+    };
+
     concat([
-        statement
-            .expression()
-            .map_or_else(jolt_fmt_ir::nil, |expression| {
-                format_expression(&expression, formatter)
-            }),
+        format_expression(&expression, formatter),
         format_statement_semicolon(statement.semicolon()),
     ])
 }
@@ -178,7 +178,11 @@ pub(crate) fn format_statement_semicolon(semicolon: Option<JavaSyntaxToken<'_>>)
 
     concat([
         format_semicolon_leading_comments(&semicolon),
-        format_token_text(semicolon.text()),
+        format_token(
+            &semicolon,
+            LeadingTrivia::SuppressAlreadyHandled,
+            TrailingTrivia::RelocatedToEnclosingContext,
+        ),
         format_terminator_trailing_comments(&semicolon),
     ])
 }

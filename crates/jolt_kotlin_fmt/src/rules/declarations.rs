@@ -2,18 +2,18 @@ use jolt_fmt_ir::{Doc, concat, group, hard_line, indent, line, space};
 use jolt_kotlin_syntax::{
     CallableName, ContextParameterClause, Declaration, DestructuringDeclaration, EnumEntry,
     ExplicitBackingField, FunctionDeclaration, InitializerBlock, KotlinFileItem, KotlinSyntaxToken,
-    ModifierList, PropertyAccessor, PropertyDeclaration, SecondaryConstructor,
-    TypeAliasDeclaration, TypeReference,
+    ModifierList, PropertyAccessor, PropertyDeclaration, RecoveredSeparatedListEntry,
+    SecondaryConstructor, TypeAliasDeclaration, TypeReference,
 };
 
-use crate::helpers::blocks::empty_source_braced_body;
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_token, format_token_sequence,
     trailing_comments_force_line,
 };
-use crate::helpers::lists::{CommaListItem, compact_parenthesized_list};
+use crate::helpers::lists::{
+    CommaListItem, compact_parenthesized_list, recovered_comma_list_items,
+};
 use crate::helpers::modifiers::modifier_prefix_from_parts;
-use crate::helpers::source::source_gap_is_trivia;
 use crate::rules::annotations::format_annotation;
 use crate::rules::expressions::format_expression;
 use crate::rules::names::format_name;
@@ -181,9 +181,7 @@ pub(super) fn format_function_declaration<'source>(
     } else {
         format_optional_declaration_expression_tail(declaration, header_end).unwrap_or_else(|| {
             format_recovered_declaration_tail(
-                declaration.token_iter(),
-                header_end,
-                declaration.text_range().end().get(),
+                declaration.tail_tokens_between(header_end, declaration.text_range().end().get()),
             )
         })
     };
@@ -271,10 +269,9 @@ fn format_optional_declaration_expression_tail<'source>(
     }
 
     declaration_expression_tail(
-        declaration.source_text(),
-        declaration.text_range().start().get(),
-        declaration.token_iter(),
+        |start, end| declaration.tail_is_trivia_between(start, end),
         header_end,
+        declaration.text_range().end().get(),
         assign,
         expression,
     )
@@ -312,18 +309,15 @@ pub(super) fn format_property_declaration<'source>(
         .unwrap_or_else(|| declaration.text_range().start().get());
     let tail = if property_body_items.is_empty() {
         let assign_tail = declaration_expression_tail(
-            declaration.source_text(),
-            declaration.text_range().start().get(),
-            declaration.token_iter(),
+            |start, end| declaration.tail_is_trivia_between(start, end),
             header_end,
+            declaration.text_range().end().get(),
             declaration.assign_token(),
             declaration.expression(),
         );
         let delegate_tail = property_delegate.and_then(|by| {
             declaration_expression_tail_between(
-                declaration.source_text(),
-                declaration.text_range().start().get(),
-                declaration.token_iter(),
+                |start, end| declaration.tail_is_trivia_between(start, end),
                 header_end,
                 by,
                 declaration.expression()?,
@@ -333,19 +327,14 @@ pub(super) fn format_property_declaration<'source>(
         assign_tail
             .or(delegate_tail)
             .or_else(|| {
-                declaration_tail_is_empty(
-                    declaration.source_text(),
-                    declaration.text_range().start().get(),
-                    declaration.token_iter(),
-                    header_end,
-                )
-                .then(jolt_fmt_ir::nil)
+                declaration
+                    .tail_is_trivia_between(header_end, declaration.text_range().end().get())
+                    .then(jolt_fmt_ir::nil)
             })
             .unwrap_or_else(|| {
                 format_recovered_declaration_tail(
-                    declaration.token_iter(),
-                    header_end,
-                    declaration.text_range().end().get(),
+                    declaration
+                        .tail_tokens_between(header_end, declaration.text_range().end().get()),
                 )
             })
     } else {
@@ -390,24 +379,16 @@ fn format_property_body_tail<'source>(
     header_end: usize,
     body_items: &[PropertyBodyItem<'source>],
 ) -> Option<Doc<'source>> {
-    let declaration_start = declaration.text_range().start().get();
     let body_start = body_items.first()?.start();
     let initializer = declaration.assign_token().map_or_else(
         || {
-            source_gap_is_trivia(
-                declaration.source_text(),
-                declaration_start,
-                declaration.token_iter(),
-                header_end,
-                body_start,
-            )
-            .then(jolt_fmt_ir::nil)
+            declaration
+                .tail_is_trivia_between(header_end, body_start)
+                .then(jolt_fmt_ir::nil)
         },
         |assign| {
             declaration_expression_tail_between(
-                declaration.source_text(),
-                declaration_start,
-                declaration.token_iter(),
+                |start, end| declaration.tail_is_trivia_between(start, end),
                 header_end,
                 assign,
                 declaration.expression()?,
@@ -415,10 +396,7 @@ fn format_property_body_tail<'source>(
             )
         },
     )?;
-    let body_docs = body_items
-        .iter()
-        .map(format_property_body_item)
-        .collect::<Option<Vec<_>>>()?;
+    let body_docs: Vec<_> = body_items.iter().map(format_property_body_item).collect();
 
     Some(concat([
         initializer,
@@ -429,46 +407,54 @@ fn format_property_body_tail<'source>(
     ]))
 }
 
-fn format_property_body_item<'source>(item: &PropertyBodyItem<'source>) -> Option<Doc<'source>> {
+fn format_property_body_item<'source>(item: &PropertyBodyItem<'source>) -> Doc<'source> {
     match item {
         PropertyBodyItem::ExplicitBackingField(field) => format_explicit_backing_field(field),
-        PropertyBodyItem::Accessor(accessor) => Some(format_property_accessor(accessor)),
+        PropertyBodyItem::Accessor(accessor) => format_property_accessor(accessor),
     }
 }
 
 pub(super) fn format_explicit_backing_field<'source>(
     field: &ExplicitBackingField<'source>,
-) -> Option<Doc<'source>> {
-    let keyword = field.field_token()?;
-    let assign = field.assign_token()?;
-    let expression = field.expression()?;
-    Some(concat([
-        format_token(
+) -> Doc<'source> {
+    let mut docs = Vec::new();
+
+    if let Some(keyword) = field.field_token() {
+        docs.push(format_token(
             &keyword,
             LeadingTrivia::SuppressAlreadyHandled,
             TrailingTrivia::RelocatedToEnclosingContext,
-        ),
-        space(),
-        format_token(
+        ));
+    }
+    if let Some(assign) = field.assign_token() {
+        if !docs.is_empty() {
+            docs.push(space());
+        }
+        docs.push(format_token(
             &assign,
             LeadingTrivia::Preserve,
-            TrailingTrivia::RelocatedToEnclosingContext,
-        ),
-        space(),
-        format_expression(&expression),
-    ]))
+            TrailingTrivia::BeforeSpaceIfComments,
+        ));
+    }
+    if let Some(expression) = field.expression() {
+        if !docs.is_empty() {
+            docs.push(space());
+        }
+        docs.push(format_expression(&expression));
+    }
+
+    if docs.is_empty() {
+        format_token_sequence(field.token_iter(), LeadingTrivia::SuppressAlreadyHandled)
+    } else {
+        concat(docs)
+    }
 }
 
 pub(super) fn format_property_accessor<'source>(
     accessor: &PropertyAccessor<'source>,
 ) -> Doc<'source> {
     let body = if let Some(block) = accessor.block() {
-        let block_doc = if block.source_text().trim() == "{}" {
-            empty_source_braced_body(block.open_brace().as_ref(), block.close_brace().as_ref())
-        } else {
-            format_block(&block)
-        };
-        concat([space(), block_doc])
+        concat([space(), format_block(&block)])
     } else if let Some(assign) = accessor.assign_token() {
         group(concat([
             space(),
@@ -542,16 +528,15 @@ fn format_destructuring_declaration<'source>(
     compact_parenthesized_list(
         declaration.open_delimiter().as_ref(),
         declaration.close_delimiter().as_ref(),
-        declaration
-            .entries_with_commas()
-            .map(|entry| CommaListItem {
+        recovered_comma_list_items(declaration.entries_with_recovered(), |entry| {
+            CommaListItem {
                 doc: entry
                     .entry
                     .name()
                     .map_or_else(jolt_fmt_ir::nil, |name| format_name(&name)),
                 comma: entry.comma,
-            })
-            .collect(),
+            }
+        }),
     )
 }
 
@@ -737,54 +722,11 @@ struct ContextParameterClauseItems<'source> {
 fn context_parameter_clause_items<'source>(
     clause: &ContextParameterClause<'source>,
 ) -> ContextParameterClauseItems<'source> {
-    let source_start = clause.text_range().start().get();
-    let source = clause.source_text();
-    let tokens = clause.token_iter().collect::<Vec<_>>();
-    let mut token_cursor = 0;
-    let mut covered_until = clause.open_paren().map_or_else(
-        || {
-            clause.context_token().map_or_else(
-                || clause.text_range().start().get(),
-                |token| token.token_text_range().end().get(),
-            )
-        },
-        |open| open.token_text_range().end().get(),
-    );
     let mut items = Vec::new();
 
-    for entry in clause.entries() {
-        push_recovered_context_parameter_gap(
-            &mut items,
-            source,
-            source_start,
-            &tokens,
-            &mut token_cursor,
-            covered_until,
-            entry.parameter.text_range().start().get(),
-        );
-        items.push(CommaListItem {
-            doc: format_context_parameter(&entry.parameter),
-            comma: entry.comma,
-        });
-        covered_until = entry.comma.map_or_else(
-            || entry.parameter.text_range().end().get(),
-            |comma| comma.token_text_range().end().get(),
-        );
+    for entry in clause.entries_with_recovered() {
+        push_context_parameter_entry(&mut items, entry);
     }
-
-    let list_end = clause.close_paren().map_or_else(
-        || clause.text_range().end().get(),
-        |close| close.token_text_range().start().get(),
-    );
-    push_recovered_context_parameter_gap(
-        &mut items,
-        source,
-        source_start,
-        &tokens,
-        &mut token_cursor,
-        covered_until,
-        list_end,
-    );
 
     ContextParameterClauseItems { items }
 }
@@ -812,42 +754,30 @@ fn format_context_parameter<'source>(
     ])
 }
 
-fn push_recovered_context_parameter_gap<'source>(
+fn push_context_parameter_entry<'source>(
     items: &mut Vec<CommaListItem<'source>>,
-    source: &'source str,
-    source_start: usize,
-    tokens: &[KotlinSyntaxToken<'source>],
-    token_cursor: &mut usize,
-    start: usize,
-    end: usize,
+    entry: RecoveredSeparatedListEntry<
+        'source,
+        jolt_kotlin_syntax::ContextParameterClauseEntry<'source>,
+    >,
 ) {
-    if source_gap_is_trivia(source, source_start, tokens.iter().copied(), start, end) {
-        return;
-    }
-
-    let mut gap_tokens = Vec::new();
-    while *token_cursor < tokens.len() {
-        let range = tokens[*token_cursor].token_text_range();
-        if range.end().get() <= start {
-            *token_cursor += 1;
-            continue;
-        }
-        if range.start().get() >= end {
-            break;
-        }
-        if range.start().get() >= start && range.end().get() <= end {
-            gap_tokens.push(tokens[*token_cursor]);
-            *token_cursor += 1;
-            continue;
-        }
-        break;
-    }
-
-    if !gap_tokens.is_empty() {
-        items.push(CommaListItem {
-            doc: format_token_sequence(gap_tokens, LeadingTrivia::Preserve),
+    match entry {
+        RecoveredSeparatedListEntry::Entry(entry) => items.push(CommaListItem {
+            doc: format_context_parameter(&entry.parameter),
+            comma: entry.comma,
+        }),
+        RecoveredSeparatedListEntry::Token(token) => items.push(CommaListItem {
+            doc: format_token_sequence(std::iter::once(token), LeadingTrivia::Preserve),
             comma: None,
-        });
+        }),
+        RecoveredSeparatedListEntry::Error(error) => items.push(CommaListItem {
+            doc: format_token_sequence(error.token_iter(), LeadingTrivia::Preserve),
+            comma: None,
+        }),
+        RecoveredSeparatedListEntry::Node(node) => items.push(CommaListItem {
+            doc: format_token_sequence(node.token_iter(), LeadingTrivia::Preserve),
+            comma: None,
+        }),
     }
 }
 
@@ -864,13 +794,12 @@ fn format_keyword_with_space<'source>(keyword: &KotlinSyntaxToken<'source>) -> D
 
 pub(super) fn format_modifier_prefix(modifiers: Option<ModifierList<'_>>) -> Doc<'_> {
     modifiers.map_or_else(jolt_fmt_ir::nil, |modifiers| {
-        let mut modifier_tokens = modifiers.modifier_tokens().collect::<Vec<_>>();
         modifier_prefix_from_parts(
             modifiers
                 .annotations()
                 .map(|annotation| format_annotation(&annotation))
                 .collect(),
-            &mut modifier_tokens,
+            modifiers.modifier_tokens(),
         )
     })
 }
@@ -890,51 +819,22 @@ pub(crate) fn format_type_annotation<'source>(
     ])
 }
 
-fn declaration_tail_is_empty<'source>(
-    declaration_source: &'source str,
-    declaration_start: usize,
-    tokens: impl IntoIterator<Item = KotlinSyntaxToken<'source>>,
-    header_end: usize,
-) -> bool {
-    source_gap_is_trivia(
-        declaration_source,
-        declaration_start,
-        tokens,
-        header_end,
-        declaration_start + declaration_source.len(),
-    )
-}
-
 fn declaration_expression_tail<'source>(
-    declaration_source: &'source str,
-    declaration_start: usize,
-    tokens: impl IntoIterator<Item = KotlinSyntaxToken<'source>>,
+    is_trivia_between: impl Fn(usize, usize) -> bool,
     header_end: usize,
+    tail_end: usize,
     assign: Option<KotlinSyntaxToken<'source>>,
     expression: Option<jolt_kotlin_syntax::Expression<'source>>,
 ) -> Option<Doc<'source>> {
-    let tokens = tokens.into_iter().collect::<Vec<_>>();
     let assign = assign?;
     if assign.token_text_range().start().get() < header_end {
         return None;
     }
-    if !source_gap_is_trivia(
-        declaration_source,
-        declaration_start,
-        tokens.iter().copied(),
-        header_end,
-        assign.token_text_range().start().get(),
-    ) {
+    if !is_trivia_between(header_end, assign.token_text_range().start().get()) {
         return None;
     }
     let Some(expression) = expression else {
-        if !source_gap_is_trivia(
-            declaration_source,
-            declaration_start,
-            tokens.iter().copied(),
-            assign.token_text_range().end().get(),
-            declaration_start + declaration_source.len(),
-        ) {
+        if !is_trivia_between(assign.token_text_range().end().get(), tail_end) {
             return None;
         }
         return Some(concat([
@@ -942,22 +842,13 @@ fn declaration_expression_tail<'source>(
             format_token(&assign, LeadingTrivia::Preserve, TrailingTrivia::Preserve),
         ]));
     };
-    if !source_gap_is_trivia(
-        declaration_source,
-        declaration_start,
-        tokens.iter().copied(),
+    if !is_trivia_between(
         assign.token_text_range().end().get(),
         expression.text_range().start().get(),
     ) {
         return None;
     }
-    if !source_gap_is_trivia(
-        declaration_source,
-        declaration_start,
-        tokens.iter().copied(),
-        expression.text_range().end().get(),
-        declaration_start + declaration_source.len(),
-    ) {
+    if !is_trivia_between(expression.text_range().end().get(), tail_end) {
         return None;
     }
 
@@ -1009,45 +900,27 @@ fn format_declaration_expression_tail<'source>(
 }
 
 fn declaration_expression_tail_between<'source>(
-    declaration_source: &'source str,
-    declaration_start: usize,
-    tokens: impl IntoIterator<Item = KotlinSyntaxToken<'source>>,
+    is_trivia_between: impl Fn(usize, usize) -> bool,
     header_end: usize,
     assign: KotlinSyntaxToken<'source>,
     expression: jolt_kotlin_syntax::Expression<'source>,
     tail_end: usize,
 ) -> Option<Doc<'source>> {
-    let tokens = tokens.into_iter().collect::<Vec<_>>();
     if assign.token_text_range().start().get() < header_end
         || expression.text_range().end().get() > tail_end
     {
         return None;
     }
-    if !source_gap_is_trivia(
-        declaration_source,
-        declaration_start,
-        tokens.iter().copied(),
-        header_end,
-        assign.token_text_range().start().get(),
-    ) {
+    if !is_trivia_between(header_end, assign.token_text_range().start().get()) {
         return None;
     }
-    if !source_gap_is_trivia(
-        declaration_source,
-        declaration_start,
-        tokens.iter().copied(),
+    if !is_trivia_between(
         assign.token_text_range().end().get(),
         expression.text_range().start().get(),
     ) {
         return None;
     }
-    if !source_gap_is_trivia(
-        declaration_source,
-        declaration_start,
-        tokens.iter().copied(),
-        expression.text_range().end().get(),
-        tail_end,
-    ) {
+    if !is_trivia_between(expression.text_range().end().get(), tail_end) {
         return None;
     }
 
@@ -1056,23 +929,18 @@ fn declaration_expression_tail_between<'source>(
 
 fn format_recovered_declaration_tail<'source>(
     tokens: impl IntoIterator<Item = KotlinSyntaxToken<'source>>,
-    start: usize,
-    end: usize,
 ) -> Doc<'source> {
-    let tokens = tokens
-        .into_iter()
-        .filter(|token| {
-            token.token_text_range().start().get() >= start
-                && token.token_text_range().end().get() <= end
-        })
-        .collect::<Vec<_>>();
+    let mut tokens = tokens.into_iter();
 
-    if tokens.is_empty() {
-        jolt_fmt_ir::nil()
-    } else {
-        concat([
-            space(),
-            crate::helpers::comments::format_token_sequence(tokens, LeadingTrivia::Preserve),
-        ])
-    }
+    let Some(first) = tokens.next() else {
+        return jolt_fmt_ir::nil();
+    };
+
+    concat([
+        space(),
+        crate::helpers::comments::format_token_sequence(
+            std::iter::once(first).chain(tokens),
+            LeadingTrivia::Preserve,
+        ),
+    ])
 }

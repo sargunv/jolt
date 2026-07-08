@@ -2,14 +2,16 @@ use super::control_flow::{format_condition_open_paren, format_statement_header_b
 use super::simple::format_statement_keyword;
 use super::{
     CatchClause, CatchParameter, CatchTypeList, Doc, FinallyClause, JavaFormatter, JavaSyntaxToken,
-    LeadingTrivia, Resource, ResourceListEntry, TrailingTrivia, TryStatement,
+    LeadingTrivia, Resource, ResourceList, ResourceListEntry, TrailingTrivia, TryStatement,
     TryWithResourcesStatement, Type, concat, empty_block, format_annotation, format_block,
     format_dangling_comments, format_expression, format_local_variable_declaration,
     format_removed_comments, format_separator_with_comments, format_statement_semicolon,
-    format_token, format_token_with_comments, format_trailing_comments_before_line_break,
-    format_type, group, hard_line, indent, line, soft_line, trailing_comments_force_line,
+    format_token, format_token_sequence, format_token_with_comments,
+    format_trailing_comments_before_line_break, format_type, group, hard_line, indent, line,
+    soft_line, trailing_comments_force_line,
 };
-use jolt_fmt_ir::{join, space};
+use crate::helpers::modifiers::inline_modifier_prefix_from_docs;
+use jolt_fmt_ir::space;
 
 pub(super) fn format_try_statement<'source>(
     statement: &TryStatement<'source>,
@@ -80,14 +82,13 @@ fn format_resource_specification<'source>(
     let resource_list = specification
         .as_ref()
         .and_then(jolt_java_syntax::ResourceSpecification::list);
-    let mut resources = resource_list
-        .as_ref()
-        .into_iter()
-        .flat_map(|list| {
-            list.entries()
-                .map(|entry| format_resource_entry(&entry, formatter))
-        })
-        .peekable();
+    let Some(resource_list) = resource_list.as_ref() else {
+        return concat([
+            format_condition_open_paren(open_paren.as_ref()),
+            format_resource_close_paren(close_paren.as_ref()),
+        ]);
+    };
+    let mut resources = resource_list_items(resource_list, formatter).peekable();
 
     if resources.peek().is_none() {
         return concat([
@@ -150,19 +151,42 @@ fn format_resource_close_paren<'source>(close: Option<&JavaSyntaxToken<'source>>
     ])
 }
 
-struct FormattedResource<'source> {
-    resource: Doc<'source>,
-    separator: Option<JavaSyntaxToken<'source>>,
+enum ResourceLineItem<'source> {
+    Resource {
+        resource: Doc<'source>,
+        separator: Option<JavaSyntaxToken<'source>>,
+    },
+    Recovered(Doc<'source>),
 }
 
 fn format_resource_entry<'source>(
     entry: &ResourceListEntry<'source>,
     formatter: &JavaFormatter<'_>,
-) -> FormattedResource<'source> {
-    FormattedResource {
+) -> ResourceLineItem<'source> {
+    ResourceLineItem::Resource {
         resource: format_resource(&entry.resource, formatter),
         separator: entry.separator,
     }
+}
+
+fn resource_list_items<'source, 'fmt>(
+    list: &'fmt ResourceList<'source>,
+    formatter: &'fmt JavaFormatter<'_>,
+) -> impl Iterator<Item = ResourceLineItem<'source>> + use<'source, 'fmt> {
+    list.entries_with_recovered().map(move |entry| match entry {
+        jolt_java_syntax::RecoveredSeparatedListEntry::Entry(entry) => {
+            format_resource_entry(&entry, formatter)
+        }
+        jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => ResourceLineItem::Recovered(
+            format_token(&token, LeadingTrivia::Preserve, TrailingTrivia::Preserve),
+        ),
+        jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => ResourceLineItem::Recovered(
+            format_token_sequence(error.token_iter(), LeadingTrivia::Preserve),
+        ),
+        jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => ResourceLineItem::Recovered(
+            format_token_sequence(node.token_iter(), LeadingTrivia::Preserve),
+        ),
+    })
 }
 
 fn format_resource<'source>(
@@ -173,14 +197,13 @@ fn format_resource<'source>(
         return format_local_variable_declaration(&declaration, formatter);
     }
     if let Some(access) = resource.variable_access() {
-        return access
-            .expression()
-            .map_or_else(jolt_fmt_ir::nil, |expression| {
-                format_expression(&expression, formatter)
-            });
+        return access.expression().map_or_else(
+            || format_token_sequence(access.token_iter(), LeadingTrivia::Preserve),
+            |expression| format_expression(&expression, formatter),
+        );
     }
 
-    jolt_fmt_ir::nil()
+    format_token_sequence(resource.token_iter(), LeadingTrivia::Preserve)
 }
 
 fn format_catch_clauses<'source>(
@@ -250,21 +273,13 @@ fn format_catch_modifier_prefix<'source>(
     parameter: &CatchParameter<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    let mut docs = parameter
-        .annotations()
-        .map(|annotation| format_annotation(&annotation, formatter))
-        .chain(
-            parameter
-                .modifier_tokens()
-                .map(|token| format_token_with_comments(&token)),
-        )
-        .peekable();
-
-    if docs.peek().is_none() {
-        jolt_fmt_ir::nil()
-    } else {
-        concat([join(&space(), docs), space()])
-    }
+    inline_modifier_prefix_from_docs(
+        parameter
+            .annotations()
+            .map(|annotation| format_annotation(&annotation, formatter))
+            .collect(),
+        parameter.modifier_entries().collect(),
+    )
 }
 
 fn format_catch_type_list<'source>(
@@ -273,7 +288,7 @@ fn format_catch_type_list<'source>(
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
     let name = name.map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name));
-    let mut entries = types.entries();
+    let mut entries = catch_type_parts(*types, formatter);
 
     let Some(mut current) = entries.next() else {
         return name;
@@ -281,18 +296,51 @@ fn format_catch_type_list<'source>(
 
     let mut docs = Vec::new();
     for next in entries {
-        docs.push(format_catch_type(&current.ty, formatter));
-        docs.push(format_catch_type_separator(current.separator.as_ref()));
+        docs.push(current.doc);
+        if let Some(separator) = current.separator {
+            docs.push(format_catch_type_separator(Some(&separator)));
+        }
         current = next;
     }
 
-    let last = concat([format_catch_type(&current.ty, formatter), space(), name]);
+    let last = concat([current.doc, space(), name]);
     if docs.is_empty() {
         return last;
     }
 
     docs.push(last);
     group(concat(docs))
+}
+
+struct CatchTypePart<'source> {
+    doc: Doc<'source>,
+    separator: Option<JavaSyntaxToken<'source>>,
+}
+
+fn catch_type_parts<'source, 'fmt>(
+    types: CatchTypeList<'source>,
+    formatter: &'fmt JavaFormatter<'_>,
+) -> impl Iterator<Item = CatchTypePart<'source>> + use<'source, 'fmt> {
+    types
+        .entries_with_recovered()
+        .map(move |entry| match entry {
+            jolt_java_syntax::RecoveredSeparatedListEntry::Entry(entry) => CatchTypePart {
+                doc: format_catch_type(&entry.ty, formatter),
+                separator: entry.separator,
+            },
+            jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => CatchTypePart {
+                doc: format_token(&token, LeadingTrivia::Preserve, TrailingTrivia::Preserve),
+                separator: None,
+            },
+            jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => CatchTypePart {
+                doc: format_token_sequence(error.token_iter(), LeadingTrivia::Preserve),
+                separator: None,
+            },
+            jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => CatchTypePart {
+                doc: format_token_sequence(node.token_iter(), LeadingTrivia::Preserve),
+                separator: None,
+            },
+        })
 }
 
 fn format_catch_type_separator<'source>(
@@ -325,21 +373,34 @@ fn format_finally_clause<'source>(
 }
 
 fn join_resource_lines<'source>(
-    mut resources: std::iter::Peekable<impl Iterator<Item = FormattedResource<'source>>>,
+    mut resources: std::iter::Peekable<impl Iterator<Item = ResourceLineItem<'source>>>,
     trailing_comments: Option<Doc<'source>>,
 ) -> Doc<'source> {
     let mut joined = Vec::new();
     let mut trailing_comments = trailing_comments;
     while let Some(resource) = resources.next() {
-        joined.push(resource.resource);
-        if resources.peek().is_none() {
-            if let Some(comments) = trailing_comments.take() {
-                joined.push(hard_line());
-                joined.push(comments);
+        match resource {
+            ResourceLineItem::Resource {
+                resource,
+                separator,
+            } => {
+                joined.push(resource);
+                if resources.peek().is_none() {
+                    if let Some(comments) = trailing_comments.take() {
+                        joined.push(hard_line());
+                        joined.push(comments);
+                    }
+                } else {
+                    joined.push(format_statement_semicolon(separator));
+                    joined.push(hard_line());
+                }
             }
-        } else {
-            joined.push(format_statement_semicolon(resource.separator));
-            joined.push(hard_line());
+            ResourceLineItem::Recovered(doc) => {
+                joined.push(doc);
+                if resources.peek().is_some() {
+                    joined.push(hard_line());
+                }
+            }
         }
     }
     concat(joined)

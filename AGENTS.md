@@ -37,6 +37,19 @@ Run `mise tasks ls --all` for the full task list.
 - Algorithms must remain linear or explicitly bounded; do not add unbounded
   layout search, best-fitting, or conditional-group behavior without a
   documented finite cost model and proven need.
+- Formatter syntax access must use borrowed source, tokens, nodes, and trivia
+  from the existing parser buffers. Do not clone source text, token buffers, or
+  syntax nodes to rediscover structure or probe recovery cases.
+- Formatter layout must be structured. Every representable tree has a
+  representable structure; format that tree and its available children instead
+  of replaying source, walking token cursors, or inferring syntax rules in the
+  formatter.
+- A formatter must not panic, refuse, or validate syntax for
+  malformed-but-represented trees. Format the represented pieces consistently
+  and preserve all existing tokens/trivia.
+- Formatter rules must not parse by inspecting token streams. Syntax crates own
+  tree shape, recovery accessors, and token ownership; formatter crates consume
+  those accessors for layout only.
 - A formatter must not synthesize tokens to repair invalid syntax or where
   source tokens (with trivia) are available. Synthesized tokens are allowed in
   very specific cases, like normalizing separators, braces, or parentheses where

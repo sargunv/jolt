@@ -1,12 +1,11 @@
 use jolt_fmt_ir::{Doc, concat};
 use jolt_kotlin_syntax::{
-    BlockItem, Declaration, Expression, ExpressionStatement, KotlinSyntaxToken, StatementSyntax,
+    BlockItem, Declaration, ExpressionStatement, RecoveredSeparatedListEntry, StatementSyntax,
 };
 
 mod blocks;
 
 use crate::helpers::comments::{LeadingTrivia, format_token_sequence};
-use crate::helpers::source::source_gap_is_trivia;
 use crate::rules::expressions::{format_expression, format_expression_without_leading};
 pub(crate) use blocks::format_block;
 
@@ -95,115 +94,40 @@ fn format_expression_statement<'source>(
     statement: &ExpressionStatement<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
-    let Some(expression) = statement.expression() else {
-        return format_token_sequence(statement.token_iter(), leading);
-    };
-    if expression_statement_has_recovered_tokens(statement, &expression) {
-        return format_expression_statement_with_recovered_tokens(statement, &expression, leading);
-    }
-
-    match leading {
-        LeadingTrivia::Preserve => format_expression(&expression),
-        LeadingTrivia::SuppressAlreadyHandled => format_expression_without_leading(&expression),
-    }
-}
-
-fn expression_statement_has_recovered_tokens(
-    statement: &ExpressionStatement<'_>,
-    expression: &Expression<'_>,
-) -> bool {
-    let source = statement.source_text();
-    let statement_start = statement.text_range().start().get();
-    let expression_range = expression.text_range();
-    !source_gap_is_trivia(
-        source,
-        statement_start,
-        statement.token_iter(),
-        statement.text_range().start().get(),
-        expression_range.start().get(),
-    ) || !source_gap_is_trivia(
-        source,
-        statement_start,
-        statement.token_iter(),
-        expression_range.end().get(),
-        statement.text_range().end().get(),
-    )
-}
-
-fn format_expression_statement_with_recovered_tokens<'source>(
-    statement: &ExpressionStatement<'source>,
-    expression: &Expression<'source>,
-    leading: LeadingTrivia,
-) -> Doc<'source> {
-    let source = statement.source_text();
-    let statement_start = statement.text_range().start().get();
-    let tokens = statement.token_iter().collect::<Vec<_>>();
-    let mut token_cursor = 0;
     let mut docs = Vec::new();
+    let mut has_output = false;
 
-    push_recovered_statement_gap(
-        &mut docs,
-        source,
-        statement_start,
-        &tokens,
-        &mut token_cursor,
-        statement.text_range().start().get(),
-        expression.text_range().start().get(),
-        leading,
-    );
+    for entry in statement.entries_with_recovered() {
+        let entry_leading = if has_output {
+            LeadingTrivia::Preserve
+        } else {
+            leading
+        };
+        match entry {
+            RecoveredSeparatedListEntry::Entry(expression) => {
+                docs.push(match entry_leading {
+                    LeadingTrivia::Preserve => format_expression(&expression),
+                    LeadingTrivia::SuppressAlreadyHandled => {
+                        format_expression_without_leading(&expression)
+                    }
+                });
+            }
+            RecoveredSeparatedListEntry::Token(token) => {
+                docs.push(format_token_sequence(std::iter::once(token), entry_leading));
+            }
+            RecoveredSeparatedListEntry::Error(error) => {
+                docs.push(format_token_sequence(error.token_iter(), entry_leading));
+            }
+            RecoveredSeparatedListEntry::Node(node) => {
+                docs.push(format_token_sequence(node.token_iter(), entry_leading));
+            }
+        }
+        has_output = true;
+    }
 
-    docs.push(match leading {
-        LeadingTrivia::Preserve => format_expression(expression),
-        LeadingTrivia::SuppressAlreadyHandled => format_expression_without_leading(expression),
-    });
-
-    push_recovered_statement_gap(
-        &mut docs,
-        source,
-        statement_start,
-        &tokens,
-        &mut token_cursor,
-        expression.text_range().end().get(),
-        statement.text_range().end().get(),
-        LeadingTrivia::Preserve,
-    );
+    if docs.is_empty() {
+        return format_token_sequence(statement.token_iter(), leading);
+    }
 
     concat(docs)
-}
-
-fn push_recovered_statement_gap<'source>(
-    docs: &mut Vec<Doc<'source>>,
-    source: &'source str,
-    source_start: usize,
-    tokens: &[KotlinSyntaxToken<'source>],
-    token_cursor: &mut usize,
-    start: usize,
-    end: usize,
-    leading: LeadingTrivia,
-) {
-    if source_gap_is_trivia(source, source_start, tokens.iter().copied(), start, end) {
-        return;
-    }
-
-    let mut gap_tokens = Vec::new();
-    while *token_cursor < tokens.len() {
-        let range = tokens[*token_cursor].token_text_range();
-        if range.end().get() <= start {
-            *token_cursor += 1;
-            continue;
-        }
-        if range.start().get() >= end {
-            break;
-        }
-        if range.start().get() >= start && range.end().get() <= end {
-            gap_tokens.push(tokens[*token_cursor]);
-            *token_cursor += 1;
-            continue;
-        }
-        break;
-    }
-
-    if !gap_tokens.is_empty() {
-        docs.push(format_token_sequence(gap_tokens, leading));
-    }
 }

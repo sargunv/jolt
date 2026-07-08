@@ -1,13 +1,16 @@
 use jolt_java_syntax::parse_compilation_unit;
 use jolt_test_support::{
-    SnapshotBuilder, collect_java_files, fixture_snapshot_name, java_fixture_root, read_to_string,
-    render_diagnostics,
+    SnapshotBuilder, collect_java_files, fixture_manifest, fixture_snapshot_name,
+    java_fixture_root, read_to_string, render_diagnostics,
 };
 
 #[test]
 fn java_corpus_syntax_snapshots() {
     let root = java_fixture_root(env!("CARGO_MANIFEST_DIR"));
-    for path in collect_java_files(&root) {
+    let paths = collect_java_files(&root);
+    insta::assert_snapshot!("fixture_manifest", fixture_manifest(&root, &paths));
+
+    for path in paths {
         let is_lexer_fixture = path
             .strip_prefix(&root)
             .is_ok_and(|relative| relative.starts_with("syntax/lexer"));

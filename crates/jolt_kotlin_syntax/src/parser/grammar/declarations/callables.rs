@@ -380,12 +380,12 @@ impl Parser<'_> {
                 K::RBrace => break,
                 K::Lt => angle_depth += 1,
                 K::Gt if angle_depth > 0 => angle_depth -= 1,
-                K::Dot if at_top_level => {
-                    if is_identifier_like_kind(self.kind_at(index + 1))
-                        && self.callable_name_boundary_at(index + 2, start)
-                    {
-                        separator = Some(index);
-                    }
+                K::Dot
+                    if at_top_level
+                        && is_identifier_like_kind(self.kind_at(index + 1))
+                        && self.callable_name_boundary_at(index + 2, start) =>
+                {
+                    separator = Some(index);
                 }
                 _ => {}
             }

@@ -119,7 +119,11 @@ fn member_chain<'source>(
 
     let mut suffixes = units.into_iter();
     let head = if keep_first_suffix_with_root {
-        concat([root, suffixes.next().expect("suffixes is not empty")])
+        if let Some(suffix) = suffixes.next() {
+            concat([root, suffix])
+        } else {
+            root
+        }
     } else {
         root
     };

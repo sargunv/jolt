@@ -3,11 +3,11 @@ use jolt_java_syntax::{
     AssertStatement, BasicForStatement, Block, BlockItem, BlockStatement, CatchClause,
     CatchParameter, CatchTypeList, DoStatement, EnhancedForStatement, Expression,
     ExpressionStatement, FinallyClause, ForInitializer, ForStatement, ForUpdate, IfStatement,
-    JavaSyntaxToken, LabeledStatement, Resource, ResourceListEntry, ReturnStatement, Statement,
-    StatementBody, StatementExpressionEntry, StatementExpressionList, SwitchBlock,
-    SwitchBlockEntry, SwitchBlockStatementGroup, SwitchLabel, SwitchLabelCaseEntry,
-    SwitchLabelCaseItem, SwitchRule, SwitchStatement, SynchronizedStatement, ThrowStatement,
-    TryStatement, TryWithResourcesStatement, Type, WhileStatement, YieldStatement,
+    JavaSyntaxToken, LabeledStatement, Resource, ResourceList, ResourceListEntry, ReturnStatement,
+    Statement, StatementBody, StatementExpressionList, SwitchBlock, SwitchBlockEntry,
+    SwitchBlockStatementGroup, SwitchLabel, SwitchLabelCaseEntry, SwitchLabelCaseItem, SwitchRule,
+    SwitchStatement, SynchronizedStatement, ThrowStatement, TryStatement,
+    TryWithResourcesStatement, Type, WhileStatement, YieldStatement,
 };
 use std::ops::Range;
 
@@ -18,8 +18,9 @@ use crate::helpers::blocks::{
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, comment_forces_line, comments_from_tokens,
     format_dangling_comments, format_removed_comments, format_separator_with_comments,
-    format_token, format_token_before_relocated_trailing_comments, format_token_with_comments,
-    format_trailing_comments_before_line_break, trailing_comments_force_line,
+    format_token, format_token_before_relocated_trailing_comments, format_token_sequence,
+    format_token_with_comments, format_trailing_comments_before_line_break,
+    trailing_comments_force_line,
 };
 use crate::helpers::formatter_ignore::{
     FormatterIgnoreRange, formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
@@ -38,7 +39,7 @@ mod simple;
 mod switches;
 mod try_resources;
 
-pub(crate) use blocks::{format_block, format_block_statement_item};
+pub(crate) use blocks::{format_block, format_block_statement_item_or_recovered};
 use control_flow::{
     format_do_statement, format_for_statement, format_if_statement, format_synchronized_statement,
     format_while_statement,
@@ -59,7 +60,7 @@ fn format_statement<'source>(
 ) -> Doc<'source> {
     match statement {
         Statement::Block(block) => format_block(block, formatter),
-        Statement::EmptyStatement(_) => empty_block(),
+        Statement::EmptyStatement(statement) => format_empty_statement(statement),
         Statement::LabeledStatement(statement) => format_labeled_statement(statement, formatter),
         Statement::ExpressionStatement(statement) => {
             format_expression_statement(statement, formatter)
@@ -101,11 +102,32 @@ fn statement_body_as_block<'source>(
 ) -> Doc<'source> {
     match body {
         Some(StatementBody::Block(block)) => format_block(block, formatter),
-        Some(StatementBody::Empty(_)) | None => empty_block(),
+        Some(StatementBody::Empty(statement)) => {
+            format_empty_statement_body(statement).unwrap_or_else(empty_block)
+        }
+        None => empty_block(),
         Some(StatementBody::Unbraced(statement)) => {
             inserted_braced_body(Some(format_statement(statement, formatter)))
         }
     }
+}
+
+fn format_empty_statement<'source>(
+    statement: &jolt_java_syntax::EmptyStatement<'source>,
+) -> Doc<'source> {
+    format_empty_statement_comments(statement).unwrap_or_else(jolt_fmt_ir::nil)
+}
+
+fn format_empty_statement_body<'source>(
+    statement: &jolt_java_syntax::EmptyStatement<'source>,
+) -> Option<Doc<'source>> {
+    format_empty_statement_comments(statement).map(|comments| inserted_braced_body(Some(comments)))
+}
+
+fn format_empty_statement_comments<'source>(
+    statement: &jolt_java_syntax::EmptyStatement<'source>,
+) -> Option<Doc<'source>> {
+    format_removed_comments(comments_from_tokens(statement.token_iter()))
 }
 
 fn statement_body_trailing_comments_force_line(body: Option<&StatementBody<'_>>) -> bool {

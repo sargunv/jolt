@@ -1233,6 +1233,39 @@ pub struct VariableDeclaratorEntry<'source> {
     pub comma: Option<JavaSyntaxToken<'source>>,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RecoveredNode<'source> {
+    syntax: JavaSyntaxNode<'source>,
+}
+
+impl<'source> RecoveredNode<'source> {
+    pub(crate) fn new(syntax: JavaSyntaxNode<'source>) -> Self {
+        Self { syntax }
+    }
+
+    pub fn token_iter(&self) -> impl Iterator<Item = JavaSyntaxToken<'source>> + '_ {
+        token_iter(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn first_token(&self) -> Option<JavaSyntaxToken<'source>> {
+        first_token(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn last_token(&self) -> Option<JavaSyntaxToken<'source>> {
+        last_token(&self.syntax)
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum RecoveredSeparatedListEntry<'source, Entry> {
+    Entry(Entry),
+    Token(JavaSyntaxToken<'source>),
+    Error(ErrorNode<'source>),
+    Node(RecoveredNode<'source>),
+}
+
 impl<'source> AnnotationArgument<'source> {
     fn cast(syntax: JavaSyntaxNode<'source>) -> Option<Self> {
         match syntax.kind() {
@@ -1251,6 +1284,12 @@ impl<'source> AnnotationArgument<'source> {
 pub enum SwitchBlockEntry<'source> {
     StatementGroup(SwitchBlockStatementGroup<'source>),
     Rule(SwitchRule<'source>),
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ConstructorBodyEntry<'source> {
+    Invocation(ConstructorInvocation<'source>),
+    BlockStatement(BlockStatement<'source>),
 }
 
 pub(crate) fn cast_compilation_unit(syntax: JavaSyntaxNode<'_>) -> Option<CompilationUnit<'_>> {

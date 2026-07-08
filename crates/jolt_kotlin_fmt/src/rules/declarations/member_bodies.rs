@@ -1,19 +1,18 @@
 use jolt_fmt_ir::{Doc, concat, empty_line, hard_line, space};
 use jolt_kotlin_syntax::{
-    ClassBody, ClassMemberDeclaration, ClassMemberDeclarationEntry, Declaration, KotlinSyntaxKind,
-    KotlinSyntaxToken,
+    ClassBody, ClassMemberDeclaration, ClassMemberDeclarationEntry, Declaration, KotlinSyntaxToken,
+    RecoveredSeparatedListEntry,
 };
 
-use crate::helpers::blocks::{join_empty_lines, source_braced_body};
+use crate::helpers::blocks::source_braced_body;
 use crate::helpers::comments::{
-    LeadingTrivia, comments_from_tokens, format_dangling_comments, format_removed_comments,
-    format_token_sequence, has_removed_comments,
+    LeadingTrivia, comments_from_tokens, format_removed_comments, format_token_sequence,
+    has_removed_comments,
 };
 use crate::helpers::formatter_ignore::{
     FormatterIgnoreRange, formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
     relative_token_range_between,
 };
-use crate::helpers::source::source_gap_is_trivia;
 
 use super::{
     format_declaration, format_enum_entry_with_separator, format_function_declaration,
@@ -46,8 +45,7 @@ fn format_class_body_contents<'source>(body: &ClassBody<'source>) -> Option<Doc<
         return format_class_body_contents_with_ignored(body, &ignored_ranges);
     }
 
-    let members = body.member_declaration_entries().collect::<Vec<_>>();
-    let sections = class_body_sections_with_recovered_tokens(body, &members);
+    let sections = class_body_sections_with_recovered_entries(body);
 
     (!sections.is_empty()).then(|| join_class_body_sections(sections))
 }
@@ -57,26 +55,26 @@ fn format_class_body_contents_with_ignored<'source>(
     ignored_ranges: &[FormatterIgnoreRange<'source>],
 ) -> Option<Doc<'source>> {
     let body_start = body.text_range().start().get();
-    let members = body.member_declaration_entries().collect::<Vec<_>>();
-    let member_ranges = members
-        .iter()
-        .map(|entry| class_member_token_range(entry, body_start))
+    let entries = body
+        .member_declaration_entries_with_recovered()
         .collect::<Vec<_>>();
-    let ignored_runs = formatter_ignore_runs(ignored_ranges, &member_ranges);
+    let entry_ranges = entries
+        .iter()
+        .map(|entry| recovered_class_member_token_range(entry, body_start))
+        .collect::<Vec<_>>();
+    let ignored_runs = formatter_ignore_runs(ignored_ranges, &entry_ranges);
     if ignored_runs.is_empty() {
-        let docs = members
-            .iter()
-            .map(format_class_member_entry)
-            .collect::<Vec<_>>();
-        return (!docs.is_empty()).then(|| join_empty_lines(docs));
+        let sections = class_body_sections_from_recovered_entries(entries);
+        return (!sections.is_empty()).then(|| join_class_body_sections(sections));
     }
 
     let mut sections = Vec::new();
     let mut ignored_index = 0;
     let mut skip_index = 0;
-    for (member_index, member) in members.iter().enumerate() {
+    let mut previous_member_had_trailing_comments = false;
+    for (entry_index, entry) in entries.into_iter().enumerate() {
         while ignored_index < ignored_runs.len()
-            && ignored_runs[ignored_index].insert_index == member_index
+            && ignored_runs[ignored_index].insert_index == entry_index
         {
             let run = &ignored_runs[ignored_index];
             sections.push(ClassBodySection {
@@ -86,18 +84,25 @@ fn format_class_body_contents_with_ignored<'source>(
             ignored_index += 1;
         }
 
-        while skip_index < ignored_runs.len() && ignored_runs[skip_index].skip_end <= member_index {
+        while skip_index < ignored_runs.len() && ignored_runs[skip_index].skip_end <= entry_index {
             skip_index += 1;
         }
 
-        if skip_index < ignored_runs.len() && ignored_runs[skip_index].skips(member_index) {
+        if skip_index < ignored_runs.len() && ignored_runs[skip_index].skips(entry_index) {
+            if let RecoveredSeparatedListEntry::Entry(member) = &entry {
+                previous_member_had_trailing_comments = member
+                    .comma
+                    .map_or_else(|| member.member.last_token(), Some)
+                    .is_some_and(|token| !token.trailing_comments().is_empty());
+            }
             continue;
         }
 
-        sections.push(ClassBodySection {
-            doc: format_class_member_entry(member),
-            hard_line_after: false,
-        });
+        push_class_body_recovered_entry(
+            &mut sections,
+            entry,
+            &mut previous_member_had_trailing_comments,
+        );
     }
 
     while ignored_index < ignored_runs.len() {
@@ -112,131 +117,86 @@ fn format_class_body_contents_with_ignored<'source>(
     (!sections.is_empty()).then(|| join_class_body_sections(sections))
 }
 
-fn class_body_sections_with_recovered_tokens<'source>(
+fn class_body_sections_with_recovered_entries<'source>(
     body: &ClassBody<'source>,
-    members: &[ClassMemberDeclarationEntry<'source>],
 ) -> Vec<ClassBodySection<'source>> {
-    let body_start = body.text_range().start().get();
-    let body_end = body.close_brace().map_or_else(
-        || body.text_range().end().get(),
-        |close| close.token_text_range().start().get(),
-    );
-    let mut cursor = body.open_brace().map_or_else(
-        || body.text_range().start().get(),
-        |open| open.token_text_range().end().get(),
-    );
-    let tokens = body.token_iter().collect::<Vec<_>>();
-    let mut token_cursor = 0;
-    let mut sections = Vec::new();
+    class_body_sections_from_recovered_entries(body.member_declaration_entries_with_recovered())
+}
 
-    for member in members {
-        push_recovered_class_body_gap(
+fn class_body_sections_from_recovered_entries<'source>(
+    entries: impl IntoIterator<
+        Item = RecoveredSeparatedListEntry<'source, ClassMemberDeclarationEntry<'source>>,
+    >,
+) -> Vec<ClassBodySection<'source>> {
+    let mut sections = Vec::new();
+    let mut previous_member_had_trailing_comments = false;
+
+    for entry in entries {
+        push_class_body_recovered_entry(
             &mut sections,
-            body.source_text(),
-            body_start,
-            &tokens,
-            &mut token_cursor,
-            cursor,
-            member.member.text_range().start().get(),
-        );
-        sections.push(ClassBodySection {
-            doc: format_class_member_entry(member),
-            hard_line_after: false,
-        });
-        cursor = member.comma.map_or_else(
-            || member.member.text_range().end().get(),
-            |comma| comma.token_text_range().end().get(),
+            entry,
+            &mut previous_member_had_trailing_comments,
         );
     }
-
-    push_recovered_class_body_gap(
-        &mut sections,
-        body.source_text(),
-        body_start,
-        &tokens,
-        &mut token_cursor,
-        cursor,
-        body_end,
-    );
 
     sections
 }
 
-fn push_recovered_class_body_gap<'source>(
+fn push_class_body_recovered_entry<'source>(
     sections: &mut Vec<ClassBodySection<'source>>,
-    source: &'source str,
-    source_start: usize,
-    tokens: &[KotlinSyntaxToken<'source>],
-    token_cursor: &mut usize,
-    start: usize,
-    end: usize,
+    entry: RecoveredSeparatedListEntry<'source, ClassMemberDeclarationEntry<'source>>,
+    previous_member_had_trailing_comments: &mut bool,
 ) {
-    if source_gap_is_trivia(source, source_start, tokens.iter().copied(), start, end) {
-        return;
-    }
-
-    let mut gap_tokens = Vec::new();
-    let mut previous_token = None;
-    while *token_cursor < tokens.len() {
-        let range = tokens[*token_cursor].token_text_range();
-        if range.end().get() <= start {
-            previous_token = Some(tokens[*token_cursor]);
-            *token_cursor += 1;
-            continue;
+    match entry {
+        RecoveredSeparatedListEntry::Entry(member) => {
+            *previous_member_had_trailing_comments = member
+                .comma
+                .map_or_else(|| member.member.last_token(), Some)
+                .is_some_and(|token| !token.trailing_comments().is_empty());
+            sections.push(ClassBodySection {
+                doc: format_class_member_entry(&member),
+                hard_line_after: false,
+            });
         }
-        if range.start().get() >= end {
-            break;
-        }
-        if range.start().get() >= start && range.end().get() <= end {
-            gap_tokens.push(tokens[*token_cursor]);
-            *token_cursor += 1;
-            continue;
-        }
-        break;
+        RecoveredSeparatedListEntry::Token(token) => push_recovered_class_body_doc(
+            sections,
+            format_token_sequence(std::iter::once(token), LeadingTrivia::Preserve),
+            *previous_member_had_trailing_comments,
+        ),
+        RecoveredSeparatedListEntry::Error(error) => push_recovered_class_body_doc(
+            sections,
+            format_token_sequence(error.token_iter(), LeadingTrivia::Preserve),
+            *previous_member_had_trailing_comments,
+        ),
+        RecoveredSeparatedListEntry::Node(node) => push_recovered_class_body_doc(
+            sections,
+            format_token_sequence(node.token_iter(), LeadingTrivia::Preserve),
+            *previous_member_had_trailing_comments,
+        ),
     }
-
-    if gap_tokens.is_empty() {
-        return;
-    }
-
-    if recovered_gap_is_enum_separator(&gap_tokens)
-        && let Some(previous) = sections.last_mut()
-    {
-        previous.doc = concat([
-            std::mem::replace(&mut previous.doc, jolt_fmt_ir::nil()),
-            format_token_sequence(gap_tokens, LeadingTrivia::Preserve),
-        ]);
-        return;
-    }
-
-    let attached_comments = previous_token
-        .into_iter()
-        .flat_map(|token| token.trailing_comments())
-        .collect::<Vec<_>>();
-    let token_doc = format_token_sequence(gap_tokens, LeadingTrivia::Preserve);
-    let doc = if attached_comments.is_empty() {
-        token_doc
-    } else {
-        concat([
-            format_dangling_comments(attached_comments),
-            hard_line(),
-            token_doc,
-        ])
-    };
-
-    sections.push(ClassBodySection {
-        doc,
-        hard_line_after: false,
-    });
 }
 
-fn recovered_gap_is_enum_separator(tokens: &[KotlinSyntaxToken<'_>]) -> bool {
-    tokens.iter().all(|token| {
-        matches!(
-            token.kind(),
-            KotlinSyntaxKind::Semicolon | KotlinSyntaxKind::DoubleSemicolon
-        )
-    })
+fn push_recovered_class_body_doc<'source>(
+    sections: &mut Vec<ClassBodySection<'source>>,
+    doc: Doc<'source>,
+    previous_member_had_trailing_comments: bool,
+) {
+    if previous_member_had_trailing_comments {
+        sections.push(ClassBodySection {
+            doc: concat([hard_line(), doc]),
+            hard_line_after: false,
+        });
+    } else if let Some(previous) = sections.last_mut() {
+        previous.doc = concat([
+            std::mem::replace(&mut previous.doc, jolt_fmt_ir::nil()),
+            doc,
+        ]);
+    } else {
+        sections.push(ClassBodySection {
+            doc,
+            hard_line_after: false,
+        });
+    }
 }
 
 fn format_class_member_entry<'source>(
@@ -295,6 +255,29 @@ fn class_member_token_range(
         &last_token,
         body_start,
     ))
+}
+
+fn recovered_class_member_token_range(
+    entry: &RecoveredSeparatedListEntry<'_, ClassMemberDeclarationEntry<'_>>,
+    body_start: usize,
+) -> Option<std::ops::Range<usize>> {
+    match entry {
+        RecoveredSeparatedListEntry::Entry(entry) => class_member_token_range(entry, body_start),
+        RecoveredSeparatedListEntry::Token(token) => {
+            let range = token.token_text_range();
+            Some(range.start().get() - body_start..range.end().get() - body_start)
+        }
+        RecoveredSeparatedListEntry::Error(error) => Some(relative_token_range_between(
+            &error.first_token()?,
+            &error.last_token()?,
+            body_start,
+        )),
+        RecoveredSeparatedListEntry::Node(node) => Some(relative_token_range_between(
+            &node.first_token()?,
+            &node.last_token()?,
+            body_start,
+        )),
+    }
 }
 
 fn join_class_body_sections(sections: Vec<ClassBodySection<'_>>) -> Doc<'_> {

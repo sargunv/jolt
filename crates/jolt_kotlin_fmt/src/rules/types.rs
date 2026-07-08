@@ -1,19 +1,21 @@
 use jolt_fmt_ir::{Doc, concat, group, indent, line, space};
 use jolt_kotlin_syntax::{
     ContextFunctionType, DefinitelyNonNullableType, FunctionType, FunctionTypeParameter,
-    KotlinSyntaxToken, ModifierList, NullableType, ParenthesizedType, ReceiverType, TypeArgument,
-    TypeArgumentList, TypeConstraint, TypeConstraintList, TypeParameter, TypeParameterList,
-    TypeProjection, TypeReference, TypeSyntax, UserType,
+    KotlinSyntaxToken, ModifierList, NullableType, ParenthesizedType, ReceiverType,
+    RecoveredSeparatedListEntry, TypeArgument, TypeArgumentList, TypeConstraint,
+    TypeConstraintList, TypeParameter, TypeParameterList, TypeProjection, TypeReference,
+    TypeSyntax, UserType,
 };
 
 use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, format_token, format_token_sequence,
+    LeadingTrivia, TrailingTrivia, format_separator_with_comments, format_token,
+    format_token_sequence,
 };
 use crate::helpers::lists::{
     CommaListItem, angle_bracket_list, comma_list, compact_angle_bracket_list, parenthesized_list,
+    recovered_comma_list_items,
 };
 use crate::helpers::modifiers::modifier_prefix_from_parts;
-use crate::helpers::source::source_gap_is_trivia;
 use crate::rules::annotations::format_annotation;
 use crate::rules::names::format_name;
 
@@ -33,93 +35,13 @@ struct TypeParameterListItems<'source> {
 fn type_parameter_list_items<'source>(
     parameters: &TypeParameterList<'source>,
 ) -> TypeParameterListItems<'source> {
-    let source_start = parameters.text_range().start().get();
-    let source = parameters.source_text();
-    let tokens = parameters.token_iter().collect::<Vec<_>>();
-    let mut token_cursor = 0;
-    let mut covered_until = parameters.open_angle().map_or_else(
-        || parameters.text_range().start().get(),
-        |open| open.token_text_range().end().get(),
-    );
-    let mut items = Vec::new();
-
-    for entry in parameters.entries() {
-        push_recovered_type_parameter_gap(
-            &mut items,
-            source,
-            source_start,
-            &tokens,
-            &mut token_cursor,
-            covered_until,
-            entry.parameter.text_range().start().get(),
-        );
-        items.push(CommaListItem {
+    let items =
+        recovered_comma_list_items(parameters.entries_with_recovered(), |entry| CommaListItem {
             doc: format_type_parameter(&entry.parameter),
             comma: entry.comma,
         });
-        covered_until = entry.comma.map_or_else(
-            || entry.parameter.text_range().end().get(),
-            |comma| comma.token_text_range().end().get(),
-        );
-    }
-
-    let list_end = parameters.close_angle().map_or_else(
-        || parameters.text_range().end().get(),
-        |close| close.token_text_range().start().get(),
-    );
-    push_recovered_type_parameter_gap(
-        &mut items,
-        source,
-        source_start,
-        &tokens,
-        &mut token_cursor,
-        covered_until,
-        list_end,
-    );
 
     TypeParameterListItems { items }
-}
-
-fn push_recovered_type_parameter_gap<'source>(
-    items: &mut Vec<CommaListItem<'source>>,
-    source: &'source str,
-    source_start: usize,
-    tokens: &[KotlinSyntaxToken<'source>],
-    token_cursor: &mut usize,
-    start: usize,
-    end: usize,
-) -> bool {
-    if source_gap_is_trivia(source, source_start, tokens.iter().copied(), start, end) {
-        return false;
-    }
-
-    let mut gap_tokens = Vec::new();
-    while *token_cursor < tokens.len() {
-        let range = tokens[*token_cursor].token_text_range();
-        if range.end().get() <= start {
-            *token_cursor += 1;
-            continue;
-        }
-        if range.start().get() >= end {
-            break;
-        }
-        if range.start().get() >= start && range.end().get() <= end {
-            gap_tokens.push(tokens[*token_cursor]);
-            *token_cursor += 1;
-            continue;
-        }
-        break;
-    }
-
-    if gap_tokens.is_empty() {
-        return false;
-    }
-
-    items.push(CommaListItem {
-        doc: format_token_sequence(gap_tokens, LeadingTrivia::Preserve),
-        comma: None,
-    });
-    true
 }
 
 pub(crate) fn format_type_constraint_list(constraints: Option<TypeConstraintList<'_>>) -> Doc<'_> {
@@ -163,23 +85,27 @@ fn format_type_parameter<'source>(parameter: &TypeParameter<'source>) -> Doc<'so
 }
 
 fn format_type_constraints<'source>(constraints: &TypeConstraintList<'source>) -> Doc<'source> {
-    let mut entries = constraints.entries();
-    let Some(mut previous) = entries.next() else {
+    let items = recovered_comma_list_items(constraints.entries_with_recovered(), |entry| {
+        CommaListItem {
+            doc: format_type_constraint(&entry.constraint),
+            comma: entry.comma,
+        }
+    });
+    let mut items = items.into_iter();
+    let Some(first) = items.next() else {
         return jolt_fmt_ir::nil();
     };
 
-    let first = format_type_constraint(&previous.constraint);
+    let first_doc = first.doc;
+    let mut previous_comma = first.comma;
     let rest = std::iter::from_fn(|| {
-        let entry = entries.next()?;
-        let doc = format_type_constraint_continuation(
-            previous.comma.as_ref(),
-            format_type_constraint(&entry.constraint),
-        );
-        previous = entry;
+        let entry = items.next()?;
+        let doc = format_type_constraint_continuation(previous_comma.as_ref(), entry.doc);
+        previous_comma = entry.comma;
         Some(doc)
     });
 
-    concat([first, indent(concat(rest))])
+    concat([first_doc, indent(concat(rest))])
 }
 
 fn format_type_constraint_continuation<'source>(
@@ -187,7 +113,7 @@ fn format_type_constraint_continuation<'source>(
     constraint: Doc<'source>,
 ) -> Doc<'source> {
     let separator = if let Some(comma) = comma {
-        concat([format_comma(comma), line()])
+        format_separator_with_comments(comma, line())
     } else {
         line()
     };
@@ -221,23 +147,14 @@ fn format_type_bound<'source>(
 
 fn format_modifier_prefix(modifiers: Option<ModifierList<'_>>) -> Doc<'_> {
     modifiers.map_or_else(jolt_fmt_ir::nil, |modifiers| {
-        let mut modifier_tokens = modifiers.modifier_tokens().collect::<Vec<_>>();
         modifier_prefix_from_parts(
             modifiers
                 .annotations()
                 .map(|annotation| format_annotation(&annotation))
                 .collect(),
-            &mut modifier_tokens,
+            modifiers.modifier_tokens(),
         )
     })
-}
-
-fn format_comma<'source>(comma: &KotlinSyntaxToken<'source>) -> Doc<'source> {
-    format_token(
-        comma,
-        LeadingTrivia::Preserve,
-        TrailingTrivia::RelocatedToEnclosingContext,
-    )
 }
 
 pub(crate) fn format_type_reference<'source>(ty: &TypeReference<'source>) -> Doc<'source> {
@@ -328,99 +245,25 @@ struct TypeArgumentListItems<'source> {
 fn type_argument_list_items<'source>(
     arguments: &TypeArgumentList<'source>,
 ) -> TypeArgumentListItems<'source> {
-    let source_start = arguments.text_range().start().get();
-    let source = arguments.source_text();
-    let tokens = arguments.token_iter().collect::<Vec<_>>();
-    let mut token_cursor = 0;
-    let mut covered_until = arguments.open_angle().map_or_else(
-        || arguments.text_range().start().get(),
-        |open| open.token_text_range().end().get(),
-    );
-    let mut items = Vec::new();
-    let mut has_recovered_tokens = false;
-
     if let Some(projections) = arguments.projection_list() {
-        for entry in projections.entries() {
-            has_recovered_tokens |= push_recovered_type_argument_gap(
-                &mut items,
-                source,
-                source_start,
-                &tokens,
-                &mut token_cursor,
-                covered_until,
-                entry.argument.text_range().start().get(),
-            );
-            items.push(CommaListItem {
-                doc: format_type_argument(&entry.argument),
-                comma: entry.comma,
-            });
-            covered_until = entry.comma.map_or_else(
-                || entry.argument.text_range().end().get(),
-                |comma| comma.token_text_range().end().get(),
-            );
-        }
+        let entries = projections.entries_with_recovered().collect::<Vec<_>>();
+        let has_recovered_tokens = entries
+            .iter()
+            .any(|entry| !matches!(entry, RecoveredSeparatedListEntry::Entry(_)));
+        let items = recovered_comma_list_items(entries, |entry| CommaListItem {
+            doc: format_type_argument(&entry.argument),
+            comma: entry.comma,
+        });
+        return TypeArgumentListItems {
+            items,
+            has_recovered_tokens,
+        };
     }
-
-    let list_end = arguments.close_angle().map_or_else(
-        || arguments.text_range().end().get(),
-        |close| close.token_text_range().start().get(),
-    );
-    has_recovered_tokens |= push_recovered_type_argument_gap(
-        &mut items,
-        source,
-        source_start,
-        &tokens,
-        &mut token_cursor,
-        covered_until,
-        list_end,
-    );
 
     TypeArgumentListItems {
-        items,
-        has_recovered_tokens,
+        items: Vec::new(),
+        has_recovered_tokens: false,
     }
-}
-
-fn push_recovered_type_argument_gap<'source>(
-    items: &mut Vec<CommaListItem<'source>>,
-    source: &'source str,
-    source_start: usize,
-    tokens: &[KotlinSyntaxToken<'source>],
-    token_cursor: &mut usize,
-    start: usize,
-    end: usize,
-) -> bool {
-    if source_gap_is_trivia(source, source_start, tokens.iter().copied(), start, end) {
-        return false;
-    }
-
-    let mut gap_tokens = Vec::new();
-    while *token_cursor < tokens.len() {
-        let range = tokens[*token_cursor].token_text_range();
-        if range.end().get() <= start {
-            *token_cursor += 1;
-            continue;
-        }
-        if range.start().get() >= end {
-            break;
-        }
-        if range.start().get() >= start && range.end().get() <= end {
-            gap_tokens.push(tokens[*token_cursor]);
-            *token_cursor += 1;
-            continue;
-        }
-        break;
-    }
-
-    if gap_tokens.is_empty() {
-        return false;
-    }
-
-    items.push(CommaListItem {
-        doc: format_token_sequence(gap_tokens, LeadingTrivia::Preserve),
-        comma: None,
-    });
-    true
 }
 
 fn format_type_argument<'source>(argument: &TypeArgument<'source>) -> Doc<'source> {
@@ -477,12 +320,10 @@ fn format_parenthesized_type<'source>(ty: &ParenthesizedType<'source>) -> Doc<'s
     docs.push(parenthesized_list(
         open.as_ref(),
         close.as_ref(),
-        ty.entries()
-            .map(|entry| CommaListItem {
-                doc: format_function_type_parameter(&entry.parameter),
-                comma: entry.comma,
-            })
-            .collect(),
+        recovered_comma_list_items(ty.entries_with_recovered(), |entry| CommaListItem {
+            doc: format_function_type_parameter(&entry.parameter),
+            comma: entry.comma,
+        }),
     ));
     concat(docs)
 }
@@ -585,14 +426,18 @@ fn format_context_function_type<'source>(ty: &ContextFunctionType<'source>) -> D
                 TrailingTrivia::RelocatedToEnclosingContext,
             )
         }),
-        comma_list(
-            ty.context_parameters()
-                .map(|parameter| CommaListItem {
-                    doc: format_type_reference(&parameter),
-                    comma: None,
-                })
-                .collect(),
-        ),
+        comma_list(recovered_comma_list_items(
+            ty.context_parameter_entries_with_recovered(),
+            |entry| CommaListItem {
+                doc: entry
+                    .parameter
+                    .ty()
+                    .map_or_else(jolt_fmt_ir::nil, |parameter| {
+                        format_type_reference(&parameter)
+                    }),
+                comma: entry.comma,
+            },
+        )),
         ty.close_paren().map_or_else(jolt_fmt_ir::nil, |close| {
             format_token(&close, LeadingTrivia::Preserve, TrailingTrivia::Preserve)
         }),

@@ -6,9 +6,10 @@ use super::{
     BlockItem, BlockStatement, Doc, JavaFormatter, LeadingTrivia, SwitchBlock, SwitchBlockEntry,
     SwitchBlockStatementGroup, SwitchLabel, SwitchLabelCaseEntry, SwitchLabelCaseItem, SwitchRule,
     SwitchStatement, TrailingTrivia, comment_forces_line, concat, empty_block, format_block,
-    format_block_statement_item, format_expression, format_pattern, format_separator_with_comments,
-    format_statement_semicolon, format_throw_statement, format_token, format_token_with_comments,
-    group, hard_line, indent, join_body_items, join_hard_lines, line,
+    format_block_statement_item_or_recovered, format_expression, format_pattern,
+    format_separator_with_comments, format_statement_semicolon, format_throw_statement,
+    format_token, format_token_sequence, format_token_with_comments, group, hard_line, indent,
+    join_body_items, join_hard_lines, line,
 };
 use jolt_fmt_ir::space;
 
@@ -42,12 +43,23 @@ pub(crate) fn format_switch_block<'source>(
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
     let entries = block
-        .entries()
+        .entries_with_recovered()
         .map(|entry| match entry {
-            SwitchBlockEntry::StatementGroup(group) => {
-                format_switch_statement_group(&group, formatter)
+            jolt_java_syntax::RecoveredSeparatedListEntry::Entry(entry) => match entry {
+                SwitchBlockEntry::StatementGroup(group) => {
+                    format_switch_statement_group(&group, formatter)
+                }
+                SwitchBlockEntry::Rule(rule) => format_switch_rule(&rule, formatter),
+            },
+            jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
+                format_token_sequence(std::iter::once(token), LeadingTrivia::Preserve)
             }
-            SwitchBlockEntry::Rule(rule) => format_switch_rule(&rule, formatter),
+            jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => {
+                format_token_sequence(error.token_iter(), LeadingTrivia::Preserve)
+            }
+            jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => {
+                format_token_sequence(node.token_iter(), LeadingTrivia::Preserve)
+            }
         })
         .collect::<Vec<_>>();
 
@@ -101,9 +113,31 @@ fn format_switch_statement_group<'source>(
         return doc;
     }
 
-    let items = statements
-        .iter()
-        .filter_map(|statement| format_block_statement_item(statement, formatter))
+    let items = group
+        .block_statements_with_recovered()
+        .filter_map(|entry| match entry {
+            jolt_java_syntax::RecoveredSeparatedListEntry::Entry(statement) => {
+                format_block_statement_item_or_recovered(&statement, formatter)
+            }
+            jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
+                Some(crate::helpers::blocks::BodyItem::new(
+                    format_token_sequence(std::iter::once(token), LeadingTrivia::Preserve),
+                    false,
+                ))
+            }
+            jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => {
+                Some(crate::helpers::blocks::BodyItem::new(
+                    format_token_sequence(error.token_iter(), LeadingTrivia::Preserve),
+                    false,
+                ))
+            }
+            jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => {
+                Some(crate::helpers::blocks::BodyItem::new(
+                    format_token_sequence(node.token_iter(), LeadingTrivia::Preserve),
+                    false,
+                ))
+            }
+        })
         .collect::<Vec<_>>();
 
     concat([
@@ -233,8 +267,6 @@ fn format_switch_label<'source>(
             .map_or_else(jolt_fmt_ir::nil, format_token_with_comments);
     }
 
-    let entries = label.case_entries().collect::<Vec<_>>();
-
     concat([
         label
             .case_token()
@@ -242,7 +274,10 @@ fn format_switch_label<'source>(
             .map_or_else(jolt_fmt_ir::nil, |token| {
                 concat([format_token_with_comments(token), space()])
             }),
-        group(indent(format_switch_label_case_entries(entries, formatter))),
+        group(indent(format_switch_label_case_entries(
+            label.case_entries_with_recovered(),
+            formatter,
+        ))),
         label.guard().map_or_else(jolt_fmt_ir::nil, |guard| {
             concat([
                 space(),
@@ -262,15 +297,56 @@ fn format_switch_label<'source>(
 }
 
 fn format_switch_label_case_entries<'source>(
-    entries: Vec<SwitchLabelCaseEntry<'source>>,
+    entries: impl IntoIterator<
+        Item = jolt_java_syntax::RecoveredSeparatedListEntry<
+            'source,
+            SwitchLabelCaseEntry<'source>,
+        >,
+    >,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
     let mut docs = Vec::new();
+    let mut entries = entries.into_iter().peekable();
 
-    for entry in entries {
-        docs.push(format_switch_label_case_item(&entry.item, formatter));
-        if let Some(comma) = entry.comma {
-            docs.push(format_separator_with_comments(&comma, line()));
+    while let Some(entry) = entries.next() {
+        let has_next = entries.peek().is_some();
+        match entry {
+            jolt_java_syntax::RecoveredSeparatedListEntry::Entry(entry) => {
+                docs.push(format_switch_label_case_item(&entry.item, formatter));
+                if let Some(comma) = entry.comma {
+                    docs.push(format_separator_with_comments(&comma, line()));
+                } else if has_next {
+                    docs.push(line());
+                }
+            }
+            jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
+                docs.push(format_token(
+                    &token,
+                    LeadingTrivia::Preserve,
+                    TrailingTrivia::Preserve,
+                ));
+                if has_next {
+                    docs.push(line());
+                }
+            }
+            jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => {
+                docs.push(format_token_sequence(
+                    error.token_iter(),
+                    LeadingTrivia::Preserve,
+                ));
+                if has_next {
+                    docs.push(line());
+                }
+            }
+            jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => {
+                docs.push(format_token_sequence(
+                    node.token_iter(),
+                    LeadingTrivia::Preserve,
+                ));
+                if has_next {
+                    docs.push(line());
+                }
+            }
         }
     }
 
@@ -282,16 +358,14 @@ fn format_switch_label_case_item<'source>(
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
     match item {
-        SwitchLabelCaseItem::Constant(constant) => constant
-            .expression()
-            .map_or_else(jolt_fmt_ir::nil, |expression| {
-                format_expression(&expression, formatter)
-            }),
-        SwitchLabelCaseItem::Pattern(pattern) => {
-            pattern.pattern().map_or_else(jolt_fmt_ir::nil, |pattern| {
-                format_pattern(&pattern, formatter)
-            })
-        }
+        SwitchLabelCaseItem::Constant(constant) => constant.expression().map_or_else(
+            || format_token_sequence(constant.token_iter(), LeadingTrivia::Preserve),
+            |expression| format_expression(&expression, formatter),
+        ),
+        SwitchLabelCaseItem::Pattern(pattern) => pattern.pattern().map_or_else(
+            || format_token_sequence(pattern.token_iter(), LeadingTrivia::Preserve),
+            |pattern| format_pattern(&pattern, formatter),
+        ),
         SwitchLabelCaseItem::Default(default) => format_token(
             default,
             LeadingTrivia::Preserve,
@@ -315,6 +389,9 @@ fn format_switch_rule_body<'source>(
             format_expression(&expression, formatter),
             format_statement_semicolon(rule.semicolon()),
         ]);
+    }
+    if rule.semicolon().is_some() {
+        return format_statement_semicolon(rule.semicolon());
     }
 
     jolt_fmt_ir::nil()

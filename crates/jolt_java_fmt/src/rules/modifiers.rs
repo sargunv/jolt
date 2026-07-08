@@ -1,10 +1,8 @@
 use jolt_fmt_ir::Doc;
-use jolt_java_syntax::{Annotation, JavaSyntaxToken, ModifierEntry, ModifierList};
+use jolt_java_syntax::{Annotation, ModifierEntry, ModifierList};
 
 use crate::context::JavaFormatter;
-use crate::helpers::modifiers::{
-    inline_modifier_prefix_from_docs, modifier_prefix_from_docs, modifier_prefix_from_token_docs,
-};
+use crate::helpers::modifiers::{inline_modifier_prefix_from_docs, modifier_prefix_from_docs};
 use crate::rules::annotations::{format_annotation, format_annotation_without_leading_comments};
 
 pub(crate) struct TypedModifierPrefix<'source> {
@@ -68,19 +66,19 @@ fn format_typed_modifier_prefix_from_split_parts<'source>(
     }
 }
 
-pub(crate) fn format_typed_modifier_prefix_from_token_split_parts<'source>(
+pub(crate) fn format_typed_modifier_prefix_from_split_entries<'source>(
     declaration_annotations: Vec<Annotation<'source>>,
     type_use_annotations: Vec<Annotation<'source>>,
-    modifier_tokens: Vec<JavaSyntaxToken<'source>>,
+    modifier_entries: Vec<ModifierEntry<'source>>,
     formatter: &JavaFormatter<'_>,
 ) -> TypedModifierPrefix<'source> {
     TypedModifierPrefix {
-        declaration_prefix: modifier_prefix_from_token_docs(
+        declaration_prefix: modifier_prefix_from_docs(
             declaration_annotations
                 .into_iter()
                 .map(|annotation| format_annotation(&annotation, formatter))
                 .collect(),
-            modifier_tokens,
+            modifier_entries,
         ),
         type_use_prefix: inline_modifier_prefix_from_docs(
             type_use_annotations

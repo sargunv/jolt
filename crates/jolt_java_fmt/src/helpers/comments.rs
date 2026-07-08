@@ -291,6 +291,23 @@ pub(crate) fn format_token<'source>(
     ])
 }
 
+pub(crate) fn format_token_sequence<'source>(
+    tokens: impl IntoIterator<Item = JavaSyntaxToken<'source>>,
+    leading: LeadingTrivia,
+) -> Doc<'source> {
+    concat(tokens.into_iter().enumerate().map(|(index, token)| {
+        format_token(
+            &token,
+            if index == 0 {
+                leading
+            } else {
+                LeadingTrivia::Preserve
+            },
+            TrailingTrivia::Preserve,
+        )
+    }))
+}
+
 pub(crate) fn format_token_with_inline_leading_comments<'source>(
     token: &JavaSyntaxToken<'source>,
     placement: InlineLeadingTrivia,

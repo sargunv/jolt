@@ -7,8 +7,8 @@ use super::{
     relative_token_range_between,
 };
 use crate::helpers::comments::{
-    InlineLeadingTrivia, format_token_after_relocated_leading_comments,
-    format_token_with_inline_leading_comments,
+    InlineLeadingTrivia, LeadingTrivia, format_token_after_relocated_leading_comments,
+    format_token_sequence, format_token_with_inline_leading_comments,
 };
 
 pub(crate) fn format_block<'source>(
@@ -55,16 +55,14 @@ fn format_block_statements_body<'source>(
     );
     let mut items = Vec::new();
     items.extend(format_block_open_dangling_comments(block));
+    let entries = block.block_statements_with_recovered().collect::<Vec<_>>();
     if ignored_ranges.is_empty() {
-        items.extend(
-            block
-                .block_statements()
-                .filter_map(|statement| format_block_statement_item(&statement, formatter)),
-        );
+        items.extend(format_block_statement_items_with_recovered(
+            entries, formatter,
+        ));
     } else {
-        let statements = block.block_statements().collect::<Vec<_>>();
-        items.extend(format_block_statement_items(
-            &statements,
+        items.extend(format_block_statement_items_with_ignored(
+            entries,
             block_start,
             &ignored_ranges,
             formatter,
@@ -72,6 +70,107 @@ fn format_block_statements_body<'source>(
     }
     items.extend(format_block_close_dangling_comments(block));
     (!items.is_empty()).then(|| join_body_items(items))
+}
+
+fn format_block_statement_items_with_recovered<'source, 'fmt, Statements>(
+    statements: Statements,
+    formatter: &'fmt JavaFormatter<'_>,
+) -> impl Iterator<Item = BodyItem<'source>> + use<'source, 'fmt, Statements>
+where
+    Statements: IntoIterator<
+        Item = jolt_java_syntax::RecoveredSeparatedListEntry<'source, BlockStatement<'source>>,
+    >,
+{
+    statements.into_iter().filter_map(move |entry| match entry {
+        jolt_java_syntax::RecoveredSeparatedListEntry::Entry(statement) => {
+            format_block_statement_item_or_recovered(&statement, formatter)
+        }
+        jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => Some(BodyItem::new(
+            format_token_sequence(std::iter::once(token), LeadingTrivia::Preserve),
+            false,
+        )),
+        jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => Some(BodyItem::new(
+            format_token_sequence(error.token_iter(), LeadingTrivia::Preserve),
+            false,
+        )),
+        jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => Some(BodyItem::new(
+            format_token_sequence(node.token_iter(), LeadingTrivia::Preserve),
+            false,
+        )),
+    })
+}
+
+fn format_block_statement_items_with_ignored<'source>(
+    entries: Vec<jolt_java_syntax::RecoveredSeparatedListEntry<'source, BlockStatement<'source>>>,
+    block_start: usize,
+    ignored_ranges: &[FormatterIgnoreRange<'source>],
+    formatter: &JavaFormatter<'_>,
+) -> Vec<BodyItem<'source>> {
+    let entry_ranges = entries
+        .iter()
+        .map(|entry| recovered_block_statement_entry_token_range(entry, block_start))
+        .collect::<Vec<_>>();
+    let ignored_runs = formatter_ignore_runs(ignored_ranges, &entry_ranges);
+
+    let mut items = Vec::new();
+    let mut ignored_index = 0;
+    let mut skip_index = 0;
+    for (entry_index, entry) in entries.into_iter().enumerate() {
+        while ignored_index < ignored_runs.len()
+            && ignored_runs[ignored_index].insert_index == entry_index
+        {
+            let run = &ignored_runs[ignored_index];
+            items.push(BodyItem::new(formatter_ignore_run_doc(run), false));
+            ignored_index += 1;
+        }
+
+        while skip_index < ignored_runs.len() && ignored_runs[skip_index].skip_end <= entry_index {
+            skip_index += 1;
+        }
+
+        if skip_index < ignored_runs.len() && ignored_runs[skip_index].skips(entry_index) {
+            continue;
+        }
+
+        let Some(mut item) = format_recovered_block_statement_entry(entry, formatter) else {
+            continue;
+        };
+        if skip_index > 0 && ignored_runs[skip_index - 1].skip_end == entry_index {
+            item = item.without_blank_line_before();
+        }
+        items.push(item);
+    }
+
+    while ignored_index < ignored_runs.len() {
+        let run = &ignored_runs[ignored_index];
+        items.push(BodyItem::new(formatter_ignore_run_doc(run), false));
+        ignored_index += 1;
+    }
+
+    items
+}
+
+fn format_recovered_block_statement_entry<'source>(
+    entry: jolt_java_syntax::RecoveredSeparatedListEntry<'source, BlockStatement<'source>>,
+    formatter: &JavaFormatter<'_>,
+) -> Option<BodyItem<'source>> {
+    match entry {
+        jolt_java_syntax::RecoveredSeparatedListEntry::Entry(statement) => {
+            format_block_statement_item_or_recovered(&statement, formatter)
+        }
+        jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => Some(BodyItem::new(
+            format_token_sequence(std::iter::once(token), LeadingTrivia::Preserve),
+            false,
+        )),
+        jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => Some(BodyItem::new(
+            format_token_sequence(error.token_iter(), LeadingTrivia::Preserve),
+            false,
+        )),
+        jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => Some(BodyItem::new(
+            format_token_sequence(node.token_iter(), LeadingTrivia::Preserve),
+            false,
+        )),
+    }
 }
 
 fn format_block_open_dangling_comments<'source>(
@@ -88,55 +187,25 @@ fn format_block_close_dangling_comments<'source>(
     (!comments.is_empty()).then(|| BodyItem::new(format_dangling_comments(comments), false))
 }
 
-fn format_block_statement_items<'source>(
-    statements: &[BlockStatement<'source>],
+fn recovered_block_statement_entry_token_range(
+    entry: &jolt_java_syntax::RecoveredSeparatedListEntry<'_, BlockStatement<'_>>,
     block_start: usize,
-    ignored_ranges: &[FormatterIgnoreRange<'source>],
-    formatter: &JavaFormatter<'_>,
-) -> Vec<BodyItem<'source>> {
-    let statement_ranges = statements
-        .iter()
-        .map(|statement| block_statement_token_range(statement, block_start))
-        .collect::<Vec<_>>();
-    let ignored_runs = formatter_ignore_runs(ignored_ranges, &statement_ranges);
-
-    let mut items = Vec::new();
-    let mut ignored_index = 0;
-    let mut skip_index = 0;
-    for (statement_index, statement) in statements.iter().enumerate() {
-        while ignored_index < ignored_runs.len()
-            && ignored_runs[ignored_index].insert_index == statement_index
-        {
-            let run = &ignored_runs[ignored_index];
-            items.push(BodyItem::new(formatter_ignore_run_doc(run), false));
-            ignored_index += 1;
+) -> Option<Range<usize>> {
+    match entry {
+        jolt_java_syntax::RecoveredSeparatedListEntry::Entry(statement) => {
+            block_statement_token_range(statement, block_start)
         }
-
-        while skip_index < ignored_runs.len()
-            && ignored_runs[skip_index].skip_end <= statement_index
-        {
-            skip_index += 1;
+        jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
+            let range = token.token_text_range();
+            Some(range.start().get() - block_start..range.end().get() - block_start)
         }
-
-        if skip_index < ignored_runs.len() && ignored_runs[skip_index].skips(statement_index) {
-            continue;
-        }
-
-        if let Some(mut item) = format_block_statement_item(statement, formatter) {
-            if skip_index > 0 && ignored_runs[skip_index - 1].skip_end == statement_index {
-                item = item.without_blank_line_before();
-            }
-            items.push(item);
-        }
+        jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => Some(
+            relative_token_range_between(&error.first_token()?, &error.last_token()?, block_start),
+        ),
+        jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => Some(
+            relative_token_range_between(&node.first_token()?, &node.last_token()?, block_start),
+        ),
     }
-
-    while ignored_index < ignored_runs.len() {
-        let run = &ignored_runs[ignored_index];
-        items.push(BodyItem::new(formatter_ignore_run_doc(run), false));
-        ignored_index += 1;
-    }
-
-    items
 }
 
 pub(crate) fn format_block_statement_item<'source>(
@@ -146,6 +215,20 @@ pub(crate) fn format_block_statement_item<'source>(
     let starts_after_blank_line = statement.starts_after_blank_line();
     let doc = format_block_item_doc(statement.item()?, statement.semicolon(), formatter)?;
     Some(BodyItem::new(doc, starts_after_blank_line))
+}
+
+pub(crate) fn format_block_statement_item_or_recovered<'source>(
+    statement: &BlockStatement<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Option<BodyItem<'source>> {
+    if statement.item().is_some() {
+        return format_block_statement_item(statement, formatter);
+    }
+
+    Some(BodyItem::new(
+        format_token_sequence(statement.token_iter(), LeadingTrivia::Preserve),
+        false,
+    ))
 }
 
 fn format_block_item_doc<'source>(

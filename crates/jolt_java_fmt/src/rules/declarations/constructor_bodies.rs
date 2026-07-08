@@ -1,10 +1,11 @@
 use super::{
-    BlockStatement, BodyItem, ConstructorInvocation, Doc, JavaFormatter, JavaSyntaxToken, Range,
-    concat, format_argument_list, format_block_statement_item, format_construct_leading_comments,
-    format_expression, format_name, format_removed_comments, format_statement_semicolon,
-    format_token_after_construct_leading_comments, format_token_with_comments,
-    format_type_argument_list, formatter_ignore_ranges, formatter_ignore_run_doc,
-    formatter_ignore_runs, join_body_items, relative_token_range_between,
+    BodyItem, ConstructorInvocation, Doc, JavaFormatter, JavaSyntaxToken, LeadingTrivia, Range,
+    concat, format_argument_list, format_block_statement_item_or_recovered,
+    format_construct_leading_comments, format_expression, format_name, format_removed_comments,
+    format_statement_semicolon, format_token_after_construct_leading_comments,
+    format_token_sequence, format_token_with_comments, format_type_argument_list,
+    formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs, join_body_items,
+    relative_token_range_between,
 };
 
 pub(super) fn format_constructor_body<'source>(
@@ -101,43 +102,71 @@ fn format_constructor_body_close_dangling_comments(
 
 fn constructor_body_elements<'source>(
     body: &jolt_java_syntax::ConstructorBody<'source>,
-) -> Vec<ConstructorBodyElement<'source>> {
-    let mut elements = body
-        .invocation()
-        .into_iter()
-        .map(ConstructorBodyElement::Invocation)
-        .chain(
-            body.block_statements()
-                .map(ConstructorBodyElement::BlockStatement),
-        )
-        .collect::<Vec<_>>();
-    elements.sort_by_key(ConstructorBodyElement::start_offset);
-    elements
+) -> Vec<
+    jolt_java_syntax::RecoveredSeparatedListEntry<
+        'source,
+        jolt_java_syntax::ConstructorBodyEntry<'source>,
+    >,
+> {
+    body.entries_with_recovered().collect()
 }
 
 fn constructor_body_element_token_range(
-    element: &ConstructorBodyElement<'_>,
+    element: &jolt_java_syntax::RecoveredSeparatedListEntry<
+        '_,
+        jolt_java_syntax::ConstructorBodyEntry<'_>,
+    >,
     body_start: usize,
 ) -> Option<Range<usize>> {
-    Some(relative_token_range_between(
-        &element.first_token()?,
-        &element.last_token()?,
-        body_start,
-    ))
+    match element {
+        jolt_java_syntax::RecoveredSeparatedListEntry::Entry(entry) => {
+            Some(relative_token_range_between(
+                &constructor_body_entry_first_token(entry)?,
+                &constructor_body_entry_last_token(entry)?,
+                body_start,
+            ))
+        }
+        jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
+            Some(relative_token_range_between(token, token, body_start))
+        }
+        jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => Some(
+            relative_token_range_between(&error.first_token()?, &error.last_token()?, body_start),
+        ),
+        jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => Some(
+            relative_token_range_between(&node.first_token()?, &node.last_token()?, body_start),
+        ),
+    }
 }
 
 fn format_constructor_body_element<'source>(
-    element: &ConstructorBodyElement<'source>,
+    element: &jolt_java_syntax::RecoveredSeparatedListEntry<
+        'source,
+        jolt_java_syntax::ConstructorBodyEntry<'source>,
+    >,
     formatter: &JavaFormatter<'_>,
 ) -> Option<BodyItem<'source>> {
     match element {
-        ConstructorBodyElement::Invocation(invocation) => Some(BodyItem::new(
-            format_constructor_invocation(invocation, formatter),
-            invocation.starts_after_blank_line(),
+        jolt_java_syntax::RecoveredSeparatedListEntry::Entry(entry) => match entry {
+            jolt_java_syntax::ConstructorBodyEntry::Invocation(invocation) => Some(BodyItem::new(
+                format_constructor_invocation(invocation, formatter),
+                invocation.starts_after_blank_line(),
+            )),
+            jolt_java_syntax::ConstructorBodyEntry::BlockStatement(statement) => {
+                format_block_statement_item_or_recovered(statement, formatter)
+            }
+        },
+        jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => Some(BodyItem::new(
+            format_token_sequence(std::iter::once(*token), LeadingTrivia::Preserve),
+            false,
         )),
-        ConstructorBodyElement::BlockStatement(statement) => {
-            format_block_statement_item(statement, formatter)
-        }
+        jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => Some(BodyItem::new(
+            format_token_sequence(error.token_iter(), LeadingTrivia::Preserve),
+            false,
+        )),
+        jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => Some(BodyItem::new(
+            format_token_sequence(node.token_iter(), LeadingTrivia::Preserve),
+            false,
+        )),
     }
 }
 
@@ -166,50 +195,35 @@ fn format_constructor_invocation_qualifier<'source>(
     invocation: &ConstructorInvocation<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
+    let dot = invocation
+        .dot_token()
+        .as_ref()
+        .map_or_else(jolt_fmt_ir::nil, format_token_with_comments);
     if let Some(name) = invocation.qualifier_name() {
-        return concat([
-            format_name(&name),
-            invocation
-                .dot_token()
-                .as_ref()
-                .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
-        ]);
+        return concat([format_name(&name), dot]);
     }
-    invocation
-        .qualifier_expression()
-        .map_or_else(jolt_fmt_ir::nil, |expression| {
-            concat([
-                format_expression(&expression, formatter),
-                invocation
-                    .dot_token()
-                    .as_ref()
-                    .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
-            ])
-        })
+    if let Some(expression) = invocation.qualifier_expression() {
+        return concat([format_expression(&expression, formatter), dot]);
+    }
+    dot
 }
 
-enum ConstructorBodyElement<'source> {
-    Invocation(ConstructorInvocation<'source>),
-    BlockStatement(BlockStatement<'source>),
+fn constructor_body_entry_first_token<'source>(
+    entry: &jolt_java_syntax::ConstructorBodyEntry<'source>,
+) -> Option<jolt_java_syntax::JavaSyntaxToken<'source>> {
+    match entry {
+        jolt_java_syntax::ConstructorBodyEntry::Invocation(invocation) => invocation.first_token(),
+        jolt_java_syntax::ConstructorBodyEntry::BlockStatement(statement) => {
+            statement.first_token()
+        }
+    }
 }
 
-impl<'source> ConstructorBodyElement<'source> {
-    fn start_offset(&self) -> usize {
-        self.first_token()
-            .map_or(usize::MAX, |token| token.text_range().start().get())
-    }
-
-    fn first_token(&self) -> Option<jolt_java_syntax::JavaSyntaxToken<'source>> {
-        match self {
-            Self::Invocation(invocation) => invocation.first_token(),
-            Self::BlockStatement(statement) => statement.first_token(),
-        }
-    }
-
-    fn last_token(&self) -> Option<jolt_java_syntax::JavaSyntaxToken<'source>> {
-        match self {
-            Self::Invocation(invocation) => invocation.last_token(),
-            Self::BlockStatement(statement) => statement.last_token(),
-        }
+fn constructor_body_entry_last_token<'source>(
+    entry: &jolt_java_syntax::ConstructorBodyEntry<'source>,
+) -> Option<jolt_java_syntax::JavaSyntaxToken<'source>> {
+    match entry {
+        jolt_java_syntax::ConstructorBodyEntry::Invocation(invocation) => invocation.last_token(),
+        jolt_java_syntax::ConstructorBodyEntry::BlockStatement(statement) => statement.last_token(),
     }
 }

@@ -2,8 +2,8 @@ use jolt_fmt_ir::{Doc, concat};
 use jolt_java_syntax::{ComponentPattern, MatchAllPattern, Pattern, RecordPattern, TypePattern};
 
 use crate::context::JavaFormatter;
-use crate::helpers::comments::format_token_with_comments;
-use crate::helpers::lists::{CommaListItem, parenthesized_list};
+use crate::helpers::comments::{LeadingTrivia, format_token_sequence, format_token_with_comments};
+use crate::helpers::lists::{CommaListItem, parenthesized_list, recovered_comma_list_items};
 use crate::rules::types::format_type;
 use crate::rules::variables::format_local_variable_declaration;
 
@@ -51,20 +51,28 @@ fn format_record_pattern_components<'source>(
     parenthesized_list(
         open.as_ref(),
         close.as_ref(),
-        pattern.entries().map(|entry| CommaListItem {
-            doc: format_component_pattern(&entry.component, formatter),
-            comma: entry.comma,
-        }),
+        record_pattern_items(pattern, formatter),
     )
+}
+
+fn record_pattern_items<'source, 'fmt>(
+    pattern: &'fmt RecordPattern<'source>,
+    formatter: &'fmt JavaFormatter<'_>,
+) -> impl Iterator<Item = CommaListItem<'source>> + use<'source, 'fmt> {
+    recovered_comma_list_items(pattern.entries_with_recovered(), |entry| CommaListItem {
+        doc: format_component_pattern(&entry.component, formatter),
+        comma: entry.comma,
+    })
 }
 
 fn format_component_pattern<'source>(
     pattern: &ComponentPattern<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    pattern.pattern().map_or_else(jolt_fmt_ir::nil, |pattern| {
-        format_pattern(&pattern, formatter)
-    })
+    pattern.pattern().map_or_else(
+        || format_token_sequence(pattern.token_iter(), LeadingTrivia::Preserve),
+        |pattern| format_pattern(&pattern, formatter),
+    )
 }
 
 fn format_match_all_pattern<'source>(pattern: &MatchAllPattern<'source>) -> Doc<'source> {

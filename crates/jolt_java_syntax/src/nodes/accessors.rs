@@ -11,66 +11,73 @@ use super::{
     ClassBody, ClassBodyDeclaration, ClassBodyMember, ClassDeclaration, ClassLiteralExpression,
     ClassType, ClassTypeSegment, CompactConstructorDeclaration, CompilationUnit,
     CompilationUnitItem, ComponentPattern, ConditionalExpression, ConstructorBody,
-    ConstructorDeclaration, ConstructorInvocation, ContinueStatement, DefaultValue, DimExpression,
-    DoStatement, EmptyDeclaration, EnhancedForStatement, EnumBody, EnumConstant, EnumConstantList,
-    EnumConstantListEntry, EnumDeclaration, ExportsDirective, Expression, ExpressionParentRole,
-    ExpressionStatement, ExtendsClause, FieldAccessExpression, FieldDeclaration, FinallyClause,
-    ForInitializer, ForStatement, ForUpdate, FormalParameter, FormalParameterList,
-    FormalParameterListEntry, FormalParameterListItem, Guard, IfStatement, ImplementsClause,
-    ImportDeclaration, ImportKind, InstanceInitializer, InstanceofExpression, InterfaceBody,
-    InterfaceBodyMember, InterfaceDeclaration, IntersectionType, IntersectionTypeEntry, JavaFamily,
-    JavaNode, JavaOperator, JavaOperatorKind, JavaOperatorPattern, JavaSyntaxKind, JavaSyntaxToken,
+    ConstructorBodyEntry, ConstructorDeclaration, ConstructorInvocation, ContinueStatement,
+    DefaultValue, DimExpression, DoStatement, EmptyDeclaration, EnhancedForStatement, EnumBody,
+    EnumConstant, EnumConstantList, EnumConstantListEntry, EnumDeclaration, ErrorNode,
+    ExportsDirective, Expression, ExpressionParentRole, ExpressionStatement, ExtendsClause,
+    FieldAccessExpression, FieldDeclaration, FinallyClause, ForInitializer, ForStatement,
+    ForUpdate, FormalParameter, FormalParameterList, FormalParameterListEntry,
+    FormalParameterListItem, Guard, IfStatement, ImplementsClause, ImportDeclaration, ImportKind,
+    InstanceInitializer, InstanceofExpression, InterfaceBody, InterfaceBodyMember,
+    InterfaceDeclaration, IntersectionType, IntersectionTypeEntry, JavaFamily, JavaNode,
+    JavaOperator, JavaOperatorKind, JavaOperatorPattern, JavaSyntaxKind, JavaSyntaxToken,
     LabeledStatement, LambdaExpression, LambdaParameter, LambdaParameterList,
     LambdaParameterListEntry, LiteralExpression, LocalClassOrInterfaceDeclaration,
     LocalVariableDeclaration, MatchAllPattern, MethodDeclaration, MethodInvocationExpression,
     MethodReferenceExpression, ModifierEntry, ModifierList, ModuleDeclaration, ModuleDirective,
-    ModuleDirectiveNode, ModuleDirectiveRole, ModuleNameListEntry, NameExpression, NameSegment,
-    NameSyntax, ObjectCreationExpression, OpensDirective, PackageDeclaration,
+    ModuleDirectiveNode, ModuleDirectiveRole, ModuleNameListEntry, Name, NameExpression,
+    NameSegment, NameSyntax, ObjectCreationExpression, OpensDirective, PackageDeclaration,
     ParenthesizedExpression, Pattern, PermitsClause, PermitsClauseEntry, PostfixExpression,
-    PrimitiveType, ProvidesDirective, ReceiverParameter, RecordBody, RecordComponent,
-    RecordComponentList, RecordComponentListEntry, RecordDeclaration, RecordPattern,
-    RecordPatternComponentEntry, RequiresDirective, Resource, ResourceList, ResourceListEntry,
-    ResourceSpecification, ReturnStatement, Statement, StatementBody, StatementExpressionEntry,
-    StatementExpressionList, StaticInitializer, SuperExpression, SwitchBlock, SwitchBlockEntry,
-    SwitchBlockStatementGroup, SwitchBlockStatementGroupLabel, SwitchExpression, SwitchLabel,
-    SwitchLabelCaseEntry, SwitchLabelCaseItem, SwitchRule, SwitchStatement, SynchronizedStatement,
-    TemplateExpression, ThisExpression, ThrowStatement, ThrowsClause, ThrowsClauseEntry,
-    TryStatement, TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList,
-    TypeArgumentListEntry, TypeBoundList, TypeClauseEntry, TypeDeclaration, TypeParameter,
-    TypeParameterList, TypeParameterListEntry, TypePattern, UnaryExpression, UnionType,
-    UnionTypeEntry, UsesDirective, VariableAccess, VariableDeclarator, VariableDeclaratorEntry,
-    VariableDeclaratorList, VariableInitializer, VariableInitializerValue, VoidType,
-    WhileStatement, WildcardBound, WildcardType, YieldStatement, assignment_operator_kind,
-    binary_operator_kind, child, child_family, child_token, child_token_in, children,
-    children_family, children_tokens_matching, nth_child_family, nth_child_token,
-    starts_after_blank_line,
+    PrimitiveType, ProvidesDirective, QualifiedName, ReceiverParameter, RecordBody,
+    RecordComponent, RecordComponentList, RecordComponentListEntry, RecordDeclaration,
+    RecordPattern, RecordPatternComponentEntry, RecoveredNode, RecoveredSeparatedListEntry,
+    RequiresDirective, Resource, ResourceList, ResourceListEntry, ResourceSpecification,
+    ReturnStatement, Statement, StatementBody, StatementExpressionEntry, StatementExpressionList,
+    StaticInitializer, SuperExpression, SwitchBlock, SwitchBlockEntry, SwitchBlockStatementGroup,
+    SwitchBlockStatementGroupLabel, SwitchExpression, SwitchLabel, SwitchLabelCaseEntry,
+    SwitchLabelCaseItem, SwitchRule, SwitchStatement, SynchronizedStatement, TemplateExpression,
+    ThisExpression, ThrowStatement, ThrowsClause, ThrowsClauseEntry, TryStatement,
+    TryWithResourcesStatement, Type, TypeArgument, TypeArgumentList, TypeArgumentListEntry,
+    TypeBoundList, TypeClauseEntry, TypeDeclaration, TypeParameter, TypeParameterList,
+    TypeParameterListEntry, TypePattern, UnaryExpression, UnionType, UnionTypeEntry, UsesDirective,
+    VariableAccess, VariableDeclarator, VariableDeclaratorEntry, VariableDeclaratorList,
+    VariableInitializer, VariableInitializerValue, VoidType, WhileStatement, WildcardBound,
+    WildcardType, YieldStatement, assignment_operator_kind, binary_operator_kind, child,
+    child_family, child_token, child_token_in, children, children_family, children_tokens_matching,
+    nth_child_family, nth_child_token, starts_after_blank_line,
 };
 use crate::{JavaSyntaxNode, language::JavaLanguage};
 use jolt_syntax::SyntaxElement;
 
 impl<'source> CompilationUnit<'source> {
     pub fn items(&self) -> impl Iterator<Item = CompilationUnitItem<'source>> + use<'source> {
-        self.syntax.children().filter_map(|syntax| {
-            if let Some(package) = PackageDeclaration::cast(syntax) {
-                return Some(CompilationUnitItem::Package(package));
-            }
-            if let Some(import) = ImportDeclaration::cast(syntax) {
-                return Some(CompilationUnitItem::Import(import));
-            }
-            if let Some(module) = ModuleDeclaration::cast(syntax) {
-                return Some(CompilationUnitItem::Module(module));
-            }
-            if let Some(declaration) = TypeDeclaration::cast(syntax) {
-                return Some(CompilationUnitItem::Type(declaration));
-            }
-            if let Some(declaration) = FieldDeclaration::cast(syntax) {
-                return Some(CompilationUnitItem::Field(declaration));
-            }
-            if let Some(declaration) = MethodDeclaration::cast(syntax) {
-                return Some(CompilationUnitItem::Method(declaration));
-            }
-            EmptyDeclaration::cast(syntax).map(CompilationUnitItem::EmptyDeclaration)
-        })
+        self.syntax
+            .children()
+            .filter_map(|node| compilation_unit_item(node).ok())
+    }
+
+    pub fn items_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, CompilationUnitItem<'source>>>
+    + use<'source> {
+        self.syntax
+            .children_with_tokens()
+            .filter_map(|element| match element {
+                SyntaxElement::Node(node) => match compilation_unit_item(node) {
+                    Ok(item) => Some(RecoveredSeparatedListEntry::Entry(item)),
+                    Err(node) => Some(recovered_node_entry(node)),
+                },
+                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Eof => {
+                    let token = JavaSyntaxToken { syntax: token };
+                    (!token.leading_comments().is_empty() || !token.trailing_comments().is_empty())
+                        .then_some(RecoveredSeparatedListEntry::Token(token))
+                }
+                SyntaxElement::Token(token) => {
+                    Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
+                        syntax: token,
+                    }))
+                }
+            })
     }
 
     #[must_use]
@@ -398,6 +405,13 @@ impl<'source> ExtendsClause<'source> {
     pub fn entries(&self) -> impl Iterator<Item = TypeClauseEntry<'source>> {
         type_clause_entries(&self.syntax)
     }
+
+    pub fn entries_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, TypeClauseEntry<'source>>>
+    + use<'source> {
+        type_clause_entries_with_recovered(&self.syntax, |kind| kind == JavaSyntaxKind::ExtendsKw)
+    }
 }
 
 impl<'source> ImplementsClause<'source> {
@@ -412,6 +426,15 @@ impl<'source> ImplementsClause<'source> {
 
     pub fn entries(&self) -> impl Iterator<Item = TypeClauseEntry<'source>> {
         type_clause_entries(&self.syntax)
+    }
+
+    pub fn entries_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, TypeClauseEntry<'source>>>
+    + use<'source> {
+        type_clause_entries_with_recovered(&self.syntax, |kind| {
+            kind == JavaSyntaxKind::ImplementsKw
+        })
     }
 }
 
@@ -432,6 +455,25 @@ impl<'source> PermitsClause<'source> {
             self.syntax.children_with_tokens(),
             JavaSyntaxKind::Comma,
             NameSyntax::cast,
+            |name, comma| PermitsClauseEntry { name, comma },
+        )
+    }
+
+    pub fn entries_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, PermitsClauseEntry<'source>>>
+    + use<'source, '_> {
+        recovered_separated_entries(
+            self.syntax.children_with_tokens().filter(|element| {
+                !matches!(
+                    element,
+                    SyntaxElement::Token(token)
+                        if token.kind() == JavaSyntaxKind::Identifier && token.text() == "permits"
+                )
+            }),
+            JavaSyntaxKind::Comma,
+            |_| false,
+            classify_name_syntax,
             |name, comma| PermitsClauseEntry { name, comma },
         )
     }
@@ -539,6 +581,19 @@ impl<'source> TypeParameterList<'source> {
             |parameter, comma| TypeParameterListEntry { parameter, comma },
         )
     }
+
+    pub fn entries_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, TypeParameterListEntry<'source>>>
+    + use<'source, '_> {
+        recovered_separated_entries(
+            self.syntax.children_with_tokens(),
+            JavaSyntaxKind::Comma,
+            |kind| matches!(kind, JavaSyntaxKind::Lt | JavaSyntaxKind::Gt),
+            classify_type_parameter,
+            |parameter, comma| TypeParameterListEntry { parameter, comma },
+        )
+    }
 }
 
 impl<'source> TypeParameter<'source> {
@@ -583,6 +638,31 @@ impl<'source> TypeBoundList<'source> {
                 intersection
                     .into_iter()
                     .flat_map(|intersection| intersection_type_entries(&intersection.syntax)),
+            )
+    }
+
+    pub fn entries_with_recovered(
+        self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, IntersectionTypeEntry<'source>>>
+    + use<'source> {
+        let intersection = child::<IntersectionType>(&self.syntax);
+        let has_intersection = intersection.is_some();
+        (!has_intersection)
+            .then_some(())
+            .into_iter()
+            .flat_map(move |()| {
+                recovered_separated_entries(
+                    self.syntax.children_with_tokens(),
+                    JavaSyntaxKind::Amp,
+                    |kind| kind == JavaSyntaxKind::ExtendsKw,
+                    classify_type,
+                    |ty, separator| IntersectionTypeEntry { ty, separator },
+                )
+            })
+            .chain(
+                intersection
+                    .into_iter()
+                    .flat_map(super::IntersectionType::entries_with_recovered),
             )
     }
 }
@@ -742,6 +822,20 @@ impl<'source> RecordComponentList<'source> {
             |component, comma| RecordComponentListEntry { component, comma },
         )
     }
+
+    pub fn entries_with_recovered(
+        &self,
+    ) -> impl Iterator<
+        Item = RecoveredSeparatedListEntry<'source, RecordComponentListEntry<'source>>,
+    > + use<'source, '_> {
+        recovered_separated_entries(
+            self.syntax.children_with_tokens(),
+            JavaSyntaxKind::Comma,
+            |kind| matches!(kind, JavaSyntaxKind::LParen | JavaSyntaxKind::RParen),
+            classify_record_component,
+            |component, comma| RecordComponentListEntry { component, comma },
+        )
+    }
 }
 
 impl<'source> RecordComponent<'source> {
@@ -759,6 +853,10 @@ impl<'source> RecordComponent<'source> {
 
     pub fn modifier_tokens(&self) -> impl Iterator<Item = JavaSyntaxToken<'source>> + use<'source> {
         children_tokens_matching(&self.syntax, is_modifier_token)
+    }
+
+    pub fn modifier_entries(&self) -> impl Iterator<Item = ModifierEntry<'source>> + use<'source> {
+        modifier_entries(&self.syntax)
     }
 
     #[must_use]
@@ -806,6 +904,13 @@ impl<'source> ClassBody<'source> {
             ClassBodyMember::cast(syntax)
         })
     }
+
+    pub fn members_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, ClassBodyMember<'source>>>
+    + use<'source, '_> {
+        class_body_members_with_recovered(&self.syntax)
+    }
 }
 
 impl ClassBodyMember<'_> {
@@ -834,6 +939,13 @@ impl<'source> RecordBody<'source> {
             ClassBodyMember::cast(syntax)
         })
     }
+
+    pub fn members_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, ClassBodyMember<'source>>>
+    + use<'source, '_> {
+        class_body_members_with_recovered(&self.syntax)
+    }
 }
 
 impl<'source> InterfaceBody<'source> {
@@ -849,6 +961,33 @@ impl<'source> InterfaceBody<'source> {
 
     pub fn members(&self) -> impl Iterator<Item = InterfaceBodyMember<'source>> + use<'source> {
         children_family(&self.syntax)
+    }
+
+    pub fn members_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, InterfaceBodyMember<'source>>>
+    + use<'source, '_> {
+        self.syntax
+            .children_with_tokens()
+            .filter_map(|element| match element {
+                SyntaxElement::Node(node) => match classify_interface_body_member(node) {
+                    Ok(member) => Some(RecoveredSeparatedListEntry::Entry(member)),
+                    Err(node) => Some(recovered_node_entry(node)),
+                },
+                SyntaxElement::Token(token)
+                    if matches!(
+                        token.kind(),
+                        JavaSyntaxKind::LBrace | JavaSyntaxKind::RBrace
+                    ) =>
+                {
+                    None
+                }
+                SyntaxElement::Token(token) => {
+                    Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
+                        syntax: token,
+                    }))
+                }
+            })
     }
 }
 
@@ -877,6 +1016,40 @@ impl<'source> AnnotationInterfaceBody<'source> {
                 list.syntax
                     .children()
                     .filter_map(AnnotationInterfaceBodyMember::cast)
+            })
+    }
+
+    pub fn members_with_recovered(
+        &self,
+    ) -> impl Iterator<
+        Item = RecoveredSeparatedListEntry<'source, AnnotationInterfaceBodyMember<'source>>,
+    > + use<'source, '_> {
+        child::<AnnotationElementList>(&self.syntax)
+            .into_iter()
+            .flat_map(|list| {
+                list.syntax
+                    .children_with_tokens()
+                    .filter_map(|element| match element {
+                        SyntaxElement::Node(node) => {
+                            match classify_annotation_interface_body_member(node) {
+                                Ok(member) => Some(RecoveredSeparatedListEntry::Entry(member)),
+                                Err(node) => Some(recovered_node_entry(node)),
+                            }
+                        }
+                        SyntaxElement::Token(token)
+                            if matches!(
+                                token.kind(),
+                                JavaSyntaxKind::LBrace | JavaSyntaxKind::RBrace
+                            ) =>
+                        {
+                            None
+                        }
+                        SyntaxElement::Token(token) => {
+                            Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
+                                syntax: token,
+                            }))
+                        }
+                    })
             })
     }
 }
@@ -977,6 +1150,13 @@ impl<'source> EnumBody<'source> {
         })
     }
 
+    pub fn members_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, ClassBodyMember<'source>>>
+    + use<'source> {
+        enum_body_members_with_recovered(&self.syntax)
+    }
+
     pub fn semicolon_tokens(
         &self,
     ) -> impl Iterator<Item = JavaSyntaxToken<'source>> + use<'source> {
@@ -999,6 +1179,19 @@ impl<'source> EnumConstantList<'source> {
             self.syntax.children_with_tokens(),
             JavaSyntaxKind::Comma,
             EnumConstant::cast,
+            |constant, comma| EnumConstantListEntry { constant, comma },
+        )
+    }
+
+    pub fn entries_with_recovered(
+        self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, EnumConstantListEntry<'source>>>
+    + use<'source> {
+        recovered_separated_entries(
+            self.syntax.children_with_tokens(),
+            JavaSyntaxKind::Comma,
+            |_| false,
+            classify_enum_constant,
             |constant, comma| EnumConstantListEntry { constant, comma },
         )
     }
@@ -1196,6 +1389,33 @@ impl<'source> ConstructorBody<'source> {
         children(&self.syntax)
     }
 
+    pub fn entries_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, ConstructorBodyEntry<'source>>>
+    + use<'source> {
+        self.syntax
+            .children_with_tokens()
+            .filter_map(|element| match element {
+                SyntaxElement::Node(node) => match classify_constructor_body_entry(node) {
+                    Ok(entry) => Some(RecoveredSeparatedListEntry::Entry(entry)),
+                    Err(node) => Some(recovered_node_entry(node)),
+                },
+                SyntaxElement::Token(token)
+                    if matches!(
+                        token.kind(),
+                        JavaSyntaxKind::LBrace | JavaSyntaxKind::RBrace
+                    ) =>
+                {
+                    None
+                }
+                SyntaxElement::Token(token) => {
+                    Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
+                        syntax: token,
+                    }))
+                }
+            })
+    }
+
     pub fn items(&self) -> impl Iterator<Item = BlockItem<'source>> + use<'source> {
         children::<BlockStatement>(&self.syntax).filter_map(|node| child_family(&node.syntax))
     }
@@ -1264,6 +1484,19 @@ impl<'source> ThrowsClause<'source> {
             |exception, comma| ThrowsClauseEntry { exception, comma },
         )
     }
+
+    pub fn entries_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, ThrowsClauseEntry<'source>>>
+    + use<'source, '_> {
+        recovered_separated_entries(
+            self.syntax.children_with_tokens(),
+            JavaSyntaxKind::Comma,
+            |kind| kind == JavaSyntaxKind::ThrowsKw,
+            classify_type,
+            |exception, comma| ThrowsClauseEntry { exception, comma },
+        )
+    }
 }
 
 impl<'source> StaticInitializer<'source> {
@@ -1318,6 +1551,20 @@ impl<'source> FormalParameterList<'source> {
             |item, comma| FormalParameterListEntry { item, comma },
         )
     }
+
+    pub fn entries_with_recovered(
+        &self,
+    ) -> impl Iterator<
+        Item = RecoveredSeparatedListEntry<'source, FormalParameterListEntry<'source>>,
+    > + use<'source, '_> {
+        recovered_separated_entries(
+            self.syntax.children_with_tokens(),
+            JavaSyntaxKind::Comma,
+            |kind| matches!(kind, JavaSyntaxKind::LParen | JavaSyntaxKind::RParen),
+            classify_formal_parameter_list_item,
+            |item, comma| FormalParameterListEntry { item, comma },
+        )
+    }
 }
 
 impl<'source> FormalParameter<'source> {
@@ -1335,6 +1582,10 @@ impl<'source> FormalParameter<'source> {
 
     pub fn modifier_tokens(&self) -> impl Iterator<Item = JavaSyntaxToken<'source>> + use<'source> {
         children_tokens_matching(&self.syntax, is_modifier_token)
+    }
+
+    pub fn modifier_entries(&self) -> impl Iterator<Item = ModifierEntry<'source>> + use<'source> {
+        modifier_entries(&self.syntax)
     }
 
     #[must_use]
@@ -1378,6 +1629,19 @@ impl<'source> VariableDeclaratorList<'source> {
             self.syntax.children_with_tokens(),
             JavaSyntaxKind::Comma,
             VariableDeclarator::cast,
+            |declarator, comma| VariableDeclaratorEntry { declarator, comma },
+        )
+    }
+
+    pub fn entries_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, VariableDeclaratorEntry<'source>>>
+    + use<'source, '_> {
+        recovered_separated_entries(
+            self.syntax.children_with_tokens(),
+            JavaSyntaxKind::Comma,
+            |_| false,
+            classify_variable_declarator,
             |declarator, comma| VariableDeclaratorEntry { declarator, comma },
         )
     }
@@ -1449,6 +1713,10 @@ impl<'source> LocalVariableDeclaration<'source> {
 
     pub fn modifier_tokens(&self) -> impl Iterator<Item = JavaSyntaxToken<'source>> + use<'source> {
         children_tokens_matching(&self.syntax, is_modifier_token)
+    }
+
+    pub fn modifier_entries(&self) -> impl Iterator<Item = ModifierEntry<'source>> + use<'source> {
+        modifier_entries(&self.syntax)
     }
 
     #[must_use]
@@ -1925,6 +2193,19 @@ impl<'source> ArgumentList<'source> {
             |argument, comma| ArgumentListEntry { argument, comma },
         )
     }
+
+    pub fn entries_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, ArgumentListEntry<'source>>>
+    + use<'source, '_> {
+        recovered_separated_entries(
+            self.syntax.children_with_tokens(),
+            JavaSyntaxKind::Comma,
+            |kind| matches!(kind, JavaSyntaxKind::LParen | JavaSyntaxKind::RParen),
+            classify_expression,
+            |argument, comma| ArgumentListEntry { argument, comma },
+        )
+    }
 }
 
 impl<'source> TypeArgumentList<'source> {
@@ -1945,6 +2226,19 @@ impl<'source> TypeArgumentList<'source> {
             self.syntax.children_with_tokens(),
             JavaSyntaxKind::Comma,
             TypeArgument::cast,
+            |argument, comma| TypeArgumentListEntry { argument, comma },
+        )
+    }
+
+    pub fn entries_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, TypeArgumentListEntry<'source>>>
+    + use<'source, '_> {
+        recovered_separated_entries(
+            self.syntax.children_with_tokens(),
+            JavaSyntaxKind::Comma,
+            |kind| matches!(kind, JavaSyntaxKind::Lt | JavaSyntaxKind::Gt),
+            classify_type_argument,
             |argument, comma| TypeArgumentListEntry { argument, comma },
         )
     }
@@ -2095,6 +2389,19 @@ impl<'source> IntersectionType<'source> {
     pub fn entries(&self) -> impl Iterator<Item = IntersectionTypeEntry<'source>> {
         intersection_type_entries(&self.syntax)
     }
+
+    pub fn entries_with_recovered(
+        self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, IntersectionTypeEntry<'source>>>
+    + use<'source> {
+        recovered_separated_entries(
+            self.syntax.children_with_tokens(),
+            JavaSyntaxKind::Amp,
+            |_| false,
+            classify_type,
+            |ty, separator| IntersectionTypeEntry { ty, separator },
+        )
+    }
 }
 
 impl<'source> Annotation<'source> {
@@ -2133,6 +2440,24 @@ impl<'source> AnnotationArgumentList<'source> {
                     list.syntax.children_with_tokens(),
                     JavaSyntaxKind::Comma,
                     AnnotationArgument::cast,
+                    |argument, comma| AnnotationArgumentListEntry { argument, comma },
+                )
+            })
+    }
+
+    pub fn entries_with_recovered(
+        &self,
+    ) -> impl Iterator<
+        Item = RecoveredSeparatedListEntry<'source, AnnotationArgumentListEntry<'source>>,
+    > + use<'source, '_> {
+        child::<AnnotationElementList>(&self.syntax)
+            .into_iter()
+            .flat_map(|list| {
+                recovered_separated_entries(
+                    list.syntax.children_with_tokens(),
+                    JavaSyntaxKind::Comma,
+                    |_| false,
+                    classify_annotation_argument,
                     |argument, comma| AnnotationArgumentListEntry { argument, comma },
                 )
             })
@@ -2191,6 +2516,20 @@ impl<'source> AnnotationArrayInitializer<'source> {
             self.syntax.children_with_tokens(),
             JavaSyntaxKind::Comma,
             AnnotationElementValue::cast,
+            |value, comma| AnnotationArrayInitializerEntry { value, comma },
+        )
+    }
+
+    pub fn entries_with_recovered(
+        &self,
+    ) -> impl Iterator<
+        Item = RecoveredSeparatedListEntry<'source, AnnotationArrayInitializerEntry<'source>>,
+    > + use<'source, '_> {
+        recovered_separated_entries(
+            self.syntax.children_with_tokens(),
+            JavaSyntaxKind::Comma,
+            |kind| matches!(kind, JavaSyntaxKind::LBrace | JavaSyntaxKind::RBrace),
+            classify_annotation_element_value,
             |value, comma| AnnotationArrayInitializerEntry { value, comma },
         )
     }
@@ -2451,6 +2790,19 @@ impl<'source> ArrayInitializer<'source> {
             |value, comma| ArrayInitializerEntry { value, comma },
         )
     }
+
+    pub fn entries_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, ArrayInitializerEntry<'source>>>
+    + use<'source, '_> {
+        recovered_separated_entries(
+            self.syntax.children_with_tokens(),
+            JavaSyntaxKind::Comma,
+            |kind| matches!(kind, JavaSyntaxKind::LBrace | JavaSyntaxKind::RBrace),
+            classify_variable_initializer_value,
+            |value, comma| ArrayInitializerEntry { value, comma },
+        )
+    }
 }
 
 impl<'source> ReceiverParameter<'source> {
@@ -2548,6 +2900,20 @@ impl<'source> LambdaParameterList<'source> {
             |parameter, comma| LambdaParameterListEntry { parameter, comma },
         )
     }
+
+    pub fn entries_with_recovered(
+        &self,
+    ) -> impl Iterator<
+        Item = RecoveredSeparatedListEntry<'source, LambdaParameterListEntry<'source>>,
+    > + use<'source, '_> {
+        recovered_separated_entries(
+            self.syntax.children_with_tokens(),
+            JavaSyntaxKind::Comma,
+            |kind| matches!(kind, JavaSyntaxKind::LParen | JavaSyntaxKind::RParen),
+            classify_lambda_parameter,
+            |parameter, comma| LambdaParameterListEntry { parameter, comma },
+        )
+    }
 }
 
 impl<'source> LambdaParameter<'source> {
@@ -2561,6 +2927,10 @@ impl<'source> LambdaParameter<'source> {
 
     pub fn modifier_tokens(&self) -> impl Iterator<Item = JavaSyntaxToken<'source>> + use<'source> {
         children_tokens_matching(&self.syntax, is_modifier_token)
+    }
+
+    pub fn modifier_entries(&self) -> impl Iterator<Item = ModifierEntry<'source>> + use<'source> {
+        modifier_entries(&self.syntax)
     }
 
     #[must_use]
@@ -2929,6 +3299,10 @@ impl<'source> CatchParameter<'source> {
         children_tokens_matching(&self.syntax, is_modifier_token)
     }
 
+    pub fn modifier_entries(&self) -> impl Iterator<Item = ModifierEntry<'source>> + use<'source> {
+        modifier_entries(&self.syntax)
+    }
+
     #[must_use]
     pub fn types(&self) -> Option<CatchTypeList<'source>> {
         child(&self.syntax)
@@ -2976,6 +3350,31 @@ impl<'source> CatchTypeList<'source> {
                     .flat_map(|union| union_type_entries(&union.syntax)),
             )
     }
+
+    pub fn entries_with_recovered(
+        self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, UnionTypeEntry<'source>>> + use<'source>
+    {
+        let union = child::<UnionType>(&self.syntax);
+        let has_union = union.is_some();
+        (!has_union)
+            .then_some(())
+            .into_iter()
+            .flat_map(move |()| {
+                recovered_separated_entries(
+                    self.syntax.children_with_tokens(),
+                    JavaSyntaxKind::Bar,
+                    |_| false,
+                    classify_type,
+                    |ty, separator| UnionTypeEntry { ty, separator },
+                )
+            })
+            .chain(
+                union
+                    .into_iter()
+                    .flat_map(super::UnionType::entries_with_recovered),
+            )
+    }
 }
 
 impl<'source> UnionType<'source> {
@@ -2985,6 +3384,19 @@ impl<'source> UnionType<'source> {
 
     pub fn entries(&self) -> impl Iterator<Item = UnionTypeEntry<'source>> {
         union_type_entries(&self.syntax)
+    }
+
+    pub fn entries_with_recovered(
+        self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, UnionTypeEntry<'source>>> + use<'source>
+    {
+        recovered_separated_entries(
+            self.syntax.children_with_tokens(),
+            JavaSyntaxKind::Bar,
+            |_| false,
+            classify_type,
+            |ty, separator| UnionTypeEntry { ty, separator },
+        )
     }
 }
 
@@ -3032,6 +3444,22 @@ impl<'source> ResourceList<'source> {
             self.syntax.children_with_tokens(),
             JavaSyntaxKind::Semicolon,
             Resource::cast,
+            |resource, separator| ResourceListEntry {
+                resource,
+                separator,
+            },
+        )
+    }
+
+    pub fn entries_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, ResourceListEntry<'source>>>
+    + use<'source, '_> {
+        recovered_separated_entries(
+            self.syntax.children_with_tokens(),
+            JavaSyntaxKind::Semicolon,
+            |_| false,
+            classify_resource,
             |resource, separator| ResourceListEntry {
                 resource,
                 separator,
@@ -3195,6 +3623,20 @@ impl<'source> StatementExpressionList<'source> {
             |expression, comma| StatementExpressionEntry { expression, comma },
         )
     }
+
+    pub fn entries_with_recovered(
+        &self,
+    ) -> impl Iterator<
+        Item = RecoveredSeparatedListEntry<'source, StatementExpressionEntry<'source>>,
+    > + use<'source, '_> {
+        recovered_separated_entries(
+            self.syntax.children_with_tokens(),
+            JavaSyntaxKind::Comma,
+            |_| false,
+            classify_expression,
+            |expression, comma| StatementExpressionEntry { expression, comma },
+        )
+    }
 }
 
 impl<'source> SwitchStatement<'source> {
@@ -3270,11 +3712,59 @@ impl<'source> SwitchBlock<'source> {
             SwitchRule::cast(syntax).map(SwitchBlockEntry::Rule)
         })
     }
+
+    pub fn entries_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, SwitchBlockEntry<'source>>>
+    + use<'source> {
+        self.syntax
+            .children_with_tokens()
+            .filter_map(|element| match element {
+                SyntaxElement::Node(node) => match classify_switch_block_entry(node) {
+                    Ok(entry) => Some(RecoveredSeparatedListEntry::Entry(entry)),
+                    Err(node) => Some(recovered_node_entry(node)),
+                },
+                SyntaxElement::Token(token)
+                    if matches!(
+                        token.kind(),
+                        JavaSyntaxKind::LBrace | JavaSyntaxKind::RBrace
+                    ) =>
+                {
+                    None
+                }
+                SyntaxElement::Token(token) => {
+                    Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
+                        syntax: token,
+                    }))
+                }
+            })
+    }
 }
 
 impl<'source> SwitchBlockStatementGroup<'source> {
     pub fn block_statements(&self) -> impl Iterator<Item = BlockStatement<'source>> + use<'source> {
         children(&self.syntax)
+    }
+
+    pub fn block_statements_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, BlockStatement<'source>>>
+    + use<'source, '_> {
+        self.syntax
+            .children_with_tokens()
+            .filter_map(|element| match element {
+                SyntaxElement::Node(node) if node.kind() == JavaSyntaxKind::SwitchLabel => None,
+                SyntaxElement::Node(node) => Some(match classify_block_statement(node) {
+                    Ok(statement) => RecoveredSeparatedListEntry::Entry(statement),
+                    Err(node) => recovered_node_entry(node),
+                }),
+                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Colon => None,
+                SyntaxElement::Token(token) => {
+                    Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
+                        syntax: token,
+                    }))
+                }
+            })
     }
 
     pub fn label_entries(
@@ -3399,6 +3889,140 @@ impl<'source> SwitchLabel<'source> {
         })
     }
 
+    pub fn case_entries_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, SwitchLabelCaseEntry<'source>>>
+    + use<'source, '_> {
+        let mut elements = self.syntax.children_with_tokens();
+        let mut pending_item = None;
+        let is_default_label = self.is_default_label();
+        let mut queued = None;
+        let mut done = false;
+
+        std::iter::from_fn(move || {
+            loop {
+                if let Some(entry) = queued.take() {
+                    return Some(entry);
+                }
+                if done {
+                    return None;
+                }
+
+                let Some(element) = elements.next() else {
+                    done = true;
+                    return pending_item.take().map(|item| {
+                        RecoveredSeparatedListEntry::Entry(SwitchLabelCaseEntry {
+                            item,
+                            comma: None,
+                        })
+                    });
+                };
+
+                match element {
+                    SyntaxElement::Node(node) => {
+                        if node.kind() == JavaSyntaxKind::Guard {
+                            done = true;
+                            return pending_item.take().map(|item| {
+                                RecoveredSeparatedListEntry::Entry(SwitchLabelCaseEntry {
+                                    item,
+                                    comma: None,
+                                })
+                            });
+                        }
+                        if let Some(item) = match node.kind() {
+                            JavaSyntaxKind::CaseConstant => {
+                                Some(SwitchLabelCaseItem::Constant(CaseConstant { syntax: node }))
+                            }
+                            JavaSyntaxKind::CasePattern => {
+                                Some(SwitchLabelCaseItem::Pattern(CasePattern { syntax: node }))
+                            }
+                            _ => None,
+                        } {
+                            if let Some(previous) = pending_item.replace(item) {
+                                return Some(RecoveredSeparatedListEntry::Entry(
+                                    SwitchLabelCaseEntry {
+                                        item: previous,
+                                        comma: None,
+                                    },
+                                ));
+                            }
+                        } else {
+                            let recovered = recovered_node_entry(node);
+                            if let Some(previous) = pending_item.take() {
+                                queued = Some(recovered);
+                                return Some(RecoveredSeparatedListEntry::Entry(
+                                    SwitchLabelCaseEntry {
+                                        item: previous,
+                                        comma: None,
+                                    },
+                                ));
+                            }
+                            return Some(recovered);
+                        }
+                    }
+                    SyntaxElement::Token(syntax) if syntax.kind() == JavaSyntaxKind::DefaultKw => {
+                        if !is_default_label
+                            && let Some(previous) = pending_item
+                                .replace(SwitchLabelCaseItem::Default(JavaSyntaxToken { syntax }))
+                        {
+                            return Some(RecoveredSeparatedListEntry::Entry(
+                                SwitchLabelCaseEntry {
+                                    item: previous,
+                                    comma: None,
+                                },
+                            ));
+                        }
+                    }
+                    SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
+                        if let Some(item) = pending_item.take() {
+                            return Some(RecoveredSeparatedListEntry::Entry(
+                                SwitchLabelCaseEntry {
+                                    item,
+                                    comma: Some(JavaSyntaxToken { syntax: token }),
+                                },
+                            ));
+                        }
+                        return Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
+                            syntax: token,
+                        }));
+                    }
+                    SyntaxElement::Token(token)
+                        if matches!(
+                            token.kind(),
+                            JavaSyntaxKind::CaseKw | JavaSyntaxKind::Colon | JavaSyntaxKind::Arrow
+                        ) =>
+                    {
+                        if matches!(token.kind(), JavaSyntaxKind::Colon | JavaSyntaxKind::Arrow) {
+                            done = true;
+                            return pending_item.take().map(|item| {
+                                RecoveredSeparatedListEntry::Entry(SwitchLabelCaseEntry {
+                                    item,
+                                    comma: None,
+                                })
+                            });
+                        }
+                    }
+                    SyntaxElement::Token(token) => {
+                        if let Some(previous) = pending_item.take() {
+                            queued = Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
+                                syntax: token,
+                            }));
+                            return Some(RecoveredSeparatedListEntry::Entry(
+                                SwitchLabelCaseEntry {
+                                    item: previous,
+                                    comma: None,
+                                },
+                            ));
+                        }
+                        return Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
+                            syntax: token,
+                        }));
+                    }
+                }
+            }
+        })
+    }
+
     #[must_use]
     pub fn guard(&self) -> Option<Guard<'source>> {
         child(&self.syntax)
@@ -3465,6 +4089,37 @@ impl<'source> RecordPattern<'source> {
             self.syntax.children_with_tokens(),
             JavaSyntaxKind::Comma,
             ComponentPattern::cast,
+            |component, comma| RecordPatternComponentEntry { component, comma },
+        )
+    }
+
+    pub fn entries_with_recovered(
+        &self,
+    ) -> impl Iterator<
+        Item = RecoveredSeparatedListEntry<'source, RecordPatternComponentEntry<'source>>,
+    > + use<'source, '_> {
+        let mut in_components = false;
+        let elements =
+            self.syntax
+                .children_with_tokens()
+                .filter_map(move |element| match element {
+                    SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::LParen => {
+                        in_components = true;
+                        None
+                    }
+                    SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::RParen => {
+                        in_components = false;
+                        None
+                    }
+                    _ if in_components => Some(element),
+                    _ => None,
+                });
+
+        recovered_separated_entries(
+            elements,
+            JavaSyntaxKind::Comma,
+            |_| false,
+            classify_component_pattern,
             |component, comma| RecordPatternComponentEntry { component, comma },
         )
     }
@@ -3657,6 +4312,35 @@ impl<'source> ModuleDeclaration<'source> {
     pub fn directives(&self) -> impl Iterator<Item = ModuleDirective<'source>> + use<'source> {
         children::<ModuleDirectiveNode>(&self.syntax).filter_map(|node| child_family(&node.syntax))
     }
+
+    pub fn directives_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, ModuleDirective<'source>>>
+    + use<'source, '_> {
+        let mut in_body = false;
+        self.syntax
+            .children_with_tokens()
+            .filter_map(move |element| match element {
+                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::LBrace => {
+                    in_body = true;
+                    None
+                }
+                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::RBrace => {
+                    in_body = false;
+                    None
+                }
+                _ if !in_body => None,
+                SyntaxElement::Node(node) => Some(match classify_module_directive(node) {
+                    Ok(directive) => RecoveredSeparatedListEntry::Entry(directive),
+                    Err(node) => recovered_node_entry(node),
+                }),
+                SyntaxElement::Token(token) => {
+                    Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
+                        syntax: token,
+                    }))
+                }
+            })
+    }
 }
 
 impl<'source> ModuleDirectiveNode<'source> {
@@ -3750,6 +4434,13 @@ impl<'source> ExportsDirective<'source> {
     pub fn target_entries(&self) -> impl Iterator<Item = ModuleNameListEntry<'source>> {
         module_name_entries_after_contextual_keyword(&self.syntax, "to")
     }
+
+    pub fn target_entries_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, ModuleNameListEntry<'source>>>
+    + use<'source, '_> {
+        module_name_entries_after_contextual_keyword_with_recovered(&self.syntax, "to")
+    }
 }
 
 impl<'source> OpensDirective<'source> {
@@ -3782,6 +4473,13 @@ impl<'source> OpensDirective<'source> {
 
     pub fn target_entries(&self) -> impl Iterator<Item = ModuleNameListEntry<'source>> {
         module_name_entries_after_contextual_keyword(&self.syntax, "to")
+    }
+
+    pub fn target_entries_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, ModuleNameListEntry<'source>>>
+    + use<'source, '_> {
+        module_name_entries_after_contextual_keyword_with_recovered(&self.syntax, "to")
     }
 }
 
@@ -3826,6 +4524,13 @@ impl<'source> ProvidesDirective<'source> {
         module_name_entries_after_contextual_keyword(&self.syntax, "with")
     }
 
+    pub fn implementation_entries_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, ModuleNameListEntry<'source>>>
+    + use<'source, '_> {
+        module_name_entries_after_contextual_keyword_with_recovered(&self.syntax, "with")
+    }
+
     #[must_use]
     pub fn provides_token(&self) -> Option<JavaSyntaxToken<'source>> {
         contextual_keyword_in(&self.syntax, "provides")
@@ -3859,6 +4564,33 @@ impl<'source> Block<'source> {
 
     pub fn block_statements(&self) -> impl Iterator<Item = BlockStatement<'source>> + use<'source> {
         children(&self.syntax)
+    }
+
+    pub fn block_statements_with_recovered(
+        &self,
+    ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, BlockStatement<'source>>>
+    + use<'source, '_> {
+        self.syntax
+            .children_with_tokens()
+            .filter_map(|element| match element {
+                SyntaxElement::Node(node) => Some(match classify_block_statement(node) {
+                    Ok(statement) => RecoveredSeparatedListEntry::Entry(statement),
+                    Err(node) => recovered_node_entry(node),
+                }),
+                SyntaxElement::Token(token)
+                    if matches!(
+                        token.kind(),
+                        JavaSyntaxKind::LBrace | JavaSyntaxKind::RBrace
+                    ) =>
+                {
+                    None
+                }
+                SyntaxElement::Token(token) => {
+                    Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
+                        syntax: token,
+                    }))
+                }
+            })
     }
 
     pub fn items(&self) -> impl Iterator<Item = BlockItem<'source>> + use<'source> {
@@ -3922,6 +4654,630 @@ fn contextual_keyword_in<'source>(
         .map(|syntax| JavaSyntaxToken { syntax })
 }
 
+fn recovered_node_entry<Entry>(
+    node: super::JavaSyntaxNode<'_>,
+) -> RecoveredSeparatedListEntry<'_, Entry> {
+    if node.kind() == JavaSyntaxKind::ErrorNode {
+        RecoveredSeparatedListEntry::Error(ErrorNode { syntax: node })
+    } else {
+        RecoveredSeparatedListEntry::Node(RecoveredNode::new(node))
+    }
+}
+
+fn classify_annotation_argument(
+    node: JavaSyntaxNode<'_>,
+) -> Result<AnnotationArgument<'_>, JavaSyntaxNode<'_>> {
+    match node.kind() {
+        JavaSyntaxKind::AnnotationElementValue => {
+            Ok(AnnotationArgument::Value(AnnotationElementValue {
+                syntax: node,
+            }))
+        }
+        JavaSyntaxKind::AnnotationElementValuePair => {
+            Ok(AnnotationArgument::Pair(AnnotationElementValuePair {
+                syntax: node,
+            }))
+        }
+        _ => Err(node),
+    }
+}
+
+fn classify_annotation_element_value(
+    node: JavaSyntaxNode<'_>,
+) -> Result<AnnotationElementValue<'_>, JavaSyntaxNode<'_>> {
+    match node.kind() {
+        JavaSyntaxKind::AnnotationElementValue => Ok(AnnotationElementValue { syntax: node }),
+        _ => Err(node),
+    }
+}
+
+fn classify_annotation_interface_body_member(
+    node: JavaSyntaxNode<'_>,
+) -> Result<AnnotationInterfaceBodyMember<'_>, JavaSyntaxNode<'_>> {
+    match node.kind() {
+        JavaSyntaxKind::EmptyDeclaration => Ok(AnnotationInterfaceBodyMember::EmptyDeclaration(
+            EmptyDeclaration { syntax: node },
+        )),
+        JavaSyntaxKind::ClassDeclaration => Ok(AnnotationInterfaceBodyMember::ClassDeclaration(
+            ClassDeclaration { syntax: node },
+        )),
+        JavaSyntaxKind::RecordDeclaration => Ok(AnnotationInterfaceBodyMember::RecordDeclaration(
+            RecordDeclaration { syntax: node },
+        )),
+        JavaSyntaxKind::EnumDeclaration => Ok(AnnotationInterfaceBodyMember::EnumDeclaration(
+            EnumDeclaration { syntax: node },
+        )),
+        JavaSyntaxKind::InterfaceDeclaration => {
+            Ok(AnnotationInterfaceBodyMember::InterfaceDeclaration(
+                InterfaceDeclaration { syntax: node },
+            ))
+        }
+        JavaSyntaxKind::AnnotationInterfaceDeclaration => Ok(
+            AnnotationInterfaceBodyMember::AnnotationInterfaceDeclaration(
+                AnnotationInterfaceDeclaration { syntax: node },
+            ),
+        ),
+        JavaSyntaxKind::FieldDeclaration => Ok(AnnotationInterfaceBodyMember::FieldDeclaration(
+            FieldDeclaration { syntax: node },
+        )),
+        JavaSyntaxKind::MethodDeclaration => Ok(AnnotationInterfaceBodyMember::MethodDeclaration(
+            MethodDeclaration { syntax: node },
+        )),
+        JavaSyntaxKind::AnnotationElementDeclaration => {
+            Ok(AnnotationInterfaceBodyMember::AnnotationElementDeclaration(
+                AnnotationElementDeclaration { syntax: node },
+            ))
+        }
+        _ => Err(node),
+    }
+}
+
+fn classify_block_statement(
+    node: JavaSyntaxNode<'_>,
+) -> Result<BlockStatement<'_>, JavaSyntaxNode<'_>> {
+    match node.kind() {
+        JavaSyntaxKind::BlockStatement => Ok(BlockStatement { syntax: node }),
+        _ => Err(node),
+    }
+}
+
+fn classify_class_body_member(
+    node: JavaSyntaxNode<'_>,
+) -> Result<ClassBodyMember<'_>, JavaSyntaxNode<'_>> {
+    match node.kind() {
+        JavaSyntaxKind::ClassBodyDeclaration => {
+            let declaration = ClassBodyDeclaration { syntax: node };
+            child_family(&declaration.syntax).ok_or(declaration.syntax)
+        }
+        JavaSyntaxKind::EmptyDeclaration => {
+            Ok(ClassBodyMember::EmptyDeclaration(EmptyDeclaration {
+                syntax: node,
+            }))
+        }
+        JavaSyntaxKind::ClassDeclaration => {
+            Ok(ClassBodyMember::ClassDeclaration(ClassDeclaration {
+                syntax: node,
+            }))
+        }
+        JavaSyntaxKind::RecordDeclaration => {
+            Ok(ClassBodyMember::RecordDeclaration(RecordDeclaration {
+                syntax: node,
+            }))
+        }
+        JavaSyntaxKind::EnumDeclaration => Ok(ClassBodyMember::EnumDeclaration(EnumDeclaration {
+            syntax: node,
+        })),
+        JavaSyntaxKind::InterfaceDeclaration => Ok(ClassBodyMember::InterfaceDeclaration(
+            InterfaceDeclaration { syntax: node },
+        )),
+        JavaSyntaxKind::AnnotationInterfaceDeclaration => {
+            Ok(ClassBodyMember::AnnotationInterfaceDeclaration(
+                AnnotationInterfaceDeclaration { syntax: node },
+            ))
+        }
+        JavaSyntaxKind::FieldDeclaration => {
+            Ok(ClassBodyMember::FieldDeclaration(FieldDeclaration {
+                syntax: node,
+            }))
+        }
+        JavaSyntaxKind::MethodDeclaration => {
+            Ok(ClassBodyMember::MethodDeclaration(MethodDeclaration {
+                syntax: node,
+            }))
+        }
+        JavaSyntaxKind::ConstructorDeclaration => Ok(ClassBodyMember::ConstructorDeclaration(
+            ConstructorDeclaration { syntax: node },
+        )),
+        JavaSyntaxKind::CompactConstructorDeclaration => {
+            Ok(ClassBodyMember::CompactConstructorDeclaration(
+                CompactConstructorDeclaration { syntax: node },
+            ))
+        }
+        JavaSyntaxKind::StaticInitializer => {
+            Ok(ClassBodyMember::StaticInitializer(StaticInitializer {
+                syntax: node,
+            }))
+        }
+        JavaSyntaxKind::InstanceInitializer => {
+            Ok(ClassBodyMember::InstanceInitializer(InstanceInitializer {
+                syntax: node,
+            }))
+        }
+        _ => Err(node),
+    }
+}
+
+fn classify_component_pattern(
+    node: JavaSyntaxNode<'_>,
+) -> Result<ComponentPattern<'_>, JavaSyntaxNode<'_>> {
+    match node.kind() {
+        JavaSyntaxKind::ComponentPattern => Ok(ComponentPattern { syntax: node }),
+        _ => Err(node),
+    }
+}
+
+fn classify_constructor_body_entry(
+    node: JavaSyntaxNode<'_>,
+) -> Result<ConstructorBodyEntry<'_>, JavaSyntaxNode<'_>> {
+    match node.kind() {
+        JavaSyntaxKind::ConstructorInvocation => {
+            Ok(ConstructorBodyEntry::Invocation(ConstructorInvocation {
+                syntax: node,
+            }))
+        }
+        JavaSyntaxKind::BlockStatement => {
+            Ok(ConstructorBodyEntry::BlockStatement(BlockStatement {
+                syntax: node,
+            }))
+        }
+        _ => Err(node),
+    }
+}
+
+fn classify_enum_constant(
+    node: JavaSyntaxNode<'_>,
+) -> Result<EnumConstant<'_>, JavaSyntaxNode<'_>> {
+    match node.kind() {
+        JavaSyntaxKind::EnumConstant => Ok(EnumConstant { syntax: node }),
+        _ => Err(node),
+    }
+}
+
+fn classify_expression(node: JavaSyntaxNode<'_>) -> Result<Expression<'_>, JavaSyntaxNode<'_>> {
+    match node.kind() {
+        JavaSyntaxKind::LiteralExpression => Ok(Expression::LiteralExpression(LiteralExpression {
+            syntax: node,
+        })),
+        JavaSyntaxKind::TemplateExpression => {
+            Ok(Expression::TemplateExpression(TemplateExpression {
+                syntax: node,
+            }))
+        }
+        JavaSyntaxKind::NameExpression => {
+            Ok(Expression::NameExpression(NameExpression { syntax: node }))
+        }
+        JavaSyntaxKind::ThisExpression => {
+            Ok(Expression::ThisExpression(ThisExpression { syntax: node }))
+        }
+        JavaSyntaxKind::SuperExpression => Ok(Expression::SuperExpression(SuperExpression {
+            syntax: node,
+        })),
+        JavaSyntaxKind::ParenthesizedExpression => Ok(Expression::ParenthesizedExpression(
+            ParenthesizedExpression { syntax: node },
+        )),
+        JavaSyntaxKind::ClassLiteralExpression => {
+            Ok(Expression::ClassLiteralExpression(ClassLiteralExpression {
+                syntax: node,
+            }))
+        }
+        JavaSyntaxKind::FieldAccessExpression => {
+            Ok(Expression::FieldAccessExpression(FieldAccessExpression {
+                syntax: node,
+            }))
+        }
+        JavaSyntaxKind::ArrayAccessExpression => {
+            Ok(Expression::ArrayAccessExpression(ArrayAccessExpression {
+                syntax: node,
+            }))
+        }
+        JavaSyntaxKind::MethodInvocationExpression => Ok(Expression::MethodInvocationExpression(
+            MethodInvocationExpression { syntax: node },
+        )),
+        JavaSyntaxKind::MethodReferenceExpression => Ok(Expression::MethodReferenceExpression(
+            MethodReferenceExpression { syntax: node },
+        )),
+        JavaSyntaxKind::ObjectCreationExpression => Ok(Expression::ObjectCreationExpression(
+            ObjectCreationExpression { syntax: node },
+        )),
+        JavaSyntaxKind::ArrayCreationExpression => Ok(Expression::ArrayCreationExpression(
+            ArrayCreationExpression { syntax: node },
+        )),
+        JavaSyntaxKind::AssignmentExpression => {
+            Ok(Expression::AssignmentExpression(AssignmentExpression {
+                syntax: node,
+            }))
+        }
+        JavaSyntaxKind::ConditionalExpression => {
+            Ok(Expression::ConditionalExpression(ConditionalExpression {
+                syntax: node,
+            }))
+        }
+        JavaSyntaxKind::InstanceofExpression => {
+            Ok(Expression::InstanceofExpression(InstanceofExpression {
+                syntax: node,
+            }))
+        }
+        JavaSyntaxKind::BinaryExpression => Ok(Expression::BinaryExpression(BinaryExpression {
+            syntax: node,
+        })),
+        JavaSyntaxKind::UnaryExpression => Ok(Expression::UnaryExpression(UnaryExpression {
+            syntax: node,
+        })),
+        JavaSyntaxKind::PostfixExpression => Ok(Expression::PostfixExpression(PostfixExpression {
+            syntax: node,
+        })),
+        JavaSyntaxKind::CastExpression => {
+            Ok(Expression::CastExpression(CastExpression { syntax: node }))
+        }
+        JavaSyntaxKind::LambdaExpression => Ok(Expression::LambdaExpression(LambdaExpression {
+            syntax: node,
+        })),
+        JavaSyntaxKind::SwitchExpression => Ok(Expression::SwitchExpression(SwitchExpression {
+            syntax: node,
+        })),
+        _ => Err(node),
+    }
+}
+
+fn classify_formal_parameter_list_item(
+    node: JavaSyntaxNode<'_>,
+) -> Result<FormalParameterListItem<'_>, JavaSyntaxNode<'_>> {
+    match node.kind() {
+        JavaSyntaxKind::ReceiverParameter => Ok(FormalParameterListItem::ReceiverParameter(
+            ReceiverParameter { syntax: node },
+        )),
+        JavaSyntaxKind::FormalParameter => {
+            Ok(FormalParameterListItem::FormalParameter(FormalParameter {
+                syntax: node,
+            }))
+        }
+        _ => Err(node),
+    }
+}
+
+fn classify_interface_body_member(
+    node: JavaSyntaxNode<'_>,
+) -> Result<InterfaceBodyMember<'_>, JavaSyntaxNode<'_>> {
+    match node.kind() {
+        JavaSyntaxKind::EmptyDeclaration => {
+            Ok(InterfaceBodyMember::EmptyDeclaration(EmptyDeclaration {
+                syntax: node,
+            }))
+        }
+        JavaSyntaxKind::ClassDeclaration => {
+            Ok(InterfaceBodyMember::ClassDeclaration(ClassDeclaration {
+                syntax: node,
+            }))
+        }
+        JavaSyntaxKind::RecordDeclaration => {
+            Ok(InterfaceBodyMember::RecordDeclaration(RecordDeclaration {
+                syntax: node,
+            }))
+        }
+        JavaSyntaxKind::EnumDeclaration => {
+            Ok(InterfaceBodyMember::EnumDeclaration(EnumDeclaration {
+                syntax: node,
+            }))
+        }
+        JavaSyntaxKind::InterfaceDeclaration => Ok(InterfaceBodyMember::InterfaceDeclaration(
+            InterfaceDeclaration { syntax: node },
+        )),
+        JavaSyntaxKind::AnnotationInterfaceDeclaration => {
+            Ok(InterfaceBodyMember::AnnotationInterfaceDeclaration(
+                AnnotationInterfaceDeclaration { syntax: node },
+            ))
+        }
+        JavaSyntaxKind::FieldDeclaration => {
+            Ok(InterfaceBodyMember::FieldDeclaration(FieldDeclaration {
+                syntax: node,
+            }))
+        }
+        JavaSyntaxKind::MethodDeclaration => {
+            Ok(InterfaceBodyMember::MethodDeclaration(MethodDeclaration {
+                syntax: node,
+            }))
+        }
+        _ => Err(node),
+    }
+}
+
+fn classify_lambda_parameter(
+    node: JavaSyntaxNode<'_>,
+) -> Result<LambdaParameter<'_>, JavaSyntaxNode<'_>> {
+    match node.kind() {
+        JavaSyntaxKind::LambdaParameter => Ok(LambdaParameter { syntax: node }),
+        _ => Err(node),
+    }
+}
+
+fn classify_name_syntax(node: JavaSyntaxNode<'_>) -> Result<NameSyntax<'_>, JavaSyntaxNode<'_>> {
+    match node.kind() {
+        JavaSyntaxKind::Name => Ok(NameSyntax::Name(Name { syntax: node })),
+        JavaSyntaxKind::QualifiedName => {
+            Ok(NameSyntax::QualifiedName(QualifiedName { syntax: node }))
+        }
+        _ => Err(node),
+    }
+}
+
+fn classify_module_directive(
+    node: JavaSyntaxNode<'_>,
+) -> Result<ModuleDirective<'_>, JavaSyntaxNode<'_>> {
+    match node.kind() {
+        JavaSyntaxKind::RequiresDirective => {
+            Ok(ModuleDirective::RequiresDirective(RequiresDirective {
+                syntax: node,
+            }))
+        }
+        JavaSyntaxKind::ExportsDirective => {
+            Ok(ModuleDirective::ExportsDirective(ExportsDirective {
+                syntax: node,
+            }))
+        }
+        JavaSyntaxKind::OpensDirective => Ok(ModuleDirective::OpensDirective(OpensDirective {
+            syntax: node,
+        })),
+        JavaSyntaxKind::UsesDirective => Ok(ModuleDirective::UsesDirective(UsesDirective {
+            syntax: node,
+        })),
+        JavaSyntaxKind::ProvidesDirective => {
+            Ok(ModuleDirective::ProvidesDirective(ProvidesDirective {
+                syntax: node,
+            }))
+        }
+        JavaSyntaxKind::ModuleDirective => {
+            let directive_node = ModuleDirectiveNode { syntax: node };
+            directive_node.directive().ok_or(directive_node.syntax)
+        }
+        _ => Err(node),
+    }
+}
+
+fn classify_record_component(
+    node: JavaSyntaxNode<'_>,
+) -> Result<RecordComponent<'_>, JavaSyntaxNode<'_>> {
+    match node.kind() {
+        JavaSyntaxKind::RecordComponent => Ok(RecordComponent { syntax: node }),
+        _ => Err(node),
+    }
+}
+
+fn classify_resource(node: JavaSyntaxNode<'_>) -> Result<Resource<'_>, JavaSyntaxNode<'_>> {
+    match node.kind() {
+        JavaSyntaxKind::Resource => Ok(Resource { syntax: node }),
+        _ => Err(node),
+    }
+}
+
+fn classify_switch_block_entry(
+    node: JavaSyntaxNode<'_>,
+) -> Result<SwitchBlockEntry<'_>, JavaSyntaxNode<'_>> {
+    match node.kind() {
+        JavaSyntaxKind::SwitchBlockStatementGroup => Ok(SwitchBlockEntry::StatementGroup(
+            SwitchBlockStatementGroup { syntax: node },
+        )),
+        JavaSyntaxKind::SwitchRule => Ok(SwitchBlockEntry::Rule(SwitchRule { syntax: node })),
+        _ => Err(node),
+    }
+}
+
+fn classify_type(node: JavaSyntaxNode<'_>) -> Result<Type<'_>, JavaSyntaxNode<'_>> {
+    match node.kind() {
+        JavaSyntaxKind::PrimitiveType => Ok(Type::PrimitiveType(PrimitiveType { syntax: node })),
+        JavaSyntaxKind::VoidType => Ok(Type::VoidType(VoidType { syntax: node })),
+        JavaSyntaxKind::ClassType => Ok(Type::ClassType(ClassType { syntax: node })),
+        JavaSyntaxKind::ArrayType => Ok(Type::ArrayType(ArrayType { syntax: node })),
+        JavaSyntaxKind::IntersectionType => {
+            Ok(Type::IntersectionType(IntersectionType { syntax: node }))
+        }
+        JavaSyntaxKind::UnionType => Ok(Type::UnionType(UnionType { syntax: node })),
+        JavaSyntaxKind::WildcardType => Ok(Type::WildcardType(WildcardType { syntax: node })),
+        _ => Err(node),
+    }
+}
+
+fn classify_type_argument(
+    node: JavaSyntaxNode<'_>,
+) -> Result<TypeArgument<'_>, JavaSyntaxNode<'_>> {
+    match node.kind() {
+        JavaSyntaxKind::TypeArgument => Ok(TypeArgument { syntax: node }),
+        _ => Err(node),
+    }
+}
+
+fn classify_type_parameter(
+    node: JavaSyntaxNode<'_>,
+) -> Result<TypeParameter<'_>, JavaSyntaxNode<'_>> {
+    match node.kind() {
+        JavaSyntaxKind::TypeParameter => Ok(TypeParameter { syntax: node }),
+        _ => Err(node),
+    }
+}
+
+fn classify_variable_declarator(
+    node: JavaSyntaxNode<'_>,
+) -> Result<VariableDeclarator<'_>, JavaSyntaxNode<'_>> {
+    match node.kind() {
+        JavaSyntaxKind::VariableDeclarator => Ok(VariableDeclarator { syntax: node }),
+        _ => Err(node),
+    }
+}
+
+fn classify_variable_initializer_value(
+    node: JavaSyntaxNode<'_>,
+) -> Result<VariableInitializerValue<'_>, JavaSyntaxNode<'_>> {
+    match classify_expression(node) {
+        Ok(expression) => Ok(match expression {
+            Expression::LiteralExpression(node) => {
+                VariableInitializerValue::LiteralExpression(node)
+            }
+            Expression::TemplateExpression(node) => {
+                VariableInitializerValue::TemplateExpression(node)
+            }
+            Expression::NameExpression(node) => VariableInitializerValue::NameExpression(node),
+            Expression::ThisExpression(node) => VariableInitializerValue::ThisExpression(node),
+            Expression::SuperExpression(node) => VariableInitializerValue::SuperExpression(node),
+            Expression::ParenthesizedExpression(node) => {
+                VariableInitializerValue::ParenthesizedExpression(node)
+            }
+            Expression::ClassLiteralExpression(node) => {
+                VariableInitializerValue::ClassLiteralExpression(node)
+            }
+            Expression::FieldAccessExpression(node) => {
+                VariableInitializerValue::FieldAccessExpression(node)
+            }
+            Expression::ArrayAccessExpression(node) => {
+                VariableInitializerValue::ArrayAccessExpression(node)
+            }
+            Expression::MethodInvocationExpression(node) => {
+                VariableInitializerValue::MethodInvocationExpression(node)
+            }
+            Expression::MethodReferenceExpression(node) => {
+                VariableInitializerValue::MethodReferenceExpression(node)
+            }
+            Expression::ObjectCreationExpression(node) => {
+                VariableInitializerValue::ObjectCreationExpression(node)
+            }
+            Expression::ArrayCreationExpression(node) => {
+                VariableInitializerValue::ArrayCreationExpression(node)
+            }
+            Expression::AssignmentExpression(node) => {
+                VariableInitializerValue::AssignmentExpression(node)
+            }
+            Expression::ConditionalExpression(node) => {
+                VariableInitializerValue::ConditionalExpression(node)
+            }
+            Expression::InstanceofExpression(node) => {
+                VariableInitializerValue::InstanceofExpression(node)
+            }
+            Expression::BinaryExpression(node) => VariableInitializerValue::BinaryExpression(node),
+            Expression::UnaryExpression(node) => VariableInitializerValue::UnaryExpression(node),
+            Expression::PostfixExpression(node) => {
+                VariableInitializerValue::PostfixExpression(node)
+            }
+            Expression::CastExpression(node) => VariableInitializerValue::CastExpression(node),
+            Expression::LambdaExpression(node) => VariableInitializerValue::LambdaExpression(node),
+            Expression::SwitchExpression(node) => VariableInitializerValue::SwitchExpression(node),
+        }),
+        Err(node) => match node.kind() {
+            JavaSyntaxKind::ArrayInitializer => Ok(VariableInitializerValue::ArrayInitializer(
+                ArrayInitializer { syntax: node },
+            )),
+            _ => Err(node),
+        },
+    }
+}
+
+fn compilation_unit_item(
+    syntax: super::JavaSyntaxNode<'_>,
+) -> Result<CompilationUnitItem<'_>, super::JavaSyntaxNode<'_>> {
+    match syntax.kind() {
+        JavaSyntaxKind::PackageDeclaration => {
+            Ok(CompilationUnitItem::Package(PackageDeclaration { syntax }))
+        }
+        JavaSyntaxKind::ImportDeclaration => {
+            Ok(CompilationUnitItem::Import(ImportDeclaration { syntax }))
+        }
+        JavaSyntaxKind::ModuleDeclaration => {
+            Ok(CompilationUnitItem::Module(ModuleDeclaration { syntax }))
+        }
+        JavaSyntaxKind::ClassDeclaration => Ok(CompilationUnitItem::Type(
+            TypeDeclaration::ClassDeclaration(ClassDeclaration { syntax }),
+        )),
+        JavaSyntaxKind::RecordDeclaration => Ok(CompilationUnitItem::Type(
+            TypeDeclaration::RecordDeclaration(RecordDeclaration { syntax }),
+        )),
+        JavaSyntaxKind::EnumDeclaration => Ok(CompilationUnitItem::Type(
+            TypeDeclaration::EnumDeclaration(EnumDeclaration { syntax }),
+        )),
+        JavaSyntaxKind::InterfaceDeclaration => Ok(CompilationUnitItem::Type(
+            TypeDeclaration::InterfaceDeclaration(InterfaceDeclaration { syntax }),
+        )),
+        JavaSyntaxKind::AnnotationInterfaceDeclaration => Ok(CompilationUnitItem::Type(
+            TypeDeclaration::AnnotationInterfaceDeclaration(AnnotationInterfaceDeclaration {
+                syntax,
+            }),
+        )),
+        JavaSyntaxKind::FieldDeclaration => {
+            Ok(CompilationUnitItem::Field(FieldDeclaration { syntax }))
+        }
+        JavaSyntaxKind::MethodDeclaration => {
+            Ok(CompilationUnitItem::Method(MethodDeclaration { syntax }))
+        }
+        JavaSyntaxKind::EmptyDeclaration => {
+            Ok(CompilationUnitItem::EmptyDeclaration(EmptyDeclaration {
+                syntax,
+            }))
+        }
+        _ => Err(syntax),
+    }
+}
+
+fn class_body_members_with_recovered<'source>(
+    syntax: &super::JavaSyntaxNode<'source>,
+) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, ClassBodyMember<'source>>> + use<'source>
+{
+    syntax
+        .children_with_tokens()
+        .filter_map(|element| match element {
+            SyntaxElement::Node(node) => Some(match classify_class_body_member(node) {
+                Ok(member) => RecoveredSeparatedListEntry::Entry(member),
+                Err(node) => recovered_node_entry(node),
+            }),
+            SyntaxElement::Token(token)
+                if matches!(
+                    token.kind(),
+                    JavaSyntaxKind::LBrace | JavaSyntaxKind::RBrace
+                ) =>
+            {
+                None
+            }
+            SyntaxElement::Token(token) => {
+                Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
+                    syntax: token,
+                }))
+            }
+        })
+}
+
+fn enum_body_members_with_recovered<'source>(
+    syntax: &super::JavaSyntaxNode<'source>,
+) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, ClassBodyMember<'source>>> + use<'source>
+{
+    syntax
+        .children_with_tokens()
+        .filter_map(|element| match element {
+            SyntaxElement::Node(node) if node.kind() == JavaSyntaxKind::EnumConstantList => None,
+            SyntaxElement::Node(node) => Some(match classify_class_body_member(node) {
+                Ok(member) => RecoveredSeparatedListEntry::Entry(member),
+                Err(node) => recovered_node_entry(node),
+            }),
+            SyntaxElement::Token(token)
+                if matches!(
+                    token.kind(),
+                    JavaSyntaxKind::LBrace | JavaSyntaxKind::RBrace | JavaSyntaxKind::Semicolon
+                ) =>
+            {
+                None
+            }
+            SyntaxElement::Token(token) => {
+                Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
+                    syntax: token,
+                }))
+            }
+        })
+}
+
 fn type_clause_entries<'source>(
     syntax: &super::JavaSyntaxNode<'source>,
 ) -> impl Iterator<Item = TypeClauseEntry<'source>> + use<'source> {
@@ -3929,6 +5285,23 @@ fn type_clause_entries<'source>(
         syntax.children_with_tokens(),
         JavaSyntaxKind::Comma,
         Type::cast,
+        |ty, comma| TypeClauseEntry { ty, comma },
+    )
+}
+
+fn type_clause_entries_with_recovered<'source, Skip>(
+    syntax: &super::JavaSyntaxNode<'source>,
+    skip_token: Skip,
+) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, TypeClauseEntry<'source>>>
++ use<'source, Skip>
+where
+    Skip: FnMut(JavaSyntaxKind) -> bool,
+{
+    recovered_separated_entries(
+        syntax.children_with_tokens(),
+        JavaSyntaxKind::Comma,
+        skip_token,
+        classify_type,
         |ty, comma| TypeClauseEntry { ty, comma },
     )
 }
@@ -4008,6 +5381,102 @@ fn module_name_entries_after_contextual_keyword<'source, 'keyword>(
     })
 }
 
+fn module_name_entries_after_contextual_keyword_with_recovered<'source, 'keyword>(
+    syntax: &super::JavaSyntaxNode<'source>,
+    keyword_text: &'keyword str,
+) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, ModuleNameListEntry<'source>>>
++ use<'source, 'keyword> {
+    let mut elements = syntax.children_with_tokens();
+    let mut after_keyword = false;
+    let mut pending_name = None;
+    let mut queued = None;
+    let mut done = false;
+
+    std::iter::from_fn(move || {
+        loop {
+            if let Some(entry) = queued.take() {
+                return Some(entry);
+            }
+            if done {
+                return None;
+            }
+
+            let Some(element) = elements.next() else {
+                done = true;
+                return pending_name.take().map(|name| {
+                    RecoveredSeparatedListEntry::Entry(ModuleNameListEntry { name, comma: None })
+                });
+            };
+
+            match element {
+                SyntaxElement::Token(token)
+                    if token.kind() == JavaSyntaxKind::Identifier
+                        && token.text() == keyword_text =>
+                {
+                    after_keyword = true;
+                    pending_name = None;
+                }
+                _ if !after_keyword => {}
+                SyntaxElement::Node(node) => match classify_name_syntax(node) {
+                    Ok(name) => {
+                        if let Some(previous) = pending_name.replace(name) {
+                            return Some(RecoveredSeparatedListEntry::Entry(ModuleNameListEntry {
+                                name: previous,
+                                comma: None,
+                            }));
+                        }
+                    }
+                    Err(node) => {
+                        let recovered = recovered_node_entry(node);
+                        if let Some(previous) = pending_name.take() {
+                            queued = Some(recovered);
+                            return Some(RecoveredSeparatedListEntry::Entry(ModuleNameListEntry {
+                                name: previous,
+                                comma: None,
+                            }));
+                        }
+                        return Some(recovered);
+                    }
+                },
+                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Semicolon => {
+                    done = true;
+                    return pending_name.take().map(|name| {
+                        RecoveredSeparatedListEntry::Entry(ModuleNameListEntry {
+                            name,
+                            comma: None,
+                        })
+                    });
+                }
+                SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
+                    if let Some(name) = pending_name.take() {
+                        return Some(RecoveredSeparatedListEntry::Entry(ModuleNameListEntry {
+                            name,
+                            comma: Some(JavaSyntaxToken { syntax: token }),
+                        }));
+                    }
+                    return Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
+                        syntax: token,
+                    }));
+                }
+                SyntaxElement::Token(token) => {
+                    if let Some(previous) = pending_name.take() {
+                        queued = Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
+                            syntax: token,
+                        }));
+                        return Some(RecoveredSeparatedListEntry::Entry(ModuleNameListEntry {
+                            name: previous,
+                            comma: None,
+                        }));
+                    }
+                    return Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
+                        syntax: token,
+                    }));
+                }
+            }
+        }
+    })
+}
+
 fn separated_entries<'source, Elements, Item, Entry, Cast, Make>(
     mut elements: Elements,
     separator_kind: JavaSyntaxKind,
@@ -4047,6 +5516,85 @@ where
 
         done = true;
         pending_item.take().map(|item| make(item, None))
+    })
+}
+
+fn recovered_separated_entries<'source, Elements, Item, Entry, Classify, Make, Skip>(
+    mut elements: Elements,
+    separator_kind: JavaSyntaxKind,
+    mut skip_token: Skip,
+    mut classify: Classify,
+    mut make: Make,
+) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, Entry>>
++ use<'source, Elements, Item, Entry, Classify, Make, Skip>
+where
+    Elements: Iterator<Item = SyntaxElement<'source, JavaLanguage>>,
+    Classify: FnMut(JavaSyntaxNode<'source>) -> Result<Item, JavaSyntaxNode<'source>>,
+    Make: FnMut(Item, Option<JavaSyntaxToken<'source>>) -> Entry,
+    Skip: FnMut(JavaSyntaxKind) -> bool,
+{
+    let mut pending_item = None;
+    let mut queued = None;
+    let mut done = false;
+
+    std::iter::from_fn(move || {
+        loop {
+            if let Some(entry) = queued.take() {
+                return Some(entry);
+            }
+
+            if done {
+                return None;
+            }
+
+            let Some(element) = elements.next() else {
+                done = true;
+                return pending_item
+                    .take()
+                    .map(|item| RecoveredSeparatedListEntry::Entry(make(item, None)));
+            };
+
+            match element {
+                SyntaxElement::Node(node) => match classify(node) {
+                    Ok(item) => {
+                        if let Some(previous) = pending_item.replace(item) {
+                            return Some(RecoveredSeparatedListEntry::Entry(make(previous, None)));
+                        }
+                    }
+                    Err(node) => {
+                        let recovered = recovered_node_entry(node);
+                        if let Some(previous) = pending_item.take() {
+                            queued = Some(recovered);
+                            return Some(RecoveredSeparatedListEntry::Entry(make(previous, None)));
+                        }
+                        return Some(recovered);
+                    }
+                },
+                SyntaxElement::Token(token) if token.kind() == separator_kind => {
+                    if let Some(item) = pending_item.take() {
+                        return Some(RecoveredSeparatedListEntry::Entry(make(
+                            item,
+                            Some(JavaSyntaxToken { syntax: token }),
+                        )));
+                    }
+                    return Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
+                        syntax: token,
+                    }));
+                }
+                SyntaxElement::Token(token) if skip_token(token.kind()) => {}
+                SyntaxElement::Token(token) => {
+                    if let Some(previous) = pending_item.take() {
+                        queued = Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
+                            syntax: token,
+                        }));
+                        return Some(RecoveredSeparatedListEntry::Entry(make(previous, None)));
+                    }
+                    return Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
+                        syntax: token,
+                    }));
+                }
+            }
+        }
     })
 }
 

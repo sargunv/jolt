@@ -1,13 +1,12 @@
 use jolt_fmt_ir::{Doc, concat};
 use jolt_kotlin_syntax::{
-    Annotation, AnnotationArgumentList, AnnotationUseSiteTarget, KotlinSyntaxToken,
+    Annotation, AnnotationArgumentList, AnnotationUseSiteTarget, RecoveredSeparatedListEntry,
 };
 
-use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, format_token, format_token_sequence, token_has_comments,
+use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_token, token_has_comments};
+use crate::helpers::lists::{
+    CommaListItem, compact_parenthesized_list, parenthesized_list, recovered_comma_list_items,
 };
-use crate::helpers::lists::{CommaListItem, compact_parenthesized_list, parenthesized_list};
-use crate::helpers::source::source_gap_is_trivia;
 use crate::rules::expressions::format_value_argument;
 use crate::rules::names::format_qualified_name;
 
@@ -95,97 +94,19 @@ struct AnnotationArgumentListItems<'source> {
 fn annotation_argument_list_items<'source>(
     arguments: &AnnotationArgumentList<'source>,
 ) -> AnnotationArgumentListItems<'source> {
-    let source_start = arguments.text_range().start().get();
-    let source = arguments.source_text();
-    let tokens = arguments.token_iter().collect::<Vec<_>>();
-    let mut token_cursor = 0;
-    let mut covered_until = arguments.open_paren().map_or_else(
-        || arguments.text_range().start().get(),
-        |open| open.token_text_range().end().get(),
-    );
-    let mut items = Vec::new();
-    let mut has_recovered_tokens = false;
-
-    for entry in arguments.entries() {
-        has_recovered_tokens |= push_recovered_annotation_argument_gap(
-            &mut items,
-            source,
-            source_start,
-            &tokens,
-            &mut token_cursor,
-            covered_until,
-            entry.argument.text_range().start().get(),
-        );
-        items.push(CommaListItem {
-            doc: format_value_argument(&entry.argument),
-            comma: entry.comma,
-        });
-        covered_until = entry.comma.map_or_else(
-            || entry.argument.text_range().end().get(),
-            |comma| comma.token_text_range().end().get(),
-        );
-    }
-
-    let list_end = arguments.close_paren().map_or_else(
-        || arguments.text_range().end().get(),
-        |close| close.token_text_range().start().get(),
-    );
-    has_recovered_tokens |= push_recovered_annotation_argument_gap(
-        &mut items,
-        source,
-        source_start,
-        &tokens,
-        &mut token_cursor,
-        covered_until,
-        list_end,
-    );
+    let entries = arguments.entries_with_recovered().collect::<Vec<_>>();
+    let has_recovered_tokens = entries
+        .iter()
+        .any(|entry| !matches!(entry, RecoveredSeparatedListEntry::Entry(_)));
+    let items = recovered_comma_list_items(entries, |entry| CommaListItem {
+        doc: format_value_argument(&entry.argument),
+        comma: entry.comma,
+    });
 
     AnnotationArgumentListItems {
         items,
         has_recovered_tokens,
     }
-}
-
-fn push_recovered_annotation_argument_gap<'source>(
-    items: &mut Vec<CommaListItem<'source>>,
-    source: &'source str,
-    source_start: usize,
-    tokens: &[KotlinSyntaxToken<'source>],
-    token_cursor: &mut usize,
-    start: usize,
-    end: usize,
-) -> bool {
-    if source_gap_is_trivia(source, source_start, tokens.iter().copied(), start, end) {
-        return false;
-    }
-
-    let mut gap_tokens = Vec::new();
-    while *token_cursor < tokens.len() {
-        let range = tokens[*token_cursor].token_text_range();
-        if range.end().get() <= start {
-            *token_cursor += 1;
-            continue;
-        }
-        if range.start().get() >= end {
-            break;
-        }
-        if range.start().get() >= start && range.end().get() <= end {
-            gap_tokens.push(tokens[*token_cursor]);
-            *token_cursor += 1;
-            continue;
-        }
-        break;
-    }
-
-    if gap_tokens.is_empty() {
-        return false;
-    }
-
-    items.push(CommaListItem {
-        doc: format_token_sequence(gap_tokens, LeadingTrivia::Preserve),
-        comma: None,
-    });
-    true
 }
 
 fn annotation_argument_list_has_internal_comments(arguments: &AnnotationArgumentList<'_>) -> bool {

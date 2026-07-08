@@ -2,11 +2,11 @@ use super::simple::format_statement_keyword;
 use super::{
     BasicForStatement, DoStatement, Doc, EnhancedForStatement, ForInitializer, ForStatement,
     ForUpdate, IfStatement, JavaFormatter, JavaSyntaxToken, LeadingTrivia, Statement,
-    StatementBody, StatementExpressionEntry, StatementExpressionList, SynchronizedStatement,
-    TrailingTrivia, WhileStatement, concat, empty_block, format_block, format_expression,
-    format_local_variable_declaration, format_separator_with_comments, format_statement_semicolon,
-    format_token, format_token_with_comments, format_trailing_comments_before_line_break, group,
-    hard_line, indent, line, soft_line, statement_body_as_block,
+    StatementBody, StatementExpressionList, SynchronizedStatement, TrailingTrivia, WhileStatement,
+    concat, empty_block, format_block, format_expression, format_local_variable_declaration,
+    format_separator_with_comments, format_statement_semicolon, format_token,
+    format_token_sequence, format_token_with_comments, format_trailing_comments_before_line_break,
+    group, hard_line, indent, line, soft_line, statement_body_as_block,
     statement_body_trailing_comments_force_line, trailing_comments_force_line,
 };
 use jolt_fmt_ir::space;
@@ -443,22 +443,75 @@ fn format_statement_expression_list<'source>(
     expressions: &StatementExpressionList<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    format_statement_expression_entries(expressions.entries().collect(), formatter)
+    format_statement_expression_entries(statement_expression_parts(expressions, formatter))
+}
+
+enum StatementExpressionPart<'source> {
+    Expression {
+        expression: Doc<'source>,
+        comma: Option<JavaSyntaxToken<'source>>,
+    },
+    Recovered(Doc<'source>),
+}
+
+fn statement_expression_parts<'source, 'fmt>(
+    expressions: &'fmt StatementExpressionList<'source>,
+    formatter: &'fmt JavaFormatter<'_>,
+) -> impl Iterator<Item = StatementExpressionPart<'source>> + use<'source, 'fmt> {
+    expressions
+        .entries_with_recovered()
+        .map(move |entry| match entry {
+            jolt_java_syntax::RecoveredSeparatedListEntry::Entry(entry) => {
+                StatementExpressionPart::Expression {
+                    expression: format_expression(&entry.expression, formatter),
+                    comma: entry.comma,
+                }
+            }
+            jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
+                StatementExpressionPart::Recovered(format_token(
+                    &token,
+                    LeadingTrivia::Preserve,
+                    TrailingTrivia::Preserve,
+                ))
+            }
+            jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => {
+                StatementExpressionPart::Recovered(format_token_sequence(
+                    error.token_iter(),
+                    LeadingTrivia::Preserve,
+                ))
+            }
+            jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => {
+                StatementExpressionPart::Recovered(format_token_sequence(
+                    node.token_iter(),
+                    LeadingTrivia::Preserve,
+                ))
+            }
+        })
 }
 
 fn format_statement_expression_entries<'source>(
-    entries: Vec<StatementExpressionEntry<'source>>,
-    formatter: &JavaFormatter<'_>,
+    entries: impl IntoIterator<Item = StatementExpressionPart<'source>>,
 ) -> Doc<'source> {
     let mut docs = Vec::new();
-    let entries_len = entries.len();
+    let mut entries = entries.into_iter().peekable();
 
-    for (index, entry) in entries.into_iter().enumerate() {
-        docs.push(format_expression(&entry.expression, formatter));
-        if let Some(comma) = entry.comma {
-            docs.push(format_separator_with_comments(&comma, space()));
-        } else if index + 1 < entries_len {
-            docs.push(line());
+    while let Some(entry) = entries.next() {
+        let has_next = entries.peek().is_some();
+        match entry {
+            StatementExpressionPart::Expression { expression, comma } => {
+                docs.push(expression);
+                if let Some(comma) = comma {
+                    docs.push(format_separator_with_comments(&comma, space()));
+                } else if has_next {
+                    docs.push(line());
+                }
+            }
+            StatementExpressionPart::Recovered(doc) => {
+                docs.push(doc);
+                if has_next {
+                    docs.push(line());
+                }
+            }
         }
     }
 

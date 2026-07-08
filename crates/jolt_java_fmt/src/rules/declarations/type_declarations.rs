@@ -7,10 +7,11 @@ use super::{
     format_enum_body_contents, format_interface_body, format_leading_comment_list,
     format_modifier_prefix, format_name, format_record_body, format_record_component, format_token,
     format_token_with_comments, format_type_parameter_list, format_type_without_leading_comments,
-    group, hard_line, line, parenthesized_list, source_braced_body,
+    group, hard_line, line, parenthesized_list, recovered_comma_list_items, source_braced_body,
 };
 use crate::helpers::comments::format_token_after_relocated_leading_comments;
 use jolt_fmt_ir::space;
+use jolt_java_syntax::RecoveredSeparatedListEntry;
 
 pub(super) fn format_class_declaration<'source>(
     class: &ClassDeclaration<'source>,
@@ -228,11 +229,18 @@ fn format_record_components<'source>(
     parenthesized_list(
         open.as_ref(),
         close.as_ref(),
-        components.entries().map(|entry| CommaListItem {
-            doc: format_record_component(&entry.component, formatter),
-            comma: entry.comma,
-        }),
+        record_component_list_items(&components, formatter),
     )
+}
+
+fn record_component_list_items<'source, 'fmt>(
+    components: &'fmt jolt_java_syntax::RecordComponentList<'source>,
+    formatter: &'fmt JavaFormatter<'_>,
+) -> impl Iterator<Item = CommaListItem<'source>> + use<'source, 'fmt> {
+    recovered_comma_list_items(components.entries_with_recovered(), |entry| CommaListItem {
+        doc: format_record_component(&entry.component, formatter),
+        comma: entry.comma,
+    })
 }
 
 fn format_extends_clause<'source>(
@@ -243,7 +251,12 @@ fn format_extends_clause<'source>(
         return jolt_fmt_ir::nil();
     };
     let keyword = clause.keyword();
-    format_type_header_clause(keyword.as_ref(), "extends", clause.entries(), formatter)
+    format_type_header_clause(
+        keyword.as_ref(),
+        "extends",
+        clause.entries_with_recovered(),
+        formatter,
+    )
 }
 
 fn format_implements_clause<'source>(
@@ -254,7 +267,12 @@ fn format_implements_clause<'source>(
         return jolt_fmt_ir::nil();
     };
     let keyword = clause.keyword();
-    format_type_header_clause(keyword.as_ref(), "implements", clause.entries(), formatter)
+    format_type_header_clause(
+        keyword.as_ref(),
+        "implements",
+        clause.entries_with_recovered(),
+        formatter,
+    )
 }
 
 fn format_permits_clause(clause: Option<PermitsClause<'_>>) -> Doc<'_> {
@@ -262,18 +280,21 @@ fn format_permits_clause(clause: Option<PermitsClause<'_>>) -> Doc<'_> {
         return jolt_fmt_ir::nil();
     };
     let keyword = clause.keyword();
-    format_permits_header_clause(keyword.as_ref(), "permits", clause.entries())
+    format_permits_header_clause(keyword.as_ref(), "permits", clause.entries_with_recovered())
 }
 
 fn format_type_header_clause<'source>(
     keyword: Option<&JavaSyntaxToken<'source>>,
     fallback: &'static str,
-    entries: impl IntoIterator<Item = TypeClauseEntry<'source>>,
+    entries: impl IntoIterator<Item = RecoveredSeparatedListEntry<'source, TypeClauseEntry<'source>>>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
     let mut entries = entries.into_iter().peekable();
     if entries.peek().is_none() {
-        return jolt_fmt_ir::nil();
+        return jolt_fmt_ir::indent(concat([
+            line(),
+            format_header_clause_keyword(keyword, fallback),
+        ]));
     }
 
     jolt_fmt_ir::indent(concat([
@@ -289,11 +310,14 @@ fn format_type_header_clause<'source>(
 fn format_permits_header_clause<'source>(
     keyword: Option<&JavaSyntaxToken<'source>>,
     fallback: &'static str,
-    entries: impl IntoIterator<Item = PermitsClauseEntry<'source>>,
+    entries: impl IntoIterator<Item = RecoveredSeparatedListEntry<'source, PermitsClauseEntry<'source>>>,
 ) -> Doc<'source> {
     let mut entries = entries.into_iter().peekable();
     if entries.peek().is_none() {
-        return jolt_fmt_ir::nil();
+        return jolt_fmt_ir::indent(concat([
+            line(),
+            format_header_clause_keyword(keyword, fallback),
+        ]));
     }
 
     jolt_fmt_ir::indent(concat([
@@ -338,10 +362,10 @@ fn header_keyword_forces_line(keyword: Option<&JavaSyntaxToken<'_>>) -> bool {
 }
 
 fn format_type_clause_entries_broken<'source>(
-    entries: impl IntoIterator<Item = TypeClauseEntry<'source>>,
+    entries: impl IntoIterator<Item = RecoveredSeparatedListEntry<'source, TypeClauseEntry<'source>>>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    comma_list(entries.into_iter().map(|entry| CommaListItem {
+    comma_list(recovered_comma_list_items(entries, |entry| CommaListItem {
         doc: concat([
             format_construct_leading_comments(entry.ty.first_token().as_ref()),
             format_type_without_leading_comments(&entry.ty, formatter),
@@ -351,9 +375,9 @@ fn format_type_clause_entries_broken<'source>(
 }
 
 fn format_permits_clause_entries_broken<'source>(
-    entries: impl IntoIterator<Item = PermitsClauseEntry<'source>>,
+    entries: impl IntoIterator<Item = RecoveredSeparatedListEntry<'source, PermitsClauseEntry<'source>>>,
 ) -> Doc<'source> {
-    comma_list(entries.into_iter().map(|entry| CommaListItem {
+    comma_list(recovered_comma_list_items(entries, |entry| CommaListItem {
         doc: concat([
             format_construct_leading_comments(entry.name.first_token().as_ref()),
             format_name(&entry.name),

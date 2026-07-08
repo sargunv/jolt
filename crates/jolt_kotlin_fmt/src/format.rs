@@ -58,12 +58,6 @@ pub fn format_source_to_sink<S: RenderSink + ?Sized>(
 ) -> KotlinFormatSinkResult<S::Error> {
     let parse = parse_kotlin_file(source);
 
-    if !parse.diagnostics().is_empty() {
-        return KotlinFormatSinkResult::Blocked {
-            diagnostics: parse.diagnostics().to_vec(),
-        };
-    }
-
     let Some(syntax) = parse.syntax() else {
         return KotlinFormatSinkResult::Blocked {
             diagnostics: Vec::new(),
@@ -89,5 +83,42 @@ fn render_error_diagnostic(error: &jolt_fmt_ir::RenderError) -> Diagnostic {
         stage: DiagnosticStage::Formatter,
         message: format!("Kotlin formatter produced an invalid document: {error}"),
         range: None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::convert::Infallible;
+
+    use jolt_fmt_ir::{RenderControl, RenderSink};
+
+    use super::{KotlinFormatOptions, KotlinFormatSinkResult, format_source_to_sink};
+
+    #[test]
+    fn formats_represented_tree_with_parse_diagnostics() {
+        let mut sink = StringSink::default();
+        let result = format_source_to_sink(
+            "fun demo() { = value }\n",
+            &KotlinFormatOptions::default(),
+            &mut sink,
+        );
+
+        assert!(matches!(result, KotlinFormatSinkResult::Complete));
+        assert!(sink.output.contains("value"), "{}", sink.output);
+        assert!(sink.output.contains("="), "{}", sink.output);
+    }
+
+    #[derive(Default)]
+    struct StringSink {
+        output: String,
+    }
+
+    impl RenderSink for StringSink {
+        type Error = Infallible;
+
+        fn write_str(&mut self, text: &str) -> Result<RenderControl, Self::Error> {
+            self.output.push_str(text);
+            Ok(RenderControl::Continue)
+        }
     }
 }

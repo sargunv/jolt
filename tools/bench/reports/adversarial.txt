@@ -1,17 +1,17 @@
 tool	version	input_files	modified_files
-jolt	jolt 0.0.0	208	196
+jolt	jolt 0.20260705.0 (072b548)	208	196
 dprint-jolt	dprint 0.54.0	208	196
 System: Linux 7.0.13-200.fc44.x86_64, x86_64, 32 logical CPUs
 Hyperfine: adaptive runs, min 3, 1 warmup
 
 Benchmark 1: jolt fmt
-  Time (mean ± σ):       7.5 ms ±   0.9 ms    [User: 26.8 ms, System: 21.5 ms]
-  Range (min … max):     5.7 ms …  13.1 ms    162 runs
+  Time (mean ± σ):       7.1 ms ±   0.6 ms    [User: 25.0 ms, System: 21.5 ms]
+  Range (min … max):     5.9 ms …   8.6 ms    162 runs
  
 Benchmark 2: dprint --plugins=jolt_fmt_dprint.wasm fmt --incremental=false --skip-stable-format
-  Time (mean ± σ):      17.4 ms ±   0.6 ms    [User: 34.4 ms, System: 37.3 ms]
-  Range (min … max):    16.2 ms …  19.2 ms    105 runs
+  Time (mean ± σ):      20.8 ms ±   0.8 ms    [User: 36.4 ms, System: 40.4 ms]
+  Range (min … max):    18.5 ms …  24.0 ms    90 runs
  
 Summary
   jolt fmt ran
-    2.33 ± 0.29 times faster than dprint --plugins=jolt_fmt_dprint.wasm fmt --incremental=false --skip-stable-format
+    2.91 ± 0.26 times faster than dprint --plugins=jolt_fmt_dprint.wasm fmt --incremental=false --skip-stable-format

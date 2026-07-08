@@ -6,11 +6,12 @@ use super::{
     format_constructor_body, format_formal_parameter, format_inline_annotations,
     format_modifier_prefix, format_receiver_parameter, format_separator_with_comments,
     format_statement_semicolon, format_token, format_token_after_construct_leading_comments,
-    format_token_with_comments, format_type, format_type_parameter_list,
+    format_token_sequence, format_token_with_comments, format_type, format_type_parameter_list,
     format_type_without_leading_comments, format_typed_modifier_prefix, group, hard_line, line,
-    parenthesized_list, source_braced_body,
+    parenthesized_list, recovered_comma_list_items, source_braced_body,
 };
 use jolt_fmt_ir::space;
+use jolt_java_syntax::RecoveredSeparatedListEntry;
 
 pub(super) fn format_constructor_declaration<'source>(
     constructor: &jolt_java_syntax::ConstructorDeclaration<'source>,
@@ -205,18 +206,25 @@ fn format_parameters<'source>(
     parenthesized_list(
         open.as_ref(),
         close.as_ref(),
-        parameters.entries().map(|entry| CommaListItem {
-            doc: match entry.item {
-                jolt_java_syntax::FormalParameterListItem::ReceiverParameter(parameter) => {
-                    format_receiver_parameter(&parameter, formatter)
-                }
-                jolt_java_syntax::FormalParameterListItem::FormalParameter(parameter) => {
-                    format_formal_parameter(&parameter, formatter)
-                }
-            },
-            comma: entry.comma,
-        }),
+        parameter_list_items(&parameters, formatter),
     )
+}
+
+fn parameter_list_items<'source, 'fmt>(
+    parameters: &'fmt FormalParameterList<'source>,
+    formatter: &'fmt JavaFormatter<'_>,
+) -> impl Iterator<Item = CommaListItem<'source>> + use<'source, 'fmt> {
+    recovered_comma_list_items(parameters.entries_with_recovered(), |entry| CommaListItem {
+        doc: match entry.item {
+            jolt_java_syntax::FormalParameterListItem::ReceiverParameter(parameter) => {
+                format_receiver_parameter(&parameter, formatter)
+            }
+            jolt_java_syntax::FormalParameterListItem::FormalParameter(parameter) => {
+                format_formal_parameter(&parameter, formatter)
+            }
+        },
+        comma: entry.comma,
+    })
 }
 
 fn format_empty_parameters<'source>(
@@ -260,9 +268,9 @@ fn format_throws_clause<'source>(
     let Some(throws) = throws else {
         return jolt_fmt_ir::nil();
     };
-    let mut entries = throws.entries().peekable();
+    let mut entries = throws.entries_with_recovered().peekable();
     if entries.peek().is_none() {
-        return jolt_fmt_ir::nil();
+        return jolt_fmt_ir::indent(concat([line(), format_throws_keyword(&throws)]));
     }
 
     jolt_fmt_ir::indent(concat([
@@ -296,7 +304,7 @@ fn format_throws_keyword_spacing<'source>(throws: &ThrowsClause<'source>) -> Doc
 }
 
 fn format_throws_entries<'source>(
-    entries: impl IntoIterator<Item = ThrowsClauseEntry<'source>>,
+    entries: impl IntoIterator<Item = RecoveredSeparatedListEntry<'source, ThrowsClauseEntry<'source>>>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
     let mut entries = entries.into_iter().peekable();
@@ -304,20 +312,39 @@ fn format_throws_entries<'source>(
         return jolt_fmt_ir::nil();
     };
 
-    let first = format_type(&entry.exception, formatter);
-    let rest = concat([
-        format_throws_entry_separator(entry.comma, entries.peek().is_some()),
-        concat(std::iter::from_fn(move || {
-            let entry = entries.next()?;
-            let has_next = entries.peek().is_some();
-            Some(concat([
-                format_type(&entry.exception, formatter),
-                format_throws_entry_separator(entry.comma, has_next),
-            ]))
-        })),
-    ]);
+    let first = format_throws_entry(entry, entries.peek().is_some(), formatter);
+    let rest = concat(std::iter::from_fn(move || {
+        let entry = entries.next()?;
+        let has_next = entries.peek().is_some();
+        Some(format_throws_entry(entry, has_next, formatter))
+    }));
 
-    concat([first, jolt_fmt_ir::indent(rest)])
+    jolt_fmt_ir::indent(concat([first, rest]))
+}
+
+fn format_throws_entry<'source>(
+    entry: RecoveredSeparatedListEntry<'source, ThrowsClauseEntry<'source>>,
+    has_next: bool,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
+    match entry {
+        RecoveredSeparatedListEntry::Entry(entry) => concat([
+            format_type(&entry.exception, formatter),
+            format_throws_entry_separator(entry.comma, has_next),
+        ]),
+        RecoveredSeparatedListEntry::Token(token) => concat([
+            format_token(&token, LeadingTrivia::Preserve, TrailingTrivia::Preserve),
+            format_throws_entry_separator(None, has_next),
+        ]),
+        RecoveredSeparatedListEntry::Error(error) => concat([
+            format_token_sequence(error.token_iter(), LeadingTrivia::Preserve),
+            format_throws_entry_separator(None, has_next),
+        ]),
+        RecoveredSeparatedListEntry::Node(node) => concat([
+            format_token_sequence(node.token_iter(), LeadingTrivia::Preserve),
+            format_throws_entry_separator(None, has_next),
+        ]),
+    }
 }
 
 fn format_throws_entry_separator(comma: Option<JavaSyntaxToken<'_>>, has_next: bool) -> Doc<'_> {

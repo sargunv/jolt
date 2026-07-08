@@ -3,7 +3,9 @@ use super::{
     PostfixExpression, UnaryExpression, concat, format_expression, format_token_with_comments,
 };
 use crate::helpers::comments::token_has_comments;
-use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_token};
+use crate::helpers::comments::{
+    LeadingTrivia, TrailingTrivia, format_token, format_token_sequence,
+};
 use crate::helpers::syntax_tokens::{FormatterInsertedToken, inserted_syntax_token};
 use jolt_fmt_ir::space;
 use jolt_fmt_ir::{force_group, group, indent, line};
@@ -62,13 +64,44 @@ pub(super) fn format_binary_expression<'source>(
     expression: &BinaryExpression<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    let parent_operator = expression.operator().map(|operator| operator.text());
+    let Some(operator) = expression.operator() else {
+        return format_binary_expression_without_operator(expression, formatter);
+    };
+
+    if expression.left().is_none() {
+        return binary_chain(
+            jolt_fmt_ir::nil(),
+            vec![(
+                format_operator_with_comments(&operator),
+                expression.right().map_or_else(jolt_fmt_ir::nil, |right| {
+                    format_expression(&right, formatter)
+                }),
+            )],
+        );
+    }
+
+    let parent_operator = operator.text();
     let (first, rest) = flatten_binary_expression(expression, formatter);
-    let first = parent_operator.map_or_else(
-        || format_expression(&first, formatter),
-        |operator| format_binary_operand(&first, operator, formatter),
-    );
+    let first = format_binary_operand(&first, parent_operator, formatter);
     binary_chain(first, rest)
+}
+
+fn format_binary_expression_without_operator<'source>(
+    expression: &BinaryExpression<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> Doc<'source> {
+    let left = expression.left();
+    let right = expression.right();
+    if left.is_none() && right.is_none() {
+        return format_token_sequence(expression.token_iter(), LeadingTrivia::Preserve);
+    }
+
+    concat([
+        left.map_or_else(jolt_fmt_ir::nil, |left| format_expression(&left, formatter)),
+        right.map_or_else(jolt_fmt_ir::nil, |right| {
+            format_expression(&right, formatter)
+        }),
+    ])
 }
 
 pub(super) fn format_unary_expression<'source>(

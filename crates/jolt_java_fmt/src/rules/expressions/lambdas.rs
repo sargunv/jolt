@@ -1,10 +1,10 @@
 use super::{
-    Doc, JavaFormatter, LambdaExpression, LambdaParameter, comment_forces_line, concat,
-    format_annotation, format_block, format_expression, format_leading_comments,
-    format_separator_with_comments, format_token_text, format_token_with_comments,
-    format_trailing_comments_before_line_break, format_type, hard_line,
-    inline_modifier_prefix_from_docs, token_iter_has_comments,
+    Doc, JavaFormatter, LambdaExpression, LambdaParameter, LeadingTrivia, TrailingTrivia,
+    comment_forces_line, concat, format_annotation, format_block, format_expression,
+    format_separator_with_comments, format_token, format_token_with_comments, format_type, group,
+    hard_line, inline_modifier_prefix_from_docs, token_iter_has_comments,
 };
+use crate::helpers::lists::{CommaListItem, comma_list, recovered_comma_list_items};
 use jolt_fmt_ir::space;
 
 pub(super) fn format_lambda_expression<'source>(
@@ -40,9 +40,11 @@ fn format_lambda_arrow<'source>(expression: &LambdaExpression<'source>) -> Doc<'
 
     concat([
         space(),
-        format_leading_comments(&arrow),
-        format_token_text(arrow.text()),
-        format_trailing_comments_before_line_break(&arrow),
+        format_token(
+            &arrow,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::BeforeLineBreak,
+        ),
         if forced_line { hard_line() } else { space() },
     ])
 }
@@ -94,7 +96,7 @@ fn format_lambda_parameters<'source>(
         return jolt_fmt_ir::nil();
     }
 
-    concat([
+    group(concat([
         open.as_ref()
             .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
         parameter_list
@@ -105,24 +107,24 @@ fn format_lambda_parameters<'source>(
         close
             .as_ref()
             .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
-    ])
+    ]))
 }
 
 fn format_lambda_parameter_entries<'source>(
     parameters: &jolt_java_syntax::LambdaParameterList<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    let mut docs = Vec::new();
-    let mut entries = parameters.entries().peekable();
-    while let Some(entry) = entries.next() {
-        docs.push(format_lambda_parameter(&entry.parameter, formatter));
-        if let Some(comma) = entry.comma {
-            docs.push(format_separator_with_comments(&comma, space()));
-        } else if entries.peek().is_some() {
-            docs.push(space());
-        }
-    }
-    concat(docs)
+    comma_list(lambda_parameter_items(parameters, formatter))
+}
+
+fn lambda_parameter_items<'source, 'fmt>(
+    parameters: &'fmt jolt_java_syntax::LambdaParameterList<'source>,
+    formatter: &'fmt JavaFormatter<'_>,
+) -> impl Iterator<Item = CommaListItem<'source>> + use<'source, 'fmt> {
+    recovered_comma_list_items(parameters.entries_with_recovered(), |entry| CommaListItem {
+        doc: format_lambda_parameter(&entry.parameter, formatter),
+        comma: entry.comma,
+    })
 }
 
 fn is_simple_untyped_lambda_parameter(parameter: &LambdaParameter<'_>) -> bool {
@@ -131,7 +133,7 @@ fn is_simple_untyped_lambda_parameter(parameter: &LambdaParameter<'_>) -> bool {
         && !parameter.is_variable_arity()
         && parameter.prefix_annotations().next().is_none()
         && parameter.varargs_annotations().next().is_none()
-        && parameter.modifier_tokens().next().is_none()
+        && parameter.modifier_entries().next().is_none()
 }
 
 fn format_lambda_parameter<'source>(
@@ -142,9 +144,9 @@ fn format_lambda_parameter<'source>(
         .prefix_annotations()
         .map(|annotation| format_annotation(&annotation, formatter))
         .collect::<Vec<_>>();
-    let modifier_tokens = parameter.modifier_tokens().collect::<Vec<_>>();
-    let has_inline_prefix = !prefix_annotations.is_empty() || !modifier_tokens.is_empty();
-    let prefix = inline_modifier_prefix_from_docs(prefix_annotations, modifier_tokens);
+    let modifier_entries = parameter.modifier_entries().collect::<Vec<_>>();
+    let has_inline_prefix = !prefix_annotations.is_empty() || !modifier_entries.is_empty();
+    let prefix = inline_modifier_prefix_from_docs(prefix_annotations, modifier_entries);
     let ty = parameter.ty();
     let var_token = parameter.var_token();
     let has_type_prefix = ty.is_some() || var_token.is_some();

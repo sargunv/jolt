@@ -1,18 +1,18 @@
 use jolt_fmt_ir::{Doc, concat, group, hard_line, indent, join, line, space};
 use jolt_java_syntax::{
-    Annotation, ArrayDimension, ArrayDimensions, ClassType, IntersectionType, JavaSyntaxToken,
-    NameSyntax, PrimitiveType, Type, TypeArgument, TypeArgumentList, TypeBoundList, TypeParameter,
-    TypeParameterList, UnionType, UnionTypeEntry, VoidType, WildcardBound, WildcardType,
+    Annotation, ArrayDimension, ArrayDimensions, ClassType, IntersectionType,
+    IntersectionTypeEntry, JavaSyntaxToken, NameSyntax, PrimitiveType, RecoveredSeparatedListEntry,
+    Type, TypeArgument, TypeArgumentList, TypeBoundList, TypeParameter, TypeParameterList,
+    UnionType, UnionTypeEntry, VoidType, WildcardType,
 };
 
 use crate::context::JavaFormatter;
 use crate::helpers::comments::{
-    InlineLeadingTrivia, LeadingTrivia, TrailingTrivia, comment_forces_line,
-    format_leading_comments, format_token, format_token_after_relocated_leading_comments,
-    format_token_text, format_token_with_comments, format_token_with_inline_leading_comments,
-    format_trailing_comments_before_line_break,
+    InlineLeadingTrivia, LeadingTrivia, TrailingTrivia, comment_forces_line, format_token,
+    format_token_after_relocated_leading_comments, format_token_sequence,
+    format_token_with_comments, format_token_with_inline_leading_comments,
 };
-use crate::helpers::lists::{CommaListItem, angle_bracket_list};
+use crate::helpers::lists::{CommaListItem, angle_bracket_list, recovered_comma_list_items};
 use crate::rules::annotations::format_annotation;
 
 pub(crate) fn format_type<'source>(
@@ -65,14 +65,8 @@ pub(crate) fn format_type_parameter_list<'source>(
     parameters.map_or_else(jolt_fmt_ir::nil, |parameters| {
         let open = parameters.open_angle();
         let close = parameters.close_angle();
-        angle_bracket_list(
-            open.as_ref(),
-            close.as_ref(),
-            parameters.entries().map(|entry| CommaListItem {
-                doc: format_type_parameter(&entry.parameter, formatter),
-                comma: entry.comma,
-            }),
-        )
+        let items = type_parameter_list_items(&parameters, formatter);
+        angle_bracket_list(open.as_ref(), close.as_ref(), items)
     })
 }
 
@@ -82,14 +76,28 @@ pub(crate) fn format_type_argument_list<'source>(
 ) -> Doc<'source> {
     let open = arguments.open_angle();
     let close = arguments.close_angle();
-    angle_bracket_list(
-        open.as_ref(),
-        close.as_ref(),
-        arguments.entries().map(|entry| CommaListItem {
-            doc: format_type_argument(&entry.argument, formatter),
-            comma: entry.comma,
-        }),
-    )
+    let items = type_argument_list_items(arguments, formatter);
+    angle_bracket_list(open.as_ref(), close.as_ref(), items)
+}
+
+fn type_parameter_list_items<'source, 'fmt>(
+    parameters: &'fmt TypeParameterList<'source>,
+    formatter: &'fmt JavaFormatter<'_>,
+) -> impl Iterator<Item = CommaListItem<'source>> + use<'source, 'fmt> {
+    recovered_comma_list_items(parameters.entries_with_recovered(), |entry| CommaListItem {
+        doc: format_type_parameter(&entry.parameter, formatter),
+        comma: entry.comma,
+    })
+}
+
+fn type_argument_list_items<'source, 'fmt>(
+    arguments: &'fmt TypeArgumentList<'source>,
+    formatter: &'fmt JavaFormatter<'_>,
+) -> impl Iterator<Item = CommaListItem<'source>> + use<'source, 'fmt> {
+    recovered_comma_list_items(arguments.entries_with_recovered(), |entry| CommaListItem {
+        doc: format_type_argument(&entry.argument, formatter),
+        comma: entry.comma,
+    })
 }
 
 pub(crate) fn format_array_dimensions<'source>(
@@ -216,14 +224,14 @@ fn format_intersection_type<'source>(
     ty: &IntersectionType<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    format_intersection_entries(ty.entries(), formatter)
+    format_intersection_entries(ty, formatter)
 }
 
 fn format_union_type<'source>(
     ty: &UnionType<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    format_union_entries(ty.entries(), formatter)
+    format_union_entries(ty, formatter)
 }
 
 fn format_type_parameter<'source>(
@@ -254,59 +262,137 @@ fn format_type_bounds<'source>(
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
     format_type_operator_entries_doc(
-        bounds.entries().map(|entry| (entry.ty, entry.separator)),
+        type_operator_parts(bounds.entries_with_recovered()),
         formatter,
     )
 }
 
 fn format_intersection_entries<'source>(
-    entries: impl IntoIterator<Item = jolt_java_syntax::IntersectionTypeEntry<'source>>,
+    ty: &IntersectionType<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    format_type_operator_entries(
-        entries.into_iter().map(|entry| (entry.ty, entry.separator)),
-        formatter,
-    )
+    format_type_operator_entries(type_operator_parts(ty.entries_with_recovered()), formatter)
 }
 
 fn format_union_entries<'source>(
-    entries: impl IntoIterator<Item = UnionTypeEntry<'source>>,
+    ty: &UnionType<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    format_type_operator_entries(
-        entries.into_iter().map(|entry| (entry.ty, entry.separator)),
-        formatter,
-    )
+    format_type_operator_entries(type_operator_parts(ty.entries_with_recovered()), formatter)
 }
 
 fn format_type_operator_entries<'source>(
-    entries: impl IntoIterator<Item = (Type<'source>, Option<JavaSyntaxToken<'source>>)>,
+    entries: impl IntoIterator<Item = TypeOperatorPart<'source>>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
     group(format_type_operator_entries_doc(entries, formatter))
 }
 
 fn format_type_operator_entries_doc<'source>(
-    entries: impl IntoIterator<Item = (Type<'source>, Option<JavaSyntaxToken<'source>>)>,
+    entries: impl IntoIterator<Item = TypeOperatorPart<'source>>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
     let mut entries = entries.into_iter().peekable();
-    let Some((ty, mut previous_separator)) = entries.next() else {
+    let Some(first) = entries.next() else {
         return jolt_fmt_ir::nil();
     };
 
-    let first = format_type(&ty, formatter);
-    let rest = std::iter::from_fn(|| {
-        let (ty, separator) = entries.next()?;
-        let doc = format_type_operator_continuation(
+    let (first, mut previous_separator) = format_type_operator_first_part(first, formatter);
+    let mut rest = Vec::new();
+    for part in entries {
+        match part {
+            TypeOperatorPart::Type { ty, separator } => {
+                rest.push(format_type_operator_continuation(
+                    previous_separator.as_ref(),
+                    format_type(&ty, formatter),
+                ));
+                previous_separator = separator;
+            }
+            TypeOperatorPart::Recovered(doc) => {
+                rest.push(format_type_operator_continuation(
+                    previous_separator.as_ref(),
+                    doc,
+                ));
+                previous_separator = None;
+            }
+        }
+    }
+    if previous_separator.is_some() {
+        rest.push(format_type_operator_continuation(
             previous_separator.as_ref(),
-            format_type(&ty, formatter),
-        );
-        previous_separator = separator;
-        Some(doc)
-    });
+            jolt_fmt_ir::nil(),
+        ));
+    }
 
     concat([first, indent(concat(rest))])
+}
+
+enum TypeOperatorPart<'source> {
+    Type {
+        ty: Type<'source>,
+        separator: Option<JavaSyntaxToken<'source>>,
+    },
+    Recovered(Doc<'source>),
+}
+
+trait TypeOperatorEntry<'source> {
+    fn ty(&self) -> Type<'source>;
+    fn separator(&self) -> Option<JavaSyntaxToken<'source>>;
+}
+
+impl<'source> TypeOperatorEntry<'source> for IntersectionTypeEntry<'source> {
+    fn ty(&self) -> Type<'source> {
+        self.ty
+    }
+
+    fn separator(&self) -> Option<JavaSyntaxToken<'source>> {
+        self.separator
+    }
+}
+
+impl<'source> TypeOperatorEntry<'source> for UnionTypeEntry<'source> {
+    fn ty(&self) -> Type<'source> {
+        self.ty
+    }
+
+    fn separator(&self) -> Option<JavaSyntaxToken<'source>> {
+        self.separator
+    }
+}
+
+fn type_operator_parts<'source, Entry>(
+    entries: impl IntoIterator<Item = RecoveredSeparatedListEntry<'source, Entry>>,
+) -> impl Iterator<Item = TypeOperatorPart<'source>>
+where
+    Entry: TypeOperatorEntry<'source>,
+{
+    entries.into_iter().map(|entry| match entry {
+        RecoveredSeparatedListEntry::Entry(entry) => TypeOperatorPart::Type {
+            ty: entry.ty(),
+            separator: entry.separator(),
+        },
+        RecoveredSeparatedListEntry::Token(token) => TypeOperatorPart::Recovered(format_token(
+            &token,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::Preserve,
+        )),
+        RecoveredSeparatedListEntry::Error(error) => TypeOperatorPart::Recovered(
+            format_token_sequence(error.token_iter(), LeadingTrivia::Preserve),
+        ),
+        RecoveredSeparatedListEntry::Node(node) => TypeOperatorPart::Recovered(
+            format_token_sequence(node.token_iter(), LeadingTrivia::Preserve),
+        ),
+    })
+}
+
+fn format_type_operator_first_part<'source>(
+    part: TypeOperatorPart<'source>,
+    formatter: &JavaFormatter<'_>,
+) -> (Doc<'source>, Option<JavaSyntaxToken<'source>>) {
+    match part {
+        TypeOperatorPart::Type { ty, separator } => (format_type(&ty, formatter), separator),
+        TypeOperatorPart::Recovered(doc) => (doc, None),
+    }
 }
 
 fn type_operator_separator_forces_line(separator: Option<&JavaSyntaxToken<'_>>) -> bool {
@@ -346,9 +432,11 @@ fn format_type_operator_separator<'source>(separator: &JavaSyntaxToken<'source>)
             .trailing_comments()
             .any(|comment| comment_forces_line(&comment));
         concat([
-            format_leading_comments(separator),
-            format_token_text(separator.text()),
-            format_trailing_comments_before_line_break(separator),
+            format_token(
+                separator,
+                LeadingTrivia::Preserve,
+                TrailingTrivia::BeforeLineBreak,
+            ),
             if forces_line {
                 jolt_fmt_ir::nil()
             } else {
@@ -362,6 +450,11 @@ fn format_type_argument<'source>(
     argument: &TypeArgument<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
+    let has_annotations = argument.annotations().next().is_some();
+    if argument.ty().is_none() && !has_annotations {
+        return format_token_sequence(argument.token_iter(), LeadingTrivia::Preserve);
+    }
+
     concat([
         format_inline_annotations(argument.annotations(), formatter),
         argument
@@ -378,19 +471,13 @@ fn format_wildcard_type<'source>(
         ty.question_token()
             .as_ref()
             .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
-        ty.bound_clause().map_or_else(jolt_fmt_ir::nil, |bound| {
-            let (keyword, bound) = match bound {
-                WildcardBound::Extends(bound) | WildcardBound::Super(bound) => {
-                    (ty.bound_keyword(), bound)
-                }
-            };
+        ty.bound_keyword().map_or_else(jolt_fmt_ir::nil, |keyword| {
             concat([
                 space(),
-                keyword
-                    .as_ref()
-                    .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
-                space(),
-                format_type(&bound, formatter),
+                format_token_with_comments(&keyword),
+                ty.bound().map_or_else(jolt_fmt_ir::nil, |bound| {
+                    concat([space(), format_type(&bound, formatter)])
+                }),
             ])
         }),
     ])

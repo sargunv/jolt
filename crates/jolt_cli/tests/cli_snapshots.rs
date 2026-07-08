@@ -258,7 +258,7 @@ fn check_mode_reports_all_changed_files_with_summary_count() {
 }
 
 #[test]
-fn check_mode_reports_mixed_changed_and_failed_files() {
+fn check_mode_reports_mixed_changed_and_recovered_files() {
     let temp = TempDir::new().expect("tempdir should be created");
     write(temp.path().join("Changed.java"), "class Changed {}\n");
     write(temp.path().join("Bad.java"), "class {\n");
@@ -266,7 +266,7 @@ fn check_mode_reports_mixed_changed_and_failed_files() {
     let output = jolt(temp.path(), ["fmt", "--check", "."], "");
 
     insta::assert_snapshot!(
-        "check_mode_reports_mixed_changed_and_failed_files",
+        "check_mode_reports_mixed_changed_and_recovered_files",
         snapshot(
             &output,
             &[
@@ -316,33 +316,33 @@ fn config_errors_report_diagnostics() {
 }
 
 #[test]
-fn parse_errors_report_diagnostics_and_do_not_write() {
+fn recovered_parse_formats_and_writes_file() {
     let temp = TempDir::new().expect("tempdir should be created");
     write(temp.path().join("A.java"), "class {\n");
 
     let output = jolt(temp.path(), ["fmt", "A.java"], "");
 
     insta::assert_snapshot!(
-        "parse_errors_report_diagnostics_and_do_not_write",
+        "recovered_parse_formats_and_writes_file",
         snapshot(&output, &[temp.path().join("A.java")])
     );
 }
 
 #[test]
-fn check_mode_parse_errors_report_diagnostics_and_do_not_write() {
+fn check_mode_reports_recovered_parse_as_changed() {
     let temp = TempDir::new().expect("tempdir should be created");
     write(temp.path().join("A.java"), "class {\n");
 
     let output = jolt(temp.path(), ["fmt", "--check", "A.java"], "");
 
     insta::assert_snapshot!(
-        "check_mode_parse_errors_report_diagnostics_and_do_not_write",
+        "check_mode_reports_recovered_parse_as_changed",
         snapshot(&output, &[temp.path().join("A.java")])
     );
 }
 
 #[test]
-fn stdin_parse_errors_use_stdin_filename_in_diagnostics() {
+fn stdin_recovered_parse_formats_to_stdout() {
     let temp = TempDir::new().expect("tempdir should be created");
 
     let output = jolt(
@@ -352,7 +352,7 @@ fn stdin_parse_errors_use_stdin_filename_in_diagnostics() {
     );
 
     insta::assert_snapshot!(
-        "stdin_parse_errors_use_stdin_filename_in_diagnostics",
+        "stdin_recovered_parse_formats_to_stdout",
         snapshot(&output, &[])
     );
 }

@@ -10,12 +10,13 @@ use crate::helpers::blocks::join_hard_lines;
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_token, format_token_sequence,
 };
-use crate::helpers::lists::{CommaListItem, compact_parenthesized_list};
+use crate::helpers::lists::{
+    CommaListItem, compact_parenthesized_list, recovered_comma_list_items,
+};
 use crate::rules::names::format_name;
-use crate::rules::statements::format_block_item;
 use crate::rules::variables::format_value_parameter_list;
 
-use super::format_expression;
+use super::{format_expression, lambdas::lambda_body_docs};
 
 pub(super) fn format_if_expression<'source>(
     expression: &IfExpression<'source>,
@@ -226,16 +227,15 @@ fn format_destructuring_declaration<'source>(
     compact_parenthesized_list(
         declaration.open_delimiter().as_ref(),
         declaration.close_delimiter().as_ref(),
-        declaration
-            .entries_with_commas()
-            .map(|entry| CommaListItem {
+        recovered_comma_list_items(declaration.entries_with_recovered(), |entry| {
+            CommaListItem {
                 doc: entry
                     .entry
                     .name()
                     .map_or_else(jolt_fmt_ir::nil, |name| format_name(&name)),
                 comma: entry.comma,
-            })
-            .collect(),
+            }
+        }),
     )
 }
 
@@ -538,20 +538,29 @@ fn format_when_entry<'source>(entry: &WhenEntry<'source>) -> Doc<'source> {
 }
 
 fn format_when_conditions<'source>(entry: &WhenEntry<'source>) -> Doc<'source> {
-    let entries = entry.condition_entries().collect::<Vec<_>>();
     let mut docs = Vec::new();
-    let entry_count = entries.len();
-    for (index, entry) in entries.into_iter().enumerate() {
-        docs.push(format_when_condition(&entry.condition));
+    let mut entries =
+        recovered_comma_list_items(entry.condition_entries_with_recovered(), |entry| {
+            CommaListItem {
+                doc: format_when_condition(&entry.condition),
+                comma: entry.comma,
+            }
+        })
+        .into_iter()
+        .peekable();
+    while let Some(entry) = entries.next() {
+        docs.push(entry.doc);
         if let Some(comma) = entry.comma {
             docs.push(format_token(
                 &comma,
                 LeadingTrivia::Preserve,
                 TrailingTrivia::BeforeSpaceIfComments,
             ));
-            if index + 1 < entry_count {
+            if entries.peek().is_some() {
                 docs.push(space());
             }
+        } else if entries.peek().is_some() {
+            docs.push(space());
         }
     }
     if let Some(guard) = entry.guard() {
@@ -670,8 +679,9 @@ fn format_braced_body<'source>(lambda: &LambdaExpression<'source>) -> Doc<'sourc
     };
     let close = lambda.close_brace();
     let items = lambda.body_items().collect::<Vec<_>>();
+    let item_docs = lambda_body_docs(lambda, &items);
 
-    if items.is_empty() {
+    if item_docs.is_empty() {
         return concat([
             format_token(
                 &open,
@@ -694,10 +704,7 @@ fn format_braced_body<'source>(lambda: &LambdaExpression<'source>) -> Doc<'sourc
             LeadingTrivia::Preserve,
             TrailingTrivia::RelocatedToEnclosingContext,
         ),
-        indent(concat([
-            hard_line(),
-            join_hard_lines(items.iter().map(format_block_item)),
-        ])),
+        indent(concat([hard_line(), join_hard_lines(item_docs)])),
         hard_line(),
         close.map_or_else(jolt_fmt_ir::nil, |close| {
             format_token(

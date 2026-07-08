@@ -19,12 +19,11 @@ pub(crate) fn format_name<'source>(name: &jolt_kotlin_syntax::Name<'source>) -> 
 }
 
 pub(crate) fn format_qualified_name<'source>(name: &QualifiedName<'source>) -> Doc<'source> {
-    let tokens = name.token_iter().collect::<Vec<_>>();
-    if tokens_have_line_comments(&tokens) {
-        return format_multiline_qualified_name(&tokens);
+    if tokens_have_line_comments(name) {
+        return format_multiline_qualified_name(name);
     }
 
-    format_inline_qualified_name(&tokens)
+    format_inline_qualified_name(name)
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -79,8 +78,8 @@ impl PartialOrd for NameSortKey<'_> {
     }
 }
 
-fn tokens_have_line_comments(tokens: &[KotlinSyntaxToken<'_>]) -> bool {
-    tokens.iter().any(|token| {
+fn tokens_have_line_comments(name: &QualifiedName<'_>) -> bool {
+    name.token_iter().any(|token| {
         token
             .leading_comments()
             .chain(token.trailing_comments())
@@ -88,19 +87,20 @@ fn tokens_have_line_comments(tokens: &[KotlinSyntaxToken<'_>]) -> bool {
     })
 }
 
-fn format_inline_qualified_name<'source>(tokens: &[KotlinSyntaxToken<'source>]) -> Doc<'source> {
+fn format_inline_qualified_name<'source>(name: &QualifiedName<'source>) -> Doc<'source> {
     let mut docs = Vec::new();
+    let mut tokens = name.token_iter().peekable();
 
-    for (index, token) in tokens.iter().enumerate() {
+    while let Some(token) = tokens.next() {
         if token.kind() == KotlinSyntaxKind::Dot {
-            docs.push(format_name_dot(token));
+            docs.push(format_name_dot(&token));
             continue;
         }
 
         docs.push(format_inline_name_segment(
-            token,
+            &token,
             tokens
-                .get(index + 1)
+                .peek()
                 .is_some_and(|next| next.kind() == KotlinSyntaxKind::Dot),
         ));
     }
@@ -108,23 +108,23 @@ fn format_inline_qualified_name<'source>(tokens: &[KotlinSyntaxToken<'source>]) 
     concat(docs)
 }
 
-fn format_multiline_qualified_name<'source>(tokens: &[KotlinSyntaxToken<'source>]) -> Doc<'source> {
+fn format_multiline_qualified_name<'source>(name: &QualifiedName<'source>) -> Doc<'source> {
     let mut docs = Vec::new();
     let mut tail_docs = Vec::new();
     let mut before_first_dot = true;
 
-    for token in tokens {
+    for token in name.token_iter() {
         if token.kind() == KotlinSyntaxKind::Dot {
             before_first_dot = false;
             tail_docs.push(hard_line());
-            tail_docs.push(format_name_dot(token));
+            tail_docs.push(format_name_dot(&token));
             continue;
         }
 
         if before_first_dot {
-            docs.push(format_name_segment(token));
+            docs.push(format_name_segment(&token));
         } else {
-            tail_docs.push(format_name_segment(token));
+            tail_docs.push(format_name_segment(&token));
         }
     }
 

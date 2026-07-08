@@ -98,14 +98,13 @@ fn format_qualified_keyword_expression<'source>(
     keyword: Doc<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    match qualifier {
-        Some(qualifier) => concat([
-            format_expression(&qualifier, formatter),
-            format_member_dot(dot),
-            keyword,
-        ]),
-        None => keyword,
-    }
+    concat([
+        qualifier.map_or_else(jolt_fmt_ir::nil, |qualifier| {
+            format_expression(&qualifier, formatter)
+        }),
+        dot.map_or_else(jolt_fmt_ir::nil, |dot| format_member_dot(Some(dot))),
+        keyword,
+    ])
 }
 
 pub(super) fn format_leaf_token<'source>(

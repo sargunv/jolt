@@ -2,7 +2,7 @@ use jolt_fmt_ir::{Doc, concat, group, indent, line, space};
 use jolt_kotlin_syntax::{
     ClassBody, ClassDeclaration, CompanionObject, DelegationSpecifier, DelegationSpecifierList,
     InterfaceDeclaration, KotlinSyntaxToken, ModifierList, Name, ObjectDeclaration,
-    ObjectExpression, PrimaryConstructor,
+    ObjectExpression, PrimaryConstructor, RecoveredSeparatedListEntry,
 };
 
 use crate::helpers::comments::{
@@ -37,7 +37,7 @@ pub(super) fn format_class_declaration<'source>(
                 &constructor,
                 declaration.source_text(),
                 declaration.text_range().start().get(),
-                declaration.token_iter(),
+                || declaration.token_iter(),
             )
         }),
         colon: declaration.colon(),
@@ -127,10 +127,13 @@ fn format_object_expression_delegation<'source>(
     let Some(delegation) = delegation else {
         return jolt_fmt_ir::nil();
     };
-    let entries = delegation.entries().collect::<Vec<_>>();
-    match entries.as_slice() {
-        [] => jolt_fmt_ir::nil(),
-        [entry] if entry.comma.is_none() => concat([
+    let mut entries = delegation.entries_with_recovered();
+    let first = entries.next();
+    if entries.next().is_none()
+        && let Some(RecoveredSeparatedListEntry::Entry(entry)) = first
+        && entry.comma.is_none()
+    {
+        return concat([
             space(),
             colon.map_or_else(jolt_fmt_ir::nil, |colon| {
                 format_token(
@@ -141,9 +144,10 @@ fn format_object_expression_delegation<'source>(
             }),
             space(),
             format_delegation_specifier(&entry.specifier),
-        ]),
-        _ => format_delegation_specifier_list(colon, Some(delegation)),
+        ]);
     }
+
+    format_delegation_specifier_list(colon, Some(delegation))
 }
 
 struct SimpleTypeDeclaration<'source> {
@@ -222,82 +226,39 @@ struct DelegationSpecifierListItems<'source> {
 fn delegation_specifier_list_items<'source>(
     delegation: &DelegationSpecifierList<'source>,
 ) -> DelegationSpecifierListItems<'source> {
-    let source_start = delegation.text_range().start().get();
-    let source = delegation.source_text();
-    let tokens = delegation.token_iter().collect::<Vec<_>>();
-    let mut token_cursor = 0;
-    let mut covered_until = delegation.text_range().start().get();
     let mut items = Vec::new();
 
-    for entry in delegation.entries() {
-        push_recovered_delegation_specifier_gap(
-            &mut items,
-            source,
-            source_start,
-            &tokens,
-            &mut token_cursor,
-            covered_until,
-            entry.specifier.text_range().start().get(),
-        );
-        items.push(CommaListItem {
-            doc: format_delegation_specifier(&entry.specifier),
-            comma: entry.comma,
-        });
-        covered_until = entry.comma.map_or_else(
-            || entry.specifier.text_range().end().get(),
-            |comma| comma.token_text_range().end().get(),
-        );
+    for entry in delegation.entries_with_recovered() {
+        push_delegation_specifier_entry(&mut items, entry);
     }
-
-    push_recovered_delegation_specifier_gap(
-        &mut items,
-        source,
-        source_start,
-        &tokens,
-        &mut token_cursor,
-        covered_until,
-        delegation.text_range().end().get(),
-    );
 
     DelegationSpecifierListItems { items }
 }
 
-fn push_recovered_delegation_specifier_gap<'source>(
+fn push_delegation_specifier_entry<'source>(
     items: &mut Vec<CommaListItem<'source>>,
-    source: &'source str,
-    source_start: usize,
-    tokens: &[KotlinSyntaxToken<'source>],
-    token_cursor: &mut usize,
-    start: usize,
-    end: usize,
+    entry: RecoveredSeparatedListEntry<
+        'source,
+        jolt_kotlin_syntax::DelegationSpecifierListEntry<'source>,
+    >,
 ) {
-    if source_gap_is_trivia(source, source_start, tokens.iter().copied(), start, end) {
-        return;
-    }
-
-    let mut gap_tokens = Vec::new();
-    while *token_cursor < tokens.len() {
-        let range = tokens[*token_cursor].token_text_range();
-        if range.end().get() <= start {
-            *token_cursor += 1;
-            continue;
-        }
-        if range.start().get() >= end {
-            break;
-        }
-        if range.start().get() >= start && range.end().get() <= end {
-            gap_tokens.push(tokens[*token_cursor]);
-            *token_cursor += 1;
-            continue;
-        }
-        break;
-    }
-
-    if !gap_tokens.is_empty() {
-        items.push(CommaListItem {
-            doc: format_token_sequence(gap_tokens, LeadingTrivia::Preserve),
+    match entry {
+        RecoveredSeparatedListEntry::Entry(entry) => items.push(CommaListItem {
+            doc: format_delegation_specifier(&entry.specifier),
+            comma: entry.comma,
+        }),
+        RecoveredSeparatedListEntry::Token(token) => items.push(CommaListItem {
+            doc: format_token_sequence(std::iter::once(token), LeadingTrivia::Preserve),
             comma: None,
-        });
+        }),
+        RecoveredSeparatedListEntry::Error(error) => items.push(CommaListItem {
+            doc: format_token_sequence(error.token_iter(), LeadingTrivia::Preserve),
+            comma: None,
+        }),
+        RecoveredSeparatedListEntry::Node(node) => items.push(CommaListItem {
+            doc: format_token_sequence(node.token_iter(), LeadingTrivia::Preserve),
+            comma: None,
+        }),
     }
 }
 
@@ -332,15 +293,18 @@ fn format_delegation_specifier<'source>(specifier: &DelegationSpecifier<'source>
     ])
 }
 
-fn simple_primary_constructor_tail<'source>(
+fn simple_primary_constructor_tail<'source, Tokens, MakeTokens>(
     name: &Name<'source>,
     type_parameters: Option<jolt_kotlin_syntax::TypeParameterList<'source>>,
     constructor: &PrimaryConstructor<'source>,
     declaration_source: &'source str,
     declaration_start: usize,
-    tokens: impl IntoIterator<Item = KotlinSyntaxToken<'source>>,
-) -> Option<DeclarationTail<'source>> {
-    let tokens = tokens.into_iter().collect::<Vec<_>>();
+    tokens: MakeTokens,
+) -> Option<DeclarationTail<'source>>
+where
+    Tokens: IntoIterator<Item = KotlinSyntaxToken<'source>>,
+    MakeTokens: Fn() -> Tokens + Copy,
+{
     let expected_open_start = type_parameters
         .and_then(|parameters| parameters.last_token())
         .or_else(|| name.last_token())?
@@ -355,7 +319,7 @@ fn simple_primary_constructor_tail<'source>(
         if !source_gap_is_trivia(
             declaration_source,
             declaration_start,
-            tokens.iter().copied(),
+            tokens(),
             expected_open_start.get(),
             open.token_text_range().start().get(),
         ) {
@@ -376,7 +340,7 @@ fn simple_primary_constructor_tail<'source>(
     if !source_gap_is_trivia(
         declaration_source,
         declaration_start,
-        tokens.iter().copied(),
+        tokens(),
         expected_open_start.get(),
         first_tail_start.get(),
     ) {

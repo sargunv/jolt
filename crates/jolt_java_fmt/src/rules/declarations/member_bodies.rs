@@ -6,9 +6,9 @@ use super::{
     format_compact_constructor_declaration, format_constructor_declaration,
     format_enum_declaration, format_field_declaration, format_interface_declaration,
     format_method_declaration, format_record_declaration, format_removed_comments,
-    format_token_with_comments, formatter_ignore_ranges, formatter_ignore_run_doc,
-    formatter_ignore_runs, hard_line, has_removed_comments, join_member_docs,
-    relative_token_range_between,
+    format_token_sequence, format_token_with_comments, formatter_ignore_ranges,
+    formatter_ignore_run_doc, formatter_ignore_runs, hard_line, has_removed_comments,
+    join_member_docs, relative_token_range_between,
 };
 use jolt_fmt_ir::space;
 
@@ -22,18 +22,18 @@ pub(super) fn format_class_body<'source>(
         body.token_iter(),
     );
     if ignored_ranges.is_empty() {
-        return format_class_member_docs(
+        return format_class_member_docs_with_recovered(
             format_body_open_dangling_comments(body.open_brace()),
-            body.members().filter(is_printable_class_member),
+            body.members_with_recovered(),
             format_body_close_dangling_comments(body.close_brace()),
             formatter,
         );
     }
 
-    format_class_member_body(
+    format_class_member_docs_with_recovered_and_ignored(
         body.text_range().start().get(),
         &ignored_ranges,
-        body.members(),
+        body.members_with_recovered(),
         format_body_open_dangling_comments(body.open_brace()),
         format_body_close_dangling_comments(body.close_brace()),
         formatter,
@@ -50,18 +50,18 @@ pub(super) fn format_record_body<'source>(
         body.token_iter(),
     );
     if ignored_ranges.is_empty() {
-        return format_class_member_docs(
+        return format_class_member_docs_with_recovered(
             format_body_open_dangling_comments(body.open_brace()),
-            body.members().filter(is_printable_class_member),
+            body.members_with_recovered(),
             format_body_close_dangling_comments(body.close_brace()),
             formatter,
         );
     }
 
-    format_class_member_body(
+    format_class_member_docs_with_recovered_and_ignored(
         body.text_range().start().get(),
         &ignored_ranges,
-        body.members(),
+        body.members_with_recovered(),
         format_body_open_dangling_comments(body.open_brace()),
         format_body_close_dangling_comments(body.close_brace()),
         formatter,
@@ -78,29 +78,20 @@ pub(super) fn format_interface_body<'source>(
         body.token_iter(),
     );
     if ignored_ranges.is_empty() {
-        let mut formatted_members = Vec::new();
-        formatted_members.extend(format_body_open_dangling_comments(body.open_brace()));
-        formatted_members.extend(
-            body.members()
-                .filter(is_printable_interface_member)
-                .map(|member| FormattedMember::from_interface_member(&member, formatter)),
+        return format_interface_member_docs_with_recovered(
+            format_body_open_dangling_comments(body.open_brace()),
+            body.members_with_recovered(),
+            format_body_close_dangling_comments(body.close_brace()),
+            formatter,
         );
-        formatted_members.extend(format_body_close_dangling_comments(body.close_brace()));
-        return (!formatted_members.is_empty()).then(|| join_member_docs(formatted_members));
     }
-    let members = body.members().collect::<Vec<_>>();
-    let effective_members = printable_interface_members(&members);
-    let member_ranges = effective_members
-        .iter()
-        .map(|member| interface_member_token_range(member, body.text_range().start().get()))
-        .collect::<Vec<_>>();
-    format_members_with_ignored(
-        &effective_members,
-        &formatter_ignore_runs(&ignored_ranges, &member_ranges),
+    format_interface_member_docs_with_recovered_and_ignored(
+        body.text_range().start().get(),
+        &ignored_ranges,
         format_body_open_dangling_comments(body.open_brace()),
-        |run, members| ignored_interface_member_category(run, members),
-        |member| FormattedMember::from_interface_member(member, formatter),
+        body.members_with_recovered(),
         format_body_close_dangling_comments(body.close_brace()),
+        formatter,
     )
 }
 
@@ -114,62 +105,54 @@ pub(super) fn format_annotation_interface_body<'source>(
         body.token_iter(),
     );
     if ignored_ranges.is_empty() {
-        let mut formatted_members = Vec::new();
-        formatted_members.extend(format_body_open_dangling_comments(body.open_brace()));
-        formatted_members.extend(
-            body.members()
-                .filter(is_printable_annotation_member)
-                .map(|member| FormattedMember::from_annotation_member(&member, formatter)),
+        return format_annotation_member_docs_with_recovered(
+            format_body_open_dangling_comments(body.open_brace()),
+            body.members_with_recovered(),
+            format_body_close_dangling_comments(body.close_brace()),
+            formatter,
         );
-        formatted_members.extend(format_body_close_dangling_comments(body.close_brace()));
-        return (!formatted_members.is_empty()).then(|| join_member_docs(formatted_members));
     }
-    let members = body.members().collect::<Vec<_>>();
-    let members = printable_annotation_members(&members);
-    let member_ranges = members
-        .iter()
-        .map(|member| annotation_member_token_range(member, body.text_range().start().get()))
-        .collect::<Vec<_>>();
-    format_members_with_ignored(
-        &members,
-        &formatter_ignore_runs(&ignored_ranges, &member_ranges),
+    format_annotation_member_docs_with_recovered_and_ignored(
+        body.text_range().start().get(),
+        &ignored_ranges,
         format_body_open_dangling_comments(body.open_brace()),
-        |run, members| ignored_annotation_member_category(run, members),
-        |member| FormattedMember::from_annotation_member(member, formatter),
+        body.members_with_recovered(),
         format_body_close_dangling_comments(body.close_brace()),
+        formatter,
     )
 }
 
 pub(super) fn format_class_member_body<'source>(
     body_start: usize,
     ignored_ranges: &[crate::helpers::formatter_ignore::FormatterIgnoreRange<'source>],
-    members: impl IntoIterator<Item = ClassBodyMember<'source>>,
+    members: impl IntoIterator<
+        Item = jolt_java_syntax::RecoveredSeparatedListEntry<'source, ClassBodyMember<'source>>,
+    >,
     open_dangling_comments: Option<FormattedMember<'source>>,
     close_dangling_comments: Option<FormattedMember<'source>>,
     formatter: &JavaFormatter<'_>,
 ) -> Option<Doc<'source>> {
     let members = members.into_iter();
     if ignored_ranges.is_empty() {
-        return format_class_member_docs(
+        return format_class_member_docs_with_recovered(
             open_dangling_comments,
-            members.filter(is_printable_class_member),
+            members,
             close_dangling_comments,
             formatter,
         );
     }
 
     let members = members.collect::<Vec<_>>();
-    let effective_members = printable_class_members(&members);
-    let member_ranges = effective_members
+    let member_ranges = members
         .iter()
-        .map(|member| class_member_token_range(member, body_start))
+        .map(|member| recovered_class_member_token_range(member, body_start))
         .collect::<Vec<_>>();
     format_members_with_ignored(
-        &effective_members,
+        &members,
         &formatter_ignore_runs(ignored_ranges, &member_ranges),
         open_dangling_comments,
-        |run, members| ignored_member_category(run, members),
-        |member| FormattedMember::from_member(member, formatter),
+        |run, members| ignored_recovered_class_member_category(run, members),
+        |member| format_recovered_class_member(member, formatter),
         close_dangling_comments,
     )
 }
@@ -182,7 +165,7 @@ fn format_members_with_ignored<'source, Member>(
         &crate::helpers::formatter_ignore::FormatterIgnoreRun<'source>,
         &[Member],
     ) -> MemberCategory,
-    mut format_member: impl FnMut(&Member) -> FormattedMember<'source>,
+    mut format_member: impl FnMut(&Member) -> Option<FormattedMember<'source>>,
     close_dangling_comments: Option<FormattedMember<'source>>,
 ) -> Option<Doc<'source>> {
     let mut formatted_members = Vec::new();
@@ -210,11 +193,12 @@ fn format_members_with_ignored<'source, Member>(
             continue;
         }
 
-        let mut formatted_member = format_member(member);
-        if skip_index > 0 && ignored_runs[skip_index - 1].skip_end == member_index {
-            formatted_member = formatted_member.without_blank_line_before();
+        if let Some(mut formatted_member) = format_member(member) {
+            if skip_index > 0 && ignored_runs[skip_index - 1].skip_end == member_index {
+                formatted_member = formatted_member.without_blank_line_before();
+            }
+            formatted_members.push(formatted_member);
         }
-        formatted_members.push(formatted_member);
     }
 
     while ignored_index < ignored_runs.len() {
@@ -230,22 +214,216 @@ fn format_members_with_ignored<'source, Member>(
     (!formatted_members.is_empty()).then(|| join_member_docs(formatted_members))
 }
 
-fn format_class_member_docs<'source>(
+fn format_class_member_docs_with_recovered<'source>(
     open_dangling_comments: Option<FormattedMember<'source>>,
-    members: impl IntoIterator<Item = ClassBodyMember<'source>>,
+    members: impl IntoIterator<
+        Item = jolt_java_syntax::RecoveredSeparatedListEntry<'source, ClassBodyMember<'source>>,
+    >,
     close_dangling_comments: Option<FormattedMember<'source>>,
     formatter: &JavaFormatter<'_>,
 ) -> Option<Doc<'source>> {
     let mut formatted_members = Vec::new();
     formatted_members.extend(open_dangling_comments);
-    formatted_members.extend(
-        members
-            .into_iter()
-            .map(|member| FormattedMember::from_member(&member, formatter)),
-    );
+
+    for entry in members {
+        match entry {
+            jolt_java_syntax::RecoveredSeparatedListEntry::Entry(member) => {
+                if is_printable_class_member(&member) {
+                    formatted_members.push(FormattedMember::from_member(&member, formatter));
+                }
+            }
+            jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
+                formatted_members.push(FormattedMember::comment(format_token_sequence(
+                    std::iter::once(token),
+                    crate::helpers::comments::LeadingTrivia::Preserve,
+                )));
+            }
+            jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => {
+                formatted_members.push(FormattedMember::comment(format_token_sequence(
+                    error.token_iter(),
+                    crate::helpers::comments::LeadingTrivia::Preserve,
+                )));
+            }
+            jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => {
+                formatted_members.push(FormattedMember::comment(format_token_sequence(
+                    node.token_iter(),
+                    crate::helpers::comments::LeadingTrivia::Preserve,
+                )));
+            }
+        }
+    }
     formatted_members.extend(close_dangling_comments);
 
     (!formatted_members.is_empty()).then(|| join_member_docs(formatted_members))
+}
+
+fn format_class_member_docs_with_recovered_and_ignored<'source>(
+    source_start: usize,
+    ignored_ranges: &[crate::helpers::formatter_ignore::FormatterIgnoreRange<'source>],
+    members: impl IntoIterator<
+        Item = jolt_java_syntax::RecoveredSeparatedListEntry<'source, ClassBodyMember<'source>>,
+    >,
+    open_dangling_comments: Option<FormattedMember<'source>>,
+    close_dangling_comments: Option<FormattedMember<'source>>,
+    formatter: &JavaFormatter<'_>,
+) -> Option<Doc<'source>> {
+    let members = members.into_iter().collect::<Vec<_>>();
+    let member_ranges = members
+        .iter()
+        .map(|member| recovered_class_member_token_range(member, source_start))
+        .collect::<Vec<_>>();
+    format_members_with_ignored(
+        &members,
+        &formatter_ignore_runs(ignored_ranges, &member_ranges),
+        open_dangling_comments,
+        |run, members| ignored_recovered_class_member_category(run, members),
+        |member| format_recovered_class_member(member, formatter),
+        close_dangling_comments,
+    )
+}
+
+fn format_interface_member_docs_with_recovered<'source>(
+    open_dangling_comments: Option<FormattedMember<'source>>,
+    members: impl IntoIterator<
+        Item = jolt_java_syntax::RecoveredSeparatedListEntry<'source, InterfaceBodyMember<'source>>,
+    >,
+    close_dangling_comments: Option<FormattedMember<'source>>,
+    formatter: &JavaFormatter<'_>,
+) -> Option<Doc<'source>> {
+    let mut formatted_members = Vec::new();
+    formatted_members.extend(open_dangling_comments);
+
+    for entry in members {
+        match entry {
+            jolt_java_syntax::RecoveredSeparatedListEntry::Entry(member) => {
+                if is_printable_interface_member(&member) {
+                    formatted_members
+                        .push(FormattedMember::from_interface_member(&member, formatter));
+                }
+            }
+            jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
+                formatted_members.push(FormattedMember::comment(format_token_sequence(
+                    std::iter::once(token),
+                    crate::helpers::comments::LeadingTrivia::Preserve,
+                )));
+            }
+            jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => {
+                formatted_members.push(FormattedMember::comment(format_token_sequence(
+                    error.token_iter(),
+                    crate::helpers::comments::LeadingTrivia::Preserve,
+                )));
+            }
+            jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => {
+                formatted_members.push(FormattedMember::comment(format_token_sequence(
+                    node.token_iter(),
+                    crate::helpers::comments::LeadingTrivia::Preserve,
+                )));
+            }
+        }
+    }
+    formatted_members.extend(close_dangling_comments);
+
+    (!formatted_members.is_empty()).then(|| join_member_docs(formatted_members))
+}
+
+fn format_interface_member_docs_with_recovered_and_ignored<'source>(
+    source_start: usize,
+    ignored_ranges: &[crate::helpers::formatter_ignore::FormatterIgnoreRange<'source>],
+    open_dangling_comments: Option<FormattedMember<'source>>,
+    members: impl IntoIterator<
+        Item = jolt_java_syntax::RecoveredSeparatedListEntry<'source, InterfaceBodyMember<'source>>,
+    >,
+    close_dangling_comments: Option<FormattedMember<'source>>,
+    formatter: &JavaFormatter<'_>,
+) -> Option<Doc<'source>> {
+    let members = members.into_iter().collect::<Vec<_>>();
+    let member_ranges = members
+        .iter()
+        .map(|member| recovered_interface_member_token_range(member, source_start))
+        .collect::<Vec<_>>();
+    format_members_with_ignored(
+        &members,
+        &formatter_ignore_runs(ignored_ranges, &member_ranges),
+        open_dangling_comments,
+        |run, members| ignored_recovered_interface_member_category(run, members),
+        |member| format_recovered_interface_member(member, formatter),
+        close_dangling_comments,
+    )
+}
+
+fn format_annotation_member_docs_with_recovered<'source>(
+    open_dangling_comments: Option<FormattedMember<'source>>,
+    members: impl IntoIterator<
+        Item = jolt_java_syntax::RecoveredSeparatedListEntry<
+            'source,
+            AnnotationInterfaceBodyMember<'source>,
+        >,
+    >,
+    close_dangling_comments: Option<FormattedMember<'source>>,
+    formatter: &JavaFormatter<'_>,
+) -> Option<Doc<'source>> {
+    let mut formatted_members = Vec::new();
+    formatted_members.extend(open_dangling_comments);
+
+    for entry in members {
+        match entry {
+            jolt_java_syntax::RecoveredSeparatedListEntry::Entry(member) => {
+                if is_printable_annotation_member(&member) {
+                    formatted_members
+                        .push(FormattedMember::from_annotation_member(&member, formatter));
+                }
+            }
+            jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
+                formatted_members.push(FormattedMember::comment(format_token_sequence(
+                    std::iter::once(token),
+                    crate::helpers::comments::LeadingTrivia::Preserve,
+                )));
+            }
+            jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => {
+                formatted_members.push(FormattedMember::comment(format_token_sequence(
+                    error.token_iter(),
+                    crate::helpers::comments::LeadingTrivia::Preserve,
+                )));
+            }
+            jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => {
+                formatted_members.push(FormattedMember::comment(format_token_sequence(
+                    node.token_iter(),
+                    crate::helpers::comments::LeadingTrivia::Preserve,
+                )));
+            }
+        }
+    }
+    formatted_members.extend(close_dangling_comments);
+
+    (!formatted_members.is_empty()).then(|| join_member_docs(formatted_members))
+}
+
+fn format_annotation_member_docs_with_recovered_and_ignored<'source>(
+    source_start: usize,
+    ignored_ranges: &[crate::helpers::formatter_ignore::FormatterIgnoreRange<'source>],
+    open_dangling_comments: Option<FormattedMember<'source>>,
+    members: impl IntoIterator<
+        Item = jolt_java_syntax::RecoveredSeparatedListEntry<
+            'source,
+            AnnotationInterfaceBodyMember<'source>,
+        >,
+    >,
+    close_dangling_comments: Option<FormattedMember<'source>>,
+    formatter: &JavaFormatter<'_>,
+) -> Option<Doc<'source>> {
+    let members = members.into_iter().collect::<Vec<_>>();
+    let member_ranges = members
+        .iter()
+        .map(|member| recovered_annotation_member_token_range(member, source_start))
+        .collect::<Vec<_>>();
+    format_members_with_ignored(
+        &members,
+        &formatter_ignore_runs(ignored_ranges, &member_ranges),
+        open_dangling_comments,
+        |run, members| ignored_recovered_annotation_member_category(run, members),
+        |member| format_recovered_annotation_member(member, formatter),
+        close_dangling_comments,
+    )
 }
 
 fn class_member_token_range(
@@ -281,61 +459,246 @@ fn annotation_member_token_range(
     ))
 }
 
-fn ignored_member_category(
+fn recovered_class_member_token_range(
+    member: &jolt_java_syntax::RecoveredSeparatedListEntry<'_, ClassBodyMember<'_>>,
+    body_start: usize,
+) -> Option<Range<usize>> {
+    match member {
+        jolt_java_syntax::RecoveredSeparatedListEntry::Entry(member) => {
+            class_member_token_range(member, body_start)
+        }
+        jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
+            Some(relative_token_range_between(token, token, body_start))
+        }
+        jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => {
+            recovered_error_token_range(error, body_start)
+        }
+        jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => {
+            recovered_node_token_range(node, body_start)
+        }
+    }
+}
+
+fn recovered_interface_member_token_range(
+    member: &jolt_java_syntax::RecoveredSeparatedListEntry<'_, InterfaceBodyMember<'_>>,
+    body_start: usize,
+) -> Option<Range<usize>> {
+    match member {
+        jolt_java_syntax::RecoveredSeparatedListEntry::Entry(member) => {
+            interface_member_token_range(member, body_start)
+        }
+        jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
+            Some(relative_token_range_between(token, token, body_start))
+        }
+        jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => {
+            recovered_error_token_range(error, body_start)
+        }
+        jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => {
+            recovered_node_token_range(node, body_start)
+        }
+    }
+}
+
+fn recovered_annotation_member_token_range(
+    member: &jolt_java_syntax::RecoveredSeparatedListEntry<'_, AnnotationInterfaceBodyMember<'_>>,
+    body_start: usize,
+) -> Option<Range<usize>> {
+    match member {
+        jolt_java_syntax::RecoveredSeparatedListEntry::Entry(member) => {
+            annotation_member_token_range(member, body_start)
+        }
+        jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
+            Some(relative_token_range_between(token, token, body_start))
+        }
+        jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => {
+            recovered_error_token_range(error, body_start)
+        }
+        jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => {
+            recovered_node_token_range(node, body_start)
+        }
+    }
+}
+
+fn recovered_error_token_range(
+    error: &jolt_java_syntax::ErrorNode<'_>,
+    body_start: usize,
+) -> Option<Range<usize>> {
+    Some(relative_token_range_between(
+        &error.first_token()?,
+        &error.last_token()?,
+        body_start,
+    ))
+}
+
+fn recovered_node_token_range(
+    node: &jolt_java_syntax::RecoveredNode<'_>,
+    body_start: usize,
+) -> Option<Range<usize>> {
+    Some(relative_token_range_between(
+        &node.first_token()?,
+        &node.last_token()?,
+        body_start,
+    ))
+}
+
+fn ignored_recovered_class_member_category(
     run: &crate::helpers::formatter_ignore::FormatterIgnoreRun,
-    members: &[ClassBodyMember<'_>],
+    members: &[jolt_java_syntax::RecoveredSeparatedListEntry<'_, ClassBodyMember<'_>>],
 ) -> MemberCategory {
     members
         .get(run.skip_start)
-        .map_or(MemberCategory::Type, member_category)
+        .map_or(MemberCategory::Type, recovered_class_member_category)
 }
 
-fn ignored_interface_member_category(
+fn ignored_recovered_interface_member_category(
     run: &crate::helpers::formatter_ignore::FormatterIgnoreRun,
-    members: &[InterfaceBodyMember<'_>],
+    members: &[jolt_java_syntax::RecoveredSeparatedListEntry<'_, InterfaceBodyMember<'_>>],
 ) -> MemberCategory {
     members
         .get(run.skip_start)
-        .map_or(MemberCategory::Type, interface_member_category)
+        .map_or(MemberCategory::Type, recovered_interface_member_category)
 }
 
-fn ignored_annotation_member_category(
+fn ignored_recovered_annotation_member_category(
     run: &crate::helpers::formatter_ignore::FormatterIgnoreRun,
-    members: &[AnnotationInterfaceBodyMember<'_>],
+    members: &[jolt_java_syntax::RecoveredSeparatedListEntry<
+        '_,
+        AnnotationInterfaceBodyMember<'_>,
+    >],
 ) -> MemberCategory {
     members
         .get(run.skip_start)
-        .map_or(MemberCategory::Type, annotation_member_category)
+        .map_or(MemberCategory::Type, recovered_annotation_member_category)
 }
 
-fn printable_class_members<'source>(
-    members: &[ClassBodyMember<'source>],
-) -> Vec<ClassBodyMember<'source>> {
-    members
-        .iter()
-        .filter(|member| is_printable_class_member(member))
-        .copied()
-        .collect()
+fn recovered_class_member_category(
+    member: &jolt_java_syntax::RecoveredSeparatedListEntry<'_, ClassBodyMember<'_>>,
+) -> MemberCategory {
+    match member {
+        jolt_java_syntax::RecoveredSeparatedListEntry::Entry(member) => member_category(member),
+        jolt_java_syntax::RecoveredSeparatedListEntry::Token(_)
+        | jolt_java_syntax::RecoveredSeparatedListEntry::Error(_)
+        | jolt_java_syntax::RecoveredSeparatedListEntry::Node(_) => MemberCategory::Type,
+    }
 }
 
-fn printable_interface_members<'source>(
-    members: &[InterfaceBodyMember<'source>],
-) -> Vec<InterfaceBodyMember<'source>> {
-    members
-        .iter()
-        .filter(|member| is_printable_interface_member(member))
-        .copied()
-        .collect()
+fn recovered_interface_member_category(
+    member: &jolt_java_syntax::RecoveredSeparatedListEntry<'_, InterfaceBodyMember<'_>>,
+) -> MemberCategory {
+    match member {
+        jolt_java_syntax::RecoveredSeparatedListEntry::Entry(member) => {
+            interface_member_category(member)
+        }
+        jolt_java_syntax::RecoveredSeparatedListEntry::Token(_)
+        | jolt_java_syntax::RecoveredSeparatedListEntry::Error(_)
+        | jolt_java_syntax::RecoveredSeparatedListEntry::Node(_) => MemberCategory::Type,
+    }
 }
 
-fn printable_annotation_members<'source>(
-    members: &[AnnotationInterfaceBodyMember<'source>],
-) -> Vec<AnnotationInterfaceBodyMember<'source>> {
-    members
-        .iter()
-        .filter(|member| is_printable_annotation_member(member))
-        .copied()
-        .collect()
+fn recovered_annotation_member_category(
+    member: &jolt_java_syntax::RecoveredSeparatedListEntry<'_, AnnotationInterfaceBodyMember<'_>>,
+) -> MemberCategory {
+    match member {
+        jolt_java_syntax::RecoveredSeparatedListEntry::Entry(member) => {
+            annotation_member_category(member)
+        }
+        jolt_java_syntax::RecoveredSeparatedListEntry::Token(_)
+        | jolt_java_syntax::RecoveredSeparatedListEntry::Error(_)
+        | jolt_java_syntax::RecoveredSeparatedListEntry::Node(_) => MemberCategory::Type,
+    }
+}
+
+fn format_recovered_class_member<'source>(
+    member: &jolt_java_syntax::RecoveredSeparatedListEntry<'source, ClassBodyMember<'source>>,
+    formatter: &JavaFormatter<'_>,
+) -> Option<FormattedMember<'source>> {
+    match member {
+        jolt_java_syntax::RecoveredSeparatedListEntry::Entry(member) => {
+            is_printable_class_member(member)
+                .then(|| FormattedMember::from_member(member, formatter))
+        }
+        jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
+            Some(FormattedMember::comment(format_token_sequence(
+                std::iter::once(*token),
+                crate::helpers::comments::LeadingTrivia::Preserve,
+            )))
+        }
+        jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => {
+            Some(FormattedMember::comment(format_token_sequence(
+                error.token_iter(),
+                crate::helpers::comments::LeadingTrivia::Preserve,
+            )))
+        }
+        jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => {
+            Some(FormattedMember::comment(format_token_sequence(
+                node.token_iter(),
+                crate::helpers::comments::LeadingTrivia::Preserve,
+            )))
+        }
+    }
+}
+
+fn format_recovered_interface_member<'source>(
+    member: &jolt_java_syntax::RecoveredSeparatedListEntry<'source, InterfaceBodyMember<'source>>,
+    formatter: &JavaFormatter<'_>,
+) -> Option<FormattedMember<'source>> {
+    match member {
+        jolt_java_syntax::RecoveredSeparatedListEntry::Entry(member) => {
+            is_printable_interface_member(member)
+                .then(|| FormattedMember::from_interface_member(member, formatter))
+        }
+        jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
+            Some(FormattedMember::comment(format_token_sequence(
+                std::iter::once(*token),
+                crate::helpers::comments::LeadingTrivia::Preserve,
+            )))
+        }
+        jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => {
+            Some(FormattedMember::comment(format_token_sequence(
+                error.token_iter(),
+                crate::helpers::comments::LeadingTrivia::Preserve,
+            )))
+        }
+        jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => {
+            Some(FormattedMember::comment(format_token_sequence(
+                node.token_iter(),
+                crate::helpers::comments::LeadingTrivia::Preserve,
+            )))
+        }
+    }
+}
+
+fn format_recovered_annotation_member<'source>(
+    member: &jolt_java_syntax::RecoveredSeparatedListEntry<
+        'source,
+        AnnotationInterfaceBodyMember<'source>,
+    >,
+    formatter: &JavaFormatter<'_>,
+) -> Option<FormattedMember<'source>> {
+    match member {
+        jolt_java_syntax::RecoveredSeparatedListEntry::Entry(member) => {
+            is_printable_annotation_member(member)
+                .then(|| FormattedMember::from_annotation_member(member, formatter))
+        }
+        jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
+            Some(FormattedMember::comment(format_token_sequence(
+                std::iter::once(*token),
+                crate::helpers::comments::LeadingTrivia::Preserve,
+            )))
+        }
+        jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => {
+            Some(FormattedMember::comment(format_token_sequence(
+                error.token_iter(),
+                crate::helpers::comments::LeadingTrivia::Preserve,
+            )))
+        }
+        jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => {
+            Some(FormattedMember::comment(format_token_sequence(
+                node.token_iter(),
+                crate::helpers::comments::LeadingTrivia::Preserve,
+            )))
+        }
+    }
 }
 
 fn is_printable_class_member(member: &ClassBodyMember<'_>) -> bool {

@@ -4,6 +4,7 @@ use std::ops::Range;
 use jolt_fmt_ir::{Doc, concat, empty_line, hard_line};
 use jolt_java_syntax::{
     ModuleDeclaration, ModuleDirective, ModuleDirectiveRole, ModuleNameListEntry, NameSyntax,
+    RecoveredSeparatedListEntry,
 };
 
 use crate::helpers::blocks::join_hard_lines;
@@ -11,8 +12,8 @@ use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_comment, format_construct_leading_comments,
     format_inline_trailing_comment_list, format_leading_comment_runs,
     format_separator_with_comments, format_token_after_relocated_leading_comments,
-    format_token_before_relocated_trailing_comments, format_token_with_comments,
-    token_has_comments,
+    format_token_before_relocated_trailing_comments, format_token_sequence,
+    format_token_with_comments, token_has_comments,
 };
 use crate::helpers::formatter_ignore::{
     formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
@@ -61,7 +62,7 @@ fn indent_module_body(directives: Option<Doc<'_>>) -> Doc<'_> {
 }
 
 fn format_module_directives<'source>(module: &ModuleDeclaration<'source>) -> Option<Doc<'source>> {
-    let directives = module.directives().collect::<Vec<_>>();
+    let directives = module.directives_with_recovered().collect::<Vec<_>>();
     if directives.is_empty() {
         return None;
     }
@@ -72,11 +73,13 @@ fn format_module_directives<'source>(module: &ModuleDeclaration<'source>) -> Opt
         module.token_iter(),
     );
     if ignored_ranges.is_empty() {
-        return Some(format_module_directive_segments(directives));
+        return Some(format_module_directive_entries(directives));
     }
     let directive_ranges = directives
         .iter()
-        .map(|directive| module_directive_token_range(directive, module.text_range().start().get()))
+        .map(|directive| {
+            module_directive_entry_token_range(directive, module.text_range().start().get())
+        })
         .collect::<Vec<_>>();
     let ignored_runs = formatter_ignore_runs(&ignored_ranges, &directive_ranges);
     Some(format_module_directives_with_ignored(
@@ -86,7 +89,7 @@ fn format_module_directives<'source>(module: &ModuleDeclaration<'source>) -> Opt
 }
 
 fn format_module_directives_with_ignored<'source>(
-    directives: Vec<ModuleDirective<'source>>,
+    directives: Vec<RecoveredSeparatedListEntry<'source, ModuleDirective<'source>>>,
     ignored_runs: &[crate::helpers::formatter_ignore::FormatterIgnoreRun<'source>],
 ) -> Doc<'source> {
     let mut sections = Vec::new();
@@ -117,7 +120,16 @@ fn format_module_directives_with_ignored<'source>(
             continue;
         }
 
-        segment.push(directive);
+        match directive {
+            RecoveredSeparatedListEntry::Entry(directive) => segment.push(directive),
+            recovered => {
+                push_module_directive_segment(&mut sections, &mut segment);
+                sections.push(ModuleDirectiveSection {
+                    doc: format_recovered_module_directive_entry(recovered),
+                    hard_line_after: false,
+                });
+            }
+        }
     }
 
     push_module_directive_segment(&mut sections, &mut segment);
@@ -178,6 +190,48 @@ fn format_module_directive_segments(directives: Vec<ModuleDirective<'_>>) -> Doc
     )
 }
 
+fn format_module_directive_entries<'source>(
+    entries: Vec<RecoveredSeparatedListEntry<'source, ModuleDirective<'source>>>,
+) -> Doc<'source> {
+    let mut sections = Vec::new();
+    let mut segment = Vec::new();
+
+    for entry in entries {
+        match entry {
+            RecoveredSeparatedListEntry::Entry(directive) => segment.push(directive),
+            recovered => {
+                push_module_directive_segment(&mut sections, &mut segment);
+                sections.push(ModuleDirectiveSection {
+                    doc: format_recovered_module_directive_entry(recovered),
+                    hard_line_after: false,
+                });
+            }
+        }
+    }
+
+    push_module_directive_segment(&mut sections, &mut segment);
+    join_module_directive_sections(sections)
+}
+
+fn format_recovered_module_directive_entry<'source>(
+    entry: RecoveredSeparatedListEntry<'source, ModuleDirective<'source>>,
+) -> Doc<'source> {
+    match entry {
+        RecoveredSeparatedListEntry::Entry(directive) => {
+            FormattedModuleDirective::from_directive(&directive).into_doc()
+        }
+        RecoveredSeparatedListEntry::Token(token) => {
+            format_token_sequence(std::iter::once(token), LeadingTrivia::Preserve)
+        }
+        RecoveredSeparatedListEntry::Error(error) => {
+            format_token_sequence(error.token_iter(), LeadingTrivia::Preserve)
+        }
+        RecoveredSeparatedListEntry::Node(node) => {
+            format_token_sequence(node.token_iter(), LeadingTrivia::Preserve)
+        }
+    }
+}
+
 fn module_directive_token_range(
     directive: &ModuleDirective<'_>,
     module_start: usize,
@@ -187,6 +241,30 @@ fn module_directive_token_range(
         &directive.last_token()?,
         module_start,
     ))
+}
+
+fn module_directive_entry_token_range(
+    entry: &RecoveredSeparatedListEntry<'_, ModuleDirective<'_>>,
+    module_start: usize,
+) -> Option<Range<usize>> {
+    match entry {
+        RecoveredSeparatedListEntry::Entry(directive) => {
+            module_directive_token_range(directive, module_start)
+        }
+        RecoveredSeparatedListEntry::Token(token) => {
+            Some(relative_token_range_between(token, token, module_start))
+        }
+        RecoveredSeparatedListEntry::Error(error) => Some(relative_token_range_between(
+            &error.first_token()?,
+            &error.last_token()?,
+            module_start,
+        )),
+        RecoveredSeparatedListEntry::Node(node) => Some(relative_token_range_between(
+            &node.first_token()?,
+            &node.last_token()?,
+            module_start,
+        )),
+    }
 }
 
 fn format_module_directive_run(directives: Vec<FormattedModuleDirective<'_>>) -> Doc<'_> {
@@ -242,9 +320,15 @@ struct FormattedModuleDirective<'source> {
 
 impl<'source> FormattedModuleDirective<'source> {
     fn from_directive(directive: &ModuleDirective<'source>) -> Self {
-        let role = directive
-            .directive_role()
-            .expect("clean module directive should expose a directive role");
+        let Some(role) = directive.directive_role() else {
+            return Self {
+                first_token: None,
+                last_token: None,
+                kind_order: ModuleDirectiveKindOrder::Requires,
+                primary_name: NameSortKey::recovered(),
+                doc: format_token_sequence(directive.token_iter(), LeadingTrivia::Preserve),
+            };
+        };
         let primary_name = module_directive_primary_name(&role);
         let kind_order = module_directive_kind_order(&role);
         let doc = format_module_directive_doc(directive, &role);
@@ -326,7 +410,7 @@ fn format_module_directive_doc<'source>(
             exports.exports_token().as_ref(),
             package,
             exports.to_token().as_ref(),
-            exports.target_entries(),
+            exports.target_entries_with_recovered(),
             exports.semicolon().as_ref(),
         ),
         (ModuleDirective::OpensDirective(opens), ModuleDirectiveRole::Opens { package, .. }) => {
@@ -334,7 +418,7 @@ fn format_module_directive_doc<'source>(
                 opens.opens_token().as_ref(),
                 package,
                 opens.to_token().as_ref(),
-                opens.target_entries(),
+                opens.target_entries_with_recovered(),
                 opens.semicolon().as_ref(),
             )
         }
@@ -350,10 +434,10 @@ fn format_module_directive_doc<'source>(
             provides.provides_token().as_ref(),
             service,
             provides.with_token().as_ref(),
-            provides.implementation_entries(),
+            provides.implementation_entries_with_recovered(),
             provides.semicolon().as_ref(),
         ),
-        _ => unreachable!("module directive role should match directive variant"),
+        _ => format_token_sequence(directive.token_iter(), LeadingTrivia::Preserve),
     }
 }
 
@@ -388,13 +472,18 @@ fn format_module_name_list_directive<'source>(
     keyword: Option<&jolt_java_syntax::JavaSyntaxToken<'source>>,
     subject: &NameSyntax<'source>,
     connective: Option<&jolt_java_syntax::JavaSyntaxToken<'source>>,
-    entries: impl IntoIterator<Item = ModuleNameListEntry<'source>>,
+    entries: impl IntoIterator<
+        Item = RecoveredSeparatedListEntry<'source, ModuleNameListEntry<'source>>,
+    >,
     semicolon: Option<&jolt_java_syntax::JavaSyntaxToken<'source>>,
 ) -> Doc<'source> {
     let Some(entries) = format_module_name_list(entries) else {
         return concat([
             format_directive_head(keyword),
             format_name(subject),
+            connective.map_or_else(jolt_fmt_ir::nil, |connective| {
+                concat([space(), format_token_with_comments(connective)])
+            }),
             format_directive_semicolon(semicolon),
         ]);
     };
@@ -410,23 +499,55 @@ fn format_module_name_list_directive<'source>(
 }
 
 fn format_module_name_list<'source>(
-    entries: impl IntoIterator<Item = ModuleNameListEntry<'source>>,
+    entries: impl IntoIterator<
+        Item = RecoveredSeparatedListEntry<'source, ModuleNameListEntry<'source>>,
+    >,
 ) -> Option<Doc<'source>> {
-    let mut entries = entries.into_iter();
-    let first = entries.next()?;
     let mut should_break = false;
+    let mut has_recovered = false;
     let mut items = Vec::new();
-    for entry in std::iter::once(first).chain(entries) {
-        should_break |= name_has_leading_comments(&entry.name)
-            || entry.comma.as_ref().is_some_and(token_has_comments);
-        items.push(FormattedModuleNameEntry {
-            leading_comments: format_construct_leading_comments(entry.name.first_token().as_ref()),
-            name: format_name(&entry.name),
-            comma: entry.comma,
-        });
+
+    for entry in entries {
+        match entry {
+            RecoveredSeparatedListEntry::Entry(entry) => {
+                should_break |= name_has_leading_comments(&entry.name)
+                    || entry.comma.as_ref().is_some_and(token_has_comments);
+                items.push(FormattedModuleNamePart::Entry(FormattedModuleNameEntry {
+                    leading_comments: format_construct_leading_comments(
+                        entry.name.first_token().as_ref(),
+                    ),
+                    name: format_name(&entry.name),
+                    comma: entry.comma,
+                }));
+            }
+            RecoveredSeparatedListEntry::Token(token) => {
+                has_recovered = true;
+                items.push(FormattedModuleNamePart::Recovered(
+                    format_token_with_comments(&token),
+                ));
+            }
+            RecoveredSeparatedListEntry::Error(error) => {
+                has_recovered = true;
+                items.push(FormattedModuleNamePart::Recovered(format_token_sequence(
+                    error.token_iter(),
+                    LeadingTrivia::Preserve,
+                )));
+            }
+            RecoveredSeparatedListEntry::Node(node) => {
+                has_recovered = true;
+                items.push(FormattedModuleNamePart::Recovered(format_token_sequence(
+                    node.token_iter(),
+                    LeadingTrivia::Preserve,
+                )));
+            }
+        }
     }
 
-    Some(if should_break {
+    if items.is_empty() {
+        return None;
+    }
+
+    Some(if should_break || has_recovered {
         jolt_fmt_ir::indent(concat([
             hard_line(),
             format_module_name_entries_broken(items),
@@ -436,32 +557,52 @@ fn format_module_name_list<'source>(
     })
 }
 
+enum FormattedModuleNamePart<'source> {
+    Entry(FormattedModuleNameEntry<'source>),
+    Recovered(Doc<'source>),
+}
+
 struct FormattedModuleNameEntry<'source> {
     leading_comments: Doc<'source>,
     name: Doc<'source>,
     comma: Option<jolt_java_syntax::JavaSyntaxToken<'source>>,
 }
 
-fn format_module_name_entries_inline(entries: Vec<FormattedModuleNameEntry<'_>>) -> Doc<'_> {
+fn format_module_name_entries_inline(entries: Vec<FormattedModuleNamePart<'_>>) -> Doc<'_> {
     let mut docs = Vec::new();
     for entry in entries {
-        docs.push(entry.name);
-        if let Some(comma) = entry.comma {
-            docs.push(format_separator_with_comments(&comma, space()));
+        match entry {
+            FormattedModuleNamePart::Entry(entry) => {
+                docs.push(entry.name);
+                if let Some(comma) = entry.comma {
+                    docs.push(format_separator_with_comments(&comma, space()));
+                }
+            }
+            FormattedModuleNamePart::Recovered(doc) => docs.push(doc),
         }
     }
     concat(docs)
 }
 
-fn format_module_name_entries_broken(entries: Vec<FormattedModuleNameEntry<'_>>) -> Doc<'_> {
+fn format_module_name_entries_broken(entries: Vec<FormattedModuleNamePart<'_>>) -> Doc<'_> {
     let mut docs = Vec::new();
     let entries_len = entries.len();
     for (index, entry) in entries.into_iter().enumerate() {
-        docs.push(concat([entry.leading_comments, entry.name]));
-        if let Some(comma) = entry.comma {
-            docs.push(format_separator_with_comments(&comma, jolt_fmt_ir::line()));
-        } else if index + 1 < entries_len {
-            docs.push(hard_line());
+        match entry {
+            FormattedModuleNamePart::Entry(entry) => {
+                docs.push(concat([entry.leading_comments, entry.name]));
+                if let Some(comma) = entry.comma {
+                    docs.push(format_separator_with_comments(&comma, jolt_fmt_ir::line()));
+                } else if index + 1 < entries_len {
+                    docs.push(hard_line());
+                }
+            }
+            FormattedModuleNamePart::Recovered(doc) => {
+                docs.push(doc);
+                if index + 1 < entries_len {
+                    docs.push(hard_line());
+                }
+            }
         }
     }
     concat(docs)

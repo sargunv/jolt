@@ -1,7 +1,7 @@
 use jolt_kotlin_syntax::parse_kotlin_file;
 use jolt_test_support::{
-    SnapshotBuilder, collect_kotlin_files, fixture_snapshot_name, kotlin_fixture_root,
-    read_to_string, render_diagnostics,
+    SnapshotBuilder, collect_kotlin_files, fixture_manifest, fixture_snapshot_name,
+    kotlin_fixture_root, read_to_string, render_diagnostics,
 };
 
 #[test]
@@ -32,17 +32,4 @@ fn kotlin_corpus_syntax_snapshots() {
 
         insta::assert_snapshot!(fixture_snapshot_name(&root, &path), snapshot);
     }
-}
-
-fn fixture_manifest(root: &std::path::Path, paths: &[std::path::PathBuf]) -> String {
-    paths
-        .iter()
-        .map(|path| {
-            path.strip_prefix(root)
-                .unwrap_or(path)
-                .to_string_lossy()
-                .replace('\\', "/")
-        })
-        .collect::<Vec<_>>()
-        .join("\n")
 }

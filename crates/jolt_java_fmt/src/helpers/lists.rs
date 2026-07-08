@@ -1,11 +1,11 @@
 use jolt_fmt_ir::space;
 use jolt_fmt_ir::{Doc, concat, force_group, group, hard_line, if_break, indent, line, soft_line};
-use jolt_java_syntax::JavaSyntaxToken;
+use jolt_java_syntax::{JavaSyntaxToken, RecoveredSeparatedListEntry};
 
 use crate::helpers::comments::{
     InlineLeadingTrivia, LeadingTrivia, TrailingTrivia, delimiter_dangling_comments,
     format_dangling_comments, format_leading_comments, format_separator_with_comments,
-    format_token, format_token_after_relocated_leading_comments,
+    format_token, format_token_after_relocated_leading_comments, format_token_sequence,
     format_token_with_inline_leading_comments, has_delimiter_dangling_comments,
     trailing_comments_force_line,
 };
@@ -34,6 +34,27 @@ pub(crate) fn comma_list<'source>(
     concat(docs)
 }
 
+pub(crate) fn recovered_comma_list_items<'source, Entry>(
+    entries: impl IntoIterator<Item = RecoveredSeparatedListEntry<'source, Entry>>,
+    mut format_entry: impl FnMut(Entry) -> CommaListItem<'source>,
+) -> impl Iterator<Item = CommaListItem<'source>> {
+    entries.into_iter().map(move |entry| match entry {
+        RecoveredSeparatedListEntry::Entry(entry) => format_entry(entry),
+        RecoveredSeparatedListEntry::Token(token) => CommaListItem {
+            doc: format_token(&token, LeadingTrivia::Preserve, TrailingTrivia::Preserve),
+            comma: None,
+        },
+        RecoveredSeparatedListEntry::Error(error) => CommaListItem {
+            doc: format_token_sequence(error.token_iter(), LeadingTrivia::Preserve),
+            comma: None,
+        },
+        RecoveredSeparatedListEntry::Node(node) => CommaListItem {
+            doc: format_token_sequence(node.token_iter(), LeadingTrivia::Preserve),
+            comma: None,
+        },
+    })
+}
+
 pub(crate) fn parenthesized_list<'source>(
     open: Option<&JavaSyntaxToken<'source>>,
     close: Option<&JavaSyntaxToken<'source>>,
@@ -53,20 +74,19 @@ pub(crate) fn angle_bracket_list<'source>(
 pub(crate) fn braced_comma_list_with_trailing_separator<'source>(
     open: Option<&JavaSyntaxToken<'source>>,
     close: Option<&JavaSyntaxToken<'source>>,
-    items: Vec<CommaListItem<'source>>,
+    items: impl IntoIterator<Item = CommaListItem<'source>>,
 ) -> Doc<'source> {
-    if items.is_empty() {
+    let mut items = items.into_iter().peekable();
+    if items.peek().is_none() {
         return empty_delimited_list(open, close);
     }
 
-    let should_break = has_delimiter_dangling_comments(open, close)
-        || items.last().is_some_and(|item| item.comma.is_some());
+    let (items_doc, has_source_trailing_separator) = comma_list_with_trailing_separator(items);
+    let should_break =
+        has_delimiter_dangling_comments(open, close) || has_source_trailing_separator;
     let doc = concat([
         format_open_delimiter(open),
-        indent(concat([
-            format_braced_open_spacing(open),
-            comma_list_with_trailing_separator(items),
-        ])),
+        indent(concat([format_braced_open_spacing(open), items_doc])),
         format_braced_close_with_spacing(close),
     ]);
 
@@ -141,15 +161,20 @@ fn format_open_delimiter_with_trailing<'source>(
     })
 }
 
-fn comma_list_with_trailing_separator(items: Vec<CommaListItem<'_>>) -> Doc<'_> {
+fn comma_list_with_trailing_separator<'source>(
+    items: impl IntoIterator<Item = CommaListItem<'source>>,
+) -> (Doc<'source>, bool) {
     let mut docs = Vec::new();
-    let items_len = items.len();
+    let mut items = items.into_iter().peekable();
+    let mut has_source_trailing_separator = false;
 
-    for (index, item) in items.into_iter().enumerate() {
+    while let Some(item) = items.next() {
+        let is_last = items.peek().is_none();
+        has_source_trailing_separator |= is_last && item.comma.is_some();
         docs.push(item.doc);
         if let Some(comma) = item.comma {
-            docs.push(trailing_comma_separator(&comma, index + 1 == items_len));
-        } else if index + 1 < items_len {
+            docs.push(trailing_comma_separator(&comma, is_last));
+        } else if !is_last {
             docs.push(line());
         } else {
             docs.push(if_break(
@@ -161,7 +186,7 @@ fn comma_list_with_trailing_separator(items: Vec<CommaListItem<'_>>) -> Doc<'_> 
         }
     }
 
-    concat(docs)
+    (concat(docs), has_source_trailing_separator)
 }
 
 fn trailing_comma_separator<'source>(

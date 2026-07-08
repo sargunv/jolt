@@ -1,7 +1,8 @@
 use jolt_fmt_ir::{Doc, concat, force_group, group, indent, soft_line, space};
 use jolt_kotlin_syntax::{
     CallExpression, CollectionLiteralExpression, Expression, ExpressionParentRole, IndexExpression,
-    KotlinSyntaxToken, NavigationExpression, ValueArgument, ValueArgumentList,
+    NavigationExpression, NavigationOperatorTokens, RecoveredSeparatedListEntry, ValueArgument,
+    ValueArgumentList,
 };
 
 use crate::helpers::comments::{
@@ -14,7 +15,6 @@ use crate::helpers::lists::{
 };
 
 use super::{format_expression_with_leading, lambdas::format_lambda_expression};
-use crate::helpers::source::source_gap_is_trivia;
 use crate::rules::types::format_type_argument_list;
 
 pub(super) fn format_navigation_expression<'source>(
@@ -34,7 +34,7 @@ pub(super) fn format_navigation_expression<'source>(
     let Some(receiver) = expression.receiver() else {
         return concat([
             format_navigation_operator(
-                &expression.operator_tokens(),
+                expression.operator_tokens(),
                 leading,
                 TrailingTrivia::BeforeSpaceIfComments,
             ),
@@ -53,7 +53,7 @@ pub(super) fn format_navigation_expression<'source>(
         return concat([
             format_expression_with_leading(&receiver, leading),
             format_navigation_operator(
-                &operators,
+                operators,
                 LeadingTrivia::SuppressAlreadyHandled,
                 TrailingTrivia::Preserve,
             ),
@@ -63,7 +63,7 @@ pub(super) fn format_navigation_expression<'source>(
     concat([
         format_expression_with_leading(&receiver, leading),
         format_navigation_operator(
-            &operators,
+            operators,
             LeadingTrivia::SuppressAlreadyHandled,
             TrailingTrivia::RelocatedToEnclosingContext,
         ),
@@ -347,7 +347,7 @@ fn format_navigation_suffix<'source>(
 
     Some(concat([
         format_navigation_operator(
-            &operators,
+            operators,
             LeadingTrivia::Preserve,
             TrailingTrivia::BeforeSpaceIfComments,
         ),
@@ -359,19 +359,18 @@ fn navigation_operator_has_leading_comments(navigation: &NavigationExpression<'_
     navigation
         .operator_tokens()
         .first()
-        .copied()
         .is_some_and(|operator| !operator.leading_comments().is_empty())
 }
 
-fn format_navigation_operator<'source>(
-    tokens: &[KotlinSyntaxToken<'source>],
+fn format_navigation_operator(
+    tokens: NavigationOperatorTokens<'_>,
     leading: LeadingTrivia,
     trailing: TrailingTrivia,
-) -> Doc<'source> {
+) -> Doc<'_> {
     let last_index = tokens.len().saturating_sub(1);
-    concat(tokens.iter().enumerate().map(|(index, token)| {
+    concat(tokens.iter().enumerate().map(move |(index, token)| {
         format_token(
-            token,
+            &token,
             if index == 0 {
                 leading
             } else {
@@ -426,50 +425,12 @@ struct SquareArgumentListItems<'source> {
 fn collection_literal_items<'source>(
     expression: &CollectionLiteralExpression<'source>,
 ) -> SquareArgumentListItems<'source> {
-    let source_start = expression.text_range().start().get();
-    let source = expression.source_text();
-    let tokens = expression.token_iter().collect::<Vec<_>>();
-    let mut token_cursor = 0;
-    let mut covered_until = expression.open_bracket().map_or_else(
-        || expression.text_range().start().get(),
-        |open| open.token_text_range().end().get(),
-    );
     let mut items = Vec::new();
     let mut has_recovered_tokens = false;
 
-    for entry in expression.entries() {
-        has_recovered_tokens |= push_recovered_square_argument_gap(
-            &mut items,
-            source,
-            source_start,
-            &tokens,
-            &mut token_cursor,
-            covered_until,
-            entry.argument.text_range().start().get(),
-        );
-        items.push(CommaListItem {
-            doc: format_value_argument(&entry.argument),
-            comma: entry.comma,
-        });
-        covered_until = entry.comma.map_or_else(
-            || entry.argument.text_range().end().get(),
-            |comma| comma.token_text_range().end().get(),
-        );
+    for entry in expression.entries_with_recovered() {
+        has_recovered_tokens |= push_square_argument_entry(&mut items, entry);
     }
-
-    let list_end = expression.close_bracket().map_or_else(
-        || expression.text_range().end().get(),
-        |close| close.token_text_range().start().get(),
-    );
-    has_recovered_tokens |= push_recovered_square_argument_gap(
-        &mut items,
-        source,
-        source_start,
-        &tokens,
-        &mut token_cursor,
-        covered_until,
-        list_end,
-    );
 
     SquareArgumentListItems {
         items,
@@ -480,55 +441,12 @@ fn collection_literal_items<'source>(
 fn index_argument_items<'source>(
     index: &IndexExpression<'source>,
 ) -> SquareArgumentListItems<'source> {
-    let source_start = index.text_range().start().get();
-    let source = index.source_text();
-    let tokens = index.token_iter().collect::<Vec<_>>();
-    let mut token_cursor = 0;
-    let mut covered_until = index.open_bracket().map_or_else(
-        || {
-            index.receiver().map_or_else(
-                || index.text_range().start().get(),
-                |receiver| receiver.text_range().end().get(),
-            )
-        },
-        |open| open.token_text_range().end().get(),
-    );
     let mut items = Vec::new();
     let mut has_recovered_tokens = false;
 
-    for entry in index.entries() {
-        has_recovered_tokens |= push_recovered_square_argument_gap(
-            &mut items,
-            source,
-            source_start,
-            &tokens,
-            &mut token_cursor,
-            covered_until,
-            entry.argument.text_range().start().get(),
-        );
-        items.push(CommaListItem {
-            doc: format_value_argument(&entry.argument),
-            comma: entry.comma,
-        });
-        covered_until = entry.comma.map_or_else(
-            || entry.argument.text_range().end().get(),
-            |comma| comma.token_text_range().end().get(),
-        );
+    for entry in index.entries_with_recovered() {
+        has_recovered_tokens |= push_square_argument_entry(&mut items, entry);
     }
-
-    let list_end = index.close_bracket().map_or_else(
-        || index.text_range().end().get(),
-        |close| close.token_text_range().start().get(),
-    );
-    has_recovered_tokens |= push_recovered_square_argument_gap(
-        &mut items,
-        source,
-        source_start,
-        &tokens,
-        &mut token_cursor,
-        covered_until,
-        list_end,
-    );
 
     SquareArgumentListItems {
         items,
@@ -536,46 +454,40 @@ fn index_argument_items<'source>(
     }
 }
 
-fn push_recovered_square_argument_gap<'source>(
+fn push_square_argument_entry<'source>(
     items: &mut Vec<CommaListItem<'source>>,
-    source: &'source str,
-    source_start: usize,
-    tokens: &[KotlinSyntaxToken<'source>],
-    token_cursor: &mut usize,
-    start: usize,
-    end: usize,
+    entry: RecoveredSeparatedListEntry<'source, jolt_kotlin_syntax::ValueArgumentEntry<'source>>,
 ) -> bool {
-    if source_gap_is_trivia(source, source_start, tokens.iter().copied(), start, end) {
-        return false;
-    }
-
-    let mut gap_tokens = Vec::new();
-    while *token_cursor < tokens.len() {
-        let range = tokens[*token_cursor].token_text_range();
-        if range.end().get() <= start {
-            *token_cursor += 1;
-            continue;
+    match entry {
+        RecoveredSeparatedListEntry::Entry(entry) => {
+            items.push(CommaListItem {
+                doc: format_value_argument(&entry.argument),
+                comma: entry.comma,
+            });
+            false
         }
-        if range.start().get() >= end {
-            break;
+        RecoveredSeparatedListEntry::Token(token) => {
+            items.push(CommaListItem {
+                doc: format_token_sequence(std::iter::once(token), LeadingTrivia::Preserve),
+                comma: None,
+            });
+            true
         }
-        if range.start().get() >= start && range.end().get() <= end {
-            gap_tokens.push(tokens[*token_cursor]);
-            *token_cursor += 1;
-            continue;
+        RecoveredSeparatedListEntry::Error(error) => {
+            items.push(CommaListItem {
+                doc: format_token_sequence(error.token_iter(), LeadingTrivia::Preserve),
+                comma: None,
+            });
+            true
         }
-        break;
+        RecoveredSeparatedListEntry::Node(node) => {
+            items.push(CommaListItem {
+                doc: format_token_sequence(node.token_iter(), LeadingTrivia::Preserve),
+                comma: None,
+            });
+            true
+        }
     }
-
-    if gap_tokens.is_empty() {
-        return false;
-    }
-
-    items.push(CommaListItem {
-        doc: format_token_sequence(gap_tokens, LeadingTrivia::Preserve),
-        comma: None,
-    });
-    true
 }
 
 const fn is_simple_member_chain_root(expression: &Expression<'_>) -> bool {
@@ -635,123 +547,58 @@ struct ValueArgumentListItems<'source> {
 fn value_argument_list_items<'source>(
     arguments: &ValueArgumentList<'source>,
 ) -> ValueArgumentListItems<'source> {
-    let source_start = arguments.text_range().start().get();
-    let source = arguments.source_text();
-    let tokens = arguments.token_iter().collect::<Vec<_>>();
-    let mut token_cursor = 0;
-    let mut covered_until = arguments.open_paren().map_or_else(
-        || arguments.text_range().start().get(),
-        |open| open.token_text_range().end().get(),
-    );
     let mut items = Vec::new();
     let mut previous_comma = None;
     let mut has_argument_leading_comments = false;
     let mut has_recovered_tokens = false;
 
-    for entry in arguments.entries() {
-        let argument_start = entry.argument.text_range().start().get();
-        has_recovered_tokens |= push_recovered_value_argument_gap(
-            &mut items,
-            source,
-            source_start,
-            &tokens,
-            &mut token_cursor,
-            covered_until,
-            argument_start,
-        );
-
-        let leading = if previous_comma.is_some() {
-            LeadingTrivia::SuppressAlreadyHandled
-        } else {
-            LeadingTrivia::Preserve
-        };
-        has_argument_leading_comments |= entry
-            .argument
-            .first_token()
-            .is_some_and(|token| !token.leading_comments().is_empty());
-        items.push(CommaListItem {
-            doc: format_value_argument_with_leading(&entry.argument, leading),
-            comma: entry.comma,
-        });
-        covered_until = entry.argument.text_range().end().get();
-
-        if let Some(comma) = entry.comma {
-            let comma_start = comma.token_text_range().start().get();
-            has_recovered_tokens |= push_recovered_value_argument_gap(
-                &mut items,
-                source,
-                source_start,
-                &tokens,
-                &mut token_cursor,
-                covered_until,
-                comma_start,
-            );
-            covered_until = comma.token_text_range().end().get();
+    for entry in arguments.entries_with_recovered() {
+        match entry {
+            RecoveredSeparatedListEntry::Entry(entry) => {
+                let leading = if previous_comma.is_some() {
+                    LeadingTrivia::SuppressAlreadyHandled
+                } else {
+                    LeadingTrivia::Preserve
+                };
+                has_argument_leading_comments |= entry
+                    .argument
+                    .first_token()
+                    .is_some_and(|token| !token.leading_comments().is_empty());
+                items.push(CommaListItem {
+                    doc: format_value_argument_with_leading(&entry.argument, leading),
+                    comma: entry.comma,
+                });
+                previous_comma = entry.comma;
+            }
+            RecoveredSeparatedListEntry::Token(token) => {
+                items.push(CommaListItem {
+                    doc: format_token_sequence(std::iter::once(token), LeadingTrivia::Preserve),
+                    comma: None,
+                });
+                has_recovered_tokens = true;
+            }
+            RecoveredSeparatedListEntry::Error(error) => {
+                items.push(CommaListItem {
+                    doc: format_token_sequence(error.token_iter(), LeadingTrivia::Preserve),
+                    comma: None,
+                });
+                has_recovered_tokens = true;
+            }
+            RecoveredSeparatedListEntry::Node(node) => {
+                items.push(CommaListItem {
+                    doc: format_token_sequence(node.token_iter(), LeadingTrivia::Preserve),
+                    comma: None,
+                });
+                has_recovered_tokens = true;
+            }
         }
-        previous_comma = entry.comma;
     }
-
-    let list_end = arguments.close_paren().map_or_else(
-        || arguments.text_range().end().get(),
-        |close| close.token_text_range().start().get(),
-    );
-    has_recovered_tokens |= push_recovered_value_argument_gap(
-        &mut items,
-        source,
-        source_start,
-        &tokens,
-        &mut token_cursor,
-        covered_until,
-        list_end,
-    );
 
     ValueArgumentListItems {
         items,
         has_argument_leading_comments,
         has_recovered_tokens,
     }
-}
-
-fn push_recovered_value_argument_gap<'source>(
-    items: &mut Vec<CommaListItem<'source>>,
-    source: &'source str,
-    source_start: usize,
-    tokens: &[KotlinSyntaxToken<'source>],
-    token_cursor: &mut usize,
-    start: usize,
-    end: usize,
-) -> bool {
-    if source_gap_is_trivia(source, source_start, tokens.iter().copied(), start, end) {
-        return false;
-    }
-
-    let mut gap_tokens = Vec::new();
-    while *token_cursor < tokens.len() {
-        let range = tokens[*token_cursor].token_text_range();
-        if range.end().get() <= start {
-            *token_cursor += 1;
-            continue;
-        }
-        if range.start().get() >= end {
-            break;
-        }
-        if range.start().get() >= start && range.end().get() <= end {
-            gap_tokens.push(tokens[*token_cursor]);
-            *token_cursor += 1;
-            continue;
-        }
-        break;
-    }
-
-    if gap_tokens.is_empty() {
-        return false;
-    }
-
-    items.push(CommaListItem {
-        doc: format_token_sequence(gap_tokens, LeadingTrivia::Preserve),
-        comma: None,
-    });
-    true
 }
 
 pub(crate) fn format_value_argument<'source>(argument: &ValueArgument<'source>) -> Doc<'source> {
@@ -765,14 +612,10 @@ fn format_value_argument_with_leading<'source>(
     let Some(expression) = argument.expression() else {
         return format_recovered_value_argument_tokens(argument, leading);
     };
-    let expression_start = expression.text_range().start().get();
-    let has_named_assign = argument.token_iter().any(|token| {
-        token.kind() == jolt_kotlin_syntax::KotlinSyntaxKind::Assign
-            && token.token_text_range().end().get() <= expression_start
-    });
+    let has_named_assign = argument.assign_token().is_some();
 
     concat([
-        format_value_argument_prefix(argument, expression_start),
+        format_value_argument_prefix(argument),
         format_expression_with_leading(
             &expression,
             if has_named_assign {
@@ -791,15 +634,9 @@ fn format_recovered_value_argument_tokens<'source>(
     format_token_sequence(argument.token_iter(), leading)
 }
 
-fn format_value_argument_prefix<'source>(
-    argument: &ValueArgument<'source>,
-    expression_start: usize,
-) -> Doc<'source> {
+fn format_value_argument_prefix<'source>(argument: &ValueArgument<'source>) -> Doc<'source> {
     let mut docs = Vec::new();
-    for token in argument
-        .token_iter()
-        .filter(|token| token.token_text_range().end().get() <= expression_start)
-    {
+    for token in argument.prefix_tokens() {
         match token.kind() {
             jolt_kotlin_syntax::KotlinSyntaxKind::Assign => {
                 docs.push(space());

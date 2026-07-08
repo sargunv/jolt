@@ -6,7 +6,8 @@ use crate::helpers::blocks::join_hard_lines;
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_comment, format_inline_trailing_comment_list,
     format_leading_comment_runs, format_token_after_relocated_leading_comments,
-    format_token_before_relocated_trailing_comments, format_token_with_comments,
+    format_token_before_relocated_trailing_comments, format_token_sequence,
+    format_token_with_comments,
 };
 use crate::rules::names::{NameSortKey, format_name};
 
@@ -71,9 +72,19 @@ struct FormattedImport<'source> {
 
 impl<'source> FormattedImport<'source> {
     fn from_declaration(import: &ImportDeclaration<'source>) -> Self {
-        let kind = import
-            .import_kind()
-            .expect("clean import declaration should expose an import kind");
+        let Some(kind) = import.import_kind() else {
+            return Self {
+                first_token: None,
+                last_token: None,
+                is_static: false,
+                path: NameSortKey::recovered(),
+                import_token: None,
+                module_token: None,
+                static_token: None,
+                path_doc: format_token_sequence(import.token_iter(), LeadingTrivia::Preserve),
+                semicolon: None,
+            };
+        };
         let (is_static, path, path_doc) = format_import_kind(import, &kind);
         Self {
             first_token: import.first_token(),

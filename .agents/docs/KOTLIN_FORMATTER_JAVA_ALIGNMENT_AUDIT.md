@@ -11,9 +11,21 @@ this audit.
 - Prefer porting Java helper architecture over local Kotlin-only heuristics.
 - Do not accept formatter refusal, raw replay, token drops, or non-idempotence
   for represented syntax.
+- All formatter syntax data is borrowed from parser-owned source, token, trivia,
+  and syntax-node buffers. Do not clone buffers or nodes to rediscover
+  structure.
+- Layout must stay structured. Format every representable tree through its
+  represented children and syntax accessors.
 - The formatter is not a syntax validator. Format each represented tree as a
   tree: use available structured children, tolerate missing recovered pieces,
   and do not panic for malformed-but-represented syntax.
+- Formatter rules must not parse by scanning token streams. Syntax crates own
+  recovery accessors and token ownership; formatter crates consume those
+  accessors for layout.
+- Formatter rules must preserve represented source tokens and trivia through the
+  standard token-formatting helpers. Synthesize tokens only for documented
+  normalization/readability cases that do not drop trivia.
+- Raw literal source is allowed only for formatter-ignore ranges.
 - Recovered token-sequence formatting is allowed only for genuinely unstructured
   recovered islands or formatter-ignore ranges. Do not replace partially
   structured nodes with whole-node token replay when their structured children
@@ -63,6 +75,13 @@ explicitly moved to a new documented follow-up with a concrete reason.
       containers.
 - [x] Verification: run Kotlin formatter/syntax tests, fmt checks,
       `git diff --check`, and `.snap.new` hygiene after fixes.
+- [x] Borrowing audit: no formatter-owned source/token/node buffer clones were
+      introduced for recovery formatting.
+- [x] No-panic audit: representable recovered trees format without formatter
+      panics or syntax validation refusals.
+- [x] No-parser-in-formatter audit: formatter token iteration is limited to
+      syntax-owned recovered islands and comment/trivia preservation helpers,
+      not syntax discovery.
 
 Source-slice classification:
 

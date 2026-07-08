@@ -172,6 +172,20 @@ pub fn fixture_snapshot_name(root: &Path, path: &Path) -> String {
 }
 
 #[must_use]
+pub fn fixture_manifest(root: &Path, paths: &[PathBuf]) -> String {
+    paths
+        .iter()
+        .map(|path| {
+            path.strip_prefix(root)
+                .unwrap_or(path)
+                .to_string_lossy()
+                .replace('\\', "/")
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+#[must_use]
 pub fn read_to_string(path: &Path) -> String {
     fs::read_to_string(path)
         .unwrap_or_else(|error| panic!("failed to read {}: {error}", path.display()))

@@ -19,19 +19,6 @@ pub(crate) fn modifier_prefix_from_docs<'source>(
     )
 }
 
-pub(crate) fn modifier_prefix_from_token_docs<'source>(
-    annotation_docs: Vec<Doc<'source>>,
-    modifier_tokens: Vec<JavaSyntaxToken<'source>>,
-) -> Doc<'source> {
-    let modifier_tokens = sorted_modifier_tokens(modifier_tokens);
-    modifier_prefix_from_modifier_docs(
-        annotation_docs,
-        modifier_tokens
-            .into_iter()
-            .map(|token| format_modifier_token(&token, LeadingComments::Preserve)),
-    )
-}
-
 fn modifier_prefix_from_modifier_docs<'source>(
     annotation_docs: Vec<Doc<'source>>,
     modifier_docs: impl IntoIterator<Item = Doc<'source>>,
@@ -52,18 +39,18 @@ fn modifier_prefix_from_modifier_docs<'source>(
 
 pub(crate) fn inline_modifier_prefix_from_docs<'source>(
     annotation_docs: Vec<Doc<'source>>,
-    modifier_tokens: Vec<JavaSyntaxToken<'source>>,
+    modifier_entries: Vec<ModifierEntry<'source>>,
 ) -> Doc<'source> {
-    let modifier_tokens = sorted_modifier_tokens(modifier_tokens);
-    let has_docs = !annotation_docs.is_empty() || !modifier_tokens.is_empty();
+    let modifier_entries = sorted_modifier_entries(modifier_entries);
+    let has_docs = !annotation_docs.is_empty() || !modifier_entries.is_empty();
     if has_docs {
         concat([
             join(
                 &space(),
                 annotation_docs.into_iter().chain(
-                    modifier_tokens
+                    modifier_entries
                         .into_iter()
-                        .map(|token| format_modifier_token(&token, LeadingComments::Preserve)),
+                        .map(|entry| format_modifier_entry(&entry, LeadingComments::Preserve)),
                 ),
             ),
             space(),
@@ -71,13 +58,6 @@ pub(crate) fn inline_modifier_prefix_from_docs<'source>(
     } else {
         jolt_fmt_ir::nil()
     }
-}
-
-fn sorted_modifier_tokens(mut tokens: Vec<JavaSyntaxToken<'_>>) -> Vec<JavaSyntaxToken<'_>> {
-    sort_modifier_runs(&mut tokens, token_has_comments, |run| {
-        run.sort_by_key(|token| modifier_order(token.kind()));
-    });
-    tokens
 }
 
 fn sorted_modifier_entries(mut entries: Vec<ModifierEntry<'_>>) -> Vec<ModifierEntry<'_>> {

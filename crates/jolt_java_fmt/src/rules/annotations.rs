@@ -7,10 +7,12 @@ use jolt_java_syntax::{
 
 use crate::context::JavaFormatter;
 use crate::helpers::comments::{
-    TrailingTrivia, format_token_after_relocated_leading_comments, format_token_with_comments,
+    LeadingTrivia, TrailingTrivia, format_token_after_relocated_leading_comments,
+    format_token_sequence, format_token_with_comments,
 };
 use crate::helpers::lists::{
     CommaListItem, braced_comma_list_with_trailing_separator, parenthesized_list,
+    recovered_comma_list_items,
 };
 use crate::rules::expressions::format_expression;
 use crate::rules::names::format_name;
@@ -61,11 +63,11 @@ pub(crate) fn format_annotation_element_value<'source>(
     if let Some(annotation) = value.annotation() {
         return format_annotation(&annotation, formatter);
     }
-    value
-        .array_initializer()
-        .map_or_else(jolt_fmt_ir::nil, |array| {
-            format_annotation_array_initializer(&array, formatter)
-        })
+    if let Some(array) = value.array_initializer() {
+        return format_annotation_array_initializer(&array, formatter);
+    }
+
+    format_token_sequence(value.token_iter(), LeadingTrivia::Preserve)
 }
 
 fn format_annotation_argument_list<'source>(
@@ -74,14 +76,18 @@ fn format_annotation_argument_list<'source>(
 ) -> Doc<'source> {
     let open = arguments.open_paren();
     let close = arguments.close_paren();
-    parenthesized_list(
-        open.as_ref(),
-        close.as_ref(),
-        arguments.entries().map(|entry| CommaListItem {
-            doc: format_annotation_argument(&entry.argument, formatter),
-            comma: entry.comma,
-        }),
-    )
+    let items = annotation_argument_list_items(arguments, formatter);
+    parenthesized_list(open.as_ref(), close.as_ref(), items)
+}
+
+fn annotation_argument_list_items<'source, 'fmt>(
+    arguments: &'fmt AnnotationArgumentList<'source>,
+    formatter: &'fmt JavaFormatter<'_>,
+) -> impl Iterator<Item = CommaListItem<'source>> + use<'source, 'fmt> {
+    recovered_comma_list_items(arguments.entries_with_recovered(), |entry| CommaListItem {
+        doc: format_annotation_argument(&entry.argument, formatter),
+        comma: entry.comma,
+    })
 }
 
 fn format_annotation_argument<'source>(
@@ -120,12 +126,18 @@ fn format_annotation_array_initializer<'source>(
     braced_comma_list_with_trailing_separator(
         open.as_ref(),
         close.as_ref(),
-        initializer
-            .entries()
-            .map(|entry| CommaListItem {
-                doc: format_annotation_element_value(&entry.value, formatter),
-                comma: entry.comma,
-            })
-            .collect(),
+        annotation_array_initializer_items(initializer, formatter),
     )
+}
+
+fn annotation_array_initializer_items<'source, 'fmt>(
+    initializer: &'fmt AnnotationArrayInitializer<'source>,
+    formatter: &'fmt JavaFormatter<'_>,
+) -> impl Iterator<Item = CommaListItem<'source>> + use<'source, 'fmt> {
+    recovered_comma_list_items(initializer.entries_with_recovered(), |entry| {
+        CommaListItem {
+            doc: format_annotation_element_value(&entry.value, formatter),
+            comma: entry.comma,
+        }
+    })
 }

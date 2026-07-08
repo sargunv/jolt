@@ -130,16 +130,15 @@ fn check_mode_with_threads_prints_changed_paths_in_order_without_writing() {
 }
 
 #[test]
-fn parse_errors_with_threads_do_not_stop_other_files() {
+fn recovered_parse_with_threads_formats_other_files() {
     let temp = TempDir::new().expect("tempdir should be created");
     write(temp.path().join("Bad.java"), "class {\n");
     write(temp.path().join("Good.java"), SIMPLE_INPUT);
 
     let output = jolt(temp.path(), ["fmt", "--threads", "2", "."], "");
 
-    assert_failure(&output);
-    assert!(stderr(&output).contains("Bad.java:1:7"));
-    assert_eq!(read(temp.path().join("Bad.java")), "class {\n");
+    assert_success(&output);
+    assert_eq!(read(temp.path().join("Bad.java")), "class  {\n\n");
     assert_simple_formatted(&read(temp.path().join("Good.java")));
 }
 

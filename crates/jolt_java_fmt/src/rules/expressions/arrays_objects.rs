@@ -8,6 +8,7 @@ use super::{
     format_token_with_inline_leading_comments, format_trailing_comments_before_line_break,
     format_type, format_type_argument_list, group, hard_line, indent, trailing_comments_force_line,
 };
+use crate::helpers::lists::recovered_comma_list_items;
 use jolt_fmt_ir::space;
 
 pub(super) fn format_array_access_expression<'source>(
@@ -35,18 +36,17 @@ pub(super) fn format_object_creation_expression<'source>(
     expression: &ObjectCreationExpression<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
+    let qualifier = expression.qualifier();
     group(concat([
-        expression
-            .qualifier()
+        qualifier
+            .as_ref()
             .map_or_else(jolt_fmt_ir::nil, |qualifier| {
-                concat([
-                    format_expression(&qualifier, formatter),
-                    expression
-                        .dot_token()
-                        .as_ref()
-                        .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
-                ])
+                format_expression(qualifier, formatter)
             }),
+        expression
+            .dot_token()
+            .as_ref()
+            .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
         format_creation_new_keyword(expression.new_token().as_ref()),
         expression
             .constructor_type_arguments()
@@ -187,14 +187,20 @@ fn format_array_initializer<'source>(
     braced_comma_list_with_trailing_separator(
         open.as_ref(),
         close.as_ref(),
-        initializer
-            .entries()
-            .map(|entry| CommaListItem {
-                doc: format_variable_initializer_value(entry.value, formatter),
-                comma: entry.comma,
-            })
-            .collect(),
+        array_initializer_items(initializer, formatter),
     )
+}
+
+fn array_initializer_items<'source, 'fmt>(
+    initializer: &'fmt ArrayInitializer<'source>,
+    formatter: &'fmt JavaFormatter<'_>,
+) -> impl Iterator<Item = CommaListItem<'source>> + use<'source, 'fmt> {
+    recovered_comma_list_items(initializer.entries_with_recovered(), |entry| {
+        CommaListItem {
+            doc: format_variable_initializer_value(entry.value, formatter),
+            comma: entry.comma,
+        }
+    })
 }
 
 pub(crate) fn format_variable_initializer_value<'source>(

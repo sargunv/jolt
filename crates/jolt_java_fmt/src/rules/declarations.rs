@@ -3,10 +3,10 @@ use std::ops::Range;
 use jolt_fmt_ir::{Doc, concat, group, hard_line, line};
 use jolt_java_syntax::{
     AnnotationElementDeclaration, AnnotationInterfaceBodyMember, AnnotationInterfaceDeclaration,
-    BlockStatement, ClassBody, ClassBodyMember, ClassDeclaration, ConstructorInvocation,
-    EnumConstant, EnumDeclaration, ExtendsClause, FormalParameterList, ImplementsClause,
-    InterfaceBody, InterfaceBodyMember, InterfaceDeclaration, JavaSyntaxToken, MethodDeclaration,
-    ModifierList, PermitsClause, PermitsClauseEntry, RecordBody, RecordDeclaration, ThrowsClause,
+    ClassBody, ClassBodyMember, ClassDeclaration, ConstructorInvocation, EnumConstant,
+    EnumDeclaration, ExtendsClause, FormalParameterList, ImplementsClause, InterfaceBody,
+    InterfaceBodyMember, InterfaceDeclaration, JavaSyntaxToken, MethodDeclaration, ModifierList,
+    PermitsClause, PermitsClauseEntry, RecordBody, RecordDeclaration, ThrowsClause,
     ThrowsClauseEntry, TypeClauseEntry, TypeDeclaration,
 };
 
@@ -17,13 +17,15 @@ use crate::helpers::comments::{
     comments_from_tokens, format_comment, format_construct_leading_comments,
     format_dangling_comments, format_leading_comment_list, format_removed_comments,
     format_separator_with_comments, format_token, format_token_after_construct_leading_comments,
-    format_token_with_comments, has_removed_comments,
+    format_token_sequence, format_token_with_comments, has_removed_comments,
 };
 use crate::helpers::formatter_ignore::{
     formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
     is_formatter_control_marker, relative_token_range_between,
 };
-use crate::helpers::lists::{CommaListItem, comma_list, parenthesized_list};
+use crate::helpers::lists::{
+    CommaListItem, comma_list, parenthesized_list, recovered_comma_list_items,
+};
 use crate::helpers::member_body::{
     MemberBodyCategory as MemberCategory, MemberBodyItem as FormattedMember,
     join_member_body as join_member_docs,
@@ -35,7 +37,7 @@ use crate::rules::modifiers::{
 };
 use crate::rules::names::format_name;
 use crate::rules::statements::{
-    format_block, format_block_statement_item, format_statement_semicolon,
+    format_block, format_block_statement_item_or_recovered, format_statement_semicolon,
 };
 use crate::rules::types::{
     format_array_dimensions, format_inline_annotations, format_type, format_type_argument_list,

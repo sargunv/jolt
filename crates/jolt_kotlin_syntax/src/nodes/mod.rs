@@ -7,7 +7,11 @@ use crate::{KotlinSyntaxKind, language::KotlinLanguage};
 
 mod accessors;
 
-pub use accessors::ClassMemberDeclarationEntry;
+pub use accessors::{
+    ClassMemberDeclarationEntry, ContextFunctionTypeParameterEntry, ContextParameterClauseEntry,
+    DelegationSpecifierListEntry, LambdaParameterListEntry, NavigationOperatorTokens,
+    ValueArgumentEntry,
+};
 
 pub(crate) type KotlinSyntaxNode<'source> = SyntaxNode<'source, KotlinLanguage>;
 type KotlinRawSyntaxToken<'source> = SyntaxToken<'source, KotlinLanguage>;
@@ -314,6 +318,39 @@ impl fmt::Debug for KotlinFile<'_> {
 
 pub(crate) fn cast_kotlin_file(syntax: KotlinSyntaxNode<'_>) -> Option<KotlinFile<'_>> {
     <KotlinFile<'_> as KotlinNode<'_>>::cast(syntax)
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RecoveredNode<'source> {
+    syntax: KotlinSyntaxNode<'source>,
+}
+
+impl<'source> RecoveredNode<'source> {
+    pub(crate) fn new(syntax: KotlinSyntaxNode<'source>) -> Self {
+        Self { syntax }
+    }
+
+    pub fn token_iter(&self) -> impl Iterator<Item = KotlinSyntaxToken<'source>> + '_ {
+        token_iter(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn first_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        first_token(&self.syntax)
+    }
+
+    #[must_use]
+    pub fn last_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        last_token(&self.syntax)
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum RecoveredSeparatedListEntry<'source, Entry> {
+    Entry(Entry),
+    Token(KotlinSyntaxToken<'source>),
+    Error(ErrorNode<'source>),
+    Node(RecoveredNode<'source>),
 }
 
 macro_rules! kotlin_cst {

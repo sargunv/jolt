@@ -58,12 +58,6 @@ pub fn format_source_to_sink<S: RenderSink + ?Sized>(
 ) -> JavaFormatSinkResult<S::Error> {
     let parse = parse_compilation_unit(source);
 
-    if !parse.diagnostics().is_empty() {
-        return JavaFormatSinkResult::Blocked {
-            diagnostics: parse.diagnostics().to_vec(),
-        };
-    }
-
     let Some(syntax) = parse.syntax() else {
         return JavaFormatSinkResult::Blocked {
             diagnostics: Vec::new(),
@@ -89,5 +83,42 @@ fn render_error_diagnostic(error: &jolt_fmt_ir::RenderError) -> Diagnostic {
         stage: DiagnosticStage::Formatter,
         message: format!("Java formatter produced an invalid document: {error}"),
         range: None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::convert::Infallible;
+
+    use jolt_fmt_ir::{RenderControl, RenderSink};
+
+    use super::{JavaFormatOptions, JavaFormatSinkResult, format_source_to_sink};
+
+    #[test]
+    fn formats_represented_tree_with_parse_diagnostics() {
+        let mut sink = StringSink::default();
+        let result = format_source_to_sink(
+            "class C { void m() { value + ; } }\n",
+            &JavaFormatOptions::default(),
+            &mut sink,
+        );
+
+        assert!(matches!(result, JavaFormatSinkResult::Complete));
+        assert!(sink.output.contains("value"), "{}", sink.output);
+        assert!(sink.output.contains("+"), "{}", sink.output);
+    }
+
+    #[derive(Default)]
+    struct StringSink {
+        output: String,
+    }
+
+    impl RenderSink for StringSink {
+        type Error = Infallible;
+
+        fn write_str(&mut self, text: &str) -> Result<RenderControl, Self::Error> {
+            self.output.push_str(text);
+            Ok(RenderControl::Continue)
+        }
     }
 }

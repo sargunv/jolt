@@ -6,7 +6,6 @@ use jolt_java_syntax::{JavaComment, JavaSyntaxToken, NameSegment, NameSyntax};
 
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, comment_forces_line, format_comment, format_token,
-    format_token_text,
 };
 
 pub(crate) fn format_name<'source>(name: &NameSyntax<'source>) -> Doc<'source> {
@@ -28,6 +27,13 @@ impl<'source> NameSortKey<'source> {
         Self {
             segments: name.segments().map(|segment| segment.text()).collect(),
             on_demand,
+        }
+    }
+
+    pub(crate) fn recovered() -> Self {
+        Self {
+            segments: Vec::new(),
+            on_demand: false,
         }
     }
 
@@ -130,7 +136,11 @@ fn format_leading_dot_segment<'source>(segment: &NameSegment<'source>) -> Doc<'s
 fn format_name_dot<'source>(dot: &JavaSyntaxToken<'source>) -> Doc<'source> {
     concat([
         format_leading_dot_comments(dot.leading_comments()),
-        format_token_text(dot.text()),
+        format_token(
+            dot,
+            LeadingTrivia::SuppressAlreadyHandled,
+            TrailingTrivia::RelocatedToEnclosingContext,
+        ),
         format_inline_comments(dot.trailing_comments()),
     ])
 }
@@ -149,7 +159,11 @@ fn format_inline_name_segment_identifier<'source>(
 ) -> Doc<'source> {
     concat([
         format_inline_comments(segment.identifier.leading_comments()),
-        format_token_text(segment.identifier.text()),
+        format_token(
+            &segment.identifier,
+            LeadingTrivia::SuppressAlreadyHandled,
+            TrailingTrivia::RelocatedToEnclosingContext,
+        ),
         if followed_by_dot {
             format_leading_dot_comments(segment.identifier.trailing_comments())
         } else {

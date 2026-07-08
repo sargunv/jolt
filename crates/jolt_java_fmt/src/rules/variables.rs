@@ -2,21 +2,21 @@ use jolt_fmt_ir::space;
 use jolt_fmt_ir::{Doc, concat, group, hard_line, indent, line};
 use jolt_java_syntax::{
     FieldDeclaration, FormalParameter, LocalVariableDeclaration, ReceiverParameter,
-    RecordComponent, VariableDeclarator, VariableDeclaratorEntry, VariableDeclaratorList,
-    VariableInitializer,
+    RecordComponent, VariableDeclarator, VariableDeclaratorList, VariableInitializer,
 };
 
 use crate::context::JavaFormatter;
 use crate::helpers::comments::{
-    InlineLeadingTrivia, TrailingTrivia, comment_forces_line, format_construct_leading_comments,
-    format_leading_comments, format_token_text, format_token_with_comments,
-    format_token_with_inline_leading_comments, format_trailing_comments,
+    InlineLeadingTrivia, LeadingTrivia, TrailingTrivia, comment_forces_line,
+    format_construct_leading_comments, format_token, format_token_with_comments,
+    format_token_with_inline_leading_comments,
 };
+use crate::helpers::lists::{CommaListItem, comma_list, recovered_comma_list_items};
 use crate::helpers::modifiers::inline_modifier_prefix_from_docs;
 use crate::rules::annotations::{format_annotation, format_annotation_without_leading_comments};
 use crate::rules::expressions::format_variable_initializer_value;
 use crate::rules::modifiers::{
-    format_typed_modifier_prefix, format_typed_modifier_prefix_from_token_split_parts,
+    format_typed_modifier_prefix, format_typed_modifier_prefix_from_split_entries,
 };
 use crate::rules::statements::format_statement_semicolon;
 use crate::rules::types::{
@@ -67,10 +67,10 @@ pub(crate) fn format_local_variable_declaration<'source>(
     declaration: &LocalVariableDeclaration<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    let modifiers = format_typed_modifier_prefix_from_token_split_parts(
+    let modifiers = format_typed_modifier_prefix_from_split_entries(
         declaration.declaration_annotations().collect(),
         declaration.type_use_annotations_after_modifiers().collect(),
-        declaration.modifier_tokens().collect(),
+        declaration.modifier_entries().collect(),
         formatter,
     );
     let ty = local_variable_type(declaration, formatter);
@@ -107,7 +107,7 @@ pub(crate) fn format_formal_parameter<'source>(
             format_construct_leading_comments(parameter.first_token().as_ref()),
             inline_modifier_prefix_from_docs(
                 format_construct_prefix_annotations(parameter.prefix_annotations(), formatter),
-                parameter.modifier_tokens().collect(),
+                parameter.modifier_entries().collect(),
             ),
         ]),
         parameter.ty().map_or_else(jolt_fmt_ir::nil, |ty| {
@@ -138,7 +138,7 @@ pub(crate) fn format_record_component<'source>(
             format_construct_leading_comments(component.first_token().as_ref()),
             inline_modifier_prefix_from_docs(
                 format_construct_prefix_annotations(component.prefix_annotations(), formatter),
-                component.modifier_tokens().collect(),
+                component.modifier_entries().collect(),
             ),
         ]),
         component.ty().map_or_else(jolt_fmt_ir::nil, |ty| {
@@ -180,11 +180,7 @@ pub(crate) fn format_receiver_parameter<'source>(
                 concat([
                     format_token_with_comments(&qualifier),
                     parameter.dot().map_or_else(jolt_fmt_ir::nil, |dot| {
-                        concat([
-                            format_leading_comments(&dot),
-                            format_token_text(dot.text()),
-                            format_trailing_comments(&dot),
-                        ])
+                        format_token(&dot, LeadingTrivia::Preserve, TrailingTrivia::Preserve)
                     }),
                 ])
             }),
@@ -269,9 +265,10 @@ fn format_variable_declarator_list<'source>(
     declarators: &VariableDeclaratorList<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    group(concat(declarators.entries().map(|entry| {
-        format_variable_declarator_entry(&entry, formatter)
-    })))
+    group(comma_list(variable_declarator_list_items(
+        declarators,
+        formatter,
+    )))
 }
 
 fn single_declarator<'source>(
@@ -306,21 +303,16 @@ fn format_single_variable_declaration<'source>(
     ])
 }
 
-fn format_variable_declarator_entry<'source>(
-    entry: &VariableDeclaratorEntry<'source>,
-    formatter: &JavaFormatter<'_>,
-) -> Doc<'source> {
-    concat([
-        format_variable_declarator(&entry.declarator, formatter),
-        entry.comma.map_or_else(jolt_fmt_ir::nil, |comma| {
-            concat([
-                format_leading_comments(&comma),
-                format_token_text(comma.text()),
-                format_trailing_comments(&comma),
-                line(),
-            ])
-        }),
-    ])
+fn variable_declarator_list_items<'source, 'fmt>(
+    declarators: &'fmt VariableDeclaratorList<'source>,
+    formatter: &'fmt JavaFormatter<'_>,
+) -> impl Iterator<Item = CommaListItem<'source>> + use<'source, 'fmt> {
+    recovered_comma_list_items(declarators.entries_with_recovered(), |entry| {
+        CommaListItem {
+            doc: format_variable_declarator(&entry.declarator, formatter),
+            comma: entry.comma,
+        }
+    })
 }
 
 fn format_variable_declarator<'source>(
