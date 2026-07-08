@@ -1,4 +1,4 @@
-use super::{JavaSyntaxKind, ParseEvents, Parser};
+use super::{JavaParserExt, JavaSyntaxKind, ParseEvents, Parser};
 
 impl Parser<'_> {
     pub(in crate::parser) fn parse_compilation_unit(mut self) -> ParseEvents {

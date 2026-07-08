@@ -3,15 +3,16 @@ mod token;
 use std::ops::Range;
 
 use jolt_diagnostics::{Diagnostic, DiagnosticStage, Severity};
-use jolt_syntax::{SyntaxTrivia, TriviaKind as SyntaxTriviaKind};
+use jolt_syntax::{LanguageLexer, LexedToken, SyntaxTrivia, TriviaKind as SyntaxTriviaKind};
 use jolt_text::{TextRange, TextSize};
 use unicode_general_category::{GeneralCategory, get_general_category};
 
 use crate::KotlinSyntaxKind;
+use crate::language::KotlinLanguage;
 
-pub(crate) use token::{KotlinLexDiagnosticCode, LexedToken, LexerDiagnostic};
+pub(crate) use token::{KotlinLexDiagnosticCode, LexerDiagnostic};
 
-pub(crate) struct KotlinLexer<'source> {
+pub struct KotlinLexer<'source> {
     scanner: Scanner<'source>,
     emitted_eof: bool,
 }
@@ -26,7 +27,10 @@ impl<'source> KotlinLexer<'source> {
     }
 
     /// Returns the next token, appending its trivia to the supplied buffer.
-    pub(crate) fn next_token_into(&mut self, trivia: &mut Vec<SyntaxTrivia>) -> LexedToken {
+    pub(crate) fn next_token_into(
+        &mut self,
+        trivia: &mut Vec<SyntaxTrivia>,
+    ) -> LexedToken<KotlinLanguage> {
         if self.emitted_eof {
             return self.eof_token_into(trivia.len()..trivia.len());
         }
@@ -55,7 +59,7 @@ impl<'source> KotlinLexer<'source> {
         self.scanner.diagnostics
     }
 
-    fn eof_token_into(&self, leading: Range<usize>) -> LexedToken {
+    fn eof_token_into(&self, leading: Range<usize>) -> LexedToken<KotlinLanguage> {
         let end = TextSize::new(self.scanner.source.len());
         let trivia_end = leading.end;
         LexedToken {
@@ -64,6 +68,22 @@ impl<'source> KotlinLexer<'source> {
             leading,
             trailing: trivia_end..trivia_end,
         }
+    }
+}
+
+impl<'source> LanguageLexer<'source> for KotlinLexer<'source> {
+    type Language = KotlinLanguage;
+
+    fn new(source: &'source str) -> Self {
+        Self::new(source)
+    }
+
+    fn next_token_into(&mut self, trivia: &mut Vec<SyntaxTrivia>) -> LexedToken<KotlinLanguage> {
+        self.next_token_into(trivia)
+    }
+
+    fn finish(self) -> Vec<Diagnostic> {
+        self.finish()
     }
 }
 

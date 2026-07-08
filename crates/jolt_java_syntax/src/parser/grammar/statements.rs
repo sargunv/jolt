@@ -1,4 +1,4 @@
-use super::{JavaSyntaxKind, Parser};
+use super::{JavaParserExt, JavaSyntaxKind, Parser};
 
 impl Parser<'_> {
     pub(super) fn parse_block(&mut self) {

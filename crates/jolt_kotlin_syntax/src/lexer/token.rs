@@ -1,18 +1,4 @@
-use std::ops::Range;
-
 use jolt_diagnostics::{Diagnostic, DiagnosticCodeId};
-use jolt_text::TextRange;
-
-use crate::KotlinSyntaxKind;
-
-/// A lexed token whose trivia lives in a caller-owned buffer.
-#[derive(Debug, Eq, PartialEq)]
-pub struct LexedToken {
-    pub kind: KotlinSyntaxKind,
-    pub range: TextRange,
-    pub leading: Range<usize>,
-    pub trailing: Range<usize>,
-}
 
 /// A lexer diagnostic with a raw source range.
 pub type LexerDiagnostic = Diagnostic;

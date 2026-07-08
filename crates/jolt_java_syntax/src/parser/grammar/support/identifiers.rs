@@ -1,5 +1,5 @@
 // Handles Java identifier roles that depend on parser context.
-use super::{JavaSyntaxKind, Parser};
+use super::{JavaParserExt, JavaSyntaxKind, Parser};
 
 impl Parser<'_> {
     pub(in crate::parser::grammar) fn expect_type_identifier(&mut self, message: &str) {

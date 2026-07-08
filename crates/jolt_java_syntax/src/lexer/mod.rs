@@ -4,16 +4,16 @@ mod unicode;
 use std::ops::Range;
 
 use crate::JavaSyntaxKind;
+use crate::language::JavaLanguage;
 use jolt_diagnostics::{Diagnostic, DiagnosticStage, Severity};
-use jolt_syntax::{SyntaxTrivia, TriviaKind as SyntaxTriviaKind};
+use jolt_syntax::{LanguageLexer, LexedToken, SyntaxTrivia, TriviaKind as SyntaxTriviaKind};
 use jolt_text::{TextRange, TextSize};
 use unicode_general_category::{GeneralCategory, get_general_category};
 
-pub(crate) use token::LexedToken;
 pub(crate) use token::{JavaLexDiagnosticCode, LexerDiagnostic};
 pub(crate) use unicode::normalize_unicode_escapes;
 
-pub(crate) struct JavaLexer<'source> {
+pub struct JavaLexer<'source> {
     scanner: Scanner<'source>,
     emitted_eof: bool,
 }
@@ -28,7 +28,10 @@ impl<'source> JavaLexer<'source> {
     }
 
     /// Returns the next token, appending its trivia to the supplied buffer.
-    pub(crate) fn next_token_into(&mut self, trivia: &mut Vec<SyntaxTrivia>) -> LexedToken {
+    pub(crate) fn next_token_into(
+        &mut self,
+        trivia: &mut Vec<SyntaxTrivia>,
+    ) -> LexedToken<JavaLanguage> {
         if self.emitted_eof {
             return self.eof_token_into(trivia.len()..trivia.len());
         }
@@ -56,7 +59,7 @@ impl<'source> JavaLexer<'source> {
         self.scanner.diagnostics
     }
 
-    fn eof_token_into(&self, leading: Range<usize>) -> LexedToken {
+    fn eof_token_into(&self, leading: Range<usize>) -> LexedToken<JavaLanguage> {
         let end = TextSize::new(self.scanner.source.len());
         let trivia_end = leading.end;
         LexedToken {
@@ -65,6 +68,22 @@ impl<'source> JavaLexer<'source> {
             leading,
             trailing: trivia_end..trivia_end,
         }
+    }
+}
+
+impl<'source> LanguageLexer<'source> for JavaLexer<'source> {
+    type Language = JavaLanguage;
+
+    fn new(source: &'source str) -> Self {
+        Self::new(source)
+    }
+
+    fn next_token_into(&mut self, trivia: &mut Vec<SyntaxTrivia>) -> LexedToken<JavaLanguage> {
+        self.next_token_into(trivia)
+    }
+
+    fn finish(self) -> Vec<Diagnostic> {
+        self.finish()
     }
 }
 

@@ -1,6 +1,6 @@
 use crate::JavaSyntaxKind;
 
-use super::source::{ParseEvents, Parser};
+use super::source::{JavaParserExt, ParseEvents, Parser};
 
 #[derive(Clone, Copy)]
 struct StopSet<'a> {

@@ -1,4 +1,4 @@
-use super::{JavaSyntaxKind, Parser};
+use super::{JavaParserExt, JavaSyntaxKind, Parser};
 
 mod declaration_predicates;
 mod delimiters;

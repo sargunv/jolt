@@ -1,5 +1,5 @@
 // Answers statement-level grammar questions before the parser commits to a branch.
-use super::{JavaSyntaxKind, Parser};
+use super::{JavaParserExt, JavaSyntaxKind, Parser};
 
 impl Parser<'_> {
     pub(in crate::parser::grammar) fn starts_receiver_parameter(&mut self) -> bool {

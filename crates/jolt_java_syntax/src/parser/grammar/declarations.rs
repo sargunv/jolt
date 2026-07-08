@@ -1,4 +1,4 @@
-use super::{JavaSyntaxKind, Parser, StopSet};
+use super::{JavaParserExt, JavaSyntaxKind, Parser, StopSet};
 
 impl Parser<'_> {
     pub(super) fn parse_type_declaration(&mut self) {

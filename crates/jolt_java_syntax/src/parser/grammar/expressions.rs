@@ -1,4 +1,4 @@
-use super::{JavaSyntaxKind, Parser, StopSet};
+use super::{JavaParserExt, JavaSyntaxKind, Parser, StopSet};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(super) enum LambdaParameterStyle {

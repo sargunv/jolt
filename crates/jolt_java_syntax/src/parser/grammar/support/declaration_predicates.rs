@@ -1,5 +1,5 @@
 // Answers declaration-level grammar questions before the parser commits to a branch.
-use super::{JavaLookahead, JavaSyntaxKind, Parser};
+use super::{JavaLookahead, JavaParserExt, JavaSyntaxKind, Parser};
 
 impl Parser<'_> {
     pub(in crate::parser::grammar) fn at_header_clause_end(&mut self) -> bool {
