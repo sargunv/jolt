@@ -7,5 +7,6 @@ mod nodes;
 mod parser;
 
 pub use kind::KotlinSyntaxKind;
+pub use language::KotlinLanguage;
 pub use nodes::*;
 pub use parser::{KotlinParse, parse_kotlin_file};

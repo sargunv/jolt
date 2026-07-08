@@ -1,6 +1,9 @@
-use std::{fmt, slice};
+use std::fmt;
 
-use jolt_syntax::{SyntaxNode, SyntaxToken, SyntaxTrivia, TriviaKind as SyntaxTriviaKind};
+pub use jolt_syntax::{
+    Comment as KotlinComment, CommentKind as KotlinCommentKind, Comments as KotlinComments,
+};
+use jolt_syntax::{SyntaxNode, SyntaxToken};
 use jolt_text::TextRange;
 
 use crate::{KotlinSyntaxKind, language::KotlinLanguage};
@@ -14,106 +17,7 @@ pub use accessors::{
 };
 
 pub(crate) type KotlinSyntaxNode<'source> = SyntaxNode<'source, KotlinLanguage>;
-type KotlinRawSyntaxToken<'source> = SyntaxToken<'source, KotlinLanguage>;
-
-/// A comment attached as token trivia in the Kotlin syntax tree.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct KotlinComment<'source> {
-    kind: KotlinCommentKind,
-    source: &'source str,
-    text_range: TextRange,
-}
-
-/// Borrowed comments attached to syntax token trivia.
-#[derive(Clone)]
-pub struct KotlinComments<'source> {
-    source: &'source str,
-    trivia: slice::Iter<'source, SyntaxTrivia>,
-    offset: jolt_text::TextSize,
-}
-
-impl<'source> KotlinComments<'source> {
-    fn new(
-        source: &'source str,
-        trivia: &'source [SyntaxTrivia],
-        offset: jolt_text::TextSize,
-    ) -> Self {
-        Self {
-            source,
-            trivia: trivia.iter(),
-            offset,
-        }
-    }
-
-    #[must_use]
-    pub fn is_empty(&self) -> bool {
-        self.trivia.as_slice().iter().all(|trivia| {
-            !matches!(
-                trivia.kind(),
-                SyntaxTriviaKind::LineComment
-                    | SyntaxTriviaKind::ShebangComment
-                    | SyntaxTriviaKind::BlockComment
-                    | SyntaxTriviaKind::DocComment
-            )
-        })
-    }
-}
-
-impl<'source> Iterator for KotlinComments<'source> {
-    type Item = KotlinComment<'source>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        for trivia in self.trivia.by_ref() {
-            let text_range = TextRange::new(self.offset, self.offset + trivia.text_len());
-            self.offset = text_range.end();
-            let kind = match trivia.kind() {
-                SyntaxTriviaKind::LineComment | SyntaxTriviaKind::ShebangComment => {
-                    KotlinCommentKind::Line
-                }
-                SyntaxTriviaKind::BlockComment => KotlinCommentKind::Block,
-                SyntaxTriviaKind::DocComment => KotlinCommentKind::Doc,
-                SyntaxTriviaKind::Whitespace
-                | SyntaxTriviaKind::Newline
-                | SyntaxTriviaKind::Ignored => continue,
-            };
-            return Some(KotlinComment {
-                kind,
-                source: self.source,
-                text_range,
-            });
-        }
-
-        None
-    }
-}
-
-impl<'source> KotlinComment<'source> {
-    #[must_use]
-    pub const fn kind(&self) -> KotlinCommentKind {
-        self.kind
-    }
-
-    #[must_use]
-    pub fn text(&self) -> &'source str {
-        &self.source[self.text_range.start().get()..self.text_range.end().get()]
-    }
-
-    #[must_use]
-    pub fn text_range(&self) -> TextRange {
-        self.text_range
-    }
-}
-
-/// A Kotlin comment kind exposed from syntax trivia.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum KotlinCommentKind {
-    /// A `//` line comment.
-    Line,
-    /// A non-`KDoc` block comment.
-    Block,
-    /// A `KDoc` comment.
-    Doc,
-}
+pub type KotlinSyntaxToken<'source> = SyntaxToken<'source, KotlinLanguage>;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExpressionParentRole {
@@ -121,57 +25,6 @@ pub enum ExpressionParentRole {
     CallCallee,
     IndexReceiver,
     IndexArgument,
-}
-
-#[derive(Clone, Copy, Eq, PartialEq)]
-pub struct KotlinSyntaxToken<'source> {
-    syntax: KotlinRawSyntaxToken<'source>,
-}
-
-impl<'source> KotlinSyntaxToken<'source> {
-    #[must_use]
-    pub fn kind(&self) -> KotlinSyntaxKind {
-        self.syntax.kind()
-    }
-
-    #[must_use]
-    pub fn text(&self) -> &'source str {
-        self.syntax.text()
-    }
-
-    #[must_use]
-    pub fn text_range(&self) -> TextRange {
-        self.syntax.text_range()
-    }
-
-    #[must_use]
-    pub fn token_text_range(&self) -> TextRange {
-        self.syntax.token_text_range()
-    }
-
-    #[must_use]
-    pub fn leading_comments(&self) -> KotlinComments<'source> {
-        KotlinComments::new(
-            self.syntax.source(),
-            self.syntax.leading(),
-            self.syntax.offset(),
-        )
-    }
-
-    #[must_use]
-    pub fn trailing_comments(&self) -> KotlinComments<'source> {
-        KotlinComments::new(
-            self.syntax.source(),
-            self.syntax.trailing(),
-            self.syntax.token_text_range().end(),
-        )
-    }
-}
-
-impl fmt::Debug for KotlinSyntaxToken<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.syntax.fmt(f)
-    }
 }
 
 mod private {
@@ -197,19 +50,15 @@ fn token_iter<'source, 'node>(
 where
     'source: 'node,
 {
-    syntax.tokens().map(|syntax| KotlinSyntaxToken { syntax })
+    syntax.tokens()
 }
 
 fn first_token<'source>(syntax: &KotlinSyntaxNode<'source>) -> Option<KotlinSyntaxToken<'source>> {
-    syntax
-        .first_token()
-        .map(|syntax| KotlinSyntaxToken { syntax })
+    syntax.first_token()
 }
 
 fn last_token<'source>(syntax: &KotlinSyntaxNode<'source>) -> Option<KotlinSyntaxToken<'source>> {
-    syntax
-        .last_token()
-        .map(|syntax| KotlinSyntaxToken { syntax })
+    syntax.last_token()
 }
 
 fn child<'source, N>(syntax: &KotlinSyntaxNode<'source>) -> Option<N>
@@ -248,18 +97,13 @@ fn child_token<'source>(
     syntax: &KotlinSyntaxNode<'source>,
     kind: KotlinSyntaxKind,
 ) -> Option<KotlinSyntaxToken<'source>> {
-    syntax
-        .child_tokens()
-        .map(|syntax| KotlinSyntaxToken { syntax })
-        .find(|token| token.kind() == kind)
+    syntax.child_tokens().find(|token| token.kind() == kind)
 }
 
 fn child_tokens<'source>(
     syntax: &KotlinSyntaxNode<'source>,
 ) -> impl Iterator<Item = KotlinSyntaxToken<'source>> + use<'source> {
-    syntax
-        .child_tokens()
-        .map(|syntax| KotlinSyntaxToken { syntax })
+    syntax.child_tokens()
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]

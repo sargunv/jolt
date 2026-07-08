@@ -3,7 +3,7 @@ use jolt_syntax::{Language, RawSyntaxKind};
 use crate::KotlinSyntaxKind;
 
 /// Kotlin language binding for the shared syntax tree infrastructure.
-pub(crate) enum KotlinLanguage {}
+pub enum KotlinLanguage {}
 
 impl Language for KotlinLanguage {
     type Kind = KotlinSyntaxKind;

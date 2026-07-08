@@ -68,15 +68,10 @@ impl<'source> CompilationUnit<'source> {
                     Err(node) => Some(recovered_node_entry(node)),
                 },
                 SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Eof => {
-                    let token = JavaSyntaxToken { syntax: token };
                     (!token.leading_comments().is_empty() || !token.trailing_comments().is_empty())
                         .then_some(RecoveredSeparatedListEntry::Token(token))
                 }
-                SyntaxElement::Token(token) => {
-                    Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
-                        syntax: token,
-                    }))
-                }
+                SyntaxElement::Token(token) => Some(RecoveredSeparatedListEntry::Token(token)),
             })
     }
 
@@ -127,15 +122,11 @@ impl<'source> ImportDeclaration<'source> {
     #[must_use]
     pub fn module_token(&self) -> Option<JavaSyntaxToken<'source>> {
         let name_start = self.name().map(|name| name.text_range().start());
-        self.syntax
-            .child_tokens()
-            .map(|syntax| JavaSyntaxToken { syntax })
-            .find(|token| {
-                token.kind() == JavaSyntaxKind::Identifier
-                    && token.text() == "module"
-                    && name_start
-                        .is_some_and(|name_start| token.token_text_range().end() <= name_start)
-            })
+        self.syntax.child_tokens().find(|token| {
+            token.kind() == JavaSyntaxKind::Identifier
+                && token.text() == "module"
+                && name_start.is_some_and(|name_start| token.token_text_range().end() <= name_start)
+        })
     }
 
     #[must_use]
@@ -155,7 +146,6 @@ impl<'source> ImportDeclaration<'source> {
             .map(|token| token.token_text_range().start())?;
         self.syntax
             .child_tokens()
-            .map(|syntax| JavaSyntaxToken { syntax })
             .filter(|token| token.kind() == JavaSyntaxKind::Dot)
             .filter(|token| token.token_text_range().start() < star_start)
             .last()
@@ -222,13 +212,13 @@ impl<'source> NameSyntax<'source> {
                         }
                     }
                     SyntaxElement::Token(syntax) if syntax.kind() == JavaSyntaxKind::Dot => {
-                        dot_before = Some(JavaSyntaxToken { syntax });
+                        dot_before = Some(syntax);
                     }
                     SyntaxElement::Token(syntax) if syntax.kind() == JavaSyntaxKind::Identifier => {
                         return Some(NameSegment {
                             annotations: std::mem::take(&mut annotations),
                             dot_before: dot_before.take(),
-                            identifier: JavaSyntaxToken { syntax },
+                            identifier: syntax,
                         });
                     }
                     SyntaxElement::Token(_) => {}
@@ -443,7 +433,7 @@ impl<'source> PermitsClause<'source> {
     pub fn keyword(&self) -> Option<JavaSyntaxToken<'source>> {
         self.syntax
             .first_token()
-            .and_then(|syntax| (syntax.text() == "permits").then_some(JavaSyntaxToken { syntax }))
+            .and_then(|syntax| (syntax.text() == "permits").then_some(syntax))
     }
 
     pub fn names(&self) -> impl Iterator<Item = NameSyntax<'source>> + use<'source> {
@@ -718,7 +708,7 @@ impl<'source> ClassType<'source> {
 
                 let node = match element {
                     SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Dot => {
-                        dot_before = Some(JavaSyntaxToken { syntax: token });
+                        dot_before = Some(token);
                         continue;
                     }
                     SyntaxElement::Node(node) => node,
@@ -982,11 +972,7 @@ impl<'source> InterfaceBody<'source> {
                 {
                     None
                 }
-                SyntaxElement::Token(token) => {
-                    Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
-                        syntax: token,
-                    }))
-                }
+                SyntaxElement::Token(token) => Some(RecoveredSeparatedListEntry::Token(token)),
             })
     }
 }
@@ -1045,9 +1031,7 @@ impl<'source> AnnotationInterfaceBody<'source> {
                             None
                         }
                         SyntaxElement::Token(token) => {
-                            Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
-                                syntax: token,
-                            }))
+                            Some(RecoveredSeparatedListEntry::Token(token))
                         }
                     })
             })
@@ -1408,11 +1392,7 @@ impl<'source> ConstructorBody<'source> {
                 {
                     None
                 }
-                SyntaxElement::Token(token) => {
-                    Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
-                        syntax: token,
-                    }))
-                }
+                SyntaxElement::Token(token) => Some(RecoveredSeparatedListEntry::Token(token)),
             })
     }
 
@@ -1793,9 +1773,7 @@ impl<'source> From<Statement<'source>> for StatementBody<'source> {
 impl<'source> LiteralExpression<'source> {
     #[must_use]
     pub fn literal_token(&self) -> Option<JavaSyntaxToken<'source>> {
-        self.syntax
-            .first_token()
-            .map(|syntax| JavaSyntaxToken { syntax })
+        self.syntax.first_token()
     }
 }
 
@@ -3732,11 +3710,7 @@ impl<'source> SwitchBlock<'source> {
                 {
                     None
                 }
-                SyntaxElement::Token(token) => {
-                    Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
-                        syntax: token,
-                    }))
-                }
+                SyntaxElement::Token(token) => Some(RecoveredSeparatedListEntry::Token(token)),
             })
     }
 }
@@ -3759,11 +3733,7 @@ impl<'source> SwitchBlockStatementGroup<'source> {
                     Err(node) => recovered_node_entry(node),
                 }),
                 SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Colon => None,
-                SyntaxElement::Token(token) => {
-                    Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
-                        syntax: token,
-                    }))
-                }
+                SyntaxElement::Token(token) => Some(RecoveredSeparatedListEntry::Token(token)),
             })
     }
 
@@ -3861,8 +3831,8 @@ impl<'source> SwitchLabel<'source> {
                     }
                     SyntaxElement::Token(syntax) if syntax.kind() == JavaSyntaxKind::DefaultKw => {
                         if !is_default_label
-                            && let Some(previous) = pending_item
-                                .replace(SwitchLabelCaseItem::Default(JavaSyntaxToken { syntax }))
+                            && let Some(previous) =
+                                pending_item.replace(SwitchLabelCaseItem::Default(syntax))
                         {
                             return Some(SwitchLabelCaseEntry {
                                 item: previous,
@@ -3874,7 +3844,7 @@ impl<'source> SwitchLabel<'source> {
                         if let Some(item) = pending_item.take() {
                             return Some(SwitchLabelCaseEntry {
                                 item,
-                                comma: Some(JavaSyntaxToken { syntax: token }),
+                                comma: Some(token),
                             });
                         }
                     }
@@ -3945,19 +3915,17 @@ impl<'source> SwitchLabel<'source> {
                     }
                     SyntaxElement::Token(syntax) if syntax.kind() == JavaSyntaxKind::DefaultKw => {
                         if !is_default_label
-                            && let Some(previous) = pending_item
-                                .replace(SwitchLabelCaseItem::Default(JavaSyntaxToken { syntax }))
+                            && let Some(previous) =
+                                pending_item.replace(SwitchLabelCaseItem::Default(syntax))
                         {
                             return Some(make_entry(previous, None));
                         }
                     }
                     SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
                         if let Some(item) = pending_item.take() {
-                            return Some(make_entry(item, Some(JavaSyntaxToken { syntax: token })));
+                            return Some(make_entry(item, Some(token)));
                         }
-                        return Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
-                            syntax: token,
-                        }));
+                        return Some(RecoveredSeparatedListEntry::Token(token));
                     }
                     SyntaxElement::Token(token)
                         if matches!(
@@ -3972,14 +3940,10 @@ impl<'source> SwitchLabel<'source> {
                     }
                     SyntaxElement::Token(token) => {
                         if let Some(previous) = pending_item.take() {
-                            queued = Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
-                                syntax: token,
-                            }));
+                            queued = Some(RecoveredSeparatedListEntry::Token(token));
                             return Some(make_entry(previous, None));
                         }
-                        return Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
-                            syntax: token,
-                        }));
+                        return Some(RecoveredSeparatedListEntry::Token(token));
                     }
                 }
             }
@@ -4126,7 +4090,7 @@ fn modifier_entries<'source>(
     let mut tokens = syntax
         .children_with_tokens()
         .filter_map(|element| match element {
-            SyntaxElement::Token(token) => Some(JavaSyntaxToken { syntax: token }),
+            SyntaxElement::Token(token) => Some(token),
             SyntaxElement::Node(_) => None,
         });
 
@@ -4201,7 +4165,7 @@ fn direct_child_token_prefix<'source>(
 ) -> [Option<JavaSyntaxToken<'source>>; 4] {
     let mut tokens = std::array::from_fn(|_| None);
     for (index, syntax) in syntax.child_tokens().take(4).enumerate() {
-        tokens[index] = Some(JavaSyntaxToken { syntax });
+        tokens[index] = Some(syntax);
     }
 
     tokens
@@ -4224,8 +4188,8 @@ fn token_sequence_matches(
         };
 
         left.token_text_range().end() == right.token_text_range().start()
-            && left.syntax.trailing().is_empty()
-            && right.syntax.leading().is_empty()
+            && left.trailing().is_empty()
+            && right.leading().is_empty()
     })
 }
 
@@ -4297,11 +4261,7 @@ impl<'source> ModuleDeclaration<'source> {
                     Ok(directive) => RecoveredSeparatedListEntry::Entry(directive),
                     Err(node) => recovered_node_entry(node),
                 }),
-                SyntaxElement::Token(token) => {
-                    Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
-                        syntax: token,
-                    }))
-                }
+                SyntaxElement::Token(token) => Some(RecoveredSeparatedListEntry::Token(token)),
             })
     }
 }
@@ -4548,11 +4508,7 @@ impl<'source> Block<'source> {
                 {
                     None
                 }
-                SyntaxElement::Token(token) => {
-                    Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
-                        syntax: token,
-                    }))
-                }
+                SyntaxElement::Token(token) => Some(RecoveredSeparatedListEntry::Token(token)),
             })
     }
 
@@ -4592,7 +4548,7 @@ fn previous_sibling_token<'source>(
     kind: JavaSyntaxKind,
 ) -> Option<JavaSyntaxToken<'source>> {
     match syntax.prev_sibling_or_token()? {
-        SyntaxElement::Token(syntax) if syntax.kind() == kind => Some(JavaSyntaxToken { syntax }),
+        SyntaxElement::Token(syntax) if syntax.kind() == kind => Some(syntax),
         _ => None,
     }
 }
@@ -4602,7 +4558,7 @@ fn next_sibling_token<'source>(
     kind: JavaSyntaxKind,
 ) -> Option<JavaSyntaxToken<'source>> {
     match syntax.next_sibling_or_token()? {
-        SyntaxElement::Token(syntax) if syntax.kind() == kind => Some(JavaSyntaxToken { syntax }),
+        SyntaxElement::Token(syntax) if syntax.kind() == kind => Some(syntax),
         _ => None,
     }
 }
@@ -4614,7 +4570,6 @@ fn contextual_keyword_in<'source>(
     syntax
         .child_tokens()
         .find(|token| token.kind() == JavaSyntaxKind::Identifier && token.text() == text)
-        .map(|syntax| JavaSyntaxToken { syntax })
 }
 
 fn recovered_node_entry<Entry>(
@@ -5205,11 +5160,7 @@ fn class_body_members_with_recovered<'source>(
             {
                 None
             }
-            SyntaxElement::Token(token) => {
-                Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
-                    syntax: token,
-                }))
-            }
+            SyntaxElement::Token(token) => Some(RecoveredSeparatedListEntry::Token(token)),
         })
 }
 
@@ -5233,11 +5184,7 @@ fn enum_body_members_with_recovered<'source>(
             {
                 None
             }
-            SyntaxElement::Token(token) => {
-                Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
-                    syntax: token,
-                }))
-            }
+            SyntaxElement::Token(token) => Some(RecoveredSeparatedListEntry::Token(token)),
         })
 }
 
@@ -5329,7 +5276,7 @@ fn module_name_entries_after_contextual_keyword<'source, 'keyword>(
                     if let Some(name) = pending_name.take() {
                         return Some(ModuleNameListEntry {
                             name,
-                            comma: Some(JavaSyntaxToken { syntax: token }),
+                            comma: Some(token),
                         });
                     }
                 }
@@ -5414,26 +5361,20 @@ fn module_name_entries_after_contextual_keyword_with_recovered<'source, 'keyword
                     if let Some(name) = pending_name.take() {
                         return Some(RecoveredSeparatedListEntry::Entry(ModuleNameListEntry {
                             name,
-                            comma: Some(JavaSyntaxToken { syntax: token }),
+                            comma: Some(token),
                         }));
                     }
-                    return Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
-                        syntax: token,
-                    }));
+                    return Some(RecoveredSeparatedListEntry::Token(token));
                 }
                 SyntaxElement::Token(token) => {
                     if let Some(previous) = pending_name.take() {
-                        queued = Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
-                            syntax: token,
-                        }));
+                        queued = Some(RecoveredSeparatedListEntry::Token(token));
                         return Some(RecoveredSeparatedListEntry::Entry(ModuleNameListEntry {
                             name: previous,
                             comma: None,
                         }));
                     }
-                    return Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
-                        syntax: token,
-                    }));
+                    return Some(RecoveredSeparatedListEntry::Token(token));
                 }
             }
         }
@@ -5470,7 +5411,7 @@ where
                 }
                 SyntaxElement::Token(token) if token.kind() == separator_kind => {
                     if let Some(item) = pending_item.take() {
-                        return Some(make(item, Some(JavaSyntaxToken { syntax: token })));
+                        return Some(make(item, Some(token)));
                     }
                 }
                 SyntaxElement::Token(_) => {}
@@ -5535,26 +5476,17 @@ where
                 },
                 SyntaxElement::Token(token) if token.kind() == separator_kind => {
                     if let Some(item) = pending_item.take() {
-                        return Some(RecoveredSeparatedListEntry::Entry(make(
-                            item,
-                            Some(JavaSyntaxToken { syntax: token }),
-                        )));
+                        return Some(RecoveredSeparatedListEntry::Entry(make(item, Some(token))));
                     }
-                    return Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
-                        syntax: token,
-                    }));
+                    return Some(RecoveredSeparatedListEntry::Token(token));
                 }
                 SyntaxElement::Token(token) if skip_token(token.kind()) => {}
                 SyntaxElement::Token(token) => {
                     if let Some(previous) = pending_item.take() {
-                        queued = Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
-                            syntax: token,
-                        }));
+                        queued = Some(RecoveredSeparatedListEntry::Token(token));
                         return Some(RecoveredSeparatedListEntry::Entry(make(previous, None)));
                     }
-                    return Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
-                        syntax: token,
-                    }));
+                    return Some(RecoveredSeparatedListEntry::Token(token));
                 }
             }
         }

@@ -3,8 +3,9 @@ use std::{fmt, marker::PhantomData};
 use jolt_text::{TextRange, TextSize};
 
 use crate::{
-    Language, RawSyntaxKind, SyntaxTrivia,
+    Comments, Language, RawSyntaxKind, SyntaxTrivia,
     syntax_tree::{SyntaxTree, TokenId},
+    trivia_has_blank_line,
 };
 
 /// A parent-aware borrowed cursor over a syntax tree token.
@@ -84,6 +85,25 @@ impl<'tree, L: Language> SyntaxToken<'tree, L> {
     #[must_use]
     pub fn trailing(&self) -> &'tree [SyntaxTrivia] {
         self.tree.trivia(&self.tree.token(self.id).trailing)
+    }
+
+    /// Returns comments attached before this token.
+    #[must_use]
+    pub fn leading_comments(&self) -> Comments<'tree> {
+        Comments::new(self.source, self.leading(), self.offset())
+    }
+
+    /// Returns comments attached after this token.
+    #[must_use]
+    pub fn trailing_comments(&self) -> Comments<'tree> {
+        Comments::new(self.source, self.trailing(), self.token_text_range().end())
+    }
+
+    /// Returns true when the token's leading trivia contains an intentional
+    /// blank line (two or more consecutive newlines not separated by a comment).
+    #[must_use]
+    pub fn has_leading_blank_line(&self) -> bool {
+        trivia_has_blank_line(self.leading())
     }
 }
 

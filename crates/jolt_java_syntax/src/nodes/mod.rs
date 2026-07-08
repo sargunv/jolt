@@ -1,173 +1,15 @@
-use std::{fmt, slice};
+use std::fmt;
 
-use jolt_syntax::{SyntaxNode, SyntaxToken, SyntaxTrivia, TriviaKind as SyntaxTriviaKind};
+pub use jolt_syntax::{
+    Comment as JavaComment, CommentKind as JavaCommentKind, Comments as JavaComments,
+};
+use jolt_syntax::{SyntaxNode, SyntaxToken};
 use jolt_text::TextRange;
 
 use crate::{JavaSyntaxKind, language::JavaLanguage};
 
 pub(crate) type JavaSyntaxNode<'source> = SyntaxNode<'source, JavaLanguage>;
-type JavaRawSyntaxToken<'source> = SyntaxToken<'source, JavaLanguage>;
-
-/// A comment attached as token trivia in the Java syntax tree.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct JavaComment<'source> {
-    kind: JavaCommentKind,
-    source: &'source str,
-    text_range: TextRange,
-}
-
-/// Borrowed comments attached to syntax token trivia.
-#[derive(Clone)]
-pub struct JavaComments<'source> {
-    source: &'source str,
-    trivia: slice::Iter<'source, SyntaxTrivia>,
-    offset: jolt_text::TextSize,
-}
-
-impl<'source> JavaComments<'source> {
-    fn new(
-        source: &'source str,
-        trivia: &'source [SyntaxTrivia],
-        offset: jolt_text::TextSize,
-    ) -> Self {
-        Self {
-            source,
-            trivia: trivia.iter(),
-            offset,
-        }
-    }
-
-    #[must_use]
-    pub fn is_empty(&self) -> bool {
-        self.trivia.as_slice().iter().all(|trivia| {
-            !matches!(
-                trivia.kind(),
-                SyntaxTriviaKind::LineComment
-                    | SyntaxTriviaKind::ShebangComment
-                    | SyntaxTriviaKind::BlockComment
-                    | SyntaxTriviaKind::DocComment
-            )
-        })
-    }
-}
-
-impl<'source> Iterator for JavaComments<'source> {
-    type Item = JavaComment<'source>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        for trivia in self.trivia.by_ref() {
-            let text_range = TextRange::new(self.offset, self.offset + trivia.text_len());
-            self.offset = text_range.end();
-            let kind = match trivia.kind() {
-                SyntaxTriviaKind::LineComment | SyntaxTriviaKind::ShebangComment => {
-                    JavaCommentKind::Line
-                }
-                SyntaxTriviaKind::BlockComment => JavaCommentKind::Block,
-                SyntaxTriviaKind::DocComment => JavaCommentKind::Doc,
-                SyntaxTriviaKind::Whitespace
-                | SyntaxTriviaKind::Newline
-                | SyntaxTriviaKind::Ignored => continue,
-            };
-            return Some(JavaComment {
-                kind,
-                source: self.source,
-                text_range,
-            });
-        }
-
-        None
-    }
-}
-
-impl<'source> JavaComment<'source> {
-    /// Returns the comment kind.
-    #[must_use]
-    pub const fn kind(&self) -> JavaCommentKind {
-        self.kind
-    }
-
-    /// Returns the raw comment text.
-    #[must_use]
-    pub fn text(&self) -> &'source str {
-        &self.source[self.text_range.start().get()..self.text_range.end().get()]
-    }
-
-    #[must_use]
-    pub fn text_range(&self) -> TextRange {
-        self.text_range
-    }
-}
-
-/// A Java comment kind exposed from syntax trivia.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum JavaCommentKind {
-    /// A `//` line comment.
-    Line,
-    /// A non-Javadoc block comment.
-    Block,
-    /// A Javadoc comment.
-    Doc,
-}
-
-#[derive(Clone, Copy, Eq, PartialEq)]
-pub struct JavaSyntaxToken<'source> {
-    syntax: JavaRawSyntaxToken<'source>,
-}
-
-impl<'source> JavaSyntaxToken<'source> {
-    #[must_use]
-    pub fn kind(&self) -> JavaSyntaxKind {
-        self.syntax.kind()
-    }
-
-    #[must_use]
-    pub fn text(&self) -> &'source str {
-        self.syntax.text()
-    }
-
-    #[must_use]
-    pub fn text_range(&self) -> TextRange {
-        self.syntax.text_range()
-    }
-
-    #[must_use]
-    pub fn token_text_range(&self) -> TextRange {
-        self.syntax.token_text_range()
-    }
-
-    /// Returns comments attached before this token.
-    #[must_use]
-    pub fn leading_comments(&self) -> JavaComments<'source> {
-        JavaComments::new(
-            self.syntax.source(),
-            self.syntax.leading(),
-            self.syntax.offset(),
-        )
-    }
-
-    /// Returns comments attached after this token.
-    #[must_use]
-    pub fn trailing_comments(&self) -> JavaComments<'source> {
-        JavaComments::new(
-            self.syntax.source(),
-            self.syntax.trailing(),
-            self.syntax.token_text_range().end(),
-        )
-    }
-
-    /// Returns true when the token's leading trivia contains an intentional
-    /// blank line.
-    #[must_use]
-    pub(crate) fn has_leading_blank_line(&self) -> bool {
-        trivia_has_blank_line(self.syntax.leading())
-    }
-}
-
-impl fmt::Debug for JavaSyntaxToken<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.syntax.fmt(f)
-    }
-}
+pub type JavaSyntaxToken<'source> = SyntaxToken<'source, JavaLanguage>;
 
 /// A Java operator, which may span multiple syntax tokens in ambiguous `>` forms.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -398,29 +240,6 @@ pub(crate) fn binary_operator_precedence(kind: JavaOperatorKind) -> Option<u8> {
         | JavaOperatorKind::RShiftEq
         | JavaOperatorKind::UnsignedRShiftEq => return None,
     })
-}
-
-fn trivia_has_blank_line(trivia: &[SyntaxTrivia]) -> bool {
-    let mut line_breaks_since_content = 0;
-    for trivia in trivia {
-        match trivia.kind() {
-            SyntaxTriviaKind::Newline => {
-                line_breaks_since_content += 1;
-                if line_breaks_since_content >= 2 {
-                    return true;
-                }
-            }
-            SyntaxTriviaKind::Whitespace | SyntaxTriviaKind::Ignored => {}
-            SyntaxTriviaKind::LineComment
-            | SyntaxTriviaKind::ShebangComment
-            | SyntaxTriviaKind::BlockComment
-            | SyntaxTriviaKind::DocComment => {
-                line_breaks_since_content = 0;
-            }
-        }
-    }
-
-    false
 }
 
 mod private {
@@ -1309,17 +1128,15 @@ fn children<'source, N: JavaNode<'source>>(
 fn token_iter<'source>(
     syntax: &JavaSyntaxNode<'source>,
 ) -> impl Iterator<Item = JavaSyntaxToken<'source>> + use<'source> {
-    syntax.tokens().map(|syntax| JavaSyntaxToken { syntax })
+    syntax.tokens()
 }
 
 fn first_token<'source>(syntax: &JavaSyntaxNode<'source>) -> Option<JavaSyntaxToken<'source>> {
-    syntax
-        .first_token()
-        .map(|syntax| JavaSyntaxToken { syntax })
+    syntax.first_token()
 }
 
 fn last_token<'source>(syntax: &JavaSyntaxNode<'source>) -> Option<JavaSyntaxToken<'source>> {
-    syntax.last_token().map(|syntax| JavaSyntaxToken { syntax })
+    syntax.last_token()
 }
 
 fn starts_after_blank_line(syntax: &JavaSyntaxNode<'_>) -> bool {
@@ -1359,7 +1176,6 @@ fn nth_child_token<'source>(
         .child_tokens()
         .filter(|token| token.kind() == kind)
         .nth(index)
-        .map(|syntax| JavaSyntaxToken { syntax })
 }
 
 fn child_token_in<'source>(
@@ -1369,7 +1185,6 @@ fn child_token_in<'source>(
     syntax
         .child_tokens()
         .find(|token| kinds.contains(&token.kind()))
-        .map(|syntax| JavaSyntaxToken { syntax })
 }
 
 fn children_tokens_matching<'source, P>(
@@ -1382,5 +1197,4 @@ where
     syntax
         .child_tokens()
         .filter(move |token| predicate(token.kind()))
-        .map(|syntax| JavaSyntaxToken { syntax })
 }

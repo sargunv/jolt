@@ -1448,7 +1448,6 @@ where
                     }
                 }
                 SyntaxElement::Token(token) => {
-                    let token = KotlinSyntaxToken { syntax: token };
                     if token.kind() == KotlinSyntaxKind::Comma
                         && let Some(node) = current.take()
                     {
@@ -1553,7 +1552,6 @@ where
                     }
                 }
                 SyntaxElement::Token(token) => {
-                    let token = KotlinSyntaxToken { syntax: token };
                     if token.kind() == KotlinSyntaxKind::Comma {
                         if let Some(node) = current.take() {
                             return Some(RecoveredSeparatedListEntry::Entry(make_entry(
@@ -1596,7 +1594,6 @@ where
                 Err(node) => recovered_node_entry(node),
             }),
             SyntaxElement::Token(token) => {
-                let token = KotlinSyntaxToken { syntax: token };
                 (!skip_token(token.kind())).then_some(RecoveredSeparatedListEntry::Token(token))
             }
         })
@@ -2726,16 +2723,11 @@ impl<'source> LambdaExpression<'source> {
                     Ok(item) => RecoveredSeparatedListEntry::Entry(item),
                     Err(node) => recovered_node_entry(node),
                 }),
-                SyntaxElement::Token(token) => {
-                    let token = KotlinSyntaxToken { syntax: token };
-                    (!matches!(
-                        token.kind(),
-                        KotlinSyntaxKind::LBrace
-                            | KotlinSyntaxKind::RBrace
-                            | KotlinSyntaxKind::Arrow
-                    ))
-                    .then_some(RecoveredSeparatedListEntry::Token(token))
-                }
+                SyntaxElement::Token(token) => (!matches!(
+                    token.kind(),
+                    KotlinSyntaxKind::LBrace | KotlinSyntaxKind::RBrace | KotlinSyntaxKind::Arrow
+                ))
+                .then_some(RecoveredSeparatedListEntry::Token(token)),
             })
     }
 }
