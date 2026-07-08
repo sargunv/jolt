@@ -1,0 +1,16 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+@file:Suppress("unused")
+
+package com.example.demo
+
+import alpha.Alpha
+import zeta.Zed
+
+class PackageSpacing
+
+diagnostics:
+(none)

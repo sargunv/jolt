@@ -1,0 +1,25 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+/* JOLT-TRIVIA:file-header */
+@file:Suppress("unused") /* JOLT-TRIVIA:file-annotation */
+
+package com /* JOLT-TRIVIA:package-mid */
+  .example
+  .trivia // JOLT-TRIVIA:package-tail
+  
+
+// JOLT-TRIVIA:before-imports
+import kotlin.collections /* JOLT-TRIVIA:import-dot */.List
+import com.example /* JOLT-TRIVIA:star-prefix */.tools.*
+import kotlin.io.println /* JOLT-TRIVIA:import-alias-source */ as say
+
+// JOLT-TRIVIA:after-imports
+fun importedNames(names: List<String>) {
+  say(names.joinToString())
+}
+
+diagnostics:
+(none)

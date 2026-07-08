@@ -1,0 +1,108 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+@file:Suppress /* JOLT-TRIVIA:file-annotation-name */ (
+  /* JOLT-TRIVIA:file-annotation-open */
+  "unused",
+  /* JOLT-TRIVIA:file-annotation-comma */
+  "UNUSED_PARAMETER",
+  /* JOLT-TRIVIA:file-annotation-close */
+)
+
+package /* JOLT-TRIVIA:package-keyword */ com /* JOLT-TRIVIA:package-dot-left */. /* JOLT-TRIVIA:package-dot-right */ example.trivia
+
+annotation class Crevice /* JOLT-TRIVIA:annotation-class-name */(
+  val value /* JOLT-TRIVIA:annotation-param-name */: /* JOLT-TRIVIA:annotation-param-colon */ String = /* JOLT-TRIVIA:annotation-param-default */ "",
+)
+
+interface Scope {
+  fun emit /* JOLT-TRIVIA:member-name */(
+    value /* JOLT-TRIVIA:member-param-name */: /* JOLT-TRIVIA:member-param-colon */ String,
+  )
+}
+
+class Holder /* JOLT-TRIVIA:class-before-type-params */< /* JOLT-TRIVIA:type-param-open */
+  T /* JOLT-TRIVIA:type-param-name */ : /* JOLT-TRIVIA:type-param-bound */ Any /* JOLT-TRIVIA:type-param-close */
+> /* JOLT-TRIVIA:class-before-constructor */ constructor /* JOLT-TRIVIA:constructor-keyword */(
+  val payload /* JOLT-TRIVIA:property-param-name */: /* JOLT-TRIVIA:property-param-colon */ T,
+)
+  where /* JOLT-TRIVIA:where-keyword */ T /* JOLT-TRIVIA:where-name */ : /* JOLT-TRIVIA:where-colon */ Comparable<T> {
+  val boxed /* JOLT-TRIVIA:property-name */: /* JOLT-TRIVIA:property-colon */ List /* JOLT-TRIVIA:type-before-args */< /* JOLT-TRIVIA:type-arg-open */
+    T /* JOLT-TRIVIA:type-arg-name */
+  > /* JOLT-TRIVIA:type-after-args */ = listOf(payload)
+
+  operator fun component1 /* JOLT-TRIVIA:component-name */() /* JOLT-TRIVIA:component-before-return */: T = payload
+}
+
+fun Scope /* JOLT-TRIVIA:receiver-type */. /* JOLT-TRIVIA:receiver-dot */commentCrevices /* JOLT-TRIVIA:function-name */(
+  input /* JOLT-TRIVIA:param-name */: /* JOLT-TRIVIA:param-colon */ List<String>,
+  transform /* JOLT-TRIVIA:function-param-name */: /* JOLT-TRIVIA:function-param-colon */ ( /* JOLT-TRIVIA:function-type-open */
+    String /* JOLT-TRIVIA:function-type-param */
+  ) /* JOLT-TRIVIA:function-type-before-arrow */ -> /* JOLT-TRIVIA:function-type-arrow */ String,
+  fallback /* JOLT-TRIVIA:default-param-name */: String = /* JOLT-TRIVIA:default-param-equals */ "empty",
+) /* JOLT-TRIVIA:before-return-type */: /* JOLT-TRIVIA:return-colon */ String {
+  val holder /* JOLT-TRIVIA:holder-name */ = Holder /* JOLT-TRIVIA:constructor-call */< /* JOLT-TRIVIA:call-type-arg-open */
+    String /* JOLT-TRIVIA:call-type-arg */
+  > /* JOLT-TRIVIA:call-type-arg-close */( /* JOLT-TRIVIA:constructor-call-open */
+    input[0 /* JOLT-TRIVIA:constructor-index */] /* JOLT-TRIVIA:constructor-call-close */
+  )
+  val (
+    first /* JOLT-TRIVIA:destructure-first */,
+    second /* JOLT-TRIVIA:destructure-second */
+  ) = input[0 /* JOLT-TRIVIA:index-zero */] /* JOLT-TRIVIA:to-receiver */ to /* JOLT-TRIVIA:to-name */
+      input[1 /* JOLT-TRIVIA:index-one */]
+  val computed = (transform /* JOLT-TRIVIA:call-callee */( /* JOLT-TRIVIA:call-open */
+    first /* JOLT-TRIVIA:call-arg */
+  ) /* JOLT-TRIVIA:binary-left */
+    + /* JOLT-TRIVIA:binary-plus */ transform(second))
+    /* JOLT-TRIVIA:before-chain-dot */
+    . /* JOLT-TRIVIA:chain-dot */ trim /* JOLT-TRIVIA:trim-name */()
+    ?. /* JOLT-TRIVIA:safe-chain */ ifEmpty /* JOLT-TRIVIA:if-empty-name */ { /* JOLT-TRIVIA:if-empty-open */
+      fallback /* JOLT-TRIVIA:if-empty-body */
+    }
+    ?: /* JOLT-TRIVIA:elvis */ fallback
+  val rendered = "value=${ /* JOLT-TRIVIA:template-open */computed
+    + /* JOLT-TRIVIA:template-plus */ "!"}"
+  val casted = rendered /* JOLT-TRIVIA:as-left */ as? /* JOLT-TRIVIA:as-operator */
+    String
+  val checked = casted /* JOLT-TRIVIA:is-left */ !is /* JOLT-TRIVIA:is-operator */
+    Nothing
+  if /* JOLT-TRIVIA:if-keyword */ ( /* JOLT-TRIVIA:if-open */
+    checked /* JOLT-TRIVIA:if-condition */
+      && /* JOLT-TRIVIA:if-and */ computed !in /* JOLT-TRIVIA:not-in */
+          listOf("") /* JOLT-TRIVIA:if-close */
+  ) {
+    emit /* JOLT-TRIVIA:emit-callee */(rendered)
+  } else /* JOLT-TRIVIA:else-keyword */ {
+    emit(fallback)
+  }
+  for /* JOLT-TRIVIA:for-keyword */ ( /* JOLT-TRIVIA:for-open */(
+    index /* JOLT-TRIVIA:loop-index */, /* JOLT-TRIVIA:loop-comma */
+    item /* JOLT-TRIVIA:loop-value */
+  ) in /* JOLT-TRIVIA:loop-in */ input.withIndex() /* JOLT-TRIVIA:for-close */) {
+    emit("$index:$item")
+  }
+  when /* JOLT-TRIVIA:when-keyword */ ( /* JOLT-TRIVIA:when-open */val text /* JOLT-TRIVIA:when-subject-name */ = /* JOLT-TRIVIA:when-subject-equals */ rendered /* JOLT-TRIVIA:when-close */) {
+    "" /* JOLT-TRIVIA:when-empty-condition */ -> /* JOLT-TRIVIA:when-empty-arrow */ emit("blank")
+    in /* JOLT-TRIVIA:when-in */ listOf(
+      first,
+      second
+    ) /* JOLT-TRIVIA:when-list */ -> emit(text)
+    else /* JOLT-TRIVIA:else-condition */ -> /* JOLT-TRIVIA:else-arrow */ emit(text)
+  }
+  return input.joinToString /* JOLT-TRIVIA:trailing-lambda-call */(
+    separator = /* JOLT-TRIVIA:named-arg-equals */ ",",
+  ) /* JOLT-TRIVIA:before-trailing-lambda */ { item /* JOLT-TRIVIA:lambda-param */ ->
+    val local /* JOLT-TRIVIA:lambda-local-name */ = transform(item)
+    if (local.isEmpty()) {
+      return@joinToString /* JOLT-TRIVIA:labeled-return */ fallback
+    }
+    local
+  }
+    + holder /* JOLT-TRIVIA:callable-reference-left */:: /* JOLT-TRIVIA:callable-reference-operator */component1 /* JOLT-TRIVIA:callable-reference-name */
+}
+
+diagnostics:
+(none)

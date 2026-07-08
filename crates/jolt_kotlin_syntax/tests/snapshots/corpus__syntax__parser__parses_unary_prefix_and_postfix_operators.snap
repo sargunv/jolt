@@ -16,7 +16,9 @@ KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    Identifier "unary" @ 4..9
+    CallableName
+      Name
+        Identifier "unary" @ 4..9
     ValueParameterList
       LParen "(" @ 9..10
       ValueParameter
@@ -35,13 +37,17 @@ KotlinFile
       LBrace "{" @ 33..34
       PropertyDeclaration
         VarKw "var" @ 39..42 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "index" @ 43..48 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "index" @ 43..48 trailing=[Whitespace " "]
         Assign "=" @ 49..50 trailing=[Whitespace " "]
         LiteralExpression
           IntegerLiteral "0" @ 51..52
       PropertyDeclaration
         ValKw "val" @ 57..60 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "before" @ 61..67 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "before" @ 61..67 trailing=[Whitespace " "]
         Assign "=" @ 68..69 trailing=[Whitespace " "]
         BinaryExpression
           UnaryExpression
@@ -58,7 +64,9 @@ KotlinFile
             MinusMinus "--" @ 93..95
       PropertyDeclaration
         ValKw "val" @ 100..103 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "after" @ 104..109 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "after" @ 104..109 trailing=[Whitespace " "]
         Assign "=" @ 110..111 trailing=[Whitespace " "]
         BinaryExpression
           UnaryExpression

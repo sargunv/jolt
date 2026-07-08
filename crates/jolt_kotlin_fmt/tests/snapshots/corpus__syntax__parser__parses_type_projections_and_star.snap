@@ -1,0 +1,13 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class TypeProjections(
+  val input: List<out Number>,
+  val output: MutableList<in Int>,
+  val unknown: List<*>,
+)
+
+diagnostics:
+(none)

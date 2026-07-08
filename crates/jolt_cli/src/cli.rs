@@ -13,6 +13,7 @@ use crate::{
     fmt::{
         self, CliFormatOptions,
         config::{self as fmt_config, default_file_config},
+        detect_language,
     },
 };
 
@@ -189,9 +190,7 @@ impl ConfigTarget {
 }
 
 fn is_supported_source_path(path: &Path) -> bool {
-    path.extension()
-        .and_then(|extension| extension.to_str())
-        .is_some_and(|extension| extension == "java")
+    detect_language(path).is_some()
 }
 
 fn existing_config_path(cwd: &Path) -> Option<PathBuf> {

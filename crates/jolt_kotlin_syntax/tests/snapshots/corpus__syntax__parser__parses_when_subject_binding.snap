@@ -16,7 +16,9 @@ KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    Identifier "subjectBinding" @ 4..18
+    CallableName
+      Name
+        Identifier "subjectBinding" @ 4..18
     ValueParameterList
       LParen "(" @ 18..19
       ValueParameter
@@ -49,8 +51,9 @@ KotlinFile
                   NameExpression
                     Identifier "input" @ 66..71 trailing=[Whitespace " "]
                   AsSafe "as?" @ 72..75 trailing=[Whitespace " "]
-                  NameExpression
-                    Identifier "String" @ 76..82
+                  TypeReference
+                    UserType
+                      Identifier "String" @ 76..82
                 RParen ")" @ 82..83 trailing=[Whitespace " "]
               LBrace "{" @ 84..85
               WhenEntry

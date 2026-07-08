@@ -1,0 +1,19 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+const val BuildName = "dev"
+
+var mutableCount: Int = 0
+
+context(config: Config)
+val configuredName: String
+  get() = config.name
+
+interface Config {
+  val name: String
+}
+
+diagnostics:
+(none)

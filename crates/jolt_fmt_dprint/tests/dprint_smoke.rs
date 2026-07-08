@@ -27,6 +27,39 @@ fn dprint_fmt_loads_local_wasm_plugin_and_formats_java() {
 }
 
 #[test]
+fn dprint_fmt_loads_local_wasm_plugin_and_formats_kotlin() {
+    let project = DprintProject::new();
+    project.write_config("");
+    project.write_file(
+        "A.kt",
+        "package   com.example\nimport z.Z\nimport a.A\nclass A\n",
+    );
+
+    project.run_dprint(["fmt", "A.kt"]).assert_success();
+
+    assert_eq!(
+        project.read_file("A.kt"),
+        direct_kotlin_format("package   com.example\nimport z.Z\nimport a.A\nclass A\n")
+    );
+}
+
+#[test]
+fn dprint_fmt_loads_local_wasm_plugin_and_formats_kotlin_script() {
+    let project = DprintProject::new();
+    project.write_config("");
+    project.write_file("build.gradle.kts", "val answer=42\n");
+
+    project
+        .run_dprint(["fmt", "build.gradle.kts"])
+        .assert_success();
+
+    assert_eq!(
+        project.read_file("build.gradle.kts"),
+        direct_kotlin_format("val answer=42\n")
+    );
+}
+
+#[test]
 fn dprint_check_loads_local_wasm_plugin_and_fails_on_unformatted_java() {
     let project = DprintProject::new();
     project.write_config("");
@@ -150,6 +183,22 @@ fn direct_java_format(source: &str) -> String {
         FormatSinkResult::Complete | FormatSinkResult::Halted => sink.text,
         FormatSinkResult::Blocked { diagnostics } => {
             panic!("direct Java formatting blocked: {diagnostics:?}")
+        }
+        FormatSinkResult::SinkError { error } => match error {},
+    }
+}
+
+fn direct_kotlin_format(source: &str) -> String {
+    let mut sink = StringSink::default();
+    match format_source_to_sink(
+        source,
+        Language::Kotlin,
+        &FormatOptions::default(),
+        &mut sink,
+    ) {
+        FormatSinkResult::Complete | FormatSinkResult::Halted => sink.text,
+        FormatSinkResult::Blocked { diagnostics } => {
+            panic!("direct Kotlin formatting blocked: {diagnostics:?}")
         }
         FormatSinkResult::SinkError { error } => match error {},
     }

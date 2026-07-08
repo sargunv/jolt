@@ -1,0 +1,16 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class Injected @Inject constructor(
+  @Named("id")
+  val id: String,
+)
+
+annotation class Inject
+
+annotation class Named(val value: String)
+
+diagnostics:
+(none)

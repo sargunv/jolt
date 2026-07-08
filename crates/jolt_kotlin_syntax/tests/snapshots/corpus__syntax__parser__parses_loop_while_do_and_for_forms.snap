@@ -24,7 +24,9 @@ KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    Identifier "loops" @ 4..9
+    CallableName
+      Name
+        Identifier "loops" @ 4..9
     ValueParameterList
       LParen "(" @ 9..10
       ValueParameter

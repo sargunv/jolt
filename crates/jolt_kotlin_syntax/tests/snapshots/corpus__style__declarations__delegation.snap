@@ -39,7 +39,9 @@ KotlinFile
       ClassMemberDeclaration
         FunctionDeclaration
           FunKw "fun" @ 56..59 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "save" @ 60..64
+          CallableName
+            Name
+              Identifier "save" @ 60..64
           ValueParameterList
             LParen "(" @ 64..65
             ValueParameter
@@ -58,8 +60,9 @@ KotlinFile
     Colon ":" @ 101..102 trailing=[Whitespace " "]
     DelegationSpecifierList
       DelegationSpecifier
-        NameExpression
-          Identifier "Store" @ 103..108 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Store" @ 103..108 trailing=[Whitespace " "]
     ClassBody
       LBrace "{" @ 109..110
       ClassMemberDeclaration
@@ -67,7 +70,9 @@ KotlinFile
           ModifierList
             Identifier "override" @ 115..123 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
           FunKw "fun" @ 124..127 trailing=[Whitespace " "]
-          Identifier "save" @ 128..132
+          CallableName
+            Name
+              Identifier "save" @ 128..132
           ValueParameterList
             LParen "(" @ 132..133
             ValueParameter
@@ -103,12 +108,12 @@ KotlinFile
     Colon ":" @ 202..203 trailing=[Whitespace " "]
     DelegationSpecifierList
       DelegationSpecifier
-        BinaryExpression
-          NameExpression
+        TypeReference
+          UserType
             Identifier "Store" @ 204..209 trailing=[Whitespace " "]
-          Identifier "by" @ 210..212 trailing=[Whitespace " "]
-          NameExpression
-            Identifier "delegate" @ 213..221
+        Identifier "by" @ 210..212 trailing=[Whitespace " "]
+        NameExpression
+          Identifier "delegate" @ 213..221
   Eof "" @ 222..222 leading=[Newline "\n"]
 
 diagnostics:

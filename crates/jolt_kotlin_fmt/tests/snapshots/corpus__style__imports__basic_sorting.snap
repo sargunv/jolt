@@ -1,0 +1,15 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+package com.example.imports
+
+import alpha.Alpha
+import kotlin.collections.List
+import zeta.Zed
+
+class ImportSorting(val alpha: Alpha, val zed: Zed, val names: List<String>)
+
+diagnostics:
+(none)

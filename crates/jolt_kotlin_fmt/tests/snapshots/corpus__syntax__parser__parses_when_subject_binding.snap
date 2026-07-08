@@ -1,0 +1,14 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+fun subjectBinding(input: Any): Int {
+  return when (val text = input as? String) {
+    null -> 0
+    else -> text.length
+  }
+}
+
+diagnostics:
+(none)

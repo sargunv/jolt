@@ -5,3 +5,11 @@ fun trailing(values: List<Int>) {
             acc + value
         }
 }
+
+class Cached<T>(private val init: (Int) -> T) {
+    init {
+        require(true)
+    }
+
+    private val values = List(8) { init(it) }
+}

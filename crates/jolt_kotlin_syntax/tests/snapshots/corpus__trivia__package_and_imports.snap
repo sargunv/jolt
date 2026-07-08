@@ -91,7 +91,9 @@ KotlinFile
       Star "*" @ 393..394
   FunctionDeclaration
     FunKw "fun" @ 425..428 leading=[Newline "\n", LineComment "// JOLT-TRIVIA:after-imports", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "importedNames" @ 429..442
+    CallableName
+      Name
+        Identifier "importedNames" @ 429..442
     ValueParameterList
       LParen "(" @ 442..443
       ValueParameter

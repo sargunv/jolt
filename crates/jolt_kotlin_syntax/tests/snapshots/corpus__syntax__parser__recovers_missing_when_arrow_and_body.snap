@@ -17,7 +17,9 @@ KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    Identifier "brokenWhen" @ 4..14
+    CallableName
+      Name
+        Identifier "brokenWhen" @ 4..14
     ValueParameterList
       LParen "(" @ 14..15
       ValueParameter

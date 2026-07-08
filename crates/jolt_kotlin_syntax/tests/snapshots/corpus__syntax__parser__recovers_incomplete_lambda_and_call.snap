@@ -15,7 +15,9 @@ KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    Identifier "incompleteLambda" @ 4..20
+    CallableName
+      Name
+        Identifier "incompleteLambda" @ 4..20
     ValueParameterList
       LParen "(" @ 20..21
       ValueParameter
@@ -53,10 +55,10 @@ KotlinFile
                     Identifier "value" @ 59..64 trailing=[Whitespace " "]
                 Arrow "->" @ 65..67
               Statement
-                ModifierList
-                  Identifier "value" @ 76..81 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                 ExpressionStatement
-                  UnaryExpression
+                  BinaryExpression
+                    NameExpression
+                      Identifier "value" @ 76..81 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                     Plus "+" @ 82..83 trailing=[Whitespace " "]
                     LiteralExpression
                       IntegerLiteral "1" @ 84..85

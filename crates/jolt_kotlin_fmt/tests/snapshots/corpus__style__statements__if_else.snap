@@ -1,0 +1,18 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+package com.example.statements
+
+fun choose(value: Int): String {
+  if (value < 0) {
+    return "negative"
+  } else if (value == 0) {
+    return "zero"
+  }
+  return "positive"
+}
+
+diagnostics:
+(none)

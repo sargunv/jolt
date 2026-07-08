@@ -1,15 +1,37 @@
+use jolt_syntax::SyntaxElement;
+
 use super::{
-    AnyKotlinNode, ClassBody, ClassDeclaration, ClassMember, CompanionObject, Declaration,
-    DestructuringDeclaration, DestructuringEntry, DestructuringPatternEntry, Expression,
-    FunctionDeclaration, ImportDirective, ImportList, InterfaceDeclaration, KotlinFile,
-    KotlinFileItem, KotlinSyntaxKind, KotlinSyntaxToken, Name, ObjectDeclaration, PackageHeader,
-    PropertyDeclaration, QualifiedName, StatementSyntax, StringTemplateExpression,
-    StringTemplatePart, TypeAliasDeclaration, TypeArgumentList, TypeArgumentListEntry,
-    TypeReference, TypeSyntax, ValueArgumentList, ValueArgumentListEntry, WhenConditionSyntax,
-    WhenEntry, child, child_family, child_token, children, children_family,
+    AnnotatedExpression, Annotation, AnnotationArgumentList, AnnotationUseSiteTarget,
+    AnonymousFunctionExpression, AnyKotlinNode, AssignmentExpression, BinaryExpression, Block,
+    BlockItem, CallExpression, CallableName, CallableReferenceExpression, CatchClause, ClassBody,
+    ClassDeclaration, ClassMember, ClassMemberDeclaration, CollectionLiteralExpression,
+    CompanionObject, ConstructorDelegationCall, ContextFunctionType, ContextParameter,
+    ContextParameterClause, Declaration, DefinitelyNonNullableType, DelegationSpecifier,
+    DelegationSpecifierList, DestructuringDeclaration, DestructuringEntry,
+    DestructuringPatternEntry, DoWhileStatement, EnumEntry, ExplicitBackingField, Expression,
+    ExpressionParentRole, ExpressionStatement, FinallyClause, ForStatement, FunctionDeclaration,
+    FunctionType, FunctionTypeParameter, IfExpression, ImportDirective, ImportList,
+    IndexExpression, InitializerBlock, InterfaceDeclaration, JumpExpression, KotlinFile,
+    KotlinFileItem, KotlinNode, KotlinSyntaxKind, KotlinSyntaxNode, KotlinSyntaxToken,
+    LambdaExpression, LambdaParameter, LambdaParameterList, LiteralExpression, LocalDeclaration,
+    ModifierList, Name, NameExpression, NavigationExpression, NullableType, ObjectDeclaration,
+    ObjectExpression, PackageHeader, ParenthesizedExpression, ParenthesizedType, PostfixExpression,
+    PrimaryConstructor, PropertyAccessor, PropertyDeclaration, QualifiedName, ReceiverType,
+    SecondaryConstructor, Statement, StatementSyntax, StringTemplateEntry,
+    StringTemplateExpression, StringTemplatePart, SuperExpression, ThisExpression, ThrowExpression,
+    TryExpression, TypeAliasDeclaration, TypeArgument, TypeArgumentList, TypeConstraint,
+    TypeConstraintList, TypeParameter, TypeParameterList, TypeProjection, TypeProjectionList,
+    TypeReference, TypeSyntax, UnaryExpression, UserType, ValueArgument, ValueArgumentList,
+    ValueParameter, ValueParameterList, WhenCondition, WhenConditionSyntax, WhenEntry,
+    WhenExpression, WhenGuard, WhenSubject, WhileStatement, child, child_family, child_token,
+    child_tokens, children, children_family,
 };
 
 impl<'source> KotlinFile<'source> {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'source>> + use<'source> {
+        children(self.syntax())
+    }
+
     #[must_use]
     pub fn package_header(&self) -> Option<PackageHeader<'source>> {
         child(self.syntax())
@@ -67,45 +89,578 @@ impl<'source> ImportDirective<'source> {
     }
 }
 
+impl<'source> EnumEntry<'source> {
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression<'source>> {
+        child_family(self.syntax())
+    }
+}
+
 impl<'source> ClassDeclaration<'source> {
     #[must_use]
+    pub fn class_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::ClassKw)
+    }
+
+    #[must_use]
     pub fn name(&self) -> Option<Name<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn modifiers(&self) -> Option<ModifierList<'source>> {
+        child(self.syntax())
+    }
+
+    pub fn modifier_lists(&self) -> impl Iterator<Item = ModifierList<'source>> + use<'source, '_> {
+        children(self.syntax())
+    }
+
+    #[must_use]
+    pub fn primary_constructor(&self) -> Option<PrimaryConstructor<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn type_parameter_list(&self) -> Option<TypeParameterList<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn type_constraint_list(&self) -> Option<TypeConstraintList<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn colon(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Colon)
+    }
+
+    #[must_use]
+    pub fn delegation_specifier_list(&self) -> Option<DelegationSpecifierList<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn body(&self) -> Option<ClassBody<'source>> {
         child(self.syntax())
     }
 }
 
 impl<'source> InterfaceDeclaration<'source> {
     #[must_use]
+    pub fn interface_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::InterfaceKw)
+    }
+
+    #[must_use]
     pub fn name(&self) -> Option<Name<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn modifiers(&self) -> Option<ModifierList<'source>> {
+        child(self.syntax())
+    }
+
+    pub fn modifier_lists(&self) -> impl Iterator<Item = ModifierList<'source>> + use<'source, '_> {
+        children(self.syntax())
+    }
+
+    #[must_use]
+    pub fn type_parameter_list(&self) -> Option<TypeParameterList<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn type_constraint_list(&self) -> Option<TypeConstraintList<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn colon(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Colon)
+    }
+
+    #[must_use]
+    pub fn delegation_specifier_list(&self) -> Option<DelegationSpecifierList<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn body(&self) -> Option<ClassBody<'source>> {
         child(self.syntax())
     }
 }
 
 impl<'source> ObjectDeclaration<'source> {
     #[must_use]
+    pub fn object_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::ObjectKw)
+    }
+
+    #[must_use]
     pub fn name(&self) -> Option<Name<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn modifiers(&self) -> Option<ModifierList<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn colon(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Colon)
+    }
+
+    #[must_use]
+    pub fn delegation_specifier_list(&self) -> Option<DelegationSpecifierList<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn body(&self) -> Option<ClassBody<'source>> {
         child(self.syntax())
     }
 }
 
 impl<'source> CompanionObject<'source> {
     #[must_use]
+    pub fn object_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::ObjectKw)
+    }
+
+    #[must_use]
     pub fn name(&self) -> Option<Name<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn modifiers(&self) -> Option<ModifierList<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn colon(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Colon)
+    }
+
+    #[must_use]
+    pub fn delegation_specifier_list(&self) -> Option<DelegationSpecifierList<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn body(&self) -> Option<ClassBody<'source>> {
         child(self.syntax())
     }
 }
 
 impl<'source> FunctionDeclaration<'source> {
     #[must_use]
+    pub fn context_parameter_clause(&self) -> Option<ContextParameterClause<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
     pub fn name(&self) -> Option<Name<'source>> {
         child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn callable_name(&self) -> Option<CallableName<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn modifiers(&self) -> Option<ModifierList<'source>> {
+        child(self.syntax())
+    }
+
+    pub fn modifier_lists(&self) -> impl Iterator<Item = ModifierList<'source>> + use<'source, '_> {
+        children(self.syntax())
+    }
+
+    #[must_use]
+    pub fn fun_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::FunKw)
+    }
+
+    #[must_use]
+    pub fn name_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Identifier)
+    }
+
+    #[must_use]
+    pub fn type_parameter_list(&self) -> Option<TypeParameterList<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn value_parameter_list(&self) -> Option<ValueParameterList<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn colon(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Colon)
+    }
+
+    #[must_use]
+    pub fn return_type(&self) -> Option<TypeReference<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn assign_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Assign)
+    }
+
+    #[must_use]
+    pub fn type_constraint_list(&self) -> Option<TypeConstraintList<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn block(&self) -> Option<Block<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression<'source>> {
+        child_family(self.syntax())
+    }
+}
+
+impl<'source> CallableName<'source> {
+    pub fn names(&self) -> impl Iterator<Item = Name<'source>> + use<'source> {
+        children(self.syntax())
+    }
+
+    #[must_use]
+    pub fn receiver_type(&self) -> Option<TypeReference<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn name(&self) -> Option<Name<'source>> {
+        self.names().last()
+    }
+
+    #[must_use]
+    pub fn receiver_separator(&self) -> Option<KotlinSyntaxToken<'source>> {
+        let name_start = self.name()?.text_range().start();
+        child_tokens(self.syntax())
+            .filter(|token| {
+                token.token_text_range().end() <= name_start
+                    && matches!(token.kind(), KotlinSyntaxKind::Dot)
+            })
+            .last()
+    }
+}
+
+impl<'source> ContextParameterClause<'source> {
+    #[must_use]
+    pub fn context_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_tokens(self.syntax()).find(|token| token.text() == "context")
+    }
+
+    #[must_use]
+    pub fn open_paren(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::RParen)
+    }
+
+    pub fn entries(
+        &self,
+    ) -> impl Iterator<Item = ContextParameterClauseEntry<'source>> + use<'source, '_> {
+        separated_entries(self.syntax(), ContextParameter::cast, |parameter, comma| {
+            ContextParameterClauseEntry { parameter, comma }
+        })
+    }
+}
+
+impl<'source> ContextParameter<'source> {
+    #[must_use]
+    pub fn name(&self) -> Option<Name<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn colon(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Colon)
+    }
+
+    #[must_use]
+    pub fn ty(&self) -> Option<TypeReference<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn assign_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Assign)
+    }
+
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression<'source>> {
+        child_family(self.syntax())
+    }
+}
+
+impl<'source> AnonymousFunctionExpression<'source> {
+    #[must_use]
+    pub fn fun_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::FunKw)
+    }
+
+    #[must_use]
+    pub fn value_parameter_list(&self) -> Option<ValueParameterList<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn receiver_type(&self) -> Option<TypeReference<'source>> {
+        let dot_start = self.dot_token()?.token_text_range().start();
+        children(self.syntax())
+            .find(|ty: &TypeReference<'source>| ty.text_range().end() <= dot_start)
+    }
+
+    #[must_use]
+    pub fn dot_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Dot)
+    }
+
+    #[must_use]
+    pub fn colon(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Colon)
+    }
+
+    #[must_use]
+    pub fn return_type(&self) -> Option<TypeReference<'source>> {
+        let colon_end = self.colon()?.token_text_range().end();
+        children(self.syntax())
+            .find(|ty: &TypeReference<'source>| ty.text_range().start() >= colon_end)
+    }
+
+    #[must_use]
+    pub fn assign_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Assign)
+    }
+
+    #[must_use]
+    pub fn block(&self) -> Option<Block<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression<'source>> {
+        child_family(self.syntax())
     }
 }
 
 impl<'source> PropertyDeclaration<'source> {
     #[must_use]
+    pub fn context_parameter_clause(&self) -> Option<ContextParameterClause<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
     pub fn name(&self) -> Option<Name<'source>> {
         child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn callable_name(&self) -> Option<CallableName<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn modifiers(&self) -> Option<ModifierList<'source>> {
+        child(self.syntax())
+    }
+
+    pub fn modifier_lists(&self) -> impl Iterator<Item = ModifierList<'source>> + use<'source, '_> {
+        children(self.syntax())
+    }
+
+    #[must_use]
+    pub fn val_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::ValKw)
+    }
+
+    #[must_use]
+    pub fn var_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::VarKw)
+    }
+
+    #[must_use]
+    pub fn name_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Identifier)
+    }
+
+    #[must_use]
+    pub fn destructuring_declaration(&self) -> Option<DestructuringDeclaration<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn colon(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Colon)
+    }
+
+    #[must_use]
+    pub fn ty(&self) -> Option<TypeReference<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn assign_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Assign)
+    }
+
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression<'source>> {
+        child_family(self.syntax())
+    }
+
+    #[must_use]
+    pub fn delegate_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_tokens(self.syntax()).find(|token| token.text() == "by")
+    }
+
+    #[must_use]
+    pub fn type_parameter_list(&self) -> Option<TypeParameterList<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn type_constraint_list(&self) -> Option<TypeConstraintList<'source>> {
+        child(self.syntax())
+    }
+
+    pub fn explicit_backing_fields(
+        &self,
+    ) -> impl Iterator<Item = ExplicitBackingField<'source>> + use<'source> {
+        children(self.syntax())
+    }
+
+    pub fn accessors(&self) -> impl Iterator<Item = PropertyAccessor<'source>> + use<'source> {
+        children(self.syntax())
+    }
+}
+
+impl<'source> ExplicitBackingField<'source> {
+    #[must_use]
+    pub fn field_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_tokens(self.syntax()).find(|token| token.text() == "field")
+    }
+
+    #[must_use]
+    pub fn assign_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Assign)
+    }
+
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression<'source>> {
+        child_family(self.syntax())
+    }
+}
+
+impl<'source> PropertyAccessor<'source> {
+    #[must_use]
+    pub fn modifiers(&self) -> Option<ModifierList<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn keyword_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_tokens(self.syntax()).find(|token| token.text() == "get" || token.text() == "set")
+    }
+
+    #[must_use]
+    pub fn value_parameter_list(&self) -> Option<ValueParameterList<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn colon(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Colon)
+    }
+
+    #[must_use]
+    pub fn return_type(&self) -> Option<TypeReference<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn assign_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Assign)
+    }
+
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression<'source>> {
+        child_family(self.syntax())
+    }
+
+    #[must_use]
+    pub fn block(&self) -> Option<Block<'source>> {
+        child(self.syntax())
+    }
+}
+
+impl<'source> InitializerBlock<'source> {
+    #[must_use]
+    pub fn init_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_tokens(self.syntax()).find(|token| token.text() == "init")
+    }
+
+    #[must_use]
+    pub fn block(&self) -> Option<Block<'source>> {
+        child(self.syntax())
+    }
+}
+
+impl<'source> SecondaryConstructor<'source> {
+    #[must_use]
+    pub fn modifiers(&self) -> Option<ModifierList<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn constructor_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_tokens(self.syntax()).find(|token| token.text() == "constructor")
+    }
+
+    #[must_use]
+    pub fn value_parameter_list(&self) -> Option<ValueParameterList<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn colon(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Colon)
+    }
+
+    #[must_use]
+    pub fn delegation_call(&self) -> Option<ConstructorDelegationCall<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn block(&self) -> Option<Block<'source>> {
+        child(self.syntax())
+    }
+}
+
+impl<'source> ConstructorDelegationCall<'source> {
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression<'source>> {
+        child_family(self.syntax())
     }
 }
 
@@ -113,6 +668,90 @@ impl<'source> TypeAliasDeclaration<'source> {
     #[must_use]
     pub fn name(&self) -> Option<Name<'source>> {
         child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn typealias_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::TypeAliasKw)
+    }
+
+    #[must_use]
+    pub fn type_parameter_list(&self) -> Option<TypeParameterList<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn assign_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Assign)
+    }
+
+    #[must_use]
+    pub fn ty(&self) -> Option<TypeReference<'source>> {
+        child(self.syntax())
+    }
+}
+
+impl<'source> ModifierList<'source> {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'source>> + use<'source> {
+        children(self.syntax())
+    }
+
+    pub fn modifier_tokens(
+        &self,
+    ) -> impl Iterator<Item = KotlinSyntaxToken<'source>> + use<'source> {
+        child_tokens(self.syntax()).filter(|token| token.kind() != KotlinSyntaxKind::At)
+    }
+}
+
+impl<'source> Annotation<'source> {
+    #[must_use]
+    pub fn use_site_target(&self) -> Option<AnnotationUseSiteTarget<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn name(&self) -> Option<QualifiedName<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn argument_list(&self) -> Option<AnnotationArgumentList<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn at_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::At)
+    }
+}
+
+impl<'source> AnnotationUseSiteTarget<'source> {
+    #[must_use]
+    pub fn target_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_tokens(self.syntax()).find(|token| token.kind() != KotlinSyntaxKind::Colon)
+    }
+
+    #[must_use]
+    pub fn colon_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Colon)
+    }
+}
+
+impl<'source> AnnotationArgumentList<'source> {
+    pub fn entries(&self) -> impl Iterator<Item = ValueArgumentEntry<'source>> + use<'source, '_> {
+        separated_entries(self.syntax(), ValueArgument::cast, |argument, comma| {
+            ValueArgumentEntry { argument, comma }
+        })
+    }
+
+    #[must_use]
+    pub fn open_paren(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::RParen)
     }
 }
 
@@ -123,21 +762,612 @@ impl<'source> TypeReference<'source> {
     }
 }
 
+impl<'source> UserType<'source> {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'source>> + use<'source> {
+        children(self.syntax())
+    }
+
+    pub fn identifier_tokens(
+        &self,
+    ) -> impl Iterator<Item = KotlinSyntaxToken<'source>> + use<'source> {
+        child_tokens(self.syntax()).filter(|token| token.kind() == KotlinSyntaxKind::Identifier)
+    }
+
+    pub fn type_argument_lists(
+        &self,
+    ) -> impl Iterator<Item = TypeArgumentList<'source>> + use<'source> {
+        children(self.syntax())
+    }
+
+    pub fn dot_tokens(&self) -> impl Iterator<Item = KotlinSyntaxToken<'source>> + use<'source> {
+        child_tokens(self.syntax()).filter(|token| token.kind() == KotlinSyntaxKind::Dot)
+    }
+}
+
+impl<'source> NullableType<'source> {
+    #[must_use]
+    pub fn inner(&self) -> Option<TypeSyntax<'source>> {
+        child_family(self.syntax())
+    }
+
+    #[must_use]
+    pub fn question_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Question)
+    }
+}
+
+impl<'source> ParenthesizedType<'source> {
+    #[must_use]
+    pub fn inner(&self) -> Option<TypeReference<'source>> {
+        self.entries().find_map(|entry| entry.parameter.ty())
+    }
+
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'source>> + use<'source> {
+        children(self.syntax())
+    }
+
+    pub fn entries(
+        &self,
+    ) -> impl Iterator<Item = FunctionTypeParameterEntry<'source>> + use<'source, '_> {
+        separated_entries(
+            self.syntax(),
+            FunctionTypeParameter::cast,
+            |parameter, comma| FunctionTypeParameterEntry { parameter, comma },
+        )
+    }
+
+    #[must_use]
+    pub fn open_paren(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::RParen)
+    }
+}
+
+impl<'source> FunctionTypeParameter<'source> {
+    #[must_use]
+    pub fn name(&self) -> Option<Name<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn colon(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Colon)
+    }
+
+    #[must_use]
+    pub fn ty(&self) -> Option<TypeReference<'source>> {
+        child(self.syntax())
+    }
+}
+
+impl<'source> ReceiverType<'source> {
+    #[must_use]
+    pub fn receiver(&self) -> Option<TypeSyntax<'source>> {
+        child_family(self.syntax())
+    }
+
+    #[must_use]
+    pub fn parameter(&self) -> Option<ParenthesizedType<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn dot_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Dot)
+    }
+}
+
+impl<'source> FunctionType<'source> {
+    #[must_use]
+    pub fn suspend_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_tokens(self.syntax()).find(|token| token.text() == "suspend")
+    }
+
+    #[must_use]
+    pub fn receiver(&self) -> Option<ReceiverType<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn nested_function_type(&self) -> Option<FunctionType<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn parameter(&self) -> Option<ParenthesizedType<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn return_type(&self) -> Option<TypeSyntax<'source>> {
+        children_family(self.syntax()).last()
+    }
+
+    #[must_use]
+    pub fn arrow_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Arrow)
+    }
+}
+
+impl<'source> ContextFunctionType<'source> {
+    #[must_use]
+    pub fn context_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_tokens(self.syntax()).find(|token| token.text() == "context")
+    }
+
+    pub fn context_parameters(
+        &self,
+    ) -> impl Iterator<Item = TypeReference<'source>> + use<'source> {
+        children::<FunctionTypeParameter<'source>>(self.syntax())
+            .filter_map(|parameter| parameter.ty())
+    }
+
+    #[must_use]
+    pub fn function_type(&self) -> Option<FunctionType<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn open_paren(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::RParen)
+    }
+}
+
+impl<'source> DefinitelyNonNullableType<'source> {
+    pub fn types(&self) -> impl Iterator<Item = UserType<'source>> + use<'source> {
+        children(self.syntax())
+    }
+
+    #[must_use]
+    pub fn amp_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Amp)
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct TypeParameterListEntry<'source> {
+    pub parameter: TypeParameter<'source>,
+    pub comma: Option<KotlinSyntaxToken<'source>>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct TypeConstraintListEntry<'source> {
+    pub constraint: TypeConstraint<'source>,
+    pub comma: Option<KotlinSyntaxToken<'source>>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct TypeProjectionListEntry<'source> {
+    pub argument: TypeArgument<'source>,
+    pub comma: Option<KotlinSyntaxToken<'source>>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct FunctionTypeParameterEntry<'source> {
+    pub parameter: FunctionTypeParameter<'source>,
+    pub comma: Option<KotlinSyntaxToken<'source>>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ValueArgumentEntry<'source> {
+    pub argument: ValueArgument<'source>,
+    pub comma: Option<KotlinSyntaxToken<'source>>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct DelegationSpecifierListEntry<'source> {
+    pub specifier: DelegationSpecifier<'source>,
+    pub comma: Option<KotlinSyntaxToken<'source>>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct DestructuringDeclarationEntry<'source> {
+    pub entry: DestructuringEntry<'source>,
+    pub comma: Option<KotlinSyntaxToken<'source>>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ClassMemberDeclarationEntry<'source> {
+    pub member: ClassMemberDeclaration<'source>,
+    pub comma: Option<KotlinSyntaxToken<'source>>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ContextParameterClauseEntry<'source> {
+    pub parameter: ContextParameter<'source>,
+    pub comma: Option<KotlinSyntaxToken<'source>>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct WhenConditionEntry<'source> {
+    pub condition: WhenCondition<'source>,
+    pub comma: Option<KotlinSyntaxToken<'source>>,
+}
+
+impl<'source> TypeParameterList<'source> {
+    pub fn parameters(&self) -> impl Iterator<Item = TypeParameter<'source>> + use<'source> {
+        children(self.syntax())
+    }
+
+    pub fn entries(
+        &self,
+    ) -> impl Iterator<Item = TypeParameterListEntry<'source>> + use<'source, '_> {
+        separated_entries(self.syntax(), TypeParameter::cast, |parameter, comma| {
+            TypeParameterListEntry { parameter, comma }
+        })
+    }
+
+    #[must_use]
+    pub fn open_angle(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Lt)
+    }
+
+    #[must_use]
+    pub fn close_angle(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Gt)
+    }
+}
+
+impl<'source> TypeParameter<'source> {
+    #[must_use]
+    pub fn modifiers(&self) -> Option<ModifierList<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn variance_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::InKw)
+    }
+
+    #[must_use]
+    pub fn name(&self) -> Option<Name<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn colon(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Colon)
+    }
+
+    #[must_use]
+    pub fn bound(&self) -> Option<TypeReference<'source>> {
+        child(self.syntax())
+    }
+}
+
+impl<'source> TypeConstraintList<'source> {
+    pub fn constraints(&self) -> impl Iterator<Item = TypeConstraint<'source>> + use<'source> {
+        children(self.syntax())
+    }
+
+    pub fn entries(
+        &self,
+    ) -> impl Iterator<Item = TypeConstraintListEntry<'source>> + use<'source, '_> {
+        separated_entries(self.syntax(), TypeConstraint::cast, |constraint, comma| {
+            TypeConstraintListEntry { constraint, comma }
+        })
+    }
+
+    #[must_use]
+    pub fn where_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_tokens(self.syntax()).find(|token| token.text() == "where")
+    }
+}
+
+impl<'source> TypeConstraint<'source> {
+    #[must_use]
+    pub fn name(&self) -> Option<Name<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn colon(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Colon)
+    }
+
+    #[must_use]
+    pub fn bound(&self) -> Option<TypeReference<'source>> {
+        child(self.syntax())
+    }
+}
+
+impl<'source> DelegationSpecifierList<'source> {
+    pub fn specifiers(&self) -> impl Iterator<Item = DelegationSpecifier<'source>> + use<'source> {
+        children(self.syntax())
+    }
+
+    pub fn entries(
+        &self,
+    ) -> impl Iterator<Item = DelegationSpecifierListEntry<'source>> + use<'source, '_> {
+        separated_entries(
+            self.syntax(),
+            DelegationSpecifier::cast,
+            |specifier, comma| DelegationSpecifierListEntry { specifier, comma },
+        )
+    }
+}
+
+impl<'source> DelegationSpecifier<'source> {
+    #[must_use]
+    pub fn ty(&self) -> Option<TypeReference<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn value_argument_list(&self) -> Option<ValueArgumentList<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn by_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_tokens(self.syntax()).find(|token| token.text() == "by")
+    }
+
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression<'source>> {
+        child_family(self.syntax())
+    }
+}
+
+fn separated_entries<'source, N, T, F>(
+    syntax: &KotlinSyntaxNode<'source>,
+    cast: fn(KotlinSyntaxNode<'source>) -> Option<N>,
+    make_entry: F,
+) -> impl Iterator<Item = T> + use<'source, N, T, F>
+where
+    N: KotlinNode<'source>,
+    F: Fn(N, Option<KotlinSyntaxToken<'source>>) -> T + Copy,
+{
+    let mut entries = Vec::new();
+    let mut current = None;
+
+    for child in syntax.children_with_tokens() {
+        match child {
+            SyntaxElement::Node(node) => {
+                if let Some(node) = cast(node)
+                    && let Some(node) = current.replace(node)
+                {
+                    entries.push(make_entry(node, None));
+                }
+            }
+            SyntaxElement::Token(token) => {
+                let token = KotlinSyntaxToken { syntax: token };
+                if token.kind() == KotlinSyntaxKind::Comma
+                    && let Some(node) = current.take()
+                {
+                    entries.push(make_entry(node, Some(token)));
+                }
+            }
+        }
+    }
+
+    if let Some(node) = current {
+        entries.push(make_entry(node, None));
+    }
+
+    entries.into_iter()
+}
+
+impl<'source> PrimaryConstructor<'source> {
+    #[must_use]
+    pub fn modifiers(&self) -> Option<ModifierList<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn constructor_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_tokens(self.syntax()).find(|token| token.text() == "constructor")
+    }
+
+    #[must_use]
+    pub fn value_parameter_list(&self) -> Option<ValueParameterList<'source>> {
+        child(self.syntax())
+    }
+}
+
+impl<'source> ValueParameterList<'source> {
+    pub fn entries(&self) -> impl Iterator<Item = ValueParameter<'source>> + use<'source> {
+        children(self.syntax())
+    }
+
+    #[must_use]
+    pub fn open_paren(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::RParen)
+    }
+}
+
+impl<'source> ValueParameter<'source> {
+    #[must_use]
+    pub fn modifiers(&self) -> Option<ModifierList<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn val_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::ValKw)
+    }
+
+    #[must_use]
+    pub fn var_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::VarKw)
+    }
+
+    #[must_use]
+    pub fn name(&self) -> Option<Name<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn colon(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Colon)
+    }
+
+    #[must_use]
+    pub fn ty(&self) -> Option<TypeReference<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn assign_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Assign)
+    }
+
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression<'source>> {
+        child_family(self.syntax())
+    }
+}
+
 impl<'source> ClassBody<'source> {
     pub fn members(&self) -> impl Iterator<Item = ClassMember<'source>> + use<'source> {
+        children_family(self.syntax())
+    }
+
+    pub fn member_declaration_entries(
+        &self,
+    ) -> impl Iterator<Item = ClassMemberDeclarationEntry<'source>> + use<'source, '_> {
+        separated_entries(
+            self.syntax(),
+            ClassMemberDeclaration::cast,
+            |member, comma| ClassMemberDeclarationEntry { member, comma },
+        )
+    }
+
+    #[must_use]
+    pub fn open_brace(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::LBrace)
+    }
+
+    #[must_use]
+    pub fn close_brace(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::RBrace)
+    }
+}
+
+impl<'source> ClassMemberDeclaration<'source> {
+    #[must_use]
+    pub fn declaration(&self) -> Option<Declaration<'source>> {
+        child_family(self.syntax())
+    }
+
+    #[must_use]
+    pub fn statement(&self) -> Option<StatementSyntax<'source>> {
+        child_family(self.syntax())
+    }
+
+    #[must_use]
+    pub fn comma(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Comma)
+    }
+}
+
+impl<'source> Block<'source> {
+    #[must_use]
+    pub fn open_brace(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::LBrace)
+    }
+
+    #[must_use]
+    pub fn close_brace(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::RBrace)
+    }
+
+    pub fn statements(&self) -> impl Iterator<Item = StatementSyntax<'source>> + use<'source> {
+        children_family(self.syntax())
+    }
+
+    pub fn items(&self) -> impl Iterator<Item = BlockItem<'source>> + use<'source> {
         children_family(self.syntax())
     }
 }
 
 impl<'source> ValueArgumentList<'source> {
-    pub fn entries(&self) -> impl Iterator<Item = ValueArgumentListEntry<'source>> + use<'source> {
-        children_family(self.syntax())
+    pub fn entries(&self) -> impl Iterator<Item = ValueArgumentEntry<'source>> + use<'source, '_> {
+        separated_entries(self.syntax(), ValueArgument::cast, |argument, comma| {
+            ValueArgumentEntry { argument, comma }
+        })
+    }
+
+    #[must_use]
+    pub fn open_paren(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::RParen)
+    }
+}
+
+impl<'source> ValueArgument<'source> {
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression<'source>> {
+        child_family(self.syntax())
     }
 }
 
 impl<'source> TypeArgumentList<'source> {
-    pub fn entries(&self) -> impl Iterator<Item = TypeArgumentListEntry<'source>> + use<'source> {
-        children_family(self.syntax())
+    #[must_use]
+    pub fn projection_list(&self) -> Option<TypeProjectionList<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn open_angle(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Lt)
+    }
+
+    #[must_use]
+    pub fn close_angle(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Gt)
+    }
+}
+
+impl<'source> TypeProjectionList<'source> {
+    pub fn entries(
+        &self,
+    ) -> impl Iterator<Item = TypeProjectionListEntry<'source>> + use<'source, '_> {
+        separated_entries(self.syntax(), TypeArgument::cast, |argument, comma| {
+            TypeProjectionListEntry { argument, comma }
+        })
+    }
+}
+
+impl<'source> TypeArgument<'source> {
+    #[must_use]
+    pub fn projection(&self) -> Option<TypeProjection<'source>> {
+        child(self.syntax())
+    }
+}
+
+impl<'source> TypeProjection<'source> {
+    #[must_use]
+    pub fn variance_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_tokens(self.syntax()).find(|token| token.text() == "in" || token.text() == "out")
+    }
+
+    #[must_use]
+    pub fn star_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Star)
+    }
+
+    #[must_use]
+    pub fn ty(&self) -> Option<TypeReference<'source>> {
+        child(self.syntax())
     }
 }
 
@@ -147,13 +1377,957 @@ impl<'source> StringTemplateExpression<'source> {
     }
 }
 
+impl<'source> StringTemplateEntry<'source> {
+    #[must_use]
+    pub fn long_entry_start(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::LongTemplateEntryStart)
+    }
+
+    #[must_use]
+    pub fn long_entry_end(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::LongTemplateEntryEnd)
+    }
+
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression<'source>> {
+        child_family(self.syntax())
+    }
+}
+
+impl<'source> StringTemplatePart<'source> {
+    #[must_use]
+    pub fn long_entry_start(&self) -> Option<KotlinSyntaxToken<'source>> {
+        match self {
+            Self::StringTemplateEntry(entry) => entry.long_entry_start(),
+        }
+    }
+
+    #[must_use]
+    pub fn long_entry_end(&self) -> Option<KotlinSyntaxToken<'source>> {
+        match self {
+            Self::StringTemplateEntry(entry) => entry.long_entry_end(),
+        }
+    }
+
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression<'source>> {
+        match self {
+            Self::StringTemplateEntry(entry) => entry.expression(),
+        }
+    }
+}
+
+impl<'source> LiteralExpression<'source> {
+    #[must_use]
+    pub fn literal_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        self.first_token()
+    }
+}
+
+impl<'source> NameExpression<'source> {
+    #[must_use]
+    pub fn name_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Identifier)
+    }
+
+    #[must_use]
+    pub fn at_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::At)
+    }
+
+    #[must_use]
+    pub fn labeled_expression(&self) -> Option<Expression<'source>> {
+        let at = self.at_token()?;
+        children_family(self.syntax()).find(|expression: &Expression<'source>| {
+            expression.text_range().start() >= at.token_text_range().end()
+        })
+    }
+}
+
+impl<'source> ThisExpression<'source> {
+    #[must_use]
+    pub fn this_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::ThisKw)
+    }
+
+    #[must_use]
+    pub fn at_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::At)
+    }
+
+    #[must_use]
+    pub fn label_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        label_token_after_at(self.syntax(), self.at_token())
+    }
+}
+
+impl<'source> SuperExpression<'source> {
+    #[must_use]
+    pub fn super_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::SuperKw)
+    }
+
+    #[must_use]
+    pub fn type_argument_list(&self) -> Option<TypeArgumentList<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn at_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::At)
+    }
+
+    #[must_use]
+    pub fn label_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        label_token_after_at(self.syntax(), self.at_token())
+    }
+}
+
+fn label_token_after_at<'source>(
+    syntax: &KotlinSyntaxNode<'source>,
+    at: Option<KotlinSyntaxToken<'source>>,
+) -> Option<KotlinSyntaxToken<'source>> {
+    let at = at?;
+    child_tokens(syntax).find(|token| {
+        token.token_text_range().start() >= at.token_text_range().end()
+            && matches!(
+                token.kind(),
+                KotlinSyntaxKind::Identifier | KotlinSyntaxKind::ThisKw | KotlinSyntaxKind::SuperKw
+            )
+    })
+}
+
+impl<'source> ParenthesizedExpression<'source> {
+    #[must_use]
+    pub fn open_paren(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression<'source>> {
+        child_family(self.syntax())
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::RParen)
+    }
+}
+
+impl<'source> AnnotatedExpression<'source> {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'source>> + use<'source> {
+        self.modifiers()
+            .into_iter()
+            .flat_map(|modifiers| modifiers.annotations())
+    }
+
+    #[must_use]
+    pub fn modifiers(&self) -> Option<ModifierList<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression<'source>> {
+        child_family(self.syntax())
+    }
+}
+
+impl<'source> AssignmentExpression<'source> {
+    pub fn operands(&self) -> impl Iterator<Item = Expression<'source>> + use<'source> {
+        children_family(self.syntax())
+    }
+
+    #[must_use]
+    pub fn left(&self) -> Option<Expression<'source>> {
+        self.operands().next()
+    }
+
+    #[must_use]
+    pub fn right(&self) -> Option<Expression<'source>> {
+        self.operands().nth(1)
+    }
+
+    #[must_use]
+    pub fn operator_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        let left = self.left()?;
+        let right = self.right()?;
+        child_tokens(self.syntax()).find(|token| {
+            matches!(
+                token.kind(),
+                KotlinSyntaxKind::Assign
+                    | KotlinSyntaxKind::PlusEq
+                    | KotlinSyntaxKind::MinusEq
+                    | KotlinSyntaxKind::StarEq
+                    | KotlinSyntaxKind::SlashEq
+                    | KotlinSyntaxKind::PercentEq
+            ) && token.token_text_range().start() >= left.text_range().end()
+                && token.token_text_range().end() <= right.text_range().start()
+        })
+    }
+}
+
+impl<'source> BinaryExpression<'source> {
+    pub fn operands(&self) -> impl Iterator<Item = Expression<'source>> + use<'source> {
+        children_family(self.syntax())
+    }
+
+    #[must_use]
+    pub fn cast_type(&self) -> Option<TypeReference<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn operator_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        let mut operands = self.operands();
+        let left = operands.next()?;
+        let right_start = operands
+            .next()
+            .map(|right| right.text_range().start())
+            .or_else(|| self.cast_type().map(|ty| ty.text_range().start()))?;
+        child_tokens(self.syntax()).find(|token| {
+            token.token_text_range().start() >= left.text_range().end()
+                && token.token_text_range().end() <= right_start
+        })
+    }
+}
+
+impl<'source> UnaryExpression<'source> {
+    #[must_use]
+    pub fn operator_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_tokens(self.syntax()).find(|token| {
+            matches!(
+                token.kind(),
+                KotlinSyntaxKind::Plus
+                    | KotlinSyntaxKind::Minus
+                    | KotlinSyntaxKind::Bang
+                    | KotlinSyntaxKind::PlusPlus
+                    | KotlinSyntaxKind::MinusMinus
+                    | KotlinSyntaxKind::Star
+            )
+        })
+    }
+
+    #[must_use]
+    pub fn operand(&self) -> Option<Expression<'source>> {
+        child_family(self.syntax())
+    }
+}
+
+impl<'source> PostfixExpression<'source> {
+    #[must_use]
+    pub fn operand(&self) -> Option<Expression<'source>> {
+        child_family(self.syntax())
+    }
+
+    #[must_use]
+    pub fn operator_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_tokens(self.syntax())
+            .filter(|token| {
+                matches!(
+                    token.kind(),
+                    KotlinSyntaxKind::PlusPlus
+                        | KotlinSyntaxKind::MinusMinus
+                        | KotlinSyntaxKind::BangBang
+                )
+            })
+            .last()
+    }
+}
+
+impl<'source> IndexExpression<'source> {
+    #[must_use]
+    pub fn receiver(&self) -> Option<Expression<'source>> {
+        child_family(self.syntax())
+    }
+
+    pub fn entries(&self) -> impl Iterator<Item = ValueArgumentEntry<'source>> + use<'source, '_> {
+        separated_entries(self.syntax(), ValueArgument::cast, |argument, comma| {
+            ValueArgumentEntry { argument, comma }
+        })
+    }
+
+    #[must_use]
+    pub fn open_bracket(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::LBracket)
+    }
+
+    #[must_use]
+    pub fn close_bracket(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::RBracket)
+    }
+}
+
+impl Expression<'_> {
+    #[must_use]
+    pub fn parent_role(&self) -> Option<ExpressionParentRole> {
+        let parent = self.syntax().parent()?;
+        let parent = AnyKotlinNode::cast(parent)?;
+
+        access_parent_role(self, parent)
+    }
+}
+
+fn access_parent_role(
+    expression: &Expression,
+    parent: AnyKotlinNode,
+) -> Option<ExpressionParentRole> {
+    match parent {
+        AnyKotlinNode::NavigationExpression(parent) => parent
+            .receiver()
+            .is_same_expression(expression)
+            .then_some(ExpressionParentRole::NavigationReceiver),
+        AnyKotlinNode::CallExpression(parent) => parent
+            .callee()
+            .is_same_expression(expression)
+            .then_some(ExpressionParentRole::CallCallee),
+        AnyKotlinNode::IndexExpression(parent) => {
+            if parent.receiver().is_same_expression(expression) {
+                Some(ExpressionParentRole::IndexReceiver)
+            } else {
+                parent
+                    .entries()
+                    .any(|entry| entry.argument.expression().is_same_expression(expression))
+                    .then_some(ExpressionParentRole::IndexArgument)
+            }
+        }
+        _ => None,
+    }
+}
+
+trait OptionalExpressionExt<'source> {
+    fn is_same_expression(&self, target: &Expression<'source>) -> bool;
+}
+
+impl<'source> OptionalExpressionExt<'source> for Option<Expression<'source>> {
+    fn is_same_expression(&self, target: &Expression<'source>) -> bool {
+        self.as_ref()
+            .is_some_and(|expression| expression_is_same(expression, target))
+    }
+}
+
+fn expression_is_same(expression: &Expression, target: &Expression) -> bool {
+    expression.kind() == target.kind() && expression.text_range() == target.text_range()
+}
+
+impl<'source> CollectionLiteralExpression<'source> {
+    pub fn entries(&self) -> impl Iterator<Item = ValueArgumentEntry<'source>> + use<'source, '_> {
+        separated_entries(self.syntax(), ValueArgument::cast, |argument, comma| {
+            ValueArgumentEntry { argument, comma }
+        })
+    }
+
+    #[must_use]
+    pub fn open_bracket(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::LBracket)
+    }
+
+    #[must_use]
+    pub fn close_bracket(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::RBracket)
+    }
+}
+
+impl<'source> NavigationExpression<'source> {
+    #[must_use]
+    pub fn receiver(&self) -> Option<Expression<'source>> {
+        child_family(self.syntax())
+    }
+
+    #[must_use]
+    pub fn operator_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        self.operator_tokens().into_iter().next()
+    }
+
+    #[must_use]
+    pub fn operator_tokens(&self) -> Vec<KotlinSyntaxToken<'source>> {
+        let tokens = child_tokens(self.syntax()).collect::<Vec<_>>();
+        tokens
+            .windows(2)
+            .find(|window| {
+                window[0].kind() == KotlinSyntaxKind::Question
+                    && window[1].kind() == KotlinSyntaxKind::Dot
+                    && tokens_are_adjacent(window[0], window[1])
+            })
+            .map(|window| window.to_vec())
+            .or_else(|| {
+                tokens
+                    .iter()
+                    .find(|token| {
+                        matches!(
+                            token.kind(),
+                            KotlinSyntaxKind::Dot
+                                | KotlinSyntaxKind::SafeAccess
+                                | KotlinSyntaxKind::ColonColon
+                        )
+                    })
+                    .copied()
+                    .map(|token| vec![token])
+            })
+            .unwrap_or_default()
+    }
+
+    #[must_use]
+    pub fn operator_last_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        self.operator_tokens().into_iter().last()
+    }
+
+    #[must_use]
+    pub fn selector_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_tokens(self.syntax())
+            .filter(|token| token.kind() == KotlinSyntaxKind::Identifier)
+            .last()
+    }
+}
+
+fn tokens_are_adjacent(left: KotlinSyntaxToken<'_>, right: KotlinSyntaxToken<'_>) -> bool {
+    left.token_text_range().end() == right.token_text_range().start()
+}
+
+impl<'source> CallableReferenceExpression<'source> {
+    #[must_use]
+    pub fn receiver(&self) -> Option<Expression<'source>> {
+        child_family(self.syntax())
+    }
+
+    #[must_use]
+    pub fn separator_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::ColonColon)
+    }
+
+    #[must_use]
+    pub fn target_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        let separator = self.separator_token()?;
+        child_tokens(self.syntax()).find(|token| {
+            token.token_text_range().start() >= separator.token_text_range().end()
+                && matches!(
+                    token.kind(),
+                    KotlinSyntaxKind::Identifier | KotlinSyntaxKind::ClassKw
+                )
+        })
+    }
+
+    pub fn type_argument_lists(
+        &self,
+    ) -> impl Iterator<Item = TypeArgumentList<'source>> + use<'source> {
+        children(self.syntax())
+    }
+}
+
+impl<'source> CallExpression<'source> {
+    #[must_use]
+    pub fn callee(&self) -> Option<Expression<'source>> {
+        child_family(self.syntax())
+    }
+
+    #[must_use]
+    pub fn value_argument_list(&self) -> Option<ValueArgumentList<'source>> {
+        child(self.syntax())
+    }
+
+    pub fn type_argument_lists(
+        &self,
+    ) -> impl Iterator<Item = TypeArgumentList<'source>> + use<'source> {
+        children(self.syntax())
+    }
+
+    pub fn lambdas(&self) -> impl Iterator<Item = LambdaExpression<'source>> + use<'source, '_> {
+        let callee_end = self.callee().map(|callee| callee.text_range().end());
+        children(self.syntax()).filter(move |lambda: &LambdaExpression<'source>| {
+            callee_end.is_none_or(|end| lambda.text_range().start() >= end)
+        })
+    }
+}
+
+impl<'source> LambdaExpression<'source> {
+    #[must_use]
+    pub fn inner_lambda(&self) -> Option<LambdaExpression<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn label_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_tokens(self.syntax()).find(|token| {
+            matches!(
+                token.kind(),
+                KotlinSyntaxKind::Identifier | KotlinSyntaxKind::ThisKw | KotlinSyntaxKind::SuperKw
+            )
+        })
+    }
+
+    #[must_use]
+    pub fn at_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::At)
+    }
+
+    #[must_use]
+    pub fn open_brace(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::LBrace)
+    }
+
+    #[must_use]
+    pub fn close_brace(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::RBrace)
+    }
+
+    #[must_use]
+    pub fn parameter_list(&self) -> Option<LambdaParameterList<'source>> {
+        child(self.syntax())
+    }
+
+    pub fn body_items(&self) -> impl Iterator<Item = BlockItem<'source>> + use<'source> {
+        children_family(self.syntax())
+    }
+}
+
+impl<'source> LambdaParameterList<'source> {
+    pub fn parameters(&self) -> impl Iterator<Item = LambdaParameter<'source>> + use<'source> {
+        children(self.syntax())
+    }
+
+    #[must_use]
+    pub fn arrow_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Arrow)
+    }
+}
+
+impl<'source> LambdaParameter<'source> {
+    #[must_use]
+    pub fn name(&self) -> Option<Name<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn destructuring_declaration(&self) -> Option<DestructuringDeclaration<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn colon(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Colon)
+    }
+
+    #[must_use]
+    pub fn ty(&self) -> Option<TypeReference<'source>> {
+        child(self.syntax())
+    }
+}
+
+impl<'source> IfExpression<'source> {
+    #[must_use]
+    pub fn if_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::IfKw)
+    }
+
+    #[must_use]
+    pub fn open_paren(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::RParen)
+    }
+
+    #[must_use]
+    pub fn condition(&self) -> Option<Expression<'source>> {
+        child_family(self.syntax())
+    }
+
+    #[must_use]
+    pub fn then_branch(&self) -> Option<Expression<'source>> {
+        let condition_end = self.condition().map_or_else(
+            || self.text_range().start(),
+            |condition| condition.text_range().end(),
+        );
+        let else_start = self.else_token().map_or_else(
+            || self.text_range().end(),
+            |token| token.token_text_range().start(),
+        );
+
+        self.expressions_after(condition_end)
+            .find(|expression| expression.text_range().start() < else_start)
+    }
+
+    #[must_use]
+    pub fn else_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::ElseKw)
+    }
+
+    #[must_use]
+    pub fn else_branch(&self) -> Option<Expression<'source>> {
+        let else_end = self.else_token()?.token_text_range().end();
+        self.expressions_after(else_end).next()
+    }
+
+    fn expressions_after(
+        &self,
+        offset: jolt_text::TextSize,
+    ) -> impl Iterator<Item = Expression<'source>> + use<'source> {
+        children_family(self.syntax()).filter(move |expression: &Expression<'source>| {
+            expression.text_range().start() >= offset
+        })
+    }
+}
+
 impl<'source> WhenEntry<'source> {
     pub fn conditions(&self) -> impl Iterator<Item = WhenConditionSyntax<'source>> + use<'source> {
         children_family(self.syntax())
     }
 
+    pub fn condition_entries(
+        &self,
+    ) -> impl Iterator<Item = WhenConditionEntry<'source>> + use<'source, '_> {
+        separated_entries(self.syntax(), WhenCondition::cast, |condition, comma| {
+            WhenConditionEntry { condition, comma }
+        })
+    }
+
+    #[must_use]
+    pub fn guard(&self) -> Option<WhenGuard<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn else_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::ElseKw)
+    }
+
+    #[must_use]
+    pub fn arrow_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Arrow)
+    }
+
+    #[must_use]
+    pub fn body_expression(&self) -> Option<Expression<'source>> {
+        let arrow_end = self.arrow_token()?.token_text_range().end();
+        self.expressions()
+            .find(|expression| expression.text_range().start() >= arrow_end)
+    }
+
     pub fn expressions(&self) -> impl Iterator<Item = Expression<'source>> + use<'source> {
         children_family(self.syntax())
+    }
+}
+
+impl<'source> WhenCondition<'source> {
+    #[must_use]
+    pub fn keyword_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_tokens(self.syntax()).find(|token| {
+            matches!(
+                token.kind(),
+                KotlinSyntaxKind::IsKw
+                    | KotlinSyntaxKind::NotIs
+                    | KotlinSyntaxKind::InKw
+                    | KotlinSyntaxKind::NotIn
+            )
+        })
+    }
+
+    #[must_use]
+    pub fn ty(&self) -> Option<TypeReference<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression<'source>> {
+        child_family(self.syntax())
+    }
+}
+
+impl<'source> WhenGuard<'source> {
+    #[must_use]
+    pub fn if_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::IfKw)
+    }
+
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression<'source>> {
+        child_family(self.syntax())
+    }
+}
+
+impl<'source> WhenExpression<'source> {
+    #[must_use]
+    pub fn when_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::WhenKw)
+    }
+
+    #[must_use]
+    pub fn subject(&self) -> Option<WhenSubject<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn open_brace(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::LBrace)
+    }
+
+    #[must_use]
+    pub fn close_brace(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::RBrace)
+    }
+
+    pub fn entries(&self) -> impl Iterator<Item = WhenEntry<'source>> + use<'source> {
+        children(self.syntax())
+    }
+}
+
+impl<'source> WhenSubject<'source> {
+    #[must_use]
+    pub fn open_paren(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::RParen)
+    }
+
+    #[must_use]
+    pub fn val_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::ValKw)
+    }
+
+    #[must_use]
+    pub fn name(&self) -> Option<Name<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn assign_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Assign)
+    }
+
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression<'source>> {
+        child_family(self.syntax())
+    }
+}
+
+impl<'source> TryExpression<'source> {
+    #[must_use]
+    pub fn try_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::TryKw)
+    }
+
+    #[must_use]
+    pub fn block(&self) -> Option<Block<'source>> {
+        child(self.syntax())
+    }
+
+    pub fn catch_clauses(&self) -> impl Iterator<Item = CatchClause<'source>> + use<'source> {
+        children(self.syntax())
+    }
+
+    #[must_use]
+    pub fn finally_clause(&self) -> Option<FinallyClause<'source>> {
+        child(self.syntax())
+    }
+}
+
+impl<'source> ForStatement<'source> {
+    #[must_use]
+    pub fn for_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::ForKw)
+    }
+
+    #[must_use]
+    pub fn open_paren(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::RParen)
+    }
+
+    #[must_use]
+    pub fn in_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::InKw)
+    }
+
+    #[must_use]
+    pub fn destructuring_declaration(&self) -> Option<DestructuringDeclaration<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn variable_expression(&self) -> Option<Expression<'source>> {
+        let in_start = self.in_token()?.token_text_range().start();
+        children_family(self.syntax())
+            .find(|expression: &Expression<'source>| expression.text_range().end() <= in_start)
+    }
+
+    #[must_use]
+    pub fn iterable_expression(&self) -> Option<Expression<'source>> {
+        let in_end = self.in_token()?.token_text_range().end();
+        children_family(self.syntax())
+            .find(|expression: &Expression<'source>| expression.text_range().start() >= in_end)
+    }
+
+    #[must_use]
+    pub fn block(&self) -> Option<Block<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn body_expression(&self) -> Option<Expression<'source>> {
+        let header_end = self
+            .close_paren()
+            .or_else(|| {
+                self.iterable_expression()
+                    .and_then(|expression| expression.last_token())
+            })
+            .or_else(|| self.in_token())
+            .or_else(|| self.for_token())?
+            .token_text_range()
+            .end();
+
+        children_family(self.syntax())
+            .find(|expression: &Expression<'source>| expression.text_range().start() >= header_end)
+    }
+}
+
+impl<'source> WhileStatement<'source> {
+    #[must_use]
+    pub fn while_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::WhileKw)
+    }
+
+    #[must_use]
+    pub fn open_paren(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::RParen)
+    }
+
+    #[must_use]
+    pub fn condition(&self) -> Option<Expression<'source>> {
+        child_family(self.syntax())
+    }
+
+    #[must_use]
+    pub fn block(&self) -> Option<Block<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn body_expression(&self) -> Option<Expression<'source>> {
+        let condition_end = match self.condition() {
+            Some(condition) => condition.text_range().end(),
+            None => self.while_token()?.token_text_range().end(),
+        };
+        children_family(self.syntax()).find(|expression: &Expression<'source>| {
+            expression.text_range().start() >= condition_end
+        })
+    }
+}
+
+impl<'source> DoWhileStatement<'source> {
+    #[must_use]
+    pub fn do_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::DoKw)
+    }
+
+    #[must_use]
+    pub fn while_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::WhileKw)
+    }
+
+    #[must_use]
+    pub fn open_paren(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::LParen)
+    }
+
+    #[must_use]
+    pub fn close_paren(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::RParen)
+    }
+
+    #[must_use]
+    pub fn condition(&self) -> Option<Expression<'source>> {
+        child_family(self.syntax())
+    }
+
+    #[must_use]
+    pub fn block(&self) -> Option<Block<'source>> {
+        child(self.syntax())
+    }
+}
+
+impl<'source> ObjectExpression<'source> {
+    #[must_use]
+    pub fn object_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::ObjectKw)
+    }
+
+    #[must_use]
+    pub fn colon(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Colon)
+    }
+
+    #[must_use]
+    pub fn delegation_specifier_list(&self) -> Option<DelegationSpecifierList<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn body(&self) -> Option<ClassBody<'source>> {
+        child(self.syntax())
+    }
+}
+
+impl<'source> CatchClause<'source> {
+    #[must_use]
+    pub fn catch_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_tokens(self.syntax()).find(|token| token.text() == "catch")
+    }
+
+    #[must_use]
+    pub fn value_parameter_list(&self) -> Option<ValueParameterList<'source>> {
+        child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn block(&self) -> Option<Block<'source>> {
+        child(self.syntax())
+    }
+}
+
+impl<'source> FinallyClause<'source> {
+    #[must_use]
+    pub fn finally_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_tokens(self.syntax()).find(|token| token.text() == "finally")
+    }
+
+    #[must_use]
+    pub fn block(&self) -> Option<Block<'source>> {
+        child(self.syntax())
+    }
+}
+
+impl<'source> DestructuringDeclaration<'source> {
+    pub fn entries_with_commas(
+        &self,
+    ) -> impl Iterator<Item = DestructuringDeclarationEntry<'source>> + use<'source, '_> {
+        separated_entries(self.syntax(), DestructuringEntry::cast, |entry, comma| {
+            DestructuringDeclarationEntry { entry, comma }
+        })
+    }
+
+    #[must_use]
+    pub fn open_delimiter(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::LParen)
+            .or_else(|| child_token(self.syntax(), KotlinSyntaxKind::LBracket))
+    }
+
+    #[must_use]
+    pub fn close_delimiter(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::RParen)
+            .or_else(|| child_token(self.syntax(), KotlinSyntaxKind::RBracket))
     }
 }
 
@@ -190,8 +2364,74 @@ impl<'source> Expression<'source> {
     }
 }
 
+impl<'source> Statement<'source> {
+    #[must_use]
+    pub fn statement(&self) -> Option<StatementSyntax<'source>> {
+        child_family(self.syntax())
+    }
+}
+
+impl<'source> ExpressionStatement<'source> {
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression<'source>> {
+        child_family(self.syntax())
+    }
+}
+
+impl<'source> LocalDeclaration<'source> {
+    #[must_use]
+    pub fn property_declaration(&self) -> Option<PropertyDeclaration<'source>> {
+        child(self.syntax())
+    }
+}
+
 impl<'source> StatementSyntax<'source> {
     pub fn expressions(&self) -> impl Iterator<Item = Expression<'source>> + use<'source> {
         children_family(self.syntax())
+    }
+}
+
+impl<'source> JumpExpression<'source> {
+    #[must_use]
+    pub fn keyword_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_tokens(self.syntax()).find(|token| {
+            matches!(
+                token.kind(),
+                KotlinSyntaxKind::ReturnKw
+                    | KotlinSyntaxKind::BreakKw
+                    | KotlinSyntaxKind::ContinueKw
+            )
+        })
+    }
+
+    #[must_use]
+    pub fn at_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::At)
+    }
+
+    #[must_use]
+    pub fn label_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        let at = self.at_token()?;
+        child_tokens(self.syntax()).find(|token| {
+            token.kind() == KotlinSyntaxKind::Identifier
+                && token.token_text_range().start() > at.token_text_range().start()
+        })
+    }
+
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression<'source>> {
+        child_family(self.syntax())
+    }
+}
+
+impl<'source> ThrowExpression<'source> {
+    #[must_use]
+    pub fn throw_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::ThrowKw)
+    }
+
+    #[must_use]
+    pub fn expression(&self) -> Option<Expression<'source>> {
+        child_family(self.syntax())
     }
 }

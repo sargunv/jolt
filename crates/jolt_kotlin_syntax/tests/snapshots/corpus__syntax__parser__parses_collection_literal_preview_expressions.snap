@@ -16,7 +16,9 @@ KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    Identifier "collectionLiterals" @ 4..22
+    CallableName
+      Name
+        Identifier "collectionLiterals" @ 4..22
     ValueParameterList
       LParen "(" @ 22..23
       RParen ")" @ 23..24
@@ -28,14 +30,18 @@ KotlinFile
       LBrace "{" @ 30..31
       PropertyDeclaration
         ValKw "val" @ 36..39 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "empty" @ 40..45 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "empty" @ 40..45 trailing=[Whitespace " "]
         Assign "=" @ 46..47 trailing=[Whitespace " "]
         CollectionLiteralExpression
           LBracket "[" @ 48..49
           RBracket "]" @ 49..50
       PropertyDeclaration
         ValKw "val" @ 55..58 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "numbers" @ 59..66 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "numbers" @ 59..66 trailing=[Whitespace " "]
         Assign "=" @ 67..68 trailing=[Whitespace " "]
         CollectionLiteralExpression
           LBracket "[" @ 69..70
@@ -53,7 +59,9 @@ KotlinFile
           RBracket "]" @ 77..78
       PropertyDeclaration
         ValKw "val" @ 83..86 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "nested" @ 87..93 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "nested" @ 87..93 trailing=[Whitespace " "]
         Assign "=" @ 94..95 trailing=[Whitespace " "]
         CollectionLiteralExpression
           LBracket "[" @ 96..97

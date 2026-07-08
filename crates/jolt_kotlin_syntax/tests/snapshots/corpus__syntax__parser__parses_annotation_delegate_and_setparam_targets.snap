@@ -69,29 +69,28 @@ KotlinFile
                     ClosingQuote "\"" @ 99..100
                 RParen ")" @ 100..101
           ValKw "val" @ 106..109 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "cached" @ 110..116
+          CallableName
+            Name
+              Identifier "cached" @ 110..116
           Colon ":" @ 116..117 trailing=[Whitespace " "]
           TypeReference
             UserType
               Identifier "String" @ 118..124 trailing=[Whitespace " "]
-      ClassMemberDeclaration
-        Statement
-          ExpressionStatement
-            BinaryExpression
-              NameExpression
-                Identifier "by" @ 125..127 trailing=[Whitespace " "]
+          Identifier "by" @ 125..127 trailing=[Whitespace " "]
+          CallExpression
+            NameExpression
               Identifier "lazy" @ 128..132 trailing=[Whitespace " "]
-              LambdaExpression
-                LBrace "{" @ 133..134 trailing=[Whitespace " "]
-                Statement
-                  ExpressionStatement
-                    StringTemplateExpression
-                      StringTemplateEntry
-                        OpenQuote "\"" @ 135..136
-                      StringTemplateEntry
-                        RegularStringPart "ready" @ 136..141
-                      ClosingQuote "\"" @ 141..142 trailing=[Whitespace " "]
-                RBrace "}" @ 143..144
+            LambdaExpression
+              LBrace "{" @ 133..134 trailing=[Whitespace " "]
+              Statement
+                ExpressionStatement
+                  StringTemplateExpression
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 135..136
+                    StringTemplateEntry
+                      RegularStringPart "ready" @ 136..141
+                    ClosingQuote "\"" @ 141..142 trailing=[Whitespace " "]
+              RBrace "}" @ 143..144
       ClassMemberDeclaration
         PropertyDeclaration
           ModifierList
@@ -132,7 +131,9 @@ KotlinFile
                     ClosingQuote "\"" @ 195..196
                 RParen ")" @ 196..197
           VarKw "var" @ 202..205 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "name" @ 206..210
+          CallableName
+            Name
+              Identifier "name" @ 206..210
           Colon ":" @ 210..211 trailing=[Whitespace " "]
           TypeReference
             UserType

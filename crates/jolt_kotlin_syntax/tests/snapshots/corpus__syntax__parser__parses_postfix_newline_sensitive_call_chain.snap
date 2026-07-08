@@ -18,7 +18,9 @@ KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    Identifier "chained" @ 4..11
+    CallableName
+      Name
+        Identifier "chained" @ 4..11
     ValueParameterList
       LParen "(" @ 11..12
       ValueParameter
@@ -78,7 +80,8 @@ KotlinFile
                       LiteralExpression
                         IntegerLiteral "0" @ 119..120
                     RBracket "]" @ 120..121
-                  SafeAccess "?." @ 130..132 leading=[Newline "\n", Whitespace "        "]
+                  Question "?" @ 130..131 leading=[Newline "\n", Whitespace "        "]
+                  Dot "." @ 131..132
                   Identifier "build" @ 132..137
                 ValueArgumentList
                   LParen "(" @ 137..138

@@ -80,6 +80,11 @@ pub fn java_fixture_root(manifest_dir: &str) -> PathBuf {
 }
 
 #[must_use]
+pub fn kotlin_fixture_root(manifest_dir: &str) -> PathBuf {
+    workspace_root(manifest_dir).join("fixtures/kotlin")
+}
+
+#[must_use]
 pub fn collect_java_files(root: &Path) -> Vec<PathBuf> {
     assert!(
         root.is_dir(),
@@ -98,6 +103,25 @@ pub fn collect_java_files(root: &Path) -> Vec<PathBuf> {
     files
 }
 
+#[must_use]
+pub fn collect_kotlin_files(root: &Path) -> Vec<PathBuf> {
+    assert!(
+        root.is_dir(),
+        "required Kotlin fixture directory is missing: {}",
+        root.display()
+    );
+
+    let mut files = Vec::new();
+    collect_kotlin_files_into(root, &mut files);
+    files.sort();
+    assert!(
+        !files.is_empty(),
+        "expected at least one Kotlin fixture under {}",
+        root.display()
+    );
+    files
+}
+
 fn collect_java_files_into(root: &Path, files: &mut Vec<PathBuf>) {
     for entry in fs::read_dir(root)
         .unwrap_or_else(|error| panic!("failed to read {}: {error}", root.display()))
@@ -108,6 +132,22 @@ fn collect_java_files_into(root: &Path, files: &mut Vec<PathBuf>) {
         } else if path
             .extension()
             .is_some_and(|extension| extension == "java")
+        {
+            files.push(path);
+        }
+    }
+}
+
+fn collect_kotlin_files_into(root: &Path, files: &mut Vec<PathBuf>) {
+    for entry in fs::read_dir(root)
+        .unwrap_or_else(|error| panic!("failed to read {}: {error}", root.display()))
+    {
+        let path = entry.expect("valid directory entry").path();
+        if path.is_dir() {
+            collect_kotlin_files_into(&path, files);
+        } else if path
+            .extension()
+            .is_some_and(|extension| extension == "kt" || extension == "kts")
         {
             files.push(path);
         }

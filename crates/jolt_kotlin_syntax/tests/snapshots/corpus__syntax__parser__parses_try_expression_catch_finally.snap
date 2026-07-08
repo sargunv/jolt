@@ -21,7 +21,9 @@ KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    Identifier "tryExpression" @ 4..17
+    CallableName
+      Name
+        Identifier "tryExpression" @ 4..17
     ValueParameterList
       LParen "(" @ 17..18
       ValueParameter

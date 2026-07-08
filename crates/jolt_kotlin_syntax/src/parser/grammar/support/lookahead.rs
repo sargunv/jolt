@@ -50,6 +50,11 @@ impl<'buffer, 'source> KotlinLookahead<'buffer, 'source> {
         self.cursor.nth_kind(self.buffer, n)
     }
 
+    fn tokens_are_adjacent(&mut self, offset: usize, count: usize) -> bool {
+        self.buffer
+            .tokens_are_adjacent(self.cursor.position() + offset, count)
+    }
+
     fn bump(&mut self) {
         self.cursor.bump(self.buffer);
     }
@@ -58,6 +63,7 @@ impl<'buffer, 'source> KotlinLookahead<'buffer, 'source> {
         let start = self.cursor.checkpoint();
         let mut depth = 0usize;
         let mut expect_argument = false;
+        let mut previous_kind = None;
 
         for _ in 0..MAX_TYPE_ARGUMENT_LOOKAHEAD {
             let kind = self.kind();
@@ -86,10 +92,24 @@ impl<'buffer, 'source> KotlinLookahead<'buffer, 'source> {
                     expect_argument = true;
                 }
                 K::LParen | K::LBrace if depth > 0 => {
+                    let issue = previous_kind == Some(K::Gt);
                     self.cursor.rewind(start);
-                    return Some("malformed type argument list");
+                    return issue.then_some("malformed type argument list");
                 }
-                K::RParen
+                K::OrOr
+                | K::AndAnd
+                | K::Plus
+                | K::Minus
+                | K::Slash
+                | K::Percent
+                | K::Range
+                | K::RangeUntil
+                | K::Elvis
+                | K::EqEq
+                | K::BangEq
+                | K::EqEqEq
+                | K::BangEqEqEq
+                | K::RParen
                 | K::RBracket
                 | K::Semicolon
                 | K::DoubleSemicolon
@@ -105,11 +125,12 @@ impl<'buffer, 'source> KotlinLookahead<'buffer, 'source> {
                 }
                 _ => {}
             }
+            previous_kind = Some(kind);
             self.bump();
         }
 
         self.cursor.rewind(start);
-        Some("malformed type argument list")
+        None
     }
 
     fn type_argument_list_is_call_suffix(&mut self) -> bool {
@@ -125,7 +146,9 @@ impl<'buffer, 'source> KotlinLookahead<'buffer, 'source> {
                         let is_suffix = matches!(
                             self.nth_kind(1),
                             K::LParen | K::LBrace | K::Dot | K::SafeAccess | K::ColonColon
-                        );
+                        ) || self.nth_kind(1) == K::Question
+                            && self.nth_kind(2) == K::Dot
+                            && self.tokens_are_adjacent(1, 2);
                         self.cursor.rewind(start);
                         return is_suffix;
                     }

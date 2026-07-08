@@ -108,12 +108,12 @@ KotlinFile
     Colon ":" @ 218..219 trailing=[Whitespace " "]
     DelegationSpecifierList
       DelegationSpecifier
-        CallExpression
-          NameExpression
+        TypeReference
+          UserType
             Identifier "Result" @ 220..226
-          ValueArgumentList
-            LParen "(" @ 226..227
-            RParen ")" @ 227..228
+        ValueArgumentList
+          LParen "(" @ 226..227
+          RParen ")" @ 227..228
   Eof "" @ 229..229 leading=[Newline "\n"]
 
 diagnostics:

@@ -1,0 +1,14 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+fun assignmentTargets(target: Target, index: Int, value: String) {
+  target.name = value
+  target[index] = value
+  target.child!!.name = value
+  target.items[index].label = value
+}
+
+diagnostics:
+(none)

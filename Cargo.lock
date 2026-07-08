@@ -458,6 +458,7 @@ dependencies = [
  "jolt_diagnostics",
  "jolt_fmt_ir",
  "jolt_java_fmt",
+ "jolt_kotlin_fmt",
  "schemars",
  "serde",
 ]
@@ -485,6 +486,18 @@ dependencies = [
  "jolt_text",
  "num_enum",
  "unicode-general-category",
+]
+
+[[package]]
+name = "jolt_kotlin_fmt"
+version = "0.0.0"
+dependencies = [
+ "insta",
+ "jolt_diagnostics",
+ "jolt_fmt_ir",
+ "jolt_kotlin_syntax",
+ "jolt_test_support",
+ "serde",
 ]
 
 [[package]]

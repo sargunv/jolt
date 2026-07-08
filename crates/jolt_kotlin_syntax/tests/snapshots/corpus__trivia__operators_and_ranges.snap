@@ -28,7 +28,9 @@ KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 28..31 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "operators" @ 32..41
+    CallableName
+      Name
+        Identifier "operators" @ 32..41
     ValueParameterList
       LParen "(" @ 41..42
       ValueParameter
@@ -56,7 +58,9 @@ KotlinFile
       LBrace "{" @ 70..71
       PropertyDeclaration
         ValKw "val" @ 76..79 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "range" @ 80..85 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "range" @ 80..85 trailing=[Whitespace " "]
         Assign "=" @ 86..87 trailing=[Whitespace " "]
         BinaryExpression
           LiteralExpression
@@ -66,7 +70,9 @@ KotlinFile
             IntegerLiteral "10" @ 149..151
       PropertyDeclaration
         ValKw "val" @ 156..159 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "indexed" @ 160..167 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "indexed" @ 160..167 trailing=[Whitespace " "]
         Assign "=" @ 168..169 trailing=[Whitespace " "]
         IndexExpression
           NameExpression

@@ -18,42 +18,42 @@ KotlinFile
     ClassKw "class" @ 0..5 trailing=[Whitespace " "]
     Name
       Identifier "Injected" @ 6..14 trailing=[Whitespace " "]
-  SecondaryConstructor
-    ModifierList
-      Annotation
-        At "@" @ 15..16
-        QualifiedName
+    PrimaryConstructor
+      ModifierList
+        Annotation
+          At "@" @ 15..16
+          QualifiedName
+            Name
+              Identifier "Inject" @ 16..22 trailing=[Whitespace " "]
+      Identifier "constructor" @ 23..34
+      ValueParameterList
+        LParen "(" @ 34..35
+        ValueParameter
+          ModifierList
+            Annotation
+              At "@" @ 40..41 leading=[Newline "\n", Whitespace "    "]
+              QualifiedName
+                Name
+                  Identifier "Named" @ 41..46
+              AnnotationArgumentList
+                LParen "(" @ 46..47
+                ValueArgument
+                  StringTemplateExpression
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 47..48
+                    StringTemplateEntry
+                      RegularStringPart "id" @ 48..50
+                    ClosingQuote "\"" @ 50..51
+                RParen ")" @ 51..52 trailing=[Whitespace " "]
+          ValKw "val" @ 53..56 trailing=[Whitespace " "]
           Name
-            Identifier "Inject" @ 16..22 trailing=[Whitespace " "]
-    Identifier "constructor" @ 23..34
-    ValueParameterList
-      LParen "(" @ 34..35
-      ValueParameter
-        ModifierList
-          Annotation
-            At "@" @ 40..41 leading=[Newline "\n", Whitespace "    "]
-            QualifiedName
-              Name
-                Identifier "Named" @ 41..46
-            AnnotationArgumentList
-              LParen "(" @ 46..47
-              ValueArgument
-                StringTemplateExpression
-                  StringTemplateEntry
-                    OpenQuote "\"" @ 47..48
-                  StringTemplateEntry
-                    RegularStringPart "id" @ 48..50
-                  ClosingQuote "\"" @ 50..51
-              RParen ")" @ 51..52 trailing=[Whitespace " "]
-        ValKw "val" @ 53..56 trailing=[Whitespace " "]
-        Name
-          Identifier "id" @ 57..59
-        Colon ":" @ 59..60 trailing=[Whitespace " "]
-        TypeReference
-          UserType
-            Identifier "String" @ 61..67
-      Comma "," @ 67..68
-      RParen ")" @ 69..70 leading=[Newline "\n"]
+            Identifier "id" @ 57..59
+          Colon ":" @ 59..60 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "String" @ 61..67
+        Comma "," @ 67..68
+        RParen ")" @ 69..70 leading=[Newline "\n"]
   ClassDeclaration
     ModifierList
       Identifier "annotation" @ 72..82 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]

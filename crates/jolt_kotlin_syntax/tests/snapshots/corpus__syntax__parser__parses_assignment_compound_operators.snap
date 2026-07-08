@@ -19,7 +19,9 @@ KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    Identifier "compoundAssignment" @ 4..22
+    CallableName
+      Name
+        Identifier "compoundAssignment" @ 4..22
     ValueParameterList
       LParen "(" @ 22..23
       ValueParameter
@@ -51,7 +53,9 @@ KotlinFile
       LBrace "{" @ 67..68
       PropertyDeclaration
         VarKw "var" @ 73..76 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "total" @ 77..82 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "total" @ 77..82 trailing=[Whitespace " "]
         Assign "=" @ 83..84 trailing=[Whitespace " "]
         LiteralExpression
           IntegerLiteral "0" @ 85..86

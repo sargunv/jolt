@@ -1,0 +1,15 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+enum class Token {
+  Word { override fun text(): String = "word" },
+
+  Number { override fun text(): String = "number" };
+
+  abstract fun text(): String
+}
+
+diagnostics:
+(none)

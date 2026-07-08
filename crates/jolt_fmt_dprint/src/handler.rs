@@ -144,6 +144,7 @@ fn language_for_path(file_path: &Path) -> Result<Language, FormatError> {
         .and_then(|extension| extension.to_str())
     {
         Some("java") => Ok(Language::Java),
+        Some("kt" | "kts") => Ok(Language::Kotlin),
         Some(extension) => Err(FormatError::from(format!(
             "Jolt dprint plugin does not support '.{extension}' files"
         ))),
@@ -237,13 +238,13 @@ mod tests {
         let plugin = JoltDprintPlugin::new();
         let error = plugin
             .format_file(
-                Path::new("Associated.kt"),
+                Path::new("Associated.scala"),
                 b"fun main() {}",
                 &FormatOptions::default(),
             )
             .expect_err("format should fail");
 
-        assert!(error.to_string().contains("does not support '.kt'"));
+        assert!(error.to_string().contains("does not support '.scala'"));
     }
 
     #[test]

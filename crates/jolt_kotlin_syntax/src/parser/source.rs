@@ -322,7 +322,7 @@ impl<'source> TokenBuffer<'source> {
         self.tokens.last().map(SyntaxTokenData::token_text_range)
     }
 
-    fn tokens_are_adjacent(&mut self, index: usize, count: usize) -> bool {
+    pub(in crate::parser) fn tokens_are_adjacent(&mut self, index: usize, count: usize) -> bool {
         if count <= 1 {
             return true;
         }
@@ -381,7 +381,36 @@ impl<'source> TokenBuffer<'source> {
     }
 
     fn push_token(&mut self, token: LexedToken) {
-        self.push_buffered_token(token.kind, token.range, token.leading, token.trailing);
+        match token.kind {
+            KotlinSyntaxKind::SafeAccess => {
+                self.push_split_token(&token, &[KotlinSyntaxKind::Question, KotlinSyntaxKind::Dot]);
+            }
+            _ => {
+                self.push_buffered_token(token.kind, token.range, token.leading, token.trailing);
+            }
+        }
+    }
+
+    fn push_split_token(&mut self, token: &LexedToken, kinds: &[KotlinSyntaxKind]) {
+        let start = token.range.start();
+        let last_index = kinds.len().saturating_sub(1);
+        for (index, kind) in kinds.iter().copied().enumerate() {
+            let token_start = start + TextSize::new(index);
+            self.push_buffered_token(
+                kind,
+                TextRange::new(token_start, token_start + TextSize::new(1)),
+                if index == 0 {
+                    token.leading.start..token.leading.end
+                } else {
+                    self.empty_trivia()
+                },
+                if index == last_index {
+                    token.trailing.start..token.trailing.end
+                } else {
+                    self.empty_trivia()
+                },
+            );
+        }
     }
 
     fn push_buffered_token(
@@ -406,6 +435,10 @@ impl<'source> TokenBuffer<'source> {
         self.trivia[range.start..range.end]
             .iter()
             .fold(TextSize::new(0), |len, trivia| len + trivia.text_len())
+    }
+
+    fn empty_trivia(&self) -> Range<usize> {
+        self.trivia.len()..self.trivia.len()
     }
 
     fn finish(

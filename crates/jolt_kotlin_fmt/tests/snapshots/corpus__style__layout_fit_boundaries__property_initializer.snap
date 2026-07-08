@@ -1,0 +1,11 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+package com.example.boundaries
+
+val endpoint = "https://example.test/api/v1/projects/default/environments/development/resources/current"
+
+diagnostics:
+(none)

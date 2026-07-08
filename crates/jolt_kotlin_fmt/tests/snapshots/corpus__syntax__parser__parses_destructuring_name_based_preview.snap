@@ -1,0 +1,13 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+fun namedDestructuring(user: User) {
+  val (name, age) = user
+  val (city, score) = user.profile
+  consume(displayName, years, homeCity, points)
+}
+
+diagnostics:
+(none)

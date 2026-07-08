@@ -61,8 +61,9 @@ KotlinFile
           Colon ":" @ 91..92 trailing=[Whitespace " "]
           DelegationSpecifierList
             DelegationSpecifier
-              NameExpression
-                Identifier "Event" @ 93..98
+              TypeReference
+                UserType
+                  Identifier "Event" @ 93..98
       ClassMemberDeclaration
         ObjectDeclaration
           ModifierList
@@ -73,12 +74,15 @@ KotlinFile
           Colon ":" @ 120..121 trailing=[Whitespace " "]
           DelegationSpecifierList
             DelegationSpecifier
-              NameExpression
-                Identifier "Event" @ 122..127
+              TypeReference
+                UserType
+                  Identifier "Event" @ 122..127
       RBrace "}" @ 128..129 leading=[Newline "\n"]
   FunctionDeclaration
     FunKw "fun" @ 131..134 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "describe" @ 135..143
+    CallableName
+      Name
+        Identifier "describe" @ 135..143
     ValueParameterList
       LParen "(" @ 143..144
       ValueParameter

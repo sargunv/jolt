@@ -17,7 +17,9 @@ KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    Identifier "squareDestructuring" @ 4..23
+    CallableName
+      Name
+        Identifier "squareDestructuring" @ 4..23
     ValueParameterList
       LParen "(" @ 23..24
       ValueParameter

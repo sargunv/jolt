@@ -45,7 +45,9 @@ KotlinFile
       ClassMemberDeclaration
         FunctionDeclaration
           FunKw "fun" @ 51..54 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "log" @ 55..58
+          CallableName
+            Name
+              Identifier "log" @ 55..58
           ValueParameterList
             LParen "(" @ 58..59
             ValueParameter
@@ -64,8 +66,9 @@ KotlinFile
     Colon ":" @ 99..100 trailing=[Whitespace " "]
     DelegationSpecifierList
       DelegationSpecifier
-        NameExpression
-          Identifier "Logger" @ 101..107 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Logger" @ 101..107 trailing=[Whitespace " "]
     ClassBody
       LBrace "{" @ 108..109
       ClassMemberDeclaration
@@ -73,7 +76,9 @@ KotlinFile
           ModifierList
             Identifier "override" @ 114..122 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
           FunKw "fun" @ 123..126 trailing=[Whitespace " "]
-          Identifier "log" @ 127..130
+          CallableName
+            Name
+              Identifier "log" @ 127..130
           ValueParameterList
             LParen "(" @ 130..131
             ValueParameter
@@ -110,36 +115,36 @@ KotlinFile
     Colon ":" @ 203..204 trailing=[Whitespace " "]
     DelegationSpecifierList
       DelegationSpecifier
-        BinaryExpression
-          NameExpression
+        TypeReference
+          UserType
             Identifier "Logger" @ 205..211 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:delegation-type */", Whitespace " "]
-          Identifier "by" @ 246..248 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:delegation-by */", Whitespace " "]
-          NameExpression
-            Identifier "logger" @ 281..287
+        Identifier "by" @ 246..248 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:delegation-by */", Whitespace " "]
+        NameExpression
+          Identifier "logger" @ 281..287
   PropertyDeclaration
     ValKw "val" @ 289..292 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "cached" @ 293..299
+    CallableName
+      Name
+        Identifier "cached" @ 293..299
     Colon ":" @ 299..300 trailing=[Whitespace " "]
     TypeReference
       UserType
         Identifier "String" @ 301..307 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:property-delegate-type */", Whitespace " "]
-  Statement
-    ExpressionStatement
-      BinaryExpression
-        NameExpression
-          Identifier "by" @ 349..351 trailing=[Whitespace " "]
+    Identifier "by" @ 349..351 trailing=[Whitespace " "]
+    CallExpression
+      NameExpression
         Identifier "lazy" @ 352..356 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:property-by */", Whitespace " "]
-        LambdaExpression
-          LBrace "{" @ 387..388
-          Statement
-            ExpressionStatement
-              StringTemplateExpression
-                StringTemplateEntry
-                  OpenQuote "\"" @ 393..394 leading=[Newline "\n", Whitespace "    "]
-                StringTemplateEntry
-                  RegularStringPart "value" @ 394..399
-                ClosingQuote "\"" @ 399..400
-          RBrace "}" @ 401..402 leading=[Newline "\n"]
+      LambdaExpression
+        LBrace "{" @ 387..388
+        Statement
+          ExpressionStatement
+            StringTemplateExpression
+              StringTemplateEntry
+                OpenQuote "\"" @ 393..394 leading=[Newline "\n", Whitespace "    "]
+              StringTemplateEntry
+                RegularStringPart "value" @ 394..399
+              ClosingQuote "\"" @ 399..400
+        RBrace "}" @ 401..402 leading=[Newline "\n"]
   Eof "" @ 403..403 leading=[Newline "\n"]
 
 diagnostics:

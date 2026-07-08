@@ -1,0 +1,93 @@
+use jolt_diagnostics::{Diagnostic, DiagnosticCodeId, DiagnosticStage, Severity};
+use jolt_fmt_ir::{RenderSink, RenderToError, render_to};
+use jolt_kotlin_syntax::parse_kotlin_file;
+
+use crate::context::KotlinFormatter;
+
+/// Kotlin formatter options consumed by the Kotlin layout builder.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+pub struct KotlinFormatOptions {
+    /// Preferred maximum rendered line width.
+    pub line_width: u16,
+    /// Number of spaces per indentation level when `use_tabs` is false.
+    pub indent_width: u8,
+    /// Whether indentation should use tabs instead of spaces.
+    pub use_tabs: bool,
+}
+
+impl Default for KotlinFormatOptions {
+    fn default() -> Self {
+        Self {
+            line_width: 80,
+            indent_width: 2,
+            use_tabs: false,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum KotlinFormatSinkResult<E> {
+    Complete,
+    Halted,
+    Blocked { diagnostics: Vec<Diagnostic> },
+    SinkError { error: E },
+}
+
+/// Stable Kotlin formatter diagnostic codes.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+enum KotlinFormatDiagnosticCode {
+    /// The document renderer rejected a formatter-produced document.
+    RenderError,
+}
+
+impl KotlinFormatDiagnosticCode {
+    const fn id(self) -> DiagnosticCodeId {
+        match self {
+            Self::RenderError => DiagnosticCodeId::new("kotlin.format.render_error"),
+        }
+    }
+}
+
+/// Formats Kotlin source text into a render sink.
+pub fn format_source_to_sink<S: RenderSink + ?Sized>(
+    source: &str,
+    options: &KotlinFormatOptions,
+    sink: &mut S,
+) -> KotlinFormatSinkResult<S::Error> {
+    let parse = parse_kotlin_file(source);
+
+    if !parse.diagnostics().is_empty() {
+        return KotlinFormatSinkResult::Blocked {
+            diagnostics: parse.diagnostics().to_vec(),
+        };
+    }
+
+    let Some(syntax) = parse.syntax() else {
+        return KotlinFormatSinkResult::Blocked {
+            diagnostics: Vec::new(),
+        };
+    };
+
+    let mut formatter = KotlinFormatter::new(options);
+    let doc = formatter.format_file(&syntax);
+    match render_to(&doc, formatter.render_options(), sink) {
+        Ok(outcome) if outcome.halted => KotlinFormatSinkResult::Halted,
+        Ok(_) => KotlinFormatSinkResult::Complete,
+        Err(RenderToError::Render(error)) => KotlinFormatSinkResult::Blocked {
+            diagnostics: vec![render_error_diagnostic(&error)],
+        },
+        Err(RenderToError::Sink(error)) => KotlinFormatSinkResult::SinkError { error },
+    }
+}
+
+fn render_error_diagnostic(error: &jolt_fmt_ir::RenderError) -> Diagnostic {
+    Diagnostic {
+        code: KotlinFormatDiagnosticCode::RenderError.id(),
+        severity: Severity::InternalError,
+        stage: DiagnosticStage::Formatter,
+        message: format!("Kotlin formatter produced an invalid document: {error}"),
+        range: None,
+    }
+}

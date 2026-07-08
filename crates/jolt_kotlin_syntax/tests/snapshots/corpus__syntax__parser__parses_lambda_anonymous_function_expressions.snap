@@ -8,6 +8,9 @@ fun anonymous(values: List<Int>) {
         return value * 2
     }
     val expression = fun(value: Int): Int = value + 1
+    val receiver = fun MutableMap<String, Expression<*>>.() {
+        put("value", expression)
+    }
     values.map(block).map(expression)
 }
 
@@ -17,7 +20,9 @@ KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    Identifier "anonymous" @ 4..13
+    CallableName
+      Name
+        Identifier "anonymous" @ 4..13
     ValueParameterList
       LParen "(" @ 13..14
       ValueParameter
@@ -41,7 +46,9 @@ KotlinFile
       LBrace "{" @ 33..34
       PropertyDeclaration
         ValKw "val" @ 39..42 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "block" @ 43..48 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "block" @ 43..48 trailing=[Whitespace " "]
         Assign "=" @ 49..50 trailing=[Whitespace " "]
         AnonymousFunctionExpression
           FunKw "fun" @ 51..54
@@ -74,7 +81,9 @@ KotlinFile
             RBrace "}" @ 103..104 leading=[Newline "\n", Whitespace "    "]
       PropertyDeclaration
         ValKw "val" @ 109..112 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "expression" @ 113..123 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "expression" @ 113..123 trailing=[Whitespace " "]
         Assign "=" @ 124..125 trailing=[Whitespace " "]
         AnonymousFunctionExpression
           FunKw "fun" @ 126..129
@@ -99,6 +108,65 @@ KotlinFile
             Plus "+" @ 155..156 trailing=[Whitespace " "]
             LiteralExpression
               IntegerLiteral "1" @ 157..158
+      PropertyDeclaration
+        ValKw "val" @ 163..166 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "receiver" @ 167..175 trailing=[Whitespace " "]
+        Assign "=" @ 176..177 trailing=[Whitespace " "]
+        AnonymousFunctionExpression
+          FunKw "fun" @ 178..181 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "MutableMap" @ 182..192
+              TypeArgumentList
+                Lt "<" @ 192..193
+                TypeProjectionList
+                  TypeArgument
+                    TypeProjection
+                      TypeReference
+                        UserType
+                          Identifier "String" @ 193..199
+                  Comma "," @ 199..200 trailing=[Whitespace " "]
+                  TypeArgument
+                    TypeProjection
+                      TypeReference
+                        UserType
+                          Identifier "Expression" @ 201..211
+                          TypeArgumentList
+                            Lt "<" @ 211..212
+                            TypeProjectionList
+                              TypeArgument
+                                TypeProjection
+                                  Star "*" @ 212..213
+                            Gt ">" @ 213..214
+                Gt ">" @ 214..215
+          Dot "." @ 215..216
+          ValueParameterList
+            LParen "(" @ 216..217
+            RParen ")" @ 217..218 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 219..220
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "put" @ 229..232 leading=[Newline "\n", Whitespace "        "]
+                  ValueArgumentList
+                    LParen "(" @ 232..233
+                    ValueArgument
+                      StringTemplateExpression
+                        StringTemplateEntry
+                          OpenQuote "\"" @ 233..234
+                        StringTemplateEntry
+                          RegularStringPart "value" @ 234..239
+                        ClosingQuote "\"" @ 239..240
+                    Comma "," @ 240..241 trailing=[Whitespace " "]
+                    ValueArgument
+                      NameExpression
+                        Identifier "expression" @ 242..252
+                    RParen ")" @ 252..253
+            RBrace "}" @ 258..259 leading=[Newline "\n", Whitespace "    "]
       Statement
         ExpressionStatement
           CallExpression
@@ -106,25 +174,25 @@ KotlinFile
               CallExpression
                 NavigationExpression
                   NameExpression
-                    Identifier "values" @ 163..169 leading=[Newline "\n", Whitespace "    "]
-                  Dot "." @ 169..170
-                  Identifier "map" @ 170..173
+                    Identifier "values" @ 264..270 leading=[Newline "\n", Whitespace "    "]
+                  Dot "." @ 270..271
+                  Identifier "map" @ 271..274
                 ValueArgumentList
-                  LParen "(" @ 173..174
+                  LParen "(" @ 274..275
                   ValueArgument
                     NameExpression
-                      Identifier "block" @ 174..179
-                  RParen ")" @ 179..180
-              Dot "." @ 180..181
-              Identifier "map" @ 181..184
+                      Identifier "block" @ 275..280
+                  RParen ")" @ 280..281
+              Dot "." @ 281..282
+              Identifier "map" @ 282..285
             ValueArgumentList
-              LParen "(" @ 184..185
+              LParen "(" @ 285..286
               ValueArgument
                 NameExpression
-                  Identifier "expression" @ 185..195
-              RParen ")" @ 195..196
-      RBrace "}" @ 197..198 leading=[Newline "\n"]
-  Eof "" @ 199..199 leading=[Newline "\n"]
+                  Identifier "expression" @ 286..296
+              RParen ")" @ 296..297
+      RBrace "}" @ 298..299 leading=[Newline "\n"]
+  Eof "" @ 300..300 leading=[Newline "\n"]
 
 diagnostics:
   (none)

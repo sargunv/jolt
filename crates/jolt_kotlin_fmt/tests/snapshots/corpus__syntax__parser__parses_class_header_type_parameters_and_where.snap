@@ -1,0 +1,14 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class Registry<K, V>(
+  private val values: Map<K, V>,
+)
+  where K : CharSequence, K : Comparable<K>, V : Any
+
+class Sink<in T>(private val name: String)
+
+diagnostics:
+(none)

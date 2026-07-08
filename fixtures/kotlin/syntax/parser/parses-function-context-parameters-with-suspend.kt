@@ -1,0 +1,28 @@
+context(logger: Logger)
+suspend inline fun logLater(message: String) {
+    logger.write(message)
+}
+
+@PublishedApi
+internal
+context(logger: Logger)
+tailrec suspend fun <T : CharSequence> Repository<UserId>.loadLater(id: UserId): T
+    where T : Comparable<T> = fetch(id)
+
+context(left: Counter)
+operator fun Counter.plus(right: Counter): Counter = Counter(value + right.value)
+
+context(logger: Logger)
+infix fun Logger.then(message: String): Logger = this
+
+interface Logger {
+    fun write(message: String)
+}
+
+class Counter(val value: Int)
+
+interface Repository<K> {
+    suspend fun <T> fetch(id: K): T
+}
+
+class UserId

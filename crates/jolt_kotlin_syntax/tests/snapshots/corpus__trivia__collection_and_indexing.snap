@@ -94,7 +94,9 @@ KotlinFile
       ClassMemberDeclaration
         PropertyDeclaration
           ValKw "val" @ 215..218 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "table" @ 219..224 trailing=[Whitespace " "]
+          CallableName
+            Name
+              Identifier "table" @ 219..224 trailing=[Whitespace " "]
           Assign "=" @ 225..226 trailing=[Whitespace " "]
           CallExpression
             NameExpression

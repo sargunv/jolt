@@ -6,7 +6,9 @@ input:
 fun malformedTypeArgumentCall(value: String) {
     val broken = factory.create<String,, Int>(value)
     val missing = factory.create<List<String>(value)
-    consume(broken, missing)
+    val spacedSafeCall = value? /* gap */ .length
+    val spacedTypeArgumentSafeCall = factory.create<Result>? /* gap */ .value
+    consume(broken, missing, spacedSafeCall, spacedTypeArgumentSafeCall)
 }
 
 syntax:
@@ -15,7 +17,9 @@ KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    Identifier "malformedTypeArgumentCall" @ 4..29
+    CallableName
+      Name
+        Identifier "malformedTypeArgumentCall" @ 4..29
     ValueParameterList
       LParen "(" @ 29..30
       ValueParameter
@@ -30,7 +34,9 @@ KotlinFile
       LBrace "{" @ 45..46
       PropertyDeclaration
         ValKw "val" @ 51..54 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "broken" @ 55..61 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "broken" @ 55..61 trailing=[Whitespace " "]
         Assign "=" @ 62..63 trailing=[Whitespace " "]
         CallExpression
           NavigationExpression
@@ -63,7 +69,9 @@ KotlinFile
             RParen ")" @ 98..99
       PropertyDeclaration
         ValKw "val" @ 104..107 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "missing" @ 108..115 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "missing" @ 108..115 trailing=[Whitespace " "]
         Assign "=" @ 116..117 trailing=[Whitespace " "]
         BinaryExpression
           NavigationExpression
@@ -91,28 +99,80 @@ KotlinFile
                 NameExpression
                   Identifier "value" @ 146..151
               RParen ")" @ 151..152
+      PropertyDeclaration
+        ValKw "val" @ 157..160 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "spacedSafeCall" @ 161..175 trailing=[Whitespace " "]
+        Assign "=" @ 176..177 trailing=[Whitespace " "]
+        NameExpression
+          Identifier "value" @ 178..183
+        ErrorNode
+          Question "?" @ 183..184 trailing=[Whitespace " ", BlockComment "/* gap */", Whitespace " "]
+        ErrorNode
+          Dot "." @ 195..196
+        ErrorNode
+          Identifier "length" @ 196..202
+      PropertyDeclaration
+        ValKw "val" @ 207..210 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "spacedTypeArgumentSafeCall" @ 211..237 trailing=[Whitespace " "]
+        Assign "=" @ 238..239 trailing=[Whitespace " "]
+        BinaryExpression
+          BinaryExpression
+            NavigationExpression
+              NameExpression
+                Identifier "factory" @ 240..247
+              Dot "." @ 247..248
+              Identifier "create" @ 248..254
+            Lt "<" @ 254..255
+            NameExpression
+              Identifier "Result" @ 255..261
+          Gt ">" @ 261..262
+          NavigationExpression
+            ErrorNode
+              Question "?" @ 262..263 trailing=[Whitespace " ", BlockComment "/* gap */", Whitespace " "]
+            Dot "." @ 274..275
+            Identifier "value" @ 275..280
       Statement
         ExpressionStatement
           CallExpression
             NameExpression
-              Identifier "consume" @ 157..164 leading=[Newline "\n", Whitespace "    "]
+              Identifier "consume" @ 285..292 leading=[Newline "\n", Whitespace "    "]
             ValueArgumentList
-              LParen "(" @ 164..165
+              LParen "(" @ 292..293
               ValueArgument
                 NameExpression
-                  Identifier "broken" @ 165..171
-              Comma "," @ 171..172 trailing=[Whitespace " "]
+                  Identifier "broken" @ 293..299
+              Comma "," @ 299..300 trailing=[Whitespace " "]
               ValueArgument
                 NameExpression
-                  Identifier "missing" @ 173..180
-              RParen ")" @ 180..181
-      RBrace "}" @ 182..183 leading=[Newline "\n"]
-  Eof "" @ 184..184 leading=[Newline "\n"]
+                  Identifier "missing" @ 301..308
+              Comma "," @ 308..309 trailing=[Whitespace " "]
+              ValueArgument
+                NameExpression
+                  Identifier "spacedSafeCall" @ 310..324
+              Comma "," @ 324..325 trailing=[Whitespace " "]
+              ValueArgument
+                NameExpression
+                  Identifier "spacedTypeArgumentSafeCall" @ 326..352
+              RParen ")" @ 352..353
+      RBrace "}" @ 354..355 leading=[Newline "\n"]
+  Eof "" @ 356..356 leading=[Newline "\n"]
 
 diagnostics:
   code=kotlin.parse.malformed_type_argument_list severity=Error stage=Parser range=88..91 message="malformed type argument list"
   code=kotlin.parse.malformed_type_argument_list severity=Error stage=Parser range=132..133 message="malformed type argument list"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=183..184 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=195..196 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=196..202 message="unexpected token in expression"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=262..263 message="expected expression"
 
 diagnostics:
 code=kotlin.parse.malformed_type_argument_list severity=Error stage=Parser range=Some(TextRange { start: TextSize(88), end: TextSize(91) }) message=malformed type argument list
 code=kotlin.parse.malformed_type_argument_list severity=Error stage=Parser range=Some(TextRange { start: TextSize(132), end: TextSize(133) }) message=malformed type argument list
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(183), end: TextSize(184) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(195), end: TextSize(196) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(196), end: TextSize(202) }) message=unexpected token in expression
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(262), end: TextSize(263) }) message=expected expression

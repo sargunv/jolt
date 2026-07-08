@@ -8,6 +8,8 @@ use jolt_fmt_ir::RenderSink;
 pub enum Language {
     /// Java source, typically `.java`.
     Java,
+    /// Kotlin source, typically `.kt` or `.kts`.
+    Kotlin,
 }
 
 /// Formatter options shared by CLI and dprint.
@@ -51,6 +53,7 @@ pub fn format_source_to_sink<S: RenderSink + ?Sized>(
 ) -> FormatSinkResult<S::Error> {
     match language {
         Language::Java => format_java_source_to_sink(source, *options, sink),
+        Language::Kotlin => format_kotlin_source_to_sink(source, *options, sink),
     }
 }
 
@@ -71,6 +74,28 @@ fn format_java_source_to_sink<S: RenderSink + ?Sized>(
             FormatSinkResult::Blocked { diagnostics }
         }
         jolt_java_fmt::JavaFormatSinkResult::SinkError { error } => {
+            FormatSinkResult::SinkError { error }
+        }
+    }
+}
+
+fn format_kotlin_source_to_sink<S: RenderSink + ?Sized>(
+    source: &str,
+    options: FormatOptions,
+    sink: &mut S,
+) -> FormatSinkResult<S::Error> {
+    let kotlin_options = jolt_kotlin_fmt::KotlinFormatOptions {
+        line_width: options.line_width,
+        indent_width: options.indent_width,
+        use_tabs: options.use_tabs,
+    };
+    match jolt_kotlin_fmt::format_source_to_sink(source, &kotlin_options, sink) {
+        jolt_kotlin_fmt::KotlinFormatSinkResult::Complete => FormatSinkResult::Complete,
+        jolt_kotlin_fmt::KotlinFormatSinkResult::Halted => FormatSinkResult::Halted,
+        jolt_kotlin_fmt::KotlinFormatSinkResult::Blocked { diagnostics } => {
+            FormatSinkResult::Blocked { diagnostics }
+        }
+        jolt_kotlin_fmt::KotlinFormatSinkResult::SinkError { error } => {
             FormatSinkResult::SinkError { error }
         }
     }

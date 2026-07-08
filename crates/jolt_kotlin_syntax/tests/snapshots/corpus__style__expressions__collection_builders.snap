@@ -33,7 +33,9 @@ KotlinFile
   ImportList
   PropertyDeclaration
     ValKw "val" @ 33..36 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "words" @ 37..42 trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "words" @ 37..42 trailing=[Whitespace " "]
     Assign "=" @ 43..44 trailing=[Whitespace " "]
     CallExpression
       NameExpression
@@ -67,7 +69,9 @@ KotlinFile
         RParen ")" @ 91..92 leading=[Newline "\n"]
   PropertyDeclaration
     ValKw "val" @ 94..97 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "index" @ 98..103 trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "index" @ 98..103 trailing=[Whitespace " "]
     Assign "=" @ 104..105 trailing=[Whitespace " "]
     CallExpression
       NameExpression

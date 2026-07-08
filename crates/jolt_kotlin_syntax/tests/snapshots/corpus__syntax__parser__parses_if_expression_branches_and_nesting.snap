@@ -4,6 +4,7 @@ expression: snapshot
 ---
 input:
 fun choose(a: Int, b: Int, c: Int): Int {
+    val logged = trace(if (a > b) a else b, c)
     return if (a > b)
         if (a > c) a else c
     else
@@ -16,7 +17,9 @@ KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    Identifier "choose" @ 4..10
+    CallableName
+      Name
+        Identifier "choose" @ 4..10
     ValueParameterList
       LParen "(" @ 10..11
       ValueParameter
@@ -49,56 +52,89 @@ KotlinFile
         Identifier "Int" @ 36..39 trailing=[Whitespace " "]
     Block
       LBrace "{" @ 40..41
+      PropertyDeclaration
+        ValKw "val" @ 46..49 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "logged" @ 50..56 trailing=[Whitespace " "]
+        Assign "=" @ 57..58 trailing=[Whitespace " "]
+        CallExpression
+          NameExpression
+            Identifier "trace" @ 59..64
+          ValueArgumentList
+            LParen "(" @ 64..65
+            ValueArgument
+              IfExpression
+                IfKw "if" @ 65..67 trailing=[Whitespace " "]
+                ParenthesizedExpression
+                  LParen "(" @ 68..69
+                  BinaryExpression
+                    NameExpression
+                      Identifier "a" @ 69..70 trailing=[Whitespace " "]
+                    Gt ">" @ 71..72 trailing=[Whitespace " "]
+                    NameExpression
+                      Identifier "b" @ 73..74
+                  RParen ")" @ 74..75 trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "a" @ 76..77 trailing=[Whitespace " "]
+                ElseKw "else" @ 78..82 trailing=[Whitespace " "]
+                NameExpression
+                  Identifier "b" @ 83..84
+            Comma "," @ 84..85 trailing=[Whitespace " "]
+            ValueArgument
+              NameExpression
+                Identifier "c" @ 86..87
+            RParen ")" @ 87..88
       Statement
         ExpressionStatement
           JumpExpression
-            ReturnKw "return" @ 46..52 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            ReturnKw "return" @ 93..99 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             IfExpression
-              IfKw "if" @ 53..55 trailing=[Whitespace " "]
+              IfKw "if" @ 100..102 trailing=[Whitespace " "]
               ParenthesizedExpression
-                LParen "(" @ 56..57
+                LParen "(" @ 103..104
                 BinaryExpression
                   NameExpression
-                    Identifier "a" @ 57..58 trailing=[Whitespace " "]
-                  Gt ">" @ 59..60 trailing=[Whitespace " "]
+                    Identifier "a" @ 104..105 trailing=[Whitespace " "]
+                  Gt ">" @ 106..107 trailing=[Whitespace " "]
                   NameExpression
-                    Identifier "b" @ 61..62
-                RParen ")" @ 62..63
+                    Identifier "b" @ 108..109
+                RParen ")" @ 109..110
               IfExpression
-                IfKw "if" @ 72..74 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                IfKw "if" @ 119..121 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                 ParenthesizedExpression
-                  LParen "(" @ 75..76
+                  LParen "(" @ 122..123
                   BinaryExpression
                     NameExpression
-                      Identifier "a" @ 76..77 trailing=[Whitespace " "]
-                    Gt ">" @ 78..79 trailing=[Whitespace " "]
+                      Identifier "a" @ 123..124 trailing=[Whitespace " "]
+                    Gt ">" @ 125..126 trailing=[Whitespace " "]
                     NameExpression
-                      Identifier "c" @ 80..81
-                  RParen ")" @ 81..82 trailing=[Whitespace " "]
+                      Identifier "c" @ 127..128
+                  RParen ")" @ 128..129 trailing=[Whitespace " "]
                 NameExpression
-                  Identifier "a" @ 83..84 trailing=[Whitespace " "]
-                ElseKw "else" @ 85..89 trailing=[Whitespace " "]
+                  Identifier "a" @ 130..131 trailing=[Whitespace " "]
+                ElseKw "else" @ 132..136 trailing=[Whitespace " "]
                 NameExpression
-                  Identifier "c" @ 90..91
-              ElseKw "else" @ 96..100 leading=[Newline "\n", Whitespace "    "]
+                  Identifier "c" @ 137..138
+              ElseKw "else" @ 143..147 leading=[Newline "\n", Whitespace "    "]
               IfExpression
-                IfKw "if" @ 109..111 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                IfKw "if" @ 156..158 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                 ParenthesizedExpression
-                  LParen "(" @ 112..113
+                  LParen "(" @ 159..160
                   BinaryExpression
                     NameExpression
-                      Identifier "b" @ 113..114 trailing=[Whitespace " "]
-                    Gt ">" @ 115..116 trailing=[Whitespace " "]
+                      Identifier "b" @ 160..161 trailing=[Whitespace " "]
+                    Gt ">" @ 162..163 trailing=[Whitespace " "]
                     NameExpression
-                      Identifier "c" @ 117..118
-                  RParen ")" @ 118..119 trailing=[Whitespace " "]
+                      Identifier "c" @ 164..165
+                  RParen ")" @ 165..166 trailing=[Whitespace " "]
                 NameExpression
-                  Identifier "b" @ 120..121 trailing=[Whitespace " "]
-                ElseKw "else" @ 122..126 trailing=[Whitespace " "]
+                  Identifier "b" @ 167..168 trailing=[Whitespace " "]
+                ElseKw "else" @ 169..173 trailing=[Whitespace " "]
                 NameExpression
-                  Identifier "c" @ 127..128
-      RBrace "}" @ 129..130 leading=[Newline "\n"]
-  Eof "" @ 131..131 leading=[Newline "\n"]
+                  Identifier "c" @ 174..175
+      RBrace "}" @ 176..177 leading=[Newline "\n"]
+  Eof "" @ 178..178 leading=[Newline "\n"]
 
 diagnostics:
   (none)

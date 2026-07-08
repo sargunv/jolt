@@ -36,7 +36,9 @@ KotlinFile
           ModifierList
             Identifier "open" @ 24..28 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
           FunKw "fun" @ 29..32 trailing=[Whitespace " "]
-          Identifier "visit" @ 33..38
+          CallableName
+            Name
+              Identifier "visit" @ 33..38
           ValueParameterList
             LParen "(" @ 38..39
             RParen ")" @ 39..40 trailing=[Whitespace " "]
@@ -51,12 +53,12 @@ KotlinFile
     Colon ":" @ 59..60 trailing=[Whitespace " "]
     DelegationSpecifierList
       DelegationSpecifier
-        CallExpression
-          NameExpression
+        TypeReference
+          UserType
             Identifier "Parent" @ 61..67
-          ValueArgumentList
-            LParen "(" @ 67..68
-            RParen ")" @ 68..69 trailing=[Whitespace " "]
+        ValueArgumentList
+          LParen "(" @ 67..68
+          RParen ")" @ 68..69 trailing=[Whitespace " "]
     ClassBody
       LBrace "{" @ 70..71
       ClassMemberDeclaration
@@ -71,7 +73,9 @@ KotlinFile
             ClassMemberDeclaration
               FunctionDeclaration
                 FunKw "fun" @ 105..108 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                Identifier "walk" @ 109..113
+                CallableName
+                  Name
+                    Identifier "walk" @ 109..113
                 ValueParameterList
                   LParen "(" @ 113..114
                   ValueParameter
@@ -129,17 +133,19 @@ KotlinFile
                                     ContinueKw "continue" @ 214..222
                                     At "@" @ 222..223
                                     Identifier "outer" @ 223..228
-                                    CallExpression
-                                      NavigationExpression
-                                        ThisExpression
-                                          ThisKw "this" @ 245..249 leading=[Newline "\n", Whitespace "                "]
-                                          At "@" @ 249..250
-                                          Identifier "Child" @ 250..255
-                                        Dot "." @ 255..256
-                                        Identifier "visit" @ 256..261
-                                      ValueArgumentList
-                                        LParen "(" @ 261..262
-                                        RParen ")" @ 262..263
+                            Statement
+                              ExpressionStatement
+                                CallExpression
+                                  NavigationExpression
+                                    ThisExpression
+                                      ThisKw "this" @ 245..249 leading=[Newline "\n", Whitespace "                "]
+                                      At "@" @ 249..250
+                                      Identifier "Child" @ 250..255
+                                    Dot "." @ 255..256
+                                    Identifier "visit" @ 256..261
+                                  ValueArgumentList
+                                    LParen "(" @ 261..262
+                                    RParen ")" @ 262..263
                             Statement
                               ExpressionStatement
                                 CallExpression

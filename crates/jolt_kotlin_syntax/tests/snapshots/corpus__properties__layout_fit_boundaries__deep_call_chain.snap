@@ -30,7 +30,9 @@ KotlinFile
   ImportList
   PropertyDeclaration
     ValKw "val" @ 32..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "normalized" @ 36..46 trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "normalized" @ 36..46 trailing=[Whitespace " "]
     Assign "=" @ 47..48
     CallExpression
       NavigationExpression

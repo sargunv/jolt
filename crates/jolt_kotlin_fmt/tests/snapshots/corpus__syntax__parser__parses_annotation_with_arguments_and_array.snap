@@ -1,0 +1,16 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+@Route(path = "/items", methods = ["GET", "POST"])
+
+class AnnotatedRoute
+
+annotation class Route(
+  val path: String,
+  val methods: Array<String>,
+)
+
+diagnostics:
+(none)

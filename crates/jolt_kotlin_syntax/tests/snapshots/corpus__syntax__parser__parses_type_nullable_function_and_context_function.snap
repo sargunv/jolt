@@ -4,6 +4,7 @@ expression: snapshot
 ---
 input:
 typealias Callback = context(Logger) (String?) -> Unit
+typealias NamedCallback = (value: String?, count: Int) -> Unit
 
 val callback: Callback = { value -> println(value) }
 
@@ -22,54 +23,88 @@ KotlinFile
       ContextFunctionType
         Identifier "context" @ 21..28
         LParen "(" @ 28..29
-        TypeReference
-          UserType
-            Identifier "Logger" @ 29..35
+        FunctionTypeParameter
+          TypeReference
+            UserType
+              Identifier "Logger" @ 29..35
         RParen ")" @ 35..36 trailing=[Whitespace " "]
         FunctionType
           ParenthesizedType
             LParen "(" @ 37..38
-            TypeReference
-              NullableType
-                UserType
-                  Identifier "String" @ 38..44
-                Question "?" @ 44..45
+            FunctionTypeParameter
+              TypeReference
+                NullableType
+                  UserType
+                    Identifier "String" @ 38..44
+                  Question "?" @ 44..45
             RParen ")" @ 45..46 trailing=[Whitespace " "]
           Arrow "->" @ 47..49 trailing=[Whitespace " "]
           UserType
             Identifier "Unit" @ 50..54
+  TypeAliasDeclaration
+    TypeAliasKw "typealias" @ 55..64 leading=[Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "NamedCallback" @ 65..78 trailing=[Whitespace " "]
+    Assign "=" @ 79..80 trailing=[Whitespace " "]
+    TypeReference
+      FunctionType
+        ParenthesizedType
+          LParen "(" @ 81..82
+          FunctionTypeParameter
+            Name
+              Identifier "value" @ 82..87
+            Colon ":" @ 87..88 trailing=[Whitespace " "]
+            TypeReference
+              NullableType
+                UserType
+                  Identifier "String" @ 89..95
+                Question "?" @ 95..96
+          Comma "," @ 96..97 trailing=[Whitespace " "]
+          FunctionTypeParameter
+            Name
+              Identifier "count" @ 98..103
+            Colon ":" @ 103..104 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                Identifier "Int" @ 105..108
+          RParen ")" @ 108..109 trailing=[Whitespace " "]
+        Arrow "->" @ 110..112 trailing=[Whitespace " "]
+        UserType
+          Identifier "Unit" @ 113..117
   PropertyDeclaration
-    ValKw "val" @ 56..59 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "callback" @ 60..68
-    Colon ":" @ 68..69 trailing=[Whitespace " "]
+    ValKw "val" @ 119..122 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "callback" @ 123..131
+    Colon ":" @ 131..132 trailing=[Whitespace " "]
     TypeReference
       UserType
-        Identifier "Callback" @ 70..78 trailing=[Whitespace " "]
-    Assign "=" @ 79..80 trailing=[Whitespace " "]
+        Identifier "Callback" @ 133..141 trailing=[Whitespace " "]
+    Assign "=" @ 142..143 trailing=[Whitespace " "]
     LambdaExpression
-      LBrace "{" @ 81..82 trailing=[Whitespace " "]
+      LBrace "{" @ 144..145 trailing=[Whitespace " "]
       LambdaParameterList
         LambdaParameter
           Name
-            Identifier "value" @ 83..88 trailing=[Whitespace " "]
-        Arrow "->" @ 89..91 trailing=[Whitespace " "]
+            Identifier "value" @ 146..151 trailing=[Whitespace " "]
+        Arrow "->" @ 152..154 trailing=[Whitespace " "]
       Statement
         ExpressionStatement
           CallExpression
             NameExpression
-              Identifier "println" @ 92..99
+              Identifier "println" @ 155..162
             ValueArgumentList
-              LParen "(" @ 99..100
+              LParen "(" @ 162..163
               ValueArgument
                 NameExpression
-                  Identifier "value" @ 100..105
-              RParen ")" @ 105..106 trailing=[Whitespace " "]
-      RBrace "}" @ 107..108
+                  Identifier "value" @ 163..168
+              RParen ")" @ 168..169 trailing=[Whitespace " "]
+      RBrace "}" @ 170..171
   InterfaceDeclaration
-    InterfaceKw "interface" @ 110..119 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    InterfaceKw "interface" @ 173..182 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
     Name
-      Identifier "Logger" @ 120..126
-  Eof "" @ 127..127 leading=[Newline "\n"]
+      Identifier "Logger" @ 183..189
+  Eof "" @ 190..190 leading=[Newline "\n"]
 
 diagnostics:
   (none)

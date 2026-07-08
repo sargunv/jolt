@@ -15,7 +15,9 @@ KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    Identifier "precedence" @ 4..14
+    CallableName
+      Name
+        Identifier "precedence" @ 4..14
     ValueParameterList
       LParen "(" @ 14..15
       ValueParameter
@@ -58,7 +60,9 @@ KotlinFile
       LBrace "{" @ 56..57
       PropertyDeclaration
         ValKw "val" @ 62..65 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "arithmetic" @ 66..76 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "arithmetic" @ 66..76 trailing=[Whitespace " "]
         Assign "=" @ 77..78 trailing=[Whitespace " "]
         BinaryExpression
           BinaryExpression
@@ -84,7 +88,9 @@ KotlinFile
               IntegerLiteral "3" @ 99..100
       PropertyDeclaration
         ValKw "val" @ 105..108 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "shifted" @ 109..116 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "shifted" @ 109..116 trailing=[Whitespace " "]
         Assign "=" @ 117..118 trailing=[Whitespace " "]
         BinaryExpression
           BinaryExpression

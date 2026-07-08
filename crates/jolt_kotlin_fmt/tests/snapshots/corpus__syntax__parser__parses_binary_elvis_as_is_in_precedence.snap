@@ -1,0 +1,20 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+fun binaryKinds(input: Any?, names: List<String>): String {
+  val name = input as? String ?: "guest"
+  val typedList = input as List<String>
+  val nullableMap = input as? Map<String, Int> ?: emptyMap()
+  val present = name in names
+  val typed = input is CharSequence
+    && input !is StringBuilder
+    && input is List<*>
+  return if (present && typed) name
+    + typedList.size
+    + nullableMap.size else "missing"
+}
+
+diagnostics:
+(none)

@@ -4,6 +4,8 @@ use crate::KotlinSyntaxKind as K;
 
 use super::super::Parser;
 
+const MAX_ANONYMOUS_FUNCTION_RECEIVER_LOOKAHEAD: usize = 128;
+
 impl Parser<'_> {
     pub(super) fn parse_if_expression(&mut self) -> CompletedMarker {
         let marker = self.start();
@@ -17,6 +19,7 @@ impl Parser<'_> {
             K::DoubleSemicolon,
             K::RBrace,
             K::RParen,
+            K::Comma,
             K::LongTemplateEntryEnd,
         ]);
         if self.eat(K::ElseKw) {
@@ -25,6 +28,7 @@ impl Parser<'_> {
                 K::DoubleSemicolon,
                 K::RBrace,
                 K::RParen,
+                K::Comma,
                 K::LongTemplateEntryEnd,
             ]);
         }
@@ -168,6 +172,10 @@ impl Parser<'_> {
     pub(super) fn parse_anonymous_function_expression(&mut self) -> CompletedMarker {
         let marker = self.start();
         self.expect(K::FunKw, "expected fun");
+        if self.anonymous_function_receiver_type_ahead() {
+            self.parse_type_reference_until(&[K::Dot]);
+            self.expect(K::Dot, "expected receiver separator");
+        }
         if self.at(K::LParen) {
             self.parse_value_parameter_list();
         }
@@ -205,5 +213,59 @@ impl Parser<'_> {
             self.parse_expression_until(&[K::RParen]);
         }
         self.expect(K::RParen, "expected ')' after for header");
+    }
+
+    fn anonymous_function_receiver_type_ahead(&mut self) -> bool {
+        let mut angle_depth = 0usize;
+        let mut paren_depth = 0usize;
+        let mut bracket_depth = 0usize;
+
+        for index in (self.position()..).take(MAX_ANONYMOUS_FUNCTION_RECEIVER_LOOKAHEAD) {
+            match self.kind_at(index) {
+                K::Dot
+                    if angle_depth == 0
+                        && paren_depth == 0
+                        && bracket_depth == 0
+                        && self.kind_at(index + 1) == K::LParen =>
+                {
+                    return true;
+                }
+                K::LParen => paren_depth += 1,
+                K::RParen => {
+                    if paren_depth == 0 {
+                        return false;
+                    }
+                    paren_depth -= 1;
+                }
+                K::LBracket => bracket_depth += 1,
+                K::RBracket => {
+                    if bracket_depth == 0 {
+                        return false;
+                    }
+                    bracket_depth -= 1;
+                }
+                K::Lt => angle_depth += 1,
+                K::Gt => {
+                    if angle_depth == 0 {
+                        return false;
+                    }
+                    angle_depth -= 1;
+                }
+                K::LBrace
+                | K::Colon
+                | K::Assign
+                | K::Semicolon
+                | K::DoubleSemicolon
+                | K::RBrace
+                | K::Eof
+                    if angle_depth == 0 && paren_depth == 0 && bracket_depth == 0 =>
+                {
+                    return false;
+                }
+                _ => {}
+            }
+        }
+
+        false
     }
 }

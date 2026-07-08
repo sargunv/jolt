@@ -47,7 +47,9 @@ KotlinFile
       ClassMemberDeclaration
         PropertyDeclaration
           VarKw "var" @ 65..68 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "visits" @ 69..75
+          CallableName
+            Name
+              Identifier "visits" @ 69..75
           Colon ":" @ 75..76 trailing=[Whitespace " "]
           TypeReference
             UserType
@@ -58,7 +60,9 @@ KotlinFile
       ClassMemberDeclaration
         FunctionDeclaration
           FunKw "fun" @ 90..93 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "greet" @ 94..99
+          CallableName
+            Name
+              Identifier "greet" @ 94..99
           ValueParameterList
             LParen "(" @ 99..100
             RParen ")" @ 100..101

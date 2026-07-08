@@ -1,0 +1,14 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+package samples.soft.context
+
+import samples.field.get.set as Accessors
+import samples.where.by.context
+
+val imported = Accessors::class
+
+diagnostics:
+(none)

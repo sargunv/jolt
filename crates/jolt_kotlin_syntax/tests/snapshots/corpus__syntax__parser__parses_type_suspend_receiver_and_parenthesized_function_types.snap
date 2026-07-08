@@ -26,9 +26,10 @@ KotlinFile
         FunctionType
           ParenthesizedType
             LParen "(" @ 30..31
-            TypeReference
-              UserType
-                Identifier "String" @ 31..37
+            FunctionTypeParameter
+              TypeReference
+                UserType
+                  Identifier "String" @ 31..37
             RParen ")" @ 37..38 trailing=[Whitespace " "]
           Arrow "->" @ 39..41 trailing=[Whitespace " "]
           UserType
@@ -46,9 +47,10 @@ KotlinFile
           Dot "." @ 79..80
           ParenthesizedType
             LParen "(" @ 80..81
-            TypeReference
-              UserType
-                Identifier "Int" @ 81..84
+            FunctionTypeParameter
+              TypeReference
+                UserType
+                  Identifier "Int" @ 81..84
             RParen ")" @ 84..85 trailing=[Whitespace " "]
         Arrow "->" @ 86..88 trailing=[Whitespace " "]
         UserType
@@ -62,24 +64,28 @@ KotlinFile
       NullableType
         ParenthesizedType
           LParen "(" @ 124..125
-          TypeReference
-            FunctionType
-              ParenthesizedType
-                LParen "(" @ 125..126
-                TypeReference
-                  NullableType
-                    UserType
-                      Identifier "String" @ 126..132
-                    Question "?" @ 132..133
-                RParen ")" @ 133..134 trailing=[Whitespace " "]
-              Arrow "->" @ 135..137 trailing=[Whitespace " "]
-              UserType
-                Identifier "Unit" @ 138..142
+          FunctionTypeParameter
+            TypeReference
+              FunctionType
+                ParenthesizedType
+                  LParen "(" @ 125..126
+                  FunctionTypeParameter
+                    TypeReference
+                      NullableType
+                        UserType
+                          Identifier "String" @ 126..132
+                        Question "?" @ 132..133
+                  RParen ")" @ 133..134 trailing=[Whitespace " "]
+                Arrow "->" @ 135..137 trailing=[Whitespace " "]
+                UserType
+                  Identifier "Unit" @ 138..142
           RParen ")" @ 142..143
         Question "?" @ 143..144
   PropertyDeclaration
     ValKw "val" @ 146..149 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "receiverBlock" @ 150..163
+    CallableName
+      Name
+        Identifier "receiverBlock" @ 150..163
     Colon ":" @ 163..164 trailing=[Whitespace " "]
     TypeReference
       UserType

@@ -30,7 +30,9 @@ KotlinFile
       ClassMemberDeclaration
         FunctionDeclaration
           FunKw "fun" @ 31..34 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "decode" @ 35..41
+          CallableName
+            Name
+              Identifier "decode" @ 35..41
           ValueParameterList
             LParen "(" @ 41..42
             ValueParameter

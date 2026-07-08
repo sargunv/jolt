@@ -24,7 +24,7 @@ pub(crate) fn resolve_config(
 
     PluginResolveConfigurationResult {
         file_matching: FileMatchingInfo {
-            file_extensions: vec!["java".to_owned()],
+            file_extensions: vec!["java".to_owned(), "kt".to_owned(), "kts".to_owned()],
             file_names: Vec::new(),
         },
         diagnostics,

@@ -28,7 +28,9 @@ KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 32..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "localFactory" @ 36..48
+    CallableName
+      Name
+        Identifier "localFactory" @ 36..48
     ValueParameterList
       LParen "(" @ 48..49
       ValueParameter
@@ -70,7 +72,9 @@ KotlinFile
             RParen ")" @ 119..120
       PropertyDeclaration
         ValKw "val" @ 125..128 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "local" @ 129..134 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "local" @ 129..134 trailing=[Whitespace " "]
         Assign "=" @ 135..136 trailing=[Whitespace " "]
         CallExpression
           NameExpression

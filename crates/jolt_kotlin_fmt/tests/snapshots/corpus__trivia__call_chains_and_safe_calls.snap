@@ -1,0 +1,26 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+package com.example.trivia
+
+class Builder {
+  fun first(value: String) = this
+
+  fun second() = this
+
+  fun done(): String = "done"
+}
+
+fun chain(
+  builder: Builder?,
+  value: String
+): String? = builder /* JOLT-TRIVIA:chain-target */?.first( /* JOLT-TRIVIA:safe-call-open */
+  value /* JOLT-TRIVIA:first-arg */
+)
+  ?.second() /* JOLT-TRIVIA:after-second */
+  ?.done /* JOLT-TRIVIA:callable-ref-gap */()
+
+diagnostics:
+(none)

@@ -7,13 +7,19 @@ fun sum(left: Int, right: Int): Int {
     return left + right
 }
 
+fun value(): Int {
+    return 0
+}
+
 syntax:
 syntax:
 KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    Identifier "sum" @ 4..7
+    CallableName
+      Name
+        Identifier "sum" @ 4..7
     ValueParameterList
       LParen "(" @ 7..8
       ValueParameter
@@ -49,7 +55,28 @@ KotlinFile
               NameExpression
                 Identifier "right" @ 56..61
       RBrace "}" @ 62..63 leading=[Newline "\n"]
-  Eof "" @ 64..64 leading=[Newline "\n"]
+  FunctionDeclaration
+    FunKw "fun" @ 65..68 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "value" @ 69..74
+    ValueParameterList
+      LParen "(" @ 74..75
+      RParen ")" @ 75..76
+    Colon ":" @ 76..77 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "Int" @ 78..81 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 82..83
+      Statement
+        ExpressionStatement
+          JumpExpression
+            ReturnKw "return" @ 88..94 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            LiteralExpression
+              IntegerLiteral "0" @ 95..96
+      RBrace "}" @ 97..98 leading=[Newline "\n"]
+  Eof "" @ 99..99 leading=[Newline "\n"]
 
 diagnostics:
   (none)

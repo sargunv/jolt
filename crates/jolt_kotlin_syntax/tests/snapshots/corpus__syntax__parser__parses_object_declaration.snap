@@ -22,7 +22,9 @@ KotlinFile
           ModifierList
             Identifier "const" @ 22..27 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
           ValKw "val" @ 28..31 trailing=[Whitespace " "]
-          Identifier "Name" @ 32..36 trailing=[Whitespace " "]
+          CallableName
+            Name
+              Identifier "Name" @ 32..36 trailing=[Whitespace " "]
           Assign "=" @ 37..38 trailing=[Whitespace " "]
           StringTemplateExpression
             StringTemplateEntry

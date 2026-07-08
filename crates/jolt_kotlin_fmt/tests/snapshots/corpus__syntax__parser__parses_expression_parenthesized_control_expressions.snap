@@ -1,0 +1,20 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+fun parenthesized(flag: Boolean, value: String?): String {
+  val chosen = (if (flag) value else "fallback") ?: "empty"
+  val selected = (if (flag) (0 until 10) else (10 downTo 0)).toList()
+  (if (flag) (0 until 10) else (10 downTo 0))
+    .forEach { index -> index.toString() }
+  val recovered = (try {
+    chosen.trim()
+  } catch (error: Throwable) {
+    "error"
+  })
+  return recovered
+}
+
+diagnostics:
+(none)

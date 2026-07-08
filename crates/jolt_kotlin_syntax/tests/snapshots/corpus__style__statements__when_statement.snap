@@ -30,7 +30,9 @@ KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 32..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "log" @ 36..39
+    CallableName
+      Name
+        Identifier "log" @ 36..39
     ValueParameterList
       LParen "(" @ 39..40
       ValueParameter

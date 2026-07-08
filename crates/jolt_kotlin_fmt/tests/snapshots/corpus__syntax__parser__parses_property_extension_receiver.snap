@@ -1,0 +1,16 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+val String.lastIndexOrZero: Int
+  get() = length - 1
+
+val com.example.Scope.qualifiedTitle: String
+  get() = toString()
+
+val MutableMap<String, Expression<*>>.entryCount: Int
+  get() = size
+
+diagnostics:
+(none)

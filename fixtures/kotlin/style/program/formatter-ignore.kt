@@ -1,0 +1,28 @@
+package sample
+
+// @formatter:off
+class   KeepUgly   {   fun   messy( )  { println(1) } }
+// @formatter:on
+class FormatMe {
+  fun ok() {
+    println(2)
+  }
+}
+
+class Body {
+  // @formatter:off
+  val    kept=1
+  fun    ugly( ) { println( 2 ) }
+  // @formatter:on
+  fun good() {
+    println(3)
+  }
+}
+
+fun block() {
+  // @formatter:off
+  println(   "kept" )
+  if (true) { println(1) }
+  // @formatter:on
+  println(4)
+}

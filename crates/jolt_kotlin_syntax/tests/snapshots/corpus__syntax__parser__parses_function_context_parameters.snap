@@ -29,7 +29,9 @@ KotlinFile
             Identifier "Logger" @ 16..22
       RParen ")" @ 22..23
     FunKw "fun" @ 24..27 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Identifier "logMessage" @ 28..38
+    CallableName
+      Name
+        Identifier "logMessage" @ 28..38
     ValueParameterList
       LParen "(" @ 38..39
       ValueParameter
@@ -66,7 +68,9 @@ KotlinFile
       ClassMemberDeclaration
         FunctionDeclaration
           FunKw "fun" @ 110..113 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "write" @ 114..119
+          CallableName
+            Name
+              Identifier "write" @ 114..119
           ValueParameterList
             LParen "(" @ 119..120
             ValueParameter

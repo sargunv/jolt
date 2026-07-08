@@ -15,7 +15,9 @@ KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    Identifier "callableReferenceTypeArguments" @ 4..34
+    CallableName
+      Name
+        Identifier "callableReferenceTypeArguments" @ 4..34
     ValueParameterList
       LParen "(" @ 34..35
       RParen ")" @ 35..36 trailing=[Whitespace " "]
@@ -23,7 +25,9 @@ KotlinFile
       LBrace "{" @ 37..38
       PropertyDeclaration
         ValKw "val" @ 43..46 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "generic" @ 47..54 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "generic" @ 47..54 trailing=[Whitespace " "]
         Assign "=" @ 55..56 trailing=[Whitespace " "]
         CallableReferenceExpression
           NameExpression
@@ -41,7 +45,9 @@ KotlinFile
             Gt ">" @ 75..76
       PropertyDeclaration
         ValKw "val" @ 81..84 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "nested" @ 85..91 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "nested" @ 85..91 trailing=[Whitespace " "]
         Assign "=" @ 92..93 trailing=[Whitespace " "]
         CallableReferenceExpression
           NavigationExpression

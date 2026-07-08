@@ -1,0 +1,20 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+package com.example.declarations
+
+interface Store {
+  fun save(value: String)
+}
+
+class MemoryStore
+  : Store {
+  override fun save(value: String) {}
+}
+
+class AuditedStore(private val delegate: Store) : Store by delegate
+
+diagnostics:
+(none)

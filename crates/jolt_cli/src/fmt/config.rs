@@ -17,7 +17,7 @@ use crate::error::CliError;
 
 use super::CliFormatOptions;
 
-const DEFAULT_INCLUDE: &[&str] = &["**/*.java"];
+const DEFAULT_INCLUDE: &[&str] = &["**/*.java", "**/*.kt", "**/*.kts"];
 const VCS_MARKERS: &[&str] = &[".git", ".hg", ".jj", ".svn"];
 
 #[derive(Clone, Debug, Eq, PartialEq)]

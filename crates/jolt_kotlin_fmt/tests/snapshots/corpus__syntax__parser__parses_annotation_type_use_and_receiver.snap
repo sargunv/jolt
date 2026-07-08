@@ -1,0 +1,13 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+fun @receiver:ReceiverMark String.trimmed(): @TypeMark String = trim()
+
+annotation class ReceiverMark
+
+annotation class TypeMark
+
+diagnostics:
+(none)

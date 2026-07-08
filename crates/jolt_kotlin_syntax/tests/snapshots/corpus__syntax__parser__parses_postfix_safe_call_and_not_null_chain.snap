@@ -17,7 +17,9 @@ KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    Identifier "safeChain" @ 4..13
+    CallableName
+      Name
+        Identifier "safeChain" @ 4..13
     ValueParameterList
       LParen "(" @ 13..14
       ValueParameter
@@ -48,11 +50,14 @@ KotlinFile
                       NavigationExpression
                         NameExpression
                           Identifier "node" @ 48..52
-                        SafeAccess "?." @ 61..63 leading=[Newline "\n", Whitespace "        "]
+                        Question "?" @ 61..62 leading=[Newline "\n", Whitespace "        "]
+                        Dot "." @ 62..63
                         Identifier "parent" @ 63..69
-                      SafeAccess "?." @ 78..80 leading=[Newline "\n", Whitespace "        "]
+                      Question "?" @ 78..79 leading=[Newline "\n", Whitespace "        "]
+                      Dot "." @ 79..80
                       Identifier "children" @ 80..88
-                    SafeAccess "?." @ 97..99 leading=[Newline "\n", Whitespace "        "]
+                    Question "?" @ 97..98 leading=[Newline "\n", Whitespace "        "]
+                    Dot "." @ 98..99
                     Identifier "get" @ 99..102
                   ValueArgumentList
                     LParen "(" @ 102..103
@@ -60,7 +65,8 @@ KotlinFile
                       LiteralExpression
                         IntegerLiteral "0" @ 103..104
                     RParen ")" @ 104..105
-                SafeAccess "?." @ 114..116 leading=[Newline "\n", Whitespace "        "]
+                Question "?" @ 114..115 leading=[Newline "\n", Whitespace "        "]
+                Dot "." @ 115..116
                 Identifier "name" @ 116..120
               BangBang "!!" @ 120..122
       RBrace "}" @ 123..124 leading=[Newline "\n"]

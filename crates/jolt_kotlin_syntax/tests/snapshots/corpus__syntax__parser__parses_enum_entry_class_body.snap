@@ -37,7 +37,9 @@ KotlinFile
                 ModifierList
                   Identifier "override" @ 38..46 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                 FunKw "fun" @ 47..50 trailing=[Whitespace " "]
-                Identifier "text" @ 51..55
+                CallableName
+                  Name
+                    Identifier "text" @ 51..55
                 ValueParameterList
                   LParen "(" @ 55..56
                   RParen ")" @ 56..57
@@ -65,7 +67,9 @@ KotlinFile
                 ModifierList
                   Identifier "override" @ 103..111 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                 FunKw "fun" @ 112..115 trailing=[Whitespace " "]
-                Identifier "text" @ 116..120
+                CallableName
+                  Name
+                    Identifier "text" @ 116..120
                 ValueParameterList
                   LParen "(" @ 120..121
                   RParen ")" @ 121..122
@@ -87,7 +91,9 @@ KotlinFile
           ModifierList
             Identifier "abstract" @ 154..162 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
           FunKw "fun" @ 163..166 trailing=[Whitespace " "]
-          Identifier "text" @ 167..171
+          CallableName
+            Name
+              Identifier "text" @ 167..171
           ValueParameterList
             LParen "(" @ 171..172
             RParen ")" @ 172..173

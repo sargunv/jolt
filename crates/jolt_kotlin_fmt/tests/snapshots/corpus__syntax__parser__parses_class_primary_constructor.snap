@@ -1,0 +1,12 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class User private constructor(
+  val id: String,
+  var displayName: String,
+)
+
+diagnostics:
+(none)

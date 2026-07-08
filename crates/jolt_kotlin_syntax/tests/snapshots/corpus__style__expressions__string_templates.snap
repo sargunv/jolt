@@ -27,7 +27,9 @@ KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 33..36 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "label" @ 37..42
+    CallableName
+      Name
+        Identifier "label" @ 37..42
     ValueParameterList
       LParen "(" @ 42..43
       ValueParameter
@@ -54,7 +56,9 @@ KotlinFile
       LBrace "{" @ 77..78
       PropertyDeclaration
         ValKw "val" @ 83..86 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "plural" @ 87..93 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "plural" @ 87..93 trailing=[Whitespace " "]
         Assign "=" @ 94..95 trailing=[Whitespace " "]
         IfExpression
           IfKw "if" @ 96..98 trailing=[Whitespace " "]

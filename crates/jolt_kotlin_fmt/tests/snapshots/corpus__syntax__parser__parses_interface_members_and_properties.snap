@@ -1,0 +1,13 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+interface Named {
+  val name: String
+
+  fun display(): String = name
+}
+
+diagnostics:
+(none)

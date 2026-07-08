@@ -25,7 +25,9 @@ KotlinFile
   ImportList
   PropertyDeclaration
     ValKw "val" @ 32..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "endpoint" @ 36..44 trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "endpoint" @ 36..44 trailing=[Whitespace " "]
     Assign "=" @ 45..46
     StringTemplateExpression
       StringTemplateEntry

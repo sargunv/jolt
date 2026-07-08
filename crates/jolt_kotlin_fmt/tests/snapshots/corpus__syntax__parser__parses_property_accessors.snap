@@ -1,0 +1,17 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class Accessors {
+  var name: String = ""
+    get() =
+      field
+        .ifBlank { "unknown" }
+    private set(value) {
+      field = value.trim()
+    }
+}
+
+diagnostics:
+(none)

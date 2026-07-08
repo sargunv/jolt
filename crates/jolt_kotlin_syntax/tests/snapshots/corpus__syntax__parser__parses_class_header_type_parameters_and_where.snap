@@ -7,6 +7,8 @@ class Registry<K, V>(
     private val values: Map<K, V>,
 ) where K : CharSequence, K : Comparable<K>, V : Any
 
+class Sink<in T>(private val name: String)
+
 syntax:
 syntax:
 KotlinFile
@@ -89,7 +91,32 @@ KotlinFile
         TypeReference
           UserType
             Identifier "Any" @ 106..109
-  Eof "" @ 110..110 leading=[Newline "\n"]
+  ClassDeclaration
+    ClassKw "class" @ 111..116 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "Sink" @ 117..121
+    TypeParameterList
+      Lt "<" @ 121..122
+      TypeParameter
+        InKw "in" @ 122..124 trailing=[Whitespace " "]
+        Name
+          Identifier "T" @ 125..126
+      Gt ">" @ 126..127
+    PrimaryConstructor
+      ValueParameterList
+        LParen "(" @ 127..128
+        ValueParameter
+          ModifierList
+            Identifier "private" @ 128..135 trailing=[Whitespace " "]
+          ValKw "val" @ 136..139 trailing=[Whitespace " "]
+          Name
+            Identifier "name" @ 140..144
+          Colon ":" @ 144..145 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "String" @ 146..152
+        RParen ")" @ 152..153
+  Eof "" @ 154..154 leading=[Newline "\n"]
 
 diagnostics:
   (none)

@@ -34,7 +34,9 @@ KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 28..31 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "consume" @ 32..39
+    CallableName
+      Name
+        Identifier "consume" @ 32..39
     ValueParameterList
       LParen "(" @ 39..40
       ValueParameter
@@ -45,9 +47,10 @@ KotlinFile
           FunctionType
             ParenthesizedType
               LParen "(" @ 47..48
-              TypeReference
-                UserType
-                  Identifier "String" @ 48..54
+              FunctionTypeParameter
+                TypeReference
+                  UserType
+                    Identifier "String" @ 48..54
               RParen ")" @ 54..55 trailing=[Whitespace " "]
             Arrow "->" @ 56..58 trailing=[Whitespace " "]
             UserType
@@ -58,7 +61,9 @@ KotlinFile
       RBrace "}" @ 66..67
   FunctionDeclaration
     FunKw "fun" @ 68..71 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Identifier "transform" @ 72..81
+    CallableName
+      Name
+        Identifier "transform" @ 72..81
     ValueParameterList
       LParen "(" @ 81..82
       ValueParameter
@@ -77,9 +82,10 @@ KotlinFile
           FunctionType
             ParenthesizedType
               LParen "(" @ 104..105
-              TypeReference
-                UserType
-                  Identifier "String" @ 105..111
+              FunctionTypeParameter
+                TypeReference
+                  UserType
+                    Identifier "String" @ 105..111
               RParen ")" @ 111..112 trailing=[Whitespace " "]
             Arrow "->" @ 113..115 trailing=[Whitespace " "]
             UserType
@@ -101,7 +107,9 @@ KotlinFile
         RParen ")" @ 145..146
   FunctionDeclaration
     FunKw "fun" @ 148..151 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "lambdas" @ 152..159
+    CallableName
+      Name
+        Identifier "lambdas" @ 152..159
     ValueParameterList
       LParen "(" @ 159..160
       RParen ")" @ 160..161 trailing=[Whitespace " "]
@@ -133,7 +141,9 @@ KotlinFile
               RBrace "}" @ 284..285 leading=[Newline "\n", Whitespace "    "]
       PropertyDeclaration
         ValKw "val" @ 290..293 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "upper" @ 294..299 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "upper" @ 294..299 trailing=[Whitespace " "]
         Assign "=" @ 300..301 trailing=[Whitespace " "]
         CallExpression
           CallExpression

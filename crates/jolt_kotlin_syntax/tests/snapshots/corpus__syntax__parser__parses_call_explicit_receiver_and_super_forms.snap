@@ -31,7 +31,9 @@ KotlinFile
           ModifierList
             Identifier "open" @ 22..26 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
           FunKw "fun" @ 27..30 trailing=[Whitespace " "]
-          Identifier "call" @ 31..35
+          CallableName
+            Name
+              Identifier "call" @ 31..35
           ValueParameterList
             LParen "(" @ 35..36
             ValueParameter
@@ -53,12 +55,12 @@ KotlinFile
     Colon ":" @ 71..72 trailing=[Whitespace " "]
     DelegationSpecifierList
       DelegationSpecifier
-        CallExpression
-          NameExpression
+        TypeReference
+          UserType
             Identifier "Base" @ 73..77
-          ValueArgumentList
-            LParen "(" @ 77..78
-            RParen ")" @ 78..79 trailing=[Whitespace " "]
+        ValueArgumentList
+          LParen "(" @ 77..78
+          RParen ")" @ 78..79 trailing=[Whitespace " "]
     ClassBody
       LBrace "{" @ 80..81
       ClassMemberDeclaration
@@ -66,7 +68,9 @@ KotlinFile
           ModifierList
             Identifier "override" @ 86..94 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
           FunKw "fun" @ 95..98 trailing=[Whitespace " "]
-          Identifier "call" @ 99..103
+          CallableName
+            Name
+              Identifier "call" @ 99..103
           ValueParameterList
             LParen "(" @ 103..104
             ValueParameter

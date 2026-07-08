@@ -23,9 +23,13 @@ KotlinFile
         QualifiedName
           Name
             Identifier "ReceiverMark" @ 14..26 trailing=[Whitespace " "]
-    Identifier "String" @ 27..33
-    Dot "." @ 33..34
-    Identifier "trimmed" @ 34..41
+    CallableName
+      TypeReference
+        UserType
+          Identifier "String" @ 27..33
+      Dot "." @ 33..34
+      Name
+        Identifier "trimmed" @ 34..41
     ValueParameterList
       LParen "(" @ 41..42
       RParen ")" @ 42..43

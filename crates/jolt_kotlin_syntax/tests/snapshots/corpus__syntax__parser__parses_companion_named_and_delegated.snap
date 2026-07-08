@@ -26,7 +26,9 @@ KotlinFile
       ClassMemberDeclaration
         FunctionDeclaration
           FunKw "fun" @ 25..28 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "provide" @ 29..36
+          CallableName
+            Name
+              Identifier "provide" @ 29..36
           ValueParameterList
             LParen "(" @ 36..37
             RParen ")" @ 37..38
@@ -51,8 +53,9 @@ KotlinFile
           Colon ":" @ 102..103 trailing=[Whitespace " "]
           DelegationSpecifierList
             DelegationSpecifier
-              NameExpression
-                Identifier "Provider" @ 104..112 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  Identifier "Provider" @ 104..112 trailing=[Whitespace " "]
           ClassBody
             LBrace "{" @ 113..114
             ClassMemberDeclaration
@@ -60,7 +63,9 @@ KotlinFile
                 ModifierList
                   Identifier "override" @ 123..131 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                 FunKw "fun" @ 132..135 trailing=[Whitespace " "]
-                Identifier "provide" @ 136..143
+                CallableName
+                  Name
+                    Identifier "provide" @ 136..143
                 ValueParameterList
                   LParen "(" @ 143..144
                   RParen ")" @ 144..145

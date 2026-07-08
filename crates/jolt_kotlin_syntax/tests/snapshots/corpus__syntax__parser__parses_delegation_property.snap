@@ -20,29 +20,28 @@ KotlinFile
       ClassMemberDeclaration
         PropertyDeclaration
           ValKw "val" @ 25..28 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "message" @ 29..36
+          CallableName
+            Name
+              Identifier "message" @ 29..36
           Colon ":" @ 36..37 trailing=[Whitespace " "]
           TypeReference
             UserType
               Identifier "String" @ 38..44 trailing=[Whitespace " "]
-      ClassMemberDeclaration
-        Statement
-          ExpressionStatement
-            BinaryExpression
-              NameExpression
-                Identifier "by" @ 45..47 trailing=[Whitespace " "]
+          Identifier "by" @ 45..47 trailing=[Whitespace " "]
+          CallExpression
+            NameExpression
               Identifier "lazy" @ 48..52 trailing=[Whitespace " "]
-              LambdaExpression
-                LBrace "{" @ 53..54 trailing=[Whitespace " "]
-                Statement
-                  ExpressionStatement
-                    StringTemplateExpression
-                      StringTemplateEntry
-                        OpenQuote "\"" @ 55..56
-                      StringTemplateEntry
-                        RegularStringPart "ready" @ 56..61
-                      ClosingQuote "\"" @ 61..62 trailing=[Whitespace " "]
-                RBrace "}" @ 63..64
+            LambdaExpression
+              LBrace "{" @ 53..54 trailing=[Whitespace " "]
+              Statement
+                ExpressionStatement
+                  StringTemplateExpression
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 55..56
+                    StringTemplateEntry
+                      RegularStringPart "ready" @ 56..61
+                    ClosingQuote "\"" @ 61..62 trailing=[Whitespace " "]
+              RBrace "}" @ 63..64
       RBrace "}" @ 65..66 leading=[Newline "\n"]
   Eof "" @ 67..67 leading=[Newline "\n"]
 

@@ -20,7 +20,9 @@ KotlinFile
         Name
           Identifier "T" @ 5..6
       Gt ">" @ 6..7 trailing=[Whitespace " "]
-    Identifier "identity" @ 8..16
+    CallableName
+      Name
+        Identifier "identity" @ 8..16
     ValueParameterList
       LParen "(" @ 16..17
       ValueParameter
@@ -59,7 +61,9 @@ KotlinFile
                         Identifier "T" @ 59..60
               Gt ">" @ 60..61
       Gt ">" @ 61..62 trailing=[Whitespace " "]
-    Identifier "maxOf" @ 63..68
+    CallableName
+      Name
+        Identifier "maxOf" @ 63..68
     ValueParameterList
       LParen "(" @ 68..69
       ValueParameter

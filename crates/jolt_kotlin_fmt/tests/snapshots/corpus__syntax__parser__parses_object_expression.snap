@@ -1,0 +1,13 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+val listener = object : Runnable {
+  override fun run() {
+    println("tick")
+  }
+}
+
+diagnostics:
+(none)

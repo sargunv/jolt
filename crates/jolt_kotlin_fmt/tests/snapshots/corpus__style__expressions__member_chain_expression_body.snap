@@ -1,0 +1,20 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+package com.example.expressions
+
+val normalized = " Alpha Beta Gamma "
+  .trim()
+  .lowercase()
+  .replace(" ", "_")
+  .removePrefix("tmp_")
+  .removeSuffix("_old")
+
+fun canonical(input: String): String = input.trim()
+  .lowercase()
+  .replace("-", "_")
+
+diagnostics:
+(none)

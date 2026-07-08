@@ -1,0 +1,14 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+#!/usr/bin/env kotlin
+package samples.scriptlike
+
+fun main() {
+  println("ready")
+}
+
+diagnostics:
+(none)

@@ -1,0 +1,13 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+fun interface Decoder<T> {
+  fun decode(text: String): T
+}
+
+sealed interface Node
+
+diagnostics:
+(none)

@@ -1,0 +1,22 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+package com.example.trivia
+
+annotation class Mark(val name: String = "")
+
+class AnnotationTargets(
+  @param:Mark /* JOLT-TRIVIA:param-target */ ("id")
+  @field:Mark /* JOLT-TRIVIA:field-target */ ("field")
+  @get:Mark /* JOLT-TRIVIA:get-target */ ("getter")
+  val id: String,
+) {
+  @set:Mark /* JOLT-TRIVIA:set-target */ ("setter")
+  @setparam:Mark /* JOLT-TRIVIA:setparam-target */ ("value")
+  var label: String = id
+}
+
+diagnostics:
+(none)

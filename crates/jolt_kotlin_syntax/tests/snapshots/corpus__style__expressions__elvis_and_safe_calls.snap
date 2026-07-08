@@ -12,6 +12,19 @@ fun email(user: User?): String =
     user?.profile?.email
         ?: "missing@example.com"
 
+class Pack(val progress: Progress)
+class Progress
+class Healthy(val status: Status) : Progress()
+enum class Status {
+    Unknown,
+}
+
+fun status(pack: Pack): Status {
+    val status = (pack.progress as? Healthy)
+        ?.status ?: return Status.Unknown
+    return status
+}
+
 syntax:
 syntax:
 KotlinFile
@@ -65,7 +78,9 @@ KotlinFile
         RParen ")" @ 99..100
   FunctionDeclaration
     FunKw "fun" @ 102..105 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "email" @ 106..111
+    CallableName
+      Name
+        Identifier "email" @ 106..111
     ValueParameterList
       LParen "(" @ 111..112
       ValueParameter
@@ -88,9 +103,11 @@ KotlinFile
         NavigationExpression
           NameExpression
             Identifier "user" @ 139..143 leading=[Newline "\n", Whitespace "    "]
-          SafeAccess "?." @ 143..145
+          Question "?" @ 143..144
+          Dot "." @ 144..145
           Identifier "profile" @ 145..152
-        SafeAccess "?." @ 152..154
+        Question "?" @ 152..153
+        Dot "." @ 153..154
         Identifier "email" @ 154..159
       Elvis "?:" @ 168..170 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
       StringTemplateExpression
@@ -99,7 +116,126 @@ KotlinFile
         StringTemplateEntry
           RegularStringPart "missing@example.com" @ 172..191
         ClosingQuote "\"" @ 191..192
-  Eof "" @ 193..193 leading=[Newline "\n"]
+  ClassDeclaration
+    ClassKw "class" @ 194..199 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "Pack" @ 200..204
+    PrimaryConstructor
+      ValueParameterList
+        LParen "(" @ 204..205
+        ValueParameter
+          ValKw "val" @ 205..208 trailing=[Whitespace " "]
+          Name
+            Identifier "progress" @ 209..217
+          Colon ":" @ 217..218 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "Progress" @ 219..227
+        RParen ")" @ 227..228
+  ClassDeclaration
+    ClassKw "class" @ 229..234 leading=[Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "Progress" @ 235..243
+  ClassDeclaration
+    ClassKw "class" @ 244..249 leading=[Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "Healthy" @ 250..257
+    PrimaryConstructor
+      ValueParameterList
+        LParen "(" @ 257..258
+        ValueParameter
+          ValKw "val" @ 258..261 trailing=[Whitespace " "]
+          Name
+            Identifier "status" @ 262..268
+          Colon ":" @ 268..269 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "Status" @ 270..276
+        RParen ")" @ 276..277 trailing=[Whitespace " "]
+    Colon ":" @ 278..279 trailing=[Whitespace " "]
+    DelegationSpecifierList
+      DelegationSpecifier
+        TypeReference
+          UserType
+            Identifier "Progress" @ 280..288
+        ValueArgumentList
+          LParen "(" @ 288..289
+          RParen ")" @ 289..290
+  ClassDeclaration
+    ModifierList
+      Identifier "enum" @ 291..295 leading=[Newline "\n"] trailing=[Whitespace " "]
+    ClassKw "class" @ 296..301 trailing=[Whitespace " "]
+    Name
+      Identifier "Status" @ 302..308 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 309..310
+      ClassMemberDeclaration
+        EnumEntry
+          NameExpression
+            Identifier "Unknown" @ 315..322 leading=[Newline "\n", Whitespace "    "]
+      Comma "," @ 322..323
+      RBrace "}" @ 324..325 leading=[Newline "\n"]
+  FunctionDeclaration
+    FunKw "fun" @ 327..330 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "status" @ 331..337
+    ValueParameterList
+      LParen "(" @ 337..338
+      ValueParameter
+        Name
+          Identifier "pack" @ 338..342
+        Colon ":" @ 342..343 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Pack" @ 344..348
+      RParen ")" @ 348..349
+    Colon ":" @ 349..350 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "Status" @ 351..357 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 358..359
+      PropertyDeclaration
+        ValKw "val" @ 364..367 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "status" @ 368..374 trailing=[Whitespace " "]
+        Assign "=" @ 375..376 trailing=[Whitespace " "]
+        BinaryExpression
+          NavigationExpression
+            ParenthesizedExpression
+              LParen "(" @ 377..378
+              BinaryExpression
+                NavigationExpression
+                  NameExpression
+                    Identifier "pack" @ 378..382
+                  Dot "." @ 382..383
+                  Identifier "progress" @ 383..391 trailing=[Whitespace " "]
+                AsSafe "as?" @ 392..395 trailing=[Whitespace " "]
+                TypeReference
+                  UserType
+                    Identifier "Healthy" @ 396..403
+              RParen ")" @ 403..404
+            Question "?" @ 413..414 leading=[Newline "\n", Whitespace "        "]
+            Dot "." @ 414..415
+            Identifier "status" @ 415..421 trailing=[Whitespace " "]
+          Elvis "?:" @ 422..424 trailing=[Whitespace " "]
+          JumpExpression
+            ReturnKw "return" @ 425..431 trailing=[Whitespace " "]
+            NavigationExpression
+              NameExpression
+                Identifier "Status" @ 432..438
+              Dot "." @ 438..439
+              Identifier "Unknown" @ 439..446
+      Statement
+        ExpressionStatement
+          JumpExpression
+            ReturnKw "return" @ 451..457 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            NameExpression
+              Identifier "status" @ 458..464
+      RBrace "}" @ 465..466 leading=[Newline "\n"]
+  Eof "" @ 467..467 leading=[Newline "\n"]
 
 diagnostics:
   (none)

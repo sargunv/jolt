@@ -38,8 +38,9 @@ KotlinFile
     Colon ":" @ 47..48 trailing=[Whitespace " "]
     DelegationSpecifierList
       DelegationSpecifier
-        NameExpression
-          Identifier "Base" @ 49..53 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Base" @ 49..53 trailing=[Whitespace " "]
     ClassBody
       LBrace "{" @ 54..55
       ClassMemberDeclaration

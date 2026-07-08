@@ -7,6 +7,4 @@ files: 72
 reconstructed changed: 0
 
 diagnostics:
-  Parser:kotlin.parse.expected_syntax: 17
-  Parser:kotlin.parse.malformed_type_argument_list: 11
-  Parser:kotlin.parse.unexpected_syntax: 54
+  <none>: 0

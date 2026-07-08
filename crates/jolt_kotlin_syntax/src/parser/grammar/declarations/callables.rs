@@ -1,6 +1,8 @@
 use crate::KotlinSyntaxKind as K;
 
 use super::super::Parser;
+use super::super::support::is_identifier_like_kind;
+use super::MAX_DECLARATION_LOOKAHEAD;
 
 impl Parser<'_> {
     pub(in crate::parser::grammar) fn parse_secondary_constructor_tail(&mut self) {
@@ -63,7 +65,7 @@ impl Parser<'_> {
             ]);
         }
         self.parse_type_constraint_list();
-        if self.eat(K::Assign) {
+        if self.eat(K::Assign) || self.eat_soft_keyword("by") {
             self.parse_expression_until(&[
                 K::Semicolon,
                 K::DoubleSemicolon,
@@ -86,7 +88,9 @@ impl Parser<'_> {
             self.complete(field, K::ExplicitBackingField);
         }
         while self.at_property_accessor_start() {
+            let before = self.position();
             self.parse_property_accessor();
+            self.ensure_progress(before, "expected property accessor");
         }
     }
 
@@ -113,15 +117,15 @@ impl Parser<'_> {
             }
             let parameter = self.start();
             self.parse_modifier_list();
+            if self.at(K::InKw) {
+                self.bump();
+            }
             self.parse_name();
             if self.eat(K::Colon) {
                 self.parse_type_reference_until(&[K::Comma, K::Gt]);
             }
             self.complete(parameter, K::TypeParameter);
-            if self.position() == before {
-                self.unexpected_here("expected type parameter");
-                self.bump();
-            }
+            self.ensure_progress(before, "expected type parameter");
         }
         self.expect(K::Gt, "expected '>' after type parameters");
         self.complete(marker, K::TypeParameterList);
@@ -134,6 +138,7 @@ impl Parser<'_> {
         let marker = self.start();
         self.bump();
         loop {
+            let before = self.position();
             let constraint = self.start();
             self.parse_name();
             if self.eat(K::Colon) {
@@ -147,6 +152,10 @@ impl Parser<'_> {
                 ]);
             }
             self.complete(constraint, K::TypeConstraint);
+            if self.position() == before {
+                self.unexpected_here("expected type constraint");
+                break;
+            }
             if !self.eat(K::Comma) {
                 break;
             }
@@ -178,21 +187,43 @@ impl Parser<'_> {
     pub(in crate::parser::grammar) fn parse_delegation_specifier_list(&mut self) {
         let marker = self.start();
         loop {
+            let before = self.position();
             let specifier = self.start();
-            self.parse_expression_until(&[
-                K::Comma,
-                K::WhereKw,
-                K::LBrace,
-                K::Semicolon,
-                K::DoubleSemicolon,
-                K::RBrace,
-            ]);
+            self.parse_delegation_specifier();
             self.complete(specifier, K::DelegationSpecifier);
+            self.ensure_progress(before, "expected delegation specifier");
             if !self.eat(K::Comma) {
                 break;
             }
         }
         self.complete(marker, K::DelegationSpecifierList);
+    }
+
+    fn parse_delegation_specifier(&mut self) {
+        const DELEGATION_STOPS: &[K] = &[
+            K::Comma,
+            K::WhereKw,
+            K::LBrace,
+            K::Semicolon,
+            K::DoubleSemicolon,
+            K::RBrace,
+        ];
+
+        self.parse_type_reference_until(&[
+            K::ByKw,
+            K::Comma,
+            K::WhereKw,
+            K::LBrace,
+            K::Semicolon,
+            K::DoubleSemicolon,
+            K::RBrace,
+        ]);
+        if self.at(K::LParen) {
+            self.parse_value_argument_list();
+        }
+        if self.eat_soft_keyword("by") {
+            self.parse_expression_until(DELEGATION_STOPS);
+        }
     }
 
     pub(in crate::parser::grammar) fn parse_value_parameter_list(&mut self) {
@@ -216,15 +247,11 @@ impl Parser<'_> {
                 self.parse_expression_until(&[K::Comma, K::RParen]);
             }
             self.complete(parameter, K::ValueParameter);
-            if self.position() == before {
-                self.unexpected_here("expected value parameter");
-                self.bump();
-            }
+            self.ensure_progress(before, "expected value parameter");
         }
         self.expect(K::RParen, "expected ')' after value parameters");
         self.complete(marker, K::ValueParameterList);
     }
-
     pub(in crate::parser::grammar) fn parse_name_or_destructuring(&mut self) {
         if self.at(K::LParen) {
             self.parse_destructuring_declaration();
@@ -261,10 +288,7 @@ impl Parser<'_> {
                 self.parse_type_reference_until(&[K::Comma, close]);
             }
             self.complete(entry, K::DestructuringEntry);
-            if self.position() == before {
-                self.unexpected_here("expected destructuring entry");
-                self.bump();
-            }
+            self.ensure_progress(before, "expected destructuring entry");
         }
         self.expect(
             close,
@@ -308,8 +332,72 @@ impl Parser<'_> {
     }
 
     fn parse_callable_name_prefix(&mut self) {
-        while !matches!(
-            self.current_kind(),
+        let marker = self.start();
+
+        if let Some(separator_position) = self.callable_receiver_separator_position() {
+            self.parse_type_reference_until_position(separator_position);
+            self.expect(K::Dot, "expected receiver separator");
+            self.parse_name();
+            self.complete(marker, K::CallableName);
+        } else if self.at_identifier_like() {
+            self.parse_name();
+            self.complete(marker, K::CallableName);
+        } else {
+            self.abandon(marker);
+        }
+    }
+
+    fn callable_receiver_separator_position(&mut self) -> Option<usize> {
+        let mut paren_depth = 0usize;
+        let mut bracket_depth = 0usize;
+        let mut brace_depth = 0usize;
+        let mut angle_depth = 0usize;
+        let mut separator = None;
+
+        for offset in 0..MAX_DECLARATION_LOOKAHEAD {
+            let index = self.position() + offset;
+            let start = self.position();
+            let kind = self.kind_at(index);
+            let at_top_level =
+                paren_depth == 0 && bracket_depth == 0 && brace_depth == 0 && angle_depth == 0;
+
+            if at_top_level && self.callable_name_boundary_at(index, start) {
+                break;
+            }
+            if kind == K::Eof {
+                break;
+            }
+
+            match kind {
+                K::LParen => paren_depth += 1,
+                K::RParen if paren_depth > 0 => paren_depth -= 1,
+                K::RParen => break,
+                K::LBracket => bracket_depth += 1,
+                K::RBracket if bracket_depth > 0 => bracket_depth -= 1,
+                K::RBracket => break,
+                K::LBrace => brace_depth += 1,
+                K::RBrace if brace_depth > 0 => brace_depth -= 1,
+                K::RBrace => break,
+                K::Lt => angle_depth += 1,
+                K::Gt if angle_depth > 0 => angle_depth -= 1,
+                K::Dot if at_top_level => {
+                    if is_identifier_like_kind(self.kind_at(index + 1))
+                        && self.callable_name_boundary_at(index + 2, start)
+                    {
+                        separator = Some(index);
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        separator
+    }
+
+    fn callable_name_boundary_at(&mut self, index: usize, start: usize) -> bool {
+        let kind = self.kind_at(index);
+        matches!(
+            kind,
             K::LParen
                 | K::Colon
                 | K::Assign
@@ -319,17 +407,9 @@ impl Parser<'_> {
                 | K::DoubleSemicolon
                 | K::RBrace
                 | K::Eof
-        ) {
-            if self.at(K::Lt) {
-                self.parse_type_argument_list();
-            } else if self.at_identifier_like()
-                || matches!(self.current_kind(), K::Dot | K::Question)
-            {
-                self.bump();
-            } else {
-                break;
-            }
-        }
+        ) || index > start
+            && self.kind_at(index - 1) != K::Dot
+            && matches!(self.text_at(index), Some("by" | "get" | "set"))
     }
 
     fn parse_optional_body(&mut self) {

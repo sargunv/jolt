@@ -45,7 +45,9 @@ KotlinFile
           ModifierList
             Identifier "private" @ 56..63 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
           ValKw "val" @ 64..67 trailing=[Whitespace " "]
-          Identifier "values" @ 68..74 trailing=[Whitespace " "]
+          CallableName
+            Name
+              Identifier "values" @ 68..74 trailing=[Whitespace " "]
           Assign "=" @ 75..76 trailing=[Whitespace " "]
           CallExpression
             NameExpression
@@ -71,7 +73,9 @@ KotlinFile
       ClassMemberDeclaration
         FunctionDeclaration
           FunKw "fun" @ 113..116 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "put" @ 117..120
+          CallableName
+            Name
+              Identifier "put" @ 117..120
           ValueParameterList
             LParen "(" @ 120..121
             ValueParameter
@@ -126,7 +130,9 @@ KotlinFile
                 ModifierList
                   Identifier "const" @ 241..246 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
                 ValKw "val" @ 247..250 trailing=[Whitespace " "]
-                Identifier "KIND" @ 251..255 trailing=[Whitespace " "]
+                CallableName
+                  Name
+                    Identifier "KIND" @ 251..255 trailing=[Whitespace " "]
                 Assign "=" @ 256..257 trailing=[Whitespace " "]
                 StringTemplateExpression
                   StringTemplateEntry

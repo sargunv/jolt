@@ -41,7 +41,9 @@ KotlinFile
       ClassMemberDeclaration
         FunctionDeclaration
           FunKw "fun" @ 48..51 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "first" @ 52..57
+          CallableName
+            Name
+              Identifier "first" @ 52..57
           ValueParameterList
             LParen "(" @ 57..58
             ValueParameter
@@ -58,7 +60,9 @@ KotlinFile
       ClassMemberDeclaration
         FunctionDeclaration
           FunKw "fun" @ 84..87 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "second" @ 88..94
+          CallableName
+            Name
+              Identifier "second" @ 88..94
           ValueParameterList
             LParen "(" @ 94..95
             RParen ")" @ 95..96 trailing=[Whitespace " "]
@@ -68,7 +72,9 @@ KotlinFile
       ClassMemberDeclaration
         FunctionDeclaration
           FunKw "fun" @ 108..111 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "done" @ 112..116
+          CallableName
+            Name
+              Identifier "done" @ 112..116
           ValueParameterList
             LParen "(" @ 116..117
             RParen ")" @ 117..118
@@ -86,7 +92,9 @@ KotlinFile
       RBrace "}" @ 136..137 leading=[Newline "\n"]
   FunctionDeclaration
     FunKw "fun" @ 139..142 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "chain" @ 143..148
+    CallableName
+      Name
+        Identifier "chain" @ 143..148
     ValueParameterList
       LParen "(" @ 148..149
       ValueParameter
@@ -122,7 +130,8 @@ KotlinFile
               NavigationExpression
                 NameExpression
                   Identifier "builder" @ 198..205 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:chain-target */"]
-                SafeAccess "?." @ 245..247 leading=[Newline "\n", Whitespace "        "]
+                Question "?" @ 245..246 leading=[Newline "\n", Whitespace "        "]
+                Dot "." @ 246..247
                 Identifier "first" @ 247..252
               ValueArgumentList
                 LParen "(" @ 252..253 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:safe-call-open */", Whitespace " "]
@@ -130,12 +139,14 @@ KotlinFile
                   NameExpression
                     Identifier "value" @ 287..292 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:first-arg */"]
                 RParen ")" @ 320..321
-            SafeAccess "?." @ 330..332 leading=[Newline "\n", Whitespace "        "]
+            Question "?" @ 330..331 leading=[Newline "\n", Whitespace "        "]
+            Dot "." @ 331..332
             Identifier "second" @ 332..338
           ValueArgumentList
             LParen "(" @ 338..339
             RParen ")" @ 339..340 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:after-second */"]
-        SafeAccess "?." @ 380..382 leading=[Newline "\n", Whitespace "        "]
+        Question "?" @ 380..381 leading=[Newline "\n", Whitespace "        "]
+        Dot "." @ 381..382
         Identifier "done" @ 382..386 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:callable-ref-gap */", Whitespace " "]
       ValueArgumentList
         LParen "(" @ 422..423

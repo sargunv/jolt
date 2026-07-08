@@ -1,5 +1,9 @@
 fun parenthesized(flag: Boolean, value: String?): String {
     val chosen = (if (flag) value else "fallback") ?: "empty"
+    val selected = (if (flag) (0 until 10) else (10 downTo 0)).toList()
+    (if (flag) (0 until 10) else (10 downTo 0)).forEach { index ->
+        index.toString()
+    }
     val recovered = (try {
         chosen.trim()
     } catch (error: Throwable) {

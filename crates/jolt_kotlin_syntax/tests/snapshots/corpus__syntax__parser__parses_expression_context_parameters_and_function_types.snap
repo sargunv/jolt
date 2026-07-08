@@ -29,7 +29,9 @@ KotlinFile
             Identifier "Logger" @ 16..22
       RParen ")" @ 22..23
     FunKw "fun" @ 24..27 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Identifier "withContextParameter" @ 28..48
+    CallableName
+      Name
+        Identifier "withContextParameter" @ 28..48
     ValueParameterList
       LParen "(" @ 48..49
       ValueParameter
@@ -66,23 +68,27 @@ KotlinFile
       ContextFunctionType
         Identifier "context" @ 112..119
         LParen "(" @ 119..120
-        TypeReference
-          UserType
-            Identifier "Session" @ 120..127
+        FunctionTypeParameter
+          TypeReference
+            UserType
+              Identifier "Session" @ 120..127
         RParen ")" @ 127..128 trailing=[Whitespace " "]
         FunctionType
           ParenthesizedType
             LParen "(" @ 129..130
-            TypeReference
-              UserType
-                Identifier "String" @ 130..136
+            FunctionTypeParameter
+              TypeReference
+                UserType
+                  Identifier "String" @ 130..136
             RParen ")" @ 136..137 trailing=[Whitespace " "]
           Arrow "->" @ 138..140 trailing=[Whitespace " "]
           UserType
             Identifier "Unit" @ 141..145
   FunctionDeclaration
     FunKw "fun" @ 147..150 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "functionType" @ 151..163
+    CallableName
+      Name
+        Identifier "functionType" @ 151..163
     ValueParameterList
       LParen "(" @ 163..164
       ValueParameter

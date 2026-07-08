@@ -4,3 +4,7 @@ fun softKeywords(context: Int, field: String, value: Boolean): String {
     val all = value && where > by
     return if (all) field else "none"
 }
+
+fun softKeywordSafeCall(open: Node?) {
+    open?.member()
+}

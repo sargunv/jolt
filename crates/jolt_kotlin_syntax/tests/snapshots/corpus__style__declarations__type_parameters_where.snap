@@ -61,7 +61,9 @@ KotlinFile
         Name
           Identifier "R" @ 81..82
       Gt ">" @ 82..83 trailing=[Whitespace " "]
-    Identifier "connect" @ 84..91
+    CallableName
+      Name
+        Identifier "connect" @ 84..91
     ValueParameterList
       LParen "(" @ 91..92
       ValueParameter

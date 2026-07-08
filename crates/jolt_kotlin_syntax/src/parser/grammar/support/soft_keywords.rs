@@ -2,6 +2,8 @@ use crate::KotlinSyntaxKind as K;
 
 use super::super::Parser;
 
+const MAX_MODIFIER_LOOKAHEAD: usize = 256;
+
 impl Parser<'_> {
     pub(in crate::parser::grammar) fn at_modifier_or_annotation(&mut self) -> bool {
         self.is_modifier_or_annotation_start_at(self.position())
@@ -22,6 +24,27 @@ impl Parser<'_> {
                 | K::AllKw
         ) || self
             .current_text()
+            .is_some_and(is_annotation_use_site_target)
+    }
+
+    pub(in crate::parser::grammar) fn is_annotation_use_site_target_at(
+        &mut self,
+        index: usize,
+    ) -> bool {
+        matches!(
+            self.kind_at(index),
+            K::FileKw
+                | K::FieldKw
+                | K::PropertyKw
+                | K::ReceiverKw
+                | K::ParamKw
+                | K::SetParamKw
+                | K::DelegateKw
+                | K::GetKw
+                | K::SetKw
+                | K::AllKw
+        ) || self
+            .text_at(index)
             .is_some_and(is_annotation_use_site_target)
     }
 
@@ -49,9 +72,11 @@ impl Parser<'_> {
         &mut self,
         text: &str,
     ) -> bool {
-        let mut index = self.position();
-        while self.is_modifier_or_annotation_start_at(index) {
-            index += 1;
+        let Some(index) = self.skip_modifier_prefix(self.position()) else {
+            return false;
+        };
+        if index >= self.position() + MAX_MODIFIER_LOOKAHEAD {
+            return false;
         }
         let kind = self.kind_at(index);
         let token_text = self.text_at(index);
@@ -63,7 +88,16 @@ impl Parser<'_> {
         kind_or_text_is_soft_keyword(kind, token_text, text)
     }
 
-    fn is_modifier_or_annotation_start_at(&mut self, index: usize) -> bool {
+    pub(in crate::parser::grammar) fn is_soft_kind_at(&mut self, index: usize, text: &str) -> bool {
+        let kind = self.kind_at(index);
+        let token_text = self.text_at(index);
+        kind_or_text_is_soft_keyword(kind, token_text, text)
+    }
+
+    pub(in crate::parser::grammar) fn is_modifier_or_annotation_start_at(
+        &mut self,
+        index: usize,
+    ) -> bool {
         let kind = self.kind_at(index);
         is_modifier_or_annotation_start(kind)
             || self.text_at(index).is_some_and(is_modifier_keyword_text)
@@ -71,9 +105,11 @@ impl Parser<'_> {
                     self.kind_at(index + 1),
                     K::Colon
                         | K::Comma
+                        | K::LParen
                         | K::RParen
                         | K::Assign
                         | K::Dot
+                        | K::Question
                         | K::SafeAccess
                         | K::Lt
                         | K::LtEq

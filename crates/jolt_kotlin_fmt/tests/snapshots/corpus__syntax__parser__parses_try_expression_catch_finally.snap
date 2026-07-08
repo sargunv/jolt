@@ -1,0 +1,19 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+fun tryExpression(path: String): String {
+  return try {
+    read(path)
+  } catch (missing: MissingFile) {
+    "missing"
+  } catch (error: Throwable) {
+    "error"
+  } finally {
+    close(path)
+  }
+}
+
+diagnostics:
+(none)

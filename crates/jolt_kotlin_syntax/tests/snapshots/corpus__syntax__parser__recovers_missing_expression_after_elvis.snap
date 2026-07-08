@@ -14,7 +14,9 @@ KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    Identifier "missingElvisOperand" @ 4..23
+    CallableName
+      Name
+        Identifier "missingElvisOperand" @ 4..23
     ValueParameterList
       LParen "(" @ 23..24
       ValueParameter
@@ -35,7 +37,9 @@ KotlinFile
       LBrace "{" @ 48..49
       PropertyDeclaration
         ValKw "val" @ 54..57 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "chosen" @ 58..64 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "chosen" @ 58..64 trailing=[Whitespace " "]
         Assign "=" @ 65..66 trailing=[Whitespace " "]
         BinaryExpression
           NameExpression

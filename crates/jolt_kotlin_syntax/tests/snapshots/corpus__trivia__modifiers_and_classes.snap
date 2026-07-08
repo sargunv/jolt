@@ -66,12 +66,12 @@ KotlinFile
           Colon ":" @ 218..219 trailing=[Whitespace " "]
           DelegationSpecifierList
             DelegationSpecifier
-              CallExpression
-                NameExpression
+              TypeReference
+                UserType
                   Identifier "Node" @ 220..224
-                ValueArgumentList
-                  LParen "(" @ 224..225
-                  RParen ")" @ 225..226
+              ValueArgumentList
+                LParen "(" @ 224..225
+                RParen ")" @ 225..226
       ClassMemberDeclaration
         ClassDeclaration
           ModifierList
@@ -83,12 +83,12 @@ KotlinFile
           Colon ":" @ 301..302 trailing=[Whitespace " "]
           DelegationSpecifierList
             DelegationSpecifier
-              CallExpression
-                NameExpression
+              TypeReference
+                UserType
                   Identifier "Node" @ 303..307
-                ValueArgumentList
-                  LParen "(" @ 307..308
-                  RParen ")" @ 308..309
+              ValueArgumentList
+                LParen "(" @ 307..308
+                RParen ")" @ 308..309
       RBrace "}" @ 310..311 leading=[Newline "\n"]
   ObjectDeclaration
     ModifierList
@@ -103,7 +103,9 @@ KotlinFile
           ModifierList
             Identifier "lateinit" @ 380..388 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:lateinit-modifier */", Whitespace " "]
           VarKw "var" @ 425..428 trailing=[Whitespace " "]
-          Identifier "current" @ 429..436
+          CallableName
+            Name
+              Identifier "current" @ 429..436
           Colon ":" @ 436..437 trailing=[Whitespace " "]
           TypeReference
             UserType

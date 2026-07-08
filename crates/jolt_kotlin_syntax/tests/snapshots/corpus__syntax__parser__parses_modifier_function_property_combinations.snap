@@ -27,7 +27,9 @@ KotlinFile
             Identifier "protected" @ 37..46 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             Identifier "abstract" @ 47..55 trailing=[Whitespace " "]
           ValKw "val" @ 56..59 trailing=[Whitespace " "]
-          Identifier "size" @ 60..64
+          CallableName
+            Name
+              Identifier "size" @ 60..64
           Colon ":" @ 64..65 trailing=[Whitespace " "]
           TypeReference
             UserType
@@ -38,7 +40,9 @@ KotlinFile
             Identifier "public" @ 75..81 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             Identifier "final" @ 82..87 trailing=[Whitespace " "]
           FunKw "fun" @ 88..91 trailing=[Whitespace " "]
-          Identifier "label" @ 92..97
+          CallableName
+            Name
+              Identifier "label" @ 92..97
           ValueParameterList
             LParen "(" @ 97..98
             RParen ")" @ 98..99

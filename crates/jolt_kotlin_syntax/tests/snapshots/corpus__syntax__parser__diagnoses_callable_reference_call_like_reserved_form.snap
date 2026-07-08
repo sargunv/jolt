@@ -15,7 +15,9 @@ KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    Identifier "invalidCallableReferenceCall" @ 4..32
+    CallableName
+      Name
+        Identifier "invalidCallableReferenceCall" @ 4..32
     ValueParameterList
       LParen "(" @ 32..33
       RParen ")" @ 33..34 trailing=[Whitespace " "]
@@ -23,7 +25,9 @@ KotlinFile
       LBrace "{" @ 35..36
       PropertyDeclaration
         ValKw "val" @ 41..44 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "direct" @ 45..51 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "direct" @ 45..51 trailing=[Whitespace " "]
         Assign "=" @ 52..53 trailing=[Whitespace " "]
         CallExpression
           CallableReferenceExpression
@@ -43,7 +47,9 @@ KotlinFile
             RParen ")" @ 76..77
       PropertyDeclaration
         ValKw "val" @ 82..85 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "generic" @ 86..93 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "generic" @ 86..93 trailing=[Whitespace " "]
         Assign "=" @ 94..95 trailing=[Whitespace " "]
         CallExpression
           CallableReferenceExpression

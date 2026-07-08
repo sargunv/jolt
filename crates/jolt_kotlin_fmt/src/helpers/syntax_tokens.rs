@@ -1,0 +1,66 @@
+use jolt_fmt_ir::{Doc, space, text};
+use jolt_kotlin_syntax::KotlinSyntaxToken;
+
+use crate::helpers::comments::{
+    LeadingTrivia, TrailingTrivia, format_leading_comments, format_trailing_comments,
+    format_trailing_comments_before_line_break, trailing_comments_force_line,
+};
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum FormatterInsertedToken {
+    ImportKeyword,
+    ImportAliasKeyword,
+    PrecedenceParenthesis,
+}
+
+pub(crate) fn inserted_syntax_token<'source>(
+    spelling: &'static str,
+    _reason: FormatterInsertedToken,
+) -> Doc<'source> {
+    text(spelling)
+}
+
+pub(crate) fn format_token_with_normalized_text<'source>(
+    token: &KotlinSyntaxToken<'source>,
+    spelling: &'static str,
+    reason: FormatterInsertedToken,
+    leading: LeadingTrivia,
+    trailing: TrailingTrivia,
+) -> Doc<'source> {
+    jolt_fmt_ir::concat([
+        match leading {
+            LeadingTrivia::Preserve => format_leading_comments(token),
+            LeadingTrivia::SuppressAlreadyHandled => jolt_fmt_ir::nil(),
+        },
+        // Source-backed normalized token: the source token provides trivia;
+        // formatter policy provides the printed spelling.
+        inserted_syntax_token(spelling, reason),
+        match trailing {
+            TrailingTrivia::Preserve => format_trailing_comments(token),
+            TrailingTrivia::BeforeLineBreak => format_trailing_comments_before_line_break(token),
+            TrailingTrivia::BeforeSoftLine => jolt_fmt_ir::concat([
+                format_trailing_comments_before_line_break(token),
+                if trailing_comments_force_line(token) {
+                    jolt_fmt_ir::hard_line()
+                } else {
+                    jolt_fmt_ir::soft_line()
+                },
+            ]),
+            TrailingTrivia::BeforeSpaceIfComments => {
+                if token.trailing_comments().is_empty() {
+                    jolt_fmt_ir::nil()
+                } else {
+                    jolt_fmt_ir::concat([
+                        format_trailing_comments_before_line_break(token),
+                        if trailing_comments_force_line(token) {
+                            jolt_fmt_ir::hard_line()
+                        } else {
+                            space()
+                        },
+                    ])
+                }
+            }
+            TrailingTrivia::RelocatedToEnclosingContext => jolt_fmt_ir::nil(),
+        },
+    ])
+}

@@ -6,3 +6,16 @@ class Profile(val email: String?)
 fun email(user: User?): String =
     user?.profile?.email
         ?: "missing@example.com"
+
+class Pack(val progress: Progress)
+class Progress
+class Healthy(val status: Status) : Progress()
+enum class Status {
+    Unknown,
+}
+
+fun status(pack: Pack): Status {
+    val status = (pack.progress as? Healthy)
+        ?.status ?: return Status.Unknown
+    return status
+}

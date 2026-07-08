@@ -1,0 +1,13 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+fun callableReferenceTypeArguments() {
+  val generic = Box::create<String>
+  val nested = Registry.Entry::from<Int>
+  consume(generic, nested)
+}
+
+diagnostics:
+(none)

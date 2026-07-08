@@ -1,0 +1,14 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class AllTarget(
+  @all:Label("user")
+  val name: String,
+)
+
+annotation class Label(val value: String)
+
+diagnostics:
+(none)

@@ -23,7 +23,8 @@ use crate::error::CliError;
 use super::{
     Args,
     config::{ConfigResolver, absolutize},
-    discover::{CandidateFile, detect_language, discover_files},
+    detect_language,
+    discover::{CandidateFile, discover_files},
 };
 
 pub(crate) fn run(args: &Args) -> Result<(), CliError> {

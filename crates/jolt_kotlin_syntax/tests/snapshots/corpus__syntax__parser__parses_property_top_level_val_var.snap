@@ -23,7 +23,9 @@ KotlinFile
     ModifierList
       Identifier "const" @ 0..5 trailing=[Whitespace " "]
     ValKw "val" @ 6..9 trailing=[Whitespace " "]
-    Identifier "BuildName" @ 10..19 trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "BuildName" @ 10..19 trailing=[Whitespace " "]
     Assign "=" @ 20..21 trailing=[Whitespace " "]
     StringTemplateExpression
       StringTemplateEntry
@@ -33,7 +35,9 @@ KotlinFile
       ClosingQuote "\"" @ 26..27
   PropertyDeclaration
     VarKw "var" @ 29..32 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "mutableCount" @ 33..45
+    CallableName
+      Name
+        Identifier "mutableCount" @ 33..45
     Colon ":" @ 45..46 trailing=[Whitespace " "]
     TypeReference
       UserType
@@ -54,7 +58,9 @@ KotlinFile
             Identifier "Config" @ 72..78
       RParen ")" @ 78..79
     ValKw "val" @ 80..83 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Identifier "configuredName" @ 84..98
+    CallableName
+      Name
+        Identifier "configuredName" @ 84..98
     Colon ":" @ 98..99 trailing=[Whitespace " "]
     TypeReference
       UserType
@@ -79,7 +85,9 @@ KotlinFile
       ClassMemberDeclaration
         PropertyDeclaration
           ValKw "val" @ 155..158 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "name" @ 159..163
+          CallableName
+            Name
+              Identifier "name" @ 159..163
           Colon ":" @ 163..164 trailing=[Whitespace " "]
           TypeReference
             UserType

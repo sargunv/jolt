@@ -1,0 +1,113 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package com.example.expressions
+
+val answer=1+2*3
+
+fun doubled(value: Int): Int=value*2
+
+fun label(input: String): String=input.trim().lowercase()
+
+syntax:
+syntax:
+KotlinFile
+  PackageHeader
+    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+    QualifiedName
+      Name
+        Identifier "com" @ 8..11
+      Dot "." @ 11..12
+      Name
+        Identifier "example" @ 12..19
+      Dot "." @ 19..20
+      Name
+        Identifier "expressions" @ 20..31
+  ImportList
+  PropertyDeclaration
+    ValKw "val" @ 33..36 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "answer" @ 37..43
+    Assign "=" @ 43..44
+    BinaryExpression
+      LiteralExpression
+        IntegerLiteral "1" @ 44..45
+      Plus "+" @ 45..46
+      BinaryExpression
+        LiteralExpression
+          IntegerLiteral "2" @ 46..47
+        Star "*" @ 47..48
+        LiteralExpression
+          IntegerLiteral "3" @ 48..49
+  FunctionDeclaration
+    FunKw "fun" @ 51..54 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "doubled" @ 55..62
+    ValueParameterList
+      LParen "(" @ 62..63
+      ValueParameter
+        Name
+          Identifier "value" @ 63..68
+        Colon ":" @ 68..69 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Int" @ 70..73
+      RParen ")" @ 73..74
+    Colon ":" @ 74..75 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "Int" @ 76..79
+    Assign "=" @ 79..80
+    BinaryExpression
+      NameExpression
+        Identifier "value" @ 80..85
+      Star "*" @ 85..86
+      LiteralExpression
+        IntegerLiteral "2" @ 86..87
+  FunctionDeclaration
+    FunKw "fun" @ 89..92 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "label" @ 93..98
+    ValueParameterList
+      LParen "(" @ 98..99
+      ValueParameter
+        Name
+          Identifier "input" @ 99..104
+        Colon ":" @ 104..105 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "String" @ 106..112
+      RParen ")" @ 112..113
+    Colon ":" @ 113..114 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "String" @ 115..121
+    Assign "=" @ 121..122
+    CallExpression
+      NavigationExpression
+        CallExpression
+          NavigationExpression
+            NameExpression
+              Identifier "input" @ 122..127
+            Dot "." @ 127..128
+            Identifier "trim" @ 128..132
+          ValueArgumentList
+            LParen "(" @ 132..133
+            RParen ")" @ 133..134
+        Dot "." @ 134..135
+        Identifier "lowercase" @ 135..144
+      ValueArgumentList
+        LParen "(" @ 144..145
+        RParen ")" @ 145..146
+  Eof "" @ 147..147 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

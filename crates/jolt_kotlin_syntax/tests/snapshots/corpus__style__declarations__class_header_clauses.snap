@@ -89,12 +89,14 @@ KotlinFile
     Colon ":" @ 171..172 trailing=[Whitespace " "]
     DelegationSpecifierList
       DelegationSpecifier
-        NameExpression
-          Identifier "Readable" @ 173..181
+        TypeReference
+          UserType
+            Identifier "Readable" @ 173..181
       Comma "," @ 181..182
       DelegationSpecifier
-        NameExpression
-          Identifier "Writable" @ 187..195 leading=[Newline "\n", Whitespace "    "]
+        TypeReference
+          UserType
+            Identifier "Writable" @ 187..195 leading=[Newline "\n", Whitespace "    "]
   Eof "" @ 196..196 leading=[Newline "\n"]
 
 diagnostics:

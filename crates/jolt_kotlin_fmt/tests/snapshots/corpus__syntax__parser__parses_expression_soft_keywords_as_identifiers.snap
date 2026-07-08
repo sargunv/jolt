@@ -1,0 +1,18 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+fun softKeywords(context: Int, field: String, value: Boolean): String {
+  val where = context + 1
+  val by = field.length
+  val all = value && where > by
+  return if (all) field else "none"
+}
+
+fun softKeywordSafeCall(open: Node?) {
+  open?.member()
+}
+
+diagnostics:
+(none)

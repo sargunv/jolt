@@ -1,0 +1,17 @@
+package com.example.expressions
+
+fun lengths(values: List<String>, emit: (String) -> Unit): List<Int> {
+    return values
+        .map { raw ->
+            val trimmed = raw.trim()
+            if (trimmed.isEmpty()) {
+                return@map 0
+            }
+            emit(trimmed)
+            trimmed.length
+        }
+        .filter { length ->
+            length > 1
+        }
+        .sorted()
+}

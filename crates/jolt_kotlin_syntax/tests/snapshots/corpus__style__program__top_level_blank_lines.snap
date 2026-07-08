@@ -33,7 +33,9 @@ KotlinFile
     ModifierList
       Identifier "const" @ 27..32 leading=[Newline "\n", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
     ValKw "val" @ 33..36 trailing=[Whitespace " "]
-    Identifier "NAME" @ 37..41
+    CallableName
+      Name
+        Identifier "NAME" @ 37..41
     Assign "=" @ 41..42
     StringTemplateExpression
       StringTemplateEntry
@@ -43,7 +45,9 @@ KotlinFile
       ClosingQuote "\"" @ 47..48
   FunctionDeclaration
     FunKw "fun" @ 51..54 leading=[Newline "\n", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "greet" @ 55..60
+    CallableName
+      Name
+        Identifier "greet" @ 55..60
     ValueParameterList
       LParen "(" @ 60..61
       RParen ")" @ 61..62 trailing=[Whitespace " "]

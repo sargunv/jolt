@@ -12,7 +12,9 @@ KotlinFile
   ImportList
   PropertyDeclaration
     ValKw "val" @ 22..25 leading=[ShebangComment "#!/usr/bin/env kotlin", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "x" @ 26..27 trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "x" @ 26..27 trailing=[Whitespace " "]
     Assign "=" @ 28..29 trailing=[Whitespace " "]
     LiteralExpression
       IntegerLiteral "1" @ 30..31

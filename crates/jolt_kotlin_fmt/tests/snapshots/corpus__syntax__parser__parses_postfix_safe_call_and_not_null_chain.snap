@@ -1,0 +1,11 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+fun safeChain(node: Node?): String {
+  return node?.parent?.children?.get(0)?.name!!
+}
+
+diagnostics:
+(none)

@@ -114,7 +114,9 @@ KotlinFile
         Name
           Identifier "T" @ 282..283 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:function-type-param */"]
       Gt ">" @ 321..322 trailing=[Whitespace " "]
-    Identifier "echo" @ 323..327
+    CallableName
+      Name
+        Identifier "echo" @ 323..327
     ValueParameterList
       LParen "(" @ 327..328
       ValueParameter

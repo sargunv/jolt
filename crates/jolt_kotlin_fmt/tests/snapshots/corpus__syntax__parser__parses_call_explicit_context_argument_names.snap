@@ -1,0 +1,11 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+fun explicitContextArgumentNames() {
+  render(user = currentUser, theme = darkTheme, content = { "ready" })
+}
+
+diagnostics:
+(none)

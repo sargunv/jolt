@@ -60,6 +60,7 @@ fn matches_selection(path: &Path, config: &ResolvedConfig) -> bool {
 pub(crate) fn detect_language(path: &Path) -> Option<Language> {
     match path.extension().and_then(|extension| extension.to_str()) {
         Some("java") => Some(Language::Java),
+        Some("kt" | "kts") => Some(Language::Kotlin),
         _ => None,
     }
 }

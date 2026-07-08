@@ -31,7 +31,9 @@ KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    Identifier "lambdas" @ 4..11
+    CallableName
+      Name
+        Identifier "lambdas" @ 4..11
     ValueParameterList
       LParen "(" @ 11..12
       ValueParameter
@@ -55,7 +57,9 @@ KotlinFile
       LBrace "{" @ 34..35
       PropertyDeclaration
         ValKw "val" @ 40..43 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "implicit" @ 44..52 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "implicit" @ 44..52 trailing=[Whitespace " "]
         Assign "=" @ 53..54 trailing=[Whitespace " "]
         CallExpression
           NavigationExpression
@@ -75,7 +79,9 @@ KotlinFile
             RBrace "}" @ 78..79
       PropertyDeclaration
         ValKw "val" @ 84..87 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "typed" @ 88..93 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "typed" @ 88..93 trailing=[Whitespace " "]
         Assign "=" @ 94..95 trailing=[Whitespace " "]
         CallExpression
           NavigationExpression
@@ -108,7 +114,9 @@ KotlinFile
             RBrace "}" @ 139..140
       PropertyDeclaration
         ValKw "val" @ 145..148 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "labeled" @ 149..156 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "labeled" @ 149..156 trailing=[Whitespace " "]
         Assign "=" @ 157..158 trailing=[Whitespace " "]
         CallExpression
           NavigationExpression
@@ -141,33 +149,40 @@ KotlinFile
                       ReturnKw "return" @ 208..214
                       At "@" @ 214..215
                       Identifier "label" @ 215..220
-                      CallExpression
+              Statement
+                ExpressionStatement
+                  CallExpression
+                    NameExpression
+                      Identifier "consume" @ 229..236 leading=[Newline "\n", Whitespace "        "]
+                    ValueArgumentList
+                      LParen "(" @ 236..237
+                      ValueArgument
                         NameExpression
-                          Identifier "consume" @ 229..236 leading=[Newline "\n", Whitespace "        "]
-                        ValueArgumentList
-                          LParen "(" @ 236..237
-                          ValueArgument
-                            NameExpression
-                              Identifier "it" @ 237..239
-                          RParen ")" @ 239..240
+                          Identifier "it" @ 237..239
+                      RParen ")" @ 239..240
               RBrace "}" @ 245..246 leading=[Newline "\n", Whitespace "    "]
       PropertyDeclaration
         ValKw "val" @ 251..254 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "block" @ 255..260 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "block" @ 255..260 trailing=[Whitespace " "]
         Assign "=" @ 261..262 trailing=[Whitespace " "]
         LambdaExpression
           LBrace "{" @ 263..264
           PropertyDeclaration
             ValKw "val" @ 273..276 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-            Identifier "maxLine" @ 277..284
+            CallableName
+              Name
+                Identifier "maxLine" @ 277..284
             Colon ":" @ 284..285 trailing=[Whitespace " "]
             TypeReference
               FunctionType
                 ParenthesizedType
                   LParen "(" @ 286..287
-                  TypeReference
-                    UserType
-                      Identifier "String" @ 287..293
+                  FunctionTypeParameter
+                    TypeReference
+                      UserType
+                        Identifier "String" @ 287..293
                   RParen ")" @ 293..294 trailing=[Whitespace " "]
                 Arrow "->" @ 295..297 trailing=[Whitespace " "]
                 UserType
@@ -231,7 +246,9 @@ KotlinFile
           RBrace "}" @ 468..469 leading=[Newline "\n", Whitespace "    "]
       PropertyDeclaration
         ValKw "val" @ 474..477 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "functionTyped" @ 478..491 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "functionTyped" @ 478..491 trailing=[Whitespace " "]
         Assign "=" @ 492..493 trailing=[Whitespace " "]
         CallExpression
           NavigationExpression
@@ -250,9 +267,10 @@ KotlinFile
                   FunctionType
                     ParenthesizedType
                       LParen "(" @ 518..519
-                      TypeReference
-                        UserType
-                          Identifier "String" @ 519..525
+                      FunctionTypeParameter
+                        TypeReference
+                          UserType
+                            Identifier "String" @ 519..525
                       RParen ")" @ 525..526 trailing=[Whitespace " "]
                     Arrow "->" @ 527..529 trailing=[Whitespace " "]
                     UserType

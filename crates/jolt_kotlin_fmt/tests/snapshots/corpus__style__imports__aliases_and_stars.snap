@@ -1,0 +1,17 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+package com.example.imports
+
+import com.example.tools.*
+import com.example.tools.Factory as ToolFactory
+import kotlin.io.println as say
+
+fun aliases(factory: ToolFactory) {
+  say(factory.toString())
+}
+
+diagnostics:
+(none)

@@ -28,7 +28,9 @@ KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 28..31 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "templates" @ 32..41
+    CallableName
+      Name
+        Identifier "templates" @ 32..41
     ValueParameterList
       LParen "(" @ 41..42
       ValueParameter
@@ -55,7 +57,9 @@ KotlinFile
       LBrace "{" @ 76..77
       PropertyDeclaration
         ValKw "val" @ 82..85 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "simple" @ 86..92 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "simple" @ 86..92 trailing=[Whitespace " "]
         Assign "=" @ 93..94 trailing=[Whitespace " "]
         StringTemplateExpression
           StringTemplateEntry
@@ -70,7 +74,9 @@ KotlinFile
           ClosingQuote "\"" @ 144..145
       PropertyDeclaration
         ValKw "val" @ 150..153 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "nested" @ 154..160 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "nested" @ 154..160 trailing=[Whitespace " "]
         Assign "=" @ 161..162 trailing=[Whitespace " "]
         StringTemplateExpression
           StringTemplateEntry

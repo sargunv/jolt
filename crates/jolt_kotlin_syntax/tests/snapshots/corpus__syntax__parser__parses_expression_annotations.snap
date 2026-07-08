@@ -1,0 +1,194 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun annotatedExpressions(flag: Boolean) {
+    val environment =
+        @Suppress("OPT_IN_USAGE_ERROR") // createForProduction uses an internal opt-in
+        createEnvironment()
+
+    val choice =
+        @Suppress("DEPRECATION")
+        when (flag) {
+            true -> "yes"
+            false -> "no"
+        }
+
+    val length =
+        @Suppress("DEPRECATION")
+        when (flag) {
+            true -> "yes"
+            false -> "no"
+        }.length
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "annotatedExpressions" @ 4..24
+    ValueParameterList
+      LParen "(" @ 24..25
+      ValueParameter
+        Name
+          Identifier "flag" @ 25..29
+        Colon ":" @ 29..30 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Boolean" @ 31..38
+      RParen ")" @ 38..39 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 40..41
+      PropertyDeclaration
+        ValKw "val" @ 46..49 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "environment" @ 50..61 trailing=[Whitespace " "]
+        Assign "=" @ 62..63
+        AnnotatedExpression
+          ModifierList
+            Annotation
+              At "@" @ 72..73 leading=[Newline "\n", Whitespace "        "]
+              QualifiedName
+                Name
+                  Identifier "Suppress" @ 73..81
+              AnnotationArgumentList
+                LParen "(" @ 81..82
+                ValueArgument
+                  StringTemplateExpression
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 82..83
+                    StringTemplateEntry
+                      RegularStringPart "OPT_IN_USAGE_ERROR" @ 83..101
+                    ClosingQuote "\"" @ 101..102
+                RParen ")" @ 102..103 trailing=[Whitespace " ", LineComment "// createForProduction uses an internal opt-in"]
+          CallExpression
+            NameExpression
+              Identifier "createEnvironment" @ 159..176 leading=[Newline "\n", Whitespace "        "]
+            ValueArgumentList
+              LParen "(" @ 176..177
+              RParen ")" @ 177..178
+      PropertyDeclaration
+        ValKw "val" @ 184..187 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "choice" @ 188..194 trailing=[Whitespace " "]
+        Assign "=" @ 195..196
+        AnnotatedExpression
+          ModifierList
+            Annotation
+              At "@" @ 205..206 leading=[Newline "\n", Whitespace "        "]
+              QualifiedName
+                Name
+                  Identifier "Suppress" @ 206..214
+              AnnotationArgumentList
+                LParen "(" @ 214..215
+                ValueArgument
+                  StringTemplateExpression
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 215..216
+                    StringTemplateEntry
+                      RegularStringPart "DEPRECATION" @ 216..227
+                    ClosingQuote "\"" @ 227..228
+                RParen ")" @ 228..229
+          WhenExpression
+            WhenKw "when" @ 238..242 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+            WhenSubject
+              LParen "(" @ 243..244
+              NameExpression
+                Identifier "flag" @ 244..248
+              RParen ")" @ 248..249 trailing=[Whitespace " "]
+            LBrace "{" @ 250..251
+            WhenEntry
+              WhenCondition
+                LiteralExpression
+                  TrueKw "true" @ 264..268 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+              Arrow "->" @ 269..271 trailing=[Whitespace " "]
+              StringTemplateExpression
+                StringTemplateEntry
+                  OpenQuote "\"" @ 272..273
+                StringTemplateEntry
+                  RegularStringPart "yes" @ 273..276
+                ClosingQuote "\"" @ 276..277
+            WhenEntry
+              WhenCondition
+                LiteralExpression
+                  FalseKw "false" @ 290..295 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+              Arrow "->" @ 296..298 trailing=[Whitespace " "]
+              StringTemplateExpression
+                StringTemplateEntry
+                  OpenQuote "\"" @ 299..300
+                StringTemplateEntry
+                  RegularStringPart "no" @ 300..302
+                ClosingQuote "\"" @ 302..303
+            RBrace "}" @ 312..313 leading=[Newline "\n", Whitespace "        "]
+      PropertyDeclaration
+        ValKw "val" @ 319..322 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "length" @ 323..329 trailing=[Whitespace " "]
+        Assign "=" @ 330..331
+        AnnotatedExpression
+          ModifierList
+            Annotation
+              At "@" @ 340..341 leading=[Newline "\n", Whitespace "        "]
+              QualifiedName
+                Name
+                  Identifier "Suppress" @ 341..349
+              AnnotationArgumentList
+                LParen "(" @ 349..350
+                ValueArgument
+                  StringTemplateExpression
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 350..351
+                    StringTemplateEntry
+                      RegularStringPart "DEPRECATION" @ 351..362
+                    ClosingQuote "\"" @ 362..363
+                RParen ")" @ 363..364
+          NavigationExpression
+            WhenExpression
+              WhenKw "when" @ 373..377 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+              WhenSubject
+                LParen "(" @ 378..379
+                NameExpression
+                  Identifier "flag" @ 379..383
+                RParen ")" @ 383..384 trailing=[Whitespace " "]
+              LBrace "{" @ 385..386
+              WhenEntry
+                WhenCondition
+                  LiteralExpression
+                    TrueKw "true" @ 399..403 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                Arrow "->" @ 404..406 trailing=[Whitespace " "]
+                StringTemplateExpression
+                  StringTemplateEntry
+                    OpenQuote "\"" @ 407..408
+                  StringTemplateEntry
+                    RegularStringPart "yes" @ 408..411
+                  ClosingQuote "\"" @ 411..412
+              WhenEntry
+                WhenCondition
+                  LiteralExpression
+                    FalseKw "false" @ 425..430 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                Arrow "->" @ 431..433 trailing=[Whitespace " "]
+                StringTemplateExpression
+                  StringTemplateEntry
+                    OpenQuote "\"" @ 434..435
+                  StringTemplateEntry
+                    RegularStringPart "no" @ 435..437
+                  ClosingQuote "\"" @ 437..438
+              RBrace "}" @ 447..448 leading=[Newline "\n", Whitespace "        "]
+            Dot "." @ 448..449
+            Identifier "length" @ 449..455
+      RBrace "}" @ 456..457 leading=[Newline "\n"]
+  Eof "" @ 458..458 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

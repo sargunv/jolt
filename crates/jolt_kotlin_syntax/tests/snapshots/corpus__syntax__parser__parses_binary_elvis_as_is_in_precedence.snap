@@ -5,9 +5,11 @@ expression: snapshot
 input:
 fun binaryKinds(input: Any?, names: List<String>): String {
     val name = input as? String ?: "guest"
+    val typedList = input as List<String>
+    val nullableMap = input as? Map<String, Int> ?: emptyMap()
     val present = name in names
-    val typed = input is CharSequence && input !is StringBuilder
-    return if (present && typed) name else "missing"
+    val typed = input is CharSequence && input !is StringBuilder && input is List<*>
+    return if (present && typed) name + typedList.size + nullableMap.size else "missing"
 }
 
 syntax:
@@ -16,7 +18,9 @@ KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    Identifier "binaryKinds" @ 4..15
+    CallableName
+      Name
+        Identifier "binaryKinds" @ 4..15
     ValueParameterList
       LParen "(" @ 15..16
       ValueParameter
@@ -54,76 +58,173 @@ KotlinFile
       LBrace "{" @ 58..59
       PropertyDeclaration
         ValKw "val" @ 64..67 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "name" @ 68..72 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "name" @ 68..72 trailing=[Whitespace " "]
         Assign "=" @ 73..74 trailing=[Whitespace " "]
         BinaryExpression
-          NameExpression
-            Identifier "input" @ 75..80 trailing=[Whitespace " "]
-          AsSafe "as?" @ 81..84 trailing=[Whitespace " "]
           BinaryExpression
             NameExpression
-              Identifier "String" @ 85..91 trailing=[Whitespace " "]
-            Elvis "?:" @ 92..94 trailing=[Whitespace " "]
-            StringTemplateExpression
-              StringTemplateEntry
-                OpenQuote "\"" @ 95..96
-              StringTemplateEntry
-                RegularStringPart "guest" @ 96..101
-              ClosingQuote "\"" @ 101..102
+              Identifier "input" @ 75..80 trailing=[Whitespace " "]
+            AsSafe "as?" @ 81..84 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                Identifier "String" @ 85..91 trailing=[Whitespace " "]
+          Elvis "?:" @ 92..94 trailing=[Whitespace " "]
+          StringTemplateExpression
+            StringTemplateEntry
+              OpenQuote "\"" @ 95..96
+            StringTemplateEntry
+              RegularStringPart "guest" @ 96..101
+            ClosingQuote "\"" @ 101..102
       PropertyDeclaration
         ValKw "val" @ 107..110 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "present" @ 111..118 trailing=[Whitespace " "]
-        Assign "=" @ 119..120 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "typedList" @ 111..120 trailing=[Whitespace " "]
+        Assign "=" @ 121..122 trailing=[Whitespace " "]
         BinaryExpression
           NameExpression
-            Identifier "name" @ 121..125 trailing=[Whitespace " "]
-          InKw "in" @ 126..128 trailing=[Whitespace " "]
-          NameExpression
-            Identifier "names" @ 129..134
+            Identifier "input" @ 123..128 trailing=[Whitespace " "]
+          AsKw "as" @ 129..131 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "List" @ 132..136
+              TypeArgumentList
+                Lt "<" @ 136..137
+                TypeProjectionList
+                  TypeArgument
+                    TypeProjection
+                      TypeReference
+                        UserType
+                          Identifier "String" @ 137..143
+                Gt ">" @ 143..144
       PropertyDeclaration
-        ValKw "val" @ 139..142 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "typed" @ 143..148 trailing=[Whitespace " "]
-        Assign "=" @ 149..150 trailing=[Whitespace " "]
+        ValKw "val" @ 149..152 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "nullableMap" @ 153..164 trailing=[Whitespace " "]
+        Assign "=" @ 165..166 trailing=[Whitespace " "]
         BinaryExpression
           BinaryExpression
             NameExpression
-              Identifier "input" @ 151..156 trailing=[Whitespace " "]
-            IsKw "is" @ 157..159 trailing=[Whitespace " "]
+              Identifier "input" @ 167..172 trailing=[Whitespace " "]
+            AsSafe "as?" @ 173..176 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                Identifier "Map" @ 177..180
+                TypeArgumentList
+                  Lt "<" @ 180..181
+                  TypeProjectionList
+                    TypeArgument
+                      TypeProjection
+                        TypeReference
+                          UserType
+                            Identifier "String" @ 181..187
+                    Comma "," @ 187..188 trailing=[Whitespace " "]
+                    TypeArgument
+                      TypeProjection
+                        TypeReference
+                          UserType
+                            Identifier "Int" @ 189..192
+                  Gt ">" @ 192..193 trailing=[Whitespace " "]
+          Elvis "?:" @ 194..196 trailing=[Whitespace " "]
+          CallExpression
             NameExpression
-              Identifier "CharSequence" @ 160..172 trailing=[Whitespace " "]
-          AndAnd "&&" @ 173..175 trailing=[Whitespace " "]
+              Identifier "emptyMap" @ 197..205
+            ValueArgumentList
+              LParen "(" @ 205..206
+              RParen ")" @ 206..207
+      PropertyDeclaration
+        ValKw "val" @ 212..215 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "present" @ 216..223 trailing=[Whitespace " "]
+        Assign "=" @ 224..225 trailing=[Whitespace " "]
+        BinaryExpression
+          NameExpression
+            Identifier "name" @ 226..230 trailing=[Whitespace " "]
+          InKw "in" @ 231..233 trailing=[Whitespace " "]
+          NameExpression
+            Identifier "names" @ 234..239
+      PropertyDeclaration
+        ValKw "val" @ 244..247 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "typed" @ 248..253 trailing=[Whitespace " "]
+        Assign "=" @ 254..255 trailing=[Whitespace " "]
+        BinaryExpression
+          BinaryExpression
+            BinaryExpression
+              NameExpression
+                Identifier "input" @ 256..261 trailing=[Whitespace " "]
+              IsKw "is" @ 262..264 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  Identifier "CharSequence" @ 265..277 trailing=[Whitespace " "]
+            AndAnd "&&" @ 278..280 trailing=[Whitespace " "]
+            BinaryExpression
+              NameExpression
+                Identifier "input" @ 281..286 trailing=[Whitespace " "]
+              NotIs "!is" @ 287..290 trailing=[Whitespace " "]
+              TypeReference
+                UserType
+                  Identifier "StringBuilder" @ 291..304 trailing=[Whitespace " "]
+          AndAnd "&&" @ 305..307 trailing=[Whitespace " "]
           BinaryExpression
             NameExpression
-              Identifier "input" @ 176..181 trailing=[Whitespace " "]
-            NotIs "!is" @ 182..185 trailing=[Whitespace " "]
-            NameExpression
-              Identifier "StringBuilder" @ 186..199
+              Identifier "input" @ 308..313 trailing=[Whitespace " "]
+            IsKw "is" @ 314..316 trailing=[Whitespace " "]
+            TypeReference
+              UserType
+                Identifier "List" @ 317..321
+                TypeArgumentList
+                  Lt "<" @ 321..322
+                  TypeProjectionList
+                    TypeArgument
+                      TypeProjection
+                        Star "*" @ 322..323
+                  Gt ">" @ 323..324
       Statement
         ExpressionStatement
           JumpExpression
-            ReturnKw "return" @ 204..210 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            ReturnKw "return" @ 329..335 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             IfExpression
-              IfKw "if" @ 211..213 trailing=[Whitespace " "]
+              IfKw "if" @ 336..338 trailing=[Whitespace " "]
               ParenthesizedExpression
-                LParen "(" @ 214..215
+                LParen "(" @ 339..340
                 BinaryExpression
                   NameExpression
-                    Identifier "present" @ 215..222 trailing=[Whitespace " "]
-                  AndAnd "&&" @ 223..225 trailing=[Whitespace " "]
+                    Identifier "present" @ 340..347 trailing=[Whitespace " "]
+                  AndAnd "&&" @ 348..350 trailing=[Whitespace " "]
                   NameExpression
-                    Identifier "typed" @ 226..231
-                RParen ")" @ 231..232 trailing=[Whitespace " "]
-              NameExpression
-                Identifier "name" @ 233..237 trailing=[Whitespace " "]
-              ElseKw "else" @ 238..242 trailing=[Whitespace " "]
+                    Identifier "typed" @ 351..356
+                RParen ")" @ 356..357 trailing=[Whitespace " "]
+              BinaryExpression
+                BinaryExpression
+                  NameExpression
+                    Identifier "name" @ 358..362 trailing=[Whitespace " "]
+                  Plus "+" @ 363..364 trailing=[Whitespace " "]
+                  NavigationExpression
+                    NameExpression
+                      Identifier "typedList" @ 365..374
+                    Dot "." @ 374..375
+                    Identifier "size" @ 375..379 trailing=[Whitespace " "]
+                Plus "+" @ 380..381 trailing=[Whitespace " "]
+                NavigationExpression
+                  NameExpression
+                    Identifier "nullableMap" @ 382..393
+                  Dot "." @ 393..394
+                  Identifier "size" @ 394..398 trailing=[Whitespace " "]
+              ElseKw "else" @ 399..403 trailing=[Whitespace " "]
               StringTemplateExpression
                 StringTemplateEntry
-                  OpenQuote "\"" @ 243..244
+                  OpenQuote "\"" @ 404..405
                 StringTemplateEntry
-                  RegularStringPart "missing" @ 244..251
-                ClosingQuote "\"" @ 251..252
-      RBrace "}" @ 253..254 leading=[Newline "\n"]
-  Eof "" @ 255..255 leading=[Newline "\n"]
+                  RegularStringPart "missing" @ 405..412
+                ClosingQuote "\"" @ 412..413
+      RBrace "}" @ 414..415 leading=[Newline "\n"]
+  Eof "" @ 416..416 leading=[Newline "\n"]
 
 diagnostics:
   (none)

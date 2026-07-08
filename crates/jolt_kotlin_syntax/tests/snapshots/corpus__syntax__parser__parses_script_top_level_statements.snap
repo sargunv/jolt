@@ -17,7 +17,9 @@ KotlinFile
   ImportList
   PropertyDeclaration
     ValKw "val" @ 23..26 leading=[ShebangComment "#!/usr/bin/env kotlin", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "scriptName" @ 27..37 trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "scriptName" @ 27..37 trailing=[Whitespace " "]
     Assign "=" @ 38..39 trailing=[Whitespace " "]
     StringTemplateExpression
       StringTemplateEntry

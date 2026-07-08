@@ -80,6 +80,22 @@ impl Parser<'_> {
                 self.bump();
                 let error = self.start();
                 self.complete(error, K::ErrorNode);
+            } else if matches!(operator, K::AsKw | K::AsSafe | K::IsKw | K::NotIs) {
+                self.bump();
+                self.parse_type_reference_until(&[
+                    K::Elvis,
+                    K::OrOr,
+                    K::AndAnd,
+                    K::Arrow,
+                    K::IfKw,
+                    K::Comma,
+                    K::Semicolon,
+                    K::DoubleSemicolon,
+                    K::RBrace,
+                    K::RParen,
+                    K::RBracket,
+                    K::LongTemplateEntryEnd,
+                ]);
             } else {
                 self.bump();
                 self.parse_binary_expression(stops, info.precedence + 1);
@@ -113,6 +129,7 @@ impl Parser<'_> {
                     self.current_kind(),
                     K::LBrace | K::LBracket | K::Dot | K::SafeAccess | K::ColonColon | K::Elvis
                 )
+                && !self.at_split_safe_access()
             {
                 break;
             }
@@ -168,6 +185,19 @@ impl Parser<'_> {
                     }
                     expression = self.complete(navigation, K::NavigationExpression);
                 }
+                K::Question if self.at_split_safe_access() => {
+                    let navigation = self.precede(expression);
+                    self.bump();
+                    self.bump();
+                    if self.at_identifier_like()
+                        || matches!(self.current_kind(), K::ThisKw | K::SuperKw)
+                    {
+                        self.bump();
+                    } else {
+                        self.expected_here("expected member name");
+                    }
+                    expression = self.complete(navigation, K::NavigationExpression);
+                }
                 K::ColonColon => {
                     let reference = self.precede(expression);
                     self.bump();
@@ -198,6 +228,7 @@ impl Parser<'_> {
 
     fn parse_primary_expression(&mut self, stops: StopSet<'_>) -> CompletedMarker {
         match self.current_kind() {
+            K::At | K::Hash => self.parse_annotated_expression(stops),
             K::IfKw => self.parse_if_expression(),
             K::WhenKw => self.parse_when_expression(),
             K::TryKw => self.parse_try_expression(),
@@ -237,6 +268,19 @@ impl Parser<'_> {
         self.complete(marker, kind)
     }
 
+    fn parse_annotated_expression(&mut self, stops: StopSet<'_>) -> CompletedMarker {
+        let marker = self.start();
+        self.parse_modifier_list();
+        if self.at_expression_boundary(stops) {
+            let error = self.start();
+            self.expected_here("expected expression");
+            self.complete(error, K::ErrorNode);
+        } else {
+            self.parse_assignment_expression(stops);
+        }
+        self.complete(marker, K::AnnotatedExpression)
+    }
+
     fn parse_this_expression(&mut self) -> CompletedMarker {
         let marker = self.start();
         self.expect(K::ThisKw, "expected this");
@@ -254,7 +298,7 @@ impl Parser<'_> {
         self.complete(marker, K::SuperExpression)
     }
 
-    fn parse_value_argument_list(&mut self) {
+    pub(in crate::parser::grammar) fn parse_value_argument_list(&mut self) {
         let marker = self.start();
         self.expect(K::LParen, "expected argument list");
         self.parse_comma_separated_until(K::RParen, K::ValueArgument);
@@ -276,7 +320,9 @@ impl Parser<'_> {
         let marker = self.start();
         self.bump();
         self.parse_optional_label_reference();
-        if !self.at_expression_boundary(stops.with_extra(K::RBrace)) {
+        if !self.at_semicolon_boundary()
+            && !self.at_expression_boundary(stops.with_extra(K::RBrace))
+        {
             self.parse_expression_until(stops.with_extra(K::RBrace));
         }
         self.complete(marker, K::JumpExpression)
@@ -383,6 +429,12 @@ impl Parser<'_> {
         (self.at_identifier_like() || matches!(kind, K::ByKw))
             && expression_start_kind(self.nth_kind(1))
             && !self.newline_before_current()
+    }
+
+    fn at_split_safe_access(&mut self) -> bool {
+        self.current_kind() == K::Question
+            && self.nth_kind(1) == K::Dot
+            && self.tokens_are_adjacent(self.position(), 2)
     }
 
     fn at_label_start(&mut self, kind: K) -> bool {

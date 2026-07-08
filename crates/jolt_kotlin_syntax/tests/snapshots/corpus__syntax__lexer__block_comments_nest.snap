@@ -11,7 +11,9 @@ KotlinFile
   ImportList
   PropertyDeclaration
     ValKw "val" @ 0..3 trailing=[Whitespace " "]
-    Identifier "x" @ 4..5 trailing=[Whitespace " ", BlockComment "/* outer /* inner */ outer */", Whitespace " "]
+    CallableName
+      Name
+        Identifier "x" @ 4..5 trailing=[Whitespace " ", BlockComment "/* outer /* inner */ outer */", Whitespace " "]
     Assign "=" @ 36..37 trailing=[Whitespace " "]
     LiteralExpression
       IntegerLiteral "1" @ 38..39

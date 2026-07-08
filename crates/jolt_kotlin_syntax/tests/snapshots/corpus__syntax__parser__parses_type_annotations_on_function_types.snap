@@ -1,0 +1,158 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+annotation class Composable
+annotation class Fancy(val name: String)
+
+fun render(
+    menu: @Composable () -> Unit,
+    map: @Composable (PaddingValues) -> Unit,
+    trailingContent: @Composable (() -> Unit)? = null,
+    decorated: @Fancy("label") String,
+) = Unit
+
+class PaddingValues
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  ClassDeclaration
+    ModifierList
+      Identifier "annotation" @ 0..10 trailing=[Whitespace " "]
+    ClassKw "class" @ 11..16 trailing=[Whitespace " "]
+    Name
+      Identifier "Composable" @ 17..27
+  ClassDeclaration
+    ModifierList
+      Identifier "annotation" @ 28..38 leading=[Newline "\n"] trailing=[Whitespace " "]
+    ClassKw "class" @ 39..44 trailing=[Whitespace " "]
+    Name
+      Identifier "Fancy" @ 45..50
+    PrimaryConstructor
+      ValueParameterList
+        LParen "(" @ 50..51
+        ValueParameter
+          ValKw "val" @ 51..54 trailing=[Whitespace " "]
+          Name
+            Identifier "name" @ 55..59
+          Colon ":" @ 59..60 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "String" @ 61..67
+        RParen ")" @ 67..68
+  FunctionDeclaration
+    FunKw "fun" @ 70..73 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "render" @ 74..80
+    ValueParameterList
+      LParen "(" @ 80..81
+      ValueParameter
+        Name
+          Identifier "menu" @ 86..90 leading=[Newline "\n", Whitespace "    "]
+        Colon ":" @ 90..91 trailing=[Whitespace " "]
+        TypeReference
+          FunctionType
+            ParenthesizedType
+              Annotation
+                At "@" @ 92..93
+                QualifiedName
+                  Name
+                    Identifier "Composable" @ 93..103 trailing=[Whitespace " "]
+              LParen "(" @ 104..105
+              RParen ")" @ 105..106 trailing=[Whitespace " "]
+            Arrow "->" @ 107..109 trailing=[Whitespace " "]
+            UserType
+              Identifier "Unit" @ 110..114
+      Comma "," @ 114..115
+      ValueParameter
+        Name
+          Identifier "map" @ 120..123 leading=[Newline "\n", Whitespace "    "]
+        Colon ":" @ 123..124 trailing=[Whitespace " "]
+        TypeReference
+          FunctionType
+            ParenthesizedType
+              Annotation
+                At "@" @ 125..126
+                QualifiedName
+                  Name
+                    Identifier "Composable" @ 126..136 trailing=[Whitespace " "]
+              LParen "(" @ 137..138
+              FunctionTypeParameter
+                TypeReference
+                  UserType
+                    Identifier "PaddingValues" @ 138..151
+              RParen ")" @ 151..152 trailing=[Whitespace " "]
+            Arrow "->" @ 153..155 trailing=[Whitespace " "]
+            UserType
+              Identifier "Unit" @ 156..160
+      Comma "," @ 160..161
+      ValueParameter
+        Name
+          Identifier "trailingContent" @ 166..181 leading=[Newline "\n", Whitespace "    "]
+        Colon ":" @ 181..182 trailing=[Whitespace " "]
+        TypeReference
+          NullableType
+            ParenthesizedType
+              Annotation
+                At "@" @ 183..184
+                QualifiedName
+                  Name
+                    Identifier "Composable" @ 184..194 trailing=[Whitespace " "]
+              LParen "(" @ 195..196
+              FunctionTypeParameter
+                TypeReference
+                  FunctionType
+                    ParenthesizedType
+                      LParen "(" @ 196..197
+                      RParen ")" @ 197..198 trailing=[Whitespace " "]
+                    Arrow "->" @ 199..201 trailing=[Whitespace " "]
+                    UserType
+                      Identifier "Unit" @ 202..206
+              RParen ")" @ 206..207
+            Question "?" @ 207..208 trailing=[Whitespace " "]
+        Assign "=" @ 209..210 trailing=[Whitespace " "]
+        LiteralExpression
+          NullKw "null" @ 211..215
+      Comma "," @ 215..216
+      ValueParameter
+        Name
+          Identifier "decorated" @ 221..230 leading=[Newline "\n", Whitespace "    "]
+        Colon ":" @ 230..231 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Annotation
+              At "@" @ 232..233
+              QualifiedName
+                Name
+                  Identifier "Fancy" @ 233..238
+              AnnotationArgumentList
+                LParen "(" @ 238..239
+                ValueArgument
+                  StringTemplateExpression
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 239..240
+                    StringTemplateEntry
+                      RegularStringPart "label" @ 240..245
+                    ClosingQuote "\"" @ 245..246
+                RParen ")" @ 246..247 trailing=[Whitespace " "]
+            Identifier "String" @ 248..254
+      Comma "," @ 254..255
+      RParen ")" @ 256..257 leading=[Newline "\n"] trailing=[Whitespace " "]
+    Assign "=" @ 258..259 trailing=[Whitespace " "]
+    NameExpression
+      Identifier "Unit" @ 260..264
+  ClassDeclaration
+    ClassKw "class" @ 266..271 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "PaddingValues" @ 272..285
+  Eof "" @ 286..286 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

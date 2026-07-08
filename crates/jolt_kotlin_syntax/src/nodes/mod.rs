@@ -7,6 +7,8 @@ use crate::{KotlinSyntaxKind, language::KotlinLanguage};
 
 mod accessors;
 
+pub use accessors::ClassMemberDeclarationEntry;
+
 pub(crate) type KotlinSyntaxNode<'source> = SyntaxNode<'source, KotlinLanguage>;
 type KotlinRawSyntaxToken<'source> = SyntaxToken<'source, KotlinLanguage>;
 
@@ -107,6 +109,14 @@ pub enum KotlinCommentKind {
     Block,
     /// A `KDoc` comment.
     Doc,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ExpressionParentRole {
+    NavigationReceiver,
+    CallCallee,
+    IndexReceiver,
+    IndexArgument,
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]
@@ -238,6 +248,14 @@ fn child_token<'source>(
         .child_tokens()
         .map(|syntax| KotlinSyntaxToken { syntax })
         .find(|token| token.kind() == kind)
+}
+
+fn child_tokens<'source>(
+    syntax: &KotlinSyntaxNode<'source>,
+) -> impl Iterator<Item = KotlinSyntaxToken<'source>> + use<'source> {
+    syntax
+        .child_tokens()
+        .map(|syntax| KotlinSyntaxToken { syntax })
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]
@@ -481,6 +499,7 @@ kotlin_cst! {
         ValueArgument => ValueArgument,
         Name => Name,
         QualifiedName => QualifiedName,
+        CallableName => CallableName,
         TypeArgumentList => TypeArgumentList,
         TypeArgument => TypeArgument,
         ClassDeclaration => ClassDeclaration,
@@ -513,6 +532,7 @@ kotlin_cst! {
         ContextFunctionType => ContextFunctionType,
         ReceiverType => ReceiverType,
         ParenthesizedType => ParenthesizedType,
+        FunctionTypeParameter => FunctionTypeParameter,
         DefinitelyNonNullableType => DefinitelyNonNullableType,
         TypeProjection => TypeProjection,
         TypeProjectionList => TypeProjectionList,
@@ -535,6 +555,7 @@ kotlin_cst! {
         ThisExpression => ThisExpression,
         SuperExpression => SuperExpression,
         ParenthesizedExpression => ParenthesizedExpression,
+        AnnotatedExpression => AnnotatedExpression,
         IfExpression => IfExpression,
         WhenExpression => WhenExpression,
         WhenSubject => WhenSubject,
@@ -630,6 +651,7 @@ kotlin_cst! {
             ThisExpression |
             SuperExpression |
             ParenthesizedExpression |
+            AnnotatedExpression |
             IfExpression |
             WhenExpression |
             TryExpression |
@@ -666,5 +688,19 @@ kotlin_cst! {
             ExpressionStatement |
             LocalDeclaration |
             Block;
+
+        BlockItem =
+            Statement |
+            ExpressionStatement |
+            LocalDeclaration |
+            Block |
+            ClassDeclaration |
+            InterfaceDeclaration |
+            ObjectDeclaration |
+            FunctionDeclaration |
+            PropertyDeclaration |
+            TypeAliasDeclaration |
+            SecondaryConstructor |
+            InitializerBlock;
     }
 }

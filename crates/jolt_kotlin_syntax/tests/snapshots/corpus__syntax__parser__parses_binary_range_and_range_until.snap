@@ -16,7 +16,9 @@ KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    Identifier "ranges" @ 4..10
+    CallableName
+      Name
+        Identifier "ranges" @ 4..10
     ValueParameterList
       LParen "(" @ 10..11
       ValueParameter
@@ -44,7 +46,9 @@ KotlinFile
       LBrace "{" @ 34..35
       PropertyDeclaration
         ValKw "val" @ 40..43 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "closed" @ 44..50 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "closed" @ 44..50 trailing=[Whitespace " "]
         Assign "=" @ 51..52 trailing=[Whitespace " "]
         BinaryExpression
           LiteralExpression
@@ -54,7 +58,9 @@ KotlinFile
             Identifier "limit" @ 56..61
       PropertyDeclaration
         ValKw "val" @ 66..69 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "open" @ 70..74 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "open" @ 70..74 trailing=[Whitespace " "]
         Assign "=" @ 75..76 trailing=[Whitespace " "]
         BinaryExpression
           LiteralExpression
@@ -64,7 +70,9 @@ KotlinFile
             Identifier "limit" @ 81..86
       PropertyDeclaration
         ValKw "val" @ 91..94 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "stepped" @ 95..102 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "stepped" @ 95..102 trailing=[Whitespace " "]
         Assign "=" @ 103..104 trailing=[Whitespace " "]
         BinaryExpression
           BinaryExpression

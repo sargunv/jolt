@@ -1,0 +1,29 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+package com.example.statements
+
+fun summarize(rows: List<List<Int>>): String {
+  val total = try {
+    var count = 0
+    outer@ for (row in rows) {
+      for (value in row) {
+        if (value < 0) continue@outer
+        count += value
+      }
+    }
+    count
+  } catch (error: IllegalStateException) {
+    return "error"
+  }
+  return when {
+    total == 0 -> "empty"
+    total > 10 -> "large"
+    else -> "small"
+  }
+}
+
+diagnostics:
+(none)

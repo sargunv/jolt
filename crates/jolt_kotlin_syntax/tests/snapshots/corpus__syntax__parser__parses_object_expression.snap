@@ -15,15 +15,18 @@ KotlinFile
   ImportList
   PropertyDeclaration
     ValKw "val" @ 0..3 trailing=[Whitespace " "]
-    Identifier "listener" @ 4..12 trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "listener" @ 4..12 trailing=[Whitespace " "]
     Assign "=" @ 13..14 trailing=[Whitespace " "]
     ObjectExpression
       ObjectKw "object" @ 15..21 trailing=[Whitespace " "]
       Colon ":" @ 22..23 trailing=[Whitespace " "]
       DelegationSpecifierList
         DelegationSpecifier
-          NameExpression
-            Identifier "Runnable" @ 24..32 trailing=[Whitespace " "]
+          TypeReference
+            UserType
+              Identifier "Runnable" @ 24..32 trailing=[Whitespace " "]
       ClassBody
         LBrace "{" @ 33..34
         ClassMemberDeclaration
@@ -31,7 +34,9 @@ KotlinFile
             ModifierList
               Identifier "override" @ 39..47 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             FunKw "fun" @ 48..51 trailing=[Whitespace " "]
-            Identifier "run" @ 52..55
+            CallableName
+              Name
+                Identifier "run" @ 52..55
             ValueParameterList
               LParen "(" @ 55..56
               RParen ")" @ 56..57 trailing=[Whitespace " "]

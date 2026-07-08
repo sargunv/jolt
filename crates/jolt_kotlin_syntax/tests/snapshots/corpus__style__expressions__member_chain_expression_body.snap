@@ -1,0 +1,167 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package com.example.expressions
+
+val normalized=" Alpha Beta Gamma ".trim().lowercase().replace(" ","_").removePrefix("tmp_").removeSuffix("_old")
+
+fun canonical(input: String): String=input.trim().lowercase().replace("-","_")
+
+syntax:
+syntax:
+KotlinFile
+  PackageHeader
+    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+    QualifiedName
+      Name
+        Identifier "com" @ 8..11
+      Dot "." @ 11..12
+      Name
+        Identifier "example" @ 12..19
+      Dot "." @ 19..20
+      Name
+        Identifier "expressions" @ 20..31
+  ImportList
+  PropertyDeclaration
+    ValKw "val" @ 33..36 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "normalized" @ 37..47
+    Assign "=" @ 47..48
+    CallExpression
+      NavigationExpression
+        CallExpression
+          NavigationExpression
+            CallExpression
+              NavigationExpression
+                CallExpression
+                  NavigationExpression
+                    CallExpression
+                      NavigationExpression
+                        StringTemplateExpression
+                          StringTemplateEntry
+                            OpenQuote "\"" @ 48..49
+                          StringTemplateEntry
+                            RegularStringPart " Alpha Beta Gamma " @ 49..67
+                          ClosingQuote "\"" @ 67..68
+                        Dot "." @ 68..69
+                        Identifier "trim" @ 69..73
+                      ValueArgumentList
+                        LParen "(" @ 73..74
+                        RParen ")" @ 74..75
+                    Dot "." @ 75..76
+                    Identifier "lowercase" @ 76..85
+                  ValueArgumentList
+                    LParen "(" @ 85..86
+                    RParen ")" @ 86..87
+                Dot "." @ 87..88
+                Identifier "replace" @ 88..95
+              ValueArgumentList
+                LParen "(" @ 95..96
+                ValueArgument
+                  StringTemplateExpression
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 96..97
+                    StringTemplateEntry
+                      RegularStringPart " " @ 97..98
+                    ClosingQuote "\"" @ 98..99
+                Comma "," @ 99..100
+                ValueArgument
+                  StringTemplateExpression
+                    StringTemplateEntry
+                      OpenQuote "\"" @ 100..101
+                    StringTemplateEntry
+                      RegularStringPart "_" @ 101..102
+                    ClosingQuote "\"" @ 102..103
+                RParen ")" @ 103..104
+            Dot "." @ 104..105
+            Identifier "removePrefix" @ 105..117
+          ValueArgumentList
+            LParen "(" @ 117..118
+            ValueArgument
+              StringTemplateExpression
+                StringTemplateEntry
+                  OpenQuote "\"" @ 118..119
+                StringTemplateEntry
+                  RegularStringPart "tmp_" @ 119..123
+                ClosingQuote "\"" @ 123..124
+            RParen ")" @ 124..125
+        Dot "." @ 125..126
+        Identifier "removeSuffix" @ 126..138
+      ValueArgumentList
+        LParen "(" @ 138..139
+        ValueArgument
+          StringTemplateExpression
+            StringTemplateEntry
+              OpenQuote "\"" @ 139..140
+            StringTemplateEntry
+              RegularStringPart "_old" @ 140..144
+            ClosingQuote "\"" @ 144..145
+        RParen ")" @ 145..146
+  FunctionDeclaration
+    FunKw "fun" @ 148..151 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "canonical" @ 152..161
+    ValueParameterList
+      LParen "(" @ 161..162
+      ValueParameter
+        Name
+          Identifier "input" @ 162..167
+        Colon ":" @ 167..168 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "String" @ 169..175
+      RParen ")" @ 175..176
+    Colon ":" @ 176..177 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "String" @ 178..184
+    Assign "=" @ 184..185
+    CallExpression
+      NavigationExpression
+        CallExpression
+          NavigationExpression
+            CallExpression
+              NavigationExpression
+                NameExpression
+                  Identifier "input" @ 185..190
+                Dot "." @ 190..191
+                Identifier "trim" @ 191..195
+              ValueArgumentList
+                LParen "(" @ 195..196
+                RParen ")" @ 196..197
+            Dot "." @ 197..198
+            Identifier "lowercase" @ 198..207
+          ValueArgumentList
+            LParen "(" @ 207..208
+            RParen ")" @ 208..209
+        Dot "." @ 209..210
+        Identifier "replace" @ 210..217
+      ValueArgumentList
+        LParen "(" @ 217..218
+        ValueArgument
+          StringTemplateExpression
+            StringTemplateEntry
+              OpenQuote "\"" @ 218..219
+            StringTemplateEntry
+              RegularStringPart "-" @ 219..220
+            ClosingQuote "\"" @ 220..221
+        Comma "," @ 221..222
+        ValueArgument
+          StringTemplateExpression
+            StringTemplateEntry
+              OpenQuote "\"" @ 222..223
+            StringTemplateEntry
+              RegularStringPart "_" @ 223..224
+            ClosingQuote "\"" @ 224..225
+        RParen ")" @ 225..226
+  Eof "" @ 227..227 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

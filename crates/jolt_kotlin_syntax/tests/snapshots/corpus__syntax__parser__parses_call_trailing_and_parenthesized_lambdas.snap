@@ -11,13 +11,23 @@ fun trailing(values: List<Int>) {
         }
 }
 
+class Cached<T>(private val init: (Int) -> T) {
+    init {
+        require(true)
+    }
+
+    private val values = List(8) { init(it) }
+}
+
 syntax:
 syntax:
 KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    Identifier "trailing" @ 4..12
+    CallableName
+      Name
+        Identifier "trailing" @ 4..12
     ValueParameterList
       LParen "(" @ 12..13
       ValueParameter
@@ -114,7 +124,93 @@ KotlinFile
                       Identifier "value" @ 151..156
               RBrace "}" @ 165..166 leading=[Newline "\n", Whitespace "        "]
       RBrace "}" @ 167..168 leading=[Newline "\n"]
-  Eof "" @ 169..169 leading=[Newline "\n"]
+  ClassDeclaration
+    ClassKw "class" @ 170..175 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "Cached" @ 176..182
+    TypeParameterList
+      Lt "<" @ 182..183
+      TypeParameter
+        Name
+          Identifier "T" @ 183..184
+      Gt ">" @ 184..185
+    PrimaryConstructor
+      ValueParameterList
+        LParen "(" @ 185..186
+        ValueParameter
+          ModifierList
+            Identifier "private" @ 186..193 trailing=[Whitespace " "]
+          ValKw "val" @ 194..197 trailing=[Whitespace " "]
+          Name
+            Identifier "init" @ 198..202
+          Colon ":" @ 202..203 trailing=[Whitespace " "]
+          TypeReference
+            FunctionType
+              ParenthesizedType
+                LParen "(" @ 204..205
+                FunctionTypeParameter
+                  TypeReference
+                    UserType
+                      Identifier "Int" @ 205..208
+                RParen ")" @ 208..209 trailing=[Whitespace " "]
+              Arrow "->" @ 210..212 trailing=[Whitespace " "]
+              UserType
+                Identifier "T" @ 213..214
+        RParen ")" @ 214..215 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 216..217
+      ClassMemberDeclaration
+        InitializerBlock
+          Identifier "init" @ 222..226 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 227..228
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "require" @ 237..244 leading=[Newline "\n", Whitespace "        "]
+                  ValueArgumentList
+                    LParen "(" @ 244..245
+                    ValueArgument
+                      LiteralExpression
+                        TrueKw "true" @ 245..249
+                    RParen ")" @ 249..250
+            RBrace "}" @ 255..256 leading=[Newline "\n", Whitespace "    "]
+      ClassMemberDeclaration
+        PropertyDeclaration
+          ModifierList
+            Identifier "private" @ 262..269 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          ValKw "val" @ 270..273 trailing=[Whitespace " "]
+          CallableName
+            Name
+              Identifier "values" @ 274..280 trailing=[Whitespace " "]
+          Assign "=" @ 281..282 trailing=[Whitespace " "]
+          CallExpression
+            CallExpression
+              NameExpression
+                Identifier "List" @ 283..287
+              ValueArgumentList
+                LParen "(" @ 287..288
+                ValueArgument
+                  LiteralExpression
+                    IntegerLiteral "8" @ 288..289
+                RParen ")" @ 289..290 trailing=[Whitespace " "]
+            LambdaExpression
+              LBrace "{" @ 291..292 trailing=[Whitespace " "]
+              Statement
+                ExpressionStatement
+                  CallExpression
+                    NameExpression
+                      Identifier "init" @ 293..297
+                    ValueArgumentList
+                      LParen "(" @ 297..298
+                      ValueArgument
+                        NameExpression
+                          Identifier "it" @ 298..300
+                      RParen ")" @ 300..301 trailing=[Whitespace " "]
+              RBrace "}" @ 302..303
+      RBrace "}" @ 304..305 leading=[Newline "\n"]
+  Eof "" @ 306..306 leading=[Newline "\n"]
 
 diagnostics:
   (none)

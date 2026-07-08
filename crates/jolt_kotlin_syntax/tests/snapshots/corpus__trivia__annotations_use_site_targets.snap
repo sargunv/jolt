@@ -170,7 +170,9 @@ KotlinFile
                     ClosingQuote "\"" @ 402..403
                 RParen ")" @ 403..404
           VarKw "var" @ 409..412 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "label" @ 413..418
+          CallableName
+            Name
+              Identifier "label" @ 413..418
           Colon ":" @ 418..419 trailing=[Whitespace " "]
           TypeReference
             UserType

@@ -26,11 +26,11 @@ impl Parser<'_> {
     }
 
     pub(in crate::parser::grammar) fn at_identifier_like(&mut self) -> bool {
-        is_identifier_like(self.current_kind())
+        is_identifier_like_kind(self.current_kind())
     }
 }
 
-fn is_identifier_like(kind: K) -> bool {
+pub(in crate::parser::grammar) fn is_identifier_like_kind(kind: K) -> bool {
     matches!(
         kind,
         K::Identifier
@@ -54,5 +54,36 @@ fn is_identifier_like(kind: K) -> bool {
             | K::CatchKw
             | K::DynamicKw
             | K::FinallyKw
+            | K::AbstractKw
+            | K::EnumKw
+            | K::ContractKw
+            | K::OpenKw
+            | K::InnerKw
+            | K::OverrideKw
+            | K::PrivateKw
+            | K::PublicKw
+            | K::InternalKw
+            | K::ProtectedKw
+            | K::OutKw
+            | K::VarargKw
+            | K::ReifiedKw
+            | K::CompanionKw
+            | K::SealedKw
+            | K::FinalKw
+            | K::LateinitKw
+            | K::DataKw
+            | K::ValueKw
+            | K::InlineKw
+            | K::NoinlineKw
+            | K::TailrecKw
+            | K::ExternalKw
+            | K::AnnotationKw
+            | K::CrossinlineKw
+            | K::OperatorKw
+            | K::InfixKw
+            | K::ConstKw
+            | K::SuspendKw
+            | K::ExpectKw
+            | K::ActualKw
     )
 }

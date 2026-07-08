@@ -1,0 +1,13 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+fun <T> identity(value: T): T = value
+
+fun <T : Comparable<T>> maxOf(left: T, right: T): T = if (
+  left >= right
+) left else right
+
+diagnostics:
+(none)

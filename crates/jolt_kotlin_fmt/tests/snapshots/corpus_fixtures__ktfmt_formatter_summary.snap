@@ -1,0 +1,13 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus_fixtures.rs
+expression: ktfmt_summary.render()
+---
+suite: ktfmt
+files: 72
+formatted: 72
+syntax blocked: 0
+formatter blocked: 0
+reconstructed changed: 0
+
+diagnostics:
+  <none>: 0

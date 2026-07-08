@@ -8,13 +8,20 @@ fun expressionJumps(value: String?): String {
     return checked.takeIf { it.isNotEmpty() } ?: return "empty"
 }
 
+fun guardReturn(isOpen: Boolean) {
+    if (!isOpen) return
+    val afterGuard = Unit
+}
+
 syntax:
 syntax:
 KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    Identifier "expressionJumps" @ 4..19
+    CallableName
+      Name
+        Identifier "expressionJumps" @ 4..19
     ValueParameterList
       LParen "(" @ 19..20
       ValueParameter
@@ -35,7 +42,9 @@ KotlinFile
       LBrace "{" @ 44..45
       PropertyDeclaration
         ValKw "val" @ 50..53 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "checked" @ 54..61 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "checked" @ 54..61 trailing=[Whitespace " "]
         Assign "=" @ 62..63 trailing=[Whitespace " "]
         BinaryExpression
           NameExpression
@@ -84,7 +93,46 @@ KotlinFile
                     RegularStringPart "empty" @ 151..156
                   ClosingQuote "\"" @ 156..157
       RBrace "}" @ 158..159 leading=[Newline "\n"]
-  Eof "" @ 160..160 leading=[Newline "\n"]
+  FunctionDeclaration
+    FunKw "fun" @ 161..164 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "guardReturn" @ 165..176
+    ValueParameterList
+      LParen "(" @ 176..177
+      ValueParameter
+        Name
+          Identifier "isOpen" @ 177..183
+        Colon ":" @ 183..184 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Boolean" @ 185..192
+      RParen ")" @ 192..193 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 194..195
+      Statement
+        ExpressionStatement
+          IfExpression
+            IfKw "if" @ 200..202 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            ParenthesizedExpression
+              LParen "(" @ 203..204
+              UnaryExpression
+                Bang "!" @ 204..205
+                NameExpression
+                  Identifier "isOpen" @ 205..211
+              RParen ")" @ 211..212 trailing=[Whitespace " "]
+            JumpExpression
+              ReturnKw "return" @ 213..219
+      PropertyDeclaration
+        ValKw "val" @ 224..227 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "afterGuard" @ 228..238 trailing=[Whitespace " "]
+        Assign "=" @ 239..240 trailing=[Whitespace " "]
+        NameExpression
+          Identifier "Unit" @ 241..245
+      RBrace "}" @ 246..247 leading=[Newline "\n"]
+  Eof "" @ 248..248 leading=[Newline "\n"]
 
 diagnostics:
   (none)

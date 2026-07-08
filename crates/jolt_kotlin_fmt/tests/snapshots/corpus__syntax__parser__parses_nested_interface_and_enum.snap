@@ -1,0 +1,19 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class Container {
+  interface Entry {
+    val key: String
+  }
+
+  enum class Kind {
+    First,
+
+    Second,
+  }
+}
+
+diagnostics:
+(none)

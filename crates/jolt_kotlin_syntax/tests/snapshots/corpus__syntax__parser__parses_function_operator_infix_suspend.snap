@@ -38,7 +38,9 @@ KotlinFile
           ModifierList
             Identifier "operator" @ 36..44 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
           FunKw "fun" @ 45..48 trailing=[Whitespace " "]
-          Identifier "plus" @ 49..53
+          CallableName
+            Name
+              Identifier "plus" @ 49..53
           ValueParameterList
             LParen "(" @ 53..54
             ValueParameter
@@ -75,7 +77,9 @@ KotlinFile
           ModifierList
             Identifier "infix" @ 115..120 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
           FunKw "fun" @ 121..124 trailing=[Whitespace " "]
-          Identifier "above" @ 125..130
+          CallableName
+            Name
+              Identifier "above" @ 125..130
           ValueParameterList
             LParen "(" @ 130..131
             ValueParameter
@@ -105,7 +109,9 @@ KotlinFile
     ModifierList
       Identifier "suspend" @ 181..188 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
     FunKw "fun" @ 189..192 trailing=[Whitespace " "]
-    Identifier "fetchValue" @ 193..203
+    CallableName
+      Name
+        Identifier "fetchValue" @ 193..203
     ValueParameterList
       LParen "(" @ 203..204
       RParen ")" @ 204..205

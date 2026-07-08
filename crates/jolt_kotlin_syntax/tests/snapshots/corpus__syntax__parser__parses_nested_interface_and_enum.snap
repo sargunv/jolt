@@ -34,7 +34,9 @@ KotlinFile
             ClassMemberDeclaration
               PropertyDeclaration
                 ValKw "val" @ 48..51 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                Identifier "key" @ 52..55
+                CallableName
+                  Name
+                    Identifier "key" @ 52..55
                 Colon ":" @ 55..56 trailing=[Whitespace " "]
                 TypeReference
                   UserType

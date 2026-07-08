@@ -30,7 +30,9 @@ KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 28..31 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "references" @ 32..42
+    CallableName
+      Name
+        Identifier "references" @ 32..42
     ValueParameterList
       LParen "(" @ 42..43
       ValueParameter
@@ -54,7 +56,9 @@ KotlinFile
       LBrace "{" @ 65..66
       PropertyDeclaration
         ValKw "val" @ 71..74 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "member" @ 75..81 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "member" @ 75..81 trailing=[Whitespace " "]
         Assign "=" @ 82..83 trailing=[Whitespace " "]
         CallableReferenceExpression
           NameExpression
@@ -94,15 +98,17 @@ KotlinFile
                         ReturnKw "return" @ 276..282
                         At "@" @ 282..283
                         Identifier "outer" @ 283..288 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:labeled-return */"]
-                        CallExpression
+                Statement
+                  ExpressionStatement
+                    CallExpression
+                      NameExpression
+                        Identifier "member" @ 330..336 leading=[Newline "\n", Whitespace "        "]
+                      ValueArgumentList
+                        LParen "(" @ 336..337
+                        ValueArgument
                           NameExpression
-                            Identifier "member" @ 330..336 leading=[Newline "\n", Whitespace "        "]
-                          ValueArgumentList
-                            LParen "(" @ 336..337
-                            ValueArgument
-                              NameExpression
-                                Identifier "it" @ 337..339
-                            RParen ")" @ 339..340
+                            Identifier "it" @ 337..339
+                        RParen ")" @ 339..340
                 RBrace "}" @ 345..346 leading=[Newline "\n", Whitespace "    "]
       RBrace "}" @ 347..348 leading=[Newline "\n"]
   Eof "" @ 349..349 leading=[Newline "\n"]

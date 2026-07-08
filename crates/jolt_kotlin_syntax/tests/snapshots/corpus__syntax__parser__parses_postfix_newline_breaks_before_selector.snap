@@ -20,7 +20,9 @@ KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    Identifier "newlineSelectors" @ 4..20
+    CallableName
+      Name
+        Identifier "newlineSelectors" @ 4..20
     ValueParameterList
       LParen "(" @ 20..21
       ValueParameter
@@ -35,7 +37,9 @@ KotlinFile
       LBrace "{" @ 41..42
       PropertyDeclaration
         ValKw "val" @ 47..50 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "selected" @ 51..59 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "selected" @ 51..59 trailing=[Whitespace " "]
         Assign "=" @ 60..61 trailing=[Whitespace " "]
         CallExpression
           NavigationExpression

@@ -29,7 +29,9 @@ KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 26..29 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "sum" @ 30..33
+    CallableName
+      Name
+        Identifier "sum" @ 30..33
     ValueParameterList
       LParen "(" @ 33..34
       ValueParameter
@@ -61,7 +63,9 @@ KotlinFile
         Identifier "right" @ 71..76
   FunctionDeclaration
     FunKw "fun" @ 78..81 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "main" @ 82..86
+    CallableName
+      Name
+        Identifier "main" @ 82..86
     ValueParameterList
       LParen "(" @ 86..87
       RParen ")" @ 87..88 trailing=[Whitespace " "]
@@ -69,7 +73,9 @@ KotlinFile
       LBrace "{" @ 89..90
       PropertyDeclaration
         ValKw "val" @ 95..98 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "total" @ 99..104 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "total" @ 99..104 trailing=[Whitespace " "]
         Assign "=" @ 105..106 trailing=[Whitespace " "]
         CallExpression
           NameExpression

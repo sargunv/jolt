@@ -1,0 +1,16 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+package com.example.properties
+
+val settings by lazy {
+  mapOf(
+    "environment" to "development",
+    "feature" to "layout-fit-boundary",
+  )
+}
+
+diagnostics:
+(none)

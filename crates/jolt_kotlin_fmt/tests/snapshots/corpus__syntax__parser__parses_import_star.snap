@@ -1,0 +1,13 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+package samples.imports
+
+import kotlin.collections.*
+
+class StarImport(val names: List<String>)
+
+diagnostics:
+(none)

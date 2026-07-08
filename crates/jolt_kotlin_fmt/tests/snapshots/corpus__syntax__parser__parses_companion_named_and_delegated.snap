@@ -1,0 +1,18 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+interface Provider {
+  fun provide(): String
+}
+
+class WithCompanion {
+  companion object Defaults
+    : Provider {
+    override fun provide(): String = "default"
+  }
+}
+
+diagnostics:
+(none)

@@ -1,0 +1,18 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+package com.example.trivia
+
+fun references(values: List<String>) {
+  val member = String /* JOLT-TRIVIA:callable-reference-receiver */:: /* JOLT-TRIVIA:callable-reference-operator */trim
+  values
+    .forEach outer@ /* JOLT-TRIVIA:lambda-label */ {
+      if (it.isBlank()) return@outer /* JOLT-TRIVIA:labeled-return */
+      member(it)
+    }
+}
+
+diagnostics:
+(none)

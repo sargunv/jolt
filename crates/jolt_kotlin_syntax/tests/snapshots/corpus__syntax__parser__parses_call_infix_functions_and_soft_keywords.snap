@@ -5,6 +5,9 @@ expression: snapshot
 input:
 fun infixCalls(bits: Bits, mask: Bits): Bits {
     val combined = bits or mask and Bits.Enabled
+    val readable = bits and mask or Bits.Enabled
+    val rightOperand = bits context mask + Bits.Enabled
+    val leftOperand = bits + mask context Bits.Enabled
     val named = combined context mask
     return named
 }
@@ -15,7 +18,9 @@ KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    Identifier "infixCalls" @ 4..14
+    CallableName
+      Name
+        Identifier "infixCalls" @ 4..14
     ValueParameterList
       LParen "(" @ 14..15
       ValueParameter
@@ -42,7 +47,9 @@ KotlinFile
       LBrace "{" @ 45..46
       PropertyDeclaration
         ValKw "val" @ 51..54 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "combined" @ 55..63 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "combined" @ 55..63 trailing=[Whitespace " "]
         Assign "=" @ 64..65 trailing=[Whitespace " "]
         BinaryExpression
           BinaryExpression
@@ -59,22 +66,81 @@ KotlinFile
             Identifier "Enabled" @ 88..95
       PropertyDeclaration
         ValKw "val" @ 100..103 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "named" @ 104..109 trailing=[Whitespace " "]
-        Assign "=" @ 110..111 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "readable" @ 104..112 trailing=[Whitespace " "]
+        Assign "=" @ 113..114 trailing=[Whitespace " "]
+        BinaryExpression
+          BinaryExpression
+            NameExpression
+              Identifier "bits" @ 115..119 trailing=[Whitespace " "]
+            Identifier "and" @ 120..123 trailing=[Whitespace " "]
+            NameExpression
+              Identifier "mask" @ 124..128 trailing=[Whitespace " "]
+          Identifier "or" @ 129..131 trailing=[Whitespace " "]
+          NavigationExpression
+            NameExpression
+              Identifier "Bits" @ 132..136
+            Dot "." @ 136..137
+            Identifier "Enabled" @ 137..144
+      PropertyDeclaration
+        ValKw "val" @ 149..152 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "rightOperand" @ 153..165 trailing=[Whitespace " "]
+        Assign "=" @ 166..167 trailing=[Whitespace " "]
         BinaryExpression
           NameExpression
-            Identifier "combined" @ 112..120 trailing=[Whitespace " "]
-          Identifier "context" @ 121..128 trailing=[Whitespace " "]
+            Identifier "bits" @ 168..172 trailing=[Whitespace " "]
+          Identifier "context" @ 173..180 trailing=[Whitespace " "]
+          BinaryExpression
+            NameExpression
+              Identifier "mask" @ 181..185 trailing=[Whitespace " "]
+            Plus "+" @ 186..187 trailing=[Whitespace " "]
+            NavigationExpression
+              NameExpression
+                Identifier "Bits" @ 188..192
+              Dot "." @ 192..193
+              Identifier "Enabled" @ 193..200
+      PropertyDeclaration
+        ValKw "val" @ 205..208 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "leftOperand" @ 209..220 trailing=[Whitespace " "]
+        Assign "=" @ 221..222 trailing=[Whitespace " "]
+        BinaryExpression
+          BinaryExpression
+            NameExpression
+              Identifier "bits" @ 223..227 trailing=[Whitespace " "]
+            Plus "+" @ 228..229 trailing=[Whitespace " "]
+            NameExpression
+              Identifier "mask" @ 230..234 trailing=[Whitespace " "]
+          Identifier "context" @ 235..242 trailing=[Whitespace " "]
+          NavigationExpression
+            NameExpression
+              Identifier "Bits" @ 243..247
+            Dot "." @ 247..248
+            Identifier "Enabled" @ 248..255
+      PropertyDeclaration
+        ValKw "val" @ 260..263 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "named" @ 264..269 trailing=[Whitespace " "]
+        Assign "=" @ 270..271 trailing=[Whitespace " "]
+        BinaryExpression
           NameExpression
-            Identifier "mask" @ 129..133
+            Identifier "combined" @ 272..280 trailing=[Whitespace " "]
+          Identifier "context" @ 281..288 trailing=[Whitespace " "]
+          NameExpression
+            Identifier "mask" @ 289..293
       Statement
         ExpressionStatement
           JumpExpression
-            ReturnKw "return" @ 138..144 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            ReturnKw "return" @ 298..304 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
             NameExpression
-              Identifier "named" @ 145..150
-      RBrace "}" @ 151..152 leading=[Newline "\n"]
-  Eof "" @ 153..153 leading=[Newline "\n"]
+              Identifier "named" @ 305..310
+      RBrace "}" @ 311..312 leading=[Newline "\n"]
+  Eof "" @ 313..313 leading=[Newline "\n"]
 
 diagnostics:
   (none)

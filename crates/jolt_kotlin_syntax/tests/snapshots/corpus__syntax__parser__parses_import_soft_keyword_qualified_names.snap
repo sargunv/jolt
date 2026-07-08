@@ -59,7 +59,9 @@ KotlinFile
           Identifier "Accessors" @ 94..103
   PropertyDeclaration
     ValKw "val" @ 105..108 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "imported" @ 109..117 trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "imported" @ 109..117 trailing=[Whitespace " "]
     Assign "=" @ 118..119 trailing=[Whitespace " "]
     CallableReferenceExpression
       NameExpression

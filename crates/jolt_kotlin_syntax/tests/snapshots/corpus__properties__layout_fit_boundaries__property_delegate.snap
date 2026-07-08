@@ -29,11 +29,13 @@ KotlinFile
   ImportList
   PropertyDeclaration
     ValKw "val" @ 32..35 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "settings" @ 36..44 trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "settings" @ 36..44 trailing=[Whitespace " "]
     Identifier "by" @ 45..47 trailing=[Whitespace " "]
-    Identifier "lazy" @ 48..52 trailing=[Whitespace " "]
-  Statement
-    ExpressionStatement
+    CallExpression
+      NameExpression
+        Identifier "lazy" @ 48..52 trailing=[Whitespace " "]
       LambdaExpression
         LBrace "{" @ 53..54
         Statement

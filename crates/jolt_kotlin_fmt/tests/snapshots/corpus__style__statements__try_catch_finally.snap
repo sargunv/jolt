@@ -1,0 +1,19 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+package com.example.statements
+
+fun parseOrZero(text: String): Int {
+  return try {
+    text.trim().toInt()
+  } catch (error: NumberFormatException) {
+    0
+  } finally {
+    println("parsed")
+  }
+}
+
+diagnostics:
+(none)

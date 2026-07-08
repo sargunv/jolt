@@ -1,0 +1,13 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class Aliases {
+  typealias Names = List<String>
+
+  val names: Names = emptyList()
+}
+
+diagnostics:
+(none)

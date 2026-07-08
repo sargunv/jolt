@@ -34,18 +34,20 @@ KotlinFile
       ContextFunctionType
         Identifier "context" @ 53..60 leading=[Newline "\n", Whitespace "    "]
         LParen "(" @ 60..61
-        TypeReference
-          UserType
-            Identifier "Logger" @ 61..67 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:context-function-type */"]
+        FunctionTypeParameter
+          TypeReference
+            UserType
+              Identifier "Logger" @ 61..67 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:context-function-type */"]
         RParen ")" @ 107..108 trailing=[Whitespace " "]
         FunctionType
           ParenthesizedType
             LParen "(" @ 109..110
-            TypeReference
-              NullableType
-                UserType
-                  Identifier "String" @ 110..116
-                Question "?" @ 116..117 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:nullable-parameter */"]
+            FunctionTypeParameter
+              TypeReference
+                NullableType
+                  UserType
+                    Identifier "String" @ 110..116
+                  Question "?" @ 116..117 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:nullable-parameter */"]
             RParen ")" @ 154..155 trailing=[Whitespace " "]
           Arrow "->" @ 156..158 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:function-arrow */", Whitespace " "]
           UserType

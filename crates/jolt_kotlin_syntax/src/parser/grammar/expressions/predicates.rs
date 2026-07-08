@@ -84,12 +84,15 @@ pub(super) fn is_unary_operator(kind: K) -> bool {
 }
 
 pub(super) fn is_expression_continuation(kind: K) -> bool {
+    // Keep this aligned with parse_postfix_expression's newline-allowed suffixes
+    // and binary_operator_info. Primary-expression starters such as `(` must not
+    // appear here, or a new statement can be mistaken for an unterminated
+    // previous expression and recovery can grow badly on repeated inputs.
     matches!(
         kind,
         K::Dot
             | K::SafeAccess
             | K::ColonColon
-            | K::LParen
             | K::LBracket
             | K::LBrace
             | K::Plus

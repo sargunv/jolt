@@ -1,0 +1,9 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+data object EndOfStream
+
+diagnostics:
+(none)

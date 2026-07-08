@@ -7,6 +7,8 @@ use tempfile::TempDir;
 const SIMPLE_INPUT: &str = "class A {}\n";
 const SIMPLE_FORMATTED: &str = "class A {\n}\n";
 const NESTED_INPUT: &str = "class A { void f(){ if (true) { System.out.println(1); } } }\n";
+const KOTLIN_INPUT: &str = "package   com.example\nimport z.Z\nimport a.A\nclass A\n";
+const KOTLIN_FORMATTED: &str = "package com.example\n\nimport a.A\nimport z.Z\n\nclass A\n";
 
 #[test]
 fn init_creates_root_config_with_schema_directive() {
@@ -23,7 +25,9 @@ fn init_creates_root_config_with_schema_directive() {
     assert!(contents.contains("[format]\n"));
     assert!(contents.contains("use-tabs = false\n"));
     assert!(contents.contains("[files]\n"));
-    assert!(contents.contains("include = [\"**/*.java\"]\n"));
+    assert!(contents.contains("\"**/*.java\""));
+    assert!(contents.contains("\"**/*.kt\""));
+    assert!(contents.contains("\"**/*.kts\""));
 }
 
 #[test]
@@ -78,6 +82,19 @@ fn write_mode_formats_multiple_files_with_threads() {
     assert_success(&output);
     assert_eq!(read(temp.path().join("A.java")), SIMPLE_FORMATTED);
     assert_nested_uses_two_spaces(&read(temp.path().join("B.java")));
+}
+
+#[test]
+fn write_mode_formats_kotlin_files_with_threads() {
+    let temp = TempDir::new().expect("tempdir should be created");
+    write(temp.path().join("A.kt"), KOTLIN_INPUT);
+    write(temp.path().join("B.kts"), "val answer=42\n");
+
+    let output = jolt(temp.path(), ["fmt", "--threads", "2", "."], "");
+
+    assert_success(&output);
+    assert_eq!(read(temp.path().join("A.kt")), KOTLIN_FORMATTED);
+    assert_eq!(read(temp.path().join("B.kts")), "val answer = 42\n");
 }
 
 #[test]
@@ -406,6 +423,23 @@ fn config_file_errors_and_no_config_behavior() {
     let invalid_glob = jolt(temp.path(), ["fmt", "-"], SIMPLE_INPUT);
     assert_failure(&invalid_glob);
     assert!(stderr(&invalid_glob).contains("jolt.toml: invalid glob pattern"));
+}
+
+#[test]
+fn config_resolve_treats_kotlin_paths_as_source_targets() {
+    let temp = TempDir::new().expect("tempdir should be created");
+
+    let kt = jolt(temp.path(), ["config", "resolve", "src/Missing.kt"], "");
+    assert_success(&kt);
+    assert!(stdout(&kt).contains("src/Missing.kt is selected"));
+
+    let kts = jolt(
+        temp.path(),
+        ["config", "resolve", "scripts/build.gradle.kts"],
+        "",
+    );
+    assert_success(&kts);
+    assert!(stdout(&kts).contains("scripts/build.gradle.kts is selected"));
 }
 
 #[test]

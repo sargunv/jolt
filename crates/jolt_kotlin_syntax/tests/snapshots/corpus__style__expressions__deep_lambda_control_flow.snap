@@ -1,0 +1,207 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+package com.example.expressions
+
+fun lengths(values: List<String>, emit: (String) -> Unit): List<Int> {
+    return values
+        .map { raw ->
+            val trimmed = raw.trim()
+            if (trimmed.isEmpty()) {
+                return@map 0
+            }
+            emit(trimmed)
+            trimmed.length
+        }
+        .filter { length ->
+            length > 1
+        }
+        .sorted()
+}
+
+syntax:
+syntax:
+KotlinFile
+  PackageHeader
+    PackageKw "package" @ 0..7 trailing=[Whitespace " "]
+    QualifiedName
+      Name
+        Identifier "com" @ 8..11
+      Dot "." @ 11..12
+      Name
+        Identifier "example" @ 12..19
+      Dot "." @ 19..20
+      Name
+        Identifier "expressions" @ 20..31
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 33..36 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "lengths" @ 37..44
+    ValueParameterList
+      LParen "(" @ 44..45
+      ValueParameter
+        Name
+          Identifier "values" @ 45..51
+        Colon ":" @ 51..52 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "List" @ 53..57
+            TypeArgumentList
+              Lt "<" @ 57..58
+              TypeProjectionList
+                TypeArgument
+                  TypeProjection
+                    TypeReference
+                      UserType
+                        Identifier "String" @ 58..64
+              Gt ">" @ 64..65
+      Comma "," @ 65..66 trailing=[Whitespace " "]
+      ValueParameter
+        Name
+          Identifier "emit" @ 67..71
+        Colon ":" @ 71..72 trailing=[Whitespace " "]
+        TypeReference
+          FunctionType
+            ParenthesizedType
+              LParen "(" @ 73..74
+              FunctionTypeParameter
+                TypeReference
+                  UserType
+                    Identifier "String" @ 74..80
+              RParen ")" @ 80..81 trailing=[Whitespace " "]
+            Arrow "->" @ 82..84 trailing=[Whitespace " "]
+            UserType
+              Identifier "Unit" @ 85..89
+      RParen ")" @ 89..90
+    Colon ":" @ 90..91 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "List" @ 92..96
+        TypeArgumentList
+          Lt "<" @ 96..97
+          TypeProjectionList
+            TypeArgument
+              TypeProjection
+                TypeReference
+                  UserType
+                    Identifier "Int" @ 97..100
+          Gt ">" @ 100..101 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 102..103
+      Statement
+        ExpressionStatement
+          JumpExpression
+            ReturnKw "return" @ 108..114 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+            CallExpression
+              NavigationExpression
+                CallExpression
+                  NavigationExpression
+                    CallExpression
+                      NavigationExpression
+                        NameExpression
+                          Identifier "values" @ 115..121
+                        Dot "." @ 130..131 leading=[Newline "\n", Whitespace "        "]
+                        Identifier "map" @ 131..134 trailing=[Whitespace " "]
+                      LambdaExpression
+                        LBrace "{" @ 135..136 trailing=[Whitespace " "]
+                        LambdaParameterList
+                          LambdaParameter
+                            Name
+                              Identifier "raw" @ 137..140 trailing=[Whitespace " "]
+                          Arrow "->" @ 141..143
+                        PropertyDeclaration
+                          ValKw "val" @ 156..159 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                          CallableName
+                            Name
+                              Identifier "trimmed" @ 160..167 trailing=[Whitespace " "]
+                          Assign "=" @ 168..169 trailing=[Whitespace " "]
+                          CallExpression
+                            NavigationExpression
+                              NameExpression
+                                Identifier "raw" @ 170..173
+                              Dot "." @ 173..174
+                              Identifier "trim" @ 174..178
+                            ValueArgumentList
+                              LParen "(" @ 178..179
+                              RParen ")" @ 179..180
+                        Statement
+                          ExpressionStatement
+                            IfExpression
+                              IfKw "if" @ 193..195 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                              ParenthesizedExpression
+                                LParen "(" @ 196..197
+                                CallExpression
+                                  NavigationExpression
+                                    NameExpression
+                                      Identifier "trimmed" @ 197..204
+                                    Dot "." @ 204..205
+                                    Identifier "isEmpty" @ 205..212
+                                  ValueArgumentList
+                                    LParen "(" @ 212..213
+                                    RParen ")" @ 213..214
+                                RParen ")" @ 214..215 trailing=[Whitespace " "]
+                              LambdaExpression
+                                LBrace "{" @ 216..217
+                                Statement
+                                  ExpressionStatement
+                                    JumpExpression
+                                      ReturnKw "return" @ 234..240 leading=[Newline "\n", Whitespace "                "]
+                                      At "@" @ 240..241
+                                      Identifier "map" @ 241..244 trailing=[Whitespace " "]
+                                      LiteralExpression
+                                        IntegerLiteral "0" @ 245..246
+                                RBrace "}" @ 259..260 leading=[Newline "\n", Whitespace "            "]
+                        Statement
+                          ExpressionStatement
+                            CallExpression
+                              NameExpression
+                                Identifier "emit" @ 273..277 leading=[Newline "\n", Whitespace "            "]
+                              ValueArgumentList
+                                LParen "(" @ 277..278
+                                ValueArgument
+                                  NameExpression
+                                    Identifier "trimmed" @ 278..285
+                                RParen ")" @ 285..286
+                        Statement
+                          ExpressionStatement
+                            NavigationExpression
+                              NameExpression
+                                Identifier "trimmed" @ 299..306 leading=[Newline "\n", Whitespace "            "]
+                              Dot "." @ 306..307
+                              Identifier "length" @ 307..313
+                        RBrace "}" @ 322..323 leading=[Newline "\n", Whitespace "        "]
+                    Dot "." @ 332..333 leading=[Newline "\n", Whitespace "        "]
+                    Identifier "filter" @ 333..339 trailing=[Whitespace " "]
+                  LambdaExpression
+                    LBrace "{" @ 340..341 trailing=[Whitespace " "]
+                    LambdaParameterList
+                      LambdaParameter
+                        Name
+                          Identifier "length" @ 342..348 trailing=[Whitespace " "]
+                      Arrow "->" @ 349..351
+                    Statement
+                      ExpressionStatement
+                        BinaryExpression
+                          NameExpression
+                            Identifier "length" @ 364..370 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                          Gt ">" @ 371..372 trailing=[Whitespace " "]
+                          LiteralExpression
+                            IntegerLiteral "1" @ 373..374
+                    RBrace "}" @ 383..384 leading=[Newline "\n", Whitespace "        "]
+                Dot "." @ 393..394 leading=[Newline "\n", Whitespace "        "]
+                Identifier "sorted" @ 394..400
+              ValueArgumentList
+                LParen "(" @ 400..401
+                RParen ")" @ 401..402
+      RBrace "}" @ 403..404 leading=[Newline "\n"]
+  Eof "" @ 405..405 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

@@ -46,7 +46,7 @@ impl Parser<'_> {
             if self.at_enum_entry_start() {
                 self.parse_enum_entry();
             } else {
-                self.parse_declaration_or_statement();
+                self.parse_class_member_declaration_or_statement();
             }
             if self.position() == before {
                 self.recover_class_member();
@@ -87,6 +87,7 @@ impl Parser<'_> {
     fn at_enum_entry_start(&mut self) -> bool {
         self.at_identifier_like()
             && !self.at_soft_keyword("constructor")
+            && !self.at_soft_keyword("init")
             && matches!(
                 self.nth_kind(1),
                 K::LParen | K::LBrace | K::Comma | K::Semicolon | K::DoubleSemicolon

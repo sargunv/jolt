@@ -1,0 +1,16 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+package com.example.declarations
+
+class Account(
+  // Stable identifier from storage.
+  val id: String,
+  /* Displayed to users. */
+  var label: String,
+)
+
+diagnostics:
+(none)

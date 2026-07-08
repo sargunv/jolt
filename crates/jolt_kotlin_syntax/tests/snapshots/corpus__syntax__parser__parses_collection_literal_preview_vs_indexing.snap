@@ -15,7 +15,9 @@ KotlinFile
   ImportList
   FunctionDeclaration
     FunKw "fun" @ 0..3 trailing=[Whitespace " "]
-    Identifier "collectionLiteralVsIndexing" @ 4..31
+    CallableName
+      Name
+        Identifier "collectionLiteralVsIndexing" @ 4..31
     ValueParameterList
       LParen "(" @ 31..32
       ValueParameter
@@ -52,7 +54,9 @@ KotlinFile
       LBrace "{" @ 62..63
       PropertyDeclaration
         ValKw "val" @ 68..71 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "literal" @ 72..79 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "literal" @ 72..79 trailing=[Whitespace " "]
         Assign "=" @ 80..81 trailing=[Whitespace " "]
         CollectionLiteralExpression
           LBracket "[" @ 82..83
@@ -78,7 +82,9 @@ KotlinFile
           RBracket "]" @ 103..104
       PropertyDeclaration
         ValKw "val" @ 109..112 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "indexed" @ 113..120 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "indexed" @ 113..120 trailing=[Whitespace " "]
         Assign "=" @ 121..122 trailing=[Whitespace " "]
         IndexExpression
           IndexExpression

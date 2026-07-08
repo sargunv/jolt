@@ -1,0 +1,16 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+fun ranges(limit: Int): List<Int> {
+  val closed = 0..limit
+  val open = 0..<limit
+  val stepped = 10 downTo 0 step 2
+  return closed
+    .filter { it in open }
+    + stepped.toList()
+}
+
+diagnostics:
+(none)

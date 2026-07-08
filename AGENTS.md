@@ -40,7 +40,11 @@ Run `mise tasks ls --all` for the full task list.
 - A formatter must not synthesize tokens to repair invalid syntax or where
   source tokens (with trivia) are available. Synthesized tokens are allowed in
   very specific cases, like normalizing separators, braces, or parentheses where
-  semantics don't change and trivia won't be lost.
+  semantics don't change and trivia won't be lost. Formatter rules must preserve
+  represented source tokens and their trivia; use the standard token formatting
+  helpers unless a documented normalization case requires otherwise.
+- A formatter must not replay raw source text as a fallback for represented
+  syntax. Raw literal source is only allowed for formatter-ignore ranges.
 - Prefer integration tests with `insta` snapshots over inline tests and
   assertions where practical. Inline focused tests should be reserved only for
   important regressions and edge cases that are not possible to test with the

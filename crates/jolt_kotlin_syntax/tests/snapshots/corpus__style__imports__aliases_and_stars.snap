@@ -76,7 +76,9 @@ KotlinFile
           Identifier "say" @ 132..135
   FunctionDeclaration
     FunKw "fun" @ 137..140 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "aliases" @ 141..148
+    CallableName
+      Name
+        Identifier "aliases" @ 141..148
     ValueParameterList
       LParen "(" @ 148..149
       ValueParameter

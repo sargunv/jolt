@@ -30,7 +30,9 @@ impl Parser<'_> {
 
     fn parse_file_annotations(&mut self) {
         while self.at(K::At) || self.at(K::Hash) {
+            let before = self.position();
             self.parse_annotation();
+            self.ensure_progress(before, "expected file annotation");
         }
     }
 
@@ -49,7 +51,9 @@ impl Parser<'_> {
     fn parse_import_list(&mut self) {
         let marker = self.start();
         while self.at_soft_keyword("import") {
+            let before = self.position();
             self.parse_import_directive();
+            self.ensure_progress(before, "expected import directive");
         }
         self.complete(marker, K::ImportList);
     }
@@ -90,10 +94,7 @@ impl Parser<'_> {
             self.parse_expression_until(&[K::Comma, close]);
             self.complete(item, item_kind);
             expect_item = false;
-            if self.position() == before {
-                self.unexpected_here("expected list item");
-                self.bump();
-            }
+            self.ensure_progress(before, "expected list item");
         }
     }
 }
