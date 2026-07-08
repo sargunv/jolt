@@ -889,7 +889,7 @@ impl<'source> Scanner<'source> {
     }
 
     fn previous_end_or_source_end(&self) -> TextSize {
-        if self.pos == 0 {
+        if self.pos == self.source.len() {
             TextSize::new(self.source.len())
         } else {
             self.previous_end()

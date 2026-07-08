@@ -80,6 +80,5 @@ fn format_or_panic(source: &str, options: &JavaFormatOptions, label: &str) -> St
         JavaFormatSinkResult::Blocked { diagnostics } => {
             panic!("formatter diagnostics in {label}: {diagnostics:#?}")
         }
-        JavaFormatSinkResult::SinkError { error } => match error {},
     }
 }

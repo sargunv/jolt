@@ -23,19 +23,19 @@ pub(crate) fn run_from_env_args() -> Option<ExitCode> {
             print_cli_reference();
             ExitCode::SUCCESS
         }
-        Some(command) if command == "manpages" => match args.next() {
-            Some(out_dir) => match generate_manpages(Path::new(&out_dir)) {
+        Some(command) if command == "manpages" => {
+            let Some(out_dir) = args.next() else {
+                eprintln!("missing manpage output directory");
+                return ExitCode::FAILURE.into();
+            };
+            match generate_manpages(Path::new(&out_dir)) {
                 Ok(()) => ExitCode::SUCCESS,
                 Err(error) => {
                     eprintln!("failed to generate manpages: {error}");
                     ExitCode::FAILURE
                 }
-            },
-            None => {
-                eprintln!("missing manpage output directory");
-                ExitCode::FAILURE
             }
-        },
+        }
         Some(command) => {
             eprintln!(
                 "unknown docs generation command: {}",

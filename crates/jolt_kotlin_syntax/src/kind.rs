@@ -3,10 +3,11 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 /// A Kotlin token or syntax node kind.
 ///
-/// The token inventory follows the Kotlin compiler's `KtTokens` split between
-/// hard keywords, soft keywords, modifier keywords, string-template tokens, and
-/// punctuation/operator tokens. Parser-created CST nodes will share this same
-/// kind space once the grammar is implemented.
+/// This enum is language-wide: lexer tokens and parser-created CST nodes share
+/// the same kind space, while the syntax tree stores whether an element is a
+/// token or node structurally. The token inventory follows the Kotlin
+/// compiler's `KtTokens` split between hard keywords, soft keywords, modifier
+/// keywords, string-template tokens, and punctuation/operator tokens.
 #[repr(u16)]
 #[derive(Clone, Copy, Debug, Eq, Hash, IntoPrimitive, PartialEq, TryFromPrimitive)]
 #[allow(clippy::enum_variant_names)]
@@ -278,13 +279,13 @@ pub enum KotlinSyntaxKind {
 impl KotlinSyntaxKind {
     /// Converts this kind into the raw representation used by shared syntax data.
     #[must_use]
-    pub fn to_raw(self) -> RawSyntaxKind {
+    pub(crate) fn to_raw(self) -> RawSyntaxKind {
         RawSyntaxKind::new(u16::from(self))
     }
 
     /// Converts a raw kind back into a Kotlin syntax kind.
     #[must_use]
-    pub fn from_raw(raw: RawSyntaxKind) -> Option<Self> {
+    pub(crate) fn from_raw(raw: RawSyntaxKind) -> Option<Self> {
         Self::try_from(raw.get()).ok()
     }
 }

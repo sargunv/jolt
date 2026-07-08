@@ -117,7 +117,6 @@ fn format_source(
     match format_source_to_sink(source, options, &mut sink) {
         KotlinFormatSinkResult::Complete | KotlinFormatSinkResult::Halted => Ok(sink.into_string()),
         KotlinFormatSinkResult::Blocked { diagnostics } => Err(diagnostics),
-        KotlinFormatSinkResult::SinkError { error } => match error {},
     }
 }
 

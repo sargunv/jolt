@@ -17,7 +17,10 @@ fn java_corpus_syntax_snapshots() {
         let source = read_to_string(&path);
         let parse = parse_compilation_unit(&source);
 
-        if let Some(syntax) = parse.syntax().filter(|_| !is_lexer_fixture) {
+        if !is_lexer_fixture {
+            let syntax = parse
+                .syntax()
+                .unwrap_or_else(|| panic!("parser aborted in {}", path.display()));
             assert_eq!(
                 syntax.source_text(),
                 source,

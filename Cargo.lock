@@ -439,6 +439,7 @@ dependencies = [
  "jolt_diagnostics",
  "jolt_fmt_ir",
  "jolt_formatter",
+ "jolt_test_support",
  "jolt_text",
  "serde_json",
  "tempfile",
@@ -527,6 +528,7 @@ version = "0.0.0"
 dependencies = [
  "jolt_diagnostics",
  "jolt_fmt_ir",
+ "unicode-width",
 ]
 
 [[package]]

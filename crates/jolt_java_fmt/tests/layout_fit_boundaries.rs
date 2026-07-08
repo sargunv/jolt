@@ -20,18 +20,10 @@ fn layout_fit_boundary_fixtures_stay_within_width() {
 fn assert_no_line_exceeds_width(path: &Path, line_width: u16) {
     let source = read_to_string(path);
     let formatted = format_or_panic(&source, line_width);
-    let offending = formatted
-        .lines()
-        .enumerate()
-        .map(|(index, line)| (index + 1, line, line.chars().count()))
-        .find(|(_, _, width)| *width > usize::from(line_width));
-
-    assert!(
-        offending.is_none(),
-        "formatted line exceeded width {line_width} in {}:\n{}\nfirst offending line: {:?}",
-        path.display(),
-        formatted,
-        offending
+    jolt_test_support::assert_no_line_exceeds_width(
+        &formatted,
+        &path.display().to_string(),
+        line_width,
     );
 }
 
@@ -47,6 +39,5 @@ fn format_or_panic(source: &str, line_width: u16) -> String {
         JavaFormatSinkResult::Blocked { diagnostics } => {
             panic!("formatter diagnostics: {diagnostics:#?}")
         }
-        JavaFormatSinkResult::SinkError { error } => match error {},
     }
 }

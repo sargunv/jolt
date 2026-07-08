@@ -1,9 +1,7 @@
-use std::collections::BTreeMap;
-use std::fmt::Write as _;
 use std::path::PathBuf;
 
 use jolt_java_syntax::parse_compilation_unit;
-use jolt_test_support::{collect_java_files, read_to_string, workspace_root};
+use jolt_test_support::{CorpusSummary, collect_java_files, read_to_string, workspace_root};
 
 #[test]
 fn fixture_java_inputs_parse_without_loss() {
@@ -19,7 +17,7 @@ fn fixture_java_inputs_parse_without_loss() {
     insta::assert_snapshot!("prettier_java_parser_summary", prettier_summary.render());
 }
 
-fn assert_corpus(suite: &str, expected_files: usize) -> ImportedParserSummary {
+fn assert_corpus(suite: &str, expected_files: usize) -> CorpusSummary {
     let root = fixture_root(suite);
     let files = collect_java_files(&root);
 
@@ -29,7 +27,7 @@ fn assert_corpus(suite: &str, expected_files: usize) -> ImportedParserSummary {
         "expected the pinned {suite} Java input fixture corpus"
     );
 
-    let mut summary = ImportedParserSummary::new(suite, files.len());
+    let mut summary = CorpusSummary::new(suite, files.len());
     for path in files {
         let source = read_to_string(&path);
         let parse = parse_compilation_unit(&source);
@@ -38,7 +36,7 @@ fn assert_corpus(suite: &str, expected_files: usize) -> ImportedParserSummary {
             .unwrap_or_else(|| panic!("parser aborted in {}", path.display()));
 
         if syntax.source_text() != source {
-            summary.reconstructed_changed += 1;
+            summary.note_reconstruction_changed();
         }
 
         summary.record_diagnostics(parse.diagnostics());
@@ -52,50 +50,4 @@ fn fixture_root(suite: &str) -> PathBuf {
         .join("tools/import/.imports")
         .join(suite)
         .join("input")
-}
-
-struct ImportedParserSummary {
-    suite: String,
-    files: usize,
-    reconstructed_changed: usize,
-    diagnostics: BTreeMap<String, usize>,
-}
-
-impl ImportedParserSummary {
-    fn new(suite: &str, files: usize) -> Self {
-        Self {
-            suite: suite.to_owned(),
-            files,
-            reconstructed_changed: 0,
-            diagnostics: BTreeMap::new(),
-        }
-    }
-
-    fn record_diagnostics(&mut self, diagnostics: &[jolt_diagnostics::Diagnostic]) {
-        for diagnostic in diagnostics {
-            let key = format!("{:?}:{}", diagnostic.stage, diagnostic.code.as_str());
-            *self.diagnostics.entry(key).or_default() += 1;
-        }
-    }
-
-    fn render(&self) -> String {
-        let mut output = String::new();
-        writeln!(&mut output, "suite: {}", self.suite).expect("write summary");
-        writeln!(&mut output, "files: {}", self.files).expect("write summary");
-        writeln!(
-            &mut output,
-            "reconstructed changed: {}",
-            self.reconstructed_changed
-        )
-        .expect("write summary");
-        output.push_str("\ndiagnostics:\n");
-        if self.diagnostics.is_empty() {
-            output.push_str("  <none>: 0\n");
-        } else {
-            for (kind, count) in &self.diagnostics {
-                writeln!(&mut output, "  {kind}: {count}").expect("write summary");
-            }
-        }
-        output
-    }
 }

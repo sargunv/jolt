@@ -35,6 +35,7 @@ dprint-core = { version = "0.68.2", default-features = false, features = ["wasm"
 jolt_diagnostics = { path = "../jolt_diagnostics" }
 jolt_fmt_ir = { path = "../jolt_fmt_ir" }
 jolt_formatter = { path = "../jolt_formatter", features = ["serde"] }
+jolt_test_support = { path = "../jolt_test_support" }
 jolt_text = { path = "../jolt_text" }
 tempfile = "3.23"
 

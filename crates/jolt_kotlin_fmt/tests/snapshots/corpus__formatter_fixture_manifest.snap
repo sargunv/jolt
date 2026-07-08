@@ -1,0 +1,209 @@
+---
+source: crates/jolt_kotlin_fmt/tests/corpus.rs
+expression: "manifest_entries.join(\"\\n\")"
+---
+format properties/layout-fit-boundaries/deep-call-chain.kt
+format properties/layout-fit-boundaries/long-when-result.kt
+format properties/layout-fit-boundaries/property-delegate.kt
+format style/declarations/annotations-and-modifiers.kt
+format style/declarations/class-header-clauses.kt
+format style/declarations/delegation.kt
+format style/declarations/explicit-backing-fields.kt
+format style/declarations/objects-and-companions.kt
+format style/declarations/primary-constructor-comments.kt
+format style/declarations/properties-accessors.kt
+format style/declarations/type-parameters-where.kt
+format style/expressions/call-chains.kt
+format style/expressions/collection-builders.kt
+format style/expressions/deep-lambda-control-flow.kt
+format style/expressions/destructuring.kt
+format style/expressions/elvis-and-safe-calls.kt
+format style/expressions/labeled-nested-lambdas.kt
+format style/expressions/lambda-formatting.kt
+format style/expressions/lambdas-and-trailing.kt
+format style/expressions/member-chain-expression-body.kt
+format style/expressions/simple-expression-bodies.kt
+format style/expressions/string-templates.kt
+format style/expressions/when-expression.kt
+format style/imports/aliases-and-stars.kt
+format style/imports/basic-sorting.kt
+format style/imports/comment-barrier.kt
+format style/layout-fit-boundaries/call-chain-single-argument.kt
+format style/layout-fit-boundaries/property-initializer.kt
+format style/layout-fit-boundaries/when-branch-expression.kt
+format style/program/comment-only-file.kt
+format style/program/formatter-ignore.kt
+format style/program/package-import-spacing.kt
+format style/program/qualified-names.kt
+format style/program/top-level-blank-lines.kt
+format style/statements/if-else.kt
+format style/statements/local-declarations.kt
+format style/statements/loops-and-labels.kt
+format style/statements/nested-control-flow.kt
+format style/statements/simple-expression-statements.kt
+format style/statements/try-catch-finally.kt
+format style/statements/when-statement.kt
+skip lexer syntax/lexer/block-comments-can-contain-newlines.kt
+skip lexer syntax/lexer/block-comments-nest.kt
+skip lexer syntax/lexer/comment-markers-inside-character-literals-are-literal-content.kt
+skip lexer syntax/lexer/comments-separate-adjacent-tokens.kt
+skip lexer syntax/lexer/keeps-range-dots-out-of-number-literals.kt
+skip lexer syntax/lexer/line-comments-can-end-at-eof.kt
+skip lexer syntax/lexer/line-comments-ignore-block-comment-markers.kt
+skip lexer syntax/lexer/modifier-keyword-spellings-remain-identifiers.kt
+skip lexer syntax/lexer/raw-strings-treat-backslash-as-content.kt
+skip lexer syntax/lexer/recognizes-all-hard-keywords.kt
+skip lexer syntax/lexer/recognizes-all-operators.kt
+skip lexer syntax/lexer/recognizes-backtick-identifiers.kt
+skip lexer syntax/lexer/recognizes-backtick-short-string-template.kt
+skip lexer syntax/lexer/recognizes-character-literals.kt
+skip lexer syntax/lexer/recognizes-collection-literal-punctuation.kt
+skip lexer syntax/lexer/recognizes-decimal-floating-point-literals.kt
+skip lexer syntax/lexer/recognizes-decimal-integer-literals.kt
+skip lexer syntax/lexer/recognizes-delimiters-and-punctuation.kt
+skip lexer syntax/lexer/recognizes-empty-line-string.kt
+skip lexer syntax/lexer/recognizes-empty-raw-string.kt
+skip lexer syntax/lexer/recognizes-field-identifiers.kt
+skip lexer syntax/lexer/recognizes-hex-and-binary-integer-literals.kt
+skip lexer syntax/lexer/recognizes-identifiers-with-underscores-and-digits.kt
+skip lexer syntax/lexer/recognizes-integer-suffixes.kt
+skip lexer syntax/lexer/recognizes-line-string-content-and-escapes.kt
+skip lexer syntax/lexer/recognizes-long-string-template-with-nested-braces.kt
+skip lexer syntax/lexer/recognizes-multi-dollar-line-string-interpolation.kt
+skip lexer syntax/lexer/recognizes-multi-dollar-raw-string-interpolation.kt
+skip lexer syntax/lexer/recognizes-raw-string-content.kt
+skip lexer syntax/lexer/recognizes-raw-string-template.kt
+skip lexer syntax/lexer/recognizes-reserved-ellipsis.kt
+skip lexer syntax/lexer/recognizes-safe-cast-and-question-operators.kt
+skip lexer syntax/lexer/recognizes-shebang-line.kt
+skip lexer syntax/lexer/recognizes-short-string-template.kt
+skip lexer syntax/lexer/recognizes-unicode-identifiers.kt
+skip lexer syntax/lexer/reports-invalid-escape-sequence-in-line-string.kt
+skip lexer syntax/lexer/reports-non-ascii-digit-as-unknown-start.kt
+skip lexer syntax/lexer/reports-unknown-character.kt
+skip lexer syntax/lexer/reports-unterminated-backtick-identifier.kt
+skip lexer syntax/lexer/reports-unterminated-block-comment.kt
+skip lexer syntax/lexer/reports-unterminated-character-literal.kt
+skip lexer syntax/lexer/reports-unterminated-line-string-at-newline.kt
+skip lexer syntax/lexer/reports-unterminated-raw-string.kt
+skip lexer syntax/lexer/separates-not-in-and-not-is-from-identifier-prefixes.kt
+skip lexer syntax/lexer/soft-keyword-spellings-remain-identifiers.kt
+skip diagnostics syntax/parser/diagnoses-callable-reference-call-like-reserved-form.kt
+skip diagnostics syntax/parser/diagnoses-invalid-assignment-targets.kt
+skip diagnostics syntax/parser/diagnoses-malformed-type-argument-call.kt
+skip diagnostics syntax/parser/diagnoses-when-guard-without-subject.kt
+format syntax/parser/parses-annotation-all-use-site-target.kt
+format syntax/parser/parses-annotation-delegate-and-setparam-targets.kt
+format syntax/parser/parses-annotation-type-use-and-receiver.kt
+format syntax/parser/parses-annotation-use-site-targets.kt
+format syntax/parser/parses-annotation-with-arguments-and-array.kt
+format syntax/parser/parses-assignment-compound-operators.kt
+format syntax/parser/parses-assignment-left-hand-side-forms.kt
+format syntax/parser/parses-binary-elvis-as-is-in-precedence.kt
+format syntax/parser/parses-binary-range-and-range-until.kt
+format syntax/parser/parses-call-explicit-context-argument-names.kt
+format syntax/parser/parses-call-explicit-receiver-and-super-forms.kt
+format syntax/parser/parses-call-infix-functions-and-soft-keywords.kt
+format syntax/parser/parses-call-named-spread-and-vararg-arguments.kt
+format syntax/parser/parses-call-trailing-and-parenthesized-lambdas.kt
+format syntax/parser/parses-call-type-arguments-and-comparison-ambiguity.kt
+format syntax/parser/parses-callable-reference-forms.kt
+format syntax/parser/parses-callable-reference-with-type-arguments.kt
+format syntax/parser/parses-class-data-value-and-sealed-headers.kt
+format syntax/parser/parses-class-header-type-parameters-and-where.kt
+format syntax/parser/parses-class-primary-constructor.kt
+format syntax/parser/parses-class-with-init-blocks.kt
+format syntax/parser/parses-collection-literal-preview-expressions.kt
+format syntax/parser/parses-collection-literal-preview-vs-indexing.kt
+format syntax/parser/parses-companion-named-and-delegated.kt
+format syntax/parser/parses-companion-object.kt
+format syntax/parser/parses-constructor-annotated-primary.kt
+format syntax/parser/parses-constructor-delegates-to-super.kt
+format syntax/parser/parses-constructor-secondary.kt
+format syntax/parser/parses-delegation-class-and-interface.kt
+format syntax/parser/parses-delegation-property.kt
+format syntax/parser/parses-destructuring-baseline-declarations.kt
+format syntax/parser/parses-destructuring-name-based-preview.kt
+format syntax/parser/parses-destructuring-square-preview.kt
+format syntax/parser/parses-enum-entries-and-body.kt
+format syntax/parser/parses-enum-entry-class-body.kt
+format syntax/parser/parses-expression-annotations.kt
+format syntax/parser/parses-expression-context-parameters-and-function-types.kt
+format syntax/parser/parses-expression-parenthesized-control-expressions.kt
+format syntax/parser/parses-expression-precedence-ladder.kt
+format syntax/parser/parses-expression-soft-keywords-as-identifiers.kt
+format syntax/parser/parses-expression-throw-and-return-in-expression-contexts.kt
+format syntax/parser/parses-file-annotations-package-and-imports.kt
+format syntax/parser/parses-file-with-shebang-and-package.kt
+format syntax/parser/parses-function-context-parameters-with-suspend.kt
+format syntax/parser/parses-function-context-parameters.kt
+format syntax/parser/parses-function-expression-body-and-type-parameters.kt
+format syntax/parser/parses-function-extension-receiver.kt
+format syntax/parser/parses-function-operator-infix-suspend.kt
+format syntax/parser/parses-function-top-level-and-block-body.kt
+format syntax/parser/parses-if-expression-branches-and-nesting.kt
+format syntax/parser/parses-import-alias.kt
+format syntax/parser/parses-import-qualified-members.kt
+format syntax/parser/parses-import-soft-keyword-qualified-names.kt
+format syntax/parser/parses-import-star.kt
+format syntax/parser/parses-interface-fun-and-sealed.kt
+format syntax/parser/parses-interface-members-and-properties.kt
+format syntax/parser/parses-jump-labeled-return-break-continue.kt
+format syntax/parser/parses-lambda-anonymous-function-expressions.kt
+format syntax/parser/parses-lambda-parameter-forms-and-labels.kt
+format syntax/parser/parses-loop-label-this-and-super-expressions.kt
+format syntax/parser/parses-loop-while-do-and-for-forms.kt
+format syntax/parser/parses-modifier-class-header.kt
+format syntax/parser/parses-modifier-function-property-combinations.kt
+format syntax/parser/parses-nested-classes-objects-and-functions.kt
+format syntax/parser/parses-nested-interface-and-enum.kt
+format syntax/parser/parses-nested-type-alias.kt
+format syntax/parser/parses-object-data-object.kt
+format syntax/parser/parses-object-declaration.kt
+format syntax/parser/parses-object-expression.kt
+format syntax/parser/parses-postfix-newline-breaks-before-selector.kt
+format syntax/parser/parses-postfix-newline-sensitive-call-chain.kt
+format syntax/parser/parses-postfix-safe-call-and-not-null-chain.kt
+format syntax/parser/parses-property-accessors.kt
+format syntax/parser/parses-property-explicit-backing-field.kt
+format syntax/parser/parses-property-extension-receiver.kt
+format syntax/parser/parses-property-top-level-val-var.kt
+format syntax/parser/parses-script-top-level-statements.kt
+format syntax/parser/parses-string-multiline-template-expression-contexts.kt
+format syntax/parser/parses-string-template-expression-contexts.kt
+format syntax/parser/parses-try-expression-catch-finally.kt
+format syntax/parser/parses-type-alias-top-level.kt
+format syntax/parser/parses-type-annotations-on-function-types.kt
+format syntax/parser/parses-type-definitely-non-nullable.kt
+format syntax/parser/parses-type-nullable-function-and-context-function.kt
+format syntax/parser/parses-type-projections-and-star.kt
+format syntax/parser/parses-type-suspend-receiver-and-parenthesized-function-types.kt
+format syntax/parser/parses-unary-prefix-and-postfix-operators.kt
+format syntax/parser/parses-when-condition-forms.kt
+format syntax/parser/parses-when-multiple-conditions-with-guards.kt
+format syntax/parser/parses-when-subject-binding.kt
+format syntax/parser/parses-when-subject-guards-and-else.kt
+skip diagnostics syntax/parser/recovers-incomplete-lambda-and-call.kt
+skip diagnostics syntax/parser/recovers-missing-expression-after-elvis.kt
+skip diagnostics syntax/parser/recovers-missing-expression-in-collection-literal-preview.kt
+skip diagnostics syntax/parser/recovers-missing-when-arrow-and-body.kt
+format trivia/annotations-use-site-targets.kt
+format trivia/call-chains-and-safe-calls.kt
+format trivia/callable-references-and-labels.kt
+format trivia/collection-and-indexing.kt
+format trivia/comment-crevices.kt
+format trivia/delegation-and-by.kt
+format trivia/destructuring-and-loops.kt
+format trivia/lambdas-and-trailing.kt
+format trivia/modifiers-and-classes.kt
+format trivia/nullable-and-function-types.kt
+format trivia/operators-and-ranges.kt
+format trivia/package-and-imports.kt
+format trivia/property-accessors-and-field.kt
+format trivia/receiver-and-context-parameters.kt
+format trivia/string-templates.kt
+format trivia/type-parameters-and-where.kt
+format trivia/when-arrows-and-guards.kt
+format upstream-docs/kotlin-basic-syntax-inspired.kt
+format upstream-docs/kotlin-classes-inspired.kt
+format upstream-docs/kotlin-control-flow-inspired.kt

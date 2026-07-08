@@ -37,20 +37,12 @@ pub enum RenderControl {
 }
 
 pub trait RenderSink {
-    type Error;
-
     /// Writes a rendered text chunk and returns whether rendering should continue.
-    ///
-    /// # Errors
-    ///
-    /// Returns a sink-specific error when the chunk cannot be accepted.
-    fn write_str(&mut self, text: &str) -> Result<RenderControl, Self::Error>;
+    fn write_str(&mut self, text: &str) -> RenderControl;
 }
 
 impl<T: RenderSink + ?Sized> RenderSink for &mut T {
-    type Error = T::Error;
-
-    fn write_str(&mut self, text: &str) -> Result<RenderControl, Self::Error> {
+    fn write_str(&mut self, text: &str) -> RenderControl {
         (**self).write_str(text)
     }
 }
@@ -95,23 +87,6 @@ impl fmt::Display for RenderError {
 
 impl Error for RenderError {}
 
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum RenderToError<E> {
-    Render(RenderError),
-    Sink(E),
-}
-
-impl<E: fmt::Display> fmt::Display for RenderToError<E> {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Render(error) => error.fmt(formatter),
-            Self::Sink(error) => error.fmt(formatter),
-        }
-    }
-}
-
-impl<E: fmt::Debug + fmt::Display> Error for RenderToError<E> {}
-
 /// Renders a document using the provided options.
 ///
 /// # Errors
@@ -122,8 +97,8 @@ pub fn render_to<S: RenderSink>(
     doc: &Doc<'_>,
     options: RenderOptions,
     sink: S,
-) -> Result<RenderOutcome, RenderToError<S::Error>> {
-    validate_doc(doc).map_err(RenderToError::Render)?;
+) -> Result<RenderOutcome, RenderError> {
+    validate_doc(doc)?;
     let mut renderer = Renderer::new(options, sink);
     renderer.render_doc(doc, Mode::Break)?;
     Ok(renderer.finish())
@@ -176,7 +151,7 @@ impl<S: RenderSink> Renderer<S> {
         }
     }
 
-    fn render_doc(&mut self, doc: &Doc<'_>, mode: Mode) -> Result<(), RenderToError<S::Error>> {
+    fn render_doc(&mut self, doc: &Doc<'_>, mode: Mode) -> Result<(), RenderError> {
         let mut stack = vec![PrintCommand::Doc(doc, mode)];
         self.render_commands(&mut stack)
     }
@@ -184,7 +159,7 @@ impl<S: RenderSink> Renderer<S> {
     fn render_commands(
         &mut self,
         stack: &mut Vec<PrintCommand<'_, '_>>,
-    ) -> Result<(), RenderToError<S::Error>> {
+    ) -> Result<(), RenderError> {
         while let Some(command) = stack.pop() {
             if self.halted {
                 break;
@@ -207,15 +182,15 @@ impl<S: RenderSink> Renderer<S> {
         doc: &'doc Doc<'source>,
         mode: Mode,
         stack: &mut Vec<PrintCommand<'doc, 'source>>,
-    ) -> Result<(), RenderToError<S::Error>> {
+    ) -> Result<(), RenderError> {
         match doc.kind() {
             DocKind::Nil => Ok(()),
             DocKind::Text(text) => {
-                self.write_measured_str(&text.text, text.width)?;
+                self.write_measured_str(&text.text, text.width);
                 Ok(())
             }
             DocKind::LiteralText(text) => {
-                self.write_literal(text)?;
+                self.write_literal(text);
                 Ok(())
             }
             DocKind::Concat(docs) => {
@@ -234,9 +209,12 @@ impl<S: RenderSink> Renderer<S> {
                 stack.push(PrintCommand::Doc(&indent.contents, mode));
                 Ok(())
             }
-            DocKind::Line(line) => self.render_line(line, mode),
+            DocKind::Line(line) => {
+                self.render_line(line, mode);
+                Ok(())
+            }
             DocKind::IfBreak(if_break) => {
-                let is_broken = self.group_break_state().map_err(RenderToError::Render)?;
+                let is_broken = self.group_break_state()?;
                 stack.push(PrintCommand::Doc(
                     if is_broken {
                         &if_break.breaks
@@ -284,16 +262,15 @@ impl<S: RenderSink> Renderer<S> {
         checker.fit_group_flat_with_stack(group, stack)
     }
 
-    fn render_line(&mut self, line: &Line, mode: Mode) -> Result<(), RenderToError<S::Error>> {
+    fn render_line(&mut self, line: &Line, mode: Mode) {
         match (mode, line.mode) {
-            (_, LineMode::Hard) => self.write_newline(line.indent_delta, 1),
-            (_, LineMode::Empty) => self.write_newline(line.indent_delta, 2),
             (Mode::Flat, LineMode::Soft | LineMode::SoftOrSpace) => {
-                self.write_flat_line(&line.flat)?;
-                Ok(())
+                self.write_flat_line(&line.flat);
             }
-            (Mode::Break, LineMode::Soft | LineMode::SoftOrSpace) => {
-                self.write_newline(line.indent_delta, 1)
+            (_, LineMode::Hard | LineMode::Empty)
+            | (Mode::Break, LineMode::Soft | LineMode::SoftOrSpace) => {
+                let count = if line.mode == LineMode::Empty { 2 } else { 1 };
+                self.write_newline(line.indent_delta, count);
             }
         }
     }
@@ -305,18 +282,13 @@ impl<S: RenderSink> Renderer<S> {
             .ok_or_else(RenderError::no_current_group)
     }
 
-    fn write_measured_str(
-        &mut self,
-        text: &str,
-        width: TextWidth,
-    ) -> Result<(), RenderToError<S::Error>> {
-        self.write_str(text)?;
+    fn write_measured_str(&mut self, text: &str, width: TextWidth) {
+        self.write_str(text);
         self.add_width(width);
-        Ok(())
     }
 
-    fn write_literal(&mut self, literal: &LiteralText<'_>) -> Result<(), RenderToError<S::Error>> {
-        self.write_str(&literal.text)?;
+    fn write_literal(&mut self, literal: &LiteralText<'_>) {
+        self.write_str(&literal.text);
         let final_width = literal.final_width();
         if literal.is_multiline() {
             self.column = final_width;
@@ -324,61 +296,54 @@ impl<S: RenderSink> Renderer<S> {
         } else {
             self.add_width(final_width);
         }
-        Ok(())
     }
 
-    fn write_flat_line(&mut self, flat: &FlatLine) -> Result<(), RenderToError<S::Error>> {
+    fn write_flat_line(&mut self, flat: &FlatLine) {
         match flat {
-            FlatLine::Empty => Ok(()),
+            FlatLine::Empty => {}
             FlatLine::Space => self.write_measured_str(" ", TextWidth::new(1)),
         }
     }
 
-    fn write_newline(
-        &mut self,
-        indent_delta: i16,
-        count: u32,
-    ) -> Result<(), RenderToError<S::Error>> {
+    fn write_newline(&mut self, indent_delta: i16, count: u32) {
         for _ in 0..count {
-            self.write_str("\n")?;
+            self.write_str("\n");
             self.column = TextWidth::ZERO;
             self.measured_group_fits = false;
         }
-        self.write_indent(indent_delta)
+        self.write_indent(indent_delta);
     }
 
-    fn write_indent(&mut self, indent_delta: i16) -> Result<(), RenderToError<S::Error>> {
+    fn write_indent(&mut self, indent_delta: i16) {
         let effective_levels = (self.indent_levels + i32::from(indent_delta))
             .max(0)
             .cast_unsigned();
         let width = effective_levels * u32::from(self.options.indent_width);
         match self.options.indent_style {
             IndentStyle::Space => {
-                self.write_repeated(' ', width)?;
+                self.write_repeated(' ', width);
                 self.column = TextWidth::new(width);
             }
             IndentStyle::Tab => {
-                self.write_repeated('\t', effective_levels)?;
+                self.write_repeated('\t', effective_levels);
                 self.column = TextWidth::new(width);
             }
         }
-        Ok(())
     }
 
-    fn write_str(&mut self, text: &str) -> Result<(), RenderToError<S::Error>> {
+    fn write_str(&mut self, text: &str) {
         if text.is_empty() || self.halted {
-            return Ok(());
+            return;
         }
-        match self.sink.write_str(text).map_err(RenderToError::Sink)? {
+        match self.sink.write_str(text) {
             RenderControl::Continue => {}
             RenderControl::Halt => {
                 self.halted = true;
             }
         }
-        Ok(())
     }
 
-    fn write_repeated(&mut self, ch: char, count: u32) -> Result<(), RenderToError<S::Error>> {
+    fn write_repeated(&mut self, ch: char, count: u32) {
         const SPACES: &str = "                                ";
         const TABS: &str = "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t";
 
@@ -391,10 +356,9 @@ impl<S: RenderSink> Renderer<S> {
         let mut remaining = count;
         while remaining > 0 {
             let write_len = remaining.min(chunk_len);
-            self.write_str(&chunk[..usize::try_from(write_len).expect("chunk length fits usize")])?;
+            self.write_str(&chunk[..usize::try_from(write_len).expect("chunk length fits usize")]);
             remaining -= write_len;
         }
-        Ok(())
     }
 
     fn add_width(&mut self, width: TextWidth) {

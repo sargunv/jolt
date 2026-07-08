@@ -1,13 +1,13 @@
 #![allow(clippy::missing_panics_doc)]
 
 use std::collections::BTreeMap;
-use std::convert::Infallible;
 use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use jolt_diagnostics::{Diagnostic, DiagnosticStage};
+use jolt_diagnostics::Diagnostic;
 use jolt_fmt_ir::{RenderControl, RenderSink};
+use unicode_width::UnicodeWidthStr;
 
 #[derive(Default)]
 pub struct StringSink {
@@ -22,11 +22,9 @@ impl StringSink {
 }
 
 impl RenderSink for StringSink {
-    type Error = Infallible;
-
-    fn write_str(&mut self, text: &str) -> Result<RenderControl, Self::Error> {
+    fn write_str(&mut self, text: &str) -> RenderControl {
         self.text.push_str(text);
-        Ok(RenderControl::Continue)
+        RenderControl::Continue
     }
 }
 
@@ -217,6 +215,7 @@ pub fn render_diagnostics(diagnostics: &[Diagnostic]) -> String {
 pub struct CorpusSummary {
     suite: String,
     files: usize,
+    reconstructed_changed: usize,
     diagnostics: BTreeMap<String, usize>,
 }
 
@@ -226,8 +225,13 @@ impl CorpusSummary {
         Self {
             suite: suite.to_owned(),
             files,
+            reconstructed_changed: 0,
             diagnostics: BTreeMap::new(),
         }
+    }
+
+    pub fn note_reconstruction_changed(&mut self) {
+        self.reconstructed_changed += 1;
     }
 
     pub fn record_diagnostics(&mut self, diagnostics: &[Diagnostic]) {
@@ -242,6 +246,12 @@ impl CorpusSummary {
         let mut output = String::new();
         writeln!(&mut output, "suite: {}", self.suite).expect("write summary");
         writeln!(&mut output, "files: {}", self.files).expect("write summary");
+        writeln!(
+            &mut output,
+            "reconstructed changed: {}",
+            self.reconstructed_changed
+        )
+        .expect("write summary");
         output.push_str("\ndiagnostics:\n");
         if self.diagnostics.is_empty() {
             output.push_str("  <none>: 0\n");
@@ -254,10 +264,18 @@ impl CorpusSummary {
     }
 }
 
-#[must_use]
-pub fn diagnostic_stage_counts(diagnostics: &[Diagnostic], stage: DiagnosticStage) -> usize {
-    diagnostics
-        .iter()
-        .filter(|diagnostic| diagnostic.stage == stage)
-        .count()
+/// Asserts that no rendered line of `formatted` exceeds `line_width` using the
+/// same Unicode-aware width model as the formatter renderer.
+pub fn assert_no_line_exceeds_width(formatted: &str, label: &str, line_width: u16) {
+    let limit = usize::from(line_width);
+    let offending = formatted
+        .lines()
+        .enumerate()
+        .map(|(index, line)| (index + 1, line, line.width()))
+        .find(|(_, _, width)| *width > limit);
+
+    assert!(
+        offending.is_none(),
+        "formatted line exceeded width {line_width} in {label}:\n{formatted}\nfirst offending line: {offending:?}",
+    );
 }

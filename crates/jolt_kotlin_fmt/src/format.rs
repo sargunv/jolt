@@ -1,5 +1,5 @@
 use jolt_diagnostics::{Diagnostic, DiagnosticCodeId, DiagnosticStage, Severity};
-use jolt_fmt_ir::{RenderSink, RenderToError, render_to};
+use jolt_fmt_ir::{RenderSink, render_to};
 use jolt_kotlin_syntax::parse_kotlin_file;
 
 use crate::context::KotlinFormatter;
@@ -28,11 +28,10 @@ impl Default for KotlinFormatOptions {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum KotlinFormatSinkResult<E> {
+pub enum KotlinFormatSinkResult {
     Complete,
     Halted,
     Blocked { diagnostics: Vec<Diagnostic> },
-    SinkError { error: E },
 }
 
 /// Stable Kotlin formatter diagnostic codes.
@@ -55,7 +54,7 @@ pub fn format_source_to_sink<S: RenderSink + ?Sized>(
     source: &str,
     options: &KotlinFormatOptions,
     sink: &mut S,
-) -> KotlinFormatSinkResult<S::Error> {
+) -> KotlinFormatSinkResult {
     let parse = parse_kotlin_file(source);
 
     let Some(syntax) = parse.syntax() else {
@@ -69,10 +68,9 @@ pub fn format_source_to_sink<S: RenderSink + ?Sized>(
     match render_to(&doc, formatter.render_options(), sink) {
         Ok(outcome) if outcome.halted => KotlinFormatSinkResult::Halted,
         Ok(_) => KotlinFormatSinkResult::Complete,
-        Err(RenderToError::Render(error)) => KotlinFormatSinkResult::Blocked {
+        Err(error) => KotlinFormatSinkResult::Blocked {
             diagnostics: vec![render_error_diagnostic(&error)],
         },
-        Err(RenderToError::Sink(error)) => KotlinFormatSinkResult::SinkError { error },
     }
 }
 
@@ -88,8 +86,6 @@ fn render_error_diagnostic(error: &jolt_fmt_ir::RenderError) -> Diagnostic {
 
 #[cfg(test)]
 mod tests {
-    use std::convert::Infallible;
-
     use jolt_fmt_ir::{RenderControl, RenderSink};
 
     use super::{KotlinFormatOptions, KotlinFormatSinkResult, format_source_to_sink};
@@ -105,7 +101,7 @@ mod tests {
 
         assert!(matches!(result, KotlinFormatSinkResult::Complete));
         assert!(sink.output.contains("value"), "{}", sink.output);
-        assert!(sink.output.contains("="), "{}", sink.output);
+        assert!(sink.output.contains('='), "{}", sink.output);
     }
 
     #[derive(Default)]
@@ -114,11 +110,9 @@ mod tests {
     }
 
     impl RenderSink for StringSink {
-        type Error = Infallible;
-
-        fn write_str(&mut self, text: &str) -> Result<RenderControl, Self::Error> {
+        fn write_str(&mut self, text: &str) -> RenderControl {
             self.output.push_str(text);
-            Ok(RenderControl::Continue)
+            RenderControl::Continue
         }
     }
 }

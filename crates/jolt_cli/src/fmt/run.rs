@@ -1,6 +1,5 @@
 use std::{
     collections::HashSet,
-    convert::Infallible,
     env,
     fmt::Write as _,
     fs,
@@ -211,9 +210,6 @@ fn run_stdin(cwd: &Path, args: &Args) -> Result<(), CliError> {
         FormatSinkResult::Halted => {
             return Err(CliError::new("formatting halted before writing stdout"));
         }
-        FormatSinkResult::SinkError { .. } => {
-            unreachable!("buffered stdout sink cannot fail while rendering");
-        }
     }
     if let Err(error) = sink.commit() {
         return Err(CliError::new(format!("failed to write stdout: {error}")));
@@ -344,7 +340,7 @@ fn finish_file_write(
     cwd: &Path,
     path: &Path,
     diagnostics: String,
-    result: &FormatSinkResult<Infallible>,
+    result: &FormatSinkResult,
     sink: BufferedFileSink<'_>,
 ) -> FileFormatResult {
     if matches!(result, FormatSinkResult::Blocked { .. }) {
@@ -372,10 +368,6 @@ fn finish_file_write(
                 display_path(cwd, path)
             )),
         };
-    }
-
-    if matches!(result, FormatSinkResult::SinkError { .. }) {
-        unreachable!("buffered file sink cannot fail while rendering");
     }
 
     let changed = sink.is_changed();
@@ -426,11 +418,9 @@ impl<W: io::Write> BufferedIoSink<W> {
 }
 
 impl<W> RenderSink for BufferedIoSink<W> {
-    type Error = Infallible;
-
-    fn write_str(&mut self, text: &str) -> Result<RenderControl, Self::Error> {
+    fn write_str(&mut self, text: &str) -> RenderControl {
         self.contents.push_str(text);
-        Ok(RenderControl::Continue)
+        RenderControl::Continue
     }
 }
 
@@ -455,20 +445,18 @@ impl<'a> CompareSink<'a> {
 }
 
 impl RenderSink for CompareSink<'_> {
-    type Error = Infallible;
-
-    fn write_str(&mut self, text: &str) -> Result<RenderControl, Self::Error> {
+    fn write_str(&mut self, text: &str) -> RenderControl {
         if !self.matches {
             self.offset += text.len();
-            return Ok(RenderControl::Halt);
+            return RenderControl::Halt;
         }
 
         compare_chunk(self.expected, &mut self.offset, &mut self.matches, text);
 
         if self.matches {
-            Ok(RenderControl::Continue)
+            RenderControl::Continue
         } else {
-            Ok(RenderControl::Halt)
+            RenderControl::Halt
         }
     }
 }
@@ -517,12 +505,10 @@ impl<'a> BufferedFileSink<'a> {
 }
 
 impl RenderSink for BufferedFileSink<'_> {
-    type Error = Infallible;
-
-    fn write_str(&mut self, text: &str) -> Result<RenderControl, Self::Error> {
+    fn write_str(&mut self, text: &str) -> RenderControl {
         self.contents.push_str(text);
         compare_chunk(self.expected, &mut self.offset, &mut self.matches, text);
-        Ok(RenderControl::Continue)
+        RenderControl::Continue
     }
 }
 
@@ -565,12 +551,10 @@ fn diagnostics_text(label: &str, source: &str, diagnostics: &[Diagnostic]) -> St
     text
 }
 
-fn result_diagnostics<E>(result: &FormatSinkResult<E>) -> &[Diagnostic] {
+fn result_diagnostics(result: &FormatSinkResult) -> &[Diagnostic] {
     match result {
         FormatSinkResult::Blocked { diagnostics } => diagnostics,
-        FormatSinkResult::Complete
-        | FormatSinkResult::Halted
-        | FormatSinkResult::SinkError { .. } => &[],
+        FormatSinkResult::Complete | FormatSinkResult::Halted => &[],
     }
 }
 

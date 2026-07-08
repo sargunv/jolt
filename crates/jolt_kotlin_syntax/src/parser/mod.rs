@@ -15,7 +15,6 @@ use self::source::Parser;
 
 /// Stable Kotlin parser diagnostic codes.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-#[allow(dead_code)]
 pub(crate) enum KotlinParseDiagnosticCode {
     ExpectedSyntax,
     UnexpectedSyntax,

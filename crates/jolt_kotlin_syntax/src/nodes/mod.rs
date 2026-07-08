@@ -393,15 +393,15 @@ macro_rules! kotlin_cst {
 
                 #[must_use]
                 pub fn first_token(&self) -> Option<KotlinSyntaxToken<'source>> {
-                    first_token(&self.syntax)
+                    first_token(self.syntax())
                 }
 
                 #[must_use]
                 pub fn last_token(&self) -> Option<KotlinSyntaxToken<'source>> {
-                    last_token(&self.syntax)
+                    last_token(self.syntax())
                 }
 
-                #[allow(dead_code)]
+                #[must_use]
                 pub(crate) fn syntax(&self) -> &KotlinSyntaxNode<'source> {
                     &self.syntax
                 }

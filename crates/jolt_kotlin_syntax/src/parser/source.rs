@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use std::ops::Range;
 
 use jolt_diagnostics::{Diagnostic, DiagnosticStage, Severity};
@@ -8,7 +6,7 @@ use jolt_syntax::{
 };
 use jolt_text::{TextRange, TextSize};
 
-use crate::{KotlinLexer, KotlinSyntaxKind, lexer::LexedToken};
+use crate::{KotlinSyntaxKind, lexer::KotlinLexer, lexer::LexedToken};
 
 use super::KotlinParseDiagnosticCode;
 
@@ -214,6 +212,7 @@ impl<'source> Parser<'source> {
         marker.precede(&mut self.events)
     }
 
+    #[allow(dead_code)]
     pub(super) fn completed_is_error_node(marker: &CompletedMarker) -> bool {
         marker.kind() == KotlinSyntaxKind::ErrorNode.to_raw()
     }

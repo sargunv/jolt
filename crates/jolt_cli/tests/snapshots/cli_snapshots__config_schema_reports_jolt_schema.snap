@@ -70,7 +70,7 @@ stdout:
       "additionalProperties": false
     },
     "JoltFormatConfig": {
-      "description": "Jolt formatter options.",
+      "description": "Jolt formatter options for `jolt.toml`.\n\nThis mirrors `jolt_formatter::FormatOptions`, but uses kebab-case field names to match the TOML convention used by `jolt.toml`. The range constraints match the `FormatOptions` `schemars(range(...))` attributes.",
       "type": "object",
       "properties": {
         "indent-width": {

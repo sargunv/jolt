@@ -1,6 +1,6 @@
 //! dprint plugin handler for Jolt.
 
-use std::{convert::Infallible, fmt::Write as _, path::Path};
+use std::{fmt::Write as _, path::Path};
 
 use dprint_core::plugins::{FormatError, FormatResult};
 #[cfg(feature = "wasm")]
@@ -61,7 +61,6 @@ impl JoltDprintPlugin {
                     &diagnostics,
                 )));
             }
-            FormatSinkResult::SinkError { error } => match error {},
         }
 
         let formatted = sink.into_bytes();
@@ -130,11 +129,9 @@ impl DprintFormatSink {
 }
 
 impl RenderSink for DprintFormatSink {
-    type Error = Infallible;
-
-    fn write_str(&mut self, text: &str) -> Result<RenderControl, Self::Error> {
+    fn write_str(&mut self, text: &str) -> RenderControl {
         self.bytes.extend_from_slice(text.as_bytes());
-        Ok(RenderControl::Continue)
+        RenderControl::Continue
     }
 }
 

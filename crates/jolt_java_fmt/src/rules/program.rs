@@ -339,8 +339,6 @@ fn format_package_declaration<'source>(
 
 #[cfg(test)]
 mod tests {
-    use std::convert::Infallible;
-
     use jolt_fmt_ir::{
         IndentStyle, RenderControl, RenderOptions, RenderSink, TextWidth, render_to,
     };
@@ -356,7 +354,7 @@ mod tests {
         assert!(formatted.contains("call"));
         assert!(formatted.contains("first"));
         assert!(formatted.contains("/* orphan */"));
-        assert!(formatted.contains(","));
+        assert!(formatted.contains(','));
         assert!(formatted.contains("second"));
     }
 
@@ -365,9 +363,9 @@ mod tests {
         let source = "class C<T, /* type */ , U> { @A(x = 1, /* ann */ , y = 2) void m(int a, /* param */ , int b) {} }\n";
         let formatted = format(source);
 
-        assert!(formatted.contains("T"));
+        assert!(formatted.contains('T'));
         assert!(formatted.contains("/* type */"));
-        assert!(formatted.contains("U"));
+        assert!(formatted.contains('U'));
         assert!(formatted.contains("/* ann */"));
         assert!(formatted.contains("/* param */"));
         assert!(formatted.contains("int b"));
@@ -379,7 +377,7 @@ mod tests {
 
         assert!(formatted.contains("int"));
         assert!(formatted.contains("value"));
-        assert!(formatted.contains("="));
+        assert!(formatted.contains('='));
         assert!(formatted.contains("/* keep */"));
     }
 
@@ -405,7 +403,7 @@ mod tests {
         let formatted = format("class C { void m() { obj.(); } }\n");
 
         assert!(formatted.contains("obj"), "{formatted}");
-        assert!(formatted.contains("."), "{formatted}");
+        assert!(formatted.contains('.'), "{formatted}");
         assert!(formatted.contains("()"), "{formatted}");
     }
 
@@ -414,7 +412,7 @@ mod tests {
         let formatted = format("class C { void m() { value + /* rhs */ ; } }\n");
 
         assert!(formatted.contains("value"), "{formatted}");
-        assert!(formatted.contains("+"), "{formatted}");
+        assert!(formatted.contains('+'), "{formatted}");
         assert!(formatted.contains("/* rhs */"), "{formatted}");
     }
 
@@ -423,7 +421,7 @@ mod tests {
         let formatted = format("import ;\nmodule m { requires ; }\n");
 
         assert!(formatted.contains("import"));
-        assert!(formatted.contains(";"));
+        assert!(formatted.contains(';'));
         assert!(formatted.contains("module"));
         assert!(formatted.contains("requires"));
     }
@@ -454,7 +452,7 @@ mod tests {
 
         assert!(formatted.contains("int a"), "{formatted}");
         assert!(formatted.contains("/* member */"), "{formatted}");
-        assert!(formatted.contains("+"), "{formatted}");
+        assert!(formatted.contains('+'), "{formatted}");
         assert!(formatted.contains("void m()"), "{formatted}");
     }
 
@@ -474,7 +472,7 @@ mod tests {
 
         assert!(formatted.contains("int before"), "{formatted}");
         assert!(formatted.contains("/* member */"), "{formatted}");
-        assert!(formatted.contains("+"), "{formatted}");
+        assert!(formatted.contains('+'), "{formatted}");
         assert!(formatted.contains("int raw=1+2;"), "{formatted}");
         assert!(formatted.contains("int after"), "{formatted}");
     }
@@ -484,11 +482,11 @@ mod tests {
         let source = "class C { void m() { try (a + /* resource */ ; b) {} catch (A | /* catch */ | B e) {} } }\n";
         let formatted = format(source);
 
-        assert!(formatted.contains("a"), "{formatted}");
-        assert!(formatted.contains("+"), "{formatted}");
+        assert!(formatted.contains('a'), "{formatted}");
+        assert!(formatted.contains('+'), "{formatted}");
         assert!(formatted.contains("/* resource */"), "{formatted}");
-        assert!(formatted.contains("b"), "{formatted}");
-        assert!(formatted.contains("A"), "{formatted}");
+        assert!(formatted.contains('b'), "{formatted}");
+        assert!(formatted.contains('A'), "{formatted}");
         assert!(formatted.contains("/* catch */"), "{formatted}");
         assert!(formatted.contains("B e"), "{formatted}");
     }
@@ -501,12 +499,12 @@ mod tests {
         );
         let formatted = format(source);
 
-        assert!(formatted.contains("A"));
+        assert!(formatted.contains('A'));
         assert!(formatted.contains("/* case */"));
-        assert!(formatted.contains("B"));
+        assert!(formatted.contains('B'));
         assert!(formatted.contains("exports"));
         assert!(formatted.contains("/* module */"));
-        assert!(formatted.contains("b"));
+        assert!(formatted.contains('b'));
     }
 
     #[test]
@@ -516,7 +514,7 @@ mod tests {
         );
 
         assert!(formatted.contains("/* block */"), "{formatted}");
-        assert!(formatted.contains("+"), "{formatted}");
+        assert!(formatted.contains('+'), "{formatted}");
         assert!(formatted.contains("case"), "{formatted}");
         assert!(formatted.contains("use"), "{formatted}");
     }
@@ -530,7 +528,7 @@ mod tests {
         assert!(formatted.contains("case"), "{formatted}");
         assert!(formatted.contains("->"), "{formatted}");
         assert!(formatted.contains("/* empty */"), "{formatted}");
-        assert!(formatted.contains(";"), "{formatted}");
+        assert!(formatted.contains(';'), "{formatted}");
     }
 
     #[test]
@@ -550,7 +548,7 @@ mod tests {
         assert!(formatted.contains("int before"), "{formatted}");
         assert!(formatted.contains("int raw=1+2;"), "{formatted}");
         assert!(formatted.contains("/* block */"), "{formatted}");
-        assert!(formatted.contains("+"), "{formatted}");
+        assert!(formatted.contains('+'), "{formatted}");
     }
 
     #[test]
@@ -561,7 +559,7 @@ mod tests {
 
         assert!(formatted.contains("case"), "{formatted}");
         assert!(formatted.contains("/* group */"), "{formatted}");
-        assert!(formatted.contains("+"), "{formatted}");
+        assert!(formatted.contains('+'), "{formatted}");
         assert!(formatted.contains("use"), "{formatted}");
     }
 
@@ -571,7 +569,7 @@ mod tests {
 
         assert!(formatted.contains("this()"), "{formatted}");
         assert!(formatted.contains("/* body */"), "{formatted}");
-        assert!(formatted.contains("+"), "{formatted}");
+        assert!(formatted.contains('+'), "{formatted}");
         assert!(formatted.contains("int"), "{formatted}");
         assert!(formatted.contains("value"), "{formatted}");
     }
@@ -581,7 +579,7 @@ mod tests {
         let formatted =
             format("class C { C() { <T>.this(); } void m() { .new Nested(); .this; .super; } }\n");
 
-        assert!(formatted.contains("."), "{formatted}");
+        assert!(formatted.contains('.'), "{formatted}");
         assert!(formatted.contains("this"), "{formatted}");
         assert!(formatted.contains("super"), "{formatted}");
         assert!(formatted.contains(".new"), "{formatted}");
@@ -593,7 +591,7 @@ mod tests {
         let formatted = format(source);
 
         assert!(formatted.contains("/* top */"), "{formatted}");
-        assert!(formatted.contains("+"), "{formatted}");
+        assert!(formatted.contains('+'), "{formatted}");
         assert!(formatted.contains("class C"), "{formatted}");
         assert!(
             formatted.contains("// JOLT-TRIVIA:file-tail"),
@@ -639,7 +637,7 @@ mod tests {
 
         assert!(formatted.contains("requires a"), "{formatted}");
         assert!(formatted.contains("/* module */"), "{formatted}");
-        assert!(formatted.contains("+"), "{formatted}");
+        assert!(formatted.contains('+'), "{formatted}");
         assert!(formatted.contains("exports p"), "{formatted}");
         assert_eq!(format(&formatted), formatted);
     }
@@ -700,11 +698,9 @@ mod tests {
     }
 
     impl RenderSink for &mut StringDocSink {
-        type Error = Infallible;
-
-        fn write_str(&mut self, text: &str) -> Result<RenderControl, Self::Error> {
+        fn write_str(&mut self, text: &str) -> RenderControl {
             self.output.push_str(text);
-            Ok(RenderControl::Continue)
+            RenderControl::Continue
         }
     }
 }

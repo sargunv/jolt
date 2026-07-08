@@ -7,6 +7,8 @@ use schemars::{
 };
 use serde::Serialize;
 
+use jolt_formatter::FormatOptions;
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum SchemaKind {
     Jolt,
@@ -26,26 +28,16 @@ pub(crate) fn write_schema(kind: SchemaKind, writer: &mut impl io::Write) -> io:
 
 /// Outer schema shape for dprint's `dprint.jsonc`: plugin options nested under
 /// the `jolt` config key, with all other dprint global keys permitted.
+///
+/// The field shape is supplied by `jolt_formatter::FormatOptions`, which uses
+/// camelCase keys (matching dprint's JSON convention) and carries the range
+/// constraints on `line_width`/`indent_width`.
 #[derive(Serialize, JsonSchema)]
 #[schemars(title = "dprint jolt plugin configuration")]
 struct DprintJoltConfig {
     /// Jolt-specific options; dprint global options (`lineWidth`, etc.) are
     /// applied as defaults when these are absent.
-    jolt: Option<DprintFormatConfig>,
-}
-
-/// Jolt-specific dprint plugin options.
-#[derive(Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-struct DprintFormatConfig {
-    /// Preferred maximum rendered line width.
-    #[schemars(range(min = 1, max = 65535))]
-    line_width: Option<u16>,
-    /// Number of spaces per indentation level when `useTabs` is false.
-    #[schemars(range(min = 1, max = 255))]
-    indent_width: Option<u8>,
-    /// Whether indentation should use tabs instead of spaces.
-    use_tabs: Option<bool>,
+    jolt: Option<FormatOptions>,
 }
 
 /// Schema shape for `jolt.toml`.
@@ -61,7 +53,11 @@ struct JoltConfig {
     files: Option<JoltFilesConfig>,
 }
 
-/// Jolt formatter options.
+/// Jolt formatter options for `jolt.toml`.
+///
+/// This mirrors `jolt_formatter::FormatOptions`, but uses kebab-case field
+/// names to match the TOML convention used by `jolt.toml`. The range
+/// constraints match the `FormatOptions` `schemars(range(...))` attributes.
 #[derive(Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 struct JoltFormatConfig {

@@ -122,7 +122,6 @@ fn format_source(
     match format_source_to_sink(source, options, &mut sink) {
         JavaFormatSinkResult::Complete | JavaFormatSinkResult::Halted => Ok(sink.into_string()),
         JavaFormatSinkResult::Blocked { diagnostics } => Err(diagnostics),
-        JavaFormatSinkResult::SinkError { error } => match error {},
     }
 }
 

@@ -10,21 +10,30 @@ fn kotlin_corpus_formatter_snapshots() {
     let options = KotlinFormatOptions::default();
     let root = kotlin_fixture_root(env!("CARGO_MANIFEST_DIR"));
     let mut formatted_cases = 0usize;
+    let mut manifest_entries = Vec::new();
 
     for path in collect_kotlin_files(&root) {
+        let relative = path
+            .strip_prefix(&root)
+            .unwrap_or(&path)
+            .to_string_lossy()
+            .replace('\\', "/");
         if path
             .strip_prefix(&root)
             .is_ok_and(|relative| relative.starts_with("syntax/lexer"))
         {
+            manifest_entries.push(format!("skip lexer {relative}"));
             continue;
         }
 
         let source = read_to_string(&path);
         let parse = parse_kotlin_file(&source);
         if !parse.diagnostics().is_empty() || parse.syntax().is_none() {
+            manifest_entries.push(format!("skip diagnostics {relative}"));
             continue;
         }
 
+        manifest_entries.push(format!("format {relative}"));
         formatted_cases += 1;
         let formatted = format_or_panic(&source, &options, &path.display().to_string());
         let formatted_parse = parse_kotlin_file(&formatted);
@@ -61,6 +70,7 @@ fn kotlin_corpus_formatter_snapshots() {
         formatted_cases > 0,
         "expected at least one valid Kotlin formatter corpus fixture"
     );
+    insta::assert_snapshot!("formatter_fixture_manifest", manifest_entries.join("\n"));
 }
 
 fn format_or_panic(source: &str, options: &KotlinFormatOptions, label: &str) -> String {
@@ -70,6 +80,5 @@ fn format_or_panic(source: &str, options: &KotlinFormatOptions, label: &str) -> 
         KotlinFormatSinkResult::Blocked { diagnostics } => {
             panic!("formatter diagnostics in {label}: {diagnostics:#?}")
         }
-        KotlinFormatSinkResult::SinkError { error } => match error {},
     }
 }

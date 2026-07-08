@@ -9,16 +9,16 @@ use unicode_general_category::{GeneralCategory, get_general_category};
 
 use crate::KotlinSyntaxKind;
 
-pub use token::{KotlinLexDiagnosticCode, LexedToken, LexerDiagnostic};
+pub(crate) use token::{KotlinLexDiagnosticCode, LexedToken, LexerDiagnostic};
 
-pub struct KotlinLexer<'source> {
+pub(crate) struct KotlinLexer<'source> {
     scanner: Scanner<'source>,
     emitted_eof: bool,
 }
 
 impl<'source> KotlinLexer<'source> {
     #[must_use]
-    pub fn new(source: &'source str) -> Self {
+    pub(crate) fn new(source: &'source str) -> Self {
         Self {
             scanner: Scanner::new(source),
             emitted_eof: false,
@@ -26,7 +26,7 @@ impl<'source> KotlinLexer<'source> {
     }
 
     /// Returns the next token, appending its trivia to the supplied buffer.
-    pub fn next_token_into(&mut self, trivia: &mut Vec<SyntaxTrivia>) -> LexedToken {
+    pub(crate) fn next_token_into(&mut self, trivia: &mut Vec<SyntaxTrivia>) -> LexedToken {
         if self.emitted_eof {
             return self.eof_token_into(trivia.len()..trivia.len());
         }
@@ -49,7 +49,7 @@ impl<'source> KotlinLexer<'source> {
 
     /// Drains the remaining source and returns all lexer diagnostics.
     #[must_use]
-    pub fn finish(mut self) -> Vec<LexerDiagnostic> {
+    pub(crate) fn finish(mut self) -> Vec<LexerDiagnostic> {
         self.scanner.drain();
         self.scanner.finish_diagnostics();
         self.scanner.diagnostics

@@ -374,8 +374,6 @@ fn format_package_header<'source>(package: &PackageHeader<'source>) -> Doc<'sour
 
 #[cfg(test)]
 mod tests {
-    use std::convert::Infallible;
-
     use jolt_fmt_ir::{
         IndentStyle, RenderControl, RenderOptions, RenderSink, TextWidth, concat, hard_line,
         render_to,
@@ -410,7 +408,7 @@ mod tests {
 
         assert!(formatted.contains("run"));
         assert!(formatted.contains("value"));
-        assert!(formatted.contains("1"));
+        assert!(formatted.contains('1'));
     }
 
     #[test]
@@ -427,7 +425,7 @@ mod tests {
         let formatted = format("fun demo() { call(/* before */,\n/* value */ value)\n}\n");
 
         assert!(formatted.contains("/* before */"));
-        assert!(formatted.contains(","));
+        assert!(formatted.contains(','));
         assert!(formatted.contains("/* value */"));
         assert!(formatted.contains("value"));
     }
@@ -465,7 +463,7 @@ mod tests {
         let formatted = format("fun demo(value: Int) { when (value) { 1 -> one()\n");
 
         assert!(formatted.contains("when"));
-        assert!(formatted.contains("1"));
+        assert!(formatted.contains('1'));
         assert!(formatted.contains("one"));
     }
 
@@ -494,7 +492,7 @@ mod tests {
 
         assert!(formatted.contains("ok"));
         assert!(formatted.contains("/* orphan */"));
-        assert!(formatted.contains("+"));
+        assert!(formatted.contains('+'));
         assert!(formatted.contains("value"));
     }
 
@@ -532,14 +530,14 @@ mod tests {
 
         assert!(formatted.contains("fun raw(){ }"));
         assert!(formatted.contains("/* member */"));
-        assert!(formatted.contains("+"));
+        assert!(formatted.contains('+'));
     }
 
     #[test]
     fn recovered_navigation_without_receiver_preserves_selector_tokens() {
         let formatted = format("fun demo() { .next }\n");
 
-        assert!(formatted.contains("."));
+        assert!(formatted.contains('.'));
         assert!(formatted.contains("next"));
     }
 
@@ -547,7 +545,7 @@ mod tests {
     fn recovered_assignment_without_left_preserves_operator_and_right() {
         let formatted = format("fun demo() { = value }\n");
 
-        assert!(formatted.contains("="));
+        assert!(formatted.contains('='));
         assert!(formatted.contains("value"));
     }
 
@@ -560,7 +558,7 @@ mod tests {
         assert!(formatted.contains("/* collection */"));
         assert!(formatted.contains("value"));
         assert!(formatted.contains("/* index */"));
-        assert!(formatted.contains("0"));
+        assert!(formatted.contains('0'));
     }
 
     #[test]
@@ -577,9 +575,9 @@ mod tests {
         let source = "fun demo(x: Int) { when (x) { 1, /* orphan */ , 2 -> hit() } }\n";
         let formatted = format(source);
 
-        assert!(formatted.contains("1"));
+        assert!(formatted.contains('1'));
         assert!(formatted.contains("/* orphan */"));
-        assert!(formatted.contains("2"));
+        assert!(formatted.contains('2'));
         assert!(formatted.contains("hit"));
     }
 
@@ -611,7 +609,7 @@ mod tests {
 
         assert!(formatted.contains("value"));
         assert!(formatted.contains("field"));
-        assert!(formatted.contains("="));
+        assert!(formatted.contains('='));
         assert!(formatted.contains("/* backing */"));
         assert!(formatted.contains("compute"));
     }
@@ -621,7 +619,7 @@ mod tests {
         let formatted = format("import sample.deep.*\nimport sample.Name as Alias\n");
 
         assert!(formatted.contains("sample.deep"));
-        assert!(formatted.contains("*"));
+        assert!(formatted.contains('*'));
         assert!(formatted.contains("sample.Name"));
         assert!(formatted.contains("as"));
         assert!(formatted.contains("Alias"));
@@ -632,7 +630,7 @@ mod tests {
         let formatted = format("fun value() =\nval answer =\nval delegated by\n");
 
         assert!(formatted.contains("fun value()"), "{formatted}");
-        assert!(formatted.contains("="), "{formatted}");
+        assert!(formatted.contains('='), "{formatted}");
         assert!(formatted.contains("answer"), "{formatted}");
         assert!(formatted.contains("by"), "{formatted}");
     }
@@ -642,7 +640,7 @@ mod tests {
         let formatted = format("fun demo(flag: Boolean) { label@\ndo { work() }\nwhen (flag)\n}\n");
 
         assert!(formatted.contains("label"));
-        assert!(formatted.contains("@"));
+        assert!(formatted.contains('@'));
         assert!(formatted.contains("do"));
         assert!(formatted.contains("work"));
         assert!(formatted.contains("when"));
@@ -719,11 +717,9 @@ mod tests {
     }
 
     impl RenderSink for &mut StringDocSink {
-        type Error = Infallible;
-
-        fn write_str(&mut self, text: &str) -> Result<RenderControl, Self::Error> {
+        fn write_str(&mut self, text: &str) -> RenderControl {
             self.output.push_str(text);
-            Ok(RenderControl::Continue)
+            RenderControl::Continue
         }
     }
 }

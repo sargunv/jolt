@@ -53,7 +53,6 @@ fn format_or_panic(source: &str, path: &PathBuf) -> String {
                 path.display()
             )
         }
-        KotlinFormatSinkResult::SinkError { error } => match error {},
     }
 }
 

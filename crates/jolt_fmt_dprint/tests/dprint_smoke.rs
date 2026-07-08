@@ -1,13 +1,12 @@
 use std::{
-    convert::Infallible,
     fs,
     path::{Path, PathBuf},
     process::Command,
     sync::OnceLock,
 };
 
-use jolt_fmt_ir::{RenderControl, RenderSink};
 use jolt_formatter::{FormatOptions, FormatSinkResult, Language, format_source_to_sink};
+use jolt_test_support::StringSink;
 use tempfile::TempDir;
 
 static PLUGIN_PATH: OnceLock<PathBuf> = OnceLock::new();
@@ -180,11 +179,10 @@ struct CommandOutput {
 fn direct_java_format(source: &str) -> String {
     let mut sink = StringSink::default();
     match format_source_to_sink(source, Language::Java, &FormatOptions::default(), &mut sink) {
-        FormatSinkResult::Complete | FormatSinkResult::Halted => sink.text,
+        FormatSinkResult::Complete | FormatSinkResult::Halted => sink.into_string(),
         FormatSinkResult::Blocked { diagnostics } => {
             panic!("direct Java formatting blocked: {diagnostics:?}")
         }
-        FormatSinkResult::SinkError { error } => match error {},
     }
 }
 
@@ -196,25 +194,10 @@ fn direct_kotlin_format(source: &str) -> String {
         &FormatOptions::default(),
         &mut sink,
     ) {
-        FormatSinkResult::Complete | FormatSinkResult::Halted => sink.text,
+        FormatSinkResult::Complete | FormatSinkResult::Halted => sink.into_string(),
         FormatSinkResult::Blocked { diagnostics } => {
             panic!("direct Kotlin formatting blocked: {diagnostics:?}")
         }
-        FormatSinkResult::SinkError { error } => match error {},
-    }
-}
-
-#[derive(Default)]
-struct StringSink {
-    text: String,
-}
-
-impl RenderSink for StringSink {
-    type Error = Infallible;
-
-    fn write_str(&mut self, text: &str) -> Result<RenderControl, Self::Error> {
-        self.text.push_str(text);
-        Ok(RenderControl::Continue)
     }
 }
 
