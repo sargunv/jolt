@@ -1,6 +1,5 @@
 use jolt_fmt_ir::{Doc, concat};
 use jolt_kotlin_syntax::{Block, BlockItem, RecoveredSeparatedListEntry};
-use jolt_syntax::source_gap_is_trivia;
 
 use crate::helpers::blocks::{
     BodyItem, empty_source_braced_body, join_body_items, source_braced_body,
@@ -28,7 +27,7 @@ pub(crate) fn format_block<'source>(block: &Block<'source>) -> Doc<'source> {
     }
 
     let body = format_block_contents(block);
-    if body.is_none() && block_inner_is_whitespace(block) {
+    if body.is_none() && block.inner_is_whitespace() {
         return empty_source_braced_body(block.open_brace().as_ref(), block.close_brace().as_ref());
     }
 
@@ -276,22 +275,6 @@ fn gap_has_blank_line(source: &str, block_start: usize, start: usize, end: usize
         }
     }
     false
-}
-
-fn block_inner_is_whitespace(block: &Block<'_>) -> bool {
-    let Some(open) = block.open_brace() else {
-        return false;
-    };
-    let Some(close) = block.close_brace() else {
-        return false;
-    };
-    source_gap_is_trivia(
-        block.source_text(),
-        block.text_range().start().get(),
-        block.token_iter(),
-        open.token_text_range().end().get(),
-        close.token_text_range().start().get(),
-    )
 }
 
 fn block_item_token_range(

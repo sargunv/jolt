@@ -1941,6 +1941,25 @@ impl<'source> Block<'source> {
             matches!(kind, KotlinSyntaxKind::LBrace | KotlinSyntaxKind::RBrace)
         })
     }
+
+    /// Returns true when no represented token (apart from the delimiters) is
+    /// present between the open and close braces; i.e. the block's interior is
+    /// only whitespace and comment trivia.
+    #[must_use]
+    pub fn inner_is_whitespace(&self) -> bool {
+        let Some(open) = self.open_brace() else {
+            return false;
+        };
+        let Some(close) = self.close_brace() else {
+            return false;
+        };
+        let open_end = open.token_text_range().end().get();
+        let close_start = close.token_text_range().start().get();
+        !self.token_iter().any(|token| {
+            let range = token.token_text_range();
+            range.start().get() > open_end && range.end().get() < close_start
+        })
+    }
 }
 
 impl<'source> ValueArgumentList<'source> {
