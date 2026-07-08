@@ -374,10 +374,7 @@ fn format_package_header<'source>(package: &PackageHeader<'source>) -> Doc<'sour
 
 #[cfg(test)]
 mod tests {
-    use jolt_fmt_ir::{
-        IndentStyle, RenderControl, RenderOptions, RenderSink, TextWidth, concat, hard_line,
-        render_to,
-    };
+    use jolt_fmt_ir::{IndentStyle, RenderOptions, TextWidth, concat, hard_line, render_to};
     use jolt_kotlin_syntax::parse_kotlin_file;
 
     use super::format_file_contents;
@@ -697,7 +694,7 @@ mod tests {
         let parse = parse_kotlin_file(source);
         let file = parse.syntax().expect("test input should parse");
         let doc = concat([format_file_contents(&file), hard_line()]);
-        let mut sink = StringDocSink::default();
+        let mut sink = jolt_test_support::StringSink::default();
         render_to(
             &doc,
             RenderOptions {
@@ -708,18 +705,6 @@ mod tests {
             &mut sink,
         )
         .expect("test doc should render");
-        sink.output
-    }
-
-    #[derive(Default)]
-    struct StringDocSink {
-        output: String,
-    }
-
-    impl RenderSink for &mut StringDocSink {
-        fn write_str(&mut self, text: &str) -> RenderControl {
-            self.output.push_str(text);
-            RenderControl::Continue
-        }
+        sink.into_string()
     }
 }

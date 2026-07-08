@@ -1,14 +1,13 @@
-use jolt_fmt_ir::{Doc, IndentStyle, RenderOptions, TextWidth};
+use jolt_fmt_ir::{Doc, FormatOptions, IndentStyle, RenderOptions, TextWidth};
 
-use crate::format::KotlinFormatOptions;
 use crate::rules::program::format_file;
 
 pub(crate) struct KotlinFormatter<'a> {
-    options: &'a KotlinFormatOptions,
+    options: &'a FormatOptions,
 }
 
 impl<'a> KotlinFormatter<'a> {
-    pub(crate) fn new(options: &'a KotlinFormatOptions) -> Self {
+    pub(crate) fn new(options: &'a FormatOptions) -> Self {
         Self { options }
     }
 

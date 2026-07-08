@@ -449,6 +449,10 @@ dependencies = [
 name = "jolt_fmt_ir"
 version = "0.0.0"
 dependencies = [
+ "jolt_diagnostics",
+ "jolt_syntax",
+ "schemars",
+ "serde",
  "unicode-width",
 ]
 
@@ -456,12 +460,9 @@ dependencies = [
 name = "jolt_formatter"
 version = "0.0.0"
 dependencies = [
- "jolt_diagnostics",
  "jolt_fmt_ir",
  "jolt_java_fmt",
  "jolt_kotlin_fmt",
- "schemars",
- "serde",
 ]
 
 [[package]]
@@ -473,7 +474,6 @@ dependencies = [
  "jolt_fmt_ir",
  "jolt_java_syntax",
  "jolt_test_support",
- "serde",
 ]
 
 [[package]]
@@ -499,7 +499,6 @@ dependencies = [
  "jolt_kotlin_syntax",
  "jolt_syntax",
  "jolt_test_support",
- "serde",
 ]
 
 [[package]]

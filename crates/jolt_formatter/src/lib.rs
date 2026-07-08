@@ -1,7 +1,8 @@
 //! Shared formatter facade for Jolt's CLI and dprint plugin.
 
-use jolt_diagnostics::Diagnostic;
 use jolt_fmt_ir::RenderSink;
+
+pub use jolt_fmt_ir::{FormatOptions, FormatSinkResult};
 
 /// Source language to format.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -12,39 +13,6 @@ pub enum Language {
     Kotlin,
 }
 
-/// Formatter options shared by CLI and dprint.
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
-#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
-pub struct FormatOptions {
-    /// Preferred maximum rendered line width.
-    #[cfg_attr(feature = "schema", schemars(range(min = 1, max = 65535)))]
-    pub line_width: u16,
-    /// Number of spaces per indentation level when `use_tabs` is false.
-    #[cfg_attr(feature = "schema", schemars(range(min = 1, max = 255)))]
-    pub indent_width: u8,
-    /// Whether indentation should use tabs instead of spaces.
-    pub use_tabs: bool,
-}
-
-impl Default for FormatOptions {
-    fn default() -> Self {
-        Self {
-            line_width: 80,
-            indent_width: 2,
-            use_tabs: false,
-        }
-    }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum FormatSinkResult {
-    Complete,
-    Halted,
-    Blocked { diagnostics: Vec<Diagnostic> },
-}
-
 /// Formats source text for `language` into a render sink using `options`.
 pub fn format_source_to_sink<S: RenderSink + ?Sized>(
     source: &str,
@@ -53,45 +21,7 @@ pub fn format_source_to_sink<S: RenderSink + ?Sized>(
     sink: &mut S,
 ) -> FormatSinkResult {
     match language {
-        Language::Java => format_java_source_to_sink(source, *options, sink),
-        Language::Kotlin => format_kotlin_source_to_sink(source, *options, sink),
-    }
-}
-
-fn format_java_source_to_sink<S: RenderSink + ?Sized>(
-    source: &str,
-    options: FormatOptions,
-    sink: &mut S,
-) -> FormatSinkResult {
-    let java_options = jolt_java_fmt::JavaFormatOptions {
-        line_width: options.line_width,
-        indent_width: options.indent_width,
-        use_tabs: options.use_tabs,
-    };
-    match jolt_java_fmt::format_source_to_sink(source, &java_options, sink) {
-        jolt_java_fmt::JavaFormatSinkResult::Complete => FormatSinkResult::Complete,
-        jolt_java_fmt::JavaFormatSinkResult::Halted => FormatSinkResult::Halted,
-        jolt_java_fmt::JavaFormatSinkResult::Blocked { diagnostics } => {
-            FormatSinkResult::Blocked { diagnostics }
-        }
-    }
-}
-
-fn format_kotlin_source_to_sink<S: RenderSink + ?Sized>(
-    source: &str,
-    options: FormatOptions,
-    sink: &mut S,
-) -> FormatSinkResult {
-    let kotlin_options = jolt_kotlin_fmt::KotlinFormatOptions {
-        line_width: options.line_width,
-        indent_width: options.indent_width,
-        use_tabs: options.use_tabs,
-    };
-    match jolt_kotlin_fmt::format_source_to_sink(source, &kotlin_options, sink) {
-        jolt_kotlin_fmt::KotlinFormatSinkResult::Complete => FormatSinkResult::Complete,
-        jolt_kotlin_fmt::KotlinFormatSinkResult::Halted => FormatSinkResult::Halted,
-        jolt_kotlin_fmt::KotlinFormatSinkResult::Blocked { diagnostics } => {
-            FormatSinkResult::Blocked { diagnostics }
-        }
+        Language::Java => jolt_java_fmt::format_source_to_sink(source, options, sink),
+        Language::Kotlin => jolt_kotlin_fmt::format_source_to_sink(source, options, sink),
     }
 }

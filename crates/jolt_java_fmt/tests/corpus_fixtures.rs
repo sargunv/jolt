@@ -1,11 +1,11 @@
-use std::collections::BTreeMap;
-use std::fmt::Write as _;
 use std::path::PathBuf;
 
 use jolt_diagnostics::DiagnosticStage;
-use jolt_java_fmt::{JavaFormatOptions, JavaFormatSinkResult, format_source_to_sink};
+use jolt_java_fmt::{FormatOptions, FormatSinkResult, format_source_to_sink};
 use jolt_java_syntax::parse_compilation_unit;
-use jolt_test_support::{StringSink, collect_java_files, read_to_string, workspace_root};
+use jolt_test_support::{
+    ImportedFormatterSummary, StringSink, collect_java_files, read_to_string, workspace_root,
+};
 
 #[test]
 fn imported_fixture_inputs_format_idempotently_and_parse() {
@@ -35,7 +35,7 @@ fn assert_corpus(suite: &str, expected_files: usize) -> ImportedFormatterSummary
     );
 
     let mut summary = ImportedFormatterSummary::new(suite, files.len());
-    let options = JavaFormatOptions::default();
+    let options = FormatOptions::default();
 
     for path in files {
         let source = read_to_string(&path);
@@ -44,12 +44,12 @@ fn assert_corpus(suite: &str, expected_files: usize) -> ImportedFormatterSummary
             .syntax()
             .unwrap_or_else(|| panic!("parser aborted in {}", path.display()));
         if syntax.source_text() != source {
-            summary.reconstructed_changed += 1;
+            summary.note_reconstruction_changed();
         }
         summary.record_diagnostics(parse.diagnostics());
 
         if !parse.diagnostics().is_empty() {
-            summary.syntax_blocked += 1;
+            summary.note_syntax_blocked();
             continue;
         }
 
@@ -64,11 +64,11 @@ fn assert_corpus(suite: &str, expected_files: usize) -> ImportedFormatterSummary
                     path.display()
                 );
                 summary.record_diagnostics(&diagnostics);
-                summary.formatter_blocked += 1;
+                summary.note_formatter_blocked();
                 continue;
             }
         };
-        summary.formatted += 1;
+        summary.note_formatted();
 
         let formatted_parse = parse_compilation_unit(&formatted);
         assert!(
@@ -116,12 +116,12 @@ fn assert_corpus(suite: &str, expected_files: usize) -> ImportedFormatterSummary
 
 fn format_source(
     source: &str,
-    options: &JavaFormatOptions,
+    options: &FormatOptions,
 ) -> Result<String, Vec<jolt_diagnostics::Diagnostic>> {
     let mut sink = StringSink::default();
     match format_source_to_sink(source, options, &mut sink) {
-        JavaFormatSinkResult::Complete | JavaFormatSinkResult::Halted => Ok(sink.into_string()),
-        JavaFormatSinkResult::Blocked { diagnostics } => Err(diagnostics),
+        FormatSinkResult::Complete | FormatSinkResult::Halted => Ok(sink.into_string()),
+        FormatSinkResult::Blocked { diagnostics } => Err(diagnostics),
     }
 }
 
@@ -130,60 +130,4 @@ fn fixture_root(suite: &str) -> PathBuf {
         .join("tools/import/.imports")
         .join(suite)
         .join("input")
-}
-
-struct ImportedFormatterSummary {
-    suite: String,
-    files: usize,
-    formatted: usize,
-    syntax_blocked: usize,
-    formatter_blocked: usize,
-    reconstructed_changed: usize,
-    diagnostics: BTreeMap<String, usize>,
-}
-
-impl ImportedFormatterSummary {
-    fn new(suite: &str, files: usize) -> Self {
-        Self {
-            suite: suite.to_owned(),
-            files,
-            formatted: 0,
-            syntax_blocked: 0,
-            formatter_blocked: 0,
-            reconstructed_changed: 0,
-            diagnostics: BTreeMap::new(),
-        }
-    }
-
-    fn record_diagnostics(&mut self, diagnostics: &[jolt_diagnostics::Diagnostic]) {
-        for diagnostic in diagnostics {
-            let key = format!("{:?}:{}", diagnostic.stage, diagnostic.code.as_str());
-            *self.diagnostics.entry(key).or_default() += 1;
-        }
-    }
-
-    fn render(&self) -> String {
-        let mut output = String::new();
-        writeln!(&mut output, "suite: {}", self.suite).expect("write summary");
-        writeln!(&mut output, "files: {}", self.files).expect("write summary");
-        writeln!(&mut output, "formatted: {}", self.formatted).expect("write summary");
-        writeln!(&mut output, "syntax blocked: {}", self.syntax_blocked).expect("write summary");
-        writeln!(&mut output, "formatter blocked: {}", self.formatter_blocked)
-            .expect("write summary");
-        writeln!(
-            &mut output,
-            "reconstructed changed: {}",
-            self.reconstructed_changed
-        )
-        .expect("write summary");
-        output.push_str("\ndiagnostics:\n");
-        if self.diagnostics.is_empty() {
-            output.push_str("  <none>: 0\n");
-        } else {
-            for (kind, count) in &self.diagnostics {
-                writeln!(&mut output, "  {kind}: {count}").expect("write summary");
-            }
-        }
-        output
-    }
 }

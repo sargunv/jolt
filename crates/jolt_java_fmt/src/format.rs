@@ -1,38 +1,8 @@
 use jolt_diagnostics::{Diagnostic, DiagnosticCodeId, DiagnosticStage, Severity};
-use jolt_fmt_ir::{RenderSink, render_to};
+use jolt_fmt_ir::{FormatOptions, FormatSinkResult, RenderSink, render_to};
 use jolt_java_syntax::parse_compilation_unit;
 
 use crate::context::JavaFormatter;
-
-/// Java formatter options consumed by the Java layout builder.
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize))]
-#[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
-pub struct JavaFormatOptions {
-    /// Preferred maximum rendered line width.
-    pub line_width: u16,
-    /// Number of spaces per indentation level when `use_tabs` is false.
-    pub indent_width: u8,
-    /// Whether indentation should use tabs instead of spaces.
-    pub use_tabs: bool,
-}
-
-impl Default for JavaFormatOptions {
-    fn default<'source>() -> Self {
-        Self {
-            line_width: 80,
-            indent_width: 2,
-            use_tabs: false,
-        }
-    }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum JavaFormatSinkResult {
-    Complete,
-    Halted,
-    Blocked { diagnostics: Vec<Diagnostic> },
-}
 
 /// Stable Java formatter diagnostic codes.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -52,13 +22,13 @@ impl JavaFormatDiagnosticCode {
 /// Formats Java source text into a render sink.
 pub fn format_source_to_sink<S: RenderSink + ?Sized>(
     source: &str,
-    options: &JavaFormatOptions,
+    options: &FormatOptions,
     sink: &mut S,
-) -> JavaFormatSinkResult {
+) -> FormatSinkResult {
     let parse = parse_compilation_unit(source);
 
     let Some(syntax) = parse.syntax() else {
-        return JavaFormatSinkResult::Blocked {
+        return FormatSinkResult::Blocked {
             diagnostics: Vec::new(),
         };
     };
@@ -66,9 +36,9 @@ pub fn format_source_to_sink<S: RenderSink + ?Sized>(
     let mut formatter = JavaFormatter::new(options);
     let doc = formatter.format_compilation_unit(&syntax);
     match render_to(&doc, formatter.render_options(), sink) {
-        Ok(outcome) if outcome.halted => JavaFormatSinkResult::Halted,
-        Ok(_) => JavaFormatSinkResult::Complete,
-        Err(error) => JavaFormatSinkResult::Blocked {
+        Ok(outcome) if outcome.halted => FormatSinkResult::Halted,
+        Ok(_) => FormatSinkResult::Complete,
+        Err(error) => FormatSinkResult::Blocked {
             diagnostics: vec![render_error_diagnostic(&error)],
         },
     }
@@ -86,33 +56,23 @@ fn render_error_diagnostic(error: &jolt_fmt_ir::RenderError) -> Diagnostic {
 
 #[cfg(test)]
 mod tests {
-    use jolt_fmt_ir::{RenderControl, RenderSink};
+    use jolt_fmt_ir::{FormatOptions, FormatSinkResult};
+    use jolt_test_support::StringSink;
 
-    use super::{JavaFormatOptions, JavaFormatSinkResult, format_source_to_sink};
+    use super::format_source_to_sink;
 
     #[test]
     fn formats_represented_tree_with_parse_diagnostics() {
         let mut sink = StringSink::default();
         let result = format_source_to_sink(
             "class C { void m() { value + ; } }\n",
-            &JavaFormatOptions::default(),
+            &FormatOptions::default(),
             &mut sink,
         );
 
-        assert!(matches!(result, JavaFormatSinkResult::Complete));
-        assert!(sink.output.contains("value"), "{}", sink.output);
-        assert!(sink.output.contains('+'), "{}", sink.output);
-    }
-
-    #[derive(Default)]
-    struct StringSink {
-        output: String,
-    }
-
-    impl RenderSink for StringSink {
-        fn write_str(&mut self, text: &str) -> RenderControl {
-            self.output.push_str(text);
-            RenderControl::Continue
-        }
+        assert!(matches!(result, FormatSinkResult::Complete));
+        let formatted = sink.into_string();
+        assert!(formatted.contains("value"), "{formatted}");
+        assert!(formatted.contains('+'), "{formatted}");
     }
 }

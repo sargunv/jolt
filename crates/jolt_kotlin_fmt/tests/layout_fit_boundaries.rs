@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use jolt_kotlin_fmt::{KotlinFormatOptions, KotlinFormatSinkResult, format_source_to_sink};
+use jolt_kotlin_fmt::{FormatOptions, FormatSinkResult, format_source_to_sink};
 use jolt_test_support::{StringSink, read_to_string, workspace_root};
 
 #[test]
@@ -32,15 +32,15 @@ fn assert_no_line_exceeds_width(path: &Path, line_width: u16) {
 }
 
 fn format_or_panic(source: &str, line_width: u16) -> String {
-    let options = KotlinFormatOptions {
+    let options = FormatOptions {
         line_width,
-        ..KotlinFormatOptions::default()
+        ..FormatOptions::default()
     };
     let mut sink = StringSink::default();
 
     match format_source_to_sink(source, &options, &mut sink) {
-        KotlinFormatSinkResult::Complete | KotlinFormatSinkResult::Halted => sink.into_string(),
-        KotlinFormatSinkResult::Blocked { diagnostics } => {
+        FormatSinkResult::Complete | FormatSinkResult::Halted => sink.into_string(),
+        FormatSinkResult::Blocked { diagnostics } => {
             panic!("formatter diagnostics: {diagnostics:#?}")
         }
     }

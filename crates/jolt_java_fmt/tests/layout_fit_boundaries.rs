@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use jolt_java_fmt::{JavaFormatOptions, JavaFormatSinkResult, format_source_to_sink};
+use jolt_java_fmt::{FormatOptions, FormatSinkResult, format_source_to_sink};
 use jolt_test_support::{StringSink, read_to_string, workspace_root};
 
 #[test]
@@ -28,15 +28,15 @@ fn assert_no_line_exceeds_width(path: &Path, line_width: u16) {
 }
 
 fn format_or_panic(source: &str, line_width: u16) -> String {
-    let options = JavaFormatOptions {
+    let options = FormatOptions {
         line_width,
-        ..JavaFormatOptions::default()
+        ..FormatOptions::default()
     };
     let mut sink = StringSink::default();
 
     match format_source_to_sink(source, &options, &mut sink) {
-        JavaFormatSinkResult::Complete | JavaFormatSinkResult::Halted => sink.into_string(),
-        JavaFormatSinkResult::Blocked { diagnostics } => {
+        FormatSinkResult::Complete | FormatSinkResult::Halted => sink.into_string(),
+        FormatSinkResult::Blocked { diagnostics } => {
             panic!("formatter diagnostics: {diagnostics:#?}")
         }
     }

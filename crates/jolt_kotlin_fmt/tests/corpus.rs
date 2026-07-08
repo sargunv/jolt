@@ -1,4 +1,4 @@
-use jolt_kotlin_fmt::{KotlinFormatOptions, KotlinFormatSinkResult, format_source_to_sink};
+use jolt_kotlin_fmt::{FormatOptions, FormatSinkResult, format_source_to_sink};
 use jolt_kotlin_syntax::parse_kotlin_file;
 use jolt_test_support::{
     SnapshotBuilder, StringSink, collect_kotlin_files, fixture_snapshot_name, kotlin_fixture_root,
@@ -7,7 +7,7 @@ use jolt_test_support::{
 
 #[test]
 fn kotlin_corpus_formatter_snapshots() {
-    let options = KotlinFormatOptions::default();
+    let options = FormatOptions::default();
     let root = kotlin_fixture_root(env!("CARGO_MANIFEST_DIR"));
     let mut formatted_cases = 0usize;
     let mut manifest_entries = Vec::new();
@@ -73,11 +73,11 @@ fn kotlin_corpus_formatter_snapshots() {
     insta::assert_snapshot!("formatter_fixture_manifest", manifest_entries.join("\n"));
 }
 
-fn format_or_panic(source: &str, options: &KotlinFormatOptions, label: &str) -> String {
+fn format_or_panic(source: &str, options: &FormatOptions, label: &str) -> String {
     let mut sink = StringSink::default();
     match format_source_to_sink(source, options, &mut sink) {
-        KotlinFormatSinkResult::Complete | KotlinFormatSinkResult::Halted => sink.into_string(),
-        KotlinFormatSinkResult::Blocked { diagnostics } => {
+        FormatSinkResult::Complete | FormatSinkResult::Halted => sink.into_string(),
+        FormatSinkResult::Blocked { diagnostics } => {
             panic!("formatter diagnostics in {label}: {diagnostics:#?}")
         }
     }

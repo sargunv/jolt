@@ -1,4 +1,4 @@
-use jolt_java_fmt::{JavaFormatOptions, JavaFormatSinkResult, format_source_to_sink};
+use jolt_java_fmt::{FormatOptions, FormatSinkResult, format_source_to_sink};
 use jolt_java_syntax::parse_compilation_unit;
 use jolt_test_support::{
     SnapshotBuilder, StringSink, collect_java_files, fixture_snapshot_name, java_fixture_root,
@@ -7,7 +7,7 @@ use jolt_test_support::{
 
 #[test]
 fn java_corpus_formatter_snapshots() {
-    let options = JavaFormatOptions::default();
+    let options = FormatOptions::default();
     let root = java_fixture_root(env!("CARGO_MANIFEST_DIR"));
     let mut formatted_cases = 0usize;
     let mut manifest_entries = Vec::new();
@@ -73,11 +73,11 @@ fn java_corpus_formatter_snapshots() {
     insta::assert_snapshot!("formatter_fixture_manifest", manifest_entries.join("\n"));
 }
 
-fn format_or_panic(source: &str, options: &JavaFormatOptions, label: &str) -> String {
+fn format_or_panic(source: &str, options: &FormatOptions, label: &str) -> String {
     let mut sink = StringSink::default();
     match format_source_to_sink(source, options, &mut sink) {
-        JavaFormatSinkResult::Complete | JavaFormatSinkResult::Halted => sink.into_string(),
-        JavaFormatSinkResult::Blocked { diagnostics } => {
+        FormatSinkResult::Complete | FormatSinkResult::Halted => sink.into_string(),
+        FormatSinkResult::Blocked { diagnostics } => {
             panic!("formatter diagnostics in {label}: {diagnostics:#?}")
         }
     }

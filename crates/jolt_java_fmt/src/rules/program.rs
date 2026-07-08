@@ -339,13 +339,11 @@ fn format_package_declaration<'source>(
 
 #[cfg(test)]
 mod tests {
-    use jolt_fmt_ir::{
-        IndentStyle, RenderControl, RenderOptions, RenderSink, TextWidth, render_to,
-    };
+    use jolt_fmt_ir::{IndentStyle, RenderOptions, TextWidth, render_to};
     use jolt_java_syntax::parse_compilation_unit;
 
     use crate::context::JavaFormatter;
-    use crate::format::JavaFormatOptions;
+    use jolt_fmt_ir::FormatOptions;
 
     #[test]
     fn recovered_argument_list_preserves_orphan_tokens_and_comments() {
@@ -675,10 +673,10 @@ mod tests {
     fn format(source: &str) -> String {
         let parse = parse_compilation_unit(source);
         let unit = parse.syntax().expect("test input should produce a tree");
-        let options = JavaFormatOptions::default();
+        let options = FormatOptions::default();
         let mut formatter = JavaFormatter::new(&options);
         let doc = formatter.format_compilation_unit(&unit);
-        let mut sink = StringDocSink::default();
+        let mut sink = jolt_test_support::StringSink::default();
         render_to(
             &doc,
             RenderOptions {
@@ -689,18 +687,6 @@ mod tests {
             &mut sink,
         )
         .expect("test doc should render");
-        sink.output
-    }
-
-    #[derive(Default)]
-    struct StringDocSink {
-        output: String,
-    }
-
-    impl RenderSink for &mut StringDocSink {
-        fn write_str(&mut self, text: &str) -> RenderControl {
-            self.output.push_str(text);
-            RenderControl::Continue
-        }
+        sink.into_string()
     }
 }

@@ -264,6 +264,137 @@ impl CorpusSummary {
     }
 }
 
+/// Summary of an imported fixture corpus run through the formatter, tracking
+/// how many files formatted cleanly versus were blocked by syntax or
+/// formatter diagnostics. Shared across the Java and Kotlin formatter crates
+/// since the imported-corpus test flow is identical modulo parse/format entry
+/// points.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ImportedFormatterSummary {
+    suite: String,
+    files: usize,
+    formatted: usize,
+    syntax_blocked: usize,
+    formatter_blocked: usize,
+    reconstructed_changed: usize,
+    diagnostics: BTreeMap<String, usize>,
+}
+
+impl ImportedFormatterSummary {
+    #[must_use]
+    pub fn new(suite: &str, files: usize) -> Self {
+        Self {
+            suite: suite.to_owned(),
+            files,
+            formatted: 0,
+            syntax_blocked: 0,
+            formatter_blocked: 0,
+            reconstructed_changed: 0,
+            diagnostics: BTreeMap::new(),
+        }
+    }
+
+    pub fn note_formatted(&mut self) {
+        self.formatted += 1;
+    }
+
+    pub fn note_syntax_blocked(&mut self) {
+        self.syntax_blocked += 1;
+    }
+
+    pub fn note_formatter_blocked(&mut self) {
+        self.formatter_blocked += 1;
+    }
+
+    pub fn note_reconstruction_changed(&mut self) {
+        self.reconstructed_changed += 1;
+    }
+
+    pub fn record_diagnostics(&mut self, diagnostics: &[Diagnostic]) {
+        for diagnostic in diagnostics {
+            let key = format!("{:?}:{}", diagnostic.stage, diagnostic.code.as_str());
+            *self.diagnostics.entry(key).or_default() += 1;
+        }
+    }
+
+    #[must_use]
+    pub fn render(&self) -> String {
+        let mut output = String::new();
+        writeln!(&mut output, "suite: {}", self.suite).expect("write summary");
+        writeln!(&mut output, "files: {}", self.files).expect("write summary");
+        writeln!(&mut output, "formatted: {}", self.formatted).expect("write summary");
+        writeln!(&mut output, "syntax blocked: {}", self.syntax_blocked).expect("write summary");
+        writeln!(&mut output, "formatter blocked: {}", self.formatter_blocked)
+            .expect("write summary");
+        writeln!(
+            &mut output,
+            "reconstructed changed: {}",
+            self.reconstructed_changed
+        )
+        .expect("write summary");
+        output.push_str("\ndiagnostics:\n");
+        if self.diagnostics.is_empty() {
+            output.push_str("  <none>: 0\n");
+        } else {
+            for (kind, count) in &self.diagnostics {
+                writeln!(&mut output, "  {kind}: {count}").expect("write summary");
+            }
+        }
+        output
+    }
+}
+
+/// Collects `JOLT-TRIVIA:`-prefixed markers from `source` so fixture-driven
+/// trivia conservation tests can compare counts before and after formatting.
+#[must_use]
+pub fn trivia_markers(source: &str) -> BTreeMap<String, usize> {
+    let mut markers = BTreeMap::new();
+    for (start, _) in source.match_indices("JOLT-TRIVIA:") {
+        let marker = source[start..]
+            .chars()
+            .take_while(|ch| ch.is_ascii_alphanumeric() || matches!(ch, ':' | '_' | '-'))
+            .collect::<String>();
+        *markers.entry(marker).or_insert(0) += 1;
+    }
+    markers
+}
+
+/// Runs the shared trivia conservation assertion flow over `files`:
+/// each fixture must contain at least one `JOLT-TRIVIA:` marker, must parse
+/// cleanly via `parse`, and must format idempotently while conserving markers
+/// via `format`. `parse` and `format` should panic on diagnostic failure,
+/// matching the per-crate test expectations.
+pub fn assert_trivia_markers_conserved(
+    files: &[PathBuf],
+    parse: impl Fn(&str, &Path),
+    format: impl Fn(&str, &Path) -> String,
+) {
+    for path in files {
+        let source = read_to_string(path);
+        let expected = trivia_markers(&source);
+        assert!(
+            !expected.is_empty(),
+            "expected trivia fixture to contain at least one marker: {}",
+            path.display()
+        );
+        parse(&source, path);
+        let formatted = format(&source, path);
+        assert_eq!(
+            trivia_markers(&formatted),
+            expected,
+            "formatter must conserve trivia markers in {}",
+            path.display()
+        );
+        let formatted_again = format(&formatted, path);
+        assert_eq!(
+            formatted_again,
+            formatted,
+            "formatter output must be idempotent for {}",
+            path.display()
+        );
+    }
+}
+
 /// Asserts that no rendered line of `formatted` exceeds `line_width` using the
 /// same Unicode-aware width model as the formatter renderer.
 pub fn assert_no_line_exceeds_width(formatted: &str, label: &str, line_width: u16) {

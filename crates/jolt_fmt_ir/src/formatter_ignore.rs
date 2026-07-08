@@ -1,41 +1,49 @@
+//! Shared `@formatter:off` / `@formatter:on` range handling.
+//!
+//! Both the Java and Kotlin formatters consume this module to discover
+//! formatter-ignore ranges from token trivia and to splice the raw source
+//! spanned by those ranges back into the rendered document.
+
 use std::borrow::Cow;
 use std::ops::Range;
 
-use jolt_fmt_ir::{Doc, concat, hard_line, text as doc_text};
-use jolt_kotlin_syntax::{KotlinComment, KotlinSyntaxToken};
+use jolt_syntax::{Comment, Language, SyntaxToken};
+
+use crate::{Doc, concat, hard_line, text as doc_text};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub(crate) struct FormatterIgnoreRange<'source> {
-    pub(crate) raw_text: &'source str,
-    pub(crate) raw_text_with_on: &'source str,
-    pub(crate) interior: Range<usize>,
+pub struct FormatterIgnoreRange<'source> {
+    pub raw_text: &'source str,
+    pub raw_text_with_on: &'source str,
+    pub interior: Range<usize>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub(crate) struct FormatterIgnoreRun<'source> {
-    pub(crate) range: FormatterIgnoreRange<'source>,
-    pub(crate) insert_index: usize,
-    pub(crate) skip_start: usize,
-    pub(crate) skip_end: usize,
-    pub(crate) include_on_marker: bool,
+pub struct FormatterIgnoreRun<'source> {
+    pub range: FormatterIgnoreRange<'source>,
+    pub insert_index: usize,
+    pub skip_start: usize,
+    pub skip_end: usize,
+    pub include_on_marker: bool,
 }
 
 impl FormatterIgnoreRun<'_> {
-    pub(crate) fn skips(&self, item_index: usize) -> bool {
+    #[must_use]
+    pub fn skips(&self, item_index: usize) -> bool {
         (self.skip_start..self.skip_end).contains(&item_index)
     }
 }
 
-pub(crate) fn formatter_ignore_ranges<'source>(
+pub fn formatter_ignore_ranges<'source, L: Language>(
     source: &'source str,
     base_start: usize,
-    tokens: impl IntoIterator<Item = KotlinSyntaxToken<'source>>,
+    tokens: impl IntoIterator<Item = SyntaxToken<'source, L>>,
 ) -> Vec<FormatterIgnoreRange<'source>> {
     let mut off_comment_start = None;
     let mut ranges = Vec::new();
 
     let mut visit_comment =
-        |comment: KotlinComment<'source>, leading_comment_start: &mut Option<usize>| {
+        |comment: Comment<'source>, leading_comment_start: &mut Option<usize>| {
             let range = comment.text_range();
             let start_offset = range.start().get() - base_start;
             let end_offset = range.end().get() - base_start;
@@ -82,7 +90,8 @@ pub(crate) fn formatter_ignore_ranges<'source>(
     ranges
 }
 
-pub(crate) fn formatter_ignore_runs<'source>(
+#[must_use]
+pub fn formatter_ignore_runs<'source>(
     ranges: &[FormatterIgnoreRange<'source>],
     item_ranges: &[Option<Range<usize>>],
 ) -> Vec<FormatterIgnoreRun<'source>> {
@@ -101,7 +110,8 @@ pub(crate) fn formatter_ignore_runs<'source>(
     runs
 }
 
-pub(crate) fn formatter_ignore_run_doc<'source>(run: &FormatterIgnoreRun<'source>) -> Doc<'source> {
+#[must_use]
+pub fn formatter_ignore_run_doc<'source>(run: &FormatterIgnoreRun<'source>) -> Doc<'source> {
     let raw_text = if run.include_on_marker {
         &run.range.raw_text_with_on
     } else {
@@ -130,16 +140,18 @@ pub(crate) fn formatter_ignore_run_doc<'source>(run: &FormatterIgnoreRun<'source
     concat(docs)
 }
 
-pub(crate) fn token_range_between<'source>(
-    first: &KotlinSyntaxToken<'source>,
-    last: &KotlinSyntaxToken<'source>,
+#[must_use]
+pub fn token_range_between<L: Language>(
+    first: &SyntaxToken<'_, L>,
+    last: &SyntaxToken<'_, L>,
 ) -> Range<usize> {
     first.token_text_range().start().get()..last.token_text_range().end().get()
 }
 
-pub(crate) fn relative_token_range_between<'source>(
-    first: &KotlinSyntaxToken<'source>,
-    last: &KotlinSyntaxToken<'source>,
+#[must_use]
+pub fn relative_token_range_between<L: Language>(
+    first: &SyntaxToken<'_, L>,
+    last: &SyntaxToken<'_, L>,
     base_start: usize,
 ) -> Range<usize> {
     let range = token_range_between(first, last);
@@ -302,14 +314,15 @@ fn line_end(source: &str, offset: usize) -> usize {
         .map_or(source.len(), |newline| offset + newline + 1)
 }
 
-pub(crate) fn is_formatter_control_marker(comment: &str) -> bool {
-    is_formatter_off_marker(comment) || is_formatter_on_marker(comment)
-}
-
 fn is_formatter_off_marker(comment: &str) -> bool {
     comment.contains("@formatter:off")
 }
 
 fn is_formatter_on_marker(comment: &str) -> bool {
     comment.contains("@formatter:on")
+}
+
+#[must_use]
+pub fn is_formatter_control_marker(comment: &str) -> bool {
+    is_formatter_off_marker(comment) || is_formatter_on_marker(comment)
 }
