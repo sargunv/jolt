@@ -66,7 +66,7 @@ pub(crate) fn format_fun_interface_file_items<'source>(
     function: &FunctionDeclaration<'source>,
     interface: &jolt_kotlin_syntax::InterfaceDeclaration<'source>,
 ) -> Option<Doc<'source>> {
-    if function.token_iter().count() != 1 {
+    if !function.is_fun_interface_header() {
         return None;
     }
     let fun_token = function.fun_token()?;

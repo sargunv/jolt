@@ -1,7 +1,7 @@
 use jolt_fmt_ir::{Doc, concat, group, indent, line, space};
 use jolt_kotlin_syntax::{
     AssignmentExpression, BinaryExpression, Expression, KotlinSyntaxKind, KotlinSyntaxToken,
-    ParenthesizedExpression, PostfixExpression, UnaryExpression,
+    ParenthesizedExpression, PostfixExpression, UnaryExpression, operators_equivalent,
 };
 
 use crate::helpers::comments::{
@@ -388,7 +388,7 @@ fn should_flatten_binary(
     }
 
     if is_multiplicative_operator(parent_operator) && is_multiplicative_operator(child_operator) {
-        return parent_operator.text() == child_operator.text()
+        return operators_equivalent(parent_operator, child_operator)
             && parent_operator.kind() != KotlinSyntaxKind::Percent
             && child_operator.kind() != KotlinSyntaxKind::Percent;
     }

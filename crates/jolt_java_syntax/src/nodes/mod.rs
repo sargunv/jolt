@@ -1041,6 +1041,32 @@ impl<'source> ModifierEntry<'source> {
         self.tokens[..self.len].iter().filter_map(Option::as_ref)
     }
 
+    /// Returns true if this entry spells the `sealed` modifier (single Identifier token
+    /// with text "sealed" — `sealed` is a contextual keyword in Java, not a reserved word).
+    #[must_use]
+    pub fn is_sealed(&self) -> bool {
+        self.len == 1
+            && self.tokens[0].as_ref().is_some_and(|token| {
+                token.kind() == JavaSyntaxKind::Identifier && token.text() == "sealed"
+            })
+    }
+
+    /// Returns true if this entry spells the `non-sealed` modifier (three tokens:
+    /// Identifier "non", Minus, Identifier "sealed").
+    #[must_use]
+    pub fn is_non_sealed(&self) -> bool {
+        self.len == 3
+            && self.tokens[0]
+                .as_ref()
+                .is_some_and(|t| t.kind() == JavaSyntaxKind::Identifier && t.text() == "non")
+            && self.tokens[1]
+                .as_ref()
+                .is_some_and(|t| t.kind() == JavaSyntaxKind::Minus)
+            && self.tokens[2]
+                .as_ref()
+                .is_some_and(|t| t.kind() == JavaSyntaxKind::Identifier && t.text() == "sealed")
+    }
+
     fn into_tokens(self) -> impl Iterator<Item = JavaSyntaxToken<'source>> {
         self.tokens.into_iter().take(self.len).flatten()
     }

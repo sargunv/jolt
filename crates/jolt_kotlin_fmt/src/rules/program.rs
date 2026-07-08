@@ -267,7 +267,7 @@ fn is_fun_interface_pair(previous: &KotlinFileItem<'_>, current: &KotlinFileItem
         (
             KotlinFileItem::FunctionDeclaration(function),
             KotlinFileItem::InterfaceDeclaration(_)
-        ) if function.token_iter().count() == 1 && function.fun_token().is_some()
+        ) if function.is_fun_interface_header()
     )
 }
 

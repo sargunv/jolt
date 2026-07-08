@@ -435,6 +435,27 @@ impl<'source> FunctionDeclaration<'source> {
         child_family(self.syntax())
     }
 
+    /// Returns true when this function declaration is a bare `fun` token with no
+    /// structured body — i.e. a fun-interface header (`fun interface Foo {}`
+    /// form where the `fun` lives on the `FunctionDeclaration` preceding the
+    /// `InterfaceDeclaration`).
+    #[must_use]
+    pub fn is_fun_interface_header(&self) -> bool {
+        self.fun_token().is_some()
+            && self.name().is_none()
+            && self.callable_name().is_none()
+            && self.name_token().is_none()
+            && self.context_parameter_clause().is_none()
+            && self.type_parameter_list().is_none()
+            && self.value_parameter_list().is_none()
+            && self.colon().is_none()
+            && self.return_type().is_none()
+            && self.assign_token().is_none()
+            && self.type_constraint_list().is_none()
+            && self.block().is_none()
+            && self.expression().is_none()
+    }
+
     #[must_use]
     pub fn tail_is_trivia_between(&self, start: usize, end: usize) -> bool {
         source_gap_is_trivia(
@@ -2308,6 +2329,26 @@ impl<'source> BinaryExpression<'source> {
                 && token.token_text_range().end() <= right_start
         })
     }
+}
+
+/// Returns true if `a` and `b` are the same Kotlin operator identity.
+///
+/// Built-in operators are identified by kind alone (e.g. `Plus`, `Star`,
+/// `Range`). Identifier-based infix-function operators (`a shl b`,
+/// `a shr b`) additionally require text equality because the kind is
+/// `Identifier` for both but the function name distinguishes them.
+#[must_use]
+pub fn operators_equivalent<'source>(
+    a: &KotlinSyntaxToken<'source>,
+    b: &KotlinSyntaxToken<'source>,
+) -> bool {
+    if a.kind() != b.kind() {
+        return false;
+    }
+    if a.kind() == KotlinSyntaxKind::Identifier {
+        return a.text() == b.text();
+    }
+    true
 }
 
 impl<'source> UnaryExpression<'source> {

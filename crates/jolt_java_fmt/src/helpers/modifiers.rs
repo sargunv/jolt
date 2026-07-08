@@ -94,9 +94,9 @@ fn sort_modifier_runs<T>(
 }
 
 fn modifier_entry_order(entry: &ModifierEntry<'_>) -> u8 {
-    if modifier_entry_text_matches(entry, &["sealed"]) {
+    if entry.is_sealed() {
         11
-    } else if modifier_entry_text_matches(entry, &["non", "-", "sealed"]) {
+    } else if entry.is_non_sealed() {
         12
     } else {
         entry
@@ -104,19 +104,6 @@ fn modifier_entry_order(entry: &ModifierEntry<'_>) -> u8 {
             .next()
             .map_or(u8::MAX, |token| modifier_order(token.kind()))
     }
-}
-
-fn modifier_entry_text_matches(entry: &ModifierEntry<'_>, pieces: &[&str]) -> bool {
-    let mut tokens = entry.tokens();
-    for piece in pieces {
-        let Some(token) = tokens.next() else {
-            return false;
-        };
-        if token.text() != *piece {
-            return false;
-        }
-    }
-    tokens.next().is_none()
 }
 
 fn format_modifier_entry<'source>(
