@@ -189,10 +189,7 @@ fn format_block_contents_with_ignored<'source>(
             continue;
         }
 
-        let Some(mut body_item) = recovered_block_body_item(block, items, &mut item_index, entry)
-        else {
-            continue;
-        };
+        let mut body_item = recovered_block_body_item(block, items, &mut item_index, entry);
         if skip_index > 0 && ignored_runs[skip_index - 1].skip_end == entry_index {
             body_item = body_item.without_blank_line_before();
         }
@@ -215,25 +212,25 @@ fn recovered_block_body_item<'source>(
     items: &[BlockItem<'source>],
     item_index: &mut usize,
     entry: &RecoveredSeparatedListEntry<'source, BlockItem<'source>>,
-) -> Option<BodyItem<'source>> {
+) -> BodyItem<'source> {
     match entry {
         RecoveredSeparatedListEntry::Entry(item) => {
             let body_item = block_body_item(block, items, *item_index, item);
             *item_index += 1;
-            Some(body_item)
+            body_item
         }
-        RecoveredSeparatedListEntry::Token(token) => Some(BodyItem::new(
+        RecoveredSeparatedListEntry::Token(token) => BodyItem::new(
             format_token_sequence(std::iter::once(*token), LeadingTrivia::Preserve),
             false,
-        )),
-        RecoveredSeparatedListEntry::Error(error) => Some(BodyItem::new(
+        ),
+        RecoveredSeparatedListEntry::Error(error) => BodyItem::new(
             format_token_sequence(error.token_iter(), LeadingTrivia::Preserve),
             false,
-        )),
-        RecoveredSeparatedListEntry::Node(node) => Some(BodyItem::new(
+        ),
+        RecoveredSeparatedListEntry::Node(node) => BodyItem::new(
             format_token_sequence(node.token_iter(), LeadingTrivia::Preserve),
             false,
-        )),
+        ),
     }
 }
 

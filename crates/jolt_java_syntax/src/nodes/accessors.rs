@@ -3893,6 +3893,9 @@ impl<'source> SwitchLabel<'source> {
         &self,
     ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, SwitchLabelCaseEntry<'source>>>
     + use<'source, '_> {
+        let make_entry =
+            |item, comma| RecoveredSeparatedListEntry::Entry(SwitchLabelCaseEntry { item, comma });
+
         let mut elements = self.syntax.children_with_tokens();
         let mut pending_item = None;
         let is_default_label = self.is_default_label();
@@ -3910,24 +3913,14 @@ impl<'source> SwitchLabel<'source> {
 
                 let Some(element) = elements.next() else {
                     done = true;
-                    return pending_item.take().map(|item| {
-                        RecoveredSeparatedListEntry::Entry(SwitchLabelCaseEntry {
-                            item,
-                            comma: None,
-                        })
-                    });
+                    return pending_item.take().map(|item| make_entry(item, None));
                 };
 
                 match element {
                     SyntaxElement::Node(node) => {
                         if node.kind() == JavaSyntaxKind::Guard {
                             done = true;
-                            return pending_item.take().map(|item| {
-                                RecoveredSeparatedListEntry::Entry(SwitchLabelCaseEntry {
-                                    item,
-                                    comma: None,
-                                })
-                            });
+                            return pending_item.take().map(|item| make_entry(item, None));
                         }
                         if let Some(item) = match node.kind() {
                             JavaSyntaxKind::CaseConstant => {
@@ -3939,23 +3932,13 @@ impl<'source> SwitchLabel<'source> {
                             _ => None,
                         } {
                             if let Some(previous) = pending_item.replace(item) {
-                                return Some(RecoveredSeparatedListEntry::Entry(
-                                    SwitchLabelCaseEntry {
-                                        item: previous,
-                                        comma: None,
-                                    },
-                                ));
+                                return Some(make_entry(previous, None));
                             }
                         } else {
                             let recovered = recovered_node_entry(node);
                             if let Some(previous) = pending_item.take() {
                                 queued = Some(recovered);
-                                return Some(RecoveredSeparatedListEntry::Entry(
-                                    SwitchLabelCaseEntry {
-                                        item: previous,
-                                        comma: None,
-                                    },
-                                ));
+                                return Some(make_entry(previous, None));
                             }
                             return Some(recovered);
                         }
@@ -3965,22 +3948,12 @@ impl<'source> SwitchLabel<'source> {
                             && let Some(previous) = pending_item
                                 .replace(SwitchLabelCaseItem::Default(JavaSyntaxToken { syntax }))
                         {
-                            return Some(RecoveredSeparatedListEntry::Entry(
-                                SwitchLabelCaseEntry {
-                                    item: previous,
-                                    comma: None,
-                                },
-                            ));
+                            return Some(make_entry(previous, None));
                         }
                     }
                     SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::Comma => {
                         if let Some(item) = pending_item.take() {
-                            return Some(RecoveredSeparatedListEntry::Entry(
-                                SwitchLabelCaseEntry {
-                                    item,
-                                    comma: Some(JavaSyntaxToken { syntax: token }),
-                                },
-                            ));
+                            return Some(make_entry(item, Some(JavaSyntaxToken { syntax: token })));
                         }
                         return Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
                             syntax: token,
@@ -3994,12 +3967,7 @@ impl<'source> SwitchLabel<'source> {
                     {
                         if matches!(token.kind(), JavaSyntaxKind::Colon | JavaSyntaxKind::Arrow) {
                             done = true;
-                            return pending_item.take().map(|item| {
-                                RecoveredSeparatedListEntry::Entry(SwitchLabelCaseEntry {
-                                    item,
-                                    comma: None,
-                                })
-                            });
+                            return pending_item.take().map(|item| make_entry(item, None));
                         }
                     }
                     SyntaxElement::Token(token) => {
@@ -4007,12 +3975,7 @@ impl<'source> SwitchLabel<'source> {
                             queued = Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
                                 syntax: token,
                             }));
-                            return Some(RecoveredSeparatedListEntry::Entry(
-                                SwitchLabelCaseEntry {
-                                    item: previous,
-                                    comma: None,
-                                },
-                            ));
+                            return Some(make_entry(previous, None));
                         }
                         return Some(RecoveredSeparatedListEntry::Token(JavaSyntaxToken {
                             syntax: token,
@@ -4098,22 +4061,22 @@ impl<'source> RecordPattern<'source> {
     ) -> impl Iterator<
         Item = RecoveredSeparatedListEntry<'source, RecordPatternComponentEntry<'source>>,
     > + use<'source, '_> {
-        let mut in_components = false;
-        let elements =
-            self.syntax
-                .children_with_tokens()
-                .filter_map(move |element| match element {
-                    SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::LParen => {
-                        in_components = true;
-                        None
-                    }
-                    SyntaxElement::Token(token) if token.kind() == JavaSyntaxKind::RParen => {
-                        in_components = false;
-                        None
-                    }
-                    _ if in_components => Some(element),
-                    _ => None,
-                });
+        let elements = self
+            .syntax
+            .children_with_tokens()
+            .skip_while(|element| {
+                !matches!(
+                    element,
+                    SyntaxElement::Token(t) if t.kind() == JavaSyntaxKind::LParen
+                )
+            })
+            .skip(1)
+            .take_while(|element| {
+                !matches!(
+                    element,
+                    SyntaxElement::Token(t) if t.kind() == JavaSyntaxKind::RParen
+                )
+            });
 
         recovered_separated_entries(
             elements,

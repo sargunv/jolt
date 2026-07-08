@@ -66,58 +66,12 @@ pub(super) fn format_enum_body_contents<'source>(
 
     let mut moved_member_comments = Vec::new();
     let constants_doc = has_constants.then(|| {
-        let mut pending_constant_comments = Vec::new();
-        let mut constant_lines = Vec::new();
-        for (index, entry) in constants.iter().enumerate() {
-            if !pending_constant_comments.is_empty() {
-                constant_lines.push(format_dangling_comments(std::mem::take(
-                    &mut pending_constant_comments,
-                )));
-            }
-
-            if entry.is_recovered {
-                constant_lines.push(entry.doc.clone());
-                continue;
-            }
-
-            let is_last_constant = !constants[index + 1..]
-                .iter()
-                .any(|constant| !constant.is_recovered);
-            let separator = if !has_body_declarations || !is_last_constant {
-                ","
-            } else {
-                ";"
-            };
-            if let Some(comma) = entry.comma.as_ref() {
-                let moved_comments = enum_separator_moved_comments(
-                    *comma,
-                    has_body_declarations && is_last_constant,
-                );
-                if has_body_declarations && is_last_constant {
-                    moved_member_comments.extend(moved_comments);
-                } else {
-                    pending_constant_comments.extend(moved_comments);
-                }
-            }
-
-            constant_lines.push(concat([
-                entry.doc.clone(),
-                format_enum_constant_separator(
-                    entry.comma.as_ref(),
-                    is_last_constant
-                        .then_some(body_declaration_separator.as_ref())
-                        .flatten(),
-                    separator,
-                    !has_body_declarations || !is_last_constant,
-                ),
-            ]));
-        }
-
-        if !pending_constant_comments.is_empty() {
-            constant_lines.push(format_dangling_comments(pending_constant_comments));
-        }
-
-        jolt_fmt_ir::join(&hard_line(), constant_lines)
+        format_enum_constants_doc(
+            &constants,
+            has_body_declarations,
+            body_declaration_separator.as_ref(),
+            &mut moved_member_comments,
+        )
     });
 
     let moved_member_comments = (!moved_member_comments.is_empty())
@@ -141,6 +95,64 @@ pub(super) fn format_enum_body_contents<'source>(
         (None, Some(members)) => Some(members),
         (None, None) => None,
     }
+}
+
+fn format_enum_constants_doc<'source>(
+    constants: &[FormattedEnumConstant<'source>],
+    has_body_declarations: bool,
+    body_declaration_separator: Option<&JavaSyntaxToken<'source>>,
+    moved_member_comments: &mut Vec<jolt_java_syntax::JavaComment<'source>>,
+) -> Doc<'source> {
+    let mut pending_constant_comments = Vec::new();
+    let mut constant_lines = Vec::new();
+    for (index, entry) in constants.iter().enumerate() {
+        if !pending_constant_comments.is_empty() {
+            constant_lines.push(format_dangling_comments(std::mem::take(
+                &mut pending_constant_comments,
+            )));
+        }
+
+        if entry.is_recovered {
+            constant_lines.push(entry.doc.clone());
+            continue;
+        }
+
+        let is_last_constant = !constants[index + 1..]
+            .iter()
+            .any(|constant| !constant.is_recovered);
+        let separator = if !has_body_declarations || !is_last_constant {
+            ","
+        } else {
+            ";"
+        };
+        if let Some(comma) = entry.comma.as_ref() {
+            let moved_comments =
+                enum_separator_moved_comments(*comma, has_body_declarations && is_last_constant);
+            if has_body_declarations && is_last_constant {
+                moved_member_comments.extend(moved_comments);
+            } else {
+                pending_constant_comments.extend(moved_comments);
+            }
+        }
+
+        constant_lines.push(concat([
+            entry.doc.clone(),
+            format_enum_constant_separator(
+                entry.comma.as_ref(),
+                is_last_constant
+                    .then_some(body_declaration_separator)
+                    .flatten(),
+                separator,
+                !has_body_declarations || !is_last_constant,
+            ),
+        ]));
+    }
+
+    if !pending_constant_comments.is_empty() {
+        constant_lines.push(format_dangling_comments(pending_constant_comments));
+    }
+
+    jolt_fmt_ir::join(&hard_line(), constant_lines)
 }
 
 fn enum_constant_entries<'source, 'fmt>(

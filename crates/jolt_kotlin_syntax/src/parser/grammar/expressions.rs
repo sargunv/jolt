@@ -176,26 +176,14 @@ impl Parser<'_> {
                 K::Dot | K::SafeAccess => {
                     let navigation = self.precede(expression);
                     self.bump();
-                    if self.at_identifier_like()
-                        || matches!(self.current_kind(), K::ThisKw | K::SuperKw)
-                    {
-                        self.bump();
-                    } else {
-                        self.expected_here("expected member name");
-                    }
+                    self.parse_navigation_member();
                     expression = self.complete(navigation, K::NavigationExpression);
                 }
                 K::Question if self.at_split_safe_access() => {
                     let navigation = self.precede(expression);
                     self.bump();
                     self.bump();
-                    if self.at_identifier_like()
-                        || matches!(self.current_kind(), K::ThisKw | K::SuperKw)
-                    {
-                        self.bump();
-                    } else {
-                        self.expected_here("expected member name");
-                    }
+                    self.parse_navigation_member();
                     expression = self.complete(navigation, K::NavigationExpression);
                 }
                 K::ColonColon => {
@@ -224,6 +212,14 @@ impl Parser<'_> {
         }
 
         expression
+    }
+
+    fn parse_navigation_member(&mut self) {
+        if self.at_identifier_like() || matches!(self.current_kind(), K::ThisKw | K::SuperKw) {
+            self.bump();
+        } else {
+            self.expected_here("expected member name");
+        }
     }
 
     fn parse_primary_expression(&mut self, stops: StopSet<'_>) -> CompletedMarker {

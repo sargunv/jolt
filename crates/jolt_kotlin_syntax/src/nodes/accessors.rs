@@ -511,22 +511,16 @@ impl<'source> ContextParameterClause<'source> {
     ) -> impl Iterator<
         Item = RecoveredSeparatedListEntry<'source, ContextParameterClauseEntry<'source>>,
     > + use<'source, '_> {
-        let mut in_parameters = false;
-        let elements =
-            self.syntax()
-                .children_with_tokens()
-                .filter_map(move |element| match element {
-                    SyntaxElement::Token(token) if token.kind() == KotlinSyntaxKind::LParen => {
-                        in_parameters = true;
-                        None
-                    }
-                    SyntaxElement::Token(token) if token.kind() == KotlinSyntaxKind::RParen => {
-                        in_parameters = false;
-                        None
-                    }
-                    _ if in_parameters => Some(element),
-                    _ => None,
-                });
+        let elements = self
+            .syntax()
+            .children_with_tokens()
+            .skip_while(|element| {
+                !matches!(element, SyntaxElement::Token(t) if t.kind() == KotlinSyntaxKind::LParen)
+            })
+            .skip(1)
+            .take_while(|element| {
+                !matches!(element, SyntaxElement::Token(t) if t.kind() == KotlinSyntaxKind::RParen)
+            });
 
         recovered_separated_elements(
             elements,
@@ -1011,22 +1005,16 @@ impl<'source> ParenthesizedType<'source> {
     ) -> impl Iterator<
         Item = RecoveredSeparatedListEntry<'source, FunctionTypeParameterEntry<'source>>,
     > + use<'source, '_> {
-        let mut in_parameters = false;
-        let elements =
-            self.syntax()
-                .children_with_tokens()
-                .filter_map(move |element| match element {
-                    SyntaxElement::Token(token) if token.kind() == KotlinSyntaxKind::LParen => {
-                        in_parameters = true;
-                        None
-                    }
-                    SyntaxElement::Token(token) if token.kind() == KotlinSyntaxKind::RParen => {
-                        in_parameters = false;
-                        None
-                    }
-                    _ if in_parameters => Some(element),
-                    _ => None,
-                });
+        let elements = self
+            .syntax()
+            .children_with_tokens()
+            .skip_while(|element| {
+                !matches!(element, SyntaxElement::Token(t) if t.kind() == KotlinSyntaxKind::LParen)
+            })
+            .skip(1)
+            .take_while(|element| {
+                !matches!(element, SyntaxElement::Token(t) if t.kind() == KotlinSyntaxKind::RParen)
+            });
 
         recovered_separated_elements(
             elements,
@@ -1142,22 +1130,16 @@ impl<'source> ContextFunctionType<'source> {
     ) -> impl Iterator<
         Item = RecoveredSeparatedListEntry<'source, ContextFunctionTypeParameterEntry<'source>>,
     > + use<'source, '_> {
-        let mut in_parameters = false;
-        let elements =
-            self.syntax()
-                .children_with_tokens()
-                .filter_map(move |element| match element {
-                    SyntaxElement::Token(token) if token.kind() == KotlinSyntaxKind::LParen => {
-                        in_parameters = true;
-                        None
-                    }
-                    SyntaxElement::Token(token) if token.kind() == KotlinSyntaxKind::RParen => {
-                        in_parameters = false;
-                        None
-                    }
-                    _ if in_parameters => Some(element),
-                    _ => None,
-                });
+        let elements = self
+            .syntax()
+            .children_with_tokens()
+            .skip_while(|element| {
+                !matches!(element, SyntaxElement::Token(t) if t.kind() == KotlinSyntaxKind::LParen)
+            })
+            .skip(1)
+            .take_while(|element| {
+                !matches!(element, SyntaxElement::Token(t) if t.kind() == KotlinSyntaxKind::RParen)
+            });
 
         recovered_separated_elements(
             elements,
@@ -2432,22 +2414,22 @@ impl<'source> IndexExpression<'source> {
         &self,
     ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, ValueArgumentEntry<'source>>>
     + use<'source, '_> {
-        let mut in_arguments = false;
-        let elements =
-            self.syntax()
-                .children_with_tokens()
-                .filter_map(move |element| match element {
-                    SyntaxElement::Token(token) if token.kind() == KotlinSyntaxKind::LBracket => {
-                        in_arguments = true;
-                        None
-                    }
-                    SyntaxElement::Token(token) if token.kind() == KotlinSyntaxKind::RBracket => {
-                        in_arguments = false;
-                        None
-                    }
-                    _ if in_arguments => Some(element),
-                    _ => None,
-                });
+        let elements = self
+            .syntax()
+            .children_with_tokens()
+            .skip_while(|element| {
+                !matches!(
+                    element,
+                    SyntaxElement::Token(t) if t.kind() == KotlinSyntaxKind::LBracket
+                )
+            })
+            .skip(1)
+            .take_while(|element| {
+                !matches!(
+                    element,
+                    SyntaxElement::Token(t) if t.kind() == KotlinSyntaxKind::RBracket
+                )
+            });
 
         recovered_separated_elements(
             elements,
@@ -2532,17 +2514,29 @@ impl<'source> CollectionLiteralExpression<'source> {
         &self,
     ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, ValueArgumentEntry<'source>>>
     + use<'source, '_> {
-        recovered_separated_entries(
-            self.syntax(),
+        let elements = self
+            .syntax()
+            .children_with_tokens()
+            .skip_while(|element| {
+                !matches!(
+                    element,
+                    SyntaxElement::Token(t) if t.kind() == KotlinSyntaxKind::LBracket
+                )
+            })
+            .skip(1)
+            .take_while(|element| {
+                !matches!(
+                    element,
+                    SyntaxElement::Token(t) if t.kind() == KotlinSyntaxKind::RBracket
+                )
+            });
+
+        recovered_separated_elements(
+            elements,
             |kind| kind == KotlinSyntaxKind::ValueArgument,
             |syntax| ValueArgument { syntax },
             |argument, comma| ValueArgumentEntry { argument, comma },
-            |token| {
-                matches!(
-                    token.kind(),
-                    KotlinSyntaxKind::LBracket | KotlinSyntaxKind::RBracket
-                )
-            },
+            |_| false,
         )
     }
 
@@ -2875,27 +2869,16 @@ impl<'source> WhenEntry<'source> {
         &self,
     ) -> impl Iterator<Item = RecoveredSeparatedListEntry<'source, WhenConditionEntry<'source>>>
     + use<'source, '_> {
-        let mut before_body = true;
-        let elements =
-            self.syntax()
-                .children_with_tokens()
-                .filter_map(move |element| match element {
-                    SyntaxElement::Token(token)
-                        if matches!(
-                            token.kind(),
-                            KotlinSyntaxKind::Arrow | KotlinSyntaxKind::ElseKw
-                        ) =>
-                    {
-                        before_body = false;
-                        None
-                    }
-                    SyntaxElement::Node(node) if node.kind() == KotlinSyntaxKind::WhenGuard => {
-                        before_body = false;
-                        None
-                    }
-                    _ if before_body => Some(element),
-                    _ => None,
-                });
+        let elements = self
+            .syntax()
+            .children_with_tokens()
+            .take_while(|element| match element {
+                SyntaxElement::Token(token) => !matches!(
+                    token.kind(),
+                    KotlinSyntaxKind::Arrow | KotlinSyntaxKind::ElseKw
+                ),
+                SyntaxElement::Node(node) => node.kind() != KotlinSyntaxKind::WhenGuard,
+            });
 
         recovered_separated_elements(
             elements,

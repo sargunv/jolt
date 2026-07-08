@@ -371,13 +371,11 @@ impl Parser<'_> {
             match kind {
                 K::LParen => paren_depth += 1,
                 K::RParen if paren_depth > 0 => paren_depth -= 1,
-                K::RParen => break,
                 K::LBracket => bracket_depth += 1,
                 K::RBracket if bracket_depth > 0 => bracket_depth -= 1,
-                K::RBracket => break,
                 K::LBrace => brace_depth += 1,
                 K::RBrace if brace_depth > 0 => brace_depth -= 1,
-                K::RBrace => break,
+                K::RParen | K::RBracket | K::RBrace => break,
                 K::Lt => angle_depth += 1,
                 K::Gt if angle_depth > 0 => angle_depth -= 1,
                 K::Dot

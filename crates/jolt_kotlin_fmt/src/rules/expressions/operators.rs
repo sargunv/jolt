@@ -421,14 +421,13 @@ fn binary_operator_precedence(operator: &KotlinSyntaxToken<'_>) -> Option<u8> {
         | KotlinSyntaxKind::IsKw
         | KotlinSyntaxKind::NotIs => Some(4),
         KotlinSyntaxKind::AsKw | KotlinSyntaxKind::AsSafe => Some(5),
-        KotlinSyntaxKind::Elvis => Some(6),
+        KotlinSyntaxKind::Elvis | KotlinSyntaxKind::Identifier => Some(6),
         KotlinSyntaxKind::Range | KotlinSyntaxKind::RangeUntil => Some(7),
         KotlinSyntaxKind::Plus | KotlinSyntaxKind::Minus => Some(8),
         KotlinSyntaxKind::Star
         | KotlinSyntaxKind::Slash
         | KotlinSyntaxKind::Percent
         | KotlinSyntaxKind::Amp => Some(9),
-        KotlinSyntaxKind::Identifier => Some(6),
         _ => None,
     }
 }
