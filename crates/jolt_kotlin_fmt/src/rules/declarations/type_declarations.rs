@@ -4,12 +4,12 @@ use jolt_kotlin_syntax::{
     InterfaceDeclaration, KotlinSyntaxToken, ModifierList, Name, ObjectDeclaration,
     ObjectExpression, PrimaryConstructor, RecoveredSeparatedListEntry,
 };
+use jolt_syntax::source_gap_is_trivia;
 
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_token, format_token_sequence,
 };
 use crate::helpers::lists::{CommaListItem, comma_list};
-use crate::helpers::source::source_gap_is_trivia;
 use crate::rules::expressions::{format_expression, format_value_argument_list};
 use crate::rules::names::format_name;
 use crate::rules::types::format_type_reference;

@@ -1,5 +1,6 @@
 use jolt_fmt_ir::{Doc, concat};
 use jolt_kotlin_syntax::{Block, BlockItem, RecoveredSeparatedListEntry};
+use jolt_syntax::source_gap_is_trivia;
 
 use crate::helpers::blocks::{
     BodyItem, empty_source_braced_body, join_body_items, source_braced_body,
@@ -9,7 +10,6 @@ use crate::helpers::formatter_ignore::{
     FormatterIgnoreRange, formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
     relative_token_range_between,
 };
-use crate::helpers::source::source_gap_is_trivia;
 
 use super::format_block_item;
 

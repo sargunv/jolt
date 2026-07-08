@@ -497,6 +497,7 @@ dependencies = [
  "jolt_diagnostics",
  "jolt_fmt_ir",
  "jolt_kotlin_syntax",
+ "jolt_syntax",
  "jolt_test_support",
  "serde",
 ]
