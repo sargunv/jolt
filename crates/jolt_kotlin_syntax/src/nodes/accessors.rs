@@ -1199,6 +1199,12 @@ impl<'source> DefinitelyNonNullableType<'source> {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct QualifiedNameSegment<'source> {
+    pub dot_before: Option<KotlinSyntaxToken<'source>>,
+    pub name: Name<'source>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct TypeParameterListEntry<'source> {
     pub parameter: TypeParameter<'source>,
     pub comma: Option<KotlinSyntaxToken<'source>>,
@@ -1983,6 +1989,40 @@ impl<'source> Block<'source> {
     }
 }
 
+impl<'source> LoopExpression<'source> {
+    /// The leading keyword token of the loop (whatever `loop_kind` the parser
+    /// bumped — typically an `Identifier` for contextual loop keywords, since
+    /// `LoopExpression` is the parser's fallback for non-for/while/do cases).
+    #[must_use]
+    pub fn loop_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        self.first_token()
+    }
+
+    /// Optional parenthesized header / condition expression.
+    #[must_use]
+    pub fn condition(&self) -> Option<ParenthesizedExpression<'source>> {
+        child(self.syntax())
+    }
+
+    /// Optional braced body.
+    #[must_use]
+    pub fn block_body(&self) -> Option<Block<'source>> {
+        child(self.syntax())
+    }
+
+    /// Optional unbraced body expression (when no block is present).
+    /// Distinct from `condition()` because the parser only produces one or
+    /// the other. To disambiguate, pick the Expression child that is NOT
+    /// the condition's `ParenthesizedExpression`.
+    #[must_use]
+    pub fn expression_body(&self) -> Option<Expression<'source>> {
+        let condition_start = self.condition().map(|c| c.text_range().start());
+        children_family(self.syntax()).find(|expr: &Expression<'source>| {
+            condition_start.is_none_or(|start| expr.text_range().start() != start)
+        })
+    }
+}
+
 impl<'source> ValueArgumentList<'source> {
     pub fn entries(&self) -> impl Iterator<Item = ValueArgumentEntry<'source>> + use<'source, '_> {
         separated_entries(self.syntax(), ValueArgument::cast, |argument, comma| {
@@ -2180,6 +2220,61 @@ impl<'source> NameExpression<'source> {
         let at = self.at_token()?;
         children_family(self.syntax()).find(|expression: &Expression<'source>| {
             expression.text_range().start() >= at.token_text_range().end()
+        })
+    }
+}
+
+impl<'source> QualifiedName<'source> {
+    /// Iterates segments in source order. The first segment's `dot_before`
+    /// is `None`; subsequent segments carry the preceding `Dot` token.
+    pub fn segments(
+        &self,
+    ) -> impl Iterator<Item = QualifiedNameSegment<'source>> + use<'source, '_> {
+        let mut elements = self.syntax().children_with_tokens();
+        let mut dot_before = None;
+        std::iter::from_fn(move || {
+            loop {
+                match elements.next()? {
+                    SyntaxElement::Node(node) => {
+                        if let Some(name) = Name::cast(node) {
+                            return Some(QualifiedNameSegment {
+                                dot_before: dot_before.take(),
+                                name,
+                            });
+                        }
+                    }
+                    SyntaxElement::Token(t) if t.kind() == KotlinSyntaxKind::Dot => {
+                        dot_before = Some(t);
+                    }
+                    SyntaxElement::Token(_) => {}
+                }
+            }
+        })
+    }
+
+    /// Convenience: identifier tokens only, in source order.
+    pub fn identifiers(
+        &self,
+    ) -> impl Iterator<Item = KotlinSyntaxToken<'source>> + use<'source, '_> {
+        self.segments().filter_map(|s| s.name.first_token())
+    }
+
+    /// Convenience: the `Dot` tokens, in source order.
+    pub fn dots(&self) -> impl Iterator<Item = KotlinSyntaxToken<'source>> + use<'source, '_> {
+        self.segments()
+            .filter_map(|s| s.dot_before)
+            .chain(self.trailing_dot())
+    }
+
+    /// A trailing `Dot` token with no following `Name` — produced by the
+    /// parser for star imports (`com.example.tools.*` stores the final `Dot`
+    /// inside the `QualifiedName`; the `Star` is a sibling).
+    #[must_use]
+    pub fn trailing_dot(&self) -> Option<KotlinSyntaxToken<'source>> {
+        let last_name_end = self.segments().last()?.name.text_range().end();
+        child_tokens(self.syntax()).find(|token| {
+            token.kind() == KotlinSyntaxKind::Dot
+                && token.token_text_range().start() >= last_name_end
         })
     }
 }

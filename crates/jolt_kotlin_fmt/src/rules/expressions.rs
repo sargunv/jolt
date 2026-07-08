@@ -1,7 +1,7 @@
 use jolt_fmt_ir::{Doc, concat, hard_line};
 use jolt_kotlin_syntax::{AnnotatedExpression, Annotation, Expression};
 
-use crate::helpers::comments::{LeadingTrivia, comment_forces_line, format_token_sequence};
+use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, comment_forces_line, format_token};
 use crate::rules::annotations::format_annotation_with_leading;
 
 mod calls;
@@ -89,7 +89,25 @@ fn format_expression_with_leading<'source>(
         Expression::WhileStatement(expression) => format_while_statement(expression, leading),
         Expression::DoWhileStatement(expression) => format_do_while_statement(expression, leading),
         Expression::LoopExpression(expression) => {
-            format_token_sequence(expression.token_iter(), leading)
+            let mut docs = Vec::new();
+            if let Some(keyword) = expression.loop_token() {
+                docs.push(format_token(&keyword, leading, TrailingTrivia::Preserve));
+            }
+            if let Some(condition) = expression.condition() {
+                docs.push(format_parenthesized_expression(
+                    &condition,
+                    LeadingTrivia::Preserve,
+                ));
+            }
+            if let Some(block) = expression.block_body() {
+                docs.push(crate::rules::statements::format_block(&block));
+            } else if let Some(body) = expression.expression_body() {
+                docs.push(format_expression_with_leading(
+                    &body,
+                    LeadingTrivia::Preserve,
+                ));
+            }
+            concat(docs)
         }
         Expression::JumpExpression(expression) => format_jump_expression(expression, leading),
         Expression::ThrowExpression(expression) => format_throw_expression(expression, leading),

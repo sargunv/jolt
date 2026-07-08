@@ -1,5 +1,5 @@
 use jolt_fmt_ir::{Doc, concat, hard_line, indent, space};
-use jolt_kotlin_syntax::{KotlinComment, KotlinSyntaxKind, KotlinSyntaxToken, QualifiedName};
+use jolt_kotlin_syntax::{KotlinComment, KotlinSyntaxToken, QualifiedName};
 use std::cmp::Ordering;
 
 use crate::helpers::comments::{
@@ -42,11 +42,7 @@ impl<'source> NameSortKey<'source> {
 
     pub(crate) fn new(name: &QualifiedName<'source>, on_demand: bool) -> Self {
         Self {
-            segments: name
-                .token_iter()
-                .filter(is_name_segment_token)
-                .map(|token| token.text())
-                .collect(),
+            segments: name.identifiers().map(|token| token.text()).collect(),
             on_demand,
         }
     }
@@ -79,7 +75,7 @@ impl PartialOrd for NameSortKey<'_> {
 }
 
 fn tokens_have_line_comments(name: &QualifiedName<'_>) -> bool {
-    name.token_iter().any(|token| {
+    name.identifiers().chain(name.dots()).any(|token| {
         token
             .leading_comments()
             .chain(token.trailing_comments())
@@ -89,20 +85,27 @@ fn tokens_have_line_comments(name: &QualifiedName<'_>) -> bool {
 
 fn format_inline_qualified_name<'source>(name: &QualifiedName<'source>) -> Doc<'source> {
     let mut docs = Vec::new();
-    let mut tokens = name.token_iter().peekable();
+    let segments: Vec<_> = name.segments().collect();
+    let trailing_dot = name.trailing_dot();
 
-    while let Some(token) = tokens.next() {
-        if token.kind() == KotlinSyntaxKind::Dot {
-            docs.push(format_name_dot(&token));
-            continue;
+    for (index, segment) in segments.iter().enumerate() {
+        if let Some(dot) = segment.dot_before {
+            docs.push(format_name_dot(&dot));
         }
 
-        docs.push(format_inline_name_segment(
-            &token,
-            tokens
-                .peek()
-                .is_some_and(|next| next.kind() == KotlinSyntaxKind::Dot),
-        ));
+        let is_last = index + 1 == segments.len();
+        let followed_by_dot = segments
+            .get(index + 1)
+            .is_some_and(|next| next.dot_before.is_some())
+            || (is_last && trailing_dot.is_some());
+
+        if let Some(token) = segment.name.first_token() {
+            docs.push(format_inline_name_segment(&token, followed_by_dot));
+        }
+    }
+
+    if let Some(dot) = trailing_dot {
+        docs.push(format_name_dot(&dot));
     }
 
     concat(docs)
@@ -112,20 +115,29 @@ fn format_multiline_qualified_name<'source>(name: &QualifiedName<'source>) -> Do
     let mut docs = Vec::new();
     let mut tail_docs = Vec::new();
     let mut before_first_dot = true;
+    let trailing_dot = name.trailing_dot();
 
-    for token in name.token_iter() {
-        if token.kind() == KotlinSyntaxKind::Dot {
+    for segment in name.segments() {
+        if let Some(dot) = segment.dot_before {
             before_first_dot = false;
             tail_docs.push(hard_line());
-            tail_docs.push(format_name_dot(&token));
-            continue;
+            tail_docs.push(format_name_dot(&dot));
         }
+
+        let Some(token) = segment.name.first_token() else {
+            continue;
+        };
 
         if before_first_dot {
             docs.push(format_name_segment(&token));
         } else {
             tail_docs.push(format_name_segment(&token));
         }
+    }
+
+    if let Some(dot) = trailing_dot {
+        tail_docs.push(hard_line());
+        tail_docs.push(format_name_dot(&dot));
     }
 
     docs.push(indent(concat(tail_docs)));
@@ -191,11 +203,4 @@ fn format_inline_comments<'source>(
         }
     }
     concat(docs)
-}
-
-fn is_name_segment_token(token: &KotlinSyntaxToken<'_>) -> bool {
-    matches!(
-        token.kind(),
-        KotlinSyntaxKind::Identifier | KotlinSyntaxKind::FieldIdentifier
-    )
 }
