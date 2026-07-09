@@ -232,7 +232,7 @@ impl<'source, L: Language> TokenBuffer<'source, L> {
     fn new(source: &'source str) -> Self {
         Self {
             lexer: L::Lexer::new(source),
-            tokens: Vec::new(),
+            tokens: Vec::with_capacity(source.len().div_ceil(8)),
             trivia: Vec::new(),
         }
     }
