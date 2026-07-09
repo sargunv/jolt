@@ -3,7 +3,7 @@ source: crates/jolt_kotlin_syntax/tests/imported_fixtures.rs
 expression: maplibre_summary.render()
 ---
 suite: maplibre-compose
-files: 484
+files: 485
 reconstructed changed: 0
 
 diagnostics:

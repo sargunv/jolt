@@ -10,7 +10,7 @@ use jolt_test_support::{
 #[test]
 fn imported_fixture_inputs_format_idempotently_and_parse() {
     let ktfmt_summary = assert_corpus("ktfmt", 72);
-    let maplibre_summary = assert_corpus("maplibre-compose", 484);
+    let maplibre_summary = assert_corpus("maplibre-compose", 485);
 
     insta::assert_snapshot!("ktfmt_formatter_summary", ktfmt_summary.render());
     insta::assert_snapshot!(
