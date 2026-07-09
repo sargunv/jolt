@@ -77,7 +77,3 @@ fn char_width(ch: char) -> TextWidth {
         )
     }
 }
-
-pub(crate) fn has_line_terminator(text: &str) -> bool {
-    text.contains(['\r', '\n'])
-}

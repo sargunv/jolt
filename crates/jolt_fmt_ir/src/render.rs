@@ -2,7 +2,6 @@ use std::error::Error;
 use std::fmt;
 
 use crate::document::{Doc, DocKind, FlatLine, Group, Line, LineMode, LiteralText};
-use crate::validation::validate_doc;
 use crate::width::{TextWidth, add_width};
 
 // A flat-fit probe can scan nested docs, the active render stack, and an overlay
@@ -53,12 +52,6 @@ pub struct RenderError {
 }
 
 impl RenderError {
-    pub(crate) const fn invalid_text(context: &'static str) -> Self {
-        Self {
-            kind: RenderErrorKind::InvalidText { context },
-        }
-    }
-
     pub(crate) const fn no_current_group() -> Self {
         Self {
             kind: RenderErrorKind::NoCurrentGroup,
@@ -68,16 +61,12 @@ impl RenderError {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 enum RenderErrorKind {
-    InvalidText { context: &'static str },
     NoCurrentGroup,
 }
 
 impl fmt::Display for RenderError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.kind {
-            RenderErrorKind::InvalidText { context } => {
-                write!(formatter, "{context} must not contain line terminators")
-            }
             RenderErrorKind::NoCurrentGroup => {
                 formatter.write_str("if_break requires a current group")
             }
@@ -91,14 +80,12 @@ impl Error for RenderError {}
 ///
 /// # Errors
 ///
-/// Returns [`RenderError`] when the document is structurally invalid or contains
-/// invalid non-literal text.
+/// Returns [`RenderError`] when the document is structurally invalid.
 pub fn render_to<S: RenderSink>(
     doc: &Doc<'_>,
     options: RenderOptions,
     sink: S,
 ) -> Result<RenderOutcome, RenderError> {
-    validate_doc(doc)?;
     let mut renderer = Renderer::new(options, sink);
     renderer.render_doc(doc, Mode::Break)?;
     Ok(renderer.finish())

@@ -4,7 +4,6 @@ mod document;
 pub mod formatter_ignore;
 mod options;
 mod render;
-mod validation;
 mod width;
 
 pub use document::{
