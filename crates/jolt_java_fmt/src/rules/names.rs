@@ -1,19 +1,21 @@
-use jolt_fmt_ir::space;
 use std::cmp::Ordering;
 
-use jolt_fmt_ir::{Doc, concat, hard_line, indent};
+use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_java_syntax::{JavaComment, JavaSyntaxToken, NameSegment, NameSyntax};
 
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, comment_forces_line, format_comment, format_token,
 };
 
-pub(crate) fn format_name<'source>(name: &NameSyntax<'source>) -> Doc<'source> {
+pub(crate) fn format_name<'source>(
+    name: &NameSyntax<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
     if segments_have_line_comments(name.segments_with_annotations()) {
-        return format_multiline_name(name.segments_with_annotations());
+        return format_multiline_name(doc, name.segments_with_annotations());
     }
 
-    format_inline_name(name.segments_with_annotations())
+    format_inline_name(doc, name.segments_with_annotations())
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -84,70 +86,96 @@ fn token_has_line_comments(token: &JavaSyntaxToken<'_>) -> bool {
 }
 
 fn format_inline_name<'source>(
+    doc: &mut DocBuilder<'source>,
     segments: impl IntoIterator<Item = NameSegment<'source>>,
 ) -> Doc<'source> {
     let mut segments = segments.into_iter().peekable();
-    let (lower, _) = segments.size_hint();
-    let mut docs = Vec::with_capacity(lower.saturating_mul(2));
+    let mut docs = doc.list();
     let mut index = 0;
     while let Some(segment) = segments.next() {
         if index > 0 {
-            docs.push(
-                segment
-                    .dot_before
-                    .as_ref()
-                    .map_or_else(jolt_fmt_ir::nil, format_name_dot),
-            );
+            let dot = segment
+                .dot_before
+                .as_ref()
+                .map_or_else(Doc::nil, |dot| format_name_dot(doc, dot));
+            docs.push(dot, doc);
         }
-        docs.push(format_inline_name_segment_identifier(
-            &segment,
-            segments.peek().is_some(),
-        ));
+        let identifier =
+            format_inline_name_segment_identifier(doc, &segment, segments.peek().is_some());
+        docs.push(identifier, doc);
         index += 1;
     }
-    concat(docs)
+    docs.finish(doc)
 }
 
 fn format_multiline_name<'source>(
+    doc: &mut DocBuilder<'source>,
     segments: impl IntoIterator<Item = NameSegment<'source>>,
 ) -> Doc<'source> {
     let mut segments = segments.into_iter();
     let Some(first) = segments.next() else {
-        return jolt_fmt_ir::nil();
+        return Doc::nil();
     };
 
-    concat([
-        format_name_segment_identifier(&first),
-        indent(concat(segments.map(|segment| {
-            concat([hard_line(), format_leading_dot_segment(&segment)])
-        }))),
-    ])
+    let mut rest = doc.list();
+    for segment in segments {
+        let hard_line = doc.hard_line();
+        let segment = format_leading_dot_segment(doc, &segment);
+        let segment = doc_concat!(doc, [hard_line, segment]);
+        rest.push(segment, doc);
+    }
+    let rest = rest.finish(doc);
+
+    doc_concat!(
+        doc,
+        [
+            format_name_segment_identifier(doc, &first),
+            doc_indent!(doc, rest),
+        ]
+    )
 }
 
-fn format_leading_dot_segment<'source>(segment: &NameSegment<'source>) -> Doc<'source> {
-    concat([
-        segment
-            .dot_before
-            .as_ref()
-            .map_or_else(jolt_fmt_ir::nil, format_name_dot),
-        format_name_segment_identifier(segment),
-    ])
+fn format_leading_dot_segment<'source>(
+    doc: &mut DocBuilder<'source>,
+    segment: &NameSegment<'source>,
+) -> Doc<'source> {
+    doc_concat!(
+        doc,
+        [
+            segment
+                .dot_before
+                .as_ref()
+                .map_or_else(Doc::nil, |dot| format_name_dot(doc, dot)),
+            format_name_segment_identifier(doc, segment),
+        ]
+    )
 }
 
-fn format_name_dot<'source>(dot: &JavaSyntaxToken<'source>) -> Doc<'source> {
-    concat([
-        format_leading_dot_comments(dot.leading_comments()),
-        format_token(
-            dot,
-            LeadingTrivia::SuppressAlreadyHandled,
-            TrailingTrivia::RelocatedToEnclosingContext,
-        ),
-        format_inline_comments(dot.trailing_comments()),
-    ])
+fn format_name_dot<'source>(
+    doc: &mut DocBuilder<'source>,
+    dot: &JavaSyntaxToken<'source>,
+) -> Doc<'source> {
+    doc_concat!(
+        doc,
+        [
+            format_leading_dot_comments(doc, dot.leading_comments()),
+            format_token(
+                doc,
+                dot,
+                LeadingTrivia::SuppressAlreadyHandled,
+                TrailingTrivia::RelocatedToEnclosingContext,
+            ),
+            format_inline_comments(doc, dot.trailing_comments()),
+        ]
+    )
 }
 
-fn format_name_segment_identifier<'source>(segment: &NameSegment<'source>) -> Doc<'source> {
+fn format_name_segment_identifier<'source>(
+    doc: &mut DocBuilder<'source>,
+    segment: &NameSegment<'source>,
+) -> Doc<'source> {
     format_token(
+        doc,
         &segment.identifier,
         LeadingTrivia::Preserve,
         TrailingTrivia::BeforeLineBreak,
@@ -155,54 +183,59 @@ fn format_name_segment_identifier<'source>(segment: &NameSegment<'source>) -> Do
 }
 
 fn format_inline_name_segment_identifier<'source>(
+    doc: &mut DocBuilder<'source>,
     segment: &NameSegment<'source>,
     followed_by_dot: bool,
 ) -> Doc<'source> {
-    concat([
-        format_inline_comments(segment.identifier.leading_comments()),
-        format_token(
-            &segment.identifier,
-            LeadingTrivia::SuppressAlreadyHandled,
-            TrailingTrivia::RelocatedToEnclosingContext,
-        ),
-        if followed_by_dot {
-            format_leading_dot_comments(segment.identifier.trailing_comments())
-        } else {
-            format_inline_comments(segment.identifier.trailing_comments())
-        },
-    ])
+    doc_concat!(
+        doc,
+        [
+            format_inline_comments(doc, segment.identifier.leading_comments()),
+            format_token(
+                doc,
+                &segment.identifier,
+                LeadingTrivia::SuppressAlreadyHandled,
+                TrailingTrivia::RelocatedToEnclosingContext,
+            ),
+            if followed_by_dot {
+                format_leading_dot_comments(doc, segment.identifier.trailing_comments())
+            } else {
+                format_inline_comments(doc, segment.identifier.trailing_comments())
+            },
+        ]
+    )
 }
 
 fn format_leading_dot_comments<'source>(
+    doc: &mut DocBuilder<'source>,
     comments: impl IntoIterator<Item = JavaComment<'source>>,
 ) -> Doc<'source> {
     let comments = comments.into_iter();
-    let (lower, _) = comments.size_hint();
-    let mut docs = Vec::with_capacity(lower.saturating_mul(3));
+    let mut docs = doc.list();
     for comment in comments {
-        docs.push(space());
-        docs.push(format_comment(&comment));
+        docs.push(doc.space(), doc);
+        docs.push(format_comment(doc, &comment), doc);
         if comment_forces_line(&comment) {
-            docs.push(hard_line());
+            docs.push(doc.hard_line(), doc);
         }
     }
-    concat(docs)
+    docs.finish(doc)
 }
 
 fn format_inline_comments<'source>(
+    doc: &mut DocBuilder<'source>,
     comments: impl IntoIterator<Item = JavaComment<'source>>,
 ) -> Doc<'source> {
     let comments = comments.into_iter();
-    let (lower, _) = comments.size_hint();
-    let mut docs = Vec::with_capacity(lower.saturating_mul(3));
+    let mut docs = doc.list();
     for comment in comments {
-        docs.push(space());
-        docs.push(format_comment(&comment));
+        docs.push(doc.space(), doc);
+        docs.push(format_comment(doc, &comment), doc);
         if comment_forces_line(&comment) {
-            docs.push(hard_line());
+            docs.push(doc.hard_line(), doc);
         } else {
-            docs.push(space());
+            docs.push(doc.space(), doc);
         }
     }
-    concat(docs)
+    docs.finish(doc)
 }

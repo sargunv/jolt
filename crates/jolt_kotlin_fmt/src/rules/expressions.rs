@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, concat, hard_line};
+use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{AnnotatedExpression, Annotation, Expression};
 
 use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, comment_forces_line, format_token};
@@ -34,124 +34,148 @@ use operators::{
 };
 use references::format_callable_reference_expression;
 
-pub(crate) fn format_expression<'source>(expression: &Expression<'source>) -> Doc<'source> {
-    format_expression_with_leading(expression, LeadingTrivia::Preserve)
+pub(crate) fn format_expression<'source>(
+    doc: &mut DocBuilder<'source>,
+    expression: &Expression<'source>,
+) -> Doc<'source> {
+    format_expression_with_leading(doc, expression, LeadingTrivia::Preserve)
 }
 
 pub(crate) fn format_expression_without_leading<'source>(
+    doc: &mut DocBuilder<'source>,
     expression: &Expression<'source>,
 ) -> Doc<'source> {
-    format_expression_with_leading(expression, LeadingTrivia::SuppressAlreadyHandled)
+    format_expression_with_leading(doc, expression, LeadingTrivia::SuppressAlreadyHandled)
 }
 
 fn format_expression_with_leading<'source>(
+    doc: &mut DocBuilder<'source>,
     expression: &Expression<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
     match expression {
-        Expression::LiteralExpression(expression) => format_literal_expression(expression, leading),
+        Expression::LiteralExpression(expression) => {
+            format_literal_expression(doc, expression, leading)
+        }
         Expression::StringTemplateExpression(expression) => {
-            format_string_template_expression(expression, leading)
+            format_string_template_expression(doc, expression, leading)
         }
         Expression::NameExpression(expression) => {
-            if let Some(labeled) = format_labeled_expression(expression, leading) {
+            if let Some(labeled) = format_labeled_expression(doc, expression, leading) {
                 labeled
             } else {
-                format_name_expression(expression, leading)
+                format_name_expression(doc, expression, leading)
             }
         }
-        Expression::ThisExpression(expression) => format_this_expression(expression, leading),
-        Expression::SuperExpression(expression) => format_super_expression(expression, leading),
+        Expression::ThisExpression(expression) => format_this_expression(doc, expression, leading),
+        Expression::SuperExpression(expression) => {
+            format_super_expression(doc, expression, leading)
+        }
         Expression::ParenthesizedExpression(expression) => {
-            format_parenthesized_expression(expression, leading)
+            format_parenthesized_expression(doc, expression, leading)
         }
         Expression::AnnotatedExpression(expression) => {
-            format_annotated_expression(expression, leading)
+            format_annotated_expression(doc, expression, leading)
         }
         Expression::AssignmentExpression(expression) => {
-            format_assignment_expression(expression, leading)
+            format_assignment_expression(doc, expression, leading)
         }
-        Expression::BinaryExpression(expression) => format_binary_expression(expression, leading),
-        Expression::UnaryExpression(expression) => format_unary_expression(expression, leading),
-        Expression::PostfixExpression(expression) => format_postfix_expression(expression, leading),
+        Expression::BinaryExpression(expression) => {
+            format_binary_expression(doc, expression, leading)
+        }
+        Expression::UnaryExpression(expression) => {
+            format_unary_expression(doc, expression, leading)
+        }
+        Expression::PostfixExpression(expression) => {
+            format_postfix_expression(doc, expression, leading)
+        }
         Expression::NavigationExpression(expression) => {
-            format_navigation_expression(expression, leading)
+            format_navigation_expression(doc, expression, leading)
         }
-        Expression::CallExpression(expression) => format_call_expression(expression, leading),
-        Expression::IndexExpression(expression) => format_index_expression(expression, leading),
+        Expression::CallExpression(expression) => format_call_expression(doc, expression, leading),
+        Expression::IndexExpression(expression) => {
+            format_index_expression(doc, expression, leading)
+        }
         Expression::CallableReferenceExpression(expression) => {
-            format_callable_reference_expression(expression, leading)
+            format_callable_reference_expression(doc, expression, leading)
         }
-        Expression::IfExpression(expression) => format_if_expression(expression, leading),
-        Expression::WhenExpression(expression) => format_when_expression(expression, leading),
-        Expression::TryExpression(expression) => format_try_expression(expression, leading),
-        Expression::ForStatement(expression) => format_for_statement(expression, leading),
-        Expression::WhileStatement(expression) => format_while_statement(expression, leading),
-        Expression::DoWhileStatement(expression) => format_do_while_statement(expression, leading),
+        Expression::IfExpression(expression) => format_if_expression(doc, expression, leading),
+        Expression::WhenExpression(expression) => format_when_expression(doc, expression, leading),
+        Expression::TryExpression(expression) => format_try_expression(doc, expression, leading),
+        Expression::ForStatement(expression) => format_for_statement(doc, expression, leading),
+        Expression::WhileStatement(expression) => format_while_statement(doc, expression, leading),
+        Expression::DoWhileStatement(expression) => {
+            format_do_while_statement(doc, expression, leading)
+        }
         Expression::LoopExpression(expression) => {
-            let mut docs = Vec::with_capacity(3);
+            let mut docs = doc.list();
             if let Some(keyword) = expression.loop_token() {
-                docs.push(format_token(&keyword, leading, TrailingTrivia::Preserve));
+                let keyword = format_token(doc, &keyword, leading, TrailingTrivia::Preserve);
+                docs.push(keyword, doc);
             }
             if let Some(condition) = expression.condition() {
-                docs.push(format_parenthesized_expression(
-                    &condition,
-                    LeadingTrivia::Preserve,
-                ));
+                let condition =
+                    format_parenthesized_expression(doc, &condition, LeadingTrivia::Preserve);
+                docs.push(condition, doc);
             }
             if let Some(block) = expression.block_body() {
-                docs.push(crate::rules::statements::format_block(&block));
+                let block = crate::rules::statements::format_block(doc, &block);
+                docs.push(block, doc);
             } else if let Some(body) = expression.expression_body() {
-                docs.push(format_expression_with_leading(
-                    &body,
-                    LeadingTrivia::Preserve,
-                ));
+                let body = format_expression_with_leading(doc, &body, LeadingTrivia::Preserve);
+                docs.push(body, doc);
             }
-            concat(docs)
+            docs.finish(doc)
         }
-        Expression::JumpExpression(expression) => format_jump_expression(expression, leading),
-        Expression::ThrowExpression(expression) => format_throw_expression(expression, leading),
-        Expression::LambdaExpression(expression) => format_lambda_expression(expression, leading),
+        Expression::JumpExpression(expression) => format_jump_expression(doc, expression, leading),
+        Expression::ThrowExpression(expression) => {
+            format_throw_expression(doc, expression, leading)
+        }
+        Expression::LambdaExpression(expression) => {
+            format_lambda_expression(doc, expression, leading)
+        }
         Expression::AnonymousFunctionExpression(expression) => {
-            format_anonymous_function_expression(expression, leading)
+            format_anonymous_function_expression(doc, expression, leading)
         }
         Expression::ObjectExpression(expression) => {
-            crate::rules::declarations::format_object_expression(expression, leading)
+            crate::rules::declarations::format_object_expression(doc, expression, leading)
         }
         Expression::CollectionLiteralExpression(expression) => {
-            format_collection_literal_expression(expression, leading)
+            format_collection_literal_expression(doc, expression, leading)
         }
     }
 }
 
 fn format_annotated_expression<'source>(
+    doc: &mut DocBuilder<'source>,
     expression: &AnnotatedExpression<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
     let annotations = expression.annotations();
-    let (lower, _) = annotations.size_hint();
-    let mut docs = Vec::with_capacity(lower.saturating_mul(2).saturating_add(1));
+    let mut docs = doc.list();
     for (index, annotation) in annotations.enumerate() {
-        docs.push(format_annotation_with_leading(
+        let annotation_doc = format_annotation_with_leading(
+            doc,
             &annotation,
             if index == 0 {
                 leading
             } else {
                 LeadingTrivia::Preserve
             },
-        ));
+        );
+        docs.push(annotation_doc, doc);
         if !annotation_trailing_comment_forces_line(&annotation) {
-            docs.push(hard_line());
+            let hard_line = doc.hard_line();
+            docs.push(hard_line, doc);
         }
     }
-    docs.push(
-        expression
-            .expression()
-            .map_or_else(jolt_fmt_ir::nil, |inner| {
-                format_expression_without_leading(&inner)
-            }),
-    );
-    concat(docs)
+    let expression = if let Some(inner) = expression.expression() {
+        format_expression_without_leading(doc, &inner)
+    } else {
+        doc.nil()
+    };
+    docs.push(expression, doc);
+    docs.finish(doc)
 }
 
 fn annotation_trailing_comment_forces_line(annotation: &Annotation<'_>) -> bool {

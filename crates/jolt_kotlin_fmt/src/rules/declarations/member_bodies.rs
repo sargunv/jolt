@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, concat, empty_line, hard_line, space};
+use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
     ClassBody, ClassMemberDeclaration, ClassMemberDeclarationEntry, Declaration, KotlinSyntaxToken,
     RecoveredSeparatedListEntry,
@@ -19,37 +19,44 @@ use super::{
     format_type_alias_declaration,
 };
 
-pub(super) fn format_class_body(body: Option<ClassBody<'_>>) -> Doc<'_> {
+pub(super) fn format_class_body<'source>(
+    doc: &mut DocBuilder<'source>,
+    body: Option<ClassBody<'source>>,
+) -> Doc<'source> {
     let Some(body) = body else {
-        return jolt_fmt_ir::nil();
+        return doc.nil();
     };
-    let body_doc = format_class_body_contents(&body);
-    concat([
-        space(),
-        source_braced_body(
-            body.open_brace().as_ref(),
-            body.close_brace().as_ref(),
-            body_doc,
-        ),
-    ])
+    let body_doc = format_class_body_contents(doc, &body);
+    let space = doc.space();
+    let body = source_braced_body(
+        doc,
+        body.open_brace().as_ref(),
+        body.close_brace().as_ref(),
+        body_doc,
+    );
+    doc.concat([space, body])
 }
 
-fn format_class_body_contents<'source>(body: &ClassBody<'source>) -> Option<Doc<'source>> {
+fn format_class_body_contents<'source>(
+    doc: &mut DocBuilder<'source>,
+    body: &ClassBody<'source>,
+) -> Option<Doc<'source>> {
     let ignored_ranges = formatter_ignore_ranges(
         body.source_text(),
         body.text_range().start().get(),
         body.token_iter(),
     );
     if !ignored_ranges.is_empty() {
-        return format_class_body_contents_with_ignored(body, &ignored_ranges);
+        return format_class_body_contents_with_ignored(doc, body, &ignored_ranges);
     }
 
-    let sections = class_body_sections_with_recovered_entries(body);
+    let sections = class_body_sections_with_recovered_entries(doc, body);
 
-    (!sections.is_empty()).then(|| join_class_body_sections(sections))
+    (!sections.is_empty()).then(|| join_class_body_sections(doc, sections))
 }
 
 fn format_class_body_contents_with_ignored<'source>(
+    doc: &mut DocBuilder<'source>,
     body: &ClassBody<'source>,
     ignored_ranges: &[FormatterIgnoreRange<'source>],
 ) -> Option<Doc<'source>> {
@@ -59,12 +66,12 @@ fn format_class_body_contents_with_ignored<'source>(
         .collect::<Vec<_>>();
     let entry_ranges = entries
         .iter()
-        .map(|entry| recovered_class_member_token_range(entry, body_start))
+        .map(|entry| recovered_class_member_token_range(doc, entry, body_start))
         .collect::<Vec<_>>();
     let ignored_runs = formatter_ignore_runs(ignored_ranges, &entry_ranges);
     if ignored_runs.is_empty() {
-        let sections = class_body_sections_from_recovered_entries(entries);
-        return (!sections.is_empty()).then(|| join_class_body_sections(sections));
+        let sections = class_body_sections_from_recovered_entries(doc, entries);
+        return (!sections.is_empty()).then(|| join_class_body_sections(doc, sections));
     }
 
     let mut sections = Vec::with_capacity(entries.len().saturating_add(ignored_runs.len()));
@@ -77,7 +84,7 @@ fn format_class_body_contents_with_ignored<'source>(
         {
             let run = &ignored_runs[ignored_index];
             sections.push(ClassBodySection {
-                doc: formatter_ignore_run_doc(run),
+                doc: formatter_ignore_run_doc(run, doc),
                 hard_line_after: !run.include_on_marker,
             });
             ignored_index += 1;
@@ -98,6 +105,7 @@ fn format_class_body_contents_with_ignored<'source>(
         }
 
         push_class_body_recovered_entry(
+            doc,
             &mut sections,
             entry,
             &mut previous_member_had_trailing_comments,
@@ -107,22 +115,27 @@ fn format_class_body_contents_with_ignored<'source>(
     while ignored_index < ignored_runs.len() {
         let run = &ignored_runs[ignored_index];
         sections.push(ClassBodySection {
-            doc: formatter_ignore_run_doc(run),
+            doc: formatter_ignore_run_doc(run, doc),
             hard_line_after: !run.include_on_marker,
         });
         ignored_index += 1;
     }
 
-    (!sections.is_empty()).then(|| join_class_body_sections(sections))
+    (!sections.is_empty()).then(|| join_class_body_sections(doc, sections))
 }
 
 fn class_body_sections_with_recovered_entries<'source>(
+    doc: &mut DocBuilder<'source>,
     body: &ClassBody<'source>,
 ) -> Vec<ClassBodySection<'source>> {
-    class_body_sections_from_recovered_entries(body.member_declaration_entries_with_recovered())
+    class_body_sections_from_recovered_entries(
+        doc,
+        body.member_declaration_entries_with_recovered(),
+    )
 }
 
 fn class_body_sections_from_recovered_entries<'source>(
+    doc: &mut DocBuilder<'source>,
     entries: impl IntoIterator<
         Item = RecoveredSeparatedListEntry<'source, ClassMemberDeclarationEntry<'source>>,
     >,
@@ -134,6 +147,7 @@ fn class_body_sections_from_recovered_entries<'source>(
 
     for entry in entries {
         push_class_body_recovered_entry(
+            doc,
             &mut sections,
             entry,
             &mut previous_member_had_trailing_comments,
@@ -144,6 +158,7 @@ fn class_body_sections_from_recovered_entries<'source>(
 }
 
 fn push_class_body_recovered_entry<'source>(
+    doc: &mut DocBuilder<'source>,
     sections: &mut Vec<ClassBodySection<'source>>,
     entry: RecoveredSeparatedListEntry<'source, ClassMemberDeclarationEntry<'source>>,
     previous_member_had_trailing_comments: &mut bool,
@@ -155,99 +170,112 @@ fn push_class_body_recovered_entry<'source>(
                 .map_or_else(|| member.member.last_token(), Some)
                 .is_some_and(|token| !token.trailing_comments().is_empty());
             sections.push(ClassBodySection {
-                doc: format_class_member_entry(&member),
+                doc: format_class_member_entry(doc, &member),
                 hard_line_after: false,
             });
         }
-        RecoveredSeparatedListEntry::Token(token) => push_recovered_class_body_doc(
-            sections,
-            format_token_sequence(std::iter::once(token), LeadingTrivia::Preserve),
-            *previous_member_had_trailing_comments,
-        ),
-        RecoveredSeparatedListEntry::Error(error) => push_recovered_class_body_doc(
-            sections,
-            format_token_sequence(error.token_iter(), LeadingTrivia::Preserve),
-            *previous_member_had_trailing_comments,
-        ),
-        RecoveredSeparatedListEntry::Node(node) => push_recovered_class_body_doc(
-            sections,
-            format_token_sequence(node.token_iter(), LeadingTrivia::Preserve),
-            *previous_member_had_trailing_comments,
-        ),
+        RecoveredSeparatedListEntry::Token(token) => {
+            let recovered =
+                format_token_sequence(doc, std::iter::once(token), LeadingTrivia::Preserve);
+            push_recovered_class_body_doc(
+                doc,
+                sections,
+                recovered,
+                *previous_member_had_trailing_comments,
+            );
+        }
+        RecoveredSeparatedListEntry::Error(error) => {
+            let recovered = format_token_sequence(doc, error.token_iter(), LeadingTrivia::Preserve);
+            push_recovered_class_body_doc(
+                doc,
+                sections,
+                recovered,
+                *previous_member_had_trailing_comments,
+            );
+        }
+        RecoveredSeparatedListEntry::Node(node) => {
+            let recovered = format_token_sequence(doc, node.token_iter(), LeadingTrivia::Preserve);
+            push_recovered_class_body_doc(
+                doc,
+                sections,
+                recovered,
+                *previous_member_had_trailing_comments,
+            );
+        }
     }
 }
 
 fn push_recovered_class_body_doc<'source>(
+    doc: &mut DocBuilder<'source>,
     sections: &mut Vec<ClassBodySection<'source>>,
-    doc: Doc<'source>,
+    recovered_doc: Doc<'source>,
     previous_member_had_trailing_comments: bool,
 ) {
     if previous_member_had_trailing_comments {
+        let line = doc.hard_line();
         sections.push(ClassBodySection {
-            doc: concat([hard_line(), doc]),
+            doc: doc.concat([line, recovered_doc]),
             hard_line_after: false,
         });
     } else if let Some(previous) = sections.last_mut() {
-        previous.doc = concat([
-            std::mem::replace(&mut previous.doc, jolt_fmt_ir::nil()),
-            doc,
+        previous.doc = doc.concat([
+            std::mem::replace(&mut previous.doc, doc.nil()),
+            recovered_doc,
         ]);
     } else {
         sections.push(ClassBodySection {
-            doc,
+            doc: recovered_doc,
             hard_line_after: false,
         });
     }
 }
 
 fn format_class_member_entry<'source>(
+    doc: &mut DocBuilder<'source>,
     entry: &ClassMemberDeclarationEntry<'source>,
 ) -> Doc<'source> {
-    format_class_member_declaration(&entry.member, entry.comma)
+    format_class_member_declaration(doc, &entry.member, entry.comma)
 }
 
 fn format_class_member_declaration<'source>(
+    doc: &mut DocBuilder<'source>,
     member: &ClassMemberDeclaration<'source>,
     comma: Option<KotlinSyntaxToken<'source>>,
 ) -> Doc<'source> {
-    member.declaration().map_or_else(
-        || {
-            member.statement().map_or_else(
-                || {
-                    if let Some(comments) =
-                        format_removed_comments(comments_from_tokens(member.token_iter()))
-                    {
-                        return comments;
-                    }
-
-                    format_token_sequence(member.token_iter(), LeadingTrivia::Preserve)
-                },
-                |statement| {
-                    crate::rules::statements::format_statement_syntax_with_leading(&statement)
-                },
-            )
-        },
-        |declaration| match declaration {
-            Declaration::EnumEntry(entry) => format_enum_entry_with_separator(&entry, comma),
+    if let Some(declaration) = member.declaration() {
+        return match declaration {
+            Declaration::EnumEntry(entry) => format_enum_entry_with_separator(doc, &entry, comma),
             Declaration::FunctionDeclaration(declaration) => {
-                format_function_declaration(&declaration)
+                format_function_declaration(doc, &declaration)
             }
             Declaration::PropertyDeclaration(declaration) => {
-                format_property_declaration(&declaration)
+                format_property_declaration(doc, &declaration)
             }
             Declaration::TypeAliasDeclaration(declaration) => {
-                format_type_alias_declaration(&declaration)
+                format_type_alias_declaration(doc, &declaration)
             }
             Declaration::SecondaryConstructor(constructor) => {
-                format_secondary_constructor(&constructor)
+                format_secondary_constructor(doc, &constructor)
             }
-            Declaration::InitializerBlock(block) => format_initializer_block(&block),
-            _ => format_declaration(&declaration),
-        },
-    )
+            Declaration::InitializerBlock(block) => format_initializer_block(doc, &block),
+            _ => format_declaration(doc, &declaration),
+        };
+    }
+
+    if let Some(statement) = member.statement() {
+        return crate::rules::statements::format_statement_syntax_with_leading(doc, &statement);
+    }
+
+    let comments = comments_from_tokens(member.token_iter());
+    if let Some(comments) = format_removed_comments(doc, comments) {
+        return comments;
+    }
+
+    format_token_sequence(doc, member.token_iter(), LeadingTrivia::Preserve)
 }
 
 fn class_member_token_range(
+    _doc: &mut DocBuilder<'_>,
     entry: &ClassMemberDeclarationEntry<'_>,
     body_start: usize,
 ) -> Option<std::ops::Range<usize>> {
@@ -260,11 +288,14 @@ fn class_member_token_range(
 }
 
 fn recovered_class_member_token_range(
+    doc: &mut DocBuilder<'_>,
     entry: &RecoveredSeparatedListEntry<'_, ClassMemberDeclarationEntry<'_>>,
     body_start: usize,
 ) -> Option<std::ops::Range<usize>> {
     match entry {
-        RecoveredSeparatedListEntry::Entry(entry) => class_member_token_range(entry, body_start),
+        RecoveredSeparatedListEntry::Entry(entry) => {
+            class_member_token_range(doc, entry, body_start)
+        }
         RecoveredSeparatedListEntry::Token(token) => {
             let range = token.token_text_range();
             Some(range.start().get() - body_start..range.end().get() - body_start)
@@ -282,21 +313,25 @@ fn recovered_class_member_token_range(
     }
 }
 
-fn join_class_body_sections(sections: Vec<ClassBodySection<'_>>) -> Doc<'_> {
-    let mut joined = Vec::with_capacity(sections.len().saturating_mul(2).saturating_sub(1));
+fn join_class_body_sections<'source>(
+    doc: &mut DocBuilder<'source>,
+    sections: Vec<ClassBodySection<'source>>,
+) -> Doc<'source> {
+    let mut joined = doc.list();
     let mut previous_hard_line_after = false;
     for section in sections {
         if !joined.is_empty() {
-            joined.push(if previous_hard_line_after {
-                hard_line()
+            let separator = if previous_hard_line_after {
+                doc.hard_line()
             } else {
-                empty_line()
-            });
+                doc.empty_line()
+            };
+            joined.push(separator, doc);
         }
-        joined.push(section.doc);
+        joined.push(section.doc, doc);
         previous_hard_line_after = section.hard_line_after;
     }
-    concat(joined)
+    joined.finish(doc)
 }
 
 struct ClassBodySection<'source> {

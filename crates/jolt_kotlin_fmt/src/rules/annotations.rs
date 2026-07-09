@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, concat};
+use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{
     Annotation, AnnotationArgumentList, AnnotationUseSiteTarget, RecoveredSeparatedListEntry,
 };
@@ -10,69 +10,85 @@ use crate::helpers::lists::{CommaListItem, compact_parenthesized_list, parenthes
 use crate::rules::expressions::format_value_argument;
 use crate::rules::names::format_qualified_name;
 
-pub(crate) fn format_annotation<'source>(annotation: &Annotation<'source>) -> Doc<'source> {
-    format_annotation_with_leading(annotation, LeadingTrivia::Preserve)
+pub(crate) fn format_annotation<'source>(
+    doc: &mut DocBuilder<'source>,
+    annotation: &Annotation<'source>,
+) -> Doc<'source> {
+    format_annotation_with_leading(doc, annotation, LeadingTrivia::Preserve)
 }
 
 pub(crate) fn format_annotation_with_leading<'source>(
+    doc: &mut DocBuilder<'source>,
     annotation: &Annotation<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
-    concat([
-        annotation
-            .at_token()
-            .map_or_else(jolt_fmt_ir::nil, |token| {
-                format_token(&token, leading, TrailingTrivia::RelocatedToEnclosingContext)
-            }),
-        annotation
-            .use_site_target()
-            .map_or_else(jolt_fmt_ir::nil, |target| {
-                format_annotation_use_site_target(&target)
-            }),
-        annotation
-            .name()
-            .map_or_else(jolt_fmt_ir::nil, |name| format_qualified_name(&name)),
-        annotation
-            .argument_list()
-            .map_or_else(jolt_fmt_ir::nil, |arguments| {
-                format_annotation_argument_list(&arguments)
-            }),
-    ])
+    let at = if let Some(token) = annotation.at_token() {
+        format_token(
+            doc,
+            &token,
+            leading,
+            TrailingTrivia::RelocatedToEnclosingContext,
+        )
+    } else {
+        doc.nil()
+    };
+    let target = if let Some(target) = annotation.use_site_target() {
+        format_annotation_use_site_target(doc, &target)
+    } else {
+        doc.nil()
+    };
+    let name = if let Some(name) = annotation.name() {
+        format_qualified_name(doc, &name)
+    } else {
+        doc.nil()
+    };
+    let arguments = if let Some(arguments) = annotation.argument_list() {
+        format_annotation_argument_list(doc, &arguments)
+    } else {
+        doc.nil()
+    };
+    doc.concat([at, target, name, arguments])
 }
 
 fn format_annotation_use_site_target<'source>(
+    doc: &mut DocBuilder<'source>,
     target: &AnnotationUseSiteTarget<'source>,
 ) -> Doc<'source> {
-    concat([
-        target
-            .target_token()
-            .map_or_else(jolt_fmt_ir::nil, |token| {
-                format_token(
-                    &token,
-                    LeadingTrivia::Preserve,
-                    TrailingTrivia::RelocatedToEnclosingContext,
-                )
-            }),
-        target.colon_token().map_or_else(jolt_fmt_ir::nil, |token| {
-            format_token(
-                &token,
-                LeadingTrivia::Preserve,
-                TrailingTrivia::RelocatedToEnclosingContext,
-            )
-        }),
-    ])
+    let target_token = if let Some(token) = target.target_token() {
+        format_token(
+            doc,
+            &token,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::RelocatedToEnclosingContext,
+        )
+    } else {
+        doc.nil()
+    };
+    let colon = if let Some(token) = target.colon_token() {
+        format_token(
+            doc,
+            &token,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::RelocatedToEnclosingContext,
+        )
+    } else {
+        doc.nil()
+    };
+    doc.concat([target_token, colon])
 }
 
 fn format_annotation_argument_list<'source>(
+    doc: &mut DocBuilder<'source>,
     arguments: &AnnotationArgumentList<'source>,
 ) -> Doc<'source> {
     let AnnotationArgumentListItems {
         items,
         has_recovered_tokens,
-    } = annotation_argument_list_items(arguments);
+    } = annotation_argument_list_items(doc, arguments);
 
     if has_recovered_tokens || annotation_argument_list_has_internal_comments(arguments) {
         return parenthesized_list(
+            doc,
             arguments.open_paren().as_ref(),
             arguments.close_paren().as_ref(),
             items,
@@ -80,6 +96,7 @@ fn format_annotation_argument_list<'source>(
     }
 
     compact_parenthesized_list(
+        doc,
         arguments.open_paren().as_ref(),
         arguments.close_paren().as_ref(),
         items,
@@ -92,6 +109,7 @@ struct AnnotationArgumentListItems<'source> {
 }
 
 fn annotation_argument_list_items<'source>(
+    doc: &mut DocBuilder<'source>,
     arguments: &AnnotationArgumentList<'source>,
 ) -> AnnotationArgumentListItems<'source> {
     let entries = arguments.entries_with_recovered();
@@ -103,19 +121,24 @@ fn annotation_argument_list_items<'source>(
         has_recovered_tokens |= !matches!(entry, RecoveredSeparatedListEntry::Entry(_));
         items.push(match entry {
             RecoveredSeparatedListEntry::Entry(entry) => CommaListItem {
-                doc: format_value_argument(&entry.argument),
+                doc: format_value_argument(doc, &entry.argument),
                 comma: entry.comma,
             },
             RecoveredSeparatedListEntry::Token(token) => CommaListItem {
-                doc: format_token(&token, LeadingTrivia::Preserve, TrailingTrivia::Preserve),
+                doc: format_token(
+                    doc,
+                    &token,
+                    LeadingTrivia::Preserve,
+                    TrailingTrivia::Preserve,
+                ),
                 comma: None,
             },
             RecoveredSeparatedListEntry::Error(error) => CommaListItem {
-                doc: format_token_sequence(error.token_iter(), LeadingTrivia::Preserve),
+                doc: format_token_sequence(doc, error.token_iter(), LeadingTrivia::Preserve),
                 comma: None,
             },
             RecoveredSeparatedListEntry::Node(node) => CommaListItem {
-                doc: format_token_sequence(node.token_iter(), LeadingTrivia::Preserve),
+                doc: format_token_sequence(doc, node.token_iter(), LeadingTrivia::Preserve),
                 comma: None,
             },
         });

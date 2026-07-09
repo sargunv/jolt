@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, concat, space};
+use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{ImportDirective, KotlinSyntaxToken};
 
 use crate::helpers::blocks::join_hard_lines;
@@ -8,21 +8,30 @@ use crate::helpers::comments::{
 use crate::helpers::syntax_tokens::{FormatterInsertedToken, format_token_with_normalized_text};
 use crate::rules::names::{NameSortKey, format_qualified_name};
 
-pub(crate) fn format_imports(imports: Vec<ImportDirective<'_>>) -> Option<Doc<'_>> {
+pub(crate) fn format_imports<'source>(
+    doc: &mut DocBuilder<'source>,
+    imports: Vec<ImportDirective<'source>>,
+) -> Option<Doc<'source>> {
     if imports.is_empty() {
         return None;
     }
 
+    let imports = imports
+        .into_iter()
+        .map(|import| FormattedImport::from_directive(doc, &import))
+        .collect::<Vec<_>>();
     Some(format_leading_comment_runs(
-        imports
-            .into_iter()
-            .map(|import| FormattedImport::from_directive(&import)),
+        doc,
+        imports,
         FormattedImport::has_leading_comments,
         format_import_run,
     ))
 }
 
-fn format_import_run(mut imports: Vec<FormattedImport<'_>>) -> Doc<'_> {
+fn format_import_run<'source>(
+    doc: &mut DocBuilder<'source>,
+    mut imports: Vec<FormattedImport<'source>>,
+) -> Doc<'source> {
     let preserve_first = imports
         .first()
         .is_some_and(FormattedImport::has_leading_comments);
@@ -31,7 +40,11 @@ fn format_import_run(mut imports: Vec<FormattedImport<'_>>) -> Doc<'_> {
     } else {
         imports.sort_by(|left, right| left.path.cmp(&right.path));
     }
-    join_hard_lines(imports.into_iter().map(FormattedImport::into_doc))
+    let imports = imports
+        .into_iter()
+        .map(|import| import.into_doc(doc))
+        .collect::<Vec<_>>();
+    join_hard_lines(doc, imports)
 }
 
 struct FormattedImport<'source> {
@@ -43,7 +56,7 @@ struct FormattedImport<'source> {
 }
 
 impl<'source> FormattedImport<'source> {
-    fn from_directive(import: &ImportDirective<'source>) -> Self {
+    fn from_directive(doc: &mut DocBuilder<'source>, import: &ImportDirective<'source>) -> Self {
         let name = import.name();
         let on_demand = import.star_token().is_some();
         let path_ends_with_trailing_comments = name
@@ -56,10 +69,12 @@ impl<'source> FormattedImport<'source> {
                 .as_ref()
                 .map_or_else(NameSortKey::empty, |name| NameSortKey::new(name, on_demand)),
             import_token: import.import_token(),
-            path_doc: name
-                .as_ref()
-                .map_or_else(jolt_fmt_ir::nil, |name| format_qualified_name(name)),
-            suffix_doc: format_import_suffix(import, path_ends_with_trailing_comments),
+            path_doc: if let Some(name) = name.as_ref() {
+                format_qualified_name(doc, name)
+            } else {
+                doc.nil()
+            },
+            suffix_doc: format_import_suffix(doc, import, path_ends_with_trailing_comments),
         }
     }
 
@@ -69,60 +84,75 @@ impl<'source> FormattedImport<'source> {
             .is_some_and(|token| !token.leading_comments().is_empty())
     }
 
-    fn into_doc(self) -> Doc<'source> {
-        let mut docs = Vec::with_capacity(4);
-        docs.extend([
-            self.import_token
-                .as_ref()
-                .map_or_else(jolt_fmt_ir::nil, |token| {
-                    format_token_with_normalized_text(
-                        token,
-                        "import",
-                        FormatterInsertedToken::ImportKeyword,
-                        LeadingTrivia::Preserve,
-                        TrailingTrivia::RelocatedToEnclosingContext,
-                    )
-                }),
-            space(),
-            self.path_doc,
-        ]);
+    fn into_doc(self, doc: &mut DocBuilder<'source>) -> Doc<'source> {
+        let mut docs = doc.list();
+        let import_token = if let Some(token) = self.import_token.as_ref() {
+            format_token_with_normalized_text(
+                doc,
+                token,
+                "import",
+                FormatterInsertedToken::ImportKeyword,
+                LeadingTrivia::Preserve,
+                TrailingTrivia::RelocatedToEnclosingContext,
+            )
+        } else {
+            doc.nil()
+        };
+        docs.push(import_token, doc);
+        let space = doc.space();
+        docs.push(space, doc);
+        docs.push(self.path_doc, doc);
+        docs.push(self.suffix_doc, doc);
 
-        docs.push(self.suffix_doc);
-
-        concat(docs)
+        docs.finish(doc)
     }
 }
 
 fn format_import_suffix<'source>(
+    doc: &mut DocBuilder<'source>,
     import: &ImportDirective<'source>,
     path_ends_with_trailing_comments: bool,
 ) -> Doc<'source> {
-    let mut docs = Vec::with_capacity(4);
+    let mut docs = doc.list();
 
     if let Some(star) = import.star_token() {
-        docs.push(format_import_path_token(&star));
+        let star = format_import_path_token(doc, &star);
+        docs.push(star, doc);
     }
 
     if let Some(alias_keyword) = import.alias_keyword_token() {
         if !path_ends_with_trailing_comments {
-            docs.push(space());
+            let space = doc.space();
+            docs.push(space, doc);
         }
-        docs.push(format_token_with_normalized_text(
+        let alias_keyword = format_token_with_normalized_text(
+            doc,
             &alias_keyword,
             "as",
             FormatterInsertedToken::ImportAliasKeyword,
             LeadingTrivia::SuppressAlreadyHandled,
             TrailingTrivia::RelocatedToEnclosingContext,
-        ));
+        );
+        docs.push(alias_keyword, doc);
         if let Some(alias) = import.alias() {
-            docs.push(space());
-            docs.push(crate::rules::names::format_name(&alias));
+            let space = doc.space();
+            docs.push(space, doc);
+            let alias = crate::rules::names::format_name(doc, &alias);
+            docs.push(alias, doc);
         }
     }
 
-    concat(docs)
+    docs.finish(doc)
 }
 
-fn format_import_path_token<'source>(token: &KotlinSyntaxToken<'source>) -> Doc<'source> {
-    format_token(token, LeadingTrivia::Preserve, TrailingTrivia::Preserve)
+fn format_import_path_token<'source>(
+    doc: &mut DocBuilder<'source>,
+    token: &KotlinSyntaxToken<'source>,
+) -> Doc<'source> {
+    format_token(
+        doc,
+        token,
+        LeadingTrivia::Preserve,
+        TrailingTrivia::Preserve,
+    )
 }

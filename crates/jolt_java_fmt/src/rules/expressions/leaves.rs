@@ -1,94 +1,113 @@
 use super::{
-    ClassLiteralExpression, Doc, Expression, InlineLeadingTrivia, JavaFormatter, JavaSyntaxToken,
-    LeadingComments, LeadingTrivia, LiteralExpression, NameExpression, SuperExpression,
-    TemplateExpression, ThisExpression, TrailingTrivia, concat, format_annotation,
-    format_array_dimensions, format_expression, format_member_dot, format_token,
-    format_token_after_relocated_leading_comments, format_token_with_inline_leading_comments,
-    format_void_type, hard_line,
+    ClassLiteralExpression, Doc, Expression, InlineLeadingTrivia, JavaSyntaxToken, LeadingComments,
+    LeadingTrivia, LiteralExpression, NameExpression, SuperExpression, TemplateExpression,
+    ThisExpression, TrailingTrivia, format_annotation, format_array_dimensions, format_expression,
+    format_member_dot, format_token, format_token_after_relocated_leading_comments,
+    format_token_with_inline_leading_comments, format_void_type,
 };
-use jolt_fmt_ir::{join, space};
+use jolt_fmt_ir::DocBuilder;
 
 pub(super) fn format_literal_expression<'source>(
     expression: &LiteralExpression<'source>,
     leading_comments: LeadingComments,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    expression
-        .literal_token()
-        .map_or_else(jolt_fmt_ir::nil, |token| {
-            format_leaf_token(&token, leading_comments)
-        })
+    expression.literal_token().map_or_else(Doc::nil, |token| {
+        format_leaf_token(&token, leading_comments, doc)
+    })
 }
 
 pub(super) fn format_template_expression<'source>(
     expression: &TemplateExpression<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    concat([
-        expression
-            .processor()
-            .map_or_else(jolt_fmt_ir::nil, |processor| {
-                format_expression(&processor, formatter)
-            }),
-        format_member_dot(expression.dot_token().as_ref()),
-        expression
-            .template()
-            .map_or_else(jolt_fmt_ir::nil, |template| {
-                format_literal_expression(&template, LeadingComments::Preserve)
-            }),
-    ])
+    doc_concat!(
+        doc,
+        [
+            expression
+                .processor()
+                .map_or_else(Doc::nil, |processor| format_expression(&processor, doc),),
+            format_member_dot(expression.dot_token().as_ref(), doc),
+            expression
+                .template()
+                .map_or_else(Doc::nil, |template| format_literal_expression(
+                    &template,
+                    LeadingComments::Preserve,
+                    doc
+                ),),
+        ]
+    )
 }
 
 pub(super) fn format_name_expression<'source>(
     expression: &NameExpression<'source>,
     leading_comments: LeadingComments,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let mut annotations = expression
-        .annotations()
-        .map(|annotation| format_annotation(&annotation, formatter))
-        .peekable();
-    let name = expression.name().map_or_else(jolt_fmt_ir::nil, |name| {
-        format_leaf_token(&name, leading_comments)
+    let annotations = format_annotation_run(expression.annotations(), doc);
+    let name = expression.name().map_or_else(Doc::nil, |name| {
+        format_leaf_token(&name, leading_comments, doc)
     });
 
-    if annotations.peek().is_none() {
-        name
+    if let Some(annotations) = annotations {
+        doc_concat!(doc, [annotations, doc.space(), name])
     } else {
-        concat([join(&space(), annotations), space(), name])
+        name
+    }
+}
+
+fn format_annotation_run<'source>(
+    annotations: impl IntoIterator<Item = jolt_java_syntax::Annotation<'source>>,
+    doc: &mut DocBuilder<'source>,
+) -> Option<Doc<'source>> {
+    let mut docs = doc.list();
+    for annotation in annotations {
+        if !docs.is_empty() {
+            let space = doc.space();
+            docs.push(space, doc);
+        }
+        let annotation = format_annotation(&annotation, doc);
+        docs.push(annotation, doc);
+    }
+
+    if docs.is_empty() {
+        None
+    } else {
+        Some(docs.finish(doc))
     }
 }
 
 pub(super) fn format_this_expression<'source>(
     expression: &ThisExpression<'source>,
     leading_comments: LeadingComments,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let dot = expression.dot_token();
 
     format_qualified_keyword_expression(
         expression.qualifier(),
         dot.as_ref(),
-        expression.keyword().map_or_else(jolt_fmt_ir::nil, |token| {
-            format_leaf_token(&token, leading_comments)
+        expression.keyword().map_or_else(Doc::nil, |token| {
+            format_leaf_token(&token, leading_comments, doc)
         }),
-        formatter,
+        doc,
     )
 }
 
 pub(super) fn format_super_expression<'source>(
     expression: &SuperExpression<'source>,
     leading_comments: LeadingComments,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let dot = expression.dot_token();
 
     format_qualified_keyword_expression(
         expression.qualifier(),
         dot.as_ref(),
-        expression.keyword().map_or_else(jolt_fmt_ir::nil, |token| {
-            format_leaf_token(&token, leading_comments)
+        expression.keyword().map_or_else(Doc::nil, |token| {
+            format_leaf_token(&token, leading_comments, doc)
         }),
-        formatter,
+        doc,
     )
 }
 
@@ -96,86 +115,101 @@ fn format_qualified_keyword_expression<'source>(
     qualifier: Option<Expression<'source>>,
     dot: Option<&JavaSyntaxToken<'source>>,
     keyword: Doc<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    concat([
-        qualifier.map_or_else(jolt_fmt_ir::nil, |qualifier| {
-            format_expression(&qualifier, formatter)
-        }),
-        dot.map_or_else(jolt_fmt_ir::nil, |dot| format_member_dot(Some(dot))),
-        keyword,
-    ])
+    doc_concat!(
+        doc,
+        [
+            qualifier.map_or_else(Doc::nil, |qualifier| format_expression(&qualifier, doc),),
+            dot.map_or_else(Doc::nil, |dot| format_member_dot(Some(dot), doc)),
+            keyword,
+        ]
+    )
 }
 
 pub(super) fn format_leaf_token<'source>(
     token: &jolt_java_syntax::JavaSyntaxToken<'source>,
     leading_comments: LeadingComments,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     match leading_comments {
-        LeadingComments::Preserve => {
-            format_token(token, LeadingTrivia::Preserve, TrailingTrivia::Preserve)
-        }
+        LeadingComments::Preserve => format_token(
+            doc,
+            token,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::Preserve,
+        ),
         LeadingComments::SuppressFirstToken => {
-            format_token_after_relocated_leading_comments(token, TrailingTrivia::Preserve)
+            format_token_after_relocated_leading_comments(doc, token, TrailingTrivia::Preserve)
         }
     }
 }
 
 pub(super) fn format_class_literal_expression<'source>(
     expression: &ClassLiteralExpression<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let target = expression.target_expression().map_or_else(
-        || {
-            expression.void_type().map_or_else(
-                || {
-                    expression
-                        .primitive_keyword()
-                        .map_or_else(jolt_fmt_ir::nil, |keyword| {
-                            format_leaf_token(&keyword, LeadingComments::Preserve)
-                        })
-                },
-                |ty| format_void_type(&ty),
-            )
+    let target = match expression.target_expression() {
+        Some(target) => format_expression(&target, doc),
+        None => match expression.void_type() {
+            Some(ty) => format_void_type(&ty, doc),
+            None => expression
+                .primitive_keyword()
+                .map_or_else(Doc::nil, |keyword| {
+                    format_leaf_token(&keyword, LeadingComments::Preserve, doc)
+                }),
         },
-        |target| format_expression(&target, formatter),
-    );
+    };
 
-    concat([
-        target,
-        expression
-            .dimensions()
-            .map_or_else(jolt_fmt_ir::nil, |dimensions| {
-                format_array_dimensions(&dimensions, formatter)
-            }),
-        expression
-            .dot_token()
-            .as_ref()
-            .map_or_else(jolt_fmt_ir::nil, format_class_literal_dot),
-        expression
-            .class_token()
-            .map_or_else(jolt_fmt_ir::nil, |token| {
-                format_token(&token, LeadingTrivia::Preserve, TrailingTrivia::Preserve)
-            }),
-    ])
+    doc_concat!(
+        doc,
+        [
+            target,
+            expression
+                .dimensions()
+                .map_or_else(Doc::nil, |dimensions| format_array_dimensions(
+                    &dimensions,
+                    doc
+                ),),
+            expression
+                .dot_token()
+                .as_ref()
+                .map_or_else(Doc::nil, |dot| format_class_literal_dot(dot, doc)),
+            expression.class_token().map_or_else(Doc::nil, |token| {
+                format_token(
+                    doc,
+                    &token,
+                    LeadingTrivia::Preserve,
+                    TrailingTrivia::Preserve,
+                )
+            },),
+        ]
+    )
 }
 
-fn format_class_literal_dot<'source>(dot: &JavaSyntaxToken<'source>) -> Doc<'source> {
-    concat([
-        format_token_with_inline_leading_comments(
-            dot,
-            InlineLeadingTrivia::AfterPreviousToken,
-            TrailingTrivia::BeforeLineBreak,
-        ),
-        if dot
-            .trailing_comments()
-            .any(|comment| super::comment_forces_line(&comment))
-        {
-            hard_line()
-        } else if dot.trailing_comments().is_empty() {
-            jolt_fmt_ir::nil()
-        } else {
-            space()
-        },
-    ])
+fn format_class_literal_dot<'source>(
+    dot: &JavaSyntaxToken<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    doc_concat!(
+        doc,
+        [
+            format_token_with_inline_leading_comments(
+                doc,
+                dot,
+                InlineLeadingTrivia::AfterPreviousToken,
+                TrailingTrivia::BeforeLineBreak,
+            ),
+            if dot
+                .trailing_comments()
+                .any(|comment| super::comment_forces_line(&comment))
+            {
+                doc.hard_line()
+            } else if dot.trailing_comments().is_empty() {
+                Doc::nil()
+            } else {
+                doc.space()
+            },
+        ]
+    )
 }

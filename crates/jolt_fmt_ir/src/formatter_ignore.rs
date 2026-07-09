@@ -9,7 +9,7 @@ use std::ops::Range;
 
 use jolt_syntax::{Comment, Language, SyntaxToken};
 
-use crate::{Doc, concat, hard_line, text as doc_text};
+use crate::{Doc, DocBuilder};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct FormatterIgnoreRange<'source> {
@@ -111,7 +111,10 @@ pub fn formatter_ignore_runs<'source>(
 }
 
 #[must_use]
-pub fn formatter_ignore_run_doc<'source>(run: &FormatterIgnoreRun<'source>) -> Doc<'source> {
+pub fn formatter_ignore_run_doc<'source>(
+    run: &FormatterIgnoreRun<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
     let raw_text = if run.include_on_marker {
         &run.range.raw_text_with_on
     } else {
@@ -121,27 +124,29 @@ pub fn formatter_ignore_run_doc<'source>(run: &FormatterIgnoreRun<'source>) -> D
     match stripped {
         Cow::Borrowed(text) => {
             let lines = text.split('\n');
-            let (lower, upper) = lines.size_hint();
-            let mut docs = Vec::with_capacity(upper.unwrap_or(lower).saturating_mul(2));
+            let mut docs = doc.list();
             for line in lines {
                 if !docs.is_empty() {
-                    docs.push(hard_line());
+                    let line_break = doc.hard_line();
+                    docs.push(line_break, doc);
                 }
-                docs.push(doc_text(line));
+                let line = doc.text(line);
+                docs.push(line, doc);
             }
-            concat(docs)
+            docs.finish(doc)
         }
         Cow::Owned(text) => {
             let lines = text.split('\n');
-            let (lower, upper) = lines.size_hint();
-            let mut docs = Vec::with_capacity(upper.unwrap_or(lower).saturating_mul(2));
+            let mut docs = doc.list();
             for line in lines {
                 if !docs.is_empty() {
-                    docs.push(hard_line());
+                    let line_break = doc.hard_line();
+                    docs.push(line_break, doc);
                 }
-                docs.push(doc_text(line.to_owned()));
+                let line = doc.text(line.to_owned());
+                docs.push(line, doc);
             }
-            concat(docs)
+            docs.finish(doc)
         }
     }
 }

@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, concat, group, hard_line, indent, join, line, space};
+use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_java_syntax::{
     Annotation, ArrayDimension, ArrayDimensions, ClassType, IntersectionType,
     IntersectionTypeEntry, JavaSyntaxToken, NameSyntax, PrimitiveType, RecoveredSeparatedListEntry,
@@ -6,7 +6,6 @@ use jolt_java_syntax::{
     UnionType, UnionTypeEntry, VoidType, WildcardType,
 };
 
-use crate::context::JavaFormatter;
 use crate::helpers::comments::{
     InlineLeadingTrivia, LeadingTrivia, TrailingTrivia, comment_forces_line, format_token,
     format_token_after_relocated_leading_comments, format_token_sequence,
@@ -17,38 +16,41 @@ use crate::rules::annotations::format_annotation;
 
 pub(crate) fn format_type<'source>(
     ty: &Type<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_type_with_leading_comments(ty, LeadingComments::Preserve, formatter)
+    format_type_with_leading_comments(ty, LeadingComments::Preserve, doc)
 }
 
 pub(crate) fn format_type_without_leading_comments<'source>(
     ty: &Type<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_type_with_leading_comments(ty, LeadingComments::SuppressFirstToken, formatter)
+    format_type_with_leading_comments(ty, LeadingComments::SuppressFirstToken, doc)
 }
 
 fn format_type_with_leading_comments<'source>(
     ty: &Type<'source>,
     leading_comments: LeadingComments,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     match ty {
-        Type::PrimitiveType(ty) => format_primitive_type(ty, leading_comments, formatter),
-        Type::VoidType(ty) => format_void_type_with_leading_comments(ty, leading_comments),
-        Type::ClassType(ty) => format_class_type(ty, leading_comments, formatter),
-        Type::ArrayType(ty) => concat([
-            ty.element_type().map_or_else(jolt_fmt_ir::nil, |element| {
-                format_type_with_leading_comments(&element, leading_comments, formatter)
-            }),
-            ty.dimensions().map_or_else(jolt_fmt_ir::nil, |dimensions| {
-                format_array_dimensions(&dimensions, formatter)
-            }),
-        ]),
-        Type::IntersectionType(ty) => format_intersection_type(ty, formatter),
-        Type::UnionType(ty) => format_union_type(ty, formatter),
-        Type::WildcardType(ty) => format_wildcard_type(ty, formatter),
+        Type::PrimitiveType(ty) => format_primitive_type(ty, leading_comments, doc),
+        Type::VoidType(ty) => format_void_type_with_leading_comments(ty, leading_comments, doc),
+        Type::ClassType(ty) => format_class_type(ty, leading_comments, doc),
+        Type::ArrayType(ty) => {
+            let element = match ty.element_type() {
+                Some(element) => format_type_with_leading_comments(&element, leading_comments, doc),
+                None => Doc::nil(),
+            };
+            let dimensions = match ty.dimensions() {
+                Some(dimensions) => format_array_dimensions(&dimensions, doc),
+                None => Doc::nil(),
+            };
+            doc_concat!(doc, [element, dimensions])
+        }
+        Type::IntersectionType(ty) => format_intersection_type(ty, doc),
+        Type::UnionType(ty) => format_union_type(ty, doc),
+        Type::WildcardType(ty) => format_wildcard_type(ty, doc),
     }
 }
 
@@ -60,93 +62,110 @@ enum LeadingComments {
 
 pub(crate) fn format_type_parameter_list<'source>(
     parameters: Option<TypeParameterList<'source>>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    parameters.map_or_else(jolt_fmt_ir::nil, |parameters| {
-        let open = parameters.open_angle();
-        let close = parameters.close_angle();
-        let items = type_parameter_list_items(&parameters, formatter);
-        angle_bracket_list(open.as_ref(), close.as_ref(), items)
-    })
+    match parameters {
+        Some(parameters) => {
+            let open = parameters.open_angle();
+            let close = parameters.close_angle();
+            let items = type_parameter_list_items(&parameters, doc);
+            angle_bracket_list(doc, open.as_ref(), close.as_ref(), items)
+        }
+        None => Doc::nil(),
+    }
 }
 
 pub(crate) fn format_type_argument_list<'source>(
     arguments: &TypeArgumentList<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let open = arguments.open_angle();
     let close = arguments.close_angle();
-    let items = type_argument_list_items(arguments, formatter);
-    angle_bracket_list(open.as_ref(), close.as_ref(), items)
+    let items = type_argument_list_items(arguments, doc);
+    angle_bracket_list(doc, open.as_ref(), close.as_ref(), items)
 }
 
 fn type_parameter_list_items<'source, 'fmt>(
     parameters: &'fmt TypeParameterList<'source>,
-    formatter: &'fmt JavaFormatter<'_>,
-) -> impl Iterator<Item = CommaListItem<'source>> + use<'source, 'fmt> {
-    recovered_comma_list_items(parameters.entries_with_recovered(), |entry| CommaListItem {
-        doc: format_type_parameter(&entry.parameter, formatter),
-        comma: entry.comma,
+    doc: &'fmt mut DocBuilder<'source>,
+) -> Vec<CommaListItem<'source>> {
+    recovered_comma_list_items(doc, parameters.entries_with_recovered(), |entry, doc| {
+        CommaListItem {
+            doc: format_type_parameter(&entry.parameter, doc),
+            comma: entry.comma,
+        }
     })
 }
 
 fn type_argument_list_items<'source, 'fmt>(
     arguments: &'fmt TypeArgumentList<'source>,
-    formatter: &'fmt JavaFormatter<'_>,
-) -> impl Iterator<Item = CommaListItem<'source>> + use<'source, 'fmt> {
-    recovered_comma_list_items(arguments.entries_with_recovered(), |entry| CommaListItem {
-        doc: format_type_argument(&entry.argument, formatter),
-        comma: entry.comma,
+    doc: &'fmt mut DocBuilder<'source>,
+) -> Vec<CommaListItem<'source>> {
+    recovered_comma_list_items(doc, arguments.entries_with_recovered(), |entry, doc| {
+        CommaListItem {
+            doc: format_type_argument(&entry.argument, doc),
+            comma: entry.comma,
+        }
     })
 }
 
 pub(crate) fn format_array_dimensions<'source>(
     dimensions: &ArrayDimensions<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    concat(
-        dimensions
-            .dimensions()
-            .map(|dimension| format_array_dimension(&dimension, formatter)),
-    )
+    let mut docs = doc.list();
+    for dimension in dimensions.dimensions() {
+        let dimension = format_array_dimension(&dimension, doc);
+        docs.push(dimension, doc);
+    }
+    docs.finish(doc)
 }
 
 fn format_primitive_type<'source>(
     ty: &PrimitiveType<'source>,
     leading_comments: LeadingComments,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    concat([
-        format_inline_annotations(ty.annotations(), formatter),
-        ty.keyword().map_or_else(jolt_fmt_ir::nil, |keyword| {
-            format_type_head_token(&keyword, leading_comments)
-        }),
-    ])
+    let annotations = format_inline_annotations(ty.annotations(), doc);
+    let keyword = match ty.keyword() {
+        Some(keyword) => format_type_head_token(&keyword, leading_comments, doc),
+        None => Doc::nil(),
+    };
+    doc_concat!(doc, [annotations, keyword])
 }
 
-pub(crate) fn format_void_type<'source>(ty: &VoidType<'source>) -> Doc<'source> {
-    format_void_type_with_leading_comments(ty, LeadingComments::Preserve)
+pub(crate) fn format_void_type<'source>(
+    ty: &VoidType<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    format_void_type_with_leading_comments(ty, LeadingComments::Preserve, doc)
 }
 
 fn format_void_type_with_leading_comments<'source>(
     ty: &VoidType<'source>,
     leading_comments: LeadingComments,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    ty.keyword().map_or_else(jolt_fmt_ir::nil, |keyword| {
-        format_type_head_token(&keyword, leading_comments)
-    })
+    match ty.keyword() {
+        Some(keyword) => format_type_head_token(&keyword, leading_comments, doc),
+        None => Doc::nil(),
+    }
 }
 
 fn format_type_head_token<'source>(
     token: &JavaSyntaxToken<'source>,
     leading_comments: LeadingComments,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     match leading_comments {
-        LeadingComments::Preserve => {
-            format_token(token, LeadingTrivia::Preserve, TrailingTrivia::Preserve)
-        }
+        LeadingComments::Preserve => format_token(
+            doc,
+            token,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::Preserve,
+        ),
         LeadingComments::SuppressFirstToken => {
-            format_token_after_relocated_leading_comments(token, TrailingTrivia::Preserve)
+            format_token_after_relocated_leading_comments(doc, token, TrailingTrivia::Preserve)
         }
     }
 }
@@ -154,184 +173,187 @@ fn format_type_head_token<'source>(
 fn format_class_type<'source>(
     ty: &ClassType<'source>,
     leading_comments: LeadingComments,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let segments = ty.segments();
-    let (lower, _) = segments.size_hint();
-    let mut docs = Vec::with_capacity(lower.saturating_mul(2));
+    let mut docs = doc.list();
     for (index, segment) in segments.enumerate() {
         if index > 0 {
-            docs.push(
-                segment
-                    .dot_before
-                    .as_ref()
-                    .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
-            );
+            let dot = match segment.dot_before.as_ref() {
+                Some(token) => format_token_with_comments(doc, token),
+                None => Doc::nil(),
+            };
+            docs.push(dot, doc);
         }
-        docs.push(format_class_type_segment(
+        let segment = format_class_type_segment(
             segment,
             if index == 0 {
                 leading_comments
             } else {
                 LeadingComments::Preserve
             },
-            formatter,
-        ));
+            doc,
+        );
+        docs.push(segment, doc);
     }
-    group(concat(docs))
+    let contents = docs.finish(doc);
+    doc_group!(doc, contents)
 }
 
 fn format_class_type_segment<'source>(
     segment: jolt_java_syntax::ClassTypeSegment<'source>,
     leading_comments: LeadingComments,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    concat([
-        format_inline_annotations(segment.annotations, formatter),
-        format_type_name(&segment.name, leading_comments, formatter),
-        segment
-            .type_arguments
-            .map_or_else(jolt_fmt_ir::nil, |arguments| {
-                format_type_argument_list(&arguments, formatter)
-            }),
-    ])
+    let annotations = format_inline_annotations(segment.annotations, doc);
+    let name = format_type_name(&segment.name, leading_comments, doc);
+    let type_arguments = match segment.type_arguments {
+        Some(arguments) => format_type_argument_list(&arguments, doc),
+        None => Doc::nil(),
+    };
+    doc_concat!(doc, [annotations, name, type_arguments])
 }
 
 fn format_type_name<'source>(
     name: &NameSyntax<'source>,
     leading_comments: LeadingComments,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let segments = name.segments_with_annotations();
-    let (lower, _) = segments.size_hint();
-    let mut docs = Vec::with_capacity(lower.saturating_mul(3));
+    let mut docs = doc.list();
     for (index, segment) in segments.enumerate() {
         if index > 0 {
-            docs.push(
-                segment
-                    .dot_before
-                    .as_ref()
-                    .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
-            );
+            let dot = match segment.dot_before.as_ref() {
+                Some(token) => format_token_with_comments(doc, token),
+                None => Doc::nil(),
+            };
+            docs.push(dot, doc);
         }
-        docs.push(format_inline_annotations(segment.annotations, formatter));
-        docs.push(if index == 0 {
-            format_type_head_token(&segment.identifier, leading_comments)
+        let annotations = format_inline_annotations(segment.annotations, doc);
+        docs.push(annotations, doc);
+        let identifier = if index == 0 {
+            format_type_head_token(&segment.identifier, leading_comments, doc)
         } else {
-            format_token_with_comments(&segment.identifier)
-        });
+            format_token_with_comments(doc, &segment.identifier)
+        };
+        docs.push(identifier, doc);
     }
-    concat(docs)
+    docs.finish(doc)
 }
 
 fn format_intersection_type<'source>(
     ty: &IntersectionType<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_intersection_entries(ty, formatter)
+    format_intersection_entries(ty, doc)
 }
 
 fn format_union_type<'source>(
     ty: &UnionType<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_union_entries(ty, formatter)
+    format_union_entries(ty, doc)
 }
 
 fn format_type_parameter<'source>(
     parameter: &TypeParameter<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    concat([
-        format_inline_annotations(parameter.annotations(), formatter),
-        parameter
-            .name()
-            .map_or_else(jolt_fmt_ir::nil, |name| format_token_with_comments(&name)),
-        parameter.bounds().map_or_else(jolt_fmt_ir::nil, |bounds| {
-            concat([
-                space(),
-                bounds
-                    .extends_token()
-                    .as_ref()
-                    .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
-                space(),
-                format_type_bounds(&bounds, formatter),
-            ])
-        }),
-    ])
+    let annotations = format_inline_annotations(parameter.annotations(), doc);
+    let name = match parameter.name() {
+        Some(name) => format_token_with_comments(doc, &name),
+        None => Doc::nil(),
+    };
+    let bounds = match parameter.bounds() {
+        Some(bounds) => {
+            let space_before_extends = doc.space();
+            let extends = match bounds.extends_token().as_ref() {
+                Some(token) => format_token_with_comments(doc, token),
+                None => Doc::nil(),
+            };
+            let space_after_extends = doc.space();
+            let bounds = format_type_bounds(&bounds, doc);
+            doc_concat!(
+                doc,
+                [space_before_extends, extends, space_after_extends, bounds]
+            )
+        }
+        None => Doc::nil(),
+    };
+    doc_concat!(doc, [annotations, name, bounds])
 }
 
 fn format_type_bounds<'source>(
     bounds: &TypeBoundList<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_type_operator_entries_doc(
-        type_operator_parts(bounds.entries_with_recovered()),
-        formatter,
-    )
+    let parts = type_operator_parts(doc, bounds.entries_with_recovered());
+    format_type_operator_entries_doc(parts, doc)
 }
 
 fn format_intersection_entries<'source>(
     ty: &IntersectionType<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_type_operator_entries(type_operator_parts(ty.entries_with_recovered()), formatter)
+    let parts = type_operator_parts(doc, ty.entries_with_recovered());
+    format_type_operator_entries(parts, doc)
 }
 
 fn format_union_entries<'source>(
     ty: &UnionType<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_type_operator_entries(type_operator_parts(ty.entries_with_recovered()), formatter)
+    let parts = type_operator_parts(doc, ty.entries_with_recovered());
+    format_type_operator_entries(parts, doc)
 }
 
 fn format_type_operator_entries<'source>(
     entries: impl IntoIterator<Item = TypeOperatorPart<'source>>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    group(format_type_operator_entries_doc(entries, formatter))
+    doc_group!(doc, format_type_operator_entries_doc(entries, doc))
 }
 
 fn format_type_operator_entries_doc<'source>(
     entries: impl IntoIterator<Item = TypeOperatorPart<'source>>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let mut entries = entries.into_iter().peekable();
     let Some(first) = entries.next() else {
-        return jolt_fmt_ir::nil();
+        return Doc::nil();
     };
 
-    let (lower, _) = entries.size_hint();
-    let (first, mut previous_separator) = format_type_operator_first_part(first, formatter);
-    let mut rest = Vec::with_capacity(lower.saturating_add(1));
+    let (first, mut previous_separator) = format_type_operator_first_part(first, doc);
+    let mut rest = doc.list();
     for part in entries {
         match part {
             TypeOperatorPart::Type { ty, separator } => {
-                rest.push(format_type_operator_continuation(
-                    previous_separator.as_ref(),
-                    format_type(&ty, formatter),
-                ));
+                let operand = format_type(&ty, doc);
+                let continuation =
+                    format_type_operator_continuation(previous_separator.as_ref(), operand, doc);
+                rest.push(continuation, doc);
                 previous_separator = separator;
             }
-            TypeOperatorPart::Recovered(doc) => {
-                rest.push(format_type_operator_continuation(
-                    previous_separator.as_ref(),
-                    doc,
-                ));
+            TypeOperatorPart::Recovered(recovered) => {
+                let continuation =
+                    format_type_operator_continuation(previous_separator.as_ref(), recovered, doc);
+                rest.push(continuation, doc);
                 previous_separator = None;
             }
         }
     }
     if previous_separator.is_some() {
-        rest.push(format_type_operator_continuation(
-            previous_separator.as_ref(),
-            jolt_fmt_ir::nil(),
-        ));
+        let continuation =
+            format_type_operator_continuation(previous_separator.as_ref(), Doc::nil(), doc);
+        rest.push(continuation, doc);
     }
 
-    concat([first, indent(concat(rest))])
+    let rest = rest.finish(doc);
+    let rest = doc_indent!(doc, rest);
+    doc_concat!(doc, [first, rest])
 }
 
+#[derive(Clone, Copy)]
 enum TypeOperatorPart<'source> {
     Type {
         ty: Type<'source>,
@@ -366,36 +388,41 @@ impl<'source> TypeOperatorEntry<'source> for UnionTypeEntry<'source> {
 }
 
 fn type_operator_parts<'source, Entry>(
+    doc: &mut DocBuilder<'source>,
     entries: impl IntoIterator<Item = RecoveredSeparatedListEntry<'source, Entry>>,
-) -> impl Iterator<Item = TypeOperatorPart<'source>>
+) -> Vec<TypeOperatorPart<'source>>
 where
     Entry: TypeOperatorEntry<'source>,
 {
-    entries.into_iter().map(|entry| match entry {
-        RecoveredSeparatedListEntry::Entry(entry) => TypeOperatorPart::Type {
-            ty: entry.ty(),
-            separator: entry.separator(),
-        },
-        RecoveredSeparatedListEntry::Token(token) => TypeOperatorPart::Recovered(format_token(
-            &token,
-            LeadingTrivia::Preserve,
-            TrailingTrivia::Preserve,
-        )),
-        RecoveredSeparatedListEntry::Error(error) => TypeOperatorPart::Recovered(
-            format_token_sequence(error.token_iter(), LeadingTrivia::Preserve),
-        ),
-        RecoveredSeparatedListEntry::Node(node) => TypeOperatorPart::Recovered(
-            format_token_sequence(node.token_iter(), LeadingTrivia::Preserve),
-        ),
-    })
+    entries
+        .into_iter()
+        .map(|entry| match entry {
+            RecoveredSeparatedListEntry::Entry(entry) => TypeOperatorPart::Type {
+                ty: entry.ty(),
+                separator: entry.separator(),
+            },
+            RecoveredSeparatedListEntry::Token(token) => TypeOperatorPart::Recovered(format_token(
+                doc,
+                &token,
+                LeadingTrivia::Preserve,
+                TrailingTrivia::Preserve,
+            )),
+            RecoveredSeparatedListEntry::Error(error) => TypeOperatorPart::Recovered(
+                format_token_sequence(doc, error.token_iter(), LeadingTrivia::Preserve),
+            ),
+            RecoveredSeparatedListEntry::Node(node) => TypeOperatorPart::Recovered(
+                format_token_sequence(doc, node.token_iter(), LeadingTrivia::Preserve),
+            ),
+        })
+        .collect()
 }
 
 fn format_type_operator_first_part<'source>(
     part: TypeOperatorPart<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> (Doc<'source>, Option<JavaSyntaxToken<'source>>) {
     match part {
-        TypeOperatorPart::Type { ty, separator } => (format_type(&ty, formatter), separator),
+        TypeOperatorPart::Type { ty, separator } => (format_type(&ty, doc), separator),
         TypeOperatorPart::Recovered(doc) => (doc, None),
     }
 }
@@ -411,117 +438,130 @@ fn type_operator_separator_forces_line(separator: Option<&JavaSyntaxToken<'_>>) 
 fn format_type_operator_continuation<'source>(
     separator: Option<&JavaSyntaxToken<'source>>,
     operand: Doc<'source>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let separator_doc = format_type_operator_separator_before_operand(separator);
+    let separator_doc = format_type_operator_separator_before_operand(separator, doc);
 
     if type_operator_separator_forces_line(separator) {
-        concat([separator_doc, indent(concat([hard_line(), operand]))])
+        let hard_line = doc.hard_line();
+        let operand = doc_concat!(doc, [hard_line, operand]);
+        let operand = doc_indent!(doc, operand);
+        doc_concat!(doc, [separator_doc, operand])
     } else {
-        concat([separator_doc, operand])
+        doc_concat!(doc, [separator_doc, operand])
     }
 }
 
 fn format_type_operator_separator_before_operand<'source>(
     separator: Option<&JavaSyntaxToken<'source>>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     if let Some(separator) = separator {
-        format_type_operator_separator(separator)
+        format_type_operator_separator(separator, doc)
     } else {
-        line()
+        doc.line()
     }
 }
 
-fn format_type_operator_separator<'source>(separator: &JavaSyntaxToken<'source>) -> Doc<'source> {
-    concat([line(), {
-        let forces_line = separator
-            .trailing_comments()
-            .any(|comment| comment_forces_line(&comment));
-        concat([
-            format_token(
-                separator,
-                LeadingTrivia::Preserve,
-                TrailingTrivia::BeforeLineBreak,
-            ),
-            if forces_line {
-                jolt_fmt_ir::nil()
-            } else {
-                space()
-            },
-        ])
-    }])
+fn format_type_operator_separator<'source>(
+    separator: &JavaSyntaxToken<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    let line = doc.line();
+    let forces_line = separator
+        .trailing_comments()
+        .any(|comment| comment_forces_line(&comment));
+    let separator = format_token(
+        doc,
+        separator,
+        LeadingTrivia::Preserve,
+        TrailingTrivia::BeforeLineBreak,
+    );
+    let space = if forces_line { Doc::nil() } else { doc.space() };
+    let separator = doc_concat!(doc, [separator, space]);
+    doc_concat!(doc, [line, separator])
 }
 
 fn format_type_argument<'source>(
     argument: &TypeArgument<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
+    let annotations = format_inline_annotations(argument.annotations(), doc);
+    let ty = match argument.ty() {
+        Some(ty) => format_type(&ty, doc),
+        None => Doc::nil(),
+    };
     let has_annotations = argument.annotations().next().is_some();
     if argument.ty().is_none() && !has_annotations {
-        return format_token_sequence(argument.token_iter(), LeadingTrivia::Preserve);
+        return format_token_sequence(doc, argument.token_iter(), LeadingTrivia::Preserve);
     }
 
-    concat([
-        format_inline_annotations(argument.annotations(), formatter),
-        argument
-            .ty()
-            .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty, formatter)),
-    ])
+    doc_concat!(doc, [annotations, ty])
 }
 
 fn format_wildcard_type<'source>(
     ty: &WildcardType<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    concat([
-        ty.question_token()
-            .as_ref()
-            .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
-        ty.bound_keyword().map_or_else(jolt_fmt_ir::nil, |keyword| {
-            concat([
-                space(),
-                format_token_with_comments(&keyword),
-                ty.bound().map_or_else(jolt_fmt_ir::nil, |bound| {
-                    concat([space(), format_type(&bound, formatter)])
-                }),
-            ])
-        }),
-    ])
+    let question = match ty.question_token().as_ref() {
+        Some(token) => format_token_with_comments(doc, token),
+        None => Doc::nil(),
+    };
+    let bound = match ty.bound_keyword() {
+        Some(keyword) => {
+            let before_keyword = doc.space();
+            let keyword = format_token_with_comments(doc, &keyword);
+            let bound = match ty.bound() {
+                Some(bound) => {
+                    let space = doc.space();
+                    let bound = format_type(&bound, doc);
+                    doc_concat!(doc, [space, bound])
+                }
+                None => Doc::nil(),
+            };
+            doc_concat!(doc, [before_keyword, keyword, bound])
+        }
+        None => Doc::nil(),
+    };
+    doc_concat!(doc, [question, bound])
 }
 
 fn format_array_dimension<'source>(
     dimension: &ArrayDimension<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let mut annotations = dimension.annotations().peekable();
     if annotations.peek().is_none() {
-        return concat([
-            dimension
-                .open_bracket()
-                .as_ref()
-                .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
-            dimension
-                .close_bracket()
-                .as_ref()
-                .map_or_else(jolt_fmt_ir::nil, format_array_dimension_close_bracket),
-        ]);
+        let open = match dimension.open_bracket().as_ref() {
+            Some(token) => format_token_with_comments(doc, token),
+            None => Doc::nil(),
+        };
+        let close = match dimension.close_bracket().as_ref() {
+            Some(token) => format_array_dimension_close_bracket(token, doc),
+            None => Doc::nil(),
+        };
+        return doc_concat!(doc, [open, close]);
     }
 
-    concat([
-        space(),
-        format_inline_annotations(annotations, formatter),
-        dimension
-            .open_bracket()
-            .as_ref()
-            .map_or_else(jolt_fmt_ir::nil, format_token_with_comments),
-        dimension
-            .close_bracket()
-            .as_ref()
-            .map_or_else(jolt_fmt_ir::nil, format_array_dimension_close_bracket),
-    ])
+    let space = doc.space();
+    let annotations = format_inline_annotations(annotations, doc);
+    let open = match dimension.open_bracket().as_ref() {
+        Some(token) => format_token_with_comments(doc, token),
+        None => Doc::nil(),
+    };
+    let close = match dimension.close_bracket().as_ref() {
+        Some(token) => format_array_dimension_close_bracket(token, doc),
+        None => Doc::nil(),
+    };
+    doc_concat!(doc, [space, annotations, open, close])
 }
 
-fn format_array_dimension_close_bracket<'source>(close: &JavaSyntaxToken<'source>) -> Doc<'source> {
+fn format_array_dimension_close_bracket<'source>(
+    close: &JavaSyntaxToken<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
     format_token_with_inline_leading_comments(
+        doc,
         close,
         InlineLeadingTrivia::AfterPreviousToken,
         TrailingTrivia::Preserve,
@@ -530,18 +570,23 @@ fn format_array_dimension_close_bracket<'source>(close: &JavaSyntaxToken<'source
 
 pub(crate) fn format_inline_annotations<'source>(
     annotations: impl IntoIterator<Item = Annotation<'source>>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let mut annotations = annotations.into_iter().peekable();
     if annotations.peek().is_none() {
-        return jolt_fmt_ir::nil();
+        return Doc::nil();
     }
 
-    concat([
-        join(
-            &space(),
-            annotations.map(|annotation| format_annotation(&annotation, formatter)),
-        ),
-        space(),
-    ])
+    let mut docs = doc.list();
+    for annotation in annotations {
+        if !docs.is_empty() {
+            let space = doc.space();
+            docs.push(space, doc);
+        }
+        let annotation = format_annotation(&annotation, doc);
+        docs.push(annotation, doc);
+    }
+    let annotations = docs.finish(doc);
+    let trailing_space = doc.space();
+    doc_concat!(doc, [annotations, trailing_space])
 }

@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, concat, hard_line};
+use jolt_fmt_ir::{Doc, DocBuilder};
 
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub(crate) enum MemberBodyCategory {
@@ -40,47 +40,53 @@ impl<'source> MemberBodyItem<'source> {
     }
 }
 
-pub(crate) fn join_member_body(members: Vec<MemberBodyItem<'_>>) -> Doc<'_> {
-    let mut joined = Vec::with_capacity(members.len().saturating_mul(2).saturating_sub(1));
+pub(crate) fn join_member_body<'source>(
+    doc: &mut DocBuilder<'source>,
+    members: Vec<MemberBodyItem<'source>>,
+) -> Doc<'source> {
+    let mut joined = doc.list();
     let mut previous_category = None;
     let mut previous_was_neutral = false;
 
     for member in members {
         if !joined.is_empty() {
-            joined.push(member_separator(
+            let separator = member_separator(
+                doc,
                 previous_category,
                 member.category,
                 member.starts_after_blank_line,
                 previous_was_neutral,
-            ));
+            );
+            joined.push(separator, doc);
         }
         previous_was_neutral = member.category.is_none();
         if let Some(category) = member.category {
             previous_category = Some(category);
         }
-        joined.push(member.doc);
+        joined.push(member.doc, doc);
     }
 
-    concat(joined)
+    joined.finish(doc)
 }
 
 fn member_separator<'source>(
+    doc: &mut DocBuilder<'source>,
     previous_category: Option<MemberBodyCategory>,
     current_category: Option<MemberBodyCategory>,
     starts_after_blank_line: bool,
     previous_was_neutral: bool,
 ) -> Doc<'source> {
     if previous_was_neutral {
-        return hard_line();
+        return doc.hard_line();
     }
     if starts_after_blank_line {
-        return jolt_fmt_ir::empty_line();
+        return doc.empty_line();
     }
 
     match (previous_category, current_category) {
         (Some(MemberBodyCategory::Field), Some(MemberBodyCategory::Field))
         | (None, Some(_))
-        | (_, None) => hard_line(),
-        _ => jolt_fmt_ir::empty_line(),
+        | (_, None) => doc.hard_line(),
+        _ => doc.empty_line(),
     }
 }

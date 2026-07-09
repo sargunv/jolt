@@ -1,20 +1,19 @@
 use super::{
     AnnotationInterfaceBodyMember, ClassBody, ClassBodyMember, Doc, FormattedMember, InterfaceBody,
-    InterfaceBodyMember, JavaFormatter, JavaSyntaxToken, MemberCategory, Range, RecordBody,
-    comments_from_tokens, concat, format_annotation_element_declaration,
-    format_annotation_interface_declaration, format_block, format_class_declaration,
-    format_compact_constructor_declaration, format_constructor_declaration,
-    format_enum_declaration, format_field_declaration, format_interface_declaration,
-    format_method_declaration, format_record_declaration, format_removed_comments,
-    format_token_sequence, format_token_with_comments, formatter_ignore_ranges,
-    formatter_ignore_run_doc, formatter_ignore_runs, hard_line, has_removed_comments,
+    InterfaceBodyMember, JavaSyntaxToken, MemberCategory, Range, RecordBody, comments_from_tokens,
+    format_annotation_element_declaration, format_annotation_interface_declaration, format_block,
+    format_class_declaration, format_compact_constructor_declaration,
+    format_constructor_declaration, format_enum_declaration, format_field_declaration,
+    format_interface_declaration, format_method_declaration, format_record_declaration,
+    format_removed_comments, format_token_sequence, format_token_with_comments,
+    formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs, has_removed_comments,
     join_member_docs, relative_token_range_between,
 };
-use jolt_fmt_ir::space;
+use jolt_fmt_ir::DocBuilder;
 
 pub(super) fn format_class_body<'source>(
     body: &ClassBody<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Option<Doc<'source>> {
     let ignored_ranges = formatter_ignore_ranges(
         body.source_text(),
@@ -23,10 +22,10 @@ pub(super) fn format_class_body<'source>(
     );
     if ignored_ranges.is_empty() {
         return format_class_member_docs_with_recovered(
-            format_body_open_dangling_comments(body.open_brace()),
+            format_body_open_dangling_comments(body.open_brace(), doc),
             body.members_with_recovered(),
-            format_body_close_dangling_comments(body.close_brace()),
-            formatter,
+            format_body_close_dangling_comments(body.close_brace(), doc),
+            doc,
         );
     }
 
@@ -34,15 +33,15 @@ pub(super) fn format_class_body<'source>(
         body.text_range().start().get(),
         &ignored_ranges,
         body.members_with_recovered(),
-        format_body_open_dangling_comments(body.open_brace()),
-        format_body_close_dangling_comments(body.close_brace()),
-        formatter,
+        format_body_open_dangling_comments(body.open_brace(), doc),
+        format_body_close_dangling_comments(body.close_brace(), doc),
+        doc,
     )
 }
 
 pub(super) fn format_record_body<'source>(
     body: &RecordBody<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Option<Doc<'source>> {
     let ignored_ranges = formatter_ignore_ranges(
         body.source_text(),
@@ -51,10 +50,10 @@ pub(super) fn format_record_body<'source>(
     );
     if ignored_ranges.is_empty() {
         return format_class_member_docs_with_recovered(
-            format_body_open_dangling_comments(body.open_brace()),
+            format_body_open_dangling_comments(body.open_brace(), doc),
             body.members_with_recovered(),
-            format_body_close_dangling_comments(body.close_brace()),
-            formatter,
+            format_body_close_dangling_comments(body.close_brace(), doc),
+            doc,
         );
     }
 
@@ -62,15 +61,15 @@ pub(super) fn format_record_body<'source>(
         body.text_range().start().get(),
         &ignored_ranges,
         body.members_with_recovered(),
-        format_body_open_dangling_comments(body.open_brace()),
-        format_body_close_dangling_comments(body.close_brace()),
-        formatter,
+        format_body_open_dangling_comments(body.open_brace(), doc),
+        format_body_close_dangling_comments(body.close_brace(), doc),
+        doc,
     )
 }
 
 pub(super) fn format_interface_body<'source>(
     body: &InterfaceBody<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Option<Doc<'source>> {
     let ignored_ranges = formatter_ignore_ranges(
         body.source_text(),
@@ -79,25 +78,25 @@ pub(super) fn format_interface_body<'source>(
     );
     if ignored_ranges.is_empty() {
         return format_interface_member_docs_with_recovered(
-            format_body_open_dangling_comments(body.open_brace()),
+            format_body_open_dangling_comments(body.open_brace(), doc),
             body.members_with_recovered(),
-            format_body_close_dangling_comments(body.close_brace()),
-            formatter,
+            format_body_close_dangling_comments(body.close_brace(), doc),
+            doc,
         );
     }
     format_interface_member_docs_with_recovered_and_ignored(
         body.text_range().start().get(),
         &ignored_ranges,
-        format_body_open_dangling_comments(body.open_brace()),
+        format_body_open_dangling_comments(body.open_brace(), doc),
         body.members_with_recovered(),
-        format_body_close_dangling_comments(body.close_brace()),
-        formatter,
+        format_body_close_dangling_comments(body.close_brace(), doc),
+        doc,
     )
 }
 
 pub(super) fn format_annotation_interface_body<'source>(
     body: &jolt_java_syntax::AnnotationInterfaceBody<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Option<Doc<'source>> {
     let ignored_ranges = formatter_ignore_ranges(
         body.source_text(),
@@ -106,19 +105,19 @@ pub(super) fn format_annotation_interface_body<'source>(
     );
     if ignored_ranges.is_empty() {
         return format_annotation_member_docs_with_recovered(
-            format_body_open_dangling_comments(body.open_brace()),
+            format_body_open_dangling_comments(body.open_brace(), doc),
             body.members_with_recovered(),
-            format_body_close_dangling_comments(body.close_brace()),
-            formatter,
+            format_body_close_dangling_comments(body.close_brace(), doc),
+            doc,
         );
     }
     format_annotation_member_docs_with_recovered_and_ignored(
         body.text_range().start().get(),
         &ignored_ranges,
-        format_body_open_dangling_comments(body.open_brace()),
+        format_body_open_dangling_comments(body.open_brace(), doc),
         body.members_with_recovered(),
-        format_body_close_dangling_comments(body.close_brace()),
-        formatter,
+        format_body_close_dangling_comments(body.close_brace(), doc),
+        doc,
     )
 }
 
@@ -130,7 +129,7 @@ pub(super) fn format_class_member_body<'source>(
     >,
     open_dangling_comments: Option<FormattedMember<'source>>,
     close_dangling_comments: Option<FormattedMember<'source>>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Option<Doc<'source>> {
     let members = members.into_iter();
     if ignored_ranges.is_empty() {
@@ -138,7 +137,7 @@ pub(super) fn format_class_member_body<'source>(
             open_dangling_comments,
             members,
             close_dangling_comments,
-            formatter,
+            doc,
         );
     }
 
@@ -148,16 +147,18 @@ pub(super) fn format_class_member_body<'source>(
         .map(|member| recovered_class_member_token_range(member, body_start))
         .collect::<Vec<_>>();
     format_members_with_ignored(
+        doc,
         &members,
         &formatter_ignore_runs(ignored_ranges, &member_ranges),
         open_dangling_comments,
         |run, members| ignored_recovered_class_member_category(run, members),
-        |member| format_recovered_class_member(member, formatter),
+        format_recovered_class_member,
         close_dangling_comments,
     )
 }
 
 fn format_members_with_ignored<'source, Member>(
+    doc: &mut DocBuilder<'source>,
     members: &[Member],
     ignored_runs: &[crate::helpers::formatter_ignore::FormatterIgnoreRun<'source>],
     open_dangling_comments: Option<FormattedMember<'source>>,
@@ -165,7 +166,7 @@ fn format_members_with_ignored<'source, Member>(
         &crate::helpers::formatter_ignore::FormatterIgnoreRun<'source>,
         &[Member],
     ) -> MemberCategory,
-    mut format_member: impl FnMut(&Member) -> Option<FormattedMember<'source>>,
+    mut format_member: impl FnMut(&Member, &mut DocBuilder<'source>) -> Option<FormattedMember<'source>>,
     close_dangling_comments: Option<FormattedMember<'source>>,
 ) -> Option<Doc<'source>> {
     let mut formatted_members = Vec::with_capacity(
@@ -184,7 +185,7 @@ fn format_members_with_ignored<'source, Member>(
         {
             let run = &ignored_runs[ignored_index];
             formatted_members.push(FormattedMember::ignored(
-                formatter_ignore_run_doc(run),
+                formatter_ignore_run_doc(run, doc),
                 ignored_category(run, members),
             ));
             ignored_index += 1;
@@ -198,7 +199,7 @@ fn format_members_with_ignored<'source, Member>(
             continue;
         }
 
-        if let Some(mut formatted_member) = format_member(member) {
+        if let Some(mut formatted_member) = format_member(member, doc) {
             if skip_index > 0 && ignored_runs[skip_index - 1].skip_end == member_index {
                 formatted_member = formatted_member.without_blank_line_before();
             }
@@ -209,14 +210,14 @@ fn format_members_with_ignored<'source, Member>(
     while ignored_index < ignored_runs.len() {
         let run = &ignored_runs[ignored_index];
         formatted_members.push(FormattedMember::ignored(
-            formatter_ignore_run_doc(run),
+            formatter_ignore_run_doc(run, doc),
             ignored_category(run, members),
         ));
         ignored_index += 1;
     }
     formatted_members.extend(close_dangling_comments);
 
-    (!formatted_members.is_empty()).then(|| join_member_docs(formatted_members))
+    (!formatted_members.is_empty()).then(|| join_member_docs(doc, formatted_members))
 }
 
 fn format_class_member_docs_with_recovered<'source>(
@@ -225,7 +226,7 @@ fn format_class_member_docs_with_recovered<'source>(
         Item = jolt_java_syntax::RecoveredSeparatedListEntry<'source, ClassBodyMember<'source>>,
     >,
     close_dangling_comments: Option<FormattedMember<'source>>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Option<Doc<'source>> {
     let members = members.into_iter();
     let (lower, _) = members.size_hint();
@@ -236,23 +237,26 @@ fn format_class_member_docs_with_recovered<'source>(
         match entry {
             jolt_java_syntax::RecoveredSeparatedListEntry::Entry(member) => {
                 if is_printable_class_member(&member) {
-                    formatted_members.push(FormattedMember::from_member(&member, formatter));
+                    formatted_members.push(FormattedMember::from_member(&member, doc));
                 }
             }
             jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
                 formatted_members.push(FormattedMember::comment(format_token_sequence(
+                    doc,
                     std::iter::once(token),
                     crate::helpers::comments::LeadingTrivia::Preserve,
                 )));
             }
             jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => {
                 formatted_members.push(FormattedMember::comment(format_token_sequence(
+                    doc,
                     error.token_iter(),
                     crate::helpers::comments::LeadingTrivia::Preserve,
                 )));
             }
             jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => {
                 formatted_members.push(FormattedMember::comment(format_token_sequence(
+                    doc,
                     node.token_iter(),
                     crate::helpers::comments::LeadingTrivia::Preserve,
                 )));
@@ -261,7 +265,7 @@ fn format_class_member_docs_with_recovered<'source>(
     }
     formatted_members.extend(close_dangling_comments);
 
-    (!formatted_members.is_empty()).then(|| join_member_docs(formatted_members))
+    (!formatted_members.is_empty()).then(|| join_member_docs(doc, formatted_members))
 }
 
 fn format_class_member_docs_with_recovered_and_ignored<'source>(
@@ -272,7 +276,7 @@ fn format_class_member_docs_with_recovered_and_ignored<'source>(
     >,
     open_dangling_comments: Option<FormattedMember<'source>>,
     close_dangling_comments: Option<FormattedMember<'source>>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Option<Doc<'source>> {
     let members = members.into_iter().collect::<Vec<_>>();
     let member_ranges = members
@@ -280,11 +284,12 @@ fn format_class_member_docs_with_recovered_and_ignored<'source>(
         .map(|member| recovered_class_member_token_range(member, source_start))
         .collect::<Vec<_>>();
     format_members_with_ignored(
+        doc,
         &members,
         &formatter_ignore_runs(ignored_ranges, &member_ranges),
         open_dangling_comments,
         |run, members| ignored_recovered_class_member_category(run, members),
-        |member| format_recovered_class_member(member, formatter),
+        format_recovered_class_member,
         close_dangling_comments,
     )
 }
@@ -295,7 +300,7 @@ fn format_interface_member_docs_with_recovered<'source>(
         Item = jolt_java_syntax::RecoveredSeparatedListEntry<'source, InterfaceBodyMember<'source>>,
     >,
     close_dangling_comments: Option<FormattedMember<'source>>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Option<Doc<'source>> {
     let members = members.into_iter();
     let (lower, _) = members.size_hint();
@@ -306,24 +311,26 @@ fn format_interface_member_docs_with_recovered<'source>(
         match entry {
             jolt_java_syntax::RecoveredSeparatedListEntry::Entry(member) => {
                 if is_printable_interface_member(&member) {
-                    formatted_members
-                        .push(FormattedMember::from_interface_member(&member, formatter));
+                    formatted_members.push(FormattedMember::from_interface_member(&member, doc));
                 }
             }
             jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
                 formatted_members.push(FormattedMember::comment(format_token_sequence(
+                    doc,
                     std::iter::once(token),
                     crate::helpers::comments::LeadingTrivia::Preserve,
                 )));
             }
             jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => {
                 formatted_members.push(FormattedMember::comment(format_token_sequence(
+                    doc,
                     error.token_iter(),
                     crate::helpers::comments::LeadingTrivia::Preserve,
                 )));
             }
             jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => {
                 formatted_members.push(FormattedMember::comment(format_token_sequence(
+                    doc,
                     node.token_iter(),
                     crate::helpers::comments::LeadingTrivia::Preserve,
                 )));
@@ -332,7 +339,7 @@ fn format_interface_member_docs_with_recovered<'source>(
     }
     formatted_members.extend(close_dangling_comments);
 
-    (!formatted_members.is_empty()).then(|| join_member_docs(formatted_members))
+    (!formatted_members.is_empty()).then(|| join_member_docs(doc, formatted_members))
 }
 
 fn format_interface_member_docs_with_recovered_and_ignored<'source>(
@@ -343,7 +350,7 @@ fn format_interface_member_docs_with_recovered_and_ignored<'source>(
         Item = jolt_java_syntax::RecoveredSeparatedListEntry<'source, InterfaceBodyMember<'source>>,
     >,
     close_dangling_comments: Option<FormattedMember<'source>>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Option<Doc<'source>> {
     let members = members.into_iter().collect::<Vec<_>>();
     let member_ranges = members
@@ -351,11 +358,12 @@ fn format_interface_member_docs_with_recovered_and_ignored<'source>(
         .map(|member| recovered_interface_member_token_range(member, source_start))
         .collect::<Vec<_>>();
     format_members_with_ignored(
+        doc,
         &members,
         &formatter_ignore_runs(ignored_ranges, &member_ranges),
         open_dangling_comments,
         |run, members| ignored_recovered_interface_member_category(run, members),
-        |member| format_recovered_interface_member(member, formatter),
+        format_recovered_interface_member,
         close_dangling_comments,
     )
 }
@@ -369,7 +377,7 @@ fn format_annotation_member_docs_with_recovered<'source>(
         >,
     >,
     close_dangling_comments: Option<FormattedMember<'source>>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Option<Doc<'source>> {
     let members = members.into_iter();
     let (lower, _) = members.size_hint();
@@ -380,24 +388,26 @@ fn format_annotation_member_docs_with_recovered<'source>(
         match entry {
             jolt_java_syntax::RecoveredSeparatedListEntry::Entry(member) => {
                 if is_printable_annotation_member(&member) {
-                    formatted_members
-                        .push(FormattedMember::from_annotation_member(&member, formatter));
+                    formatted_members.push(FormattedMember::from_annotation_member(&member, doc));
                 }
             }
             jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
                 formatted_members.push(FormattedMember::comment(format_token_sequence(
+                    doc,
                     std::iter::once(token),
                     crate::helpers::comments::LeadingTrivia::Preserve,
                 )));
             }
             jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => {
                 formatted_members.push(FormattedMember::comment(format_token_sequence(
+                    doc,
                     error.token_iter(),
                     crate::helpers::comments::LeadingTrivia::Preserve,
                 )));
             }
             jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => {
                 formatted_members.push(FormattedMember::comment(format_token_sequence(
+                    doc,
                     node.token_iter(),
                     crate::helpers::comments::LeadingTrivia::Preserve,
                 )));
@@ -406,7 +416,7 @@ fn format_annotation_member_docs_with_recovered<'source>(
     }
     formatted_members.extend(close_dangling_comments);
 
-    (!formatted_members.is_empty()).then(|| join_member_docs(formatted_members))
+    (!formatted_members.is_empty()).then(|| join_member_docs(doc, formatted_members))
 }
 
 fn format_annotation_member_docs_with_recovered_and_ignored<'source>(
@@ -420,7 +430,7 @@ fn format_annotation_member_docs_with_recovered_and_ignored<'source>(
         >,
     >,
     close_dangling_comments: Option<FormattedMember<'source>>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Option<Doc<'source>> {
     let members = members.into_iter().collect::<Vec<_>>();
     let member_ranges = members
@@ -428,11 +438,12 @@ fn format_annotation_member_docs_with_recovered_and_ignored<'source>(
         .map(|member| recovered_annotation_member_token_range(member, source_start))
         .collect::<Vec<_>>();
     format_members_with_ignored(
+        doc,
         &members,
         &formatter_ignore_runs(ignored_ranges, &member_ranges),
         open_dangling_comments,
         |run, members| ignored_recovered_annotation_member_category(run, members),
-        |member| format_recovered_annotation_member(member, formatter),
+        format_recovered_annotation_member,
         close_dangling_comments,
     )
 }
@@ -621,27 +632,29 @@ fn recovered_annotation_member_category(
 
 fn format_recovered_class_member<'source>(
     member: &jolt_java_syntax::RecoveredSeparatedListEntry<'source, ClassBodyMember<'source>>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Option<FormattedMember<'source>> {
     match member {
         jolt_java_syntax::RecoveredSeparatedListEntry::Entry(member) => {
-            is_printable_class_member(member)
-                .then(|| FormattedMember::from_member(member, formatter))
+            is_printable_class_member(member).then(|| FormattedMember::from_member(member, doc))
         }
         jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
             Some(FormattedMember::comment(format_token_sequence(
+                doc,
                 std::iter::once(*token),
                 crate::helpers::comments::LeadingTrivia::Preserve,
             )))
         }
         jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => {
             Some(FormattedMember::comment(format_token_sequence(
+                doc,
                 error.token_iter(),
                 crate::helpers::comments::LeadingTrivia::Preserve,
             )))
         }
         jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => {
             Some(FormattedMember::comment(format_token_sequence(
+                doc,
                 node.token_iter(),
                 crate::helpers::comments::LeadingTrivia::Preserve,
             )))
@@ -651,27 +664,30 @@ fn format_recovered_class_member<'source>(
 
 fn format_recovered_interface_member<'source>(
     member: &jolt_java_syntax::RecoveredSeparatedListEntry<'source, InterfaceBodyMember<'source>>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Option<FormattedMember<'source>> {
     match member {
         jolt_java_syntax::RecoveredSeparatedListEntry::Entry(member) => {
             is_printable_interface_member(member)
-                .then(|| FormattedMember::from_interface_member(member, formatter))
+                .then(|| FormattedMember::from_interface_member(member, doc))
         }
         jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
             Some(FormattedMember::comment(format_token_sequence(
+                doc,
                 std::iter::once(*token),
                 crate::helpers::comments::LeadingTrivia::Preserve,
             )))
         }
         jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => {
             Some(FormattedMember::comment(format_token_sequence(
+                doc,
                 error.token_iter(),
                 crate::helpers::comments::LeadingTrivia::Preserve,
             )))
         }
         jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => {
             Some(FormattedMember::comment(format_token_sequence(
+                doc,
                 node.token_iter(),
                 crate::helpers::comments::LeadingTrivia::Preserve,
             )))
@@ -684,27 +700,30 @@ fn format_recovered_annotation_member<'source>(
         'source,
         AnnotationInterfaceBodyMember<'source>,
     >,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Option<FormattedMember<'source>> {
     match member {
         jolt_java_syntax::RecoveredSeparatedListEntry::Entry(member) => {
             is_printable_annotation_member(member)
-                .then(|| FormattedMember::from_annotation_member(member, formatter))
+                .then(|| FormattedMember::from_annotation_member(member, doc))
         }
         jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
             Some(FormattedMember::comment(format_token_sequence(
+                doc,
                 std::iter::once(*token),
                 crate::helpers::comments::LeadingTrivia::Preserve,
             )))
         }
         jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => {
             Some(FormattedMember::comment(format_token_sequence(
+                doc,
                 error.token_iter(),
                 crate::helpers::comments::LeadingTrivia::Preserve,
             )))
         }
         jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => {
             Some(FormattedMember::comment(format_token_sequence(
+                doc,
                 node.token_iter(),
                 crate::helpers::comments::LeadingTrivia::Preserve,
             )))
@@ -727,40 +746,43 @@ fn is_printable_annotation_member(member: &AnnotationInterfaceBodyMember<'_>) ->
         || has_removed_comments(comments_from_tokens(member.token_iter()))
 }
 
-pub(super) fn format_body_open_dangling_comments(
-    open: Option<JavaSyntaxToken<'_>>,
-) -> Option<FormattedMember<'_>> {
-    format_removed_comments(open?.trailing_comments()).map(FormattedMember::comment)
+pub(super) fn format_body_open_dangling_comments<'source>(
+    open: Option<JavaSyntaxToken<'source>>,
+    doc: &mut DocBuilder<'source>,
+) -> Option<FormattedMember<'source>> {
+    format_removed_comments(doc, open?.trailing_comments()).map(FormattedMember::comment)
 }
 
-pub(super) fn format_body_close_dangling_comments(
-    close: Option<JavaSyntaxToken<'_>>,
-) -> Option<FormattedMember<'_>> {
-    format_removed_comments(close?.leading_comments()).map(FormattedMember::comment)
+pub(super) fn format_body_close_dangling_comments<'source>(
+    close: Option<JavaSyntaxToken<'source>>,
+    doc: &mut DocBuilder<'source>,
+) -> Option<FormattedMember<'source>> {
+    format_removed_comments(doc, close?.leading_comments()).map(FormattedMember::comment)
 }
 
-pub(super) fn format_empty_enum_constant_list_comments(
-    constants: Option<jolt_java_syntax::EnumConstantList<'_>>,
-) -> Option<FormattedMember<'_>> {
+pub(super) fn format_empty_enum_constant_list_comments<'source>(
+    constants: Option<jolt_java_syntax::EnumConstantList<'source>>,
+    doc: &mut DocBuilder<'source>,
+) -> Option<FormattedMember<'source>> {
     let constants = constants?;
     if constants.constants().next().is_some() {
         return None;
     }
 
-    format_removed_comments(comments_from_tokens(constants.token_iter()))
+    format_removed_comments(doc, comments_from_tokens(constants.token_iter()))
         .map(FormattedMember::comment)
 }
 
 pub(super) fn combine_comment_members<'source>(
+    doc: &mut DocBuilder<'source>,
     first: Option<FormattedMember<'source>>,
     second: Option<FormattedMember<'source>>,
 ) -> Option<FormattedMember<'source>> {
     match (first, second) {
-        (Some(first), Some(second)) => Some(FormattedMember::comment(concat([
-            first.doc,
-            hard_line(),
-            second.doc,
-        ]))),
+        (Some(first), Some(second)) => Some(FormattedMember::comment(doc_concat!(
+            doc,
+            [first.doc, doc.hard_line(), second.doc,]
+        ))),
         (Some(member), None) | (None, Some(member)) => Some(member),
         (None, None) => None,
     }
@@ -812,186 +834,190 @@ fn annotation_member_category(member: &AnnotationInterfaceBodyMember<'_>) -> Mem
 }
 
 impl<'source> FormattedMember<'source> {
-    fn from_member(member: &ClassBodyMember<'source>, formatter: &JavaFormatter<'_>) -> Self {
+    fn from_member(member: &ClassBodyMember<'source>, doc: &mut DocBuilder<'source>) -> Self {
         let starts_after_blank_line = member.starts_after_blank_line();
         match member {
             ClassBodyMember::FieldDeclaration(field) => Self {
                 category: Some(MemberCategory::Field),
                 starts_after_blank_line,
-                doc: format_field_declaration(field, formatter),
+                doc: format_field_declaration(field, doc),
             },
             ClassBodyMember::ConstructorDeclaration(constructor) => Self {
                 category: Some(MemberCategory::Constructor),
                 starts_after_blank_line,
-                doc: format_constructor_declaration(constructor, formatter),
+                doc: format_constructor_declaration(constructor, doc),
             },
             ClassBodyMember::CompactConstructorDeclaration(constructor) => Self {
                 category: Some(MemberCategory::Constructor),
                 starts_after_blank_line,
-                doc: format_compact_constructor_declaration(constructor, formatter),
+                doc: format_compact_constructor_declaration(constructor, doc),
             },
             ClassBodyMember::MethodDeclaration(method) => Self {
                 category: Some(MemberCategory::Method),
                 starts_after_blank_line,
-                doc: format_method_declaration(method, formatter),
+                doc: format_method_declaration(method, doc),
             },
             ClassBodyMember::StaticInitializer(member) => Self {
                 category: Some(MemberCategory::Initializer),
                 starts_after_blank_line,
-                doc: concat([
-                    member
-                        .static_token()
-                        .as_ref()
-                        .map_or_else(jolt_fmt_ir::nil, |token| {
-                            concat([format_token_with_comments(token), space()])
-                        }),
-                    member
-                        .body()
-                        .map_or_else(jolt_fmt_ir::nil, |body| format_block(&body, formatter)),
-                ]),
+                doc: doc_concat!(
+                    doc,
+                    [
+                        member
+                            .static_token()
+                            .as_ref()
+                            .map_or_else(Doc::nil, |token| doc_concat!(
+                                doc,
+                                [format_token_with_comments(doc, token), doc.space()]
+                            ),),
+                        member
+                            .body()
+                            .map_or_else(Doc::nil, |body| format_block(&body, doc)),
+                    ]
+                ),
             },
             ClassBodyMember::InstanceInitializer(member) => Self {
                 category: Some(MemberCategory::Initializer),
                 starts_after_blank_line,
                 doc: member
                     .body()
-                    .map_or_else(jolt_fmt_ir::nil, |body| format_block(&body, formatter)),
+                    .map_or_else(Doc::nil, |body| format_block(&body, doc)),
             },
             ClassBodyMember::ClassDeclaration(class) => Self {
                 category: Some(MemberCategory::Type),
                 starts_after_blank_line,
-                doc: format_class_declaration(class, formatter),
+                doc: format_class_declaration(class, doc),
             },
             ClassBodyMember::RecordDeclaration(record) => Self {
                 category: Some(MemberCategory::Type),
                 starts_after_blank_line,
-                doc: format_record_declaration(record, formatter),
+                doc: format_record_declaration(record, doc),
             },
             ClassBodyMember::EnumDeclaration(enum_) => Self {
                 category: Some(MemberCategory::Type),
                 starts_after_blank_line,
-                doc: format_enum_declaration(enum_, formatter),
+                doc: format_enum_declaration(enum_, doc),
             },
             ClassBodyMember::InterfaceDeclaration(interface) => Self {
                 category: Some(MemberCategory::Type),
                 starts_after_blank_line,
-                doc: format_interface_declaration(interface, formatter),
+                doc: format_interface_declaration(interface, doc),
             },
             ClassBodyMember::AnnotationInterfaceDeclaration(annotation) => Self {
                 category: Some(MemberCategory::Type),
                 starts_after_blank_line,
-                doc: format_annotation_interface_declaration(annotation, formatter),
+                doc: format_annotation_interface_declaration(annotation, doc),
             },
             ClassBodyMember::EmptyDeclaration(_) => Self {
                 category: None,
                 starts_after_blank_line,
-                doc: format_removed_comments(comments_from_tokens(member.token_iter()))
-                    .unwrap_or_else(jolt_fmt_ir::nil),
+                doc: format_removed_comments(doc, comments_from_tokens(member.token_iter()))
+                    .unwrap_or_else(Doc::nil),
             },
         }
     }
 
     fn from_interface_member(
         member: &InterfaceBodyMember<'source>,
-        formatter: &JavaFormatter<'_>,
+        doc: &mut DocBuilder<'source>,
     ) -> Self {
         let starts_after_blank_line = member.starts_after_blank_line();
         match member {
             InterfaceBodyMember::FieldDeclaration(field) => Self {
                 category: Some(MemberCategory::Field),
                 starts_after_blank_line,
-                doc: format_field_declaration(field, formatter),
+                doc: format_field_declaration(field, doc),
             },
             InterfaceBodyMember::MethodDeclaration(method) => Self {
                 category: Some(MemberCategory::Method),
                 starts_after_blank_line,
-                doc: format_method_declaration(method, formatter),
+                doc: format_method_declaration(method, doc),
             },
             InterfaceBodyMember::ClassDeclaration(class) => Self {
                 category: Some(MemberCategory::Type),
                 starts_after_blank_line,
-                doc: format_class_declaration(class, formatter),
+                doc: format_class_declaration(class, doc),
             },
             InterfaceBodyMember::RecordDeclaration(record) => Self {
                 category: Some(MemberCategory::Type),
                 starts_after_blank_line,
-                doc: format_record_declaration(record, formatter),
+                doc: format_record_declaration(record, doc),
             },
             InterfaceBodyMember::EnumDeclaration(enum_) => Self {
                 category: Some(MemberCategory::Type),
                 starts_after_blank_line,
-                doc: format_enum_declaration(enum_, formatter),
+                doc: format_enum_declaration(enum_, doc),
             },
             InterfaceBodyMember::InterfaceDeclaration(interface) => Self {
                 category: Some(MemberCategory::Type),
                 starts_after_blank_line,
-                doc: format_interface_declaration(interface, formatter),
+                doc: format_interface_declaration(interface, doc),
             },
             InterfaceBodyMember::AnnotationInterfaceDeclaration(annotation) => Self {
                 category: Some(MemberCategory::Type),
                 starts_after_blank_line,
-                doc: format_annotation_interface_declaration(annotation, formatter),
+                doc: format_annotation_interface_declaration(annotation, doc),
             },
             InterfaceBodyMember::EmptyDeclaration(_) => Self {
                 category: None,
                 starts_after_blank_line,
-                doc: format_removed_comments(comments_from_tokens(member.token_iter()))
-                    .unwrap_or_else(jolt_fmt_ir::nil),
+                doc: format_removed_comments(doc, comments_from_tokens(member.token_iter()))
+                    .unwrap_or_else(Doc::nil),
             },
         }
     }
 
     fn from_annotation_member(
         member: &AnnotationInterfaceBodyMember<'source>,
-        formatter: &JavaFormatter<'_>,
+        doc: &mut DocBuilder<'source>,
     ) -> Self {
         let starts_after_blank_line = member.starts_after_blank_line();
         match member {
             AnnotationInterfaceBodyMember::FieldDeclaration(field) => Self {
                 category: Some(MemberCategory::Field),
                 starts_after_blank_line,
-                doc: format_field_declaration(field, formatter),
+                doc: format_field_declaration(field, doc),
             },
             AnnotationInterfaceBodyMember::MethodDeclaration(method) => Self {
                 category: Some(MemberCategory::Method),
                 starts_after_blank_line,
-                doc: format_method_declaration(method, formatter),
+                doc: format_method_declaration(method, doc),
             },
             AnnotationInterfaceBodyMember::AnnotationElementDeclaration(member) => Self {
                 category: Some(MemberCategory::Method),
                 starts_after_blank_line,
-                doc: format_annotation_element_declaration(member, formatter),
+                doc: format_annotation_element_declaration(member, doc),
             },
             AnnotationInterfaceBodyMember::ClassDeclaration(class) => Self {
                 category: Some(MemberCategory::Type),
                 starts_after_blank_line,
-                doc: format_class_declaration(class, formatter),
+                doc: format_class_declaration(class, doc),
             },
             AnnotationInterfaceBodyMember::RecordDeclaration(record) => Self {
                 category: Some(MemberCategory::Type),
                 starts_after_blank_line,
-                doc: format_record_declaration(record, formatter),
+                doc: format_record_declaration(record, doc),
             },
             AnnotationInterfaceBodyMember::EnumDeclaration(enum_) => Self {
                 category: Some(MemberCategory::Type),
                 starts_after_blank_line,
-                doc: format_enum_declaration(enum_, formatter),
+                doc: format_enum_declaration(enum_, doc),
             },
             AnnotationInterfaceBodyMember::InterfaceDeclaration(interface) => Self {
                 category: Some(MemberCategory::Type),
                 starts_after_blank_line,
-                doc: format_interface_declaration(interface, formatter),
+                doc: format_interface_declaration(interface, doc),
             },
             AnnotationInterfaceBodyMember::AnnotationInterfaceDeclaration(annotation) => Self {
                 category: Some(MemberCategory::Type),
                 starts_after_blank_line,
-                doc: format_annotation_interface_declaration(annotation, formatter),
+                doc: format_annotation_interface_declaration(annotation, doc),
             },
             AnnotationInterfaceBodyMember::EmptyDeclaration(_) => Self {
                 category: None,
                 starts_after_blank_line,
-                doc: format_removed_comments(comments_from_tokens(member.token_iter()))
-                    .unwrap_or_else(jolt_fmt_ir::nil),
+                doc: format_removed_comments(doc, comments_from_tokens(member.token_iter()))
+                    .unwrap_or_else(Doc::nil),
             },
         }
     }

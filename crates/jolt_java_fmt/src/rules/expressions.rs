@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, concat, group, hard_line, indent, line, soft_line};
+use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_java_syntax::{
     ArgumentList, ArrayAccessExpression, ArrayCreationExpression, ArrayInitializer,
     AssignmentExpression, BinaryExpression, CastExpression, ClassLiteralExpression,
@@ -10,7 +10,6 @@ use jolt_java_syntax::{
     VariableInitializerValue,
 };
 
-use crate::context::JavaFormatter;
 use crate::helpers::comments::{
     InlineLeadingTrivia, LeadingTrivia, TrailingTrivia, comment_forces_line,
     format_leading_comments, format_separator_with_comments, format_token,
@@ -67,76 +66,72 @@ use switches::format_switch_expression;
 
 pub(crate) fn format_expression<'source>(
     expression: &Expression<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_expression_with_leading_comments(expression, LeadingComments::Preserve, formatter)
+    format_expression_with_leading_comments(expression, LeadingComments::Preserve, doc)
 }
 
 fn format_expression_with_leading_comments<'source>(
     expression: &Expression<'source>,
     leading_comments: LeadingComments,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     match expression {
         Expression::ParenthesizedExpression(expression) => {
-            format_parenthesized_expression(expression, formatter)
+            format_parenthesized_expression(expression, doc)
         }
         Expression::AssignmentExpression(expression) => {
-            format_assignment_expression(expression, formatter)
+            format_assignment_expression(expression, doc)
         }
         Expression::ConditionalExpression(expression) => {
-            format_conditional_expression(expression, formatter)
+            format_conditional_expression(expression, doc)
         }
-        Expression::BinaryExpression(expression) => format_binary_expression(expression, formatter),
-        Expression::UnaryExpression(expression) => format_unary_expression(expression, formatter),
-        Expression::PostfixExpression(expression) => {
-            format_postfix_expression(expression, formatter)
-        }
-        Expression::LambdaExpression(expression) => format_lambda_expression(expression, formatter),
+        Expression::BinaryExpression(expression) => format_binary_expression(expression, doc),
+        Expression::UnaryExpression(expression) => format_unary_expression(expression, doc),
+        Expression::PostfixExpression(expression) => format_postfix_expression(expression, doc),
+        Expression::LambdaExpression(expression) => format_lambda_expression(expression, doc),
         Expression::LiteralExpression(expression) => {
-            format_literal_expression(expression, leading_comments)
+            format_literal_expression(expression, leading_comments, doc)
         }
-        Expression::TemplateExpression(expression) => {
-            format_template_expression(expression, formatter)
-        }
+        Expression::TemplateExpression(expression) => format_template_expression(expression, doc),
         Expression::NameExpression(expression) => {
-            format_name_expression(expression, leading_comments, formatter)
+            format_name_expression(expression, leading_comments, doc)
         }
         Expression::ThisExpression(expression) => {
-            format_this_expression(expression, leading_comments, formatter)
+            format_this_expression(expression, leading_comments, doc)
         }
         Expression::SuperExpression(expression) => {
-            format_super_expression(expression, leading_comments, formatter)
+            format_super_expression(expression, leading_comments, doc)
         }
         Expression::ClassLiteralExpression(expression) => {
-            format_class_literal_expression(expression, formatter)
+            format_class_literal_expression(expression, doc)
         }
         Expression::MethodReferenceExpression(expression) => {
-            format_method_reference_expression(expression, formatter)
+            format_method_reference_expression(expression, doc)
         }
-        Expression::SwitchExpression(expression) => format_switch_expression(expression, formatter),
+        Expression::SwitchExpression(expression) => format_switch_expression(expression, doc),
         Expression::ArrayCreationExpression(expression) => {
-            format_array_creation_expression(expression, formatter)
+            format_array_creation_expression(expression, doc)
         }
         Expression::InstanceofExpression(expression) => {
-            format_instanceof_expression(expression, formatter)
+            format_instanceof_expression(expression, doc)
         }
-        Expression::CastExpression(expression) => format_cast_expression(expression, formatter),
+        Expression::CastExpression(expression) => format_cast_expression(expression, doc),
         Expression::FieldAccessExpression(expression) => {
-            format_field_access_expression(expression, formatter)
+            format_field_access_expression(expression, doc)
         }
         Expression::ArrayAccessExpression(expression) => {
-            format_array_access_expression(expression, formatter)
+            format_array_access_expression(expression, doc)
         }
         Expression::MethodInvocationExpression(expression) => {
             format_method_invocation_expression_with_leading_comments(
                 expression,
                 leading_comments,
-                formatter,
+                doc,
             )
         }
         Expression::ObjectCreationExpression(expression) => {
-            format_object_creation_expression(expression, formatter)
+            format_object_creation_expression(expression, doc)
         }
     }
 }

@@ -1,20 +1,17 @@
-use jolt_fmt_ir::{Doc, concat, group, hard_line, indent, line, soft_line};
+use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_java_syntax::{
     AssertStatement, BasicForStatement, Block, BlockItem, BlockStatement, CatchClause,
     CatchParameter, CatchTypeList, DoStatement, EnhancedForStatement, Expression,
     ExpressionStatement, FinallyClause, ForInitializer, ForStatement, ForUpdate, IfStatement,
-    JavaSyntaxToken, LabeledStatement, Resource, ResourceList, ResourceListEntry, ReturnStatement,
-    Statement, StatementBody, StatementExpressionList, SwitchBlock, SwitchBlockEntry,
+    JavaSyntaxToken, LabeledStatement, Resource, ResourceList, ReturnStatement, Statement,
+    StatementBody, StatementExpressionList, SwitchBlock, SwitchBlockEntry,
     SwitchBlockStatementGroup, SwitchLabel, SwitchLabelCaseEntry, SwitchLabelCaseItem, SwitchRule,
     SwitchStatement, SynchronizedStatement, ThrowStatement, TryStatement,
     TryWithResourcesStatement, Type, WhileStatement, YieldStatement,
 };
 use std::ops::Range;
 
-use crate::context::JavaFormatter;
-use crate::helpers::blocks::{
-    BodyItem, empty_block, inserted_braced_body, join_body_items, join_hard_lines,
-};
+use crate::helpers::blocks::{BodyItem, empty_block, inserted_braced_body, join_body_items};
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, comment_forces_line, comments_from_tokens,
     format_dangling_comments, format_removed_comments, format_separator_with_comments,
@@ -56,78 +53,83 @@ use try_resources::{format_try_statement, format_try_with_resources_statement};
 
 fn format_statement<'source>(
     statement: &Statement<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     match statement {
-        Statement::Block(block) => format_block(block, formatter),
-        Statement::EmptyStatement(statement) => format_empty_statement(statement),
-        Statement::LabeledStatement(statement) => format_labeled_statement(statement, formatter),
-        Statement::ExpressionStatement(statement) => {
-            format_expression_statement(statement, formatter)
-        }
-        Statement::IfStatement(statement) => format_if_statement(statement, formatter),
-        Statement::AssertStatement(statement) => format_assert_statement(statement, formatter),
-        Statement::SwitchStatement(statement) => format_switch_statement(statement, formatter),
-        Statement::WhileStatement(statement) => format_while_statement(statement, formatter),
-        Statement::DoStatement(statement) => format_do_statement(statement, formatter),
-        Statement::ForStatement(statement) => format_for_statement(statement, formatter),
+        Statement::Block(block) => format_block(block, doc),
+        Statement::EmptyStatement(statement) => format_empty_statement(statement, doc),
+        Statement::LabeledStatement(statement) => format_labeled_statement(statement, doc),
+        Statement::ExpressionStatement(statement) => format_expression_statement(statement, doc),
+        Statement::IfStatement(statement) => format_if_statement(statement, doc),
+        Statement::AssertStatement(statement) => format_assert_statement(statement, doc),
+        Statement::SwitchStatement(statement) => format_switch_statement(statement, doc),
+        Statement::WhileStatement(statement) => format_while_statement(statement, doc),
+        Statement::DoStatement(statement) => format_do_statement(statement, doc),
+        Statement::ForStatement(statement) => format_for_statement(statement, doc),
         Statement::BreakStatement(statement) => format_jump_statement(
             statement.keyword(),
             "break",
             statement.label(),
             statement.semicolon(),
+            doc,
         ),
-        Statement::YieldStatement(statement) => format_yield_statement(statement, formatter),
+        Statement::YieldStatement(statement) => format_yield_statement(statement, doc),
         Statement::ContinueStatement(statement) => format_jump_statement(
             statement.keyword(),
             "continue",
             statement.label(),
             statement.semicolon(),
+            doc,
         ),
-        Statement::ReturnStatement(statement) => format_return_statement(statement, formatter),
-        Statement::ThrowStatement(statement) => format_throw_statement(statement, formatter),
+        Statement::ReturnStatement(statement) => format_return_statement(statement, doc),
+        Statement::ThrowStatement(statement) => format_throw_statement(statement, doc),
         Statement::SynchronizedStatement(statement) => {
-            format_synchronized_statement(statement, formatter)
+            format_synchronized_statement(statement, doc)
         }
-        Statement::TryStatement(statement) => format_try_statement(statement, formatter),
+        Statement::TryStatement(statement) => format_try_statement(statement, doc),
         Statement::TryWithResourcesStatement(statement) => {
-            format_try_with_resources_statement(statement, formatter)
+            format_try_with_resources_statement(statement, doc)
         }
     }
 }
 
 fn statement_body_as_block<'source>(
     body: Option<&StatementBody<'source>>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     match body {
-        Some(StatementBody::Block(block)) => format_block(block, formatter),
+        Some(StatementBody::Block(block)) => format_block(block, doc),
         Some(StatementBody::Empty(statement)) => {
-            format_empty_statement_body(statement).unwrap_or_else(empty_block)
+            format_empty_statement_body(statement, doc).unwrap_or_else(|| empty_block(doc))
         }
-        None => empty_block(),
+        None => empty_block(doc),
         Some(StatementBody::Unbraced(statement)) => {
-            inserted_braced_body(Some(format_statement(statement, formatter)))
+            let body = format_statement(statement, doc);
+            inserted_braced_body(doc, Some(body))
         }
     }
 }
 
 fn format_empty_statement<'source>(
     statement: &jolt_java_syntax::EmptyStatement<'source>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_empty_statement_comments(statement).unwrap_or_else(jolt_fmt_ir::nil)
+    format_empty_statement_comments(statement, doc).unwrap_or_else(Doc::nil)
 }
 
 fn format_empty_statement_body<'source>(
     statement: &jolt_java_syntax::EmptyStatement<'source>,
+    doc: &mut DocBuilder<'source>,
 ) -> Option<Doc<'source>> {
-    format_empty_statement_comments(statement).map(|comments| inserted_braced_body(Some(comments)))
+    format_empty_statement_comments(statement, doc)
+        .map(|comments| inserted_braced_body(doc, Some(comments)))
 }
 
 fn format_empty_statement_comments<'source>(
     statement: &jolt_java_syntax::EmptyStatement<'source>,
+    doc: &mut DocBuilder<'source>,
 ) -> Option<Doc<'source>> {
-    format_removed_comments(comments_from_tokens(statement.token_iter()))
+    format_removed_comments(doc, comments_from_tokens(statement.token_iter()))
 }
 
 fn statement_body_trailing_comments_force_line(body: Option<&StatementBody<'_>>) -> bool {

@@ -1,8 +1,11 @@
 use jolt_diagnostics::{Diagnostic, DiagnosticCodeId, DiagnosticStage, Severity};
-use jolt_fmt_ir::{FormatOptions, FormatSinkResult, RenderSink, render_to};
+use jolt_fmt_ir::{
+    DocBuilder, FormatOptions, FormatSinkResult, IndentStyle, RenderOptions, RenderSink, TextWidth,
+    render_to,
+};
 use jolt_kotlin_syntax::parse_kotlin_file;
 
-use crate::context::KotlinFormatter;
+use crate::rules::program::format_file;
 
 /// Stable Kotlin formatter diagnostic codes.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -33,13 +36,27 @@ pub fn format_source_to_sink<S: RenderSink + ?Sized>(
         };
     };
 
-    let mut formatter = KotlinFormatter::new(options);
-    let doc = formatter.format_file(&syntax);
-    match render_to(&doc, formatter.render_options(), sink) {
+    let mut builder = DocBuilder::new();
+    let doc = format_file(&syntax, &mut builder);
+    let render_options = render_options(*options);
+    let arena = builder.into_arena();
+    match render_to(&arena, doc, render_options, sink) {
         Ok(outcome) if outcome.halted => FormatSinkResult::Halted,
         Ok(_) => FormatSinkResult::Complete,
         Err(error) => FormatSinkResult::Blocked {
             diagnostics: vec![render_error_diagnostic(&error)],
+        },
+    }
+}
+
+fn render_options(options: FormatOptions) -> RenderOptions {
+    RenderOptions {
+        line_width: TextWidth::from(options.line_width),
+        indent_width: u16::from(options.indent_width),
+        indent_style: if options.use_tabs {
+            IndentStyle::Tab
+        } else {
+            IndentStyle::Space
         },
     }
 }

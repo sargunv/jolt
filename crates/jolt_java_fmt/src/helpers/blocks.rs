@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, concat, empty_line, hard_line, join};
+use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_java_syntax::JavaSyntaxToken;
 
 use crate::helpers::comments::{
@@ -28,94 +28,117 @@ impl<'source> BodyItem<'source> {
     }
 }
 
-pub(crate) fn inserted_braced_body(body: Option<Doc<'_>>) -> Doc<'_> {
-    concat([
-        // Intentional synthesized token: normalized braced bodies add braces
-        // around source statements that did not have a block.
-        inserted_syntax_token("{", FormatterInsertedToken::BlockBrace),
-        inserted_braced_body_tail(body),
-    ])
+pub(crate) fn inserted_braced_body<'source>(
+    doc: &mut DocBuilder<'source>,
+    body: Option<Doc<'source>>,
+) -> Doc<'source> {
+    doc_concat!(
+        doc,
+        [
+            // Intentional synthesized token: normalized braced bodies add braces
+            // around source statements that did not have a block.
+            inserted_syntax_token(doc, "{", FormatterInsertedToken::BlockBrace),
+            inserted_braced_body_tail(doc, body),
+        ]
+    )
 }
 
 pub(crate) fn source_braced_body<'source>(
+    doc: &mut DocBuilder<'source>,
     open: Option<&JavaSyntaxToken<'source>>,
     close: Option<&JavaSyntaxToken<'source>>,
     body: Option<Doc<'source>>,
 ) -> Doc<'source> {
-    concat([
-        format_source_open_brace(open),
-        source_braced_body_tail(close, body),
-    ])
+    doc_concat!(
+        doc,
+        [
+            format_source_open_brace(doc, open),
+            source_braced_body_tail(doc, close, body),
+        ]
+    )
 }
 
-fn inserted_braced_body_tail(body: Option<Doc<'_>>) -> Doc<'_> {
-    concat([
-        body.map_or_else(hard_line, |body| {
-            concat([
-                jolt_fmt_ir::indent(concat([hard_line(), body])),
-                hard_line(),
-            ])
-        }),
-        // Intentional synthesized token: closes the formatter-owned block
-        // opened by `inserted_braced_body`.
-        inserted_syntax_token("}", FormatterInsertedToken::BlockBrace),
-    ])
+fn inserted_braced_body_tail<'source>(
+    doc: &mut DocBuilder<'source>,
+    body: Option<Doc<'source>>,
+) -> Doc<'source> {
+    let body = match body {
+        Some(body) => {
+            let hard_line_before = doc.hard_line();
+            let body = doc_concat!(doc, [hard_line_before, body]);
+            let body = doc_indent!(doc, body);
+            let hard_line_after = doc.hard_line();
+            doc_concat!(doc, [body, hard_line_after])
+        }
+        None => doc.hard_line(),
+    };
+    let close = inserted_syntax_token(doc, "}", FormatterInsertedToken::BlockBrace);
+    doc_concat!(doc, [body, close])
 }
 
 fn source_braced_body_tail<'source>(
+    doc: &mut DocBuilder<'source>,
     close: Option<&JavaSyntaxToken<'source>>,
     body: Option<Doc<'source>>,
 ) -> Doc<'source> {
-    concat([
-        body.map_or_else(hard_line, |body| {
-            concat([
-                jolt_fmt_ir::indent(concat([hard_line(), body])),
-                hard_line(),
-            ])
-        }),
-        format_source_close_brace(close),
-    ])
+    let body = match body {
+        Some(body) => {
+            let hard_line_before = doc.hard_line();
+            let body = doc_concat!(doc, [hard_line_before, body]);
+            let body = doc_indent!(doc, body);
+            let hard_line_after = doc.hard_line();
+            doc_concat!(doc, [body, hard_line_after])
+        }
+        None => doc.hard_line(),
+    };
+    let close = format_source_close_brace(doc, close);
+    doc_concat!(doc, [body, close])
 }
 
-pub(crate) fn empty_block<'source>() -> Doc<'source> {
-    inserted_braced_body(None)
-}
-
-pub(crate) fn join_hard_lines<'source>(
-    docs: impl IntoIterator<Item = Doc<'source>>,
-) -> Doc<'source> {
-    join(&hard_line(), docs)
+pub(crate) fn empty_block<'source>(doc: &mut DocBuilder<'source>) -> Doc<'source> {
+    inserted_braced_body(doc, None)
 }
 
 pub(crate) fn join_empty_lines<'source>(
+    doc: &mut DocBuilder<'source>,
     docs: impl IntoIterator<Item = Doc<'source>>,
 ) -> Doc<'source> {
-    join(&empty_line(), docs)
+    doc_join!(doc, doc.empty_line(), docs)
 }
 
-pub(crate) fn join_body_items(items: Vec<BodyItem<'_>>) -> Doc<'_> {
-    let mut joined = Vec::with_capacity(items.len().saturating_mul(2).saturating_sub(1));
+pub(crate) fn join_body_items<'source>(
+    doc: &mut DocBuilder<'source>,
+    items: Vec<BodyItem<'source>>,
+) -> Doc<'source> {
+    let mut joined = doc.list();
     for item in items {
         if !joined.is_empty() {
-            joined.push(if item.starts_after_blank_line {
-                jolt_fmt_ir::empty_line()
+            let separator = if item.starts_after_blank_line {
+                doc.empty_line()
             } else {
-                hard_line()
-            });
+                doc.hard_line()
+            };
+            joined.push(separator, doc);
         }
-        joined.push(item.doc);
+        joined.push(item.doc, doc);
     }
-    concat(joined)
+    joined.finish(doc)
 }
 
-fn format_source_open_brace<'source>(open: Option<&JavaSyntaxToken<'source>>) -> Doc<'source> {
-    open.map_or_else(jolt_fmt_ir::nil, |open| {
-        format_token_before_relocated_trailing_comments(open, LeadingTrivia::Preserve)
+fn format_source_open_brace<'source>(
+    doc: &mut DocBuilder<'source>,
+    open: Option<&JavaSyntaxToken<'source>>,
+) -> Doc<'source> {
+    open.map_or_else(Doc::nil, |open| {
+        format_token_before_relocated_trailing_comments(doc, open, LeadingTrivia::Preserve)
     })
 }
 
-fn format_source_close_brace<'source>(close: Option<&JavaSyntaxToken<'source>>) -> Doc<'source> {
-    close.map_or_else(jolt_fmt_ir::nil, |close| {
-        format_token_after_relocated_leading_comments(close, TrailingTrivia::Preserve)
+fn format_source_close_brace<'source>(
+    doc: &mut DocBuilder<'source>,
+    close: Option<&JavaSyntaxToken<'source>>,
+) -> Doc<'source> {
+    close.map_or_else(Doc::nil, |close| {
+        format_token_after_relocated_leading_comments(doc, close, TrailingTrivia::Preserve)
     })
 }

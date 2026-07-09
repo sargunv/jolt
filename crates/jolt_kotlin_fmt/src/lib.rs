@@ -1,6 +1,5 @@
 //! Kotlin formatter implementation for Jolt.
 
-mod context;
 mod format;
 mod helpers;
 mod rules;

@@ -1,10 +1,9 @@
 use std::ops::Range;
 
-use jolt_fmt_ir::{Doc, concat, empty_line, hard_line, space};
+use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::{KotlinFile, KotlinFileItem, PackageHeader, StatementSyntax};
 
-use crate::context::KotlinFormatter;
-use crate::helpers::blocks::{join_empty_lines, join_hard_lines};
+use crate::helpers::blocks::join_hard_lines;
 use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_token};
 use crate::helpers::formatter_ignore::{
     FormatterIgnoreRun, formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
@@ -18,15 +17,20 @@ use crate::rules::statements::format_statement_syntax;
 
 pub(crate) fn format_file<'source>(
     file: &KotlinFile<'source>,
-    _formatter: &mut KotlinFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    concat([format_file_contents(file), hard_line()])
+    let contents = format_file_contents(doc, file);
+    let hard_line = doc.hard_line();
+    doc.concat([contents, hard_line])
 }
 
-fn format_file_contents<'source>(file: &KotlinFile<'source>) -> Doc<'source> {
+fn format_file_contents<'source>(
+    doc: &mut DocBuilder<'source>,
+    file: &KotlinFile<'source>,
+) -> Doc<'source> {
     let items = file.items().collect::<Vec<_>>();
     if items.is_empty() {
-        return format_file_annotations(file).unwrap_or_else(jolt_fmt_ir::nil);
+        return format_file_annotations(doc, file).unwrap_or_else(|| doc.nil());
     }
 
     let ignored_ranges = formatter_ignore_ranges(
@@ -37,24 +41,31 @@ fn format_file_contents<'source>(file: &KotlinFile<'source>) -> Doc<'source> {
     if !ignored_ranges.is_empty() {
         let item_ranges = items
             .iter()
-            .map(|item| file_item_token_range(item, file.text_range().start().get()))
+            .map(|item| file_item_token_range(doc, item, file.text_range().start().get()))
             .collect::<Vec<_>>();
         let ignored_runs = formatter_ignore_runs(&ignored_ranges, &item_ranges);
         if !ignored_runs.is_empty() {
-            return format_file_contents_with_ignored(file, items, &ignored_runs);
+            return format_file_contents_with_ignored(doc, file, items, &ignored_runs);
         }
     }
 
-    let mut sections = Vec::with_capacity(3);
-    if let Some(annotations) = format_file_annotations(file) {
-        sections.push(annotations);
+    let mut sections = doc.list();
+    if let Some(annotations) = format_file_annotations(doc, file) {
+        sections.push(annotations, doc);
     }
-    push_file_item_sections(file.source_text(), items, &mut sections);
+    if let Some(item_sections) = format_file_item_sections(doc, file.source_text(), items) {
+        if !sections.is_empty() {
+            let empty_line = doc.empty_line();
+            sections.push(empty_line, doc);
+        }
+        sections.push(item_sections, doc);
+    }
 
-    join_empty_lines(sections)
+    sections.finish(doc)
 }
 
 fn format_file_contents_with_ignored<'source>(
+    doc: &mut DocBuilder<'source>,
     file: &KotlinFile<'source>,
     items: Vec<KotlinFileItem<'source>>,
     ignored_runs: &[FormatterIgnoreRun<'source>],
@@ -65,7 +76,7 @@ fn format_file_contents_with_ignored<'source>(
     let mut ignored_index = 0;
     let mut skip_index = 0;
 
-    if let Some(annotations) = format_file_annotations(file) {
+    if let Some(annotations) = format_file_annotations(doc, file) {
         sections.push(FileSection {
             doc: annotations,
             hard_line_after: false,
@@ -76,10 +87,10 @@ fn format_file_contents_with_ignored<'source>(
         while ignored_index < ignored_runs.len()
             && ignored_runs[ignored_index].insert_index == item_index
         {
-            push_file_item_segment(source, &mut sections, &mut segment);
+            push_file_item_segment(doc, source, &mut sections, &mut segment);
             let run = &ignored_runs[ignored_index];
             sections.push(FileSection {
-                doc: formatter_ignore_run_doc(run),
+                doc: formatter_ignore_run_doc(run, doc),
                 hard_line_after: !run.include_on_marker,
             });
             ignored_index += 1;
@@ -96,35 +107,35 @@ fn format_file_contents_with_ignored<'source>(
         segment.push(item);
     }
 
-    push_file_item_segment(source, &mut sections, &mut segment);
+    push_file_item_segment(doc, source, &mut sections, &mut segment);
     while ignored_index < ignored_runs.len() {
         let run = &ignored_runs[ignored_index];
         sections.push(FileSection {
-            doc: formatter_ignore_run_doc(run),
+            doc: formatter_ignore_run_doc(run, doc),
             hard_line_after: !run.include_on_marker,
         });
         ignored_index += 1;
     }
 
-    join_file_sections(sections)
+    join_file_sections(doc, sections)
 }
 
-fn format_file_annotations<'source>(file: &KotlinFile<'source>) -> Option<Doc<'source>> {
-    let mut annotations = file
+fn format_file_annotations<'source>(
+    doc: &mut DocBuilder<'source>,
+    file: &KotlinFile<'source>,
+) -> Option<Doc<'source>> {
+    let annotations = file
         .annotations()
-        .map(|annotation| format_annotation(&annotation))
-        .peekable();
-    annotations
-        .peek()
-        .is_some()
-        .then(|| join_hard_lines(annotations))
+        .map(|annotation| format_annotation(doc, &annotation))
+        .collect::<Vec<_>>();
+    (!annotations.is_empty()).then(|| join_hard_lines(doc, annotations))
 }
 
-fn push_file_item_sections<'source>(
+fn format_file_item_sections<'source>(
+    doc: &mut DocBuilder<'source>,
     source: &'source str,
     items: Vec<KotlinFileItem<'source>>,
-    sections: &mut Vec<Doc<'source>>,
-) {
+) -> Option<Doc<'source>> {
     let mut package = None;
     let mut imports = None;
     let mut body_items = Vec::with_capacity(items.len());
@@ -133,25 +144,41 @@ fn push_file_item_sections<'source>(
         match item {
             KotlinFileItem::PackageHeader(header) => package = Some(header),
             KotlinFileItem::ImportList(list) => {
-                imports = format_imports(list.directives().collect());
+                imports = format_imports(doc, list.directives().collect());
             }
             item => body_items.push(item),
         }
     }
 
+    let mut sections = doc.list();
     if let Some(package) = package {
-        sections.push(format_package_header(&package));
+        let package = format_package_header(doc, &package);
+        push_file_item_section(doc, &mut sections, package);
     }
     if let Some(imports) = imports {
-        sections.push(imports);
+        push_file_item_section(doc, &mut sections, imports);
     }
-    let body_sections = format_source_body_sections(source, body_items);
-    if !body_sections.is_empty() {
-        sections.push(join_empty_lines(body_sections));
+    if let Some(body_sections) = format_source_body_sections(doc, source, body_items) {
+        push_file_item_section(doc, &mut sections, body_sections);
     }
+
+    (!sections.is_empty()).then(|| sections.finish(doc))
+}
+
+fn push_file_item_section<'source>(
+    doc: &mut DocBuilder<'source>,
+    sections: &mut jolt_fmt_ir::DocList<'source>,
+    section: Doc<'source>,
+) {
+    if !sections.is_empty() {
+        let empty_line = doc.empty_line();
+        sections.push(empty_line, doc);
+    }
+    sections.push(section, doc);
 }
 
 fn push_file_item_segment<'source>(
+    doc: &mut DocBuilder<'source>,
     source: &'source str,
     sections: &mut Vec<FileSection<'source>>,
     segment: &mut Vec<KotlinFileItem<'source>>,
@@ -160,31 +187,33 @@ fn push_file_item_segment<'source>(
         return;
     }
 
-    let mut docs = Vec::with_capacity(3);
-    push_file_item_sections(source, std::mem::take(segment), &mut docs);
-    if !docs.is_empty() {
+    if let Some(doc) = format_file_item_sections(doc, source, std::mem::take(segment)) {
         sections.push(FileSection {
-            doc: join_empty_lines(docs),
+            doc,
             hard_line_after: false,
         });
     }
 }
 
-fn join_file_sections(sections: Vec<FileSection<'_>>) -> Doc<'_> {
-    let mut joined = Vec::with_capacity(sections.len().saturating_mul(2).saturating_sub(1));
+fn join_file_sections<'source>(
+    doc: &mut DocBuilder<'source>,
+    sections: Vec<FileSection<'source>>,
+) -> Doc<'source> {
+    let mut joined = doc.list();
     let mut previous_hard_line_after = false;
     for section in sections {
         if !joined.is_empty() {
-            joined.push(if previous_hard_line_after {
-                hard_line()
+            let separator = if previous_hard_line_after {
+                doc.hard_line()
             } else {
-                empty_line()
-            });
+                doc.empty_line()
+            };
+            joined.push(separator, doc);
         }
-        joined.push(section.doc);
+        joined.push(section.doc, doc);
         previous_hard_line_after = section.hard_line_after;
     }
-    concat(joined)
+    joined.finish(doc)
 }
 
 struct FileSection<'source> {
@@ -193,16 +222,24 @@ struct FileSection<'source> {
 }
 
 fn format_source_body_sections<'source>(
+    doc: &mut DocBuilder<'source>,
     source: &'source str,
     items: Vec<KotlinFileItem<'source>>,
-) -> Vec<Doc<'source>> {
-    source_item_groups(source, items)
-        .into_iter()
-        .map(|group| format_source_item_group(source, &group))
-        .collect()
+) -> Option<Doc<'source>> {
+    let mut sections = doc.list();
+    for group in source_item_groups(doc, source, items) {
+        if !sections.is_empty() {
+            let empty_line = doc.empty_line();
+            sections.push(empty_line, doc);
+        }
+        let group = format_source_item_group(doc, source, &group);
+        sections.push(group, doc);
+    }
+    (!sections.is_empty()).then(|| sections.finish(doc))
 }
 
 fn source_item_groups<'source>(
+    doc: &mut DocBuilder<'source>,
     source: &str,
     items: Vec<KotlinFileItem<'source>>,
 ) -> Vec<SourceItemGroup<'source>> {
@@ -220,6 +257,7 @@ fn source_item_groups<'source>(
 
         if current_group.items.last().is_some_and(|previous| {
             should_continue_source_group(
+                doc,
                 source,
                 previous,
                 &item,
@@ -245,23 +283,28 @@ fn source_item_groups<'source>(
 }
 
 fn should_continue_source_group(
+    doc: &mut DocBuilder<'_>,
     source: &str,
     previous: &KotlinFileItem<'_>,
     current: &KotlinFileItem<'_>,
     previous_end: usize,
     current_start: usize,
 ) -> bool {
-    !has_blank_line_between(source, previous_end, current_start)
-        && (is_statement_item(previous)
-            || is_statement_item(current)
-            || is_fun_interface_pair(previous, current))
+    !has_blank_line_between(doc, source, previous_end, current_start)
+        && (is_statement_item(doc, previous)
+            || is_statement_item(doc, current)
+            || is_fun_interface_pair(doc, previous, current))
 }
 
-fn is_statement_item(item: &KotlinFileItem<'_>) -> bool {
+fn is_statement_item(_doc: &mut DocBuilder<'_>, item: &KotlinFileItem<'_>) -> bool {
     matches!(item, KotlinFileItem::Statement(_))
 }
 
-fn is_fun_interface_pair(previous: &KotlinFileItem<'_>, current: &KotlinFileItem<'_>) -> bool {
+fn is_fun_interface_pair(
+    _doc: &mut DocBuilder<'_>,
+    previous: &KotlinFileItem<'_>,
+    current: &KotlinFileItem<'_>,
+) -> bool {
     matches!(
         (previous, current),
         (
@@ -272,30 +315,39 @@ fn is_fun_interface_pair(previous: &KotlinFileItem<'_>, current: &KotlinFileItem
 }
 
 fn format_source_item_group<'source>(
+    doc: &mut DocBuilder<'source>,
     _source: &'source str,
     group: &SourceItemGroup<'source>,
 ) -> Doc<'source> {
     if let [item] = group.items.as_slice() {
-        return format_body_item(item);
+        return format_body_item(doc, item);
     }
     if let [
         KotlinFileItem::FunctionDeclaration(function),
         KotlinFileItem::InterfaceDeclaration(interface),
     ] = group.items.as_slice()
-        && let Some(doc) = format_fun_interface_file_items(function, interface)
+        && let Some(doc) = format_fun_interface_file_items(doc, function, interface)
     {
         return doc;
     }
 
-    join_hard_lines(group.items.iter().map(format_body_item))
+    let items = group
+        .items
+        .iter()
+        .map(|item| format_body_item(doc, item))
+        .collect::<Vec<_>>();
+    join_hard_lines(doc, items)
 }
 
-fn format_body_item<'source>(item: &KotlinFileItem<'source>) -> Doc<'source> {
+fn format_body_item<'source>(
+    doc: &mut DocBuilder<'source>,
+    item: &KotlinFileItem<'source>,
+) -> Doc<'source> {
     match item {
         KotlinFileItem::Statement(statement) => {
-            format_statement_syntax(&StatementSyntax::Statement(*statement))
+            format_statement_syntax(doc, &StatementSyntax::Statement(*statement))
         }
-        _ => format_file_item(item),
+        _ => format_file_item(doc, item),
     }
 }
 
@@ -339,7 +391,11 @@ impl SourceItemRange {
     }
 }
 
-fn file_item_token_range(item: &KotlinFileItem<'_>, file_start: usize) -> Option<Range<usize>> {
+fn file_item_token_range(
+    _doc: &mut DocBuilder<'_>,
+    item: &KotlinFileItem<'_>,
+    file_start: usize,
+) -> Option<Range<usize>> {
     Some(relative_token_range_between(
         &item.first_token()?,
         &item.last_token()?,
@@ -347,7 +403,12 @@ fn file_item_token_range(item: &KotlinFileItem<'_>, file_start: usize) -> Option
     ))
 }
 
-fn has_blank_line_between(source: &str, left_end: usize, right_start: usize) -> bool {
+fn has_blank_line_between(
+    _doc: &mut DocBuilder<'_>,
+    source: &str,
+    left_end: usize,
+    right_start: usize,
+) -> bool {
     source[left_end..right_start]
         .bytes()
         .filter(|byte| *byte == b'\n')
@@ -356,18 +417,26 @@ fn has_blank_line_between(source: &str, left_end: usize, right_start: usize) -> 
         >= 2
 }
 
-fn format_package_header<'source>(package: &PackageHeader<'source>) -> Doc<'source> {
-    concat([
-        package
-            .package_token()
-            .map_or_else(jolt_fmt_ir::nil, |token| {
-                concat([
-                    format_token(&token, LeadingTrivia::Preserve, TrailingTrivia::Preserve),
-                    space(),
-                ])
-            }),
-        package
-            .name()
-            .map_or_else(jolt_fmt_ir::nil, |name| format_qualified_name(&name)),
-    ])
+fn format_package_header<'source>(
+    doc: &mut DocBuilder<'source>,
+    package: &PackageHeader<'source>,
+) -> Doc<'source> {
+    let package_token = if let Some(token) = package.package_token() {
+        let token = format_token(
+            doc,
+            &token,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::Preserve,
+        );
+        let space = doc.space();
+        doc.concat([token, space])
+    } else {
+        doc.nil()
+    };
+    let name = if let Some(name) = package.name() {
+        format_qualified_name(doc, &name)
+    } else {
+        doc.nil()
+    };
+    doc.concat([package_token, name])
 }

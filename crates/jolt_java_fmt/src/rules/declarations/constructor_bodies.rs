@@ -1,16 +1,17 @@
 use super::{
-    BodyItem, ConstructorInvocation, Doc, JavaFormatter, JavaSyntaxToken, LeadingTrivia, Range,
-    concat, format_argument_list, format_block_statement_item_or_recovered,
+    BodyItem, ConstructorInvocation, Doc, JavaSyntaxToken, LeadingTrivia, Range,
+    format_argument_list, format_block_statement_item_or_recovered,
     format_construct_leading_comments, format_expression, format_name, format_removed_comments,
     format_statement_semicolon, format_token_after_construct_leading_comments,
     format_token_sequence, format_token_with_comments, format_type_argument_list,
     formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs, join_body_items,
     relative_token_range_between,
 };
+use jolt_fmt_ir::DocBuilder;
 
 pub(super) fn format_constructor_body<'source>(
     body: &jolt_java_syntax::ConstructorBody<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Option<Doc<'source>> {
     let elements = constructor_body_elements(body);
     let ignored_ranges = formatter_ignore_ranges(
@@ -21,17 +22,19 @@ pub(super) fn format_constructor_body<'source>(
     if ignored_ranges.is_empty() {
         let mut items = Vec::with_capacity(elements.len().saturating_add(2));
         items.extend(format_constructor_body_open_dangling_comments(
+            doc,
             body.open_brace(),
         ));
         items.extend(
             elements
                 .iter()
-                .filter_map(|element| format_constructor_body_element(element, formatter)),
+                .filter_map(|element| format_constructor_body_element(element, doc)),
         );
         items.extend(format_constructor_body_close_dangling_comments(
+            doc,
             body.close_brace(),
         ));
-        return (!items.is_empty()).then(|| join_body_items(items));
+        return (!items.is_empty()).then(|| join_body_items(doc, items));
     }
     let element_ranges = elements
         .iter()
@@ -47,6 +50,7 @@ pub(super) fn format_constructor_body<'source>(
             .saturating_add(2),
     );
     items.extend(format_constructor_body_open_dangling_comments(
+        doc,
         body.open_brace(),
     ));
     let mut ignored_index = 0;
@@ -57,7 +61,7 @@ pub(super) fn format_constructor_body<'source>(
             && ignored_runs[ignored_index].insert_index == element_index
         {
             let run = &ignored_runs[ignored_index];
-            items.push(BodyItem::new(formatter_ignore_run_doc(run), false));
+            items.push(BodyItem::new(formatter_ignore_run_doc(run, doc), false));
             ignored_index += 1;
         }
 
@@ -70,7 +74,7 @@ pub(super) fn format_constructor_body<'source>(
             continue;
         }
 
-        let Some(mut item) = format_constructor_body_element(element, formatter) else {
+        let Some(mut item) = format_constructor_body_element(element, doc) else {
             continue;
         };
         if skip_index > 0 && ignored_runs[skip_index - 1].skip_end == element_index {
@@ -81,27 +85,30 @@ pub(super) fn format_constructor_body<'source>(
 
     while ignored_index < ignored_runs.len() {
         let run = &ignored_runs[ignored_index];
-        items.push(BodyItem::new(formatter_ignore_run_doc(run), false));
+        items.push(BodyItem::new(formatter_ignore_run_doc(run, doc), false));
         ignored_index += 1;
     }
     items.extend(format_constructor_body_close_dangling_comments(
+        doc,
         body.close_brace(),
     ));
 
-    (!items.is_empty()).then(|| join_body_items(items))
+    (!items.is_empty()).then(|| join_body_items(doc, items))
 }
 
-fn format_constructor_body_open_dangling_comments(
-    open: Option<JavaSyntaxToken<'_>>,
-) -> Option<BodyItem<'_>> {
-    format_removed_comments(open?.trailing_comments())
+fn format_constructor_body_open_dangling_comments<'source>(
+    doc: &mut jolt_fmt_ir::DocBuilder<'source>,
+    open: Option<JavaSyntaxToken<'source>>,
+) -> Option<BodyItem<'source>> {
+    format_removed_comments(doc, open?.trailing_comments())
         .map(|comments| BodyItem::new(comments, false))
 }
 
-fn format_constructor_body_close_dangling_comments(
-    close: Option<JavaSyntaxToken<'_>>,
-) -> Option<BodyItem<'_>> {
-    format_removed_comments(close?.leading_comments())
+fn format_constructor_body_close_dangling_comments<'source>(
+    doc: &mut jolt_fmt_ir::DocBuilder<'source>,
+    close: Option<JavaSyntaxToken<'source>>,
+) -> Option<BodyItem<'source>> {
+    format_removed_comments(doc, close?.leading_comments())
         .map(|comments| BodyItem::new(comments, false))
 }
 
@@ -148,28 +155,28 @@ fn format_constructor_body_element<'source>(
         'source,
         jolt_java_syntax::ConstructorBodyEntry<'source>,
     >,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Option<BodyItem<'source>> {
     match element {
         jolt_java_syntax::RecoveredSeparatedListEntry::Entry(entry) => match entry {
             jolt_java_syntax::ConstructorBodyEntry::Invocation(invocation) => Some(BodyItem::new(
-                format_constructor_invocation(invocation, formatter),
+                format_constructor_invocation(invocation, doc),
                 invocation.starts_after_blank_line(),
             )),
             jolt_java_syntax::ConstructorBodyEntry::BlockStatement(statement) => {
-                format_block_statement_item_or_recovered(statement, formatter)
+                format_block_statement_item_or_recovered(statement, doc)
             }
         },
         jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => Some(BodyItem::new(
-            format_token_sequence(std::iter::once(*token), LeadingTrivia::Preserve),
+            format_token_sequence(doc, std::iter::once(*token), LeadingTrivia::Preserve),
             false,
         )),
         jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => Some(BodyItem::new(
-            format_token_sequence(error.token_iter(), LeadingTrivia::Preserve),
+            format_token_sequence(doc, error.token_iter(), LeadingTrivia::Preserve),
             false,
         )),
         jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => Some(BodyItem::new(
-            format_token_sequence(node.token_iter(), LeadingTrivia::Preserve),
+            format_token_sequence(doc, node.token_iter(), LeadingTrivia::Preserve),
             false,
         )),
     }
@@ -177,38 +184,45 @@ fn format_constructor_body_element<'source>(
 
 fn format_constructor_invocation<'source>(
     invocation: &ConstructorInvocation<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let invocation_first_token = invocation.first_token();
-    concat([
-        format_construct_leading_comments(invocation_first_token.as_ref()),
-        format_constructor_invocation_qualifier(invocation, formatter),
-        invocation
-            .type_arguments()
-            .map_or_else(jolt_fmt_ir::nil, |arguments| {
-                format_type_argument_list(&arguments, formatter)
-            }),
-        invocation.target().map_or_else(jolt_fmt_ir::nil, |target| {
-            format_token_after_construct_leading_comments(&target, invocation_first_token.as_ref())
-        }),
-        format_argument_list(invocation.arguments(), formatter),
-        format_statement_semicolon(invocation.semicolon()),
-    ])
+    doc_concat!(
+        doc,
+        [
+            format_construct_leading_comments(doc, invocation_first_token.as_ref()),
+            format_constructor_invocation_qualifier(invocation, doc),
+            invocation
+                .type_arguments()
+                .map_or_else(Doc::nil, |arguments| format_type_argument_list(
+                    &arguments, doc
+                ),),
+            invocation.target().map_or_else(Doc::nil, |target| {
+                format_token_after_construct_leading_comments(
+                    doc,
+                    &target,
+                    invocation_first_token.as_ref(),
+                )
+            },),
+            format_argument_list(invocation.arguments(), doc),
+            format_statement_semicolon(invocation.semicolon(), doc),
+        ]
+    )
 }
 
 fn format_constructor_invocation_qualifier<'source>(
     invocation: &ConstructorInvocation<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let dot = invocation
         .dot_token()
         .as_ref()
-        .map_or_else(jolt_fmt_ir::nil, format_token_with_comments);
+        .map_or_else(Doc::nil, |token| format_token_with_comments(doc, token));
     if let Some(name) = invocation.qualifier_name() {
-        return concat([format_name(&name), dot]);
+        return doc_concat!(doc, [format_name(&name, doc), dot]);
     }
     if let Some(expression) = invocation.qualifier_expression() {
-        return concat([format_expression(&expression, formatter), dot]);
+        return doc_concat!(doc, [format_expression(&expression, doc), dot]);
     }
     dot
 }

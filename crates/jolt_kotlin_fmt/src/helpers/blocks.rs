@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, concat, empty_line, hard_line, indent, join};
+use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_kotlin_syntax::KotlinSyntaxToken;
 
 use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_token};
@@ -25,85 +25,108 @@ impl<'source> BodyItem<'source> {
 }
 
 pub(crate) fn join_hard_lines<'source>(
+    doc: &mut DocBuilder<'source>,
     docs: impl IntoIterator<Item = Doc<'source>>,
 ) -> Doc<'source> {
-    join(&hard_line(), docs)
+    let separator = doc.hard_line();
+    doc.join(separator, docs)
 }
 
-pub(crate) fn join_empty_lines<'source>(
-    docs: impl IntoIterator<Item = Doc<'source>>,
+pub(crate) fn join_body_items<'source>(
+    doc: &mut DocBuilder<'source>,
+    items: Vec<BodyItem<'source>>,
 ) -> Doc<'source> {
-    join(&empty_line(), docs)
-}
-
-pub(crate) fn join_body_items(items: Vec<BodyItem<'_>>) -> Doc<'_> {
-    let mut joined = Vec::with_capacity(items.len().saturating_mul(2).saturating_sub(1));
+    let mut joined = doc.list();
     for item in items {
         if !joined.is_empty() {
-            joined.push(if item.starts_after_blank_line {
-                empty_line()
+            let separator = if item.starts_after_blank_line {
+                doc.empty_line()
             } else {
-                hard_line()
-            });
+                doc.hard_line()
+            };
+            joined.push(separator, doc);
         }
-        joined.push(item.doc);
+        joined.push(item.doc, doc);
     }
-    concat(joined)
+    joined.finish(doc)
 }
 
 pub(crate) fn source_braced_body<'source>(
+    doc: &mut DocBuilder<'source>,
     open: Option<&KotlinSyntaxToken<'source>>,
     close: Option<&KotlinSyntaxToken<'source>>,
     body: Option<Doc<'source>>,
 ) -> Doc<'source> {
-    concat([
-        format_source_open_brace(open),
-        source_braced_body_tail(close, body),
-    ])
+    let open = format_source_open_brace(doc, open);
+    let tail = source_braced_body_tail(doc, close, body);
+    doc.concat([open, tail])
 }
 
 pub(crate) fn empty_source_braced_body<'source>(
+    doc: &mut DocBuilder<'source>,
     open: Option<&KotlinSyntaxToken<'source>>,
     close: Option<&KotlinSyntaxToken<'source>>,
 ) -> Doc<'source> {
-    concat([
-        format_source_open_brace(open),
-        format_source_close_brace(close),
-    ])
+    let open = format_source_open_brace(doc, open);
+    let close = format_source_close_brace(doc, close);
+    doc.concat([open, close])
 }
 
 fn source_braced_body_tail<'source>(
+    doc: &mut DocBuilder<'source>,
     close: Option<&KotlinSyntaxToken<'source>>,
     body: Option<Doc<'source>>,
 ) -> Doc<'source> {
-    match body {
-        Some(body) => concat([
-            concat([indent(concat([hard_line(), body])), hard_line()]),
-            format_source_close_brace_with_leading(close, LeadingTrivia::SuppressAlreadyHandled),
-        ]),
-        None => concat([hard_line(), format_source_close_brace(close)]),
+    if let Some(body) = body {
+        let line = doc.hard_line();
+        let body = doc.concat([line, body]);
+        let body = doc.indent(body);
+        let line = doc.hard_line();
+        let body = doc.concat([body, line]);
+        let close = format_source_close_brace_with_leading(
+            doc,
+            close,
+            LeadingTrivia::SuppressAlreadyHandled,
+        );
+        doc.concat([body, close])
+    } else {
+        let line = doc.hard_line();
+        let close = format_source_close_brace(doc, close);
+        doc.concat([line, close])
     }
 }
 
-fn format_source_open_brace<'source>(open: Option<&KotlinSyntaxToken<'source>>) -> Doc<'source> {
-    open.map_or_else(jolt_fmt_ir::nil, |open| {
+fn format_source_open_brace<'source>(
+    doc: &mut DocBuilder<'source>,
+    open: Option<&KotlinSyntaxToken<'source>>,
+) -> Doc<'source> {
+    if let Some(open) = open {
         format_token(
+            doc,
             open,
             LeadingTrivia::Preserve,
             TrailingTrivia::RelocatedToEnclosingContext,
         )
-    })
+    } else {
+        doc.nil()
+    }
 }
 
-fn format_source_close_brace<'source>(close: Option<&KotlinSyntaxToken<'source>>) -> Doc<'source> {
-    format_source_close_brace_with_leading(close, LeadingTrivia::Preserve)
+fn format_source_close_brace<'source>(
+    doc: &mut DocBuilder<'source>,
+    close: Option<&KotlinSyntaxToken<'source>>,
+) -> Doc<'source> {
+    format_source_close_brace_with_leading(doc, close, LeadingTrivia::Preserve)
 }
 
 fn format_source_close_brace_with_leading<'source>(
+    doc: &mut DocBuilder<'source>,
     close: Option<&KotlinSyntaxToken<'source>>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
-    close.map_or_else(jolt_fmt_ir::nil, |close| {
-        format_token(close, leading, TrailingTrivia::Preserve)
-    })
+    if let Some(close) = close {
+        format_token(doc, close, leading, TrailingTrivia::Preserve)
+    } else {
+        doc.nil()
+    }
 }

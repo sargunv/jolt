@@ -1,159 +1,160 @@
 use super::{
-    AssignmentExpression, BinaryExpression, ConditionalExpression, Doc, Expression, JavaFormatter,
-    PostfixExpression, UnaryExpression, concat, format_expression, format_token_with_comments,
+    AssignmentExpression, BinaryExpression, ConditionalExpression, Doc, Expression,
+    PostfixExpression, UnaryExpression, format_expression, format_token_with_comments,
 };
 use crate::helpers::comments::token_has_comments;
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_token, format_token_sequence,
 };
 use crate::helpers::syntax_tokens::{FormatterInsertedToken, inserted_syntax_token};
-use jolt_fmt_ir::space;
-use jolt_fmt_ir::{force_group, group, indent, line};
+use jolt_fmt_ir::{DocBuilder, DocList};
 use jolt_java_syntax::{ExpressionParentRole, JavaOperator};
 
 pub(super) fn format_assignment_expression<'source>(
     expression: &AssignmentExpression<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    assignment_expression(
-        expression
-            .left()
-            .map_or_else(jolt_fmt_ir::nil, |left| format_expression(&left, formatter)),
-        expression
-            .operator()
-            .map_or_else(jolt_fmt_ir::nil, |operator| {
-                format_operator_with_comments(&operator)
-            }),
-        expression.right().map_or_else(jolt_fmt_ir::nil, |right| {
-            format_expression(&right, formatter)
-        }),
-    )
+    let left = match expression.left() {
+        Some(left) => format_expression(&left, doc),
+        None => Doc::nil(),
+    };
+    let operator = match expression.operator() {
+        Some(operator) => format_operator_with_comments(&operator, doc),
+        None => Doc::nil(),
+    };
+    let right = match expression.right() {
+        Some(right) => format_expression(&right, doc),
+        None => Doc::nil(),
+    };
+
+    assignment_expression(doc, left, operator, right)
 }
 
 pub(super) fn format_conditional_expression<'source>(
     expression: &ConditionalExpression<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
+    let condition = match expression.condition() {
+        Some(condition) => format_expression(&condition, doc),
+        None => Doc::nil(),
+    };
+    let question = match expression.question_token() {
+        Some(token) => format_token_with_comments(doc, &token),
+        None => Doc::nil(),
+    };
+    let consequence = match expression.true_expression() {
+        Some(expression) => format_expression(&expression, doc),
+        None => Doc::nil(),
+    };
+    let colon = match expression.colon_token() {
+        Some(token) => format_token_with_comments(doc, &token),
+        None => Doc::nil(),
+    };
+    let alternative = match expression.false_expression() {
+        Some(expression) => format_expression(&expression, doc),
+        None => Doc::nil(),
+    };
+
     ternary_expression(
-        expression
-            .condition()
-            .map_or_else(jolt_fmt_ir::nil, |condition| {
-                format_expression(&condition, formatter)
-            }),
-        expression
-            .question_token()
-            .map_or_else(jolt_fmt_ir::nil, |token| format_token_with_comments(&token)),
-        expression
-            .true_expression()
-            .map_or_else(jolt_fmt_ir::nil, |expression| {
-                format_expression(&expression, formatter)
-            }),
-        expression
-            .colon_token()
-            .map_or_else(jolt_fmt_ir::nil, |token| format_token_with_comments(&token)),
-        expression
-            .false_expression()
-            .map_or_else(jolt_fmt_ir::nil, |expression| {
-                format_expression(&expression, formatter)
-            }),
+        doc,
+        condition,
+        question,
+        consequence,
+        colon,
+        alternative,
         should_force_conditional_break(expression),
     )
 }
 
 pub(super) fn format_binary_expression<'source>(
     expression: &BinaryExpression<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let Some(operator) = expression.operator() else {
-        return format_binary_expression_without_operator(expression, formatter);
+        return format_binary_expression_without_operator(expression, doc);
     };
 
     if expression.left().is_none() {
-        return binary_chain(
-            jolt_fmt_ir::nil(),
-            vec![(
-                format_operator_with_comments(&operator),
-                expression.right().map_or_else(jolt_fmt_ir::nil, |right| {
-                    format_expression(&right, formatter)
-                }),
-            )],
-        );
+        let operator = format_operator_with_comments(&operator, doc);
+        let right = match expression.right() {
+            Some(right) => format_expression(&right, doc),
+            None => Doc::nil(),
+        };
+        let mut rest = doc.list();
+        push_binary_chain_item(&mut rest, operator, right, doc);
+        return binary_chain(doc, Doc::nil(), rest);
     }
 
     let parent_operator = operator.text();
-    let (first, rest) = flatten_binary_expression(expression, formatter);
-    let first = format_binary_operand(&first, parent_operator, formatter);
-    binary_chain(first, rest)
+    let (first, rest) = flatten_binary_expression(expression, doc);
+    let first = format_binary_operand(&first, parent_operator, doc);
+    binary_chain(doc, first, rest)
 }
 
 fn format_binary_expression_without_operator<'source>(
     expression: &BinaryExpression<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let left = expression.left();
     let right = expression.right();
     if left.is_none() && right.is_none() {
-        return format_token_sequence(expression.token_iter(), LeadingTrivia::Preserve);
+        return format_token_sequence(doc, expression.token_iter(), LeadingTrivia::Preserve);
     }
+    let left = match left {
+        Some(left) => format_expression(&left, doc),
+        None => Doc::nil(),
+    };
+    let right = match right {
+        Some(right) => format_expression(&right, doc),
+        None => Doc::nil(),
+    };
 
-    concat([
-        left.map_or_else(jolt_fmt_ir::nil, |left| format_expression(&left, formatter)),
-        right.map_or_else(jolt_fmt_ir::nil, |right| {
-            format_expression(&right, formatter)
-        }),
-    ])
+    doc_concat!(doc, [left, right])
 }
 
 pub(super) fn format_unary_expression<'source>(
     expression: &UnaryExpression<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    concat([
-        expression
-            .operator()
-            .map_or_else(jolt_fmt_ir::nil, |operator| {
-                format_token_with_comments(&operator)
-            }),
-        expression
-            .operand()
-            .map_or_else(jolt_fmt_ir::nil, |operand| {
-                format_expression(&operand, formatter)
-            }),
-    ])
+    let operator = expression.operator().map_or_else(Doc::nil, |operator| {
+        format_token_with_comments(doc, &operator)
+    });
+    let operand = expression
+        .operand()
+        .map_or_else(Doc::nil, |operand| format_expression(&operand, doc));
+
+    doc_concat!(doc, [operator, operand])
 }
 
 pub(super) fn format_postfix_expression<'source>(
     expression: &PostfixExpression<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    concat([
-        expression
-            .operand()
-            .map_or_else(jolt_fmt_ir::nil, |operand| {
-                format_expression(&operand, formatter)
-            }),
-        expression
-            .operator()
-            .map_or_else(jolt_fmt_ir::nil, |operator| {
-                format_token_with_comments(&operator)
-            }),
-    ])
+    let operand = expression
+        .operand()
+        .map_or_else(Doc::nil, |operand| format_expression(&operand, doc));
+    let operator = expression.operator().map_or_else(Doc::nil, |operator| {
+        format_token_with_comments(doc, &operator)
+    });
+
+    doc_concat!(doc, [operand, operator])
 }
 
 fn flatten_binary_expression<'source>(
     expression: &BinaryExpression<'source>,
-    formatter: &JavaFormatter<'_>,
-) -> (Expression<'source>, Vec<(Doc<'source>, Doc<'source>)>) {
+    doc: &mut DocBuilder<'source>,
+) -> (Expression<'source>, DocList<'source>) {
     let Some(operator) = expression.operator() else {
+        let mut rest = doc.list();
+        if let Some(right) = expression.right() {
+            let right = format_expression(&right, doc);
+            push_binary_chain_item(&mut rest, Doc::nil(), right, doc);
+        }
         return (
             expression
                 .left()
                 .unwrap_or_else(|| Expression::from(*expression)),
-            expression
-                .right()
-                .map(|right| (jolt_fmt_ir::nil(), format_expression(&right, formatter)))
-                .into_iter()
-                .collect(),
+            rest,
         );
     };
     let root = Expression::from(*expression);
@@ -161,21 +162,17 @@ fn flatten_binary_expression<'source>(
     let mut operators = Vec::new();
     collect_binary_chain(root, &mut operands, &mut operators);
     if operators.len() + 1 != operands.len() {
-        return unflattened_binary_expression(expression, formatter, &operator);
+        return unflattened_binary_expression(expression, doc, &operator);
     }
 
     let mut operands = operands.into_iter();
     let first = operands.next().unwrap_or(root);
-    let rest = operators
-        .into_iter()
-        .zip(operands)
-        .map(|(operator, operand)| {
-            (
-                format_operator_with_comments(&operator),
-                format_binary_operand(&operand, operator.text(), formatter),
-            )
-        })
-        .collect();
+    let mut rest = doc.list();
+    for (operator, operand) in operators.into_iter().zip(operands) {
+        let operand = format_binary_operand(&operand, operator.text(), doc);
+        let operator = format_operator_with_comments(&operator, doc);
+        push_binary_chain_item(&mut rest, operator, operand, doc);
+    }
 
     (first, rest)
 }
@@ -183,40 +180,51 @@ fn flatten_binary_expression<'source>(
 fn format_binary_operand<'source>(
     expression: &Expression<'source>,
     parent_operator: &str,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let doc = format_expression(expression, formatter);
+    let formatted = format_expression(expression, doc);
     if should_parenthesize_binary_operand(expression, parent_operator) {
-        jolt_fmt_ir::group(concat([
-            // Intentional synthesized token: readability parentheses preserve
-            // the parsed precedence while making mixed binary precedence clear.
-            inserted_syntax_token("(", FormatterInsertedToken::PrecedenceParenthesis),
-            jolt_fmt_ir::indent(concat([jolt_fmt_ir::soft_line(), doc])),
-            jolt_fmt_ir::soft_line(),
-            // Intentional synthesized token: closes the formatter-owned
-            // readability parenthesis above.
-            inserted_syntax_token(")", FormatterInsertedToken::PrecedenceParenthesis),
-        ]))
+        let open = inserted_syntax_token(doc, "(", FormatterInsertedToken::PrecedenceParenthesis);
+        let line = doc.soft_line();
+        let indented = doc_indent!(doc, doc_concat!(doc, [line, formatted]));
+        let line = doc.soft_line();
+        let close = inserted_syntax_token(doc, ")", FormatterInsertedToken::PrecedenceParenthesis);
+        doc_group!(
+            doc,
+            doc_concat!(
+                doc,
+                [
+                    // Intentional synthesized token: readability parentheses preserve
+                    // the parsed precedence while making mixed binary precedence clear.
+                    open, indented, line,
+                    // Intentional synthesized token: closes the doc-owned
+                    // readability parenthesis above.
+                    close,
+                ]
+            )
+        )
     } else {
-        doc
+        formatted
     }
 }
 
 fn unflattened_binary_expression<'source>(
     expression: &BinaryExpression<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
     operator: &JavaOperator<'source>,
-) -> (Expression<'source>, Vec<(Doc<'source>, Doc<'source>)>) {
+) -> (Expression<'source>, DocList<'source>) {
+    let operator = format_operator_with_comments(operator, doc);
+    let right = expression
+        .right()
+        .map_or_else(Doc::nil, |right| format_expression(&right, doc));
+    let mut rest = doc.list();
+    push_binary_chain_item(&mut rest, operator, right, doc);
+
     (
         expression
             .left()
             .unwrap_or_else(|| Expression::from(*expression)),
-        vec![(
-            format_operator_with_comments(operator),
-            expression.right().map_or_else(jolt_fmt_ir::nil, |right| {
-                format_expression(&right, formatter)
-            }),
-        )],
+        rest,
     )
 }
 
@@ -286,17 +294,21 @@ fn binary_for_chain(expression: Expression<'_>) -> Option<BinaryExpression<'_>> 
     }
 }
 
-fn format_operator_with_comments<'source>(operator: &JavaOperator<'source>) -> Doc<'source> {
+fn format_operator_with_comments<'source>(
+    operator: &JavaOperator<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
     if let Some(token) = operator.as_single_token() {
-        return format_token_with_comments(token);
+        return format_token_with_comments(doc, token);
     }
 
     let mut tokens = operator.tokens().enumerate().peekable();
-    concat(std::iter::from_fn(|| {
-        let (index, token) = tokens.next()?;
+    let mut docs = doc.list();
+    while let Some((index, token)) = tokens.next() {
         let is_first = index == 0;
         let is_last = tokens.peek().is_none();
-        Some(format_token(
+        let token = format_token(
+            doc,
             &token,
             if is_first {
                 LeadingTrivia::Preserve
@@ -308,39 +320,58 @@ fn format_operator_with_comments<'source>(operator: &JavaOperator<'source>) -> D
             } else {
                 TrailingTrivia::RelocatedToEnclosingContext
             },
-        ))
-    }))
+        );
+        docs.push(token, doc);
+    }
+    docs.finish(doc)
 }
 
 fn assignment_expression<'source>(
+    doc: &mut DocBuilder<'source>,
     left: Doc<'source>,
     operator: Doc<'source>,
     right: Doc<'source>,
 ) -> Doc<'source> {
-    group(concat([left, space(), operator, assignment_rhs(right)]))
+    doc_group!(
+        doc,
+        doc_concat!(
+            doc,
+            [left, doc.space(), operator, assignment_rhs(right, doc)]
+        )
+    )
 }
 
-fn assignment_rhs(right: Doc<'_>) -> Doc<'_> {
-    indent(concat([line(), right]))
+fn assignment_rhs<'source>(right: Doc<'source>, doc: &mut DocBuilder<'source>) -> Doc<'source> {
+    doc_indent!(doc, doc_concat!(doc, [doc.line(), right]))
 }
 
 fn binary_chain<'source>(
+    doc: &mut DocBuilder<'source>,
     first: Doc<'source>,
-    rest: Vec<(Doc<'source>, Doc<'source>)>,
+    rest: DocList<'source>,
 ) -> Doc<'source> {
     if rest.is_empty() {
         return first;
     }
+    let rest = rest.finish(doc);
 
-    group(concat([
-        first,
-        indent(concat(rest.into_iter().map(|(operator, operand)| {
-            concat([line(), operator, space(), operand])
-        }))),
-    ]))
+    doc_group!(doc, doc_concat!(doc, [first, doc_indent!(doc, rest),]))
+}
+
+fn push_binary_chain_item<'source>(
+    rest: &mut DocList<'source>,
+    operator: Doc<'source>,
+    operand: Doc<'source>,
+    doc: &mut DocBuilder<'source>,
+) {
+    let line = doc.line();
+    let space = doc.space();
+    let item = doc_concat!(doc, [line, operator, space, operand]);
+    rest.push(item, doc);
 }
 
 fn ternary_expression<'source>(
+    builder: &mut DocBuilder<'source>,
     condition: Doc<'source>,
     question: Doc<'source>,
     consequence: Doc<'source>,
@@ -348,24 +379,32 @@ fn ternary_expression<'source>(
     alternative: Doc<'source>,
     force_break: bool,
 ) -> Doc<'source> {
-    let doc = concat([
-        condition,
-        indent(concat([
-            line(),
-            question,
-            space(),
-            consequence,
-            line(),
-            colon,
-            space(),
-            alternative,
-        ])),
-    ]);
+    let line = builder.line();
+    let question_space = builder.space();
+    let line_after_consequence = builder.line();
+    let colon_space = builder.space();
+    let tail = doc_indent!(
+        builder,
+        doc_concat!(
+            builder,
+            [
+                line,
+                question,
+                question_space,
+                consequence,
+                line_after_consequence,
+                colon,
+                colon_space,
+                alternative,
+            ]
+        )
+    );
+    let doc = doc_concat!(builder, [condition, tail,]);
 
     if force_break {
-        force_group(doc)
+        doc_force_group!(builder, doc)
     } else {
-        group(doc)
+        doc_group!(builder, doc)
     }
 }
 

@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, concat};
+use jolt_fmt_ir::{Doc, DocBuilder, DocList};
 use jolt_kotlin_syntax::{Block, BlockItem, RecoveredSeparatedListEntry};
 
 use crate::helpers::blocks::{
@@ -12,33 +12,49 @@ use crate::helpers::formatter_ignore::{
 
 use super::format_block_item;
 
-pub(crate) fn format_block<'source>(block: &Block<'source>) -> Doc<'source> {
+pub(crate) fn format_block<'source>(
+    doc: &mut DocBuilder<'source>,
+    block: &Block<'source>,
+) -> Doc<'source> {
     if block.items().next().is_none() {
-        if let Some(contents) = format_block_dangling_comments(block)
-            .or_else(|| format_block_contents_from_recovered_entries(block))
+        if let Some(contents) = format_block_dangling_comments(doc, block)
+            .or_else(|| format_block_contents_from_recovered_entries(doc, block))
         {
             return source_braced_body(
+                doc,
                 block.open_brace().as_ref(),
                 block.close_brace().as_ref(),
                 Some(contents),
             );
         }
-        return empty_source_braced_body(block.open_brace().as_ref(), block.close_brace().as_ref());
+        return empty_source_braced_body(
+            doc,
+            block.open_brace().as_ref(),
+            block.close_brace().as_ref(),
+        );
     }
 
-    let body = format_block_contents(block);
+    let body = format_block_contents(doc, block);
     if body.is_none() && block.inner_is_whitespace() {
-        return empty_source_braced_body(block.open_brace().as_ref(), block.close_brace().as_ref());
+        return empty_source_braced_body(
+            doc,
+            block.open_brace().as_ref(),
+            block.close_brace().as_ref(),
+        );
     }
 
     source_braced_body(
+        doc,
         block.open_brace().as_ref(),
         block.close_brace().as_ref(),
         body,
     )
 }
 
-fn format_block_contents<'source>(block: &Block<'source>) -> Option<Doc<'source>> {
+fn format_block_contents<'source>(
+    doc: &mut DocBuilder<'source>,
+    block: &Block<'source>,
+) -> Option<Doc<'source>> {
     let entries = block.items_with_recovered().collect::<Vec<_>>();
     let mut items = Vec::with_capacity(entries.len());
     items.extend(entries.iter().filter_map(|entry| match entry {
@@ -54,15 +70,16 @@ fn format_block_contents<'source>(block: &Block<'source>) -> Option<Doc<'source>
         block.token_iter(),
     );
     if !ignored_ranges.is_empty() {
-        return format_block_contents_with_ignored(block, &entries, &items, &ignored_ranges);
+        return format_block_contents_with_ignored(doc, block, &entries, &items, &ignored_ranges);
     }
 
-    let docs = block_body_entries(block, &entries, &items);
+    let docs = block_body_entries(doc, block, &entries, &items);
 
-    (!docs.is_empty()).then(|| join_body_items(docs))
+    (!docs.is_empty()).then(|| join_body_items(doc, docs))
 }
 
 fn format_block_contents_from_recovered_entries<'source>(
+    doc: &mut DocBuilder<'source>,
     block: &Block<'source>,
 ) -> Option<Doc<'source>> {
     let entries = block.items_with_recovered().collect::<Vec<_>>();
@@ -73,56 +90,66 @@ fn format_block_contents_from_recovered_entries<'source>(
         | RecoveredSeparatedListEntry::Error(_)
         | RecoveredSeparatedListEntry::Node(_) => None,
     }));
-    let docs = block_body_entries(block, &entries, &items);
+    let docs = block_body_entries(doc, block, &entries, &items);
 
-    (!docs.is_empty()).then(|| join_body_items(docs))
+    (!docs.is_empty()).then(|| join_body_items(doc, docs))
 }
 
 fn block_body_entries<'source>(
+    doc: &mut DocBuilder<'source>,
     block: &Block<'source>,
     entries: &[RecoveredSeparatedListEntry<'source, BlockItem<'source>>],
     items: &[BlockItem<'source>],
 ) -> Vec<BodyItem<'source>> {
-    let mut docs = Vec::with_capacity(entries.len());
-    let mut recovered_docs = Vec::new();
+    let mut body_items = Vec::with_capacity(entries.len());
+    let mut recovered_docs = doc.list();
     let mut item_index = 0;
 
     for entry in entries {
         match entry {
             RecoveredSeparatedListEntry::Entry(item) => {
-                push_recovered_block_body_item(&mut docs, &mut recovered_docs);
-                docs.push(block_body_item(block, items, item_index, item));
+                push_recovered_block_body_item(doc, &mut body_items, &mut recovered_docs);
+                body_items.push(block_body_item(doc, block, items, item_index, item));
                 item_index += 1;
             }
-            RecoveredSeparatedListEntry::Token(token) => recovered_docs.push(
-                format_token_sequence(std::iter::once(*token), LeadingTrivia::Preserve),
-            ),
-            RecoveredSeparatedListEntry::Error(error) => recovered_docs.push(
-                format_token_sequence(error.token_iter(), LeadingTrivia::Preserve),
-            ),
-            RecoveredSeparatedListEntry::Node(node) => recovered_docs.push(format_token_sequence(
-                node.token_iter(),
-                LeadingTrivia::Preserve,
-            )),
+            RecoveredSeparatedListEntry::Token(token) => {
+                let token =
+                    format_token_sequence(doc, std::iter::once(*token), LeadingTrivia::Preserve);
+                recovered_docs.push(token, doc);
+            }
+            RecoveredSeparatedListEntry::Error(error) => {
+                let error = format_token_sequence(doc, error.token_iter(), LeadingTrivia::Preserve);
+                recovered_docs.push(error, doc);
+            }
+            RecoveredSeparatedListEntry::Node(node) => {
+                let node = format_token_sequence(doc, node.token_iter(), LeadingTrivia::Preserve);
+                recovered_docs.push(node, doc);
+            }
         }
     }
 
-    push_recovered_block_body_item(&mut docs, &mut recovered_docs);
-    docs
+    push_recovered_block_body_item(doc, &mut body_items, &mut recovered_docs);
+    body_items
 }
 
 fn push_recovered_block_body_item<'source>(
-    docs: &mut Vec<BodyItem<'source>>,
-    recovered_docs: &mut Vec<Doc<'source>>,
+    doc: &mut DocBuilder<'source>,
+    body_items: &mut Vec<BodyItem<'source>>,
+    recovered_docs: &mut DocList<'source>,
 ) {
     if recovered_docs.is_empty() {
         return;
     }
 
-    docs.push(BodyItem::new(concat(std::mem::take(recovered_docs)), false));
+    let empty = doc.list();
+    let recovered = std::mem::replace(recovered_docs, empty).finish(doc);
+    body_items.push(BodyItem::new(recovered, false));
 }
 
-fn format_block_dangling_comments<'source>(block: &Block<'source>) -> Option<Doc<'source>> {
+fn format_block_dangling_comments<'source>(
+    doc: &mut DocBuilder<'source>,
+    block: &Block<'source>,
+) -> Option<Doc<'source>> {
     let mut comments = block
         .open_brace()
         .into_iter()
@@ -138,10 +165,11 @@ fn format_block_dangling_comments<'source>(block: &Block<'source>) -> Option<Doc
     comments
         .peek()
         .is_some()
-        .then(|| format_dangling_comments(comments))
+        .then(|| format_dangling_comments(doc, comments))
 }
 
 fn format_block_contents_with_ignored<'source>(
+    doc: &mut DocBuilder<'source>,
     block: &Block<'source>,
     entries: &[RecoveredSeparatedListEntry<'source, BlockItem<'source>>],
     items: &[BlockItem<'source>],
@@ -150,21 +178,21 @@ fn format_block_contents_with_ignored<'source>(
     let block_start = block.text_range().start().get();
     let entry_ranges = entries
         .iter()
-        .map(|entry| recovered_block_item_token_range(entry, block_start))
+        .map(|entry| recovered_block_item_token_range(doc, entry, block_start))
         .collect::<Vec<_>>();
     let mut ignored_runs = formatter_ignore_runs(ignored_ranges, &entry_ranges);
     for run in &mut ignored_runs {
         run.include_on_marker = entries
             .get(run.skip_end)
             .is_some_and(|entry| matches!(entry, RecoveredSeparatedListEntry::Entry(_)))
-            && !gap_after_on_marker_contains_comment(block.source_text(), run, &entry_ranges);
+            && !gap_after_on_marker_contains_comment(doc, block.source_text(), run, &entry_ranges);
     }
     if ignored_runs.is_empty() {
-        let docs = block_body_entries(block, entries, items);
-        return (!docs.is_empty()).then(|| join_body_items(docs));
+        let docs = block_body_entries(doc, block, entries, items);
+        return (!docs.is_empty()).then(|| join_body_items(doc, docs));
     }
 
-    let mut docs = Vec::with_capacity(entries.len().saturating_add(ignored_runs.len()));
+    let mut body_items = Vec::with_capacity(entries.len().saturating_add(ignored_runs.len()));
     let mut ignored_index = 0;
     let mut skip_index = 0;
     let mut item_index = 0;
@@ -172,8 +200,8 @@ fn format_block_contents_with_ignored<'source>(
         while ignored_index < ignored_runs.len()
             && ignored_runs[ignored_index].insert_index == entry_index
         {
-            docs.push(BodyItem::new(
-                formatter_ignore_run_doc(&ignored_runs[ignored_index]),
+            body_items.push(BodyItem::new(
+                formatter_ignore_run_doc(&ignored_runs[ignored_index], doc),
                 false,
             ));
             ignored_index += 1;
@@ -190,25 +218,26 @@ fn format_block_contents_with_ignored<'source>(
             continue;
         }
 
-        let mut body_item = recovered_block_body_item(block, items, &mut item_index, entry);
+        let mut body_item = recovered_block_body_item(doc, block, items, &mut item_index, entry);
         if skip_index > 0 && ignored_runs[skip_index - 1].skip_end == entry_index {
             body_item = body_item.without_blank_line_before();
         }
-        docs.push(body_item);
+        body_items.push(body_item);
     }
 
     while ignored_index < ignored_runs.len() {
-        docs.push(BodyItem::new(
-            formatter_ignore_run_doc(&ignored_runs[ignored_index]),
+        body_items.push(BodyItem::new(
+            formatter_ignore_run_doc(&ignored_runs[ignored_index], doc),
             false,
         ));
         ignored_index += 1;
     }
 
-    (!docs.is_empty()).then(|| join_body_items(docs))
+    (!body_items.is_empty()).then(|| join_body_items(doc, body_items))
 }
 
 fn gap_after_on_marker_contains_comment(
+    _doc: &mut DocBuilder<'_>,
     source: &str,
     run: &crate::helpers::formatter_ignore::FormatterIgnoreRun<'_>,
     entry_ranges: &[Option<std::ops::Range<usize>>],
@@ -230,6 +259,7 @@ fn gap_after_on_marker_contains_comment(
 }
 
 fn recovered_block_body_item<'source>(
+    doc: &mut DocBuilder<'source>,
     block: &Block<'source>,
     items: &[BlockItem<'source>],
     item_index: &mut usize,
@@ -237,38 +267,40 @@ fn recovered_block_body_item<'source>(
 ) -> BodyItem<'source> {
     match entry {
         RecoveredSeparatedListEntry::Entry(item) => {
-            let body_item = block_body_item(block, items, *item_index, item);
+            let body_item = block_body_item(doc, block, items, *item_index, item);
             *item_index += 1;
             body_item
         }
         RecoveredSeparatedListEntry::Token(token) => BodyItem::new(
-            format_token_sequence(std::iter::once(*token), LeadingTrivia::Preserve),
+            format_token_sequence(doc, std::iter::once(*token), LeadingTrivia::Preserve),
             false,
         ),
         RecoveredSeparatedListEntry::Error(error) => BodyItem::new(
-            format_token_sequence(error.token_iter(), LeadingTrivia::Preserve),
+            format_token_sequence(doc, error.token_iter(), LeadingTrivia::Preserve),
             false,
         ),
         RecoveredSeparatedListEntry::Node(node) => BodyItem::new(
-            format_token_sequence(node.token_iter(), LeadingTrivia::Preserve),
+            format_token_sequence(doc, node.token_iter(), LeadingTrivia::Preserve),
             false,
         ),
     }
 }
 
 fn block_body_item<'source>(
+    doc: &mut DocBuilder<'source>,
     block: &Block<'source>,
     items: &[BlockItem<'source>],
     index: usize,
     item: &BlockItem<'source>,
 ) -> BodyItem<'source> {
     BodyItem::new(
-        format_block_item(item),
-        block_item_starts_after_blank_line(block, items, index),
+        format_block_item(doc, item),
+        block_item_starts_after_blank_line(doc, block, items, index),
     )
 }
 
 fn block_item_starts_after_blank_line(
+    doc: &mut DocBuilder<'_>,
     block: &Block<'_>,
     items: &[BlockItem<'_>],
     index: usize,
@@ -279,6 +311,7 @@ fn block_item_starts_after_blank_line(
     let previous_end = items[index - 1].text_range().end().get();
     let current_start = items[index].text_range().start().get();
     gap_has_blank_line(
+        doc,
         block.source_text(),
         block.text_range().start().get(),
         previous_end,
@@ -286,7 +319,13 @@ fn block_item_starts_after_blank_line(
     )
 }
 
-fn gap_has_blank_line(source: &str, block_start: usize, start: usize, end: usize) -> bool {
+fn gap_has_blank_line(
+    _doc: &mut DocBuilder<'_>,
+    source: &str,
+    block_start: usize,
+    start: usize,
+    end: usize,
+) -> bool {
     let gap = &source[start - block_start..end - block_start];
     let mut line_breaks = 0;
     for byte in gap.bytes() {
@@ -301,6 +340,7 @@ fn gap_has_blank_line(source: &str, block_start: usize, start: usize, end: usize
 }
 
 fn block_item_token_range(
+    _doc: &mut DocBuilder<'_>,
     item: &BlockItem<'_>,
     block_start: usize,
 ) -> Option<std::ops::Range<usize>> {
@@ -312,11 +352,12 @@ fn block_item_token_range(
 }
 
 fn recovered_block_item_token_range(
+    doc: &mut DocBuilder<'_>,
     entry: &RecoveredSeparatedListEntry<'_, BlockItem<'_>>,
     block_start: usize,
 ) -> Option<std::ops::Range<usize>> {
     match entry {
-        RecoveredSeparatedListEntry::Entry(item) => block_item_token_range(item, block_start),
+        RecoveredSeparatedListEntry::Entry(item) => block_item_token_range(doc, item, block_start),
         RecoveredSeparatedListEntry::Token(token) => {
             let range = token.token_text_range();
             Some(range.start().get() - block_start..range.end().get() - block_start)

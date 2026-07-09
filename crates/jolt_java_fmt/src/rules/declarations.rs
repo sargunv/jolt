@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-use jolt_fmt_ir::{Doc, concat, group, hard_line, line};
+use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_java_syntax::{
     AnnotationElementDeclaration, AnnotationInterfaceBodyMember, AnnotationInterfaceDeclaration,
     ClassBody, ClassBodyMember, ClassDeclaration, ConstructorInvocation, EnumConstant,
@@ -10,7 +10,6 @@ use jolt_java_syntax::{
     ThrowsClauseEntry, TypeClauseEntry, TypeDeclaration,
 };
 
-use crate::context::JavaFormatter;
 use crate::helpers::blocks::{BodyItem, join_body_items, source_braced_body};
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, comment_forces_line, comment_is_star_block,
@@ -72,30 +71,27 @@ use type_declarations::{
 
 pub(crate) fn format_type_declaration<'source>(
     declaration: &TypeDeclaration<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     match declaration {
-        TypeDeclaration::ClassDeclaration(class) => format_class_declaration(class, formatter),
+        TypeDeclaration::ClassDeclaration(class) => format_class_declaration(class, doc),
         TypeDeclaration::InterfaceDeclaration(interface) => {
-            format_interface_declaration(interface, formatter)
+            format_interface_declaration(interface, doc)
         }
-        TypeDeclaration::RecordDeclaration(record) => format_record_declaration(record, formatter),
-        TypeDeclaration::EnumDeclaration(enum_) => format_enum_declaration(enum_, formatter),
+        TypeDeclaration::RecordDeclaration(record) => format_record_declaration(record, doc),
+        TypeDeclaration::EnumDeclaration(enum_) => format_enum_declaration(enum_, doc),
         TypeDeclaration::AnnotationInterfaceDeclaration(annotation) => {
-            format_annotation_interface_declaration(annotation, formatter)
+            format_annotation_interface_declaration(annotation, doc)
         }
     }
 }
 
 pub(crate) fn format_anonymous_class_body<'source>(
     body: &ClassBody<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let open = body.open_brace();
     let close = body.close_brace();
-    source_braced_body(
-        open.as_ref(),
-        close.as_ref(),
-        format_class_body(body, formatter),
-    )
+    let body_doc = format_class_body(body, doc);
+    source_braced_body(doc, open.as_ref(), close.as_ref(), body_doc)
 }

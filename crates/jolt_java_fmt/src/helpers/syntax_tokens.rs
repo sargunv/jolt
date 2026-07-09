@@ -1,5 +1,4 @@
-use jolt_fmt_ir::space;
-use jolt_fmt_ir::{Doc, text};
+use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_java_syntax::JavaSyntaxToken;
 
 use crate::helpers::comments::{
@@ -16,53 +15,66 @@ pub(crate) enum FormatterInsertedToken {
 }
 
 pub(crate) fn inserted_syntax_token<'source>(
+    doc: &mut DocBuilder<'source>,
     spelling: &'static str,
     _reason: FormatterInsertedToken,
 ) -> Doc<'source> {
-    text(spelling)
+    doc.text(spelling)
 }
 
 pub(crate) fn format_token_with_normalized_text<'source>(
+    doc: &mut DocBuilder<'source>,
     token: &JavaSyntaxToken<'source>,
     spelling: &'static str,
     reason: FormatterInsertedToken,
     leading: LeadingTrivia,
     trailing: TrailingTrivia,
 ) -> Doc<'source> {
-    jolt_fmt_ir::concat([
-        match leading {
-            LeadingTrivia::Preserve => format_leading_comments(token),
-            LeadingTrivia::SuppressAlreadyHandled => jolt_fmt_ir::nil(),
-        },
-        // Source-backed normalized token: the source token provides trivia;
-        // formatter policy provides the printed spelling.
-        inserted_syntax_token(spelling, reason),
-        match trailing {
-            TrailingTrivia::Preserve => format_trailing_comments(token),
-            TrailingTrivia::BeforeLineBreak => format_trailing_comments_before_line_break(token),
-            TrailingTrivia::BeforeSoftLine => jolt_fmt_ir::concat([
-                format_trailing_comments_before_line_break(token),
-                if trailing_comments_force_line(token) {
-                    jolt_fmt_ir::hard_line()
-                } else {
-                    jolt_fmt_ir::soft_line()
-                },
-            ]),
-            TrailingTrivia::BeforeSpaceIfComments => {
-                if token.trailing_comments().is_empty() {
-                    jolt_fmt_ir::nil()
-                } else {
-                    jolt_fmt_ir::concat([
-                        format_trailing_comments_before_line_break(token),
-                        if trailing_comments_force_line(token) {
-                            jolt_fmt_ir::hard_line()
-                        } else {
-                            space()
-                        },
-                    ])
+    doc_concat!(
+        doc,
+        [
+            match leading {
+                LeadingTrivia::Preserve => format_leading_comments(doc, token),
+                LeadingTrivia::SuppressAlreadyHandled => Doc::nil(),
+            },
+            // Source-backed normalized token: the source token provides trivia;
+            // formatter policy provides the printed spelling.
+            inserted_syntax_token(doc, spelling, reason),
+            match trailing {
+                TrailingTrivia::Preserve => format_trailing_comments(doc, token),
+                TrailingTrivia::BeforeLineBreak => {
+                    format_trailing_comments_before_line_break(doc, token)
                 }
-            }
-            TrailingTrivia::RelocatedToEnclosingContext => jolt_fmt_ir::nil(),
-        },
-    ])
+                TrailingTrivia::BeforeSoftLine => doc_concat!(
+                    doc,
+                    [
+                        format_trailing_comments_before_line_break(doc, token),
+                        if trailing_comments_force_line(token) {
+                            doc.hard_line()
+                        } else {
+                            doc.soft_line()
+                        },
+                    ]
+                ),
+                TrailingTrivia::BeforeSpaceIfComments => {
+                    if token.trailing_comments().is_empty() {
+                        Doc::nil()
+                    } else {
+                        doc_concat!(
+                            doc,
+                            [
+                                format_trailing_comments_before_line_break(doc, token),
+                                if trailing_comments_force_line(token) {
+                                    doc.hard_line()
+                                } else {
+                                    doc.space()
+                                },
+                            ]
+                        )
+                    }
+                }
+                TrailingTrivia::RelocatedToEnclosingContext => Doc::nil(),
+            },
+        ]
+    )
 }

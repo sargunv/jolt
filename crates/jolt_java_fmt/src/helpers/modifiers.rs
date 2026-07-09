@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, concat, hard_line, join, space};
+use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_java_syntax::{JavaSyntaxKind, JavaSyntaxToken, ModifierEntry};
 
 use crate::helpers::comments::{
@@ -7,57 +7,65 @@ use crate::helpers::comments::{
 };
 
 pub(crate) fn modifier_prefix_from_docs<'source>(
-    annotation_docs: Vec<Doc<'source>>,
+    doc: &mut DocBuilder<'source>,
+    annotation_docs: impl IntoIterator<Item = Doc<'source>>,
     modifier_entries: Vec<ModifierEntry<'source>>,
 ) -> Doc<'source> {
     let modifier_entries = sorted_modifier_entries(modifier_entries);
-    modifier_prefix_from_modifier_docs(
-        annotation_docs,
-        modifier_entries
-            .into_iter()
-            .map(|entry| format_modifier_entry(&entry, LeadingComments::Suppress)),
-    )
-}
-
-fn modifier_prefix_from_modifier_docs<'source>(
-    annotation_docs: Vec<Doc<'source>>,
-    modifier_docs: impl IntoIterator<Item = Doc<'source>>,
-) -> Doc<'source> {
-    let mut docs = Vec::with_capacity(annotation_docs.len().saturating_mul(2).saturating_add(2));
+    let mut docs = doc.list();
     for annotation in annotation_docs {
-        docs.push(annotation);
-        docs.push(hard_line());
+        docs.push(annotation, doc);
+        let hard_line = doc.hard_line();
+        docs.push(hard_line, doc);
     }
-    let mut modifier_docs = modifier_docs.into_iter().peekable();
-    if modifier_docs.peek().is_some() {
-        docs.push(join(&space(), modifier_docs));
-        docs.push(space());
+    let mut modifiers = doc.list();
+    for entry in modifier_entries {
+        if !modifiers.is_empty() {
+            let space = doc.space();
+            modifiers.push(space, doc);
+        }
+        let entry = format_modifier_entry(doc, &entry, LeadingComments::Suppress);
+        modifiers.push(entry, doc);
+    }
+    if !modifiers.is_empty() {
+        let modifiers = modifiers.finish(doc);
+        docs.push(modifiers, doc);
+        let space = doc.space();
+        docs.push(space, doc);
     }
 
-    concat(docs)
+    docs.finish(doc)
 }
 
 pub(crate) fn inline_modifier_prefix_from_docs<'source>(
-    annotation_docs: Vec<Doc<'source>>,
+    doc: &mut DocBuilder<'source>,
+    annotation_docs: impl IntoIterator<Item = Doc<'source>>,
     modifier_entries: Vec<ModifierEntry<'source>>,
 ) -> Doc<'source> {
     let modifier_entries = sorted_modifier_entries(modifier_entries);
-    let has_docs = !annotation_docs.is_empty() || !modifier_entries.is_empty();
-    if has_docs {
-        concat([
-            join(
-                &space(),
-                annotation_docs.into_iter().chain(
-                    modifier_entries
-                        .into_iter()
-                        .map(|entry| format_modifier_entry(&entry, LeadingComments::Preserve)),
-                ),
-            ),
-            space(),
-        ])
-    } else {
-        jolt_fmt_ir::nil()
+    let mut docs = doc.list();
+    for annotation in annotation_docs {
+        if !docs.is_empty() {
+            let space = doc.space();
+            docs.push(space, doc);
+        }
+        docs.push(annotation, doc);
     }
+    for entry in modifier_entries {
+        if !docs.is_empty() {
+            let space = doc.space();
+            docs.push(space, doc);
+        }
+        let entry = format_modifier_entry(doc, &entry, LeadingComments::Preserve);
+        docs.push(entry, doc);
+    }
+    if docs.is_empty() {
+        return Doc::nil();
+    }
+
+    let docs = docs.finish(doc);
+    let space = doc.space();
+    doc_concat!(doc, [docs, space])
 }
 
 fn sorted_modifier_entries(mut entries: Vec<ModifierEntry<'_>>) -> Vec<ModifierEntry<'_>> {
@@ -107,29 +115,35 @@ fn modifier_entry_order(entry: &ModifierEntry<'_>) -> u8 {
 }
 
 fn format_modifier_entry<'source>(
+    doc: &mut DocBuilder<'source>,
     entry: &ModifierEntry<'source>,
     leading_comments: LeadingComments,
 ) -> Doc<'source> {
-    concat(
-        entry
-            .tokens()
-            .map(|token| format_modifier_token(token, leading_comments)),
-    )
+    let mut docs = doc.list();
+    for token in entry.tokens() {
+        let token = format_modifier_token(doc, token, leading_comments);
+        docs.push(token, doc);
+    }
+    docs.finish(doc)
 }
 
 fn format_modifier_token<'source>(
+    doc: &mut DocBuilder<'source>,
     token: &JavaSyntaxToken<'source>,
     leading_comments: LeadingComments,
 ) -> Doc<'source> {
     match leading_comments {
         LeadingComments::Preserve => format_token(
+            doc,
             token,
             LeadingTrivia::Preserve,
             TrailingTrivia::BeforeLineBreak,
         ),
-        LeadingComments::Suppress => {
-            format_token_after_relocated_leading_comments(token, TrailingTrivia::BeforeLineBreak)
-        }
+        LeadingComments::Suppress => format_token_after_relocated_leading_comments(
+            doc,
+            token,
+            TrailingTrivia::BeforeLineBreak,
+        ),
     }
 }
 

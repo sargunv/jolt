@@ -1,7 +1,6 @@
-use jolt_fmt_ir::{Doc, concat};
+use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_java_syntax::{ComponentPattern, MatchAllPattern, Pattern, RecordPattern, TypePattern};
 
-use crate::context::JavaFormatter;
 use crate::helpers::comments::{LeadingTrivia, format_token_sequence, format_token_with_comments};
 use crate::helpers::lists::{CommaListItem, parenthesized_list, recovered_comma_list_items};
 use crate::rules::types::format_type;
@@ -9,74 +8,76 @@ use crate::rules::variables::format_local_variable_declaration;
 
 pub(crate) fn format_pattern<'source>(
     pattern: &Pattern<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     match pattern {
-        Pattern::TypePattern(pattern) => format_type_pattern(pattern, formatter),
-        Pattern::RecordPattern(pattern) => format_record_pattern(pattern, formatter),
-        Pattern::ComponentPattern(pattern) => format_component_pattern(pattern, formatter),
-        Pattern::MatchAllPattern(pattern) => format_match_all_pattern(pattern),
+        Pattern::TypePattern(pattern) => format_type_pattern(pattern, doc),
+        Pattern::RecordPattern(pattern) => format_record_pattern(pattern, doc),
+        Pattern::ComponentPattern(pattern) => format_component_pattern(pattern, doc),
+        Pattern::MatchAllPattern(pattern) => format_match_all_pattern(pattern, doc),
     }
 }
 
 fn format_type_pattern<'source>(
     pattern: &TypePattern<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    pattern
-        .variable()
-        .map_or_else(jolt_fmt_ir::nil, |variable| {
-            format_local_variable_declaration(&variable, formatter)
-        })
+    match pattern.variable() {
+        Some(variable) => format_local_variable_declaration(&variable, doc),
+        None => Doc::nil(),
+    }
 }
 
 fn format_record_pattern<'source>(
     pattern: &RecordPattern<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    concat([
-        pattern
-            .ty()
-            .map_or_else(jolt_fmt_ir::nil, |ty| format_type(&ty, formatter)),
-        format_record_pattern_components(pattern, formatter),
-    ])
+    let ty = match pattern.ty() {
+        Some(ty) => format_type(&ty, doc),
+        None => Doc::nil(),
+    };
+    let components = format_record_pattern_components(pattern, doc);
+    doc_concat!(doc, [ty, components])
 }
 
 fn format_record_pattern_components<'source>(
     pattern: &RecordPattern<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let open = pattern.open_paren();
     let close = pattern.close_paren();
-    parenthesized_list(
-        open.as_ref(),
-        close.as_ref(),
-        record_pattern_items(pattern, formatter),
-    )
+    let items = record_pattern_items(pattern, doc);
+    parenthesized_list(doc, open.as_ref(), close.as_ref(), items)
 }
 
 fn record_pattern_items<'source, 'fmt>(
     pattern: &'fmt RecordPattern<'source>,
-    formatter: &'fmt JavaFormatter<'_>,
-) -> impl Iterator<Item = CommaListItem<'source>> + use<'source, 'fmt> {
-    recovered_comma_list_items(pattern.entries_with_recovered(), |entry| CommaListItem {
-        doc: format_component_pattern(&entry.component, formatter),
-        comma: entry.comma,
+    doc: &'fmt mut DocBuilder<'source>,
+) -> Vec<CommaListItem<'source>> {
+    recovered_comma_list_items(doc, pattern.entries_with_recovered(), |entry, doc| {
+        CommaListItem {
+            doc: format_component_pattern(&entry.component, doc),
+            comma: entry.comma,
+        }
     })
 }
 
 fn format_component_pattern<'source>(
     pattern: &ComponentPattern<'source>,
-    formatter: &JavaFormatter<'_>,
+    doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    pattern.pattern().map_or_else(
-        || format_token_sequence(pattern.token_iter(), LeadingTrivia::Preserve),
-        |pattern| format_pattern(&pattern, formatter),
-    )
+    match pattern.pattern() {
+        Some(pattern) => format_pattern(&pattern, doc),
+        None => format_token_sequence(doc, pattern.token_iter(), LeadingTrivia::Preserve),
+    }
 }
 
-fn format_match_all_pattern<'source>(pattern: &MatchAllPattern<'source>) -> Doc<'source> {
-    pattern
-        .underscore()
-        .map_or_else(jolt_fmt_ir::nil, |token| format_token_with_comments(&token))
+fn format_match_all_pattern<'source>(
+    pattern: &MatchAllPattern<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    match pattern.underscore() {
+        Some(token) => format_token_with_comments(doc, &token),
+        None => Doc::nil(),
+    }
 }
