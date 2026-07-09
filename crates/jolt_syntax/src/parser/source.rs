@@ -123,6 +123,11 @@ impl<'source, L: Language> Parser<'source, L> {
         self.error_here(L::unexpected_diagnostic_code(), message);
     }
 
+    /// Adds a parser error at the current token, or at the last token if the cursor is past EOF.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the parser token stream does not contain EOF.
     pub fn error_here(&mut self, code: DiagnosticCodeId, message: &str) {
         let range = self
             .cursor
