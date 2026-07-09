@@ -2,6 +2,8 @@
 """Import pinned upstream files."""
 
 import contextlib
+import hashlib
+import json
 import shutil
 import subprocess
 import sys
@@ -10,6 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 IMPORTS = ROOT / "tools/import/.imports"
+MANIFEST = IMPORTS / "manifest.json"
 
 IMPORTS_CONFIG = [
     {
@@ -73,7 +76,8 @@ IMPORTS_CONFIG = [
 def main() -> int:
     sync_repos(IMPORTS_CONFIG)
     clear_imports(IMPORTS_CONFIG)
-    materialize(IMPORTS_CONFIG)
+    manifest = materialize(IMPORTS_CONFIG)
+    write_manifest(manifest)
     return 0
 
 
@@ -125,13 +129,15 @@ def clear_imports(imports: list[dict]) -> None:
         target.mkdir(parents=True)
 
 
-def materialize(imports: list[dict]) -> None:
+def materialize(imports: list[dict]) -> list[dict]:
+    manifest = []
     for item in imports:
         source_dir = repo_dir(item) / item["path"]
         paths = source_paths(source_dir, item["globs"])
         target_dir = IMPORTS / item["name"]
         written = 0
         seen: set[Path] = set()
+        files = []
 
         for path in paths:
             relative = path.relative_to(source_dir)
@@ -142,9 +148,58 @@ def materialize(imports: list[dict]) -> None:
             seen.add(destination)
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(path, destination)
+            digest = sha256_file(destination)
+            files.append({"path": output.as_posix(), "sha256": digest})
             written += 1
 
         log(f"imported {written} {item['name']} file(s)")
+        manifest.append(
+            {
+                "name": item["name"],
+                "repo": item["repo"],
+                "tag": item["tag"],
+                "commit": item["commit"],
+                "source_path": item["path"],
+                "globs": item["globs"],
+                "file_count": written,
+                "files_sha256": files_sha256(files),
+                "files": files,
+            }
+        )
+    return manifest
+
+
+def write_manifest(manifest: list[dict]) -> None:
+    MANIFEST.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "suites": manifest,
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n"
+    )
+    log(f"wrote {MANIFEST.relative_to(ROOT)}")
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as file:
+        while chunk := file.read(1024 * 1024):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def files_sha256(files: list[dict]) -> str:
+    digest = hashlib.sha256()
+    for file in files:
+        digest.update(file["path"].encode())
+        digest.update(b"\0")
+        digest.update(file["sha256"].encode())
+        digest.update(b"\0")
+    return digest.hexdigest()
 
 
 def source_paths(source_dir: Path, globs: list[str]) -> list[Path]:

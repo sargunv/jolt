@@ -24,7 +24,7 @@ auto = true
 [deps.imports]
 auto = true
 sources = ["tools/import/import.py"]
-outputs = ["tools/import/.imports"]
+outputs = ["tools/import/.imports/manifest.json"]
 run = "python tools/import/import.py"
 
 [tasks.check]
