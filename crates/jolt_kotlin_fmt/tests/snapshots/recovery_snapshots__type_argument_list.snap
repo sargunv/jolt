@@ -1,0 +1,14 @@
+---
+source: crates/jolt_kotlin_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+fun demo() { call<First, /* orphan */ , Second>() }
+
+formatted:
+fun demo() {
+  call<First, /* orphan */ ,  Second>()
+}
+
+diagnostics:
+code=kotlin.parse.malformed_type_argument_list severity=Error stage=Parser range=Some(TextRange { start: TextSize(40), end: TextSize(46) }) message=malformed type argument list

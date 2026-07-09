@@ -1,0 +1,41 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+import sample.deep.*
+import sample.Name as Alias
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+    ImportDirective
+      Identifier "import" @ 0..6 trailing=[Whitespace " "]
+      QualifiedName
+        Name
+          Identifier "sample" @ 7..13
+        Dot "." @ 13..14
+        Name
+          Identifier "deep" @ 14..18
+        Dot "." @ 18..19
+      Star "*" @ 19..20
+    ImportDirective
+      Identifier "import" @ 21..27 leading=[Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        Name
+          Identifier "sample" @ 28..34
+        Dot "." @ 34..35
+        Name
+          Identifier "Name" @ 35..39 trailing=[Whitespace " "]
+      ImportAlias
+        AsKw "as" @ 40..42 trailing=[Whitespace " "]
+        Name
+          Identifier "Alias" @ 43..48
+  Eof "" @ 49..49 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

@@ -1,0 +1,45 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun demo(first: String, /* orphan */ , second: Int) {}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "demo" @ 4..8
+    ValueParameterList
+      LParen "(" @ 8..9
+      ValueParameter
+        Name
+          Identifier "first" @ 9..14
+        Colon ":" @ 14..15 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "String" @ 16..22
+      Comma "," @ 22..23 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
+      Comma "," @ 37..38 trailing=[Whitespace " "]
+      ValueParameter
+        Name
+          Identifier "second" @ 39..45
+        Colon ":" @ 45..46 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Int" @ 47..50
+      RParen ")" @ 50..51 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 52..53
+      RBrace "}" @ 53..54
+  Eof "" @ 55..55 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

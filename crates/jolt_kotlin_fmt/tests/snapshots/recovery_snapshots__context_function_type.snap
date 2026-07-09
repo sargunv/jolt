@@ -1,0 +1,14 @@
+---
+source: crates/jolt_kotlin_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+typealias Handler = context(First, /* orphan */ , Second) () -> Unit
+
+formatted:
+typealias Handler = context(First, /* orphan */
+,
+Second) () -> Unit
+
+diagnostics:
+(none)

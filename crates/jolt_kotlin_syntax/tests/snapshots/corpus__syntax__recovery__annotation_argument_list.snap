@@ -1,0 +1,36 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+@Anno(/* orphan */ , value)
+class Demo
+
+syntax:
+syntax:
+KotlinFile
+  Annotation
+    At "@" @ 0..1
+    QualifiedName
+      Name
+        Identifier "Anno" @ 1..5
+    AnnotationArgumentList
+      LParen "(" @ 5..6 trailing=[BlockComment "/* orphan */", Whitespace " "]
+      Comma "," @ 19..20 trailing=[Whitespace " "]
+      ErrorNode
+      ValueArgument
+        NameExpression
+          Identifier "value" @ 21..26
+      RParen ")" @ 26..27
+  ImportList
+  ClassDeclaration
+    ClassKw "class" @ 28..33 leading=[Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "Demo" @ 34..38
+  Eof "" @ 39..39 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=21..26 message="expected list item"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(21), end: TextSize(26) }) message=expected list item

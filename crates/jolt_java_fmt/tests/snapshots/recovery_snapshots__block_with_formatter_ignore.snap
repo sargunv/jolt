@@ -1,0 +1,31 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+class C { void m() {
+  int before;
+  // @formatter:off
+  int raw=1+2;
+  // @formatter:on
+  /* block */ + ;
+  int after;
+} }
+
+formatted:
+class C {
+  void m() {
+    int before;
+    // @formatter:off
+    int raw=1+2;
+    // @formatter:on
+    /* block */
+    +;intafter;
+  }
+}
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(105), end: TextSize(106) }) message=expected expression
+code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(109), end: TextSize(112) }) message=expected statement expression
+code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(109), end: TextSize(112) }) message=unexpected token in statement expression
+code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(113), end: TextSize(118) }) message=unexpected token in statement expression

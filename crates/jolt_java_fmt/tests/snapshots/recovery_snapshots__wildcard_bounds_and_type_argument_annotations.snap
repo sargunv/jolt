@@ -1,0 +1,16 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+class C { List<? extends /* bound */> a; List<@A /* arg */> b; }
+
+formatted:
+class C {
+  List<? extends /* bound */> a;
+  List<@A /* arg */  > b;
+}
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(36), end: TextSize(37) }) message=expected type
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(58), end: TextSize(59) }) message=expected type

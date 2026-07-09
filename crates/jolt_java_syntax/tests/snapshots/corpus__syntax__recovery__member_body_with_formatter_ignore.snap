@@ -1,0 +1,66 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class C {
+  int before;
+  /* member */ + ;
+  // @formatter:off
+  int raw=1+2;
+  // @formatter:on
+  int after;
+}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "C" @ 6..7 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 8..9
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 12..15 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "before" @ 16..22
+          Semicolon ";" @ 22..23
+      ClassBodyDeclaration
+        ErrorNode
+          Plus "+" @ 39..40 leading=[Newline "\n", Whitespace "  ", BlockComment "/* member */", Whitespace " "] trailing=[Whitespace " "]
+          Semicolon ";" @ 41..42
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 65..68 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "raw" @ 69..72
+              Assign "=" @ 72..73
+              VariableInitializer
+                BinaryExpression
+                  LiteralExpression
+                    IntegerLiteral "1" @ 73..74
+                  Plus "+" @ 74..75
+                  LiteralExpression
+                    IntegerLiteral "2" @ 75..76
+          Semicolon ";" @ 76..77
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 99..102 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "after" @ 103..108
+          Semicolon ";" @ 108..109
+      RBrace "}" @ 110..111 leading=[Newline "\n"]
+  Eof "" @ 112..112 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=39..40 message="unexpected token in type body"
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(39), end: TextSize(40) }) message=unexpected token in type body

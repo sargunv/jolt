@@ -1,0 +1,53 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun demo(flag: Boolean) { if (flag) yes() else }
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "demo" @ 4..8
+    ValueParameterList
+      LParen "(" @ 8..9
+      ValueParameter
+        Name
+          Identifier "flag" @ 9..13
+        Colon ":" @ 13..14 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Boolean" @ 15..22
+      RParen ")" @ 22..23 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 24..25 trailing=[Whitespace " "]
+      Statement
+        ExpressionStatement
+          IfExpression
+            IfKw "if" @ 26..28 trailing=[Whitespace " "]
+            ParenthesizedExpression
+              LParen "(" @ 29..30
+              NameExpression
+                Identifier "flag" @ 30..34
+              RParen ")" @ 34..35 trailing=[Whitespace " "]
+            CallExpression
+              NameExpression
+                Identifier "yes" @ 36..39
+              ValueArgumentList
+                LParen "(" @ 39..40
+                RParen ")" @ 40..41 trailing=[Whitespace " "]
+            ElseKw "else" @ 42..46 trailing=[Whitespace " "]
+            ErrorNode
+      RBrace "}" @ 47..48
+  Eof "" @ 49..49 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=47..48 message="expected expression"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(47), end: TextSize(48) }) message=expected expression

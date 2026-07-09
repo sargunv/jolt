@@ -1,0 +1,74 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class Base {}
+class C extends /* type */ {}
+class D { void m() throws /* throws */ {} }
+module m { exports p to /* target */ ; provides S with /* impl */ ; }
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "Base" @ 6..10 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 11..12
+      RBrace "}" @ 12..13
+  ClassDeclaration
+    ClassKw "class" @ 14..19 leading=[Newline "\n"] trailing=[Whitespace " "]
+    Identifier "C" @ 20..21 trailing=[Whitespace " "]
+    ExtendsClause
+      ExtendsKw "extends" @ 22..29 trailing=[Whitespace " ", BlockComment "/* type */", Whitespace " "]
+    ClassBody
+      LBrace "{" @ 41..42
+      RBrace "}" @ 42..43
+  ClassDeclaration
+    ClassKw "class" @ 44..49 leading=[Newline "\n"] trailing=[Whitespace " "]
+    Identifier "D" @ 50..51 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 52..53 trailing=[Whitespace " "]
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 54..58 trailing=[Whitespace " "]
+          Identifier "m" @ 59..60
+          LParen "(" @ 60..61
+          RParen ")" @ 61..62 trailing=[Whitespace " "]
+          ThrowsClause
+            ThrowsKw "throws" @ 63..69 trailing=[Whitespace " ", BlockComment "/* throws */", Whitespace " "]
+          Block
+            LBrace "{" @ 83..84
+            RBrace "}" @ 84..85 trailing=[Whitespace " "]
+      RBrace "}" @ 86..87
+  ModuleDeclaration
+    Identifier "module" @ 88..94 leading=[Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "m" @ 95..96 trailing=[Whitespace " "]
+    LBrace "{" @ 97..98 trailing=[Whitespace " "]
+    ModuleDirective
+      ExportsDirective
+        Identifier "exports" @ 99..106 trailing=[Whitespace " "]
+        Name
+          Identifier "p" @ 107..108 trailing=[Whitespace " "]
+        Identifier "to" @ 109..111 trailing=[Whitespace " ", BlockComment "/* target */", Whitespace " "]
+        Semicolon ";" @ 125..126 trailing=[Whitespace " "]
+    ModuleDirective
+      ProvidesDirective
+        Identifier "provides" @ 127..135 trailing=[Whitespace " "]
+        Name
+          Identifier "S" @ 136..137 trailing=[Whitespace " "]
+        Identifier "with" @ 138..142 trailing=[Whitespace " ", BlockComment "/* impl */", Whitespace " "]
+        Semicolon ";" @ 154..155 trailing=[Whitespace " "]
+    RBrace "}" @ 156..157
+  Eof "" @ 158..158 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=125..126 message="expected identifier"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=154..155 message="expected identifier"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(125), end: TextSize(126) }) message=expected identifier
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(154), end: TextSize(155) }) message=expected identifier

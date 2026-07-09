@@ -1,0 +1,17 @@
+---
+source: crates/jolt_kotlin_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+fun demo(value: Int) { when (value) { 1 -> one()
+
+formatted:
+fun demo(value: Int) {
+  when (value) {
+    1 -> one()
+  
+
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(49), end: TextSize(49) }) message=expected '}' after when
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(49), end: TextSize(49) }) message=expected '}' after block

@@ -1,0 +1,48 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun demo() { run { value(1)
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "demo" @ 4..8
+    ValueParameterList
+      LParen "(" @ 8..9
+      RParen ")" @ 9..10 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 11..12 trailing=[Whitespace " "]
+      Statement
+        ExpressionStatement
+          CallExpression
+            NameExpression
+              Identifier "run" @ 13..16 trailing=[Whitespace " "]
+            LambdaExpression
+              LBrace "{" @ 17..18 trailing=[Whitespace " "]
+              Statement
+                ExpressionStatement
+                  CallExpression
+                    NameExpression
+                      Identifier "value" @ 19..24
+                    ValueArgumentList
+                      LParen "(" @ 24..25
+                      ValueArgument
+                        LiteralExpression
+                          IntegerLiteral "1" @ 25..26
+                      RParen ")" @ 26..27
+  Eof "" @ 28..28 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=28..28 message="expected '}' after lambda"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=28..28 message="expected '}' after block"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(28), end: TextSize(28) }) message=expected '}' after lambda
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(28), end: TextSize(28) }) message=expected '}' after block

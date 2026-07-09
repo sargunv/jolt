@@ -1,0 +1,18 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+/* top */ + ; class C {}
+// JOLT-TRIVIA:file-tail
+
+formatted:
+/* top */
++;
+
+class C {
+}
+// JOLT-TRIVIA:file-tail
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(10), end: TextSize(11) }) message=unexpected token at top level

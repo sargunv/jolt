@@ -1,0 +1,33 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class Box<First, /* orphan */ , Second>
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Name
+      Identifier "Box" @ 6..9
+    TypeParameterList
+      Lt "<" @ 9..10
+      TypeParameter
+        Name
+          Identifier "First" @ 10..15
+      Comma "," @ 15..16 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
+      Comma "," @ 30..31 trailing=[Whitespace " "]
+      TypeParameter
+        Name
+          Identifier "Second" @ 32..38
+      Gt ">" @ 38..39
+  Eof "" @ 40..40 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

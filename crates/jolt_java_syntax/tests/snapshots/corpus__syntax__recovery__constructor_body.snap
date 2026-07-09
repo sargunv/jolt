@@ -1,0 +1,63 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class C { C() { this(); /* body */ + ; int value = 1; } }
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "C" @ 6..7 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 8..9 trailing=[Whitespace " "]
+      ClassBodyDeclaration
+        ConstructorDeclaration
+          Identifier "C" @ 10..11
+          LParen "(" @ 11..12
+          RParen ")" @ 12..13 trailing=[Whitespace " "]
+          ConstructorBody
+            LBrace "{" @ 14..15 trailing=[Whitespace " "]
+            ConstructorInvocation
+              ThisKw "this" @ 16..20
+              ArgumentList
+                LParen "(" @ 20..21
+                RParen ")" @ 21..22
+              Semicolon ";" @ 22..23 trailing=[Whitespace " ", BlockComment "/* body */", Whitespace " "]
+            BlockStatement
+              ExpressionStatement
+                ErrorNode
+                  UnaryExpression
+                    Plus "+" @ 35..36 trailing=[Whitespace " "]
+                    ErrorNode
+                      Semicolon ";" @ 37..38 trailing=[Whitespace " "]
+                ErrorNode
+                  IntKw "int" @ 39..42 trailing=[Whitespace " "]
+                ErrorNode
+                  Identifier "value" @ 43..48 trailing=[Whitespace " "]
+                ErrorNode
+                  Assign "=" @ 49..50 trailing=[Whitespace " "]
+                ErrorNode
+                  IntegerLiteral "1" @ 51..52
+                Semicolon ";" @ 52..53 trailing=[Whitespace " "]
+            RBrace "}" @ 54..55 trailing=[Whitespace " "]
+      RBrace "}" @ 56..57
+  Eof "" @ 58..58 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=37..38 message="expected expression"
+  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=39..42 message="expected statement expression"
+  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=39..42 message="unexpected token in statement expression"
+  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=43..48 message="unexpected token in statement expression"
+  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=49..50 message="unexpected token in statement expression"
+  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=51..52 message="unexpected token in statement expression"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(37), end: TextSize(38) }) message=expected expression
+code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(39), end: TextSize(42) }) message=expected statement expression
+code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(39), end: TextSize(42) }) message=unexpected token in statement expression
+code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(43), end: TextSize(48) }) message=unexpected token in statement expression
+code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(49), end: TextSize(50) }) message=unexpected token in statement expression
+code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(51), end: TextSize(52) }) message=unexpected token in statement expression

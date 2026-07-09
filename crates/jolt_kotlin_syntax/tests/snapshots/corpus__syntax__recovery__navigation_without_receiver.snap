@@ -1,0 +1,37 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun demo() { .next }
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "demo" @ 4..8
+    ValueParameterList
+      LParen "(" @ 8..9
+      RParen ")" @ 9..10 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 11..12 trailing=[Whitespace " "]
+      Statement
+        ExpressionStatement
+          ErrorNode
+            Dot "." @ 13..14
+          ErrorNode
+            Identifier "next" @ 14..18 trailing=[Whitespace " "]
+      RBrace "}" @ 19..20
+  Eof "" @ 21..21 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=13..14 message="expected expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=14..18 message="unexpected token in expression"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(13), end: TextSize(14) }) message=expected expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(14), end: TextSize(18) }) message=unexpected token in expression

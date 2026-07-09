@@ -1,0 +1,16 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+class C { void m() { int value = /* keep */ ; } }
+
+formatted:
+class C {
+  void m() {
+    int value = /* keep */;
+  }
+}
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(44), end: TextSize(45) }) message=expected expression

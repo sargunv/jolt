@@ -1,0 +1,21 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+sealed class C extends Base, /* extends */ , Other implements A, /* implements */ , B permits C, /* permits */ , D { void m() throws E, /* throws */ , F {} }
+
+formatted:
+sealed class C
+  extends Base, /* extends */  , Other
+  implements A, /* implements */  , B
+  permits C, /* permits */ , D {
+  void m() throws E, /* throws */  , F {
+  }
+}
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(43), end: TextSize(44) }) message=expected class or interface type
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(82), end: TextSize(83) }) message=expected class or interface type
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(111), end: TextSize(112) }) message=expected identifier
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(149), end: TextSize(150) }) message=expected class or interface type

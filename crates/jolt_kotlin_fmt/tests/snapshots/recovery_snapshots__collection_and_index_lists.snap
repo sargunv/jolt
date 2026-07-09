@@ -1,0 +1,25 @@
+---
+source: crates/jolt_kotlin_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+fun demo(values: List<Int>) { [/* collection */ , value]
+values[/* index */ , 0] }
+
+formatted:
+fun demo(values: List<Int>) {
+  [ /* collection */
+    ,
+    
+    value
+  ]
+  values[ /* index */
+    ,
+    
+    0
+  ]
+}
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(50), end: TextSize(55) }) message=expected list item
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(78), end: TextSize(79) }) message=expected list item

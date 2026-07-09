@@ -1,0 +1,17 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+class C { int a; /* member */ + ; void m() {} }
+
+formatted:
+class C {
+  int a; /* member */
+  +;
+  void m() {
+  }
+}
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(30), end: TextSize(31) }) message=unexpected token in type body

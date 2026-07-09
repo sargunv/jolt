@@ -1,0 +1,15 @@
+---
+source: crates/jolt_java_fmt/tests/corpus.rs
+expression: snapshot
+---
+formatted:
+class C {
+  void m(boolean ready) {
+    while (ready) {
+      // keep
+    }
+  }
+}
+
+diagnostics:
+(none)

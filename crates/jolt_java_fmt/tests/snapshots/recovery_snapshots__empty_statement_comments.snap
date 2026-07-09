@@ -1,0 +1,19 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+class C { void m(boolean ready) { while (ready) ; // keep
+} }
+
+formatted:
+class C {
+  void m(boolean ready) {
+    while (ready) {
+      // keep
+    }
+  }
+}
+
+diagnostics:
+(none)

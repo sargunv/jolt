@@ -1,0 +1,12 @@
+---
+source: crates/jolt_kotlin_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+class Box<First, /* orphan */ , Second>
+
+formatted:
+class Box<First, /* orphan */ , Second>
+
+diagnostics:
+(none)

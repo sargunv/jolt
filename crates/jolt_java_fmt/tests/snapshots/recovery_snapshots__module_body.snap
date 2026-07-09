@@ -1,0 +1,18 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+module m { requires a; /* module */ + ; exports p; }
+
+formatted:
+module m {
+  requires a; /* module */
+
+  +;
+
+  exports p;
+}
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(36), end: TextSize(37) }) message=unexpected token in module declaration

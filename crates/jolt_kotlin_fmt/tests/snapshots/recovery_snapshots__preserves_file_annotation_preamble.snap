@@ -1,0 +1,20 @@
+---
+source: crates/jolt_kotlin_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+@file:Suppress("unused")
+
+package sample
+
+class Demo
+
+formatted:
+@file:Suppress("unused")
+
+package sample
+
+class Demo
+
+diagnostics:
+(none)

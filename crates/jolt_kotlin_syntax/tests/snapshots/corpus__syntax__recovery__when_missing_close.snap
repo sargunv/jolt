@@ -1,0 +1,58 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun demo(value: Int) { when (value) { 1 -> one()
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "demo" @ 4..8
+    ValueParameterList
+      LParen "(" @ 8..9
+      ValueParameter
+        Name
+          Identifier "value" @ 9..14
+        Colon ":" @ 14..15 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Int" @ 16..19
+      RParen ")" @ 19..20 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 21..22 trailing=[Whitespace " "]
+      Statement
+        ExpressionStatement
+          WhenExpression
+            WhenKw "when" @ 23..27 trailing=[Whitespace " "]
+            WhenSubject
+              LParen "(" @ 28..29
+              NameExpression
+                Identifier "value" @ 29..34
+              RParen ")" @ 34..35 trailing=[Whitespace " "]
+            LBrace "{" @ 36..37 trailing=[Whitespace " "]
+            WhenEntry
+              WhenCondition
+                LiteralExpression
+                  IntegerLiteral "1" @ 38..39 trailing=[Whitespace " "]
+              Arrow "->" @ 40..42 trailing=[Whitespace " "]
+              CallExpression
+                NameExpression
+                  Identifier "one" @ 43..46
+                ValueArgumentList
+                  LParen "(" @ 46..47
+                  RParen ")" @ 47..48
+  Eof "" @ 49..49 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=49..49 message="expected '}' after when"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=49..49 message="expected '}' after block"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(49), end: TextSize(49) }) message=expected '}' after when
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(49), end: TextSize(49) }) message=expected '}' after block

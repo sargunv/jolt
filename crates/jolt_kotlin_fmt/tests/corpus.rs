@@ -18,11 +18,10 @@ fn kotlin_corpus_formatter_snapshots() {
             .unwrap_or(&path)
             .to_string_lossy()
             .replace('\\', "/");
-        if path
-            .strip_prefix(&root)
-            .is_ok_and(|relative| relative.starts_with("syntax/lexer"))
-        {
-            manifest_entries.push(format!("skip lexer {relative}"));
+        if path.strip_prefix(&root).is_ok_and(|relative| {
+            relative.starts_with("syntax/lexer") || relative.starts_with("syntax/recovery")
+        }) {
+            manifest_entries.push(format!("skip {relative}"));
             continue;
         }
 

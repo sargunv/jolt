@@ -1,0 +1,31 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+class Base {}
+class C extends /* type */ {}
+class D { void m() throws /* throws */ {} }
+module m { exports p to /* target */ ; provides S with /* impl */ ; }
+
+formatted:
+module m {
+  exports p to /* target */;
+
+  provides S with /* impl */;
+}
+
+class Base {
+}
+
+class C extends /* type */ {
+}
+
+class D {
+  void m() throws /* throws */ {
+  }
+}
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(125), end: TextSize(126) }) message=expected identifier
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(154), end: TextSize(155) }) message=expected identifier

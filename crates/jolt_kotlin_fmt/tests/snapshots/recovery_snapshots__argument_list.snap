@@ -1,0 +1,21 @@
+---
+source: crates/jolt_kotlin_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+fun demo() { call(/* before */,
+/* value */ value)
+}
+
+formatted:
+fun demo() {
+  call( /* before */
+    ,
+    
+    /* value */
+    value
+  )
+}
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(44), end: TextSize(49) }) message=expected list item

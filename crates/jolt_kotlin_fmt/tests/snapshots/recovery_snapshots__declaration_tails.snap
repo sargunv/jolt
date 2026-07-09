@@ -1,0 +1,19 @@
+---
+source: crates/jolt_kotlin_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+fun value() =
+val answer =
+val delegated by
+
+formatted:
+fun value() =valanswer=
+
+val delegated by
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(14), end: TextSize(17) }) message=expected expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(18), end: TextSize(24) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(25), end: TextSize(26) }) message=unexpected token in expression
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(44), end: TextSize(44) }) message=expected expression

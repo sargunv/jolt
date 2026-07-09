@@ -1,0 +1,13 @@
+---
+source: crates/jolt_kotlin_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+val value: Int field = /* backing */ compute()
+
+formatted:
+val value: Int
+  field = /* backing */  compute()
+
+diagnostics:
+(none)

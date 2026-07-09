@@ -1,0 +1,16 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+class C { void m() { obj.(); } }
+
+formatted:
+class C {
+  void m() {
+    obj.();
+  }
+}
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(25), end: TextSize(26) }) message=expected member name

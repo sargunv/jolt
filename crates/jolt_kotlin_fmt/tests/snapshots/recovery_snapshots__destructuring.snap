@@ -1,0 +1,12 @@
+---
+source: crates/jolt_kotlin_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+val (first, /* orphan */ , second) = pair
+
+formatted:
+val (first, /* orphan */ , second) = pair
+
+diagnostics:
+(none)

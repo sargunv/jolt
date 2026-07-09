@@ -1,0 +1,33 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class A {}
+; // keep
+class B {}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "A" @ 6..7 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 8..9
+      RBrace "}" @ 9..10
+  EmptyDeclaration
+    Semicolon ";" @ 11..12 leading=[Newline "\n"] trailing=[Whitespace " ", LineComment "// keep"]
+  ClassDeclaration
+    ClassKw "class" @ 21..26 leading=[Newline "\n"] trailing=[Whitespace " "]
+    Identifier "B" @ 27..28 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 29..30
+      RBrace "}" @ 30..31
+  Eof "" @ 32..32 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

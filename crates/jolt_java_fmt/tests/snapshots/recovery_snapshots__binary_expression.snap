@@ -1,0 +1,22 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+class C { void m() { value + /* rhs */ ; } }
+
+formatted:
+class C {
+  void m() {
+    value+ /* rhs */;}}
+  
+
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(39), end: TextSize(40) }) message=expected expression
+code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(41), end: TextSize(42) }) message=expected statement expression
+code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(41), end: TextSize(42) }) message=unexpected token in statement expression
+code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(43), end: TextSize(44) }) message=unexpected token in statement expression
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(45), end: TextSize(45) }) message=expected `;` after expression statement
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(45), end: TextSize(45) }) message=expected `}` after block
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(45), end: TextSize(45) }) message=expected `}` after type body

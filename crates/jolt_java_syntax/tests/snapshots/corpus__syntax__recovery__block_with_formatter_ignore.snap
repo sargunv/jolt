@@ -1,0 +1,82 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class C { void m() {
+  int before;
+  // @formatter:off
+  int raw=1+2;
+  // @formatter:on
+  /* block */ + ;
+  int after;
+} }
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "C" @ 6..7 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 8..9 trailing=[Whitespace " "]
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 10..14 trailing=[Whitespace " "]
+          Identifier "m" @ 15..16
+          LParen "(" @ 16..17
+          RParen ")" @ 17..18 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 19..20
+            BlockStatement
+              LocalVariableDeclaration
+                PrimitiveType
+                  IntKw "int" @ 23..26 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "before" @ 27..33
+              Semicolon ";" @ 33..34
+            BlockStatement
+              LocalVariableDeclaration
+                PrimitiveType
+                  IntKw "int" @ 57..60 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                VariableDeclaratorList
+                  VariableDeclarator
+                    Identifier "raw" @ 61..64
+                    Assign "=" @ 64..65
+                    VariableInitializer
+                      BinaryExpression
+                        LiteralExpression
+                          IntegerLiteral "1" @ 65..66
+                        Plus "+" @ 66..67
+                        LiteralExpression
+                          IntegerLiteral "2" @ 67..68
+              Semicolon ";" @ 68..69
+            BlockStatement
+              ExpressionStatement
+                ErrorNode
+                  UnaryExpression
+                    Plus "+" @ 103..104 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  ", BlockComment "/* block */", Whitespace " "] trailing=[Whitespace " "]
+                    ErrorNode
+                      Semicolon ";" @ 105..106
+                ErrorNode
+                  IntKw "int" @ 109..112 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                ErrorNode
+                  Identifier "after" @ 113..118
+                Semicolon ";" @ 118..119
+            RBrace "}" @ 120..121 leading=[Newline "\n"] trailing=[Whitespace " "]
+      RBrace "}" @ 122..123
+  Eof "" @ 124..124 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=105..106 message="expected expression"
+  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=109..112 message="expected statement expression"
+  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=109..112 message="unexpected token in statement expression"
+  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=113..118 message="unexpected token in statement expression"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(105), end: TextSize(106) }) message=expected expression
+code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(109), end: TextSize(112) }) message=expected statement expression
+code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(109), end: TextSize(112) }) message=unexpected token in statement expression
+code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(113), end: TextSize(118) }) message=unexpected token in statement expression

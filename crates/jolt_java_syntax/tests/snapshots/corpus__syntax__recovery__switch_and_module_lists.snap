@@ -1,0 +1,88 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class C { void m(Object value) { switch (value) { case A, /* case */ , B -> use(); } } }
+module m { exports p to a, /* module */ , b; }
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "C" @ 6..7 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 8..9 trailing=[Whitespace " "]
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 10..14 trailing=[Whitespace " "]
+          Identifier "m" @ 15..16
+          LParen "(" @ 16..17
+          FormalParameterList
+            FormalParameter
+              ClassType
+                Name
+                  Identifier "Object" @ 17..23 trailing=[Whitespace " "]
+              Identifier "value" @ 24..29
+          RParen ")" @ 29..30 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 31..32 trailing=[Whitespace " "]
+            BlockStatement
+              SwitchStatement
+                SwitchKw "switch" @ 33..39 trailing=[Whitespace " "]
+                LParen "(" @ 40..41
+                NameExpression
+                  Identifier "value" @ 41..46
+                RParen ")" @ 46..47 trailing=[Whitespace " "]
+                SwitchBlock
+                  LBrace "{" @ 48..49 trailing=[Whitespace " "]
+                  SwitchRule
+                    SwitchLabel
+                      CaseKw "case" @ 50..54 trailing=[Whitespace " "]
+                      CaseConstant
+                        NameExpression
+                          Identifier "A" @ 55..56
+                      Comma "," @ 56..57 trailing=[Whitespace " ", BlockComment "/* case */", Whitespace " "]
+                      Comma "," @ 69..70 trailing=[Whitespace " "]
+                      CaseConstant
+                        NameExpression
+                          Identifier "B" @ 71..72 trailing=[Whitespace " "]
+                    Arrow "->" @ 73..75 trailing=[Whitespace " "]
+                    MethodInvocationExpression
+                      NameExpression
+                        Identifier "use" @ 76..79
+                      ArgumentList
+                        LParen "(" @ 79..80
+                        RParen ")" @ 80..81
+                    Semicolon ";" @ 81..82 trailing=[Whitespace " "]
+                  RBrace "}" @ 83..84 trailing=[Whitespace " "]
+            RBrace "}" @ 85..86 trailing=[Whitespace " "]
+      RBrace "}" @ 87..88
+  ModuleDeclaration
+    Identifier "module" @ 89..95 leading=[Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "m" @ 96..97 trailing=[Whitespace " "]
+    LBrace "{" @ 98..99 trailing=[Whitespace " "]
+    ModuleDirective
+      ExportsDirective
+        Identifier "exports" @ 100..107 trailing=[Whitespace " "]
+        Name
+          Identifier "p" @ 108..109 trailing=[Whitespace " "]
+        Identifier "to" @ 110..112 trailing=[Whitespace " "]
+        Name
+          Identifier "a" @ 113..114
+        Comma "," @ 114..115 trailing=[Whitespace " ", BlockComment "/* module */", Whitespace " "]
+        Comma "," @ 129..130 trailing=[Whitespace " "]
+        Name
+          Identifier "b" @ 131..132
+        Semicolon ";" @ 132..133 trailing=[Whitespace " "]
+    RBrace "}" @ 134..135
+  Eof "" @ 136..136 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=129..130 message="expected identifier"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(129), end: TextSize(130) }) message=expected identifier

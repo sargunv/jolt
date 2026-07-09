@@ -1,0 +1,48 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun value() =
+val answer =
+val delegated by
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "value" @ 4..9
+    ValueParameterList
+      LParen "(" @ 9..10
+      RParen ")" @ 10..11 trailing=[Whitespace " "]
+    Assign "=" @ 12..13
+    ErrorNode
+      ValKw "val" @ 14..17 leading=[Newline "\n"] trailing=[Whitespace " "]
+    ErrorNode
+      Identifier "answer" @ 18..24 trailing=[Whitespace " "]
+    ErrorNode
+      Assign "=" @ 25..26
+  PropertyDeclaration
+    ValKw "val" @ 27..30 leading=[Newline "\n"] trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "delegated" @ 31..40 trailing=[Whitespace " "]
+    Identifier "by" @ 41..43
+    ErrorNode
+  Eof "" @ 44..44 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=14..17 message="expected expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=18..24 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=25..26 message="unexpected token in expression"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=44..44 message="expected expression"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(14), end: TextSize(17) }) message=expected expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(18), end: TextSize(24) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(25), end: TextSize(26) }) message=unexpected token in expression
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(44), end: TextSize(44) }) message=expected expression

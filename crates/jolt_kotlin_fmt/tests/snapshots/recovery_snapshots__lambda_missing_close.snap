@@ -1,0 +1,15 @@
+---
+source: crates/jolt_kotlin_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+fun demo() { run { value(1)
+
+formatted:
+fun demo() {
+  run { value(1) 
+
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(28), end: TextSize(28) }) message=expected '}' after lambda
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(28), end: TextSize(28) }) message=expected '}' after block

@@ -1,0 +1,44 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun demo() { call(/* before */,
+/* value */ value)
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "demo" @ 4..8
+    ValueParameterList
+      LParen "(" @ 8..9
+      RParen ")" @ 9..10 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 11..12 trailing=[Whitespace " "]
+      Statement
+        ExpressionStatement
+          CallExpression
+            NameExpression
+              Identifier "call" @ 13..17
+            ValueArgumentList
+              LParen "(" @ 17..18 trailing=[BlockComment "/* before */"]
+              Comma "," @ 30..31
+              ErrorNode
+              ValueArgument
+                NameExpression
+                  Identifier "value" @ 44..49 leading=[Newline "\n", BlockComment "/* value */", Whitespace " "]
+              RParen ")" @ 49..50
+      RBrace "}" @ 51..52 leading=[Newline "\n"]
+  Eof "" @ 53..53 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=44..49 message="expected list item"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(44), end: TextSize(49) }) message=expected list item

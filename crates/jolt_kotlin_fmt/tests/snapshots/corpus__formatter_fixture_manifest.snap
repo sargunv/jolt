@@ -43,51 +43,51 @@ format style/statements/nested-control-flow.kt
 format style/statements/simple-expression-statements.kt
 format style/statements/try-catch-finally.kt
 format style/statements/when-statement.kt
-skip lexer syntax/lexer/block-comments-can-contain-newlines.kt
-skip lexer syntax/lexer/block-comments-nest.kt
-skip lexer syntax/lexer/comment-markers-inside-character-literals-are-literal-content.kt
-skip lexer syntax/lexer/comments-separate-adjacent-tokens.kt
-skip lexer syntax/lexer/keeps-range-dots-out-of-number-literals.kt
-skip lexer syntax/lexer/line-comments-can-end-at-eof.kt
-skip lexer syntax/lexer/line-comments-ignore-block-comment-markers.kt
-skip lexer syntax/lexer/modifier-keyword-spellings-remain-identifiers.kt
-skip lexer syntax/lexer/raw-strings-treat-backslash-as-content.kt
-skip lexer syntax/lexer/recognizes-all-hard-keywords.kt
-skip lexer syntax/lexer/recognizes-all-operators.kt
-skip lexer syntax/lexer/recognizes-backtick-identifiers.kt
-skip lexer syntax/lexer/recognizes-backtick-short-string-template.kt
-skip lexer syntax/lexer/recognizes-character-literals.kt
-skip lexer syntax/lexer/recognizes-collection-literal-punctuation.kt
-skip lexer syntax/lexer/recognizes-decimal-floating-point-literals.kt
-skip lexer syntax/lexer/recognizes-decimal-integer-literals.kt
-skip lexer syntax/lexer/recognizes-delimiters-and-punctuation.kt
-skip lexer syntax/lexer/recognizes-empty-line-string.kt
-skip lexer syntax/lexer/recognizes-empty-raw-string.kt
-skip lexer syntax/lexer/recognizes-field-identifiers.kt
-skip lexer syntax/lexer/recognizes-hex-and-binary-integer-literals.kt
-skip lexer syntax/lexer/recognizes-identifiers-with-underscores-and-digits.kt
-skip lexer syntax/lexer/recognizes-integer-suffixes.kt
-skip lexer syntax/lexer/recognizes-line-string-content-and-escapes.kt
-skip lexer syntax/lexer/recognizes-long-string-template-with-nested-braces.kt
-skip lexer syntax/lexer/recognizes-multi-dollar-line-string-interpolation.kt
-skip lexer syntax/lexer/recognizes-multi-dollar-raw-string-interpolation.kt
-skip lexer syntax/lexer/recognizes-raw-string-content.kt
-skip lexer syntax/lexer/recognizes-raw-string-template.kt
-skip lexer syntax/lexer/recognizes-reserved-ellipsis.kt
-skip lexer syntax/lexer/recognizes-safe-cast-and-question-operators.kt
-skip lexer syntax/lexer/recognizes-shebang-line.kt
-skip lexer syntax/lexer/recognizes-short-string-template.kt
-skip lexer syntax/lexer/recognizes-unicode-identifiers.kt
-skip lexer syntax/lexer/reports-invalid-escape-sequence-in-line-string.kt
-skip lexer syntax/lexer/reports-non-ascii-digit-as-unknown-start.kt
-skip lexer syntax/lexer/reports-unknown-character.kt
-skip lexer syntax/lexer/reports-unterminated-backtick-identifier.kt
-skip lexer syntax/lexer/reports-unterminated-block-comment.kt
-skip lexer syntax/lexer/reports-unterminated-character-literal.kt
-skip lexer syntax/lexer/reports-unterminated-line-string-at-newline.kt
-skip lexer syntax/lexer/reports-unterminated-raw-string.kt
-skip lexer syntax/lexer/separates-not-in-and-not-is-from-identifier-prefixes.kt
-skip lexer syntax/lexer/soft-keyword-spellings-remain-identifiers.kt
+skip syntax/lexer/block-comments-can-contain-newlines.kt
+skip syntax/lexer/block-comments-nest.kt
+skip syntax/lexer/comment-markers-inside-character-literals-are-literal-content.kt
+skip syntax/lexer/comments-separate-adjacent-tokens.kt
+skip syntax/lexer/keeps-range-dots-out-of-number-literals.kt
+skip syntax/lexer/line-comments-can-end-at-eof.kt
+skip syntax/lexer/line-comments-ignore-block-comment-markers.kt
+skip syntax/lexer/modifier-keyword-spellings-remain-identifiers.kt
+skip syntax/lexer/raw-strings-treat-backslash-as-content.kt
+skip syntax/lexer/recognizes-all-hard-keywords.kt
+skip syntax/lexer/recognizes-all-operators.kt
+skip syntax/lexer/recognizes-backtick-identifiers.kt
+skip syntax/lexer/recognizes-backtick-short-string-template.kt
+skip syntax/lexer/recognizes-character-literals.kt
+skip syntax/lexer/recognizes-collection-literal-punctuation.kt
+skip syntax/lexer/recognizes-decimal-floating-point-literals.kt
+skip syntax/lexer/recognizes-decimal-integer-literals.kt
+skip syntax/lexer/recognizes-delimiters-and-punctuation.kt
+skip syntax/lexer/recognizes-empty-line-string.kt
+skip syntax/lexer/recognizes-empty-raw-string.kt
+skip syntax/lexer/recognizes-field-identifiers.kt
+skip syntax/lexer/recognizes-hex-and-binary-integer-literals.kt
+skip syntax/lexer/recognizes-identifiers-with-underscores-and-digits.kt
+skip syntax/lexer/recognizes-integer-suffixes.kt
+skip syntax/lexer/recognizes-line-string-content-and-escapes.kt
+skip syntax/lexer/recognizes-long-string-template-with-nested-braces.kt
+skip syntax/lexer/recognizes-multi-dollar-line-string-interpolation.kt
+skip syntax/lexer/recognizes-multi-dollar-raw-string-interpolation.kt
+skip syntax/lexer/recognizes-raw-string-content.kt
+skip syntax/lexer/recognizes-raw-string-template.kt
+skip syntax/lexer/recognizes-reserved-ellipsis.kt
+skip syntax/lexer/recognizes-safe-cast-and-question-operators.kt
+skip syntax/lexer/recognizes-shebang-line.kt
+skip syntax/lexer/recognizes-short-string-template.kt
+skip syntax/lexer/recognizes-unicode-identifiers.kt
+skip syntax/lexer/reports-invalid-escape-sequence-in-line-string.kt
+skip syntax/lexer/reports-non-ascii-digit-as-unknown-start.kt
+skip syntax/lexer/reports-unknown-character.kt
+skip syntax/lexer/reports-unterminated-backtick-identifier.kt
+skip syntax/lexer/reports-unterminated-block-comment.kt
+skip syntax/lexer/reports-unterminated-character-literal.kt
+skip syntax/lexer/reports-unterminated-line-string-at-newline.kt
+skip syntax/lexer/reports-unterminated-raw-string.kt
+skip syntax/lexer/separates-not-in-and-not-is-from-identifier-prefixes.kt
+skip syntax/lexer/soft-keyword-spellings-remain-identifiers.kt
 skip diagnostics syntax/parser/diagnoses-callable-reference-call-like-reserved-form.kt
 skip diagnostics syntax/parser/diagnoses-invalid-assignment-targets.kt
 skip diagnostics syntax/parser/diagnoses-malformed-type-argument-call.kt
@@ -187,6 +187,36 @@ skip diagnostics syntax/parser/recovers-incomplete-lambda-and-call.kt
 skip diagnostics syntax/parser/recovers-missing-expression-after-elvis.kt
 skip diagnostics syntax/parser/recovers-missing-expression-in-collection-literal-preview.kt
 skip diagnostics syntax/parser/recovers-missing-when-arrow-and-body.kt
+skip syntax/recovery/annotation-argument-list.kt
+skip syntax/recovery/argument-list.kt
+skip syntax/recovery/assignment-without-left.kt
+skip syntax/recovery/block-missing-close.kt
+skip syntax/recovery/block-with-formatter-ignore.kt
+skip syntax/recovery/call-without-callee.kt
+skip syntax/recovery/class-body-with-formatter-ignore.kt
+skip syntax/recovery/class-body.kt
+skip syntax/recovery/collection-and-index-lists.kt
+skip syntax/recovery/context-function-type.kt
+skip syntax/recovery/control-flow-missing-children.kt
+skip syntax/recovery/declaration-tails.kt
+skip syntax/recovery/destructuring.kt
+skip syntax/recovery/else-without-branch.kt
+skip syntax/recovery/explicit-backing-field.kt
+skip syntax/recovery/for-partial-header.kt
+skip syntax/recovery/import-suffixes.kt
+skip syntax/recovery/lambda-branch.kt
+skip syntax/recovery/lambda-missing-close.kt
+skip syntax/recovery/lambda-parameter-list.kt
+skip syntax/recovery/navigation-without-receiver.kt
+skip syntax/recovery/normalizes-package-import-spacing.kt
+skip syntax/recovery/object-delegation.kt
+skip syntax/recovery/preserves-file-annotation-preamble.kt
+skip syntax/recovery/type-argument-list.kt
+skip syntax/recovery/type-constraints.kt
+skip syntax/recovery/type-parameter-list.kt
+skip syntax/recovery/value-parameter-list.kt
+skip syntax/recovery/when-condition-list.kt
+skip syntax/recovery/when-missing-close.kt
 format trivia/annotations-use-site-targets.kt
 format trivia/call-chains-and-safe-calls.kt
 format trivia/callable-references-and-labels.kt

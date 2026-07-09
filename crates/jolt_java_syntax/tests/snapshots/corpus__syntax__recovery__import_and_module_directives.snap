@@ -1,0 +1,33 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+import ;
+module m { requires ; }
+
+syntax:
+syntax:
+CompilationUnit
+  ImportDeclaration
+    ImportKw "import" @ 0..6 trailing=[Whitespace " "]
+    Semicolon ";" @ 7..8
+  ModuleDeclaration
+    Identifier "module" @ 9..15 leading=[Newline "\n"] trailing=[Whitespace " "]
+    Name
+      Identifier "m" @ 16..17 trailing=[Whitespace " "]
+    LBrace "{" @ 18..19 trailing=[Whitespace " "]
+    ModuleDirective
+      RequiresDirective
+        Identifier "requires" @ 20..28 trailing=[Whitespace " "]
+        Semicolon ";" @ 29..30 trailing=[Whitespace " "]
+    RBrace "}" @ 31..32
+  Eof "" @ 33..33 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=7..8 message="expected identifier"
+  code=java.parse.expected_syntax severity=Error stage=Parser range=29..30 message="expected identifier"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(7), end: TextSize(8) }) message=expected identifier
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(29), end: TextSize(30) }) message=expected identifier

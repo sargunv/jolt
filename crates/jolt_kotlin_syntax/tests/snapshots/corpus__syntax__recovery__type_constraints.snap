@@ -1,0 +1,71 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun <T> demo() where T : Any, /* orphan */ , T : Closeable {}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    TypeParameterList
+      Lt "<" @ 4..5
+      TypeParameter
+        Name
+          Identifier "T" @ 5..6
+      Gt ">" @ 6..7 trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "demo" @ 8..12
+    ValueParameterList
+      LParen "(" @ 12..13
+      RParen ")" @ 13..14 trailing=[Whitespace " "]
+    TypeConstraintList
+      Identifier "where" @ 15..20 trailing=[Whitespace " "]
+      TypeConstraint
+        Name
+          Identifier "T" @ 21..22 trailing=[Whitespace " "]
+        Colon ":" @ 23..24 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "Any" @ 25..28
+      Comma "," @ 28..29 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
+      TypeConstraint
+        Name
+  Statement
+    ExpressionStatement
+      ErrorNode
+        Comma "," @ 43..44 trailing=[Whitespace " "]
+      ErrorNode
+        Identifier "T" @ 45..46 trailing=[Whitespace " "]
+      ErrorNode
+        Colon ":" @ 47..48 trailing=[Whitespace " "]
+      ErrorNode
+        Identifier "Closeable" @ 49..58 trailing=[Whitespace " "]
+      ErrorNode
+        LBrace "{" @ 59..60
+  RBrace "}" @ 60..61
+  Eof "" @ 62..62 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=43..44 message="expected name"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=43..44 message="expected type constraint"
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=43..44 message="expected expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=45..46 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=47..48 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=49..58 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=59..60 message="unexpected token in expression"
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=60..61 message="unexpected closing brace at top level"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(43), end: TextSize(44) }) message=expected name
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(43), end: TextSize(44) }) message=expected type constraint
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(43), end: TextSize(44) }) message=expected expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(45), end: TextSize(46) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(47), end: TextSize(48) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(49), end: TextSize(58) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(59), end: TextSize(60) }) message=unexpected token in expression
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(60), end: TextSize(61) }) message=unexpected closing brace at top level

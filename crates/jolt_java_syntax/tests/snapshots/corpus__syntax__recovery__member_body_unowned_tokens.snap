@@ -1,0 +1,45 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class C { int a; /* member */ + ; void m() {} }
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "C" @ 6..7 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 8..9 trailing=[Whitespace " "]
+      ClassBodyDeclaration
+        FieldDeclaration
+          PrimitiveType
+            IntKw "int" @ 10..13 trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "a" @ 14..15
+          Semicolon ";" @ 15..16 trailing=[Whitespace " ", BlockComment "/* member */", Whitespace " "]
+      ClassBodyDeclaration
+        ErrorNode
+          Plus "+" @ 30..31 trailing=[Whitespace " "]
+          Semicolon ";" @ 32..33 trailing=[Whitespace " "]
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 34..38 trailing=[Whitespace " "]
+          Identifier "m" @ 39..40
+          LParen "(" @ 40..41
+          RParen ")" @ 41..42 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 43..44
+            RBrace "}" @ 44..45 trailing=[Whitespace " "]
+      RBrace "}" @ 46..47
+  Eof "" @ 48..48 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=30..31 message="unexpected token in type body"
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(30), end: TextSize(31) }) message=unexpected token in type body

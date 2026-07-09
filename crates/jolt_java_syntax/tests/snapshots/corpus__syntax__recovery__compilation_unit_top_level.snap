@@ -1,0 +1,27 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+/* top */ + ; class C {}
+// JOLT-TRIVIA:file-tail
+
+syntax:
+syntax:
+CompilationUnit
+  ErrorNode
+    Plus "+" @ 10..11 leading=[BlockComment "/* top */", Whitespace " "] trailing=[Whitespace " "]
+    Semicolon ";" @ 12..13 trailing=[Whitespace " "]
+  ClassDeclaration
+    ClassKw "class" @ 14..19 trailing=[Whitespace " "]
+    Identifier "C" @ 20..21 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 22..23
+      RBrace "}" @ 23..24
+  Eof "" @ 50..50 leading=[Newline "\n", LineComment "// JOLT-TRIVIA:file-tail", Newline "\n"]
+
+diagnostics:
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=10..11 message="unexpected token at top level"
+
+diagnostics:
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(10), end: TextSize(11) }) message=unexpected token at top level

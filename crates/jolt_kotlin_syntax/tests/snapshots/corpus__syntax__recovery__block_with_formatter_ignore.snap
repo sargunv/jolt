@@ -1,0 +1,63 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun demo() {
+  val before = 1
+  // @formatter:off
+  val raw=1+2
+  // @formatter:on
+  /* block */ val after = value
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "demo" @ 4..8
+    ValueParameterList
+      LParen "(" @ 8..9
+      RParen ")" @ 9..10 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 11..12
+      PropertyDeclaration
+        ValKw "val" @ 15..18 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "before" @ 19..25 trailing=[Whitespace " "]
+        Assign "=" @ 26..27 trailing=[Whitespace " "]
+        LiteralExpression
+          IntegerLiteral "1" @ 28..29
+      PropertyDeclaration
+        ValKw "val" @ 52..55 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "raw" @ 56..59
+        Assign "=" @ 59..60
+        BinaryExpression
+          LiteralExpression
+            IntegerLiteral "1" @ 60..61
+          Plus "+" @ 61..62
+          LiteralExpression
+            IntegerLiteral "2" @ 62..63
+      PropertyDeclaration
+        ValKw "val" @ 97..100 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  ", BlockComment "/* block */", Whitespace " "] trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "after" @ 101..106 trailing=[Whitespace " "]
+        Assign "=" @ 107..108 trailing=[Whitespace " "]
+        NameExpression
+          Identifier "value" @ 109..114
+      RBrace "}" @ 115..116 leading=[Newline "\n"]
+  Eof "" @ 117..117 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

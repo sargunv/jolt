@@ -1,0 +1,36 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun demo() { val answer = 42
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "demo" @ 4..8
+    ValueParameterList
+      LParen "(" @ 8..9
+      RParen ")" @ 9..10 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 11..12 trailing=[Whitespace " "]
+      PropertyDeclaration
+        ValKw "val" @ 13..16 trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "answer" @ 17..23 trailing=[Whitespace " "]
+        Assign "=" @ 24..25 trailing=[Whitespace " "]
+        LiteralExpression
+          IntegerLiteral "42" @ 26..28
+  Eof "" @ 29..29 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=29..29 message="expected '}' after block"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(29), end: TextSize(29) }) message=expected '}' after block

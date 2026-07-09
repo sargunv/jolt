@@ -1,0 +1,34 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+val (first, /* orphan */ , second) = pair
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  PropertyDeclaration
+    ValKw "val" @ 0..3 trailing=[Whitespace " "]
+    DestructuringDeclaration
+      LParen "(" @ 4..5
+      DestructuringEntry
+        Name
+          Identifier "first" @ 5..10
+      Comma "," @ 10..11 trailing=[Whitespace " ", BlockComment "/* orphan */", Whitespace " "]
+      Comma "," @ 25..26 trailing=[Whitespace " "]
+      DestructuringEntry
+        Name
+          Identifier "second" @ 27..33
+      RParen ")" @ 33..34 trailing=[Whitespace " "]
+    Assign "=" @ 35..36 trailing=[Whitespace " "]
+    NameExpression
+      Identifier "pair" @ 37..41
+  Eof "" @ 42..42 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

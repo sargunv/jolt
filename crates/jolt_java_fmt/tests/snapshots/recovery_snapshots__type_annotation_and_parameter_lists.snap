@@ -1,0 +1,19 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+class C<T, /* type */ , U> { @A(x = 1, /* ann */ , y = 2) void m(int a, /* param */ , int b) {} }
+
+formatted:
+class C<T, /* type */ , U> {
+  @A(x = 1, /* ann */ , y = 2)
+  void m(int a, /* param */  , int b) {
+  }
+}
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(22), end: TextSize(23) }) message=expected type parameter name
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(49), end: TextSize(50) }) message=expected expression
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(84), end: TextSize(85) }) message=expected type
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(84), end: TextSize(85) }) message=expected parameter name

@@ -1,0 +1,43 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class C { void m() { obj.(); } }
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "C" @ 6..7 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 8..9 trailing=[Whitespace " "]
+      ClassBodyDeclaration
+        MethodDeclaration
+          VoidType
+            VoidKw "void" @ 10..14 trailing=[Whitespace " "]
+          Identifier "m" @ 15..16
+          LParen "(" @ 16..17
+          RParen ")" @ 17..18 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 19..20 trailing=[Whitespace " "]
+            BlockStatement
+              ExpressionStatement
+                MethodInvocationExpression
+                  NameExpression
+                    Identifier "obj" @ 21..24
+                  Dot "." @ 24..25
+                  ArgumentList
+                    LParen "(" @ 25..26
+                    RParen ")" @ 26..27
+                Semicolon ";" @ 27..28 trailing=[Whitespace " "]
+            RBrace "}" @ 29..30 trailing=[Whitespace " "]
+      RBrace "}" @ 31..32
+  Eof "" @ 33..33 leading=[Newline "\n"]
+
+diagnostics:
+  code=java.parse.expected_syntax severity=Error stage=Parser range=25..26 message="expected member name"
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(25), end: TextSize(26) }) message=expected member name

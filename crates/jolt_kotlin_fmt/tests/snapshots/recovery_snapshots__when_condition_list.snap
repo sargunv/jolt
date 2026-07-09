@@ -1,0 +1,16 @@
+---
+source: crates/jolt_kotlin_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+fun demo(x: Int) { when (x) { 1, /* orphan */ , 2 -> hit() } }
+
+formatted:
+fun demo(x: Int) {
+  when (x) {
+    1, /* orphan */  , 2 -> hit()
+  }
+}
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(46), end: TextSize(47) }) message=expected expression

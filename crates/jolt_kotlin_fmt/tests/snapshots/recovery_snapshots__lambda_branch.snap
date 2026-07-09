@@ -1,0 +1,20 @@
+---
+source: crates/jolt_kotlin_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+fun demo(flag: Boolean) { if (flag) { run(/* branch */ value)
+next() } }
+
+formatted:
+fun demo(flag: Boolean) {
+  if (flag) {
+    run( /* branch */
+      value
+    )
+    next()
+  }
+}
+
+diagnostics:
+(none)

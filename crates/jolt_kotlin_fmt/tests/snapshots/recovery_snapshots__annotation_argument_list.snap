@@ -1,0 +1,19 @@
+---
+source: crates/jolt_kotlin_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+@Anno(/* orphan */ , value)
+class Demo
+
+formatted:
+@Anno( /* orphan */
+  ,
+  
+  value
+)
+
+class Demo
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(21), end: TextSize(26) }) message=expected list item
