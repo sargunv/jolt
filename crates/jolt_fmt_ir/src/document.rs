@@ -13,6 +13,10 @@ impl<'source> Doc<'source> {
     pub(crate) const fn kind(&self) -> &DocKind<'source> {
         &self.0
     }
+
+    const fn is_nil(&self) -> bool {
+        matches!(self.0, DocKind::Nil)
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -119,7 +123,15 @@ pub fn literal_text<'source>(value: impl Into<Cow<'source, str>>) -> Doc<'source
 
 #[must_use]
 pub fn concat<'source>(docs: impl IntoIterator<Item = Doc<'source>>) -> Doc<'source> {
-    Doc(DocKind::Concat(docs.into_iter().collect()))
+    let mut docs = docs
+        .into_iter()
+        .filter(|doc| !doc.is_nil())
+        .collect::<Vec<_>>();
+    match docs.len() {
+        0 => nil(),
+        1 => docs.pop().expect("single concat doc exists"),
+        _ => Doc(DocKind::Concat(docs)),
+    }
 }
 
 #[must_use]
@@ -134,11 +146,15 @@ pub fn join<'source>(
         }
         joined.push(doc);
     }
-    Doc(DocKind::Concat(joined))
+    concat(joined)
 }
 
 #[must_use]
 pub fn group(doc: Doc<'_>) -> Doc<'_> {
+    if doc.is_nil() {
+        return doc;
+    }
+
     Doc(DocKind::Group(Group {
         should_break: false,
         contents: Box::new(doc),
@@ -147,6 +163,10 @@ pub fn group(doc: Doc<'_>) -> Doc<'_> {
 
 #[must_use]
 pub fn force_group(doc: Doc<'_>) -> Doc<'_> {
+    if doc.is_nil() {
+        return doc;
+    }
+
     Doc(DocKind::Group(Group {
         should_break: true,
         contents: Box::new(doc),
@@ -155,6 +175,10 @@ pub fn force_group(doc: Doc<'_>) -> Doc<'_> {
 
 #[must_use]
 pub fn indent(doc: Doc<'_>) -> Doc<'_> {
+    if doc.is_nil() {
+        return doc;
+    }
+
     Doc(DocKind::Indent(Indent {
         levels: 1,
         contents: Box::new(doc),
