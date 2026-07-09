@@ -1,6 +1,6 @@
 use std::{
     env,
-    ffi::OsString,
+    ffi::OsStr,
     fs::{self, File},
     io::{self, Write as _},
     path::Path,
@@ -14,7 +14,7 @@ use crate::cli::{Cli, VERSION};
 pub(crate) fn run_from_env_args() -> Option<ExitCode> {
     let mut args = env::args_os();
     let _program = args.next()?;
-    if args.next().as_deref() != Some(std::ffi::OsStr::new("__docs")) {
+    if args.next().as_deref() != Some(OsStr::new("__docs")) {
         return None;
     }
 
@@ -50,7 +50,7 @@ pub(crate) fn run_from_env_args() -> Option<ExitCode> {
     };
 
     if let Some(extra) = args.next() {
-        return Some(unexpected_argument(extra));
+        return Some(unexpected_argument(&extra));
     }
 
     Some(exit_code)
@@ -107,7 +107,7 @@ fn generate_manpage(
     Ok(())
 }
 
-fn unexpected_argument(arg: OsString) -> ExitCode {
+fn unexpected_argument(arg: &OsStr) -> ExitCode {
     eprintln!(
         "unexpected docs generation argument: {}",
         arg.to_string_lossy()

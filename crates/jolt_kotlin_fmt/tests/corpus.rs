@@ -34,7 +34,7 @@ fn kotlin_corpus_formatter_snapshots() {
 
         manifest_entries.push(format!("format {relative}"));
         formatted_cases += 1;
-        let formatted = format_or_panic(&source, &options, &path.display().to_string());
+        let formatted = format_or_panic(&source, options, &path.display().to_string());
         let formatted_parse = parse_kotlin_file(&formatted);
         assert!(
             formatted_parse.diagnostics().is_empty(),
@@ -49,7 +49,7 @@ fn kotlin_corpus_formatter_snapshots() {
             path.display()
         );
 
-        let repeated = format_or_panic(&formatted, &options, &path.display().to_string());
+        let repeated = format_or_panic(&formatted, options, &path.display().to_string());
         assert_eq!(
             repeated,
             formatted,
@@ -72,9 +72,9 @@ fn kotlin_corpus_formatter_snapshots() {
     insta::assert_snapshot!("formatter_fixture_manifest", manifest_entries.join("\n"));
 }
 
-fn format_or_panic(source: &str, options: &FormatOptions, label: &str) -> String {
+fn format_or_panic(source: &str, options: FormatOptions, label: &str) -> String {
     let mut sink = StringSink::default();
-    match format_source_to_sink(source, options, &mut sink) {
+    match format_source_to_sink(source, &options, &mut sink) {
         FormatSinkResult::Complete | FormatSinkResult::Halted => sink.into_string(),
         FormatSinkResult::Blocked { diagnostics } => {
             panic!("formatter diagnostics in {label}: {diagnostics:#?}")

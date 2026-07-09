@@ -53,7 +53,7 @@ fn assert_corpus(suite: &str, expected_files: usize) -> ImportedFormatterSummary
             continue;
         }
 
-        let formatted = match format_source(&source, &options) {
+        let formatted = match format_source(&source, options) {
             Ok(formatted) => formatted,
             Err(diagnostics) => {
                 assert!(
@@ -84,7 +84,7 @@ fn assert_corpus(suite: &str, expected_files: usize) -> ImportedFormatterSummary
             path.display()
         );
 
-        let formatted_again = format_source(&formatted, &options).unwrap_or_else(|diagnostics| {
+        let formatted_again = format_source(&formatted, options).unwrap_or_else(|diagnostics| {
             panic!(
                 "formatted output was not accepted by formatter for {}: {diagnostics:#?}",
                 path.display()
@@ -97,7 +97,7 @@ fn assert_corpus(suite: &str, expected_files: usize) -> ImportedFormatterSummary
             path.display()
         );
 
-        let repeated = format_source(&source, &options).unwrap_or_else(|diagnostics| {
+        let repeated = format_source(&source, options).unwrap_or_else(|diagnostics| {
             panic!(
                 "repeated formatting produced diagnostic(s) for {}: {diagnostics:#?}",
                 path.display()
@@ -116,10 +116,10 @@ fn assert_corpus(suite: &str, expected_files: usize) -> ImportedFormatterSummary
 
 fn format_source(
     source: &str,
-    options: &FormatOptions,
+    options: FormatOptions,
 ) -> Result<String, Vec<jolt_diagnostics::Diagnostic>> {
     let mut sink = StringSink::default();
-    match format_source_to_sink(source, options, &mut sink) {
+    match format_source_to_sink(source, &options, &mut sink) {
         FormatSinkResult::Complete | FormatSinkResult::Halted => Ok(sink.into_string()),
         FormatSinkResult::Blocked { diagnostics } => Err(diagnostics),
     }

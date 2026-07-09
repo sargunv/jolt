@@ -1,4 +1,5 @@
 use std::{
+    fmt::Write as _,
     fs,
     path::{Path, PathBuf},
     process::Output,
@@ -390,7 +391,8 @@ fn jolt<const N: usize>(dir: &Path, args: [&str; N], stdin: &str) -> Output {
 
 fn snapshot(output: &Output, files: &[PathBuf]) -> String {
     let mut rendered = String::new();
-    rendered.push_str(&format!("status: {}\n", output.status.code().unwrap_or(-1)));
+    writeln!(rendered, "status: {}", output.status.code().unwrap_or(-1))
+        .expect("writing to a String should not fail");
     push_stream(&mut rendered, "stdout", &output.stdout);
     push_stream(&mut rendered, "stderr", &output.stderr);
     rendered.push_str("files:\n");
@@ -398,12 +400,14 @@ fn snapshot(output: &Output, files: &[PathBuf]) -> String {
         rendered.push_str("<none>\n");
     } else {
         for file in files {
-            rendered.push_str(&format!(
-                "-- {} --\n",
+            writeln!(
+                rendered,
+                "-- {} --",
                 file.file_name()
                     .expect("snapshot file should have a file name")
                     .to_string_lossy()
-            ));
+            )
+            .expect("writing to a String should not fail");
             rendered.push_str(&normalize_commit_hashes(
                 &fs::read_to_string(file)
                     .unwrap_or_else(|error| panic!("file should be readable: {error}")),

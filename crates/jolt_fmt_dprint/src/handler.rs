@@ -24,7 +24,7 @@ pub(crate) struct JoltDprintPlugin;
 
 impl JoltDprintPlugin {
     /// Creates a Jolt dprint plugin handler.
-    #[must_use]
+    #[cfg(all(feature = "wasm", target_arch = "wasm32", target_os = "unknown"))]
     pub(crate) const fn new() -> Self {
         Self
     }
@@ -35,19 +35,14 @@ impl JoltDprintPlugin {
     ///
     /// Returns an error when the file is not UTF-8, the path is not a supported
     /// Jolt language, or the core formatter blocks without producing output.
-    fn format_file(
-        &self,
-        file_path: &Path,
-        file_bytes: &[u8],
-        options: &FormatOptions,
-    ) -> FormatResult {
+    fn format_file(file_path: &Path, file_bytes: &[u8], options: FormatOptions) -> FormatResult {
         let source = std::str::from_utf8(file_bytes).map_err(|error| {
             FormatError::from(format!("Jolt formatter requires UTF-8 input: {error}"))
         })?;
         let language = language_for_path(file_path)?;
 
         let mut sink = DprintFormatSink::default();
-        let result = format_source_to_sink(source, language, options, &mut sink);
+        let result = format_source_to_sink(source, language, &options, &mut sink);
         match result {
             FormatSinkResult::Complete => {}
             FormatSinkResult::Halted => {
@@ -113,7 +108,7 @@ impl dprint_core::plugins::SyncPluginHandler<FormatOptions> for JoltDprintPlugin
         request: dprint_core::plugins::SyncFormatRequest<FormatOptions>,
         _format_with_host: impl FnMut(dprint_core::plugins::SyncHostFormatRequest) -> FormatResult,
     ) -> FormatResult {
-        self.format_file(request.file_path, &request.file_bytes, request.config)
+        Self::format_file(request.file_path, &request.file_bytes, *request.config)
     }
 }
 
@@ -227,29 +222,29 @@ mod tests {
 
     #[test]
     fn unsupported_associated_paths_return_errors_without_formatted_bytes() {
-        let plugin = JoltDprintPlugin::new();
-        let error = plugin
-            .format_file(
-                Path::new("Associated.scala"),
-                b"fun main() {}",
-                &FormatOptions::default(),
-            )
-            .expect_err("format should fail");
+        let error = JoltDprintPlugin::format_file(
+            Path::new("Associated.scala"),
+            b"fun main() {}",
+            FormatOptions::default(),
+        )
+        .expect_err("format should fail");
 
         assert!(error.to_string().contains("does not support '.scala'"));
     }
 
     #[test]
     fn invalid_utf8_returns_errors_without_formatted_bytes() {
-        let plugin = JoltDprintPlugin::new();
-        let error = plugin
-            .format_file(Path::new("Broken.java"), &[0xff], &FormatOptions::default())
-            .expect_err("format should fail");
+        let error = JoltDprintPlugin::format_file(
+            Path::new("Broken.java"),
+            &[0xff],
+            FormatOptions::default(),
+        )
+        .expect_err("format should fail");
 
         assert!(error.to_string().contains("requires UTF-8 input"));
     }
 
     fn format_java(source: &str, options: FormatOptions) -> Result<Option<Vec<u8>>, FormatError> {
-        JoltDprintPlugin::new().format_file(Path::new("A.java"), source.as_bytes(), &options)
+        JoltDprintPlugin::format_file(Path::new("A.java"), source.as_bytes(), options)
     }
 }

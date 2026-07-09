@@ -54,17 +54,17 @@ fn apply_plugin_config(
     diagnostics: &mut Vec<ConfigurationDiagnostic>,
 ) {
     if let Some(value) = config.shift_remove("lineWidth")
-        && let Some(line_width) = read_i32("lineWidth", value, diagnostics)
+        && let Some(line_width) = read_i32("lineWidth", &value, diagnostics)
     {
         apply_i32_as_u16(options, "lineWidth", line_width, diagnostics);
     }
     if let Some(value) = config.shift_remove("indentWidth")
-        && let Some(indent_width) = read_i32("indentWidth", value, diagnostics)
+        && let Some(indent_width) = read_i32("indentWidth", &value, diagnostics)
     {
         apply_i32_as_u8(options, "indentWidth", indent_width, diagnostics);
     }
     if let Some(value) = config.shift_remove("useTabs")
-        && let Some(use_tabs) = read_bool("useTabs", value, diagnostics)
+        && let Some(use_tabs) = read_bool("useTabs", &value, diagnostics)
     {
         options.use_tabs = use_tabs;
     }
@@ -72,11 +72,11 @@ fn apply_plugin_config(
 
 fn read_i32(
     property_name: &str,
-    value: ConfigKeyValue,
+    value: &ConfigKeyValue,
     diagnostics: &mut Vec<ConfigurationDiagnostic>,
 ) -> Option<i32> {
     match value {
-        ConfigKeyValue::Number(value) => Some(value),
+        ConfigKeyValue::Number(value) => Some(*value),
         ConfigKeyValue::Null => None,
         ConfigKeyValue::String(_)
         | ConfigKeyValue::Bool(_)
@@ -94,11 +94,11 @@ fn read_i32(
 
 fn read_bool(
     property_name: &str,
-    value: ConfigKeyValue,
+    value: &ConfigKeyValue,
     diagnostics: &mut Vec<ConfigurationDiagnostic>,
 ) -> Option<bool> {
     match value {
-        ConfigKeyValue::Bool(value) => Some(value),
+        ConfigKeyValue::Bool(value) => Some(*value),
         ConfigKeyValue::Null => None,
         ConfigKeyValue::String(_)
         | ConfigKeyValue::Number(_)

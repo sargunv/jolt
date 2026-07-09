@@ -23,7 +23,7 @@ fn kotlin_recovery_formatter_snapshots() {
             "recovery fixture did not produce a represented tree for {}",
             path.display()
         );
-        let formatted = format_or_panic(&source, &options, &path.display().to_string());
+        let formatted = format_or_panic(&source, options, &path.display().to_string());
         let formatted_parse = parse_kotlin_file(&formatted);
         assert!(
             formatted_parse.syntax().is_some(),
@@ -31,7 +31,7 @@ fn kotlin_recovery_formatter_snapshots() {
             path.display(),
             formatted
         );
-        let repeated = format_or_panic(&formatted, &options, &path.display().to_string());
+        let repeated = format_or_panic(&formatted, options, &path.display().to_string());
         assert_eq!(
             repeated,
             formatted,
@@ -49,9 +49,9 @@ fn kotlin_recovery_formatter_snapshots() {
     }
 }
 
-fn format_or_panic(source: &str, options: &FormatOptions, label: &str) -> String {
+fn format_or_panic(source: &str, options: FormatOptions, label: &str) -> String {
     let mut sink = StringSink::default();
-    match format_source_to_sink(source, options, &mut sink) {
+    match format_source_to_sink(source, &options, &mut sink) {
         FormatSinkResult::Complete | FormatSinkResult::Halted => sink.into_string(),
         FormatSinkResult::Blocked { diagnostics } => {
             panic!("formatter blocked for {label}: {diagnostics:#?}")
