@@ -164,7 +164,9 @@ impl<'source> Scanner<'source> {
             }
             (Some('/'), Some('*')) => {
                 let end = find_block_comment_end(self.source, self.pos);
-                if end.is_some_and(|end| !contains_line_terminator(&self.source[self.pos..end])) {
+                let is_trailing_comment =
+                    end.is_some_and(|end| !contains_line_terminator(&self.source[self.pos..end]));
+                if is_trailing_comment {
                     trivia.push(self.block_comment());
                     while self.current_char().is_some_and(is_horizontal_whitespace) {
                         trivia.push(self.horizontal_whitespace());
@@ -798,12 +800,13 @@ impl<'source> Scanner<'source> {
     }
 
     fn validate_octal_literal(&mut self, start_pos: usize, start: TextSize, kind: JavaSyntaxKind) {
+        let rest = &self.source[start_pos..];
         if kind != JavaSyntaxKind::IntegerLiteral
-            || !self.source[start_pos..].starts_with('0')
-            || self.source[start_pos..].starts_with("0x")
-            || self.source[start_pos..].starts_with("0X")
-            || self.source[start_pos..].starts_with("0b")
-            || self.source[start_pos..].starts_with("0B")
+            || !rest.starts_with('0')
+            || rest.starts_with("0x")
+            || rest.starts_with("0X")
+            || rest.starts_with("0b")
+            || rest.starts_with("0B")
         {
             return;
         }
@@ -872,20 +875,21 @@ impl<'source> Scanner<'source> {
     }
 
     fn current(&self) -> Option<(char, TextRange)> {
-        let ch = self.source.get(self.pos..)?.chars().next()?;
-        let end = self.pos + ch.len_utf8();
-        Some((
-            ch,
-            TextRange::new(TextSize::new(self.pos), TextSize::new(end)),
-        ))
+        Some((self.current_char()?, self.current_range()?))
     }
 
     fn current_char(&self) -> Option<char> {
-        self.current().map(|(ch, _)| ch)
+        let byte = *self.source.as_bytes().get(self.pos)?;
+        if byte.is_ascii() {
+            Some(char::from(byte))
+        } else {
+            self.source.get(self.pos..)?.chars().next()
+        }
     }
 
     fn current_range(&self) -> Option<TextRange> {
-        self.current().map(|(_, range)| range)
+        let end = self.pos + utf8_char_width(*self.source.as_bytes().get(self.pos)?);
+        Some(TextRange::new(TextSize::new(self.pos), TextSize::new(end)))
     }
 
     fn peek_char(&self, offset: usize) -> Option<char> {
@@ -894,9 +898,8 @@ impl<'source> Scanner<'source> {
 
     fn bump(&mut self) {
         debug_assert!(!self.at_end());
-        let (_, range) = self.current().expect("bump before EOF");
-        self.pos = range.end().get();
-        self.previous_end = range.end();
+        self.pos += utf8_char_width(self.source.as_bytes()[self.pos]);
+        self.previous_end = TextSize::new(self.pos);
     }
 
     fn at_end(&self) -> bool {
@@ -930,6 +933,15 @@ impl<'source> Scanner<'source> {
             && self
                 .current()
                 .is_some_and(|(_, range)| range.end().get() == self.source.len())
+    }
+}
+
+fn utf8_char_width(byte: u8) -> usize {
+    match byte {
+        0x00..=0x7F => 1,
+        0xC0..=0xDF => 2,
+        0xE0..=0xEF => 3,
+        _ => 4,
     }
 }
 

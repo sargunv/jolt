@@ -304,7 +304,9 @@ impl<'source> Scanner<'source> {
             }
             (Some('/'), Some('*')) => {
                 let end = find_nested_block_comment_end(self.source, self.pos);
-                if end.is_some_and(|end| !contains_line_terminator(&self.source[self.pos..end])) {
+                let is_trailing_comment =
+                    end.is_some_and(|end| !contains_line_terminator(&self.source[self.pos..end]));
+                if is_trailing_comment {
                     trivia.push(self.block_comment());
                     while self.current_char().is_some_and(is_horizontal_whitespace) {
                         trivia.push(self.horizontal_whitespace());
@@ -1116,13 +1118,17 @@ impl<'source> Scanner<'source> {
     }
 
     fn bump(&mut self) {
-        let ch = self.current_char().expect("cannot bump EOF");
-        self.pos += ch.len_utf8();
+        self.pos += utf8_char_width(self.source.as_bytes()[self.pos]);
         self.previous_end = TextSize::new(self.pos);
     }
 
     fn current_char(&self) -> Option<char> {
-        self.source.get(self.pos..)?.chars().next()
+        let byte = *self.source.as_bytes().get(self.pos)?;
+        if byte.is_ascii() {
+            Some(char::from(byte))
+        } else {
+            self.source.get(self.pos..)?.chars().next()
+        }
     }
 
     fn peek_char(&self, n: usize) -> Option<char> {
@@ -1144,7 +1150,7 @@ impl<'source> Scanner<'source> {
 
     fn current_range(&self) -> Option<TextRange> {
         let start = TextSize::new(self.pos);
-        let end = start + TextSize::new(self.current_char()?.len_utf8());
+        let end = start + TextSize::new(utf8_char_width(*self.source.as_bytes().get(self.pos)?));
         Some(TextRange::new(start, end))
     }
 
@@ -1162,6 +1168,15 @@ impl<'source> Scanner<'source> {
 
     fn at_end(&self) -> bool {
         self.pos >= self.source.len()
+    }
+}
+
+fn utf8_char_width(byte: u8) -> usize {
+    match byte {
+        0x00..=0x7F => 1,
+        0xC0..=0xDF => 2,
+        0xE0..=0xEF => 3,
+        _ => 4,
     }
 }
 
