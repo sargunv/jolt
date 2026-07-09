@@ -1,16 +1,13 @@
 use std::{
     collections::HashMap,
     fmt::Write as _,
+    fs,
     path::{Path, PathBuf},
 };
 
-use figment::{
-    Figment,
-    providers::{Format, Toml},
-};
 use globset::{GlobBuilder, GlobSet, GlobSetBuilder};
 use jolt_formatter::FormatOptions;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use toml_edit::DocumentMut;
 
 use crate::error::CliError;
@@ -156,17 +153,23 @@ struct ResolvedConfigSources {
 }
 
 #[derive(Clone, Debug)]
-pub(crate) struct ConfigResolver {
+pub(crate) struct ConfigGraph {
     invocation_root: PathBuf,
     cli_options: CliFormatOptions,
     cli_include: Option<PatternList>,
     cli_exclude: Option<PatternList>,
     explicit_config: Option<SparseConfig>,
     no_config: bool,
+    defaults: ConfigDefaults,
+    config_paths_by_dir: HashMap<PathBuf, Vec<ConfigPath>>,
+    boundary_by_dir: HashMap<PathBuf, bool>,
+    project_root_by_dir: HashMap<PathBuf, PathBuf>,
+    directory_config_by_dir: HashMap<PathBuf, DirectoryConfig>,
+    discovered_by_dir: HashMap<PathBuf, ConfigBuilder>,
     resolved_by_dir: HashMap<PathBuf, ResolvedConfig>,
 }
 
-impl ConfigResolver {
+impl ConfigGraph {
     pub(crate) fn new(
         cwd: &Path,
         invocation_root: PathBuf,
@@ -187,6 +190,7 @@ impl ConfigResolver {
         let explicit_config = explicit_config
             .map(|path| load_explicit_config(cwd, path))
             .transpose()?;
+        let defaults = ConfigDefaults::new(&invocation_root)?;
         Ok(Self {
             invocation_root,
             cli_options,
@@ -194,6 +198,12 @@ impl ConfigResolver {
             cli_exclude,
             explicit_config,
             no_config,
+            defaults,
+            config_paths_by_dir: HashMap::new(),
+            boundary_by_dir: HashMap::new(),
+            project_root_by_dir: HashMap::new(),
+            directory_config_by_dir: HashMap::new(),
+            discovered_by_dir: HashMap::new(),
             resolved_by_dir: HashMap::new(),
         })
     }
@@ -203,14 +213,11 @@ impl ConfigResolver {
             return Ok(config.clone());
         }
 
-        let mut builder = ConfigBuilder::new(&self.invocation_root)?;
-
-        if self.explicit_config.is_none() && !self.no_config {
-            let project_root = find_project_root(dir, &self.invocation_root)?;
-            for config in Self::discovered_configs(&project_root, dir)? {
-                builder.apply_sparse(&config);
-            }
-        }
+        let mut builder = if self.explicit_config.is_some() || self.no_config {
+            ConfigBuilder::new(&self.defaults)
+        } else {
+            self.discovered_builder_for_dir(dir)?
+        };
 
         if let Some(config) = &self.explicit_config {
             builder.apply_sparse(config);
@@ -233,15 +240,158 @@ impl ConfigResolver {
         Ok(resolved)
     }
 
-    fn discovered_configs(project_root: &Path, dir: &Path) -> Result<Vec<SparseConfig>, CliError> {
-        let mut configs = Vec::new();
+    pub(crate) fn discovered_config_paths_for_dir(
+        &mut self,
+        dir: &Path,
+    ) -> Result<Vec<PathBuf>, CliError> {
+        let project_root = self.project_root_for_dir(dir)?;
+        let mut paths = Vec::new();
+        for ancestor in ancestors_from_root_to_dir(&project_root, dir) {
+            paths.extend(
+                self.config_paths_for_dir(&ancestor)
+                    .into_iter()
+                    .map(|config_path| config_path.path),
+            );
+        }
+        Ok(paths)
+    }
 
-        for config_path in discovered_config_paths(project_root, dir) {
+    fn discovered_builder_for_dir(&mut self, dir: &Path) -> Result<ConfigBuilder, CliError> {
+        if let Some(builder) = self.discovered_by_dir.get(dir) {
+            return Ok(builder.clone());
+        }
+
+        let project_root = self.project_root_for_dir(dir)?;
+        self.discovered_builder_from_root(&project_root, dir)
+    }
+
+    fn discovered_builder_from_root(
+        &mut self,
+        project_root: &Path,
+        dir: &Path,
+    ) -> Result<ConfigBuilder, CliError> {
+        if let Some(builder) = self.discovered_by_dir.get(dir) {
+            return Ok(builder.clone());
+        }
+
+        let mut builder = if dir == project_root {
+            ConfigBuilder::new(&self.defaults)
+        } else if let Some(parent) = dir
+            .parent()
+            .filter(|parent| parent.starts_with(project_root))
+        {
+            self.discovered_builder_from_root(project_root, parent)?
+        } else {
+            ConfigBuilder::new(&self.defaults)
+        };
+
+        for config in self.directory_config(dir)?.configs {
+            builder.apply_sparse(&config);
+        }
+
+        self.discovered_by_dir
+            .insert(dir.to_path_buf(), builder.clone());
+        Ok(builder)
+    }
+
+    fn project_root_for_dir(&mut self, dir: &Path) -> Result<PathBuf, CliError> {
+        if let Some(root) = self.project_root_by_dir.get(dir) {
+            return Ok(root.clone());
+        }
+
+        for ancestor in dir.ancestors() {
+            if self.is_project_boundary(ancestor)? {
+                let root = ancestor.to_path_buf();
+                self.project_root_by_dir
+                    .insert(dir.to_path_buf(), root.clone());
+                return Ok(root);
+            }
+        }
+
+        let root = self.invocation_root.clone();
+        self.project_root_by_dir
+            .insert(dir.to_path_buf(), root.clone());
+        Ok(root)
+    }
+
+    fn is_project_boundary(&mut self, dir: &Path) -> Result<bool, CliError> {
+        if let Some(is_boundary) = self.boundary_by_dir.get(dir) {
+            return Ok(*is_boundary);
+        }
+
+        let is_boundary = has_vcs_marker(dir) || self.has_root_config(dir)?;
+        self.boundary_by_dir.insert(dir.to_path_buf(), is_boundary);
+        Ok(is_boundary)
+    }
+
+    fn has_root_config(&mut self, dir: &Path) -> Result<bool, CliError> {
+        for config_path in self.config_paths_for_dir(dir) {
+            let config = load_toml_file::<ProjectRootConfig>(&config_path.path)?;
+            if config.root == Some(true) {
+                return Ok(true);
+            }
+        }
+
+        Ok(false)
+    }
+
+    fn directory_config(&mut self, dir: &Path) -> Result<DirectoryConfig, CliError> {
+        if let Some(config) = self.directory_config_by_dir.get(dir) {
+            return Ok(config.clone());
+        }
+
+        let mut configs = Vec::new();
+        for config_path in self.config_paths_for_dir(dir) {
             configs.push(load_config_at(&config_path.path, &config_path.base_dir)?);
         }
 
-        Ok(configs)
+        let config = DirectoryConfig { configs };
+        self.directory_config_by_dir
+            .insert(dir.to_path_buf(), config.clone());
+        Ok(config)
     }
+
+    fn config_paths_for_dir(&mut self, dir: &Path) -> Vec<ConfigPath> {
+        if let Some(paths) = self.config_paths_by_dir.get(dir) {
+            return paths.clone();
+        }
+
+        let paths = config_paths_for_dir(dir)
+            .into_iter()
+            .filter(|config_path| config_path.path.is_file())
+            .collect::<Vec<_>>();
+        self.config_paths_by_dir
+            .insert(dir.to_path_buf(), paths.clone());
+        paths
+    }
+}
+
+#[derive(Clone, Debug)]
+struct ConfigDefaults {
+    line_width: SourceValue<u16>,
+    indent_width: SourceValue<u8>,
+    use_tabs: SourceValue<bool>,
+    include: SourceValue<PatternList>,
+}
+
+impl ConfigDefaults {
+    fn new(invocation_root: &Path) -> Result<Self, CliError> {
+        let default = default_config();
+        Ok(Self {
+            line_width: SourceValue::new(default.options.line_width, ValueSource::Default),
+            indent_width: SourceValue::new(default.options.indent_width, ValueSource::Default),
+            use_tabs: SourceValue::new(default.options.use_tabs, ValueSource::Default),
+            include: SourceValue::new(
+                PatternList::new(invocation_root, &default.include)?,
+                ValueSource::Default,
+            ),
+        })
+    }
+}
+
+#[derive(Clone, Debug)]
+struct DirectoryConfig {
+    configs: Vec<SparseConfig>,
 }
 
 #[derive(Clone, Debug)]
@@ -254,18 +404,14 @@ struct ConfigBuilder {
 }
 
 impl ConfigBuilder {
-    fn new(invocation_root: &Path) -> Result<Self, CliError> {
-        let default = default_config();
-        Ok(Self {
-            line_width: SourceValue::new(default.options.line_width, ValueSource::Default),
-            indent_width: SourceValue::new(default.options.indent_width, ValueSource::Default),
-            use_tabs: SourceValue::new(default.options.use_tabs, ValueSource::Default),
-            include: SourceValue::new(
-                PatternList::new(invocation_root, &default.include)?,
-                ValueSource::Default,
-            ),
+    fn new(defaults: &ConfigDefaults) -> Self {
+        Self {
+            line_width: defaults.line_width.clone(),
+            indent_width: defaults.indent_width.clone(),
+            use_tabs: defaults.use_tabs.clone(),
+            include: defaults.include.clone(),
             excludes: Vec::new(),
-        })
+        }
     }
 
     fn apply_sparse(&mut self, sparse: &SparseConfig) {
@@ -383,10 +529,22 @@ fn load_explicit_config(cwd: &Path, path: &Path) -> Result<SparseConfig, CliErro
 }
 
 fn load_config_at(path: &Path, base_dir: &Path) -> Result<SparseConfig, CliError> {
-    let file_config = Figment::from(Toml::file(path))
-        .extract::<FileConfig>()
-        .map_err(|error| CliError::new(format!("{}: {error}", path.display())))?;
+    let file_config = load_toml_file::<FileConfig>(path)?;
     file_config.into_sparse(path, base_dir)
+}
+
+fn load_toml_file<T>(path: &Path) -> Result<T, CliError>
+where
+    T: DeserializeOwned,
+{
+    let contents = fs::read_to_string(path).map_err(|error| {
+        CliError::new(format!(
+            "{}: failed to read config: {error}",
+            path.display()
+        ))
+    })?;
+    toml_edit::de::from_str(&contents)
+        .map_err(|error| CliError::new(format!("{}: {error}", path.display())))
 }
 
 impl FileConfig {
@@ -483,11 +641,16 @@ pub(crate) fn discovered_config_paths_for_dir(
     invocation_root: &Path,
     dir: &Path,
 ) -> Result<Vec<PathBuf>, CliError> {
-    let project_root = find_project_root(dir, invocation_root)?;
-    Ok(discovered_config_paths(&project_root, dir)
-        .into_iter()
-        .map(|config_path| config_path.path)
-        .collect())
+    let mut graph = ConfigGraph::new(
+        invocation_root,
+        invocation_root.to_path_buf(),
+        CliFormatOptions::default(),
+        &[],
+        &[],
+        None,
+        false,
+    )?;
+    graph.discovered_config_paths_for_dir(dir)
 }
 
 pub(crate) fn render_resolved_config(
@@ -586,20 +749,6 @@ fn set_key_source_comment(table: &mut toml_edit::Table, key: &str, sources: &[&V
     key.leaf_decor_mut().set_prefix(comment);
 }
 
-fn discovered_config_paths(project_root: &Path, dir: &Path) -> Vec<ConfigPath> {
-    let mut configs = Vec::new();
-
-    for ancestor in ancestors_from_root_to_dir(project_root, dir) {
-        for config_path in config_paths_for_dir(&ancestor) {
-            if config_path.path.is_file() {
-                configs.push(config_path);
-            }
-        }
-    }
-
-    configs
-}
-
 fn config_paths_for_dir(dir: &Path) -> Vec<ConfigPath> {
     let base_dir = dir.to_path_buf();
     vec![
@@ -618,35 +767,8 @@ fn config_paths_for_dir(dir: &Path) -> Vec<ConfigPath> {
     ]
 }
 
-fn find_project_root(dir: &Path, fallback: &Path) -> Result<PathBuf, CliError> {
-    for ancestor in dir.ancestors() {
-        if has_vcs_marker(ancestor) || has_root_config(ancestor)? {
-            return Ok(ancestor.to_path_buf());
-        }
-    }
-
-    Ok(fallback.to_path_buf())
-}
-
 fn has_vcs_marker(dir: &Path) -> bool {
     VCS_MARKERS.iter().any(|marker| dir.join(marker).exists())
-}
-
-fn has_root_config(dir: &Path) -> Result<bool, CliError> {
-    for config_path in config_paths_for_dir(dir) {
-        if !config_path.path.is_file() {
-            continue;
-        }
-
-        let config = Figment::from(Toml::file(&config_path.path))
-            .extract::<ProjectRootConfig>()
-            .map_err(|error| CliError::new(format!("{}: {error}", config_path.path.display())))?;
-        if config.root == Some(true) {
-            return Ok(true);
-        }
-    }
-
-    Ok(false)
 }
 
 fn ancestors_from_root_to_dir(root: &Path, dir: &Path) -> Vec<PathBuf> {

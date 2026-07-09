@@ -122,7 +122,7 @@ fn config_list(args: &ConfigTargetArgs) -> Result<(), CliError> {
 fn config_resolve(args: &ConfigTargetArgs) -> Result<(), CliError> {
     let cwd = current_dir()?;
     let target = ConfigTarget::new(&cwd, args.path.as_deref());
-    let mut resolver = fmt_config::ConfigResolver::new(
+    let mut config_graph = fmt_config::ConfigGraph::new(
         &cwd,
         target.dir.clone(),
         CliFormatOptions::default(),
@@ -131,7 +131,7 @@ fn config_resolve(args: &ConfigTargetArgs) -> Result<(), CliError> {
         None,
         false,
     )?;
-    let config = resolver.resolve_for_dir(&target.dir)?;
+    let config = config_graph.resolve_for_dir(&target.dir)?;
     let rendered = fmt_config::render_resolved_config(&config, target.file.as_deref())?;
 
     let mut stdout = io::stdout().lock();

@@ -1,5 +1,5 @@
 use std::{
-    collections::HashSet,
+    collections::{HashMap, HashSet},
     env,
     fmt::Write as _,
     fs,
@@ -21,7 +21,7 @@ use crate::error::CliError;
 
 use super::{
     Args,
-    config::{ConfigResolver, absolutize},
+    config::{ConfigGraph, absolutize},
     detect_language,
     discover::{CandidateFile, discover_files},
 };
@@ -83,6 +83,7 @@ fn collect_candidates(cwd: &Path, args: &Args) -> Result<Vec<CandidateFile>, Cli
 
     let mut candidates = Vec::new();
     let mut seen: HashSet<PathBuf> = HashSet::new();
+    let mut config_graphs: HashMap<PathBuf, ConfigGraph> = HashMap::new();
 
     for path in paths {
         if path.is_file() {
@@ -95,16 +96,8 @@ fn collect_candidates(cwd: &Path, args: &Args) -> Result<Vec<CandidateFile>, Cli
             let root = path
                 .parent()
                 .map_or_else(|| cwd.to_path_buf(), Path::to_path_buf);
-            let mut resolver = ConfigResolver::new(
-                cwd,
-                root.clone(),
-                args.format_options(),
-                &args.include,
-                &args.exclude,
-                args.config.as_deref(),
-                args.no_config,
-            )?;
-            let config = resolver.resolve_for_dir(&root)?;
+            let config_graph = config_graph_for_root(&mut config_graphs, cwd, args, &root)?;
+            let config = config_graph.resolve_for_dir(&root)?;
             if seen.insert(path.clone()) {
                 candidates.push(CandidateFile {
                     path,
@@ -116,16 +109,8 @@ fn collect_candidates(cwd: &Path, args: &Args) -> Result<Vec<CandidateFile>, Cli
         }
 
         if path.is_dir() {
-            let mut resolver = ConfigResolver::new(
-                cwd,
-                path.clone(),
-                args.format_options(),
-                &args.include,
-                &args.exclude,
-                args.config.as_deref(),
-                args.no_config,
-            )?;
-            for candidate in discover_files(&path, &mut resolver)? {
+            let config_graph = config_graph_for_root(&mut config_graphs, cwd, args, &path)?;
+            for candidate in discover_files(&path, config_graph)? {
                 if seen.insert(candidate.path.clone()) {
                     candidates.push(candidate);
                 }
@@ -140,6 +125,30 @@ fn collect_candidates(cwd: &Path, args: &Args) -> Result<Vec<CandidateFile>, Cli
     }
 
     Ok(candidates)
+}
+
+fn config_graph_for_root<'graphs>(
+    config_graphs: &'graphs mut HashMap<PathBuf, ConfigGraph>,
+    cwd: &Path,
+    args: &Args,
+    root: &Path,
+) -> Result<&'graphs mut ConfigGraph, CliError> {
+    if !config_graphs.contains_key(root) {
+        let config_graph = ConfigGraph::new(
+            cwd,
+            root.to_path_buf(),
+            args.format_options(),
+            &args.include,
+            &args.exclude,
+            args.config.as_deref(),
+            args.no_config,
+        )?;
+        config_graphs.insert(root.to_path_buf(), config_graph);
+    }
+
+    Ok(config_graphs
+        .get_mut(root)
+        .expect("config graph should be present after insertion"))
 }
 
 fn run_stdin(cwd: &Path, args: &Args) -> Result<(), CliError> {
@@ -164,7 +173,7 @@ fn run_stdin(cwd: &Path, args: &Args) -> Result<(), CliError> {
         .as_deref()
         .and_then(Path::parent)
         .map_or_else(|| cwd.to_path_buf(), |path| absolutize(cwd, path));
-    let mut resolver = ConfigResolver::new(
+    let mut config_graph = ConfigGraph::new(
         cwd,
         cwd.to_path_buf(),
         args.format_options(),
@@ -173,7 +182,7 @@ fn run_stdin(cwd: &Path, args: &Args) -> Result<(), CliError> {
         args.config.as_deref(),
         args.no_config,
     )?;
-    let config = resolver.resolve_for_dir(&pseudo_parent)?;
+    let config = config_graph.resolve_for_dir(&pseudo_parent)?;
 
     let mut source = String::new();
     io::stdin()

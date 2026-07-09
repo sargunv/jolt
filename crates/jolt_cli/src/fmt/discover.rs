@@ -6,7 +6,7 @@ use jolt_formatter::{FormatOptions, Language};
 
 use crate::error::CliError;
 
-use super::config::{ConfigResolver, ResolvedConfig};
+use super::config::{ConfigGraph, ResolvedConfig};
 
 #[derive(Clone, Debug)]
 pub(crate) struct CandidateFile {
@@ -17,7 +17,7 @@ pub(crate) struct CandidateFile {
 
 pub(crate) fn discover_files(
     root: &Path,
-    resolver: &mut ConfigResolver,
+    config_graph: &mut ConfigGraph,
 ) -> Result<Vec<CandidateFile>, CliError> {
     let mut candidates = Vec::new();
 
@@ -36,7 +36,7 @@ pub(crate) fn discover_files(
         };
 
         let parent = path.parent().unwrap_or(root);
-        let config = resolver.resolve_for_dir(parent)?;
+        let config = config_graph.resolve_for_dir(parent)?;
 
         if !matches_selection(&path, &config) {
             continue;
