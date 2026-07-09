@@ -129,7 +129,7 @@ pub fn concat<'source>(docs: impl IntoIterator<Item = Doc<'source>>) -> Doc<'sou
         .collect::<Vec<_>>();
     match docs.len() {
         0 => nil(),
-        1 => docs.pop().expect("single concat doc exists"),
+        1 => docs.pop().unwrap_or_else(nil),
         _ => Doc(DocKind::Concat(docs)),
     }
 }

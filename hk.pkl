@@ -13,7 +13,6 @@ local lintSteps = new Mapping<String, Step> {
     ["cargo-clippy"] {
         glob = List("**/*.rs")
         check = "cargo clippy --workspace -- -D warnings"
-        fix = "cargo clippy --fix --workspace --allow-dirty --allow-staged -- -D warnings"
     }
     ["cargo-machete"] {
         glob = List("**/*.rs", "Cargo.toml", "Cargo.lock")
