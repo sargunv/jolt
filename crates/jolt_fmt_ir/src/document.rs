@@ -139,7 +139,9 @@ pub fn join<'source>(
     separator: &Doc<'source>,
     docs: impl IntoIterator<Item = Doc<'source>>,
 ) -> Doc<'source> {
-    let mut joined = Vec::new();
+    let docs = docs.into_iter();
+    let (lower, _) = docs.size_hint();
+    let mut joined = Vec::with_capacity(lower.saturating_mul(2).saturating_sub(1));
     for doc in docs {
         if !joined.is_empty() {
             joined.push(separator.clone());

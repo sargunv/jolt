@@ -45,7 +45,7 @@ fn format_file_contents<'source>(file: &KotlinFile<'source>) -> Doc<'source> {
         }
     }
 
-    let mut sections = Vec::new();
+    let mut sections = Vec::with_capacity(3);
     if let Some(annotations) = format_file_annotations(file) {
         sections.push(annotations);
     }
@@ -60,8 +60,8 @@ fn format_file_contents_with_ignored<'source>(
     ignored_runs: &[FormatterIgnoreRun<'source>],
 ) -> Doc<'source> {
     let source = file.source_text();
-    let mut sections = Vec::new();
-    let mut segment = Vec::new();
+    let mut sections = Vec::with_capacity(items.len().saturating_add(ignored_runs.len()));
+    let mut segment = Vec::with_capacity(items.len());
     let mut ignored_index = 0;
     let mut skip_index = 0;
 
@@ -110,14 +110,14 @@ fn format_file_contents_with_ignored<'source>(
 }
 
 fn format_file_annotations<'source>(file: &KotlinFile<'source>) -> Option<Doc<'source>> {
-    let annotations = file.annotations().collect::<Vec<_>>();
-    (!annotations.is_empty()).then(|| {
-        join_hard_lines(
-            annotations
-                .iter()
-                .map(|annotation| format_annotation(annotation)),
-        )
-    })
+    let mut annotations = file
+        .annotations()
+        .map(|annotation| format_annotation(&annotation))
+        .peekable();
+    annotations
+        .peek()
+        .is_some()
+        .then(|| join_hard_lines(annotations))
 }
 
 fn push_file_item_sections<'source>(
@@ -127,7 +127,7 @@ fn push_file_item_sections<'source>(
 ) {
     let mut package = None;
     let mut imports = None;
-    let mut body_items = Vec::new();
+    let mut body_items = Vec::with_capacity(items.len());
 
     for item in items {
         match item {
@@ -160,7 +160,7 @@ fn push_file_item_segment<'source>(
         return;
     }
 
-    let mut docs = Vec::new();
+    let mut docs = Vec::with_capacity(3);
     push_file_item_sections(source, std::mem::take(segment), &mut docs);
     if !docs.is_empty() {
         sections.push(FileSection {
@@ -171,7 +171,7 @@ fn push_file_item_segment<'source>(
 }
 
 fn join_file_sections(sections: Vec<FileSection<'_>>) -> Doc<'_> {
-    let mut joined = Vec::new();
+    let mut joined = Vec::with_capacity(sections.len().saturating_mul(2).saturating_sub(1));
     let mut previous_hard_line_after = false;
     for section in sections {
         if !joined.is_empty() {
@@ -206,7 +206,7 @@ fn source_item_groups<'source>(
     source: &str,
     items: Vec<KotlinFileItem<'source>>,
 ) -> Vec<SourceItemGroup<'source>> {
-    let mut groups = Vec::new();
+    let mut groups = Vec::with_capacity(items.len());
     let mut current: Option<SourceItemGroup<'source>> = None;
 
     for (item, range) in items

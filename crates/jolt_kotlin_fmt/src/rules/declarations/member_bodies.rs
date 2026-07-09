@@ -7,7 +7,6 @@ use jolt_kotlin_syntax::{
 use crate::helpers::blocks::source_braced_body;
 use crate::helpers::comments::{
     LeadingTrivia, comments_from_tokens, format_removed_comments, format_token_sequence,
-    has_removed_comments,
 };
 use crate::helpers::formatter_ignore::{
     FormatterIgnoreRange, formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
@@ -68,7 +67,7 @@ fn format_class_body_contents_with_ignored<'source>(
         return (!sections.is_empty()).then(|| join_class_body_sections(sections));
     }
 
-    let mut sections = Vec::new();
+    let mut sections = Vec::with_capacity(entries.len().saturating_add(ignored_runs.len()));
     let mut ignored_index = 0;
     let mut skip_index = 0;
     let mut previous_member_had_trailing_comments = false;
@@ -128,7 +127,9 @@ fn class_body_sections_from_recovered_entries<'source>(
         Item = RecoveredSeparatedListEntry<'source, ClassMemberDeclarationEntry<'source>>,
     >,
 ) -> Vec<ClassBodySection<'source>> {
-    let mut sections = Vec::new();
+    let entries = entries.into_iter();
+    let (lower, _) = entries.size_hint();
+    let mut sections = Vec::with_capacity(lower);
     let mut previous_member_had_trailing_comments = false;
 
     for entry in entries {
@@ -213,9 +214,10 @@ fn format_class_member_declaration<'source>(
         || {
             member.statement().map_or_else(
                 || {
-                    let comments = comments_from_tokens(member.token_iter()).collect::<Vec<_>>();
-                    if has_removed_comments(comments.iter().copied()) {
-                        return format_removed_comments(comments).unwrap_or_else(jolt_fmt_ir::nil);
+                    if let Some(comments) =
+                        format_removed_comments(comments_from_tokens(member.token_iter()))
+                    {
+                        return comments;
                     }
 
                     format_token_sequence(member.token_iter(), LeadingTrivia::Preserve)
@@ -281,7 +283,7 @@ fn recovered_class_member_token_range(
 }
 
 fn join_class_body_sections(sections: Vec<ClassBodySection<'_>>) -> Doc<'_> {
-    let mut joined = Vec::new();
+    let mut joined = Vec::with_capacity(sections.len().saturating_mul(2).saturating_sub(1));
     let mut previous_hard_line_after = false;
     for section in sections {
         if !joined.is_empty() {

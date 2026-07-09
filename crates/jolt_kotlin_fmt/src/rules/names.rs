@@ -84,18 +84,19 @@ fn tokens_have_line_comments(name: &QualifiedName<'_>) -> bool {
 }
 
 fn format_inline_qualified_name<'source>(name: &QualifiedName<'source>) -> Doc<'source> {
-    let mut docs = Vec::new();
-    let segments: Vec<_> = name.segments().collect();
+    let mut segments = name.segments().peekable();
+    let (lower, _) = segments.size_hint();
+    let mut docs = Vec::with_capacity(lower.saturating_mul(2).saturating_add(1));
     let trailing_dot = name.trailing_dot();
 
-    for (index, segment) in segments.iter().enumerate() {
+    while let Some(segment) = segments.next() {
         if let Some(dot) = segment.dot_before {
             docs.push(format_name_dot(&dot));
         }
 
-        let is_last = index + 1 == segments.len();
+        let is_last = segments.peek().is_none();
         let followed_by_dot = segments
-            .get(index + 1)
+            .peek()
             .is_some_and(|next| next.dot_before.is_some())
             || (is_last && trailing_dot.is_some());
 
@@ -112,7 +113,7 @@ fn format_inline_qualified_name<'source>(name: &QualifiedName<'source>) -> Doc<'
 }
 
 fn format_multiline_qualified_name<'source>(name: &QualifiedName<'source>) -> Doc<'source> {
-    let mut docs = Vec::new();
+    let mut docs = Vec::with_capacity(2);
     let mut tail_docs = Vec::new();
     let mut before_first_dot = true;
     let trailing_dot = name.trailing_dot();
@@ -178,7 +179,9 @@ fn format_inline_name_segment<'source>(
 fn format_leading_dot_comments<'source>(
     comments: impl IntoIterator<Item = KotlinComment<'source>>,
 ) -> Doc<'source> {
-    let mut docs = Vec::new();
+    let comments = comments.into_iter();
+    let (lower, _) = comments.size_hint();
+    let mut docs = Vec::with_capacity(lower.saturating_mul(3));
     for comment in comments {
         docs.push(space());
         docs.push(format_comment(&comment));
@@ -192,7 +195,9 @@ fn format_leading_dot_comments<'source>(
 fn format_inline_comments<'source>(
     comments: impl IntoIterator<Item = KotlinComment<'source>>,
 ) -> Doc<'source> {
-    let mut docs = Vec::new();
+    let comments = comments.into_iter();
+    let (lower, _) = comments.size_hint();
+    let mut docs = Vec::with_capacity(lower.saturating_mul(3));
     for comment in comments {
         docs.push(space());
         docs.push(format_comment(&comment));

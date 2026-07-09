@@ -492,8 +492,9 @@ fn statement_expression_parts<'source, 'fmt>(
 fn format_statement_expression_entries<'source>(
     entries: impl IntoIterator<Item = StatementExpressionPart<'source>>,
 ) -> Doc<'source> {
-    let mut docs = Vec::new();
     let mut entries = entries.into_iter().peekable();
+    let (lower, _) = entries.size_hint();
+    let mut docs = Vec::with_capacity(lower.saturating_mul(2));
 
     while let Some(entry) = entries.next() {
         let has_next = entries.peek().is_some();

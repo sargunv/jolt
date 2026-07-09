@@ -89,7 +89,7 @@ fn format_expression_with_leading<'source>(
         Expression::WhileStatement(expression) => format_while_statement(expression, leading),
         Expression::DoWhileStatement(expression) => format_do_while_statement(expression, leading),
         Expression::LoopExpression(expression) => {
-            let mut docs = Vec::new();
+            let mut docs = Vec::with_capacity(3);
             if let Some(keyword) = expression.loop_token() {
                 docs.push(format_token(&keyword, leading, TrailingTrivia::Preserve));
             }
@@ -128,8 +128,10 @@ fn format_annotated_expression<'source>(
     expression: &AnnotatedExpression<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
-    let mut docs = Vec::new();
-    for (index, annotation) in expression.annotations().enumerate() {
+    let annotations = expression.annotations();
+    let (lower, _) = annotations.size_hint();
+    let mut docs = Vec::with_capacity(lower.saturating_mul(2).saturating_add(1));
+    for (index, annotation) in annotations.enumerate() {
         docs.push(format_annotation_with_leading(
             &annotation,
             if index == 0 {

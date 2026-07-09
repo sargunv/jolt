@@ -156,8 +156,10 @@ fn format_class_type<'source>(
     leading_comments: LeadingComments,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    let mut docs = Vec::new();
-    for (index, segment) in ty.segments().enumerate() {
+    let segments = ty.segments();
+    let (lower, _) = segments.size_hint();
+    let mut docs = Vec::with_capacity(lower.saturating_mul(2));
+    for (index, segment) in segments.enumerate() {
         if index > 0 {
             docs.push(
                 segment
@@ -200,8 +202,10 @@ fn format_type_name<'source>(
     leading_comments: LeadingComments,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    let mut docs = Vec::new();
-    for (index, segment) in name.segments_with_annotations().enumerate() {
+    let segments = name.segments_with_annotations();
+    let (lower, _) = segments.size_hint();
+    let mut docs = Vec::with_capacity(lower.saturating_mul(3));
+    for (index, segment) in segments.enumerate() {
         if index > 0 {
             docs.push(
                 segment
@@ -297,8 +301,9 @@ fn format_type_operator_entries_doc<'source>(
         return jolt_fmt_ir::nil();
     };
 
+    let (lower, _) = entries.size_hint();
     let (first, mut previous_separator) = format_type_operator_first_part(first, formatter);
-    let mut rest = Vec::new();
+    let mut rest = Vec::with_capacity(lower.saturating_add(1));
     for part in entries {
         match part {
             TypeOperatorPart::Type { ty, separator } => {

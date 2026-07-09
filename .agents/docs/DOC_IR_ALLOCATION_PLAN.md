@@ -194,19 +194,6 @@ bounded. The scratch storage should follow the same principle:
 Renderer scratch optimization is secondary to arena-backed docs, but it is worth
 doing after the IR is moved because fit probes are frequent in group-heavy code.
 
-## Short-Term Improvements
-
-These are useful stopgaps if the arena refactor is not immediately scheduled:
-
-- Pre-size `Vec<Doc>` in hot list helpers when item counts are known.
-- Stream obvious `collect::<Vec<_>>()` call sites that only exist to immediately
-  format a sequence.
-- Add separator-aware builder helpers so `join` does not clone recursive
-  separator docs.
-
-These should not distract from the main plan. The structural fix is shared
-storage for doc nodes and child lists.
-
 ## Constraints
 
 - Preserve the formatter invariant that syntax crates own tree shape and token

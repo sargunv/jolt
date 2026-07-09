@@ -284,11 +284,11 @@ fn member_chain<'source>(
     } else {
         root
     };
-    let rest = suffixes
+    let mut rest = suffixes
         .map(|suffix| concat([soft_line(), suffix.doc]))
-        .collect::<Vec<_>>();
+        .peekable();
 
-    if rest.is_empty() {
+    if rest.peek().is_none() {
         return group(head);
     }
 
@@ -425,10 +425,12 @@ struct SquareArgumentListItems<'source> {
 fn collection_literal_items<'source>(
     expression: &CollectionLiteralExpression<'source>,
 ) -> SquareArgumentListItems<'source> {
-    let mut items = Vec::new();
+    let entries = expression.entries_with_recovered();
+    let (lower, _) = entries.size_hint();
+    let mut items = Vec::with_capacity(lower);
     let mut has_recovered_tokens = false;
 
-    for entry in expression.entries_with_recovered() {
+    for entry in entries {
         has_recovered_tokens |= push_square_argument_entry(&mut items, entry);
     }
 
@@ -441,10 +443,12 @@ fn collection_literal_items<'source>(
 fn index_argument_items<'source>(
     index: &IndexExpression<'source>,
 ) -> SquareArgumentListItems<'source> {
-    let mut items = Vec::new();
+    let entries = index.entries_with_recovered();
+    let (lower, _) = entries.size_hint();
+    let mut items = Vec::with_capacity(lower);
     let mut has_recovered_tokens = false;
 
-    for entry in index.entries_with_recovered() {
+    for entry in entries {
         has_recovered_tokens |= push_square_argument_entry(&mut items, entry);
     }
 
@@ -547,12 +551,14 @@ struct ValueArgumentListItems<'source> {
 fn value_argument_list_items<'source>(
     arguments: &ValueArgumentList<'source>,
 ) -> ValueArgumentListItems<'source> {
-    let mut items = Vec::new();
+    let entries = arguments.entries_with_recovered();
+    let (lower, _) = entries.size_hint();
+    let mut items = Vec::with_capacity(lower);
     let mut previous_comma = None;
     let mut has_argument_leading_comments = false;
     let mut has_recovered_tokens = false;
 
-    for entry in arguments.entries_with_recovered() {
+    for entry in entries {
         match entry {
             RecoveredSeparatedListEntry::Entry(entry) => {
                 let leading = if previous_comma.is_some() {
@@ -635,8 +641,10 @@ fn format_recovered_value_argument_tokens<'source>(
 }
 
 fn format_value_argument_prefix<'source>(argument: &ValueArgument<'source>) -> Doc<'source> {
-    let mut docs = Vec::new();
-    for token in argument.prefix_tokens() {
+    let tokens = argument.prefix_tokens();
+    let (lower, _) = tokens.size_hint();
+    let mut docs = Vec::with_capacity(lower.saturating_mul(3));
+    for token in tokens {
         match token.kind() {
             jolt_kotlin_syntax::KotlinSyntaxKind::Assign => {
                 docs.push(space());

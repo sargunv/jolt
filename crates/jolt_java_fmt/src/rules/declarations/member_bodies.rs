@@ -168,7 +168,12 @@ fn format_members_with_ignored<'source, Member>(
     mut format_member: impl FnMut(&Member) -> Option<FormattedMember<'source>>,
     close_dangling_comments: Option<FormattedMember<'source>>,
 ) -> Option<Doc<'source>> {
-    let mut formatted_members = Vec::new();
+    let mut formatted_members = Vec::with_capacity(
+        members
+            .len()
+            .saturating_add(ignored_runs.len())
+            .saturating_add(2),
+    );
     formatted_members.extend(open_dangling_comments);
     let mut ignored_index = 0;
     let mut skip_index = 0;
@@ -222,7 +227,9 @@ fn format_class_member_docs_with_recovered<'source>(
     close_dangling_comments: Option<FormattedMember<'source>>,
     formatter: &JavaFormatter<'_>,
 ) -> Option<Doc<'source>> {
-    let mut formatted_members = Vec::new();
+    let members = members.into_iter();
+    let (lower, _) = members.size_hint();
+    let mut formatted_members = Vec::with_capacity(lower.saturating_add(2));
     formatted_members.extend(open_dangling_comments);
 
     for entry in members {
@@ -290,7 +297,9 @@ fn format_interface_member_docs_with_recovered<'source>(
     close_dangling_comments: Option<FormattedMember<'source>>,
     formatter: &JavaFormatter<'_>,
 ) -> Option<Doc<'source>> {
-    let mut formatted_members = Vec::new();
+    let members = members.into_iter();
+    let (lower, _) = members.size_hint();
+    let mut formatted_members = Vec::with_capacity(lower.saturating_add(2));
     formatted_members.extend(open_dangling_comments);
 
     for entry in members {
@@ -362,7 +371,9 @@ fn format_annotation_member_docs_with_recovered<'source>(
     close_dangling_comments: Option<FormattedMember<'source>>,
     formatter: &JavaFormatter<'_>,
 ) -> Option<Doc<'source>> {
-    let mut formatted_members = Vec::new();
+    let members = members.into_iter();
+    let (lower, _) = members.size_hint();
+    let mut formatted_members = Vec::with_capacity(lower.saturating_add(2));
     formatted_members.extend(open_dangling_comments);
 
     for entry in members {

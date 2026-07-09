@@ -40,15 +40,13 @@ pub(crate) fn format_block<'source>(block: &Block<'source>) -> Doc<'source> {
 
 fn format_block_contents<'source>(block: &Block<'source>) -> Option<Doc<'source>> {
     let entries = block.items_with_recovered().collect::<Vec<_>>();
-    let items = entries
-        .iter()
-        .filter_map(|entry| match entry {
-            RecoveredSeparatedListEntry::Entry(item) => Some(*item),
-            RecoveredSeparatedListEntry::Token(_)
-            | RecoveredSeparatedListEntry::Error(_)
-            | RecoveredSeparatedListEntry::Node(_) => None,
-        })
-        .collect::<Vec<_>>();
+    let mut items = Vec::with_capacity(entries.len());
+    items.extend(entries.iter().filter_map(|entry| match entry {
+        RecoveredSeparatedListEntry::Entry(item) => Some(*item),
+        RecoveredSeparatedListEntry::Token(_)
+        | RecoveredSeparatedListEntry::Error(_)
+        | RecoveredSeparatedListEntry::Node(_) => None,
+    }));
 
     let ignored_ranges = formatter_ignore_ranges(
         block.source_text(),
@@ -68,15 +66,13 @@ fn format_block_contents_from_recovered_entries<'source>(
     block: &Block<'source>,
 ) -> Option<Doc<'source>> {
     let entries = block.items_with_recovered().collect::<Vec<_>>();
-    let items = entries
-        .iter()
-        .filter_map(|entry| match entry {
-            RecoveredSeparatedListEntry::Entry(item) => Some(*item),
-            RecoveredSeparatedListEntry::Token(_)
-            | RecoveredSeparatedListEntry::Error(_)
-            | RecoveredSeparatedListEntry::Node(_) => None,
-        })
-        .collect::<Vec<_>>();
+    let mut items = Vec::with_capacity(entries.len());
+    items.extend(entries.iter().filter_map(|entry| match entry {
+        RecoveredSeparatedListEntry::Entry(item) => Some(*item),
+        RecoveredSeparatedListEntry::Token(_)
+        | RecoveredSeparatedListEntry::Error(_)
+        | RecoveredSeparatedListEntry::Node(_) => None,
+    }));
     let docs = block_body_entries(block, &entries, &items);
 
     (!docs.is_empty()).then(|| join_body_items(docs))
@@ -87,7 +83,7 @@ fn block_body_entries<'source>(
     entries: &[RecoveredSeparatedListEntry<'source, BlockItem<'source>>],
     items: &[BlockItem<'source>],
 ) -> Vec<BodyItem<'source>> {
-    let mut docs = Vec::new();
+    let mut docs = Vec::with_capacity(entries.len());
     let mut recovered_docs = Vec::new();
     let mut item_index = 0;
 
@@ -127,7 +123,7 @@ fn push_recovered_block_body_item<'source>(
 }
 
 fn format_block_dangling_comments<'source>(block: &Block<'source>) -> Option<Doc<'source>> {
-    let comments = block
+    let mut comments = block
         .open_brace()
         .into_iter()
         .flat_map(|token| token.trailing_comments())
@@ -137,9 +133,12 @@ fn format_block_dangling_comments<'source>(block: &Block<'source>) -> Option<Doc
                 .into_iter()
                 .flat_map(|token| token.leading_comments()),
         )
-        .collect::<Vec<_>>();
+        .peekable();
 
-    (!comments.is_empty()).then(|| format_dangling_comments(comments))
+    comments
+        .peek()
+        .is_some()
+        .then(|| format_dangling_comments(comments))
 }
 
 fn format_block_contents_with_ignored<'source>(
@@ -165,7 +164,7 @@ fn format_block_contents_with_ignored<'source>(
         return (!docs.is_empty()).then(|| join_body_items(docs));
     }
 
-    let mut docs = Vec::new();
+    let mut docs = Vec::with_capacity(entries.len().saturating_add(ignored_runs.len()));
     let mut ignored_index = 0;
     let mut skip_index = 0;
     let mut item_index = 0;

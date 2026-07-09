@@ -94,7 +94,7 @@ pub(crate) fn join_empty_lines<'source>(
 }
 
 pub(crate) fn join_body_items(items: Vec<BodyItem<'_>>) -> Doc<'_> {
-    let mut joined = Vec::new();
+    let mut joined = Vec::with_capacity(items.len().saturating_mul(2).saturating_sub(1));
     for item in items {
         if !joined.is_empty() {
             joined.push(if item.starts_after_blank_line {

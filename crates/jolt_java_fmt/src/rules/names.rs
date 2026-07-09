@@ -86,8 +86,9 @@ fn token_has_line_comments(token: &JavaSyntaxToken<'_>) -> bool {
 fn format_inline_name<'source>(
     segments: impl IntoIterator<Item = NameSegment<'source>>,
 ) -> Doc<'source> {
-    let mut docs = Vec::new();
     let mut segments = segments.into_iter().peekable();
+    let (lower, _) = segments.size_hint();
+    let mut docs = Vec::with_capacity(lower.saturating_mul(2));
     let mut index = 0;
     while let Some(segment) = segments.next() {
         if index > 0 {
@@ -175,7 +176,9 @@ fn format_inline_name_segment_identifier<'source>(
 fn format_leading_dot_comments<'source>(
     comments: impl IntoIterator<Item = JavaComment<'source>>,
 ) -> Doc<'source> {
-    let mut docs = Vec::new();
+    let comments = comments.into_iter();
+    let (lower, _) = comments.size_hint();
+    let mut docs = Vec::with_capacity(lower.saturating_mul(3));
     for comment in comments {
         docs.push(space());
         docs.push(format_comment(&comment));
@@ -189,7 +192,9 @@ fn format_leading_dot_comments<'source>(
 fn format_inline_comments<'source>(
     comments: impl IntoIterator<Item = JavaComment<'source>>,
 ) -> Doc<'source> {
-    let mut docs = Vec::new();
+    let comments = comments.into_iter();
+    let (lower, _) = comments.size_hint();
+    let mut docs = Vec::with_capacity(lower.saturating_mul(3));
     for comment in comments {
         docs.push(space());
         docs.push(format_comment(&comment));

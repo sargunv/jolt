@@ -68,7 +68,7 @@ pub(super) fn format_when_expression<'source>(
         ]);
     };
     let close_brace = expression.close_brace();
-    let entries = expression.entries().collect::<Vec<_>>();
+    let mut entries = expression.entries().peekable();
 
     concat([
         format_token(&keyword, leading, TrailingTrivia::Preserve),
@@ -83,13 +83,13 @@ pub(super) fn format_when_expression<'source>(
             LeadingTrivia::Preserve,
             TrailingTrivia::RelocatedToEnclosingContext,
         ),
-        if entries.is_empty() {
+        if entries.peek().is_none() {
             hard_line()
         } else {
             concat([
                 indent(concat([
                     hard_line(),
-                    join_hard_lines(entries.iter().map(format_when_entry)),
+                    join_hard_lines(entries.map(|entry| format_when_entry(&entry))),
                 ])),
                 hard_line(),
             ])
@@ -538,7 +538,6 @@ fn format_when_entry<'source>(entry: &WhenEntry<'source>) -> Doc<'source> {
 }
 
 fn format_when_conditions<'source>(entry: &WhenEntry<'source>) -> Doc<'source> {
-    let mut docs = Vec::new();
     let mut entries =
         recovered_comma_list_items(entry.condition_entries_with_recovered(), |entry| {
             CommaListItem {
@@ -548,6 +547,8 @@ fn format_when_conditions<'source>(entry: &WhenEntry<'source>) -> Doc<'source> {
         })
         .into_iter()
         .peekable();
+    let (lower, _) = entries.size_hint();
+    let mut docs = Vec::with_capacity(lower.saturating_mul(2).saturating_add(2));
     while let Some(entry) = entries.next() {
         docs.push(entry.doc);
         if let Some(comma) = entry.comma {

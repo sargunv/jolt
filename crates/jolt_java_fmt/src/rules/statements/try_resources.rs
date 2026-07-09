@@ -294,7 +294,8 @@ fn format_catch_type_list<'source>(
         return name;
     };
 
-    let mut docs = Vec::new();
+    let (lower, _) = entries.size_hint();
+    let mut docs = Vec::with_capacity(lower.saturating_mul(2).saturating_add(1));
     for next in entries {
         docs.push(current.doc);
         if let Some(separator) = current.separator {
@@ -376,7 +377,8 @@ fn join_resource_lines<'source>(
     mut resources: std::iter::Peekable<impl Iterator<Item = ResourceLineItem<'source>>>,
     trailing_comments: Option<Doc<'source>>,
 ) -> Doc<'source> {
-    let mut joined = Vec::new();
+    let (lower, _) = resources.size_hint();
+    let mut joined = Vec::with_capacity(lower.saturating_mul(3));
     let mut trailing_comments = trailing_comments;
     while let Some(resource) = resources.next() {
         match resource {

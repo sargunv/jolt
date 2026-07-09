@@ -5,13 +5,13 @@ System: Linux 7.0.13-200.fc44.x86_64, x86_64, 32 logical CPUs
 Hyperfine: adaptive runs, min 3, 1 warmup
 
 Benchmark 1: jolt fmt
-  Time (mean ± σ):       6.3 ms ±   0.6 ms    [User: 21.6 ms, System: 20.2 ms]
-  Range (min … max):     5.1 ms …   9.2 ms    169 runs
+  Time (mean ± σ):       6.3 ms ±   0.5 ms    [User: 21.1 ms, System: 21.0 ms]
+  Range (min … max):     5.2 ms …   8.4 ms    173 runs
  
 Benchmark 2: dprint --plugins=jolt_fmt_dprint.wasm fmt --incremental=false --skip-stable-format
-  Time (mean ± σ):      19.7 ms ±   0.9 ms    [User: 32.8 ms, System: 40.5 ms]
-  Range (min … max):    17.9 ms …  25.1 ms    95 runs
+  Time (mean ± σ):      19.6 ms ±   0.6 ms    [User: 33.0 ms, System: 39.2 ms]
+  Range (min … max):    18.0 ms …  21.0 ms    95 runs
  
 Summary
   jolt fmt ran
-    3.11 ± 0.32 times faster than dprint --plugins=jolt_fmt_dprint.wasm fmt --incremental=false --skip-stable-format
+    3.12 ± 0.28 times faster than dprint --plugins=jolt_fmt_dprint.wasm fmt --incremental=false --skip-stable-format

@@ -417,7 +417,7 @@ fn format_property_body_item<'source>(item: &PropertyBodyItem<'source>) -> Doc<'
 pub(super) fn format_explicit_backing_field<'source>(
     field: &ExplicitBackingField<'source>,
 ) -> Doc<'source> {
-    let mut docs = Vec::new();
+    let mut docs = Vec::with_capacity(5);
 
     if let Some(keyword) = field.field_token() {
         docs.push(format_token(
@@ -583,12 +583,20 @@ fn format_callable_receiver<'source>(
 }
 
 fn format_inline_modifier_prefix<'source>(modifiers: &ModifierList<'source>) -> Doc<'source> {
-    let mut docs = Vec::new();
-    for annotation in modifiers.annotations() {
+    let annotations = modifiers.annotations();
+    let (annotation_count, _) = annotations.size_hint();
+    let modifier_tokens = modifiers.modifier_tokens();
+    let (modifier_count, _) = modifier_tokens.size_hint();
+    let mut docs = Vec::with_capacity(
+        annotation_count
+            .saturating_add(modifier_count)
+            .saturating_mul(2),
+    );
+    for annotation in annotations {
         docs.push(format_annotation(&annotation));
         docs.push(space());
     }
-    for token in modifiers.modifier_tokens() {
+    for token in modifier_tokens {
         docs.push(format_token(
             &token,
             LeadingTrivia::Preserve,
@@ -722,9 +730,11 @@ struct ContextParameterClauseItems<'source> {
 fn context_parameter_clause_items<'source>(
     clause: &ContextParameterClause<'source>,
 ) -> ContextParameterClauseItems<'source> {
-    let mut items = Vec::new();
+    let entries = clause.entries_with_recovered();
+    let (lower, _) = entries.size_hint();
+    let mut items = Vec::with_capacity(lower);
 
-    for entry in clause.entries_with_recovered() {
+    for entry in entries {
         push_context_parameter_entry(&mut items, entry);
     }
 

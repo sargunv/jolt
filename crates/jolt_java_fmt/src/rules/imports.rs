@@ -26,7 +26,7 @@ pub(crate) fn format_imports(imports: Vec<ImportDeclaration<'_>>) -> Option<Doc<
 }
 
 fn format_import_run(imports: Vec<FormattedImport<'_>>) -> Doc<'_> {
-    let mut normal_imports = Vec::new();
+    let mut normal_imports = Vec::with_capacity(imports.len());
     let mut static_imports = Vec::new();
 
     for import in imports {
@@ -40,7 +40,7 @@ fn format_import_run(imports: Vec<FormattedImport<'_>>) -> Doc<'_> {
     normal_imports.sort_by(|lhs, rhs| lhs.path.cmp(&rhs.path));
     static_imports.sort_by(|lhs, rhs| lhs.path.cmp(&rhs.path));
 
-    let mut docs = Vec::new();
+    let mut docs = Vec::with_capacity(3);
     if !normal_imports.is_empty() {
         docs.push(join_hard_lines(
             normal_imports.into_iter().map(FormattedImport::into_doc),

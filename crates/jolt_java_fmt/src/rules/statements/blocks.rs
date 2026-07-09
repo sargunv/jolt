@@ -53,9 +53,9 @@ fn format_block_statements_body<'source>(
         block.text_range().start().get(),
         block.token_iter(),
     );
-    let mut items = Vec::new();
-    items.extend(format_block_open_dangling_comments(block));
     let entries = block.block_statements_with_recovered().collect::<Vec<_>>();
+    let mut items = Vec::with_capacity(entries.len().saturating_add(2));
+    items.extend(format_block_open_dangling_comments(block));
     if ignored_ranges.is_empty() {
         items.extend(format_block_statement_items_with_recovered(
             entries, formatter,
@@ -112,7 +112,7 @@ fn format_block_statement_items_with_ignored<'source>(
         .collect::<Vec<_>>();
     let ignored_runs = formatter_ignore_runs(ignored_ranges, &entry_ranges);
 
-    let mut items = Vec::new();
+    let mut items = Vec::with_capacity(entries.len().saturating_add(ignored_runs.len()));
     let mut ignored_index = 0;
     let mut skip_index = 0;
     for (entry_index, entry) in entries.into_iter().enumerate() {

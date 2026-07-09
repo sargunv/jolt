@@ -33,8 +33,10 @@ pub(crate) fn format_leading_comment_runs<'source, Item>(
     mut has_leading_comments: impl FnMut(&Item) -> bool,
     mut format_run: impl FnMut(Vec<Item>) -> Doc<'source>,
 ) -> Doc<'source> {
+    let items = items.into_iter();
+    let (lower, _) = items.size_hint();
     let mut docs = Vec::new();
-    let mut current_run = Vec::new();
+    let mut current_run = Vec::with_capacity(lower);
 
     for item in items {
         if has_leading_comments(&item) && !current_run.is_empty() {
@@ -99,7 +101,9 @@ pub(crate) fn format_construct_leading_comments<'source>(
 pub(crate) fn format_leading_comment_list<'source>(
     comments: impl IntoIterator<Item = JavaComment<'source>>,
 ) -> Doc<'source> {
-    let mut docs = Vec::new();
+    let comments = comments.into_iter();
+    let (lower, _) = comments.size_hint();
+    let mut docs = Vec::with_capacity(lower.saturating_mul(2));
     for comment in comments {
         docs.push(format_comment(&comment));
         docs.push(hard_line());
@@ -110,7 +114,9 @@ pub(crate) fn format_leading_comment_list<'source>(
 pub(crate) fn format_removed_comments<'source>(
     comments: impl IntoIterator<Item = JavaComment<'source>>,
 ) -> Option<Doc<'source>> {
-    let mut docs = Vec::new();
+    let comments = comments.into_iter();
+    let (lower, _) = comments.size_hint();
+    let mut docs = Vec::with_capacity(lower.saturating_mul(2).saturating_sub(1));
     for comment in comments {
         if is_formatter_control_marker(comment.text()) {
             continue;
@@ -125,8 +131,10 @@ pub(crate) fn format_removed_comments<'source>(
 }
 
 pub(crate) fn format_leading_comments<'source>(token: &JavaSyntaxToken<'source>) -> Doc<'source> {
-    let mut docs = Vec::new();
-    for comment in token.leading_comments() {
+    let comments = token.leading_comments();
+    let (lower, _) = comments.size_hint();
+    let mut docs = Vec::with_capacity(lower.saturating_mul(2));
+    for comment in comments {
         docs.push(format_comment(&comment));
         docs.push(hard_line());
     }
@@ -134,8 +142,10 @@ pub(crate) fn format_leading_comments<'source>(token: &JavaSyntaxToken<'source>)
 }
 
 pub(crate) fn format_trailing_comments<'source>(token: &JavaSyntaxToken<'source>) -> Doc<'source> {
-    let mut docs = Vec::new();
-    for comment in token.trailing_comments() {
+    let comments = token.trailing_comments();
+    let (lower, _) = comments.size_hint();
+    let mut docs = Vec::with_capacity(lower.saturating_mul(3));
+    for comment in comments {
         docs.push(space());
         docs.push(format_comment(&comment));
         if comment_forces_line(&comment) {
@@ -149,7 +159,8 @@ pub(crate) fn format_trailing_comments_before_line_break<'source>(
     token: &JavaSyntaxToken<'source>,
 ) -> Doc<'source> {
     let mut comments = token.trailing_comments().peekable();
-    let mut docs = Vec::new();
+    let (lower, _) = comments.size_hint();
+    let mut docs = Vec::with_capacity(lower.saturating_mul(3));
 
     while let Some(comment) = comments.next() {
         docs.push(space());
@@ -193,7 +204,9 @@ pub(crate) fn format_separator_with_comments<'source>(
 pub(crate) fn format_dangling_comments<'source>(
     comments: impl IntoIterator<Item = JavaComment<'source>>,
 ) -> Doc<'source> {
-    let mut docs = Vec::new();
+    let comments = comments.into_iter();
+    let (lower, _) = comments.size_hint();
+    let mut docs = Vec::with_capacity(lower.saturating_mul(2).saturating_sub(1));
     for comment in comments {
         if !docs.is_empty() {
             docs.push(hard_line());
@@ -295,10 +308,12 @@ pub(crate) fn format_token_sequence<'source>(
     tokens: impl IntoIterator<Item = JavaSyntaxToken<'source>>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
-    let mut docs = Vec::new();
+    let tokens = tokens.into_iter();
+    let (lower, _) = tokens.size_hint();
+    let mut docs = Vec::with_capacity(lower.saturating_mul(2).saturating_sub(1));
     let mut previous = None;
 
-    for (index, token) in tokens.into_iter().enumerate() {
+    for (index, token) in tokens.enumerate() {
         if let Some(previous) = previous {
             docs.push(format_recovered_token_gap(&previous, &token));
         }
@@ -398,7 +413,9 @@ pub(crate) fn comment_is_star_block(comment: &JavaComment<'_>) -> bool {
 fn format_comment_lines<'source>(
     lines: impl IntoIterator<Item = impl Into<Cow<'source, str>>>,
 ) -> Doc<'source> {
-    let mut docs = Vec::new();
+    let lines = lines.into_iter();
+    let (lower, _) = lines.size_hint();
+    let mut docs = Vec::with_capacity(lower.saturating_mul(2).saturating_sub(1));
     for line in lines {
         if !docs.is_empty() {
             docs.push(hard_line());

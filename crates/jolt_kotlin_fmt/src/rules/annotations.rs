@@ -3,10 +3,10 @@ use jolt_kotlin_syntax::{
     Annotation, AnnotationArgumentList, AnnotationUseSiteTarget, RecoveredSeparatedListEntry,
 };
 
-use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_token, token_has_comments};
-use crate::helpers::lists::{
-    CommaListItem, compact_parenthesized_list, parenthesized_list, recovered_comma_list_items,
+use crate::helpers::comments::{
+    LeadingTrivia, TrailingTrivia, format_token, format_token_sequence, token_has_comments,
 };
+use crate::helpers::lists::{CommaListItem, compact_parenthesized_list, parenthesized_list};
 use crate::rules::expressions::format_value_argument;
 use crate::rules::names::format_qualified_name;
 
@@ -94,14 +94,32 @@ struct AnnotationArgumentListItems<'source> {
 fn annotation_argument_list_items<'source>(
     arguments: &AnnotationArgumentList<'source>,
 ) -> AnnotationArgumentListItems<'source> {
-    let entries = arguments.entries_with_recovered().collect::<Vec<_>>();
-    let has_recovered_tokens = entries
-        .iter()
-        .any(|entry| !matches!(entry, RecoveredSeparatedListEntry::Entry(_)));
-    let items = recovered_comma_list_items(entries, |entry| CommaListItem {
-        doc: format_value_argument(&entry.argument),
-        comma: entry.comma,
-    });
+    let entries = arguments.entries_with_recovered();
+    let (lower, _) = entries.size_hint();
+    let mut items = Vec::with_capacity(lower);
+    let mut has_recovered_tokens = false;
+
+    for entry in entries {
+        has_recovered_tokens |= !matches!(entry, RecoveredSeparatedListEntry::Entry(_));
+        items.push(match entry {
+            RecoveredSeparatedListEntry::Entry(entry) => CommaListItem {
+                doc: format_value_argument(&entry.argument),
+                comma: entry.comma,
+            },
+            RecoveredSeparatedListEntry::Token(token) => CommaListItem {
+                doc: format_token(&token, LeadingTrivia::Preserve, TrailingTrivia::Preserve),
+                comma: None,
+            },
+            RecoveredSeparatedListEntry::Error(error) => CommaListItem {
+                doc: format_token_sequence(error.token_iter(), LeadingTrivia::Preserve),
+                comma: None,
+            },
+            RecoveredSeparatedListEntry::Node(node) => CommaListItem {
+                doc: format_token_sequence(node.token_iter(), LeadingTrivia::Preserve),
+                comma: None,
+            },
+        });
+    }
 
     AnnotationArgumentListItems {
         items,

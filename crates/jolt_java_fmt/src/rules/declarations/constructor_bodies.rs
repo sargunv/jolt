@@ -19,7 +19,7 @@ pub(super) fn format_constructor_body<'source>(
         body.token_iter(),
     );
     if ignored_ranges.is_empty() {
-        let mut items = Vec::new();
+        let mut items = Vec::with_capacity(elements.len().saturating_add(2));
         items.extend(format_constructor_body_open_dangling_comments(
             body.open_brace(),
         ));
@@ -40,7 +40,12 @@ pub(super) fn format_constructor_body<'source>(
         })
         .collect::<Vec<_>>();
     let ignored_runs = formatter_ignore_runs(&ignored_ranges, &element_ranges);
-    let mut items = Vec::new();
+    let mut items = Vec::with_capacity(
+        elements
+            .len()
+            .saturating_add(ignored_runs.len())
+            .saturating_add(2),
+    );
     items.extend(format_constructor_body_open_dangling_comments(
         body.open_brace(),
     ));

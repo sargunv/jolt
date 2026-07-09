@@ -104,7 +104,7 @@ fn format_enum_constants_doc<'source>(
     moved_member_comments: &mut Vec<jolt_java_syntax::JavaComment<'source>>,
 ) -> Doc<'source> {
     let mut pending_constant_comments = Vec::new();
-    let mut constant_lines = Vec::new();
+    let mut constant_lines = Vec::with_capacity(constants.len());
     for (index, entry) in constants.iter().enumerate() {
         if !pending_constant_comments.is_empty() {
             constant_lines.push(format_dangling_comments(std::mem::take(
@@ -256,11 +256,12 @@ fn format_enum_body_declaration_separator<'source>(
 fn format_enum_separator_inline_trailing_comments<'source>(
     comma: &JavaSyntaxToken<'source>,
 ) -> Doc<'source> {
-    let mut docs = Vec::new();
-    for comment in comma
+    let comments = comma
         .trailing_comments()
-        .filter(|comment| !enum_separator_comment_moves(comment))
-    {
+        .filter(|comment| !enum_separator_comment_moves(comment));
+    let (lower, _) = comments.size_hint();
+    let mut docs = Vec::with_capacity(lower.saturating_mul(2));
+    for comment in comments {
         docs.push(space());
         docs.push(format_comment(&comment));
     }

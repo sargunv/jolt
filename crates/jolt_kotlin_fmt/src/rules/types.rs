@@ -180,7 +180,12 @@ fn format_user_type<'source>(ty: &UserType<'source>) -> Doc<'source> {
     }
     let arguments = ty.type_argument_lists().collect::<Vec<_>>();
     let mut dots = ty.dot_tokens();
-    let mut parts = Vec::new();
+    let mut parts = Vec::with_capacity(
+        identifiers
+            .len()
+            .saturating_mul(2)
+            .saturating_add(arguments.len()),
+    );
 
     for annotation in ty.annotations() {
         parts.push(format_annotation(&annotation));
@@ -246,14 +251,31 @@ fn type_argument_list_items<'source>(
     arguments: &TypeArgumentList<'source>,
 ) -> TypeArgumentListItems<'source> {
     if let Some(projections) = arguments.projection_list() {
-        let entries = projections.entries_with_recovered().collect::<Vec<_>>();
-        let has_recovered_tokens = entries
-            .iter()
-            .any(|entry| !matches!(entry, RecoveredSeparatedListEntry::Entry(_)));
-        let items = recovered_comma_list_items(entries, |entry| CommaListItem {
-            doc: format_type_argument(&entry.argument),
-            comma: entry.comma,
-        });
+        let entries = projections.entries_with_recovered();
+        let (lower, _) = entries.size_hint();
+        let mut items = Vec::with_capacity(lower);
+        let mut has_recovered_tokens = false;
+        for entry in entries {
+            has_recovered_tokens |= !matches!(entry, RecoveredSeparatedListEntry::Entry(_));
+            items.push(match entry {
+                RecoveredSeparatedListEntry::Entry(entry) => CommaListItem {
+                    doc: format_type_argument(&entry.argument),
+                    comma: entry.comma,
+                },
+                RecoveredSeparatedListEntry::Token(token) => CommaListItem {
+                    doc: format_token(&token, LeadingTrivia::Preserve, TrailingTrivia::Preserve),
+                    comma: None,
+                },
+                RecoveredSeparatedListEntry::Error(error) => CommaListItem {
+                    doc: format_token_sequence(error.token_iter(), LeadingTrivia::Preserve),
+                    comma: None,
+                },
+                RecoveredSeparatedListEntry::Node(node) => CommaListItem {
+                    doc: format_token_sequence(node.token_iter(), LeadingTrivia::Preserve),
+                    comma: None,
+                },
+            });
+        }
         return TypeArgumentListItems {
             items,
             has_recovered_tokens,
@@ -309,7 +331,7 @@ fn format_nullable_type<'source>(ty: &NullableType<'source>) -> Doc<'source> {
 }
 
 fn format_parenthesized_type<'source>(ty: &ParenthesizedType<'source>) -> Doc<'source> {
-    let mut docs = Vec::new();
+    let mut docs = Vec::with_capacity(3);
     for annotation in ty.annotations() {
         docs.push(format_annotation(&annotation));
         docs.push(space());

@@ -118,26 +118,32 @@ pub fn formatter_ignore_run_doc<'source>(run: &FormatterIgnoreRun<'source>) -> D
         &run.range.raw_text
     };
     let stripped = strip_first_line_indent(raw_text);
-    let mut docs = Vec::new();
     match stripped {
         Cow::Borrowed(text) => {
-            for line in text.split('\n') {
+            let lines = text.split('\n');
+            let (lower, upper) = lines.size_hint();
+            let mut docs = Vec::with_capacity(upper.unwrap_or(lower).saturating_mul(2));
+            for line in lines {
                 if !docs.is_empty() {
                     docs.push(hard_line());
                 }
                 docs.push(doc_text(line));
             }
+            concat(docs)
         }
         Cow::Owned(text) => {
-            for line in text.split('\n') {
+            let lines = text.split('\n');
+            let (lower, upper) = lines.size_hint();
+            let mut docs = Vec::with_capacity(upper.unwrap_or(lower).saturating_mul(2));
+            for line in lines {
                 if !docs.is_empty() {
                     docs.push(hard_line());
                 }
                 docs.push(doc_text(line.to_owned()));
             }
+            concat(docs)
         }
     }
-    concat(docs)
 }
 
 #[must_use]

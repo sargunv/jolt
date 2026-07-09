@@ -92,8 +92,8 @@ fn format_module_directives_with_ignored<'source>(
     directives: Vec<RecoveredSeparatedListEntry<'source, ModuleDirective<'source>>>,
     ignored_runs: &[crate::helpers::formatter_ignore::FormatterIgnoreRun<'source>],
 ) -> Doc<'source> {
-    let mut sections = Vec::new();
-    let mut segment = Vec::new();
+    let mut sections = Vec::with_capacity(directives.len().saturating_add(ignored_runs.len()));
+    let mut segment = Vec::with_capacity(directives.len());
     let mut ignored_index = 0;
     let mut skip_index = 0;
 
@@ -159,7 +159,7 @@ fn push_module_directive_segment<'source>(
 }
 
 fn join_module_directive_sections(sections: Vec<ModuleDirectiveSection<'_>>) -> Doc<'_> {
-    let mut joined = Vec::new();
+    let mut joined = Vec::with_capacity(sections.len().saturating_mul(2).saturating_sub(1));
     let mut previous_hard_line_after = false;
     for section in sections {
         if !joined.is_empty() {
@@ -193,8 +193,8 @@ fn format_module_directive_segments(directives: Vec<ModuleDirective<'_>>) -> Doc
 fn format_module_directive_entries<'source>(
     entries: Vec<RecoveredSeparatedListEntry<'source, ModuleDirective<'source>>>,
 ) -> Doc<'source> {
-    let mut sections = Vec::new();
-    let mut segment = Vec::new();
+    let mut sections = Vec::with_capacity(entries.len());
+    let mut segment = Vec::with_capacity(entries.len());
 
     for entry in entries {
         match entry {
@@ -275,9 +275,9 @@ fn format_module_directive_run(directives: Vec<FormattedModuleDirective<'_>>) ->
             .then_with(|| lhs.primary_name.cmp(&rhs.primary_name))
     });
 
-    let mut docs = Vec::new();
+    let mut docs = Vec::with_capacity(directives.len().saturating_mul(2).saturating_sub(1));
     let mut current_kind = None;
-    let mut current_group = Vec::new();
+    let mut current_group = Vec::with_capacity(directives.len());
 
     for directive in directives {
         if current_kind.is_some_and(|kind| kind != directive.kind_order) {
@@ -505,7 +505,9 @@ fn format_module_name_list<'source>(
 ) -> Option<Doc<'source>> {
     let mut should_break = false;
     let mut has_recovered = false;
-    let mut items = Vec::new();
+    let entries = entries.into_iter();
+    let (lower, _) = entries.size_hint();
+    let mut items = Vec::with_capacity(lower);
 
     for entry in entries {
         match entry {
@@ -569,7 +571,7 @@ struct FormattedModuleNameEntry<'source> {
 }
 
 fn format_module_name_entries_inline(entries: Vec<FormattedModuleNamePart<'_>>) -> Doc<'_> {
-    let mut docs = Vec::new();
+    let mut docs = Vec::with_capacity(entries.len().saturating_mul(2));
     for entry in entries {
         match entry {
             FormattedModuleNamePart::Entry(entry) => {
@@ -585,8 +587,8 @@ fn format_module_name_entries_inline(entries: Vec<FormattedModuleNamePart<'_>>) 
 }
 
 fn format_module_name_entries_broken(entries: Vec<FormattedModuleNamePart<'_>>) -> Doc<'_> {
-    let mut docs = Vec::new();
     let entries_len = entries.len();
+    let mut docs = Vec::with_capacity(entries_len.saturating_mul(2));
     for (index, entry) in entries.into_iter().enumerate() {
         match entry {
             FormattedModuleNamePart::Entry(entry) => {

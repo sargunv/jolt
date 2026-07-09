@@ -94,12 +94,14 @@ pub(super) fn format_string_template_expression<'source>(
         .collect::<Vec<_>>();
     long_entries.sort_by_key(|entry| entry.start.token_text_range().start());
 
-    let mut docs = Vec::new();
+    let tokens = expression.token_iter();
+    let (lower, _) = tokens.size_hint();
+    let mut docs = Vec::with_capacity(lower.saturating_add(long_entries.len().saturating_mul(2)));
     let mut skip_until = None;
     let first_token = expression
         .first_token()
         .map(|token| token.token_text_range());
-    for token in expression.token_iter() {
+    for token in tokens {
         let token_leading = if Some(token.token_text_range()) == first_token {
             leading
         } else {

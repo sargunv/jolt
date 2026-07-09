@@ -70,7 +70,8 @@ impl<'source> FormattedImport<'source> {
     }
 
     fn into_doc(self) -> Doc<'source> {
-        let mut docs = vec![
+        let mut docs = Vec::with_capacity(4);
+        docs.extend([
             self.import_token
                 .as_ref()
                 .map_or_else(jolt_fmt_ir::nil, |token| {
@@ -84,7 +85,7 @@ impl<'source> FormattedImport<'source> {
                 }),
             space(),
             self.path_doc,
-        ];
+        ]);
 
         docs.push(self.suffix_doc);
 
@@ -96,7 +97,7 @@ fn format_import_suffix<'source>(
     import: &ImportDirective<'source>,
     path_ends_with_trailing_comments: bool,
 ) -> Doc<'source> {
-    let mut docs = Vec::new();
+    let mut docs = Vec::with_capacity(4);
 
     if let Some(star) = import.star_token() {
         docs.push(format_import_path_token(&star));

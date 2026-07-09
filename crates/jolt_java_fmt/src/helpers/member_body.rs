@@ -41,7 +41,7 @@ impl<'source> MemberBodyItem<'source> {
 }
 
 pub(crate) fn join_member_body(members: Vec<MemberBodyItem<'_>>) -> Doc<'_> {
-    let mut joined = Vec::new();
+    let mut joined = Vec::with_capacity(members.len().saturating_mul(2).saturating_sub(1));
     let mut previous_category = None;
     let mut previous_was_neutral = false;
 

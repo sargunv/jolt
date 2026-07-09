@@ -19,8 +19,9 @@ pub(crate) struct CommaListItem<'source> {
 pub(crate) fn comma_list<'source>(
     items: impl IntoIterator<Item = CommaListItem<'source>>,
 ) -> Doc<'source> {
-    let mut docs = Vec::new();
     let mut items = items.into_iter().peekable();
+    let (lower, _) = items.size_hint();
+    let mut docs = Vec::with_capacity(lower.saturating_mul(2));
 
     while let Some(item) = items.next() {
         docs.push(item.doc);
@@ -164,8 +165,9 @@ fn format_open_delimiter_with_trailing<'source>(
 fn comma_list_with_trailing_separator<'source>(
     items: impl IntoIterator<Item = CommaListItem<'source>>,
 ) -> (Doc<'source>, bool) {
-    let mut docs = Vec::new();
     let mut items = items.into_iter().peekable();
+    let (lower, _) = items.size_hint();
+    let mut docs = Vec::with_capacity(lower.saturating_mul(2));
     let mut has_source_trailing_separator = false;
 
     while let Some(item) = items.next() {

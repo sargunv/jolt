@@ -113,7 +113,8 @@ fn format_lambda_parameter_prefix<'source>(
         })
         .into_iter()
         .peekable();
-    let mut docs = Vec::new();
+    let (lower, _) = entries.size_hint();
+    let mut docs = Vec::with_capacity(lower.saturating_mul(2).saturating_add(1));
 
     while let Some(entry) = entries.next() {
         docs.push(entry.doc);
@@ -184,7 +185,7 @@ pub(super) fn lambda_body_docs<'source>(
     lambda: &LambdaExpression<'source>,
     items: &[BlockItem<'source>],
 ) -> Vec<Doc<'source>> {
-    let mut docs = Vec::new();
+    let mut docs = Vec::with_capacity(items.len());
     let mut recovered_docs = Vec::new();
 
     for entry in lambda.body_items_with_recovered() {

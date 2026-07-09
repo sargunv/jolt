@@ -22,10 +22,11 @@ pub(crate) fn format_value_parameter_list<'source>(
 fn value_parameter_list_items<'source>(
     list: &ValueParameterList<'source>,
 ) -> Vec<CommaListItem<'source>> {
-    let entries = list.parameter_entries_with_recovered().collect::<Vec<_>>();
-    recovered_comma_list_items(entries, |entry| CommaListItem {
-        doc: format_value_parameter(&entry.parameter),
-        comma: entry.comma,
+    recovered_comma_list_items(list.parameter_entries_with_recovered(), |entry| {
+        CommaListItem {
+            doc: format_value_parameter(&entry.parameter),
+            comma: entry.comma,
+        }
     })
 }
 

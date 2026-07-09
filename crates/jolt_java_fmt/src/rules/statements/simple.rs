@@ -190,8 +190,10 @@ pub(crate) fn format_statement_semicolon(semicolon: Option<JavaSyntaxToken<'_>>)
 fn format_semicolon_leading_comments<'source>(
     semicolon: &JavaSyntaxToken<'source>,
 ) -> Doc<'source> {
-    let mut docs = Vec::new();
-    for comment in semicolon.leading_comments() {
+    let comments = semicolon.leading_comments();
+    let (lower, _) = comments.size_hint();
+    let mut docs = Vec::with_capacity(lower.saturating_mul(3));
+    for comment in comments {
         docs.push(space());
         docs.push(format_comment(&comment));
         if comment_forces_line(&comment) {
@@ -202,8 +204,10 @@ fn format_semicolon_leading_comments<'source>(
 }
 
 fn format_terminator_trailing_comments<'source>(token: &JavaSyntaxToken<'source>) -> Doc<'source> {
-    let mut docs = Vec::new();
-    for comment in token.trailing_comments() {
+    let comments = token.trailing_comments();
+    let (lower, _) = comments.size_hint();
+    let mut docs = Vec::with_capacity(lower.saturating_mul(2));
+    for comment in comments {
         if terminator_comment_starts_next_line(&comment) {
             docs.push(hard_line());
         } else {

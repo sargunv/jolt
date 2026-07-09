@@ -96,8 +96,8 @@ fn format_statement_node<'source>(
         return format_token_sequence(statement.token_iter(), leading);
     };
     let doc = format_statement_owned(&inner, leading);
-    let tail = statement.tail_tokens_after_statement().collect::<Vec<_>>();
-    if tail.is_empty() {
+    let mut tail = statement.tail_tokens_after_statement().peekable();
+    if tail.peek().is_none() {
         return doc;
     }
 
@@ -108,11 +108,13 @@ fn format_expression_statement<'source>(
     statement: &ExpressionStatement<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
-    let mut docs = Vec::new();
+    let entries = statement.entries_with_recovered();
+    let (lower, _) = entries.size_hint();
+    let mut docs = Vec::with_capacity(lower.saturating_mul(2));
     let mut has_output = false;
     let mut previous_last_token = None;
 
-    for entry in statement.entries_with_recovered() {
+    for entry in entries {
         if let (Some(left), Some(right)) = (previous_last_token.as_ref(), entry_first_token(&entry))
         {
             docs.push(format_token_gap(left, &right));

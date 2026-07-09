@@ -23,7 +23,7 @@ fn modifier_prefix_from_modifier_docs<'source>(
     annotation_docs: Vec<Doc<'source>>,
     modifier_docs: impl IntoIterator<Item = Doc<'source>>,
 ) -> Doc<'source> {
-    let mut docs = Vec::new();
+    let mut docs = Vec::with_capacity(annotation_docs.len().saturating_mul(2).saturating_add(2));
     for annotation in annotation_docs {
         docs.push(annotation);
         docs.push(hard_line());

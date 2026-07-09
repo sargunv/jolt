@@ -226,9 +226,11 @@ struct DelegationSpecifierListItems<'source> {
 fn delegation_specifier_list_items<'source>(
     delegation: &DelegationSpecifierList<'source>,
 ) -> DelegationSpecifierListItems<'source> {
-    let mut items = Vec::new();
+    let entries = delegation.entries_with_recovered();
+    let (lower, _) = entries.size_hint();
+    let mut items = Vec::with_capacity(lower);
 
-    for entry in delegation.entries_with_recovered() {
+    for entry in entries {
         push_delegation_specifier_entry(&mut items, entry);
     }
 

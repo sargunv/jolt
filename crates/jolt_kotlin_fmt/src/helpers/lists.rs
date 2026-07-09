@@ -108,8 +108,8 @@ fn delimited_comma_list<'source>(
 }
 
 pub(crate) fn comma_list(items: Vec<CommaListItem<'_>>) -> Doc<'_> {
-    let mut docs = Vec::new();
     let item_count = items.len();
+    let mut docs = Vec::with_capacity(item_count.saturating_mul(2));
 
     for (index, item) in items.into_iter().enumerate() {
         docs.push(item.doc);

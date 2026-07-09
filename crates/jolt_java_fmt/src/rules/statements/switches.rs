@@ -42,7 +42,7 @@ pub(crate) fn format_switch_block<'source>(
     block: &SwitchBlock<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    let entries = block
+    let mut entries = block
         .entries_with_recovered()
         .map(|entry| match entry {
             jolt_java_syntax::RecoveredSeparatedListEntry::Entry(entry) => match entry {
@@ -61,16 +61,16 @@ pub(crate) fn format_switch_block<'source>(
                 format_token_sequence(node.token_iter(), LeadingTrivia::Preserve)
             }
         })
-        .collect::<Vec<_>>();
+        .peekable();
 
-    braced_switch_block(block, entries)
+    let body = entries.peek().is_some().then(|| join_hard_lines(entries));
+    braced_switch_block(block, body)
 }
 
 fn braced_switch_block<'source>(
     block: &SwitchBlock<'source>,
-    entries: Vec<Doc<'source>>,
+    body: Option<Doc<'source>>,
 ) -> Doc<'source> {
-    let body = (!entries.is_empty()).then(|| join_hard_lines(entries));
     concat([
         block
             .open_brace()
@@ -113,32 +113,34 @@ fn format_switch_statement_group<'source>(
         return doc;
     }
 
-    let items = group
-        .block_statements_with_recovered()
-        .filter_map(|entry| match entry {
-            jolt_java_syntax::RecoveredSeparatedListEntry::Entry(statement) => {
-                format_block_statement_item_or_recovered(&statement, formatter)
-            }
-            jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
-                Some(crate::helpers::blocks::BodyItem::new(
-                    format_token_sequence(std::iter::once(token), LeadingTrivia::Preserve),
-                    false,
-                ))
-            }
-            jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => {
-                Some(crate::helpers::blocks::BodyItem::new(
-                    format_token_sequence(error.token_iter(), LeadingTrivia::Preserve),
-                    false,
-                ))
-            }
-            jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => {
-                Some(crate::helpers::blocks::BodyItem::new(
-                    format_token_sequence(node.token_iter(), LeadingTrivia::Preserve),
-                    false,
-                ))
-            }
-        })
-        .collect::<Vec<_>>();
+    let mut items = Vec::with_capacity(statements.len());
+    items.extend(
+        group
+            .block_statements_with_recovered()
+            .filter_map(|entry| match entry {
+                jolt_java_syntax::RecoveredSeparatedListEntry::Entry(statement) => {
+                    format_block_statement_item_or_recovered(&statement, formatter)
+                }
+                jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
+                    Some(crate::helpers::blocks::BodyItem::new(
+                        format_token_sequence(std::iter::once(token), LeadingTrivia::Preserve),
+                        false,
+                    ))
+                }
+                jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => {
+                    Some(crate::helpers::blocks::BodyItem::new(
+                        format_token_sequence(error.token_iter(), LeadingTrivia::Preserve),
+                        false,
+                    ))
+                }
+                jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => {
+                    Some(crate::helpers::blocks::BodyItem::new(
+                        format_token_sequence(node.token_iter(), LeadingTrivia::Preserve),
+                        false,
+                    ))
+                }
+            }),
+    );
 
     concat([
         join_hard_lines(labels),
@@ -305,8 +307,9 @@ fn format_switch_label_case_entries<'source>(
     >,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    let mut docs = Vec::new();
     let mut entries = entries.into_iter().peekable();
+    let (lower, _) = entries.size_hint();
+    let mut docs = Vec::with_capacity(lower.saturating_mul(2));
 
     while let Some(entry) = entries.next() {
         let has_next = entries.peek().is_some();

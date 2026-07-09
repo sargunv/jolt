@@ -68,8 +68,8 @@ fn format_compilation_unit_item_entries<'source>(
     >,
     formatter: &JavaFormatter<'_>,
 ) -> Option<Doc<'source>> {
-    let mut sections = Vec::new();
-    let mut segment = Vec::new();
+    let mut sections = Vec::with_capacity(items.len());
+    let mut segment = Vec::with_capacity(items.len());
     for item in items {
         match item {
             jolt_java_syntax::RecoveredSeparatedListEntry::Entry(item) => segment.push(item),
@@ -88,11 +88,11 @@ fn format_compilation_unit_items<'source>(
     items: Vec<CompilationUnitItem<'source>>,
     formatter: &JavaFormatter<'_>,
 ) -> Option<Doc<'source>> {
-    let mut sections = Vec::new();
+    let mut sections = Vec::with_capacity(4);
     let mut package = None;
-    let mut imports = Vec::new();
+    let mut imports = Vec::with_capacity(items.len());
     let mut module = None;
-    let mut declarations = Vec::new();
+    let mut declarations = Vec::with_capacity(items.len());
     let mut pending_removed_comments = None;
 
     for item in items {
@@ -186,8 +186,8 @@ fn format_compilation_unit_item_entries_with_ignored<'source>(
     ignored_runs: &[crate::helpers::formatter_ignore::FormatterIgnoreRun<'source>],
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    let mut sections = Vec::new();
-    let mut segment = Vec::new();
+    let mut sections = Vec::with_capacity(items.len().saturating_add(ignored_runs.len()));
+    let mut segment = Vec::with_capacity(items.len());
     let mut ignored_index = 0;
     let mut skip_index = 0;
 
@@ -269,7 +269,7 @@ fn push_compilation_unit_recovered_section<'source>(
 }
 
 fn join_program_sections(sections: Vec<ProgramSection<'_>>) -> Doc<'_> {
-    let mut joined = Vec::new();
+    let mut joined = Vec::with_capacity(sections.len().saturating_mul(2).saturating_sub(1));
     let mut previous_hard_line_after = false;
     for section in sections {
         if !joined.is_empty() {
@@ -353,10 +353,10 @@ fn format_package_declaration<'source>(
     package: &PackageDeclaration<'source>,
     formatter: &JavaFormatter<'_>,
 ) -> Doc<'source> {
-    let annotations = package
+    let mut annotations = package
         .annotations()
         .map(|annotation| format_annotation(&annotation, formatter))
-        .collect::<Vec<_>>();
+        .peekable();
     let declaration = concat([
         package
             .package_token()
@@ -371,7 +371,7 @@ fn format_package_declaration<'source>(
             .map_or_else(jolt_fmt_ir::nil, |token| format_token_with_comments(&token)),
     ]);
 
-    if annotations.is_empty() {
+    if annotations.peek().is_none() {
         declaration
     } else {
         concat([join_hard_lines(annotations), hard_line(), declaration])
