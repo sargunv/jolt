@@ -8,7 +8,8 @@ val answer =
 val delegated by
 
 formatted:
-fun value() =valanswer=
+fun value() =
+val answer =
 
 val delegated by
 

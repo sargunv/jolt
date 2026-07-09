@@ -9,7 +9,7 @@ formatted:
 class C {
   void m(int value) {
     switch (value) { /* block */
-      +;case1->use();
+      + ; case 1 -> use();
     }
   }
 }

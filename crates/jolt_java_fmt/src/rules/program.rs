@@ -93,6 +93,7 @@ fn format_compilation_unit_items<'source>(
     let mut imports = Vec::new();
     let mut module = None;
     let mut declarations = Vec::new();
+    let mut pending_removed_comments = None;
 
     for item in items {
         match item {
@@ -100,22 +101,38 @@ fn format_compilation_unit_items<'source>(
             CompilationUnitItem::Import(declaration) => imports.push(declaration),
             CompilationUnitItem::Module(declaration) => module = Some(declaration),
             CompilationUnitItem::Type(declaration) => {
-                declarations.push(format_type_declaration(&declaration, formatter));
+                push_declaration_doc(
+                    &mut declarations,
+                    &mut pending_removed_comments,
+                    format_type_declaration(&declaration, formatter),
+                );
             }
             CompilationUnitItem::Field(declaration) => {
-                declarations.push(format_field_declaration(&declaration, formatter));
+                push_declaration_doc(
+                    &mut declarations,
+                    &mut pending_removed_comments,
+                    format_field_declaration(&declaration, formatter),
+                );
             }
             CompilationUnitItem::Method(declaration) => {
-                declarations.push(format_method_declaration(&declaration, formatter));
+                push_declaration_doc(
+                    &mut declarations,
+                    &mut pending_removed_comments,
+                    format_method_declaration(&declaration, formatter),
+                );
             }
             CompilationUnitItem::EmptyDeclaration(declaration) => {
                 if let Some(comments) =
                     format_removed_comments(comments_from_tokens(declaration.token_iter()))
                 {
-                    declarations.push(comments);
+                    append_pending_removed_comments(&mut pending_removed_comments, comments);
                 }
             }
         }
+    }
+
+    if let Some(comments) = pending_removed_comments {
+        declarations.push(comments);
     }
 
     if let Some(package) = package {
@@ -136,6 +153,30 @@ fn format_compilation_unit_items<'source>(
     }
 
     (!sections.is_empty()).then(|| join_empty_lines(sections))
+}
+
+fn push_declaration_doc<'source>(
+    declarations: &mut Vec<Doc<'source>>,
+    pending_removed_comments: &mut Option<Doc<'source>>,
+    declaration: Doc<'source>,
+) {
+    let declaration = if let Some(comments) = pending_removed_comments.take() {
+        concat([comments, hard_line(), declaration])
+    } else {
+        declaration
+    };
+    declarations.push(declaration);
+}
+
+fn append_pending_removed_comments<'source>(
+    pending_removed_comments: &mut Option<Doc<'source>>,
+    comments: Doc<'source>,
+) {
+    *pending_removed_comments = Some(if let Some(pending) = pending_removed_comments.take() {
+        concat([pending, hard_line(), comments])
+    } else {
+        comments
+    });
 }
 
 fn format_compilation_unit_item_entries_with_ignored<'source>(

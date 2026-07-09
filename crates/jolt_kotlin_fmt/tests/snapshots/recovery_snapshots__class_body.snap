@@ -12,7 +12,8 @@ class Demo {
   fun ok() {}
 
   /* orphan */
-  +valvalue=1
+  +
+  val value = 1
 }
 
 diagnostics:

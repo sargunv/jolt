@@ -1,0 +1,33 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun demo(){;}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "demo" @ 4..8
+    ValueParameterList
+      LParen "(" @ 8..9
+      RParen ")" @ 9..10
+    Block
+      LBrace "{" @ 10..11
+      Statement
+        ExpressionStatement
+          ErrorNode
+        Semicolon ";" @ 11..12
+      RBrace "}" @ 12..13
+  Eof "" @ 14..14 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=11..12 message="expected expression"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(11), end: TextSize(12) }) message=expected expression

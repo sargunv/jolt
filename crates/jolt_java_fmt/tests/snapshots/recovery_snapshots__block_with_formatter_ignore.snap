@@ -20,7 +20,8 @@ class C {
     int raw=1+2;
     // @formatter:on
     /* block */
-    +;intafter;
+    + ;
+    int after;
   }
 }
 

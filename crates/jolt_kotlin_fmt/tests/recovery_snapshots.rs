@@ -18,18 +18,26 @@ fn kotlin_recovery_formatter_snapshots() {
     for path in paths {
         let source = read_to_string(&path);
         let parse = parse_kotlin_file(&source);
-        let formatted = match parse.syntax() {
-            Some(_syntax) => {
-                let mut sink = StringSink::default();
-                match format_source_to_sink(source.as_str(), &options, &mut sink) {
-                    FormatSinkResult::Complete | FormatSinkResult::Halted => sink.into_string(),
-                    FormatSinkResult::Blocked { diagnostics } => {
-                        panic!("formatter blocked for {}: {diagnostics:#?}", path.display())
-                    }
-                }
-            }
-            None => source.clone(),
-        };
+        assert!(
+            parse.syntax().is_some(),
+            "recovery fixture did not produce a represented tree for {}",
+            path.display()
+        );
+        let formatted = format_or_panic(&source, &options, &path.display().to_string());
+        let formatted_parse = parse_kotlin_file(&formatted);
+        assert!(
+            formatted_parse.syntax().is_some(),
+            "formatted recovery output did not produce a represented tree for {}:\n{}",
+            path.display(),
+            formatted
+        );
+        let repeated = format_or_panic(&formatted, &options, &path.display().to_string());
+        assert_eq!(
+            repeated,
+            formatted,
+            "recovery formatter output was not idempotent for {}",
+            path.display()
+        );
 
         let snapshot = SnapshotBuilder::new()
             .section("input", &source)
@@ -38,5 +46,15 @@ fn kotlin_recovery_formatter_snapshots() {
             .finish();
 
         insta::assert_snapshot!(fixture_snapshot_name(&recovery_root, &path), snapshot);
+    }
+}
+
+fn format_or_panic(source: &str, options: &FormatOptions, label: &str) -> String {
+    let mut sink = StringSink::default();
+    match format_source_to_sink(source, options, &mut sink) {
+        FormatSinkResult::Complete | FormatSinkResult::Halted => sink.into_string(),
+        FormatSinkResult::Blocked { diagnostics } => {
+            panic!("formatter blocked for {label}: {diagnostics:#?}")
+        }
     }
 }

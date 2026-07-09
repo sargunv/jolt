@@ -1,11 +1,12 @@
 use jolt_fmt_ir::{Doc, concat};
 use jolt_kotlin_syntax::{
-    BlockItem, Declaration, ExpressionStatement, RecoveredSeparatedListEntry, StatementSyntax,
+    BlockItem, Declaration, Expression, ExpressionStatement, KotlinSyntaxToken,
+    RecoveredSeparatedListEntry, Statement, StatementSyntax,
 };
 
 mod blocks;
 
-use crate::helpers::comments::{LeadingTrivia, format_token_sequence};
+use crate::helpers::comments::{LeadingTrivia, format_token_gap, format_token_sequence};
 use crate::rules::expressions::{format_expression, format_expression_without_leading};
 pub(crate) use blocks::format_block;
 
@@ -69,10 +70,7 @@ fn format_statement_owned<'source>(
     leading: LeadingTrivia,
 ) -> Doc<'source> {
     match statement {
-        StatementSyntax::Statement(statement) => statement.statement().map_or_else(
-            || format_token_sequence(statement.token_iter(), leading),
-            |statement| format_statement_owned(&statement, leading),
-        ),
+        StatementSyntax::Statement(statement) => format_statement_node(statement, leading),
         StatementSyntax::ExpressionStatement(statement) => {
             format_expression_statement(statement, leading)
         }
@@ -90,30 +88,54 @@ fn format_statement_owned<'source>(
     }
 }
 
+fn format_statement_node<'source>(
+    statement: &Statement<'source>,
+    leading: LeadingTrivia,
+) -> Doc<'source> {
+    let Some(inner) = statement.statement() else {
+        return format_token_sequence(statement.token_iter(), leading);
+    };
+    let doc = format_statement_owned(&inner, leading);
+    let tail = statement.tail_tokens_after_statement().collect::<Vec<_>>();
+    if tail.is_empty() {
+        return doc;
+    }
+
+    concat([doc, format_token_sequence(tail, LeadingTrivia::Preserve)])
+}
+
 fn format_expression_statement<'source>(
     statement: &ExpressionStatement<'source>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
     let mut docs = Vec::new();
     let mut has_output = false;
+    let mut previous_last_token = None;
 
     for entry in statement.entries_with_recovered() {
+        if let (Some(left), Some(right)) = (previous_last_token.as_ref(), entry_first_token(&entry))
+        {
+            docs.push(format_token_gap(left, &right));
+        }
         let entry_leading = if has_output {
             LeadingTrivia::Preserve
         } else {
             leading
         };
-        match entry {
+        match &entry {
             RecoveredSeparatedListEntry::Entry(expression) => {
                 docs.push(match entry_leading {
-                    LeadingTrivia::Preserve => format_expression(&expression),
+                    LeadingTrivia::Preserve => format_expression(expression),
                     LeadingTrivia::SuppressAlreadyHandled => {
-                        format_expression_without_leading(&expression)
+                        format_expression_without_leading(expression)
                     }
                 });
             }
             RecoveredSeparatedListEntry::Token(token) => {
-                docs.push(format_token_sequence(std::iter::once(token), entry_leading));
+                docs.push(format_token_sequence(
+                    std::iter::once(*token),
+                    entry_leading,
+                ));
             }
             RecoveredSeparatedListEntry::Error(error) => {
                 docs.push(format_token_sequence(error.token_iter(), entry_leading));
@@ -122,6 +144,7 @@ fn format_expression_statement<'source>(
                 docs.push(format_token_sequence(node.token_iter(), entry_leading));
             }
         }
+        previous_last_token = entry_last_token(&entry);
         has_output = true;
     }
 
@@ -130,4 +153,26 @@ fn format_expression_statement<'source>(
     }
 
     concat(docs)
+}
+
+fn entry_first_token<'source>(
+    entry: &RecoveredSeparatedListEntry<'source, Expression<'source>>,
+) -> Option<KotlinSyntaxToken<'source>> {
+    match entry {
+        RecoveredSeparatedListEntry::Entry(expression) => expression.first_token(),
+        RecoveredSeparatedListEntry::Token(token) => Some(*token),
+        RecoveredSeparatedListEntry::Error(error) => error.first_token(),
+        RecoveredSeparatedListEntry::Node(node) => node.first_token(),
+    }
+}
+
+fn entry_last_token<'source>(
+    entry: &RecoveredSeparatedListEntry<'source, Expression<'source>>,
+) -> Option<KotlinSyntaxToken<'source>> {
+    match entry {
+        RecoveredSeparatedListEntry::Entry(expression) => expression.last_token(),
+        RecoveredSeparatedListEntry::Token(token) => Some(*token),
+        RecoveredSeparatedListEntry::Error(error) => error.last_token(),
+        RecoveredSeparatedListEntry::Node(node) => node.last_token(),
+    }
 }

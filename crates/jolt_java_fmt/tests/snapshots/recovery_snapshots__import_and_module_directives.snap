@@ -7,10 +7,10 @@ import ;
 module m { requires ; }
 
 formatted:
-import;
+import ;
 
 module m {
-  requires;
+  requires ;
 }
 
 diagnostics:

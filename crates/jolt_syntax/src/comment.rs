@@ -128,7 +128,7 @@ impl<'source> Iterator for Comments<'source> {
 ///
 /// Whitespace and ignored trivia do not interrupt the run.
 #[must_use]
-pub fn trivia_has_blank_line(trivia: &[SyntaxTrivia]) -> bool {
+pub(crate) fn trivia_has_blank_line(trivia: &[SyntaxTrivia]) -> bool {
     let mut line_breaks_since_content = 0;
     for trivia in trivia {
         match trivia.kind() {

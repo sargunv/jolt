@@ -68,12 +68,7 @@ pub fn source_gap_is_trivia<'source, L: Language>(
 
 /// Returns true when `source[source_start + (start - source_start) .. source_start + (end - source_start)]`
 /// contains only whitespace.
-pub fn source_slice_is_whitespace(
-    source: &str,
-    source_start: usize,
-    start: usize,
-    end: usize,
-) -> bool {
+fn source_slice_is_whitespace(source: &str, source_start: usize, start: usize, end: usize) -> bool {
     let Some(slice_start) = start.checked_sub(source_start) else {
         return false;
     };

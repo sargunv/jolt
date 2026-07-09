@@ -4,8 +4,8 @@ use jolt_text::{TextRange, TextSize};
 
 use crate::{
     Comments, Language, RawSyntaxKind, SyntaxTrivia,
+    comment::trivia_has_blank_line,
     syntax_tree::{SyntaxTree, TokenId},
-    trivia_has_blank_line,
 };
 
 /// A parent-aware borrowed cursor over a syntax tree token.

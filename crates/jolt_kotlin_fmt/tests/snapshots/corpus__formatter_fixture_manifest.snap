@@ -88,6 +88,7 @@ skip syntax/lexer/reports-unterminated-line-string-at-newline.kt
 skip syntax/lexer/reports-unterminated-raw-string.kt
 skip syntax/lexer/separates-not-in-and-not-is-from-identifier-prefixes.kt
 skip syntax/lexer/soft-keyword-spellings-remain-identifiers.kt
+skip diagnostics syntax/parser/block-empty-statement-adjacent-braces.kt
 skip diagnostics syntax/parser/diagnoses-callable-reference-call-like-reserved-form.kt
 skip diagnostics syntax/parser/diagnoses-invalid-assignment-targets.kt
 skip diagnostics syntax/parser/diagnoses-malformed-type-argument-call.kt
@@ -190,6 +191,7 @@ skip diagnostics syntax/parser/recovers-missing-when-arrow-and-body.kt
 skip syntax/recovery/annotation-argument-list.kt
 skip syntax/recovery/argument-list.kt
 skip syntax/recovery/assignment-without-left.kt
+skip syntax/recovery/block-empty-statement-adjacent-braces.kt
 skip syntax/recovery/block-missing-close.kt
 skip syntax/recovery/block-with-formatter-ignore.kt
 skip syntax/recovery/call-without-callee.kt

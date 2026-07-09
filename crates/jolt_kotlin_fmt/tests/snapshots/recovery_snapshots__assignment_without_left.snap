@@ -7,7 +7,7 @@ fun demo() { = value }
 
 formatted:
 fun demo() {
-  =value
+  = value
 }
 
 diagnostics:

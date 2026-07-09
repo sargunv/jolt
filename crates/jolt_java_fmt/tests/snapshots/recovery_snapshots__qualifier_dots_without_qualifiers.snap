@@ -12,7 +12,7 @@ class C {
   }
 
   void m() {
-    .newNested();
+    .new Nested();
     .this;
     .super;
   }

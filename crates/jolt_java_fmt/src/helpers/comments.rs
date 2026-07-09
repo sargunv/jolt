@@ -295,8 +295,14 @@ pub(crate) fn format_token_sequence<'source>(
     tokens: impl IntoIterator<Item = JavaSyntaxToken<'source>>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
-    concat(tokens.into_iter().enumerate().map(|(index, token)| {
-        format_token(
+    let mut docs = Vec::new();
+    let mut previous = None;
+
+    for (index, token) in tokens.into_iter().enumerate() {
+        if let Some(previous) = previous {
+            docs.push(format_recovered_token_gap(&previous, &token));
+        }
+        docs.push(format_token(
             &token,
             if index == 0 {
                 leading
@@ -304,8 +310,31 @@ pub(crate) fn format_token_sequence<'source>(
                 LeadingTrivia::Preserve
             },
             TrailingTrivia::Preserve,
-        )
-    }))
+        ));
+        previous = Some(token);
+    }
+
+    concat(docs)
+}
+
+fn format_recovered_token_gap<'source>(
+    left: &JavaSyntaxToken<'source>,
+    right: &JavaSyntaxToken<'source>,
+) -> Doc<'source> {
+    let start = left.token_text_range().end().get();
+    let end = right.token_text_range().start().get();
+    if start >= end || trailing_comments_force_line(left) {
+        return jolt_fmt_ir::nil();
+    }
+
+    let gap = &left.source()[start..end];
+    if gap.contains(['\n', '\r']) {
+        hard_line()
+    } else if gap.chars().any(char::is_whitespace) {
+        space()
+    } else {
+        jolt_fmt_ir::nil()
+    }
 }
 
 pub(crate) fn format_token_with_inline_leading_comments<'source>(

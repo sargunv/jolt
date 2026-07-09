@@ -155,7 +155,10 @@ fn format_block_contents_with_ignored<'source>(
         .collect::<Vec<_>>();
     let mut ignored_runs = formatter_ignore_runs(ignored_ranges, &entry_ranges);
     for run in &mut ignored_runs {
-        run.include_on_marker = true;
+        run.include_on_marker = entries
+            .get(run.skip_end)
+            .is_some_and(|entry| matches!(entry, RecoveredSeparatedListEntry::Entry(_)))
+            && !gap_after_on_marker_contains_comment(block.source_text(), run, &entry_ranges);
     }
     if ignored_runs.is_empty() {
         let docs = block_body_entries(block, entries, items);
@@ -204,6 +207,27 @@ fn format_block_contents_with_ignored<'source>(
     }
 
     (!docs.is_empty()).then(|| join_body_items(docs))
+}
+
+fn gap_after_on_marker_contains_comment(
+    source: &str,
+    run: &crate::helpers::formatter_ignore::FormatterIgnoreRun<'_>,
+    entry_ranges: &[Option<std::ops::Range<usize>>],
+) -> bool {
+    let Some(next_start) = entry_ranges
+        .get(run.skip_end)
+        .and_then(|range| range.as_ref())
+        .map(|range| range.start)
+    else {
+        return false;
+    };
+    let on_line_end = run.range.interior.start + run.range.raw_text_with_on.len();
+    if on_line_end >= next_start {
+        return false;
+    }
+
+    let gap = &source[on_line_end..next_start];
+    gap.contains("//") || gap.contains("/*")
 }
 
 fn recovered_block_body_item<'source>(

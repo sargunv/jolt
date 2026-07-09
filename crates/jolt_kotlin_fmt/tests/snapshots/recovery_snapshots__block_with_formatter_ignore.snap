@@ -17,7 +17,6 @@ fun demo() {
   // @formatter:off
   val raw=1+2
   // @formatter:on
-  // @formatter:on
   /* block */
   val after = value
 }

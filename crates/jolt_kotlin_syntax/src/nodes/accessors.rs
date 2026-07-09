@@ -1984,7 +1984,7 @@ impl<'source> Block<'source> {
         let close_start = close.token_text_range().start().get();
         !self.token_iter().any(|token| {
             let range = token.token_text_range();
-            range.start().get() > open_end && range.end().get() < close_start
+            range.start().get() >= open_end && range.end().get() <= close_start
         })
     }
 }
@@ -3383,6 +3383,16 @@ impl<'source> Statement<'source> {
     #[must_use]
     pub fn statement(&self) -> Option<StatementSyntax<'source>> {
         child_family(self.syntax())
+    }
+
+    pub fn tail_tokens_after_statement(
+        &self,
+    ) -> impl Iterator<Item = KotlinSyntaxToken<'source>> + use<'source, '_> {
+        let start = self.statement().map_or_else(
+            || self.text_range().start().get(),
+            |statement| statement.text_range().end().get(),
+        );
+        tokens_between(self.token_iter(), start, self.text_range().end().get())
     }
 }
 
