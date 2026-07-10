@@ -20,21 +20,19 @@ pub(crate) fn comma_list<'source>(
     items: impl IntoIterator<Item = CommaListItem<'source>>,
 ) -> Doc<'source> {
     let mut items = items.into_iter().peekable();
-    let mut docs = doc.list();
-
-    while let Some(item) = items.next() {
-        docs.push(item.doc, doc);
-        if let Some(comma) = item.comma {
-            let line = doc.line();
-            let separator = format_separator_with_comments(doc, &comma, line);
-            docs.push(separator, doc);
-        } else if items.peek().is_some() {
-            let line = doc.line();
-            docs.push(line, doc);
+    doc.concat_list(|docs| {
+        while let Some(item) = items.next() {
+            docs.push(item.doc);
+            if let Some(comma) = item.comma {
+                let line = docs.line();
+                let separator = format_separator_with_comments(docs, &comma, line);
+                docs.push(separator);
+            } else if items.peek().is_some() {
+                let line = docs.line();
+                docs.push(line);
+            }
         }
-    }
-
-    docs.finish(doc)
+    })
 }
 
 pub(crate) fn recovered_comma_list_items<'source, Entry>(
@@ -232,30 +230,32 @@ fn comma_list_with_trailing_separator<'source>(
     items: impl IntoIterator<Item = CommaListItem<'source>>,
 ) -> (Doc<'source>, bool) {
     let mut items = items.into_iter().peekable();
-    let mut docs = doc.list();
     let mut has_source_trailing_separator = false;
-
-    while let Some(item) = items.next() {
-        let is_last = items.peek().is_none();
-        has_source_trailing_separator |= is_last && item.comma.is_some();
-        docs.push(item.doc, doc);
-        if let Some(comma) = item.comma {
-            docs.push(trailing_comma_separator(doc, &comma, is_last), doc);
-        } else if !is_last {
-            docs.push(doc.line(), doc);
-        } else {
-            let trailing_comma = doc_if_break!(
-                doc,
-                // Intentional synthesized token: trailing comma policy adds a
-                // comma only when the list breaks across lines.
-                inserted_syntax_token(doc, ",", FormatterInsertedToken::TrailingComma),
-                Doc::nil(),
-            );
-            docs.push(trailing_comma, doc);
+    let docs = doc.concat_list(|docs| {
+        while let Some(item) = items.next() {
+            let is_last = items.peek().is_none();
+            has_source_trailing_separator |= is_last && item.comma.is_some();
+            docs.push(item.doc);
+            if let Some(comma) = item.comma {
+                let separator = trailing_comma_separator(docs, &comma, is_last);
+                docs.push(separator);
+            } else if !is_last {
+                let line = docs.line();
+                docs.push(line);
+            } else {
+                let trailing_comma = doc_if_break!(
+                    docs,
+                    // Intentional synthesized token: trailing comma policy adds a
+                    // comma only when the list breaks across lines.
+                    inserted_syntax_token(docs, ",", FormatterInsertedToken::TrailingComma),
+                    Doc::nil(),
+                );
+                docs.push(trailing_comma);
+            }
         }
-    }
+    });
 
-    (docs.finish(doc), has_source_trailing_separator)
+    (docs, has_source_trailing_separator)
 }
 
 fn trailing_comma_separator<'source>(

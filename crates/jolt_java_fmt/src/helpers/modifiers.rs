@@ -12,29 +12,30 @@ pub(crate) fn modifier_prefix_from_docs<'source>(
     modifier_entries: Vec<ModifierEntry<'source>>,
 ) -> Doc<'source> {
     let modifier_entries = sorted_modifier_entries(modifier_entries);
-    let mut docs = doc.list();
-    for annotation in annotation_docs {
-        docs.push(annotation, doc);
-        let hard_line = doc.hard_line();
-        docs.push(hard_line, doc);
-    }
-    let mut modifiers = doc.list();
-    for entry in modifier_entries {
-        if !modifiers.is_empty() {
-            let space = doc.space();
-            modifiers.push(space, doc);
+    doc.concat_list(|docs| {
+        for annotation in annotation_docs {
+            docs.push(annotation);
+            let hard_line = docs.hard_line();
+            docs.push(hard_line);
         }
-        let entry = format_modifier_entry(doc, &entry, LeadingComments::Suppress);
-        modifiers.push(entry, doc);
-    }
-    if !modifiers.is_empty() {
-        let modifiers = modifiers.finish(doc);
-        docs.push(modifiers, doc);
-        let space = doc.space();
-        docs.push(space, doc);
-    }
-
-    docs.finish(doc)
+        let mut has_modifiers = false;
+        let modifiers = docs.concat_list(|modifiers| {
+            for entry in modifier_entries {
+                if !modifiers.is_empty() {
+                    let space = modifiers.space();
+                    modifiers.push(space);
+                }
+                let entry = format_modifier_entry(modifiers, &entry, LeadingComments::Suppress);
+                modifiers.push(entry);
+            }
+            has_modifiers = !modifiers.is_empty();
+        });
+        if has_modifiers {
+            docs.push(modifiers);
+            let space = docs.space();
+            docs.push(space);
+        }
+    })
 }
 
 pub(crate) fn inline_modifier_prefix_from_docs<'source>(
@@ -43,27 +44,29 @@ pub(crate) fn inline_modifier_prefix_from_docs<'source>(
     modifier_entries: Vec<ModifierEntry<'source>>,
 ) -> Doc<'source> {
     let modifier_entries = sorted_modifier_entries(modifier_entries);
-    let mut docs = doc.list();
-    for annotation in annotation_docs {
-        if !docs.is_empty() {
-            let space = doc.space();
-            docs.push(space, doc);
+    let mut has_docs = false;
+    let docs = doc.concat_list(|docs| {
+        for annotation in annotation_docs {
+            if !docs.is_empty() {
+                let space = docs.space();
+                docs.push(space);
+            }
+            docs.push(annotation);
         }
-        docs.push(annotation, doc);
-    }
-    for entry in modifier_entries {
-        if !docs.is_empty() {
-            let space = doc.space();
-            docs.push(space, doc);
+        for entry in modifier_entries {
+            if !docs.is_empty() {
+                let space = docs.space();
+                docs.push(space);
+            }
+            let entry = format_modifier_entry(docs, &entry, LeadingComments::Preserve);
+            docs.push(entry);
         }
-        let entry = format_modifier_entry(doc, &entry, LeadingComments::Preserve);
-        docs.push(entry, doc);
-    }
-    if docs.is_empty() {
+        has_docs = !docs.is_empty();
+    });
+    if !has_docs {
         return Doc::nil();
     }
 
-    let docs = docs.finish(doc);
     let space = doc.space();
     doc_concat!(doc, [docs, space])
 }
@@ -119,12 +122,12 @@ fn format_modifier_entry<'source>(
     entry: &ModifierEntry<'source>,
     leading_comments: LeadingComments,
 ) -> Doc<'source> {
-    let mut docs = doc.list();
-    for token in entry.tokens() {
-        let token = format_modifier_token(doc, token, leading_comments);
-        docs.push(token, doc);
-    }
-    docs.finish(doc)
+    doc.concat_list(|docs| {
+        for token in entry.tokens() {
+            let token = format_modifier_token(docs, token, leading_comments);
+            docs.push(token);
+        }
+    })
 }
 
 fn format_modifier_token<'source>(

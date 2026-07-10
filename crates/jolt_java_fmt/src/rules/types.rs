@@ -113,12 +113,12 @@ pub(crate) fn format_array_dimensions<'source>(
     dimensions: &ArrayDimensions<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let mut docs = doc.list();
-    for dimension in dimensions.dimensions() {
-        let dimension = format_array_dimension(&dimension, doc);
-        docs.push(dimension, doc);
-    }
-    docs.finish(doc)
+    doc.concat_list(|docs| {
+        for dimension in dimensions.dimensions() {
+            let dimension = format_array_dimension(&dimension, docs);
+            docs.push(dimension);
+        }
+    })
 }
 
 fn format_primitive_type<'source>(
@@ -176,27 +176,27 @@ fn format_class_type<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let segments = ty.segments();
-    let mut docs = doc.list();
-    for (index, segment) in segments.enumerate() {
-        if index > 0 {
-            let dot = match segment.dot_before.as_ref() {
-                Some(token) => format_token_with_comments(doc, token),
-                None => Doc::nil(),
-            };
-            docs.push(dot, doc);
+    let contents = doc.concat_list(|docs| {
+        for (index, segment) in segments.enumerate() {
+            if index > 0 {
+                let dot = match segment.dot_before.as_ref() {
+                    Some(token) => format_token_with_comments(docs, token),
+                    None => Doc::nil(),
+                };
+                docs.push(dot);
+            }
+            let segment = format_class_type_segment(
+                segment,
+                if index == 0 {
+                    leading_comments
+                } else {
+                    LeadingComments::Preserve
+                },
+                docs,
+            );
+            docs.push(segment);
         }
-        let segment = format_class_type_segment(
-            segment,
-            if index == 0 {
-                leading_comments
-            } else {
-                LeadingComments::Preserve
-            },
-            doc,
-        );
-        docs.push(segment, doc);
-    }
-    let contents = docs.finish(doc);
+    });
     doc_group!(doc, contents)
 }
 
@@ -220,25 +220,25 @@ fn format_type_name<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let segments = name.segments_with_annotations();
-    let mut docs = doc.list();
-    for (index, segment) in segments.enumerate() {
-        if index > 0 {
-            let dot = match segment.dot_before.as_ref() {
-                Some(token) => format_token_with_comments(doc, token),
-                None => Doc::nil(),
+    doc.concat_list(|docs| {
+        for (index, segment) in segments.enumerate() {
+            if index > 0 {
+                let dot = match segment.dot_before.as_ref() {
+                    Some(token) => format_token_with_comments(docs, token),
+                    None => Doc::nil(),
+                };
+                docs.push(dot);
+            }
+            let annotations = format_inline_annotations(segment.annotations, docs);
+            docs.push(annotations);
+            let identifier = if index == 0 {
+                format_type_head_token(&segment.identifier, leading_comments, docs)
+            } else {
+                format_token_with_comments(docs, &segment.identifier)
             };
-            docs.push(dot, doc);
+            docs.push(identifier);
         }
-        let annotations = format_inline_annotations(segment.annotations, doc);
-        docs.push(annotations, doc);
-        let identifier = if index == 0 {
-            format_type_head_token(&segment.identifier, leading_comments, doc)
-        } else {
-            format_token_with_comments(doc, &segment.identifier)
-        };
-        docs.push(identifier, doc);
-    }
-    docs.finish(doc)
+    })
 }
 
 fn format_intersection_type<'source>(
@@ -324,31 +324,37 @@ fn format_type_operator_entries_doc<'source>(
     };
 
     let (first, mut previous_separator) = format_type_operator_first_part(first, doc);
-    let mut rest = doc.list();
-    for part in entries {
-        match part {
-            TypeOperatorPart::Type { ty, separator } => {
-                let operand = format_type(&ty, doc);
-                let continuation =
-                    format_type_operator_continuation(previous_separator.as_ref(), operand, doc);
-                rest.push(continuation, doc);
-                previous_separator = separator;
-            }
-            TypeOperatorPart::Recovered(recovered) => {
-                let continuation =
-                    format_type_operator_continuation(previous_separator.as_ref(), recovered, doc);
-                rest.push(continuation, doc);
-                previous_separator = None;
+    let rest = doc.concat_list(|rest| {
+        for part in entries {
+            match part {
+                TypeOperatorPart::Type { ty, separator } => {
+                    let operand = format_type(&ty, rest);
+                    let continuation = format_type_operator_continuation(
+                        previous_separator.as_ref(),
+                        operand,
+                        rest,
+                    );
+                    rest.push(continuation);
+                    previous_separator = separator;
+                }
+                TypeOperatorPart::Recovered(recovered) => {
+                    let continuation = format_type_operator_continuation(
+                        previous_separator.as_ref(),
+                        recovered,
+                        rest,
+                    );
+                    rest.push(continuation);
+                    previous_separator = None;
+                }
             }
         }
-    }
-    if previous_separator.is_some() {
-        let continuation =
-            format_type_operator_continuation(previous_separator.as_ref(), Doc::nil(), doc);
-        rest.push(continuation, doc);
-    }
+        if previous_separator.is_some() {
+            let continuation =
+                format_type_operator_continuation(previous_separator.as_ref(), Doc::nil(), rest);
+            rest.push(continuation);
+        }
+    });
 
-    let rest = rest.finish(doc);
     let rest = doc_indent!(doc, rest);
     doc_concat!(doc, [first, rest])
 }
@@ -577,16 +583,16 @@ pub(crate) fn format_inline_annotations<'source>(
         return Doc::nil();
     }
 
-    let mut docs = doc.list();
-    for annotation in annotations {
-        if !docs.is_empty() {
-            let space = doc.space();
-            docs.push(space, doc);
+    let annotations = doc.concat_list(|docs| {
+        for annotation in annotations {
+            if !docs.is_empty() {
+                let space = docs.space();
+                docs.push(space);
+            }
+            let annotation = format_annotation(&annotation, docs);
+            docs.push(annotation);
         }
-        let annotation = format_annotation(&annotation, doc);
-        docs.push(annotation, doc);
-    }
-    let annotations = docs.finish(doc);
+    });
     let trailing_space = doc.space();
     doc_concat!(doc, [annotations, trailing_space])
 }

@@ -107,45 +107,45 @@ pub(super) fn format_string_template_expression<'source>(
     long_entries.sort_by_key(|entry| entry.start.token_text_range().start());
 
     let tokens = expression.token_iter();
-    let mut docs = doc.list();
     let mut skip_until = None;
     let first_token = expression
         .first_token()
         .map(|token| token.token_text_range());
-    for token in tokens {
-        let token_leading = if Some(token.token_text_range()) == first_token {
-            leading
-        } else {
-            LeadingTrivia::Preserve
-        };
-        if skip_until.is_some_and(|end| token.token_text_range().start().get() < end) {
-            continue;
-        }
-        skip_until = None;
+    doc.concat_list(|docs| {
+        for token in tokens {
+            let token_leading = if Some(token.token_text_range()) == first_token {
+                leading
+            } else {
+                LeadingTrivia::Preserve
+            };
+            if skip_until.is_some_and(|end| token.token_text_range().start().get() < end) {
+                continue;
+            }
+            skip_until = None;
 
-        if let Some(entry) = long_entries
-            .iter()
-            .find(|entry| entry.start.token_text_range() == token.token_text_range())
-        {
-            let start = format_token(doc, &entry.start, token_leading, TrailingTrivia::Preserve);
-            docs.push(start, doc);
-            let expression = format_expression(doc, &entry.expression);
-            docs.push(expression, doc);
-            let end = format_token(
-                doc,
-                &entry.end,
-                LeadingTrivia::SuppressAlreadyHandled,
-                TrailingTrivia::Preserve,
-            );
-            docs.push(end, doc);
-            skip_until = Some(entry.end.token_text_range().end().get());
-        } else {
-            let token = format_token(doc, &token, token_leading, TrailingTrivia::Preserve);
-            docs.push(token, doc);
+            if let Some(entry) = long_entries
+                .iter()
+                .find(|entry| entry.start.token_text_range() == token.token_text_range())
+            {
+                let start =
+                    format_token(docs, &entry.start, token_leading, TrailingTrivia::Preserve);
+                docs.push(start);
+                let expression = format_expression(docs, &entry.expression);
+                docs.push(expression);
+                let end = format_token(
+                    docs,
+                    &entry.end,
+                    LeadingTrivia::SuppressAlreadyHandled,
+                    TrailingTrivia::Preserve,
+                );
+                docs.push(end);
+                skip_until = Some(entry.end.token_text_range().end().get());
+            } else {
+                let token = format_token(docs, &token, token_leading, TrailingTrivia::Preserve);
+                docs.push(token);
+            }
         }
-    }
-
-    docs.finish(doc)
+    })
 }
 
 struct LongTemplateEntry<'source> {

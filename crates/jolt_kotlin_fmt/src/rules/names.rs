@@ -95,77 +95,77 @@ fn format_inline_qualified_name<'source>(
     name: &QualifiedName<'source>,
 ) -> Doc<'source> {
     let mut segments = name.segments().peekable();
-    let mut docs = doc.list();
     let trailing_dot = name.trailing_dot();
+    doc.concat_list(|docs| {
+        while let Some(segment) = segments.next() {
+            if let Some(dot) = segment.dot_before {
+                let dot = format_name_dot(docs, &dot);
+                docs.push(dot);
+            }
 
-    while let Some(segment) = segments.next() {
-        if let Some(dot) = segment.dot_before {
-            let dot = format_name_dot(doc, &dot);
-            docs.push(dot, doc);
+            let is_last = segments.peek().is_none();
+            let followed_by_dot = segments
+                .peek()
+                .is_some_and(|next| next.dot_before.is_some())
+                || (is_last && trailing_dot.is_some());
+
+            if let Some(token) = segment.name.first_token() {
+                let token = format_inline_name_segment(docs, &token, followed_by_dot);
+                docs.push(token);
+            }
         }
 
-        let is_last = segments.peek().is_none();
-        let followed_by_dot = segments
-            .peek()
-            .is_some_and(|next| next.dot_before.is_some())
-            || (is_last && trailing_dot.is_some());
-
-        if let Some(token) = segment.name.first_token() {
-            let token = format_inline_name_segment(doc, &token, followed_by_dot);
-            docs.push(token, doc);
+        if let Some(dot) = trailing_dot {
+            let dot = format_name_dot(docs, &dot);
+            docs.push(dot);
         }
-    }
-
-    if let Some(dot) = trailing_dot {
-        let dot = format_name_dot(doc, &dot);
-        docs.push(dot, doc);
-    }
-
-    docs.finish(doc)
+    })
 }
 
 fn format_multiline_qualified_name<'source>(
     doc: &mut DocBuilder<'source>,
     name: &QualifiedName<'source>,
 ) -> Doc<'source> {
-    let mut docs = doc.list();
-    let mut tail_docs = doc.list();
-    let mut before_first_dot = true;
+    let mut segments = name.segments().peekable();
     let trailing_dot = name.trailing_dot();
-
-    for segment in name.segments() {
-        if let Some(dot) = segment.dot_before {
-            before_first_dot = false;
-            let hard_line = doc.hard_line();
-            tail_docs.push(hard_line, doc);
-            let dot = format_name_dot(doc, &dot);
-            tail_docs.push(dot, doc);
+    doc.concat_list(|docs| {
+        while segments
+            .peek()
+            .is_some_and(|segment| segment.dot_before.is_none())
+        {
+            let segment = segments.next().expect("peeked name segment exists");
+            if let Some(token) = segment.name.first_token() {
+                let token = format_name_segment(docs, &token);
+                docs.push(token);
+            }
         }
 
-        let Some(token) = segment.name.first_token() else {
-            continue;
-        };
+        let tail = docs.concat_list(|tail_docs| {
+            for segment in segments {
+                if let Some(dot) = segment.dot_before {
+                    let hard_line = tail_docs.hard_line();
+                    tail_docs.push(hard_line);
+                    let dot = format_name_dot(tail_docs, &dot);
+                    tail_docs.push(dot);
+                }
 
-        if before_first_dot {
-            let token = format_name_segment(doc, &token);
-            docs.push(token, doc);
-        } else {
-            let token = format_name_segment(doc, &token);
-            tail_docs.push(token, doc);
-        }
-    }
+                if let Some(token) = segment.name.first_token() {
+                    let token = format_name_segment(tail_docs, &token);
+                    tail_docs.push(token);
+                }
+            }
 
-    if let Some(dot) = trailing_dot {
-        let hard_line = doc.hard_line();
-        tail_docs.push(hard_line, doc);
-        let dot = format_name_dot(doc, &dot);
-        tail_docs.push(dot, doc);
-    }
+            if let Some(dot) = trailing_dot {
+                let hard_line = tail_docs.hard_line();
+                tail_docs.push(hard_line);
+                let dot = format_name_dot(tail_docs, &dot);
+                tail_docs.push(dot);
+            }
+        });
 
-    let tail = tail_docs.finish(doc);
-    let tail = doc.indent(tail);
-    docs.push(tail, doc);
-    docs.finish(doc)
+        let tail = docs.indent(tail);
+        docs.push(tail);
+    })
 }
 
 fn format_name_dot<'source>(
@@ -209,37 +209,37 @@ fn format_leading_dot_comments<'source>(
     doc: &mut DocBuilder<'source>,
     comments: impl IntoIterator<Item = KotlinComment<'source>>,
 ) -> Doc<'source> {
-    let mut docs = doc.list();
-    for comment in comments {
-        let space = doc.space();
-        docs.push(space, doc);
-        let comment_doc = format_comment(doc, &comment);
-        docs.push(comment_doc, doc);
-        if comment_forces_line(&comment) {
-            let hard_line = doc.hard_line();
-            docs.push(hard_line, doc);
+    doc.concat_list(|docs| {
+        for comment in comments {
+            let space = docs.space();
+            docs.push(space);
+            let comment_doc = format_comment(docs, &comment);
+            docs.push(comment_doc);
+            if comment_forces_line(&comment) {
+                let hard_line = docs.hard_line();
+                docs.push(hard_line);
+            }
         }
-    }
-    docs.finish(doc)
+    })
 }
 
 fn format_inline_comments<'source>(
     doc: &mut DocBuilder<'source>,
     comments: impl IntoIterator<Item = KotlinComment<'source>>,
 ) -> Doc<'source> {
-    let mut docs = doc.list();
-    for comment in comments {
-        let space = doc.space();
-        docs.push(space, doc);
-        let comment_doc = format_comment(doc, &comment);
-        docs.push(comment_doc, doc);
-        if comment_forces_line(&comment) {
-            let hard_line = doc.hard_line();
-            docs.push(hard_line, doc);
-        } else {
-            let space = doc.space();
-            docs.push(space, doc);
+    doc.concat_list(|docs| {
+        for comment in comments {
+            let space = docs.space();
+            docs.push(space);
+            let comment_doc = format_comment(docs, &comment);
+            docs.push(comment_doc);
+            if comment_forces_line(&comment) {
+                let hard_line = docs.hard_line();
+                docs.push(hard_line);
+            } else {
+                let space = docs.space();
+                docs.push(space);
+            }
         }
-    }
-    docs.finish(doc)
+    })
 }

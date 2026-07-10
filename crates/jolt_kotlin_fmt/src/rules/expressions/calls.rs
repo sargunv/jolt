@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, DocBuilder, DocList};
+use jolt_fmt_ir::{ConcatBuilder, Doc, DocBuilder};
 use jolt_kotlin_syntax::{
     CallExpression, CollectionLiteralExpression, Expression, ExpressionParentRole, IndexExpression,
     NavigationExpression, NavigationOperatorTokens, RecoveredSeparatedListEntry, ValueArgument,
@@ -173,7 +173,6 @@ struct MemberChainBuilder<'source> {
     root: Option<Expression<'source>>,
     first_suffix: Option<Doc<'source>>,
     first_suffix_forces_break: bool,
-    rest_suffixes: DocList<'source>,
     suffix_count: u32,
     force_multiline: bool,
     field_run: Option<Doc<'source>>,
@@ -181,11 +180,11 @@ struct MemberChainBuilder<'source> {
 
 impl<'source> MemberChainBuilder<'source> {
     fn finish(
-        mut self,
+        self,
         doc: &mut DocBuilder<'source>,
         leading: LeadingTrivia,
+        rest_suffixes: Doc<'source>,
     ) -> Option<Doc<'source>> {
-        self.flush_field_run(doc);
         let root = self.root?;
         let keep_first_suffix_with_root = is_simple_member_chain_root(&root)
             && (self.suffix_count == 0 || !self.first_suffix_forces_break);
@@ -197,7 +196,7 @@ impl<'source> MemberChainBuilder<'source> {
             doc,
             root_doc,
             self.first_suffix,
-            self.rest_suffixes,
+            rest_suffixes,
             self.suffix_count,
             self.force_multiline,
             keep_first_suffix_with_root,
@@ -207,39 +206,39 @@ impl<'source> MemberChainBuilder<'source> {
 
     fn push_suffix(
         &mut self,
-        doc: &mut DocBuilder<'source>,
+        rest_suffixes: &mut ConcatBuilder<'_, 'source>,
         suffix: Doc<'source>,
         forces_break_before: bool,
     ) {
-        self.flush_field_run(doc);
-        self.append_suffix(doc, suffix, forces_break_before);
+        self.flush_field_run(rest_suffixes);
+        self.append_suffix(rest_suffixes, suffix, forces_break_before);
     }
 
     fn push_navigation_suffix(
         &mut self,
-        doc: &mut DocBuilder<'source>,
+        rest_suffixes: &mut ConcatBuilder<'_, 'source>,
         suffix: Doc<'source>,
         forces_break_before: bool,
     ) {
         if forces_break_before {
-            self.push_suffix(doc, suffix, true);
+            self.push_suffix(rest_suffixes, suffix, true);
         } else {
             self.field_run = Some(match self.field_run.take() {
-                Some(run) => doc.concat([run, suffix]),
+                Some(run) => rest_suffixes.concat([run, suffix]),
                 None => suffix,
             });
         }
     }
 
-    fn flush_field_run(&mut self, doc: &mut DocBuilder<'source>) {
+    fn flush_field_run(&mut self, rest_suffixes: &mut ConcatBuilder<'_, 'source>) {
         if let Some(run) = self.field_run.take() {
-            self.append_suffix(doc, run, false);
+            self.append_suffix(rest_suffixes, run, false);
         }
     }
 
     fn append_suffix(
         &mut self,
-        doc: &mut DocBuilder<'source>,
+        rest_suffixes: &mut ConcatBuilder<'_, 'source>,
         suffix: Doc<'source>,
         forces_break_before: bool,
     ) {
@@ -248,9 +247,9 @@ impl<'source> MemberChainBuilder<'source> {
             self.first_suffix = Some(suffix);
             self.first_suffix_forces_break = forces_break_before;
         } else {
-            let soft_line = doc.soft_line();
-            let suffix = doc.concat([soft_line, suffix]);
-            self.rest_suffixes.push(suffix, doc);
+            let soft_line = rest_suffixes.soft_line();
+            rest_suffixes.push(soft_line);
+            rest_suffixes.push(suffix);
         }
         self.suffix_count += 1;
     }
@@ -265,18 +264,27 @@ fn format_member_chain<'source>(
         root: None,
         first_suffix: None,
         first_suffix_forces_break: false,
-        rest_suffixes: doc.list(),
         suffix_count: 0,
         force_multiline: false,
         field_run: None,
     };
 
-    append_chain_expression(doc, &mut builder, expression)?;
-    builder.finish(doc, leading)
+    let mut valid = false;
+    let rest_suffixes = doc.concat_list(|rest_suffixes| {
+        valid = append_chain_expression(rest_suffixes, &mut builder, expression).is_some();
+        if valid {
+            builder.flush_field_run(rest_suffixes);
+        }
+    });
+    if valid {
+        builder.finish(doc, leading, rest_suffixes)
+    } else {
+        None
+    }
 }
 
 fn append_chain_expression<'source>(
-    doc: &mut DocBuilder<'source>,
+    rest_suffixes: &mut ConcatBuilder<'_, 'source>,
     builder: &mut MemberChainBuilder<'source>,
     expression: Expression<'source>,
 ) -> Option<()> {
@@ -286,24 +294,26 @@ fn append_chain_expression<'source>(
             let Expression::NavigationExpression(navigation) = callee else {
                 return None;
             };
-            append_chain_receiver(doc, builder, navigation.receiver()?);
-            let forces_break_before = navigation_operator_has_leading_comments(doc, &navigation)
-                || call_has_lambdas(doc, &call);
-            let suffix = format_call_suffix(doc, &navigation, &call)?;
-            builder.push_suffix(doc, suffix, forces_break_before);
+            append_chain_receiver(rest_suffixes, builder, navigation.receiver()?);
+            let forces_break_before =
+                navigation_operator_has_leading_comments(rest_suffixes, &navigation)
+                    || call_has_lambdas(rest_suffixes, &call);
+            let suffix = format_call_suffix(rest_suffixes, &navigation, &call)?;
+            builder.push_suffix(rest_suffixes, suffix, forces_break_before);
             Some(())
         }
         Expression::NavigationExpression(navigation) => {
-            append_chain_receiver(doc, builder, navigation.receiver()?);
-            let suffix = format_navigation_suffix(doc, &navigation)?;
-            let forces_break_before = navigation_operator_has_leading_comments(doc, &navigation);
-            builder.push_navigation_suffix(doc, suffix, forces_break_before);
+            append_chain_receiver(rest_suffixes, builder, navigation.receiver()?);
+            let suffix = format_navigation_suffix(rest_suffixes, &navigation)?;
+            let forces_break_before =
+                navigation_operator_has_leading_comments(rest_suffixes, &navigation);
+            builder.push_navigation_suffix(rest_suffixes, suffix, forces_break_before);
             Some(())
         }
         Expression::IndexExpression(index) => {
-            append_chain_receiver(doc, builder, index.receiver()?);
-            let suffix = format_index_suffix(doc, &index);
-            builder.push_suffix(doc, suffix, false);
+            append_chain_receiver(rest_suffixes, builder, index.receiver()?);
+            let suffix = format_index_suffix(rest_suffixes, &index);
+            builder.push_suffix(rest_suffixes, suffix, false);
             Some(())
         }
         _ => None,
@@ -311,11 +321,11 @@ fn append_chain_expression<'source>(
 }
 
 fn append_chain_receiver<'source>(
-    doc: &mut DocBuilder<'source>,
+    rest_suffixes: &mut ConcatBuilder<'_, 'source>,
     builder: &mut MemberChainBuilder<'source>,
     receiver: Expression<'source>,
 ) {
-    if append_chain_expression(doc, builder, receiver).is_none() {
+    if append_chain_expression(rest_suffixes, builder, receiver).is_none() {
         builder.root = Some(receiver);
     }
 }
@@ -324,7 +334,7 @@ fn member_chain<'source>(
     doc: &mut DocBuilder<'source>,
     root: Doc<'source>,
     first_suffix: Option<Doc<'source>>,
-    rest_suffixes: DocList<'source>,
+    rest_suffixes: Doc<'source>,
     suffix_count: u32,
     force_multiline: bool,
     keep_first_suffix_with_root: bool,
@@ -340,15 +350,10 @@ fn member_chain<'source>(
         root
     };
     let rest = if keep_first_suffix_with_root {
-        rest_suffixes.finish(doc)
+        rest_suffixes
     } else {
-        let mut rest = doc.list();
         let soft_line = doc.soft_line();
-        let first_suffix = doc.concat([soft_line, first_suffix]);
-        rest.push(first_suffix, doc);
-        let rest_suffixes = rest_suffixes.finish(doc);
-        rest.push(rest_suffixes, doc);
-        rest.finish(doc)
+        doc.concat([soft_line, first_suffix, rest_suffixes])
     };
 
     if keep_first_suffix_with_root && suffix_count == 1 {
@@ -755,29 +760,29 @@ fn format_value_argument_prefix<'source>(
     argument: &ValueArgument<'source>,
 ) -> Doc<'source> {
     let tokens = argument.prefix_tokens();
-    let mut docs = doc.list();
-    for token in tokens {
-        if token.kind() == jolt_kotlin_syntax::KotlinSyntaxKind::Assign {
-            let space = doc.space();
-            docs.push(space, doc);
-            let token = format_token(
-                doc,
-                &token,
-                LeadingTrivia::Preserve,
-                TrailingTrivia::Preserve,
-            );
-            docs.push(token, doc);
-            let space = doc.space();
-            docs.push(space, doc);
-        } else {
-            let token = format_token(
-                doc,
-                &token,
-                LeadingTrivia::Preserve,
-                TrailingTrivia::RelocatedToEnclosingContext,
-            );
-            docs.push(token, doc);
+    doc.concat_list(|docs| {
+        for token in tokens {
+            if token.kind() == jolt_kotlin_syntax::KotlinSyntaxKind::Assign {
+                let space = docs.space();
+                docs.push(space);
+                let token = format_token(
+                    docs,
+                    &token,
+                    LeadingTrivia::Preserve,
+                    TrailingTrivia::Preserve,
+                );
+                docs.push(token);
+                let space = docs.space();
+                docs.push(space);
+            } else {
+                let token = format_token(
+                    docs,
+                    &token,
+                    LeadingTrivia::Preserve,
+                    TrailingTrivia::RelocatedToEnclosingContext,
+                );
+                docs.push(token);
+            }
         }
-    }
-    docs.finish(doc)
+    })
 }

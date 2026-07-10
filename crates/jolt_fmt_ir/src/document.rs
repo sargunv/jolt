@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 use std::marker::PhantomData;
+use std::ops::{Deref, DerefMut};
 
 use crate::width::{TextWidth, display_width, literal_text_metrics};
 
@@ -43,7 +44,7 @@ pub struct DocId(u32);
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct DocArena<'source> {
     nodes: Vec<DocNode<'source>>,
-    children: Vec<DocChild<'source>>,
+    children: Vec<Doc<'source>>,
 }
 
 impl<'source> DocArena<'source> {
@@ -54,8 +55,15 @@ impl<'source> DocArena<'source> {
         self.nodes.get(usize::try_from(doc.id().0).ok()?)
     }
 
-    pub(crate) fn child(&self, id: ChildId) -> &DocChild<'source> {
-        &self.children[usize::try_from(id.0).expect("doc child id fits usize")]
+    pub(crate) fn child(&self, index: u32) -> Doc<'source> {
+        self.children[usize::try_from(index).expect("doc child index fits usize")]
+    }
+
+    fn child_count(&self) -> u32 {
+        self.children
+            .len()
+            .try_into()
+            .expect("doc arena child count fits u32")
     }
 
     fn push_node(&mut self, node: DocNode<'source>) -> Doc<'source> {
@@ -69,21 +77,15 @@ impl<'source> DocArena<'source> {
         Doc::new(id)
     }
 
-    fn push_child(&mut self, doc: Doc<'source>, next: Option<ChildId>) -> ChildId {
-        let id = ChildId(
-            self.children
-                .len()
-                .try_into()
-                .expect("doc arena child count fits u32"),
-        );
-        self.children.push(DocChild { doc, next });
-        id
+    fn push_child(&mut self, doc: Doc<'source>) {
+        self.children.push(doc);
     }
 }
 
 #[derive(Default)]
 pub struct DocBuilder<'source> {
     arena: DocArena<'source>,
+    list_scratch: Vec<Doc<'source>>,
 }
 
 impl<'source> DocBuilder<'source> {
@@ -122,7 +124,7 @@ impl<'source> DocBuilder<'source> {
 
     #[must_use]
     pub fn concat(&mut self, docs: impl IntoIterator<Item = Doc<'source>>) -> Doc<'source> {
-        let mut concat = ConcatBuilder::new();
+        let mut concat = ConcatAppender::new();
         for doc in docs {
             concat.push(doc, self);
         }
@@ -135,7 +137,7 @@ impl<'source> DocBuilder<'source> {
         separator: Doc<'source>,
         docs: impl IntoIterator<Item = Doc<'source>>,
     ) -> Doc<'source> {
-        let mut concat = ConcatBuilder::new();
+        let mut concat = ConcatAppender::new();
         let mut needs_separator = false;
         for doc in docs {
             if needs_separator {
@@ -148,11 +150,24 @@ impl<'source> DocBuilder<'source> {
         concat.finish(self)
     }
 
+    /// Builds a concatenation using reusable builder scratch storage.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the list exceeds the supported document size.
     #[must_use]
-    pub const fn list(&self) -> DocList<'source> {
-        DocList {
-            concat: ConcatBuilder::new(),
-        }
+    pub fn concat_list(
+        &mut self,
+        build: impl FnOnce(&mut ConcatBuilder<'_, 'source>),
+    ) -> Doc<'source> {
+        let start = self.list_scratch.len();
+        let mut list = ConcatBuilder {
+            builder: self,
+            start,
+            active: true,
+        };
+        build(&mut list);
+        list.finish()
     }
 
     #[must_use]
@@ -238,48 +253,102 @@ impl<'source> DocBuilder<'source> {
         self.arena.push_node(node)
     }
 
-    fn push_child(&mut self, doc: Doc<'source>, next: Option<ChildId>) -> ChildId {
-        self.arena.push_child(doc, next)
+    fn child_count(&self) -> u32 {
+        self.arena.child_count()
+    }
+
+    fn push_child(&mut self, doc: Doc<'source>) {
+        self.arena.push_child(doc);
     }
 }
 
-pub struct DocList<'source> {
-    concat: ConcatBuilder<'source>,
+/// Scoped dynamic concatenation backed by reusable [`DocBuilder`] scratch.
+pub struct ConcatBuilder<'builder, 'source> {
+    builder: &'builder mut DocBuilder<'source>,
+    start: usize,
+    active: bool,
 }
 
-impl<'source> DocList<'source> {
-    pub fn push(&mut self, doc: Doc<'source>, builder: &mut DocBuilder<'source>) {
-        self.concat.push(doc, builder);
+impl<'source> ConcatBuilder<'_, 'source> {
+    /// Appends a document to this concatenation.
+    pub fn push(&mut self, doc: Doc<'source>) {
+        if !doc.is_nil() {
+            self.builder.list_scratch.push(doc);
+        }
     }
 
     #[must_use]
     pub const fn is_empty(&self) -> bool {
-        self.concat.is_empty()
+        self.builder.list_scratch.len() == self.start
     }
 
-    #[must_use]
-    pub fn finish(self, builder: &mut DocBuilder<'source>) -> Doc<'source> {
-        self.concat.finish(builder)
+    fn finish(mut self) -> Doc<'source> {
+        let len = self.builder.list_scratch.len() - self.start;
+        let doc = match len {
+            0 => self.builder.nil(),
+            1 => self
+                .builder
+                .list_scratch
+                .pop()
+                .expect("concat list item exists"),
+            _ => {
+                let len = u32::try_from(len).expect("concat list length fits u32");
+                let child_start = self.builder.child_count();
+                child_start
+                    .checked_add(len)
+                    .expect("doc arena child count fits u32");
+                for index in self.start..self.builder.list_scratch.len() {
+                    self.builder
+                        .arena
+                        .push_child(self.builder.list_scratch[index]);
+                }
+                self.builder.list_scratch.truncate(self.start);
+                self.builder.push_node(DocNode::Concat {
+                    start: child_start,
+                    len,
+                })
+            }
+        };
+        self.active = false;
+        doc
     }
 }
 
-struct ConcatBuilder<'source> {
+impl Drop for ConcatBuilder<'_, '_> {
+    fn drop(&mut self) {
+        if self.active && self.builder.list_scratch.len() >= self.start {
+            self.builder.list_scratch.truncate(self.start);
+        }
+    }
+}
+
+impl<'source> Deref for ConcatBuilder<'_, 'source> {
+    type Target = DocBuilder<'source>;
+
+    fn deref(&self) -> &Self::Target {
+        self.builder
+    }
+}
+
+impl DerefMut for ConcatBuilder<'_, '_> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.builder
+    }
+}
+
+struct ConcatAppender<'source> {
     first: Option<Doc<'source>>,
-    head: Option<ChildId>,
+    start: Option<u32>,
     len: u32,
 }
 
-impl<'source> ConcatBuilder<'source> {
+impl<'source> ConcatAppender<'source> {
     const fn new() -> Self {
         Self {
             first: None,
-            head: None,
+            start: None,
             len: 0,
         }
-    }
-
-    const fn is_empty(&self) -> bool {
-        self.len == 0
     }
 
     fn push(&mut self, doc: Doc<'source>, builder: &mut DocBuilder<'source>) {
@@ -287,34 +356,41 @@ impl<'source> ConcatBuilder<'source> {
             return;
         }
 
-        match self.len {
-            0 => {
-                self.first = Some(doc);
-                self.len = 1;
-            }
-            1 => {
-                let first = self.first.take().expect("first concat doc exists");
-                let first = builder.push_child(first, None);
-                self.head = Some(builder.push_child(doc, Some(first)));
-                self.len = 2;
-            }
-            _ => {
-                self.head = Some(builder.push_child(doc, self.head));
+        match self.start {
+            Some(_) => {
+                builder.push_child(doc);
                 self.len = self
                     .len
                     .checked_add(1)
                     .expect("concat child count fits u32");
             }
+            None if self.first.is_none() => {
+                self.first = Some(doc);
+                self.len = 1;
+            }
+            None => {
+                let first = self.first.take().expect("first concat doc exists");
+                let start = builder.child_count();
+                builder.push_child(first);
+                builder.push_child(doc);
+                self.start = Some(start);
+                self.len = 2;
+            }
         }
     }
 
     fn finish(self, builder: &mut DocBuilder<'source>) -> Doc<'source> {
-        match self.len {
-            0 => builder.nil(),
-            1 => self.first.unwrap_or_else(|| builder.nil()),
-            _ => builder.push_node(DocNode::Concat {
-                head: self.head.expect("concat head exists"),
-            }),
+        match self.start {
+            Some(start) => {
+                start
+                    .checked_add(self.len)
+                    .expect("doc arena child count fits u32");
+                builder.push_node(DocNode::Concat {
+                    start,
+                    len: self.len,
+                })
+            }
+            None => self.first.unwrap_or_else(|| builder.nil()),
         }
     }
 }
@@ -324,7 +400,8 @@ pub(crate) enum DocNode<'source> {
     Text(Text<'source>),
     LiteralText(LiteralText<'source>),
     Concat {
-        head: ChildId,
+        start: u32,
+        len: u32,
     },
     Group {
         contents: Doc<'source>,
@@ -339,15 +416,6 @@ pub(crate) enum DocNode<'source> {
         breaks: Doc<'source>,
         flat: Doc<'source>,
     },
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) struct ChildId(u32);
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) struct DocChild<'source> {
-    pub(crate) doc: Doc<'source>,
-    pub(crate) next: Option<ChildId>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]

@@ -36,19 +36,19 @@ pub(crate) fn join_body_items<'source>(
     doc: &mut DocBuilder<'source>,
     items: Vec<BodyItem<'source>>,
 ) -> Doc<'source> {
-    let mut joined = doc.list();
-    for item in items {
-        if !joined.is_empty() {
-            let separator = if item.starts_after_blank_line {
-                doc.empty_line()
-            } else {
-                doc.hard_line()
-            };
-            joined.push(separator, doc);
+    doc.concat_list(|joined| {
+        for item in items {
+            if !joined.is_empty() {
+                let separator = if item.starts_after_blank_line {
+                    joined.empty_line()
+                } else {
+                    joined.hard_line()
+                };
+                joined.push(separator);
+            }
+            joined.push(item.doc);
         }
-        joined.push(item.doc, doc);
-    }
-    joined.finish(doc)
+    })
 }
 
 pub(crate) fn source_braced_body<'source>(

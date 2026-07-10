@@ -129,54 +129,57 @@ fn format_expression_statement<'source>(
     leading: LeadingTrivia,
 ) -> Doc<'source> {
     let entries = statement.entries_with_recovered();
-    let mut docs = doc.list();
     let mut has_output = false;
     let mut previous_last_token = None;
-
-    for entry in entries {
-        if let (Some(left), Some(right)) =
-            (previous_last_token.as_ref(), entry_first_token(doc, &entry))
-        {
-            let gap = format_token_gap(doc, left, &right);
-            docs.push(gap, doc);
+    let mut is_empty = true;
+    let result = doc.concat_list(|docs| {
+        for entry in entries {
+            if let (Some(left), Some(right)) = (
+                previous_last_token.as_ref(),
+                entry_first_token(docs, &entry),
+            ) {
+                let gap = format_token_gap(docs, left, &right);
+                docs.push(gap);
+            }
+            let entry_leading = if has_output {
+                LeadingTrivia::Preserve
+            } else {
+                leading
+            };
+            match &entry {
+                RecoveredSeparatedListEntry::Entry(expression) => {
+                    let expression = match entry_leading {
+                        LeadingTrivia::Preserve => format_expression(docs, expression),
+                        LeadingTrivia::SuppressAlreadyHandled => {
+                            format_expression_without_leading(docs, expression)
+                        }
+                    };
+                    docs.push(expression);
+                }
+                RecoveredSeparatedListEntry::Token(token) => {
+                    let token = format_token_sequence(docs, std::iter::once(*token), entry_leading);
+                    docs.push(token);
+                }
+                RecoveredSeparatedListEntry::Error(error) => {
+                    let error = format_token_sequence(docs, error.token_iter(), entry_leading);
+                    docs.push(error);
+                }
+                RecoveredSeparatedListEntry::Node(node) => {
+                    let node = format_token_sequence(docs, node.token_iter(), entry_leading);
+                    docs.push(node);
+                }
+            }
+            previous_last_token = entry_last_token(docs, &entry);
+            has_output = true;
         }
-        let entry_leading = if has_output {
-            LeadingTrivia::Preserve
-        } else {
-            leading
-        };
-        match &entry {
-            RecoveredSeparatedListEntry::Entry(expression) => {
-                let expression = match entry_leading {
-                    LeadingTrivia::Preserve => format_expression(doc, expression),
-                    LeadingTrivia::SuppressAlreadyHandled => {
-                        format_expression_without_leading(doc, expression)
-                    }
-                };
-                docs.push(expression, doc);
-            }
-            RecoveredSeparatedListEntry::Token(token) => {
-                let token = format_token_sequence(doc, std::iter::once(*token), entry_leading);
-                docs.push(token, doc);
-            }
-            RecoveredSeparatedListEntry::Error(error) => {
-                let error = format_token_sequence(doc, error.token_iter(), entry_leading);
-                docs.push(error, doc);
-            }
-            RecoveredSeparatedListEntry::Node(node) => {
-                let node = format_token_sequence(doc, node.token_iter(), entry_leading);
-                docs.push(node, doc);
-            }
-        }
-        previous_last_token = entry_last_token(doc, &entry);
-        has_output = true;
-    }
+        is_empty = docs.is_empty();
+    });
 
-    if docs.is_empty() {
-        return format_token_sequence(doc, statement.token_iter(), leading);
+    if is_empty {
+        format_token_sequence(doc, statement.token_iter(), leading)
+    } else {
+        result
     }
-
-    docs.finish(doc)
 }
 
 fn entry_first_token<'source>(

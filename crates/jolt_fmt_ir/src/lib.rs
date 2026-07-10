@@ -6,7 +6,7 @@ mod options;
 mod render;
 mod width;
 
-pub use document::{Doc, DocArena, DocBuilder, DocId, DocList};
+pub use document::{ConcatBuilder, Doc, DocArena, DocBuilder, DocId};
 pub use options::{FormatOptions, FormatSinkResult};
 pub use render::{
     IndentStyle, RenderControl, RenderError, RenderOptions, RenderOutcome, RenderSink, render_to,

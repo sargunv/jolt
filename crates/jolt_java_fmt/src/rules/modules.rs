@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-use jolt_fmt_ir::{Doc, DocBuilder, DocList};
+use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_java_syntax::{
     ModuleDeclaration, ModuleDirective, ModuleDirectiveRole, ModuleNameListEntry, NameSyntax,
     RecoveredSeparatedListEntry,
@@ -176,21 +176,21 @@ fn join_module_directive_sections<'source>(
     sections: Vec<ModuleDirectiveSection<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let mut joined = doc.list();
     let mut previous_hard_line_after = false;
-    for section in sections {
-        if !joined.is_empty() {
-            let separator = if previous_hard_line_after {
-                doc.hard_line()
-            } else {
-                doc.empty_line()
-            };
-            joined.push(separator, doc);
+    doc.concat_list(|joined| {
+        for section in sections {
+            if !joined.is_empty() {
+                let separator = if previous_hard_line_after {
+                    joined.hard_line()
+                } else {
+                    joined.empty_line()
+                };
+                joined.push(separator);
+            }
+            joined.push(section.doc);
+            previous_hard_line_after = section.hard_line_after;
         }
-        joined.push(section.doc, doc);
-        previous_hard_line_after = section.hard_line_after;
-    }
-    joined.finish(doc)
+    })
 }
 
 struct ModuleDirectiveSection<'source> {
@@ -304,37 +304,31 @@ fn format_module_directive_run<'source>(
             .then_with(|| lhs.primary_name.cmp(&rhs.primary_name))
     });
 
-    let mut docs = doc.list();
-    let mut current_kind = None;
-    let mut current_group = doc.list();
-
-    for directive in directives {
-        if current_kind.is_some_and(|kind| kind != directive.kind_order) {
-            push_module_directive_group(&mut docs, current_group, doc);
-            current_group = doc.list();
+    let mut directives = directives.into_iter().peekable();
+    doc.concat_list(|docs| {
+        while let Some(directive) = directives.next() {
+            if !docs.is_empty() {
+                let empty_line = docs.empty_line();
+                docs.push(empty_line);
+            }
+            let kind = directive.kind_order;
+            let group = docs.concat_list(|group| {
+                let directive = directive.into_doc(group);
+                group.push(directive);
+                while directives
+                    .peek()
+                    .is_some_and(|directive| directive.kind_order == kind)
+                {
+                    let hard_line = group.hard_line();
+                    group.push(hard_line);
+                    let directive = directives.next().expect("peeked module directive exists");
+                    let directive = directive.into_doc(group);
+                    group.push(directive);
+                }
+            });
+            docs.push(group);
         }
-        current_kind = Some(directive.kind_order);
-        if !current_group.is_empty() {
-            current_group.push(doc.hard_line(), doc);
-        }
-        current_group.push(directive.into_doc(doc), doc);
-    }
-    if !current_group.is_empty() {
-        push_module_directive_group(&mut docs, current_group, doc);
-    }
-
-    docs.finish(doc)
-}
-
-fn push_module_directive_group<'source>(
-    docs: &mut DocList<'source>,
-    group: DocList<'source>,
-    doc: &mut DocBuilder<'source>,
-) {
-    if !docs.is_empty() {
-        docs.push(doc.empty_line(), doc);
-    }
-    docs.push(group.finish(doc), doc);
+    })
 }
 
 #[derive(Clone, Copy, Eq, Ord, PartialEq, PartialOrd)]
@@ -401,19 +395,20 @@ impl<'source> FormattedModuleDirective<'source> {
         {
             doc
         } else {
-            let mut leading_comments = builder.list();
-            for comment in self
-                .first_token
-                .into_iter()
-                .flat_map(|token| token.leading_comments())
-            {
-                if !leading_comments.is_empty() {
-                    leading_comments.push(builder.hard_line(), builder);
+            let leading_comments = builder.concat_list(|leading_comments| {
+                for comment in self
+                    .first_token
+                    .into_iter()
+                    .flat_map(|token| token.leading_comments())
+                {
+                    if !leading_comments.is_empty() {
+                        let hard_line = leading_comments.hard_line();
+                        leading_comments.push(hard_line);
+                    }
+                    let comment = format_comment(leading_comments, &comment);
+                    leading_comments.push(comment);
                 }
-                let comment = format_comment(builder, &comment);
-                leading_comments.push(comment, builder);
-            }
-            let leading_comments = leading_comments.finish(builder);
+            });
             doc_concat!(builder, [leading_comments, builder.hard_line(), doc,])
         }
     }
@@ -432,25 +427,24 @@ fn format_module_directive_doc<'source>(
                 is_static,
                 is_transitive,
             },
-        ) => {
-            let mut parts = doc.list();
-            let head = format_directive_head(requires.requires_token().as_ref(), doc);
-            parts.push(head, doc);
+        ) => doc.concat_list(|parts| {
+            let head = format_directive_head(requires.requires_token().as_ref(), parts);
+            parts.push(head);
             if *is_static {
                 let static_token =
-                    format_directive_middle_token(requires.static_token().as_ref(), doc);
-                parts.push(static_token, doc);
+                    format_directive_middle_token(requires.static_token().as_ref(), parts);
+                parts.push(static_token);
             }
             if *is_transitive {
                 let transitive =
-                    format_directive_middle_token(requires.transitive_token().as_ref(), doc);
-                parts.push(transitive, doc);
+                    format_directive_middle_token(requires.transitive_token().as_ref(), parts);
+                parts.push(transitive);
             }
-            parts.push(format_name(module, doc), doc);
-            let semicolon = format_directive_semicolon(requires.semicolon().as_ref(), doc);
-            parts.push(semicolon, doc);
-            parts.finish(doc)
-        }
+            let module = format_name(module, parts);
+            parts.push(module);
+            let semicolon = format_directive_semicolon(requires.semicolon().as_ref(), parts);
+            parts.push(semicolon);
+        }),
         (
             ModuleDirective::ExportsDirective(exports),
             ModuleDirectiveRole::Exports { package, .. },
@@ -659,21 +653,21 @@ fn format_module_name_entries_inline<'source>(
     entries: Vec<FormattedModuleNamePart<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let mut docs = doc.list();
-    for entry in entries {
-        match entry {
-            FormattedModuleNamePart::Entry(entry) => {
-                docs.push(entry.name, doc);
-                if let Some(comma) = entry.comma {
-                    let separator = doc.space();
-                    let comma = format_separator_with_comments(doc, &comma, separator);
-                    docs.push(comma, doc);
+    doc.concat_list(|docs| {
+        for entry in entries {
+            match entry {
+                FormattedModuleNamePart::Entry(entry) => {
+                    docs.push(entry.name);
+                    if let Some(comma) = entry.comma {
+                        let separator = docs.space();
+                        let comma = format_separator_with_comments(docs, &comma, separator);
+                        docs.push(comma);
+                    }
                 }
+                FormattedModuleNamePart::Recovered(recovered) => docs.push(recovered),
             }
-            FormattedModuleNamePart::Recovered(recovered) => docs.push(recovered, doc),
         }
-    }
-    docs.finish(doc)
+    })
 }
 
 fn format_module_name_entries_broken<'source>(
@@ -681,28 +675,31 @@ fn format_module_name_entries_broken<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let entries_len = entries.len();
-    let mut docs = doc.list();
-    for (index, entry) in entries.into_iter().enumerate() {
-        match entry {
-            FormattedModuleNamePart::Entry(entry) => {
-                docs.push(doc_concat!(doc, [entry.leading_comments, entry.name]), doc);
-                if let Some(comma) = entry.comma {
-                    let separator = doc.line();
-                    let comma = format_separator_with_comments(doc, &comma, separator);
-                    docs.push(comma, doc);
-                } else if index + 1 < entries_len {
-                    docs.push(doc.hard_line(), doc);
+    doc.concat_list(|docs| {
+        for (index, entry) in entries.into_iter().enumerate() {
+            match entry {
+                FormattedModuleNamePart::Entry(entry) => {
+                    let entry_doc = doc_concat!(docs, [entry.leading_comments, entry.name]);
+                    docs.push(entry_doc);
+                    if let Some(comma) = entry.comma {
+                        let separator = docs.line();
+                        let comma = format_separator_with_comments(docs, &comma, separator);
+                        docs.push(comma);
+                    } else if index + 1 < entries_len {
+                        let hard_line = docs.hard_line();
+                        docs.push(hard_line);
+                    }
                 }
-            }
-            FormattedModuleNamePart::Recovered(recovered) => {
-                docs.push(recovered, doc);
-                if index + 1 < entries_len {
-                    docs.push(doc.hard_line(), doc);
+                FormattedModuleNamePart::Recovered(recovered) => {
+                    docs.push(recovered);
+                    if index + 1 < entries_len {
+                        let hard_line = docs.hard_line();
+                        docs.push(hard_line);
+                    }
                 }
             }
         }
-    }
-    docs.finish(doc)
+    })
 }
 
 fn name_has_leading_comments(name: &NameSyntax<'_>) -> bool {

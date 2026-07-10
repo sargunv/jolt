@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, DocBuilder, DocList};
+use jolt_fmt_ir::{ConcatBuilder, Doc, DocBuilder};
 use jolt_kotlin_syntax::{Block, BlockItem, RecoveredSeparatedListEntry};
 
 use crate::helpers::blocks::{
@@ -102,48 +102,56 @@ fn block_body_entries<'source>(
     items: &[BlockItem<'source>],
 ) -> Vec<BodyItem<'source>> {
     let mut body_items = Vec::with_capacity(entries.len());
-    let mut recovered_docs = doc.list();
     let mut item_index = 0;
+    let mut entries = entries.iter().peekable();
 
-    for entry in entries {
+    while let Some(entry) = entries.next() {
         match entry {
             RecoveredSeparatedListEntry::Entry(item) => {
-                push_recovered_block_body_item(doc, &mut body_items, &mut recovered_docs);
                 body_items.push(block_body_item(doc, block, items, item_index, item));
                 item_index += 1;
             }
-            RecoveredSeparatedListEntry::Token(token) => {
-                let token =
-                    format_token_sequence(doc, std::iter::once(*token), LeadingTrivia::Preserve);
-                recovered_docs.push(token, doc);
-            }
-            RecoveredSeparatedListEntry::Error(error) => {
-                let error = format_token_sequence(doc, error.token_iter(), LeadingTrivia::Preserve);
-                recovered_docs.push(error, doc);
-            }
-            RecoveredSeparatedListEntry::Node(node) => {
-                let node = format_token_sequence(doc, node.token_iter(), LeadingTrivia::Preserve);
-                recovered_docs.push(node, doc);
+            recovered_entry => {
+                let mut recovered_is_empty = true;
+                let recovered = doc.concat_list(|recovered_docs| {
+                    push_recovered_block_entry(recovered_docs, recovered_entry);
+                    while entries.peek().is_some_and(|entry| {
+                        !matches!(entry, RecoveredSeparatedListEntry::Entry(_))
+                    }) {
+                        let entry = entries.next().expect("peeked block body entry exists");
+                        push_recovered_block_entry(recovered_docs, entry);
+                    }
+                    recovered_is_empty = recovered_docs.is_empty();
+                });
+                if !recovered_is_empty {
+                    body_items.push(BodyItem::new(recovered, false));
+                }
             }
         }
     }
 
-    push_recovered_block_body_item(doc, &mut body_items, &mut recovered_docs);
     body_items
 }
 
-fn push_recovered_block_body_item<'source>(
-    doc: &mut DocBuilder<'source>,
-    body_items: &mut Vec<BodyItem<'source>>,
-    recovered_docs: &mut DocList<'source>,
+fn push_recovered_block_entry<'source>(
+    recovered_docs: &mut ConcatBuilder<'_, 'source>,
+    entry: &RecoveredSeparatedListEntry<'source, BlockItem<'source>>,
 ) {
-    if recovered_docs.is_empty() {
-        return;
-    }
-
-    let empty = doc.list();
-    let recovered = std::mem::replace(recovered_docs, empty).finish(doc);
-    body_items.push(BodyItem::new(recovered, false));
+    let recovered = match entry {
+        RecoveredSeparatedListEntry::Entry(_) => return,
+        RecoveredSeparatedListEntry::Token(token) => format_token_sequence(
+            recovered_docs,
+            std::iter::once(*token),
+            LeadingTrivia::Preserve,
+        ),
+        RecoveredSeparatedListEntry::Error(error) => {
+            format_token_sequence(recovered_docs, error.token_iter(), LeadingTrivia::Preserve)
+        }
+        RecoveredSeparatedListEntry::Node(node) => {
+            format_token_sequence(recovered_docs, node.token_iter(), LeadingTrivia::Preserve)
+        }
+    };
+    recovered_docs.push(recovered);
 }
 
 fn format_block_dangling_comments<'source>(

@@ -16,7 +16,7 @@ use crate::helpers::comments::{
 use crate::helpers::syntax_tokens::{
     FormatterInsertedToken, format_token_with_normalized_text, inserted_syntax_token,
 };
-use jolt_fmt_ir::{DocBuilder, DocList};
+use jolt_fmt_ir::{ConcatBuilder, DocBuilder};
 struct FormattedEnumConstant<'source> {
     doc: Doc<'source>,
     comma: Option<JavaSyntaxToken<'source>>,
@@ -108,80 +108,77 @@ fn format_enum_constants_doc<'source>(
     moved_member_comments: &mut Vec<jolt_java_syntax::JavaComment<'source>>,
 ) -> Doc<'source> {
     let mut pending_constant_comments = Vec::new();
-    let mut constant_lines = doc.list();
     let mut has_constant_line = false;
-    for (index, entry) in constants.iter().enumerate() {
-        if !pending_constant_comments.is_empty() {
-            let comments =
-                format_dangling_comments(doc, std::mem::take(&mut pending_constant_comments));
-            push_hard_line_separated(&mut constant_lines, &mut has_constant_line, comments, doc);
-        }
-
-        if entry.is_recovered {
-            push_hard_line_separated(&mut constant_lines, &mut has_constant_line, entry.doc, doc);
-            continue;
-        }
-
-        let is_last_constant = !constants[index + 1..]
-            .iter()
-            .any(|constant| !constant.is_recovered);
-        let separator = if !has_body_declarations || !is_last_constant {
-            ","
-        } else {
-            ";"
-        };
-        if let Some(comma) = entry.comma.as_ref() {
-            let moved_comments =
-                enum_separator_moved_comments(*comma, has_body_declarations && is_last_constant);
-            if has_body_declarations && is_last_constant {
-                moved_member_comments.extend(moved_comments);
-            } else {
-                pending_constant_comments.extend(moved_comments);
+    doc.concat_list(|constant_lines| {
+        for (index, entry) in constants.iter().enumerate() {
+            if !pending_constant_comments.is_empty() {
+                let comments = format_dangling_comments(
+                    constant_lines,
+                    std::mem::take(&mut pending_constant_comments),
+                );
+                push_hard_line_separated(constant_lines, &mut has_constant_line, comments);
             }
+
+            if entry.is_recovered {
+                push_hard_line_separated(constant_lines, &mut has_constant_line, entry.doc);
+                continue;
+            }
+
+            let is_last_constant = !constants[index + 1..]
+                .iter()
+                .any(|constant| !constant.is_recovered);
+            let separator = if !has_body_declarations || !is_last_constant {
+                ","
+            } else {
+                ";"
+            };
+            if let Some(comma) = entry.comma.as_ref() {
+                let moved_comments = enum_separator_moved_comments(
+                    *comma,
+                    has_body_declarations && is_last_constant,
+                );
+                if has_body_declarations && is_last_constant {
+                    moved_member_comments.extend(moved_comments);
+                } else {
+                    pending_constant_comments.extend(moved_comments);
+                }
+            }
+
+            let constant_doc = doc_concat!(
+                constant_lines,
+                [
+                    entry.doc,
+                    format_enum_constant_separator(
+                        constant_lines,
+                        entry.comma.as_ref(),
+                        is_last_constant
+                            .then_some(body_declaration_separator)
+                            .flatten(),
+                        separator,
+                        !has_body_declarations || !is_last_constant,
+                    ),
+                ]
+            );
+            push_hard_line_separated(constant_lines, &mut has_constant_line, constant_doc);
         }
 
-        let constant_doc = doc_concat!(
-            doc,
-            [
-                entry.doc,
-                format_enum_constant_separator(
-                    doc,
-                    entry.comma.as_ref(),
-                    is_last_constant
-                        .then_some(body_declaration_separator)
-                        .flatten(),
-                    separator,
-                    !has_body_declarations || !is_last_constant,
-                ),
-            ]
-        );
-        push_hard_line_separated(
-            &mut constant_lines,
-            &mut has_constant_line,
-            constant_doc,
-            doc,
-        );
-    }
-
-    if !pending_constant_comments.is_empty() {
-        let comments = format_dangling_comments(doc, pending_constant_comments);
-        push_hard_line_separated(&mut constant_lines, &mut has_constant_line, comments, doc);
-    }
-
-    constant_lines.finish(doc)
+        if !pending_constant_comments.is_empty() {
+            let comments = format_dangling_comments(constant_lines, pending_constant_comments);
+            push_hard_line_separated(constant_lines, &mut has_constant_line, comments);
+        }
+    })
 }
 
 fn push_hard_line_separated<'source>(
-    docs: &mut DocList<'source>,
+    docs: &mut ConcatBuilder<'_, 'source>,
     has_doc: &mut bool,
     next: Doc<'source>,
-    doc: &mut DocBuilder<'source>,
 ) {
     if *has_doc {
-        let separator = doc.hard_line();
-        docs.push(separator, doc);
+        let hard_line = docs.hard_line();
+        docs.push(hard_line);
     }
-    docs.push(next, doc);
+    docs.push(next);
     *has_doc = true;
 }
 
@@ -305,12 +302,14 @@ fn format_enum_separator_inline_trailing_comments<'source>(
     let comments = comma
         .trailing_comments()
         .filter(|comment| !enum_separator_comment_moves(comment));
-    let mut docs = doc.list();
-    for comment in comments {
-        docs.push(doc.space(), doc);
-        docs.push(format_comment(doc, &comment), doc);
-    }
-    docs.finish(doc)
+    doc.concat_list(|docs| {
+        for comment in comments {
+            let space = docs.space();
+            docs.push(space);
+            let comment_doc = format_comment(docs, &comment);
+            docs.push(comment_doc);
+        }
+    })
 }
 
 fn enum_separator_moved_comments(

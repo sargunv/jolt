@@ -4,47 +4,24 @@ use super::{
     format_expression_with_leading_comments, format_leading_comments, format_token,
     format_token_with_comments, format_type_argument_list, trailing_comments_force_line,
 };
-use jolt_fmt_ir::{DocBuilder, DocList};
+use jolt_fmt_ir::{ConcatBuilder, DocBuilder};
 
 struct MemberChainBuilder<'source> {
     root: Option<Expression<'source>>,
     first_suffix: Option<Doc<'source>>,
-    rest_suffixes: DocList<'source>,
     suffix_count: u32,
     field_run: Option<Doc<'source>>,
 }
 
 impl<'source> MemberChainBuilder<'source> {
-    fn finish(mut self, doc: &mut DocBuilder<'source>) -> Option<Doc<'source>> {
-        self.flush_field_run(doc);
-        let root = self.root?;
-        let keep_first_suffix_with_root = is_simple_member_chain_root(&root);
-        let leading_comments = format_expression_leading_comments(&root, doc);
-        let root_doc = format_expression_with_leading_comments(
-            &root,
-            LeadingComments::SuppressFirstToken,
-            doc,
-        );
-        let chain = member_chain(
-            doc,
-            root_doc,
-            self.first_suffix,
-            self.rest_suffixes,
-            self.suffix_count,
-            keep_first_suffix_with_root,
-        );
-
-        Some(doc_concat!(doc, [leading_comments, chain]))
-    }
-
     fn push_field_access(
         &mut self,
         access: &FieldAccessExpression<'source>,
-        doc: &mut DocBuilder<'source>,
+        rest_suffixes: &mut ConcatBuilder<'_, 'source>,
     ) {
-        let suffix = format_field_access_suffix(access, doc);
+        let suffix = format_field_access_suffix(access, rest_suffixes);
         self.field_run = Some(match self.field_run.take() {
-            Some(run) => doc_concat!(doc, [run, suffix]),
+            Some(run) => doc_concat!(rest_suffixes, [run, suffix]),
             None => suffix,
         });
     }
@@ -52,26 +29,30 @@ impl<'source> MemberChainBuilder<'source> {
     fn push_method_invocation(
         &mut self,
         invocation: &MethodInvocationExpression<'source>,
-        doc: &mut DocBuilder<'source>,
+        rest_suffixes: &mut ConcatBuilder<'_, 'source>,
     ) {
-        self.flush_field_run(doc);
-        let suffix = format_method_invocation_suffix(invocation, doc);
-        self.push_suffix(suffix, doc);
+        self.flush_field_run(rest_suffixes);
+        let suffix = format_method_invocation_suffix(invocation, rest_suffixes);
+        self.push_suffix(suffix, rest_suffixes);
     }
 
-    fn flush_field_run(&mut self, doc: &mut DocBuilder<'source>) {
+    fn flush_field_run(&mut self, rest_suffixes: &mut ConcatBuilder<'_, 'source>) {
         if let Some(run) = self.field_run.take() {
-            self.push_suffix(run, doc);
+            self.push_suffix(run, rest_suffixes);
         }
     }
 
-    fn push_suffix(&mut self, suffix: Doc<'source>, doc: &mut DocBuilder<'source>) {
+    fn push_suffix(
+        &mut self,
+        suffix: Doc<'source>,
+        rest_suffixes: &mut ConcatBuilder<'_, 'source>,
+    ) {
         if self.suffix_count == 0 {
             self.first_suffix = Some(suffix);
         } else {
-            let line = doc.soft_line();
-            let suffix = doc_concat!(doc, [line, suffix]);
-            self.rest_suffixes.push(suffix, doc);
+            let line = rest_suffixes.soft_line();
+            rest_suffixes.push(line);
+            rest_suffixes.push(suffix);
         }
         self.suffix_count += 1;
     }
@@ -81,35 +62,54 @@ pub(super) fn format_member_chain<'source>(
     expression: Expression<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Option<Doc<'source>> {
-    let mut builder = MemberChainBuilder {
-        root: None,
-        first_suffix: None,
-        rest_suffixes: doc.list(),
-        suffix_count: 0,
-        field_run: None,
-    };
+    let mut chain = None;
+    let rest_suffixes = doc.concat_list(|rest_suffixes| {
+        let mut builder = MemberChainBuilder {
+            root: None,
+            first_suffix: None,
+            suffix_count: 0,
+            field_run: None,
+        };
+        if append_chain_expression(&mut builder, expression, rest_suffixes).is_some() {
+            builder.flush_field_run(rest_suffixes);
+            chain = Some((builder.root, builder.first_suffix, builder.suffix_count));
+        }
+    });
+    let (root, first_suffix, suffix_count) = chain?;
+    let root = root?;
+    let keep_first_suffix_with_root = is_simple_member_chain_root(&root);
+    let leading_comments = format_expression_leading_comments(&root, doc);
+    let root_doc =
+        format_expression_with_leading_comments(&root, LeadingComments::SuppressFirstToken, doc);
+    let chain = member_chain(
+        doc,
+        root_doc,
+        first_suffix,
+        rest_suffixes,
+        suffix_count,
+        keep_first_suffix_with_root,
+    );
 
-    append_chain_expression(&mut builder, expression, doc)?;
-    builder.finish(doc)
+    Some(doc_concat!(doc, [leading_comments, chain]))
 }
 
 fn append_chain_expression<'source>(
     builder: &mut MemberChainBuilder<'source>,
     expression: Expression<'source>,
-    doc: &mut DocBuilder<'source>,
+    rest_suffixes: &mut ConcatBuilder<'_, 'source>,
 ) -> Option<()> {
     match expression {
         Expression::FieldAccessExpression(access) => {
             let receiver = access.receiver()?;
-            append_chain_receiver(builder, receiver, doc);
-            builder.push_field_access(&access, doc);
+            append_chain_receiver(builder, receiver, rest_suffixes);
+            builder.push_field_access(&access, rest_suffixes);
             Some(())
         }
         Expression::MethodInvocationExpression(invocation) => {
             invocation.direct_method_name()?;
             let qualifier = invocation.qualifier()?;
-            append_chain_receiver(builder, qualifier, doc);
-            builder.push_method_invocation(&invocation, doc);
+            append_chain_receiver(builder, qualifier, rest_suffixes);
+            builder.push_method_invocation(&invocation, rest_suffixes);
             Some(())
         }
         _ => None,
@@ -119,9 +119,9 @@ fn append_chain_expression<'source>(
 fn append_chain_receiver<'source>(
     builder: &mut MemberChainBuilder<'source>,
     receiver: Expression<'source>,
-    doc: &mut DocBuilder<'source>,
+    rest_suffixes: &mut ConcatBuilder<'_, 'source>,
 ) {
-    if append_chain_expression(builder, receiver, doc).is_none() {
+    if append_chain_expression(builder, receiver, rest_suffixes).is_none() {
         builder.root = Some(receiver);
     }
 }
@@ -130,7 +130,7 @@ fn member_chain<'source>(
     doc: &mut DocBuilder<'source>,
     root: Doc<'source>,
     first_suffix: Option<Doc<'source>>,
-    rest_suffixes: DocList<'source>,
+    rest_suffixes: Doc<'source>,
     suffix_count: u32,
     keep_first_suffix_with_root: bool,
 ) -> Doc<'source> {
@@ -145,12 +145,9 @@ fn member_chain<'source>(
         root
     };
     let rest = if keep_first_suffix_with_root {
-        rest_suffixes.finish(doc)
+        rest_suffixes
     } else {
-        let mut rest = doc.list();
-        rest.push(doc_concat!(doc, [doc.soft_line(), first_suffix]), doc);
-        rest.push(rest_suffixes.finish(doc), doc);
-        rest.finish(doc)
+        doc_concat!(doc, [doc.soft_line(), first_suffix, rest_suffixes])
     };
 
     if keep_first_suffix_with_root && suffix_count == 1 {

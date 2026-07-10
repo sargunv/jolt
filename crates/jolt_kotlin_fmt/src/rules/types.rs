@@ -120,15 +120,14 @@ fn format_type_constraints<'source>(
 
     let first_doc = first.doc;
     let mut previous_comma = first.comma;
-    let mut rest = doc.list();
-    for entry in items {
-        let continuation =
-            format_type_constraint_continuation(doc, previous_comma.as_ref(), entry.doc);
-        previous_comma = entry.comma;
-        rest.push(continuation, doc);
-    }
-
-    let rest = rest.finish(doc);
+    let rest = doc.concat_list(|rest| {
+        for entry in items {
+            let continuation =
+                format_type_constraint_continuation(rest, previous_comma.as_ref(), entry.doc);
+            previous_comma = entry.comma;
+            rest.push(continuation);
+        }
+    });
     let rest = doc.indent(rest);
     doc.concat([first_doc, rest])
 }
@@ -233,46 +232,49 @@ fn format_user_type<'source>(
     }
     let arguments = ty.type_argument_lists().collect::<Vec<_>>();
     let mut dots = ty.dot_tokens();
-    let mut parts = doc.list();
-
-    for annotation in ty.annotations() {
-        let annotation = format_annotation(doc, &annotation);
-        parts.push(annotation, doc);
-        let space = doc.space();
-        parts.push(space, doc);
-    }
-
-    for (index, identifier) in identifiers.iter().enumerate() {
-        if index > 0 {
-            let dot = if let Some(dot) = dots.next() {
-                format_token(doc, &dot, LeadingTrivia::Preserve, TrailingTrivia::Preserve)
-            } else {
-                doc.nil()
-            };
-            parts.push(dot, doc);
+    let parts = doc.concat_list(|parts| {
+        for annotation in ty.annotations() {
+            let annotation = format_annotation(parts, &annotation);
+            parts.push(annotation);
+            let space = parts.space();
+            parts.push(space);
         }
-        let identifier_end = identifier.token_text_range().end();
-        let next_identifier_start = identifiers.get(index + 1).map_or_else(
-            || ty.text_range().end(),
-            |next| next.token_text_range().start(),
-        );
-        let identifier = format_token(
-            doc,
-            identifier,
-            LeadingTrivia::Preserve,
-            TrailingTrivia::Preserve,
-        );
-        parts.push(identifier, doc);
-        for arguments in arguments.iter().filter(|arguments| {
-            arguments.text_range().start() >= identifier_end
-                && arguments.text_range().start() < next_identifier_start
-        }) {
-            let arguments = format_type_argument_list(doc, arguments);
-            parts.push(arguments, doc);
-        }
-    }
 
-    let parts = parts.finish(doc);
+        for (index, identifier) in identifiers.iter().enumerate() {
+            if index > 0 {
+                let dot = if let Some(dot) = dots.next() {
+                    format_token(
+                        parts,
+                        &dot,
+                        LeadingTrivia::Preserve,
+                        TrailingTrivia::Preserve,
+                    )
+                } else {
+                    parts.nil()
+                };
+                parts.push(dot);
+            }
+            let identifier_end = identifier.token_text_range().end();
+            let next_identifier_start = identifiers.get(index + 1).map_or_else(
+                || ty.text_range().end(),
+                |next| next.token_text_range().start(),
+            );
+            let identifier = format_token(
+                parts,
+                identifier,
+                LeadingTrivia::Preserve,
+                TrailingTrivia::Preserve,
+            );
+            parts.push(identifier);
+            for arguments in arguments.iter().filter(|arguments| {
+                arguments.text_range().start() >= identifier_end
+                    && arguments.text_range().start() < next_identifier_start
+            }) {
+                let arguments = format_type_argument_list(parts, arguments);
+                parts.push(arguments);
+            }
+        }
+    });
     doc.group(parts)
 }
 
@@ -424,25 +426,25 @@ fn format_parenthesized_type<'source>(
     doc: &mut DocBuilder<'source>,
     ty: &ParenthesizedType<'source>,
 ) -> Doc<'source> {
-    let mut docs = doc.list();
-    for annotation in ty.annotations() {
-        let annotation = format_annotation(doc, &annotation);
-        docs.push(annotation, doc);
-        let space = doc.space();
-        docs.push(space, doc);
-    }
-
-    let open = ty.open_paren();
-    let close = ty.close_paren();
-    let items = recovered_comma_list_items(doc, ty.entries_with_recovered(), |doc, entry| {
-        CommaListItem {
-            doc: format_function_type_parameter(doc, &entry.parameter),
-            comma: entry.comma,
+    doc.concat_list(|docs| {
+        for annotation in ty.annotations() {
+            let annotation = format_annotation(docs, &annotation);
+            docs.push(annotation);
+            let space = docs.space();
+            docs.push(space);
         }
-    });
-    let list = parenthesized_list(doc, open.as_ref(), close.as_ref(), items);
-    docs.push(list, doc);
-    docs.finish(doc)
+
+        let open = ty.open_paren();
+        let close = ty.close_paren();
+        let items = recovered_comma_list_items(docs, ty.entries_with_recovered(), |doc, entry| {
+            CommaListItem {
+                doc: format_function_type_parameter(doc, &entry.parameter),
+                comma: entry.comma,
+            }
+        });
+        let list = parenthesized_list(docs, open.as_ref(), close.as_ref(), items);
+        docs.push(list);
+    })
 }
 
 fn format_function_type_parameter<'source>(

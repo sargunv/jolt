@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-use jolt_fmt_ir::{Doc, DocBuilder};
+use jolt_fmt_ir::{ConcatBuilder, Doc, DocBuilder};
 use jolt_kotlin_syntax::{KotlinFile, KotlinFileItem, PackageHeader, StatementSyntax};
 
 use crate::helpers::blocks::join_hard_lines;
@@ -49,19 +49,19 @@ fn format_file_contents<'source>(
         }
     }
 
-    let mut sections = doc.list();
-    if let Some(annotations) = format_file_annotations(doc, file) {
-        sections.push(annotations, doc);
-    }
-    if let Some(item_sections) = format_file_item_sections(doc, file.source_text(), items) {
-        if !sections.is_empty() {
-            let empty_line = doc.empty_line();
-            sections.push(empty_line, doc);
+    doc.concat_list(|sections| {
+        if let Some(annotations) = format_file_annotations(sections, file) {
+            sections.push(annotations);
         }
-        sections.push(item_sections, doc);
-    }
-
-    sections.finish(doc)
+        if let Some(item_sections) = format_file_item_sections(sections, file.source_text(), items)
+        {
+            if !sections.is_empty() {
+                let empty_line = sections.empty_line();
+                sections.push(empty_line);
+            }
+            sections.push(item_sections);
+        }
+    })
 }
 
 fn format_file_contents_with_ignored<'source>(
@@ -150,31 +150,33 @@ fn format_file_item_sections<'source>(
         }
     }
 
-    let mut sections = doc.list();
-    if let Some(package) = package {
-        let package = format_package_header(doc, &package);
-        push_file_item_section(doc, &mut sections, package);
-    }
-    if let Some(imports) = imports {
-        push_file_item_section(doc, &mut sections, imports);
-    }
-    if let Some(body_sections) = format_source_body_sections(doc, source, body_items) {
-        push_file_item_section(doc, &mut sections, body_sections);
-    }
+    let mut is_empty = true;
+    let sections = doc.concat_list(|sections| {
+        if let Some(package) = package {
+            let package = format_package_header(sections, &package);
+            push_file_item_section(sections, package);
+        }
+        if let Some(imports) = imports {
+            push_file_item_section(sections, imports);
+        }
+        if let Some(body_sections) = format_source_body_sections(sections, source, body_items) {
+            push_file_item_section(sections, body_sections);
+        }
+        is_empty = sections.is_empty();
+    });
 
-    (!sections.is_empty()).then(|| sections.finish(doc))
+    (!is_empty).then_some(sections)
 }
 
 fn push_file_item_section<'source>(
-    doc: &mut DocBuilder<'source>,
-    sections: &mut jolt_fmt_ir::DocList<'source>,
+    sections: &mut ConcatBuilder<'_, 'source>,
     section: Doc<'source>,
 ) {
     if !sections.is_empty() {
-        let empty_line = doc.empty_line();
-        sections.push(empty_line, doc);
+        let empty_line = sections.empty_line();
+        sections.push(empty_line);
     }
-    sections.push(section, doc);
+    sections.push(section);
 }
 
 fn push_file_item_segment<'source>(
@@ -199,21 +201,21 @@ fn join_file_sections<'source>(
     doc: &mut DocBuilder<'source>,
     sections: Vec<FileSection<'source>>,
 ) -> Doc<'source> {
-    let mut joined = doc.list();
     let mut previous_hard_line_after = false;
-    for section in sections {
-        if !joined.is_empty() {
-            let separator = if previous_hard_line_after {
-                doc.hard_line()
-            } else {
-                doc.empty_line()
-            };
-            joined.push(separator, doc);
+    doc.concat_list(|joined| {
+        for section in sections {
+            if !joined.is_empty() {
+                let separator = if previous_hard_line_after {
+                    joined.hard_line()
+                } else {
+                    joined.empty_line()
+                };
+                joined.push(separator);
+            }
+            joined.push(section.doc);
+            previous_hard_line_after = section.hard_line_after;
         }
-        joined.push(section.doc, doc);
-        previous_hard_line_after = section.hard_line_after;
-    }
-    joined.finish(doc)
+    })
 }
 
 struct FileSection<'source> {
@@ -226,16 +228,20 @@ fn format_source_body_sections<'source>(
     source: &'source str,
     items: Vec<KotlinFileItem<'source>>,
 ) -> Option<Doc<'source>> {
-    let mut sections = doc.list();
-    for group in source_item_groups(doc, source, items) {
-        if !sections.is_empty() {
-            let empty_line = doc.empty_line();
-            sections.push(empty_line, doc);
+    let groups = source_item_groups(doc, source, items);
+    let mut is_empty = true;
+    let sections = doc.concat_list(|sections| {
+        for group in groups {
+            if !sections.is_empty() {
+                let empty_line = sections.empty_line();
+                sections.push(empty_line);
+            }
+            let group = format_source_item_group(sections, source, &group);
+            sections.push(group);
         }
-        let group = format_source_item_group(doc, source, &group);
-        sections.push(group, doc);
-    }
-    (!sections.is_empty()).then(|| sections.finish(doc))
+        is_empty = sections.is_empty();
+    });
+    (!is_empty).then_some(sections)
 }
 
 fn source_item_groups<'source>(

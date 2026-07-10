@@ -362,14 +362,14 @@ fn format_throws_entries<'source>(
     };
 
     let first = format_throws_entry(entry, entries.peek().is_some(), doc);
-    let mut docs = doc.list();
-    docs.push(first, doc);
-    while let Some(entry) = entries.next() {
-        let has_next = entries.peek().is_some();
-        let entry_doc = format_throws_entry(entry, has_next, doc);
-        docs.push(entry_doc, doc);
-    }
-    let contents = docs.finish(doc);
+    let contents = doc.concat_list(|docs| {
+        docs.push(first);
+        while let Some(entry) = entries.next() {
+            let has_next = entries.peek().is_some();
+            let entry_doc = format_throws_entry(entry, has_next, docs);
+            docs.push(entry_doc);
+        }
+    });
 
     doc_indent!(doc, contents)
 }

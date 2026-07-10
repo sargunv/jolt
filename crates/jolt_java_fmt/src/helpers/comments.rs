@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use jolt_fmt_ir::{Doc, DocBuilder, DocList};
+use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_java_syntax::{JavaComment, JavaCommentKind, JavaSyntaxToken};
 
 use crate::helpers::formatter_ignore::is_formatter_control_marker;
@@ -34,37 +34,29 @@ pub(crate) fn format_leading_comment_runs<'source, Item>(
 ) -> Doc<'source> {
     let items = items.into_iter();
     let (lower, _) = items.size_hint();
-    let mut docs = doc.list();
     let mut current_run = Vec::with_capacity(lower);
 
-    for item in items {
-        if has_leading_comments(&item) && !current_run.is_empty() {
-            push_leading_comment_run(
-                doc,
-                &mut docs,
-                std::mem::take(&mut current_run),
-                &mut format_run,
-            );
+    doc.concat_list(|docs| {
+        for item in items {
+            if has_leading_comments(&item) && !current_run.is_empty() {
+                if !docs.is_empty() {
+                    let empty_line = docs.empty_line();
+                    docs.push(empty_line);
+                }
+                let run = format_run(std::mem::take(&mut current_run), docs);
+                docs.push(run);
+            }
+            current_run.push(item);
         }
-        current_run.push(item);
-    }
-    if !current_run.is_empty() {
-        push_leading_comment_run(doc, &mut docs, current_run, &mut format_run);
-    }
-
-    docs.finish(doc)
-}
-
-fn push_leading_comment_run<'source, Item>(
-    doc: &mut DocBuilder<'source>,
-    docs: &mut DocList<'source>,
-    run: Vec<Item>,
-    format_run: &mut impl FnMut(Vec<Item>, &mut DocBuilder<'source>) -> Doc<'source>,
-) {
-    if !docs.is_empty() {
-        docs.push(doc.empty_line(), doc);
-    }
-    docs.push(format_run(run, doc), doc);
+        if !current_run.is_empty() {
+            if !docs.is_empty() {
+                let empty_line = docs.empty_line();
+                docs.push(empty_line);
+            }
+            let run = format_run(std::mem::take(&mut current_run), docs);
+            docs.push(run);
+        }
+    })
 }
 
 pub(crate) fn token_has_comments(token: &JavaSyntaxToken<'_>) -> bool {
@@ -109,61 +101,69 @@ pub(crate) fn format_leading_comment_list<'source>(
     doc: &mut DocBuilder<'source>,
     comments: impl IntoIterator<Item = JavaComment<'source>>,
 ) -> Doc<'source> {
-    let comments = comments.into_iter();
-    let mut docs = doc.list();
-    for comment in comments {
-        docs.push(format_comment(doc, &comment), doc);
-        docs.push(doc.hard_line(), doc);
-    }
-    docs.finish(doc)
+    doc.concat_list(|docs| {
+        for comment in comments {
+            let comment = format_comment(docs, &comment);
+            docs.push(comment);
+            let hard_line = docs.hard_line();
+            docs.push(hard_line);
+        }
+    })
 }
 
 pub(crate) fn format_removed_comments<'source>(
     doc: &mut DocBuilder<'source>,
     comments: impl IntoIterator<Item = JavaComment<'source>>,
 ) -> Option<Doc<'source>> {
-    let comments = comments.into_iter();
-    let mut docs = doc.list();
-    for comment in comments {
-        if is_formatter_control_marker(comment.text()) {
-            continue;
+    let mut has_comments = false;
+    let docs = doc.concat_list(|docs| {
+        for comment in comments {
+            if is_formatter_control_marker(comment.text()) {
+                continue;
+            }
+            if !docs.is_empty() {
+                let hard_line = docs.hard_line();
+                docs.push(hard_line);
+            }
+            let comment = format_comment(docs, &comment);
+            docs.push(comment);
         }
-        if !docs.is_empty() {
-            docs.push(doc.hard_line(), doc);
-        }
-        docs.push(format_comment(doc, &comment), doc);
-    }
+        has_comments = !docs.is_empty();
+    });
 
-    (!docs.is_empty()).then(|| docs.finish(doc))
+    has_comments.then_some(docs)
 }
 
 pub(crate) fn format_leading_comments<'source>(
     doc: &mut DocBuilder<'source>,
     token: &JavaSyntaxToken<'source>,
 ) -> Doc<'source> {
-    let comments = token.leading_comments();
-    let mut docs = doc.list();
-    for comment in comments {
-        docs.push(format_comment(doc, &comment), doc);
-        docs.push(doc.hard_line(), doc);
-    }
-    docs.finish(doc)
+    doc.concat_list(|docs| {
+        for comment in token.leading_comments() {
+            let comment = format_comment(docs, &comment);
+            docs.push(comment);
+            let hard_line = docs.hard_line();
+            docs.push(hard_line);
+        }
+    })
 }
 
 pub(crate) fn format_trailing_comments<'source>(
     doc: &mut DocBuilder<'source>,
     token: &JavaSyntaxToken<'source>,
 ) -> Doc<'source> {
-    let comments = token.trailing_comments();
-    let mut docs = doc.list();
-    for comment in comments {
-        docs.push(doc.space(), doc);
-        docs.push(format_comment(doc, &comment), doc);
-        if comment_forces_line(&comment) {
-            docs.push(doc.hard_line(), doc);
+    doc.concat_list(|docs| {
+        for comment in token.trailing_comments() {
+            let space = docs.space();
+            docs.push(space);
+            let comment_doc = format_comment(docs, &comment);
+            docs.push(comment_doc);
+            if comment_forces_line(&comment) {
+                let hard_line = docs.hard_line();
+                docs.push(hard_line);
+            }
         }
-    }
-    docs.finish(doc)
+    })
 }
 
 pub(crate) fn format_trailing_comments_before_line_break<'source>(
@@ -171,34 +171,32 @@ pub(crate) fn format_trailing_comments_before_line_break<'source>(
     token: &JavaSyntaxToken<'source>,
 ) -> Doc<'source> {
     let mut comments = token.trailing_comments().peekable();
-    let mut docs = doc.list();
-
-    while let Some(comment) = comments.next() {
-        let space = doc.space();
-        docs.push(space, doc);
-        let comment_doc = format_comment(doc, &comment);
-        docs.push(comment_doc, doc);
-        if comments.peek().is_some() && comment_forces_line(&comment) {
-            let hard_line = doc.hard_line();
-            docs.push(hard_line, doc);
+    doc.concat_list(|docs| {
+        while let Some(comment) = comments.next() {
+            let space = docs.space();
+            docs.push(space);
+            let comment_doc = format_comment(docs, &comment);
+            docs.push(comment_doc);
+            if comments.peek().is_some() && comment_forces_line(&comment) {
+                let hard_line = docs.hard_line();
+                docs.push(hard_line);
+            }
         }
-    }
-
-    docs.finish(doc)
+    })
 }
 
 pub(crate) fn format_inline_trailing_comment_list<'source>(
     doc: &mut DocBuilder<'source>,
     comments: impl IntoIterator<Item = JavaComment<'source>>,
 ) -> Doc<'source> {
-    let mut docs = doc.list();
-    for comment in comments {
-        let space = doc.space();
-        docs.push(space, doc);
-        let comment = format_comment(doc, &comment);
-        docs.push(comment, doc);
-    }
-    docs.finish(doc)
+    doc.concat_list(|docs| {
+        for comment in comments {
+            let space = docs.space();
+            docs.push(space);
+            let comment = format_comment(docs, &comment);
+            docs.push(comment);
+        }
+    })
 }
 
 pub(crate) fn format_separator_with_comments<'source>(
@@ -228,17 +226,16 @@ pub(crate) fn format_dangling_comments<'source>(
     doc: &mut DocBuilder<'source>,
     comments: impl IntoIterator<Item = JavaComment<'source>>,
 ) -> Doc<'source> {
-    let comments = comments.into_iter();
-    let mut docs = doc.list();
-    for comment in comments {
-        if !docs.is_empty() {
-            let hard_line = doc.hard_line();
-            docs.push(hard_line, doc);
+    doc.concat_list(|docs| {
+        for comment in comments {
+            if !docs.is_empty() {
+                let hard_line = docs.hard_line();
+                docs.push(hard_line);
+            }
+            let comment = format_comment(docs, &comment);
+            docs.push(comment);
         }
-        let comment = format_comment(doc, &comment);
-        docs.push(comment, doc);
-    }
-    docs.finish(doc)
+    })
 }
 
 pub(crate) fn has_delimiter_dangling_comments<'source>(
@@ -359,29 +356,28 @@ pub(crate) fn format_token_sequence<'source>(
     tokens: impl IntoIterator<Item = JavaSyntaxToken<'source>>,
     leading: LeadingTrivia,
 ) -> Doc<'source> {
-    let tokens = tokens.into_iter();
-    let mut docs = doc.list();
     let mut previous = None;
 
-    for (index, token) in tokens.enumerate() {
-        if let Some(previous) = previous {
-            docs.push(format_recovered_token_gap(doc, &previous, &token), doc);
+    doc.concat_list(|docs| {
+        for (index, token) in tokens.into_iter().enumerate() {
+            if let Some(previous) = previous {
+                let gap = format_recovered_token_gap(docs, &previous, &token);
+                docs.push(gap);
+            }
+            let formatted = format_token(
+                docs,
+                &token,
+                if index == 0 {
+                    leading
+                } else {
+                    LeadingTrivia::Preserve
+                },
+                TrailingTrivia::Preserve,
+            );
+            docs.push(formatted);
+            previous = Some(token);
         }
-        let formatted = format_token(
-            doc,
-            &token,
-            if index == 0 {
-                leading
-            } else {
-                LeadingTrivia::Preserve
-            },
-            TrailingTrivia::Preserve,
-        );
-        docs.push(formatted, doc);
-        previous = Some(token);
-    }
-
-    docs.finish(doc)
+    })
 }
 
 fn format_recovered_token_gap<'source>(
@@ -415,16 +411,16 @@ pub(crate) fn format_token_with_inline_leading_comments<'source>(
     let leading = if leading.is_empty() {
         Doc::nil()
     } else {
-        let mut comments = doc.list();
-        for comment in leading {
-            if !comments.is_empty() {
-                let space = doc.space();
-                comments.push(space, doc);
+        let comments = doc.concat_list(|comments| {
+            for comment in leading {
+                if !comments.is_empty() {
+                    let space = comments.space();
+                    comments.push(space);
+                }
+                let comment = format_comment(comments, &comment);
+                comments.push(comment);
             }
-            let comment = format_comment(doc, &comment);
-            comments.push(comment, doc);
-        }
-        let comments = comments.finish(doc);
+        });
         let space = doc.space();
         match placement {
             InlineLeadingTrivia::AfterPreviousToken => doc_concat!(doc, [space, comments]),
@@ -484,15 +480,16 @@ fn format_comment_lines<'source>(
     doc: &mut DocBuilder<'source>,
     lines: impl IntoIterator<Item = impl Into<Cow<'source, str>>>,
 ) -> Doc<'source> {
-    let lines = lines.into_iter();
-    let mut docs = doc.list();
-    for line in lines {
-        if !docs.is_empty() {
-            docs.push(doc.hard_line(), doc);
+    doc.concat_list(|docs| {
+        for line in lines {
+            if !docs.is_empty() {
+                let hard_line = docs.hard_line();
+                docs.push(hard_line);
+            }
+            let line = docs.text(line);
+            docs.push(line);
         }
-        docs.push(doc.text(line), doc);
-    }
-    docs.finish(doc)
+    })
 }
 
 fn format_line_comment<'source>(
@@ -514,47 +511,41 @@ fn format_star_block_comment<'source>(
     comment: &'source str,
 ) -> Doc<'source> {
     let content = strip_block_comment_delimiters(comment);
-    let mut docs = doc.list();
-    let open = doc.literal_text("/**");
-    docs.push(open, doc);
+    doc.concat_list(|docs| {
+        let open = docs.literal_text("/**");
+        docs.push(open);
 
-    let mut has_content = false;
-    let mut pending_blank_lines = 0;
-    for line in content.lines().map(normalize_star_block_body_line) {
-        if line.is_empty() {
-            if has_content {
-                pending_blank_lines += 1;
+        let mut has_content = false;
+        let mut pending_blank_lines = 0;
+        for line in content.lines().map(normalize_star_block_body_line) {
+            if line.is_empty() {
+                if has_content {
+                    pending_blank_lines += 1;
+                }
+                continue;
             }
-            continue;
+
+            has_content = true;
+            for _ in 0..pending_blank_lines {
+                let line = docs.literal_text(" *");
+                let hard_line = docs.hard_line();
+                docs.push(hard_line);
+                docs.push(line);
+            }
+            pending_blank_lines = 0;
+            let prefix = docs.literal_text(" * ");
+            let line = docs.text(line);
+            let line = doc_concat!(docs, [prefix, line]);
+            let hard_line = docs.hard_line();
+            docs.push(hard_line);
+            docs.push(line);
         }
 
-        has_content = true;
-        for _ in 0..pending_blank_lines {
-            let line = doc.literal_text(" *");
-            push_comment_line(doc, &mut docs, line);
-        }
-        pending_blank_lines = 0;
-        let prefix = doc.literal_text(" * ");
-        let line = doc.text(line);
-        let line = doc_concat!(doc, [prefix, line]);
-        push_comment_line(doc, &mut docs, line);
-    }
-
-    let close = doc.literal_text(" */");
-    push_comment_line(doc, &mut docs, close);
-    docs.finish(doc)
-}
-
-fn push_comment_line<'source>(
-    doc: &mut DocBuilder<'source>,
-    docs: &mut DocList<'source>,
-    line: Doc<'source>,
-) {
-    if !docs.is_empty() {
-        let hard_line = doc.hard_line();
-        docs.push(hard_line, doc);
-    }
-    docs.push(line, doc);
+        let close = docs.literal_text(" */");
+        let hard_line = docs.hard_line();
+        docs.push(hard_line);
+        docs.push(close);
+    })
 }
 
 fn preserved_comment_lines(comment: &str) -> impl Iterator<Item = &str> {

@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-use jolt_fmt_ir::{Doc, DocBuilder, DocList};
+use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_java_syntax::{CompilationUnit, CompilationUnitItem, JavaSyntaxKind, PackageDeclaration};
 
 use crate::helpers::blocks::join_empty_lines;
@@ -92,54 +92,71 @@ fn format_compilation_unit_items<'source>(
     let mut package = None;
     let mut imports = Vec::with_capacity(items.len());
     let mut module = None;
-    let mut declarations = doc.list();
     let mut pending_removed_comments = None;
 
-    for item in items {
-        match item {
-            CompilationUnitItem::Package(declaration) => package = Some(declaration),
-            CompilationUnitItem::Import(declaration) => imports.push(declaration),
-            CompilationUnitItem::Module(declaration) => module = Some(declaration),
-            CompilationUnitItem::Type(declaration) => {
-                push_declaration_doc(
-                    &mut declarations,
-                    &mut pending_removed_comments,
-                    format_type_declaration(&declaration, doc),
-                    doc,
-                );
-            }
-            CompilationUnitItem::Field(declaration) => {
-                push_declaration_doc(
-                    &mut declarations,
-                    &mut pending_removed_comments,
-                    format_field_declaration(&declaration, doc),
-                    doc,
-                );
-            }
-            CompilationUnitItem::Method(declaration) => {
-                push_declaration_doc(
-                    &mut declarations,
-                    &mut pending_removed_comments,
-                    format_method_declaration(&declaration, doc),
-                    doc,
-                );
-            }
-            CompilationUnitItem::EmptyDeclaration(declaration) => {
-                if let Some(comments) =
-                    format_removed_comments(doc, comments_from_tokens(declaration.token_iter()))
-                {
-                    append_pending_removed_comments(&mut pending_removed_comments, comments, doc);
+    let mut has_declarations = false;
+    let declarations = doc.concat_list(|declarations| {
+        for item in items {
+            let declaration = match item {
+                CompilationUnitItem::Package(declaration) => {
+                    package = Some(declaration);
+                    None
                 }
+                CompilationUnitItem::Import(declaration) => {
+                    imports.push(declaration);
+                    None
+                }
+                CompilationUnitItem::Module(declaration) => {
+                    module = Some(declaration);
+                    None
+                }
+                CompilationUnitItem::Type(declaration) => {
+                    Some(format_type_declaration(&declaration, declarations))
+                }
+                CompilationUnitItem::Field(declaration) => {
+                    Some(format_field_declaration(&declaration, declarations))
+                }
+                CompilationUnitItem::Method(declaration) => {
+                    Some(format_method_declaration(&declaration, declarations))
+                }
+                CompilationUnitItem::EmptyDeclaration(declaration) => {
+                    if let Some(comments) = format_removed_comments(
+                        declarations,
+                        comments_from_tokens(declaration.token_iter()),
+                    ) {
+                        append_pending_removed_comments(
+                            &mut pending_removed_comments,
+                            comments,
+                            declarations,
+                        );
+                    }
+                    None
+                }
+            };
+
+            if let Some(declaration) = declaration {
+                let declaration = prepend_pending_removed_comments(
+                    &mut pending_removed_comments,
+                    declaration,
+                    declarations,
+                );
+                if !declarations.is_empty() {
+                    let empty_line = declarations.empty_line();
+                    declarations.push(empty_line);
+                }
+                declarations.push(declaration);
             }
         }
-    }
 
-    if let Some(comments) = pending_removed_comments {
-        if !declarations.is_empty() {
-            declarations.push(doc.empty_line(), doc);
+        if let Some(comments) = pending_removed_comments.take() {
+            if !declarations.is_empty() {
+                let empty_line = declarations.empty_line();
+                declarations.push(empty_line);
+            }
+            declarations.push(comments);
         }
-        declarations.push(comments, doc);
-    }
+        has_declarations = !declarations.is_empty();
+    });
 
     if let Some(package) = package {
         sections.push(format_package_declaration(&package, doc));
@@ -154,28 +171,23 @@ fn format_compilation_unit_items<'source>(
         sections.push(format_module_declaration(&module, doc));
     }
 
-    if !declarations.is_empty() {
-        sections.push(declarations.finish(doc));
+    if has_declarations {
+        sections.push(declarations);
     }
 
     (!sections.is_empty()).then(|| join_empty_lines(doc, sections))
 }
 
-fn push_declaration_doc<'source>(
-    declarations: &mut DocList<'source>,
+fn prepend_pending_removed_comments<'source>(
     pending_removed_comments: &mut Option<Doc<'source>>,
     declaration: Doc<'source>,
     doc: &mut DocBuilder<'source>,
-) {
-    let declaration = if let Some(comments) = pending_removed_comments.take() {
+) -> Doc<'source> {
+    if let Some(comments) = pending_removed_comments.take() {
         doc_concat!(doc, [comments, doc.hard_line(), declaration])
     } else {
         declaration
-    };
-    if !declarations.is_empty() {
-        declarations.push(doc.empty_line(), doc);
     }
-    declarations.push(declaration, doc);
 }
 
 fn append_pending_removed_comments<'source>(
@@ -284,21 +296,21 @@ fn join_program_sections<'source>(
     sections: Vec<ProgramSection<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let mut joined = doc.list();
     let mut previous_hard_line_after = false;
-    for section in sections {
-        if !joined.is_empty() {
-            let separator = if previous_hard_line_after {
-                doc.hard_line()
-            } else {
-                doc.empty_line()
-            };
-            joined.push(separator, doc);
+    doc.concat_list(|joined| {
+        for section in sections {
+            if !joined.is_empty() {
+                let separator = if previous_hard_line_after {
+                    joined.hard_line()
+                } else {
+                    joined.empty_line()
+                };
+                joined.push(separator);
+            }
+            joined.push(section.doc);
+            previous_hard_line_after = section.hard_line_after;
         }
-        joined.push(section.doc, doc);
-        previous_hard_line_after = section.hard_line_after;
-    }
-    joined.finish(doc)
+    })
 }
 
 struct ProgramSection<'source> {
@@ -342,16 +354,16 @@ fn format_recovered_compilation_unit_item<'source>(
         jolt_java_syntax::RecoveredSeparatedListEntry::Entry(_) => None,
         jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
             if token.kind() == JavaSyntaxKind::Eof {
-                let mut comments = doc.list();
-                for comment in token.leading_comments().chain(token.trailing_comments()) {
-                    if !comments.is_empty() {
-                        let hard_line = doc.hard_line();
-                        comments.push(hard_line, doc);
+                Some(doc.concat_list(|comments| {
+                    for comment in token.leading_comments().chain(token.trailing_comments()) {
+                        if !comments.is_empty() {
+                            let hard_line = comments.hard_line();
+                            comments.push(hard_line);
+                        }
+                        let comment = format_comment(comments, &comment);
+                        comments.push(comment);
                     }
-                    let comment = format_comment(doc, &comment);
-                    comments.push(comment, doc);
-                }
-                Some(comments.finish(doc))
+                }))
             } else {
                 Some(format_token_sequence(
                     doc,
@@ -377,16 +389,18 @@ fn format_package_declaration<'source>(
     package: &PackageDeclaration<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let mut annotations = doc.list();
-    for annotation in package.annotations() {
-        if !annotations.is_empty() {
-            let hard_line = doc.hard_line();
-            annotations.push(hard_line, doc);
+    let mut has_annotations = false;
+    let annotations = doc.concat_list(|annotations| {
+        for annotation in package.annotations() {
+            if !annotations.is_empty() {
+                let hard_line = annotations.hard_line();
+                annotations.push(hard_line);
+            }
+            let annotation = format_annotation(&annotation, annotations);
+            annotations.push(annotation);
         }
-        let annotation = format_annotation(&annotation, doc);
-        annotations.push(annotation, doc);
-    }
-    let has_annotations = !annotations.is_empty();
+        has_annotations = !annotations.is_empty();
+    });
 
     let package_token = match package.package_token() {
         Some(token) => {
@@ -407,7 +421,6 @@ fn format_package_declaration<'source>(
     let declaration = doc_concat!(doc, [package_token, name, semicolon]);
 
     if has_annotations {
-        let annotations = annotations.finish(doc);
         let hard_line = doc.hard_line();
         doc_concat!(doc, [annotations, hard_line, declaration])
     } else {

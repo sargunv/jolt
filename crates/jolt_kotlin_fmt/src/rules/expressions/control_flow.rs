@@ -685,33 +685,33 @@ fn format_when_conditions<'source>(
     )
     .into_iter()
     .peekable();
-    let mut docs = doc.list();
-    while let Some(entry) = entries.next() {
-        docs.push(entry.doc, doc);
-        if let Some(comma) = entry.comma {
-            let comma = format_token(
-                doc,
-                &comma,
-                LeadingTrivia::Preserve,
-                TrailingTrivia::BeforeSpaceIfComments,
-            );
-            docs.push(comma, doc);
-            if entries.peek().is_some() {
-                let space = doc.space();
-                docs.push(space, doc);
+    doc.concat_list(|docs| {
+        while let Some(entry) = entries.next() {
+            docs.push(entry.doc);
+            if let Some(comma) = entry.comma {
+                let comma = format_token(
+                    docs,
+                    &comma,
+                    LeadingTrivia::Preserve,
+                    TrailingTrivia::BeforeSpaceIfComments,
+                );
+                docs.push(comma);
+                if entries.peek().is_some() {
+                    let space = docs.space();
+                    docs.push(space);
+                }
+            } else if entries.peek().is_some() {
+                let space = docs.space();
+                docs.push(space);
             }
-        } else if entries.peek().is_some() {
-            let space = doc.space();
-            docs.push(space, doc);
         }
-    }
-    if let Some(guard) = entry.guard() {
-        let space = doc.space();
-        docs.push(space, doc);
-        let guard = format_when_guard(doc, &guard);
-        docs.push(guard, doc);
-    }
-    docs.finish(doc)
+        if let Some(guard) = entry.guard() {
+            let space = docs.space();
+            docs.push(space);
+            let guard = format_when_guard(docs, &guard);
+            docs.push(guard);
+        }
+    })
 }
 
 fn format_when_condition<'source>(

@@ -124,29 +124,29 @@ pub fn formatter_ignore_run_doc<'source>(
     match stripped {
         Cow::Borrowed(text) => {
             let lines = text.split('\n');
-            let mut docs = doc.list();
-            for line in lines {
-                if !docs.is_empty() {
-                    let line_break = doc.hard_line();
-                    docs.push(line_break, doc);
+            doc.concat_list(|docs| {
+                for line in lines {
+                    if !docs.is_empty() {
+                        let line_break = docs.hard_line();
+                        docs.push(line_break);
+                    }
+                    let line = docs.text(line);
+                    docs.push(line);
                 }
-                let line = doc.text(line);
-                docs.push(line, doc);
-            }
-            docs.finish(doc)
+            })
         }
         Cow::Owned(text) => {
             let lines = text.split('\n');
-            let mut docs = doc.list();
-            for line in lines {
-                if !docs.is_empty() {
-                    let line_break = doc.hard_line();
-                    docs.push(line_break, doc);
+            doc.concat_list(|docs| {
+                for line in lines {
+                    if !docs.is_empty() {
+                        let line_break = docs.hard_line();
+                        docs.push(line_break);
+                    }
+                    let line = docs.text(line.to_owned());
+                    docs.push(line);
                 }
-                let line = doc.text(line.to_owned());
-                docs.push(line, doc);
-            }
-            docs.finish(doc)
+            })
         }
     }
 }

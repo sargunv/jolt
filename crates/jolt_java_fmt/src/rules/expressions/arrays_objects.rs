@@ -84,12 +84,12 @@ pub(super) fn format_array_creation_expression<'source>(
     let ty = expression
         .ty()
         .map_or_else(Doc::nil, |ty| format_type(&ty, doc));
-    let mut dimensions = doc.list();
-    for dimension in expression.dimensions() {
-        let dimension = format_dim_expression(&dimension, doc);
-        dimensions.push(dimension, doc);
-    }
-    let dimensions = dimensions.finish(doc);
+    let dimensions = doc.concat_list(|dimensions| {
+        for dimension in expression.dimensions() {
+            let dimension = format_dim_expression(&dimension, dimensions);
+            dimensions.push(dimension);
+        }
+    });
     let initializer = expression
         .initializer()
         .map_or_else(Doc::nil, |initializer| {

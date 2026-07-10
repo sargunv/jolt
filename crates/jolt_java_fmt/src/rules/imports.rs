@@ -47,35 +47,36 @@ fn format_import_run<'source>(
     normal_imports.sort_by(|lhs, rhs| lhs.path.cmp(&rhs.path));
     static_imports.sort_by(|lhs, rhs| lhs.path.cmp(&rhs.path));
 
-    let mut docs = doc.list();
-    if !normal_imports.is_empty() {
-        let normal_imports = format_import_list(normal_imports, doc);
-        docs.push(normal_imports, doc);
-    }
-    if !static_imports.is_empty() {
-        if !docs.is_empty() {
-            docs.push(doc.empty_line(), doc);
+    doc.concat_list(|docs| {
+        if !normal_imports.is_empty() {
+            let normal_imports = format_import_list(normal_imports, docs);
+            docs.push(normal_imports);
         }
-        let static_imports = format_import_list(static_imports, doc);
-        docs.push(static_imports, doc);
-    }
-
-    docs.finish(doc)
+        if !static_imports.is_empty() {
+            if !docs.is_empty() {
+                let empty_line = docs.empty_line();
+                docs.push(empty_line);
+            }
+            let static_imports = format_import_list(static_imports, docs);
+            docs.push(static_imports);
+        }
+    })
 }
 
 fn format_import_list<'source>(
     imports: Vec<FormattedImport<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let mut docs = doc.list();
-    for import in imports {
-        if !docs.is_empty() {
-            docs.push(doc.hard_line(), doc);
+    doc.concat_list(|docs| {
+        for import in imports {
+            if !docs.is_empty() {
+                let hard_line = docs.hard_line();
+                docs.push(hard_line);
+            }
+            let import = import.into_doc(docs);
+            docs.push(import);
         }
-        let import = import.into_doc(doc);
-        docs.push(import, doc);
-    }
-    docs.finish(doc)
+    })
 }
 
 struct FormattedImport<'source> {
@@ -178,19 +179,20 @@ impl<'source> FormattedImport<'source> {
         {
             import
         } else {
-            let mut leading_comments = doc.list();
-            for comment in self
-                .first_token
-                .into_iter()
-                .flat_map(|token| token.leading_comments())
-            {
-                if !leading_comments.is_empty() {
-                    leading_comments.push(doc.hard_line(), doc);
+            let leading_comments = doc.concat_list(|leading_comments| {
+                for comment in self
+                    .first_token
+                    .into_iter()
+                    .flat_map(|token| token.leading_comments())
+                {
+                    if !leading_comments.is_empty() {
+                        let hard_line = leading_comments.hard_line();
+                        leading_comments.push(hard_line);
+                    }
+                    let comment = format_comment(leading_comments, &comment);
+                    leading_comments.push(comment);
                 }
-                let comment = format_comment(doc, &comment);
-                leading_comments.push(comment, doc);
-            }
-            let leading_comments = leading_comments.finish(doc);
+            });
             doc_concat!(doc, [leading_comments, doc.hard_line(), import,])
         }
     }

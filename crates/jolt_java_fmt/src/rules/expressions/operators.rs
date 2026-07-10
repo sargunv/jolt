@@ -7,7 +7,7 @@ use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_token, format_token_sequence,
 };
 use crate::helpers::syntax_tokens::{FormatterInsertedToken, inserted_syntax_token};
-use jolt_fmt_ir::{DocBuilder, DocList};
+use jolt_fmt_ir::DocBuilder;
 use jolt_java_syntax::{ExpressionParentRole, JavaOperator};
 
 pub(super) fn format_assignment_expression<'source>(
@@ -80,15 +80,17 @@ pub(super) fn format_binary_expression<'source>(
             Some(right) => format_expression(&right, doc),
             None => Doc::nil(),
         };
-        let mut rest = doc.list();
-        push_binary_chain_item(&mut rest, operator, right, doc);
-        return binary_chain(doc, Doc::nil(), rest);
+        let rest = doc.concat_list(|rest| {
+            let item = binary_chain_item(operator, right, rest);
+            rest.push(item);
+        });
+        return binary_chain(doc, Doc::nil(), rest, true);
     }
 
     let parent_operator = operator.text();
-    let (first, rest) = flatten_binary_expression(expression, doc);
+    let (first, rest, has_rest) = flatten_binary_expression(expression, doc);
     let first = format_binary_operand(&first, parent_operator, doc);
-    binary_chain(doc, first, rest)
+    binary_chain(doc, first, rest, has_rest)
 }
 
 fn format_binary_expression_without_operator<'source>(
@@ -143,18 +145,23 @@ pub(super) fn format_postfix_expression<'source>(
 fn flatten_binary_expression<'source>(
     expression: &BinaryExpression<'source>,
     doc: &mut DocBuilder<'source>,
-) -> (Expression<'source>, DocList<'source>) {
+) -> (Expression<'source>, Doc<'source>, bool) {
     let Some(operator) = expression.operator() else {
-        let mut rest = doc.list();
-        if let Some(right) = expression.right() {
-            let right = format_expression(&right, doc);
-            push_binary_chain_item(&mut rest, Doc::nil(), right, doc);
-        }
+        let mut has_rest = false;
+        let rest = doc.concat_list(|rest| {
+            if let Some(right) = expression.right() {
+                let right = format_expression(&right, rest);
+                let item = binary_chain_item(Doc::nil(), right, rest);
+                rest.push(item);
+            }
+            has_rest = !rest.is_empty();
+        });
         return (
             expression
                 .left()
                 .unwrap_or_else(|| Expression::from(*expression)),
             rest,
+            has_rest,
         );
     };
     let root = Expression::from(*expression);
@@ -167,14 +174,18 @@ fn flatten_binary_expression<'source>(
 
     let mut operands = operands.into_iter();
     let first = operands.next().unwrap_or(root);
-    let mut rest = doc.list();
-    for (operator, operand) in operators.into_iter().zip(operands) {
-        let operand = format_binary_operand(&operand, operator.text(), doc);
-        let operator = format_operator_with_comments(&operator, doc);
-        push_binary_chain_item(&mut rest, operator, operand, doc);
-    }
+    let mut has_rest = false;
+    let rest = doc.concat_list(|rest| {
+        for (operator, operand) in operators.into_iter().zip(operands) {
+            let operand = format_binary_operand(&operand, operator.text(), rest);
+            let operator = format_operator_with_comments(&operator, rest);
+            let item = binary_chain_item(operator, operand, rest);
+            rest.push(item);
+        }
+        has_rest = !rest.is_empty();
+    });
 
-    (first, rest)
+    (first, rest, has_rest)
 }
 
 fn format_binary_operand<'source>(
@@ -212,19 +223,22 @@ fn unflattened_binary_expression<'source>(
     expression: &BinaryExpression<'source>,
     doc: &mut DocBuilder<'source>,
     operator: &JavaOperator<'source>,
-) -> (Expression<'source>, DocList<'source>) {
+) -> (Expression<'source>, Doc<'source>, bool) {
     let operator = format_operator_with_comments(operator, doc);
     let right = expression
         .right()
         .map_or_else(Doc::nil, |right| format_expression(&right, doc));
-    let mut rest = doc.list();
-    push_binary_chain_item(&mut rest, operator, right, doc);
+    let rest = doc.concat_list(|rest| {
+        let item = binary_chain_item(operator, right, rest);
+        rest.push(item);
+    });
 
     (
         expression
             .left()
             .unwrap_or_else(|| Expression::from(*expression)),
         rest,
+        true,
     )
 }
 
@@ -303,27 +317,27 @@ fn format_operator_with_comments<'source>(
     }
 
     let mut tokens = operator.tokens().enumerate().peekable();
-    let mut docs = doc.list();
-    while let Some((index, token)) = tokens.next() {
-        let is_first = index == 0;
-        let is_last = tokens.peek().is_none();
-        let token = format_token(
-            doc,
-            &token,
-            if is_first {
-                LeadingTrivia::Preserve
-            } else {
-                LeadingTrivia::SuppressAlreadyHandled
-            },
-            if is_last {
-                TrailingTrivia::Preserve
-            } else {
-                TrailingTrivia::RelocatedToEnclosingContext
-            },
-        );
-        docs.push(token, doc);
-    }
-    docs.finish(doc)
+    doc.concat_list(|docs| {
+        while let Some((index, token)) = tokens.next() {
+            let is_first = index == 0;
+            let is_last = tokens.peek().is_none();
+            let token = format_token(
+                docs,
+                &token,
+                if is_first {
+                    LeadingTrivia::Preserve
+                } else {
+                    LeadingTrivia::SuppressAlreadyHandled
+                },
+                if is_last {
+                    TrailingTrivia::Preserve
+                } else {
+                    TrailingTrivia::RelocatedToEnclosingContext
+                },
+            );
+            docs.push(token);
+        }
+    })
 }
 
 fn assignment_expression<'source>(
@@ -348,26 +362,24 @@ fn assignment_rhs<'source>(right: Doc<'source>, doc: &mut DocBuilder<'source>) -
 fn binary_chain<'source>(
     doc: &mut DocBuilder<'source>,
     first: Doc<'source>,
-    rest: DocList<'source>,
+    rest: Doc<'source>,
+    has_rest: bool,
 ) -> Doc<'source> {
-    if rest.is_empty() {
+    if !has_rest {
         return first;
     }
-    let rest = rest.finish(doc);
 
     doc_group!(doc, doc_concat!(doc, [first, doc_indent!(doc, rest),]))
 }
 
-fn push_binary_chain_item<'source>(
-    rest: &mut DocList<'source>,
+fn binary_chain_item<'source>(
     operator: Doc<'source>,
     operand: Doc<'source>,
     doc: &mut DocBuilder<'source>,
-) {
+) -> Doc<'source> {
     let line = doc.line();
     let space = doc.space();
-    let item = doc_concat!(doc, [line, operator, space, operand]);
-    rest.push(item, doc);
+    doc_concat!(doc, [line, operator, space, operand])
 }
 
 fn ternary_expression<'source>(

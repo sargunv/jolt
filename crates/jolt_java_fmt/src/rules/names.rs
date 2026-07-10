@@ -90,22 +90,22 @@ fn format_inline_name<'source>(
     segments: impl IntoIterator<Item = NameSegment<'source>>,
 ) -> Doc<'source> {
     let mut segments = segments.into_iter().peekable();
-    let mut docs = doc.list();
     let mut index = 0;
-    while let Some(segment) = segments.next() {
-        if index > 0 {
-            let dot = segment
-                .dot_before
-                .as_ref()
-                .map_or_else(Doc::nil, |dot| format_name_dot(doc, dot));
-            docs.push(dot, doc);
+    doc.concat_list(|docs| {
+        while let Some(segment) = segments.next() {
+            if index > 0 {
+                let dot = segment
+                    .dot_before
+                    .as_ref()
+                    .map_or_else(Doc::nil, |dot| format_name_dot(docs, dot));
+                docs.push(dot);
+            }
+            let identifier =
+                format_inline_name_segment_identifier(docs, &segment, segments.peek().is_some());
+            docs.push(identifier);
+            index += 1;
         }
-        let identifier =
-            format_inline_name_segment_identifier(doc, &segment, segments.peek().is_some());
-        docs.push(identifier, doc);
-        index += 1;
-    }
-    docs.finish(doc)
+    })
 }
 
 fn format_multiline_name<'source>(
@@ -117,14 +117,14 @@ fn format_multiline_name<'source>(
         return Doc::nil();
     };
 
-    let mut rest = doc.list();
-    for segment in segments {
-        let hard_line = doc.hard_line();
-        let segment = format_leading_dot_segment(doc, &segment);
-        let segment = doc_concat!(doc, [hard_line, segment]);
-        rest.push(segment, doc);
-    }
-    let rest = rest.finish(doc);
+    let rest = doc.concat_list(|rest| {
+        for segment in segments {
+            let hard_line = rest.hard_line();
+            let segment = format_leading_dot_segment(rest, &segment);
+            let segment = doc_concat!(rest, [hard_line, segment]);
+            rest.push(segment);
+        }
+    });
 
     doc_concat!(
         doc,
@@ -210,32 +210,37 @@ fn format_leading_dot_comments<'source>(
     doc: &mut DocBuilder<'source>,
     comments: impl IntoIterator<Item = JavaComment<'source>>,
 ) -> Doc<'source> {
-    let comments = comments.into_iter();
-    let mut docs = doc.list();
-    for comment in comments {
-        docs.push(doc.space(), doc);
-        docs.push(format_comment(doc, &comment), doc);
-        if comment_forces_line(&comment) {
-            docs.push(doc.hard_line(), doc);
+    doc.concat_list(|docs| {
+        for comment in comments {
+            let space = docs.space();
+            docs.push(space);
+            let comment_doc = format_comment(docs, &comment);
+            docs.push(comment_doc);
+            if comment_forces_line(&comment) {
+                let hard_line = docs.hard_line();
+                docs.push(hard_line);
+            }
         }
-    }
-    docs.finish(doc)
+    })
 }
 
 fn format_inline_comments<'source>(
     doc: &mut DocBuilder<'source>,
     comments: impl IntoIterator<Item = JavaComment<'source>>,
 ) -> Doc<'source> {
-    let comments = comments.into_iter();
-    let mut docs = doc.list();
-    for comment in comments {
-        docs.push(doc.space(), doc);
-        docs.push(format_comment(doc, &comment), doc);
-        if comment_forces_line(&comment) {
-            docs.push(doc.hard_line(), doc);
-        } else {
-            docs.push(doc.space(), doc);
+    doc.concat_list(|docs| {
+        for comment in comments {
+            let space = docs.space();
+            docs.push(space);
+            let comment_doc = format_comment(docs, &comment);
+            docs.push(comment_doc);
+            if comment_forces_line(&comment) {
+                let hard_line = docs.hard_line();
+                docs.push(hard_line);
+            } else {
+                let space = docs.space();
+                docs.push(space);
+            }
         }
-    }
-    docs.finish(doc)
+    })
 }

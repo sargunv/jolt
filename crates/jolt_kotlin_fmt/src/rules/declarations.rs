@@ -518,47 +518,49 @@ pub(super) fn format_explicit_backing_field<'source>(
     doc: &mut DocBuilder<'source>,
     field: &ExplicitBackingField<'source>,
 ) -> Doc<'source> {
-    let mut docs = doc.list();
-
-    if let Some(keyword) = field.field_token() {
-        let keyword = format_token(
-            doc,
-            &keyword,
-            LeadingTrivia::SuppressAlreadyHandled,
-            TrailingTrivia::RelocatedToEnclosingContext,
-        );
-        docs.push(keyword, doc);
-    }
-    if let Some(assign) = field.assign_token() {
-        if !docs.is_empty() {
-            let space = doc.space();
-            docs.push(space, doc);
+    let mut is_empty = true;
+    let result = doc.concat_list(|docs| {
+        if let Some(keyword) = field.field_token() {
+            let keyword = format_token(
+                docs,
+                &keyword,
+                LeadingTrivia::SuppressAlreadyHandled,
+                TrailingTrivia::RelocatedToEnclosingContext,
+            );
+            docs.push(keyword);
         }
-        let assign = format_token(
-            doc,
-            &assign,
-            LeadingTrivia::Preserve,
-            TrailingTrivia::BeforeSpaceIfComments,
-        );
-        docs.push(assign, doc);
-    }
-    if let Some(expression) = field.expression() {
-        if !docs.is_empty() {
-            let space = doc.space();
-            docs.push(space, doc);
+        if let Some(assign) = field.assign_token() {
+            if !docs.is_empty() {
+                let space = docs.space();
+                docs.push(space);
+            }
+            let assign = format_token(
+                docs,
+                &assign,
+                LeadingTrivia::Preserve,
+                TrailingTrivia::BeforeSpaceIfComments,
+            );
+            docs.push(assign);
         }
-        let expression = format_expression(doc, &expression);
-        docs.push(expression, doc);
-    }
+        if let Some(expression) = field.expression() {
+            if !docs.is_empty() {
+                let space = docs.space();
+                docs.push(space);
+            }
+            let expression = format_expression(docs, &expression);
+            docs.push(expression);
+        }
+        is_empty = docs.is_empty();
+    });
 
-    if docs.is_empty() {
+    if is_empty {
         format_token_sequence(
             doc,
             field.token_iter(),
             LeadingTrivia::SuppressAlreadyHandled,
         )
     } else {
-        docs.finish(doc)
+        result
     }
 }
 
@@ -710,25 +712,25 @@ fn format_inline_modifier_prefix<'source>(
 ) -> Doc<'source> {
     let annotations = modifiers.annotations();
     let modifier_tokens = modifiers.modifier_tokens();
-    let mut docs = doc.list();
-    for annotation in annotations {
-        let annotation = format_annotation(doc, &annotation);
-        docs.push(annotation, doc);
-        let space = doc.space();
-        docs.push(space, doc);
-    }
-    for token in modifier_tokens {
-        let token = format_token(
-            doc,
-            &token,
-            LeadingTrivia::Preserve,
-            TrailingTrivia::RelocatedToEnclosingContext,
-        );
-        docs.push(token, doc);
-        let space = doc.space();
-        docs.push(space, doc);
-    }
-    docs.finish(doc)
+    doc.concat_list(|docs| {
+        for annotation in annotations {
+            let annotation = format_annotation(docs, &annotation);
+            docs.push(annotation);
+            let space = docs.space();
+            docs.push(space);
+        }
+        for token in modifier_tokens {
+            let token = format_token(
+                docs,
+                &token,
+                LeadingTrivia::Preserve,
+                TrailingTrivia::RelocatedToEnclosingContext,
+            );
+            docs.push(token);
+            let space = docs.space();
+            docs.push(space);
+        }
+    })
 }
 
 struct FormattedCallableName<'source> {

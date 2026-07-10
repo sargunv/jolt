@@ -107,26 +107,24 @@ fn format_expression_with_leading<'source>(
         Expression::DoWhileStatement(expression) => {
             format_do_while_statement(doc, expression, leading)
         }
-        Expression::LoopExpression(expression) => {
-            let mut docs = doc.list();
+        Expression::LoopExpression(expression) => doc.concat_list(|docs| {
             if let Some(keyword) = expression.loop_token() {
-                let keyword = format_token(doc, &keyword, leading, TrailingTrivia::Preserve);
-                docs.push(keyword, doc);
+                let keyword = format_token(docs, &keyword, leading, TrailingTrivia::Preserve);
+                docs.push(keyword);
             }
             if let Some(condition) = expression.condition() {
                 let condition =
-                    format_parenthesized_expression(doc, &condition, LeadingTrivia::Preserve);
-                docs.push(condition, doc);
+                    format_parenthesized_expression(docs, &condition, LeadingTrivia::Preserve);
+                docs.push(condition);
             }
             if let Some(block) = expression.block_body() {
-                let block = crate::rules::statements::format_block(doc, &block);
-                docs.push(block, doc);
+                let block = crate::rules::statements::format_block(docs, &block);
+                docs.push(block);
             } else if let Some(body) = expression.expression_body() {
-                let body = format_expression_with_leading(doc, &body, LeadingTrivia::Preserve);
-                docs.push(body, doc);
+                let body = format_expression_with_leading(docs, &body, LeadingTrivia::Preserve);
+                docs.push(body);
             }
-            docs.finish(doc)
-        }
+        }),
         Expression::JumpExpression(expression) => format_jump_expression(doc, expression, leading),
         Expression::ThrowExpression(expression) => {
             format_throw_expression(doc, expression, leading)
@@ -152,30 +150,30 @@ fn format_annotated_expression<'source>(
     leading: LeadingTrivia,
 ) -> Doc<'source> {
     let annotations = expression.annotations();
-    let mut docs = doc.list();
-    for (index, annotation) in annotations.enumerate() {
-        let annotation_doc = format_annotation_with_leading(
-            doc,
-            &annotation,
-            if index == 0 {
-                leading
-            } else {
-                LeadingTrivia::Preserve
-            },
-        );
-        docs.push(annotation_doc, doc);
-        if !annotation_trailing_comment_forces_line(&annotation) {
-            let hard_line = doc.hard_line();
-            docs.push(hard_line, doc);
+    doc.concat_list(|docs| {
+        for (index, annotation) in annotations.enumerate() {
+            let annotation_doc = format_annotation_with_leading(
+                docs,
+                &annotation,
+                if index == 0 {
+                    leading
+                } else {
+                    LeadingTrivia::Preserve
+                },
+            );
+            docs.push(annotation_doc);
+            if !annotation_trailing_comment_forces_line(&annotation) {
+                let hard_line = docs.hard_line();
+                docs.push(hard_line);
+            }
         }
-    }
-    let expression = if let Some(inner) = expression.expression() {
-        format_expression_without_leading(doc, &inner)
-    } else {
-        doc.nil()
-    };
-    docs.push(expression, doc);
-    docs.finish(doc)
+        let expression = if let Some(inner) = expression.expression() {
+            format_expression_without_leading(docs, &inner)
+        } else {
+            docs.nil()
+        };
+        docs.push(expression);
+    })
 }
 
 fn annotation_trailing_comment_forces_line(annotation: &Annotation<'_>) -> bool {

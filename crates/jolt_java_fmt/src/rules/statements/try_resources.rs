@@ -199,53 +199,63 @@ fn format_resource_lines<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Option<Doc<'source>> {
     let mut entries = list.entries_with_recovered().peekable();
-    let mut joined = doc.list();
     let mut trailing_comments = trailing_comments;
-
-    while let Some(entry) = entries.next() {
-        let has_next = entries.peek().is_some();
-        match entry {
-            jolt_java_syntax::RecoveredSeparatedListEntry::Entry(entry) => {
-                let resource = format_resource(&entry.resource, doc);
-                joined.push(resource, doc);
-                if has_next {
-                    joined.push(format_statement_semicolon(entry.separator, doc), doc);
-                    joined.push(doc.hard_line(), doc);
-                } else if let Some(comments) = trailing_comments.take() {
-                    joined.push(doc.hard_line(), doc);
-                    joined.push(comments, doc);
+    let mut has_entries = false;
+    let joined = doc.concat_list(|joined| {
+        while let Some(entry) = entries.next() {
+            let has_next = entries.peek().is_some();
+            match entry {
+                jolt_java_syntax::RecoveredSeparatedListEntry::Entry(entry) => {
+                    let resource = format_resource(&entry.resource, joined);
+                    joined.push(resource);
+                    if has_next {
+                        let separator = format_statement_semicolon(entry.separator, joined);
+                        joined.push(separator);
+                        let hard_line = joined.hard_line();
+                        joined.push(hard_line);
+                    } else if let Some(comments) = trailing_comments.take() {
+                        let hard_line = joined.hard_line();
+                        joined.push(hard_line);
+                        joined.push(comments);
+                    }
                 }
-            }
-            jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
-                let token = format_token(
-                    doc,
-                    &token,
-                    LeadingTrivia::Preserve,
-                    TrailingTrivia::Preserve,
-                );
-                joined.push(token, doc);
-                if has_next {
-                    joined.push(doc.hard_line(), doc);
+                jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
+                    let token = format_token(
+                        joined,
+                        &token,
+                        LeadingTrivia::Preserve,
+                        TrailingTrivia::Preserve,
+                    );
+                    joined.push(token);
+                    if has_next {
+                        let hard_line = joined.hard_line();
+                        joined.push(hard_line);
+                    }
                 }
-            }
-            jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => {
-                let error = format_token_sequence(doc, error.token_iter(), LeadingTrivia::Preserve);
-                joined.push(error, doc);
-                if has_next {
-                    joined.push(doc.hard_line(), doc);
+                jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => {
+                    let error =
+                        format_token_sequence(joined, error.token_iter(), LeadingTrivia::Preserve);
+                    joined.push(error);
+                    if has_next {
+                        let hard_line = joined.hard_line();
+                        joined.push(hard_line);
+                    }
                 }
-            }
-            jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => {
-                let node = format_token_sequence(doc, node.token_iter(), LeadingTrivia::Preserve);
-                joined.push(node, doc);
-                if has_next {
-                    joined.push(doc.hard_line(), doc);
+                jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => {
+                    let node =
+                        format_token_sequence(joined, node.token_iter(), LeadingTrivia::Preserve);
+                    joined.push(node);
+                    if has_next {
+                        let hard_line = joined.hard_line();
+                        joined.push(hard_line);
+                    }
                 }
             }
         }
-    }
+        has_entries = !joined.is_empty();
+    });
 
-    (!joined.is_empty()).then(|| joined.finish(doc))
+    has_entries.then_some(joined)
 }
 
 fn format_resource<'source>(
@@ -269,11 +279,12 @@ fn format_catch_clauses<'source>(
     clauses: impl Iterator<Item = CatchClause<'source>> + 'source,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let mut docs = doc.list();
-    for clause in clauses {
-        docs.push(format_catch_clause(&clause, doc), doc);
-    }
-    docs.finish(doc)
+    doc.concat_list(|docs| {
+        for clause in clauses {
+            let clause = format_catch_clause(&clause, docs);
+            docs.push(clause);
+        }
+    })
 }
 
 fn format_catch_clause<'source>(
@@ -359,24 +370,30 @@ fn format_catch_modifier_prefix<'source>(
         );
     }
 
-    let mut prefix = doc.list();
-    for annotation in annotations {
-        if !prefix.is_empty() {
-            prefix.push(doc.space(), doc);
+    doc.concat_list(|prefix| {
+        for annotation in annotations {
+            if !prefix.is_empty() {
+                let space = prefix.space();
+                prefix.push(space);
+            }
+            let annotation = format_annotation(&annotation, prefix);
+            prefix.push(annotation);
         }
-        prefix.push(format_annotation(&annotation, doc), doc);
-    }
 
-    if modifiers.is_empty() {
-        prefix.push(doc.space(), doc);
-    } else {
-        let modifiers =
-            inline_modifier_prefix_from_docs(doc, std::iter::empty::<Doc<'source>>(), modifiers);
-        prefix.push(doc.space(), doc);
-        prefix.push(modifiers, doc);
-    }
-
-    prefix.finish(doc)
+        if modifiers.is_empty() {
+            let space = prefix.space();
+            prefix.push(space);
+        } else {
+            let modifiers = inline_modifier_prefix_from_docs(
+                prefix,
+                std::iter::empty::<Doc<'source>>(),
+                modifiers,
+            );
+            let space = prefix.space();
+            prefix.push(space);
+            prefix.push(modifiers);
+        }
+    })
 }
 
 fn format_catch_type_list<'source>(
@@ -394,24 +411,29 @@ fn format_catch_type_list<'source>(
         return name;
     };
 
-    let mut docs = doc.list();
-    for entry in entries {
-        let next = format_catch_type_part(entry, doc);
-        docs.push(current.doc, doc);
-        if let Some(separator) = current.separator {
-            let separator = format_catch_type_separator(Some(&separator), doc);
-            docs.push(separator, doc);
+    let mut has_prefix = false;
+    let contents = doc.concat_list(|docs| {
+        for entry in entries {
+            let next = format_catch_type_part(entry, docs);
+            docs.push(current.doc);
+            if let Some(separator) = current.separator {
+                let separator = format_catch_type_separator(Some(&separator), docs);
+                docs.push(separator);
+            }
+            current = next;
         }
-        current = next;
+        has_prefix = !docs.is_empty();
+        docs.push(current.doc);
+        let space = docs.space();
+        docs.push(space);
+        docs.push(name);
+    });
+
+    if !has_prefix {
+        return contents;
     }
 
-    let last = doc_concat!(doc, [current.doc, doc.space(), name]);
-    if docs.is_empty() {
-        return last;
-    }
-
-    docs.push(last, doc);
-    doc_group!(doc, docs.finish(doc))
+    doc_group!(doc, contents)
 }
 
 struct CatchTypePart<'source> {

@@ -1,4 +1,4 @@
-use jolt_fmt_ir::{Doc, DocBuilder, DocList};
+use jolt_fmt_ir::{ConcatBuilder, Doc, DocBuilder};
 use jolt_kotlin_syntax::{
     BlockItem, DestructuringDeclaration, LambdaExpression, LambdaParameter, LambdaParameterList,
     RecoveredSeparatedListEntry,
@@ -138,33 +138,33 @@ fn format_lambda_parameter_prefix<'source>(
     )
     .into_iter()
     .peekable();
-    let mut docs = doc.list();
-
-    while let Some(entry) = entries.next() {
-        docs.push(entry.doc, doc);
-        if let Some(comma) = entry.comma {
-            let space = doc.space();
-            let comma = format_separator_with_comments(doc, &comma, space);
-            docs.push(comma, doc);
-        } else if entries.peek().is_some() {
-            let space = doc.space();
-            docs.push(space, doc);
+    let result = doc.concat_list(|docs| {
+        while let Some(entry) = entries.next() {
+            docs.push(entry.doc);
+            if let Some(comma) = entry.comma {
+                let space = docs.space();
+                let comma = format_separator_with_comments(docs, &comma, space);
+                docs.push(comma);
+            } else if entries.peek().is_some() {
+                let space = docs.space();
+                docs.push(space);
+            }
         }
-    }
 
-    if !docs.is_empty() {
-        let space = doc.space();
-        docs.push(space, doc);
-    }
-    let arrow = format_token(
-        doc,
-        &arrow,
-        LeadingTrivia::SuppressAlreadyHandled,
-        TrailingTrivia::RelocatedToEnclosingContext,
-    );
-    docs.push(arrow, doc);
+        if !docs.is_empty() {
+            let space = docs.space();
+            docs.push(space);
+        }
+        let arrow = format_token(
+            docs,
+            &arrow,
+            LeadingTrivia::SuppressAlreadyHandled,
+            TrailingTrivia::RelocatedToEnclosingContext,
+        );
+        docs.push(arrow);
+    });
 
-    Some(docs.finish(doc))
+    Some(result)
 }
 
 fn format_lambda_parameter<'source>(
@@ -226,74 +226,79 @@ pub(super) fn lambda_body_doc<'source>(
     lambda: &LambdaExpression<'source>,
     items: &[BlockItem<'source>],
 ) -> LambdaBodyDoc<'source> {
-    let mut body = doc.list();
     let mut count = 0;
-    let mut recovered_docs = doc.list();
-
-    for entry in lambda.body_items_with_recovered() {
-        match entry {
-            RecoveredSeparatedListEntry::Entry(item) => {
-                push_recovered_lambda_docs(doc, &mut body, &mut count, &mut recovered_docs);
-                let item = format_block_item(doc, &item);
-                push_lambda_body_doc(doc, &mut body, &mut count, item);
-            }
-            RecoveredSeparatedListEntry::Token(token) => {
-                let token =
-                    format_token_sequence(doc, std::iter::once(token), LeadingTrivia::Preserve);
-                recovered_docs.push(token, doc);
-            }
-            RecoveredSeparatedListEntry::Error(error) => {
-                let error = format_token_sequence(doc, error.token_iter(), LeadingTrivia::Preserve);
-                recovered_docs.push(error, doc);
-            }
-            RecoveredSeparatedListEntry::Node(node) => {
-                let node = format_token_sequence(doc, node.token_iter(), LeadingTrivia::Preserve);
-                recovered_docs.push(node, doc);
+    let mut entries = lambda.body_items_with_recovered().peekable();
+    let body = doc.concat_list(|body| {
+        while let Some(entry) = entries.next() {
+            match entry {
+                RecoveredSeparatedListEntry::Entry(item) => {
+                    let item = format_block_item(body, &item);
+                    push_lambda_body_doc(body, &mut count, item);
+                }
+                recovered_entry => {
+                    let mut recovered_is_empty = true;
+                    let recovered = body.concat_list(|recovered_docs| {
+                        push_recovered_lambda_entry(recovered_docs, recovered_entry);
+                        while entries.peek().is_some_and(|entry| {
+                            !matches!(entry, RecoveredSeparatedListEntry::Entry(_))
+                        }) {
+                            let entry = entries.next().expect("peeked lambda body entry exists");
+                            push_recovered_lambda_entry(recovered_docs, entry);
+                        }
+                        recovered_is_empty = recovered_docs.is_empty();
+                    });
+                    if !recovered_is_empty {
+                        push_lambda_body_doc(body, &mut count, recovered);
+                    }
+                }
             }
         }
-    }
 
-    push_recovered_lambda_docs(doc, &mut body, &mut count, &mut recovered_docs);
-
-    if count == 0 {
-        for item in items {
-            let item = format_block_item(doc, item);
-            push_lambda_body_doc(doc, &mut body, &mut count, item);
+        if count == 0 {
+            for item in items {
+                let item = format_block_item(body, item);
+                push_lambda_body_doc(body, &mut count, item);
+            }
         }
-    }
+    });
 
     LambdaBodyDoc {
-        doc: (count > 0).then(|| body.finish(doc)),
+        doc: (count > 0).then_some(body),
         count,
     }
 }
 
-fn push_recovered_lambda_docs<'source>(
-    doc: &mut DocBuilder<'source>,
-    body: &mut DocList<'source>,
-    count: &mut usize,
-    recovered_docs: &mut DocList<'source>,
+fn push_recovered_lambda_entry<'source>(
+    recovered_docs: &mut ConcatBuilder<'_, 'source>,
+    entry: RecoveredSeparatedListEntry<'source, BlockItem<'source>>,
 ) {
-    if recovered_docs.is_empty() {
-        return;
-    }
-
-    let empty = doc.list();
-    let recovered = std::mem::replace(recovered_docs, empty).finish(doc);
-    push_lambda_body_doc(doc, body, count, recovered);
+    let recovered = match entry {
+        RecoveredSeparatedListEntry::Entry(_) => return,
+        RecoveredSeparatedListEntry::Token(token) => format_token_sequence(
+            recovered_docs,
+            std::iter::once(token),
+            LeadingTrivia::Preserve,
+        ),
+        RecoveredSeparatedListEntry::Error(error) => {
+            format_token_sequence(recovered_docs, error.token_iter(), LeadingTrivia::Preserve)
+        }
+        RecoveredSeparatedListEntry::Node(node) => {
+            format_token_sequence(recovered_docs, node.token_iter(), LeadingTrivia::Preserve)
+        }
+    };
+    recovered_docs.push(recovered);
 }
 
 fn push_lambda_body_doc<'source>(
-    doc: &mut DocBuilder<'source>,
-    body: &mut DocList<'source>,
+    body: &mut ConcatBuilder<'_, 'source>,
     count: &mut usize,
     item: Doc<'source>,
 ) {
     if *count > 0 {
-        let hard_line = doc.hard_line();
-        body.push(hard_line, doc);
+        let hard_line = body.hard_line();
+        body.push(hard_line);
     }
-    body.push(item, doc);
+    body.push(item);
     *count += 1;
 }
 

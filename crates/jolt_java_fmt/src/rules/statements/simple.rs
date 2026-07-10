@@ -226,33 +226,37 @@ fn format_semicolon_leading_comments<'source>(
     semicolon: &JavaSyntaxToken<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let comments = semicolon.leading_comments();
-    let mut docs = doc.list();
-    for comment in comments {
-        docs.push(doc.space(), doc);
-        docs.push(format_comment(doc, &comment), doc);
-        if comment_forces_line(&comment) {
-            docs.push(doc.hard_line(), doc);
+    doc.concat_list(|docs| {
+        for comment in semicolon.leading_comments() {
+            let space = docs.space();
+            docs.push(space);
+            let comment_doc = format_comment(docs, &comment);
+            docs.push(comment_doc);
+            if comment_forces_line(&comment) {
+                let hard_line = docs.hard_line();
+                docs.push(hard_line);
+            }
         }
-    }
-    docs.finish(doc)
+    })
 }
 
 fn format_terminator_trailing_comments<'source>(
     token: &JavaSyntaxToken<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let comments = token.trailing_comments();
-    let mut docs = doc.list();
-    for comment in comments {
-        if terminator_comment_starts_next_line(&comment) {
-            docs.push(doc.hard_line(), doc);
-        } else {
-            docs.push(doc.space(), doc);
+    doc.concat_list(|docs| {
+        for comment in token.trailing_comments() {
+            if terminator_comment_starts_next_line(&comment) {
+                let hard_line = docs.hard_line();
+                docs.push(hard_line);
+            } else {
+                let space = docs.space();
+                docs.push(space);
+            }
+            let comment_doc = format_comment(docs, &comment);
+            docs.push(comment_doc);
         }
-        docs.push(format_comment(doc, &comment), doc);
-    }
-    docs.finish(doc)
+    })
 }
 
 fn terminator_comment_starts_next_line(comment: &JavaComment<'_>) -> bool {

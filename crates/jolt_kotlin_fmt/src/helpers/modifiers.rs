@@ -20,21 +20,20 @@ where
         return doc.nil();
     }
 
-    let mut docs = doc.list();
-    for annotation in annotation_docs {
-        docs.push(annotation, doc);
-        let hard_line = doc.hard_line();
-        docs.push(hard_line, doc);
-    }
-    if !modifier_docs.is_empty() {
-        let space = doc.space();
-        let modifiers = doc.join(space, modifier_docs);
-        docs.push(modifiers, doc);
-        let space = doc.space();
-        docs.push(space, doc);
-    }
-
-    docs.finish(doc)
+    doc.concat_list(|docs| {
+        for annotation in annotation_docs {
+            docs.push(annotation);
+            let hard_line = docs.hard_line();
+            docs.push(hard_line);
+        }
+        if !modifier_docs.is_empty() {
+            let space = docs.space();
+            let modifiers = docs.join(space, modifier_docs);
+            docs.push(modifiers);
+            let space = docs.space();
+            docs.push(space);
+        }
+    })
 }
 
 fn format_modifier_token<'source>(

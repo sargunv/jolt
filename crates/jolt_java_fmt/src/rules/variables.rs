@@ -226,38 +226,44 @@ fn format_construct_prefix_annotations<'source>(
     annotations: impl IntoIterator<Item = Annotation<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Option<Doc<'source>> {
-    let mut docs = doc.list();
-    for (index, annotation) in annotations.into_iter().enumerate() {
-        if index > 0 {
-            let space = doc.space();
-            docs.push(space, doc);
+    let mut has_annotations = false;
+    let docs = doc.concat_list(|docs| {
+        for (index, annotation) in annotations.into_iter().enumerate() {
+            if index > 0 {
+                let space = docs.space();
+                docs.push(space);
+            }
+            let annotation = if index == 0 {
+                format_annotation_without_leading_comments(&annotation, docs)
+            } else {
+                format_annotation(&annotation, docs)
+            };
+            docs.push(annotation);
         }
-        let annotation = if index == 0 {
-            format_annotation_without_leading_comments(&annotation, doc)
-        } else {
-            format_annotation(&annotation, doc)
-        };
-        docs.push(annotation, doc);
-    }
+        has_annotations = !docs.is_empty();
+    });
 
-    (!docs.is_empty()).then(|| docs.finish(doc))
+    has_annotations.then_some(docs)
 }
 
 fn format_annotation_docs<'source>(
     annotations: impl IntoIterator<Item = Annotation<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Option<Doc<'source>> {
-    let mut docs = doc.list();
-    for annotation in annotations {
-        if !docs.is_empty() {
-            let space = doc.space();
-            docs.push(space, doc);
+    let mut has_annotations = false;
+    let docs = doc.concat_list(|docs| {
+        for annotation in annotations {
+            if !docs.is_empty() {
+                let space = docs.space();
+                docs.push(space);
+            }
+            let annotation = format_annotation(&annotation, docs);
+            docs.push(annotation);
         }
-        let annotation = format_annotation(&annotation, doc);
-        docs.push(annotation, doc);
-    }
+        has_annotations = !docs.is_empty();
+    });
 
-    (!docs.is_empty()).then(|| docs.finish(doc))
+    has_annotations.then_some(docs)
 }
 
 fn format_named_typed_declaration<'source>(

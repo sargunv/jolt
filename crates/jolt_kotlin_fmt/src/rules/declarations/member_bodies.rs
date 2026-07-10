@@ -317,21 +317,21 @@ fn join_class_body_sections<'source>(
     doc: &mut DocBuilder<'source>,
     sections: Vec<ClassBodySection<'source>>,
 ) -> Doc<'source> {
-    let mut joined = doc.list();
     let mut previous_hard_line_after = false;
-    for section in sections {
-        if !joined.is_empty() {
-            let separator = if previous_hard_line_after {
-                doc.hard_line()
-            } else {
-                doc.empty_line()
-            };
-            joined.push(separator, doc);
+    doc.concat_list(|joined| {
+        for section in sections {
+            if !joined.is_empty() {
+                let separator = if previous_hard_line_after {
+                    joined.hard_line()
+                } else {
+                    joined.empty_line()
+                };
+                joined.push(separator);
+            }
+            joined.push(section.doc);
+            previous_hard_line_after = section.hard_line_after;
         }
-        joined.push(section.doc, doc);
-        previous_hard_line_after = section.hard_line_after;
-    }
-    joined.finish(doc)
+    })
 }
 
 struct ClassBodySection<'source> {

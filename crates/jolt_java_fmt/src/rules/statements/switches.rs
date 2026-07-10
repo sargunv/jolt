@@ -44,33 +44,36 @@ pub(crate) fn format_switch_block<'source>(
     block: &SwitchBlock<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let mut docs = doc.list();
-    for entry in block.entries_with_recovered() {
-        if !docs.is_empty() {
-            docs.push(doc.hard_line(), doc);
-        }
-        let entry = match entry {
-            jolt_java_syntax::RecoveredSeparatedListEntry::Entry(entry) => match entry {
-                SwitchBlockEntry::StatementGroup(group) => {
-                    format_switch_statement_group(&group, doc)
+    let mut has_body = false;
+    let body = doc.concat_list(|docs| {
+        for entry in block.entries_with_recovered() {
+            if !docs.is_empty() {
+                let hard_line = docs.hard_line();
+                docs.push(hard_line);
+            }
+            let entry = match entry {
+                jolt_java_syntax::RecoveredSeparatedListEntry::Entry(entry) => match entry {
+                    SwitchBlockEntry::StatementGroup(group) => {
+                        format_switch_statement_group(&group, docs)
+                    }
+                    SwitchBlockEntry::Rule(rule) => format_switch_rule(&rule, docs),
+                },
+                jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
+                    format_token_sequence(docs, std::iter::once(token), LeadingTrivia::Preserve)
                 }
-                SwitchBlockEntry::Rule(rule) => format_switch_rule(&rule, doc),
-            },
-            jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
-                format_token_sequence(doc, std::iter::once(token), LeadingTrivia::Preserve)
-            }
-            jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => {
-                format_token_sequence(doc, error.token_iter(), LeadingTrivia::Preserve)
-            }
-            jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => {
-                format_token_sequence(doc, node.token_iter(), LeadingTrivia::Preserve)
-            }
-        };
-        docs.push(entry, doc);
-    }
+                jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => {
+                    format_token_sequence(docs, error.token_iter(), LeadingTrivia::Preserve)
+                }
+                jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => {
+                    format_token_sequence(docs, node.token_iter(), LeadingTrivia::Preserve)
+                }
+            };
+            docs.push(entry);
+        }
+        has_body = !docs.is_empty();
+    });
 
-    let body = (!docs.is_empty()).then(|| docs.finish(doc));
-    braced_switch_block(block, body, doc)
+    braced_switch_block(block, has_body.then_some(body), doc)
 }
 
 fn braced_switch_block<'source>(
@@ -101,27 +104,29 @@ fn format_switch_statement_group<'source>(
     group: &SwitchBlockStatementGroup<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let mut labels = doc.list();
     let mut label_count = 0;
     let mut single_label = None;
-    for entry in group.label_entries() {
-        let label = doc_concat!(
-            doc,
-            [
-                format_switch_label(&entry.label, doc),
-                entry
-                    .colon
-                    .as_ref()
-                    .map_or_else(Doc::nil, |token| format_token_with_comments(doc, token)),
-            ]
-        );
-        if !labels.is_empty() {
-            labels.push(doc.hard_line(), doc);
+    let labels = doc.concat_list(|labels| {
+        for entry in group.label_entries() {
+            let label = doc_concat!(
+                labels,
+                [
+                    format_switch_label(&entry.label, labels),
+                    entry
+                        .colon
+                        .as_ref()
+                        .map_or_else(Doc::nil, |token| format_token_with_comments(labels, token)),
+                ]
+            );
+            if !labels.is_empty() {
+                let hard_line = labels.hard_line();
+                labels.push(hard_line);
+            }
+            labels.push(label);
+            label_count += 1;
+            single_label = Some(label);
         }
-        labels.push(label, doc);
-        label_count += 1;
-        single_label = Some(label);
-    }
+    });
     let statements = group.block_statements().collect::<Vec<_>>();
 
     if let Some(doc) =
@@ -162,7 +167,7 @@ fn format_switch_statement_group<'source>(
     doc_concat!(
         doc,
         [
-            labels.finish(doc),
+            labels,
             if items.is_empty() {
                 Doc::nil()
             } else {
@@ -307,22 +312,23 @@ fn format_switch_rule_arrow<'source>(
     let forced_line = arrow
         .trailing_comments()
         .any(|comment| comment_forces_line(&comment));
-    let mut docs = doc.list();
-    docs.push(doc.space(), doc);
-    let arrow = format_token(
-        doc,
-        &arrow,
-        LeadingTrivia::Preserve,
-        TrailingTrivia::BeforeLineBreak,
-    );
-    docs.push(arrow, doc);
-    let separator = if forced_line {
-        doc.hard_line()
-    } else {
-        doc.space()
-    };
-    docs.push(separator, doc);
-    docs.finish(doc)
+    doc.concat_list(|docs| {
+        let space = docs.space();
+        docs.push(space);
+        let arrow = format_token(
+            docs,
+            &arrow,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::BeforeLineBreak,
+        );
+        docs.push(arrow);
+        let separator = if forced_line {
+            docs.hard_line()
+        } else {
+            docs.space()
+        };
+        docs.push(separator);
+    })
 }
 
 fn format_switch_label<'source>(
@@ -386,51 +392,56 @@ fn format_switch_label_case_entries<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let mut entries = entries.into_iter().peekable();
-    let mut docs = doc.list();
-
-    while let Some(entry) = entries.next() {
-        let has_next = entries.peek().is_some();
-        match entry {
-            jolt_java_syntax::RecoveredSeparatedListEntry::Entry(entry) => {
-                docs.push(format_switch_label_case_item(&entry.item, doc), doc);
-                if let Some(comma) = entry.comma {
-                    let line = doc.line();
-                    let comma = format_separator_with_comments(doc, &comma, line);
-                    docs.push(comma, doc);
-                } else if has_next {
-                    docs.push(doc.line(), doc);
+    doc.concat_list(|docs| {
+        while let Some(entry) = entries.next() {
+            let has_next = entries.peek().is_some();
+            match entry {
+                jolt_java_syntax::RecoveredSeparatedListEntry::Entry(entry) => {
+                    let item = format_switch_label_case_item(&entry.item, docs);
+                    docs.push(item);
+                    if let Some(comma) = entry.comma {
+                        let line = docs.line();
+                        let comma = format_separator_with_comments(docs, &comma, line);
+                        docs.push(comma);
+                    } else if has_next {
+                        let line = docs.line();
+                        docs.push(line);
+                    }
                 }
-            }
-            jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
-                let token = format_token(
-                    doc,
-                    &token,
-                    LeadingTrivia::Preserve,
-                    TrailingTrivia::Preserve,
-                );
-                docs.push(token, doc);
-                if has_next {
-                    docs.push(doc.line(), doc);
+                jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
+                    let token = format_token(
+                        docs,
+                        &token,
+                        LeadingTrivia::Preserve,
+                        TrailingTrivia::Preserve,
+                    );
+                    docs.push(token);
+                    if has_next {
+                        let line = docs.line();
+                        docs.push(line);
+                    }
                 }
-            }
-            jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => {
-                let error = format_token_sequence(doc, error.token_iter(), LeadingTrivia::Preserve);
-                docs.push(error, doc);
-                if has_next {
-                    docs.push(doc.line(), doc);
+                jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => {
+                    let error =
+                        format_token_sequence(docs, error.token_iter(), LeadingTrivia::Preserve);
+                    docs.push(error);
+                    if has_next {
+                        let line = docs.line();
+                        docs.push(line);
+                    }
                 }
-            }
-            jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => {
-                let node = format_token_sequence(doc, node.token_iter(), LeadingTrivia::Preserve);
-                docs.push(node, doc);
-                if has_next {
-                    docs.push(doc.line(), doc);
+                jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => {
+                    let node =
+                        format_token_sequence(docs, node.token_iter(), LeadingTrivia::Preserve);
+                    docs.push(node);
+                    if has_next {
+                        let line = docs.line();
+                        docs.push(line);
+                    }
                 }
             }
         }
-    }
-
-    docs.finish(doc)
+    })
 }
 
 fn format_switch_label_case_item<'source>(

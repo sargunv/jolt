@@ -60,21 +60,20 @@ fn format_annotation_run<'source>(
     annotations: impl IntoIterator<Item = jolt_java_syntax::Annotation<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Option<Doc<'source>> {
-    let mut docs = doc.list();
-    for annotation in annotations {
-        if !docs.is_empty() {
-            let space = doc.space();
-            docs.push(space, doc);
+    let mut has_annotations = false;
+    let docs = doc.concat_list(|docs| {
+        for annotation in annotations {
+            if !docs.is_empty() {
+                let space = docs.space();
+                docs.push(space);
+            }
+            let annotation = format_annotation(&annotation, docs);
+            docs.push(annotation);
         }
-        let annotation = format_annotation(&annotation, doc);
-        docs.push(annotation, doc);
-    }
+        has_annotations = !docs.is_empty();
+    });
 
-    if docs.is_empty() {
-        None
-    } else {
-        Some(docs.finish(doc))
-    }
+    has_annotations.then_some(docs)
 }
 
 pub(super) fn format_this_expression<'source>(

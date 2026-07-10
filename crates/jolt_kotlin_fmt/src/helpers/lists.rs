@@ -117,25 +117,23 @@ pub(crate) fn comma_list<'source>(
     items: Vec<CommaListItem<'source>>,
 ) -> Doc<'source> {
     let item_count = items.len();
-    let mut docs = doc.list();
-
-    for (index, item) in items.into_iter().enumerate() {
-        docs.push(item.doc, doc);
-        if let Some(comma) = item.comma {
-            let line = if index + 1 < item_count {
-                doc.line()
-            } else {
-                doc.nil()
-            };
-            let comma = format_separator_with_comments(doc, &comma, line);
-            docs.push(comma, doc);
-        } else if index + 1 < item_count {
-            let line = doc.line();
-            docs.push(line, doc);
+    doc.concat_list(|docs| {
+        for (index, item) in items.into_iter().enumerate() {
+            docs.push(item.doc);
+            if let Some(comma) = item.comma {
+                let line = if index + 1 < item_count {
+                    docs.line()
+                } else {
+                    docs.nil()
+                };
+                let comma = format_separator_with_comments(docs, &comma, line);
+                docs.push(comma);
+            } else if index + 1 < item_count {
+                let line = docs.line();
+                docs.push(line);
+            }
         }
-    }
-
-    docs.finish(doc)
+    })
 }
 
 pub(crate) fn recovered_comma_list_items<'source, Entry>(

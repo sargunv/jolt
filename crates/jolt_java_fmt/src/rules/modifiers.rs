@@ -99,15 +99,16 @@ fn format_inline_annotations<'source>(
     annotations: Vec<Annotation<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let mut docs = doc.list();
-    for annotation in annotations {
-        if !docs.is_empty() {
-            docs.push(doc.space(), doc);
+    doc.concat_list(|docs| {
+        for annotation in annotations {
+            if !docs.is_empty() {
+                let space = docs.space();
+                docs.push(space);
+            }
+            let annotation = format_annotation(&annotation, docs);
+            docs.push(annotation);
         }
-        let annotation = format_annotation(&annotation, doc);
-        docs.push(annotation, doc);
-    }
-    docs.finish(doc)
+    })
 }
 
 fn format_declaration_annotations<'source>(
@@ -115,17 +116,18 @@ fn format_declaration_annotations<'source>(
     first_leading: FirstAnnotationLeading,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let mut docs = doc.list();
-    for (index, annotation) in annotations.into_iter().enumerate() {
-        let annotation = if index == 0 && first_leading == FirstAnnotationLeading::Suppress {
-            format_annotation_without_leading_comments(&annotation, doc)
-        } else {
-            format_annotation(&annotation, doc)
-        };
-        docs.push(annotation, doc);
-        docs.push(doc.hard_line(), doc);
-    }
-    docs.finish(doc)
+    doc.concat_list(|docs| {
+        for (index, annotation) in annotations.into_iter().enumerate() {
+            let annotation = if index == 0 && first_leading == FirstAnnotationLeading::Suppress {
+                format_annotation_without_leading_comments(&annotation, docs)
+            } else {
+                format_annotation(&annotation, docs)
+            };
+            docs.push(annotation);
+            let hard_line = docs.hard_line();
+            docs.push(hard_line);
+        }
+    })
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]

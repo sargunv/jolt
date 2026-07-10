@@ -540,54 +540,56 @@ fn format_statement_expression_list<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let mut entries = expressions.entries_with_recovered().peekable();
-    let mut docs = doc.list();
-
-    while let Some(entry) = entries.next() {
-        let has_next = entries.peek().is_some();
-        match entry {
-            jolt_java_syntax::RecoveredSeparatedListEntry::Entry(entry) => {
-                let expression = format_expression(&entry.expression, doc);
-                docs.push(expression, doc);
-                if let Some(comma) = entry.comma {
-                    let space = doc.space();
-                    let comma = format_separator_with_comments(doc, &comma, space);
-                    docs.push(comma, doc);
-                } else if has_next {
-                    docs.push(doc.line(), doc);
+    doc.concat_list(|docs| {
+        while let Some(entry) = entries.next() {
+            let has_next = entries.peek().is_some();
+            match entry {
+                jolt_java_syntax::RecoveredSeparatedListEntry::Entry(entry) => {
+                    let expression = format_expression(&entry.expression, docs);
+                    docs.push(expression);
+                    if let Some(comma) = entry.comma {
+                        let space = docs.space();
+                        let comma = format_separator_with_comments(docs, &comma, space);
+                        docs.push(comma);
+                    } else if has_next {
+                        let line = docs.line();
+                        docs.push(line);
+                    }
                 }
-            }
-            jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
-                let recovered = format_token(
-                    doc,
-                    &token,
-                    LeadingTrivia::Preserve,
-                    TrailingTrivia::Preserve,
-                );
-                docs.push(recovered, doc);
-                if has_next {
-                    docs.push(doc.line(), doc);
+                jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
+                    let recovered = format_token(
+                        docs,
+                        &token,
+                        LeadingTrivia::Preserve,
+                        TrailingTrivia::Preserve,
+                    );
+                    docs.push(recovered);
+                    if has_next {
+                        let line = docs.line();
+                        docs.push(line);
+                    }
                 }
-            }
-            jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => {
-                let recovered =
-                    format_token_sequence(doc, error.token_iter(), LeadingTrivia::Preserve);
-                docs.push(recovered, doc);
-                if has_next {
-                    docs.push(doc.line(), doc);
+                jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => {
+                    let recovered =
+                        format_token_sequence(docs, error.token_iter(), LeadingTrivia::Preserve);
+                    docs.push(recovered);
+                    if has_next {
+                        let line = docs.line();
+                        docs.push(line);
+                    }
                 }
-            }
-            jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => {
-                let recovered =
-                    format_token_sequence(doc, node.token_iter(), LeadingTrivia::Preserve);
-                docs.push(recovered, doc);
-                if has_next {
-                    docs.push(doc.line(), doc);
+                jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => {
+                    let recovered =
+                        format_token_sequence(docs, node.token_iter(), LeadingTrivia::Preserve);
+                    docs.push(recovered);
+                    if has_next {
+                        let line = docs.line();
+                        docs.push(line);
+                    }
                 }
             }
         }
-    }
-
-    docs.finish(doc)
+    })
 }
 
 pub(super) fn format_synchronized_statement<'source>(

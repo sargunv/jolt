@@ -85,26 +85,25 @@ impl<'source> FormattedImport<'source> {
     }
 
     fn into_doc(self, doc: &mut DocBuilder<'source>) -> Doc<'source> {
-        let mut docs = doc.list();
-        let import_token = if let Some(token) = self.import_token.as_ref() {
-            format_token_with_normalized_text(
-                doc,
-                token,
-                "import",
-                FormatterInsertedToken::ImportKeyword,
-                LeadingTrivia::Preserve,
-                TrailingTrivia::RelocatedToEnclosingContext,
-            )
-        } else {
-            doc.nil()
-        };
-        docs.push(import_token, doc);
-        let space = doc.space();
-        docs.push(space, doc);
-        docs.push(self.path_doc, doc);
-        docs.push(self.suffix_doc, doc);
-
-        docs.finish(doc)
+        doc.concat_list(|docs| {
+            let import_token = if let Some(token) = self.import_token.as_ref() {
+                format_token_with_normalized_text(
+                    docs,
+                    token,
+                    "import",
+                    FormatterInsertedToken::ImportKeyword,
+                    LeadingTrivia::Preserve,
+                    TrailingTrivia::RelocatedToEnclosingContext,
+                )
+            } else {
+                docs.nil()
+            };
+            docs.push(import_token);
+            let space = docs.space();
+            docs.push(space);
+            docs.push(self.path_doc);
+            docs.push(self.suffix_doc);
+        })
     }
 }
 
@@ -113,36 +112,34 @@ fn format_import_suffix<'source>(
     import: &ImportDirective<'source>,
     path_ends_with_trailing_comments: bool,
 ) -> Doc<'source> {
-    let mut docs = doc.list();
-
-    if let Some(star) = import.star_token() {
-        let star = format_import_path_token(doc, &star);
-        docs.push(star, doc);
-    }
-
-    if let Some(alias_keyword) = import.alias_keyword_token() {
-        if !path_ends_with_trailing_comments {
-            let space = doc.space();
-            docs.push(space, doc);
+    doc.concat_list(|docs| {
+        if let Some(star) = import.star_token() {
+            let star = format_import_path_token(docs, &star);
+            docs.push(star);
         }
-        let alias_keyword = format_token_with_normalized_text(
-            doc,
-            &alias_keyword,
-            "as",
-            FormatterInsertedToken::ImportAliasKeyword,
-            LeadingTrivia::SuppressAlreadyHandled,
-            TrailingTrivia::RelocatedToEnclosingContext,
-        );
-        docs.push(alias_keyword, doc);
-        if let Some(alias) = import.alias() {
-            let space = doc.space();
-            docs.push(space, doc);
-            let alias = crate::rules::names::format_name(doc, &alias);
-            docs.push(alias, doc);
-        }
-    }
 
-    docs.finish(doc)
+        if let Some(alias_keyword) = import.alias_keyword_token() {
+            if !path_ends_with_trailing_comments {
+                let space = docs.space();
+                docs.push(space);
+            }
+            let alias_keyword = format_token_with_normalized_text(
+                docs,
+                &alias_keyword,
+                "as",
+                FormatterInsertedToken::ImportAliasKeyword,
+                LeadingTrivia::SuppressAlreadyHandled,
+                TrailingTrivia::RelocatedToEnclosingContext,
+            );
+            docs.push(alias_keyword);
+            if let Some(alias) = import.alias() {
+                let space = docs.space();
+                docs.push(space);
+                let alias = crate::rules::names::format_name(docs, &alias);
+                docs.push(alias);
+            }
+        }
+    })
 }
 
 fn format_import_path_token<'source>(
