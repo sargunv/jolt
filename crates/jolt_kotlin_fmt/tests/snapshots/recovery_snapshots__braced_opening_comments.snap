@@ -10,8 +10,8 @@ class BracedOpeningComments { /* JOLT-TRIVIA:class-open */
 }
 
 formatted:
-class BracedOpeningComments {
-  fun block() {
+class BracedOpeningComments { /* JOLT-TRIVIA:class-open */
+  fun block() { /* JOLT-TRIVIA:block-open */
     println("body")
   }
 }

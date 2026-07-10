@@ -44,7 +44,8 @@ use super::{
     VariableInitializer, VariableInitializerValue, VoidType, WhileStatement, WildcardBound,
     WildcardType, YieldStatement, assignment_operator_kind, binary_operator_kind, child,
     child_family, child_token, child_token_in, children, children_family, children_tokens_matching,
-    nth_child_family, nth_child_token, starts_after_blank_line,
+    direct_error_tokens, nth_child_family, nth_child_token, recovered_child,
+    recovered_child_family, recovered_error_tokens, starts_after_blank_line,
 };
 use crate::{JavaSyntaxNode, language::JavaLanguage};
 use jolt_syntax::SyntaxElement;
@@ -156,6 +157,23 @@ impl<'source> ImportDeclaration<'source> {
         child_token(&self.syntax, JavaSyntaxKind::Semicolon)
     }
 
+    pub fn trailing_recovered_tokens(
+        &self,
+    ) -> impl Iterator<Item = JavaSyntaxToken<'source>> + use<'source> {
+        let name_end = self.name().map(|name| name.text_range().end());
+        let semicolon_start = self
+            .semicolon()
+            .map(|token| token.token_text_range().start());
+        self.syntax.child_tokens().filter(move |token| {
+            name_end.is_some_and(|end| token.token_text_range().start() >= end)
+                && semicolon_start.is_some_and(|end| token.token_text_range().end() <= end)
+                && !matches!(
+                    token.kind(),
+                    JavaSyntaxKind::Semicolon | JavaSyntaxKind::Dot | JavaSyntaxKind::Star
+                )
+        })
+    }
+
     fn is_static(&self) -> bool {
         child_token(&self.syntax, JavaSyntaxKind::StaticKw).is_some()
     }
@@ -242,6 +260,7 @@ impl<'source> ClassDeclaration<'source> {
     #[must_use]
     pub fn name(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
+            .or_else(|| recovered_identifier(&self.syntax))
     }
 
     #[must_use]
@@ -268,6 +287,18 @@ impl<'source> ClassDeclaration<'source> {
     pub fn body(&self) -> Option<ClassBody<'source>> {
         child(&self.syntax)
     }
+
+    #[must_use]
+    pub fn missing_body_semicolon(&self) -> Option<JavaSyntaxToken<'source>> {
+        self.syntax.children().find_map(|node| {
+            (node.kind() == JavaSyntaxKind::ErrorNode)
+                .then(|| {
+                    node.child_tokens()
+                        .find(|token| token.kind() == JavaSyntaxKind::Semicolon)
+                })
+                .flatten()
+        })
+    }
 }
 
 impl<'source> RecordDeclaration<'source> {
@@ -285,6 +316,7 @@ impl<'source> RecordDeclaration<'source> {
     #[must_use]
     pub fn name(&self) -> Option<JavaSyntaxToken<'source>> {
         nth_child_token(&self.syntax, JavaSyntaxKind::Identifier, 1)
+            .or_else(|| recovered_identifier(&self.syntax))
     }
 
     #[must_use]
@@ -332,6 +364,7 @@ impl<'source> EnumDeclaration<'source> {
     #[must_use]
     pub fn name(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
+            .or_else(|| recovered_identifier(&self.syntax))
     }
 
     #[must_use]
@@ -359,6 +392,7 @@ impl<'source> InterfaceDeclaration<'source> {
     #[must_use]
     pub fn name(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Identifier)
+            .or_else(|| recovered_identifier(&self.syntax))
     }
 
     #[must_use]
@@ -711,6 +745,14 @@ impl<'source> ClassType<'source> {
                         dot_before = Some(token);
                         continue;
                     }
+                    SyntaxElement::Node(node) if node.kind() == JavaSyntaxKind::ErrorNode => {
+                        if let Some(type_arguments) = child::<TypeArgumentList>(&node)
+                            && let Some(segment) = current.as_mut()
+                        {
+                            segment.type_arguments = Some(type_arguments);
+                        }
+                        continue;
+                    }
                     SyntaxElement::Node(node) => node,
                     SyntaxElement::Token(_) => continue,
                 };
@@ -725,7 +767,7 @@ impl<'source> ClassType<'source> {
                         annotations: std::mem::take(&mut annotations),
                         dot_before: dot_before.take(),
                         name,
-                        type_arguments: None,
+                        type_arguments: recovered_child(&node),
                     };
                     if let Some(segment) = current.replace(next) {
                         return Some(segment);
@@ -1279,6 +1321,11 @@ impl<'source> MethodDeclaration<'source> {
     }
 
     #[must_use]
+    pub fn dimensions(&self) -> Option<ArrayDimensions<'source>> {
+        child(&self.syntax)
+    }
+
+    #[must_use]
     pub fn throws_clause(&self) -> Option<ThrowsClause<'source>> {
         child(&self.syntax)
     }
@@ -1643,7 +1690,7 @@ impl<'source> VariableDeclarator<'source> {
 
     #[must_use]
     pub fn initializer(&self) -> Option<VariableInitializer<'source>> {
-        child(&self.syntax)
+        child(&self.syntax).or_else(|| recovered_child(&self.syntax))
     }
 }
 
@@ -1652,6 +1699,11 @@ impl<'source> VariableInitializer<'source> {
     pub fn operator(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::Assign)
             .or_else(|| previous_sibling_token(&self.syntax, JavaSyntaxKind::Assign))
+            .or_else(|| {
+                self.syntax
+                    .parent()
+                    .and_then(|parent| previous_sibling_token(&parent, JavaSyntaxKind::Assign))
+            })
     }
 
     #[must_use]
@@ -2533,17 +2585,30 @@ impl<'source> ParenthesizedExpression<'source> {
 impl<'source> AssignmentExpression<'source> {
     #[must_use]
     pub fn left(&self) -> Option<Expression<'source>> {
-        nth_child_family(&self.syntax, 0)
+        let operator_start = self.operator()?.tokens().next()?.token_text_range().start();
+        self.syntax.children().find_map(|node| {
+            (node.text_range().end() <= operator_start)
+                .then(|| Expression::cast(node).or_else(|| child_family(&node)))
+                .flatten()
+        })
     }
 
     #[must_use]
     pub fn operator(&self) -> Option<JavaOperator<'source>> {
-        assignment_operator(&self.syntax)
+        assignment_operator(&self.syntax).or_else(|| {
+            child_token(&self.syntax, JavaSyntaxKind::Assign)
+                .map(|token| JavaOperator::single(JavaOperatorKind::Assign, token))
+        })
     }
 
     #[must_use]
     pub fn right(&self) -> Option<Expression<'source>> {
-        nth_child_family(&self.syntax, 1)
+        let operator_end = self.operator()?.tokens().last()?.token_text_range().end();
+        self.syntax.children().find_map(|node| {
+            (node.text_range().start() >= operator_end)
+                .then(|| Expression::cast(node).or_else(|| child_family(&node)))
+                .flatten()
+        })
     }
 }
 
@@ -2589,6 +2654,12 @@ impl<'source> BinaryExpression<'source> {
     pub fn right(&self) -> Option<Expression<'source>> {
         nth_child_family(&self.syntax, 1)
     }
+
+    pub fn recovered_tokens(
+        &self,
+    ) -> impl Iterator<Item = JavaSyntaxToken<'source>> + use<'source> {
+        direct_error_tokens(&self.syntax)
+    }
 }
 
 impl<'source> UnaryExpression<'source> {
@@ -2610,6 +2681,12 @@ impl<'source> UnaryExpression<'source> {
     #[must_use]
     pub fn operand(&self) -> Option<Expression<'source>> {
         child_family(&self.syntax)
+    }
+
+    pub fn recovered_tokens(
+        &self,
+    ) -> impl Iterator<Item = JavaSyntaxToken<'source>> + use<'source> {
+        direct_error_tokens(&self.syntax)
     }
 }
 
@@ -2663,7 +2740,12 @@ impl<'source> InstanceofExpression<'source> {
 
     #[must_use]
     pub fn ty(&self) -> Option<Type<'source>> {
-        child_family(&self.syntax)
+        child_family(&self.syntax).or_else(|| {
+            self.syntax
+                .children()
+                .filter(|node| node.kind() == JavaSyntaxKind::ErrorNode)
+                .find_map(|node| child_family(&node))
+        })
     }
 
     #[must_use]
@@ -2695,7 +2777,30 @@ impl<'source> ObjectCreationExpression<'source> {
 
     #[must_use]
     pub fn ty(&self) -> Option<Type<'source>> {
-        child_family(&self.syntax)
+        child_family(&self.syntax).or_else(|| recovered_child_family(&self.syntax))
+    }
+
+    #[must_use]
+    pub fn recovered_primitive_type_token(&self) -> Option<JavaSyntaxToken<'source>> {
+        self.syntax.children().find_map(|node| {
+            (node.kind() == JavaSyntaxKind::ErrorNode)
+                .then(|| {
+                    child_token_in(
+                        &node,
+                        &[
+                            JavaSyntaxKind::BooleanKw,
+                            JavaSyntaxKind::ByteKw,
+                            JavaSyntaxKind::CharKw,
+                            JavaSyntaxKind::DoubleKw,
+                            JavaSyntaxKind::FloatKw,
+                            JavaSyntaxKind::IntKw,
+                            JavaSyntaxKind::LongKw,
+                            JavaSyntaxKind::ShortKw,
+                        ],
+                    )
+                })
+                .flatten()
+        })
     }
 
     #[must_use]
@@ -2721,16 +2826,29 @@ impl<'source> ArrayCreationExpression<'source> {
     }
 
     pub fn dimensions(&self) -> impl Iterator<Item = DimExpression<'source>> + use<'source> {
-        children(&self.syntax)
+        children(&self.syntax).chain(self.syntax.children().filter_map(|node| {
+            (node.kind() == JavaSyntaxKind::ErrorNode)
+                .then(|| child::<DimExpression>(&node))
+                .flatten()
+        }))
+    }
+
+    #[must_use]
+    pub fn trailing_dimensions(&self) -> Option<ArrayDimensions<'source>> {
+        child(&self.syntax)
     }
 
     #[must_use]
     pub fn initializer(&self) -> Option<ArrayInitializer<'source>> {
-        child(&self.syntax)
+        child(&self.syntax).or_else(|| recovered_child(&self.syntax))
     }
 }
 
 impl<'source> DimExpression<'source> {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'source>> + use<'source> {
+        children(&self.syntax)
+    }
+
     #[must_use]
     pub fn open_bracket(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::LBracket)
@@ -2943,13 +3061,43 @@ impl<'source> LambdaParameter<'source> {
             )
         })
         .last()
+        .or_else(|| recovered_identifier(&self.syntax))
     }
 }
 
 impl<'source> ExpressionStatement<'source> {
     #[must_use]
     pub fn expression(&self) -> Option<Expression<'source>> {
-        child_family(&self.syntax)
+        child_family(&self.syntax).or_else(|| recovered_child_family(&self.syntax))
+    }
+
+    #[must_use]
+    pub fn recovered_open_paren(&self) -> Option<JavaSyntaxToken<'source>> {
+        recovered_error_tokens(&self.syntax, JavaSyntaxKind::LParen).next()
+    }
+
+    #[must_use]
+    pub fn recovered_close_paren(&self) -> Option<JavaSyntaxToken<'source>> {
+        recovered_error_tokens(&self.syntax, JavaSyntaxKind::RParen).next()
+    }
+
+    pub fn recovered_tokens_after_expression(
+        &self,
+    ) -> impl Iterator<Item = (JavaSyntaxToken<'source>, bool)> + use<'source> {
+        let expression_end = self
+            .expression()
+            .map(|expression| expression.text_range().end());
+        let mut previous = None;
+        direct_error_tokens(&self.syntax)
+            .filter(move |token| {
+                expression_end.is_some_and(|end| token.token_text_range().start() >= end)
+            })
+            .map(move |token| {
+                let space_before =
+                    previous.is_some_and(|kind| is_word_token(kind) && is_word_token(token.kind()));
+                previous = Some(token.kind());
+                (token, space_before)
+            })
     }
 
     #[must_use]
@@ -4084,6 +4232,23 @@ fn is_modifier_token(kind: JavaSyntaxKind) -> bool {
     )
 }
 
+fn is_word_token(kind: JavaSyntaxKind) -> bool {
+    matches!(kind, JavaSyntaxKind::Identifier | JavaSyntaxKind::IntKw)
+}
+
+fn recovered_identifier<'source>(
+    syntax: &JavaSyntaxNode<'source>,
+) -> Option<JavaSyntaxToken<'source>> {
+    syntax.children().find_map(|node| {
+        (node.kind() == JavaSyntaxKind::ErrorNode)
+            .then(|| {
+                node.child_tokens()
+                    .find(|token| token.kind() == JavaSyntaxKind::Identifier)
+            })
+            .flatten()
+    })
+}
+
 fn modifier_entries<'source>(
     syntax: &JavaSyntaxNode<'source>,
 ) -> impl Iterator<Item = ModifierEntry<'source>> + use<'source> {
@@ -4091,6 +4256,9 @@ fn modifier_entries<'source>(
         .children_with_tokens()
         .filter_map(|element| match element {
             SyntaxElement::Token(token) => Some(token),
+            SyntaxElement::Node(node) if node.kind() == JavaSyntaxKind::ErrorNode => {
+                node.child_tokens().next()
+            }
             SyntaxElement::Node(_) => None,
         });
 
@@ -4208,6 +4376,10 @@ fn java_operator(
 }
 
 impl<'source> ModuleDeclaration<'source> {
+    pub fn annotations(&self) -> impl Iterator<Item = Annotation<'source>> + use<'source> {
+        children(&self.syntax)
+    }
+
     #[must_use]
     pub fn open_token(&self) -> Option<JavaSyntaxToken<'source>> {
         contextual_keyword_in(&self.syntax, "open")
@@ -4313,6 +4485,10 @@ impl<'source> RequiresDirective<'source> {
     #[must_use]
     pub fn static_token(&self) -> Option<JavaSyntaxToken<'source>> {
         child_token(&self.syntax, JavaSyntaxKind::StaticKw)
+    }
+
+    pub fn static_tokens(&self) -> impl Iterator<Item = JavaSyntaxToken<'source>> + use<'source> {
+        children_tokens_matching(&self.syntax, |kind| kind == JavaSyntaxKind::StaticKw)
     }
 
     #[must_use]

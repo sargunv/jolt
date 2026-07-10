@@ -12,20 +12,20 @@ use super::{
     Expression, ExpressionParentRole, ExpressionStatement, FinallyClause, ForStatement,
     FunctionDeclaration, FunctionType, FunctionTypeParameter, IfExpression, ImportAlias,
     ImportDirective, ImportList, IndexExpression, InitializerBlock, InterfaceDeclaration,
-    JumpExpression, KotlinFile, KotlinFileItem, KotlinNode, KotlinSyntaxKind, KotlinSyntaxNode,
-    KotlinSyntaxToken, LambdaExpression, LambdaParameter, LambdaParameterList, LiteralExpression,
-    LocalDeclaration, LoopExpression, ModifierList, Name, NameExpression, NavigationExpression,
-    NullableType, ObjectDeclaration, ObjectExpression, PackageHeader, ParenthesizedExpression,
-    ParenthesizedType, PostfixExpression, PrimaryConstructor, PropertyAccessor,
-    PropertyDeclaration, QualifiedName, ReceiverType, RecoveredNode, RecoveredSeparatedListEntry,
-    SecondaryConstructor, Statement, StatementSyntax, StringTemplateEntry,
-    StringTemplateExpression, StringTemplatePart, SuperExpression, ThisExpression, ThrowExpression,
-    TryExpression, TypeAliasDeclaration, TypeArgument, TypeArgumentList, TypeConstraint,
-    TypeConstraintList, TypeParameter, TypeParameterList, TypeProjection, TypeProjectionList,
-    TypeReference, TypeSyntax, UnaryExpression, UserType, ValueArgument, ValueArgumentList,
-    ValueParameter, ValueParameterList, WhenCondition, WhenConditionSyntax, WhenEntry,
-    WhenExpression, WhenGuard, WhenSubject, WhileStatement, child, child_family, child_token,
-    child_tokens, children, children_family,
+    JumpExpression, KotlinFamily, KotlinFile, KotlinFileItem, KotlinNode, KotlinSyntaxKind,
+    KotlinSyntaxNode, KotlinSyntaxToken, LambdaExpression, LambdaParameter, LambdaParameterList,
+    LiteralExpression, LocalDeclaration, LoopExpression, ModifierList, Name, NameExpression,
+    NavigationExpression, NullableType, ObjectDeclaration, ObjectExpression, PackageHeader,
+    ParenthesizedExpression, ParenthesizedType, PostfixExpression, PrimaryConstructor,
+    PropertyAccessor, PropertyDeclaration, QualifiedName, ReceiverType, RecoveredNode,
+    RecoveredSeparatedListEntry, SecondaryConstructor, Statement, StatementSyntax,
+    StringTemplateEntry, StringTemplateExpression, StringTemplatePart, SuperExpression,
+    ThisExpression, ThrowExpression, TryExpression, TypeAliasDeclaration, TypeArgument,
+    TypeArgumentList, TypeConstraint, TypeConstraintList, TypeParameter, TypeParameterList,
+    TypeProjection, TypeProjectionList, TypeReference, TypeSyntax, UnaryExpression, UserType,
+    ValueArgument, ValueArgumentList, ValueParameter, ValueParameterList, WhenCondition,
+    WhenConditionSyntax, WhenEntry, WhenExpression, WhenGuard, WhenSubject, WhileStatement, child,
+    child_family, child_token, child_tokens, children, children_family,
 };
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -132,6 +132,17 @@ impl<'source> KotlinFile<'source> {
 
     pub fn items(&self) -> impl Iterator<Item = KotlinFileItem<'source>> + use<'source> {
         children_family(self.syntax())
+    }
+
+    pub fn recovered_tokens(
+        &self,
+    ) -> impl Iterator<Item = KotlinSyntaxToken<'source>> + use<'source, '_> {
+        self.syntax()
+            .children_with_tokens()
+            .filter_map(|element| match element {
+                SyntaxElement::Token(token) if token.kind() != KotlinSyntaxKind::Eof => Some(token),
+                _ => None,
+            })
     }
 }
 
@@ -1196,6 +1207,11 @@ impl<'source> DefinitelyNonNullableType<'source> {
     pub fn amp_token(&self) -> Option<KotlinSyntaxToken<'source>> {
         child_token(self.syntax(), KotlinSyntaxKind::Amp)
     }
+
+    #[must_use]
+    pub fn bang_bang_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::BangBang)
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -1280,6 +1296,14 @@ pub struct ValueParameterListEntry<'source> {
 pub struct WhenConditionEntry<'source> {
     pub condition: WhenCondition<'source>,
     pub comma: Option<KotlinSyntaxToken<'source>>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum WhenEntryRecoveryPart<'source> {
+    Condition(WhenCondition<'source>),
+    Expression(Expression<'source>),
+    Token(KotlinSyntaxToken<'source>),
+    Error(ErrorNode<'source>),
 }
 
 impl<'source> TypeParameterList<'source> {
@@ -2369,7 +2393,11 @@ impl<'source> AnnotatedExpression<'source> {
 
 impl<'source> AssignmentExpression<'source> {
     pub fn operands(&self) -> impl Iterator<Item = Expression<'source>> + use<'source> {
-        children_family(self.syntax())
+        self.syntax().children().filter_map(|node| {
+            Expression::cast(node.clone()).or_else(|| {
+                (node.kind() == KotlinSyntaxKind::ErrorNode).then(|| child_family(&node))?
+            })
+        })
     }
 
     #[must_use]
@@ -2385,7 +2413,6 @@ impl<'source> AssignmentExpression<'source> {
     #[must_use]
     pub fn operator_token(&self) -> Option<KotlinSyntaxToken<'source>> {
         let left = self.left()?;
-        let right = self.right()?;
         child_tokens(self.syntax()).find(|token| {
             matches!(
                 token.kind(),
@@ -2396,7 +2423,6 @@ impl<'source> AssignmentExpression<'source> {
                     | KotlinSyntaxKind::SlashEq
                     | KotlinSyntaxKind::PercentEq
             ) && token.token_text_range().start() >= left.text_range().end()
-                && token.token_text_range().end() <= right.text_range().start()
         })
     }
 }
@@ -2418,10 +2444,10 @@ impl<'source> BinaryExpression<'source> {
         let right_start = operands
             .next()
             .map(|right| right.text_range().start())
-            .or_else(|| self.cast_type().map(|ty| ty.text_range().start()))?;
+            .or_else(|| self.cast_type().map(|ty| ty.text_range().start()));
         child_tokens(self.syntax()).find(|token| {
             token.token_text_range().start() >= left.text_range().end()
-                && token.token_text_range().end() <= right_start
+                && right_start.is_none_or(|start| token.token_text_range().end() <= start)
         })
     }
 }
@@ -2687,6 +2713,15 @@ impl<'source> NavigationExpression<'source> {
             NavigationOperatorTokens::Missing,
             NavigationOperatorTokens::Single,
         )
+    }
+
+    pub fn recovered_prefix_tokens(
+        &self,
+    ) -> impl Iterator<Item = KotlinSyntaxToken<'source>> + use<'source, '_> {
+        self.syntax()
+            .children()
+            .take_while(|node| node.kind() == KotlinSyntaxKind::ErrorNode)
+            .flat_map(|node| node.tokens())
     }
 
     #[must_use]
@@ -2975,6 +3010,27 @@ impl<'source> WhenEntry<'source> {
         )
     }
 
+    pub fn recovery_parts(
+        &self,
+    ) -> impl Iterator<Item = WhenEntryRecoveryPart<'source>> + use<'source, '_> {
+        self.syntax()
+            .children_with_tokens()
+            .filter_map(|element| match element {
+                SyntaxElement::Node(node) if node.kind() == KotlinSyntaxKind::WhenCondition => {
+                    Some(WhenEntryRecoveryPart::Condition(WhenCondition {
+                        syntax: node,
+                    }))
+                }
+                SyntaxElement::Node(node) if node.kind() == KotlinSyntaxKind::ErrorNode => {
+                    Some(WhenEntryRecoveryPart::Error(ErrorNode { syntax: node }))
+                }
+                SyntaxElement::Node(node) => {
+                    Expression::cast(node).map(WhenEntryRecoveryPart::Expression)
+                }
+                SyntaxElement::Token(token) => Some(WhenEntryRecoveryPart::Token(token)),
+            })
+    }
+
     #[must_use]
     pub fn guard(&self) -> Option<WhenGuard<'source>> {
         child(self.syntax())
@@ -3024,6 +3080,15 @@ impl<'source> WhenCondition<'source> {
     #[must_use]
     pub fn expression(&self) -> Option<Expression<'source>> {
         child_family(self.syntax())
+    }
+
+    pub fn recovered_tokens(
+        &self,
+    ) -> impl Iterator<Item = KotlinSyntaxToken<'source>> + use<'source, '_> {
+        self.syntax()
+            .children()
+            .filter(|node| node.kind() == KotlinSyntaxKind::ErrorNode)
+            .flat_map(|node| node.tokens())
     }
 }
 
@@ -3356,8 +3421,28 @@ impl<'source> DestructuringDeclaration<'source> {
 
 impl<'source> DestructuringEntry<'source> {
     #[must_use]
+    pub fn modifier_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_tokens(self.syntax()).find(|token| {
+            matches!(
+                token.kind(),
+                KotlinSyntaxKind::ValKw | KotlinSyntaxKind::VarKw
+            )
+        })
+    }
+
+    #[must_use]
     pub fn name(&self) -> Option<Name<'source>> {
         child(self.syntax())
+    }
+
+    #[must_use]
+    pub fn assign_token(&self) -> Option<KotlinSyntaxToken<'source>> {
+        child_token(self.syntax(), KotlinSyntaxKind::Assign)
+    }
+
+    #[must_use]
+    pub fn default_expression(&self) -> Option<Expression<'source>> {
+        child_family(self.syntax())
     }
 }
 

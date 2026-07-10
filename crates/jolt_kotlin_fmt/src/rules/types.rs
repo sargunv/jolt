@@ -274,6 +274,15 @@ fn format_user_type<'source>(
                 parts.push(arguments);
             }
         }
+        for dot in dots {
+            let dot = format_token(
+                parts,
+                &dot,
+                LeadingTrivia::Preserve,
+                TrailingTrivia::Preserve,
+            );
+            parts.push(dot);
+        }
     });
     doc.group(parts)
 }
@@ -640,5 +649,15 @@ fn format_definitely_non_nullable_type<'source>(
     } else {
         doc.nil()
     };
-    doc.concat([first, amp, second])
+    let bang_bang = if let Some(bang_bang) = ty.bang_bang_token() {
+        format_token(
+            doc,
+            &bang_bang,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::Preserve,
+        )
+    } else {
+        doc.nil()
+    };
+    doc.concat([first, amp, second, bang_bang])
 }

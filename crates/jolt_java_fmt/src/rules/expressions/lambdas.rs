@@ -77,15 +77,17 @@ fn format_lambda_parameters<'source>(
 
     let parameter_list = expression.parameters();
     if let Some(parameters) = parameter_list.as_ref() {
-        let mut parameters = parameters.parameters();
-        if let Some(parameter) = parameters.next()
-            && parameters.next().is_none()
-            && is_simple_untyped_lambda_parameter(&parameter)
+        let mut entries = parameters.entries_with_recovered();
+        if let Some(jolt_java_syntax::RecoveredSeparatedListEntry::Entry(entry)) = entries.next()
+            && entries.next().is_none()
+            && entry.comma.is_none()
+            && is_simple_untyped_lambda_parameter(&entry.parameter)
         {
-            if token_iter_has_comments(parameter.token_iter()) {
-                return format_lambda_parameter(&parameter, doc);
+            if token_iter_has_comments(entry.parameter.token_iter()) {
+                return format_lambda_parameter(&entry.parameter, doc);
             }
-            return parameter
+            return entry
+                .parameter
                 .name()
                 .map_or_else(Doc::nil, |name| format_token_with_comments(doc, &name));
         }

@@ -650,11 +650,7 @@ fn format_destructuring_declaration<'source>(
     let items =
         recovered_comma_list_items(doc, declaration.entries_with_recovered(), |doc, entry| {
             CommaListItem {
-                doc: if let Some(name) = entry.entry.name() {
-                    format_name(doc, &name)
-                } else {
-                    doc.nil()
-                },
+                doc: format_destructuring_entry(doc, &entry.entry),
                 comma: entry.comma,
             }
         });
@@ -664,6 +660,54 @@ fn format_destructuring_declaration<'source>(
         declaration.close_delimiter().as_ref(),
         items,
     )
+}
+
+fn format_destructuring_entry<'source>(
+    doc: &mut DocBuilder<'source>,
+    entry: &jolt_kotlin_syntax::DestructuringEntry<'source>,
+) -> Doc<'source> {
+    let modifier = if let Some(modifier) = entry.modifier_token() {
+        let modifier = format_token(
+            doc,
+            &modifier,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::Preserve,
+        );
+        let space = doc.space();
+        doc.concat([modifier, space])
+    } else {
+        doc.nil()
+    };
+    let name = entry
+        .name()
+        .map_or_else(Doc::nil, |name| format_name(doc, &name));
+    let default = match (entry.assign_token(), entry.default_expression()) {
+        (Some(assign), Some(expression)) => {
+            let before = doc.space();
+            let assign = format_token(
+                doc,
+                &assign,
+                LeadingTrivia::Preserve,
+                TrailingTrivia::Preserve,
+            );
+            let after = doc.space();
+            let expression = crate::rules::expressions::format_expression(doc, &expression);
+            doc.concat([before, assign, after, expression])
+        }
+        (Some(assign), None) => {
+            let before = doc.space();
+            let assign = format_token(
+                doc,
+                &assign,
+                LeadingTrivia::Preserve,
+                TrailingTrivia::Preserve,
+            );
+            doc.concat([before, assign])
+        }
+        (None, Some(expression)) => crate::rules::expressions::format_expression(doc, &expression),
+        (None, None) => doc.nil(),
+    };
+    doc.concat([modifier, name, default])
 }
 
 fn format_callable_name<'source>(

@@ -10,7 +10,8 @@ fun nestedRecoveredWhenCondition(value: Int) = when (value) {
 
 formatted:
 fun nestedRecoveredWhenCondition(value: Int) = when (value) {
-  0 else -> " other "
+  0 "zero"
+  else -> "other"
 }
 
 diagnostics:

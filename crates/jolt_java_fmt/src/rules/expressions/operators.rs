@@ -84,13 +84,15 @@ pub(super) fn format_binary_expression<'source>(
             let item = binary_chain_item(operator, right, rest);
             rest.push(item);
         });
-        return binary_chain(doc, Doc::nil(), rest, true);
+        let binary = binary_chain(doc, Doc::nil(), rest, true);
+        return append_recovered_binary_tokens(expression, binary, doc);
     }
 
     let parent_operator = operator.text();
     let (first, rest, has_rest) = flatten_binary_expression(expression, doc);
     let first = format_binary_operand(&first, parent_operator, doc);
-    binary_chain(doc, first, rest, has_rest)
+    let binary = binary_chain(doc, first, rest, has_rest);
+    append_recovered_binary_tokens(expression, binary, doc)
 }
 
 fn format_binary_expression_without_operator<'source>(
@@ -125,7 +127,37 @@ pub(super) fn format_unary_expression<'source>(
         .operand()
         .map_or_else(Doc::nil, |operand| format_expression(&operand, doc));
 
-    doc_concat!(doc, [operator, operand])
+    let recovered = doc.concat_list(|tokens| {
+        for token in expression.recovered_tokens() {
+            let token = format_token(
+                tokens,
+                &token,
+                LeadingTrivia::Preserve,
+                TrailingTrivia::Preserve,
+            );
+            tokens.push(token);
+        }
+    });
+    doc_concat!(doc, [operator, operand, recovered])
+}
+
+fn append_recovered_binary_tokens<'source>(
+    expression: &BinaryExpression<'source>,
+    binary: Doc<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    let recovered = doc.concat_list(|tokens| {
+        for token in expression.recovered_tokens() {
+            let token = format_token(
+                tokens,
+                &token,
+                LeadingTrivia::Preserve,
+                TrailingTrivia::Preserve,
+            );
+            tokens.push(token);
+        }
+    });
+    doc_concat!(doc, [binary, recovered])
 }
 
 pub(super) fn format_postfix_expression<'source>(

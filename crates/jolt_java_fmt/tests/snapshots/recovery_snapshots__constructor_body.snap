@@ -9,7 +9,7 @@ formatted:
 class C {
   C() {
     this(); /* body */
-    + ; int value = 1;
+    +;int value=1;
   }
 }
 

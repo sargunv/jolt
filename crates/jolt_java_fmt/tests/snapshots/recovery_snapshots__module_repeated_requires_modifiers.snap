@@ -7,7 +7,7 @@ module com.example.repeated { requires static /* JOLT-TRIVIA:repeated-requires-s
 
 formatted:
 module com.example.repeated {
-  requires static /* JOLT-TRIVIA:repeated-requires-static */ dependency;
+  requires static /* JOLT-TRIVIA:repeated-requires-static */ static dependency;
 }
 
 diagnostics:

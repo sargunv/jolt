@@ -311,13 +311,6 @@ They are now hard conservation/idempotence failures outside snapshots.
       token: `crates/jolt_kotlin_fmt/src/rules/names.rs:9-23`.
 - [ ] Replace expression-order/range role inference for `if`, `for`, and calls:
       `crates/jolt_kotlin_syntax/src/nodes/accessors.rs:2739-2761,2900-2938,3147-3181`.
-- [ ] Give trailing-lambda call wrappers explicit member-chain ownership. The
-      outer call must own the complete chain, and nested receiver/callee
-      expressions must not start independent builders. Then include `CallCallee`
-      in member-chain child detection instead of relying on its current
-      exclusion:
-      `crates/jolt_kotlin_fmt/src/rules/expressions/calls.rs:258-331,485-489`
-      and `crates/jolt_kotlin_syntax/src/nodes/accessors.rs:2545-2580`.
 - [ ] Represent `fun interface` as one syntax declaration and remove formatter
       pairing of adjacent function/interface declarations:
       `crates/jolt_kotlin_syntax/src/nodes/accessors.rs:438-457`,
@@ -477,3 +470,10 @@ They are now hard conservation/idempotence failures outside snapshots.
       explicitly reason-tagged; malformed missing-body brace repair remains open
       above.
 - [x] Kotlin readability parentheses are explicitly reason-tagged.
+
+## Accepted Deviations
+
+- Kotlin intentionally excludes `CallCallee` from member-chain child detection
+  because trailing-lambda syntax wraps a call as another call's callee;
+  including that role suppresses the top-level chain builder. See
+  `crates/jolt_kotlin_fmt/src/rules/expressions/calls.rs:485-489`.

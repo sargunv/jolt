@@ -45,6 +45,21 @@ pub(super) fn format_expression_statement<'source>(
         doc,
         [
             format_expression(&expression, doc),
+            doc.concat_list(|tokens| {
+                for (token, space_before) in statement.recovered_tokens_after_expression() {
+                    if space_before {
+                        let space = tokens.space();
+                        tokens.push(space);
+                    }
+                    let token = format_token(
+                        tokens,
+                        &token,
+                        LeadingTrivia::Preserve,
+                        TrailingTrivia::Preserve,
+                    );
+                    tokens.push(token);
+                }
+            }),
             format_statement_semicolon(statement.semicolon(), doc),
         ]
     )

@@ -12,7 +12,7 @@ class ArrayCreationTrailingDimensions {
 
 formatted:
 class ArrayCreationTrailingDimensions {
-  Object value = new String[1];
+  Object value = new String[1] @First [] @Second [];
 }
 
 @interface First {

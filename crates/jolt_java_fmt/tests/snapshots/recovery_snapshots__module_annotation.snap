@@ -6,6 +6,7 @@ input:
 @Deprecated module com.example.annotated {}
 
 formatted:
+@Deprecated
 module com.example.annotated {
 }
 

@@ -329,8 +329,10 @@ fn format_variable_declarator_list<'source>(
 fn single_declarator<'source>(
     declarators: &VariableDeclaratorList<'source>,
 ) -> Option<VariableDeclarator<'source>> {
-    let mut entries = declarators.entries();
-    let entry = entries.next()?;
+    let mut entries = declarators.entries_with_recovered();
+    let jolt_java_syntax::RecoveredSeparatedListEntry::Entry(entry) = entries.next()? else {
+        return None;
+    };
     if entries.next().is_some() || entry.comma.is_some() {
         return None;
     }

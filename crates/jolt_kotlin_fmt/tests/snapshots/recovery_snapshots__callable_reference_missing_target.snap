@@ -9,7 +9,7 @@ fun callableReferenceMissingTarget() {
 
 formatted:
 fun callableReferenceMissingTarget() {
-  val reference = ::
+  val reference = ::<String>
 }
 
 diagnostics:

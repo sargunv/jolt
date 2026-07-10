@@ -75,7 +75,12 @@ fn format_callable_reference_parts<'source>(
     } else {
         doc.nil()
     };
-    let contents = doc.concat([receiver, separator, target]);
+    let arguments = expression
+        .type_argument_lists()
+        .map(|arguments| format_type_argument_list(doc, &arguments))
+        .collect::<Vec<_>>();
+    let arguments = doc.concat(arguments);
+    let contents = doc.concat([receiver, separator, arguments, target]);
     doc.group(contents)
 }
 

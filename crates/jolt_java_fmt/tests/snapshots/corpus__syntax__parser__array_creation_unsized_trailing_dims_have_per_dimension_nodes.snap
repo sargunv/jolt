@@ -5,7 +5,7 @@ expression: snapshot
 formatted:
 class ArrayCreationPerDimensionDims {
   void method() {
-    Object values = new String[1];
+    Object values = new String[1] @A [] @B [];
   }
 }
 

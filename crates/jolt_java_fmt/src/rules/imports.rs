@@ -3,7 +3,7 @@ use jolt_java_syntax::{ImportDeclaration, ImportKind};
 
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_comment, format_inline_trailing_comment_list,
-    format_leading_comment_runs, format_token_after_relocated_leading_comments,
+    format_leading_comment_runs, format_token, format_token_after_relocated_leading_comments,
     format_token_before_relocated_trailing_comments, format_token_sequence,
     format_token_with_comments,
 };
@@ -89,6 +89,7 @@ struct FormattedImport<'source> {
     static_token: Option<jolt_java_syntax::JavaSyntaxToken<'source>>,
     path_doc: Doc<'source>,
     semicolon: Option<jolt_java_syntax::JavaSyntaxToken<'source>>,
+    trailing: Doc<'source>,
 }
 
 impl<'source> FormattedImport<'source> {
@@ -107,6 +108,7 @@ impl<'source> FormattedImport<'source> {
                 static_token: None,
                 path_doc: format_token_sequence(doc, import.token_iter(), LeadingTrivia::Preserve),
                 semicolon: None,
+                trailing: Doc::nil(),
             };
         };
         let (is_static, path, path_doc) = format_import_kind(import, &kind, doc);
@@ -120,6 +122,17 @@ impl<'source> FormattedImport<'source> {
             static_token: import.static_token(),
             path_doc,
             semicolon: import.semicolon(),
+            trailing: doc.concat_list(|tokens| {
+                for token in import.trailing_recovered_tokens() {
+                    let token = format_token(
+                        tokens,
+                        &token,
+                        LeadingTrivia::Preserve,
+                        TrailingTrivia::Preserve,
+                    );
+                    tokens.push(token);
+                }
+            }),
         }
     }
 
@@ -159,6 +172,7 @@ impl<'source> FormattedImport<'source> {
                         [format_token_with_comments(doc, token), doc.space()]
                     ),),
                 self.path_doc,
+                self.trailing,
                 self.semicolon.as_ref().map_or_else(Doc::nil, |token| {
                     format_token_before_relocated_trailing_comments(
                         doc,

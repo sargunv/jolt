@@ -1145,6 +1145,16 @@ fn child<'source, N: JavaNode<'source>>(syntax: &JavaSyntaxNode<'source>) -> Opt
     syntax.children().find_map(N::cast)
 }
 
+pub(crate) fn recovered_child<'source, N: JavaNode<'source>>(
+    syntax: &JavaSyntaxNode<'source>,
+) -> Option<N> {
+    syntax.children().find_map(|node| {
+        (node.kind() == JavaSyntaxKind::ErrorNode)
+            .then(|| child(&node))
+            .flatten()
+    })
+}
+
 fn children<'source, N: JavaNode<'source>>(
     syntax: &JavaSyntaxNode<'source>,
 ) -> impl Iterator<Item = N> + use<'source, N> {
@@ -1171,6 +1181,36 @@ fn starts_after_blank_line(syntax: &JavaSyntaxNode<'_>) -> bool {
 
 fn child_family<'source, F: JavaFamily<'source>>(syntax: &JavaSyntaxNode<'source>) -> Option<F> {
     syntax.children().find_map(F::cast)
+}
+
+pub(crate) fn recovered_child_family<'source, F: JavaFamily<'source>>(
+    syntax: &JavaSyntaxNode<'source>,
+) -> Option<F> {
+    syntax.children().find_map(|node| {
+        (node.kind() == JavaSyntaxKind::ErrorNode)
+            .then(|| child_family(&node))
+            .flatten()
+    })
+}
+
+pub(crate) fn recovered_error_tokens<'source>(
+    syntax: &JavaSyntaxNode<'source>,
+    kind: JavaSyntaxKind,
+) -> impl Iterator<Item = JavaSyntaxToken<'source>> + use<'source> {
+    syntax.children().filter_map(move |node| {
+        (node.kind() == JavaSyntaxKind::ErrorNode)
+            .then(|| node.child_tokens().find(|token| token.kind() == kind))
+            .flatten()
+    })
+}
+
+pub(crate) fn direct_error_tokens<'source>(
+    syntax: &JavaSyntaxNode<'source>,
+) -> impl Iterator<Item = JavaSyntaxToken<'source>> + use<'source> {
+    syntax
+        .children()
+        .filter(|node| node.kind() == JavaSyntaxKind::ErrorNode)
+        .flat_map(|node| node.tokens())
 }
 
 fn nth_child_family<'source, F: JavaFamily<'source>>(

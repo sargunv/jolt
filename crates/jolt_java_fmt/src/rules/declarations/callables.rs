@@ -118,6 +118,9 @@ pub(crate) fn format_method_declaration<'source>(
                 .name()
                 .map_or_else(Doc::nil, |name| format_token_with_comments(doc, &name)),
             format_parameters(method.open_paren(), method.close_paren(), parameters, doc,),
+            method.dimensions().map_or_else(Doc::nil, |dimensions| {
+                format_array_dimensions(&dimensions, doc)
+            }),
         ]
     );
     let header = doc_concat!(

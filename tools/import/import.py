@@ -2,12 +2,12 @@
 """Import pinned upstream files."""
 
 import contextlib
+import fcntl
 import hashlib
 import json
 import shutil
 import subprocess
 import sys
-import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -239,16 +239,9 @@ def repo_dir(item: dict) -> Path:
 def repo_lock(item: dict):
     lock = IMPORTS / ".locks" / (item["repo"].replace("/", "__") + ".lock")
     lock.parent.mkdir(parents=True, exist_ok=True)
-    while True:
-        try:
-            lock.mkdir()
-            break
-        except FileExistsError:
-            time.sleep(0.1)
-    try:
+    with lock.open("w") as lock_file:
+        fcntl.flock(lock_file, fcntl.LOCK_EX)
         yield
-    finally:
-        shutil.rmtree(lock, ignore_errors=True)
 
 
 def run(*command: str, cwd: Path | None = None) -> None:

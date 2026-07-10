@@ -6,7 +6,7 @@ input:
 fun <T> definitelyNonNullable(value: T!!): T = value
 
 formatted:
-fun <T> definitelyNonNullable(value: T): T = value
+fun <T> definitelyNonNullable(value: T!!): T = value
 
 diagnostics:
 (none)

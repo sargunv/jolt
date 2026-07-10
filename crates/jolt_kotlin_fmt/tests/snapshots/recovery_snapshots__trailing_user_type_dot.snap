@@ -6,7 +6,7 @@ input:
 fun trailingUserTypeDot(value: example.Type.) = value
 
 formatted:
-fun trailingUserTypeDot(value: example.Type) = value
+fun trailingUserTypeDot(value: example.Type.) = value
 
 diagnostics:
 code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(44), end: TextSize(45) }) message=expected type segment

@@ -5,6 +5,7 @@ expression: snapshot
 formatted:
 import java.lang.annotation.Native;
 
+@Deprecated
 open module example.module {
   requires static transitive java.sql;
 

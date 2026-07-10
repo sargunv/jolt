@@ -4,7 +4,9 @@ use jolt_fmt_ir::{ConcatBuilder, Doc, DocBuilder};
 use jolt_kotlin_syntax::{KotlinFile, KotlinFileItem, PackageHeader, StatementSyntax};
 
 use crate::helpers::blocks::join_hard_lines;
-use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_token};
+use crate::helpers::comments::{
+    LeadingTrivia, TrailingTrivia, format_token, format_token_sequence,
+};
 use crate::helpers::formatter_ignore::{
     FormatterIgnoreRun, formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
     relative_token_range_between,
@@ -20,8 +22,9 @@ pub(crate) fn format_file<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let contents = format_file_contents(doc, file);
+    let recovered = format_token_sequence(doc, file.recovered_tokens(), LeadingTrivia::Preserve);
     let hard_line = doc.hard_line();
-    doc.concat([contents, hard_line])
+    doc.concat([contents, recovered, hard_line])
 }
 
 fn format_file_contents<'source>(

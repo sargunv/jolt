@@ -3,7 +3,8 @@ use jolt_kotlin_syntax::{
     CatchClause, DestructuringDeclaration, DoWhileStatement, Expression, FinallyClause,
     ForStatement, IfExpression, JumpExpression, KotlinSyntaxKind, KotlinSyntaxToken,
     LambdaExpression, NameExpression, ParenthesizedExpression, ThrowExpression, TryExpression,
-    WhenCondition, WhenEntry, WhenExpression, WhenGuard, WhenSubject, WhileStatement,
+    WhenCondition, WhenEntry, WhenEntryRecoveryPart, WhenExpression, WhenGuard, WhenSubject,
+    WhileStatement,
 };
 
 use crate::helpers::blocks::join_hard_lines;
@@ -16,7 +17,7 @@ use crate::helpers::lists::{
 use crate::rules::names::format_name;
 use crate::rules::variables::format_value_parameter_list;
 
-use super::{format_expression, lambdas::lambda_body_doc};
+use super::{format_expression, format_expression_with_leading, lambdas::lambda_body_doc};
 
 pub(super) fn format_if_expression<'source>(
     doc: &mut DocBuilder<'source>,
@@ -639,6 +640,9 @@ fn format_when_entry<'source>(
     doc: &mut DocBuilder<'source>,
     entry: &WhenEntry<'source>,
 ) -> Doc<'source> {
+    if entry.arrow_token().is_none() {
+        return format_recovered_when_entry(doc, entry);
+    }
     let label = if let Some(else_token) = entry.else_token() {
         format_token(
             doc,
@@ -669,6 +673,60 @@ fn format_when_entry<'source>(
         doc.nil()
     };
     doc.concat([label, arrow, body])
+}
+
+fn format_recovered_when_entry<'source>(
+    doc: &mut DocBuilder<'source>,
+    entry: &WhenEntry<'source>,
+) -> Doc<'source> {
+    doc.concat_list(|parts| {
+        let mut needs_line_before_expression = false;
+        for part in entry.recovery_parts() {
+            match part {
+                WhenEntryRecoveryPart::Condition(condition) => {
+                    let condition = format_when_condition(parts, &condition);
+                    parts.push(condition);
+                    needs_line_before_expression = true;
+                }
+                WhenEntryRecoveryPart::Expression(expression) => {
+                    if needs_line_before_expression {
+                        let line = parts.hard_line();
+                        parts.push(line);
+                    }
+                    let expression =
+                        format_expression_with_leading(parts, &expression, LeadingTrivia::Preserve);
+                    parts.push(expression);
+                    needs_line_before_expression = false;
+                }
+                WhenEntryRecoveryPart::Token(token) => {
+                    let token = format_token(
+                        parts,
+                        &token,
+                        LeadingTrivia::Preserve,
+                        TrailingTrivia::Preserve,
+                    );
+                    parts.push(token);
+                }
+                WhenEntryRecoveryPart::Error(error) => {
+                    let first = error.first_token();
+                    if first.is_some_and(|token| token.kind() == KotlinSyntaxKind::ElseKw) {
+                        let line = parts.hard_line();
+                        parts.push(line);
+                    } else if first.is_some_and(|token| token.kind() == KotlinSyntaxKind::Arrow) {
+                        let space = parts.space();
+                        parts.push(space);
+                    }
+                    let error =
+                        format_token_sequence(parts, error.token_iter(), LeadingTrivia::Preserve);
+                    parts.push(error);
+                    if first.is_some_and(|token| token.kind() == KotlinSyntaxKind::Arrow) {
+                        let space = parts.space();
+                        parts.push(space);
+                    }
+                }
+            }
+        }
+    })
 }
 
 fn format_when_conditions<'source>(
@@ -761,7 +819,15 @@ fn format_when_condition<'source>(
         }
         _ => {
             if let Some(expression) = condition.expression() {
-                format_expression(doc, &expression)
+                let expression = format_expression(doc, &expression);
+                let recovered_tokens = condition.recovered_tokens().collect::<Vec<_>>();
+                if recovered_tokens.is_empty() {
+                    return expression;
+                }
+                let recovered =
+                    format_token_sequence(doc, recovered_tokens, LeadingTrivia::Preserve);
+                let space = doc.space();
+                doc.concat([expression, space, recovered])
             } else {
                 format_token_sequence(doc, condition.token_iter(), LeadingTrivia::Preserve)
             }

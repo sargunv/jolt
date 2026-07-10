@@ -3,8 +3,8 @@ use super::{
     ArrayAccessExpression, ArrayCreationExpression, ArrayInitializer, CommaListItem, DimExpression,
     Doc, InlineLeadingTrivia, JavaSyntaxToken, LeadingTrivia, ObjectCreationExpression,
     TrailingTrivia, VariableInitializerValue, braced_comma_list_with_trailing_separator,
-    comment_forces_line, format_anonymous_class_body, format_expression, format_token,
-    format_token_with_comments, format_token_with_inline_leading_comments,
+    comment_forces_line, format_anonymous_class_body, format_array_dimensions, format_expression,
+    format_token, format_token_with_comments, format_token_with_inline_leading_comments,
     format_trailing_comments_before_line_break, format_type, format_type_argument_list,
     trailing_comments_force_line,
 };
@@ -51,9 +51,12 @@ pub(super) fn format_object_creation_expression<'source>(
                     [format_type_argument_list(&arguments, doc), doc.space(),]
                 )
             });
-    let ty = expression
-        .ty()
-        .map_or_else(Doc::nil, |ty| format_type(&ty, doc));
+    let ty = match expression.ty() {
+        Some(ty) => format_type(&ty, doc),
+        None => expression
+            .recovered_primitive_type_token()
+            .map_or_else(Doc::nil, |token| format_token_with_comments(doc, &token)),
+    };
     let arguments = format_argument_list(expression.arguments(), doc);
     let body = expression.body().map_or_else(Doc::nil, |body| {
         doc_concat!(doc, [doc.space(), format_anonymous_class_body(&body, doc)])
@@ -90,6 +93,11 @@ pub(super) fn format_array_creation_expression<'source>(
             dimensions.push(dimension);
         }
     });
+    let trailing_dimensions = expression
+        .trailing_dimensions()
+        .map_or_else(Doc::nil, |dimensions| {
+            format_array_dimensions(&dimensions, doc)
+        });
     let initializer = expression
         .initializer()
         .map_or_else(Doc::nil, |initializer| {
@@ -99,7 +107,10 @@ pub(super) fn format_array_creation_expression<'source>(
             )
         });
 
-    doc_group!(doc, doc_concat!(doc, [new, ty, dimensions, initializer]),)
+    doc_group!(
+        doc,
+        doc_concat!(doc, [new, ty, dimensions, trailing_dimensions, initializer]),
+    )
 }
 
 fn format_creation_new_keyword<'source>(
@@ -130,6 +141,18 @@ fn format_dim_expression<'source>(
     dimension: &DimExpression<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
+    let mut annotations = dimension.annotations().peekable();
+    let annotations = if annotations.peek().is_some() {
+        doc_concat!(
+            doc,
+            [
+                doc.space(),
+                crate::rules::types::format_inline_annotations(annotations, doc),
+            ]
+        )
+    } else {
+        Doc::nil()
+    };
     let open_bracket = dimension.open_bracket();
     let close_bracket = dimension.close_bracket();
     let expression = match dimension.expression() {
@@ -137,11 +160,17 @@ fn format_dim_expression<'source>(
         None => Doc::nil(),
     };
 
-    format_bracketed_expression(
+    doc_concat!(
         doc,
-        open_bracket.as_ref(),
-        expression,
-        close_bracket.as_ref(),
+        [
+            annotations,
+            format_bracketed_expression(
+                doc,
+                open_bracket.as_ref(),
+                expression,
+                close_bracket.as_ref()
+            ),
+        ]
     )
 }
 

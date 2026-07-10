@@ -17,6 +17,7 @@ use crate::helpers::formatter_ignore::{
     formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
     relative_token_range_between,
 };
+use crate::rules::annotations::format_annotation;
 use crate::rules::names::{NameSortKey, format_name};
 
 pub(crate) fn format_module_declaration<'source>(
@@ -26,6 +27,14 @@ pub(crate) fn format_module_declaration<'source>(
     doc_concat!(
         doc,
         [
+            doc.concat_list(|annotations| {
+                for annotation in module.annotations() {
+                    let annotation = format_annotation(&annotation, annotations);
+                    annotations.push(annotation);
+                    let hard_line = annotations.hard_line();
+                    annotations.push(hard_line);
+                }
+            }),
             module
                 .open_token()
                 .as_ref()
@@ -431,9 +440,10 @@ fn format_module_directive_doc<'source>(
             let head = format_directive_head(requires.requires_token().as_ref(), parts);
             parts.push(head);
             if *is_static {
-                let static_token =
-                    format_directive_middle_token(requires.static_token().as_ref(), parts);
-                parts.push(static_token);
+                for token in requires.static_tokens() {
+                    let static_token = format_directive_middle_token(Some(&token), parts);
+                    parts.push(static_token);
+                }
             }
             if *is_transitive {
                 let transitive =

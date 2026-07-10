@@ -5,7 +5,7 @@ expression: snapshot
 formatted:
 class AnnotatedDimExpression {
   void method(int n) {
-    int[] values = new int[n];
+    int[] values = new int @Marker [n];
   }
 }
 

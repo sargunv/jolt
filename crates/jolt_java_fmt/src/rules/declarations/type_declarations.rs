@@ -44,6 +44,7 @@ pub(super) fn format_class_declaration<'source>(
         open,
         close,
         body_doc,
+        class.missing_body_semicolon(),
         doc,
     )
 }
@@ -80,6 +81,7 @@ pub(super) fn format_interface_declaration<'source>(
         open,
         close,
         body_doc,
+        None,
         doc,
     )
 }
@@ -117,6 +119,7 @@ pub(super) fn format_record_declaration<'source>(
         open,
         close,
         body_doc,
+        None,
         doc,
     )
 }
@@ -152,6 +155,7 @@ pub(super) fn format_enum_declaration<'source>(
         open,
         close,
         body_doc,
+        None,
         doc,
     )
 }
@@ -193,6 +197,7 @@ pub(super) fn format_annotation_interface_declaration<'source>(
         open,
         close,
         body_doc,
+        None,
         doc,
     )
 }
@@ -223,6 +228,7 @@ fn format_type_declaration_with_body<'source>(
     open_brace: Option<JavaSyntaxToken<'source>>,
     close_brace: Option<JavaSyntaxToken<'source>>,
     body: Option<Doc<'source>>,
+    missing_body_semicolon: Option<JavaSyntaxToken<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     doc_concat!(
@@ -243,6 +249,9 @@ fn format_type_declaration_with_body<'source>(
             doc_group!(doc, header_tail),
             doc.space(),
             source_braced_body(doc, open_brace.as_ref(), close_brace.as_ref(), body),
+            missing_body_semicolon.map_or_else(Doc::nil, |semicolon| {
+                format_token_with_comments(doc, &semicolon)
+            }),
         ]
     )
 }

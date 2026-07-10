@@ -101,12 +101,7 @@ fn format_source_open_brace<'source>(
     open: Option<&KotlinSyntaxToken<'source>>,
 ) -> Doc<'source> {
     if let Some(open) = open {
-        format_token(
-            doc,
-            open,
-            LeadingTrivia::Preserve,
-            TrailingTrivia::RelocatedToEnclosingContext,
-        )
+        format_token(doc, open, LeadingTrivia::Preserve, TrailingTrivia::Preserve)
     } else {
         doc.nil()
     }

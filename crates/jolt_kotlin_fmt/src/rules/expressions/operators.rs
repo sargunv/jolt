@@ -118,6 +118,19 @@ pub(super) fn format_binary_expression<'source>(
             doc.nil()
         };
     };
+    if expression.operands().nth(1).is_none() && expression.cast_type().is_none() {
+        let left = expression.operands().next().map_or_else(Doc::nil, |left| {
+            format_expression_with_leading(doc, &left, leading)
+        });
+        let space = doc.space();
+        let operator = format_token(
+            doc,
+            &operator,
+            LeadingTrivia::Preserve,
+            TrailingTrivia::Preserve,
+        );
+        return doc.concat([left, space, operator]);
+    }
     if is_type_binary_operator(doc, &operator) {
         return format_type_binary_expression(doc, expression, &operator, leading);
     }
@@ -557,7 +570,7 @@ pub(super) fn format_unary_expression<'source>(
     };
 
     let operator = format_token(doc, &operator, leading, TrailingTrivia::Preserve);
-    let operand = format_expression(doc, &operand);
+    let operand = format_expression_with_leading(doc, &operand, LeadingTrivia::Preserve);
     doc.concat([operator, operand])
 }
 

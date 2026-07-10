@@ -10,11 +10,11 @@ class RecoveredModifiers {
 }
 
 formatted:
-record (int value) {
+record sealed(int value) {
 }
 
 class RecoveredModifiers {
-  void method() {
+  transient void method() {
   }
 }
 

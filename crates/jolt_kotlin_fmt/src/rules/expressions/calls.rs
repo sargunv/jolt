@@ -33,10 +33,11 @@ pub(super) fn format_navigation_expression<'source>(
     };
 
     let Some(receiver) = expression.receiver() else {
+        let prefix = format_token_sequence(doc, expression.recovered_prefix_tokens(), leading);
         let operator = format_navigation_operator(
             doc,
             expression.operator_tokens(),
-            leading,
+            LeadingTrivia::Preserve,
             TrailingTrivia::BeforeSpaceIfComments,
         );
         let selector = if let Some(selector) = expression.selector_token() {
@@ -49,7 +50,7 @@ pub(super) fn format_navigation_expression<'source>(
         } else {
             doc.nil()
         };
-        return doc.concat([operator, selector]);
+        return doc.concat([prefix, operator, selector]);
     };
     let operators = expression.operator_tokens();
     if operators.is_empty() {

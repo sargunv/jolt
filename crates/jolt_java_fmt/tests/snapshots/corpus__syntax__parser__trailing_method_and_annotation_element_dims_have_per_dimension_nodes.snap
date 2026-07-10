@@ -4,7 +4,7 @@ expression: snapshot
 ---
 formatted:
 abstract class TrailingMethodPerDimensionDims {
-  abstract int values();
+  abstract int values() @A [] @B [];
 }
 
 @interface TrailingAnnotationElementPerDimensionDims {
