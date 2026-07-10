@@ -1,0 +1,16 @@
+---
+source: crates/jolt_kotlin_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+fun callableReferenceMissingTarget() {
+    val reference = ::<String>
+}
+
+formatted:
+fun callableReferenceMissingTarget() {
+  val reference = ::
+}
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(70), end: TextSize(71) }) message=expected callable reference name

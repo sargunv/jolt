@@ -225,19 +225,19 @@ format syntax/parser/array-creation-unsized-trailing-dims-have-per-dimension-nod
 format syntax/parser/array-type-dims-have-per-dimension-nodes.java
 format syntax/parser/catch-clause-has-catch-parameter-boundary.java
 format syntax/parser/catch-union-types-have-union-type-nodes.java
-skip diagnostics syntax/parser/diagnoses-bare-try-statement.java
-skip diagnostics syntax/parser/diagnoses-decimal-integer-boundary-literals-outside-unary-minus-operand.java
-skip diagnostics syntax/parser/diagnoses-expression-try-with-resource.java
-skip diagnostics syntax/parser/diagnoses-invalid-declaration-contexts.java
-skip diagnostics syntax/parser/diagnoses-invalid-expression-forms.java
-skip diagnostics syntax/parser/diagnoses-invalid-lambda-parameters.java
-skip diagnostics syntax/parser/diagnoses-invalid-statement-expressions.java
-skip diagnostics syntax/parser/diagnoses-literals-and-underscore-used-as-general-identifiers.java
-skip diagnostics syntax/parser/diagnoses-misplaced-explicit-constructor-invocations.java
-skip diagnostics syntax/parser/diagnoses-misplaced-receiver-parameter.java
-skip diagnostics syntax/parser/diagnoses-missing-class-body.java
+audit diagnostics syntax/parser/diagnoses-bare-try-statement.java
+audit diagnostics syntax/parser/diagnoses-decimal-integer-boundary-literals-outside-unary-minus-operand.java
+audit diagnostics syntax/parser/diagnoses-expression-try-with-resource.java
+audit diagnostics syntax/parser/diagnoses-invalid-declaration-contexts.java
+audit diagnostics syntax/parser/diagnoses-invalid-expression-forms.java
+audit diagnostics syntax/parser/diagnoses-invalid-lambda-parameters.java
+audit diagnostics syntax/parser/diagnoses-invalid-statement-expressions.java
+audit diagnostics syntax/parser/diagnoses-literals-and-underscore-used-as-general-identifiers.java
+audit diagnostics syntax/parser/diagnoses-misplaced-explicit-constructor-invocations.java
+audit diagnostics syntax/parser/diagnoses-misplaced-receiver-parameter.java
+audit diagnostics syntax/parser/diagnoses-missing-class-body.java
 format syntax/parser/disambiguates-parenthesized-expression-from-reference-cast.java
-skip diagnostics syntax/parser/disambiguates-when-in-switch-labels--invalid-guard.java
+audit diagnostics syntax/parser/disambiguates-when-in-switch-labels--invalid-guard.java
 format syntax/parser/disambiguates-when-in-switch-labels.java
 format syntax/parser/instanceof-forms-have-dedicated-expression-nodes.java
 format syntax/parser/module-import-declarations-expose-structured-module-names.java
@@ -334,13 +334,13 @@ format syntax/parser/parses-var-lambda-parameter.java
 format syntax/parser/parses-var-local-variable-type.java
 format syntax/parser/parses-variable-arity-lambda-parameter.java
 format syntax/parser/parses-yield-identifier-statement-expressions.java
-skip diagnostics syntax/parser/recovers-contextual-keyword-missing-space-before-class.java
-skip diagnostics syntax/parser/recovers-from-invalid-void-field.java
-skip diagnostics syntax/parser/recovers-invalid-syntax-with-error-nodes-and-diagnostics.java
-skip diagnostics syntax/parser/recovers-malformed-nested-generic-member.java
-skip diagnostics syntax/parser/recovers-missing-declaration-names.java
-skip diagnostics syntax/parser/recovers-restricted-type-identifiers.java
-skip diagnostics syntax/parser/recovers-unqualified-yield-method-invocation.java
+audit diagnostics syntax/parser/recovers-contextual-keyword-missing-space-before-class.java
+audit diagnostics syntax/parser/recovers-from-invalid-void-field.java
+audit diagnostics syntax/parser/recovers-invalid-syntax-with-error-nodes-and-diagnostics.java
+audit diagnostics syntax/parser/recovers-malformed-nested-generic-member.java
+audit diagnostics syntax/parser/recovers-missing-declaration-names.java
+audit diagnostics syntax/parser/recovers-restricted-type-identifiers.java
+audit diagnostics syntax/parser/recovers-unqualified-yield-method-invocation.java
 format syntax/parser/single-element-annotations-and-defaults-have-structured-element-values.java
 format syntax/parser/static-import-declarations-expose-structured-names.java
 format syntax/parser/switch-case-constant-can-be-a-conditional-expression.java
@@ -352,6 +352,7 @@ format syntax/parser/type-bounds-and-casts-have-intersection-type-nodes.java
 format syntax/parser/type-on-demand-import-declarations-expose-package-prefix-names.java
 format syntax/parser/void-method-results-and-class-literals-have-void-type-nodes.java
 skip syntax/recovery/argument-list.java
+skip syntax/recovery/array-creation-trailing-dimensions.java
 skip syntax/recovery/binary-expression.java
 skip syntax/recovery/block-statement.java
 skip syntax/recovery/block-with-formatter-ignore.java
@@ -363,11 +364,16 @@ skip syntax/recovery/empty-statement-comments.java
 skip syntax/recovery/enum-pattern-and-for-lists.java
 skip syntax/recovery/header-clauses.java
 skip syntax/recovery/import-and-module-directives.java
+skip syntax/recovery/import-trailing-tokens.java
 skip syntax/recovery/member-body-unowned-tokens.java
 skip syntax/recovery/member-body-with-formatter-ignore.java
 skip syntax/recovery/method-invocation-without-name.java
+skip syntax/recovery/missing-type-body-token.java
+skip syntax/recovery/module-annotation.java
 skip syntax/recovery/module-body.java
+skip syntax/recovery/module-repeated-requires-modifiers.java
 skip syntax/recovery/qualifier-dots-without-qualifiers.java
+skip syntax/recovery/recovered-declaration-names-and-modifiers.java
 skip syntax/recovery/resource-and-catch-lists.java
 skip syntax/recovery/switch-and-module-lists.java
 skip syntax/recovery/switch-block-unowned-tokens.java

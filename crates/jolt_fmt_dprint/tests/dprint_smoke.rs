@@ -179,7 +179,8 @@ struct CommandOutput {
 fn direct_java_format(source: &str) -> String {
     let mut sink = StringSink::default();
     match format_source_to_sink(source, Language::Java, &FormatOptions::default(), &mut sink) {
-        FormatSinkResult::Complete | FormatSinkResult::Halted => sink.into_string(),
+        FormatSinkResult::Complete => sink.into_string(),
+        FormatSinkResult::Halted => panic!("direct Java formatting unexpectedly halted"),
         FormatSinkResult::Blocked { diagnostics } => {
             panic!("direct Java formatting blocked: {diagnostics:?}")
         }
@@ -194,7 +195,8 @@ fn direct_kotlin_format(source: &str) -> String {
         &FormatOptions::default(),
         &mut sink,
     ) {
-        FormatSinkResult::Complete | FormatSinkResult::Halted => sink.into_string(),
+        FormatSinkResult::Complete => sink.into_string(),
+        FormatSinkResult::Halted => panic!("direct Kotlin formatting unexpectedly halted"),
         FormatSinkResult::Blocked { diagnostics } => {
             panic!("direct Kotlin formatting blocked: {diagnostics:?}")
         }

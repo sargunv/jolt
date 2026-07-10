@@ -1,0 +1,2 @@
+fun topLevelOrphanToken() = Unit
+}

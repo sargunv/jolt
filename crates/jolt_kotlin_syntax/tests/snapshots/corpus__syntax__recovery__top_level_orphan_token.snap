@@ -1,0 +1,31 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun topLevelOrphanToken() = Unit
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "topLevelOrphanToken" @ 4..23
+    ValueParameterList
+      LParen "(" @ 23..24
+      RParen ")" @ 24..25 trailing=[Whitespace " "]
+    Assign "=" @ 26..27 trailing=[Whitespace " "]
+    NameExpression
+      Identifier "Unit" @ 28..32
+  RBrace "}" @ 33..34 leading=[Newline "\n"]
+  Eof "" @ 35..35 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=33..34 message="unexpected closing brace at top level"
+
+diagnostics:
+code=kotlin.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(33), end: TextSize(34) }) message=unexpected closing brace at top level

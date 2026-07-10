@@ -1,0 +1,39 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun trailingUserTypeDot(value: example.Type.) = value
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "trailingUserTypeDot" @ 4..23
+    ValueParameterList
+      LParen "(" @ 23..24
+      ValueParameter
+        Name
+          Identifier "value" @ 24..29
+        Colon ":" @ 29..30 trailing=[Whitespace " "]
+        TypeReference
+          UserType
+            Identifier "example" @ 31..38
+            Dot "." @ 38..39
+            Identifier "Type" @ 39..43
+            Dot "." @ 43..44
+      RParen ")" @ 44..45 trailing=[Whitespace " "]
+    Assign "=" @ 46..47 trailing=[Whitespace " "]
+    NameExpression
+      Identifier "value" @ 48..53
+  Eof "" @ 54..54 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.expected_syntax severity=Error stage=Parser range=44..45 message="expected type segment"
+
+diagnostics:
+code=kotlin.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(44), end: TextSize(45) }) message=expected type segment

@@ -22,7 +22,11 @@ fn trivia_markers_are_conserved_by_formatter() {
         |source, path| {
             let mut sink = StringSink::default();
             match format_source_to_sink(source, &FormatOptions::default(), &mut sink) {
-                FormatSinkResult::Complete | FormatSinkResult::Halted => sink.into_string(),
+                FormatSinkResult::Complete => sink.into_string(),
+                FormatSinkResult::Halted => panic!(
+                    "formatter unexpectedly halted with StringSink in {}",
+                    path.display()
+                ),
                 FormatSinkResult::Blocked { diagnostics } => {
                     panic!(
                         "formatter diagnostics in {}: {diagnostics:#?}",

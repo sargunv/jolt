@@ -2,7 +2,7 @@ use jolt_kotlin_fmt::{FormatOptions, FormatSinkResult, format_source_to_sink};
 use jolt_kotlin_syntax::parse_kotlin_file;
 use jolt_test_support::{
     SnapshotBuilder, StringSink, collect_kotlin_files, fixture_snapshot_name, kotlin_fixture_root,
-    read_to_string, render_diagnostics,
+    read_to_string, render_diagnostics, represented_token_loss_report, trivia_markers,
 };
 
 #[test]
@@ -11,6 +11,7 @@ fn kotlin_corpus_formatter_snapshots() {
     let root = kotlin_fixture_root(env!("CARGO_MANIFEST_DIR"));
     let mut formatted_cases = 0usize;
     let mut manifest_entries = Vec::new();
+    let mut conservation_failures = Vec::new();
 
     for path in collect_kotlin_files(&root) {
         let relative = path
@@ -27,8 +28,15 @@ fn kotlin_corpus_formatter_snapshots() {
 
         let source = read_to_string(&path);
         let parse = parse_kotlin_file(&source);
-        if !parse.diagnostics().is_empty() || parse.syntax().is_none() {
-            manifest_entries.push(format!("skip diagnostics {relative}"));
+        if parse.syntax().is_none() {
+            manifest_entries.push(format!("skip no syntax {relative}"));
+            continue;
+        }
+        if !parse.diagnostics().is_empty() {
+            manifest_entries.push(format!("audit diagnostics {relative}"));
+            if let Some(failure) = audit_diagnostic_source(&source, options, &relative) {
+                conservation_failures.push(failure);
+            }
             continue;
         }
 
@@ -48,6 +56,28 @@ fn kotlin_corpus_formatter_snapshots() {
             "formatted output produced no syntax tree for {}",
             path.display()
         );
+        let token_loss = represented_token_loss_report(
+            parse.syntax().expect("syntax checked above").token_iter(),
+            formatted_parse
+                .syntax()
+                .expect("formatted syntax checked above")
+                .token_iter(),
+            &[],
+        );
+        let expected_markers = trivia_markers(&source);
+        let actual_markers = trivia_markers(&formatted);
+        if !token_loss.is_empty() || actual_markers != expected_markers {
+            conservation_failures.push(format!(
+                "{relative}:\n{token_loss}{}",
+                if actual_markers == expected_markers {
+                    String::new()
+                } else {
+                    format!(
+                        "trivia markers changed\nexpected: {expected_markers:#?}\nactual: {actual_markers:#?}\n"
+                    )
+                }
+            ));
+        }
 
         let repeated = format_or_panic(&formatted, options, &path.display().to_string());
         assert_eq!(
@@ -70,12 +100,47 @@ fn kotlin_corpus_formatter_snapshots() {
         "expected at least one valid Kotlin formatter corpus fixture"
     );
     insta::assert_snapshot!("formatter_fixture_manifest", manifest_entries.join("\n"));
+    assert!(
+        conservation_failures.is_empty(),
+        "formatter lost represented Kotlin source:\n{}",
+        conservation_failures.join("\n")
+    );
+}
+
+fn audit_diagnostic_source(source: &str, options: FormatOptions, label: &str) -> Option<String> {
+    let before_parse = parse_kotlin_file(source);
+    let before = before_parse.syntax()?;
+    let formatted = format_or_panic(source, options, label);
+    let after_parse = parse_kotlin_file(&formatted);
+    let after = after_parse.syntax();
+    let Some(after) = after else {
+        return Some(format!("{label}: formatted output has no represented tree"));
+    };
+    let token_loss = represented_token_loss_report(before.token_iter(), after.token_iter(), &[]);
+    let expected_markers = trivia_markers(source);
+    let actual_markers = trivia_markers(&formatted);
+    let repeated = format_or_panic(&formatted, options, label);
+
+    let mut failures = String::new();
+    failures.push_str(&token_loss);
+    if actual_markers != expected_markers {
+        failures.push_str(&format!(
+            "trivia markers changed\nexpected: {expected_markers:#?}\nactual: {actual_markers:#?}\n"
+        ));
+    }
+    if repeated != formatted {
+        failures.push_str("formatter output is not idempotent\n");
+    }
+    (!failures.is_empty()).then(|| format!("{label}:\n{failures}"))
 }
 
 fn format_or_panic(source: &str, options: FormatOptions, label: &str) -> String {
     let mut sink = StringSink::default();
     match format_source_to_sink(source, &options, &mut sink) {
-        FormatSinkResult::Complete | FormatSinkResult::Halted => sink.into_string(),
+        FormatSinkResult::Complete => sink.into_string(),
+        FormatSinkResult::Halted => {
+            panic!("formatter unexpectedly halted with StringSink in {label}")
+        }
         FormatSinkResult::Blocked { diagnostics } => {
             panic!("formatter diagnostics in {label}: {diagnostics:#?}")
         }

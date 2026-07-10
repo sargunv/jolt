@@ -1,0 +1,22 @@
+---
+source: crates/jolt_kotlin_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+fun invalidAssignmentTargets(value: Int) {
+    1 = value
+    value + 1 = value
+    value() = 3
+}
+
+formatted:
+fun invalidAssignmentTargets(value: Int) {
+  value
+  value
+  3
+}
+
+diagnostics:
+code=kotlin.parse.invalid_assignment_target severity=Error stage=Parser range=Some(TextRange { start: TextSize(49), end: TextSize(50) }) message=invalid assignment target
+code=kotlin.parse.invalid_assignment_target severity=Error stage=Parser range=Some(TextRange { start: TextSize(71), end: TextSize(72) }) message=invalid assignment target
+code=kotlin.parse.invalid_assignment_target severity=Error stage=Parser range=Some(TextRange { start: TextSize(91), end: TextSize(92) }) message=invalid assignment target

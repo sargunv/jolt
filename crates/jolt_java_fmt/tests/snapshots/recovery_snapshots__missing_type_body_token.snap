@@ -1,0 +1,13 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+class MissingTypeBody;
+
+formatted:
+class MissingTypeBody 
+
+
+diagnostics:
+code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(21), end: TextSize(22) }) message=expected type body

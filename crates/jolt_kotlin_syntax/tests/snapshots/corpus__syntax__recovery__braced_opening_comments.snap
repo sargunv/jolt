@@ -1,0 +1,56 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class BracedOpeningComments { /* JOLT-TRIVIA:class-open */
+    fun block() { /* JOLT-TRIVIA:block-open */
+        println("body")
+    }
+}
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Name
+      Identifier "BracedOpeningComments" @ 6..27 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 28..29 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:class-open */"]
+      ClassMemberDeclaration
+        FunctionDeclaration
+          FunKw "fun" @ 63..66 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          CallableName
+            Name
+              Identifier "block" @ 67..72
+          ValueParameterList
+            LParen "(" @ 72..73
+            RParen ")" @ 73..74 trailing=[Whitespace " "]
+          Block
+            LBrace "{" @ 75..76 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:block-open */"]
+            Statement
+              ExpressionStatement
+                CallExpression
+                  NameExpression
+                    Identifier "println" @ 114..121 leading=[Newline "\n", Whitespace "        "]
+                  ValueArgumentList
+                    LParen "(" @ 121..122
+                    ValueArgument
+                      StringTemplateExpression
+                        StringTemplateEntry
+                          OpenQuote "\"" @ 122..123
+                        StringTemplateEntry
+                          RegularStringPart "body" @ 123..127
+                        ClosingQuote "\"" @ 127..128
+                    RParen ")" @ 128..129
+            RBrace "}" @ 134..135 leading=[Newline "\n", Whitespace "    "]
+      RBrace "}" @ 136..137 leading=[Newline "\n"]
+  Eof "" @ 138..138 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

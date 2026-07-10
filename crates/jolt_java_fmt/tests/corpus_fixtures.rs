@@ -120,7 +120,8 @@ fn format_source(
 ) -> Result<String, Vec<jolt_diagnostics::Diagnostic>> {
     let mut sink = StringSink::default();
     match format_source_to_sink(source, &options, &mut sink) {
-        FormatSinkResult::Complete | FormatSinkResult::Halted => Ok(sink.into_string()),
+        FormatSinkResult::Complete => Ok(sink.into_string()),
+        FormatSinkResult::Halted => panic!("formatter unexpectedly halted with StringSink"),
         FormatSinkResult::Blocked { diagnostics } => Err(diagnostics),
     }
 }

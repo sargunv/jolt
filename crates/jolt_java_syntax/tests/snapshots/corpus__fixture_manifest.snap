@@ -352,6 +352,7 @@ syntax/parser/type-bounds-and-casts-have-intersection-type-nodes.java
 syntax/parser/type-on-demand-import-declarations-expose-package-prefix-names.java
 syntax/parser/void-method-results-and-class-literals-have-void-type-nodes.java
 syntax/recovery/argument-list.java
+syntax/recovery/array-creation-trailing-dimensions.java
 syntax/recovery/binary-expression.java
 syntax/recovery/block-statement.java
 syntax/recovery/block-with-formatter-ignore.java
@@ -363,11 +364,16 @@ syntax/recovery/empty-statement-comments.java
 syntax/recovery/enum-pattern-and-for-lists.java
 syntax/recovery/header-clauses.java
 syntax/recovery/import-and-module-directives.java
+syntax/recovery/import-trailing-tokens.java
 syntax/recovery/member-body-unowned-tokens.java
 syntax/recovery/member-body-with-formatter-ignore.java
 syntax/recovery/method-invocation-without-name.java
+syntax/recovery/missing-type-body-token.java
+syntax/recovery/module-annotation.java
 syntax/recovery/module-body.java
+syntax/recovery/module-repeated-requires-modifiers.java
 syntax/recovery/qualifier-dots-without-qualifiers.java
+syntax/recovery/recovered-declaration-names-and-modifiers.java
 syntax/recovery/resource-and-catch-lists.java
 syntax/recovery/switch-and-module-lists.java
 syntax/recovery/switch-block-unowned-tokens.java

@@ -1,0 +1,14 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+module com.example.repeated { requires static /* JOLT-TRIVIA:repeated-requires-static */ static dependency; }
+
+formatted:
+module com.example.repeated {
+  requires static /* JOLT-TRIVIA:repeated-requires-static */ dependency;
+}
+
+diagnostics:
+(none)

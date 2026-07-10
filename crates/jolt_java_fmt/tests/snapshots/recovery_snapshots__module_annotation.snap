@@ -1,0 +1,13 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+@Deprecated module com.example.annotated {}
+
+formatted:
+module com.example.annotated {
+}
+
+diagnostics:
+(none)

@@ -7,6 +7,7 @@ use std::path::{Path, PathBuf};
 
 use jolt_diagnostics::Diagnostic;
 use jolt_fmt_ir::{RenderControl, RenderSink};
+use jolt_syntax::{Language, SyntaxToken};
 use unicode_width::UnicodeWidthStr;
 
 #[derive(Default)]
@@ -357,6 +358,95 @@ pub fn trivia_markers(source: &str) -> BTreeMap<String, usize> {
         *markers.entry(marker).or_insert(0) += 1;
     }
     markers
+}
+
+/// Describes a bounded source-token removal performed by a formatter
+/// normalization rule.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct RepresentedTokenRemoval {
+    pub source: &'static str,
+    pub count: usize,
+}
+
+/// Reports represented source tokens that disappeared while formatting.
+///
+/// Token order and output-only tokens are ignored because formatters may sort
+/// constructs and synthesize documented readability tokens. Source-token
+/// removals and spelling changes must be listed explicitly by the caller.
+#[must_use]
+pub fn represented_token_loss_report<'before, 'after, L>(
+    before: impl IntoIterator<Item = SyntaxToken<'before, L>>,
+    after: impl IntoIterator<Item = SyntaxToken<'after, L>>,
+    removals: &[RepresentedTokenRemoval],
+) -> String
+where
+    L: Language,
+{
+    let mut before = token_text_inventory(before);
+    let mut after = token_text_inventory(after);
+
+    let exact_tokens = before.keys().cloned().collect::<Vec<_>>();
+    for token in exact_tokens {
+        cancel_inventory_counts(&mut before, &mut after, &token, &token, usize::MAX);
+    }
+
+    for removal in removals {
+        subtract_inventory_count(&mut before, removal.source, removal.count);
+    }
+
+    let mut report = String::new();
+    for (token, count) in before {
+        if count > 0 {
+            writeln!(&mut report, "missing {count} x {token:?}").expect("write token-loss report");
+        }
+    }
+    report
+}
+
+fn token_text_inventory<'source, L>(
+    tokens: impl IntoIterator<Item = SyntaxToken<'source, L>>,
+) -> BTreeMap<String, usize>
+where
+    L: Language,
+{
+    let mut inventory = BTreeMap::new();
+    for token in tokens {
+        if token.kind() != L::eof_kind() {
+            *inventory.entry(token.text().to_owned()).or_default() += 1;
+        }
+    }
+    inventory
+}
+
+fn cancel_inventory_counts(
+    before: &mut BTreeMap<String, usize>,
+    after: &mut BTreeMap<String, usize>,
+    source: &str,
+    output: &str,
+    limit: usize,
+) {
+    let matched = before
+        .get(source)
+        .copied()
+        .unwrap_or_default()
+        .min(after.get(output).copied().unwrap_or_default())
+        .min(limit);
+    if matched == 0 {
+        return;
+    }
+
+    if let Some(count) = before.get_mut(source) {
+        *count -= matched;
+    }
+    if let Some(count) = after.get_mut(output) {
+        *count -= matched;
+    }
+}
+
+fn subtract_inventory_count(inventory: &mut BTreeMap<String, usize>, token: &str, count: usize) {
+    if let Some(remaining) = inventory.get_mut(token) {
+        *remaining = remaining.saturating_sub(count);
+    }
 }
 
 /// Runs the shared trivia conservation assertion flow over `files`:

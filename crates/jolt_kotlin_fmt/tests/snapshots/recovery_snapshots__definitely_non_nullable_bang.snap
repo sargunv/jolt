@@ -1,0 +1,12 @@
+---
+source: crates/jolt_kotlin_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+fun <T> definitelyNonNullable(value: T!!): T = value
+
+formatted:
+fun <T> definitelyNonNullable(value: T): T = value
+
+diagnostics:
+(none)

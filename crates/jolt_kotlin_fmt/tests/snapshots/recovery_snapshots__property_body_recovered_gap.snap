@@ -1,0 +1,14 @@
+---
+source: crates/jolt_kotlin_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+val property: Int +
+    get() = 1
+
+formatted:
+val property: Int
+1
+
+diagnostics:
+code=kotlin.parse.invalid_assignment_target severity=Error stage=Parser range=Some(TextRange { start: TextSize(30), end: TextSize(31) }) message=invalid assignment target

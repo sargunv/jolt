@@ -1,0 +1,23 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+record sealed(int value) {}
+
+class RecoveredModifiers {
+    transient void method() {}
+}
+
+formatted:
+record (int value) {
+}
+
+class RecoveredModifiers {
+  void method() {
+  }
+}
+
+diagnostics:
+code=java.parse.restricted_type_identifier severity=Error stage=Parser range=Some(TextRange { start: TextSize(7), end: TextSize(13) }) message=expected type name
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(60), end: TextSize(69) }) message=invalid method modifier

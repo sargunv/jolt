@@ -1,0 +1,25 @@
+---
+source: crates/jolt_java_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+class ArrayCreationTrailingDimensions {
+    Object value = new String[1] @First [] @Second [];
+}
+
+@interface First {}
+@interface Second {}
+
+formatted:
+class ArrayCreationTrailingDimensions {
+  Object value = new String[1];
+}
+
+@interface First {
+}
+
+@interface Second {
+}
+
+diagnostics:
+(none)

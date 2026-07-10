@@ -1,0 +1,20 @@
+---
+source: crates/jolt_kotlin_fmt/tests/recovery_snapshots.rs
+expression: snapshot
+---
+input:
+class BracedOpeningComments { /* JOLT-TRIVIA:class-open */
+    fun block() { /* JOLT-TRIVIA:block-open */
+        println("body")
+    }
+}
+
+formatted:
+class BracedOpeningComments {
+  fun block() {
+    println("body")
+  }
+}
+
+diagnostics:
+(none)

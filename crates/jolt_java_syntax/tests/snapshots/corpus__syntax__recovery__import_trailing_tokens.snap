@@ -1,0 +1,34 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+import com.example + lost;
+
+class ImportTrailingTokens {}
+
+syntax:
+syntax:
+CompilationUnit
+  ImportDeclaration
+    ImportKw "import" @ 0..6 trailing=[Whitespace " "]
+    QualifiedName
+      Identifier "com" @ 7..10
+      Dot "." @ 10..11
+      Identifier "example" @ 11..18 trailing=[Whitespace " "]
+    Plus "+" @ 19..20 trailing=[Whitespace " "]
+    Identifier "lost" @ 21..25
+    Semicolon ";" @ 25..26
+  ClassDeclaration
+    ClassKw "class" @ 28..33 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    Identifier "ImportTrailingTokens" @ 34..54 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 55..56
+      RBrace "}" @ 56..57
+  Eof "" @ 58..58 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

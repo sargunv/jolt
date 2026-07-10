@@ -1,0 +1,43 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+val property: Int +
+    get() = 1
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  PropertyDeclaration
+    ValKw "val" @ 0..3 trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "property" @ 4..12
+    Colon ":" @ 12..13 trailing=[Whitespace " "]
+    TypeReference
+      UserType
+        Identifier "Int" @ 14..17 trailing=[Whitespace " "]
+  Statement
+    ExpressionStatement
+      AssignmentExpression
+        ErrorNode
+          UnaryExpression
+            Plus "+" @ 18..19
+            CallExpression
+              NameExpression
+                Identifier "get" @ 24..27 leading=[Newline "\n", Whitespace "    "]
+              ValueArgumentList
+                LParen "(" @ 27..28
+                RParen ")" @ 28..29 trailing=[Whitespace " "]
+        Assign "=" @ 30..31 trailing=[Whitespace " "]
+        LiteralExpression
+          IntegerLiteral "1" @ 32..33
+  Eof "" @ 34..34 leading=[Newline "\n"]
+
+diagnostics:
+  code=kotlin.parse.invalid_assignment_target severity=Error stage=Parser range=30..31 message="invalid assignment target"
+
+diagnostics:
+code=kotlin.parse.invalid_assignment_target severity=Error stage=Parser range=Some(TextRange { start: TextSize(30), end: TextSize(31) }) message=invalid assignment target

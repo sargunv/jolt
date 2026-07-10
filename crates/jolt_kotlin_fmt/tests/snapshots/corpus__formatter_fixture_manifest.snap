@@ -88,11 +88,11 @@ skip syntax/lexer/reports-unterminated-line-string-at-newline.kt
 skip syntax/lexer/reports-unterminated-raw-string.kt
 skip syntax/lexer/separates-not-in-and-not-is-from-identifier-prefixes.kt
 skip syntax/lexer/soft-keyword-spellings-remain-identifiers.kt
-skip diagnostics syntax/parser/block-empty-statement-adjacent-braces.kt
-skip diagnostics syntax/parser/diagnoses-callable-reference-call-like-reserved-form.kt
-skip diagnostics syntax/parser/diagnoses-invalid-assignment-targets.kt
-skip diagnostics syntax/parser/diagnoses-malformed-type-argument-call.kt
-skip diagnostics syntax/parser/diagnoses-when-guard-without-subject.kt
+audit diagnostics syntax/parser/block-empty-statement-adjacent-braces.kt
+audit diagnostics syntax/parser/diagnoses-callable-reference-call-like-reserved-form.kt
+audit diagnostics syntax/parser/diagnoses-invalid-assignment-targets.kt
+audit diagnostics syntax/parser/diagnoses-malformed-type-argument-call.kt
+audit diagnostics syntax/parser/diagnoses-when-guard-without-subject.kt
 format syntax/parser/parses-annotation-all-use-site-target.kt
 format syntax/parser/parses-annotation-delegate-and-setparam-targets.kt
 format syntax/parser/parses-annotation-type-use-and-receiver.kt
@@ -184,23 +184,27 @@ format syntax/parser/parses-when-condition-forms.kt
 format syntax/parser/parses-when-multiple-conditions-with-guards.kt
 format syntax/parser/parses-when-subject-binding.kt
 format syntax/parser/parses-when-subject-guards-and-else.kt
-skip diagnostics syntax/parser/recovers-incomplete-lambda-and-call.kt
-skip diagnostics syntax/parser/recovers-missing-expression-after-elvis.kt
-skip diagnostics syntax/parser/recovers-missing-expression-in-collection-literal-preview.kt
-skip diagnostics syntax/parser/recovers-missing-when-arrow-and-body.kt
+audit diagnostics syntax/parser/recovers-incomplete-lambda-and-call.kt
+audit diagnostics syntax/parser/recovers-missing-expression-after-elvis.kt
+audit diagnostics syntax/parser/recovers-missing-expression-in-collection-literal-preview.kt
+audit diagnostics syntax/parser/recovers-missing-when-arrow-and-body.kt
 skip syntax/recovery/annotation-argument-list.kt
 skip syntax/recovery/argument-list.kt
+skip syntax/recovery/assignment-invalid-targets.kt
 skip syntax/recovery/assignment-without-left.kt
 skip syntax/recovery/block-empty-statement-adjacent-braces.kt
 skip syntax/recovery/block-missing-close.kt
 skip syntax/recovery/block-with-formatter-ignore.kt
+skip syntax/recovery/braced-opening-comments.kt
 skip syntax/recovery/call-without-callee.kt
+skip syntax/recovery/callable-reference-missing-target.kt
 skip syntax/recovery/class-body-with-formatter-ignore.kt
 skip syntax/recovery/class-body.kt
 skip syntax/recovery/collection-and-index-lists.kt
 skip syntax/recovery/context-function-type.kt
 skip syntax/recovery/control-flow-missing-children.kt
 skip syntax/recovery/declaration-tails.kt
+skip syntax/recovery/definitely-non-nullable-bang.kt
 skip syntax/recovery/destructuring.kt
 skip syntax/recovery/else-without-branch.kt
 skip syntax/recovery/explicit-backing-field.kt
@@ -210,9 +214,13 @@ skip syntax/recovery/lambda-branch.kt
 skip syntax/recovery/lambda-missing-close.kt
 skip syntax/recovery/lambda-parameter-list.kt
 skip syntax/recovery/navigation-without-receiver.kt
+skip syntax/recovery/nested-recovered-when-condition.kt
 skip syntax/recovery/normalizes-package-import-spacing.kt
 skip syntax/recovery/object-delegation.kt
 skip syntax/recovery/preserves-file-annotation-preamble.kt
+skip syntax/recovery/property-body-recovered-gap.kt
+skip syntax/recovery/top-level-orphan-token.kt
+skip syntax/recovery/trailing-user-type-dot.kt
 skip syntax/recovery/type-argument-list.kt
 skip syntax/recovery/type-constraints.kt
 skip syntax/recovery/type-parameter-list.kt

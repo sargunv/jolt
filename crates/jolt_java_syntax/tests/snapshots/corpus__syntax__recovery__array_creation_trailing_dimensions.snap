@@ -1,0 +1,80 @@
+---
+source: crates/jolt_java_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+class ArrayCreationTrailingDimensions {
+    Object value = new String[1] @First [] @Second [];
+}
+
+@interface First {}
+@interface Second {}
+
+syntax:
+syntax:
+CompilationUnit
+  ClassDeclaration
+    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+    Identifier "ArrayCreationTrailingDimensions" @ 6..37 trailing=[Whitespace " "]
+    ClassBody
+      LBrace "{" @ 38..39
+      ClassBodyDeclaration
+        FieldDeclaration
+          ClassType
+            Name
+              Identifier "Object" @ 44..50 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          VariableDeclaratorList
+            VariableDeclarator
+              Identifier "value" @ 51..56 trailing=[Whitespace " "]
+              Assign "=" @ 57..58 trailing=[Whitespace " "]
+              VariableInitializer
+                ArrayCreationExpression
+                  NewKw "new" @ 59..62 trailing=[Whitespace " "]
+                  ClassType
+                    Name
+                      Identifier "String" @ 63..69
+                  DimExpression
+                    LBracket "[" @ 69..70
+                    LiteralExpression
+                      IntegerLiteral "1" @ 70..71
+                    RBracket "]" @ 71..72 trailing=[Whitespace " "]
+                  ArrayDimensions
+                    ArrayDimension
+                      Annotation
+                        At "@" @ 73..74
+                        Name
+                          Identifier "First" @ 74..79 trailing=[Whitespace " "]
+                      LBracket "[" @ 80..81
+                      RBracket "]" @ 81..82 trailing=[Whitespace " "]
+                    ArrayDimension
+                      Annotation
+                        At "@" @ 83..84
+                        Name
+                          Identifier "Second" @ 84..90 trailing=[Whitespace " "]
+                      LBracket "[" @ 91..92
+                      RBracket "]" @ 92..93
+          Semicolon ";" @ 93..94
+      RBrace "}" @ 95..96 leading=[Newline "\n"]
+  AnnotationInterfaceDeclaration
+    At "@" @ 98..99 leading=[Newline "\n", Newline "\n"]
+    InterfaceKw "interface" @ 99..108 trailing=[Whitespace " "]
+    Identifier "First" @ 109..114 trailing=[Whitespace " "]
+    AnnotationInterfaceBody
+      LBrace "{" @ 115..116
+      AnnotationElementList
+      RBrace "}" @ 116..117
+  AnnotationInterfaceDeclaration
+    At "@" @ 118..119 leading=[Newline "\n"]
+    InterfaceKw "interface" @ 119..128 trailing=[Whitespace " "]
+    Identifier "Second" @ 129..135 trailing=[Whitespace " "]
+    AnnotationInterfaceBody
+      LBrace "{" @ 136..137
+      AnnotationElementList
+      RBrace "}" @ 137..138
+  Eof "" @ 139..139 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)
