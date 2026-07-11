@@ -6,6 +6,7 @@ lockfile = true
 
 [tools]
 "aqua:dprint/dprint" = "0.54.0"
+"aqua:WebAssembly/binaryen" = "130"
 "aqua:jdx/hk" = "1.48.0"
 "core:java" = "zulu-25.34.17.0"
 "core:python" = "3.14.5"
@@ -87,6 +88,15 @@ case "${usage_mode?}" in
   debug) cargo build --target wasm32-unknown-unknown --package jolt_fmt_dprint --features wasm ;;
   release) cargo build --release --target wasm32-unknown-unknown --package jolt_fmt_dprint --features wasm ;;
 esac
+'''
+
+[tasks."build:dprint-plugin-optimized"]
+description = "Build and post-link optimize the release dprint plugin"
+run = '''
+cargo build --release --target wasm32-unknown-unknown --package jolt_fmt_dprint --features wasm
+wasm-opt -O3 \
+  target/wasm32-unknown-unknown/release/jolt_fmt_dprint.wasm \
+  -o target/wasm32-unknown-unknown/release/jolt_fmt_dprint.opt.wasm
 '''
 
 [tasks."dprint-with-jolt"]
