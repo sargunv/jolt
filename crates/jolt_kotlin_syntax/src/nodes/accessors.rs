@@ -2394,7 +2394,7 @@ impl<'source> AnnotatedExpression<'source> {
 impl<'source> AssignmentExpression<'source> {
     pub fn operands(&self) -> impl Iterator<Item = Expression<'source>> + use<'source> {
         self.syntax().children().filter_map(|node| {
-            Expression::cast(node.clone()).or_else(|| {
+            Expression::cast(node).or_else(|| {
                 (node.kind() == KotlinSyntaxKind::ErrorNode).then(|| child_family(&node))?
             })
         })
