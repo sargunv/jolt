@@ -23,7 +23,7 @@ const labels = [
   "prettier-java",
 ] as const;
 
-const seconds = [0.4, 0.5, 11, 28];
+const seconds = [0.30, 0.42, 11, 28];
 
 function themeColor(cssVar: string, fallback: string): string {
   if (typeof document === "undefined") {
