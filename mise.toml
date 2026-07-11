@@ -64,13 +64,9 @@ flag "--mode <mode>" help="Cargo build mode" {
 run = '''
 case "${usage_mode?}" in
   debug) cargo build --package jolt_cli ;;
-  release) cargo build --package jolt_cli --release ;;
+  release) python -m tools.pgo.build ;;
 esac
 '''
-
-[tasks."build:jolt-pgo"]
-description = "Build a profile-guided optimized Jolt CLI"
-run = "python -m tools.pgo.build"
 
 [tasks."jolt"]
 raw_args = true
@@ -86,14 +82,8 @@ flag "--mode <mode>" help="Cargo build mode" {
 run = '''
 case "${usage_mode?}" in
   debug) cargo build --target wasm32-unknown-unknown --package jolt_fmt_dprint --features wasm ;;
-  release) cargo build --release --target wasm32-unknown-unknown --package jolt_fmt_dprint --features wasm ;;
+  release) tools/wasm/build_optimized.sh ;;
 esac
-'''
-
-[tasks."build:dprint-plugin-optimized"]
-description = "Build and post-link optimize the release dprint plugin"
-run = '''
-tools/wasm/build_optimized.sh
 '''
 
 [tasks."dprint-with-jolt"]

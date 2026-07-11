@@ -20,7 +20,8 @@ EXE_SUFFIX = ".exe" if os.name == "nt" else ""
 
 
 def main() -> None:
-    target = parse_args().target
+    args = parse_args()
+    target = args.target
     reset_build_outputs()
     llvm_profdata = find_llvm_profdata()
     prepare_training_corpora()
@@ -60,7 +61,13 @@ def main() -> None:
     require_file(optimized_jolt, "PGO-optimized Jolt CLI")
     if target is None or target == rust_host():
         run(optimized_jolt, "--version")
-    print(f"PGO-optimized CLI: {optimized_jolt}")
+    output = args.output
+    if output is None and target is None:
+        output = ROOT / f"target/release/jolt{EXE_SUFFIX}"
+    output = output or optimized_jolt
+    if output != optimized_jolt:
+        publish(optimized_jolt, output)
+    print(f"PGO-optimized CLI: {output}")
 
 
 def parse_args() -> argparse.Namespace:
@@ -68,6 +75,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--target",
         help="Rust target triple for the optimized build (training runs on the host)",
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        help="copy the optimized binary to this path",
     )
     return parser.parse_args()
 
@@ -164,6 +176,16 @@ def build(target_dir: Path, rustflags: str, target: str | None = None) -> None:
 def require_file(path: Path, label: str) -> None:
     if not path.is_file():
         raise RuntimeError(f"missing {label}: {path}")
+
+
+def publish(source: Path, output: Path) -> None:
+    output.parent.mkdir(parents=True, exist_ok=True)
+    temporary = output.with_name(f".{output.name}.{os.getpid()}.tmp")
+    try:
+        shutil.copy2(source, temporary)
+        os.replace(temporary, output)
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 def capture(*args: str) -> str:

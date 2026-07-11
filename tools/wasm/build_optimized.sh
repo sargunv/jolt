@@ -1,8 +1,8 @@
 #!/bin/sh
 set -eu
 
-output=${1:-target/wasm32-unknown-unknown/release/jolt_fmt_dprint.opt.wasm}
 input=target/wasm32-unknown-unknown/release/jolt_fmt_dprint.wasm
+output=${1:-$input}
 
 rustup target add wasm32-unknown-unknown
 cargo build --release --target wasm32-unknown-unknown --package jolt_fmt_dprint --features wasm
@@ -33,7 +33,13 @@ case $("$wasm_opt" --version) in
   *) echo "expected wasm-opt version 130: $wasm_opt" >&2; exit 1 ;;
 esac
 
-"$wasm_opt" -O3 "$input" -o "$output"
+case "$output" in
+  *.wasm) optimized=${output%.wasm}.opt.wasm ;;
+  *) echo "WASM output must end in .wasm: $output" >&2; exit 1 ;;
+esac
+smoke=
+trap '[ -z "$smoke" ] || rm -rf "$smoke"; rm -f "$optimized"' EXIT HUP INT TERM
+"$wasm_opt" -O3 "$input" -o "$optimized"
 
 if command -v dprint >/dev/null 2>&1; then
   dprint=$(command -v dprint)
@@ -61,9 +67,8 @@ case $("$dprint" --version) in
   *) echo "expected dprint 0.54.0: $dprint" >&2; exit 1 ;;
 esac
 
-plugin=$(cd "$(dirname "$output")" && pwd)/$(basename "$output")
+plugin=$(cd "$(dirname "$optimized")" && pwd)/$(basename "$optimized")
 smoke=$(mktemp -d)
-trap 'rm -rf "$smoke"' EXIT HUP INT TERM
 printf 'class Smoke{}\n' > "$smoke/Smoke.java"
 printf 'class Smoke{val answer=42}\n' > "$smoke/Smoke.kt"
 (
@@ -72,3 +77,4 @@ printf 'class Smoke{val answer=42}\n' > "$smoke/Smoke.kt"
 )
 grep -q 'class Smoke {' "$smoke/Smoke.java"
 grep -q 'val answer = 42' "$smoke/Smoke.kt"
+mv -f "$optimized" "$output"
