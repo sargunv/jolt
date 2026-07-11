@@ -1,10 +1,7 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_java_syntax::JavaSyntaxToken;
 
-use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, format_leading_comments, format_trailing_comments,
-    format_trailing_comments_before_line_break, trailing_comments_force_line,
-};
+use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_token_doc};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum FormatterInsertedToken {
@@ -30,51 +27,8 @@ pub(crate) fn format_token_with_normalized_text<'source>(
     leading: LeadingTrivia,
     trailing: TrailingTrivia,
 ) -> Doc<'source> {
-    doc_concat!(
-        doc,
-        [
-            match leading {
-                LeadingTrivia::Preserve => format_leading_comments(doc, token),
-                LeadingTrivia::SuppressAlreadyHandled => Doc::nil(),
-            },
-            // Source-backed normalized token: the source token provides trivia;
-            // formatter policy provides the printed spelling.
-            inserted_syntax_token(doc, spelling, reason),
-            match trailing {
-                TrailingTrivia::Preserve => format_trailing_comments(doc, token),
-                TrailingTrivia::BeforeLineBreak => {
-                    format_trailing_comments_before_line_break(doc, token)
-                }
-                TrailingTrivia::BeforeSoftLine => doc_concat!(
-                    doc,
-                    [
-                        format_trailing_comments_before_line_break(doc, token),
-                        if trailing_comments_force_line(token) {
-                            doc.hard_line()
-                        } else {
-                            doc.soft_line()
-                        },
-                    ]
-                ),
-                TrailingTrivia::BeforeSpaceIfComments => {
-                    if token.trailing_comments().is_empty() {
-                        Doc::nil()
-                    } else {
-                        doc_concat!(
-                            doc,
-                            [
-                                format_trailing_comments_before_line_break(doc, token),
-                                if trailing_comments_force_line(token) {
-                                    doc.hard_line()
-                                } else {
-                                    doc.space()
-                                },
-                            ]
-                        )
-                    }
-                }
-                TrailingTrivia::RelocatedToEnclosingContext => Doc::nil(),
-            },
-        ]
-    )
+    // Source-backed normalized token: the source token provides trivia;
+    // formatter policy provides the printed spelling.
+    let token_doc = inserted_syntax_token(doc, spelling, reason);
+    format_token_doc(doc, token, token_doc, leading, trailing)
 }

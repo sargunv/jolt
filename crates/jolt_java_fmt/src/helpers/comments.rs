@@ -304,6 +304,17 @@ pub(crate) fn format_token<'source>(
     leading: LeadingTrivia,
     trailing: TrailingTrivia,
 ) -> Doc<'source> {
+    let token_text = format_token_text(doc, token.text());
+    format_token_doc(doc, token, token_text, leading, trailing)
+}
+
+pub(crate) fn format_token_doc<'source>(
+    doc: &mut DocBuilder<'source>,
+    token: &JavaSyntaxToken<'source>,
+    token_doc: Doc<'source>,
+    leading: LeadingTrivia,
+    trailing: TrailingTrivia,
+) -> Doc<'source> {
     doc_concat!(
         doc,
         [
@@ -311,7 +322,7 @@ pub(crate) fn format_token<'source>(
                 LeadingTrivia::Preserve => format_leading_comments(doc, token),
                 LeadingTrivia::SuppressAlreadyHandled => Doc::nil(),
             },
-            format_token_text(doc, token.text()),
+            token_doc,
             match trailing {
                 TrailingTrivia::Preserve => format_trailing_comments(doc, token),
                 TrailingTrivia::BeforeLineBreak => {
