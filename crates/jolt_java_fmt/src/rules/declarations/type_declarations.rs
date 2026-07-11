@@ -41,9 +41,7 @@ pub(super) fn format_class_declaration<'source>(
                 format_permits_clause(class.permits_clause(), doc),
             ]
         ),
-        open,
-        close,
-        body_doc,
+        (open, close, body_doc),
         class.missing_body_semicolon(),
         doc,
     )
@@ -78,9 +76,7 @@ pub(super) fn format_interface_declaration<'source>(
                 format_permits_clause(interface.permits_clause(), doc),
             ]
         ),
-        open,
-        close,
-        body_doc,
+        (open, close, body_doc),
         None,
         doc,
     )
@@ -116,9 +112,7 @@ pub(super) fn format_record_declaration<'source>(
                 ]
             ),
         ),
-        open,
-        close,
-        body_doc,
+        (open, close, body_doc),
         None,
         doc,
     )
@@ -152,9 +146,7 @@ pub(super) fn format_enum_declaration<'source>(
                 format_implements_clause(enum_.implements_clause(), doc),
             ]
         ),
-        open,
-        close,
-        body_doc,
+        (open, close, body_doc),
         None,
         doc,
     )
@@ -194,9 +186,7 @@ pub(super) fn format_annotation_interface_declaration<'source>(
                     .map_or_else(Doc::nil, |name| format_token_with_comments(doc, &name)),
             ]
         ),
-        open,
-        close,
-        body_doc,
+        (open, close, body_doc),
         None,
         doc,
     )
@@ -225,12 +215,15 @@ fn format_type_declaration_with_body<'source>(
     first_token: Option<&jolt_java_syntax::JavaSyntaxToken<'source>>,
     modifiers: Option<ModifierList<'source>>,
     header_tail: Doc<'source>,
-    open_brace: Option<JavaSyntaxToken<'source>>,
-    close_brace: Option<JavaSyntaxToken<'source>>,
-    body: Option<Doc<'source>>,
+    body: (
+        Option<JavaSyntaxToken<'source>>,
+        Option<JavaSyntaxToken<'source>>,
+        Option<Doc<'source>>,
+    ),
     missing_body_semicolon: Option<JavaSyntaxToken<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
+    let (open_brace, close_brace, body) = body;
     doc_concat!(
         doc,
         [
