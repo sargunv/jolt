@@ -39,6 +39,13 @@ pub fn formatter_ignore_ranges<'source, L: Language>(
     base_start: usize,
     tokens: impl IntoIterator<Item = SyntaxToken<'source, L>>,
 ) -> Vec<FormatterIgnoreRange<'source>> {
+    // Formatter control markers are rare. Avoid walking every token and both
+    // trivia lists for every file, block, and member body when the source
+    // slice cannot contain one.
+    if !source.contains("@formatter:") {
+        return Vec::new();
+    }
+
     let mut off_comment_start = None;
     let mut ranges = Vec::new();
 
@@ -95,11 +102,45 @@ pub fn formatter_ignore_runs<'source>(
     ranges: &[FormatterIgnoreRange<'source>],
     item_ranges: &[Option<Range<usize>>],
 ) -> Vec<FormatterIgnoreRun<'source>> {
-    let mut runs = ranges
-        .iter()
-        .map(|range| formatter_ignore_run(range, item_ranges))
-        .filter(|run| run.skip_start < run.skip_end)
-        .collect::<Vec<_>>();
+    let mut runs = Vec::with_capacity(ranges.len());
+    let mut item_index = 0;
+
+    // Both inputs are in source order. Keep a single cursor through the items
+    // instead of rescanning the entire list for every ignored range.
+    for range in ranges {
+        while item_ranges.get(item_index).is_some_and(|item_range| {
+            item_range
+                .as_ref()
+                .is_none_or(|item_range| item_range.start < range.interior.start)
+        }) {
+            item_index += 1;
+        }
+
+        let insert_index = item_index;
+        let skip_start = item_index;
+        let mut last_skipped = None;
+        while item_ranges.get(item_index).is_some_and(|item_range| {
+            item_range
+                .as_ref()
+                .is_none_or(|item_range| item_range.start < range.interior.end)
+        }) {
+            if item_ranges[item_index].is_some() {
+                last_skipped = Some(item_index);
+            }
+            item_index += 1;
+        }
+        let skip_end = last_skipped.map_or(skip_start, |last| last + 1);
+
+        if skip_start < skip_end {
+            runs.push(FormatterIgnoreRun {
+                range: range.clone(),
+                insert_index,
+                skip_start,
+                skip_end,
+                include_on_marker: item_index == item_ranges.len(),
+            });
+        }
+    }
 
     for index in 0..runs.len().saturating_sub(1) {
         if !runs[index].include_on_marker && runs[index + 1].insert_index == runs[index].skip_end {
@@ -167,49 +208,6 @@ pub fn relative_token_range_between<L: Language>(
 ) -> Range<usize> {
     let range = token_range_between(first, last);
     range.start - base_start..range.end - base_start
-}
-
-fn formatter_ignore_run<'source>(
-    range: &FormatterIgnoreRange<'source>,
-    item_ranges: &[Option<Range<usize>>],
-) -> FormatterIgnoreRun<'source> {
-    let mut first_skipped = None;
-    let mut last_skipped = None;
-    for (index, item_range) in item_ranges.iter().enumerate() {
-        let Some(item_range) = item_range.as_ref() else {
-            continue;
-        };
-        if range.interior.contains(&item_range.start) {
-            first_skipped.get_or_insert(index);
-            last_skipped = Some(index);
-        }
-    }
-
-    let insert_index = first_skipped.unwrap_or_else(|| {
-        item_ranges
-            .iter()
-            .position(|item_range| {
-                item_range
-                    .as_ref()
-                    .is_some_and(|item_range| range.interior.start < item_range.start)
-            })
-            .unwrap_or(item_ranges.len())
-    });
-    let skip_start = first_skipped.unwrap_or(insert_index);
-    let skip_end = last_skipped.map_or(skip_start, |last| last + 1);
-    let include_on_marker = !item_ranges.iter().any(|item_range| {
-        item_range
-            .as_ref()
-            .is_some_and(|item_range| range.interior.end <= item_range.start)
-    });
-
-    FormatterIgnoreRun {
-        range: range.clone(),
-        insert_index,
-        skip_start,
-        skip_end,
-        include_on_marker,
-    }
 }
 
 fn strip_first_line_indent(text: &str) -> Cow<'_, str> {
