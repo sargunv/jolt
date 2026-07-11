@@ -27,6 +27,8 @@ HYPERFINE_WARMUP = 1
 CORPORA = {
     "adversarial": {
         "description": "google-java-format formatter test inputs",
+        "language": "java",
+        "extensions": (".java",),
         "source": IMPORTS / "google-java-format/input",
         "exclude": [
             # Intentionally invalid upstream Java.
@@ -40,7 +42,16 @@ CORPORA = {
     },
     "realistic": {
         "description": "Spring Framework Java sources",
+        "language": "java",
+        "extensions": (".java",),
         "source": IMPORTS / "spring-framework",
+        "exclude": [],
+    },
+    "kotlin-realistic": {
+        "description": "MapLibre Compose Kotlin sources",
+        "language": "kotlin",
+        "extensions": (".kt", ".kts"),
+        "source": IMPORTS / "maplibre-compose/source",
         "exclude": [],
     },
 }
@@ -61,6 +72,7 @@ class Tool:
     version_command: str
     requirements: tuple[tuple[Path, str], ...] = ()
     reset_commands: Callable[[str], list[str]] = lambda _corpus: []
+    languages: frozenset[str] = frozenset({"java", "kotlin"})
 
 
 TOOLS: dict[ToolKey, Tool] = {
@@ -90,6 +102,7 @@ TOOLS: dict[ToolKey, Tool] = {
         reset_commands=lambda corpus: [
             f"find {q(tool_dir(corpus, 'google-java-format'))} -name '*.java' -print > {q(WORK / corpus / 'google-java-format.args')}"
         ],
+        languages=frozenset({"java"}),
     ),
     "prettier-java": Tool(
         "prettier --write --plugin prettier-plugin-java",
@@ -98,6 +111,7 @@ TOOLS: dict[ToolKey, Tool] = {
         ),
         "pnpm exec prettier --version",
         ((ROOT / "node_modules/.bin/prettier", "Prettier install"),),
+        languages=frozenset({"java"}),
     ),
 }
 
@@ -165,7 +179,7 @@ def copy_corpus(corpus: dict, dest: Path) -> None:
         shutil.rmtree(dest)
     dest.mkdir(parents=True)
 
-    for source in sorted(corpus["source"].rglob("*.java")):
+    for source in corpus_files(corpus, corpus["source"]):
         relative = source.relative_to(corpus["source"])
         if is_excluded(relative, corpus["exclude"]):
             continue
@@ -185,10 +199,16 @@ def benchmark(tool_keys: tuple[ToolKey, ...]) -> None:
             require(path, label)
 
     for name, corpus in CORPORA.items():
-        prepare_baseline(name, tool_keys)
+        corpus_tool_keys = applicable_tools(corpus, tool_keys)
+        if not corpus_tool_keys:
+            log(
+                f"skipping {name}: none of the selected tools support {corpus['language']}"
+            )
+            continue
+        prepare_baseline(name, corpus_tool_keys)
         summarize(name, corpus)
-        versions = version_strings(tool_keys)
-        rows = report_rows(name, tool_keys, versions)
+        versions = version_strings(corpus_tool_keys)
+        rows = report_rows(name, corpus_tool_keys, versions)
         args = [
             "hyperfine",
             "--warmup",
@@ -196,9 +216,9 @@ def benchmark(tool_keys: tuple[ToolKey, ...]) -> None:
             "--min-runs",
             str(HYPERFINE_MIN_RUNS),
             "--prepare",
-            reset_command(name, tool_keys),
+            reset_command(name, corpus_tool_keys),
         ]
-        for key in tool_keys:
+        for key in corpus_tool_keys:
             tool = TOOLS[key]
             args += [
                 "-n",
@@ -229,7 +249,7 @@ def write_report(
 
 
 def summarize(name: str, corpus: dict) -> None:
-    files = list(baseline_dir(name).rglob("*.java"))
+    files = corpus_files(corpus, baseline_dir(name))
     total_bytes = sum(path.stat().st_size for path in files)
     log(
         f"benchmarking {name} ({corpus['description']}): {len(files)} file(s), {total_bytes} byte(s)"
@@ -245,9 +265,9 @@ def report_rows(
     run_shell(reset_command(name, tool_keys), cwd=ROOT)
     for key in tool_keys:
         run_shell(TOOLS[key].benchmark_command(name), cwd=ROOT)
-        input_files = len(java_files(tool_dir(name, key)))
+        input_files = len(corpus_files(CORPORA[name], tool_dir(name, key)))
         modified_files = count_modified_files(
-            baseline_dir(name), tool_dir(name, key)
+            CORPORA[name], baseline_dir(name), tool_dir(name, key)
         )
         if input_files > 0 and modified_files == 0:
             raise RuntimeError(f"{key} did not modify any files for {name}")
@@ -284,13 +304,24 @@ def format_rows(rows: list[dict[str, str | int]]) -> str:
     return "\n".join(lines)
 
 
-def java_files(directory: Path) -> list[Path]:
-    return sorted(directory.rglob("*.java"))
+def corpus_files(corpus: dict, directory: Path) -> list[Path]:
+    return sorted(
+        path
+        for extension in corpus["extensions"]
+        for path in directory.rglob(f"*{extension}")
+    )
 
 
-def count_modified_files(baseline: Path, formatted: Path) -> int:
+def applicable_tools(
+    corpus: dict, tool_keys: tuple[ToolKey, ...]
+) -> tuple[ToolKey, ...]:
+    language = corpus["language"]
+    return tuple(key for key in tool_keys if language in TOOLS[key].languages)
+
+
+def count_modified_files(corpus: dict, baseline: Path, formatted: Path) -> int:
     count = 0
-    for path in java_files(baseline):
+    for path in corpus_files(corpus, baseline):
         relative = path.relative_to(baseline)
         formatted_path = formatted / relative
         if (

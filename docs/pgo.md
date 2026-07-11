@@ -1,8 +1,10 @@
 # Profile-guided Jolt builds
 
 The PGO build trains a release Jolt CLI on the same adversarial and realistic
-Java corpora used by the benchmark harness, then rebuilds the CLI using the
-resulting execution profile.
+Java corpora and realistic Kotlin corpus used by the benchmark harness, then
+rebuilds the CLI using the resulting execution profile. The Kotlin corpus is the
+pinned MapLibre Compose source import, a representative application and library
+workload.
 
 ```sh
 mise install

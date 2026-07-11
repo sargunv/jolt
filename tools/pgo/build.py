@@ -16,11 +16,21 @@ TRAINING = WORK / "training"
 MERGED_PROFILE = WORK / "jolt.profdata"
 EXE_SUFFIX = ".exe" if os.name == "nt" else ""
 
-# Keep this aligned with the corpora used by tools/bench/bench.py. The excluded
+# Keep this aligned with the corpora used by tools/bench/bench.py. MapLibre
+# Compose supplies a representative pinned Kotlin workload; the excluded Java
 # input is intentionally invalid upstream Java.
 CORPORA = {
-    "adversarial": (IMPORTS / "google-java-format/input", {"B26952926.java"}),
-    "realistic": (IMPORTS / "spring-framework", set()),
+    "adversarial": (
+        IMPORTS / "google-java-format/input",
+        (".java",),
+        {"B26952926.java"},
+    ),
+    "realistic": (IMPORTS / "spring-framework", (".java",), set()),
+    "kotlin-realistic": (
+        IMPORTS / "maplibre-compose/source",
+        (".kt", ".kts"),
+        set(),
+    ),
 }
 
 
@@ -101,19 +111,20 @@ def prepare_training_corpora() -> None:
     if TRAINING.exists():
         shutil.rmtree(TRAINING)
 
-    for name, (source, excluded) in CORPORA.items():
+    for name, (source, extensions, excluded) in CORPORA.items():
         if not source.is_dir():
             raise RuntimeError(
                 f"missing benchmark corpus: {source}; run `mise install` to import fixtures"
             )
         files = [
             path
-            for path in sorted(source.rglob("*.java"))
+            for extension in extensions
+            for path in sorted(source.rglob(f"*{extension}"))
             if path.relative_to(source).as_posix() not in excluded
         ]
         if not files:
             raise RuntimeError(
-                f"benchmark corpus contains no Java files: {source}"
+                f"benchmark corpus contains no source files: {source}"
             )
         for path in files:
             destination = TRAINING / name / path.relative_to(source)
