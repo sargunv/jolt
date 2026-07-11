@@ -70,7 +70,7 @@ esac
 
 [tasks."build:jolt-pgo"]
 description = "Build a profile-guided optimized Jolt CLI"
-run = "python tools/pgo/build.py"
+run = "python -m tools.pgo.build"
 
 [tasks."jolt"]
 raw_args = true
@@ -120,7 +120,7 @@ depends = [
     "release",
   ] },
 ]
-run = 'python tools/bench/bench.py ${usage_tools:-}'
+run = 'python -m tools.bench.bench ${usage_tools:-}'
 
 [tasks."release:build"]
 run = '''

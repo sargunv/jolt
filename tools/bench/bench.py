@@ -2,7 +2,6 @@
 """Run formatter benchmarks over imported benchmark corpora."""
 
 import argparse
-import fnmatch
 import json
 import os
 import platform
@@ -13,8 +12,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Literal
 
+from tools.corpora import CORPORA, Corpus
+
 ROOT = Path(__file__).resolve().parents[2]
-IMPORTS = ROOT / "tools/import/.imports"
 WORK = ROOT / "target/bench"
 REPORTS = ROOT / "tools/bench/reports"
 JOLT = ROOT / "target/release/jolt"
@@ -23,38 +23,6 @@ DPRINT_PLUGIN = (
 )
 HYPERFINE_MIN_RUNS = 3
 HYPERFINE_WARMUP = 1
-
-CORPORA = {
-    "adversarial": {
-        "description": "google-java-format formatter test inputs",
-        "language": "java",
-        "extensions": (".java",),
-        "source": IMPORTS / "google-java-format/input",
-        "exclude": [
-            # Intentionally invalid upstream Java.
-            "B26952926.java",
-        ],
-        "tool_exclude": {
-            # Uses an annotation expression accepted by google-java-format and
-            # Jolt but rejected by prettier-plugin-java 2.10.2.
-            "prettier-java": ["B38352414.java"],
-        },
-    },
-    "realistic": {
-        "description": "Spring Framework Java sources",
-        "language": "java",
-        "extensions": (".java",),
-        "source": IMPORTS / "spring-framework",
-        "exclude": [],
-    },
-    "kotlin-realistic": {
-        "description": "MapLibre Compose Kotlin sources",
-        "language": "kotlin",
-        "extensions": (".kt", ".kts"),
-        "source": IMPORTS / "maplibre-compose/source",
-        "exclude": [],
-    },
-}
 
 
 def q(path: str | Path) -> str:
@@ -148,7 +116,7 @@ def parse_args(argv: list[str]) -> tuple[ToolKey, ...]:
 
 def prepare_baseline(name: str, tool_keys: tuple[ToolKey, ...]) -> None:
     corpus = CORPORA[name]
-    source = corpus["source"]
+    source = corpus.source
     if not source.is_dir():
         raise RuntimeError(f"missing benchmark import: {source}")
 
@@ -156,7 +124,7 @@ def prepare_baseline(name: str, tool_keys: tuple[ToolKey, ...]) -> None:
     (WORK / name).mkdir(parents=True, exist_ok=True)
     if "prettier-java" in tool_keys:
         (WORK / name / "prettier.ignore").write_text(
-            "\n".join(corpus.get("tool_exclude", {}).get("prettier-java", ())),
+            "\n".join(corpus.tool_exclude.get("prettier-java", ())),
             encoding="utf-8",
         )
     if "dprint-jolt" in tool_keys:
@@ -174,23 +142,16 @@ def prepare_baseline(name: str, tool_keys: tuple[ToolKey, ...]) -> None:
         )
 
 
-def copy_corpus(corpus: dict, dest: Path) -> None:
+def copy_corpus(corpus: Corpus, dest: Path) -> None:
     if dest.exists():
         shutil.rmtree(dest)
     dest.mkdir(parents=True)
 
-    for source in corpus_files(corpus, corpus["source"]):
-        relative = source.relative_to(corpus["source"])
-        if is_excluded(relative, corpus["exclude"]):
-            continue
+    for source in corpus.files():
+        relative = source.relative_to(corpus.source)
         target = dest / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(source, target)
-
-
-def is_excluded(path: Path, patterns: list[str]) -> bool:
-    posix = path.as_posix()
-    return any(fnmatch.fnmatchcase(posix, pattern) for pattern in patterns)
 
 
 def benchmark(tool_keys: tuple[ToolKey, ...]) -> None:
@@ -202,7 +163,7 @@ def benchmark(tool_keys: tuple[ToolKey, ...]) -> None:
         corpus_tool_keys = applicable_tools(corpus, tool_keys)
         if not corpus_tool_keys:
             log(
-                f"skipping {name}: none of the selected tools support {corpus['language']}"
+                f"skipping {name}: none of the selected tools support {corpus.language}"
             )
             continue
         prepare_baseline(name, corpus_tool_keys)
@@ -248,11 +209,11 @@ def write_report(
     report.write_text(contents, encoding="utf-8")
 
 
-def summarize(name: str, corpus: dict) -> None:
-    files = corpus_files(corpus, baseline_dir(name))
+def summarize(name: str, corpus: Corpus) -> None:
+    files = corpus.files(baseline_dir(name))
     total_bytes = sum(path.stat().st_size for path in files)
     log(
-        f"benchmarking {name} ({corpus['description']}): {len(files)} file(s), {total_bytes} byte(s)"
+        f"benchmarking {name} ({corpus.description}): {len(files)} file(s), {total_bytes} byte(s)"
     )
 
 
@@ -265,7 +226,7 @@ def report_rows(
     run_shell(reset_command(name, tool_keys), cwd=ROOT)
     for key in tool_keys:
         run_shell(TOOLS[key].benchmark_command(name), cwd=ROOT)
-        input_files = len(corpus_files(CORPORA[name], tool_dir(name, key)))
+        input_files = len(CORPORA[name].files(tool_dir(name, key)))
         modified_files = count_modified_files(
             CORPORA[name], baseline_dir(name), tool_dir(name, key)
         )
@@ -304,24 +265,19 @@ def format_rows(rows: list[dict[str, str | int]]) -> str:
     return "\n".join(lines)
 
 
-def corpus_files(corpus: dict, directory: Path) -> list[Path]:
-    return sorted(
-        path
-        for extension in corpus["extensions"]
-        for path in directory.rglob(f"*{extension}")
+def applicable_tools(
+    corpus: Corpus, tool_keys: tuple[ToolKey, ...]
+) -> tuple[ToolKey, ...]:
+    return tuple(
+        key for key in tool_keys if corpus.language in TOOLS[key].languages
     )
 
 
-def applicable_tools(
-    corpus: dict, tool_keys: tuple[ToolKey, ...]
-) -> tuple[ToolKey, ...]:
-    language = corpus["language"]
-    return tuple(key for key in tool_keys if language in TOOLS[key].languages)
-
-
-def count_modified_files(corpus: dict, baseline: Path, formatted: Path) -> int:
+def count_modified_files(
+    corpus: Corpus, baseline: Path, formatted: Path
+) -> int:
     count = 0
-    for path in corpus_files(corpus, baseline):
+    for path in corpus.files(baseline):
         relative = path.relative_to(baseline)
         formatted_path = formatted / relative
         if (

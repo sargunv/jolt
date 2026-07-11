@@ -11,7 +11,6 @@ from pathlib import Path
 
 PACKAGE_ROOT = Path(__file__).resolve().parent
 ROOT = PACKAGE_ROOT.parents[1]
-PGO_BUILD = ROOT / "tools/pgo/build.py"
 IMPORT_MANIFEST = ROOT / "tools/import/.imports/manifest.json"
 OUT = PACKAGE_ROOT / "out"
 
@@ -30,7 +29,7 @@ def main() -> None:
     suffix = ".exe" if "windows" in target else ""
     host = rust_host()
     if target_arch(host) == target_arch(target):
-        run(sys.executable, PGO_BUILD, "--target", target)
+        run(sys.executable, "-m", "tools.pgo.build", "--target", target)
         source = ROOT / f"target/pgo/optimized/{target}/release/jolt{suffix}"
         should_smoke = True
     else:

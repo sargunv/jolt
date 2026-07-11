@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 from tools.bench import bench
-from tools.pgo import build as pgo
+from tools.corpora import CORPORA
 
 
 class BenchmarkCorpusTests(unittest.TestCase):
@@ -11,11 +11,11 @@ class BenchmarkCorpusTests(unittest.TestCase):
         selected = tuple(bench.TOOLS)
 
         self.assertEqual(
-            bench.applicable_tools(bench.CORPORA["kotlin-realistic"], selected),
+            bench.applicable_tools(CORPORA["kotlin-realistic"], selected),
             ("jolt", "dprint-jolt"),
         )
         self.assertEqual(
-            bench.applicable_tools(bench.CORPORA["realistic"], selected),
+            bench.applicable_tools(CORPORA["realistic"], selected),
             selected,
         )
 
@@ -26,19 +26,11 @@ class BenchmarkCorpusTests(unittest.TestCase):
             (root / "Build.kts").touch()
             (root / "Ignored.java").touch()
 
-            files = bench.corpus_files(bench.CORPORA["kotlin-realistic"], root)
+            files = CORPORA["kotlin-realistic"].files(root)
 
         self.assertEqual(
             [path.name for path in files], ["Build.kts", "Source.kt"]
         )
-
-    def test_pgo_corpora_match_benchmark_sources_and_extensions(self) -> None:
-        self.assertEqual(set(pgo.CORPORA), set(bench.CORPORA))
-        for name, corpus in bench.CORPORA.items():
-            source, extensions, excluded = pgo.CORPORA[name]
-            self.assertEqual(source, corpus["source"])
-            self.assertEqual(extensions, corpus["extensions"])
-            self.assertEqual(excluded, set(corpus["exclude"]))
 
 
 if __name__ == "__main__":

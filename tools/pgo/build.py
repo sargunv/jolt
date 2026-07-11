@@ -7,8 +7,9 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from tools.corpora import CORPORA
+
 ROOT = Path(__file__).resolve().parents[2]
-IMPORTS = ROOT / "tools/import/.imports"
 WORK = ROOT / "target/pgo"
 PROFILES = WORK / "profiles"
 INSTRUMENTED_TARGET = WORK / "instrumented"
@@ -16,23 +17,6 @@ OPTIMIZED_TARGET = WORK / "optimized"
 TRAINING = WORK / "training"
 MERGED_PROFILE = WORK / "jolt.profdata"
 EXE_SUFFIX = ".exe" if os.name == "nt" else ""
-
-# Keep this aligned with the corpora used by tools/bench/bench.py. MapLibre
-# Compose supplies a representative pinned Kotlin workload; the excluded Java
-# input is intentionally invalid upstream Java.
-CORPORA = {
-    "adversarial": (
-        IMPORTS / "google-java-format/input",
-        (".java",),
-        {"B26952926.java"},
-    ),
-    "realistic": (IMPORTS / "spring-framework", (".java",), set()),
-    "kotlin-realistic": (
-        IMPORTS / "maplibre-compose/source",
-        (".kt", ".kts"),
-        set(),
-    ),
-}
 
 
 def main() -> None:
@@ -120,17 +104,13 @@ def prepare_training_corpora() -> None:
     if TRAINING.exists():
         shutil.rmtree(TRAINING)
 
-    for name, (source, extensions, excluded) in CORPORA.items():
+    for name, corpus in CORPORA.items():
+        source = corpus.source
         if not source.is_dir():
             raise RuntimeError(
                 f"missing benchmark corpus: {source}; run `mise install` to import fixtures"
             )
-        files = [
-            path
-            for extension in extensions
-            for path in sorted(source.rglob(f"*{extension}"))
-            if path.relative_to(source).as_posix() not in excluded
-        ]
+        files = corpus.files()
         if not files:
             raise RuntimeError(
                 f"benchmark corpus contains no source files: {source}"
