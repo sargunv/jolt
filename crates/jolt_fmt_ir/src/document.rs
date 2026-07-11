@@ -4,6 +4,8 @@ use std::ops::{Deref, DerefMut};
 
 use crate::width::{TextWidth, display_width, literal_text_metrics};
 
+pub(crate) const INLINE_CONCAT_CAPACITY: usize = 4;
+
 /// Copyable formatter document handle.
 ///
 /// Documents are allocated into a [`DocBuilder`] for one formatting run. This
@@ -79,6 +81,10 @@ impl<'source> DocArena<'source> {
 
     fn push_child(&mut self, doc: Doc<'source>) {
         self.children.push(doc);
+    }
+
+    fn extend_children(&mut self, docs: &[Doc<'source>]) {
+        self.children.extend_from_slice(docs);
     }
 }
 
@@ -293,20 +299,32 @@ impl<'source> ConcatBuilder<'_, 'source> {
                 .expect("concat list item exists"),
             _ => {
                 let len = u32::try_from(len).expect("concat list length fits u32");
-                let child_start = self.builder.child_count();
-                child_start
-                    .checked_add(len)
-                    .expect("doc arena child count fits u32");
-                for index in self.start..self.builder.list_scratch.len() {
+                let doc = if len
+                    <= u32::try_from(INLINE_CONCAT_CAPACITY)
+                        .expect("inline concat capacity fits u32")
+                {
+                    let mut docs = [Doc::nil(); INLINE_CONCAT_CAPACITY];
+                    let source = &self.builder.list_scratch[self.start..];
+                    docs[..source.len()].copy_from_slice(source);
+                    self.builder.push_node(DocNode::InlineConcat {
+                        docs,
+                        len: u8::try_from(len).expect("inline concat length fits u8"),
+                    })
+                } else {
+                    let child_start = self.builder.child_count();
+                    child_start
+                        .checked_add(len)
+                        .expect("doc arena child count fits u32");
                     self.builder
                         .arena
-                        .push_child(self.builder.list_scratch[index]);
-                }
+                        .extend_children(&self.builder.list_scratch[self.start..]);
+                    self.builder.push_node(DocNode::ConcatRange {
+                        start: child_start,
+                        len,
+                    })
+                };
                 self.builder.list_scratch.truncate(self.start);
-                self.builder.push_node(DocNode::Concat {
-                    start: child_start,
-                    len,
-                })
+                doc
             }
         };
         self.active = false;
@@ -337,7 +355,7 @@ impl DerefMut for ConcatBuilder<'_, '_> {
 }
 
 struct ConcatAppender<'source> {
-    first: Option<Doc<'source>>,
+    inline: [Doc<'source>; INLINE_CONCAT_CAPACITY],
     start: Option<u32>,
     len: u32,
 }
@@ -345,7 +363,7 @@ struct ConcatAppender<'source> {
 impl<'source> ConcatAppender<'source> {
     const fn new() -> Self {
         Self {
-            first: None,
+            inline: [Doc::nil(); INLINE_CONCAT_CAPACITY],
             start: None,
             len: 0,
         }
@@ -364,17 +382,20 @@ impl<'source> ConcatAppender<'source> {
                     .checked_add(1)
                     .expect("concat child count fits u32");
             }
-            None if self.first.is_none() => {
-                self.first = Some(doc);
-                self.len = 1;
-            }
             None => {
-                let first = self.first.take().expect("first concat doc exists");
-                let start = builder.child_count();
-                builder.push_child(first);
-                builder.push_child(doc);
-                self.start = Some(start);
-                self.len = 2;
+                if self.len
+                    < u32::try_from(INLINE_CONCAT_CAPACITY)
+                        .expect("inline concat capacity fits u32")
+                {
+                    self.inline[usize::try_from(self.len).expect("concat length fits usize")] = doc;
+                    self.len += 1;
+                } else {
+                    let start = builder.child_count();
+                    builder.arena.extend_children(&self.inline);
+                    builder.push_child(doc);
+                    self.start = Some(start);
+                    self.len += 1;
+                }
             }
         }
     }
@@ -385,12 +406,19 @@ impl<'source> ConcatAppender<'source> {
                 start
                     .checked_add(self.len)
                     .expect("doc arena child count fits u32");
-                builder.push_node(DocNode::Concat {
+                builder.push_node(DocNode::ConcatRange {
                     start,
                     len: self.len,
                 })
             }
-            None => self.first.unwrap_or_else(|| builder.nil()),
+            None => match self.len {
+                0 => builder.nil(),
+                1 => self.inline[0],
+                len => builder.push_node(DocNode::InlineConcat {
+                    docs: self.inline,
+                    len: u8::try_from(len).expect("inline concat length fits u8"),
+                }),
+            },
         }
     }
 }
@@ -399,7 +427,11 @@ impl<'source> ConcatAppender<'source> {
 pub(crate) enum DocNode<'source> {
     Text(Text<'source>),
     LiteralText(LiteralText<'source>),
-    Concat {
+    InlineConcat {
+        docs: [Doc<'source>; INLINE_CONCAT_CAPACITY],
+        len: u8,
+    },
+    ConcatRange {
         start: u32,
         len: u32,
     },

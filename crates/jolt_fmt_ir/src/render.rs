@@ -214,7 +214,13 @@ impl<'arena, 'source, S: RenderSink> Renderer<'arena, 'source, S> {
                 self.write_literal(text);
                 Ok(())
             }
-            Some(DocNode::Concat { start, len }) => {
+            Some(DocNode::InlineConcat { docs, len }) => {
+                for child in docs[..usize::from(*len)].iter().rev() {
+                    stack.push(RenderCommand::Doc(*child, mode));
+                }
+                Ok(())
+            }
+            Some(DocNode::ConcatRange { start, len }) => {
                 if let Some(end) = start.checked_add(*len) {
                     self.render_concat_span(*start, end, mode, stack);
                 }
@@ -492,7 +498,13 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
                     self.width_result(text.final_width())
                 }
             }
-            Some(DocNode::Concat { start, len }) => {
+            Some(DocNode::InlineConcat { docs, len }) => {
+                for child in docs[..usize::from(*len)].iter().rev() {
+                    stack.push(FitCommand::Doc(*child, mode));
+                }
+                FitResult::Continue
+            }
+            Some(DocNode::ConcatRange { start, len }) => {
                 if let Some(end) = start.checked_add(*len) {
                     stack.push(FitCommand::ConcatRange {
                         next: *start,
