@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Build Jolt with profile-guided optimization using benchmark corpora."""
 
+import argparse
 import os
 import shutil
 import subprocess
@@ -35,6 +36,7 @@ CORPORA = {
 
 
 def main() -> None:
+    target = parse_args().target
     reset_build_outputs()
     llvm_profdata = find_llvm_profdata()
     prepare_training_corpora()
@@ -68,11 +70,30 @@ def main() -> None:
     build(
         OPTIMIZED_TARGET,
         f"-Cprofile-use={MERGED_PROFILE.as_posix()}",
+        target,
     )
-    optimized_jolt = OPTIMIZED_TARGET / f"release/jolt{EXE_SUFFIX}"
+    optimized_jolt = optimized_binary(target)
     require_file(optimized_jolt, "PGO-optimized Jolt CLI")
-    run(optimized_jolt, "--version")
+    if target is None or target == rust_host():
+        run(optimized_jolt, "--version")
     print(f"PGO-optimized CLI: {optimized_jolt}")
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--target",
+        help="Rust target triple for the optimized build (training runs on the host)",
+    )
+    return parser.parse_args()
+
+
+def optimized_binary(target: str | None) -> Path:
+    directory = OPTIMIZED_TARGET
+    if target:
+        directory /= target
+    suffix = ".exe" if target and "windows" in target else EXE_SUFFIX
+    return directory / f"release/jolt{suffix}"
 
 
 def find_llvm_profdata() -> Path:
@@ -83,21 +104,9 @@ def find_llvm_profdata() -> Path:
         return tool
 
     sysroot = capture("rustc", "--print", "sysroot")
-    host_line = next(
-        (
-            line
-            for line in capture("rustc", "-vV").splitlines()
-            if line.startswith("host: ")
-        ),
-        None,
-    )
-    if host_line is None:
-        raise RuntimeError("rustc -vV did not report its host triple")
+    host = rust_host()
     tool = (
-        Path(sysroot)
-        / "lib/rustlib"
-        / host_line.removeprefix("host: ")
-        / f"bin/llvm-profdata{EXE_SUFFIX}"
+        Path(sysroot) / "lib/rustlib" / host / f"bin/llvm-profdata{EXE_SUFFIX}"
     )
     if not tool.is_file():
         raise RuntimeError(
@@ -142,14 +151,33 @@ def reset_build_outputs() -> None:
     PROFILES.mkdir(parents=True)
 
 
-def build(target: Path, rustflags: str) -> None:
-    run(
+def rust_host() -> str:
+    host_line = next(
+        (
+            line
+            for line in capture("rustc", "-vV").splitlines()
+            if line.startswith("host: ")
+        ),
+        None,
+    )
+    if host_line is None:
+        raise RuntimeError("rustc -vV did not report its host triple")
+    return host_line.removeprefix("host: ")
+
+
+def build(target_dir: Path, rustflags: str, target: str | None = None) -> None:
+    command = [
         "cargo",
         "build",
         "--release",
         "--package",
         "jolt_cli",
-        env={"CARGO_TARGET_DIR": target.as_posix(), "RUSTFLAGS": rustflags},
+    ]
+    if target:
+        command += ["--target", target]
+    run(
+        *command,
+        env={"CARGO_TARGET_DIR": target_dir.as_posix(), "RUSTFLAGS": rustflags},
     )
 
 

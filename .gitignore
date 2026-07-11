@@ -5,6 +5,9 @@ node_modules/
 .ruff_cache/
 /plugin.wasm
 /schema.json
+/dprint-schema.json
+/jolt-schema.json
+/dist/jolt/out/
 /docs/.vitepress/cache/
 /docs/.vitepress/dist/
 /docs/.vitepress/.temp/

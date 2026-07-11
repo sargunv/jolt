@@ -131,6 +131,10 @@ jobs:
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
             echo "$HOME/.cargo/bin" >> $GITHUB_PATH
           fi
+      - name: "Install pinned Python"
+        uses: "actions/setup-python@v6"
+        with:
+          "python-version": "3.14.5"
       - uses: swatinem/rust-cache@v2
         with:
           key: ${{ join(matrix.targets, '-') }}
@@ -144,8 +148,6 @@ jobs:
           pattern: artifacts-*
           path: target/distrib/
           merge-multiple: true
-      - name: Install cargo-auditable
-        run: ${{ matrix.install_cargo_auditable.run }}
       - name: Install dependencies
         run: |
           ${{ matrix.packages_install }}

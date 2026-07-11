@@ -19,7 +19,8 @@ silently contaminate the result. The workflow fails when either corpus is
 missing or empty, when the matching LLVM profile tool is unavailable, or when
 training produces no profile.
 
-PGO is intentionally a separate build rather than the default release workflow:
+PGO is intentionally separate from ordinary local Cargo release builds, while
+the production packaging workflow uses it by default:
 
 - It performs two clean release builds and formats both corpora, making it much
   slower than `mise run build:jolt --mode release`.
@@ -38,3 +39,28 @@ PGO is intentionally a separate build rather than the default release workflow:
 The final binary is `target/pgo/optimized/release/jolt`. Run the command again
 after compiler, dependency, source, or representative-workload changes;
 generated profiles are not portable release inputs and should not be committed.
+
+## Native release artifacts
+
+`mise run release:build` packages PGO builds for every release target whose
+architecture matches its cargo-dist runner, while
+`mise run build:jolt --mode release` remains the faster, ordinary release build
+for local development. The release task selects the configured native target for
+the current host (the static musl target on Linux). cargo-dist invokes
+`dist/jolt/build.py` once per release target. Training always runs as a host
+executable, then the merged profile is applied while compiling the requested
+`CARGO_DIST_TARGET`. Each same-architecture result is executed for version and
+stdin-formatting smoke tests before packaging.
+
+The ARM64 Windows artifact is currently built by cargo-dist on an x64 Windows
+runner. Indexed profiles are not reused across architectures, so that artifact
+uses the ordinary LTO release profile until a native ARM64 Windows runner is
+available.
+
+cargo-dist 0.32 does not support overriding a Cargo package's build command, so
+the shipped CLI is represented by a small generic package in
+`dist/jolt/dist.toml`. Its version must match `crates/jolt_cli/Cargo.toml`; the
+`release:cut` task updates both. Generic builds also cannot use cargo-dist's
+`cargo-auditable` integration, so release binaries currently omit that metadata.
+The regular Cargo package remains the source of the binary and all development
+builds.

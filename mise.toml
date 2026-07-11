@@ -123,7 +123,16 @@ depends = [
 run = 'python tools/bench/bench.py ${usage_tools:-}'
 
 [tasks."release:build"]
-run = "dist build"
+run = '''
+host=$(rustc -vV | sed -n 's/^host: //p')
+case "$host" in
+  aarch64-unknown-linux-gnu) target=aarch64-unknown-linux-musl ;;
+  x86_64-unknown-linux-gnu) target=x86_64-unknown-linux-musl ;;
+  aarch64-apple-darwin|x86_64-apple-darwin|aarch64-pc-windows-msvc|x86_64-pc-windows-msvc) target=$host ;;
+  *) echo "unsupported release host: $host" >&2; exit 1 ;;
+esac
+dist build --target "$target"
+'''
 
 [tasks."release:cut"]
 run = '''
@@ -139,7 +148,7 @@ version="0.$today.$n"
 tag="$version"
 
 echo "About to cut $tag"
-echo "  - bump crates/jolt_cli/Cargo.toml and crates/jolt_fmt_dprint/Cargo.toml to $version"
+echo "  - bump native, plugin, and dist package manifests to $version"
 echo "  - sync Cargo.lock"
 echo "  - git commit -m \"chore: release jolt $version\""
 echo "  - git tag -m \"jolt $version\" $tag"
@@ -151,12 +160,12 @@ case "$reply" in
   *) echo "Aborted"; exit 1 ;;
 esac
 
-for toml in crates/jolt_cli/Cargo.toml crates/jolt_fmt_dprint/Cargo.toml; do
+for toml in crates/jolt_cli/Cargo.toml crates/jolt_fmt_dprint/Cargo.toml dist/jolt/dist.toml; do
   awk -v v="$version" '/^version = / && !done { print "version = \"" v "\""; done=1; next } { print }' "$toml" > "$toml.tmp" && mv "$toml.tmp" "$toml"
 done
 cargo metadata --format-version=1 >/dev/null
 
-git add crates/jolt_cli/Cargo.toml crates/jolt_fmt_dprint/Cargo.toml Cargo.lock
+git add crates/jolt_cli/Cargo.toml crates/jolt_fmt_dprint/Cargo.toml dist/jolt/dist.toml Cargo.lock
 git commit -m "chore: release jolt $version"
 git tag -m "jolt $version" "$tag"
 git push --atomic origin HEAD "$tag"
