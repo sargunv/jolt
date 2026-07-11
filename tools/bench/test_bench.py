@@ -32,6 +32,21 @@ class BenchmarkCorpusTests(unittest.TestCase):
             [path.name for path in files], ["Build.kts", "Source.kt"]
         )
 
+    def test_modified_file_count_rejects_missing_files(self) -> None:
+        corpus = CORPORA["realistic"]
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            baseline = root / "baseline"
+            formatted = root / "formatted"
+            baseline.mkdir()
+            formatted.mkdir()
+            (baseline / "Present.java").touch()
+
+            with self.assertRaisesRegex(
+                RuntimeError, "formatted corpus file set changed"
+            ):
+                bench.count_modified_files(corpus, baseline, formatted)
+
 
 if __name__ == "__main__":
     unittest.main()

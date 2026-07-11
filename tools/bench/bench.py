@@ -276,16 +276,24 @@ def applicable_tools(
 def count_modified_files(
     corpus: Corpus, baseline: Path, formatted: Path
 ) -> int:
-    count = 0
-    for path in corpus.files(baseline):
-        relative = path.relative_to(baseline)
-        formatted_path = formatted / relative
-        if (
-            not formatted_path.exists()
-            or path.read_bytes() != formatted_path.read_bytes()
-        ):
-            count += 1
-    return count
+    baseline_files = {
+        path.relative_to(baseline): path for path in corpus.files(baseline)
+    }
+    formatted_files = {
+        path.relative_to(formatted): path for path in corpus.files(formatted)
+    }
+    if formatted_files.keys() != baseline_files.keys():
+        missing = sorted(baseline_files.keys() - formatted_files.keys())
+        unexpected = sorted(formatted_files.keys() - baseline_files.keys())
+        raise RuntimeError(
+            "formatted corpus file set changed: "
+            f"missing={missing}, unexpected={unexpected}"
+        )
+    return sum(
+        baseline_files[relative].read_bytes()
+        != formatted_files[relative].read_bytes()
+        for relative in baseline_files
+    )
 
 
 def system_info() -> str:
