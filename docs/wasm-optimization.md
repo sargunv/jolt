@@ -22,6 +22,6 @@ Supporting PGO would therefore require a custom profiler runtime and a change to
 the dprint plugin host protocol, not just a release-build flag.
 
 `wasm-opt -O3` is a reproducible, target-appropriate alternative that requires
-no runtime profiling channel. The Binaryen version is pinned in `mise.toml`.
-Release packaging applies the same pinned optimizer to the published
-`plugin.wasm`; the separate task is primarily useful for local validation.
+no runtime profiling channel. `tools/wasm/build_optimized.sh` is shared by local
+and release builds. Binaryen is pinned through mise locally; release CI verifies
+and uses the same pinned Binaryen archive when the tool is not already present.

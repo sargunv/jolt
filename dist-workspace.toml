@@ -51,22 +51,7 @@ build = [
   "-c",
   """\
 set -eu
-rustup target add wasm32-unknown-unknown
-cargo build --release --target wasm32-unknown-unknown --package jolt_fmt_dprint --features wasm
-binaryen=target/binaryen-version_130
-if [ ! -x "$binaryen/bin/wasm-opt" ]; then
-  archive=target/binaryen-version_130-x86_64-linux.tar.gz
-  curl --proto '=https' --tlsv1.2 -LsSf \
-    https://github.com/WebAssembly/binaryen/releases/download/version_130/binaryen-version_130-x86_64-linux.tar.gz \
-    -o "$archive"
-  printf '%s  %s\n' \
-    0a18362361ad05465118cd8eeb72edaeec89de6894bc283576ef4e07aa3babcc \
-    "$archive" | sha256sum -c -
-  tar -xzf "$archive" -C target
-fi
-"$binaryen/bin/wasm-opt" -O3 \
-  target/wasm32-unknown-unknown/release/jolt_fmt_dprint.wasm \
-  -o plugin.wasm
+tools/wasm/build_optimized.sh plugin.wasm
 cargo run --release --package jolt_cli -- config schema --dprint > dprint-schema.json
 cargo run --release --package jolt_cli -- config schema > jolt-schema.json
 """,

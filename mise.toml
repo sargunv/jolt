@@ -93,10 +93,7 @@ esac
 [tasks."build:dprint-plugin-optimized"]
 description = "Build and post-link optimize the release dprint plugin"
 run = '''
-cargo build --release --target wasm32-unknown-unknown --package jolt_fmt_dprint --features wasm
-wasm-opt -O3 \
-  target/wasm32-unknown-unknown/release/jolt_fmt_dprint.wasm \
-  -o target/wasm32-unknown-unknown/release/jolt_fmt_dprint.opt.wasm
+tools/wasm/build_optimized.sh
 '''
 
 [tasks."dprint-with-jolt"]
