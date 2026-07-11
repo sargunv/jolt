@@ -8,6 +8,13 @@ use super::{JavaLexDiagnosticCode, LexerDiagnostic, lexer_diagnostic};
 // For example, `\u000a` becomes an actual line terminator before string or
 // comment scanning sees it; it is not the same as a string escape like `\n`.
 pub(crate) fn normalize_unicode_escapes(source: &str) -> (Cow<'_, str>, Vec<LexerDiagnostic>) {
+    // Unicode escapes always begin with a backslash. Most source files do not
+    // contain one at all, so avoid decoding every UTF-8 scalar just to discover
+    // that normalization has no work to do.
+    if !source.as_bytes().contains(&b'\\') {
+        return (Cow::Borrowed(source), Vec::new());
+    }
+
     let mut normalized = None;
     let mut diagnostics = Vec::new();
     let mut eligibility = UnicodeEscapeEligibility::default();
