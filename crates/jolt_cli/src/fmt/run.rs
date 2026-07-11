@@ -233,6 +233,13 @@ fn format_candidates(
     candidates: &[CandidateFile],
 ) -> Result<Vec<FileFormatResult>, CliError> {
     let threads = args.threads.unwrap_or_else(default_thread_count).get();
+    if threads == 1 || candidates.len() <= 1 {
+        return Ok(candidates
+            .iter()
+            .map(|candidate| format_candidate(cwd, candidate, args.check))
+            .collect());
+    }
+
     let pool = rayon::ThreadPoolBuilder::new()
         .num_threads(threads)
         .build()
