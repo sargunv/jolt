@@ -219,17 +219,24 @@ pub fn build_syntax_tree(
     tokens: Vec<SyntaxTokenData>,
     trivia: Vec<SyntaxTrivia>,
 ) -> Result<(SyntaxTree, Vec<Diagnostic>), BuildSyntaxTreeError> {
+    let event_count = events.len();
+    let token_count = tokens.len();
+    let estimated_node_count = events
+        .iter()
+        .filter(|event| matches!(event, Event::StartNode { .. }))
+        .count();
+    let estimated_child_count = estimated_node_count.saturating_add(token_count);
     let builder = SyntaxTreeBuilder {
-        nodes: Vec::new(),
-        children: Vec::new(),
-        pending_children: Vec::new(),
+        nodes: Vec::with_capacity(estimated_node_count),
+        children: Vec::with_capacity(estimated_child_count),
+        pending_children: Vec::with_capacity(token_count),
         tokens,
         trivia,
-        stack: Vec::new(),
+        stack: Vec::with_capacity(64),
         root: None,
         token_index: 0,
         diagnostics: Vec::new(),
-        skip_events: Vec::new(),
+        skip_events: vec![false; event_count],
     };
 
     builder.build(events)
@@ -245,7 +252,7 @@ struct SyntaxTreeBuilder {
     root: Option<NodeId>,
     token_index: usize,
     diagnostics: Vec<Diagnostic>,
-    skip_events: Vec<usize>,
+    skip_events: Vec<bool>,
 }
 
 impl SyntaxTreeBuilder {
@@ -256,7 +263,7 @@ impl SyntaxTreeBuilder {
         let mut event_index = 0;
 
         while event_index < events.len() {
-            if self.skip_events.binary_search(&event_index).is_ok() {
+            if self.skip_events[event_index] {
                 event_index += 1;
                 continue;
             }
@@ -354,14 +361,11 @@ impl SyntaxTreeBuilder {
                 },
             )?;
 
-            let skip_insert_index = self.skip_events.binary_search(&target).err();
-
-            if target <= position || target >= events.len() || skip_insert_index.is_none() {
+            if target <= position || target >= events.len() || self.skip_events[target] {
                 return Err(BuildSyntaxTreeError::InvalidForwardParent { position, target });
             }
 
-            self.skip_events
-                .insert(skip_insert_index.expect("checked above"), target);
+            self.skip_events[target] = true;
             self.start_forward_parent_nodes(events, target)?;
         }
 
