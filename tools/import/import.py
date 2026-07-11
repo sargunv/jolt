@@ -2,17 +2,26 @@
 """Import pinned upstream files."""
 
 import contextlib
-import fcntl
 import hashlib
 import json
+import os
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
+
+if os.name == "nt":
+    import msvcrt
+else:
+    import fcntl
 
 ROOT = Path(__file__).resolve().parents[2]
 IMPORTS = ROOT / "tools/import/.imports"
 MANIFEST = IMPORTS / "manifest.json"
+LOCK = IMPORTS / ".locks/import.lock"
+LOCK_TIMEOUT_SECONDS = 300
+LOCK_RETRY_SECONDS = 0.1
 
 IMPORTS_CONFIG = [
     {
@@ -74,45 +83,45 @@ IMPORTS_CONFIG = [
 
 
 def main() -> int:
-    sync_repos(IMPORTS_CONFIG)
-    clear_imports(IMPORTS_CONFIG)
-    manifest = materialize(IMPORTS_CONFIG)
-    write_manifest(manifest)
+    with import_lock():
+        sync_repos(IMPORTS_CONFIG)
+        clear_imports(IMPORTS_CONFIG)
+        manifest = materialize(IMPORTS_CONFIG)
+        write_manifest(manifest)
     return 0
 
 
 def sync_repos(imports: list[dict]) -> None:
     repos = {item["repo"]: item for item in imports}
     for item in sorted(repos.values(), key=lambda item: item["repo"]):
-        with repo_lock(item):
-            destination = repo_dir(item)
-            log(f"syncing {item['repo']} {item['tag']} ({item['commit']})")
-            if not destination.exists():
-                destination.parent.mkdir(parents=True, exist_ok=True)
-                run(
-                    "git",
-                    "clone",
-                    "--filter=blob:none",
-                    "--no-checkout",
-                    f"https://github.com/{item['repo']}.git",
-                    str(destination),
-                )
+        destination = repo_dir(item)
+        log(f"syncing {item['repo']} {item['tag']} ({item['commit']})")
+        if not destination.exists():
+            destination.parent.mkdir(parents=True, exist_ok=True)
             run(
                 "git",
-                "fetch",
-                "--depth",
-                "1",
-                "origin",
-                f"refs/tags/{item['tag']}",
-                cwd=destination,
+                "clone",
+                "--filter=blob:none",
+                "--no-checkout",
+                f"https://github.com/{item['repo']}.git",
+                str(destination),
             )
-            run("git", "checkout", "--detach", item["commit"], cwd=destination)
-            run("git", "clean", "-fdx", cwd=destination)
-            actual = capture("git", "rev-parse", "HEAD", cwd=destination)
-            if actual != item["commit"]:
-                raise RuntimeError(
-                    f"{item['repo']} resolved to {actual}, expected {item['commit']}"
-                )
+        run_with_retries(
+            "git",
+            "fetch",
+            "--depth",
+            "1",
+            "origin",
+            f"refs/tags/{item['tag']}",
+            cwd=destination,
+        )
+        run("git", "checkout", "--detach", item["commit"], cwd=destination)
+        run("git", "clean", "-fdx", cwd=destination)
+        actual = capture("git", "rev-parse", "HEAD", cwd=destination)
+        if actual != item["commit"]:
+            raise RuntimeError(
+                f"{item['repo']} resolved to {actual}, expected {item['commit']}"
+            )
 
 
 def clear_imports(imports: list[dict]) -> None:
@@ -236,17 +245,58 @@ def repo_dir(item: dict) -> Path:
 
 
 @contextlib.contextmanager
-def repo_lock(item: dict):
-    lock = IMPORTS / ".locks" / (item["repo"].replace("/", "__") + ".lock")
-    lock.parent.mkdir(parents=True, exist_ok=True)
-    with lock.open("w") as lock_file:
-        fcntl.flock(lock_file, fcntl.LOCK_EX)
-        yield
+def import_lock():
+    LOCK.parent.mkdir(parents=True, exist_ok=True)
+    with LOCK.open("a+b") as lock_file:
+        if os.name == "nt":
+            if lock_file.tell() == 0:
+                lock_file.write(b"\0")
+                lock_file.flush()
+            deadline = time.monotonic() + LOCK_TIMEOUT_SECONDS
+            while True:
+                try:
+                    lock_file.seek(0)
+                    msvcrt.locking(lock_file.fileno(), msvcrt.LK_NBLCK, 1)
+                    break
+                except OSError as error:
+                    if time.monotonic() >= deadline:
+                        raise TimeoutError(
+                            f"timed out waiting for import lock: {LOCK}"
+                        ) from error
+                    time.sleep(LOCK_RETRY_SECONDS)
+        else:
+            fcntl.flock(lock_file, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            if os.name == "nt":
+                lock_file.seek(0)
+                msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
 
 
 def run(*command: str, cwd: Path | None = None) -> None:
     print("+ " + " ".join(command), file=sys.stderr)
     subprocess.run(command, cwd=cwd, check=True)
+
+
+def run_with_retries(
+    *command: str,
+    cwd: Path | None = None,
+    attempts: int = 3,
+) -> None:
+    for attempt in range(1, attempts + 1):
+        try:
+            run(*command, cwd=cwd)
+            return
+        except subprocess.CalledProcessError:
+            if attempt == attempts:
+                raise
+            delay = attempt
+            log(
+                f"command failed (attempt {attempt}/{attempts}); "
+                f"retrying in {delay}s"
+            )
+            time.sleep(delay)
 
 
 def capture(*command: str, cwd: Path | None = None) -> str:
