@@ -132,41 +132,17 @@ impl<'tree, L: Language> SyntaxNode<'tree, L> {
     /// Returns the first token contained by this node.
     #[must_use]
     pub fn first_token(&self) -> Option<SyntaxToken<'tree, L>> {
-        for child in self.tree.children(self.id).iter().copied() {
-            match child {
-                TreeElement::Node(id) => {
-                    let node = Self::new_child(self.source, self.tree, id);
-                    if let Some(token) = node.first_token() {
-                        return Some(token);
-                    }
-                }
-                TreeElement::Token(id) => {
-                    return Some(SyntaxToken::new(self.source, self.tree, id));
-                }
-            }
-        }
-
-        None
+        let tokens = &self.tree.node(self.id).tokens;
+        (tokens.start < tokens.end)
+            .then(|| SyntaxToken::new(self.source, self.tree, TokenId::new(tokens.start)))
     }
 
     /// Returns the last token contained by this node.
     #[must_use]
     pub fn last_token(&self) -> Option<SyntaxToken<'tree, L>> {
-        for child in self.tree.children(self.id).iter().copied().rev() {
-            match child {
-                TreeElement::Node(id) => {
-                    let node = Self::new_child(self.source, self.tree, id);
-                    if let Some(token) = node.last_token() {
-                        return Some(token);
-                    }
-                }
-                TreeElement::Token(id) => {
-                    return Some(SyntaxToken::new(self.source, self.tree, id));
-                }
-            }
-        }
-
-        None
+        let tokens = &self.tree.node(self.id).tokens;
+        (tokens.start < tokens.end)
+            .then(|| SyntaxToken::new(self.source, self.tree, TokenId::new(tokens.end - 1)))
     }
 
     /// Returns every token contained by this node in source order.
@@ -267,8 +243,7 @@ fn fmt_indent(f: &mut fmt::Formatter<'_>, indent: usize) -> fmt::Result {
 struct Tokens<'tree, L: Language> {
     source: &'tree str,
     tree: &'tree SyntaxTree,
-    root: NodeId,
-    next: Option<TreeElement>,
+    range: std::ops::Range<usize>,
     language: PhantomData<L>,
 }
 
@@ -277,32 +252,9 @@ impl<'tree, L: Language> Tokens<'tree, L> {
         Self {
             source: root.source,
             tree: root.tree,
-            root: root.id,
-            next: root.tree.children(root.id).first().copied(),
+            range: root.tree.node(root.id).tokens.clone(),
             language: PhantomData,
         }
-    }
-
-    fn next_after_token(&self, id: TokenId) -> Option<TreeElement> {
-        let token = self.tree.token(id);
-        self.next_after_child(token.parent?, token.index)
-    }
-
-    fn next_after_node(&self, id: NodeId) -> Option<TreeElement> {
-        if id == self.root {
-            return None;
-        }
-
-        let node = self.tree.node(id);
-        self.next_after_child(node.parent?, node.index)
-    }
-
-    fn next_after_child(&self, parent: NodeId, index: usize) -> Option<TreeElement> {
-        if let Some(sibling) = self.tree.children(parent).get(index.saturating_add(1)) {
-            return Some(*sibling);
-        }
-
-        self.next_after_node(parent)
     }
 }
 
@@ -310,25 +262,7 @@ impl<'tree, L: Language> Iterator for Tokens<'tree, L> {
     type Item = SyntaxToken<'tree, L>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let mut element = self.next?;
-
-        loop {
-            match element {
-                TreeElement::Node(id) => {
-                    if let Some(child) = self.tree.children(id).first().copied() {
-                        element = child;
-                    } else if let Some(next) = self.next_after_node(id) {
-                        element = next;
-                    } else {
-                        self.next = None;
-                        return None;
-                    }
-                }
-                TreeElement::Token(id) => {
-                    self.next = self.next_after_token(id);
-                    return Some(SyntaxToken::new(self.source, self.tree, id));
-                }
-            }
-        }
+        let id = TokenId::new(self.range.next()?);
+        Some(SyntaxToken::new(self.source, self.tree, id))
     }
 }

@@ -23,7 +23,7 @@ impl NodeId {
 pub(crate) struct TokenId(usize);
 
 impl TokenId {
-    const fn new(index: usize) -> Self {
+    pub(crate) const fn new(index: usize) -> Self {
         Self(index)
     }
 
@@ -140,6 +140,7 @@ impl SyntaxTokenData {
 pub(crate) struct TreeNode {
     pub(crate) kind: RawSyntaxKind,
     pub(crate) children: Range<usize>,
+    pub(crate) tokens: Range<usize>,
     pub(crate) parent: Option<NodeId>,
     pub(crate) offset: TextSize,
     pub(crate) text_len: TextSize,
@@ -328,6 +329,7 @@ impl SyntaxTreeBuilder {
         self.stack.push(PartialNode {
             kind,
             children_start: self.pending_children.len(),
+            tokens_start: self.token_index,
             text_len: TextSize::new(0),
         });
     }
@@ -409,6 +411,7 @@ impl SyntaxTreeBuilder {
         self.nodes.push(TreeNode {
             kind: node.kind,
             children,
+            tokens: node.tokens_start..self.token_index,
             parent: None,
             offset: TextSize::new(0),
             text_len: node.text_len,
@@ -430,6 +433,7 @@ impl SyntaxTreeBuilder {
 struct PartialNode {
     kind: RawSyntaxKind,
     children_start: usize,
+    tokens_start: usize,
     text_len: TextSize,
 }
 
