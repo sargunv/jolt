@@ -1,14 +1,14 @@
 # Formatter
 
-This page describes how Jolt's Java formatter works, from source text to
-formatted output.
+This page describes how Jolt's Java and Kotlin formatters work, from source text
+to formatted output.
 
 ## Pipeline
 
 Formatting is a one-way pipeline:
 
 ```
-Java source
+Java or Kotlin source
   -> parse        lexer + parser
   -> syntax tree  lossless concrete syntax tree
   -> format       tree -> document IR
@@ -18,8 +18,8 @@ Java source
 ```
 
 The same pipeline drives the native CLI and the WebAssembly dprint plugin. A
-facade dispatches by language (just Java today) into a language-specific
-lowering, then into the shared renderer.
+facade dispatches Java and Kotlin source into their language-specific parsers
+and document lowering, then into the shared renderer.
 
 ## Syntax tree
 
@@ -71,7 +71,7 @@ A `group` is the unit of layout decision. The renderer checks whether a group's
 content fits within the configured line width; if it does, the group stays on
 one line, and otherwise it breaks at its break points.
 
-Java source:
+Java or Kotlin source:
 
 ```
 foo(first, second, third)

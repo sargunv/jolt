@@ -1,7 +1,7 @@
 # Jolt
 
-Jolt is a simple, portable, and extremely fast formatter for Java source, with a
-predictable and opinionated style.
+Jolt is a simple, portable, and extremely fast formatter for Java and Kotlin
+source, with a predictable and opinionated style.
 
 Jolt runs as a standalone native CLI or as a [dprint](https://dprint.dev)
 WebAssembly plugin. It has a small configuration surface and is designed for

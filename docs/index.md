@@ -4,7 +4,7 @@ title: Jolt
 
 hero:
   name: Jolt
-  text: Simple, portable, and extremely fast Java formatter
+  text: Simple, portable, and extremely fast Java and Kotlin formatter
   actions:
     - theme: brand
       text: Get Started

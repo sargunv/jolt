@@ -1,6 +1,6 @@
 # What is Jolt?
 
-Jolt is a high performance Java source formatter.
+Jolt is a high-performance Java and Kotlin source formatter.
 
 The CLI is a static binary with no runtime dependency. The same engine also
 builds to WebAssembly for dprint, editors, and other WASM hosts. You can run it
@@ -9,9 +9,9 @@ the formatter.
 
 ## Approach
 
-Jolt is aimed at large Java codebases and editor integrations. A slow formatter
-in pre-commit or editor save hooks adds noticeable latency on every run. Jolt is
-built so that latency stays miniscule even on large codebases.
+Jolt is aimed at large Java and Kotlin codebases and editor integrations. A slow
+formatter in pre-commit or editor save hooks adds noticeable latency on every
+run. Jolt is built so that latency stays miniscule even on large codebases.
 
 The layout model is meant to be uniform: the same wrapping and indentation rules
 apply to method calls, annotation arguments, arrays, enum constants, records,

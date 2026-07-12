@@ -3,8 +3,7 @@ import { defineConfig } from "vitepress";
 export default defineConfig({
   base: process.env.VITEPRESS_BASE ?? "/",
   title: "Jolt",
-  description:
-    "Fast, opinionated JVM and Kotlin Multiplatform project tooling.",
+  description: "Fast, opinionated Java and Kotlin formatter.",
   vite: {
     optimizeDeps: {
       include: [

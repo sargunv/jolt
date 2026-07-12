@@ -46,8 +46,8 @@ Install the dprint extension and use settings like:
 
 ### Zed
 
-Zed supports external formatters per language. For Java, configure jolt (or
-dprint) as the formatter in `.zed/settings.json` or your user `settings.json`:
+Zed supports external formatters per language. Configure jolt as the formatter
+for Java and Kotlin in `.zed/settings.json` or your user `settings.json`:
 
 ```json
 {
@@ -60,17 +60,35 @@ dprint) as the formatter in `.zed/settings.json` or your user `settings.json`:
         }
       },
       "format_on_save": "on"
+    },
+    "Kotlin": {
+      "formatter": {
+        "external": {
+          "command": "jolt",
+          "arguments": ["fmt", "-", "--stdin-filename", "{buffer_path}"]
+        }
+      },
+      "format_on_save": "on"
     }
   }
 }
 ```
 
-or with dprint:
+Or configure both languages with dprint:
 
 ```json
 {
   "languages": {
     "Java": {
+      "formatter": {
+        "external": {
+          "command": "dprint",
+          "arguments": ["fmt", "--stdin", "{buffer_path}"]
+        }
+      },
+      "format_on_save": "on"
+    },
+    "Kotlin": {
       "formatter": {
         "external": {
           "command": "dprint",
@@ -106,7 +124,7 @@ amends "package://github.com/jdx/hk/releases/download/v1.48.0/hk@1.48.0#/Config.
 
 local lintSteps = new Mapping<String, Step> {
   ["jolt"] {
-    glob = List("**/*.java", "jolt.toml")
+    glob = List("**/*.java", "**/*.kt", "**/*.kts", "jolt.toml")
     check = "jolt fmt --check ."
     fix = "jolt fmt ."
   }
@@ -152,7 +170,7 @@ repos:
         name: jolt
         entry: jolt fmt
         language: unsupported
-        files: \.java$
+        files: \.(java|kt|kts)$
 ```
 
 Install the hook once:
