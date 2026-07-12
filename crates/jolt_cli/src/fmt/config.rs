@@ -1,5 +1,5 @@
 use std::{
-    collections::HashMap,
+    collections::{BTreeSet, HashMap},
     fmt::Write as _,
     fs,
     path::{Path, PathBuf},
@@ -126,7 +126,7 @@ impl<T> SourceValue<T> {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 enum ValueSource {
     Default,
     Config(PathBuf),
@@ -735,18 +735,23 @@ fn set_key_source_comment(table: &mut toml_edit::Table, key: &str, sources: &[&V
         return;
     };
 
-    let mut labels = Vec::<String>::new();
-    for source in sources {
-        let label = source.label();
-        if !labels.contains(&label) {
-            labels.push(label);
+    let comment = source_comment(sources);
+    key.leaf_decor_mut().set_prefix(comment);
+}
+
+fn source_comment(sources: &[&ValueSource]) -> String {
+    // Preserve first-seen output order while bounding membership checks. For
+    // `s` sources whose paths contain at most `p` platform units, lookup and
+    // rendering are O(s log s * p) time with O(s) borrowed set entries.
+    let mut seen = BTreeSet::new();
+    let mut comment = String::new();
+    for &source in sources {
+        if seen.insert(source) {
+            writeln!(&mut comment, "# from {}", source.label())
+                .expect("writing to a String cannot fail");
         }
     }
-    let mut comment = String::new();
-    for label in labels {
-        writeln!(&mut comment, "# from {label}").expect("writing to a String cannot fail");
-    }
-    key.leaf_decor_mut().set_prefix(comment);
+    comment
 }
 
 fn config_paths_for_dir(dir: &Path) -> Vec<ConfigPath> {

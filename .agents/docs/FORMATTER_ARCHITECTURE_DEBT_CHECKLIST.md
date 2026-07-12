@@ -286,15 +286,19 @@ later regression. Performance attribution may not be deferred to the final gate.
 ### New Phase 1: Carry Forward Accepted Cost Controls
 
 Re-extract old Phase 16's bounded formatter-ignore lookup, finite sorting
-models, constant-time parent-role lookup, comment deduplication, and source-gap
-helper removal. Run the production complexity scan so the baseline includes
-these already-accepted improvements.
+models, constant-time parent-role lookup, and comment deduplication. Run the
+production complexity scan so the baseline includes these already-accepted
+improvements. Do not copy Phase 16's `source_gap_is_trivia` deletion: on `main`
+the helper still has four Kotlin consumers that old Phases 9 and 15 had already
+removed. Record those consumers as Phase 2 inputs and forbid new call sites.
 
 ### New Phase 2: Carry Forward Represented-Trivia Layout
 
 Re-extract old Phase 9's represented-trivia classification, valid-path raw-gap
 removal, formatter-ignore boundary, comment ownership, and linear matching
-without carrying its superseded recovery consumers.
+without carrying its superseded recovery consumers. Replace the four remaining
+`source_gap_is_trivia` consumers with represented structure/trivia and delete
+the helper and export in this phase.
 
 ### New Phase 3: Establish Performance And Allocation Baselines
 
@@ -445,10 +449,11 @@ and `mise run test`. Scan for valid replay, untracked verbatim, raw-gap layout,
 repair synthesis, panic paths, unbounded algorithms, and formatter-side
 structural layers. Fail if P16-only ordered recovery parts or local replay loops
 were reintroduced. Report generated and hand-written production LOC separately,
-prove that total production Rust under `crates/**/src/**/*.rs` excluding
-`jolt_test_support` is net negative relative to `2197128`, including generated
-code, and fail if two grammar-shape descriptions remain. Change status to
-`CLEAN` only when every correctness, size, and performance gate passes.
+prove with the architecture's explicit `:(glob)` pathspec command that total
+production Rust under every crate `src` tree, excluding `jolt_test_support`, is
+net negative relative to `2197128`, including generated code, and fail if two
+grammar-shape descriptions remain. Change status to `CLEAN` only when every
+correctness, size, and performance gate passes.
 
 ## Kotlin Structural Recovery Debt
 

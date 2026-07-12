@@ -48,37 +48,36 @@ pub fn formatter_ignore_ranges<'source, L: Language>(
 
     let mut off_comment_start = None;
     let mut ranges = Vec::new();
+    let mut lines = SourceLineCursor::new(source);
 
     let mut visit_comment =
         |comment: Comment<'source>, leading_comment_start: &mut Option<usize>| {
             let range = comment.text_range();
             let start_offset = range.start().get() - base_start;
             let end_offset = range.end().get() - base_start;
+            let line = lines.comment_line(start_offset);
+            let end_line = lines.comment_line(end_offset.saturating_sub(1).max(start_offset));
             let comment_text = comment.text();
             if is_formatter_off_marker(comment_text) {
-                off_comment_start = Some(
-                    leading_comment_start
-                        .take()
-                        .unwrap_or_else(|| line_start(source, start_offset)),
-                );
+                off_comment_start = Some(leading_comment_start.take().unwrap_or(line.start));
             } else if is_formatter_on_marker(comment_text)
                 && let Some(start) = off_comment_start.take()
             {
-                let end = line_start(source, start_offset);
+                let end = line.start;
                 if start < end {
                     ranges.push(FormatterIgnoreRange {
                         raw_text: strip_trailing_line_ending(&source[start..end]),
                         raw_text_with_on: strip_trailing_line_ending(
-                            &source[start..line_end(source, end_offset)],
+                            &source[start..end_line.raw_end],
                         ),
                         interior: start..end,
                     });
                 }
             } else if off_comment_start.is_none()
                 && leading_comment_start.is_none()
-                && comment_starts_own_line(source, start_offset)
+                && line.comment_starts_own_line
             {
-                *leading_comment_start = Some(line_start(source, start_offset));
+                *leading_comment_start = Some(line.start);
             }
         };
 
@@ -307,20 +306,75 @@ fn strip_trailing_line_ending(text: &str) -> &str {
         .unwrap_or(text)
 }
 
-fn comment_starts_own_line(source: &str, offset: usize) -> bool {
-    source[line_start(source, offset)..offset].trim().is_empty()
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct SourceLine {
+    start: usize,
+    raw_end: usize,
+    next_start: usize,
 }
 
-fn line_start(source: &str, offset: usize) -> usize {
-    source[..offset]
-        .rfind(['\n', '\r'])
-        .map_or(0, |newline| newline + 1)
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct CommentLine {
+    start: usize,
+    raw_end: usize,
+    comment_starts_own_line: bool,
 }
 
-fn line_end(source: &str, offset: usize) -> usize {
-    source[offset..]
-        .find(['\n', '\r'])
-        .map_or(source.len(), |newline| offset + newline + 1)
+/// Monotonic line lookup for comments visited in represented source order.
+///
+/// `comment_line` advances through source bytes once as ordered comments
+/// arrive and inspects a line prefix only for its first comment, so all marker
+/// lookup is O(source bytes + comments) time and O(1) auxiliary storage.
+struct SourceLineCursor<'source> {
+    source: &'source str,
+    line: SourceLine,
+    line_has_comment: bool,
+    previous_comment_start: Option<usize>,
+}
+
+impl<'source> SourceLineCursor<'source> {
+    fn new(source: &'source str) -> Self {
+        Self {
+            source,
+            line: source_line(source.as_bytes(), 0),
+            line_has_comment: false,
+            previous_comment_start: None,
+        }
+    }
+
+    fn comment_line(&mut self, comment_start: usize) -> CommentLine {
+        debug_assert!(
+            self.previous_comment_start
+                .is_none_or(|previous| previous <= comment_start),
+            "formatter comments must be visited in source order"
+        );
+        self.previous_comment_start = Some(comment_start);
+
+        while self.line.next_start < self.source.len() && comment_start >= self.line.next_start {
+            self.line = source_line(self.source.as_bytes(), self.line.next_start);
+            self.line_has_comment = false;
+        }
+
+        let line = self.line;
+        debug_assert!((line.start..=line.raw_end).contains(&comment_start));
+        let comment_starts_own_line =
+            !self.line_has_comment && self.source[line.start..comment_start].trim().is_empty();
+        self.line_has_comment = true;
+        CommentLine {
+            start: line.start,
+            raw_end: line.raw_end,
+            comment_starts_own_line,
+        }
+    }
+}
+
+fn source_line(bytes: &[u8], start: usize) -> SourceLine {
+    let content_end = normalized_line_end(bytes, start);
+    SourceLine {
+        start,
+        raw_end: content_end + usize::from(content_end < bytes.len()),
+        next_start: next_line_start(bytes, content_end),
+    }
 }
 
 fn is_formatter_off_marker(comment: &str) -> bool {
@@ -334,4 +388,39 @@ fn is_formatter_on_marker(comment: &str) -> bool {
 #[must_use]
 pub fn is_formatter_control_marker(comment: &str) -> bool {
     is_formatter_off_marker(comment) || is_formatter_on_marker(comment)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{CommentLine, SourceLineCursor};
+
+    #[test]
+    fn source_line_cursor_handles_same_line_comments_and_mixed_line_endings() {
+        let source = "  /* first */ /* second */\r\ncode /* third */\n  /* fourth */";
+        let mut lines = SourceLineCursor::new(source);
+
+        assert_eq!(
+            lines.comment_line(source.find("/* first */").unwrap()),
+            CommentLine {
+                start: 0,
+                raw_end: 27,
+                comment_starts_own_line: true,
+            }
+        );
+        assert!(
+            !lines
+                .comment_line(source.find("/* second */").unwrap())
+                .comment_starts_own_line
+        );
+        assert!(
+            !lines
+                .comment_line(source.find("/* third */").unwrap())
+                .comment_starts_own_line
+        );
+        assert!(
+            lines
+                .comment_line(source.find("/* fourth */").unwrap())
+                .comment_starts_own_line
+        );
+    }
 }

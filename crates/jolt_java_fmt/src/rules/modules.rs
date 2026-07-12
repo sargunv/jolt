@@ -307,6 +307,11 @@ fn format_module_directive_run<'source>(
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let mut directives = directives;
+    // Cost model: a comment-delimited run of `r` directives is stably sorted
+    // with O(r log r) comparisons. Kind comparison is constant; name
+    // comparison streams at most `p` borrowed Unicode scalars, so total time is
+    // bounded by O(r log r * p) with O(r) formatter-owned storage. No layout
+    // candidate search is involved.
     directives.sort_by(|lhs, rhs| {
         lhs.kind_order
             .cmp(&rhs.kind_order)

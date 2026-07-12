@@ -49,6 +49,10 @@ pub(crate) fn discover_files(
         });
     }
 
+    // Cost model: `n` discovered paths are stably sorted with O(n log n)
+    // comparisons, each bounded by the longer path (`p` platform units), for
+    // O(n log n * p) time and O(n) storage. This is the deterministic
+    // file-discovery ordering; it does not participate in formatter layout.
     candidates.sort_by(|left, right| left.path.cmp(&right.path));
     Ok(candidates)
 }

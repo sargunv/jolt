@@ -701,8 +701,8 @@ or bogus kinds beside that machinery. Completion requires:
 The checked-in counting command is:
 
 ```sh
-git diff --numstat 2197128 -- 'crates/**/src/**/*.rs' \
-  ':(exclude)crates/jolt_test_support/**'
+git diff --numstat 2197128 -- ':(glob)crates/**/src/**/*.rs' \
+  ':(exclude,glob)crates/jolt_test_support/**'
 ```
 
 Phase 6 records a by-crate projection that is net negative against `2197128`

@@ -2035,10 +2035,10 @@ fn access_parent_role(
             .selector()
             .is_same_expression(expression)
             .then_some(ExpressionParentRole::SwitchExpressionSelector),
-        AnyJavaNode::ArgumentList(parent) => parent
-            .entries()
-            .any(|entry| expression_is_same(&entry.argument, expression))
-            .then_some(ExpressionParentRole::Argument),
+        // An expression whose direct represented parent is an argument list is
+        // necessarily an argument. Do not rescan every sibling argument to
+        // rediscover the child we already reached through its parent link.
+        AnyJavaNode::ArgumentList(_) => Some(ExpressionParentRole::Argument),
         AnyJavaNode::AnnotationElementValue(parent) => parent
             .expression()
             .is_same_expression(expression)

@@ -109,6 +109,9 @@ fn format_enum_constants_doc<'source>(
 ) -> Doc<'source> {
     let mut pending_constant_comments = Vec::new();
     let mut has_constant_line = false;
+    let last_constant_index = constants
+        .iter()
+        .rposition(|constant| !constant.is_recovered);
     doc.concat_list(|constant_lines| {
         for (index, entry) in constants.iter().enumerate() {
             if !pending_constant_comments.is_empty() {
@@ -124,9 +127,7 @@ fn format_enum_constants_doc<'source>(
                 continue;
             }
 
-            let is_last_constant = !constants[index + 1..]
-                .iter()
-                .any(|constant| !constant.is_recovered);
+            let is_last_constant = Some(index) == last_constant_index;
             let separator = if !has_body_declarations || !is_last_constant {
                 ","
             } else {

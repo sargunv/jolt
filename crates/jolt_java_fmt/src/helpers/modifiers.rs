@@ -80,6 +80,11 @@ fn sorted_modifier_entries(mut entries: Vec<ModifierEntry<'_>>) -> Vec<ModifierE
     entries
 }
 
+/// Stably orders the comment-free runs among `m` modifier entries.
+///
+/// The runs partition the input, so their stable comparison sorts perform
+/// O(m log m) comparisons in total and use O(m) auxiliary storage. Each key is
+/// a constant-size grammar-order integer; there is no layout search or retry.
 fn sort_modifier_runs<T>(
     items: &mut [T],
     mut is_barrier: impl FnMut(&T) -> bool,

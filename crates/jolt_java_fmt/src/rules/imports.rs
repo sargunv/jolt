@@ -44,6 +44,11 @@ fn format_import_run<'source>(
         }
     }
 
+    // Cost model: for each comment-delimited run, the two stable comparison
+    // sorts perform O(r log r) comparisons. A comparison streams at most the
+    // longer borrowed name key (`p` Unicode scalars), so the run is bounded by
+    // O(r log r * p) time and O(r) formatter-owned storage. Runs partition the
+    // represented imports; there is no layout search or retry.
     normal_imports.sort_by(|lhs, rhs| lhs.path.cmp(&rhs.path));
     static_imports.sort_by(|lhs, rhs| lhs.path.cmp(&rhs.path));
 

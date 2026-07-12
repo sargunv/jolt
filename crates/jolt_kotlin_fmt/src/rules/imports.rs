@@ -32,6 +32,11 @@ fn format_import_run<'source>(
     doc: &mut DocBuilder<'source>,
     mut imports: Vec<FormattedImport<'source>>,
 ) -> Doc<'source> {
+    // Cost model: a comment-delimited run of `r` imports is stably sorted with
+    // O(r log r) comparisons. Each comparison streams at most the longer
+    // borrowed path key (`p` Unicode scalars), bounding the run by
+    // O(r log r * p) time and O(r) formatter-owned storage. There is no layout
+    // search or retry.
     let preserve_first = imports
         .first()
         .is_some_and(FormattedImport::has_leading_comments);
