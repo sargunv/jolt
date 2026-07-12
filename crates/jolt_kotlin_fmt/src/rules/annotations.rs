@@ -152,12 +152,9 @@ fn annotation_argument_list_items<'source>(
 
 fn annotation_argument_list_has_internal_comments(arguments: &AnnotationArgumentList<'_>) -> bool {
     let close = arguments.close_paren();
-    let close_range = close
-        .as_ref()
-        .map(jolt_kotlin_syntax::KotlinSyntaxToken::token_text_range);
 
     arguments.token_iter().any(|token| {
-        if Some(token.token_text_range()) == close_range {
+        if Some(token) == close {
             return !token.leading_comments().is_empty();
         }
         token_has_comments(&token)

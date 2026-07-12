@@ -9,7 +9,7 @@ formatted:
 package com /* JOLT-TRIVIA:package-mid */
   .example
   .trivia // JOLT-TRIVIA:package-tail
-  
+
 
 // JOLT-TRIVIA:before-imports
 import kotlin.collections /* JOLT-TRIVIA:import-dot */.List

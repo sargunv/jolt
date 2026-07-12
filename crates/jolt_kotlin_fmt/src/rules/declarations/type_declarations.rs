@@ -4,7 +4,6 @@ use jolt_kotlin_syntax::{
     InterfaceDeclaration, KotlinSyntaxToken, ModifierList, Name, ObjectDeclaration,
     ObjectExpression, PrimaryConstructor, RecoveredSeparatedListEntry,
 };
-use jolt_syntax::source_gap_is_trivia;
 
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_token, format_token_sequence,
@@ -27,16 +26,8 @@ pub(super) fn format_class_declaration<'source>(
     let constructor = declaration.primary_constructor();
     let type_parameters = declaration.type_parameter_list();
     let tail = if let Some(constructor) = constructor {
-        if let Some(name) = declaration.name() {
-            simple_primary_constructor_tail(
-                doc,
-                &name,
-                type_parameters,
-                &constructor,
-                declaration.source_text(),
-                declaration.text_range().start().get(),
-                || declaration.token_iter(),
-            )
+        if declaration.name().is_some() {
+            simple_primary_constructor_tail(doc, &constructor)
         } else {
             None
         }
@@ -355,59 +346,18 @@ fn format_delegation_specifier<'source>(
     doc.concat([ty, arguments, by])
 }
 
-fn simple_primary_constructor_tail<'source, Tokens, MakeTokens>(
+fn simple_primary_constructor_tail<'source>(
     doc: &mut DocBuilder<'source>,
-    name: &Name<'source>,
-    type_parameters: Option<jolt_kotlin_syntax::TypeParameterList<'source>>,
     constructor: &PrimaryConstructor<'source>,
-    declaration_source: &'source str,
-    declaration_start: usize,
-    tokens: MakeTokens,
-) -> Option<DeclarationTail<'source>>
-where
-    Tokens: IntoIterator<Item = KotlinSyntaxToken<'source>>,
-    MakeTokens: Fn() -> Tokens + Copy,
-{
-    let expected_open_start = type_parameters
-        .and_then(|parameters| parameters.last_token())
-        .or_else(|| name.last_token())?
-        .token_text_range()
-        .end();
+) -> Option<DeclarationTail<'source>> {
     let parameters = constructor.value_parameter_list()?;
-    let open = parameters.open_paren()?;
     let modifiers = constructor.modifiers();
     let constructor_token = constructor.constructor_token();
 
     if modifiers.is_none() && constructor_token.is_none() {
-        if !source_gap_is_trivia(
-            declaration_source,
-            declaration_start,
-            tokens(),
-            expected_open_start.get(),
-            open.token_text_range().start().get(),
-        ) {
-            return None;
-        }
         return Some(DeclarationTail {
             doc: format_value_parameter_list(doc, &parameters),
         });
-    }
-
-    let first_tail_start = modifiers
-        .and_then(|modifiers| modifiers.first_token())
-        .or(constructor_token)
-        .map(|token| token.token_text_range().start())?;
-    if first_tail_start < expected_open_start {
-        return None;
-    }
-    if !source_gap_is_trivia(
-        declaration_source,
-        declaration_start,
-        tokens(),
-        expected_open_start.get(),
-        first_tail_start.get(),
-    ) {
-        return None;
     }
 
     let space = doc.space();

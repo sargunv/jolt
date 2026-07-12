@@ -5,8 +5,7 @@
 //! between tokens as comment-only or whitespace-only. They exist here so the
 //! language crates' node accessor modules don't each need to maintain a copy.
 
-use crate::{Comment, Language, SyntaxToken};
-use jolt_text::TextRange;
+use crate::{Language, SyntaxToken, TriviaKind};
 
 /// Filters an iterator of tokens to those whose `token_text_range` lies fully
 /// inside `[start, end]`.
@@ -21,63 +20,91 @@ pub fn tokens_between<'source, L: Language>(
     })
 }
 
-/// Returns true when the source gap `[start, end)` between tokens contains only
-/// whitespace and comment trivia (no represented tokens).
+/// Returns whether `[start, end)` contains only represented whitespace,
+/// newline, or comment trivia.
 ///
-/// `source` is the borrowed source text and `source_start` is the source offset
-/// of the slice the byte indices are relative to.
-pub fn source_gap_is_trivia<'source, L: Language>(
-    source: &'source str,
-    source_start: usize,
+/// Unlike a raw source-gap scan, this walks the lossless token and trivia
+/// representation once. Lexer-ignored bytes are not safe trivia: callers must
+/// preserve them through a malformed-syntax path instead of selecting a valid
+/// structured layout.
+pub fn represented_range_is_trivia<'source, L: Language>(
     tokens: impl IntoIterator<Item = SyntaxToken<'source, L>>,
     start: usize,
     end: usize,
 ) -> bool {
-    let mut comment_ranges: Vec<(usize, usize)> = tokens
-        .into_iter()
-        .flat_map(|token| {
-            let leading = token.leading_comments();
-            let trailing = token.trailing_comments();
-            leading.chain(trailing)
-        })
-        .filter_map(|comment: Comment<'_>| {
-            let range: TextRange = comment.text_range();
-            let comment_start = range.start().get();
-            let comment_end = range.end().get();
-            (comment_start >= start && comment_end <= end).then_some((comment_start, comment_end))
-        })
-        .collect();
-    comment_ranges.sort_unstable();
-
-    let mut cursor = start;
-    for (comment_start, comment_end) in comment_ranges {
-        if comment_start < cursor {
-            if comment_end > cursor {
-                cursor = comment_end;
-            }
-            continue;
-        }
-        if !source_slice_is_whitespace(source, source_start, cursor, comment_start) {
-            return false;
-        }
-        cursor = comment_end;
+    if start > end {
+        return false;
+    }
+    if start == end {
+        return true;
     }
 
-    source_slice_is_whitespace(source, source_start, cursor, end)
+    let mut cursor = start;
+    for token in tokens {
+        if !advance_over_trivia(
+            token.leading(),
+            token.offset().get(),
+            start,
+            end,
+            &mut cursor,
+        ) {
+            return false;
+        }
+
+        let token_range = token.token_text_range();
+        if ranges_overlap(
+            token_range.start().get(),
+            token_range.end().get(),
+            start,
+            end,
+        ) {
+            return false;
+        }
+
+        if !advance_over_trivia(
+            token.trailing(),
+            token_range.end().get(),
+            start,
+            end,
+            &mut cursor,
+        ) {
+            return false;
+        }
+    }
+    cursor >= end
 }
 
-/// Returns true when `source[source_start + (start - source_start) .. source_start + (end - source_start)]`
-/// contains only whitespace.
-fn source_slice_is_whitespace(source: &str, source_start: usize, start: usize, end: usize) -> bool {
-    let Some(slice_start) = start.checked_sub(source_start) else {
-        return false;
-    };
-    let Some(slice_end) = end.checked_sub(source_start) else {
-        return false;
-    };
-    let Some(slice) = source.get(slice_start..slice_end) else {
-        return false;
-    };
+fn advance_over_trivia(
+    trivia: &[crate::SyntaxTrivia],
+    mut offset: usize,
+    start: usize,
+    end: usize,
+    cursor: &mut usize,
+) -> bool {
+    for piece in trivia {
+        let piece_start = offset;
+        offset += piece.text_len().get();
+        if !ranges_overlap(piece_start, offset, start, end) {
+            continue;
+        }
+        if piece.kind() == TriviaKind::Ignored {
+            return false;
+        }
 
-    slice.chars().all(char::is_whitespace)
+        let overlap_start = piece_start.max(start);
+        if overlap_start > *cursor {
+            return false;
+        }
+        *cursor = (*cursor).max(offset.min(end));
+    }
+    true
+}
+
+const fn ranges_overlap(
+    left_start: usize,
+    left_end: usize,
+    right_start: usize,
+    right_end: usize,
+) -> bool {
+    left_start < right_end && left_end > right_start
 }

@@ -18,6 +18,7 @@ fun summarize(rows: List<List<Int>>): String {
   } catch (error: IllegalStateException) {
     return "error"
   }
+
   return when {
     total == 0 -> "empty"
     total > 10 -> "large"

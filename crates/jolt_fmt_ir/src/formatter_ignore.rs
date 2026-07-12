@@ -378,11 +378,23 @@ fn source_line(bytes: &[u8], start: usize) -> SourceLine {
 }
 
 fn is_formatter_off_marker(comment: &str) -> bool {
-    comment.contains("@formatter:off")
+    formatter_marker_body(comment) == Some("@formatter:off")
 }
 
-fn is_formatter_on_marker(comment: &str) -> bool {
-    comment.contains("@formatter:on")
+#[must_use]
+pub fn is_formatter_on_marker(comment: &str) -> bool {
+    formatter_marker_body(comment) == Some("@formatter:on")
+}
+
+fn formatter_marker_body(comment: &str) -> Option<&str> {
+    let comment = comment.trim();
+    if let Some(body) = comment.strip_prefix("//") {
+        return Some(body.trim());
+    }
+    comment
+        .strip_prefix("/*")?
+        .strip_suffix("*/")
+        .map(str::trim)
 }
 
 #[must_use]
@@ -392,7 +404,17 @@ pub fn is_formatter_control_marker(comment: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{CommentLine, SourceLineCursor};
+    use super::{CommentLine, SourceLineCursor, is_formatter_on_marker};
+
+    #[test]
+    fn formatter_on_marker_requires_the_complete_comment_body() {
+        assert!(is_formatter_on_marker("// @formatter:on"));
+        assert!(is_formatter_on_marker("  /* @formatter:on */  "));
+        assert!(!is_formatter_on_marker("// text @formatter:on"));
+        assert!(!is_formatter_on_marker("// @formatter:on later"));
+        assert!(!is_formatter_on_marker("/* prefix @formatter:on */"));
+        assert!(!is_formatter_on_marker("@formatter:on"));
+    }
 
     #[test]
     fn source_line_cursor_handles_same_line_comments_and_mixed_line_endings() {

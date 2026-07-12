@@ -4,7 +4,7 @@ use jolt_text::{TextRange, TextSize};
 
 use crate::{
     Comments, Language, RawSyntaxKind, SyntaxTrivia,
-    comment::trivia_has_blank_line,
+    comment::{trivia_has_blank_line, trivia_iter_has_blank_line},
     syntax_tree::{SyntaxTree, TokenId},
 };
 
@@ -14,6 +14,16 @@ pub struct SyntaxToken<'tree, L: Language> {
     tree: &'tree SyntaxTree,
     id: TokenId,
     language: PhantomData<L>,
+}
+
+/// Returns true when the represented trivia between two adjacent tokens
+/// contains an intentional blank line.
+#[must_use]
+pub fn tokens_have_blank_line_between<L: Language>(
+    left: &SyntaxToken<'_, L>,
+    right: &SyntaxToken<'_, L>,
+) -> bool {
+    trivia_iter_has_blank_line(left.trailing().iter().chain(right.leading()))
 }
 
 impl<'tree, L: Language> SyntaxToken<'tree, L> {

@@ -1,0 +1,108 @@
+---
+source: crates/jolt_kotlin_syntax/tests/corpus.rs
+expression: snapshot
+---
+input:
+fun triviaOwnedBlockGaps() {
+  val first = 1
+
+  /* JOLT-TRIVIA:blank-line-before-comment */
+  val second = 2
+  /* JOLT-TRIVIA:comment-resets-newline-run */
+  val third = 3 // JOLT-TRIVIA:line-comment-no-blank
+  val fourth = 4 // JOLT-TRIVIA:line-comment-before-blank
+
+  val fifth = 5
+}
+
+val firstTopLevel = 1 // JOLT-TRIVIA:top-level-line-comment-no-blank
+val secondTopLevel = 2 // JOLT-TRIVIA:top-level-line-comment-before-blank
+
+val thirdTopLevel = 3
+
+syntax:
+syntax:
+KotlinFile
+  ImportList
+  FunctionDeclaration
+    FunKw "fun" @ 0..3 trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "triviaOwnedBlockGaps" @ 4..24
+    ValueParameterList
+      LParen "(" @ 24..25
+      RParen ")" @ 25..26 trailing=[Whitespace " "]
+    Block
+      LBrace "{" @ 27..28
+      PropertyDeclaration
+        ValKw "val" @ 31..34 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "first" @ 35..40 trailing=[Whitespace " "]
+        Assign "=" @ 41..42 trailing=[Whitespace " "]
+        LiteralExpression
+          IntegerLiteral "1" @ 43..44
+      PropertyDeclaration
+        ValKw "val" @ 94..97 leading=[Newline "\n", Newline "\n", Whitespace "  ", BlockComment "/* JOLT-TRIVIA:blank-line-before-comment */", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "second" @ 98..104 trailing=[Whitespace " "]
+        Assign "=" @ 105..106 trailing=[Whitespace " "]
+        LiteralExpression
+          IntegerLiteral "2" @ 107..108
+      PropertyDeclaration
+        ValKw "val" @ 158..161 leading=[Newline "\n", Whitespace "  ", BlockComment "/* JOLT-TRIVIA:comment-resets-newline-run */", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "third" @ 162..167 trailing=[Whitespace " "]
+        Assign "=" @ 168..169 trailing=[Whitespace " "]
+        LiteralExpression
+          IntegerLiteral "3" @ 170..171 trailing=[Whitespace " ", LineComment "// JOLT-TRIVIA:line-comment-no-blank"]
+      PropertyDeclaration
+        ValKw "val" @ 211..214 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "fourth" @ 215..221 trailing=[Whitespace " "]
+        Assign "=" @ 222..223 trailing=[Whitespace " "]
+        LiteralExpression
+          IntegerLiteral "4" @ 224..225 trailing=[Whitespace " ", LineComment "// JOLT-TRIVIA:line-comment-before-blank"]
+      PropertyDeclaration
+        ValKw "val" @ 270..273 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+        CallableName
+          Name
+            Identifier "fifth" @ 274..279 trailing=[Whitespace " "]
+        Assign "=" @ 280..281 trailing=[Whitespace " "]
+        LiteralExpression
+          IntegerLiteral "5" @ 282..283
+      RBrace "}" @ 284..285 leading=[Newline "\n"]
+  PropertyDeclaration
+    ValKw "val" @ 287..290 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "firstTopLevel" @ 291..304 trailing=[Whitespace " "]
+    Assign "=" @ 305..306 trailing=[Whitespace " "]
+    LiteralExpression
+      IntegerLiteral "1" @ 307..308 trailing=[Whitespace " ", LineComment "// JOLT-TRIVIA:top-level-line-comment-no-blank"]
+  PropertyDeclaration
+    ValKw "val" @ 356..359 leading=[Newline "\n"] trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "secondTopLevel" @ 360..374 trailing=[Whitespace " "]
+    Assign "=" @ 375..376 trailing=[Whitespace " "]
+    LiteralExpression
+      IntegerLiteral "2" @ 377..378 trailing=[Whitespace " ", LineComment "// JOLT-TRIVIA:top-level-line-comment-before-blank"]
+  PropertyDeclaration
+    ValKw "val" @ 431..434 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+    CallableName
+      Name
+        Identifier "thirdTopLevel" @ 435..448 trailing=[Whitespace " "]
+    Assign "=" @ 449..450 trailing=[Whitespace " "]
+    LiteralExpression
+      IntegerLiteral "3" @ 451..452
+  Eof "" @ 453..453 leading=[Newline "\n"]
+
+diagnostics:
+  (none)
+
+diagnostics:
+(none)

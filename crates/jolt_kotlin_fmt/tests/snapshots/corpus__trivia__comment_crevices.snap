@@ -69,6 +69,7 @@ fun Scope /* JOLT-TRIVIA:receiver-type */. /* JOLT-TRIVIA:receiver-dot */comment
     String
   val checked = casted /* JOLT-TRIVIA:is-left */ !is /* JOLT-TRIVIA:is-operator */
     Nothing
+
   if /* JOLT-TRIVIA:if-keyword */ ( /* JOLT-TRIVIA:if-open */
     checked /* JOLT-TRIVIA:if-condition */
       && /* JOLT-TRIVIA:if-and */ computed !in /* JOLT-TRIVIA:not-in */
@@ -78,12 +79,14 @@ fun Scope /* JOLT-TRIVIA:receiver-type */. /* JOLT-TRIVIA:receiver-dot */comment
   } else /* JOLT-TRIVIA:else-keyword */ {
     emit(fallback)
   }
+
   for /* JOLT-TRIVIA:for-keyword */ ( /* JOLT-TRIVIA:for-open */(
     index /* JOLT-TRIVIA:loop-index */, /* JOLT-TRIVIA:loop-comma */
     item /* JOLT-TRIVIA:loop-value */
   ) in /* JOLT-TRIVIA:loop-in */ input.withIndex() /* JOLT-TRIVIA:for-close */) {
     emit("$index:$item")
   }
+
   when /* JOLT-TRIVIA:when-keyword */ ( /* JOLT-TRIVIA:when-open */val text /* JOLT-TRIVIA:when-subject-name */ = /* JOLT-TRIVIA:when-subject-equals */ rendered /* JOLT-TRIVIA:when-close */) {
     "" /* JOLT-TRIVIA:when-empty-condition */ -> /* JOLT-TRIVIA:when-empty-arrow */ emit("blank")
     in /* JOLT-TRIVIA:when-in */ listOf(
@@ -92,6 +95,7 @@ fun Scope /* JOLT-TRIVIA:receiver-type */. /* JOLT-TRIVIA:receiver-dot */comment
     ) /* JOLT-TRIVIA:when-list */ -> emit(text)
     else /* JOLT-TRIVIA:else-condition */ -> /* JOLT-TRIVIA:else-arrow */ emit(text)
   }
+
   return input.joinToString /* JOLT-TRIVIA:trailing-lambda-call */(
     separator = /* JOLT-TRIVIA:named-arg-equals */ ",",
   ) /* JOLT-TRIVIA:before-trailing-lambda */ { item /* JOLT-TRIVIA:lambda-param */ ->

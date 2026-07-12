@@ -105,6 +105,12 @@ struct GroupFrame {
 }
 
 #[derive(Clone, Copy, Debug)]
+struct PendingIndent {
+    character: char,
+    count: u32,
+}
+
+#[derive(Clone, Copy, Debug)]
 enum RenderCommand<'source> {
     Doc(Doc<'source>, Mode),
     EndIndent(i16),
@@ -136,6 +142,7 @@ struct Renderer<'arena, 'source, S> {
     halted: bool,
     column: TextWidth,
     indent_levels: i32,
+    pending_indent: Option<PendingIndent>,
     group_stack: Vec<GroupFrame>,
     command_stack: Vec<RenderCommand<'source>>,
     fit_group_stack: Vec<GroupFrame>,
@@ -152,6 +159,7 @@ impl<'arena, 'source, S: RenderSink> Renderer<'arena, 'source, S> {
             halted: false,
             column: TextWidth::ZERO,
             indent_levels: 0,
+            pending_indent: None,
             group_stack: Vec::new(),
             command_stack: Vec::new(),
             fit_group_stack: Vec::new(),
@@ -352,32 +360,33 @@ impl<'arena, 'source, S: RenderSink> Renderer<'arena, 'source, S> {
     }
 
     fn write_newline(&mut self, indent_delta: i16, count: u32) {
+        self.pending_indent = None;
         for _ in 0..count {
-            self.write_str("\n");
+            self.write_sink_str("\n");
             self.column = TextWidth::ZERO;
             self.measured_group_fits = false;
         }
-        self.write_indent(indent_delta);
-    }
-
-    fn write_indent(&mut self, indent_delta: i16) {
         let effective_levels = (self.indent_levels + i32::from(indent_delta))
             .max(0)
             .cast_unsigned();
         let width = effective_levels * u32::from(self.options.indent_width);
-        match self.options.indent_style {
-            IndentStyle::Space => {
-                self.write_repeated(' ', width);
-                self.column = TextWidth::new(width);
-            }
-            IndentStyle::Tab => {
-                self.write_repeated('\t', effective_levels);
-                self.column = TextWidth::new(width);
-            }
-        }
+        let (character, count) = match self.options.indent_style {
+            IndentStyle::Space => (' ', width),
+            IndentStyle::Tab => ('\t', effective_levels),
+        };
+        self.pending_indent = (count > 0).then_some(PendingIndent { character, count });
+        self.column = TextWidth::new(width);
     }
 
     fn write_str(&mut self, text: &str) {
+        if text.is_empty() || self.halted {
+            return;
+        }
+        self.flush_pending_indent();
+        self.write_sink_str(text);
+    }
+
+    fn write_sink_str(&mut self, text: &str) {
         if text.is_empty() || self.halted {
             return;
         }
@@ -387,6 +396,13 @@ impl<'arena, 'source, S: RenderSink> Renderer<'arena, 'source, S> {
                 self.halted = true;
             }
         }
+    }
+
+    fn flush_pending_indent(&mut self) {
+        let Some(indent) = self.pending_indent.take() else {
+            return;
+        };
+        self.write_repeated(indent.character, indent.count);
     }
 
     fn write_repeated(&mut self, ch: char, count: u32) {
@@ -402,7 +418,9 @@ impl<'arena, 'source, S: RenderSink> Renderer<'arena, 'source, S> {
         let mut remaining = count;
         while remaining > 0 {
             let write_len = remaining.min(chunk_len);
-            self.write_str(&chunk[..usize::try_from(write_len).expect("chunk length fits usize")]);
+            self.write_sink_str(
+                &chunk[..usize::try_from(write_len).expect("chunk length fits usize")],
+            );
             remaining -= write_len;
         }
     }
@@ -715,6 +733,52 @@ mod tests {
         render_to(&arena, doc, options(), &mut sink).expect("document renders");
 
         assert_eq!(sink.0, "abcd");
+    }
+
+    #[test]
+    fn indentation_is_flushed_only_before_text() {
+        let mut builder = DocBuilder::new();
+        let contents = builder.concat_list(|contents| {
+            let line = contents.hard_line();
+            contents.push(line);
+            let text = contents.text("indented");
+            contents.push(text);
+        });
+        let doc = builder.indent(contents);
+        let arena = builder.into_arena();
+        let mut sink = StringSink::default();
+
+        render_to(&arena, doc, options(), &mut sink).expect("document renders");
+
+        assert_eq!(sink.0, "\n    indented");
+    }
+
+    #[test]
+    fn consecutive_indented_lines_do_not_emit_trailing_whitespace() {
+        let mut builder = DocBuilder::new();
+        let contents = builder.concat_list(|contents| {
+            let first = contents.text("first");
+            contents.push(first);
+            let hard = contents.hard_line();
+            contents.push(hard);
+            let second_hard = contents.hard_line();
+            contents.push(second_hard);
+            let second = contents.text("second");
+            contents.push(second);
+            let empty = contents.empty_line();
+            contents.push(empty);
+            let third = contents.text("third");
+            contents.push(third);
+            let trailing = contents.hard_line();
+            contents.push(trailing);
+        });
+        let doc = builder.indent(contents);
+        let arena = builder.into_arena();
+        let mut sink = StringSink::default();
+
+        render_to(&arena, doc, options(), &mut sink).expect("document renders");
+
+        assert_eq!(sink.0, "first\n\n    second\n\n    third\n");
     }
 
     #[test]

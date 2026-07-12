@@ -315,7 +315,11 @@ incrementally and cumulatively.
 
 Create a machine-readable inventory of every parser-reachable fixture and parser
 fix from old Phases 1–15, mapped to its owning replacement phase. This commit
-contains no formatter mechanism.
+contains no formatter mechanism. Include `class Unexpected + (val value: Int)`:
+the parser correctly ends the class before `+`, while the separately recovered
+top-level parenthesized expression currently loses its error-node contents when
+formatted. Assign that expression recovery to New Phase 18 rather than treating
+it as a class-constructor gap.
 
 ### New Phase 5: Public Completion And Corpus Baseline
 

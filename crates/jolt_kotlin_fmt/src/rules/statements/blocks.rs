@@ -1,13 +1,14 @@
 use jolt_fmt_ir::{ConcatBuilder, Doc, DocBuilder};
-use jolt_kotlin_syntax::{Block, BlockItem, RecoveredSeparatedListEntry};
+use jolt_kotlin_syntax::{Block, BlockItem, KotlinCommentKind, RecoveredSeparatedListEntry};
+use jolt_syntax::tokens_have_blank_line_between;
 
 use crate::helpers::blocks::{
-    BodyItem, empty_source_braced_body, join_body_items, source_braced_body,
+    BodyItem, BodyItemSeparator, empty_source_braced_body, join_body_items, source_braced_body,
 };
 use crate::helpers::comments::{LeadingTrivia, format_dangling_comments, format_token_sequence};
 use crate::helpers::formatter_ignore::{
     FormatterIgnoreRange, formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
-    relative_token_range_between,
+    is_formatter_on_marker, relative_token_range_between,
 };
 
 use super::format_block_item;
@@ -56,13 +57,6 @@ fn format_block_contents<'source>(
     block: &Block<'source>,
 ) -> Option<Doc<'source>> {
     let entries = block.items_with_recovered().collect::<Vec<_>>();
-    let mut items = Vec::with_capacity(entries.len());
-    items.extend(entries.iter().filter_map(|entry| match entry {
-        RecoveredSeparatedListEntry::Entry(item) => Some(*item),
-        RecoveredSeparatedListEntry::Token(_)
-        | RecoveredSeparatedListEntry::Error(_)
-        | RecoveredSeparatedListEntry::Node(_) => None,
-    }));
 
     let ignored_ranges = formatter_ignore_ranges(
         block.source_text(),
@@ -70,10 +64,10 @@ fn format_block_contents<'source>(
         block.token_iter(),
     );
     if !ignored_ranges.is_empty() {
-        return format_block_contents_with_ignored(doc, block, &entries, &items, &ignored_ranges);
+        return format_block_contents_with_ignored(doc, block, &entries, &ignored_ranges);
     }
 
-    let docs = block_body_entries(doc, block, &entries, &items);
+    let docs = block_body_entries(doc, &entries);
 
     (!docs.is_empty()).then(|| join_body_items(doc, docs))
 }
@@ -83,36 +77,32 @@ fn format_block_contents_from_recovered_entries<'source>(
     block: &Block<'source>,
 ) -> Option<Doc<'source>> {
     let entries = block.items_with_recovered().collect::<Vec<_>>();
-    let mut items = Vec::with_capacity(entries.len());
-    items.extend(entries.iter().filter_map(|entry| match entry {
-        RecoveredSeparatedListEntry::Entry(item) => Some(*item),
-        RecoveredSeparatedListEntry::Token(_)
-        | RecoveredSeparatedListEntry::Error(_)
-        | RecoveredSeparatedListEntry::Node(_) => None,
-    }));
-    let docs = block_body_entries(doc, block, &entries, &items);
+    let docs = block_body_entries(doc, &entries);
 
     (!docs.is_empty()).then(|| join_body_items(doc, docs))
 }
 
 fn block_body_entries<'source>(
     doc: &mut DocBuilder<'source>,
-    block: &Block<'source>,
     entries: &[RecoveredSeparatedListEntry<'source, BlockItem<'source>>],
-    items: &[BlockItem<'source>],
 ) -> Vec<BodyItem<'source>> {
     let mut body_items = Vec::with_capacity(entries.len());
-    let mut item_index = 0;
     let mut entries = entries.iter().peekable();
+    let mut previous_token = None;
 
     while let Some(entry) = entries.next() {
         match entry {
             RecoveredSeparatedListEntry::Entry(item) => {
-                body_items.push(block_body_item(doc, block, items, item_index, item));
-                item_index += 1;
+                body_items.push(block_body_item(doc, item, previous_token));
+                previous_token = item.last_token();
             }
             recovered_entry => {
                 let mut recovered_is_empty = true;
+                let mut recovered_last_token = recovered_entry_last_token(recovered_entry);
+                let separator = block_item_separator(
+                    previous_token,
+                    recovered_block_entry_first_token(recovered_entry),
+                );
                 let recovered = doc.concat_list(|recovered_docs| {
                     push_recovered_block_entry(recovered_docs, recovered_entry);
                     while entries.peek().is_some_and(|entry| {
@@ -120,12 +110,14 @@ fn block_body_entries<'source>(
                     }) {
                         let entry = entries.next().expect("peeked block body entry exists");
                         push_recovered_block_entry(recovered_docs, entry);
+                        recovered_last_token = recovered_entry_last_token(entry);
                     }
                     recovered_is_empty = recovered_docs.is_empty();
                 });
                 if !recovered_is_empty {
-                    body_items.push(BodyItem::new(recovered, false));
+                    body_items.push(BodyItem::new(recovered, separator));
                 }
+                previous_token = recovered_last_token;
             }
         }
     }
@@ -180,7 +172,6 @@ fn format_block_contents_with_ignored<'source>(
     doc: &mut DocBuilder<'source>,
     block: &Block<'source>,
     entries: &[RecoveredSeparatedListEntry<'source, BlockItem<'source>>],
-    items: &[BlockItem<'source>],
     ignored_ranges: &[FormatterIgnoreRange<'source>],
 ) -> Option<Doc<'source>> {
     let block_start = block.text_range().start().get();
@@ -193,24 +184,27 @@ fn format_block_contents_with_ignored<'source>(
         run.include_on_marker = entries
             .get(run.skip_end)
             .is_some_and(|entry| matches!(entry, RecoveredSeparatedListEntry::Entry(_)))
-            && !gap_after_on_marker_contains_comment(doc, block.source_text(), run, &entry_ranges);
+            && entries
+                .get(run.skip_end)
+                .and_then(recovered_block_entry_first_token)
+                .is_none_or(|token| !has_comment_after_formatter_on(&token));
     }
     if ignored_runs.is_empty() {
-        let docs = block_body_entries(doc, block, entries, items);
+        let docs = block_body_entries(doc, entries);
         return (!docs.is_empty()).then(|| join_body_items(doc, docs));
     }
 
     let mut body_items = Vec::with_capacity(entries.len().saturating_add(ignored_runs.len()));
     let mut ignored_index = 0;
     let mut skip_index = 0;
-    let mut item_index = 0;
+    let mut previous_token = None;
     for (entry_index, entry) in entries.iter().enumerate() {
         while ignored_index < ignored_runs.len()
             && ignored_runs[ignored_index].insert_index == entry_index
         {
             body_items.push(BodyItem::new(
                 formatter_ignore_run_doc(&ignored_runs[ignored_index], doc),
-                false,
+                BodyItemSeparator::Line,
             ));
             ignored_index += 1;
         }
@@ -220,23 +214,21 @@ fn format_block_contents_with_ignored<'source>(
         }
 
         if skip_index < ignored_runs.len() && ignored_runs[skip_index].skips(entry_index) {
-            if matches!(entry, RecoveredSeparatedListEntry::Entry(_)) {
-                item_index += 1;
-            }
             continue;
         }
 
-        let mut body_item = recovered_block_body_item(doc, block, items, &mut item_index, entry);
+        let mut body_item = recovered_block_body_item(doc, entry, previous_token);
         if skip_index > 0 && ignored_runs[skip_index - 1].skip_end == entry_index {
             body_item = body_item.without_blank_line_before();
         }
         body_items.push(body_item);
+        previous_token = recovered_entry_last_token(entry);
     }
 
     while ignored_index < ignored_runs.len() {
         body_items.push(BodyItem::new(
             formatter_ignore_run_doc(&ignored_runs[ignored_index], doc),
-            false,
+            BodyItemSeparator::Line,
         ));
         ignored_index += 1;
     }
@@ -244,105 +236,89 @@ fn format_block_contents_with_ignored<'source>(
     (!body_items.is_empty()).then(|| join_body_items(doc, body_items))
 }
 
-fn gap_after_on_marker_contains_comment(
-    _doc: &mut DocBuilder<'_>,
-    source: &str,
-    run: &crate::helpers::formatter_ignore::FormatterIgnoreRun<'_>,
-    entry_ranges: &[Option<std::ops::Range<usize>>],
-) -> bool {
-    let Some(next_start) = entry_ranges
-        .get(run.skip_end)
-        .and_then(|range| range.as_ref())
-        .map(|range| range.start)
-    else {
-        return false;
-    };
-    let on_line_end = run.range.interior.start + run.range.raw_text_with_on.len();
-    if on_line_end >= next_start {
-        return false;
-    }
-
-    let gap = &source[on_line_end..next_start];
-    gap.contains("//") || gap.contains("/*")
-}
-
 fn recovered_block_body_item<'source>(
     doc: &mut DocBuilder<'source>,
-    block: &Block<'source>,
-    items: &[BlockItem<'source>],
-    item_index: &mut usize,
     entry: &RecoveredSeparatedListEntry<'source, BlockItem<'source>>,
+    previous_token: Option<jolt_kotlin_syntax::KotlinSyntaxToken<'source>>,
 ) -> BodyItem<'source> {
-    match entry {
-        RecoveredSeparatedListEntry::Entry(item) => {
-            let body_item = block_body_item(doc, block, items, *item_index, item);
-            *item_index += 1;
-            body_item
-        }
-        RecoveredSeparatedListEntry::Token(token) => BodyItem::new(
-            format_token_sequence(doc, std::iter::once(*token), LeadingTrivia::Preserve),
-            false,
-        ),
-        RecoveredSeparatedListEntry::Error(error) => BodyItem::new(
-            format_token_sequence(doc, error.token_iter(), LeadingTrivia::Preserve),
-            false,
-        ),
-        RecoveredSeparatedListEntry::Node(node) => BodyItem::new(
-            format_token_sequence(doc, node.token_iter(), LeadingTrivia::Preserve),
-            false,
-        ),
+    if let RecoveredSeparatedListEntry::Entry(item) = entry {
+        return block_body_item(doc, item, previous_token);
     }
+
+    let entry_doc = match entry {
+        RecoveredSeparatedListEntry::Entry(_) => unreachable!("handled above"),
+        RecoveredSeparatedListEntry::Token(token) => {
+            format_token_sequence(doc, std::iter::once(*token), LeadingTrivia::Preserve)
+        }
+        RecoveredSeparatedListEntry::Error(error) => {
+            format_token_sequence(doc, error.token_iter(), LeadingTrivia::Preserve)
+        }
+        RecoveredSeparatedListEntry::Node(node) => {
+            format_token_sequence(doc, node.token_iter(), LeadingTrivia::Preserve)
+        }
+    };
+    let separator = block_item_separator(previous_token, recovered_block_entry_first_token(entry));
+    BodyItem::new(entry_doc, separator)
 }
 
 fn block_body_item<'source>(
     doc: &mut DocBuilder<'source>,
-    block: &Block<'source>,
-    items: &[BlockItem<'source>],
-    index: usize,
     item: &BlockItem<'source>,
+    previous_token: Option<jolt_kotlin_syntax::KotlinSyntaxToken<'source>>,
 ) -> BodyItem<'source> {
     BodyItem::new(
         format_block_item(doc, item),
-        block_item_starts_after_blank_line(doc, block, items, index),
+        block_item_separator(previous_token, item.first_token()),
     )
 }
 
-fn block_item_starts_after_blank_line(
-    doc: &mut DocBuilder<'_>,
-    block: &Block<'_>,
-    items: &[BlockItem<'_>],
-    index: usize,
-) -> bool {
-    if index == 0 {
-        return false;
+fn block_item_separator<'source>(
+    previous: Option<jolt_kotlin_syntax::KotlinSyntaxToken<'source>>,
+    current: Option<jolt_kotlin_syntax::KotlinSyntaxToken<'source>>,
+) -> BodyItemSeparator {
+    let Some((previous, current)) = previous.zip(current) else {
+        return BodyItemSeparator::Line;
+    };
+    let has_blank_line = tokens_have_blank_line_between(&previous, &current);
+    let previous_forces_line = previous
+        .trailing_comments()
+        .any(|comment| comment.kind() == KotlinCommentKind::Line);
+    match (has_blank_line, previous_forces_line) {
+        (false, true) => BodyItemSeparator::None,
+        (true, true) | (false, false) => BodyItemSeparator::Line,
+        (true, false) => BodyItemSeparator::EmptyLine,
     }
-    let previous_end = items[index - 1].text_range().end().get();
-    let current_start = items[index].text_range().start().get();
-    gap_has_blank_line(
-        doc,
-        block.source_text(),
-        block.text_range().start().get(),
-        previous_end,
-        current_start,
-    )
 }
 
-fn gap_has_blank_line(
-    _doc: &mut DocBuilder<'_>,
-    source: &str,
-    block_start: usize,
-    start: usize,
-    end: usize,
-) -> bool {
-    let gap = &source[start - block_start..end - block_start];
-    let mut line_breaks = 0;
-    for byte in gap.bytes() {
-        if byte == b'\n' {
-            line_breaks += 1;
-            if line_breaks >= 2 {
-                return true;
-            }
+fn recovered_block_entry_first_token<'source>(
+    entry: &RecoveredSeparatedListEntry<'source, BlockItem<'source>>,
+) -> Option<jolt_kotlin_syntax::KotlinSyntaxToken<'source>> {
+    match entry {
+        RecoveredSeparatedListEntry::Entry(item) => item.first_token(),
+        RecoveredSeparatedListEntry::Token(token) => Some(*token),
+        RecoveredSeparatedListEntry::Error(error) => error.first_token(),
+        RecoveredSeparatedListEntry::Node(node) => node.first_token(),
+    }
+}
+
+fn recovered_entry_last_token<'source>(
+    entry: &RecoveredSeparatedListEntry<'source, BlockItem<'source>>,
+) -> Option<jolt_kotlin_syntax::KotlinSyntaxToken<'source>> {
+    match entry {
+        RecoveredSeparatedListEntry::Entry(item) => item.last_token(),
+        RecoveredSeparatedListEntry::Token(token) => Some(*token),
+        RecoveredSeparatedListEntry::Error(error) => error.last_token(),
+        RecoveredSeparatedListEntry::Node(node) => node.last_token(),
+    }
+}
+
+fn has_comment_after_formatter_on(token: &jolt_kotlin_syntax::KotlinSyntaxToken<'_>) -> bool {
+    let mut saw_on_marker = false;
+    for comment in token.leading_comments() {
+        if saw_on_marker {
+            return true;
         }
+        saw_on_marker = is_formatter_on_marker(comment.text());
     }
     false
 }

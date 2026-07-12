@@ -5,20 +5,34 @@ use crate::helpers::comments::{LeadingTrivia, TrailingTrivia, format_token};
 
 pub(crate) struct BodyItem<'source> {
     doc: Doc<'source>,
-    starts_after_blank_line: bool,
+    separator: BodyItemSeparator,
+}
+
+#[derive(Clone, Copy)]
+pub(crate) enum BodyItemSeparator {
+    None,
+    Line,
+    EmptyLine,
+}
+
+impl BodyItemSeparator {
+    pub(crate) fn doc<'source>(self, doc: &mut DocBuilder<'source>) -> Doc<'source> {
+        match self {
+            Self::None => doc.nil(),
+            Self::Line => doc.hard_line(),
+            Self::EmptyLine => doc.empty_line(),
+        }
+    }
 }
 
 impl<'source> BodyItem<'source> {
-    pub(crate) fn new(doc: Doc<'source>, starts_after_blank_line: bool) -> Self {
-        Self {
-            doc,
-            starts_after_blank_line,
-        }
+    pub(crate) fn new(doc: Doc<'source>, separator: BodyItemSeparator) -> Self {
+        Self { doc, separator }
     }
 
     pub(crate) fn without_blank_line_before(self) -> Self {
         Self {
-            starts_after_blank_line: false,
+            separator: BodyItemSeparator::Line,
             ..self
         }
     }
@@ -39,11 +53,7 @@ pub(crate) fn join_body_items<'source>(
     doc.concat_list(|joined| {
         for item in items {
             if !joined.is_empty() {
-                let separator = if item.starts_after_blank_line {
-                    joined.empty_line()
-                } else {
-                    joined.hard_line()
-                };
+                let separator = item.separator.doc(joined);
                 joined.push(separator);
             }
             joined.push(item.doc);

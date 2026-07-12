@@ -13,7 +13,8 @@ mod accessors;
 pub use accessors::{
     ClassMemberDeclarationEntry, ContextFunctionTypeParameterEntry, ContextParameterClauseEntry,
     DelegationSpecifierListEntry, LambdaParameterListEntry, NavigationOperatorTokens,
-    QualifiedNameSegment, ValueArgumentEntry, WhenEntryRecoveryPart, operators_equivalent,
+    QualifiedNameSegment, TokenGap, ValueArgumentEntry, WhenEntryRecoveryPart,
+    operators_equivalent, token_gap,
 };
 
 pub(crate) type KotlinSyntaxNode<'source> = SyntaxNode<'source, KotlinLanguage>;

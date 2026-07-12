@@ -219,6 +219,7 @@ syntax/recovery/normalizes-package-import-spacing.kt
 syntax/recovery/object-delegation.kt
 syntax/recovery/preserves-file-annotation-preamble.kt
 syntax/recovery/property-body-recovered-gap.kt
+syntax/recovery/source-gap-trivia-ownership.kt
 syntax/recovery/top-level-orphan-token.kt
 syntax/recovery/trailing-user-type-dot.kt
 syntax/recovery/type-argument-list.kt

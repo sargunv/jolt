@@ -1,4 +1,4 @@
-use jolt_syntax::{SyntaxElement, source_gap_is_trivia, tokens_between};
+use jolt_syntax::{SyntaxElement, TriviaKind, represented_range_is_trivia, tokens_between};
 
 use super::{
     AnnotatedExpression, Annotation, AnnotationArgumentList, AnnotationUseSiteTarget,
@@ -36,6 +36,35 @@ pub enum NavigationOperatorTokens<'source> {
         question: KotlinSyntaxToken<'source>,
         dot: KotlinSyntaxToken<'source>,
     },
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum TokenGap {
+    None,
+    Whitespace,
+    Line,
+}
+
+/// Classifies represented trivia between adjacent recovered tokens without
+/// reading their source range.
+#[must_use]
+pub fn token_gap(left: &KotlinSyntaxToken<'_>, right: &KotlinSyntaxToken<'_>) -> TokenGap {
+    let mut gap = TokenGap::None;
+    for trivia in left.trailing().iter().chain(right.leading()) {
+        match trivia.kind() {
+            TriviaKind::Newline => gap = TokenGap::Line,
+            TriviaKind::Whitespace | TriviaKind::Ignored if gap == TokenGap::None => {
+                gap = TokenGap::Whitespace;
+            }
+            TriviaKind::Whitespace
+            | TriviaKind::Ignored
+            | TriviaKind::LineComment
+            | TriviaKind::ShebangComment
+            | TriviaKind::BlockComment
+            | TriviaKind::DocComment => {}
+        }
+    }
+    gap
 }
 
 impl<'source> NavigationOperatorTokens<'source> {
@@ -469,13 +498,7 @@ impl<'source> FunctionDeclaration<'source> {
 
     #[must_use]
     pub fn tail_is_trivia_between(&self, start: usize, end: usize) -> bool {
-        source_gap_is_trivia(
-            self.source_text(),
-            self.text_range().start().get(),
-            self.token_iter(),
-            start,
-            end,
-        )
+        represented_range_is_trivia(self.token_iter(), start, end)
     }
 
     pub fn tail_tokens_between(
@@ -709,13 +732,7 @@ impl<'source> PropertyDeclaration<'source> {
 
     #[must_use]
     pub fn tail_is_trivia_between(&self, start: usize, end: usize) -> bool {
-        source_gap_is_trivia(
-            self.source_text(),
-            self.text_range().start().get(),
-            self.token_iter(),
-            start,
-            end,
-        )
+        represented_range_is_trivia(self.token_iter(), start, end)
     }
 
     pub fn tail_tokens_between(

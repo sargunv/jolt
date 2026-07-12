@@ -1,7 +1,9 @@
 use std::borrow::Cow;
 
 use jolt_fmt_ir::{ConcatBuilder, Doc, DocBuilder};
-use jolt_kotlin_syntax::{KotlinComment, KotlinCommentKind, KotlinSyntaxToken};
+use jolt_kotlin_syntax::{
+    KotlinComment, KotlinCommentKind, KotlinSyntaxToken, TokenGap, token_gap,
+};
 
 use crate::helpers::formatter_ignore::is_formatter_control_marker;
 
@@ -280,19 +282,14 @@ pub(crate) fn format_token_gap<'source>(
     left: &KotlinSyntaxToken<'source>,
     right: &KotlinSyntaxToken<'source>,
 ) -> Doc<'source> {
-    let start = left.token_text_range().end().get();
-    let end = right.token_text_range().start().get();
-    if start >= end || trailing_comments_force_line(left) {
+    if trailing_comments_force_line(left) {
         return doc.nil();
     }
 
-    let gap = &left.source()[start..end];
-    if gap.contains(['\n', '\r']) {
-        doc.hard_line()
-    } else if gap.chars().any(char::is_whitespace) {
-        doc.space()
-    } else {
-        doc.nil()
+    match token_gap(left, right) {
+        TokenGap::None => doc.nil(),
+        TokenGap::Whitespace => doc.space(),
+        TokenGap::Line => doc.hard_line(),
     }
 }
 
