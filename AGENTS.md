@@ -56,8 +56,13 @@ Run `mise tasks ls --all` for the full task list.
   semantics don't change and trivia won't be lost. Formatter rules must preserve
   represented source tokens and their trivia; use the standard token formatting
   helpers unless a documented normalization case requires otherwise.
-- A formatter must not replay raw source text as a fallback for represented
-  syntax. Raw literal source is only allowed for formatter-ignore ranges.
+- A formatter may emit a syntax-owned malformed/bogus subtree verbatim, and may
+  emit formatter-ignore ranges verbatim. Valid syntax must always use structured
+  formatting: formatter failure, a missing formatter accessor, or an unhandled
+  valid node must never select verbatim output. The parser/syntax layer owns
+  malformed classification, and verbatim formatting must track every contained
+  token and comment so the surrounding structured formatter cannot lose or
+  duplicate them.
 - Prefer integration tests with `insta` snapshots over inline tests and
   assertions where practical. Inline focused tests should be reserved only for
   important regressions and edge cases that are not possible to test with the
