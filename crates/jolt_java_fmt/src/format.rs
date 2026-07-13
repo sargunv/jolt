@@ -3,7 +3,7 @@ use jolt_fmt_ir::{
     DocBuilder, FormatOptions, FormatSinkResult, IndentStyle, RenderOptions, RenderSink, TextWidth,
     render_to,
 };
-use jolt_java_syntax::parse_compilation_unit;
+use jolt_java_syntax::{CompilationUnit, parse_compilation_unit};
 
 use crate::rules::program::format_compilation_unit;
 
@@ -36,17 +36,45 @@ pub fn format_source_to_sink<S: RenderSink + ?Sized>(
         };
     };
 
+    format_syntax_to_sink(&syntax, *options, sink).0
+}
+
+fn format_syntax_to_sink<S: RenderSink + ?Sized>(
+    syntax: &CompilationUnit<'_>,
+    options: FormatOptions,
+    sink: &mut S,
+) -> (FormatSinkResult, DocBuilderMetrics) {
     let mut builder = DocBuilder::new();
-    let doc = format_compilation_unit(&syntax, &mut builder);
-    let render_options = render_options(*options);
+    let doc = format_compilation_unit(syntax, &mut builder);
+    let render_options = render_options(options);
     let arena = builder.into_arena();
-    match render_to(&arena, doc, render_options, sink) {
+    #[cfg(feature = "bench")]
+    let metrics = arena.benchmark_metrics();
+    let result = match render_to(&arena, doc, render_options, sink) {
         Ok(outcome) if outcome.halted => FormatSinkResult::Halted,
         Ok(_) => FormatSinkResult::Complete,
         Err(error) => FormatSinkResult::Blocked {
             diagnostics: vec![render_error_diagnostic(&error)],
         },
-    }
+    };
+    #[cfg(not(feature = "bench"))]
+    let metrics = ();
+    (result, metrics)
+}
+
+#[cfg(feature = "bench")]
+type DocBuilderMetrics = jolt_fmt_ir::DocArenaMetrics;
+#[cfg(not(feature = "bench"))]
+type DocBuilderMetrics = ();
+
+/// Formats an already-parsed root and returns its document arena measurements.
+#[cfg(feature = "bench")]
+pub fn benchmark_format_syntax_to_sink<S: RenderSink + ?Sized>(
+    syntax: &CompilationUnit<'_>,
+    options: &FormatOptions,
+    sink: &mut S,
+) -> (FormatSinkResult, jolt_fmt_ir::DocArenaMetrics) {
+    format_syntax_to_sink(syntax, *options, sink)
 }
 
 fn render_options(options: FormatOptions) -> RenderOptions {

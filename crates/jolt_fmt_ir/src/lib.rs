@@ -6,6 +6,8 @@ mod options;
 mod render;
 mod width;
 
+#[cfg(feature = "bench")]
+pub use document::DocArenaMetrics;
 pub use document::{ConcatBuilder, Doc, DocArena, DocBuilder, DocId};
 pub use options::{FormatOptions, FormatSinkResult};
 pub use render::{

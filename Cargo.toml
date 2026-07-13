@@ -12,6 +12,7 @@ members = [
   "crates/jolt_syntax",
   "crates/jolt_test_support",
   "crates/jolt_text",
+  "tools/bench/driver",
 ]
 resolver = "3"
 

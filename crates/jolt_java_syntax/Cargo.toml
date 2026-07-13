@@ -13,6 +13,9 @@ jolt_text = { path = "../jolt_text" }
 num_enum = "0.7.6"
 unicode-general-category = "1.1"
 
+[features]
+bench = ["jolt_syntax/bench"]
+
 [dev-dependencies]
 insta = "1.48"
 jolt_test_support = { path = "../jolt_test_support" }

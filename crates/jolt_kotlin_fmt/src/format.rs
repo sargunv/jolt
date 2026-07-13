@@ -3,7 +3,7 @@ use jolt_fmt_ir::{
     DocBuilder, FormatOptions, FormatSinkResult, IndentStyle, RenderOptions, RenderSink, TextWidth,
     render_to,
 };
-use jolt_kotlin_syntax::parse_kotlin_file;
+use jolt_kotlin_syntax::{KotlinFile, parse_kotlin_file};
 
 use crate::rules::program::format_file;
 
@@ -36,17 +36,45 @@ pub fn format_source_to_sink<S: RenderSink + ?Sized>(
         };
     };
 
+    format_syntax_to_sink(&syntax, *options, sink).0
+}
+
+fn format_syntax_to_sink<S: RenderSink + ?Sized>(
+    syntax: &KotlinFile<'_>,
+    options: FormatOptions,
+    sink: &mut S,
+) -> (FormatSinkResult, DocBuilderMetrics) {
     let mut builder = DocBuilder::new();
-    let doc = format_file(&syntax, &mut builder);
-    let render_options = render_options(*options);
+    let doc = format_file(syntax, &mut builder);
+    let render_options = render_options(options);
     let arena = builder.into_arena();
-    match render_to(&arena, doc, render_options, sink) {
+    #[cfg(feature = "bench")]
+    let metrics = arena.benchmark_metrics();
+    let result = match render_to(&arena, doc, render_options, sink) {
         Ok(outcome) if outcome.halted => FormatSinkResult::Halted,
         Ok(_) => FormatSinkResult::Complete,
         Err(error) => FormatSinkResult::Blocked {
             diagnostics: vec![render_error_diagnostic(&error)],
         },
-    }
+    };
+    #[cfg(not(feature = "bench"))]
+    let metrics = ();
+    (result, metrics)
+}
+
+#[cfg(feature = "bench")]
+type DocBuilderMetrics = jolt_fmt_ir::DocArenaMetrics;
+#[cfg(not(feature = "bench"))]
+type DocBuilderMetrics = ();
+
+/// Formats an already-parsed root and returns its document arena measurements.
+#[cfg(feature = "bench")]
+pub fn benchmark_format_syntax_to_sink<S: RenderSink + ?Sized>(
+    syntax: &KotlinFile<'_>,
+    options: &FormatOptions,
+    sink: &mut S,
+) -> (FormatSinkResult, jolt_fmt_ir::DocArenaMetrics) {
+    format_syntax_to_sink(syntax, *options, sink)
 }
 
 fn render_options(options: FormatOptions) -> RenderOptions {

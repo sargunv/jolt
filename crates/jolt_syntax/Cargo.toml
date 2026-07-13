@@ -10,5 +10,8 @@ rust-version.workspace = true
 jolt_diagnostics = { path = "../jolt_diagnostics" }
 jolt_text = { path = "../jolt_text" }
 
+[features]
+bench = []
+
 [lints]
 workspace = true

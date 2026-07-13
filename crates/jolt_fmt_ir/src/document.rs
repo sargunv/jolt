@@ -49,7 +49,32 @@ pub struct DocArena<'source> {
     children: Vec<Doc<'source>>,
 }
 
+/// Formatter document arena measurements exposed only to the benchmark driver.
+#[cfg(feature = "bench")]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct DocArenaMetrics {
+    pub nodes: usize,
+    pub children: usize,
+    pub logical_bytes: usize,
+    pub reserved_bytes: usize,
+}
+
 impl<'source> DocArena<'source> {
+    /// Returns allocation-independent size and capacity measurements.
+    #[cfg(feature = "bench")]
+    #[must_use]
+    pub fn benchmark_metrics(&self) -> DocArenaMetrics {
+        use std::mem::size_of;
+
+        DocArenaMetrics {
+            nodes: self.nodes.len(),
+            children: self.children.len(),
+            logical_bytes: self.nodes.len() * size_of::<DocNode<'_>>()
+                + self.children.len() * size_of::<Doc<'_>>(),
+            reserved_bytes: self.nodes.capacity() * size_of::<DocNode<'_>>()
+                + self.children.capacity() * size_of::<Doc<'_>>(),
+        }
+    }
     pub(crate) fn node(&self, doc: Doc<'source>) -> Option<&DocNode<'source>> {
         if doc.is_nil() {
             return None;

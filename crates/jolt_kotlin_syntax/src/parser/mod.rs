@@ -55,6 +55,13 @@ pub struct KotlinParse<'source> {
 }
 
 impl KotlinParse<'_> {
+    /// Returns flat arena measurements for the benchmark driver.
+    #[cfg(feature = "bench")]
+    #[must_use]
+    pub fn benchmark_metrics(&self) -> Option<jolt_syntax::SyntaxTreeMetrics> {
+        self.tree.as_ref().map(SyntaxTree::benchmark_metrics)
+    }
+
     /// Returns the parsed syntax tree root.
     #[must_use]
     pub fn syntax(&self) -> Option<KotlinFile<'_>> {

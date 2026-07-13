@@ -16,5 +16,8 @@ jolt_syntax = { path = "../jolt_syntax" }
 insta = "1.48"
 jolt_test_support = { path = "../jolt_test_support" }
 
+[features]
+bench = ["jolt_fmt_ir/bench", "jolt_kotlin_syntax/bench"]
+
 [lints]
 workspace = true

@@ -12,6 +12,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "allocation-counter"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "beb9e990c0a33699f1984d85a6abead615ccc72dd8130bf3e15dcabe2ca149c9"
+
+[[package]]
 name = "anstream"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -369,6 +375,21 @@ name = "itoa"
 version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
+
+[[package]]
+name = "jolt_bench_driver"
+version = "0.0.0"
+dependencies = [
+ "allocation-counter",
+ "jolt_fmt_ir",
+ "jolt_java_fmt",
+ "jolt_java_syntax",
+ "jolt_kotlin_fmt",
+ "jolt_kotlin_syntax",
+ "jolt_syntax",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "jolt_cli"

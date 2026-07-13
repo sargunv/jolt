@@ -1,0 +1,24 @@
+[package]
+name = "jolt_bench_driver"
+version = "0.0.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+allocation-counter = { version = "=0.8.1", optional = true }
+jolt_fmt_ir = { path = "../../../crates/jolt_fmt_ir", features = ["bench"] }
+jolt_java_fmt = { path = "../../../crates/jolt_java_fmt", features = ["bench"] }
+jolt_java_syntax = { path = "../../../crates/jolt_java_syntax", features = ["bench"] }
+jolt_kotlin_fmt = { path = "../../../crates/jolt_kotlin_fmt", features = ["bench"] }
+jolt_kotlin_syntax = { path = "../../../crates/jolt_kotlin_syntax", features = ["bench"] }
+jolt_syntax = { path = "../../../crates/jolt_syntax", features = ["bench"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[features]
+allocations = ["dep:allocation-counter"]
+
+[lints]
+workspace = true

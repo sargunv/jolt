@@ -11,7 +11,6 @@ lockfile = true
 "core:java" = "zulu-25.34.17.0"
 "core:python" = "3.14.5"
 "core:rust" = { version = "1.96.0", profile = "minimal", components = "rustfmt,clippy,llvm-tools-preview", targets = "wasm32-unknown-unknown" }
-"aqua:sharkdp/hyperfine" = "1.20.0"
 "aqua:google/google-java-format" = "1.35.0"
 "aqua:pnpm/pnpm" = "11.9.0"
 "core:node" = "24.18.0"
@@ -92,22 +91,8 @@ raw_args = true
 run = "dprint --plugins=\"$PWD/target/wasm32-unknown-unknown/debug/jolt_fmt_dprint.wasm\""
 
 [tasks.benchmark]
-usage = '''
-arg "[tools]" help="Benchmark tools" var=#true {
-  choices "jolt" "dprint-jolt" "google-java-format" "prettier-java" "all"
-}
-'''
-depends = [
-  { task = "build:jolt", args = [
-    "--mode",
-    "release",
-  ] },
-  { task = "build:dprint-plugin", args = [
-    "--mode",
-    "release",
-  ] },
-]
-run = 'python -m tools.bench.bench ${usage_tools:-}'
+description = "Run formatter benchmarks"
+run = "python -m tools.bench.architecture"
 
 [tasks."release:build"]
 run = '''

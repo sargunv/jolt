@@ -20,6 +20,8 @@ pub use red::{
     SyntaxElement, SyntaxNode, SyntaxToken, represented_range_is_trivia, tokens_between,
     tokens_have_blank_line_between,
 };
+#[cfg(feature = "bench")]
+pub use syntax_tree::SyntaxTreeMetrics;
 pub use syntax_tree::{
     BuildSyntaxTreeError, SyntaxTokenData, SyntaxTree, SyntaxTrivia, TriviaKind, build_syntax_tree,
 };

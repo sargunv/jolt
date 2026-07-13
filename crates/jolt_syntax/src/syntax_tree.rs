@@ -157,7 +157,42 @@ pub struct SyntaxTree {
     trivia: Vec<SyntaxTrivia>,
 }
 
+/// Flat syntax arena measurements exposed only to the benchmark driver.
+#[cfg(feature = "bench")]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct SyntaxTreeMetrics {
+    pub nodes: usize,
+    pub children: usize,
+    pub tokens: usize,
+    pub trivia: usize,
+    pub logical_bytes: usize,
+    pub reserved_bytes: usize,
+}
+
 impl SyntaxTree {
+    /// Returns allocation-independent size and capacity measurements.
+    #[cfg(feature = "bench")]
+    #[must_use]
+    pub fn benchmark_metrics(&self) -> SyntaxTreeMetrics {
+        use std::mem::size_of;
+
+        let logical_bytes = self.nodes.len() * size_of::<TreeNode>()
+            + self.children.len() * size_of::<TreeElement>()
+            + self.tokens.len() * size_of::<SyntaxTokenData>()
+            + self.trivia.len() * size_of::<SyntaxTrivia>();
+        let reserved_bytes = self.nodes.capacity() * size_of::<TreeNode>()
+            + self.children.capacity() * size_of::<TreeElement>()
+            + self.tokens.capacity() * size_of::<SyntaxTokenData>()
+            + self.trivia.capacity() * size_of::<SyntaxTrivia>();
+        SyntaxTreeMetrics {
+            nodes: self.nodes.len(),
+            children: self.children.len(),
+            tokens: self.tokens.len(),
+            trivia: self.trivia.len(),
+            logical_bytes,
+            reserved_bytes,
+        }
+    }
     #[must_use]
     pub(crate) const fn root(&self) -> NodeId {
         self.root

@@ -653,15 +653,25 @@ Before migration, a benchmark phase records the existing release baseline for:
 - syntax-tree bytes per token/node; and
 - formatter document nodes per input token.
 
-The baseline is commit `2197128` (`main` when this architecture was written),
-built in the same locked release profile on the same machine. Each result
-records the commit, corpus-manifest digest, command, toolchain, machine
-identifier, sample count, warmup count, median, dispersion, and raw samples.
+The baseline is the first committed report produced by the Phase 3 measurement
+harness in the locked release profile on a given machine. Earlier commits have
+no allocation or stage-specific harness; applying new instrumentation to them
+would modify the measured subject and create a false baseline. The architecture
+gate uses the Spring Framework Java and MapLibre Compose Kotlin realistic
+corpora. Each result records the source identity, corpus digest, command,
+toolchain, hardware-derived machine identifier, sample count, warmup count,
+median, dispersion, and raw samples.
 
-Every phase reports both its parent-to-child incremental delta and its
-cumulative delta from `2197128`; earlier speedups cannot buy permission for a
-later regression. No broad migration starts if a slice introduces a per-node
-allocation or if either comparison exceeds any default budget:
+Running the benchmark overwrites one tracked report per derived machine
+identifier. The code and report are reviewed and committed together; Git is the
+history and acceptance mechanism. Comparisons across different machines,
+toolchains, profiles, harness generations, or corpus digests are invalid.
+
+Every measured production phase reviews its report diff against both the
+previous committed report and the Phase 3 report in Git history; earlier
+speedups cannot buy permission for a later regression. No broad migration starts
+if a slice introduces a per-node allocation or if either comparison exceeds any
+default budget:
 
 - three percent median regression for parse-only, format-only, or parse-plus-
   format wall time;

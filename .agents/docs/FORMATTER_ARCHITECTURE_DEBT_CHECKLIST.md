@@ -279,9 +279,10 @@ is reference material, not a base branch.
 
 Every production-wired vertical phase from 8 through 19 reruns the relevant
 Phase 3 parse-only, format-only, end-to-end, allocation, memory, tree-size, and
-IR metrics in that commit. Each reports both parent-to-child incremental and
-cumulative deltas from `2197128`; earlier improvements provide no headroom for a
-later regression. Performance attribution may not be deferred to the final gate.
+IR metrics. Review its per-machine report diff against the previously committed
+report and the Phase 3 report in Git history; earlier improvements provide no
+headroom for a later regression. Performance attribution may not be deferred to
+the final gate.
 
 ### New Phase 1: Carry Forward Accepted Cost Controls
 
@@ -302,14 +303,19 @@ the helper and export in this phase.
 
 ### New Phase 3: Establish Performance And Allocation Baselines
 
-Extend the benchmark harness with parse-only and format-only execution,
-allocation count/bytes, peak memory, syntax-tree bytes per node/token, and
-formatter-document nodes per input token. Record reproducible release baselines
-at `2197128` for the Java, Kotlin, realistic, and adversarial manifests,
-including commands, toolchain, machine identity, manifest digests, raw samples,
-and dispersion. Enforce the architecture's three-percent time, one-percent
-allocation, five-percent peak-memory, and five-percent tree-byte budgets both
-incrementally and cumulatively.
+Replace the old tool-comparison benchmark with parse-only and format-only
+execution, allocation count/bytes, peak memory, syntax-tree bytes per
+node/token, and formatter-document nodes per input token. Running
+`mise run benchmark` overwrites the automatically identified machine's report
+for the Spring Framework Java and MapLibre Compose Kotlin realistic corpora,
+including commands, toolchain, source identity, hardware-spec hash, corpus
+digests, raw samples, and dispersion. The first committed report is the
+architecture baseline; later committed report diffs are the accepted history.
+Earlier commits cannot honestly supply allocation or stage-specific baselines
+without modifying the measured subject. Never compare measurements across
+machines. Review the architecture's three-percent time, one-percent allocation,
+five-percent peak-memory, and five-percent tree-byte budgets against both the
+preceding report and the Phase 3 report in Git history.
 
 ### New Phase 4: Retained Regression Inventory
 
