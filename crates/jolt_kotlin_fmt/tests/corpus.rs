@@ -130,9 +130,11 @@ fn audit_diagnostic_source(source: &str, options: FormatOptions, label: &str) ->
         failures.push_str("represented comment inventory changed\n");
     }
     if actual_markers != expected_markers {
-        failures.push_str(&format!(
+        write!(
+            failures,
             "trivia markers changed\nexpected: {expected_markers:#?}\nactual: {actual_markers:#?}\n"
-        ));
+        )
+        .expect("writing to a String cannot fail");
     }
     if repeated != formatted {
         failures.push_str("formatter output is not idempotent\n");
@@ -152,3 +154,4 @@ fn format_or_panic(source: &str, options: FormatOptions, label: &str) -> String 
         }
     }
 }
+use std::fmt::Write;
