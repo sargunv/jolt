@@ -3,6 +3,12 @@ use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
 
 use crate::width::{TextWidth, display_width, literal_text_metrics};
+use crate::{
+    ExceptionalFragment, ExceptionalSeparator, FragmentBoundary, LexicalAtom, LexicalSafety,
+    RemovalClaim, ReplacementClaim, SourceFragmentKind, SynthesisClaim,
+    source_fragment::{SourceFragment, exceptional_separators},
+};
+use jolt_syntax::{Language, SourceIdentity, SourceTriviaPiece, SyntaxToken, SyntaxVerbatimCore};
 
 pub(crate) const INLINE_CONCAT_CAPACITY: usize = 4;
 
@@ -47,6 +53,8 @@ pub struct DocId(u32);
 pub struct DocArena<'source> {
     nodes: Vec<DocNode<'source>>,
     children: Vec<Doc<'source>>,
+    #[cfg(debug_assertions)]
+    source_claims: Vec<SourceIdentity<'source>>,
 }
 
 /// Formatter document arena measurements exposed only to the benchmark driver.
@@ -84,6 +92,24 @@ impl<'source> DocArena<'source> {
 
     pub(crate) fn child(&self, index: u32) -> Doc<'source> {
         self.children[usize::try_from(index).expect("doc child index fits usize")]
+    }
+
+    pub(crate) fn source_claims(
+        &self,
+        fragment: &SourceFragment<'source, 'source>,
+    ) -> &[SourceIdentity<'source>] {
+        #[cfg(debug_assertions)]
+        {
+            let start =
+                usize::try_from(fragment.claims_start).expect("source claim index fits usize");
+            let len = usize::try_from(fragment.claims_len).expect("source claim length fits usize");
+            &self.source_claims[start..start + len]
+        }
+        #[cfg(not(debug_assertions))]
+        {
+            let _ = fragment;
+            &[]
+        }
     }
 
     fn child_count(&self) -> u32 {
@@ -151,6 +177,163 @@ impl<'source> DocBuilder<'source> {
             final_width: metrics.final_width,
             line_count: metrics.line_count,
         }))
+    }
+
+    /// Emits an ordinary structured source token with its conservation claim.
+    #[must_use]
+    pub fn source_token<L: Language>(&mut self, token: &SyntaxToken<'source, L>) -> Doc<'source> {
+        self.source_fragment(
+            Cow::Borrowed(token.text()),
+            None,
+            [SourceIdentity::Token(token.source_id())],
+        )
+    }
+
+    /// Emits structured trivia output and claims its represented source pieces.
+    #[must_use]
+    pub fn source_trivia(
+        &mut self,
+        text: impl Into<Cow<'source, str>>,
+        pieces: impl IntoIterator<Item = SourceTriviaPiece<'source>>,
+    ) -> Doc<'source> {
+        self.source_fragment(
+            text.into(),
+            None,
+            pieces
+                .into_iter()
+                .map(|piece| SourceIdentity::Trivia(piece.id())),
+        )
+    }
+
+    /// Emits one borrowed malformed source core and records every identity it
+    /// covers. An empty core and empty claim set still records malformed
+    /// dispatch.
+    #[must_use]
+    pub fn malformed_verbatim<L: Language>(
+        &mut self,
+        core: &SyntaxVerbatimCore<'source, L>,
+        boundary: FragmentBoundary<'source>,
+    ) -> ExceptionalFragment<'source> {
+        let doc = self.source_fragment(
+            Cow::Borrowed(core.text()),
+            Some(SourceFragmentKind::MalformedVerbatim),
+            core.identities(),
+        );
+        ExceptionalFragment::new(doc, boundary)
+    }
+
+    /// Emits normalized spelling while consuming the replaced source identity.
+    #[must_use]
+    pub fn replaced_source(
+        &mut self,
+        claim: ReplacementClaim<'source>,
+    ) -> ExceptionalFragment<'source> {
+        let (source, token) = claim.into_parts();
+        let text = token.text();
+        let doc = self.source_fragment(
+            Cow::Borrowed(text),
+            Some(SourceFragmentKind::Replaced { token }),
+            [SourceIdentity::Token(source)],
+        );
+        let atom = LexicalAtom::new(token.lexical_kind(), text);
+        ExceptionalFragment::new(
+            doc,
+            FragmentBoundary {
+                first: Some(atom),
+                last: Some(atom),
+                ends_with_line_comment: false,
+            },
+        )
+    }
+
+    /// Consumes a source identity without emitting text.
+    #[must_use]
+    pub fn removed_source(&mut self, claim: RemovalClaim<'source>) -> Doc<'source> {
+        let (source, reason) = claim.into_parts();
+        self.source_fragment(
+            Cow::Borrowed(""),
+            Some(SourceFragmentKind::Removed { reason }),
+            [source],
+        )
+    }
+
+    /// Emits an authorized source-free token anchored near represented syntax.
+    #[must_use]
+    pub fn synthesized_source(
+        &mut self,
+        claim: SynthesisClaim<'source>,
+    ) -> ExceptionalFragment<'source> {
+        let (anchor, token) = claim.into_parts();
+        let text = token.text();
+        let doc = self.source_fragment(
+            Cow::Borrowed(text),
+            Some(SourceFragmentKind::Synthesized { token, anchor }),
+            [],
+        );
+        let atom = LexicalAtom::new(token.lexical_kind(), text);
+        ExceptionalFragment::new(
+            doc,
+            FragmentBoundary {
+                first: Some(atom),
+                last: Some(atom),
+                ends_with_line_comment: false,
+            },
+        )
+    }
+
+    /// Resolves the only permitted lexical joins around an exceptional fragment.
+    #[must_use]
+    pub fn resolve_exceptional<L: Language>(
+        &mut self,
+        fragment: ExceptionalFragment<'source>,
+        left: Option<&SyntaxToken<'source, L>>,
+        right: Option<&SyntaxToken<'source, L>>,
+        safety: &mut impl LexicalSafety<L>,
+    ) -> Doc<'source> {
+        let left = left.map(|token| LexicalAtom::new(safety.classify(token), token.text()));
+        let right = right.map(|token| LexicalAtom::new(safety.classify(token), token.text()));
+        let separators = exceptional_separators(left, fragment, right, safety);
+        let before = self.exceptional_separator(separators.before);
+        let after = self.exceptional_separator(separators.after);
+        self.concat([before, fragment.doc(), after])
+    }
+
+    /// Joins two exceptional fragments while retaining their outer boundary.
+    ///
+    /// This is the only exceptional-to-exceptional composition path. It makes
+    /// exactly one bounded lexical-safety decision at their shared edge.
+    #[must_use]
+    pub fn join_exceptional<L: Language>(
+        &mut self,
+        left: ExceptionalFragment<'source>,
+        right: ExceptionalFragment<'source>,
+        safety: &mut impl LexicalSafety<L>,
+    ) -> ExceptionalFragment<'source> {
+        let left_boundary = left.boundary();
+        let right_boundary = right.boundary();
+        let separator = if left_boundary.ends_with_line_comment && right_boundary.first.is_some() {
+            ExceptionalSeparator::HardLine
+        } else {
+            match (left_boundary.last, right_boundary.first) {
+                (Some(left), Some(right)) => safety.separator(left, right),
+                _ => ExceptionalSeparator::None,
+            }
+        };
+        let separator = self.exceptional_separator(separator);
+        let doc = self.concat([left.doc(), separator, right.doc()]);
+        let right_has_boundary = right_boundary.first.is_some() || right_boundary.last.is_some();
+        ExceptionalFragment::new(
+            doc,
+            FragmentBoundary {
+                first: left_boundary.first.or(right_boundary.first),
+                last: right_boundary.last.or(left_boundary.last),
+                ends_with_line_comment: if right_has_boundary {
+                    right_boundary.ends_with_line_comment
+                } else {
+                    left_boundary.ends_with_line_comment
+                },
+            },
+        )
     }
 
     #[must_use]
@@ -282,6 +465,42 @@ impl<'source> DocBuilder<'source> {
 
     fn push_node(&mut self, node: DocNode<'source>) -> Doc<'source> {
         self.arena.push_node(node)
+    }
+
+    fn source_fragment(
+        &mut self,
+        text: Cow<'source, str>,
+        provenance: Option<SourceFragmentKind<'source>>,
+        claims: impl IntoIterator<Item = SourceIdentity<'source>>,
+    ) -> Doc<'source> {
+        #[cfg(debug_assertions)]
+        let (claims_start, claims_len) = {
+            let start =
+                u32::try_from(self.arena.source_claims.len()).expect("source claim index fits u32");
+            self.arena.source_claims.extend(claims);
+            let len = u32::try_from(self.arena.source_claims.len())
+                .expect("source claim count fits u32")
+                - start;
+            (start, len)
+        };
+        #[cfg(not(debug_assertions))]
+        let _ = claims;
+        self.push_node(DocNode::SourceFragment(SourceFragment::new(
+            text,
+            provenance,
+            #[cfg(debug_assertions)]
+            claims_start,
+            #[cfg(debug_assertions)]
+            claims_len,
+        )))
+    }
+
+    fn exceptional_separator(&mut self, separator: ExceptionalSeparator) -> Doc<'source> {
+        match separator {
+            ExceptionalSeparator::None => self.nil(),
+            ExceptionalSeparator::Space => self.space(),
+            ExceptionalSeparator::HardLine => self.hard_line(),
+        }
     }
 
     fn child_count(&self) -> u32 {
@@ -452,6 +671,7 @@ impl<'source> ConcatAppender<'source> {
 pub(crate) enum DocNode<'source> {
     Text(Text<'source>),
     LiteralText(LiteralText<'source>),
+    SourceFragment(SourceFragment<'source, 'source>),
     InlineConcat {
         docs: [Doc<'source>; INLINE_CONCAT_CAPACITY],
         len: u8,
@@ -487,6 +707,12 @@ pub(crate) struct LiteralText<'source> {
     final_width: TextWidth,
     line_count: usize,
 }
+
+#[cfg(not(debug_assertions))]
+const _: () = assert!(
+    std::mem::size_of::<SourceFragment<'static, 'static>>()
+        <= std::mem::size_of::<LiteralText<'static>>()
+);
 
 impl LiteralText<'_> {
     pub(crate) const fn final_width(&self) -> TextWidth {

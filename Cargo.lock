@@ -442,7 +442,9 @@ name = "jolt_fmt_ir"
 version = "0.0.0"
 dependencies = [
  "jolt_diagnostics",
+ "jolt_java_syntax",
  "jolt_syntax",
+ "jolt_text",
  "schemars",
  "serde",
  "unicode-width",

@@ -1,0 +1,922 @@
+use std::fmt;
+
+use jolt_text::{TextRange, TextSize};
+
+use crate::{
+    Language, SyntaxNode, SyntaxToken, SyntaxTrivia, TriviaKind,
+    syntax_tree::{SyntaxTree, TokenId},
+};
+
+/// Identifies which side of a source token owns a trivia piece.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum SourceTriviaSide {
+    Leading,
+    Trailing,
+}
+
+/// The parse-local identity of a represented source token.
+#[derive(Clone, Copy)]
+pub struct SourceTokenId<'tree> {
+    pub(crate) tree: &'tree SyntaxTree,
+    pub(crate) id: TokenId,
+}
+
+impl SourceTokenId<'_> {
+    fn belongs_to(self, tree: &SyntaxTree) -> bool {
+        std::ptr::eq(self.tree, tree)
+    }
+}
+
+impl fmt::Debug for SourceTokenId<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_tuple("SourceTokenId")
+            .field(&self.id.index())
+            .finish()
+    }
+}
+
+impl PartialEq for SourceTokenId<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.belongs_to(other.tree) && self.id == other.id
+    }
+}
+
+impl Eq for SourceTokenId<'_> {}
+
+impl std::hash::Hash for SourceTokenId<'_> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        std::ptr::from_ref(self.tree).hash(state);
+        self.id.hash(state);
+    }
+}
+
+/// The parse-local identity of a represented source trivia piece.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct SourceTriviaId<'tree> {
+    token: SourceTokenId<'tree>,
+    side: SourceTriviaSide,
+    ordinal: usize,
+}
+
+/// A represented source identity handled by formatter output.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum SourceIdentity<'tree> {
+    Token(SourceTokenId<'tree>),
+    Trivia(SourceTriviaId<'tree>),
+}
+
+/// A trivia piece paired with its parse-local identity and exact source range.
+#[derive(Clone, Copy, Debug)]
+pub struct SourceTriviaPiece<'tree> {
+    id: SourceTriviaId<'tree>,
+    trivia: SyntaxTrivia,
+    text_range: TextRange,
+}
+
+impl<'tree> SourceTriviaPiece<'tree> {
+    #[must_use]
+    pub const fn id(self) -> SourceTriviaId<'tree> {
+        self.id
+    }
+
+    #[must_use]
+    pub const fn trivia(self) -> SyntaxTrivia {
+        self.trivia
+    }
+
+    #[must_use]
+    pub const fn text_range(self) -> TextRange {
+        self.text_range
+    }
+}
+
+pub(crate) struct SourceTriviaPieces<'tree> {
+    token: SourceTokenId<'tree>,
+    side: SourceTriviaSide,
+    trivia: &'tree [SyntaxTrivia],
+    next: usize,
+    offset: TextSize,
+}
+
+impl<'tree> SourceTriviaPieces<'tree> {
+    pub(crate) const fn new(
+        token: SourceTokenId<'tree>,
+        side: SourceTriviaSide,
+        trivia: &'tree [SyntaxTrivia],
+        offset: TextSize,
+    ) -> Self {
+        Self {
+            token,
+            side,
+            trivia,
+            next: 0,
+            offset,
+        }
+    }
+}
+
+impl<'tree> Iterator for SourceTriviaPieces<'tree> {
+    type Item = SourceTriviaPiece<'tree>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let ordinal = self.next;
+        let trivia = *self.trivia.get(ordinal)?;
+        self.next += 1;
+        let text_range = TextRange::new(self.offset, self.offset + trivia.text_len());
+        self.offset = text_range.end();
+        Some(SourceTriviaPiece {
+            id: SourceTriviaId {
+                token: self.token,
+                side: self.side,
+                ordinal,
+            },
+            trivia,
+            text_range,
+        })
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let remaining = self.trivia.len() - self.next;
+        (remaining, Some(remaining))
+    }
+}
+
+impl ExactSizeIterator for SourceTriviaPieces<'_> {}
+
+/// A deterministic debug/test conservation failure.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ConservationError {
+    ForeignToken,
+    ForeignTrivia,
+    UnownedTrivia {
+        trivia: usize,
+    },
+    UnauthorizedToken {
+        token: usize,
+        range: TextRange,
+    },
+    DuplicateToken {
+        token: usize,
+    },
+    DuplicateTrivia {
+        token: usize,
+        side: SourceTriviaSide,
+        ordinal: usize,
+    },
+    UnauthorizedTrivia {
+        token: usize,
+        side: SourceTriviaSide,
+        ordinal: usize,
+        kind: TriviaKind,
+        range: TextRange,
+    },
+    MissingToken {
+        token: usize,
+        range: TextRange,
+    },
+    MissingTrivia {
+        token: usize,
+        side: SourceTriviaSide,
+        ordinal: usize,
+        kind: TriviaKind,
+        range: TextRange,
+    },
+}
+
+impl fmt::Display for ConservationError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{self:?}")
+    }
+}
+
+impl std::error::Error for ConservationError {}
+
+#[cfg(debug_assertions)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ClaimState {
+    NotConserved,
+    Unclaimed,
+    Claimed,
+}
+
+/// Root-level dense source identity accounting for debug and test formatters.
+///
+/// Optimized builds retain this API as a zero-sized no-op and allocate no
+/// tracking state. The syntax tree itself never stores formatter state.
+pub struct SyntaxConservationTracker<'tree> {
+    #[cfg(debug_assertions)]
+    tree: &'tree SyntaxTree,
+    #[cfg(debug_assertions)]
+    tokens: Vec<ClaimState>,
+    #[cfg(debug_assertions)]
+    trivia: Vec<ClaimState>,
+    #[cfg(not(debug_assertions))]
+    marker: std::marker::PhantomData<&'tree SyntaxTree>,
+}
+
+#[cfg(not(debug_assertions))]
+const _: () = assert!(std::mem::size_of::<SyntaxConservationTracker<'static>>() == 0);
+
+impl<'tree> SyntaxConservationTracker<'tree> {
+    pub(crate) fn new<L: Language>(root: &SyntaxNode<'tree, L>) -> Self {
+        #[cfg(debug_assertions)]
+        {
+            let tree = root.tree();
+            let eof = L::kind_to_raw(L::eof_kind());
+            let tokens = tree
+                .token_data()
+                .iter()
+                .map(|token| {
+                    if token.raw_kind() == eof {
+                        ClaimState::NotConserved
+                    } else {
+                        ClaimState::Unclaimed
+                    }
+                })
+                .collect();
+            let mut trivia = vec![ClaimState::NotConserved; tree.trivia_len()];
+            mark_conserved_trivia(tree, &mut trivia);
+            Self {
+                tree,
+                tokens,
+                trivia,
+            }
+        }
+        #[cfg(not(debug_assertions))]
+        {
+            let _ = root;
+            Self {
+                marker: std::marker::PhantomData,
+            }
+        }
+    }
+
+    /// Claims one represented source identity.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for foreign, unauthorized, or duplicate identities.
+    pub fn claim(&mut self, identity: SourceIdentity<'tree>) -> Result<(), ConservationError> {
+        match identity {
+            SourceIdentity::Token(token) => self.claim_token(token),
+            SourceIdentity::Trivia(trivia) => self.claim_trivia(trivia),
+        }
+    }
+
+    /// Claims one represented source token.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for a foreign, unauthorized, or duplicate token.
+    pub fn claim_token(&mut self, identity: SourceTokenId<'tree>) -> Result<(), ConservationError> {
+        #[cfg(debug_assertions)]
+        {
+            if !identity.belongs_to(self.tree) {
+                return Err(ConservationError::ForeignToken);
+            }
+            match self.tokens[identity.id.index()] {
+                ClaimState::NotConserved => {
+                    return Err(ConservationError::UnauthorizedToken {
+                        token: identity.id.index(),
+                        range: self.tree.token(identity.id).token_text_range(),
+                    });
+                }
+                ClaimState::Unclaimed => {
+                    self.tokens[identity.id.index()] = ClaimState::Claimed;
+                }
+                ClaimState::Claimed => {
+                    return Err(ConservationError::DuplicateToken {
+                        token: identity.id.index(),
+                    });
+                }
+            }
+        }
+        #[cfg(not(debug_assertions))]
+        let _ = identity;
+        Ok(())
+    }
+
+    /// Validates a token identity without consuming it.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for a foreign or unauthorized token.
+    pub fn validate_token(&self, identity: SourceTokenId<'tree>) -> Result<(), ConservationError> {
+        #[cfg(debug_assertions)]
+        {
+            if !identity.belongs_to(self.tree) {
+                return Err(ConservationError::ForeignToken);
+            }
+            if self.tokens[identity.id.index()] == ClaimState::NotConserved {
+                return Err(ConservationError::UnauthorizedToken {
+                    token: identity.id.index(),
+                    range: self.tree.token(identity.id).token_text_range(),
+                });
+            }
+        }
+        #[cfg(not(debug_assertions))]
+        let _ = identity;
+        Ok(())
+    }
+
+    /// Claims one represented conserved trivia piece.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for foreign, unowned, unauthorized, or duplicate trivia.
+    pub fn claim_trivia(
+        &mut self,
+        identity: SourceTriviaId<'tree>,
+    ) -> Result<(), ConservationError> {
+        #[cfg(debug_assertions)]
+        {
+            let Some(index) = self.trivia_index(identity) else {
+                return Err(ConservationError::ForeignTrivia);
+            };
+            match self.trivia[index] {
+                ClaimState::NotConserved => {
+                    let Some((_, _, _, range)) = self.trivia_identity_for_index(index) else {
+                        return Err(ConservationError::UnownedTrivia { trivia: index });
+                    };
+                    return Err(ConservationError::UnauthorizedTrivia {
+                        token: identity.token.id.index(),
+                        side: identity.side,
+                        ordinal: identity.ordinal,
+                        kind: self.tree.trivia_at(index).kind(),
+                        range,
+                    });
+                }
+                ClaimState::Unclaimed => self.trivia[index] = ClaimState::Claimed,
+                ClaimState::Claimed => {
+                    return Err(ConservationError::DuplicateTrivia {
+                        token: identity.token.id.index(),
+                        side: identity.side,
+                        ordinal: identity.ordinal,
+                    });
+                }
+            }
+        }
+        #[cfg(not(debug_assertions))]
+        let _ = identity;
+        Ok(())
+    }
+
+    /// Claims every conserved identity inside a syntax-owned verbatim core.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any identity is foreign, unauthorized, or duplicate.
+    pub fn claim_verbatim<L: Language>(
+        &mut self,
+        core: &SyntaxVerbatimCore<'tree, L>,
+    ) -> Result<(), ConservationError> {
+        #[cfg(debug_assertions)]
+        for identity in core.identities() {
+            self.claim(identity)?;
+        }
+        #[cfg(not(debug_assertions))]
+        let _ = core;
+        Ok(())
+    }
+
+    /// Completes this root conservation proof.
+    ///
+    /// # Errors
+    ///
+    /// Returns the first deterministic missing or unowned source identity.
+    pub fn finish(self) -> Result<(), ConservationError> {
+        #[cfg(debug_assertions)]
+        {
+            for (index, state) in self.tokens.iter().enumerate() {
+                if *state == ClaimState::Unclaimed {
+                    return Err(ConservationError::MissingToken {
+                        token: index,
+                        range: self.tree.token(TokenId::new(index)).token_text_range(),
+                    });
+                }
+            }
+            for (index, state) in self.trivia.iter().enumerate() {
+                if *state != ClaimState::Unclaimed {
+                    continue;
+                }
+                let Some((token, side, ordinal, range)) = self.trivia_identity_for_index(index)
+                else {
+                    return Err(ConservationError::UnownedTrivia { trivia: index });
+                };
+                return Err(ConservationError::MissingTrivia {
+                    token,
+                    side,
+                    ordinal,
+                    kind: self.tree.trivia_at(index).kind(),
+                    range,
+                });
+            }
+        }
+        Ok(())
+    }
+
+    #[cfg(debug_assertions)]
+    fn trivia_index(&self, identity: SourceTriviaId<'tree>) -> Option<usize> {
+        if !identity.token.belongs_to(self.tree) {
+            return None;
+        }
+        let token = self.tree.token(identity.token.id);
+        let range = match identity.side {
+            SourceTriviaSide::Leading => token.leading(),
+            SourceTriviaSide::Trailing => token.trailing(),
+        };
+        (identity.ordinal < range.len()).then(|| range.start + identity.ordinal)
+    }
+
+    #[cfg(debug_assertions)]
+    fn trivia_identity_for_index(
+        &self,
+        index: usize,
+    ) -> Option<(usize, SourceTriviaSide, usize, TextRange)> {
+        for (token_index, token) in self.tree.token_data().iter().enumerate() {
+            let token_id = SourceTokenId {
+                tree: self.tree,
+                id: TokenId::new(token_index),
+            };
+            for piece in source_trivia_pieces(token_id, SourceTriviaSide::Leading, token.leading())
+            {
+                if self.trivia_index(piece.id()) == Some(index) {
+                    return Some((
+                        token_index,
+                        SourceTriviaSide::Leading,
+                        piece.id.ordinal,
+                        piece.text_range,
+                    ));
+                }
+            }
+            for piece in
+                source_trivia_pieces(token_id, SourceTriviaSide::Trailing, token.trailing())
+            {
+                if self.trivia_index(piece.id()) == Some(index) {
+                    return Some((
+                        token_index,
+                        SourceTriviaSide::Trailing,
+                        piece.id.ordinal,
+                        piece.text_range,
+                    ));
+                }
+            }
+        }
+        None
+    }
+}
+
+#[cfg(debug_assertions)]
+fn mark_conserved_trivia(tree: &SyntaxTree, states: &mut [ClaimState]) {
+    let mut line_comment_needs_terminator = false;
+    for (index, state) in states.iter_mut().enumerate() {
+        let kind = tree.trivia_at(index).kind();
+        let conserved = matches!(
+            kind,
+            TriviaKind::LineComment
+                | TriviaKind::ShebangComment
+                | TriviaKind::BlockComment
+                | TriviaKind::DocComment
+                | TriviaKind::Ignored
+        ) || (kind == TriviaKind::Newline && line_comment_needs_terminator);
+        if conserved {
+            *state = ClaimState::Unclaimed;
+        }
+        line_comment_needs_terminator = match kind {
+            TriviaKind::LineComment | TriviaKind::ShebangComment => true,
+            TriviaKind::Whitespace
+            | TriviaKind::Newline
+            | TriviaKind::BlockComment
+            | TriviaKind::DocComment
+            | TriviaKind::Ignored => false,
+        };
+    }
+}
+
+/// The exact syntax-owned source core eligible for malformed verbatim output.
+#[derive(Clone, Copy)]
+pub struct SyntaxVerbatimCore<'tree, L: Language> {
+    node: SyntaxNode<'tree, L>,
+    range: TextRange,
+}
+
+impl<'tree, L: Language> SyntaxVerbatimCore<'tree, L> {
+    pub(crate) fn new(node: SyntaxNode<'tree, L>) -> Self {
+        let range = if node.parent().is_none() {
+            node.text_range()
+        } else if let (Some(first), Some(last)) = (node.first_token(), node.last_token()) {
+            let mut start = first.token_text_range().start();
+            let mut ignored_run_start = None;
+            for piece in first.leading_trivia_with_ids() {
+                if piece.trivia().kind() == TriviaKind::Ignored {
+                    ignored_run_start.get_or_insert(piece.text_range().start());
+                } else {
+                    ignored_run_start = None;
+                }
+            }
+            if let Some(ignored_start) = ignored_run_start {
+                start = ignored_start;
+            }
+
+            let mut end = last.token_text_range().end();
+            for piece in last.trailing_trivia_with_ids() {
+                if piece.trivia().kind() != TriviaKind::Ignored {
+                    break;
+                }
+                end = piece.text_range().end();
+            }
+            TextRange::new(start, end)
+        } else {
+            TextRange::empty(node.text_range().start())
+        };
+        Self { node, range }
+    }
+
+    #[must_use]
+    pub const fn text_range(&self) -> TextRange {
+        self.range
+    }
+
+    #[must_use]
+    pub fn text(&self) -> &'tree str {
+        &self.node.source()[self.range.start().get()..self.range.end().get()]
+    }
+
+    pub fn tokens(&self) -> impl Iterator<Item = SyntaxToken<'tree, L>> + use<'tree, L> {
+        self.node.tokens()
+    }
+
+    /// Returns every conserved source identity wholly owned by this core.
+    pub fn identities(&self) -> impl Iterator<Item = SourceIdentity<'tree>> + use<'tree, L> {
+        let range = self.range;
+        self.node.tokens().flat_map(move |token| {
+            let leading = token.leading_trivia_with_ids().filter_map(move |piece| {
+                (range_contains(range, piece.text_range()) && is_conserved_trivia(piece.id()))
+                    .then_some(SourceIdentity::Trivia(piece.id()))
+            });
+            let token_identity = (range_contains(range, token.token_text_range())
+                && token.token_text_range().start() != token.token_text_range().end())
+            .then_some(SourceIdentity::Token(token.source_id()))
+            .into_iter();
+            let trailing = token.trailing_trivia_with_ids().filter_map(move |piece| {
+                (range_contains(range, piece.text_range()) && is_conserved_trivia(piece.id()))
+                    .then_some(SourceIdentity::Trivia(piece.id()))
+            });
+            leading.chain(token_identity).chain(trailing)
+        })
+    }
+}
+
+fn is_conserved_trivia(identity: SourceTriviaId<'_>) -> bool {
+    let token = identity.token.tree.token(identity.token.id);
+    let range = match identity.side {
+        SourceTriviaSide::Leading => token.leading(),
+        SourceTriviaSide::Trailing => token.trailing(),
+    };
+    let index = range.start + identity.ordinal;
+    let kind = identity.token.tree.trivia_at(index).kind();
+    matches!(
+        kind,
+        TriviaKind::LineComment
+            | TriviaKind::ShebangComment
+            | TriviaKind::BlockComment
+            | TriviaKind::DocComment
+            | TriviaKind::Ignored
+    ) || (kind == TriviaKind::Newline
+        && index.checked_sub(1).is_some_and(|previous| {
+            matches!(
+                identity.token.tree.trivia_at(previous).kind(),
+                TriviaKind::LineComment | TriviaKind::ShebangComment
+            )
+        }))
+}
+
+fn range_contains(outer: TextRange, inner: TextRange) -> bool {
+    outer.start() <= inner.start() && inner.end() <= outer.end()
+}
+
+pub(crate) fn source_trivia_pieces<'tree>(
+    token: SourceTokenId<'tree>,
+    side: SourceTriviaSide,
+    range: &std::ops::Range<usize>,
+) -> SourceTriviaPieces<'tree> {
+    let data = token.tree.token(token.id);
+    let offset = match side {
+        SourceTriviaSide::Leading => data.offset,
+        SourceTriviaSide::Trailing => data.token_text_range.end(),
+    };
+    SourceTriviaPieces::new(token, side, token.tree.trivia(range), offset)
+}
+
+#[cfg(test)]
+mod tests {
+    use jolt_diagnostics::{Diagnostic, DiagnosticCodeId};
+    use jolt_text::{TextRange, TextSize};
+
+    use crate::{
+        Event, Language, LanguageLexer, LexedToken, RawSyntaxKind, SyntaxNode, SyntaxTokenData,
+        SyntaxTrivia, TriviaKind, build_syntax_tree,
+    };
+
+    use super::{ConservationError, SourceIdentity, SourceTriviaSide, SyntaxVerbatimCore};
+
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    enum TestKind {
+        Root,
+        Token,
+        Eof,
+        Error,
+    }
+
+    struct TestLanguage;
+    struct UnusedLexer;
+
+    impl Language for TestLanguage {
+        type Kind = TestKind;
+        type Lexer<'source> = UnusedLexer;
+
+        fn kind_from_raw(raw: RawSyntaxKind) -> Self::Kind {
+            match raw.get() {
+                0 => TestKind::Root,
+                1 => TestKind::Token,
+                2 => TestKind::Eof,
+                _ => TestKind::Error,
+            }
+        }
+
+        fn kind_to_raw(kind: Self::Kind) -> RawSyntaxKind {
+            RawSyntaxKind::new(match kind {
+                TestKind::Root => 0,
+                TestKind::Token => 1,
+                TestKind::Eof => 2,
+                TestKind::Error => 3,
+            })
+        }
+
+        fn eof_kind() -> Self::Kind {
+            TestKind::Eof
+        }
+
+        fn error_node_kind() -> Self::Kind {
+            TestKind::Error
+        }
+
+        fn expected_diagnostic_code() -> DiagnosticCodeId {
+            DiagnosticCodeId::new("test.expected")
+        }
+
+        fn unexpected_diagnostic_code() -> DiagnosticCodeId {
+            DiagnosticCodeId::new("test.unexpected")
+        }
+
+        fn split_token(_token: &LexedToken<Self>) -> Option<&'static [Self::Kind]> {
+            None
+        }
+    }
+
+    impl<'source> LanguageLexer<'source> for UnusedLexer {
+        type Language = TestLanguage;
+
+        fn new(_source: &'source str) -> Self {
+            Self
+        }
+
+        fn next_token_into(
+            &mut self,
+            _trivia: &mut Vec<SyntaxTrivia>,
+        ) -> LexedToken<Self::Language> {
+            panic!("test constructs tokens directly")
+        }
+
+        fn finish(self) -> Vec<Diagnostic> {
+            Vec::new()
+        }
+    }
+
+    fn test_tree() -> (&'static str, crate::SyntaxTree) {
+        let source = "x// c\n !\u{1a}";
+        let trivia = vec![
+            SyntaxTrivia::new(TriviaKind::LineComment, TextSize::new(4)),
+            SyntaxTrivia::new(TriviaKind::Newline, TextSize::new(1)),
+            SyntaxTrivia::new(TriviaKind::Whitespace, TextSize::new(1)),
+            SyntaxTrivia::new(TriviaKind::Ignored, TextSize::new(1)),
+        ];
+        let tokens = vec![
+            SyntaxTokenData::new(
+                RawSyntaxKind::new(1),
+                TextRange::new(TextSize::new(0), TextSize::new(1)),
+                0..0,
+                0..1,
+                TextSize::new(5),
+            ),
+            SyntaxTokenData::new(
+                RawSyntaxKind::new(1),
+                TextRange::new(TextSize::new(7), TextSize::new(8)),
+                1..3,
+                3..4,
+                TextSize::new(4),
+            ),
+            SyntaxTokenData::new(
+                RawSyntaxKind::new(2),
+                TextRange::empty(TextSize::new(9)),
+                4..4,
+                4..4,
+                TextSize::new(0),
+            ),
+        ];
+        let events = vec![
+            Event::StartNode {
+                kind: RawSyntaxKind::new(0),
+                forward_parent: None,
+            },
+            Event::Token,
+            Event::StartNode {
+                kind: RawSyntaxKind::new(0),
+                forward_parent: None,
+            },
+            Event::Token,
+            Event::FinishNode,
+            Event::Token,
+            Event::FinishNode,
+        ];
+        let (tree, diagnostics) = build_syntax_tree(events, tokens, trivia).expect("valid tree");
+        assert!(diagnostics.is_empty());
+        (source, tree)
+    }
+
+    fn claim_all_individually(root: SyntaxNode<'_, TestLanguage>) {
+        let mut tracker = root.conservation_tracker();
+        for token in root.tokens() {
+            if token.token_text_range().start() != token.token_text_range().end() {
+                tracker
+                    .claim_token(token.source_id())
+                    .expect("unique source token");
+            }
+            for piece in token
+                .leading_trivia_with_ids()
+                .chain(token.trailing_trivia_with_ids())
+            {
+                if piece.trivia().kind() != TriviaKind::Whitespace {
+                    tracker
+                        .claim(SourceIdentity::Trivia(piece.id()))
+                        .expect("unique conserved source trivia");
+                }
+            }
+        }
+        tracker.finish().expect("all conserved identities claimed");
+    }
+
+    #[test]
+    fn dense_accounting_conserves_comments_ignored_and_line_terminators() {
+        let (source, tree) = test_tree();
+        let root = SyntaxNode::<TestLanguage>::new_root(source, &tree);
+        claim_all_individually(root);
+
+        let mut tracker = root.conservation_tracker();
+        for token in root.tokens() {
+            if token.token_text_range().start() != token.token_text_range().end() {
+                tracker
+                    .claim_token(token.source_id())
+                    .expect("source token");
+            }
+            for piece in token
+                .leading_trivia_with_ids()
+                .chain(token.trailing_trivia_with_ids())
+            {
+                if !matches!(
+                    piece.trivia().kind(),
+                    TriviaKind::Newline | TriviaKind::Whitespace
+                ) {
+                    tracker.claim_trivia(piece.id()).expect("source trivia");
+                }
+            }
+        }
+        assert_eq!(
+            tracker.finish(),
+            Err(ConservationError::MissingTrivia {
+                token: 1,
+                side: SourceTriviaSide::Leading,
+                ordinal: 0,
+                kind: TriviaKind::Newline,
+                range: TextRange::new(TextSize::new(5), TextSize::new(6)),
+            })
+        );
+    }
+
+    #[test]
+    fn duplicate_missing_and_foreign_fail_deterministically() {
+        let (source, tree) = test_tree();
+        let root = SyntaxNode::<TestLanguage>::new_root(source, &tree);
+        let first = root.first_token().expect("first token");
+        let mut tracker = root.conservation_tracker();
+        tracker.claim_token(first.source_id()).expect("first claim");
+        assert_eq!(
+            tracker.claim_token(first.source_id()),
+            Err(ConservationError::DuplicateToken { token: 0 })
+        );
+        let comment = first
+            .trailing_trivia_with_ids()
+            .next()
+            .expect("trailing comment");
+        tracker
+            .claim_trivia(comment.id())
+            .expect("first trivia claim");
+        assert_eq!(
+            tracker.claim_trivia(comment.id()),
+            Err(ConservationError::DuplicateTrivia {
+                token: 0,
+                side: SourceTriviaSide::Trailing,
+                ordinal: 0,
+            })
+        );
+
+        let tracker = root.conservation_tracker();
+        assert_eq!(
+            tracker.finish(),
+            Err(ConservationError::MissingToken {
+                token: 0,
+                range: TextRange::new(TextSize::new(0), TextSize::new(1)),
+            })
+        );
+
+        let (other_source, other_tree) = test_tree();
+        let other_root = SyntaxNode::<TestLanguage>::new_root(other_source, &other_tree);
+        let mut tracker = root.conservation_tracker();
+        assert_eq!(
+            tracker.claim_token(other_root.first_token().expect("foreign token").source_id()),
+            Err(ConservationError::ForeignToken)
+        );
+        let foreign_comment = other_root
+            .first_token()
+            .expect("foreign token")
+            .trailing_trivia_with_ids()
+            .next()
+            .expect("foreign comment");
+        assert_eq!(
+            tracker.claim_trivia(foreign_comment.id()),
+            Err(ConservationError::ForeignTrivia)
+        );
+
+        let whitespace = root
+            .tokens()
+            .nth(1)
+            .expect("second token")
+            .leading_trivia_with_ids()
+            .nth(1)
+            .expect("leading whitespace");
+        let mut tracker = root.conservation_tracker();
+        assert_eq!(
+            tracker.claim_trivia(whitespace.id()),
+            Err(ConservationError::UnauthorizedTrivia {
+                token: 1,
+                side: SourceTriviaSide::Leading,
+                ordinal: 1,
+                kind: TriviaKind::Whitespace,
+                range: TextRange::new(TextSize::new(6), TextSize::new(7)),
+            })
+        );
+
+        let eof = root.last_token().expect("EOF token");
+        let mut tracker = root.conservation_tracker();
+        assert_eq!(
+            tracker.claim_token(eof.source_id()),
+            Err(ConservationError::UnauthorizedToken {
+                token: 2,
+                range: TextRange::empty(TextSize::new(9)),
+            })
+        );
+        assert_eq!(
+            tracker.validate_token(eof.source_id()),
+            Err(ConservationError::UnauthorizedToken {
+                token: 2,
+                range: TextRange::empty(TextSize::new(9)),
+            })
+        );
+    }
+
+    #[test]
+    fn verbatim_range_claims_exact_contained_tokens_and_trivia() {
+        let (source, tree) = test_tree();
+        let root = SyntaxNode::<TestLanguage>::new_root(source, &tree);
+        let mut tracker = root.conservation_tracker();
+        let core = SyntaxVerbatimCore::new(root);
+        tracker
+            .claim_verbatim(&core)
+            .expect("whole source is an exact verbatim range");
+        tracker.finish().expect("verbatim claims all identities");
+    }
+
+    #[test]
+    fn non_root_verbatim_core_excludes_boundary_layout_but_keeps_ignored_suffix() {
+        let (source, tree) = test_tree();
+        let root = SyntaxNode::<TestLanguage>::new_root(source, &tree);
+        let child = root.children().next().expect("nested child");
+        let core = SyntaxVerbatimCore::new(child);
+        assert_eq!(
+            core.text_range(),
+            TextRange::new(TextSize::new(7), TextSize::new(9))
+        );
+        assert_eq!(core.text(), "!\u{1a}");
+        assert_eq!(core.tokens().count(), 1);
+    }
+}

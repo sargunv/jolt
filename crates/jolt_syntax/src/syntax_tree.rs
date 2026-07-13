@@ -226,6 +226,20 @@ impl SyntaxTree {
     pub(crate) fn trivia(&self, range: &Range<usize>) -> &[SyntaxTrivia] {
         &self.trivia[range.start..range.end]
     }
+
+    #[cfg(debug_assertions)]
+    pub(crate) fn token_data(&self) -> &[SyntaxTokenData] {
+        &self.tokens
+    }
+
+    #[cfg(debug_assertions)]
+    pub(crate) const fn trivia_len(&self) -> usize {
+        self.trivia.len()
+    }
+
+    pub(crate) fn trivia_at(&self, index: usize) -> SyntaxTrivia {
+        self.trivia[index]
+    }
 }
 
 /// An event-to-tree construction error.

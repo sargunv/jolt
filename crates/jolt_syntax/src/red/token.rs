@@ -3,8 +3,10 @@ use std::{fmt, marker::PhantomData};
 use jolt_text::{TextRange, TextSize};
 
 use crate::{
-    Comments, Language, RawSyntaxKind, SyntaxTrivia,
+    Comments, Language, RawSyntaxKind, SourceTokenId, SourceTriviaPiece, SourceTriviaSide,
+    SyntaxTrivia,
     comment::{trivia_has_blank_line, trivia_iter_has_blank_line},
+    conservation::source_trivia_pieces,
     syntax_tree::{SyntaxTree, TokenId},
 };
 
@@ -54,6 +56,15 @@ impl<'tree, L: Language> SyntaxToken<'tree, L> {
         self.source
     }
 
+    /// Returns this token's parse-local, tree-branded source identity.
+    #[must_use]
+    pub const fn source_id(&self) -> SourceTokenId<'tree> {
+        SourceTokenId {
+            tree: self.tree,
+            id: self.id,
+        }
+    }
+
     /// Returns the byte offset where this token starts, including leading trivia.
     #[must_use]
     pub fn offset(&self) -> TextSize {
@@ -95,6 +106,30 @@ impl<'tree, L: Language> SyntaxToken<'tree, L> {
     #[must_use]
     pub fn trailing(&self) -> &'tree [SyntaxTrivia] {
         self.tree.trivia(&self.tree.token(self.id).trailing)
+    }
+
+    /// Returns leading trivia paired with exact parse-local identities.
+    #[must_use]
+    pub fn leading_trivia_with_ids(
+        &self,
+    ) -> impl ExactSizeIterator<Item = SourceTriviaPiece<'tree>> + use<'tree, L> {
+        source_trivia_pieces(
+            self.source_id(),
+            SourceTriviaSide::Leading,
+            self.tree.token(self.id).leading(),
+        )
+    }
+
+    /// Returns trailing trivia paired with exact parse-local identities.
+    #[must_use]
+    pub fn trailing_trivia_with_ids(
+        &self,
+    ) -> impl ExactSizeIterator<Item = SourceTriviaPiece<'tree>> + use<'tree, L> {
+        source_trivia_pieces(
+            self.source_id(),
+            SourceTriviaSide::Trailing,
+            self.tree.token(self.id).trailing(),
+        )
     }
 
     /// Returns comments attached before this token.

@@ -3,7 +3,7 @@ use std::{fmt, marker::PhantomData};
 use jolt_text::{TextRange, TextSize};
 
 use crate::{
-    Language, RawSyntaxKind,
+    Language, RawSyntaxKind, SyntaxConservationTracker, SyntaxVerbatimCore,
     syntax_tree::{NodeId, SyntaxTree, TokenId, TreeElement},
 };
 
@@ -42,6 +42,27 @@ impl<'tree, L: Language> SyntaxNode<'tree, L> {
     #[must_use]
     pub const fn source(&self) -> &'tree str {
         self.source
+    }
+
+    /// Creates root-level dense source conservation accounting for this tree.
+    ///
+    /// Optimized builds return a zero-sized no-op tracker.
+    #[must_use]
+    pub fn conservation_tracker(&self) -> SyntaxConservationTracker<'tree> {
+        SyntaxConservationTracker::new(self)
+    }
+
+    /// Returns this node's exact syntax-owned malformed-verbatim core when it
+    /// is the language's current parser error node.
+    #[must_use]
+    pub fn malformed_verbatim_core(&self) -> Option<SyntaxVerbatimCore<'tree, L>> {
+        (self.raw_kind() == L::kind_to_raw(L::error_node_kind()))
+            .then(|| SyntaxVerbatimCore::new(*self))
+    }
+
+    #[cfg(debug_assertions)]
+    pub(crate) const fn tree(&self) -> &'tree SyntaxTree {
+        self.tree
     }
 
     /// Returns the language-specific kind for this node.

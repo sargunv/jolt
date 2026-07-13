@@ -21,6 +21,14 @@ empty slots and validates each requested node. Generated constant-time accessors
 read those slots. Formatter rules structurally format valid nodes and emit only
 syntax-owned malformed/bogus subtrees verbatim.
 
+Jolt already has the typed-view half of this architecture. `SyntaxNode` is a
+small parent-aware borrowed cursor over the parse-owned arena, and wrappers such
+as `BinaryExpression`, `Block`, and `Expression` are the existing typed
+red-style views. Phase 7 preserves those cursor and wrapper types. It replaces
+their hand-written child searches with generated fixed-slot access; it does not
+add a second typed tree, universal `FooFields` wrapper layer, or persistent
+decoded representation.
+
 Verbatim is not an error-handling fallback. A formatter failure, missing
 accessor, or unimplemented valid-node rule must return an internal error in
 debug/test or fail its gate; it must never cause valid syntax to be replayed.
@@ -148,13 +156,30 @@ from the same definitions:
 - node kinds, category unions, and category-compatible bogus kinds;
 - the language syntax factory that validates parsed direct children, inserts
   empty slots, and converts an unrepresentable requested node to its bogus kind;
-- typed field records and accessors used outside the formatter; and
+- the existing typed node wrappers, category unions, and their direct-slot
+  accessors; and
 - the sealed formatter dispatch input for each node kind.
 
 There is no hand-written second description of field order in accessors or
 formatter recovery code. Generated output may be checked in, but generated and
 hand-written production line counts are reported separately and both count
 toward the completion budget.
+
+The sealed classification reuses the existing typed wrapper as its valid view:
+
+```rust
+enum FormatShape<N> {
+    Valid(N),
+    Bogus(MalformedOwner),
+    InvariantError(SyntaxInvariantError),
+}
+```
+
+Generated required-field accessors remain non-panicking and read their fixed
+slot directly. Optional accessors distinguish `Empty` from an invariant type
+mismatch. A stack-local fields value is permitted only when an owning formatter
+rule needs it to encode a real multi-field invariant; Phase 7 does not generate
+universal fields records as a convenience API.
 
 The target physical representation is Biome-style stored slots in Jolt's flat
 arena:
@@ -178,7 +203,7 @@ struct TreeNode {
 tree is stored beside it. A node kind determines the meaning of each slot index.
 Lists use generated borrowed views over their slots and separators.
 
-Phase 6 validates this representation against the current compact arena. If it
+Phase 7 validates this representation against the current compact arena. If it
 misses the performance or total-size gates, implementation stops. An alternative
 compact encoding may be proposed only if it preserves the same logical slots,
 factory behavior, generated APIs, and constant-time field access; it is an
@@ -196,7 +221,7 @@ The selected implementation must be:
 - the replacement for hand-written recovery accessors, not an additional API
   beside them.
 
-Phase 6 includes the cost of the factory, stored empty slots, and generated
+Phase 7 includes the cost of the factory, stored empty slots, and generated
 views. The decision record states which Biome capabilities are retained or
 forgone and uses parse-only CPU, allocation, memory, tree-byte, and
 production-line measurements.
@@ -259,11 +284,11 @@ The ownership invariant is bidirectional for production parses:
 - every reachable category-bogus/malformed owner is backed by a structural
   diagnostic.
 
-A valid-kind node whose generated fields are missing, duplicated, or unexpected
+A valid-kind node whose generated slots are missing, duplicated, or unexpected
 without a syntax-owned malformed marker returns `InvariantError`. It blocks
 formatting as a parser/decoder bug and may not select verbatim. Therefore a
 parse with no structural diagnostics implies that every reachable classification
-result is `Valid(fields)`.
+result is `Valid(node)`.
 
 Parser/factory tests prove both directions. Formatter dispatch uses only the
 sealed classification result; it never scans diagnostics or descendants on the
@@ -363,7 +388,7 @@ fourth direct element, it converts the requested `BinaryExpression` itself to
 `BogusExpression` while preserving all of its children. It does not scan for a
 smaller span or invent a nested bogus node.
 
-### Concrete generated factory and typed accessors
+### Concrete generated factory and existing typed accessors
 
 The grammar-shape source contains one definition equivalent to:
 
@@ -398,41 +423,32 @@ The pseudocode describes generated behavior, not a proposed builder API. Missing
 fields become `Empty`; mismatched elements are left unconsumed and make the
 current node bogus.
 
-The same definition generates constant-time slot accessors:
+The same definition keeps the existing typed wrapper and generates its
+constant-time slot accessors with their compatible public signatures:
 
 ```rust
-pub struct BinaryExpressionFields<'source> {
-    pub left: SyntaxResult<Expression<'source>>,
-    pub operator: SyntaxResult<KotlinSyntaxToken<'source>>,
-    pub right: SyntaxResult<Expression<'source>>,
-}
-
 impl<'source> BinaryExpression<'source> {
-    pub fn fields(&self) -> BinaryExpressionFields<'source> {
-        BinaryExpressionFields {
-            left: required_node(self.syntax(), 0),
-            operator: required_token(self.syntax(), 1),
-            right: required_node(self.syntax(), 2),
-        }
+    pub fn left(&self) -> Option<Expression<'source>> {
+        node_at_slot(self.syntax(), 0)
+    }
+
+    pub fn operator(&self) -> Option<KotlinSyntaxToken<'source>> {
+        token_at_slot(self.syntax(), 1)
+    }
+
+    pub fn right(&self) -> Option<Expression<'source>> {
+        node_at_slot(self.syntax(), 2)
     }
 }
 ```
 
-These Biome-shaped public accessors report missing required slots to general
-syntax consumers. Formatter dispatch resolves them before entering a valid rule:
-
-```rust
-pub struct BinaryExpressionFormatFields<'source> {
-    pub left: Expression<'source>,
-    pub operator: KotlinSyntaxToken<'source>,
-    pub right: Expression<'source>,
-}
-```
-
-`format_fields()` returns `Bogus(self)` for a required `Empty`, resolves all
-three values before constructing `Valid`, and reserves `InvariantError` for a
-slot whose stored variant or kind contradicts the generated schema. Therefore
-`Valid` is total by construction.
+The accessors return `None` for an `Empty` slot and report a stored variant or
+kind contradicting the schema through the sealed classifier. `format_shape()`
+returns `Bogus(self)` for a required `Empty`, `Valid(self)` for a conforming
+node, and reserves `InvariantError` for a factory/schema contradiction. A later
+owning formatter phase may create a private stack-local input value after
+classification when that rule needs to carry several proven required values;
+that value is behavior of the rule, not a second generated typed syntax layer.
 
 This replaces current-main accessors that find all expression-family children
 and then locate an operator by comparing source ranges. The rejected P16
@@ -440,13 +456,12 @@ and then locate an operator by comparing source ranges. The rejected P16
 is shown only as an approach that must never be reintroduced; it is not present
 on the replacement branch.
 
-Formatter classification uses the same slots, once:
+Formatter classification uses the same slots, once. The owning vertical phase
+writes structured formatting against the existing wrapper:
 
 ```rust
-match expression.format_fields() {
-    Valid(BinaryExpressionFormatFields { left, operator, right }) => {
-        format_binary(left, operator, right)
-    }
+match expression.format_shape() {
+    Valid(binary) => format_binary(binary),
     Bogus(owner) => format_tracked_verbatim(owner),
     InvariantError(error) => block_with_internal_diagnostic(error),
 }
@@ -456,8 +471,8 @@ The results for the three examples are exact:
 
 | Input   | Binary result                                      | Child result               | Verbatim boundary |
 | ------- | -------------------------------------------------- | -------------------------- | ----------------- |
-| `a + b` | `Valid(fields)`                                    | all valid                  | none              |
-| `a + §` | `Valid(fields)`                                    | right is `BogusExpression` | `§` only          |
+| `a + b` | `Valid(binary)`                                    | all valid                  | none              |
+| `a + §` | `Valid(binary)`                                    | right is `BogusExpression` | `§` only          |
 | `a +`   | `Bogus(binary)` because required slot 2 is `Empty` | none                       | `a +`             |
 
 The intended code movement is deletion, not wrapping: generated grammar/factory
@@ -467,9 +482,10 @@ forbidden patterns that must never enter a replacement branch.
 
 ### Valid structured path
 
-Every valid node kind has a structured rule over generated fields. Rules borrow
-source tokens, child nodes, and trivia. They may choose canonical whitespace,
-line breaks, indentation, and documented semantic normalizations.
+Every valid node kind has a structured rule over the existing typed wrapper and
+its generated direct-slot accessors. Rules borrow source tokens, child nodes,
+and trivia. They may choose canonical whitespace, line breaks, indentation, and
+documented semantic normalizations.
 
 Required-slot access on a node classified as valid is total. A required empty
 slot classifies its containing node as malformed before its structured rule is
@@ -484,9 +500,9 @@ covered by one.
 classifier is not called again by the structured rule:
 
 ```text
-match node.format_fields():
+match node.format_shape():
     Bogus(owner) => format_tracked_verbatim(owner)
-    Valid(fields) => format_structured(node, fields)
+    Valid(node) => format_structured(node)
     InvariantError(error) => block_with_internal_diagnostic(error)
 ```
 
@@ -502,13 +518,52 @@ Tracked verbatim output:
 - applies no syntax repair or canonical token normalization; and
 - is linear in the subtree's represented elements and source length.
 
+Phase 6 installs the primitive without pretending that category-bogus
+classification already exists. Only the current generic parser error node can
+produce an opaque borrowed malformed core. Formatter IR accepts that core,
+records its identities, resolves its bounded lexical joins, and requires the
+consuming tracked render entrypoint:
+
+```rust
+let core = error.syntax().malformed_verbatim_core()?;
+let fragment = docs.malformed_verbatim(&core, boundary);
+let document = docs.resolve_exceptional(
+    fragment,
+    previous_source_token,
+    next_source_token,
+    &mut lexical_safety,
+);
+let outcome = render_to_tracked(
+    &arena,
+    document,
+    options,
+    sink,
+    RenderProof::new(root.conservation_tracker()),
+)?;
+```
+
+An ordinary `render_to` call rejects a visited exceptional fragment. Debug and
+test renders record a `MalformedVerbatim` tag even for an empty core. Valid
+nodes cannot construct a malformed core. The tracked entrypoint completes the
+root proof before it can return a completed outcome; an intentional sink halt
+returns an incomplete halted outcome with no proof, and callers cannot forget a
+separate `finish()` step. Ordinary structured token and trivia documents carry
+source claims without exceptional tags, so mixed valid/bogus output can complete
+one root proof. Phase 7 supplies the generated category-bogus owner and sealed
+`Valid(node)`/`Bogus(owner)` dispatch, then mechanically wires the shared token,
+comment, and root-render helpers without changing family layout. Optimized
+builds keep the same required API and output behavior while the dense tracker,
+claim arena, and provenance ledger compile out.
+
 The only permitted byte change inside the verbatim core is an explicitly
 approved global text policy, such as line-ending normalization. Any such policy
 is reason-tagged and tested separately.
 
 Formatter-ignore remains a separate verbatim feature. It is selected by an
 ignore directive, not malformed classification, and retains its existing
-contract.
+normalized indentation and line-ending contract. Phase 7 adapts that existing
+range/run path to claim every skipped token and conserved trivia identity before
+root rendering becomes tracked; it does not introduce another ignore path.
 
 ### Exact verbatim range and boundary trivia
 
@@ -541,10 +596,10 @@ core plus separately tracked outside comments, not canonicalized boundary
 whitespace.
 
 A lexical atom is a source token, an authorized synthetic token, or a conserved
-comment/control item. Boundary metadata is attached only to exceptional
-source-bearing fragments: malformed verbatim, formatter-ignore, replaced,
-removed, or synthesized fragments. It is not added to every `Doc` or valid
-structured join.
+comment/control item. Boundary metadata is attached only to exceptional emitted
+fragments: malformed verbatim, formatter-ignore, replacement, or synthesized
+text. Removal has conservation claims but no emitted boundary. Metadata is not
+added to every `Doc` or valid structured join.
 
 Joins involving one of those exceptional fragments pass through a bounded
 language-aware lexical boundary service. Ordinary valid structured rules remain
@@ -555,7 +610,19 @@ without inspecting raw source gaps.
 ## Canonical Normalization
 
 Valid structured rules may perform narrowly documented semantic-preserving
-normalizations. Each normalization has a reason code and exact preconditions.
+normalizations. Each normalization is a closed enum case with one permitted
+spelling and exact preconditions. Phase 6 exposes temporary opaque replacement,
+removal, and synthesis claim carriers but no public constructors, so formatter
+rules cannot pair an arbitrary source identity with a normalization case before
+the grammar schema exists. Phase 7 moves these carriers upstream into
+`jolt_syntax`: the shared `Language` contract receives a closed normalization
+operation and the generated language implementation validates the owning slot,
+source kind, and valid-syntax precondition. A `SyntaxToken` then returns an
+opaque, tree-branded permit only when that language hook accepts the operation,
+and formatter IR consumes the permit without creating a syntax-to-IR dependency.
+Phase 7 deletes the temporary IR-owned carriers in the same commit. Synthesized
+tokens require a same-tree source-token anchor. Removal reasons are separately
+closed.
 
 Source-token replacement or reordering records the source identities it consumes
 and the permitted spelling or bounded permutation. A synthesized token records
@@ -693,8 +760,8 @@ source grew by 3,908 net lines and Java/Kotlin formatter source grew by 1,407
 net lines. The P16 Java and Kotlin accessor files alone total 12,628 lines,
 versus 9,256 lines before that stack.
 
-The replacement is not complete if it merely adds generated fields, a factory,
-or bogus kinds beside that machinery. Completion requires:
+The replacement is not complete if it merely adds generated slot accessors, a
+factory, or bogus kinds beside that machinery. Completion requires:
 
 - final production Rust under `crates/**/src/**/*.rs`, excluding
   `jolt_test_support`, to be net negative relative to `2197128` on `main`, with
@@ -715,7 +782,7 @@ git diff --numstat 2197128 -- ':(glob)crates/**/src/**/*.rs' \
   ':(exclude,glob)crates/jolt_test_support/**'
 ```
 
-Phase 6 records a by-crate projection that is net negative against `2197128`
+Phase 7 records a by-crate projection that is net negative against `2197128`
 before broad migration. Every vertical phase reports additions, deletions, and
 which main-branch helpers it replaced. Phase 23 fails if the final total is not
 net negative against `2197128` or if two independent grammar-shape descriptions
@@ -754,8 +821,8 @@ and CI regenerates the imports.
 
 ## Migration Rules
 
-- Build generated fields and malformed ownership in syntax before changing a
-  formatter family.
+- Build generated slots, direct accessors, and malformed ownership in syntax
+  before changing a formatter family.
 - Migrate vertically: parser/syntax factory, generated accessors, structured
   formatter, verbatim dispatch, fixtures, and benchmarks for one family in one
   commit.

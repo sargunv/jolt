@@ -1,6 +1,7 @@
 //! Shared lossless syntax tree infrastructure for Jolt.
 
 mod comment;
+mod conservation;
 mod event;
 mod kind;
 mod language;
@@ -10,6 +11,10 @@ mod syntax_tree;
 mod red;
 
 pub use comment::{Comment, CommentKind, Comments};
+pub use conservation::{
+    ConservationError, SourceIdentity, SourceTokenId, SourceTriviaId, SourceTriviaPiece,
+    SourceTriviaSide, SyntaxConservationTracker, SyntaxVerbatimCore,
+};
 pub use event::{CompletedMarker, Event, Marker};
 pub use kind::RawSyntaxKind;
 pub use language::Language;
