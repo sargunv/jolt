@@ -3,7 +3,8 @@ use jolt_kotlin_fmt::format_source_to_sink;
 use jolt_kotlin_syntax::parse_kotlin_file;
 use jolt_test_support::{
     SnapshotBuilder, StringSink, collect_kotlin_files, fixture_snapshot_name, kotlin_fixture_root,
-    read_to_string, render_diagnostics, represented_token_loss_report, trivia_markers,
+    read_to_string, render_diagnostics, represented_comment_inventory,
+    represented_token_loss_report, trivia_markers,
 };
 
 #[test]
@@ -36,6 +37,9 @@ fn kotlin_recovery_formatter_snapshots() {
         });
         let token_loss =
             represented_token_loss_report(syntax.token_iter(), formatted_syntax.token_iter(), &[]);
+        let comment_loss = (represented_comment_inventory(syntax.token_iter())
+            != represented_comment_inventory(formatted_syntax.token_iter()))
+        .then_some("represented comment inventory changed\n");
         let expected_markers = trivia_markers(&source);
         let actual_markers = trivia_markers(&formatted);
         let marker_loss = (actual_markers != expected_markers).then(|| {
@@ -43,11 +47,12 @@ fn kotlin_recovery_formatter_snapshots() {
                 "trivia markers changed\nexpected: {expected_markers:#?}\nactual: {actual_markers:#?}\n"
             )
         });
-        if !token_loss.is_empty() || marker_loss.is_some() {
+        if !token_loss.is_empty() || comment_loss.is_some() || marker_loss.is_some() {
             conservation_failures.push(format!(
-                "{}:\n{}{marker_loss}",
+                "{}:\n{}{comment_loss}{marker_loss}",
                 path.display(),
                 token_loss,
+                comment_loss = comment_loss.unwrap_or_default(),
                 marker_loss = marker_loss.unwrap_or_default(),
             ));
         }

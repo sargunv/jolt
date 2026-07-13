@@ -731,8 +731,8 @@ cannot be waived while declaring the checklist `CLEAN`.
 3. **Valid-path tests** fail on every verbatim tag.
 4. **Malformed-path tests** prove exact tracked verbatim coverage and structured
    formatting around it.
-5. **Lexical-pair tests** use a checked-in content-addressed set of finite token
-   and comment representatives.
+5. **Lexical-pair tests** use a checked-in finite set of token and comment
+   representatives.
 6. **Mutation tests** use a checked-in bounded seed manifest and deterministic
    token deletion/replacement operations.
 7. **In-repository and imported corpora** apply conservation, classification,
@@ -741,6 +741,16 @@ cannot be waived while declaring the checklist `CLEAN`.
    partial output.
 9. **Performance tests** compare the same release artifacts and manifests before
    and after each vertical slice and at completion.
+
+Phase 5 installs the green, architecture-neutral corpus harness. Imported files
+with parser diagnostics or syntax-reconstruction mismatches begin in an exact
+deferred-path manifest, with reasons and owning replacement phases, rather than
+as knowingly failing tests or snapshotted formatter-loss allowlists. Phases 8
+through 19 activate those paths by owned syntax family only when all applicable
+gates pass. Phase 23 requires the deferred manifest to be empty and applies the
+full corpus contract above. Imported corpus identity remains the importer's
+responsibility: it pins upstream commits, writes the generated file manifest,
+and CI regenerates the imports.
 
 ## Migration Rules
 
@@ -756,6 +766,8 @@ cannot be waived while declaring the checklist `CLEAN`.
 - Never introduce a temporary formatter fallback from structured failure to
   verbatim.
 - Preserve useful parser-reachability fixes and fixtures from the old branches.
+- Restore each historical regression fixture in its owning vertical phase, not
+  in the Phase 5 harness commit.
 - A valid family is complete only when its tests prove zero verbatim coverage.
 
 ## Non-Goals

@@ -127,18 +127,19 @@ reproductions do not by themselves close the broader architecture items below.
       `FormatSinkResult::Halted`.
 - [ ] Add dense debug/test token and comment accounting over existing syntax
       identities so identical synthesized tokens cannot mask loss.
-- [ ] Extend recovery comment conservation from explicit markers to canonical
+- [x] Extend recovery comment conservation from explicit markers to canonical
       inventories of every represented source comment.
 - [x] Stop skipping parser-diagnostic fixtures in
       `crates/jolt_java_fmt/tests/corpus.rs:28-33` and
       `crates/jolt_kotlin_fmt/tests/corpus.rs:28-33`; route every represented
       tree through conservation and idempotence checks.
-- [ ] Stop skipping diagnostic imported Java and Kotlin inputs in
-      `crates/jolt_java_fmt/tests/corpus_fixtures.rs:40-53` and
-      `crates/jolt_kotlin_fmt/tests/corpus_fixtures.rs:35-49`; report exact
-      skipped paths rather than aggregate counts.
-- [ ] Make imported fixture manifests content-addressed instead of validating
-      only aggregate counts.
+- [x] Replace aggregate diagnostic-import skip counts with an exact
+      deferred-path manifest in Phase 5. Each vertical phase removes the paths
+      owned by its migrated syntax families only after their hard conservation
+      and idempotence gates pass. Phase 23 requires the manifest to be empty.
+- [x] Keep imported corpus identity in the importer: upstream commits and the
+      generated file manifest are pinned, and CI regenerates imports. Formatter
+      tests do not duplicate that contract by rehashing imported files.
 - [ ] Make imported Java and Kotlin syntax reconstruction loss a hard failure
       instead of a summary count in
       `crates/jolt_java_syntax/tests/parser_fixtures.rs:38-42` and
@@ -148,7 +149,7 @@ reproductions do not by themselves close the broader architecture items below.
 - [ ] Audit every Java and Kotlin token-sequence/raw replay call. Retain it only
       inside tracked syntax-owned malformed/bogus verbatim or formatter-ignore;
       valid syntax must use structured rules.
-- [ ] Return a diagnostic when either formatter receives no syntax tree instead
+- [x] Return a diagnostic when either formatter receives no syntax tree instead
       of an unexplained empty blocked result:
       `crates/jolt_java_fmt/src/format.rs:33-36` and
       `crates/jolt_kotlin_fmt/src/format.rs:33-36`.
@@ -230,24 +231,24 @@ The classifications are semantic, not instructions to cherry-pick commits out of
 their dependency chain. The replacement stack reconstructs the accepted pieces
 in dependency order.
 
-| Old phase                                | Commit    | Classification   | Disposition                                                                                                                                                                                                                                     |
-| ---------------------------------------- | --------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1. Authoritative gates                   | `86b178b` | Revise           | Keep no-tree diagnostics, content-addressed manifests, diagnostic corpora, comment inventories, and renderer completion. Rework token accounting as dense debug/test tracking over existing IDs; do not add a production parts/provenance tree. |
-| 2. Java recovery ownership               | `2aff426` | Supersede        | Keep parser reachability fixes, fixtures, and useful grammar-role vocabulary. Replace skip/range-derived recovery accessors with generated fields and syntax-owned malformed/bogus boundaries.                                                  |
-| 3. Kotlin declaration ownership          | `d1783cf` | Supersede        | Keep duplicate-header parsing, fixtures, and parser findings. Replace ordered recovery streams, range-derived headers/bodies, and skip predicates with generated fields and malformed ownership.                                                |
-| 4. Kotlin expression/type ownership      | `d5d2fc8` | Supersede        | Keep its recovery corpus and delimiter/list findings. Move ownership into parser recovery and generated fields with explicit malformed nodes; do not reconstruct expression roles in the formatter.                                             |
-| 5. Kotlin types/parameters               | `bb3fa8d` | Supersede        | Keep valid canonical layout, parser fixes, list primitives, and fixtures. Replace per-node recovery state machines with structured valid rules plus tracked verbatim malformed dispatch.                                                        |
-| 6. Kotlin declarations                   | `35e2e6e` | Supersede        | Keep parser fixes, canonical declaration documents, and fixtures. Remove prefix/header/tail recovery partitioning and format directly from valid decoded fields or a malformed boundary.                                                        |
-| 7. Kotlin expressions/control flow       | `c2f7a66` | Supersede        | Keep parser-reachable fixtures and bounded recovery findings. Remove manual recovery loops, range inference, and parser-inexpressible completion claims.                                                                                        |
-| 8. Kotlin formatter-owned parsing/replay | `598e535` | Supersede        | Keep the `fun interface` parser correction, canonical rules, and fixtures. Replace filtered token fallbacks with syntax-owned malformed verbatim; valid nodes must never replay.                                                                |
-| 9. Kotlin source-gap layout              | `ce91a28` | Accept unchanged | Retain represented-trivia classification, raw-gap removal on valid paths, formatter-ignore boundary, comment ownership, and linear matching.                                                                                                    |
-| 10. Kotlin repair/panic paths            | `4d52772` | Revise           | Keep guarded valid-syntax normalization, malformed-token preservation, parser fixtures, and panic removal. Route malformed imports verbatim and keep valid import sorting behind malformed barriers.                                            |
-| 11. Java programs/declarations           | `95d158c` | Supersede        | Keep duplicate-package parsing, explicit recovery nodes, singleton removal, valid canonical rules, and fixtures. Replace bespoke recovery streams and dispatch.                                                                                 |
-| 12. Java expressions/statements          | `e4db005` | Supersede        | Keep parser fixes, fixtures, and grammar-role vocabulary. Replace optional-anchor/range recovery regions and formatter loops with generated fields and malformed boundaries.                                                                    |
-| 13. Java formatter-owned parsing/replay  | `e47c982` | Supersede        | Keep borrowed operator identity, valid canonical rules, fixtures, and the finding that valid replay is unsafe. Replace local recovery formatting with tracked malformed verbatim.                                                               |
-| 14. Java repair/panic paths              | `c272352` | Revise           | Re-extract missing-body parser boundaries, no-repair behavior, panic removal, and fixtures. Missing bodies must create syntax-owned malformed boundaries before formatter dispatch.                                                             |
-| 15. Cross-language source reconstruction | `fa6055d` | Supersede        | Keep trivia/lexical-boundary findings and fixtures. Recovered source-gap reconstruction is unnecessary once malformed subtrees are tracked verbatim; valid layout remains structured.                                                           |
-| 16. Cost model                           | `046eff8` | Accept unchanged | Carry forward bounded formatter-ignore lookup, finite sorting models, constant-time parent-role lookup, comment deduplication, and source-gap helper removal.                                                                                   |
+| Old phase                                | Commit    | Classification   | Disposition                                                                                                                                                                                                                                      |
+| ---------------------------------------- | --------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1. Authoritative gates                   | `86b178b` | Revise           | Keep no-tree diagnostics, an exact deferred-path queue, diagnostic corpora, comment inventories, and renderer completion. Rework token accounting as dense debug/test tracking over existing IDs; do not add a production parts/provenance tree. |
+| 2. Java recovery ownership               | `2aff426` | Supersede        | Keep parser reachability fixes, fixtures, and useful grammar-role vocabulary. Replace skip/range-derived recovery accessors with generated fields and syntax-owned malformed/bogus boundaries.                                                   |
+| 3. Kotlin declaration ownership          | `d1783cf` | Supersede        | Keep duplicate-header parsing, fixtures, and parser findings. Replace ordered recovery streams, range-derived headers/bodies, and skip predicates with generated fields and malformed ownership.                                                 |
+| 4. Kotlin expression/type ownership      | `d5d2fc8` | Supersede        | Keep its recovery corpus and delimiter/list findings. Move ownership into parser recovery and generated fields with explicit malformed nodes; do not reconstruct expression roles in the formatter.                                              |
+| 5. Kotlin types/parameters               | `bb3fa8d` | Supersede        | Keep valid canonical layout, parser fixes, list primitives, and fixtures. Replace per-node recovery state machines with structured valid rules plus tracked verbatim malformed dispatch.                                                         |
+| 6. Kotlin declarations                   | `35e2e6e` | Supersede        | Keep parser fixes, canonical declaration documents, and fixtures. Remove prefix/header/tail recovery partitioning and format directly from valid decoded fields or a malformed boundary.                                                         |
+| 7. Kotlin expressions/control flow       | `c2f7a66` | Supersede        | Keep parser-reachable fixtures and bounded recovery findings. Remove manual recovery loops, range inference, and parser-inexpressible completion claims.                                                                                         |
+| 8. Kotlin formatter-owned parsing/replay | `598e535` | Supersede        | Keep the `fun interface` parser correction, canonical rules, and fixtures. Replace filtered token fallbacks with syntax-owned malformed verbatim; valid nodes must never replay.                                                                 |
+| 9. Kotlin source-gap layout              | `ce91a28` | Accept unchanged | Retain represented-trivia classification, raw-gap removal on valid paths, formatter-ignore boundary, comment ownership, and linear matching.                                                                                                     |
+| 10. Kotlin repair/panic paths            | `4d52772` | Revise           | Keep guarded valid-syntax normalization, malformed-token preservation, parser fixtures, and panic removal. Route malformed imports verbatim and keep valid import sorting behind malformed barriers.                                             |
+| 11. Java programs/declarations           | `95d158c` | Supersede        | Keep duplicate-package parsing, explicit recovery nodes, singleton removal, valid canonical rules, and fixtures. Replace bespoke recovery streams and dispatch.                                                                                  |
+| 12. Java expressions/statements          | `e4db005` | Supersede        | Keep parser fixes, fixtures, and grammar-role vocabulary. Replace optional-anchor/range recovery regions and formatter loops with generated fields and malformed boundaries.                                                                     |
+| 13. Java formatter-owned parsing/replay  | `e47c982` | Supersede        | Keep borrowed operator identity, valid canonical rules, fixtures, and the finding that valid replay is unsafe. Replace local recovery formatting with tracked malformed verbatim.                                                                |
+| 14. Java repair/panic paths              | `c272352` | Revise           | Re-extract missing-body parser boundaries, no-repair behavior, panic removal, and fixtures. Missing bodies must create syntax-owned malformed boundaries before formatter dispatch.                                                              |
+| 15. Cross-language source reconstruction | `fa6055d` | Supersede        | Keep trivia/lexical-boundary findings and fixtures. Recovered source-gap reconstruction is unnecessary once malformed subtrees are tracked verbatim; valid layout remains structured.                                                            |
+| 16. Cost model                           | `046eff8` | Accept unchanged | Carry forward bounded formatter-ignore lookup, finite sorting models, constant-time parent-role lookup, comment deduplication, and source-gap helper removal.                                                                                    |
 
 ### Audit Consequences
 
@@ -332,12 +333,21 @@ pinned to their old-phase commits; mixed-family fixtures carry a separate scope
 for each owning replacement phase. The known active expression regression stays
 inline until Phase 18 so Phase 4 does not add a knowingly failing corpus input.
 
-### New Phase 5: Public Completion And Corpus Baseline
+### New Phase 5: Green Completion Harness And Corpus Baseline
 
-Re-extract no-tree diagnostics, halted-render rejection, content-addressed
-manifests, exact failing paths, represented-comment inventories, and diagnostic
-corpus routing from old Phase 1. Nonempty loss or idempotence findings fail
-instead of becoming snapshot allowlists.
+Re-extract only architecture-neutral enforcement from old Phase 1: explicit
+no-tree diagnostics, halted-render rejection, exact per-path reporting, and
+represented-comment inventory helpers. Keep the existing in-repository
+diagnostic corpus routed through hard token/comment conservation and idempotence
+gates.
+
+This phase restores no historical regression fixture, adds no knowingly failing
+test, and changes no formatter recovery or layout rule. Record imported sources
+that cannot yet enter the hard formatter gate—including parser diagnostics and
+syntax-reconstruction mismatches—in an exact deferred-path manifest with a
+reason and owning replacement phase. That manifest is a migration queue, not a
+snapshot of accepted formatter loss. The Phase 5 commit must pass
+`mise run test` with no token-loss, comment-loss, or idempotence allowlist.
 
 ### New Phase 6: Grammar Schema, Syntax Factory, And Field Representation
 
@@ -369,6 +379,13 @@ For expression statements, binary/unary expressions, `instanceof` patterns, one
 list, and blocks, add category-compatible bogus nodes, structural diagnostic
 ownership, generated fields, structured valid rules, malformed-only verbatim
 dispatch, cleanup, fixtures, and Phase 3 measurements in one commit.
+
+Every vertical phase from 8 through 19 restores the historical fixture scopes
+assigned to it by `formatter-retained-regressions.toml` and removes the imported
+paths owned by its migrated families from Phase 5's deferred manifest. A path
+leaves the manifest only when its syntax reconstruction, conservation,
+represented-comment, reparse, and idempotence checks all pass. No phase commits
+a red test or snapshots a nonempty failure list.
 
 ### New Phase 9: Kotlin Vertical Slice
 
@@ -439,7 +456,9 @@ blocks. Delete Kotlin's final bespoke recovery formatting.
 
 Audit every spelling/reordering/synthetic normalization and every panic or empty
 fallback. Normalizations require valid syntax and exact debug/test claims;
-malformed syntax is preserved verbatim rather than repaired.
+malformed syntax is preserved verbatim rather than repaired. Resolve every
+normalization finding by distinguishing documented valid normalization from
+source loss without adding per-path exceptions.
 
 ### New Phase 21: Delete Transitional Recovery Architecture
 
@@ -460,7 +479,8 @@ budgets without an explicit approved architecture amendment.
 Run generated-field exhaustiveness, bogus-category and diagnostic-ownership
 snapshots, token/comment tracking, valid zero-verbatim gates, deterministic
 mutations, in-repository and imported corpora, CLI/dprint tests, `mise run fix`,
-and `mise run test`. Scan for valid replay, untracked verbatim, raw-gap layout,
+and `mise run test`. Require Phase 5's imported diagnostic deferred-path
+manifest to be empty. Scan for valid replay, untracked verbatim, raw-gap layout,
 repair synthesis, panic paths, unbounded algorithms, and formatter-side
 structural layers. Fail if P16-only ordered recovery parts or local replay loops
 were reintroduced. Report generated and hand-written production LOC separately,

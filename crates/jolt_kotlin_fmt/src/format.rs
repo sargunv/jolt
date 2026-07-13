@@ -10,6 +10,8 @@ use crate::rules::program::format_file;
 /// Stable Kotlin formatter diagnostic codes.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 enum KotlinFormatDiagnosticCode {
+    /// Parsing did not produce a represented syntax tree.
+    NoSyntaxTree,
     /// The document renderer rejected a formatter-produced document.
     RenderError,
 }
@@ -17,6 +19,7 @@ enum KotlinFormatDiagnosticCode {
 impl KotlinFormatDiagnosticCode {
     const fn id(self) -> DiagnosticCodeId {
         match self {
+            Self::NoSyntaxTree => DiagnosticCodeId::new("kotlin.format.no_syntax_tree"),
             Self::RenderError => DiagnosticCodeId::new("kotlin.format.render_error"),
         }
     }
@@ -32,7 +35,7 @@ pub fn format_source_to_sink<S: RenderSink + ?Sized>(
 
     let Some(syntax) = parse.syntax() else {
         return FormatSinkResult::Blocked {
-            diagnostics: Vec::new(),
+            diagnostics: vec![no_syntax_tree_diagnostic()],
         };
     };
 
@@ -75,6 +78,16 @@ pub fn benchmark_format_syntax_to_sink<S: RenderSink + ?Sized>(
     sink: &mut S,
 ) -> (FormatSinkResult, jolt_fmt_ir::DocArenaMetrics) {
     format_syntax_to_sink(syntax, *options, sink)
+}
+
+fn no_syntax_tree_diagnostic() -> Diagnostic {
+    Diagnostic {
+        code: KotlinFormatDiagnosticCode::NoSyntaxTree.id(),
+        severity: Severity::Error,
+        stage: DiagnosticStage::Formatter,
+        message: "Kotlin formatter received no represented syntax tree".to_owned(),
+        range: None,
+    }
 }
 
 fn render_options(options: FormatOptions) -> RenderOptions {

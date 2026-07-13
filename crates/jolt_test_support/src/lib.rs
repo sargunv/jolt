@@ -7,7 +7,8 @@ use std::path::{Path, PathBuf};
 
 use jolt_diagnostics::Diagnostic;
 use jolt_fmt_ir::{RenderControl, RenderSink};
-use jolt_syntax::{Language, SyntaxToken};
+use jolt_syntax::{CommentKind, Language, SyntaxToken};
+use serde::Deserialize;
 use unicode_width::UnicodeWidthStr;
 
 #[derive(Default)]
@@ -184,6 +185,157 @@ pub fn fixture_manifest(root: &Path, paths: &[PathBuf]) -> String {
         .join("\n")
 }
 
+#[derive(Clone, Copy, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd)]
+#[serde(rename_all = "kebab-case")]
+pub enum DeferredReason {
+    ParserDiagnostics,
+    NoSyntaxTree,
+    SyntaxReconstructionMismatch,
+}
+
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+pub struct ObservedDeferredPath {
+    suite: String,
+    path: String,
+    reasons: Vec<DeferredReason>,
+}
+
+impl ObservedDeferredPath {
+    #[must_use]
+    pub fn new(
+        suite: &str,
+        suite_root: &Path,
+        path: &Path,
+        reasons: impl IntoIterator<Item = DeferredReason>,
+    ) -> Self {
+        let relative = path
+            .strip_prefix(suite_root)
+            .unwrap_or_else(|error| {
+                panic!(
+                    "{} is outside {}: {error}",
+                    path.display(),
+                    suite_root.display()
+                )
+            })
+            .to_string_lossy()
+            .replace('\\', "/");
+        let mut reasons = reasons.into_iter().collect::<Vec<_>>();
+        reasons.sort_unstable();
+        reasons.dedup();
+        assert!(!reasons.is_empty(), "deferred path must have a reason");
+        Self {
+            suite: suite.to_owned(),
+            path: relative,
+            reasons,
+        }
+    }
+}
+
+#[derive(Deserialize)]
+struct DeferredManifest {
+    version: u8,
+    entries: Vec<DeferredEntry>,
+}
+
+#[derive(Deserialize)]
+struct DeferredEntry {
+    suite: String,
+    path: String,
+    reasons: Vec<DeferredReason>,
+    owner_phase: u8,
+}
+
+/// Verifies that the exact imported migration queue matches the paths which
+/// cannot yet enter the hard formatter gate.
+pub fn assert_deferred_import_manifest(
+    workspace_root: &Path,
+    imports_root: &Path,
+    suite_names: &[&str],
+    reason_filter: &[DeferredReason],
+    observed: &[ObservedDeferredPath],
+) {
+    const HARD_GATE_SUITES: &[&str] = &[
+        "google-java-format/input",
+        "palantir-java-format/input",
+        "prettier-java/input",
+        "ktfmt/source",
+        "maplibre-compose/source",
+    ];
+    let manifest_path = workspace_root.join("tools/import/deferred-formatter-paths.json");
+    let manifest: DeferredManifest = serde_json::from_str(&read_to_string(&manifest_path))
+        .unwrap_or_else(|error| panic!("failed to parse {}: {error}", manifest_path.display()));
+    assert_eq!(
+        manifest.version, 1,
+        "unsupported deferred formatter manifest version"
+    );
+
+    let mut expected = Vec::with_capacity(manifest.entries.len());
+    let mut unique_paths = std::collections::BTreeSet::new();
+    for entry in manifest.entries {
+        assert!(
+            HARD_GATE_SUITES.contains(&entry.suite.as_str()),
+            "deferred path belongs to a suite outside the formatter hard gate: {}/{}",
+            entry.suite,
+            entry.path
+        );
+        assert!(
+            unique_paths.insert((entry.suite.clone(), entry.path.clone())),
+            "duplicate deferred formatter path: {}/{}",
+            entry.suite,
+            entry.path
+        );
+        assert!(
+            (8..=19).contains(&entry.owner_phase),
+            "invalid owner phase {} for {}/{}",
+            entry.owner_phase,
+            entry.suite,
+            entry.path
+        );
+        let path = imports_root.join(&entry.suite).join(&entry.path);
+        assert!(path.is_file(), "missing deferred path {}", path.display());
+        let mut reasons = entry.reasons;
+        let reason_count = reasons.len();
+        reasons.sort_unstable();
+        reasons.dedup();
+        assert!(
+            !reasons.is_empty(),
+            "deferred path has no reason: {}/{}",
+            entry.suite,
+            entry.path
+        );
+        assert_eq!(
+            reasons.len(),
+            reason_count,
+            "duplicate deferred reason for {}/{}",
+            entry.suite,
+            entry.path
+        );
+        if suite_names.contains(&entry.suite.as_str())
+            && (reason_filter.is_empty()
+                || reasons.iter().any(|reason| reason_filter.contains(reason)))
+        {
+            expected.push(ObservedDeferredPath {
+                suite: entry.suite,
+                path: entry.path,
+                reasons,
+            });
+        }
+    }
+    expected.sort();
+    let mut actual = observed.to_vec();
+    assert!(
+        actual
+            .iter()
+            .all(|entry| suite_names.contains(&entry.suite.as_str())),
+        "observed a deferred path outside the selected suites"
+    );
+    actual.sort();
+    assert_eq!(
+        actual, expected,
+        "deferred formatter paths changed; fix a path in its owning phase or update the reviewed migration queue"
+    );
+}
+
 #[must_use]
 pub fn read_to_string(path: &Path) -> String {
     fs::read_to_string(path)
@@ -276,7 +428,6 @@ pub struct ImportedFormatterSummary {
     files: usize,
     formatted: usize,
     syntax_blocked: usize,
-    formatter_blocked: usize,
     reconstructed_changed: usize,
     diagnostics: BTreeMap<String, usize>,
 }
@@ -289,7 +440,6 @@ impl ImportedFormatterSummary {
             files,
             formatted: 0,
             syntax_blocked: 0,
-            formatter_blocked: 0,
             reconstructed_changed: 0,
             diagnostics: BTreeMap::new(),
         }
@@ -301,10 +451,6 @@ impl ImportedFormatterSummary {
 
     pub fn note_syntax_blocked(&mut self) {
         self.syntax_blocked += 1;
-    }
-
-    pub fn note_formatter_blocked(&mut self) {
-        self.formatter_blocked += 1;
     }
 
     pub fn note_reconstruction_changed(&mut self) {
@@ -325,8 +471,6 @@ impl ImportedFormatterSummary {
         writeln!(&mut output, "files: {}", self.files).expect("write summary");
         writeln!(&mut output, "formatted: {}", self.formatted).expect("write summary");
         writeln!(&mut output, "syntax blocked: {}", self.syntax_blocked).expect("write summary");
-        writeln!(&mut output, "formatter blocked: {}", self.formatter_blocked)
-            .expect("write summary");
         writeln!(
             &mut output,
             "reconstructed changed: {}",
@@ -358,6 +502,84 @@ pub fn trivia_markers(source: &str) -> BTreeMap<String, usize> {
         *markers.entry(marker).or_insert(0) += 1;
     }
     markers
+}
+
+/// Inventories every represented comment by kind and a single global canonical
+/// body that ignores formatter-controlled interior whitespace.
+#[must_use]
+pub fn represented_comment_inventory<'source, L>(
+    tokens: impl IntoIterator<Item = SyntaxToken<'source, L>>,
+) -> BTreeMap<String, usize>
+where
+    L: Language,
+{
+    let mut comments = BTreeMap::new();
+    for token in tokens {
+        for comment in token.leading_comments().chain(token.trailing_comments()) {
+            let key = comment_inventory_key(comment.kind(), comment.text());
+            *comments.entry(key).or_default() += 1;
+        }
+    }
+    comments
+}
+
+fn comment_inventory_key(kind: CommentKind, text: &str) -> String {
+    format!("{kind:?}:{}", canonical_comment_text(text))
+}
+
+fn canonical_comment_text(text: &str) -> String {
+    let body = text
+        .strip_prefix("//")
+        .or_else(|| {
+            text.strip_prefix("/**")
+                .and_then(|text| text.strip_suffix("*/"))
+        })
+        .or_else(|| {
+            text.strip_prefix("/*")
+                .and_then(|text| text.strip_suffix("*/"))
+        })
+        .unwrap_or(text);
+    let multiline = body.contains('\n');
+    body.lines()
+        .flat_map(|line| {
+            let line = line.trim();
+            let line = if multiline {
+                line.strip_prefix('*')
+                    .map_or(line, |line| line.strip_prefix(' ').unwrap_or(line))
+            } else {
+                line
+            };
+            line.split_whitespace()
+        })
+        .filter(|word| !word.is_empty())
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::comment_inventory_key;
+    use jolt_syntax::CommentKind;
+
+    #[test]
+    fn canonical_comment_inventory_preserves_meaningful_stars_and_kind() {
+        assert_ne!(
+            comment_inventory_key(CommentKind::Block, "/* *bold* */"),
+            comment_inventory_key(CommentKind::Block, "/* bold */")
+        );
+        assert_ne!(
+            comment_inventory_key(CommentKind::Block, "/* same */"),
+            comment_inventory_key(CommentKind::Doc, "/** same */")
+        );
+    }
+
+    #[test]
+    fn canonical_comment_inventory_ignores_multiline_decoration_and_whitespace() {
+        assert_eq!(
+            comment_inventory_key(CommentKind::Doc, "/**\n * hello   world\n */"),
+            comment_inventory_key(CommentKind::Doc, "/** hello world */")
+        );
+    }
 }
 
 /// Describes a bounded source-token removal performed by a formatter

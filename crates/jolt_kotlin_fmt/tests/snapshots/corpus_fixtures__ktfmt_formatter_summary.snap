@@ -6,7 +6,6 @@ suite: ktfmt
 files: 72
 formatted: 72
 syntax blocked: 0
-formatter blocked: 0
 reconstructed changed: 0
 
 diagnostics:

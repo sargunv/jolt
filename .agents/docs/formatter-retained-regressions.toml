@@ -24,7 +24,7 @@ paths = [
   "crates/jolt_java_syntax/tests/parser_fixtures.rs",
   "crates/jolt_kotlin_syntax/tests/imported_fixtures.rs",
 ]
-requirement = "Inventory environment-owned imported inputs through content-addressed manifests and report every skipped or failing path."
+requirement = "Inventory every deferred imported diagnostic or reconstruction path with its exact reason and owning replacement phase; rely on pinned importer commits and CI regeneration for corpus identity."
 
 # Old Phase 1 made these recovery reproductions authoritative.
 

@@ -6,7 +6,6 @@ suite: maplibre-compose
 files: 485
 formatted: 485
 syntax blocked: 0
-formatter blocked: 0
 reconstructed changed: 0
 
 diagnostics:

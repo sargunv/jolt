@@ -10,6 +10,8 @@ rust-version.workspace = true
 jolt_diagnostics = { path = "../jolt_diagnostics" }
 jolt_fmt_ir = { path = "../jolt_fmt_ir" }
 jolt_syntax = { path = "../jolt_syntax" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 unicode-width = "0.2.2"
 
 [lints]

@@ -1,17 +1,31 @@
 use std::path::PathBuf;
 
-use jolt_diagnostics::DiagnosticStage;
 use jolt_java_fmt::{FormatOptions, FormatSinkResult, format_source_to_sink};
 use jolt_java_syntax::parse_compilation_unit;
 use jolt_test_support::{
-    ImportedFormatterSummary, StringSink, collect_java_files, read_to_string, workspace_root,
+    DeferredReason, ImportedFormatterSummary, ObservedDeferredPath, StringSink,
+    assert_deferred_import_manifest, collect_java_files, read_to_string, workspace_root,
 };
 
 #[test]
 fn imported_fixture_inputs_format_idempotently_and_parse() {
-    let google_summary = assert_corpus("google-java-format", 209);
-    let palantir_summary = assert_corpus("palantir-java-format", 226);
-    let prettier_summary = assert_corpus("prettier-java", 86);
+    let mut deferred = Vec::new();
+    let google_summary = assert_corpus("google-java-format", &mut deferred);
+    let palantir_summary = assert_corpus("palantir-java-format", &mut deferred);
+    let prettier_summary = assert_corpus("prettier-java", &mut deferred);
+
+    let workspace = workspace_root(env!("CARGO_MANIFEST_DIR"));
+    assert_deferred_import_manifest(
+        &workspace,
+        &workspace.join("tools/import/.imports"),
+        &[
+            "google-java-format/input",
+            "palantir-java-format/input",
+            "prettier-java/input",
+        ],
+        &[],
+        &deferred,
+    );
 
     insta::assert_snapshot!(
         "google_java_format_formatter_summary",
@@ -24,49 +38,49 @@ fn imported_fixture_inputs_format_idempotently_and_parse() {
     insta::assert_snapshot!("prettier_java_formatter_summary", prettier_summary.render());
 }
 
-fn assert_corpus(suite: &str, expected_files: usize) -> ImportedFormatterSummary {
+fn assert_corpus(
+    suite: &str,
+    deferred: &mut Vec<ObservedDeferredPath>,
+) -> ImportedFormatterSummary {
     let root = fixture_root(suite);
     let files = collect_java_files(&root);
-
-    assert_eq!(
-        files.len(),
-        expected_files,
-        "expected the pinned {suite} Java input fixture corpus"
-    );
-
+    let suite_name = format!("{suite}/input");
     let mut summary = ImportedFormatterSummary::new(suite, files.len());
     let options = FormatOptions::default();
 
     for path in files {
         let source = read_to_string(&path);
         let parse = parse_compilation_unit(&source);
-        let syntax = parse
-            .syntax()
-            .unwrap_or_else(|| panic!("parser aborted in {}", path.display()));
-        if syntax.source_text() != source {
+        let syntax = parse.syntax();
+        let mut reasons = Vec::new();
+        if syntax.is_none() {
+            reasons.push(DeferredReason::NoSyntaxTree);
+        } else if syntax.is_some_and(|syntax| syntax.source_text() != source) {
             summary.note_reconstruction_changed();
+            reasons.push(DeferredReason::SyntaxReconstructionMismatch);
         }
         summary.record_diagnostics(parse.diagnostics());
-
         if !parse.diagnostics().is_empty() {
             summary.note_syntax_blocked();
+            reasons.push(DeferredReason::ParserDiagnostics);
+        }
+        if !reasons.is_empty() {
+            deferred.push(ObservedDeferredPath::new(
+                &suite_name,
+                &root,
+                &path,
+                reasons,
+            ));
             continue;
         }
+        let _syntax = syntax.expect("active imported path has syntax");
 
         let formatted = match format_source(&source, options) {
             Ok(formatted) => formatted,
-            Err(diagnostics) => {
-                assert!(
-                    diagnostics
-                        .iter()
-                        .all(|diagnostic| diagnostic.stage == DiagnosticStage::Formatter),
-                    "non-formatter diagnostic(s) after clean parse in {}: {diagnostics:#?}",
-                    path.display()
-                );
-                summary.record_diagnostics(&diagnostics);
-                summary.note_formatter_blocked();
-                continue;
-            }
+            Err(diagnostics) => panic!(
+                "formatter refused clean imported input {}: {diagnostics:#?}",
+                path.display()
+            ),
         };
         summary.note_formatted();
 
@@ -78,9 +92,16 @@ fn assert_corpus(suite: &str, expected_files: usize) -> ImportedFormatterSummary
             formatted_parse.diagnostics(),
             formatted
         );
-        assert!(
-            formatted_parse.syntax().is_some(),
-            "formatted output produced no syntax tree for {}",
+        let formatted_syntax = formatted_parse.syntax().unwrap_or_else(|| {
+            panic!(
+                "formatted output produced no syntax tree for {}",
+                path.display()
+            )
+        });
+        assert_eq!(
+            formatted_syntax.source_text(),
+            formatted,
+            "formatted output did not reconstruct exactly for {}",
             path.display()
         );
 

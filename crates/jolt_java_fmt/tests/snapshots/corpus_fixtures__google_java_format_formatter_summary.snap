@@ -6,7 +6,6 @@ suite: google-java-format
 files: 209
 formatted: 208
 syntax blocked: 1
-formatter blocked: 0
 reconstructed changed: 0
 
 diagnostics:

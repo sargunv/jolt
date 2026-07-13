@@ -521,6 +521,8 @@ dependencies = [
  "jolt_diagnostics",
  "jolt_fmt_ir",
  "jolt_syntax",
+ "serde",
+ "serde_json",
  "unicode-width",
 ]
 

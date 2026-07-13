@@ -4,9 +4,8 @@ expression: prettier_summary.render()
 ---
 suite: prettier-java
 files: 86
-formatted: 68
+formatted: 67
 syntax blocked: 18
-formatter blocked: 0
 reconstructed changed: 1
 
 diagnostics:

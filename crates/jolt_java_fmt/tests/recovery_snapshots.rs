@@ -4,7 +4,7 @@ use jolt_java_syntax::parse_compilation_unit;
 use jolt_test_support::{
     RepresentedTokenRemoval, SnapshotBuilder, StringSink, collect_java_files,
     fixture_snapshot_name, java_fixture_root, read_to_string, render_diagnostics,
-    represented_token_loss_report, trivia_markers,
+    represented_comment_inventory, represented_token_loss_report, trivia_markers,
 };
 
 #[test]
@@ -40,6 +40,9 @@ fn java_recovery_formatter_snapshots() {
             formatted_syntax.token_iter(),
             allowed_removed_tokens(&path),
         );
+        let comment_loss = (represented_comment_inventory(syntax.token_iter())
+            != represented_comment_inventory(formatted_syntax.token_iter()))
+        .then_some("represented comment inventory changed\n");
         let expected_markers = trivia_markers(&source);
         let actual_markers = trivia_markers(&formatted);
         let marker_loss = (actual_markers != expected_markers).then(|| {
@@ -47,11 +50,12 @@ fn java_recovery_formatter_snapshots() {
                 "trivia markers changed\nexpected: {expected_markers:#?}\nactual: {actual_markers:#?}\n"
             )
         });
-        if !token_loss.is_empty() || marker_loss.is_some() {
+        if !token_loss.is_empty() || comment_loss.is_some() || marker_loss.is_some() {
             conservation_failures.push(format!(
-                "{}:\n{}{marker_loss}",
+                "{}:\n{}{comment_loss}{marker_loss}",
                 path.display(),
                 token_loss,
+                comment_loss = comment_loss.unwrap_or_default(),
                 marker_loss = marker_loss.unwrap_or_default(),
             ));
         }

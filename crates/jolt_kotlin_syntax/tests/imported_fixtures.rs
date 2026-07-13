@@ -1,40 +1,63 @@
 use std::path::PathBuf;
 
 use jolt_kotlin_syntax::parse_kotlin_file;
-use jolt_test_support::{CorpusSummary, collect_kotlin_files, read_to_string, workspace_root};
+use jolt_test_support::{
+    CorpusSummary, DeferredReason, ObservedDeferredPath, assert_deferred_import_manifest,
+    collect_kotlin_files, read_to_string, workspace_root,
+};
 
 #[test]
 fn fixture_kotlin_sources_parse_without_loss() {
-    let ktfmt_summary = assert_corpus("ktfmt", 72);
-    let maplibre_summary = assert_corpus("maplibre-compose", 485);
+    let mut deferred = Vec::new();
+    let ktfmt_summary = assert_corpus("ktfmt", &mut deferred);
+    let maplibre_summary = assert_corpus("maplibre-compose", &mut deferred);
+
+    let workspace = workspace_root(env!("CARGO_MANIFEST_DIR"));
+    assert_deferred_import_manifest(
+        &workspace,
+        &workspace.join("tools/import/.imports"),
+        &["ktfmt/source", "maplibre-compose/source"],
+        &[
+            DeferredReason::ParserDiagnostics,
+            DeferredReason::NoSyntaxTree,
+            DeferredReason::SyntaxReconstructionMismatch,
+        ],
+        &deferred,
+    );
 
     insta::assert_snapshot!("ktfmt_parser_summary", ktfmt_summary.render());
     insta::assert_snapshot!("maplibre_compose_parser_summary", maplibre_summary.render());
 }
 
-fn assert_corpus(suite: &str, expected_files: usize) -> CorpusSummary {
+fn assert_corpus(suite: &str, deferred: &mut Vec<ObservedDeferredPath>) -> CorpusSummary {
     let root = fixture_root(suite);
     let files = collect_kotlin_files(&root);
-
-    assert_eq!(
-        files.len(),
-        expected_files,
-        "expected the pinned {suite} Kotlin source fixture corpus"
-    );
-
+    let suite_name = format!("{suite}/source");
     let mut summary = CorpusSummary::new(suite, files.len());
     for path in files {
         let source = read_to_string(&path);
         let parse = parse_kotlin_file(&source);
-        let syntax = parse
-            .syntax()
-            .unwrap_or_else(|| panic!("parser aborted in {}", path.display()));
+        let syntax = parse.syntax();
+        let mut reasons = Vec::new();
 
-        if syntax.source_text() != source {
+        if syntax.is_none() {
+            reasons.push(DeferredReason::NoSyntaxTree);
+        } else if syntax.is_some_and(|syntax| syntax.source_text() != source) {
             summary.note_reconstruction_changed();
+            reasons.push(DeferredReason::SyntaxReconstructionMismatch);
         }
-
         summary.record_diagnostics(parse.diagnostics());
+        if !parse.diagnostics().is_empty() {
+            reasons.push(DeferredReason::ParserDiagnostics);
+        }
+        if !reasons.is_empty() {
+            deferred.push(ObservedDeferredPath::new(
+                &suite_name,
+                &root,
+                &path,
+                reasons,
+            ));
+        }
     }
 
     summary

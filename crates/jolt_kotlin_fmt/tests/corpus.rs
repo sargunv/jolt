@@ -2,7 +2,8 @@ use jolt_kotlin_fmt::{FormatOptions, FormatSinkResult, format_source_to_sink};
 use jolt_kotlin_syntax::parse_kotlin_file;
 use jolt_test_support::{
     SnapshotBuilder, StringSink, collect_kotlin_files, fixture_snapshot_name, kotlin_fixture_root,
-    read_to_string, render_diagnostics, represented_token_loss_report, trivia_markers,
+    read_to_string, render_diagnostics, represented_comment_inventory,
+    represented_token_loss_report, trivia_markers,
 };
 
 #[test]
@@ -117,12 +118,17 @@ fn audit_diagnostic_source(source: &str, options: FormatOptions, label: &str) ->
         return Some(format!("{label}: formatted output has no represented tree"));
     };
     let token_loss = represented_token_loss_report(before.token_iter(), after.token_iter(), &[]);
+    let comments_changed = represented_comment_inventory(before.token_iter())
+        != represented_comment_inventory(after.token_iter());
     let expected_markers = trivia_markers(source);
     let actual_markers = trivia_markers(&formatted);
     let repeated = format_or_panic(&formatted, options, label);
 
     let mut failures = String::new();
     failures.push_str(&token_loss);
+    if comments_changed {
+        failures.push_str("represented comment inventory changed\n");
+    }
     if actual_markers != expected_markers {
         failures.push_str(&format!(
             "trivia markers changed\nexpected: {expected_markers:#?}\nactual: {actual_markers:#?}\n"
