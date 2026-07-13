@@ -327,6 +327,11 @@ top-level parenthesized expression currently loses its error-node contents when
 formatted. Assign that expression recovery to New Phase 18 rather than treating
 it as a class-constructor gap.
 
+Inventory: `formatter-retained-regressions.toml`. Historical fixture paths are
+pinned to their old-phase commits; mixed-family fixtures carry a separate scope
+for each owning replacement phase. The known active expression regression stays
+inline until Phase 18 so Phase 4 does not add a knowingly failing corpus input.
+
 ### New Phase 5: Public Completion And Corpus Baseline
 
 Re-extract no-tree diagnostics, halted-render rejection, content-addressed
