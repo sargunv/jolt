@@ -364,134 +364,173 @@ opaque permit. Test valid, bogus, and mixed structured/bogus constructor trees
 without wiring a production formatter family. Keep the existing formatter-ignore
 path unchanged rather than adding a parallel ignore API. Prove that optimized
 builds compile accounting out and add no per-node tracker or comment-map
-allocation. Defer throughput and allocation measurement to Phase 7, when the
-existing realistic-corpus benchmark exercises production paths that use the
-primitive; do not add a synthetic or second benchmark harness for this API-only
-phase.
+allocation. Defer throughput and allocation measurement until the language
+pivots in Phases 8 and 9 exercise production paths that use the primitive; do
+not add a synthetic or second benchmark harness for this API-only phase.
 
-### New Phase 7: Grammar Schema, Syntax Factory, And Slot Representation
+### New Phase 7: Declarative Rust Syntax Authority
 
-Create the single declarative grammar-shape source that generates category
-unions and bogus kinds, construction-time shape validation, stored grammar slots
-including `Empty`, and constant-time accessors on Jolt's existing typed node
-wrappers. `SyntaxNode` remains the borrowed parent-aware red-style cursor and
-the current language node/category wrappers remain the only typed views. Replace
-`TreeElement` with `TreeSlot` in the flat arena; do not add a parallel typed
-tree, universal fields layer, role array, or decoder representation. Add the
-sealed `Valid(node)`, `Bogus(owner)`, or `InvariantError` formatter result,
-direct-slot exhaustiveness tests, and parse-only CPU, allocation, memory,
-tree-byte, and production-line measurements. A stack-local fields value is
-allowed only when an owning formatter rule later needs it to encode a real
-multi-field invariant, never as a generated convenience API. Stop if the
-representation exceeds the performance budgets relative to its parent or
-cumulatively. Record a by-crate final projection that is net negative against
-`2197128`, including generated source. Add forbidden-pattern gates for P16-only
-ordered recovery parts and formatter-local recovery loops. Wire the generated
-category-bogus variants through the Phase 6 tracked-verbatim primitive so the
-slot representation is exhaustive without a fallback or parallel malformed
-encoding. Generic bogus dispatch changes are part of this atomic pivot;
-family-specific structured layout remains in Phases 8 through 19. Mechanically
-route the shared Java/Kotlin token and comment helpers through the Phase 6
-source-backed claims and switch root rendering to the consuming tracked
-entrypoint in this phase; this changes accounting, not family layout.
-Mechanically adapt the existing formatter-ignore range/run helper to claim its
-skipped tokens and conserved trivia while retaining its current normalized
-indentation and line-ending contract; do not add a parallel ignore path.
-Generate the category-bogus malformed owner and exact boundary facts that
-replace Phase 6's temporary generic-error restriction. The language
-lexical-safety services classify adjacent source tokens; exceptional documents
-remain inaccessible until those bounded joins are resolved. Replace the two
-formatter-local `FormatterInsertedToken` enums with Phase 6's closed
-normalization cases rather than retaining parallel authorization vocabularies.
-Move the temporary normalization claim carriers upstream into `jolt_syntax` as
-opaque, tree-branded permits issued by generated `Language` authorization hooks;
-delete the IR-owned carriers so the dependency remains syntax-to-formatter only.
-Expose syntax-owned first/last malformed boundary elements and make formatter IR
-derive its lexical atoms from them rather than accepting caller-authored facts.
-The mechanically adapted structured comment/control helper must likewise expose
-a boundary-bearing neighbor, covering comment-to-exceptional and
-exceptional-to-comment joins before tracked root rendering is enabled.
+Add one crate-private declarative Rust macro schema to each language syntax
+crate. Expand the schema into the language kind inventory, typed node and
+category declarations, category-compatible bogus kinds, typed static shape
+metadata, and named slot indices. Delete the corresponding hand-written
+kind/node/category duplication in the same commit; semantic accessor bodies may
+remain temporarily, but macro-defined direct fields become authoritative.
+Describe every requested node kind exactly once, including contextual-token
+roles and list shapes. Do not add TOML, Python, a build script, a procedural
+macro, checked-in generated Rust, or a code-generation task.
 
-### New Phase 8: Java Vertical Slice
+Every ordinary valid field must be one required or optional target slot. Model
+repetition with an explicit syntax-list node stored in one parent slot, and
+model a compound semantic value with an explicit fixed-field constructed node;
+do not call a variable child span or multi-element group one named slot. The
+Rust static audit rejects any ordinary node that is not representable by this
+fixed-slot contract. Audit-time expansion of list and constructed nodes is only
+the migration bridge from the current compact parser tree.
 
-For expression statements, binary/unary expressions, `instanceof` patterns, one
-list, and blocks, add category-compatible bogus nodes, structural diagnostic
-ownership, generated slot accessors, structured valid rules, malformed-only
-verbatim dispatch, cleanup, fixtures, and Phase 3 measurements in one commit.
+Add a Rust audit-only corpus gate that parses the existing fixture sources and
+runs current compact direct-child sequences through the macro-defined matcher
+without changing production tree construction. Traverse diagnostic and clean
+trees alike; do not parse snapshot text or skip represented recovery nodes.
+Resolve every unmatched or ambiguous valid shape in the declarative grammar;
+diagnostic/recovery shapes remain reported separately rather than being accepted
+as valid grammar variants. Record macro-schema/consumer and ordinary production
+LOC plus the by-crate projection against `2197128`. This phase makes no arena,
+parser, or formatter runtime change: do not expose `TreeSlot`, insert `Empty`,
+switch root rendering, or add a second representation before one language can
+pivot atomically.
 
-Every vertical phase from 8 through 19 restores the historical fixture scopes
-assigned to it by `formatter-retained-regressions.toml` and removes the imported
-paths owned by its migrated families from Phase 5's deferred manifest. A path
-leaves the manifest only when its syntax reconstruction, conservation,
+Phase 7's checked-in size record is 53,632 lines of production Rust. Its two
+macro schemas contain 2,199 lines, their language consumers contain 22, and the
+shared production metadata and lowering macro contain 275. The Rust-only corpus
+audit adds 1,133 lines outside snapshots. The phase adds 3,727 and removes 1,153
+lines of implementation Rust, a net increase of 2,574. A one-time migration
+comparison confirmed that every pre-Phase-7 raw kind kept its discriminant; new
+structural and bogus kinds are appended. No historical compatibility table
+remains in production.
+
+The user's net-negative requirement counts all architecture implementation,
+including audit and test-support code, while excluding fixture data and
+snapshots. Against `2197128`, accepted Phases 1-7 stand at +7,856/-1,788, or
++6,068 net implementation lines:
+
+| Implementation area            | Additions | Deletions | Current delta |  Completion budget |
+| ------------------------------ | --------: | --------: | ------------: | -----------------: |
+| `jolt_java_syntax`             |     1,348 |       619 |          +729 |     at most -1,900 |
+| `jolt_kotlin_syntax`           |     1,164 |       587 |          +577 |     at most -1,250 |
+| `jolt_syntax` + `jolt_fmt_ir`  |     2,968 |       103 |        +2,865 |       at most +450 |
+| Java + Kotlin formatter crates |       453 |       458 |            -5 |     at most -2,350 |
+| `jolt_test_support`            |     1,304 |         9 |        +1,295 |          at most 0 |
+| Benchmark tools                |       598 |         0 |          +598 |       at most +598 |
+| `jolt_cli`                     |        21 |        12 |            +9 |         at most +9 |
+| **Implementation Rust total**  | **7,856** | **1,788** |    **+6,068** | **at most -4,443** |
+
+The completion column is the maximum final delta from `2197128`, not credit
+already earned. Phase 8 must replace Java's direct-search accessors instead of
+wrapping them; Phase 9 must do the same for Kotlin; Phase 10 must delete the
+temporary claim, audit-matcher, and compact-factory carriers once their proofs
+move onto the production representation. Later layout phases may improve these
+numbers but may not spend the reserved deletion. Recompute the table after each
+pivot from the counting command in the implementation-size contract.
+
+### New Phase 8: Java Whole-Language Construction And Formatting Pivot
+
+For every Java node in one commit, add contextual token roles, explicit
+structural diagnostic ownership, construction-time shape validation, stored
+`TreeSlot::Empty`, generated constant-time accessors/list views, category bogus
+unions, sealed `Valid`/`Bogus`/`InvariantError` classification, syntax-derived
+malformed boundaries, lexical safety, and syntax-owned normalization permits.
+Wire Java token/comment/formatter-ignore claims and generic bogus dispatch, then
+switch the Java root to tracked rendering only after every Java output path is
+accounted. Delete Java's compact/fallback construction and direct child-search
+recovery accessors in the same commit. Existing valid family layout remains
+unchanged.
+
+### New Phase 9: Kotlin Whole-Language Construction And Formatting Pivot
+
+Apply the complete Phase 8 construction and formatting pivot to every Kotlin
+node, including soft/contextual token roles. Switch the Kotlin root to tracked
+rendering only after Kotlin token, comment, formatter-ignore, removal,
+normalization, bogus, and lexical-boundary paths all carry exact claims. Delete
+Kotlin's compact/fallback construction and direct child-search recovery
+accessors in the same commit. No mixed compact/slot runtime survives Phase 9.
+
+### New Phase 10: Shared Slot-Architecture Closeout
+
+Remove temporary compact-factory capability, the generic-error-only malformed
+owner, IR-owned normalization carriers, and both formatter-local
+`FormatterInsertedToken` enums. Enable forbidden-pattern, bidirectional
+diagnostic-owner, direct-slot exhaustiveness, clean-zero-verbatim, malformed
+conservation/idempotence, production LOC, and benchmark-ready performance gates.
+The existing realistic benchmark remains the only performance harness.
+
+Every canonical-layout phase from 11 through 20 restores the historical fixture
+scopes assigned to it by `formatter-retained-regressions.toml` and removes the
+imported paths owned by its migrated families from Phase 5's deferred manifest.
+A path leaves the manifest only when its syntax reconstruction, conservation,
 represented-comment, reparse, and idempotence checks all pass. No phase commits
 a red test or snapshots a nonempty failure list.
 
-### New Phase 9: Kotlin Vertical Slice
-
-Apply the same vertical migration to function types, value parameters, property
-bodies, calls/navigation, and one block/control-flow family. Cover missing and
-orphan delimiters, comment boundaries, cleanup, and Phase 3 measurements.
-
-### New Phase 10: Java Programs, Modules, And Imports
+### New Phase 11: Java Programs, Modules, And Imports
 
 Vertically migrate compilation units, packages, imports, modules/directives, EOF
 comments, and sorting barriers. Valid nodes remain structured; malformed spans
 use the narrowest category-compatible bogus owner.
 
-### New Phase 11: Java Names, Types, And Declaration Prefixes
+### New Phase 12: Java Names, Types, And Declaration Prefixes
 
 Vertically migrate names, types, dimensions, annotations, modifiers, parameters,
 declarators, and throws clauses. Delete range-derived and skip-capable recovery
 accessors for these families.
 
-### New Phase 12: Java Declarations
+### New Phase 13: Java Declarations
 
 Vertically migrate fields, methods, constructors, initializers, annotation
 elements, classes, interfaces, enums, records, members, and bodies. Missing-body
 diagnostics must have narrow syntax owners; valid declarations may not replay.
 
-### New Phase 13: Java Expressions And Patterns
+### New Phase 14: Java Expressions And Patterns
 
 Vertically migrate remaining operators, primary expressions, calls, references,
 lambdas, arrays/objects, patterns, and expression-owned lists. Preserve borrowed
 operator identity and delete local recovery formatting.
 
-### New Phase 14: Java Statements And Control Flow
+### New Phase 15: Java Statements And Control Flow
 
 Vertically migrate simple statements, loops, switches, resources, catches, and
 remaining control-flow families. Delete Java's final bespoke recovery
 formatting.
 
-### New Phase 15: Kotlin Programs, Packages, Imports, And Names
+### New Phase 16: Kotlin Programs, Packages, Imports, And Names
 
 Vertically migrate files, duplicate package/import containers, names, EOF
 comments, and imports. Retain Phase 2 trivia behavior and use
 category-compatible bogus entries as sorting barriers.
 
-### New Phase 16: Kotlin Types And Parameters
+### New Phase 17: Kotlin Types And Parameters
 
 Vertically migrate names/types, arguments/parameters, constraints, projections,
 context parameters, function types, and type-owned lists not covered by Phase 9.
 Delete range-derived recovery and list state machines.
 
-### New Phase 17: Kotlin Declarations
+### New Phase 18: Kotlin Declarations
 
 Vertically migrate properties, functions, constructors, accessors, type aliases,
 classes, objects, interfaces, enum entries, delegation, and member bodies.
 Delete prefix/header/tail partitioning and declaration recovery loops.
 
-### New Phase 18: Kotlin Expressions And Calls
+### New Phase 19: Kotlin Expressions And Calls
 
 Vertically migrate operators, strings, lambdas, collections, callable
 references, object literals, and remaining call/navigation families. Delete
 filtered token fallback and expression-local recovery state.
 
-### New Phase 19: Kotlin Statements And Control Flow
+### New Phase 20: Kotlin Statements And Control Flow
 
 Vertically migrate branches, loops, `when`, `try`, and remaining statements and
 blocks. Delete Kotlin's final bespoke recovery formatting.
 
-### New Phase 20: Normalization And Totality Audit
+### New Phase 21: Normalization And Totality Audit
 
 Audit every spelling/reordering/synthetic normalization and every panic or empty
 fallback. Normalizations require valid syntax and exact debug/test claims;
@@ -499,35 +538,35 @@ malformed syntax is preserved verbatim rather than repaired. Resolve every
 normalization finding by distinguishing documented valid normalization from
 source loss without adding per-path exceptions.
 
-### New Phase 21: Delete Transitional Recovery Architecture
+### New Phase 22: Delete Transitional Recovery Architecture
 
 Remove obsolete recovery accessors, filtered token fallbacks, source-range
 ownership, recovery sorters, and local recovery join helpers. Prove that every
 valid node kind has a structured rule, every malformed category has tracked
 verbatim dispatch, and clean corpora emit zero verbatim tags.
 
-### New Phase 22: Final Performance Gate
+### New Phase 23: Final Performance Gate
 
 Repeat the Phase 3 release benchmarks on the same machine and manifests. Reject
 per-node allocation, a release comment map, or a result exceeding the
 architecture's incremental or cumulative time, allocation, memory, or tree-byte
 budgets without an explicit approved architecture amendment.
 
-### New Phase 23: Clean Completion Proof
+### New Phase 24: Clean Completion Proof
 
-Run generated-field exhaustiveness, bogus-category and diagnostic-ownership
+Run macro-field exhaustiveness, bogus-category and diagnostic-ownership
 snapshots, token/comment tracking, valid zero-verbatim gates, deterministic
 mutations, in-repository and imported corpora, CLI/dprint tests, `mise run fix`,
 and `mise run test`. Require Phase 5's imported diagnostic deferred-path
 manifest to be empty. Scan for valid replay, untracked verbatim, raw-gap layout,
 repair synthesis, panic paths, unbounded algorithms, and formatter-side
 structural layers. Fail if P16-only ordered recovery parts or local replay loops
-were reintroduced. Report generated and hand-written production LOC separately,
-prove with the architecture's explicit `:(glob)` pathspec command that total
-production Rust under every crate `src` tree, excluding `jolt_test_support`, is
-net negative relative to `2197128`, including generated code, and fail if two
-grammar-shape descriptions remain. Change status to `CLEAN` only when every
-correctness, size, and performance gate passes.
+were reintroduced. Report macro-schema, consumer, audit, and ordinary
+implementation LOC separately, prove with the architecture's explicit `:(glob)`
+pathspec command that all implementation code, including test support but
+excluding fixtures and snapshots, is net negative relative to `2197128`, and
+fail if two grammar-shape descriptions remain. Change status to `CLEAN` only
+when every correctness, size, and performance gate passes.
 
 ## Kotlin Structural Recovery Debt
 

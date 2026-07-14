@@ -1,0 +1,291 @@
+---
+source: crates/jolt_kotlin_syntax/src/schema_audit.rs
+expression: audit.render()
+---
+language = kotlin
+fixture_files = 246
+diagnostic_fixture_files = 58
+audited_nodes = 9630
+exact_valid_shapes = 9364
+malformed_nodes = 175
+clean_missing_required_shapes = 2
+diagnostic_missing_required_shapes = 13
+clean_unexpected_shapes = 5
+diagnostic_unexpected_shapes = 71
+error_node_owners = 175
+
+[clean_missing_required]
+syntax__recovery__control_flow_missing_children: DoWhileStatement occurrence 1 (DoKw("do") Block)
+syntax__recovery__control_flow_missing_children: WhenExpression occurrence 1 (WhenKw("when") WhenSubject)
+
+[diagnostic_missing_required]
+syntax__lexer__recognizes_all_hard_keywords: Name occurrence 1 ()
+syntax__lexer__recognizes_delimiters_and_punctuation: NavigationExpression occurrence 1 (CallExpression Dot("."))
+syntax__lexer__reports_unterminated_line_string_at_newline: StringTemplateExpression occurrence 1 (StringTemplateEntry StringTemplateEntry StringTemplateEntry StringTemplateEntry StringTemplateEntry StringTemplateEntry StringTemplateEntry)
+syntax__lexer__reports_unterminated_raw_string: StringTemplateExpression occurrence 1 (StringTemplateEntry StringTemplateEntry StringTemplateEntry)
+syntax__parser__recovers_incomplete_lambda_and_call: Block occurrence 1 (LBrace("{") Statement)
+syntax__parser__recovers_incomplete_lambda_and_call: ValueArgumentList occurrence 1 (LParen("(") ValueArgument)
+syntax__recovery__block_missing_close: Block occurrence 1 (LBrace("{") PropertyDeclaration)
+syntax__recovery__callable_reference_missing_target: CallableReferenceExpression occurrence 1 (ColonColon("::") TypeArgumentList)
+syntax__recovery__lambda_missing_close: Block occurrence 1 (LBrace("{") Statement)
+syntax__recovery__type_constraints: TypeConstraint occurrence 2 (Name)
+syntax__recovery__type_constraints: Name occurrence 4 ()
+syntax__recovery__when_missing_close: Block occurrence 1 (LBrace("{") Statement)
+syntax__recovery__when_missing_close: WhenExpression occurrence 1 (WhenKw("when") WhenSubject LBrace("{") WhenEntry)
+
+[clean_unexpected]
+syntax__recovery__context_function_type: ContextFunctionType occurrence 1 (Identifier("context") LParen("(") FunctionTypeParameter Comma(",") Comma(",") FunctionTypeParameter RParen(")") FunctionType)
+syntax__recovery__destructuring: DestructuringDeclaration occurrence 1 (LParen("(") DestructuringEntry Comma(",") Comma(",") DestructuringEntry RParen(")"))
+syntax__recovery__lambda_parameter_list: LambdaParameterList occurrence 1 (LambdaParameter Comma(",") Comma(",") LambdaParameter Arrow("->"))
+syntax__recovery__type_parameter_list: TypeParameterList occurrence 1 (Lt("<") TypeParameter Comma(",") Comma(",") TypeParameter Gt(">"))
+syntax__recovery__value_parameter_list: ValueParameterList occurrence 1 (LParen("(") ValueParameter Comma(",") Comma(",") ValueParameter RParen(")"))
+
+[diagnostic_unexpected]
+syntax__lexer__comment_markers_inside_character_literals_are_literal_content: ExpressionStatement occurrence 1 (LiteralExpression ErrorNode)
+syntax__lexer__keeps_range_dots_out_of_number_literals: ExpressionStatement occurrence 1 (BinaryExpression ErrorNode ErrorNode ErrorNode)
+syntax__lexer__recognizes_all_hard_keywords: ExpressionStatement occurrence 1 (ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode)
+syntax__lexer__recognizes_all_operators: ExpressionStatement occurrence 1 (BinaryExpression ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode)
+syntax__lexer__recognizes_all_operators: BinaryExpression occurrence 1 (BinaryExpression GtEq(">=") ErrorNode)
+syntax__lexer__recognizes_all_operators: BinaryExpression occurrence 2 (BinaryExpression Gt(">") ErrorNode)
+syntax__lexer__recognizes_all_operators: BinaryExpression occurrence 3 (UnaryExpression Percent("%") ErrorNode)
+syntax__lexer__recognizes_all_operators: UnaryExpression occurrence 6 (Bang("!") ErrorNode)
+syntax__lexer__recognizes_character_literals: ExpressionStatement occurrence 1 (LiteralExpression ErrorNode ErrorNode ErrorNode ErrorNode)
+syntax__lexer__recognizes_decimal_floating_point_literals: ExpressionStatement occurrence 1 (LiteralExpression ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode)
+syntax__lexer__recognizes_decimal_integer_literals: ExpressionStatement occurrence 1 (LiteralExpression ErrorNode ErrorNode ErrorNode)
+syntax__lexer__recognizes_delimiters_and_punctuation: Statement occurrence 1 (ExpressionStatement Semicolon(";") DoubleSemicolon(";;"))
+syntax__lexer__recognizes_delimiters_and_punctuation: ExpressionStatement occurrence 1 (NavigationExpression ErrorNode ErrorNode ErrorNode)
+syntax__lexer__recognizes_delimiters_and_punctuation: ExpressionStatement occurrence 2 (BinaryExpression ErrorNode ErrorNode ErrorNode)
+syntax__lexer__recognizes_delimiters_and_punctuation: BinaryExpression occurrence 1 (ErrorNode RangeUntil("..<") ErrorNode)
+syntax__lexer__recognizes_field_identifiers: ExpressionStatement occurrence 1 (NameExpression ErrorNode)
+syntax__lexer__recognizes_hex_and_binary_integer_literals: ExpressionStatement occurrence 1 (LiteralExpression ErrorNode ErrorNode ErrorNode)
+syntax__lexer__recognizes_identifiers_with_underscores_and_digits: ExpressionStatement occurrence 1 (BinaryExpression ErrorNode)
+syntax__lexer__recognizes_integer_suffixes: ExpressionStatement occurrence 1 (LiteralExpression ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode)
+syntax__lexer__recognizes_reserved_ellipsis: ExpressionStatement occurrence 1 (ErrorNode)
+syntax__lexer__recognizes_safe_cast_and_question_operators: ExpressionStatement occurrence 1 (ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode)
+syntax__lexer__recognizes_unicode_identifiers: ExpressionStatement occurrence 1 (BinaryExpression ErrorNode)
+syntax__lexer__reports_non_ascii_digit_as_unknown_start: ExpressionStatement occurrence 1 (ErrorNode ErrorNode)
+syntax__lexer__reports_unknown_character: PropertyDeclaration occurrence 1 (ValKw("val") CallableName Assign("=") LiteralExpression ErrorNode ErrorNode)
+syntax__lexer__reports_unterminated_backtick_identifier: ExpressionStatement occurrence 1 (ErrorNode ErrorNode)
+syntax__lexer__reports_unterminated_line_string_at_newline: StringTemplateEntry occurrence 4 (ValKw("val"))
+syntax__lexer__reports_unterminated_line_string_at_newline: StringTemplateEntry occurrence 6 (Assign("="))
+syntax__lexer__reports_unterminated_line_string_at_newline: StringTemplateEntry occurrence 7 (IntegerLiteral("1"))
+syntax__lexer__separates_not_in_and_not_is_from_identifier_prefixes: ExpressionStatement occurrence 1 (ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode)
+syntax__parser__block_empty_statement_adjacent_braces: ExpressionStatement occurrence 1 (ErrorNode)
+syntax__parser__diagnoses_invalid_assignment_targets: AssignmentExpression occurrence 1 (ErrorNode Assign("=") NameExpression)
+syntax__parser__diagnoses_invalid_assignment_targets: AssignmentExpression occurrence 2 (ErrorNode Assign("=") NameExpression)
+syntax__parser__diagnoses_invalid_assignment_targets: AssignmentExpression occurrence 4 (ErrorNode Assign("=") LiteralExpression)
+syntax__parser__diagnoses_malformed_type_argument_call: TypeProjectionList occurrence 1 (TypeArgument Comma(",") Comma(",") ErrorNode TypeArgument)
+syntax__parser__diagnoses_malformed_type_argument_call: BinaryExpression occurrence 1 (NavigationExpression ErrorNode Lt("<") CallExpression)
+syntax__parser__diagnoses_malformed_type_argument_call: PropertyDeclaration occurrence 3 (ValKw("val") CallableName Assign("=") NameExpression ErrorNode ErrorNode ErrorNode)
+syntax__parser__diagnoses_malformed_type_argument_call: NavigationExpression occurrence 4 (ErrorNode Dot(".") Identifier("value"))
+syntax__parser__recovers_incomplete_lambda_and_call: LambdaExpression occurrence 1 (LBrace("{") LambdaParameterList Statement Statement)
+syntax__parser__recovers_incomplete_lambda_and_call: ValueArgument occurrence 1 (ErrorNode)
+syntax__parser__recovers_missing_expression_after_elvis: BinaryExpression occurrence 1 (NameExpression Elvis("?:") ErrorNode)
+syntax__parser__recovers_missing_expression_in_collection_literal_preview: CollectionLiteralExpression occurrence 1 (LBracket("[") ValueArgument Comma(",") Comma(",") ErrorNode ValueArgument RBracket("]"))
+syntax__parser__recovers_missing_when_arrow_and_body: WhenEntry occurrence 1 (WhenCondition LiteralExpression ErrorNode)
+syntax__parser__recovers_missing_when_arrow_and_body: WhenCondition occurrence 1 (LiteralExpression ErrorNode ErrorNode ErrorNode)
+syntax__recovery__annotation_argument_list: AnnotationArgumentList occurrence 1 (LParen("(") Comma(",") ErrorNode ValueArgument RParen(")"))
+syntax__recovery__argument_list: ValueArgumentList occurrence 1 (LParen("(") Comma(",") ErrorNode ValueArgument RParen(")"))
+syntax__recovery__assignment_invalid_targets: AssignmentExpression occurrence 1 (ErrorNode Assign("=") NameExpression)
+syntax__recovery__assignment_invalid_targets: AssignmentExpression occurrence 2 (ErrorNode Assign("=") NameExpression)
+syntax__recovery__assignment_invalid_targets: AssignmentExpression occurrence 3 (ErrorNode Assign("=") LiteralExpression)
+syntax__recovery__assignment_without_left: ExpressionStatement occurrence 1 (ErrorNode ErrorNode)
+syntax__recovery__block_empty_statement_adjacent_braces: ExpressionStatement occurrence 1 (ErrorNode)
+syntax__recovery__call_without_callee: ExpressionStatement occurrence 1 (ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode)
+syntax__recovery__class_body_with_formatter_ignore: UnaryExpression occurrence 1 (Plus("+") ErrorNode)
+syntax__recovery__class_body: ExpressionStatement occurrence 1 (UnaryExpression ErrorNode ErrorNode ErrorNode)
+syntax__recovery__class_body: UnaryExpression occurrence 1 (Plus("+") ErrorNode)
+syntax__recovery__collection_and_index_lists: CollectionLiteralExpression occurrence 1 (LBracket("[") Comma(",") ErrorNode ValueArgument RBracket("]"))
+syntax__recovery__collection_and_index_lists: IndexExpression occurrence 1 (NameExpression LBracket("[") Comma(",") ErrorNode ValueArgument RBracket("]"))
+syntax__recovery__declaration_tails: FunctionDeclaration occurrence 1 (FunKw("fun") CallableName ValueParameterList Assign("=") ErrorNode ErrorNode ErrorNode)
+syntax__recovery__declaration_tails: PropertyDeclaration occurrence 1 (ValKw("val") CallableName Identifier("by") ErrorNode)
+syntax__recovery__else_without_branch: IfExpression occurrence 1 (IfKw("if") ParenthesizedExpression CallExpression ElseKw("else") ErrorNode)
+syntax__recovery__for_partial_header: ForStatement occurrence 1 (ForKw("for") LParen("(") NameExpression InKw("in") BinaryExpression ErrorNode)
+syntax__recovery__lambda_missing_close: LambdaExpression occurrence 1 (LBrace("{") Statement)
+syntax__recovery__navigation_without_receiver: ExpressionStatement occurrence 1 (ErrorNode ErrorNode)
+syntax__recovery__nested_recovered_when_condition: WhenEntry occurrence 1 (WhenCondition ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode)
+syntax__recovery__nested_recovered_when_condition: WhenCondition occurrence 1 (LiteralExpression ErrorNode ErrorNode ErrorNode)
+syntax__recovery__object_delegation: TypeReference occurrence 2 (ErrorNode)
+syntax__recovery__property_body_recovered_gap: AssignmentExpression occurrence 1 (ErrorNode Assign("=") LiteralExpression)
+syntax__recovery__top_level_orphan_token: KotlinFile occurrence 1 (ImportList FunctionDeclaration RBrace("}") Eof(""))
+syntax__recovery__type_argument_list: TypeProjectionList occurrence 1 (TypeArgument Comma(",") Comma(",") ErrorNode TypeArgument)
+syntax__recovery__type_constraints: KotlinFile occurrence 1 (ImportList FunctionDeclaration Statement RBrace("}") Eof(""))
+syntax__recovery__type_constraints: ExpressionStatement occurrence 1 (ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode)
+syntax__recovery__when_condition_list: WhenCondition occurrence 2 (ErrorNode)
+
+[error_node_ownership]
+syntax__lexer__comment_markers_inside_character_literals_are_literal_content: ErrorNode occurrence 1 owned by ExpressionStatement
+syntax__lexer__keeps_range_dots_out_of_number_literals: ErrorNode occurrence 1 owned by ExpressionStatement
+syntax__lexer__keeps_range_dots_out_of_number_literals: ErrorNode occurrence 2 owned by ExpressionStatement
+syntax__lexer__keeps_range_dots_out_of_number_literals: ErrorNode occurrence 3 owned by ExpressionStatement
+syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 1 owned by ExpressionStatement
+syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 2 owned by ExpressionStatement
+syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 3 owned by ExpressionStatement
+syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 4 owned by ExpressionStatement
+syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 5 owned by ExpressionStatement
+syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 6 owned by ExpressionStatement
+syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 7 owned by ExpressionStatement
+syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 8 owned by ExpressionStatement
+syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 9 owned by ExpressionStatement
+syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 10 owned by ExpressionStatement
+syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 11 owned by ExpressionStatement
+syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 12 owned by ExpressionStatement
+syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 13 owned by ExpressionStatement
+syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 14 owned by ExpressionStatement
+syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 15 owned by ExpressionStatement
+syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 16 owned by ExpressionStatement
+syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 17 owned by ExpressionStatement
+syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 18 owned by ExpressionStatement
+syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 19 owned by ExpressionStatement
+syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 20 owned by ExpressionStatement
+syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 21 owned by ExpressionStatement
+syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 22 owned by ExpressionStatement
+syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 23 owned by ExpressionStatement
+syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 24 owned by ExpressionStatement
+syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 25 owned by ExpressionStatement
+syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 26 owned by ExpressionStatement
+syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 27 owned by ExpressionStatement
+syntax__lexer__recognizes_all_hard_keywords: ErrorNode occurrence 28 owned by ExpressionStatement
+syntax__lexer__recognizes_all_operators: ErrorNode occurrence 1 owned by UnaryExpression
+syntax__lexer__recognizes_all_operators: ErrorNode occurrence 2 owned by BinaryExpression
+syntax__lexer__recognizes_all_operators: ErrorNode occurrence 3 owned by BinaryExpression
+syntax__lexer__recognizes_all_operators: ErrorNode occurrence 4 owned by BinaryExpression
+syntax__lexer__recognizes_all_operators: ErrorNode occurrence 5 owned by ExpressionStatement
+syntax__lexer__recognizes_all_operators: ErrorNode occurrence 6 owned by ExpressionStatement
+syntax__lexer__recognizes_all_operators: ErrorNode occurrence 7 owned by ExpressionStatement
+syntax__lexer__recognizes_all_operators: ErrorNode occurrence 8 owned by ExpressionStatement
+syntax__lexer__recognizes_all_operators: ErrorNode occurrence 9 owned by ExpressionStatement
+syntax__lexer__recognizes_all_operators: ErrorNode occurrence 10 owned by ExpressionStatement
+syntax__lexer__recognizes_all_operators: ErrorNode occurrence 11 owned by ExpressionStatement
+syntax__lexer__recognizes_all_operators: ErrorNode occurrence 12 owned by ExpressionStatement
+syntax__lexer__recognizes_all_operators: ErrorNode occurrence 13 owned by ExpressionStatement
+syntax__lexer__recognizes_all_operators: ErrorNode occurrence 14 owned by ExpressionStatement
+syntax__lexer__recognizes_all_operators: ErrorNode occurrence 15 owned by ExpressionStatement
+syntax__lexer__recognizes_all_operators: ErrorNode occurrence 16 owned by ExpressionStatement
+syntax__lexer__recognizes_all_operators: ErrorNode occurrence 17 owned by ExpressionStatement
+syntax__lexer__recognizes_all_operators: ErrorNode occurrence 18 owned by ExpressionStatement
+syntax__lexer__recognizes_all_operators: ErrorNode occurrence 19 owned by ExpressionStatement
+syntax__lexer__recognizes_all_operators: ErrorNode occurrence 20 owned by ExpressionStatement
+syntax__lexer__recognizes_all_operators: ErrorNode occurrence 21 owned by ExpressionStatement
+syntax__lexer__recognizes_all_operators: ErrorNode occurrence 22 owned by ExpressionStatement
+syntax__lexer__recognizes_all_operators: ErrorNode occurrence 23 owned by ExpressionStatement
+syntax__lexer__recognizes_character_literals: ErrorNode occurrence 1 owned by ExpressionStatement
+syntax__lexer__recognizes_character_literals: ErrorNode occurrence 2 owned by ExpressionStatement
+syntax__lexer__recognizes_character_literals: ErrorNode occurrence 3 owned by ExpressionStatement
+syntax__lexer__recognizes_character_literals: ErrorNode occurrence 4 owned by ExpressionStatement
+syntax__lexer__recognizes_decimal_floating_point_literals: ErrorNode occurrence 1 owned by ExpressionStatement
+syntax__lexer__recognizes_decimal_floating_point_literals: ErrorNode occurrence 2 owned by ExpressionStatement
+syntax__lexer__recognizes_decimal_floating_point_literals: ErrorNode occurrence 3 owned by ExpressionStatement
+syntax__lexer__recognizes_decimal_floating_point_literals: ErrorNode occurrence 4 owned by ExpressionStatement
+syntax__lexer__recognizes_decimal_floating_point_literals: ErrorNode occurrence 5 owned by ExpressionStatement
+syntax__lexer__recognizes_decimal_floating_point_literals: ErrorNode occurrence 6 owned by ExpressionStatement
+syntax__lexer__recognizes_decimal_integer_literals: ErrorNode occurrence 1 owned by ExpressionStatement
+syntax__lexer__recognizes_decimal_integer_literals: ErrorNode occurrence 2 owned by ExpressionStatement
+syntax__lexer__recognizes_decimal_integer_literals: ErrorNode occurrence 3 owned by ExpressionStatement
+syntax__lexer__recognizes_delimiters_and_punctuation: ErrorNode occurrence 1 owned by ExpressionStatement
+syntax__lexer__recognizes_delimiters_and_punctuation: ErrorNode occurrence 2 owned by ExpressionStatement
+syntax__lexer__recognizes_delimiters_and_punctuation: ErrorNode occurrence 3 owned by ExpressionStatement
+syntax__lexer__recognizes_delimiters_and_punctuation: ErrorNode occurrence 4 owned by BinaryExpression
+syntax__lexer__recognizes_delimiters_and_punctuation: ErrorNode occurrence 5 owned by BinaryExpression
+syntax__lexer__recognizes_delimiters_and_punctuation: ErrorNode occurrence 6 owned by ExpressionStatement
+syntax__lexer__recognizes_delimiters_and_punctuation: ErrorNode occurrence 7 owned by ExpressionStatement
+syntax__lexer__recognizes_delimiters_and_punctuation: ErrorNode occurrence 8 owned by ExpressionStatement
+syntax__lexer__recognizes_field_identifiers: ErrorNode occurrence 1 owned by ExpressionStatement
+syntax__lexer__recognizes_hex_and_binary_integer_literals: ErrorNode occurrence 1 owned by ExpressionStatement
+syntax__lexer__recognizes_hex_and_binary_integer_literals: ErrorNode occurrence 2 owned by ExpressionStatement
+syntax__lexer__recognizes_hex_and_binary_integer_literals: ErrorNode occurrence 3 owned by ExpressionStatement
+syntax__lexer__recognizes_identifiers_with_underscores_and_digits: ErrorNode occurrence 1 owned by ExpressionStatement
+syntax__lexer__recognizes_integer_suffixes: ErrorNode occurrence 1 owned by ExpressionStatement
+syntax__lexer__recognizes_integer_suffixes: ErrorNode occurrence 2 owned by ExpressionStatement
+syntax__lexer__recognizes_integer_suffixes: ErrorNode occurrence 3 owned by ExpressionStatement
+syntax__lexer__recognizes_integer_suffixes: ErrorNode occurrence 4 owned by ExpressionStatement
+syntax__lexer__recognizes_integer_suffixes: ErrorNode occurrence 5 owned by ExpressionStatement
+syntax__lexer__recognizes_reserved_ellipsis: ErrorNode occurrence 1 owned by ExpressionStatement
+syntax__lexer__recognizes_safe_cast_and_question_operators: ErrorNode occurrence 1 owned by ExpressionStatement
+syntax__lexer__recognizes_safe_cast_and_question_operators: ErrorNode occurrence 2 owned by ExpressionStatement
+syntax__lexer__recognizes_safe_cast_and_question_operators: ErrorNode occurrence 3 owned by ExpressionStatement
+syntax__lexer__recognizes_safe_cast_and_question_operators: ErrorNode occurrence 4 owned by ExpressionStatement
+syntax__lexer__recognizes_safe_cast_and_question_operators: ErrorNode occurrence 5 owned by ExpressionStatement
+syntax__lexer__recognizes_safe_cast_and_question_operators: ErrorNode occurrence 6 owned by ExpressionStatement
+syntax__lexer__recognizes_safe_cast_and_question_operators: ErrorNode occurrence 7 owned by ExpressionStatement
+syntax__lexer__recognizes_safe_cast_and_question_operators: ErrorNode occurrence 8 owned by ExpressionStatement
+syntax__lexer__recognizes_safe_cast_and_question_operators: ErrorNode occurrence 9 owned by ExpressionStatement
+syntax__lexer__recognizes_safe_cast_and_question_operators: ErrorNode occurrence 10 owned by ExpressionStatement
+syntax__lexer__recognizes_safe_cast_and_question_operators: ErrorNode occurrence 11 owned by ExpressionStatement
+syntax__lexer__recognizes_safe_cast_and_question_operators: ErrorNode occurrence 12 owned by ExpressionStatement
+syntax__lexer__recognizes_unicode_identifiers: ErrorNode occurrence 1 owned by ExpressionStatement
+syntax__lexer__reports_non_ascii_digit_as_unknown_start: ErrorNode occurrence 1 owned by ExpressionStatement
+syntax__lexer__reports_non_ascii_digit_as_unknown_start: ErrorNode occurrence 2 owned by ExpressionStatement
+syntax__lexer__reports_unknown_character: ErrorNode occurrence 1 owned by PropertyDeclaration
+syntax__lexer__reports_unknown_character: ErrorNode occurrence 2 owned by PropertyDeclaration
+syntax__lexer__reports_unterminated_backtick_identifier: ErrorNode occurrence 1 owned by ExpressionStatement
+syntax__lexer__reports_unterminated_backtick_identifier: ErrorNode occurrence 2 owned by ExpressionStatement
+syntax__lexer__separates_not_in_and_not_is_from_identifier_prefixes: ErrorNode occurrence 1 owned by ExpressionStatement
+syntax__lexer__separates_not_in_and_not_is_from_identifier_prefixes: ErrorNode occurrence 2 owned by ExpressionStatement
+syntax__lexer__separates_not_in_and_not_is_from_identifier_prefixes: ErrorNode occurrence 3 owned by ExpressionStatement
+syntax__lexer__separates_not_in_and_not_is_from_identifier_prefixes: ErrorNode occurrence 4 owned by ExpressionStatement
+syntax__lexer__separates_not_in_and_not_is_from_identifier_prefixes: ErrorNode occurrence 5 owned by ExpressionStatement
+syntax__lexer__separates_not_in_and_not_is_from_identifier_prefixes: ErrorNode occurrence 6 owned by ExpressionStatement
+syntax__parser__block_empty_statement_adjacent_braces: ErrorNode occurrence 1 owned by ExpressionStatement
+syntax__parser__diagnoses_invalid_assignment_targets: ErrorNode occurrence 1 owned by AssignmentExpression
+syntax__parser__diagnoses_invalid_assignment_targets: ErrorNode occurrence 2 owned by AssignmentExpression
+syntax__parser__diagnoses_invalid_assignment_targets: ErrorNode occurrence 3 owned by AssignmentExpression
+syntax__parser__diagnoses_malformed_type_argument_call: ErrorNode occurrence 1 owned by TypeProjectionList
+syntax__parser__diagnoses_malformed_type_argument_call: ErrorNode occurrence 2 owned by BinaryExpression
+syntax__parser__diagnoses_malformed_type_argument_call: ErrorNode occurrence 3 owned by PropertyDeclaration
+syntax__parser__diagnoses_malformed_type_argument_call: ErrorNode occurrence 4 owned by PropertyDeclaration
+syntax__parser__diagnoses_malformed_type_argument_call: ErrorNode occurrence 5 owned by PropertyDeclaration
+syntax__parser__diagnoses_malformed_type_argument_call: ErrorNode occurrence 6 owned by NavigationExpression
+syntax__parser__recovers_incomplete_lambda_and_call: ErrorNode occurrence 1 owned by ValueArgument
+syntax__parser__recovers_missing_expression_after_elvis: ErrorNode occurrence 1 owned by BinaryExpression
+syntax__parser__recovers_missing_expression_in_collection_literal_preview: ErrorNode occurrence 1 owned by CollectionLiteralExpression
+syntax__parser__recovers_missing_when_arrow_and_body: ErrorNode occurrence 1 owned by WhenCondition
+syntax__parser__recovers_missing_when_arrow_and_body: ErrorNode occurrence 2 owned by WhenCondition
+syntax__parser__recovers_missing_when_arrow_and_body: ErrorNode occurrence 3 owned by WhenCondition
+syntax__parser__recovers_missing_when_arrow_and_body: ErrorNode occurrence 4 owned by WhenEntry
+syntax__recovery__annotation_argument_list: ErrorNode occurrence 1 owned by AnnotationArgumentList
+syntax__recovery__argument_list: ErrorNode occurrence 1 owned by ValueArgumentList
+syntax__recovery__assignment_invalid_targets: ErrorNode occurrence 1 owned by AssignmentExpression
+syntax__recovery__assignment_invalid_targets: ErrorNode occurrence 2 owned by AssignmentExpression
+syntax__recovery__assignment_invalid_targets: ErrorNode occurrence 3 owned by AssignmentExpression
+syntax__recovery__assignment_without_left: ErrorNode occurrence 1 owned by ExpressionStatement
+syntax__recovery__assignment_without_left: ErrorNode occurrence 2 owned by ExpressionStatement
+syntax__recovery__block_empty_statement_adjacent_braces: ErrorNode occurrence 1 owned by ExpressionStatement
+syntax__recovery__call_without_callee: ErrorNode occurrence 1 owned by ExpressionStatement
+syntax__recovery__call_without_callee: ErrorNode occurrence 2 owned by ExpressionStatement
+syntax__recovery__call_without_callee: ErrorNode occurrence 3 owned by ExpressionStatement
+syntax__recovery__call_without_callee: ErrorNode occurrence 4 owned by ExpressionStatement
+syntax__recovery__call_without_callee: ErrorNode occurrence 5 owned by ExpressionStatement
+syntax__recovery__call_without_callee: ErrorNode occurrence 6 owned by ExpressionStatement
+syntax__recovery__class_body_with_formatter_ignore: ErrorNode occurrence 1 owned by UnaryExpression
+syntax__recovery__class_body: ErrorNode occurrence 1 owned by UnaryExpression
+syntax__recovery__class_body: ErrorNode occurrence 2 owned by ExpressionStatement
+syntax__recovery__class_body: ErrorNode occurrence 3 owned by ExpressionStatement
+syntax__recovery__class_body: ErrorNode occurrence 4 owned by ExpressionStatement
+syntax__recovery__collection_and_index_lists: ErrorNode occurrence 1 owned by CollectionLiteralExpression
+syntax__recovery__collection_and_index_lists: ErrorNode occurrence 2 owned by IndexExpression
+syntax__recovery__declaration_tails: ErrorNode occurrence 1 owned by FunctionDeclaration
+syntax__recovery__declaration_tails: ErrorNode occurrence 2 owned by FunctionDeclaration
+syntax__recovery__declaration_tails: ErrorNode occurrence 3 owned by FunctionDeclaration
+syntax__recovery__declaration_tails: ErrorNode occurrence 4 owned by PropertyDeclaration
+syntax__recovery__else_without_branch: ErrorNode occurrence 1 owned by IfExpression
+syntax__recovery__for_partial_header: ErrorNode occurrence 1 owned by ForStatement
+syntax__recovery__navigation_without_receiver: ErrorNode occurrence 1 owned by ExpressionStatement
+syntax__recovery__navigation_without_receiver: ErrorNode occurrence 2 owned by ExpressionStatement
+syntax__recovery__nested_recovered_when_condition: ErrorNode occurrence 1 owned by WhenCondition
+syntax__recovery__nested_recovered_when_condition: ErrorNode occurrence 2 owned by WhenCondition
+syntax__recovery__nested_recovered_when_condition: ErrorNode occurrence 3 owned by WhenCondition
+syntax__recovery__nested_recovered_when_condition: ErrorNode occurrence 4 owned by WhenEntry
+syntax__recovery__nested_recovered_when_condition: ErrorNode occurrence 5 owned by WhenEntry
+syntax__recovery__nested_recovered_when_condition: ErrorNode occurrence 6 owned by WhenEntry
+syntax__recovery__nested_recovered_when_condition: ErrorNode occurrence 7 owned by WhenEntry
+syntax__recovery__nested_recovered_when_condition: ErrorNode occurrence 8 owned by WhenEntry
+syntax__recovery__object_delegation: ErrorNode occurrence 1 owned by TypeReference
+syntax__recovery__property_body_recovered_gap: ErrorNode occurrence 1 owned by AssignmentExpression
+syntax__recovery__type_argument_list: ErrorNode occurrence 1 owned by TypeProjectionList
+syntax__recovery__type_constraints: ErrorNode occurrence 1 owned by ExpressionStatement
+syntax__recovery__type_constraints: ErrorNode occurrence 2 owned by ExpressionStatement
+syntax__recovery__type_constraints: ErrorNode occurrence 3 owned by ExpressionStatement
+syntax__recovery__type_constraints: ErrorNode occurrence 4 owned by ExpressionStatement
+syntax__recovery__type_constraints: ErrorNode occurrence 5 owned by ExpressionStatement
+syntax__recovery__when_condition_list: ErrorNode occurrence 1 owned by WhenCondition

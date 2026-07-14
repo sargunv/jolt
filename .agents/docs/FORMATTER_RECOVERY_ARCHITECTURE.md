@@ -24,10 +24,12 @@ syntax-owned malformed/bogus subtrees verbatim.
 Jolt already has the typed-view half of this architecture. `SyntaxNode` is a
 small parent-aware borrowed cursor over the parse-owned arena, and wrappers such
 as `BinaryExpression`, `Block`, and `Expression` are the existing typed
-red-style views. Phase 7 preserves those cursor and wrapper types. It replaces
-their hand-written child searches with generated fixed-slot access; it does not
-add a second typed tree, universal `FooFields` wrapper layer, or persistent
-decoded representation.
+red-style views. Phase 7 makes the declarative grammar and generated
+declarations authoritative without changing runtime representation. Phases 8 and
+9 preserve those cursor and wrapper types while replacing hand-written child
+searches with generated fixed-slot access for Java and Kotlin respectively. They
+do not add a second typed tree, universal `FooFields` wrapper layer, or
+persistent decoded representation.
 
 Verbatim is not an error-handling fallback. A formatter failure, missing
 accessor, or unimplemented valid-node rule must return an internal error in
@@ -150,8 +152,8 @@ with the existing borrowed iterators.
 
 ### One grammar-shape source and syntax factory
 
-Java and Kotlin each gain one declarative grammar-shape source. It generates,
-from the same definitions:
+Java and Kotlin each gain one crate-private declarative Rust macro schema. Small
+consumers expand the same schema into:
 
 - node kinds, category unions, and category-compatible bogus kinds;
 - the language syntax factory that validates parsed direct children, inserts
@@ -161,9 +163,27 @@ from the same definitions:
 - the sealed formatter dispatch input for each node kind.
 
 There is no hand-written second description of field order in accessors or
-formatter recovery code. Generated output may be checked in, but generated and
-hand-written production line counts are reported separately and both count
-toward the completion budget.
+formatter recovery code. There is also no TOML, Python generator, build script,
+procedural macro, checked-in generated Rust, or code-generation command. Macro
+expansion is compiler work rather than a second source artifact; schema and
+consumer source lines count toward the completion budget, and compiled static
+metadata counts toward binary-size and performance gates.
+
+Every ordinary node declaration is physically representable: each named field is
+required or optional and lowers to exactly one `TreeSlot`. Repeated roles are
+explicit variable-length syntax-list node kinds, and their parent field is one
+required node slot even when the list is empty. Bounded compound forms that are
+one semantic value, such as split shift operators, are explicit fixed-field
+syntax nodes rather than multi-element pseudo-fields. Only list nodes and
+malformed nodes may own variable slot ranges.
+
+Phase 7 must audit the current compact parser tree without installing the new
+runtime representation. A `list` or `constructed` field therefore names its
+target node and expands that same node's declared children in place during the
+audit. Phases 8 and 9 replace that temporary expansion by constructing the named
+node and storing it in the parent's one fixed slot. This is migration behavior
+derived from the target declaration, not a second grammar or a persistent range
+decoder.
 
 The sealed classification reuses the existing typed wrapper as its valid view:
 
@@ -178,8 +198,8 @@ enum FormatShape<N> {
 Generated required-field accessors remain non-panicking and read their fixed
 slot directly. Optional accessors distinguish `Empty` from an invariant type
 mismatch. A stack-local fields value is permitted only when an owning formatter
-rule needs it to encode a real multi-field invariant; Phase 7 does not generate
-universal fields records as a convenience API.
+rule needs it to encode a real multi-field invariant; macro expansion does not
+produce universal fields records as a convenience API.
 
 The target physical representation is Biome-style stored slots in Jolt's flat
 arena:
@@ -201,14 +221,20 @@ struct TreeNode {
 
 `TreeSlot` replaces `TreeElement`; no role array, decoder result, or wrapper
 tree is stored beside it. A node kind determines the meaning of each slot index.
-Lists use generated borrowed views over their slots and separators.
+Ordinary nodes have a fixed slot count. Explicit syntax-list nodes alone have a
+variable slot range and use macro-defined borrowed views over their alternating
+items and separators; a parent still reaches the entire list through one fixed
+node slot.
 
-Phase 7 validates this representation against the current compact arena. If it
-misses the performance or total-size gates, implementation stops. An alternative
-compact encoding may be proposed only if it preserves the same logical slots,
-factory behavior, generated APIs, and constant-time field access; it is an
-architecture amendment, not an implementation detail selected during a later
-vertical phase.
+Phase 7 validates every current compact direct-child sequence against the
+generated shape matcher in audit mode but makes no runtime storage change. Phase
+8 enables the representation for all Java nodes atomically; Phase 9 does the
+same for Kotlin and removes the mixed compact/slot runtime. If either
+language-complete pivot misses the performance or total-size gates,
+implementation stops. An alternative compact encoding may be proposed only if it
+preserves the same logical slots, factory behavior, generated APIs, and
+constant-time field access; it is an architecture amendment, not an
+implementation detail selected during a later canonical-layout phase.
 
 The selected implementation must be:
 
@@ -221,10 +247,10 @@ The selected implementation must be:
 - the replacement for hand-written recovery accessors, not an additional API
   beside them.
 
-Phase 7 includes the cost of the factory, stored empty slots, and generated
-views. The decision record states which Biome capabilities are retained or
-forgone and uses parse-only CPU, allocation, memory, tree-byte, and
-production-line measurements.
+Phase 7 records macro-schema, consumer, audit, and ordinary implementation-line
+measurements and the projected factory/slot cost. Phases 8 and 9 measure the
+actual language-complete factory, stored empty slots, and generated views using
+parse-only CPU, allocation, memory, and tree-byte metrics.
 
 ### Syntax-owned malformed classification
 
@@ -549,11 +575,13 @@ root proof before it can return a completed outcome; an intentional sink halt
 returns an incomplete halted outcome with no proof, and callers cannot forget a
 separate `finish()` step. Ordinary structured token and trivia documents carry
 source claims without exceptional tags, so mixed valid/bogus output can complete
-one root proof. Phase 7 supplies the generated category-bogus owner and sealed
-`Valid(node)`/`Bogus(owner)` dispatch, then mechanically wires the shared token,
-comment, and root-render helpers without changing family layout. Optimized
-builds keep the same required API and output behavior while the dense tracker,
-claim arena, and provenance ledger compile out.
+one root proof. Phase 7 macro-expands the category-bogus and shape declarations
+without enabling them at runtime. Phase 8 wires the complete Java dispatch and
+tracked root; Phase 9 does the same for Kotlin. A root switches only after that
+language's token, comment, ignore, removal, normalization, malformed-boundary,
+and recovered-container paths carry exact claims. Optimized builds keep the same
+required API and output behavior while the dense tracker, claim arena, and
+provenance ledger compile out.
 
 The only permitted byte change inside the verbatim core is an explicitly
 approved global text policy, such as line-ending normalization. Any such policy
@@ -561,9 +589,10 @@ is reason-tagged and tested separately.
 
 Formatter-ignore remains a separate verbatim feature. It is selected by an
 ignore directive, not malformed classification, and retains its existing
-normalized indentation and line-ending contract. Phase 7 adapts that existing
-range/run path to claim every skipped token and conserved trivia identity before
-root rendering becomes tracked; it does not introduce another ignore path.
+normalized indentation and line-ending contract. Each language-complete pivot
+adapts that existing range/run path to claim every skipped token and conserved
+trivia identity before its root rendering becomes tracked; it does not introduce
+another ignore path.
 
 ### Exact verbatim range and boundary trivia
 
@@ -614,15 +643,16 @@ normalizations. Each normalization is a closed enum case with one permitted
 spelling and exact preconditions. Phase 6 exposes temporary opaque replacement,
 removal, and synthesis claim carriers but no public constructors, so formatter
 rules cannot pair an arbitrary source identity with a normalization case before
-the grammar schema exists. Phase 7 moves these carriers upstream into
-`jolt_syntax`: the shared `Language` contract receives a closed normalization
-operation and the generated language implementation validates the owning slot,
-source kind, and valid-syntax precondition. A `SyntaxToken` then returns an
-opaque, tree-branded permit only when that language hook accepts the operation,
-and formatter IR consumes the permit without creating a syntax-to-IR dependency.
-Phase 7 deletes the temporary IR-owned carriers in the same commit. Synthesized
-tokens require a same-tree source-token anchor. Removal reasons are separately
-closed.
+the grammar schema exists. Phase 7 macro-expands the closed operation
+declarations and owning slot roles. Phases 8 and 9 move the carriers upstream
+into `jolt_syntax`: the shared `Language` contract receives a closed
+normalization operation and the generated language implementation validates the
+owning slot, source kind, and valid-syntax precondition. A `SyntaxToken` then
+returns an opaque, tree-branded permit only when that language hook accepts the
+operation, and formatter IR consumes the permit without creating a syntax-to-IR
+dependency. Phase 10 deletes the temporary IR-owned carriers after both language
+pivots. Synthesized tokens require a same-tree source-token anchor. Removal
+reasons are separately closed.
 
 Source-token replacement or reordering records the source identities it consumes
 and the permitted spelling or bounded permutation. A synthesized token records
@@ -752,7 +782,7 @@ measured product justification. It is not absorbed silently into a later phase.
 The final clean gate reruns the same benchmark manifests on the same machine and
 build profile.
 
-## Production Size Contract
+## Implementation Size Contract
 
 The discarded Phase 1–16 implementation added 10,021 and removed 3,076 lines of
 non-test-tree Rust, a net increase of 6,945 lines. Of that, language syntax
@@ -760,34 +790,38 @@ source grew by 3,908 net lines and Java/Kotlin formatter source grew by 1,407
 net lines. The P16 Java and Kotlin accessor files alone total 12,628 lines,
 versus 9,256 lines before that stack.
 
-The replacement is not complete if it merely adds generated slot accessors, a
-factory, or bogus kinds beside that machinery. Completion requires:
+The replacement is not complete if it merely adds macro-expanded slot accessors,
+a factory, or bogus kinds beside that machinery. Completion requires:
 
-- final production Rust under `crates/**/src/**/*.rs`, excluding
-  `jolt_test_support`, to be net negative relative to `2197128` on `main`, with
-  generated code included and the exact diff reported by crate;
+- final implementation code, including Rust test support but excluding fixture
+  data and snapshots, to be net negative relative to `2197128` on `main`, with
+  the exact diff reported by crate;
+- no external grammar source, generator, build script, or code-generation task;
 - main's duplicated field-search and formatter fallback helpers to be removed as
-  their generated replacements land;
+  their macro-defined replacements land;
 - P16-only ordered-part enums and `parts_with_recovered` APIs to remain absent,
   enforced by a forbidden-pattern scan;
-- generated and hand-written production lines to be reported separately, with
-  generated lines still included in the total; and
+- macro-schema, consumer, audit, and ordinary implementation lines to be
+  reported separately, with every category included in the total; and
 - comparison with P16 to be reported only as evidence that the discarded
   machinery was avoided, never as the completion baseline.
 
 The checked-in counting command is:
 
 ```sh
-git diff --numstat 2197128 -- ':(glob)crates/**/src/**/*.rs' \
-  ':(exclude,glob)crates/jolt_test_support/**'
+git diff --numstat 2197128 -- ':(glob)**/*.rs'
 ```
 
-Phase 7 records a by-crate projection that is net negative against `2197128`
-before broad migration. Every vertical phase reports additions, deletions, and
-which main-branch helpers it replaced. Phase 23 fails if the final total is not
-net negative against `2197128` or if two independent grammar-shape descriptions
-remain. Missing the target requires a user-approved architecture amendment; it
-cannot be waived while declaring the checklist `CLEAN`.
+For an uncommitted phase, append untracked Rust implementation files to that
+report before summing it. Fixture sources, `*.snap`, and benchmark reports are
+not implementation code.
+
+Phase 7 records a by-crate projection against `2197128` before runtime
+migration. Every later phase reports additions, deletions, and which main-branch
+helpers it replaced. Phase 24 fails if implementation is not net negative
+against `2197128` or if two independent grammar-shape descriptions remain.
+Missing the target requires a user-approved architecture amendment; it cannot be
+waived while declaring the checklist `CLEAN`.
 
 ## Testing Strategy
 

@@ -11,6 +11,10 @@ use jolt_syntax::{CommentKind, Language, SyntaxToken};
 use serde::Deserialize;
 use unicode_width::UnicodeWidthStr;
 
+mod schema_audit;
+
+pub use schema_audit::{SchemaAudit, assert_schema_deterministic};
+
 #[derive(Default)]
 pub struct StringSink {
     text: String,

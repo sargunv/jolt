@@ -107,64 +107,6 @@ fn child_tokens<'source>(
     syntax.child_tokens()
 }
 
-#[derive(Clone, Copy, Eq, PartialEq)]
-pub struct KotlinFile<'source> {
-    syntax: KotlinSyntaxNode<'source>,
-}
-
-impl<'source> KotlinFile<'source> {
-    #[must_use]
-    pub fn kind(&self) -> KotlinSyntaxKind {
-        self.syntax.kind()
-    }
-
-    #[must_use]
-    pub fn text_range(&self) -> TextRange {
-        self.syntax.text_range()
-    }
-
-    #[must_use]
-    pub fn source_text(&self) -> &'source str {
-        syntax_source_text(&self.syntax)
-    }
-
-    pub fn token_iter(&self) -> impl Iterator<Item = KotlinSyntaxToken<'source>> + '_ {
-        token_iter(&self.syntax)
-    }
-
-    #[must_use]
-    pub fn first_token(&self) -> Option<KotlinSyntaxToken<'source>> {
-        first_token(&self.syntax)
-    }
-
-    #[must_use]
-    pub fn last_token(&self) -> Option<KotlinSyntaxToken<'source>> {
-        last_token(&self.syntax)
-    }
-
-    pub(crate) fn syntax(&self) -> &KotlinSyntaxNode<'source> {
-        &self.syntax
-    }
-}
-
-impl private::Sealed for KotlinFile<'_> {}
-
-impl<'source> KotlinNode<'source> for KotlinFile<'source> {
-    fn cast(syntax: KotlinSyntaxNode<'source>) -> Option<Self> {
-        matches!(syntax.kind(), KotlinSyntaxKind::KotlinFile).then_some(Self { syntax })
-    }
-}
-
-impl fmt::Debug for KotlinFile<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.syntax.fmt(f)
-    }
-}
-
-pub(crate) fn cast_kotlin_file(syntax: KotlinSyntaxNode<'_>) -> Option<KotlinFile<'_>> {
-    <KotlinFile<'_> as KotlinNode<'_>>::cast(syntax)
-}
-
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct RecoveredNode<'source> {
     syntax: KotlinSyntaxNode<'source>,
@@ -269,17 +211,12 @@ macro_rules! kotlin_cst {
 
         #[derive(Clone, Copy, Debug, Eq, PartialEq)]
         pub enum AnyKotlinNode<'source> {
-            KotlinFile(KotlinFile<'source>),
             $($node($node<'source>),)*
         }
 
         impl<'source> AnyKotlinNode<'source> {
             pub(crate) fn cast(syntax: KotlinSyntaxNode<'source>) -> Option<Self> {
                 match syntax.kind() {
-                    KotlinSyntaxKind::KotlinFile => {
-                        <KotlinFile<'source> as KotlinNode<'source>>::cast(syntax)
-                            .map(Self::KotlinFile)
-                    }
                     $(
                         KotlinSyntaxKind::$kind => {
                             <$node<'source> as KotlinNode<'source>>::cast(syntax).map(Self::$node)
@@ -366,223 +303,26 @@ macro_rules! kotlin_cst {
     };
 }
 
-kotlin_cst! {
-    nodes {
-        ErrorNode => ErrorNode,
-        PackageHeader => PackageHeader,
-        ImportList => ImportList,
-        ImportDirective => ImportDirective,
-        ImportAlias => ImportAlias,
-        ModifierList => ModifierList,
-        Annotation => Annotation,
-        AnnotationUseSiteTarget => AnnotationUseSiteTarget,
-        AnnotationArgumentList => AnnotationArgumentList,
-        ValueArgumentList => ValueArgumentList,
-        ValueArgument => ValueArgument,
-        Name => Name,
-        QualifiedName => QualifiedName,
-        CallableName => CallableName,
-        TypeArgumentList => TypeArgumentList,
-        TypeArgument => TypeArgument,
-        ClassDeclaration => ClassDeclaration,
-        InterfaceDeclaration => InterfaceDeclaration,
-        ObjectDeclaration => ObjectDeclaration,
-        CompanionObject => CompanionObject,
-        EnumEntry => EnumEntry,
-        ClassBody => ClassBody,
-        ClassMemberDeclaration => ClassMemberDeclaration,
-        PrimaryConstructor => PrimaryConstructor,
-        SecondaryConstructor => SecondaryConstructor,
-        ConstructorDelegationCall => ConstructorDelegationCall,
-        InitializerBlock => InitializerBlock,
-        FunctionDeclaration => FunctionDeclaration,
-        PropertyDeclaration => PropertyDeclaration,
-        PropertyAccessor => PropertyAccessor,
-        ExplicitBackingField => ExplicitBackingField,
-        TypeAliasDeclaration => TypeAliasDeclaration,
-        TypeParameterList => TypeParameterList,
-        TypeParameter => TypeParameter,
-        TypeConstraintList => TypeConstraintList,
-        TypeConstraint => TypeConstraint,
-        ContextParameterClause => ContextParameterClause,
-        ContextParameter => ContextParameter,
-        DelegationSpecifierList => DelegationSpecifierList,
-        DelegationSpecifier => DelegationSpecifier,
-        UserType => UserType,
-        NullableType => NullableType,
-        FunctionType => FunctionType,
-        ContextFunctionType => ContextFunctionType,
-        ReceiverType => ReceiverType,
-        ParenthesizedType => ParenthesizedType,
-        FunctionTypeParameter => FunctionTypeParameter,
-        DefinitelyNonNullableType => DefinitelyNonNullableType,
-        TypeProjection => TypeProjection,
-        TypeProjectionList => TypeProjectionList,
-        Block => Block,
-        Statement => Statement,
-        ExpressionStatement => ExpressionStatement,
-        LocalDeclaration => LocalDeclaration,
-        AssignmentExpression => AssignmentExpression,
-        BinaryExpression => BinaryExpression,
-        UnaryExpression => UnaryExpression,
-        PostfixExpression => PostfixExpression,
-        CallExpression => CallExpression,
-        IndexExpression => IndexExpression,
-        NavigationExpression => NavigationExpression,
-        CallableReferenceExpression => CallableReferenceExpression,
-        LiteralExpression => LiteralExpression,
-        StringTemplateExpression => StringTemplateExpression,
-        StringTemplateEntry => StringTemplateEntry,
-        NameExpression => NameExpression,
-        ThisExpression => ThisExpression,
-        SuperExpression => SuperExpression,
-        ParenthesizedExpression => ParenthesizedExpression,
-        AnnotatedExpression => AnnotatedExpression,
-        IfExpression => IfExpression,
-        WhenExpression => WhenExpression,
-        WhenSubject => WhenSubject,
-        WhenEntry => WhenEntry,
-        WhenCondition => WhenCondition,
-        WhenGuard => WhenGuard,
-        TryExpression => TryExpression,
-        CatchClause => CatchClause,
-        FinallyClause => FinallyClause,
-        LoopExpression => LoopExpression,
-        ForStatement => ForStatement,
-        WhileStatement => WhileStatement,
-        DoWhileStatement => DoWhileStatement,
-        JumpExpression => JumpExpression,
-        ThrowExpression => ThrowExpression,
-        LambdaExpression => LambdaExpression,
-        LambdaParameterList => LambdaParameterList,
-        LambdaParameter => LambdaParameter,
-        AnonymousFunctionExpression => AnonymousFunctionExpression,
-        ObjectExpression => ObjectExpression,
-        CollectionLiteralExpression => CollectionLiteralExpression,
-        DestructuringDeclaration => DestructuringDeclaration,
-        DestructuringEntry => DestructuringEntry,
-        ValueParameterList => ValueParameterList,
-        ValueParameter => ValueParameter,
-        TypeReference => TypeReference,
-    }
-    enums {
-        KotlinFileItem =
-            PackageHeader |
-            ImportList |
-            ClassDeclaration |
-            InterfaceDeclaration |
-            ObjectDeclaration |
-            CompanionObject |
-            EnumEntry |
-            FunctionDeclaration |
-            PropertyDeclaration |
-            TypeAliasDeclaration |
-            SecondaryConstructor |
-            InitializerBlock |
-            Statement;
+macro_rules! define_kotlin_cst_from_schema {
+    (
+        tokens { $($token:ident,)* }
+        categories { $($family:ident => $bogus:ident { $($member:ident,)* })* }
+        nodes { $($kind:ident => $wrapper:ident [$module:ident $class:ident] { $($fields:tt)* })* }
+    ) => {
+        kotlin_cst! {
+            nodes {
+                $($wrapper => $kind,)*
+                $($bogus => $bogus,)*
+            }
+            enums {
+                $($family = $($member)|+;)*
+            }
+        }
+    };
+}
 
-        Declaration =
-            ClassDeclaration |
-            InterfaceDeclaration |
-            ObjectDeclaration |
-            CompanionObject |
-            EnumEntry |
-            FunctionDeclaration |
-            PropertyDeclaration |
-            TypeAliasDeclaration |
-            SecondaryConstructor |
-            InitializerBlock;
+kotlin_syntax_schema!(define_kotlin_cst_from_schema);
 
-        ClassMember =
-            ClassMemberDeclaration |
-            ClassDeclaration |
-            InterfaceDeclaration |
-            ObjectDeclaration |
-            CompanionObject |
-            EnumEntry |
-            FunctionDeclaration |
-            PropertyDeclaration |
-            TypeAliasDeclaration |
-            SecondaryConstructor |
-            InitializerBlock |
-            PropertyAccessor |
-            ExplicitBackingField |
-            Statement;
-
-        TypeSyntax =
-            UserType |
-            NullableType |
-            FunctionType |
-            ContextFunctionType |
-            ReceiverType |
-            ParenthesizedType |
-            DefinitelyNonNullableType;
-
-        Expression =
-            AssignmentExpression |
-            BinaryExpression |
-            UnaryExpression |
-            PostfixExpression |
-            CallExpression |
-            IndexExpression |
-            NavigationExpression |
-            CallableReferenceExpression |
-            LiteralExpression |
-            StringTemplateExpression |
-            NameExpression |
-            ThisExpression |
-            SuperExpression |
-            ParenthesizedExpression |
-            AnnotatedExpression |
-            IfExpression |
-            WhenExpression |
-            TryExpression |
-            LoopExpression |
-            ForStatement |
-            WhileStatement |
-            DoWhileStatement |
-            JumpExpression |
-            ThrowExpression |
-            LambdaExpression |
-            AnonymousFunctionExpression |
-            ObjectExpression |
-            CollectionLiteralExpression;
-
-        WhenConditionSyntax =
-            WhenCondition |
-            WhenGuard;
-
-        StringTemplatePart =
-            StringTemplateEntry;
-
-        ValueArgumentListEntry =
-            ValueArgument;
-
-        TypeArgumentListEntry =
-            TypeArgument |
-            TypeProjection;
-
-        DestructuringPatternEntry =
-            DestructuringEntry;
-
-        StatementSyntax =
-            Statement |
-            ExpressionStatement |
-            LocalDeclaration |
-            Block;
-
-        BlockItem =
-            Statement |
-            ExpressionStatement |
-            LocalDeclaration |
-            Block |
-            ClassDeclaration |
-            InterfaceDeclaration |
-            ObjectDeclaration |
-            FunctionDeclaration |
-            PropertyDeclaration |
-            TypeAliasDeclaration |
-            SecondaryConstructor |
-            InitializerBlock;
-    }
+pub(crate) fn cast_kotlin_file(syntax: KotlinSyntaxNode<'_>) -> Option<KotlinFile<'_>> {
+    <KotlinFile<'_> as KotlinNode<'_>>::cast(syntax)
 }

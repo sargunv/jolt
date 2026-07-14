@@ -6,6 +6,8 @@ mod event;
 mod kind;
 mod language;
 mod parser;
+#[doc(hidden)]
+pub mod schema;
 mod syntax_tree;
 
 mod red;
