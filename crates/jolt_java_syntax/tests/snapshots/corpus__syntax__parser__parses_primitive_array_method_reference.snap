@@ -12,60 +12,83 @@ class PrimitiveArrayMethodReference {
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "PrimitiveArrayMethodReference" @ 6..35 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 36..37
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 42..46 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "method" @ 47..53
-          LParen "(" @ 53..54
-          RParen ")" @ 54..55 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 56..57
-            BlockStatement
-              LocalVariableDeclaration
-                ClassType
-                  QualifiedName
-                    Identifier "java" @ 66..70 leading=[Newline "\n", Whitespace "        "]
-                    Dot "." @ 70..71
-                    Identifier "util" @ 71..75
-                    Dot "." @ 75..76
-                    Identifier "function" @ 76..84
-                    Dot "." @ 84..85
-                    Identifier "IntFunction" @ 85..96
-                  TypeArgumentList
-                    Lt "<" @ 96..97
-                    TypeArgument
-                      ArrayType
-                        PrimitiveType
-                          IntKw "int" @ 97..100
-                        ArrayDimensions
-                          ArrayDimension
-                            LBracket "[" @ 100..101
-                            RBracket "]" @ 101..102
-                    Gt ">" @ 102..103 trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "factory" @ 104..111 trailing=[Whitespace " "]
-                    Assign "=" @ 112..113 trailing=[Whitespace " "]
-                    VariableInitializer
-                      MethodReferenceExpression
-                        ArrayType
-                          PrimitiveType
-                            IntKw "int" @ 114..117
-                          ArrayDimensions
-                            ArrayDimension
-                              LBracket "[" @ 117..118
-                              RBracket "]" @ 118..119
-                        DoubleColon "::" @ 119..121
-                        NewKw "new" @ 121..124
-              Semicolon ";" @ 124..125
-            RBrace "}" @ 130..131 leading=[Newline "\n", Whitespace "    "]
-      RBrace "}" @ 132..133 leading=[Newline "\n"]
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "PrimitiveArrayMethodReference" @ 6..35 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 36..37
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 42..46 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Identifier "method" @ 47..53
+              LParen "(" @ 53..54
+              RParen ")" @ 54..55 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 56..57
+                BlockStatementList
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
+                            AnnotationList
+                            QualifiedName
+                              QualifiedNameSegmentNode
+                                AnnotationList
+                                Identifier "java" @ 66..70 leading=[Newline "\n", Whitespace "        "]
+                              Dot "." @ 70..71
+                              NameSegmentDotList
+                                QualifiedNameSegmentNode
+                                  AnnotationList
+                                  Identifier "util" @ 71..75
+                                Dot "." @ 75..76
+                                QualifiedNameSegmentNode
+                                  AnnotationList
+                                  Identifier "function" @ 76..84
+                                Dot "." @ 84..85
+                                QualifiedNameSegmentNode
+                                  AnnotationList
+                                  Identifier "IntFunction" @ 85..96
+                            TypeArgumentList
+                              Lt "<" @ 96..97
+                              TypeArgumentSeparatedList
+                                TypeArgument
+                                  AnnotationList
+                                  ArrayType
+                                    PrimitiveType
+                                      AnnotationList
+                                      IntKw "int" @ 97..100
+                                    ArrayDimensions
+                                      ArrayDimension
+                                        AnnotationList
+                                        LBracket "[" @ 100..101
+                                        RBracket "]" @ 101..102
+                              Gt ">" @ 102..103 trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "factory" @ 104..111 trailing=[Whitespace " "]
+                          Assign "=" @ 112..113 trailing=[Whitespace " "]
+                          VariableInitializer
+                            MethodReferenceExpression
+                              ArrayType
+                                PrimitiveType
+                                  AnnotationList
+                                  IntKw "int" @ 114..117
+                                ArrayDimensions
+                                  ArrayDimension
+                                    AnnotationList
+                                    LBracket "[" @ 117..118
+                                    RBracket "]" @ 118..119
+                              DoubleColon "::" @ 119..121
+                              NewKw "new" @ 121..124
+                    Semicolon ";" @ 124..125
+                RBrace "}" @ 130..131 leading=[Newline "\n", Whitespace "    "]
+        RBrace "}" @ 132..133 leading=[Newline "\n"]
   Eof "" @ 134..134 leading=[Newline "\n"]
 
 diagnostics:

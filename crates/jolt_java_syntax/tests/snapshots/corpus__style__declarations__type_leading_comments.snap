@@ -12,23 +12,27 @@ class Plain {}
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 15..20 leading=[LineComment "// plain class", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "Plain" @ 21..26 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 27..28
-      RBrace "}" @ 28..29
-  InterfaceDeclaration
-    ModifierList
-      Annotation
-        At "@" @ 54..55 leading=[Newline "\n", Newline "\n", LineComment "// annotated interface", Newline "\n"]
-        Name
-          Identifier "Beta" @ 55..59 trailing=[Whitespace " "]
-    InterfaceKw "interface" @ 60..69 trailing=[Whitespace " "]
-    Identifier "Api" @ 70..73 trailing=[Whitespace " "]
-    InterfaceBody
-      LBrace "{" @ 74..75
-      RBrace "}" @ 75..76
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 15..20 leading=[LineComment "// plain class", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "Plain" @ 21..26 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 27..28
+        ClassBodyMemberList
+        RBrace "}" @ 28..29
+    InterfaceDeclaration
+      ModifierList
+        Annotation
+          At "@" @ 54..55 leading=[Newline "\n", Newline "\n", LineComment "// annotated interface", Newline "\n"]
+          Name
+            Identifier "Beta" @ 55..59 trailing=[Whitespace " "]
+      InterfaceKw "interface" @ 60..69 trailing=[Whitespace " "]
+      Identifier "Api" @ 70..73 trailing=[Whitespace " "]
+      InterfaceBody
+        LBrace "{" @ 74..75
+        InterfaceBodyMemberList
+        RBrace "}" @ 75..76
   Eof "" @ 77..77 leading=[Newline "\n"]
 
 diagnostics:

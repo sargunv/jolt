@@ -8,20 +8,24 @@ int a; // comment \u000a int b;
 syntax:
 syntax:
 CompilationUnit
-  FieldDeclaration
-    PrimitiveType
-      IntKw "int" @ 0..3 trailing=[Whitespace " "]
-    VariableDeclaratorList
-      VariableDeclarator
-        Identifier "a" @ 4..5
-    Semicolon ";" @ 5..6 trailing=[Whitespace " ", LineComment "// comment "]
-  FieldDeclaration
-    PrimitiveType
-      IntKw "int" @ 20..23 leading=[Newline "\n", Whitespace " "] trailing=[Whitespace " "]
-    VariableDeclaratorList
-      VariableDeclarator
-        Identifier "b" @ 24..25
-    Semicolon ";" @ 25..26
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    FieldDeclaration
+      PrimitiveType
+        AnnotationList
+        IntKw "int" @ 0..3 trailing=[Whitespace " "]
+      VariableDeclaratorList
+        VariableDeclarator
+          Identifier "a" @ 4..5
+      Semicolon ";" @ 5..6 trailing=[Whitespace " ", LineComment "// comment "]
+    FieldDeclaration
+      PrimitiveType
+        AnnotationList
+        IntKw "int" @ 20..23 leading=[Newline "\n", Whitespace " "] trailing=[Whitespace " "]
+      VariableDeclaratorList
+        VariableDeclarator
+          Identifier "b" @ 24..25
+      Semicolon ";" @ 25..26
   Eof "" @ 26..26
 
 diagnostics:

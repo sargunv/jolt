@@ -11,8 +11,10 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    TextBlockLiteral "\"\"\"\n/* text */\n// text\n\"\"\"" @ 0..26
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      TextBlockLiteral "\"\"\"\n/* text */\n// text\n\"\"\"" @ 0..26
   Eof "" @ 26..26
 
 diagnostics:

@@ -17,74 +17,118 @@ module demo {
 syntax:
 syntax:
 CompilationUnit
+  ImportDeclarationList
   ModuleDeclaration
+    AnnotationList
     Identifier "module" @ 0..6 trailing=[Whitespace " "]
     Name
       Identifier "demo" @ 7..11 trailing=[Whitespace " "]
     LBrace "{" @ 12..13
-    ModuleDirective
-      UsesDirective
-        Identifier "uses" @ 16..20 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-        QualifiedName
-          Identifier "z" @ 21..22
-          Dot "." @ 22..23
-          Identifier "Service" @ 23..30
-        Semicolon ";" @ 30..31
-    ModuleDirective
-      RequiresDirective
-        Identifier "requires" @ 34..42 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-        Name
-          Identifier "beta" @ 43..47
-        Semicolon ";" @ 47..48
-    ModuleDirective
-      ProvidesDirective
-        Identifier "provides" @ 71..79 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-        QualifiedName
-          Identifier "z" @ 80..81
-          Dot "." @ 81..82
-          Identifier "Service" @ 82..89 trailing=[Whitespace " "]
-        Identifier "with" @ 90..94 trailing=[Whitespace " "]
-        QualifiedName
-          Identifier "b" @ 95..96
-          Dot "." @ 96..97
-          Identifier "Impl" @ 97..101
-        Comma "," @ 101..102
-        QualifiedName
-          Identifier "a" @ 102..103
-          Dot "." @ 103..104
-          Identifier "Impl" @ 104..108
-        Semicolon ";" @ 108..109
-    ModuleDirective
-      OpensDirective
-        Identifier "opens" @ 112..117 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace "   "]
-        QualifiedName
-          Identifier "raw" @ 120..123
-          Dot "." @ 123..124
-          Identifier "pkg" @ 124..127 trailing=[Whitespace "  "]
-        Identifier "to" @ 129..131 trailing=[Whitespace "   "]
-        QualifiedName
-          Identifier "x" @ 134..135
-          Dot "." @ 135..136
-          Identifier "y" @ 136..137
-        Comma "," @ 137..138
-        QualifiedName
-          Identifier "z" @ 138..139
-          Dot "." @ 139..140
-          Identifier "y" @ 140..141
-        Semicolon ";" @ 141..142
-    ModuleDirective
-      RequiresDirective
-        Identifier "requires" @ 164..172 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-        Name
-          Identifier "alpha" @ 173..178
-        Semicolon ";" @ 178..179
-    ModuleDirective
-      ExportsDirective
-        Identifier "exports" @ 182..189 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-        Name
-          Identifier "api" @ 190..193
-        Semicolon ";" @ 193..194
+    ModuleDirectiveList
+      ModuleDirective
+        UsesDirective
+          Identifier "uses" @ 16..20 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          QualifiedName
+            QualifiedNameSegmentNode
+              AnnotationList
+              Identifier "z" @ 21..22
+            Dot "." @ 22..23
+            NameSegmentDotList
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "Service" @ 23..30
+          Semicolon ";" @ 30..31
+      ModuleDirective
+        RequiresDirective
+          Identifier "requires" @ 34..42 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          RequiresModifierList
+          Name
+            Identifier "beta" @ 43..47
+          Semicolon ";" @ 47..48
+      ModuleDirective
+        ProvidesDirective
+          Identifier "provides" @ 71..79 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          QualifiedName
+            QualifiedNameSegmentNode
+              AnnotationList
+              Identifier "z" @ 80..81
+            Dot "." @ 81..82
+            NameSegmentDotList
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "Service" @ 82..89 trailing=[Whitespace " "]
+          Identifier "with" @ 90..94 trailing=[Whitespace " "]
+          NameList
+            QualifiedName
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "b" @ 95..96
+              Dot "." @ 96..97
+              NameSegmentDotList
+                QualifiedNameSegmentNode
+                  AnnotationList
+                  Identifier "Impl" @ 97..101
+            Comma "," @ 101..102
+            QualifiedName
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "a" @ 102..103
+              Dot "." @ 103..104
+              NameSegmentDotList
+                QualifiedNameSegmentNode
+                  AnnotationList
+                  Identifier "Impl" @ 104..108
+          Semicolon ";" @ 108..109
+      ModuleDirective
+        OpensDirective
+          Identifier "opens" @ 112..117 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace "   "]
+          QualifiedName
+            QualifiedNameSegmentNode
+              AnnotationList
+              Identifier "raw" @ 120..123
+            Dot "." @ 123..124
+            NameSegmentDotList
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "pkg" @ 124..127 trailing=[Whitespace "  "]
+          Identifier "to" @ 129..131 trailing=[Whitespace "   "]
+          NameList
+            QualifiedName
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "x" @ 134..135
+              Dot "." @ 135..136
+              NameSegmentDotList
+                QualifiedNameSegmentNode
+                  AnnotationList
+                  Identifier "y" @ 136..137
+            Comma "," @ 137..138
+            QualifiedName
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "z" @ 138..139
+              Dot "." @ 139..140
+              NameSegmentDotList
+                QualifiedNameSegmentNode
+                  AnnotationList
+                  Identifier "y" @ 140..141
+          Semicolon ";" @ 141..142
+      ModuleDirective
+        RequiresDirective
+          Identifier "requires" @ 164..172 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          RequiresModifierList
+          Name
+            Identifier "alpha" @ 173..178
+          Semicolon ";" @ 178..179
+      ModuleDirective
+        ExportsDirective
+          Identifier "exports" @ 182..189 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          Name
+            Identifier "api" @ 190..193
+          NameList
+          Semicolon ";" @ 193..194
     RBrace "}" @ 195..196 leading=[Newline "\n"]
+  CompilationUnitDeclarationList
   Eof "" @ 197..197 leading=[Newline "\n"]
 
 diagnostics:

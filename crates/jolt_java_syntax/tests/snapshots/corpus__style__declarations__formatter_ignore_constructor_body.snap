@@ -17,77 +17,93 @@ Example(int a,int b){}
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "Example" @ 6..13 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 14..15
-      ClassBodyDeclaration
-        ConstructorDeclaration
-          Identifier "Example" @ 16..23 leading=[Newline "\n"]
-          LParen "(" @ 23..24
-          RParen ")" @ 24..25 trailing=[Whitespace " "]
-          ConstructorBody
-            LBrace "{" @ 26..27
-            ConstructorInvocation
-              ThisKw "this" @ 50..54 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "]
-              ArgumentList
-                LParen "(" @ 54..55 trailing=[Whitespace " "]
-                LiteralExpression
-                  IntegerLiteral "1" @ 56..57
-                Comma "," @ 57..58
-                LiteralExpression
-                  IntegerLiteral "2" @ 58..59 trailing=[Whitespace " "]
-                RParen ")" @ 60..61
-              Semicolon ";" @ 61..62
-            BlockStatement
-              LocalVariableDeclaration
-                PrimitiveType
-                  IntKw "int" @ 65..68 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "raw" @ 69..72
-                    Assign "=" @ 72..73
-                    VariableInitializer
-                      BinaryExpression
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "Example" @ 6..13 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 14..15
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            ConstructorDeclaration
+              Identifier "Example" @ 16..23 leading=[Newline "\n"]
+              LParen "(" @ 23..24
+              RParen ")" @ 24..25 trailing=[Whitespace " "]
+              ConstructorBody
+                LBrace "{" @ 26..27
+                ConstructorBodyEntryList
+                  ConstructorInvocation
+                    ThisKw "this" @ 50..54 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "]
+                    ArgumentList
+                      LParen "(" @ 54..55 trailing=[Whitespace " "]
+                      ExpressionList
                         LiteralExpression
-                          IntegerLiteral "1" @ 73..74
-                        Plus "+" @ 74..75
+                          IntegerLiteral "1" @ 56..57
+                        Comma "," @ 57..58
                         LiteralExpression
-                          IntegerLiteral "2" @ 75..76
-              Semicolon ";" @ 76..77
-            BlockStatement
-              LocalVariableDeclaration
-                PrimitiveType
-                  IntKw "int" @ 97..100 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n"] trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "after" @ 101..106
-                    Assign "=" @ 106..107
-                    VariableInitializer
-                      LiteralExpression
-                        IntegerLiteral "3" @ 107..108
-              Semicolon ";" @ 108..109
-            RBrace "}" @ 110..111 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        ConstructorDeclaration
-          Identifier "Example" @ 112..119 leading=[Newline "\n"]
-          LParen "(" @ 119..120
-          FormalParameterList
-            FormalParameter
-              PrimitiveType
-                IntKw "int" @ 120..123 trailing=[Whitespace " "]
-              Identifier "a" @ 124..125
-            Comma "," @ 125..126
-            FormalParameter
-              PrimitiveType
-                IntKw "int" @ 126..129 trailing=[Whitespace " "]
-              Identifier "b" @ 130..131
-          RParen ")" @ 131..132
-          ConstructorBody
-            LBrace "{" @ 132..133
-            RBrace "}" @ 133..134
-      RBrace "}" @ 135..136 leading=[Newline "\n"]
+                          IntegerLiteral "2" @ 58..59 trailing=[Whitespace " "]
+                      RParen ")" @ 60..61
+                    Semicolon ";" @ 61..62
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      PrimitiveType
+                        AnnotationList
+                        IntKw "int" @ 65..68 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "raw" @ 69..72
+                          Assign "=" @ 72..73
+                          VariableInitializer
+                            BinaryExpression
+                              LiteralExpression
+                                IntegerLiteral "1" @ 73..74
+                              Plus "+" @ 74..75
+                              LiteralExpression
+                                IntegerLiteral "2" @ 75..76
+                    Semicolon ";" @ 76..77
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      PrimitiveType
+                        AnnotationList
+                        IntKw "int" @ 97..100 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n"] trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "after" @ 101..106
+                          Assign "=" @ 106..107
+                          VariableInitializer
+                            LiteralExpression
+                              IntegerLiteral "3" @ 107..108
+                    Semicolon ";" @ 108..109
+                RBrace "}" @ 110..111 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            ConstructorDeclaration
+              Identifier "Example" @ 112..119 leading=[Newline "\n"]
+              LParen "(" @ 119..120
+              FormalParameterList
+                FormalParameter
+                  ParameterModifierList
+                  PrimitiveType
+                    AnnotationList
+                    IntKw "int" @ 120..123 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "a" @ 124..125
+                Comma "," @ 125..126
+                FormalParameter
+                  ParameterModifierList
+                  PrimitiveType
+                    AnnotationList
+                    IntKw "int" @ 126..129 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "b" @ 130..131
+              RParen ")" @ 131..132
+              ConstructorBody
+                LBrace "{" @ 132..133
+                ConstructorBodyEntryList
+                RBrace "}" @ 133..134
+        RBrace "}" @ 135..136 leading=[Newline "\n"]
   Eof "" @ 137..137 leading=[Newline "\n"]
 
 diagnostics:

@@ -26,39 +26,6 @@ pub(crate) enum InlineLeadingTrivia {
     BeforeToken,
 }
 
-pub(crate) fn format_leading_comment_runs<'source, Item>(
-    doc: &mut DocBuilder<'source>,
-    items: impl IntoIterator<Item = Item>,
-    mut has_leading_comments: impl FnMut(&Item) -> bool,
-    mut format_run: impl FnMut(Vec<Item>, &mut DocBuilder<'source>) -> Doc<'source>,
-) -> Doc<'source> {
-    let items = items.into_iter();
-    let (lower, _) = items.size_hint();
-    let mut current_run = Vec::with_capacity(lower);
-
-    doc.concat_list(|docs| {
-        for item in items {
-            if has_leading_comments(&item) && !current_run.is_empty() {
-                if !docs.is_empty() {
-                    let empty_line = docs.empty_line();
-                    docs.push(empty_line);
-                }
-                let run = format_run(std::mem::take(&mut current_run), docs);
-                docs.push(run);
-            }
-            current_run.push(item);
-        }
-        if !current_run.is_empty() {
-            if !docs.is_empty() {
-                let empty_line = docs.empty_line();
-                docs.push(empty_line);
-            }
-            let run = format_run(std::mem::take(&mut current_run), docs);
-            docs.push(run);
-        }
-    })
-}
-
 pub(crate) fn token_has_comments(token: &JavaSyntaxToken<'_>) -> bool {
     !token.leading_comments().is_empty() || !token.trailing_comments().is_empty()
 }
@@ -115,23 +82,28 @@ pub(crate) fn format_removed_comments<'source>(
     doc: &mut DocBuilder<'source>,
     comments: impl IntoIterator<Item = JavaComment<'source>>,
 ) -> Option<Doc<'source>> {
-    let mut has_comments = false;
+    let mut has_claims = false;
+    let mut has_output = false;
     let docs = doc.concat_list(|docs| {
         for comment in comments {
             if is_formatter_control_marker(comment.text()) {
+                let claim = docs.claimed_trivia(Doc::nil(), comment.source_pieces());
+                docs.push(claim);
+                has_claims = true;
                 continue;
             }
-            if !docs.is_empty() {
+            if has_output {
                 let hard_line = docs.hard_line();
                 docs.push(hard_line);
             }
             let comment = format_comment(docs, &comment);
             docs.push(comment);
+            has_claims = true;
+            has_output = true;
         }
-        has_comments = !docs.is_empty();
     });
 
-    has_comments.then_some(docs)
+    has_claims.then_some(docs)
 }
 
 pub(crate) fn format_leading_comments<'source>(
@@ -304,7 +276,7 @@ pub(crate) fn format_token<'source>(
     leading: LeadingTrivia,
     trailing: TrailingTrivia,
 ) -> Doc<'source> {
-    let token_text = format_token_text(doc, token.text());
+    let token_text = doc.source_token(token);
     format_token_doc(doc, token, token_text, leading, trailing)
 }
 
@@ -362,56 +334,6 @@ pub(crate) fn format_token_doc<'source>(
     )
 }
 
-pub(crate) fn format_token_sequence<'source>(
-    doc: &mut DocBuilder<'source>,
-    tokens: impl IntoIterator<Item = JavaSyntaxToken<'source>>,
-    leading: LeadingTrivia,
-) -> Doc<'source> {
-    let mut previous = None;
-
-    doc.concat_list(|docs| {
-        for (index, token) in tokens.into_iter().enumerate() {
-            if let Some(previous) = previous {
-                let gap = format_recovered_token_gap(docs, &previous, &token);
-                docs.push(gap);
-            }
-            let formatted = format_token(
-                docs,
-                &token,
-                if index == 0 {
-                    leading
-                } else {
-                    LeadingTrivia::Preserve
-                },
-                TrailingTrivia::Preserve,
-            );
-            docs.push(formatted);
-            previous = Some(token);
-        }
-    })
-}
-
-fn format_recovered_token_gap<'source>(
-    doc: &mut DocBuilder<'source>,
-    left: &JavaSyntaxToken<'source>,
-    right: &JavaSyntaxToken<'source>,
-) -> Doc<'source> {
-    let start = left.token_text_range().end().get();
-    let end = right.token_text_range().start().get();
-    if start >= end || trailing_comments_force_line(left) {
-        return Doc::nil();
-    }
-
-    let gap = &left.source()[start..end];
-    if gap.contains(['\n', '\r']) {
-        doc.hard_line()
-    } else if gap.chars().any(char::is_whitespace) {
-        doc.space()
-    } else {
-        Doc::nil()
-    }
-}
-
 pub(crate) fn format_token_with_inline_leading_comments<'source>(
     doc: &mut DocBuilder<'source>,
     token: &JavaSyntaxToken<'source>,
@@ -458,25 +380,15 @@ pub(crate) fn format_comment<'source>(
     doc: &mut DocBuilder<'source>,
     comment: &JavaComment<'source>,
 ) -> Doc<'source> {
-    match comment.kind() {
+    let formatted = match comment.kind() {
         JavaCommentKind::Line => format_line_comment(doc, comment.text()),
         JavaCommentKind::Block if is_star_block_comment(comment.text()) => {
             format_star_block_comment(doc, comment.text())
         }
         JavaCommentKind::Block => format_block_comment(doc, comment.text()),
         JavaCommentKind::Doc => format_star_block_comment(doc, comment.text()),
-    }
-}
-
-pub(crate) fn format_token_text<'source>(
-    doc: &mut DocBuilder<'source>,
-    token_text: &'source str,
-) -> Doc<'source> {
-    if token_text.contains(['\n', '\r']) {
-        doc.literal_text(token_text)
-    } else {
-        doc.text(token_text)
-    }
+    };
+    doc.claimed_trivia(formatted, comment.source_pieces())
 }
 
 pub(crate) fn comment_forces_line(comment: &JavaComment<'_>) -> bool {

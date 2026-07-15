@@ -10,7 +10,9 @@ fn declared_schema_matches_represented_corpus() {
     assert_schema_deterministic(&SCHEMA);
     let root = kotlin_fixture_root(env!("CARGO_MANIFEST_DIR"));
     let paths = collect_kotlin_files(&root);
-    let mut audit = SchemaAudit::new("kotlin");
+    // Kotlin keeps its Phase 7 raw child representation until its typed syntax
+    // conversion. Constructed and list fields are therefore audited inline.
+    let mut audit = SchemaAudit::new_raw("kotlin");
 
     for path in paths {
         let source = read_to_string(&path);

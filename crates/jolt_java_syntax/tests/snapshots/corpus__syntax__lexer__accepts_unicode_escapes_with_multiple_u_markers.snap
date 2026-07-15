@@ -8,8 +8,10 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    IfKw "if" @ 0..2
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      IfKw "if" @ 0..2
   Eof "" @ 2..2
 
 diagnostics:

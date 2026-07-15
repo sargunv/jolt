@@ -11,39 +11,61 @@ class A {}
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclaration
-    ImportKw "import" @ 0..6 trailing=[Whitespace " "]
-    QualifiedName
-      Identifier "java" @ 7..11
-      Dot "." @ 11..12
-      Identifier "util" @ 12..16
-      Dot "." @ 16..17
-      Identifier "Map" @ 17..20
-    Semicolon ";" @ 20..21
-  ImportDeclaration
-    ImportKw "import" @ 22..28 leading=[Newline "\n"] trailing=[Whitespace " "]
-    QualifiedName
-      Identifier "java" @ 29..33
-      Dot "." @ 33..34
-      Identifier "util" @ 34..38
-    Dot "." @ 38..39
-    Star "*" @ 39..40
-    Semicolon ";" @ 40..41
-  ImportDeclaration
-    ImportKw "import" @ 42..48 leading=[Newline "\n"] trailing=[Whitespace " "]
-    QualifiedName
-      Identifier "java" @ 49..53
-      Dot "." @ 53..54
-      Identifier "util" @ 54..58
-      Dot "." @ 58..59
-      Identifier "List" @ 59..63
-    Semicolon ";" @ 63..64
-  ClassDeclaration
-    ClassKw "class" @ 65..70 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Identifier "A" @ 71..72 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 73..74
-      RBrace "}" @ 74..75
+  ImportDeclarationList
+    ImportDeclaration
+      ImportKw "import" @ 0..6 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "java" @ 7..11
+        Dot "." @ 11..12
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "util" @ 12..16
+          Dot "." @ 16..17
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "Map" @ 17..20
+      Semicolon ";" @ 20..21
+    ImportDeclaration
+      ImportKw "import" @ 22..28 leading=[Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "java" @ 29..33
+        Dot "." @ 33..34
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "util" @ 34..38
+      Dot "." @ 38..39
+      Star "*" @ 39..40
+      Semicolon ";" @ 40..41
+    ImportDeclaration
+      ImportKw "import" @ 42..48 leading=[Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "java" @ 49..53
+        Dot "." @ 53..54
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "util" @ 54..58
+          Dot "." @ 58..59
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "List" @ 59..63
+      Semicolon ";" @ 63..64
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 65..70 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "A" @ 71..72 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 73..74
+        ClassBodyMemberList
+        RBrace "}" @ 74..75
   Eof "" @ 76..76 leading=[Newline "\n"]
 
 diagnostics:

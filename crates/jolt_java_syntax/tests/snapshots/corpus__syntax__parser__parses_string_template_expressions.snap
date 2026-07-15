@@ -12,39 +12,51 @@ class StringTemplates {
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "StringTemplates" @ 6..21 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 22..23
-      ClassBodyDeclaration
-        MethodDeclaration
-          ClassType
-            Name
-              Identifier "String" @ 28..34 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "greeting" @ 35..43
-          LParen "(" @ 43..44
-          FormalParameterList
-            FormalParameter
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "StringTemplates" @ 6..21 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 22..23
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
               ClassType
-                Name
-                  Identifier "String" @ 44..50 trailing=[Whitespace " "]
-              Identifier "name" @ 51..55
-          RParen ")" @ 55..56 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 57..58
-            BlockStatement
-              ReturnStatement
-                ReturnKw "return" @ 67..73 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                TemplateExpression
-                  NameExpression
-                    Identifier "STR" @ 74..77
-                  Dot "." @ 77..78
-                  LiteralExpression
-                    StringLiteral "\"Hello \\{name}\"" @ 78..93
-                Semicolon ";" @ 93..94
-            RBrace "}" @ 99..100 leading=[Newline "\n", Whitespace "    "]
-      RBrace "}" @ 101..102 leading=[Newline "\n"]
+                ClassTypeSegmentList
+                  ClassTypeSegmentNode
+                    AnnotationList
+                    Name
+                      Identifier "String" @ 28..34 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Identifier "greeting" @ 35..43
+              LParen "(" @ 43..44
+              FormalParameterList
+                FormalParameter
+                  ParameterModifierList
+                  ClassType
+                    ClassTypeSegmentList
+                      ClassTypeSegmentNode
+                        AnnotationList
+                        Name
+                          Identifier "String" @ 44..50 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "name" @ 51..55
+              RParen ")" @ 55..56 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 57..58
+                BlockStatementList
+                  BlockStatement
+                    ReturnStatement
+                      ReturnKw "return" @ 67..73 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      TemplateExpression
+                        NameExpression
+                          Identifier "STR" @ 74..77
+                        Dot "." @ 77..78
+                        LiteralExpression
+                          StringLiteral "\"Hello \\{name}\"" @ 78..93
+                      Semicolon ";" @ 93..94
+                RBrace "}" @ 99..100 leading=[Newline "\n", Whitespace "    "]
+        RBrace "}" @ 101..102 leading=[Newline "\n"]
   Eof "" @ 103..103 leading=[Newline "\n"]
 
 diagnostics:

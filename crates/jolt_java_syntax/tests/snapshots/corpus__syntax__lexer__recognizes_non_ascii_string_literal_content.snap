@@ -8,8 +8,10 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    StringLiteral "\"™\"" @ 0..5
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      StringLiteral "\"™\"" @ 0..5
   Eof "" @ 5..5
 
 diagnostics:

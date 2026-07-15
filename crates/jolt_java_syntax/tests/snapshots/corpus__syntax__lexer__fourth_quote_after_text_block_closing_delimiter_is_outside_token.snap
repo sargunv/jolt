@@ -10,9 +10,11 @@ text
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    TextBlockLiteral "\"\"\"\ntext\n\"\"\"" @ 0..12
-    StringLiteral "\"" @ 12..13
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      TextBlockLiteral "\"\"\"\ntext\n\"\"\"" @ 0..12
+      StringLiteral "\"" @ 12..13
   Eof "" @ 13..13
 
 diagnostics:

@@ -3,77 +3,93 @@ use super::control_flow::{
 };
 use super::simple::format_statement_keyword;
 use super::{
-    BlockItem, BlockStatement, Doc, LeadingTrivia, SwitchBlock, SwitchBlockEntry,
-    SwitchBlockStatementGroup, SwitchLabel, SwitchLabelCaseEntry, SwitchLabelCaseItem, SwitchRule,
-    SwitchStatement, TrailingTrivia, comment_forces_line, empty_block, format_block,
-    format_block_statement_item_or_recovered, format_expression, format_pattern,
-    format_separator_with_comments, format_statement_semicolon, format_throw_statement,
-    format_token, format_token_sequence, format_token_with_comments, join_body_items,
+    BlockItem, BlockStatement, Doc, LeadingTrivia, SwitchBlock, SwitchBlockStatementGroup,
+    SwitchLabel, SwitchRule, SwitchStatement, TrailingTrivia, comment_forces_line, format_block,
+    format_block_statement_item, format_expression, format_pattern, format_separator_with_comments,
+    format_statement_semicolon, format_throw_statement, format_token, format_token_with_comments,
+    join_body_items,
+};
+use crate::helpers::blocks::BodyItem;
+use crate::helpers::comments::token_has_comments;
+use crate::helpers::recovery::{
+    JavaFormatDelimiter, JavaFormatField, JavaFormatListPart, format_malformed, format_or_verbatim,
+    resolve_list_part, resolve_optional_field, resolve_required_delimiter, resolve_required_field,
 };
 use jolt_fmt_ir::DocBuilder;
+use jolt_java_syntax::{JavaSyntaxListPart, JavaSyntaxView};
 
 pub(super) fn format_switch_statement<'source>(
     statement: &SwitchStatement<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let open = statement.open_paren();
-    let close = statement.close_paren();
-    let selector = match statement.selector() {
-        Some(selector) => format_expression(&selector, doc),
-        None => Doc::nil(),
-    };
-    let selector =
-        format_parenthesized_statement_expression(doc, open.as_ref(), selector, close.as_ref());
-    let block = match statement.block() {
-        Some(block) => format_switch_block(&block, doc),
-        None => empty_block(doc),
-    };
-    doc_concat!(
-        doc,
-        [
-            format_statement_keyword(statement.keyword(), "switch", doc),
-            doc.space(),
-            selector,
-            format_statement_header_body_separator(close.as_ref(), doc),
-            block,
-        ]
-    )
+    format_or_verbatim(statement, doc, |doc| {
+        let close = resolve_required_delimiter(statement.close_paren(), doc);
+        let separator = format_statement_header_body_separator(close.source(), doc);
+        let selector = match resolve_required_field(statement.selector(), doc) {
+            JavaFormatField::Present(selector) => format_expression(&selector, doc),
+            JavaFormatField::Malformed(malformed) => malformed,
+        };
+        let open = resolve_required_delimiter(statement.open_paren(), doc);
+        let selector = format_parenthesized_statement_expression(doc, open, selector, close);
+        let body = match resolve_required_field(statement.body(), doc) {
+            JavaFormatField::Present(block) => format_switch_block(&block, doc),
+            JavaFormatField::Malformed(malformed) => malformed,
+        };
+        doc_concat!(
+            doc,
+            [
+                format_statement_keyword(statement.switch_keyword(), doc),
+                doc.space(),
+                selector,
+                separator,
+                body,
+            ]
+        )
+    })
 }
 
 pub(crate) fn format_switch_block<'source>(
     block: &SwitchBlock<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let mut has_body = false;
-    let body = doc.concat_list(|docs| {
-        for entry in block.entries_with_recovered() {
-            if !docs.is_empty() {
-                let hard_line = docs.hard_line();
-                docs.push(hard_line);
+    format_or_verbatim(block, doc, |doc| {
+        let entries = match resolve_required_field(block.entries(), doc) {
+            JavaFormatField::Present(entries) => entries,
+            JavaFormatField::Malformed(malformed) => {
+                return braced_switch_block(block, Some(malformed), doc);
             }
-            let entry = match entry {
-                jolt_java_syntax::RecoveredSeparatedListEntry::Entry(entry) => match entry {
-                    SwitchBlockEntry::StatementGroup(group) => {
-                        format_switch_statement_group(&group, docs)
+        };
+        let mut has_body = false;
+        let body = doc.concat_list(|docs| {
+            for part in entries.parts() {
+                let entry = match resolve_list_part(part, docs) {
+                    JavaFormatListPart::Item(entry) => {
+                        if let Some(group) = entry.cast_node::<SwitchBlockStatementGroup<'source>>()
+                        {
+                            format_switch_statement_group(&group, docs)
+                        } else if let Some(rule) = entry.cast_node::<SwitchRule<'source>>() {
+                            format_switch_rule(&rule, docs)
+                        } else {
+                            docs.block_on_invariant("invalid switch entry role");
+                            Doc::nil()
+                        }
                     }
-                    SwitchBlockEntry::Rule(rule) => format_switch_rule(&rule, docs),
-                },
-                jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
-                    format_token_sequence(docs, std::iter::once(token), LeadingTrivia::Preserve)
+                    JavaFormatListPart::Malformed(malformed) => malformed,
+                    JavaFormatListPart::Separator(separator) => {
+                        docs.block_on_invariant("unseparated switch entry list had a separator");
+                        format_token_with_comments(docs, &separator)
+                    }
+                };
+                if !docs.is_empty() {
+                    let hard_line = docs.hard_line();
+                    docs.push(hard_line);
                 }
-                jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => {
-                    format_token_sequence(docs, error.token_iter(), LeadingTrivia::Preserve)
-                }
-                jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => {
-                    format_token_sequence(docs, node.token_iter(), LeadingTrivia::Preserve)
-                }
-            };
-            docs.push(entry);
-        }
-        has_body = !docs.is_empty();
-    });
-
-    braced_switch_block(block, has_body.then_some(body), doc)
+                docs.push(entry);
+            }
+            has_body = !docs.is_empty();
+        });
+        braced_switch_block(block, has_body.then_some(body), doc)
+    })
 }
 
 fn braced_switch_block<'source>(
@@ -81,9 +97,9 @@ fn braced_switch_block<'source>(
     body: Option<Doc<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let open = match block.open_brace().as_ref() {
-        Some(token) => format_token_with_comments(doc, token),
-        None => Doc::nil(),
+    let open = match resolve_required_field(block.open_brace(), doc) {
+        JavaFormatField::Present(token) => format_token_with_comments(doc, &token),
+        JavaFormatField::Malformed(malformed) => malformed,
     };
     let body = match body {
         Some(body) => {
@@ -92,11 +108,10 @@ fn braced_switch_block<'source>(
         }
         None => doc.hard_line(),
     };
-    let close = match block.close_brace().as_ref() {
-        Some(token) => format_token_with_comments(doc, token),
-        None => Doc::nil(),
+    let close = match resolve_required_field(block.close_brace(), doc) {
+        JavaFormatField::Present(token) => format_token_with_comments(doc, &token),
+        JavaFormatField::Malformed(malformed) => malformed,
     };
-
     doc_concat!(doc, [open, body, close])
 }
 
@@ -104,80 +119,119 @@ fn format_switch_statement_group<'source>(
     group: &SwitchBlockStatementGroup<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let mut label_count = 0;
-    let mut single_label = None;
-    let labels = doc.concat_list(|labels| {
-        for entry in group.label_entries() {
-            let label = doc_concat!(
-                labels,
-                [
-                    format_switch_label(&entry.label, labels),
-                    entry
-                        .colon
-                        .as_ref()
-                        .map_or_else(Doc::nil, |token| format_token_with_comments(labels, token)),
-                ]
-            );
-            if !labels.is_empty() {
-                let hard_line = labels.hard_line();
-                labels.push(hard_line);
-            }
-            labels.push(label);
-            label_count += 1;
-            single_label = Some(label);
-        }
-    });
-    let statements = group.block_statements().collect::<Vec<_>>();
-
-    if let Some(doc) =
-        format_single_block_switch_statement_group(label_count, single_label, &statements, doc)
+    if group.is_malformed() {
+        return format_malformed(group, doc);
+    }
+    let (labels_doc, label_count, single_label) = match resolve_required_field(group.labels(), doc)
     {
-        return doc;
+        JavaFormatField::Present(labels) => format_switch_group_labels(labels.parts(), doc),
+        JavaFormatField::Malformed(malformed) => (malformed, 0, None),
+    };
+    let statements = match resolve_required_field(group.statements(), doc) {
+        JavaFormatField::Present(statements) => statements,
+        JavaFormatField::Malformed(malformed) => {
+            return doc_concat!(doc, [labels_doc, doc.hard_line(), malformed]);
+        }
+    };
+    let statement_parts = statements.parts().collect::<Vec<_>>();
+    if let [Ok(JavaSyntaxListPart::Item(statement))] = statement_parts.as_slice()
+        && let Some(single) = format_single_block_switch_statement_group(
+            label_count,
+            single_label,
+            std::slice::from_ref(statement),
+            doc,
+        )
+    {
+        return single;
     }
 
-    let mut items = Vec::with_capacity(statements.len());
-    items.extend(
-        group
-            .block_statements_with_recovered()
-            .filter_map(|entry| match entry {
-                jolt_java_syntax::RecoveredSeparatedListEntry::Entry(statement) => {
-                    format_block_statement_item_or_recovered(&statement, doc)
-                }
-                jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
-                    Some(crate::helpers::blocks::BodyItem::new(
-                        format_token_sequence(doc, std::iter::once(token), LeadingTrivia::Preserve),
-                        false,
-                    ))
-                }
-                jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => {
-                    Some(crate::helpers::blocks::BodyItem::new(
-                        format_token_sequence(doc, error.token_iter(), LeadingTrivia::Preserve),
-                        false,
-                    ))
-                }
-                jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => {
-                    Some(crate::helpers::blocks::BodyItem::new(
-                        format_token_sequence(doc, node.token_iter(), LeadingTrivia::Preserve),
-                        false,
-                    ))
-                }
-            }),
-    );
-
+    let items = statement_parts
+        .iter()
+        .filter_map(|part| match part {
+            Ok(JavaSyntaxListPart::Item(statement)) => format_block_statement_item(statement, doc),
+            Ok(JavaSyntaxListPart::Malformed(malformed)) => {
+                Some(BodyItem::new(format_malformed(malformed, doc), false))
+            }
+            Ok(JavaSyntaxListPart::Missing(missing)) => Some(BodyItem::new(
+                crate::helpers::recovery::format_missing(missing, doc),
+                false,
+            )),
+            Ok(JavaSyntaxListPart::Separator(token)) => {
+                doc.block_on_invariant("unseparated switch statement list had a separator");
+                Some(BodyItem::new(format_token_with_comments(doc, token), false))
+            }
+            Err(error) => {
+                doc.block_on_invariant(error.to_string());
+                None
+            }
+        })
+        .collect::<Vec<_>>();
     doc_concat!(
         doc,
         [
-            labels,
+            labels_doc,
             if items.is_empty() {
                 Doc::nil()
             } else {
-                doc_indent!(
-                    doc,
-                    doc_concat!(doc, [doc.hard_line(), join_body_items(doc, items)])
-                )
+                let body = doc_concat!(doc, [doc.hard_line(), join_body_items(doc, items)]);
+                doc_indent!(doc, body)
             },
         ]
     )
+}
+
+fn format_switch_group_labels<'source>(
+    parts: impl IntoIterator<
+        Item = Result<
+            JavaSyntaxListPart<'source, SwitchLabel<'source>>,
+            jolt_java_syntax::JavaSyntaxInvariantError,
+        >,
+    >,
+    doc: &mut DocBuilder<'source>,
+) -> (Doc<'source>, usize, Option<Doc<'source>>) {
+    let mut label_count = 0;
+    let mut single_label = None;
+    let labels_doc = doc.concat_list(|docs| {
+        let mut pending: Option<Doc<'source>> = None;
+        for part in parts {
+            match resolve_list_part(part, docs) {
+                JavaFormatListPart::Item(label) => {
+                    if let Some(previous) = pending.take() {
+                        if !docs.is_empty() {
+                            let line = docs.hard_line();
+                            docs.push(line);
+                        }
+                        docs.push(previous);
+                    }
+                    let formatted = format_switch_label(&label, docs);
+                    label_count += 1;
+                    single_label = Some(formatted);
+                    pending = Some(formatted);
+                }
+                JavaFormatListPart::Separator(colon) => {
+                    let label = pending.take().unwrap_or_else(Doc::nil);
+                    let formatted =
+                        doc_concat!(docs, [label, format_token_with_comments(docs, &colon)]);
+                    single_label = Some(formatted);
+                    if !docs.is_empty() {
+                        let line = docs.hard_line();
+                        docs.push(line);
+                    }
+                    docs.push(formatted);
+                }
+                JavaFormatListPart::Malformed(malformed) => {
+                    if let Some(previous) = pending.take() {
+                        docs.push(previous);
+                    }
+                    docs.push(malformed);
+                }
+            }
+        }
+        if let Some(pending) = pending {
+            docs.push(pending);
+        }
+    });
+    (labels_doc, label_count, single_label)
 }
 
 fn format_single_block_switch_statement_group<'source>(
@@ -189,14 +243,15 @@ fn format_single_block_switch_statement_group<'source>(
     if label_count != 1 || statements.len() != 1 || statements[0].starts_after_blank_line() {
         return None;
     }
-
-    let BlockItem::Block(block) = statements[0].item()? else {
+    let jolt_java_syntax::JavaSyntaxField::Present(item) = statements[0].item().ok()? else {
         return None;
     };
-
+    let BlockItem::Block(block) = item else {
+        return None;
+    };
     Some(doc_concat!(
         doc,
-        [label?, doc.space(), format_block(&block, doc),]
+        [label?, doc.space(), format_block(&block, doc)]
     ))
 }
 
@@ -204,81 +259,119 @@ fn format_switch_rule<'source>(
     rule: &SwitchRule<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let label = rule
-        .label()
-        .map_or_else(Doc::nil, |label| format_switch_label(&label, doc));
-
-    if let Some(expression) = rule.expression() {
-        return doc_concat!(
+    format_or_verbatim(rule, doc, |doc| {
+        let label = match resolve_required_field(rule.label(), doc) {
+            JavaFormatField::Present(label) => format_switch_label(&label, doc),
+            JavaFormatField::Malformed(malformed) => malformed,
+        };
+        let body = match resolve_required_field(rule.body(), doc) {
+            JavaFormatField::Present(body) => body,
+            JavaFormatField::Malformed(malformed) => {
+                return doc_concat!(
+                    doc,
+                    [
+                        label,
+                        format_switch_rule_arrow(rule, doc),
+                        malformed,
+                        format_switch_rule_semicolon(rule, doc),
+                    ]
+                );
+            }
+        };
+        if let Some(expression) = body.cast_family::<jolt_java_syntax::Expression<'source>>() {
+            return doc_concat!(
+                doc,
+                [
+                    label,
+                    doc_group!(
+                        doc,
+                        doc_concat!(
+                            doc,
+                            [
+                                format_switch_rule_arrow_head(rule, doc),
+                                doc_indent!(
+                                    doc,
+                                    doc_concat!(
+                                        doc,
+                                        [
+                                            format_switch_rule_arrow_body_separator(rule, doc),
+                                            format_expression(&expression, doc),
+                                            format_statement_semicolon(rule.semicolon(), doc),
+                                        ]
+                                    )
+                                ),
+                            ]
+                        )
+                    ),
+                ]
+            );
+        }
+        doc_concat!(
             doc,
             [
                 label,
-                doc_group!(
-                    doc,
-                    doc_concat!(
-                        doc,
-                        [
-                            format_switch_rule_arrow_head(rule, doc),
-                            doc_indent!(
-                                doc,
-                                doc_concat!(
-                                    doc,
-                                    [
-                                        format_switch_rule_arrow_body_separator(rule, doc),
-                                        format_expression(&expression, doc),
-                                        format_statement_semicolon(rule.semicolon(), doc),
-                                    ]
-                                )
-                            ),
-                        ]
-                    )
-                ),
+                format_switch_rule_arrow(rule, doc),
+                format_switch_rule_body(body, doc),
+                format_switch_rule_semicolon(rule, doc),
             ]
-        );
-    }
+        )
+    })
+}
 
-    doc_concat!(
-        doc,
-        [
-            label,
-            format_switch_rule_arrow(rule, doc),
-            format_switch_rule_body(rule, doc),
-        ]
-    )
+fn format_switch_rule_semicolon<'source>(
+    rule: &SwitchRule<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    crate::helpers::recovery::format_optional_field(rule.semicolon(), doc, |semicolon, doc| {
+        format_statement_semicolon(
+            Ok(jolt_java_syntax::JavaSyntaxField::Present(semicolon)),
+            doc,
+        )
+    })
+}
+
+fn switch_arrow<'source>(
+    rule: &SwitchRule<'source>,
+) -> Option<jolt_java_syntax::JavaSyntaxToken<'source>> {
+    match rule.arrow().ok()? {
+        jolt_java_syntax::JavaSyntaxField::Present(arrow) => Some(arrow),
+        _ => None,
+    }
 }
 
 fn format_switch_rule_arrow_head<'source>(
     rule: &SwitchRule<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let Some(arrow) = rule.arrow() else {
-        return Doc::nil();
+    let Some(arrow) = switch_arrow(rule) else {
+        return match resolve_required_field(rule.arrow(), doc) {
+            JavaFormatField::Malformed(doc) => doc,
+            JavaFormatField::Present(_) => Doc::nil(),
+        };
     };
-
-    let trailing_comments = arrow.trailing_comments();
-    if trailing_comments.is_empty() {
-        return doc_concat!(doc, [doc.space(), format_token_with_comments(doc, &arrow)]);
+    if arrow.trailing_comments().next().is_none() {
+        doc_concat!(doc, [doc.space(), format_token_with_comments(doc, &arrow)])
+    } else {
+        doc_concat!(
+            doc,
+            [
+                doc.space(),
+                format_token(
+                    doc,
+                    &arrow,
+                    LeadingTrivia::Preserve,
+                    TrailingTrivia::BeforeLineBreak
+                )
+            ]
+        )
     }
-
-    doc_concat!(
-        doc,
-        [
-            doc.space(),
-            format_token(
-                doc,
-                &arrow,
-                LeadingTrivia::Preserve,
-                TrailingTrivia::BeforeLineBreak,
-            ),
-        ]
-    )
 }
 
 fn format_switch_rule_arrow_body_separator<'source>(
     rule: &SwitchRule<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    if rule.arrow().is_some_and(|arrow| {
+    if switch_arrow(rule).is_some_and(|arrow| {
         arrow
             .trailing_comments()
             .any(|comment| comment_forces_line(&comment))
@@ -293,201 +386,205 @@ fn format_switch_rule_arrow<'source>(
     rule: &SwitchRule<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let Some(arrow) = rule.arrow() else {
-        return Doc::nil();
+    let Some(arrow) = switch_arrow(rule) else {
+        return match resolve_required_field(rule.arrow(), doc) {
+            JavaFormatField::Malformed(doc) => doc,
+            JavaFormatField::Present(_) => Doc::nil(),
+        };
     };
-
-    let trailing_comments = arrow.trailing_comments();
-    if trailing_comments.is_empty() {
-        return doc_concat!(
-            doc,
-            [
-                doc.space(),
-                format_token_with_comments(doc, &arrow),
-                doc.space(),
-            ]
-        );
-    }
-
-    let forced_line = arrow
+    let forced = arrow
         .trailing_comments()
         .any(|comment| comment_forces_line(&comment));
-    doc.concat_list(|docs| {
-        let space = docs.space();
-        docs.push(space);
-        let arrow = format_token(
-            docs,
-            &arrow,
-            LeadingTrivia::Preserve,
-            TrailingTrivia::BeforeLineBreak,
-        );
-        docs.push(arrow);
-        let separator = if forced_line {
-            docs.hard_line()
-        } else {
-            docs.space()
-        };
-        docs.push(separator);
-    })
+    doc_concat!(
+        doc,
+        [
+            doc.space(),
+            format_token(
+                doc,
+                &arrow,
+                LeadingTrivia::Preserve,
+                TrailingTrivia::BeforeLineBreak
+            ),
+            if forced { doc.hard_line() } else { doc.space() }
+        ]
+    )
 }
 
 fn format_switch_label<'source>(
     label: &SwitchLabel<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    if label.is_default_label() {
-        return label
-            .default_token()
-            .as_ref()
-            .map_or_else(Doc::nil, |token| format_token_with_comments(doc, token));
-    }
-
-    doc_concat!(
-        doc,
-        [
-            label
-                .case_token()
-                .as_ref()
-                .map_or_else(Doc::nil, |token| doc_concat!(
-                    doc,
-                    [format_token_with_comments(doc, token), doc.space()]
-                ),),
-            doc_group!(
-                doc,
-                doc_indent!(
-                    doc,
-                    format_switch_label_case_entries(label.case_entries_with_recovered(), doc,)
-                )
+    format_or_verbatim(label, doc, |doc| {
+        let (keyword_doc, is_bare_default) = match resolve_required_field(label.keyword(), doc) {
+            JavaFormatField::Present(keyword) => (
+                format_token_with_comments(doc, &keyword),
+                keyword.kind() == jolt_java_syntax::JavaSyntaxKind::DefaultKw,
             ),
-            label.guard().map_or_else(Doc::nil, |guard| {
-                doc_concat!(
-                    doc,
-                    [
-                        doc.space(),
-                        guard
-                            .when_token()
-                            .as_ref()
-                            .map_or_else(Doc::nil, |token| format_token_with_comments(doc, token)),
-                        doc.space(),
-                        guard
-                            .expression()
-                            .map_or_else(Doc::nil, |expression| format_expression(
-                                &expression,
-                                doc
-                            ),),
-                    ]
+            JavaFormatField::Malformed(malformed) => (malformed, false),
+        };
+        let (items_doc, items_are_empty) = match resolve_required_field(label.items(), doc) {
+            JavaFormatField::Present(items) => {
+                let items_are_empty = items.parts().next().is_none();
+                (
+                    format_switch_label_items(items.parts(), doc),
+                    items_are_empty,
                 )
-            },),
-        ]
-    )
+            }
+            JavaFormatField::Malformed(malformed) => (malformed, false),
+        };
+        let guard = match resolve_optional_field(label.guard(), doc) {
+            JavaFormatField::Present(Some(guard)) => format_guard(&guard, doc),
+            JavaFormatField::Present(None) => Doc::nil(),
+            JavaFormatField::Malformed(malformed) => malformed,
+        };
+        if is_bare_default && items_are_empty {
+            doc_concat!(doc, [keyword_doc, guard])
+        } else {
+            doc_concat!(
+                doc,
+                [
+                    keyword_doc,
+                    doc.space(),
+                    doc_group!(doc, doc_indent!(doc, items_doc)),
+                    guard
+                ]
+            )
+        }
+    })
 }
 
-fn format_switch_label_case_entries<'source>(
-    entries: impl IntoIterator<
-        Item = jolt_java_syntax::RecoveredSeparatedListEntry<
-            'source,
-            SwitchLabelCaseEntry<'source>,
+fn format_switch_label_items<'source>(
+    parts: impl IntoIterator<
+        Item = Result<
+            JavaSyntaxListPart<'source, jolt_java_syntax::SwitchLabelItem<'source>>,
+            jolt_java_syntax::JavaSyntaxInvariantError,
         >,
     >,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let mut entries = entries.into_iter().peekable();
+    let mut need_line = false;
     doc.concat_list(|docs| {
-        while let Some(entry) = entries.next() {
-            let has_next = entries.peek().is_some();
-            match entry {
-                jolt_java_syntax::RecoveredSeparatedListEntry::Entry(entry) => {
-                    let item = format_switch_label_case_item(&entry.item, docs);
-                    docs.push(item);
-                    if let Some(comma) = entry.comma {
-                        let line = docs.line();
-                        let comma = format_separator_with_comments(docs, &comma, line);
-                        docs.push(comma);
-                    } else if has_next {
+        for part in parts {
+            match resolve_list_part(part, docs) {
+                JavaFormatListPart::Item(item) => {
+                    if need_line {
                         let line = docs.line();
                         docs.push(line);
                     }
+                    let formatted = if let Some(constant) =
+                        item.cast_node::<jolt_java_syntax::CaseConstant<'source>>()
+                    {
+                        match resolve_required_field(constant.expression(), docs) {
+                            JavaFormatField::Present(value) => format_expression(&value, docs),
+                            JavaFormatField::Malformed(value) => value,
+                        }
+                    } else if let Some(pattern) =
+                        item.cast_node::<jolt_java_syntax::CasePattern<'source>>()
+                    {
+                        match resolve_required_field(pattern.pattern(), docs) {
+                            JavaFormatField::Present(role) => role
+                                .cast_node::<jolt_java_syntax::TypePattern<'source>>()
+                                .map(|value| format_pattern(&value.into(), docs))
+                                .or_else(|| {
+                                    role.cast_node::<jolt_java_syntax::RecordPattern<'source>>()
+                                        .map(|value| format_pattern(&value.into(), docs))
+                                })
+                                .unwrap_or_else(|| {
+                                    docs.block_on_invariant("invalid case pattern role");
+                                    Doc::nil()
+                                }),
+                            JavaFormatField::Malformed(value) => value,
+                        }
+                    } else if let Some(token) = item.token() {
+                        format_token(
+                            docs,
+                            &token,
+                            LeadingTrivia::Preserve,
+                            TrailingTrivia::BeforeLineBreak,
+                        )
+                    } else {
+                        docs.block_on_invariant("invalid switch label item role");
+                        Doc::nil()
+                    };
+                    docs.push(formatted);
+                    need_line = true;
                 }
-                jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
-                    let token = format_token(
-                        docs,
-                        &token,
-                        LeadingTrivia::Preserve,
-                        TrailingTrivia::Preserve,
-                    );
-                    docs.push(token);
-                    if has_next {
-                        let line = docs.line();
-                        docs.push(line);
-                    }
+                JavaFormatListPart::Separator(comma) => {
+                    let line = docs.line();
+                    let comma = format_separator_with_comments(docs, &comma, line);
+                    docs.push(comma);
+                    need_line = false;
                 }
-                jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => {
-                    let error =
-                        format_token_sequence(docs, error.token_iter(), LeadingTrivia::Preserve);
-                    docs.push(error);
-                    if has_next {
+                JavaFormatListPart::Malformed(value) => {
+                    if need_line {
                         let line = docs.line();
                         docs.push(line);
                     }
-                }
-                jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => {
-                    let node =
-                        format_token_sequence(docs, node.token_iter(), LeadingTrivia::Preserve);
-                    docs.push(node);
-                    if has_next {
-                        let line = docs.line();
-                        docs.push(line);
-                    }
+                    docs.push(value);
+                    need_line = true;
                 }
             }
         }
     })
 }
 
-fn format_switch_label_case_item<'source>(
-    item: &SwitchLabelCaseItem<'source>,
+fn format_guard<'source>(
+    guard: &jolt_java_syntax::Guard<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    match item {
-        SwitchLabelCaseItem::Constant(constant) => match constant.expression() {
-            Some(expression) => format_expression(&expression, doc),
-            None => format_token_sequence(doc, constant.token_iter(), LeadingTrivia::Preserve),
-        },
-        SwitchLabelCaseItem::Pattern(pattern) => match pattern.pattern() {
-            Some(pattern) => format_pattern(&pattern, doc),
-            None => format_token_sequence(doc, pattern.token_iter(), LeadingTrivia::Preserve),
-        },
-        SwitchLabelCaseItem::Default(default) => format_token(
-            doc,
-            default,
-            LeadingTrivia::Preserve,
-            TrailingTrivia::BeforeLineBreak,
-        ),
-    }
+    format_or_verbatim(guard, doc, |doc| {
+        let when = match resolve_required_field(guard.when_keyword(), doc) {
+            JavaFormatField::Present(value) => format_token_with_comments(doc, &value),
+            JavaFormatField::Malformed(value) => value,
+        };
+        let open = resolve_optional_field(guard.open_paren(), doc);
+        let close = resolve_optional_field(guard.close_paren(), doc);
+        let condition = match resolve_required_field(guard.condition(), doc) {
+            JavaFormatField::Present(value) => format_expression(&value, doc),
+            JavaFormatField::Malformed(value) => value,
+        };
+        let condition = match (open, close) {
+            (JavaFormatField::Present(Some(open)), JavaFormatField::Present(Some(close)))
+                if !token_has_comments(&open) && !token_has_comments(&close) =>
+            {
+                let removals = guard.redundant_parenthesis_removal_claims();
+                let open = removals
+                    .open
+                    .map_or_else(Doc::nil, |claim| doc.removed_source(claim));
+                let close = removals
+                    .close
+                    .map_or_else(Doc::nil, |claim| doc.removed_source(claim));
+                doc_concat!(doc, [open, condition, close])
+            }
+            (JavaFormatField::Present(Some(open)), JavaFormatField::Present(Some(close))) => {
+                format_parenthesized_statement_expression(
+                    doc,
+                    JavaFormatDelimiter::Source(open),
+                    condition,
+                    JavaFormatDelimiter::Source(close),
+                )
+            }
+            (JavaFormatField::Malformed(open), JavaFormatField::Malformed(close)) => {
+                doc_concat!(doc, [open, condition, close])
+            }
+            (JavaFormatField::Malformed(open), _) => doc_concat!(doc, [open, condition]),
+            (_, JavaFormatField::Malformed(close)) => doc_concat!(doc, [condition, close]),
+            _ => condition,
+        };
+        doc_concat!(doc, [doc.space(), when, doc.space(), condition])
+    })
 }
 
 fn format_switch_rule_body<'source>(
-    rule: &SwitchRule<'source>,
+    body: jolt_java_syntax::SwitchRuleBody<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    if let Some(block) = rule.block() {
+    if let Some(block) = body.cast_node::<jolt_java_syntax::Block<'source>>() {
         return format_block(&block, doc);
     }
-    if let Some(statement) = rule.throw_statement() {
+    if let Some(statement) = body.cast_node::<jolt_java_syntax::ThrowStatement<'source>>() {
         return format_throw_statement(&statement, doc);
     }
-    if let Some(expression) = rule.expression() {
-        return doc_concat!(
-            doc,
-            [
-                format_expression(&expression, doc),
-                format_statement_semicolon(rule.semicolon(), doc),
-            ]
-        );
-    }
-    if rule.semicolon().is_some() {
-        return format_statement_semicolon(rule.semicolon(), doc);
-    }
-
+    doc.block_on_invariant("invalid switch rule body role");
     Doc::nil()
 }

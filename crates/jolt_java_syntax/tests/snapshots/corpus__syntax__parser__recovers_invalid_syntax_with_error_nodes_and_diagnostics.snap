@@ -12,35 +12,44 @@ class Broken {
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "Broken" @ 6..12 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 13..14
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 19..23 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "method" @ 24..30
-          LParen "(" @ 30..31 trailing=[Whitespace " "]
-          FormalParameterList
-            FormalParameter
-              ErrorNode
-          Block
-            LBrace "{" @ 32..33
-            BlockStatement
-              LocalVariableDeclaration
-                PrimitiveType
-                  IntKw "int" @ 42..45 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "value" @ 46..51 trailing=[Whitespace " "]
-                    Assign "=" @ 52..53 trailing=[Whitespace " "]
-                    VariableInitializer
-                      ErrorNode
-              Semicolon ";" @ 54..55
-            RBrace "}" @ 60..61 leading=[Newline "\n", Whitespace "    "]
-      RBrace "}" @ 62..63 leading=[Newline "\n"]
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "Broken" @ 6..12 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 13..14
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 19..23 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Identifier "method" @ 24..30
+              LParen "(" @ 30..31 trailing=[Whitespace " "]
+              FormalParameterList
+                FormalParameter
+                  ParameterModifierList
+                  ErrorNode
+                    AnnotationList
+                  AnnotationList
+              Block
+                LBrace "{" @ 32..33
+                BlockStatementList
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      PrimitiveType
+                        AnnotationList
+                        IntKw "int" @ 42..45 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "value" @ 46..51 trailing=[Whitespace " "]
+                          Assign "=" @ 52..53 trailing=[Whitespace " "]
+                          VariableInitializer
+                            ErrorNode
+                    Semicolon ";" @ 54..55
+                RBrace "}" @ 60..61 leading=[Newline "\n", Whitespace "    "]
+        RBrace "}" @ 62..63 leading=[Newline "\n"]
   Eof "" @ 64..64 leading=[Newline "\n"]
 
 diagnostics:

@@ -8,8 +8,10 @@ null
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    NullLiteral "null" @ 0..4
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      NullLiteral "null" @ 0..4
   Eof "" @ 4..4
 
 diagnostics:

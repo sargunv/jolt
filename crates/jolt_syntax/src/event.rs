@@ -1,23 +1,24 @@
-use jolt_diagnostics::Diagnostic;
-
 use crate::RawSyntaxKind;
 
+/// Sentinel stored in a start event when a node has no forward parent.
+pub(crate) const NO_FORWARD_PARENT: u32 = 0;
+
 /// A parser event consumed by the shared syntax tree builder.
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Event {
     /// Starts a syntax node with the supplied raw kind.
-    StartNode {
+    Start {
         /// The node kind.
         kind: RawSyntaxKind,
         /// Offset to a later start-node event that should wrap this node.
-        forward_parent: Option<usize>,
+        /// Zero means that this node has no forward parent. Every real offset
+        /// is positive because a forward parent always starts at a later event.
+        forward_parent: u32,
     },
     /// Consumes the next token from the token source.
     Token,
     /// Finishes the current syntax node.
-    FinishNode,
-    /// Records a parser diagnostic without changing the tree shape.
-    Error(Diagnostic),
+    Finish,
     /// A placeholder event reserved by parser marker APIs.
     Tombstone,
 }
@@ -52,7 +53,7 @@ impl Marker {
         );
 
         *event = Event::start_node(kind);
-        events.push(Event::FinishNode);
+        events.push(Event::Finish);
 
         CompletedMarker {
             position: self.position,
@@ -108,15 +109,16 @@ impl CompletedMarker {
         let event = events
             .get_mut(self.position)
             .expect("completed marker position must exist in event stream");
-        let Event::StartNode { forward_parent, .. } = event else {
+        let Event::Start { forward_parent, .. } = event else {
             panic!("completed marker position must contain a start-node event");
         };
-        assert!(
-            forward_parent.is_none(),
+        assert_eq!(
+            *forward_parent, NO_FORWARD_PARENT,
             "completed marker must not already have a forward parent"
         );
 
-        *forward_parent = Some(position - self.position);
+        *forward_parent = u32::try_from(position - self.position)
+            .expect("forward-parent event offset must fit in u32");
 
         Marker { position }
     }
@@ -126,9 +128,9 @@ impl Event {
     /// Creates a start-node event with no forward parent.
     #[must_use]
     pub(crate) const fn start_node(kind: RawSyntaxKind) -> Self {
-        Self::StartNode {
+        Self::Start {
             kind,
-            forward_parent: None,
+            forward_parent: NO_FORWARD_PARENT,
         }
     }
 }

@@ -8,17 +8,19 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    IntegerLiteral "0x_1" @ 0..4 trailing=[Whitespace " "]
-    IntegerLiteral "1_" @ 5..7 trailing=[Whitespace " "]
-    IntegerLiteral "0x" @ 8..10 trailing=[Whitespace " "]
-    IntegerLiteral "0X" @ 11..13 trailing=[Whitespace " "]
-    IntegerLiteral "0b" @ 14..16 trailing=[Whitespace " "]
-    IntegerLiteral "0B" @ 17..19 trailing=[Whitespace " "]
-    IntegerLiteral "0x1_" @ 20..24 trailing=[Whitespace " "]
-    IntegerLiteral "0b1_" @ 25..29 trailing=[Whitespace " "]
-    IntegerLiteral "01_" @ 30..33 trailing=[Whitespace " "]
-    IntegerLiteral "1_L" @ 34..37
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      IntegerLiteral "0x_1" @ 0..4 trailing=[Whitespace " "]
+      IntegerLiteral "1_" @ 5..7 trailing=[Whitespace " "]
+      IntegerLiteral "0x" @ 8..10 trailing=[Whitespace " "]
+      IntegerLiteral "0X" @ 11..13 trailing=[Whitespace " "]
+      IntegerLiteral "0b" @ 14..16 trailing=[Whitespace " "]
+      IntegerLiteral "0B" @ 17..19 trailing=[Whitespace " "]
+      IntegerLiteral "0x1_" @ 20..24 trailing=[Whitespace " "]
+      IntegerLiteral "0b1_" @ 25..29 trailing=[Whitespace " "]
+      IntegerLiteral "01_" @ 30..33 trailing=[Whitespace " "]
+      IntegerLiteral "1_L" @ 34..37
   Eof "" @ 37..37
 
 diagnostics:

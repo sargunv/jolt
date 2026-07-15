@@ -1,9 +1,11 @@
 use super::{
-    Doc, LeadingTrivia, MethodReferenceExpression, TrailingTrivia, format_array_dimensions,
-    format_expression, format_token, format_token_with_comments, format_type,
-    format_type_argument_list, trailing_comments_force_line,
+    Doc, Expression, LeadingTrivia, MethodReferenceExpression, TrailingTrivia, format_expression,
+    format_token, format_token_with_comments, format_type, format_type_argument_list,
+    trailing_comments_force_line,
 };
+use crate::helpers::recovery::{format_optional_field, format_required_field};
 use jolt_fmt_ir::DocBuilder;
+use jolt_java_syntax::Type;
 
 pub(super) fn format_method_reference_expression<'source>(
     expression: &MethodReferenceExpression<'source>,
@@ -16,20 +18,17 @@ pub(super) fn format_method_reference_expression<'source>(
             [
                 format_method_reference_receiver(expression, doc),
                 format_method_reference_separator(expression, doc),
-                expression
-                    .type_arguments()
-                    .map_or_else(Doc::nil, |arguments| format_type_argument_list(
-                        &arguments, doc
-                    ),),
-                if expression.is_constructor_reference() {
-                    expression
-                        .new_token()
-                        .map_or_else(Doc::nil, |token| format_token_with_comments(doc, &token))
-                } else {
-                    expression
-                        .target_name()
-                        .map_or_else(Doc::nil, |target| format_token_with_comments(doc, &target))
-                },
+                format_optional_field(
+                    expression.receiver_type_arguments(),
+                    doc,
+                    |arguments, doc| format_type_argument_list(&arguments, doc),
+                ),
+                format_optional_field(expression.target_type_arguments(), doc, |arguments, doc| {
+                    format_type_argument_list(&arguments, doc)
+                }),
+                format_required_field(expression.target(), doc, |target, doc| {
+                    format_token_with_comments(doc, &target)
+                }),
             ]
         )
     )
@@ -39,51 +38,41 @@ fn format_method_reference_separator<'source>(
     expression: &MethodReferenceExpression<'source>,
     doc: &mut jolt_fmt_ir::DocBuilder<'source>,
 ) -> Doc<'source> {
-    expression
-        .double_colon()
-        .map_or_else(Doc::nil, |separator| {
-            let has_trailing_comments = !separator.trailing_comments().is_empty();
-            doc_concat!(
-                doc,
-                [
-                    format_token(
-                        doc,
-                        &separator,
-                        LeadingTrivia::Preserve,
-                        TrailingTrivia::BeforeLineBreak,
-                    ),
-                    if trailing_comments_force_line(&separator) {
-                        doc.hard_line()
-                    } else if has_trailing_comments {
-                        doc.space()
-                    } else {
-                        Doc::nil()
-                    },
-                ]
-            )
-        })
+    format_required_field(expression.double_colon(), doc, |separator, doc| {
+        let has_trailing_comments = !separator.trailing_comments().is_empty();
+        doc_concat!(
+            doc,
+            [
+                format_token(
+                    doc,
+                    &separator,
+                    LeadingTrivia::Preserve,
+                    TrailingTrivia::BeforeLineBreak,
+                ),
+                if trailing_comments_force_line(&separator) {
+                    doc.hard_line()
+                } else if has_trailing_comments {
+                    doc.space()
+                } else {
+                    Doc::nil()
+                },
+            ]
+        )
+    })
 }
 
 fn format_method_reference_receiver<'source>(
     expression: &MethodReferenceExpression<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    if let Some(receiver) = expression.receiver_expression() {
-        return doc_concat!(
-            doc,
-            [
-                format_expression(&receiver, doc),
-                expression
-                    .receiver_dimensions()
-                    .map_or_else(Doc::nil, |dimensions| format_array_dimensions(
-                        &dimensions,
-                        doc
-                    ),),
-            ]
-        );
-    }
-
-    expression
-        .receiver_type()
-        .map_or_else(Doc::nil, |ty| format_type(&ty, doc))
+    format_required_field(expression.receiver(), doc, |receiver, doc| {
+        if let Some(expression) = receiver.cast_family::<Expression<'source>>() {
+            format_expression(&expression, doc)
+        } else if let Some(ty) = receiver.cast_family::<Type<'source>>() {
+            format_type(&ty, doc)
+        } else {
+            doc.block_on_invariant("method reference receiver was neither expression nor type");
+            Doc::nil()
+        }
+    })
 }

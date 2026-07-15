@@ -1,14 +1,15 @@
-use jolt_fmt_ir::{Doc, DocBuilder};
-use jolt_java_syntax::{JavaSyntaxToken, RecoveredSeparatedListEntry};
+use jolt_fmt_ir::{Doc, DocBuilder, SynthesisClaim};
+use jolt_java_syntax::{JavaSyntaxInvariantError, JavaSyntaxListPart, JavaSyntaxToken};
 
 use crate::helpers::comments::{
     InlineLeadingTrivia, LeadingTrivia, TrailingTrivia, delimiter_dangling_comments,
     format_dangling_comments, format_leading_comments, format_separator_with_comments,
-    format_token, format_token_after_relocated_leading_comments, format_token_sequence,
-    format_token_with_inline_leading_comments, has_delimiter_dangling_comments,
-    trailing_comments_force_line,
+    format_token, format_token_after_relocated_leading_comments,
+    format_token_with_inline_leading_comments, format_trailing_comments_before_line_break,
+    has_delimiter_dangling_comments, trailing_comments_force_line,
 };
-use crate::helpers::syntax_tokens::{FormatterInsertedToken, inserted_syntax_token};
+use crate::helpers::recovery::{JavaFormatDelimiter, JavaFormatListPart, resolve_list_part};
+use crate::helpers::syntax_tokens::inserted_syntax_token;
 
 pub(crate) struct CommaListItem<'source> {
     pub(crate) doc: Doc<'source>,
@@ -35,40 +36,55 @@ pub(crate) fn comma_list<'source>(
     })
 }
 
-pub(crate) fn recovered_comma_list_items<'source, Entry>(
+pub(crate) fn syntax_comma_list_items<'source, Entry>(
     doc: &mut DocBuilder<'source>,
-    entries: impl IntoIterator<Item = RecoveredSeparatedListEntry<'source, Entry>>,
-    mut format_entry: impl FnMut(Entry, &mut DocBuilder<'source>) -> CommaListItem<'source>,
+    entries: impl IntoIterator<
+        Item = Result<JavaSyntaxListPart<'source, Entry>, JavaSyntaxInvariantError>,
+    >,
+    mut format_entry: impl FnMut(Entry, &mut DocBuilder<'source>) -> Doc<'source>,
 ) -> Vec<CommaListItem<'source>> {
-    entries
-        .into_iter()
-        .map(|entry| match entry {
-            RecoveredSeparatedListEntry::Entry(entry) => format_entry(entry, doc),
-            RecoveredSeparatedListEntry::Token(token) => CommaListItem {
-                doc: format_token(
-                    doc,
-                    &token,
-                    LeadingTrivia::Preserve,
-                    TrailingTrivia::Preserve,
-                ),
+    let entries = entries.into_iter();
+    let (lower, _) = entries.size_hint();
+    // The represented list is already a bounded physical syntax node. Reserve
+    // from that exact traversal instead of geometrically reallocating a second
+    // recovery staging buffer while attaching separators to their items.
+    let mut items = Vec::with_capacity(lower);
+    for entry in entries {
+        match resolve_list_part(entry, doc) {
+            JavaFormatListPart::Item(entry) => items.push(CommaListItem {
+                doc: format_entry(entry, doc),
                 comma: None,
-            },
-            RecoveredSeparatedListEntry::Error(error) => CommaListItem {
-                doc: format_token_sequence(doc, error.token_iter(), LeadingTrivia::Preserve),
+            }),
+            JavaFormatListPart::Separator(separator) => {
+                if let Some(item) = items.last_mut()
+                    && item.comma.is_none()
+                {
+                    item.comma = Some(separator);
+                } else {
+                    items.push(CommaListItem {
+                        doc: format_token(
+                            doc,
+                            &separator,
+                            LeadingTrivia::Preserve,
+                            TrailingTrivia::Preserve,
+                        ),
+                        comma: None,
+                    });
+                }
+            }
+            JavaFormatListPart::Malformed(malformed) => items.push(CommaListItem {
+                doc: malformed,
                 comma: None,
-            },
-            RecoveredSeparatedListEntry::Node(node) => CommaListItem {
-                doc: format_token_sequence(doc, node.token_iter(), LeadingTrivia::Preserve),
-                comma: None,
-            },
-        })
-        .collect()
+            }),
+        }
+    }
+    items
 }
 
 pub(crate) fn parenthesized_list<'source>(
     doc: &mut DocBuilder<'source>,
-    open: Option<&JavaSyntaxToken<'source>>,
-    close: Option<&JavaSyntaxToken<'source>>,
+    open: JavaFormatDelimiter<'source>,
+    close: JavaFormatDelimiter<'source>,
     items: impl IntoIterator<Item = CommaListItem<'source>>,
 ) -> Doc<'source> {
     delimited_comma_list(doc, open, close, items)
@@ -76,8 +92,8 @@ pub(crate) fn parenthesized_list<'source>(
 
 pub(crate) fn angle_bracket_list<'source>(
     doc: &mut DocBuilder<'source>,
-    open: Option<&JavaSyntaxToken<'source>>,
-    close: Option<&JavaSyntaxToken<'source>>,
+    open: JavaFormatDelimiter<'source>,
+    close: JavaFormatDelimiter<'source>,
     items: impl IntoIterator<Item = CommaListItem<'source>>,
 ) -> Doc<'source> {
     delimited_comma_list(doc, open, close, items)
@@ -85,26 +101,26 @@ pub(crate) fn angle_bracket_list<'source>(
 
 pub(crate) fn braced_comma_list_with_trailing_separator<'source>(
     doc: &mut DocBuilder<'source>,
-    open: Option<&JavaSyntaxToken<'source>>,
-    close: Option<&JavaSyntaxToken<'source>>,
+    open: JavaFormatDelimiter<'source>,
+    close: JavaFormatDelimiter<'source>,
     items: impl IntoIterator<Item = CommaListItem<'source>>,
+    trailing_comma: Option<SynthesisClaim<'source>>,
 ) -> Doc<'source> {
     let mut items = items.into_iter().peekable();
     if items.peek().is_none() {
         return empty_delimited_list(doc, open, close);
     }
 
-    let (items_doc, has_source_trailing_separator) = comma_list_with_trailing_separator(doc, items);
-    let should_break =
-        has_delimiter_dangling_comments(open, close) || has_source_trailing_separator;
+    let (items_doc, has_source_trailing_separator) =
+        comma_list_with_trailing_separator(doc, items, trailing_comma);
+    let should_break = has_delimiter_dangling_comments(open.source(), close.source())
+        || has_source_trailing_separator;
+    let open_spacing = format_braced_open_spacing(doc, open.source());
     let contents = doc_concat!(
         doc,
         [
             format_open_delimiter(doc, open),
-            doc_indent!(
-                doc,
-                doc_concat!(doc, [format_braced_open_spacing(doc, open), items_doc])
-            ),
+            doc_indent!(doc, doc_concat!(doc, [open_spacing, items_doc])),
             format_braced_close_with_spacing(doc, close),
         ]
     );
@@ -118,8 +134,8 @@ pub(crate) fn braced_comma_list_with_trailing_separator<'source>(
 
 fn delimited_comma_list<'source>(
     doc: &mut DocBuilder<'source>,
-    open: Option<&JavaSyntaxToken<'source>>,
-    close: Option<&JavaSyntaxToken<'source>>,
+    open: JavaFormatDelimiter<'source>,
+    close: JavaFormatDelimiter<'source>,
     items: impl IntoIterator<Item = CommaListItem<'source>>,
 ) -> Doc<'source> {
     let mut items = items.into_iter().peekable();
@@ -127,7 +143,24 @@ fn delimited_comma_list<'source>(
         return empty_delimited_list(doc, open, close);
     }
 
-    doc_group!(
+    let trailing = close.source().map_or_else(Doc::nil, |close| {
+        if close.trailing_comments().is_empty() {
+            Doc::nil()
+        } else {
+            doc_concat!(
+                doc,
+                [
+                    format_trailing_comments_before_line_break(doc, close),
+                    if trailing_comments_force_line(close) {
+                        doc.hard_line()
+                    } else {
+                        Doc::nil()
+                    },
+                ]
+            )
+        }
+    });
+    let list = doc_group!(
         doc,
         doc_concat!(
             doc,
@@ -139,22 +172,23 @@ fn delimited_comma_list<'source>(
                         [
                             format_open_delimiter_before_items(doc, open),
                             comma_list(doc, items),
-                            format_close_leading_comments(doc, close),
+                            format_close_leading_comments(doc, close.source()),
                         ]
                     )
                 ),
                 format_close_with_spacing(doc, close),
             ]
         )
-    )
+    );
+    doc_concat!(doc, [list, trailing])
 }
 
 fn empty_delimited_list<'source>(
     doc: &mut DocBuilder<'source>,
-    open: Option<&JavaSyntaxToken<'source>>,
-    close: Option<&JavaSyntaxToken<'source>>,
+    open: JavaFormatDelimiter<'source>,
+    close: JavaFormatDelimiter<'source>,
 ) -> Doc<'source> {
-    if !has_delimiter_dangling_comments(open, close) {
+    if !has_delimiter_dangling_comments(open.source(), close.source()) {
         return doc_concat!(
             doc,
             [
@@ -164,22 +198,18 @@ fn empty_delimited_list<'source>(
         );
     }
 
+    let dangling = format_dangling_comments(
+        doc,
+        delimiter_dangling_comments(open.source(), close.source()),
+    );
+
     doc_force_group!(
         doc,
         doc_concat!(
             doc,
             [
                 format_open_delimiter(doc, open),
-                doc_indent!(
-                    doc,
-                    doc_concat!(
-                        doc,
-                        [
-                            doc.hard_line(),
-                            format_delimiter_dangling_comments(doc, open, close),
-                        ]
-                    )
-                ),
+                doc_indent!(doc, doc_concat!(doc, [doc.hard_line(), dangling,])),
                 doc.hard_line(),
                 format_close_delimiter_without_leading(doc, close),
             ]
@@ -189,48 +219,52 @@ fn empty_delimited_list<'source>(
 
 fn format_open_delimiter<'source>(
     doc: &mut DocBuilder<'source>,
-    open: Option<&JavaSyntaxToken<'source>>,
+    open: JavaFormatDelimiter<'source>,
 ) -> Doc<'source> {
     format_open_delimiter_with_trailing(doc, open, TrailingTrivia::RelocatedToEnclosingContext)
 }
 
 fn format_open_delimiter_before_items<'source>(
     doc: &mut DocBuilder<'source>,
-    open: Option<&JavaSyntaxToken<'source>>,
+    open: JavaFormatDelimiter<'source>,
 ) -> Doc<'source> {
     match open {
-        Some(open) => format_token_with_inline_leading_comments(
+        JavaFormatDelimiter::Source(open) => format_token_with_inline_leading_comments(
             doc,
-            open,
+            &open,
             InlineLeadingTrivia::BeforeToken,
             TrailingTrivia::BeforeSoftLine,
         ),
-        None => doc.soft_line(),
+        JavaFormatDelimiter::Recovery(recovery) => {
+            doc_concat!(doc, [recovery, doc.soft_line()])
+        }
     }
 }
 
 fn format_open_delimiter_with_trailing<'source>(
     doc: &mut DocBuilder<'source>,
-    open: Option<&JavaSyntaxToken<'source>>,
+    open: JavaFormatDelimiter<'source>,
     trailing: TrailingTrivia,
 ) -> Doc<'source> {
     match open {
-        Some(open) => format_token_with_inline_leading_comments(
+        JavaFormatDelimiter::Source(open) => format_token_with_inline_leading_comments(
             doc,
-            open,
+            &open,
             InlineLeadingTrivia::BeforeToken,
             trailing,
         ),
-        None => Doc::nil(),
+        JavaFormatDelimiter::Recovery(recovery) => recovery,
     }
 }
 
 fn comma_list_with_trailing_separator<'source>(
     doc: &mut DocBuilder<'source>,
     items: impl IntoIterator<Item = CommaListItem<'source>>,
+    trailing_comma: Option<SynthesisClaim<'source>>,
 ) -> (Doc<'source>, bool) {
     let mut items = items.into_iter().peekable();
     let mut has_source_trailing_separator = false;
+    let mut trailing_comma = trailing_comma;
     let docs = doc.concat_list(|docs| {
         while let Some(item) = items.next() {
             let is_last = items.peek().is_none();
@@ -243,13 +277,15 @@ fn comma_list_with_trailing_separator<'source>(
                 let line = docs.line();
                 docs.push(line);
             } else {
-                let trailing_comma = doc_if_break!(
-                    docs,
-                    // Intentional synthesized token: trailing comma policy adds a
-                    // comma only when the list breaks across lines.
-                    inserted_syntax_token(docs, ",", FormatterInsertedToken::TrailingComma),
-                    Doc::nil(),
-                );
+                let trailing_comma = trailing_comma.take().map_or_else(Doc::nil, |claim| {
+                    doc_if_break!(
+                        docs,
+                        // Intentional synthesized token: trailing comma policy adds a
+                        // comma only when the list breaks across lines.
+                        inserted_syntax_token(docs, claim),
+                        Doc::nil(),
+                    )
+                });
                 docs.push(trailing_comma);
             }
         }
@@ -318,17 +354,18 @@ fn format_braced_open_spacing<'source>(
 
 fn format_braced_close_with_spacing<'source>(
     doc: &mut DocBuilder<'source>,
-    close: Option<&JavaSyntaxToken<'source>>,
+    close: JavaFormatDelimiter<'source>,
 ) -> Doc<'source> {
     doc_concat!(doc, [doc.line(), format_close_delimiter(doc, close)])
 }
 
 fn format_close_with_spacing<'source>(
     doc: &mut DocBuilder<'source>,
-    close: Option<&JavaSyntaxToken<'source>>,
+    close: JavaFormatDelimiter<'source>,
 ) -> Doc<'source> {
-    let close_has_leading_comments =
-        close.is_some_and(|token| !token.leading_comments().is_empty());
+    let close_has_leading_comments = close
+        .source()
+        .is_some_and(|token| !token.leading_comments().is_empty());
 
     doc_concat!(
         doc,
@@ -338,7 +375,16 @@ fn format_close_with_spacing<'source>(
             } else {
                 doc.soft_line()
             },
-            format_close_delimiter_without_leading(doc, close),
+            match close {
+                JavaFormatDelimiter::Source(close) => {
+                    format_token_after_relocated_leading_comments(
+                        doc,
+                        &close,
+                        TrailingTrivia::RelocatedToEnclosingContext,
+                    )
+                }
+                JavaFormatDelimiter::Recovery(recovery) => recovery,
+            },
         ]
     )
 }
@@ -364,38 +410,39 @@ fn format_close_leading_comments<'source>(
 
 fn format_close_delimiter<'source>(
     doc: &mut DocBuilder<'source>,
-    close: Option<&JavaSyntaxToken<'source>>,
+    close: JavaFormatDelimiter<'source>,
 ) -> Doc<'source> {
-    let close_has_leading_comments =
-        close.is_some_and(|token| !token.leading_comments().is_empty());
-    close.map_or_else(Doc::nil, |close| {
-        doc_concat!(
+    let close_has_leading_comments = close
+        .source()
+        .is_some_and(|token| !token.leading_comments().is_empty());
+    match close {
+        JavaFormatDelimiter::Source(close) => doc_concat!(
             doc,
             [
                 if close_has_leading_comments {
-                    format_leading_comments(doc, close)
+                    format_leading_comments(doc, &close)
                 } else {
                     Doc::nil()
                 },
-                format_token_after_relocated_leading_comments(doc, close, TrailingTrivia::Preserve),
+                format_token_after_relocated_leading_comments(
+                    doc,
+                    &close,
+                    TrailingTrivia::Preserve
+                ),
             ]
-        )
-    })
+        ),
+        JavaFormatDelimiter::Recovery(recovery) => recovery,
+    }
 }
 
 fn format_close_delimiter_without_leading<'source>(
     doc: &mut DocBuilder<'source>,
-    close: Option<&JavaSyntaxToken<'source>>,
+    close: JavaFormatDelimiter<'source>,
 ) -> Doc<'source> {
-    close.map_or_else(Doc::nil, |close| {
-        format_token_after_relocated_leading_comments(doc, close, TrailingTrivia::Preserve)
-    })
-}
-
-fn format_delimiter_dangling_comments<'source>(
-    doc: &mut DocBuilder<'source>,
-    open: Option<&JavaSyntaxToken<'source>>,
-    close: Option<&JavaSyntaxToken<'source>>,
-) -> Doc<'source> {
-    format_dangling_comments(doc, delimiter_dangling_comments(open, close))
+    match close {
+        JavaFormatDelimiter::Source(close) => {
+            format_token_after_relocated_leading_comments(doc, &close, TrailingTrivia::Preserve)
+        }
+        JavaFormatDelimiter::Recovery(recovery) => recovery,
+    }
 }

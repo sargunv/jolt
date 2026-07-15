@@ -29,105 +29,132 @@ enum Mode {
 syntax:
 syntax:
 CompilationUnit
-  RecordDeclaration
-    Identifier "record" @ 30..36 leading=[DocComment "/** JOLT-TRIVIA:record-doc */", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "Box" @ 37..40
-    LParen "(" @ 40..41
-    RecordComponentList
-      RecordComponent
-        ClassType
-          Name
-            Identifier "String" @ 76..82 leading=[Newline "\n", Whitespace "    ", BlockComment "/* JOLT-TRIVIA:record-open */", Whitespace " "] trailing=[Whitespace " "]
-        Identifier "name" @ 83..87 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:record-name */"]
-      Comma "," @ 117..118
-      RecordComponent
-        PrimitiveType
-          IntKw "int" @ 123..126 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-        Identifier "count" @ 127..132 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:record-count */"]
-    RParen ")" @ 163..164 trailing=[Whitespace " "]
-    RecordBody
-      LBrace "{" @ 165..166
-      ClassBodyDeclaration
-        CompactConstructorDeclaration
-          Identifier "Box" @ 169..172 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:compact-constructor-name */", Whitespace " "]
-          ConstructorBody
-            LBrace "{" @ 216..217
-            BlockStatement
-              ExpressionStatement
-                AssignmentExpression
-                  NameExpression
-                    Identifier "count" @ 222..227 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                  Assign "=" @ 228..229 trailing=[Whitespace " "]
-                  BinaryExpression
-                    NameExpression
-                      Identifier "count" @ 230..235 trailing=[Whitespace " "]
-                    Plus "+" @ 236..237 trailing=[Whitespace " "]
-                    LiteralExpression
-                      IntegerLiteral "1" @ 238..239
-                Semicolon ";" @ 239..240
-            RBrace "}" @ 243..244 leading=[Newline "\n", Whitespace "  "]
-      RBrace "}" @ 245..246 leading=[Newline "\n"]
-  EnumDeclaration
-    EnumKw "enum" @ 248..252 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "Mode" @ 253..257 trailing=[Whitespace " "]
-    EnumBody
-      LBrace "{" @ 258..259
-      EnumConstantList
-        EnumConstant
-          Identifier "A" @ 294..295 leading=[Newline "\n", Whitespace "  ", DocComment "/** JOLT-TRIVIA:enum-a-doc */", Newline "\n", Whitespace "  "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:enum-a-tail */"]
-        Comma "," @ 325..326
-        EnumConstant
-          Identifier "B" @ 329..330 leading=[Newline "\n", Whitespace "  "]
-          ArgumentList
-            LParen "(" @ 330..331 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:enum-b-open */", Whitespace " "]
-            LiteralExpression
-              StringLiteral "\"b\"" @ 362..365 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:enum-b-arg */"]
-            RParen ")" @ 394..395 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:enum-b-tail */"]
-      Semicolon ";" @ 425..426
-      ClassBodyDeclaration
-        ConstructorDeclaration
-          Identifier "Mode" @ 430..434 leading=[Newline "\n", Newline "\n", Whitespace "  "]
-          LParen "(" @ 434..435
-          RParen ")" @ 435..436 trailing=[Whitespace " "]
-          ConstructorBody
-            LBrace "{" @ 437..438
-            RBrace "}" @ 438..439
-      ClassBodyDeclaration
-        ConstructorDeclaration
-          Identifier "Mode" @ 443..447 leading=[Newline "\n", Newline "\n", Whitespace "  "]
-          LParen "(" @ 447..448
-          FormalParameterList
-            FormalParameter
-              ClassType
-                Name
-                  Identifier "String" @ 448..454 trailing=[Whitespace " "]
-              Identifier "value" @ 455..460
-          RParen ")" @ 460..461 trailing=[Whitespace " "]
-          ConstructorBody
-            LBrace "{" @ 462..463
-            RBrace "}" @ 463..464
-      RBrace "}" @ 465..466 leading=[Newline "\n"]
-  AnnotationInterfaceDeclaration
-    At "@" @ 468..469 leading=[Newline "\n", Newline "\n"]
-    InterfaceKw "interface" @ 469..478 trailing=[Whitespace " "]
-    Identifier "Flag" @ 479..483 trailing=[Whitespace " "]
-    AnnotationInterfaceBody
-      LBrace "{" @ 484..485
-      AnnotationElementList
-        AnnotationElementDeclaration
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    RecordDeclaration
+      Identifier "record" @ 30..36 leading=[DocComment "/** JOLT-TRIVIA:record-doc */", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "Box" @ 37..40
+      LParen "(" @ 40..41
+      RecordComponentList
+        RecordComponent
+          ParameterModifierList
           ClassType
-            Name
-              Identifier "String" @ 488..494 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-          Identifier "value" @ 495..500
-          LParen "(" @ 500..501
-          RParen ")" @ 501..502 trailing=[Whitespace " "]
-          DefaultValue
-            DefaultKw "default" @ 503..510 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:annotation-default */", Whitespace " "]
-            AnnotationElementValue
-              LiteralExpression
-                StringLiteral "\"on\"" @ 548..552
-          Semicolon ";" @ 552..553
-      RBrace "}" @ 554..555 leading=[Newline "\n"]
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "String" @ 76..82 leading=[Newline "\n", Whitespace "    ", BlockComment "/* JOLT-TRIVIA:record-open */", Whitespace " "] trailing=[Whitespace " "]
+          AnnotationList
+          Identifier "name" @ 83..87 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:record-name */"]
+        Comma "," @ 117..118
+        RecordComponent
+          ParameterModifierList
+          PrimitiveType
+            AnnotationList
+            IntKw "int" @ 123..126 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+          AnnotationList
+          Identifier "count" @ 127..132 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:record-count */"]
+      RParen ")" @ 163..164 trailing=[Whitespace " "]
+      RecordBody
+        LBrace "{" @ 165..166
+        RecordBodyMemberList
+          ClassBodyDeclaration
+            CompactConstructorDeclaration
+              Identifier "Box" @ 169..172 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:compact-constructor-name */", Whitespace " "]
+              ConstructorBody
+                LBrace "{" @ 216..217
+                ConstructorBodyEntryList
+                  BlockStatement
+                    ExpressionStatement
+                      AssignmentExpression
+                        NameExpression
+                          Identifier "count" @ 222..227 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                        Assign "=" @ 228..229 trailing=[Whitespace " "]
+                        BinaryExpression
+                          NameExpression
+                            Identifier "count" @ 230..235 trailing=[Whitespace " "]
+                          Plus "+" @ 236..237 trailing=[Whitespace " "]
+                          LiteralExpression
+                            IntegerLiteral "1" @ 238..239
+                      Semicolon ";" @ 239..240
+                RBrace "}" @ 243..244 leading=[Newline "\n", Whitespace "  "]
+        RBrace "}" @ 245..246 leading=[Newline "\n"]
+    EnumDeclaration
+      EnumKw "enum" @ 248..252 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "Mode" @ 253..257 trailing=[Whitespace " "]
+      EnumBody
+        LBrace "{" @ 258..259
+        EnumConstantList
+          EnumConstant
+            AnnotationList
+            Identifier "A" @ 294..295 leading=[Newline "\n", Whitespace "  ", DocComment "/** JOLT-TRIVIA:enum-a-doc */", Newline "\n", Whitespace "  "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:enum-a-tail */"]
+          Comma "," @ 325..326
+          EnumConstant
+            AnnotationList
+            Identifier "B" @ 329..330 leading=[Newline "\n", Whitespace "  "]
+            ArgumentList
+              LParen "(" @ 330..331 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:enum-b-open */", Whitespace " "]
+              ExpressionList
+                LiteralExpression
+                  StringLiteral "\"b\"" @ 362..365 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:enum-b-arg */"]
+              RParen ")" @ 394..395 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:enum-b-tail */"]
+        Semicolon ";" @ 425..426
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            ConstructorDeclaration
+              Identifier "Mode" @ 430..434 leading=[Newline "\n", Newline "\n", Whitespace "  "]
+              LParen "(" @ 434..435
+              RParen ")" @ 435..436 trailing=[Whitespace " "]
+              ConstructorBody
+                LBrace "{" @ 437..438
+                ConstructorBodyEntryList
+                RBrace "}" @ 438..439
+          ClassBodyDeclaration
+            ConstructorDeclaration
+              Identifier "Mode" @ 443..447 leading=[Newline "\n", Newline "\n", Whitespace "  "]
+              LParen "(" @ 447..448
+              FormalParameterList
+                FormalParameter
+                  ParameterModifierList
+                  ClassType
+                    ClassTypeSegmentList
+                      ClassTypeSegmentNode
+                        AnnotationList
+                        Name
+                          Identifier "String" @ 448..454 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "value" @ 455..460
+              RParen ")" @ 460..461 trailing=[Whitespace " "]
+              ConstructorBody
+                LBrace "{" @ 462..463
+                ConstructorBodyEntryList
+                RBrace "}" @ 463..464
+        RBrace "}" @ 465..466 leading=[Newline "\n"]
+    AnnotationInterfaceDeclaration
+      At "@" @ 468..469 leading=[Newline "\n", Newline "\n"]
+      InterfaceKw "interface" @ 469..478 trailing=[Whitespace " "]
+      Identifier "Flag" @ 479..483 trailing=[Whitespace " "]
+      AnnotationInterfaceBody
+        LBrace "{" @ 484..485
+        AnnotationElementList
+          AnnotationInterfaceBodyMemberList
+            AnnotationElementDeclaration
+              ClassType
+                ClassTypeSegmentList
+                  ClassTypeSegmentNode
+                    AnnotationList
+                    Name
+                      Identifier "String" @ 488..494 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Identifier "value" @ 495..500
+              LParen "(" @ 500..501
+              RParen ")" @ 501..502 trailing=[Whitespace " "]
+              DefaultValue
+                DefaultKw "default" @ 503..510 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:annotation-default */", Whitespace " "]
+                AnnotationElementValue
+                  LiteralExpression
+                    StringLiteral "\"on\"" @ 548..552
+              Semicolon ";" @ 552..553
+        RBrace "}" @ 554..555 leading=[Newline "\n"]
   Eof "" @ 556..556 leading=[Newline "\n"]
 
 diagnostics:

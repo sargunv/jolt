@@ -12,39 +12,47 @@ class RecoveredModifiers {
 syntax:
 syntax:
 CompilationUnit
-  RecordDeclaration
-    Identifier "record" @ 0..6 trailing=[Whitespace " "]
-    ErrorNode
-      Identifier "sealed" @ 7..13
-    LParen "(" @ 13..14
-    RecordComponentList
-      RecordComponent
-        PrimitiveType
-          IntKw "int" @ 14..17 trailing=[Whitespace " "]
-        Identifier "value" @ 18..23
-    RParen ")" @ 23..24 trailing=[Whitespace " "]
-    RecordBody
-      LBrace "{" @ 25..26
-      RBrace "}" @ 26..27
-  ClassDeclaration
-    ClassKw "class" @ 29..34 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "RecoveredModifiers" @ 35..53 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 54..55
-      ClassBodyDeclaration
-        MethodDeclaration
-          ModifierList
-            ErrorNode
-              TransientKw "transient" @ 60..69 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          VoidType
-            VoidKw "void" @ 70..74 trailing=[Whitespace " "]
-          Identifier "method" @ 75..81
-          LParen "(" @ 81..82
-          RParen ")" @ 82..83 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 84..85
-            RBrace "}" @ 85..86
-      RBrace "}" @ 87..88 leading=[Newline "\n"]
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    RecordDeclaration
+      Identifier "record" @ 0..6 trailing=[Whitespace " "]
+      ErrorNode
+        Identifier "sealed" @ 7..13
+      LParen "(" @ 13..14
+      RecordComponentList
+        RecordComponent
+          ParameterModifierList
+          PrimitiveType
+            AnnotationList
+            IntKw "int" @ 14..17 trailing=[Whitespace " "]
+          AnnotationList
+          Identifier "value" @ 18..23
+      RParen ")" @ 23..24 trailing=[Whitespace " "]
+      RecordBody
+        LBrace "{" @ 25..26
+        RecordBodyMemberList
+        RBrace "}" @ 26..27
+    ClassDeclaration
+      ClassKw "class" @ 29..34 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "RecoveredModifiers" @ 35..53 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 54..55
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              ModifierList
+                ErrorNode
+                  TransientKw "transient" @ 60..69 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              VoidType
+                VoidKw "void" @ 70..74 trailing=[Whitespace " "]
+              Identifier "method" @ 75..81
+              LParen "(" @ 81..82
+              RParen ")" @ 82..83 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 84..85
+                BlockStatementList
+                RBrace "}" @ 85..86
+        RBrace "}" @ 87..88 leading=[Newline "\n"]
   Eof "" @ 89..89 leading=[Newline "\n"]
 
 diagnostics:

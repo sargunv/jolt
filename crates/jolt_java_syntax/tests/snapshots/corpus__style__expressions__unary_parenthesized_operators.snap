@@ -12,107 +12,133 @@ return !(bounds.getLeft() > getRight() || bounds.getRight() < getLeft() || bound
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "Example" @ 6..13 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 14..15
-      ClassBodyDeclaration
-        MethodDeclaration
-          PrimitiveType
-            BooleanKw "boolean" @ 16..23 leading=[Newline "\n"] trailing=[Whitespace " "]
-          Identifier "disjoint" @ 24..32
-          LParen "(" @ 32..33
-          FormalParameterList
-            FormalParameter
-              ClassType
-                Name
-                  Identifier "Rectangle" @ 33..42 trailing=[Whitespace " "]
-              Identifier "bounds" @ 43..49
-          RParen ")" @ 49..50 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 51..52
-            BlockStatement
-              ReturnStatement
-                ReturnKw "return" @ 53..59 leading=[Newline "\n"] trailing=[Whitespace " "]
-                UnaryExpression
-                  Bang "!" @ 60..61
-                  ParenthesizedExpression
-                    LParen "(" @ 61..62
-                    BinaryExpression
-                      BinaryExpression
-                        BinaryExpression
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "Example" @ 6..13 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 14..15
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              PrimitiveType
+                AnnotationList
+                BooleanKw "boolean" @ 16..23 leading=[Newline "\n"] trailing=[Whitespace " "]
+              Identifier "disjoint" @ 24..32
+              LParen "(" @ 32..33
+              FormalParameterList
+                FormalParameter
+                  ParameterModifierList
+                  ClassType
+                    ClassTypeSegmentList
+                      ClassTypeSegmentNode
+                        AnnotationList
+                        Name
+                          Identifier "Rectangle" @ 33..42 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "bounds" @ 43..49
+              RParen ")" @ 49..50 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 51..52
+                BlockStatementList
+                  BlockStatement
+                    ReturnStatement
+                      ReturnKw "return" @ 53..59 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      UnaryExpression
+                        Bang "!" @ 60..61
+                        ParenthesizedExpression
+                          LParen "(" @ 61..62
                           BinaryExpression
-                            MethodInvocationExpression
-                              NameExpression
-                                Identifier "bounds" @ 62..68
-                              Dot "." @ 68..69
-                              Identifier "getLeft" @ 69..76
-                              ArgumentList
-                                LParen "(" @ 76..77
-                                RParen ")" @ 77..78 trailing=[Whitespace " "]
-                            Gt ">" @ 79..80 trailing=[Whitespace " "]
-                            MethodInvocationExpression
-                              NameExpression
-                                Identifier "getRight" @ 81..89
-                              ArgumentList
-                                LParen "(" @ 89..90
-                                RParen ")" @ 90..91 trailing=[Whitespace " "]
-                          OrOr "||" @ 92..94 trailing=[Whitespace " "]
-                          BinaryExpression
-                            MethodInvocationExpression
-                              NameExpression
-                                Identifier "bounds" @ 95..101
-                              Dot "." @ 101..102
-                              Identifier "getRight" @ 102..110
-                              ArgumentList
-                                LParen "(" @ 110..111
-                                RParen ")" @ 111..112 trailing=[Whitespace " "]
-                            Lt "<" @ 113..114 trailing=[Whitespace " "]
-                            MethodInvocationExpression
-                              NameExpression
-                                Identifier "getLeft" @ 115..122
-                              ArgumentList
-                                LParen "(" @ 122..123
-                                RParen ")" @ 123..124 trailing=[Whitespace " "]
-                        OrOr "||" @ 125..127 trailing=[Whitespace " "]
-                        BinaryExpression
-                          MethodInvocationExpression
-                            NameExpression
-                              Identifier "bounds" @ 128..134
-                            Dot "." @ 134..135
-                            Identifier "getTop" @ 135..141
-                            ArgumentList
-                              LParen "(" @ 141..142
-                              RParen ")" @ 142..143 trailing=[Whitespace " "]
-                          Gt ">" @ 144..145 trailing=[Whitespace " "]
-                          MethodInvocationExpression
-                            NameExpression
-                              Identifier "getBottom" @ 146..155
-                            ArgumentList
-                              LParen "(" @ 155..156
-                              RParen ")" @ 156..157 trailing=[Whitespace " "]
-                      OrOr "||" @ 158..160 trailing=[Whitespace " "]
-                      BinaryExpression
-                        MethodInvocationExpression
-                          NameExpression
-                            Identifier "bounds" @ 161..167
-                          Dot "." @ 167..168
-                          Identifier "getBottom" @ 168..177
-                          ArgumentList
-                            LParen "(" @ 177..178
-                            RParen ")" @ 178..179 trailing=[Whitespace " "]
-                        Lt "<" @ 180..181 trailing=[Whitespace " "]
-                        MethodInvocationExpression
-                          NameExpression
-                            Identifier "getTop" @ 182..188
-                          ArgumentList
-                            LParen "(" @ 188..189
-                            RParen ")" @ 189..190
-                    RParen ")" @ 190..191
-                Semicolon ";" @ 191..192
-            RBrace "}" @ 193..194 leading=[Newline "\n"]
-      RBrace "}" @ 195..196 leading=[Newline "\n"]
+                            BinaryExpression
+                              BinaryExpression
+                                BinaryExpression
+                                  MethodInvocationExpression
+                                    QualifiedMethodInvocation
+                                      NameExpression
+                                        Identifier "bounds" @ 62..68
+                                      Dot "." @ 68..69
+                                      Identifier "getLeft" @ 69..76
+                                      ArgumentList
+                                        LParen "(" @ 76..77
+                                        ExpressionList
+                                        RParen ")" @ 77..78 trailing=[Whitespace " "]
+                                  Gt ">" @ 79..80 trailing=[Whitespace " "]
+                                  MethodInvocationExpression
+                                    UnqualifiedMethodInvocation
+                                      NameExpression
+                                        Identifier "getRight" @ 81..89
+                                      ArgumentList
+                                        LParen "(" @ 89..90
+                                        ExpressionList
+                                        RParen ")" @ 90..91 trailing=[Whitespace " "]
+                                OrOr "||" @ 92..94 trailing=[Whitespace " "]
+                                BinaryExpression
+                                  MethodInvocationExpression
+                                    QualifiedMethodInvocation
+                                      NameExpression
+                                        Identifier "bounds" @ 95..101
+                                      Dot "." @ 101..102
+                                      Identifier "getRight" @ 102..110
+                                      ArgumentList
+                                        LParen "(" @ 110..111
+                                        ExpressionList
+                                        RParen ")" @ 111..112 trailing=[Whitespace " "]
+                                  Lt "<" @ 113..114 trailing=[Whitespace " "]
+                                  MethodInvocationExpression
+                                    UnqualifiedMethodInvocation
+                                      NameExpression
+                                        Identifier "getLeft" @ 115..122
+                                      ArgumentList
+                                        LParen "(" @ 122..123
+                                        ExpressionList
+                                        RParen ")" @ 123..124 trailing=[Whitespace " "]
+                              OrOr "||" @ 125..127 trailing=[Whitespace " "]
+                              BinaryExpression
+                                MethodInvocationExpression
+                                  QualifiedMethodInvocation
+                                    NameExpression
+                                      Identifier "bounds" @ 128..134
+                                    Dot "." @ 134..135
+                                    Identifier "getTop" @ 135..141
+                                    ArgumentList
+                                      LParen "(" @ 141..142
+                                      ExpressionList
+                                      RParen ")" @ 142..143 trailing=[Whitespace " "]
+                                Gt ">" @ 144..145 trailing=[Whitespace " "]
+                                MethodInvocationExpression
+                                  UnqualifiedMethodInvocation
+                                    NameExpression
+                                      Identifier "getBottom" @ 146..155
+                                    ArgumentList
+                                      LParen "(" @ 155..156
+                                      ExpressionList
+                                      RParen ")" @ 156..157 trailing=[Whitespace " "]
+                            OrOr "||" @ 158..160 trailing=[Whitespace " "]
+                            BinaryExpression
+                              MethodInvocationExpression
+                                QualifiedMethodInvocation
+                                  NameExpression
+                                    Identifier "bounds" @ 161..167
+                                  Dot "." @ 167..168
+                                  Identifier "getBottom" @ 168..177
+                                  ArgumentList
+                                    LParen "(" @ 177..178
+                                    ExpressionList
+                                    RParen ")" @ 178..179 trailing=[Whitespace " "]
+                              Lt "<" @ 180..181 trailing=[Whitespace " "]
+                              MethodInvocationExpression
+                                UnqualifiedMethodInvocation
+                                  NameExpression
+                                    Identifier "getTop" @ 182..188
+                                  ArgumentList
+                                    LParen "(" @ 188..189
+                                    ExpressionList
+                                    RParen ")" @ 189..190
+                          RParen ")" @ 190..191
+                      Semicolon ";" @ 191..192
+                RBrace "}" @ 193..194 leading=[Newline "\n"]
+        RBrace "}" @ 195..196 leading=[Newline "\n"]
   Eof "" @ 197..197 leading=[Newline "\n"]
 
 diagnostics:

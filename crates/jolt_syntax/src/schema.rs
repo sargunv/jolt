@@ -120,6 +120,7 @@ macro_rules! __lower_syntax_schema {
                 $kind:ident => $wrapper:ident [$module:ident $class:ident] {
                     $(
                         $field:ident: $cardinality:ident $matcher:tt
+                        $(=> $role:ident)?
                         $([$($policy:tt)*])?;
                     )*
                 }

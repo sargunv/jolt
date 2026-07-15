@@ -15,81 +15,139 @@ module demo {
 syntax:
 syntax:
 CompilationUnit
+  ImportDeclarationList
   ModuleDeclaration
+    AnnotationList
     Identifier "module" @ 0..6 trailing=[Whitespace " "]
     Name
       Identifier "demo" @ 7..11 trailing=[Whitespace " "]
     LBrace "{" @ 12..13
-    ModuleDirective
-      ProvidesDirective
-        Identifier "provides" @ 16..24 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-        QualifiedName
-          Identifier "com" @ 25..28
-          Dot "." @ 28..29
-          Identifier "example" @ 29..36
-          Dot "." @ 36..37
-          Identifier "Plugin" @ 37..43 trailing=[Whitespace " "]
-        Identifier "with" @ 44..48 trailing=[Whitespace " "]
-        QualifiedName
-          Identifier "com" @ 49..52
-          Dot "." @ 52..53
-          Identifier "example" @ 53..60
-          Dot "." @ 60..61
-          Identifier "impl" @ 61..65
-          Dot "." @ 65..66
-          Identifier "PluginImpl" @ 66..76
-        Semicolon ";" @ 76..77
-    ModuleDirective
-      OpensDirective
-        Identifier "opens" @ 80..85 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-        QualifiedName
-          Identifier "com" @ 86..89
-          Dot "." @ 89..90
-          Identifier "example" @ 90..97
-          Dot "." @ 97..98
-          Identifier "internal" @ 98..106
-        Semicolon ";" @ 106..107
-    ModuleDirective
-      RequiresDirective
-        Identifier "requires" @ 110..118 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-        Identifier "transitive" @ 119..129 trailing=[Whitespace " "]
-        StaticKw "static" @ 130..136 trailing=[Whitespace " "]
-        QualifiedName
-          Identifier "com" @ 137..140
-          Dot "." @ 140..141
-          Identifier "example" @ 141..148
-          Dot "." @ 148..149
-          Identifier "lib" @ 149..152
-        Semicolon ";" @ 152..153
-    ModuleDirective
-      ExportsDirective
-        Identifier "exports" @ 156..163 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-        QualifiedName
-          Identifier "com" @ 164..167
-          Dot "." @ 167..168
-          Identifier "example" @ 168..175
-          Dot "." @ 175..176
-          Identifier "api" @ 176..179
-        Semicolon ";" @ 179..180
-    ModuleDirective
-      UsesDirective
-        Identifier "uses" @ 183..187 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-        QualifiedName
-          Identifier "com" @ 188..191
-          Dot "." @ 191..192
-          Identifier "example" @ 192..199
-          Dot "." @ 199..200
-          Identifier "Plugin" @ 200..206
-        Semicolon ";" @ 206..207
-    ModuleDirective
-      RequiresDirective
-        Identifier "requires" @ 210..218 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-        QualifiedName
-          Identifier "java" @ 219..223
-          Dot "." @ 223..224
-          Identifier "sql" @ 224..227
-        Semicolon ";" @ 227..228
+    ModuleDirectiveList
+      ModuleDirective
+        ProvidesDirective
+          Identifier "provides" @ 16..24 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          QualifiedName
+            QualifiedNameSegmentNode
+              AnnotationList
+              Identifier "com" @ 25..28
+            Dot "." @ 28..29
+            NameSegmentDotList
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "example" @ 29..36
+              Dot "." @ 36..37
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "Plugin" @ 37..43 trailing=[Whitespace " "]
+          Identifier "with" @ 44..48 trailing=[Whitespace " "]
+          NameList
+            QualifiedName
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "com" @ 49..52
+              Dot "." @ 52..53
+              NameSegmentDotList
+                QualifiedNameSegmentNode
+                  AnnotationList
+                  Identifier "example" @ 53..60
+                Dot "." @ 60..61
+                QualifiedNameSegmentNode
+                  AnnotationList
+                  Identifier "impl" @ 61..65
+                Dot "." @ 65..66
+                QualifiedNameSegmentNode
+                  AnnotationList
+                  Identifier "PluginImpl" @ 66..76
+          Semicolon ";" @ 76..77
+      ModuleDirective
+        OpensDirective
+          Identifier "opens" @ 80..85 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          QualifiedName
+            QualifiedNameSegmentNode
+              AnnotationList
+              Identifier "com" @ 86..89
+            Dot "." @ 89..90
+            NameSegmentDotList
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "example" @ 90..97
+              Dot "." @ 97..98
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "internal" @ 98..106
+          NameList
+          Semicolon ";" @ 106..107
+      ModuleDirective
+        RequiresDirective
+          Identifier "requires" @ 110..118 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          RequiresModifierList
+            Identifier "transitive" @ 119..129 trailing=[Whitespace " "]
+            StaticKw "static" @ 130..136 trailing=[Whitespace " "]
+          QualifiedName
+            QualifiedNameSegmentNode
+              AnnotationList
+              Identifier "com" @ 137..140
+            Dot "." @ 140..141
+            NameSegmentDotList
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "example" @ 141..148
+              Dot "." @ 148..149
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "lib" @ 149..152
+          Semicolon ";" @ 152..153
+      ModuleDirective
+        ExportsDirective
+          Identifier "exports" @ 156..163 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          QualifiedName
+            QualifiedNameSegmentNode
+              AnnotationList
+              Identifier "com" @ 164..167
+            Dot "." @ 167..168
+            NameSegmentDotList
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "example" @ 168..175
+              Dot "." @ 175..176
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "api" @ 176..179
+          NameList
+          Semicolon ";" @ 179..180
+      ModuleDirective
+        UsesDirective
+          Identifier "uses" @ 183..187 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          QualifiedName
+            QualifiedNameSegmentNode
+              AnnotationList
+              Identifier "com" @ 188..191
+            Dot "." @ 191..192
+            NameSegmentDotList
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "example" @ 192..199
+              Dot "." @ 199..200
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "Plugin" @ 200..206
+          Semicolon ";" @ 206..207
+      ModuleDirective
+        RequiresDirective
+          Identifier "requires" @ 210..218 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+          RequiresModifierList
+          QualifiedName
+            QualifiedNameSegmentNode
+              AnnotationList
+              Identifier "java" @ 219..223
+            Dot "." @ 223..224
+            NameSegmentDotList
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "sql" @ 224..227
+          Semicolon ";" @ 227..228
     RBrace "}" @ 229..230 leading=[Newline "\n"]
+  CompilationUnitDeclarationList
   Eof "" @ 231..231 leading=[Newline "\n"]
 
 diagnostics:

@@ -11,6 +11,10 @@ pub trait Language: 'static {
     /// The lexer type that produces tokens for this language.
     type Lexer<'source>: crate::LanguageLexer<'source, Language = Self>;
 
+    /// Opaque capability held by the language syntax crate and required to
+    /// authorize formatter normalizations.
+    type NormalizationAuthority: Copy;
+
     /// Converts a raw kind stored in shared syntax data to a language kind.
     fn kind_from_raw(raw: RawSyntaxKind) -> Self::Kind;
 

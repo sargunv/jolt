@@ -14,116 +14,146 @@ class Arrays {
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "Arrays" @ 6..12 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 13..14
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 19..23 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "method" @ 24..30
-          LParen "(" @ 30..31
-          FormalParameterList
-            FormalParameter
-              PrimitiveType
-                IntKw "int" @ 31..34 trailing=[Whitespace " "]
-              Identifier "n" @ 35..36
-          RParen ")" @ 36..37 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 38..39
-            BlockStatement
-              LocalVariableDeclaration
-                ArrayType
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "Arrays" @ 6..12 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 13..14
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 19..23 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Identifier "method" @ 24..30
+              LParen "(" @ 30..31
+              FormalParameterList
+                FormalParameter
+                  ParameterModifierList
                   PrimitiveType
-                    IntKw "int" @ 48..51 leading=[Newline "\n", Whitespace "        "]
-                  ArrayDimensions
-                    ArrayDimension
-                      LBracket "[" @ 51..52
-                      RBracket "]" @ 52..53 trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "literal" @ 54..61 trailing=[Whitespace " "]
-                    Assign "=" @ 62..63 trailing=[Whitespace " "]
-                    VariableInitializer
-                      ArrayInitializer
-                        LBrace "{" @ 64..65
-                        LiteralExpression
-                          IntegerLiteral "1" @ 65..66
-                        Comma "," @ 66..67 trailing=[Whitespace " "]
-                        LiteralExpression
-                          IntegerLiteral "2" @ 68..69
-                        Comma "," @ 69..70 trailing=[Whitespace " "]
-                        LiteralExpression
-                          IntegerLiteral "3" @ 71..72
-                        RBrace "}" @ 72..73
-              Semicolon ";" @ 73..74
-            BlockStatement
-              LocalVariableDeclaration
-                ArrayType
-                  PrimitiveType
-                    IntKw "int" @ 83..86 leading=[Newline "\n", Whitespace "        "]
-                  ArrayDimensions
-                    ArrayDimension
-                      LBracket "[" @ 86..87
-                      RBracket "]" @ 87..88
-                    ArrayDimension
-                      LBracket "[" @ 88..89
-                      RBracket "]" @ 89..90 trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "sized" @ 91..96 trailing=[Whitespace " "]
-                    Assign "=" @ 97..98 trailing=[Whitespace " "]
-                    VariableInitializer
-                      ArrayCreationExpression
-                        NewKw "new" @ 99..102 trailing=[Whitespace " "]
+                    AnnotationList
+                    IntKw "int" @ 31..34 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "n" @ 35..36
+              RParen ")" @ 36..37 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 38..39
+                BlockStatementList
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      ArrayType
                         PrimitiveType
-                          IntKw "int" @ 103..106
-                        DimExpression
-                          LBracket "[" @ 106..107
-                          NameExpression
-                            Identifier "n" @ 107..108
-                          RBracket "]" @ 108..109
-                        DimExpression
-                          LBracket "[" @ 109..110
-                          NameExpression
-                            Identifier "n" @ 110..111
-                          RBracket "]" @ 111..112
-              Semicolon ";" @ 112..113
-            BlockStatement
-              LocalVariableDeclaration
-                ArrayType
-                  ClassType
-                    Name
-                      Identifier "String" @ 122..128 leading=[Newline "\n", Whitespace "        "]
-                  ArrayDimensions
-                    ArrayDimension
-                      LBracket "[" @ 128..129
-                      RBracket "]" @ 129..130 trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "named" @ 131..136 trailing=[Whitespace " "]
-                    Assign "=" @ 137..138 trailing=[Whitespace " "]
-                    VariableInitializer
-                      ArrayCreationExpression
-                        NewKw "new" @ 139..142 trailing=[Whitespace " "]
-                        ArrayType
-                          ClassType
-                            Name
-                              Identifier "String" @ 143..149
-                          ArrayDimensions
-                            ArrayDimension
-                              LBracket "[" @ 149..150
-                              RBracket "]" @ 150..151 trailing=[Whitespace " "]
-                        ArrayInitializer
-                          LBrace "{" @ 152..153
-                          LiteralExpression
-                            StringLiteral "\"\"" @ 153..155
-                          RBrace "}" @ 155..156
-              Semicolon ";" @ 156..157
-            RBrace "}" @ 162..163 leading=[Newline "\n", Whitespace "    "]
-      RBrace "}" @ 164..165 leading=[Newline "\n"]
+                          AnnotationList
+                          IntKw "int" @ 48..51 leading=[Newline "\n", Whitespace "        "]
+                        ArrayDimensions
+                          ArrayDimension
+                            AnnotationList
+                            LBracket "[" @ 51..52
+                            RBracket "]" @ 52..53 trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "literal" @ 54..61 trailing=[Whitespace " "]
+                          Assign "=" @ 62..63 trailing=[Whitespace " "]
+                          VariableInitializer
+                            ArrayInitializer
+                              LBrace "{" @ 64..65
+                              VariableInitializerList
+                                LiteralExpression
+                                  IntegerLiteral "1" @ 65..66
+                                Comma "," @ 66..67 trailing=[Whitespace " "]
+                                LiteralExpression
+                                  IntegerLiteral "2" @ 68..69
+                                Comma "," @ 69..70 trailing=[Whitespace " "]
+                                LiteralExpression
+                                  IntegerLiteral "3" @ 71..72
+                              RBrace "}" @ 72..73
+                    Semicolon ";" @ 73..74
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      ArrayType
+                        PrimitiveType
+                          AnnotationList
+                          IntKw "int" @ 83..86 leading=[Newline "\n", Whitespace "        "]
+                        ArrayDimensions
+                          ArrayDimension
+                            AnnotationList
+                            LBracket "[" @ 86..87
+                            RBracket "]" @ 87..88
+                          ArrayDimension
+                            AnnotationList
+                            LBracket "[" @ 88..89
+                            RBracket "]" @ 89..90 trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "sized" @ 91..96 trailing=[Whitespace " "]
+                          Assign "=" @ 97..98 trailing=[Whitespace " "]
+                          VariableInitializer
+                            ArrayCreationExpression
+                              NewKw "new" @ 99..102 trailing=[Whitespace " "]
+                              PrimitiveType
+                                AnnotationList
+                                IntKw "int" @ 103..106
+                              DimExpressionList
+                                DimExpression
+                                  AnnotationList
+                                  LBracket "[" @ 106..107
+                                  NameExpression
+                                    Identifier "n" @ 107..108
+                                  RBracket "]" @ 108..109
+                                DimExpression
+                                  AnnotationList
+                                  LBracket "[" @ 109..110
+                                  NameExpression
+                                    Identifier "n" @ 110..111
+                                  RBracket "]" @ 111..112
+                    Semicolon ";" @ 112..113
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      ArrayType
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "String" @ 122..128 leading=[Newline "\n", Whitespace "        "]
+                        ArrayDimensions
+                          ArrayDimension
+                            AnnotationList
+                            LBracket "[" @ 128..129
+                            RBracket "]" @ 129..130 trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "named" @ 131..136 trailing=[Whitespace " "]
+                          Assign "=" @ 137..138 trailing=[Whitespace " "]
+                          VariableInitializer
+                            ArrayCreationExpression
+                              NewKw "new" @ 139..142 trailing=[Whitespace " "]
+                              ArrayType
+                                ClassType
+                                  ClassTypeSegmentList
+                                    ClassTypeSegmentNode
+                                      AnnotationList
+                                      Name
+                                        Identifier "String" @ 143..149
+                                ArrayDimensions
+                                  ArrayDimension
+                                    AnnotationList
+                                    LBracket "[" @ 149..150
+                                    RBracket "]" @ 150..151 trailing=[Whitespace " "]
+                              DimExpressionList
+                              ArrayInitializer
+                                LBrace "{" @ 152..153
+                                VariableInitializerList
+                                  LiteralExpression
+                                    StringLiteral "\"\"" @ 153..155
+                                RBrace "}" @ 155..156
+                    Semicolon ";" @ 156..157
+                RBrace "}" @ 162..163 leading=[Newline "\n", Whitespace "    "]
+        RBrace "}" @ 164..165 leading=[Newline "\n"]
   Eof "" @ 166..166 leading=[Newline "\n"]
 
 diagnostics:

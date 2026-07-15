@@ -4,12 +4,13 @@ mod source;
 use std::{borrow::Cow, fmt};
 
 use jolt_diagnostics::{Diagnostic, DiagnosticCodeId, DiagnosticStage, Severity};
-use jolt_syntax::{SyntaxTree, build_syntax_tree};
+use jolt_syntax::{SyntaxTree, build_syntax_tree_with_factory};
 
 use crate::{
     CompilationUnit,
     lexer::normalize_unicode_escapes,
     nodes::{JavaSyntaxNode, cast_compilation_unit},
+    shape::JavaSyntaxFactory,
 };
 
 use self::source::Parser;
@@ -145,7 +146,13 @@ fn finish_parse<'source>(
     diagnostics: &mut Vec<Diagnostic>,
 ) -> JavaParse<'source> {
     diagnostics.extend(parse.diagnostics);
-    let tree = match build_syntax_tree(parse.events, parse.tokens, parse.trivia) {
+    let tree = match build_syntax_tree_with_factory(
+        &source,
+        &parse.events,
+        parse.tokens,
+        parse.trivia,
+        &JavaSyntaxFactory,
+    ) {
         Ok(tree) => tree,
         Err(error) => {
             diagnostics.push(invalid_event_stream_diagnostic(&error));
@@ -156,9 +163,6 @@ fn finish_parse<'source>(
             };
         }
     };
-    let (tree, parser_diagnostics) = tree;
-    diagnostics.extend(parser_diagnostics);
-
     JavaParse {
         source,
         tree: Some(tree),

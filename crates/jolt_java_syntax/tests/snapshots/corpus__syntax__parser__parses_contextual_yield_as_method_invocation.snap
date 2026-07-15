@@ -14,43 +14,50 @@ class ContextualYield {
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "ContextualYield" @ 6..21 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 22..23
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 28..32 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "method" @ 33..39
-          LParen "(" @ 39..40
-          RParen ")" @ 40..41 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 42..43
-            BlockStatement
-              ExpressionStatement
-                MethodInvocationExpression
-                  ThisExpression
-                    ThisKw "this" @ 52..56 leading=[Newline "\n", Whitespace "        "]
-                  Dot "." @ 56..57
-                  Identifier "yield" @ 57..62
-                  ArgumentList
-                    LParen "(" @ 62..63
-                    RParen ")" @ 63..64
-                Semicolon ";" @ 64..65
-            RBrace "}" @ 70..71 leading=[Newline "\n", Whitespace "    "]
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 77..81 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "yield" @ 82..87
-          LParen "(" @ 87..88
-          RParen ")" @ 88..89 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 90..91
-            RBrace "}" @ 91..92
-      RBrace "}" @ 93..94 leading=[Newline "\n"]
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "ContextualYield" @ 6..21 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 22..23
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 28..32 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Identifier "method" @ 33..39
+              LParen "(" @ 39..40
+              RParen ")" @ 40..41 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 42..43
+                BlockStatementList
+                  BlockStatement
+                    ExpressionStatement
+                      MethodInvocationExpression
+                        QualifiedMethodInvocation
+                          ThisExpression
+                            ThisKw "this" @ 52..56 leading=[Newline "\n", Whitespace "        "]
+                          Dot "." @ 56..57
+                          Identifier "yield" @ 57..62
+                          ArgumentList
+                            LParen "(" @ 62..63
+                            ExpressionList
+                            RParen ")" @ 63..64
+                      Semicolon ";" @ 64..65
+                RBrace "}" @ 70..71 leading=[Newline "\n", Whitespace "    "]
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 77..81 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Identifier "yield" @ 82..87
+              LParen "(" @ 87..88
+              RParen ")" @ 88..89 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 90..91
+                BlockStatementList
+                RBrace "}" @ 91..92
+        RBrace "}" @ 93..94 leading=[Newline "\n"]
   Eof "" @ 95..95 leading=[Newline "\n"]
 
 diagnostics:

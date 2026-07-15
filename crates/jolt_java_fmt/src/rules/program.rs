@@ -1,18 +1,25 @@
 use std::ops::Range;
 
 use jolt_fmt_ir::{Doc, DocBuilder};
-use jolt_java_syntax::{CompilationUnit, CompilationUnitItem, JavaSyntaxKind, PackageDeclaration};
+use jolt_java_syntax::{
+    CompilationUnit, CompilationUnitDeclaration, EmptyDeclaration, FieldDeclaration,
+    ImportDeclaration, JavaSyntaxField, JavaSyntaxListPart, JavaSyntaxView, MethodDeclaration,
+    ModuleDeclaration, PackageDeclaration, TypeDeclaration,
+};
 
-use crate::helpers::blocks::join_empty_lines;
 use crate::helpers::comments::{
-    LeadingTrivia, comments_from_tokens, format_comment, format_removed_comments,
-    format_token_sequence, format_token_with_comments,
+    comments_from_tokens, format_comment, format_removed_comments, format_token_with_comments,
+    has_removed_comments,
 };
 use crate::helpers::formatter_ignore::{
-    formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs, token_range_between,
+    FormatterIgnoreRun, formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
+    token_range_between,
+};
+use crate::helpers::recovery::{
+    JavaFormatField, JavaFormatListPart, format_malformed, format_or_verbatim,
+    format_required_field, resolve_list_part,
 };
 use crate::rules::annotations::format_annotation;
-use crate::rules::comments::format_comment_only_compilation_unit;
 use crate::rules::declarations::{format_method_declaration, format_type_declaration};
 use crate::rules::imports::format_imports;
 use crate::rules::modules::format_module_declaration;
@@ -23,407 +30,426 @@ pub(crate) fn format_compilation_unit<'source>(
     unit: &CompilationUnit<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let items = unit.items_with_recovered().collect::<Vec<_>>();
-    let contents = if items.is_empty() || items.iter().all(is_recovered_eof_token) {
-        format_comment_only_compilation_unit(unit, doc)
+    format_or_verbatim(unit, doc, |doc| format_valid_compilation_unit(unit, doc))
+}
+
+fn format_valid_compilation_unit<'source>(
+    unit: &CompilationUnit<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    let mut entries = Vec::new();
+
+    match crate::helpers::recovery::resolve_optional_field(unit.package(), doc) {
+        JavaFormatField::Present(Some(package)) => entries.push(ProgramEntry::Package(package)),
+        JavaFormatField::Present(None) => {}
+        JavaFormatField::Malformed(malformed) => entries.push(ProgramEntry::Raw(malformed, None)),
+    }
+    collect_imports(unit.imports(), &mut entries, doc);
+    match crate::helpers::recovery::resolve_optional_field(unit.module(), doc) {
+        JavaFormatField::Present(Some(module)) => entries.push(ProgramEntry::Module(module)),
+        JavaFormatField::Present(None) => {}
+        JavaFormatField::Malformed(malformed) => entries.push(ProgramEntry::Raw(malformed, None)),
+    }
+    collect_declarations(unit.declarations(), &mut entries, doc);
+
+    let ignored_ranges = formatter_ignore_ranges(
+        unit.source_text(),
+        unit.text_range().start().get(),
+        unit.token_iter(),
+    );
+    let (contents, ignored_eof_comments) = if ignored_ranges.is_empty() {
+        (format_program_entries(entries, doc), Vec::new())
     } else {
-        let ignored_ranges = formatter_ignore_ranges(
-            unit.source_text(),
-            unit.text_range().start().get(),
-            unit.token_iter(),
-        );
-        if ignored_ranges.is_empty() {
-            return doc_concat!(
-                doc,
-                [
-                    format_compilation_unit_item_entries(items, doc).unwrap_or_else(Doc::nil),
-                    doc.hard_line(),
-                ]
-            );
-        }
-        let item_ranges = items
+        let item_ranges = entries
             .iter()
-            .map(recovered_compilation_unit_item_token_range)
+            .map(ProgramEntry::token_range)
             .collect::<Vec<_>>();
-        let ignored_runs = formatter_ignore_runs(&ignored_ranges, &item_ranges);
-        format_compilation_unit_item_entries_with_ignored(items, &ignored_runs, doc)
+        let runs = formatter_ignore_runs(&ignored_ranges, &item_ranges);
+        let base = unit.text_range().start().get();
+        let ignored_eof_comments = runs
+            .iter()
+            .filter(|run| run.include_on_marker)
+            .map(|run| {
+                let start = base + run.range.interior.start;
+                start..start + run.range.raw_text_with_on.len()
+            })
+            .collect();
+        (
+            format_program_entries_with_ignored(entries, &runs, doc),
+            ignored_eof_comments,
+        )
     };
-
-    doc_concat!(doc, [contents, doc.hard_line()])
-}
-
-fn is_recovered_eof_token(
-    item: &jolt_java_syntax::RecoveredSeparatedListEntry<'_, CompilationUnitItem<'_>>,
-) -> bool {
-    matches!(
-        item,
-        jolt_java_syntax::RecoveredSeparatedListEntry::Token(token)
-            if token.kind() == JavaSyntaxKind::Eof
-    )
-}
-
-fn format_compilation_unit_item_entries<'source>(
-    items: Vec<
-        jolt_java_syntax::RecoveredSeparatedListEntry<'source, CompilationUnitItem<'source>>,
-    >,
-    doc: &mut DocBuilder<'source>,
-) -> Option<Doc<'source>> {
-    let mut sections = Vec::with_capacity(items.len());
-    let mut segment = Vec::with_capacity(items.len());
-    for item in items {
-        match item {
-            jolt_java_syntax::RecoveredSeparatedListEntry::Entry(item) => segment.push(item),
-            recovered => {
-                push_compilation_unit_segment(&mut sections, &mut segment, doc);
-                push_compilation_unit_recovered_section(&mut sections, recovered, doc);
+    let has_source_contents = unit.token_iter().any(|token| !token.text().is_empty());
+    let eof = format_required_field(unit.eof(), doc, |token, doc| {
+        doc.concat_list(|comments| {
+            let mut emitted_comment = false;
+            for comment in token.leading_comments().chain(token.trailing_comments()) {
+                let range = comment.text_range();
+                let range = range.start().get()..range.end().get();
+                if ignored_eof_comments.iter().any(|ignored: &Range<usize>| {
+                    ignored.start <= range.start && range.end <= ignored.end
+                }) {
+                    continue;
+                }
+                if emitted_comment || has_source_contents {
+                    let hard_line = comments.hard_line();
+                    comments.push(hard_line);
+                }
+                let comment = format_comment(comments, &comment);
+                comments.push(comment);
+                emitted_comment = true;
             }
-        }
-    }
-    push_compilation_unit_segment(&mut sections, &mut segment, doc);
-
-    (!sections.is_empty()).then(|| join_program_sections(sections, doc))
+        })
+    });
+    doc_concat!(doc, [contents, eof, doc.hard_line()])
 }
 
-fn format_compilation_unit_items<'source>(
-    items: Vec<CompilationUnitItem<'source>>,
+fn collect_imports<'source>(
+    field: Result<
+        JavaSyntaxField<'source, jolt_java_syntax::ImportDeclarationList<'source>>,
+        jolt_java_syntax::JavaSyntaxInvariantError,
+    >,
+    entries: &mut Vec<ProgramEntry<'source>>,
     doc: &mut DocBuilder<'source>,
-) -> Option<Doc<'source>> {
-    let mut sections = Vec::with_capacity(4);
-    let mut package = None;
-    let mut imports = Vec::with_capacity(items.len());
-    let mut module = None;
-    let mut pending_removed_comments = None;
-
-    let mut has_declarations = false;
-    let declarations = doc.concat_list(|declarations| {
-        for item in items {
-            let declaration = match item {
-                CompilationUnitItem::Package(declaration) => {
-                    package = Some(declaration);
-                    None
-                }
-                CompilationUnitItem::Import(declaration) => {
-                    imports.push(declaration);
-                    None
-                }
-                CompilationUnitItem::Module(declaration) => {
-                    module = Some(declaration);
-                    None
-                }
-                CompilationUnitItem::Type(declaration) => {
-                    Some(format_type_declaration(&declaration, declarations))
-                }
-                CompilationUnitItem::Field(declaration) => {
-                    Some(format_field_declaration(&declaration, declarations))
-                }
-                CompilationUnitItem::Method(declaration) => {
-                    Some(format_method_declaration(&declaration, declarations))
-                }
-                CompilationUnitItem::EmptyDeclaration(declaration) => {
-                    if let Some(comments) = format_removed_comments(
-                        declarations,
-                        comments_from_tokens(declaration.token_iter()),
-                    ) {
-                        append_pending_removed_comments(
-                            &mut pending_removed_comments,
-                            comments,
-                            declarations,
-                        );
+) {
+    match crate::helpers::recovery::resolve_required_field(field, doc) {
+        JavaFormatField::Present(list) => {
+            let parts = list.parts();
+            let (lower, _) = parts.size_hint();
+            if lower != 0 {
+                entries.reserve(lower);
+            }
+            for part in parts {
+                match part {
+                    Ok(JavaSyntaxListPart::Item(import)) => {
+                        entries.push(ProgramEntry::Import(import));
                     }
-                    None
+                    Ok(JavaSyntaxListPart::Separator(separator)) => {
+                        entries.push(ProgramEntry::Raw(
+                            crate::helpers::comments::format_token_with_comments(doc, &separator),
+                            Some(token_range_between(&separator, &separator)),
+                        ));
+                    }
+                    Ok(JavaSyntaxListPart::Malformed(malformed)) => {
+                        let range = token_range(&malformed);
+                        entries.push(ProgramEntry::Raw(format_malformed(&malformed, doc), range));
+                    }
+                    Ok(JavaSyntaxListPart::Missing(missing)) => entries.push(ProgramEntry::Raw(
+                        crate::helpers::recovery::format_missing(&missing, doc),
+                        None,
+                    )),
+                    Err(error) => doc.block_on_invariant(error.to_string()),
                 }
-            };
-
-            if let Some(declaration) = declaration {
-                let declaration = prepend_pending_removed_comments(
-                    &mut pending_removed_comments,
-                    declaration,
-                    declarations,
-                );
-                if !declarations.is_empty() {
-                    let empty_line = declarations.empty_line();
-                    declarations.push(empty_line);
-                }
-                declarations.push(declaration);
             }
         }
-
-        if let Some(comments) = pending_removed_comments.take() {
-            if !declarations.is_empty() {
-                let empty_line = declarations.empty_line();
-                declarations.push(empty_line);
-            }
-            declarations.push(comments);
-        }
-        has_declarations = !declarations.is_empty();
-    });
-
-    if let Some(package) = package {
-        sections.push(format_package_declaration(&package, doc));
-    }
-
-    let imports = format_imports(imports, doc);
-    if let Some(imports) = imports {
-        sections.push(imports);
-    }
-
-    if let Some(module) = module {
-        sections.push(format_module_declaration(&module, doc));
-    }
-
-    if has_declarations {
-        sections.push(declarations);
-    }
-
-    (!sections.is_empty()).then(|| join_empty_lines(doc, sections))
-}
-
-fn prepend_pending_removed_comments<'source>(
-    pending_removed_comments: &mut Option<Doc<'source>>,
-    declaration: Doc<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    if let Some(comments) = pending_removed_comments.take() {
-        doc_concat!(doc, [comments, doc.hard_line(), declaration])
-    } else {
-        declaration
+        JavaFormatField::Malformed(malformed) => entries.push(ProgramEntry::Raw(malformed, None)),
     }
 }
 
-fn append_pending_removed_comments<'source>(
-    pending_removed_comments: &mut Option<Doc<'source>>,
-    comments: Doc<'source>,
-    doc: &mut DocBuilder<'source>,
-) {
-    *pending_removed_comments = Some(if let Some(pending) = pending_removed_comments.take() {
-        doc_concat!(doc, [pending, doc.hard_line(), comments])
-    } else {
-        comments
-    });
-}
-
-fn format_compilation_unit_item_entries_with_ignored<'source>(
-    items: Vec<
-        jolt_java_syntax::RecoveredSeparatedListEntry<'source, CompilationUnitItem<'source>>,
+fn collect_declarations<'source>(
+    field: Result<
+        JavaSyntaxField<'source, jolt_java_syntax::CompilationUnitDeclarationList<'source>>,
+        jolt_java_syntax::JavaSyntaxInvariantError,
     >,
-    ignored_runs: &[crate::helpers::formatter_ignore::FormatterIgnoreRun<'source>],
+    entries: &mut Vec<ProgramEntry<'source>>,
     doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let mut sections = Vec::with_capacity(items.len().saturating_add(ignored_runs.len()));
-    let mut segment = Vec::with_capacity(items.len());
-    let mut ignored_index = 0;
-    let mut skip_index = 0;
-
-    for (item_index, item) in items.into_iter().enumerate() {
-        while ignored_index < ignored_runs.len()
-            && ignored_runs[ignored_index].insert_index == item_index
-        {
-            push_compilation_unit_segment(&mut sections, &mut segment, doc);
-            let run = &ignored_runs[ignored_index];
-            sections.push(ProgramSection {
-                doc: formatter_ignore_run_doc(run, doc),
-                hard_line_after: !run.include_on_marker,
-            });
-            ignored_index += 1;
-        }
-
-        while skip_index < ignored_runs.len() && ignored_runs[skip_index].skip_end <= item_index {
-            skip_index += 1;
-        }
-
-        if skip_index < ignored_runs.len() && ignored_runs[skip_index].skips(item_index) {
-            continue;
-        }
-
-        match item {
-            jolt_java_syntax::RecoveredSeparatedListEntry::Entry(item) => segment.push(item),
-            recovered => {
-                push_compilation_unit_segment(&mut sections, &mut segment, doc);
-                push_compilation_unit_recovered_section(&mut sections, recovered, doc);
+) {
+    match crate::helpers::recovery::resolve_required_field(field, doc) {
+        JavaFormatField::Present(list) => {
+            let parts = list.parts();
+            let (lower, _) = parts.size_hint();
+            if lower != 0 {
+                entries.reserve(lower);
+            }
+            for part in parts {
+                match part {
+                    Ok(JavaSyntaxListPart::Item(item)) => {
+                        entries.push(ProgramEntry::Declaration(item));
+                    }
+                    Ok(JavaSyntaxListPart::Separator(separator)) => {
+                        entries.push(ProgramEntry::Raw(
+                            crate::helpers::comments::format_token_with_comments(doc, &separator),
+                            Some(token_range_between(&separator, &separator)),
+                        ));
+                    }
+                    Ok(JavaSyntaxListPart::Malformed(malformed)) => {
+                        let range = token_range(&malformed);
+                        entries.push(ProgramEntry::Raw(format_malformed(&malformed, doc), range));
+                    }
+                    Ok(JavaSyntaxListPart::Missing(missing)) => entries.push(ProgramEntry::Raw(
+                        crate::helpers::recovery::format_missing(&missing, doc),
+                        None,
+                    )),
+                    Err(error) => doc.block_on_invariant(error.to_string()),
+                }
             }
         }
-    }
-
-    push_compilation_unit_segment(&mut sections, &mut segment, doc);
-    while ignored_index < ignored_runs.len() {
-        let run = &ignored_runs[ignored_index];
-        sections.push(ProgramSection {
-            doc: formatter_ignore_run_doc(run, doc),
-            hard_line_after: !run.include_on_marker,
-        });
-        ignored_index += 1;
-    }
-
-    join_program_sections(sections, doc)
-}
-
-fn push_compilation_unit_segment<'source>(
-    sections: &mut Vec<ProgramSection<'source>>,
-    segment: &mut Vec<CompilationUnitItem<'source>>,
-    doc: &mut DocBuilder<'source>,
-) {
-    if segment.is_empty() {
-        return;
-    }
-    let items = std::mem::take(segment);
-    if let Some(doc) = format_compilation_unit_items(items, doc) {
-        sections.push(ProgramSection {
-            doc,
-            hard_line_after: false,
-        });
+        JavaFormatField::Malformed(malformed) => entries.push(ProgramEntry::Raw(malformed, None)),
     }
 }
 
-fn push_compilation_unit_recovered_section<'source>(
-    sections: &mut Vec<ProgramSection<'source>>,
-    item: jolt_java_syntax::RecoveredSeparatedListEntry<'source, CompilationUnitItem<'source>>,
+enum ProgramEntry<'source> {
+    Package(PackageDeclaration<'source>),
+    Import(ImportDeclaration<'source>),
+    Module(ModuleDeclaration<'source>),
+    Declaration(CompilationUnitDeclaration<'source>),
+    Raw(Doc<'source>, Option<Range<usize>>),
+}
+
+impl ProgramEntry<'_> {
+    fn token_range(&self) -> Option<Range<usize>> {
+        match self {
+            Self::Package(item) => token_range(item),
+            Self::Import(item) => token_range(item),
+            Self::Module(item) => token_range(item),
+            Self::Declaration(item) => {
+                let first = item.first_token()?;
+                let last = item.last_token()?;
+                Some(token_range_between(&first, &last))
+            }
+            Self::Raw(_, range) => range.clone(),
+        }
+    }
+}
+
+fn token_range<'source>(view: &impl JavaSyntaxView<'source>) -> Option<Range<usize>> {
+    let syntax = view.syntax_node()?;
+    Some(token_range_between(
+        &syntax.first_token()?,
+        &syntax.last_token()?,
+    ))
+}
+
+fn format_program_entries<'source>(
+    entries: Vec<ProgramEntry<'source>>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    let mut sections = Vec::with_capacity(entries.len());
+    let mut imports = Vec::new();
+    for entry in entries {
+        let section = match entry {
+            ProgramEntry::Import(import) => {
+                imports.push(import);
+                continue;
+            }
+            ProgramEntry::Package(package) => {
+                flush_imports(&mut imports, &mut sections, doc);
+                (format_package_declaration(&package, doc), true, false)
+            }
+            ProgramEntry::Module(module) => {
+                flush_imports(&mut imports, &mut sections, doc);
+                (format_module_declaration(&module, doc), true, false)
+            }
+            ProgramEntry::Declaration(declaration) => {
+                flush_imports(&mut imports, &mut sections, doc);
+                let visible = declaration_is_visible(declaration);
+                let comment_only =
+                    declaration
+                        .cast_node::<EmptyDeclaration<'_>>()
+                        .is_some_and(|empty| {
+                            has_removed_comments(comments_from_tokens(empty.token_iter()))
+                        });
+                (
+                    format_compilation_unit_declaration(declaration, doc),
+                    visible,
+                    comment_only,
+                )
+            }
+            ProgramEntry::Raw(raw, _) => {
+                flush_imports(&mut imports, &mut sections, doc);
+                (raw, true, false)
+            }
+        };
+        sections.push(section);
+    }
+    flush_imports(&mut imports, &mut sections, doc);
+    join_program_sections(doc, sections)
+}
+
+fn declaration_is_visible(declaration: CompilationUnitDeclaration<'_>) -> bool {
+    declaration
+        .cast_node::<EmptyDeclaration<'_>>()
+        .is_none_or(|empty| has_removed_comments(comments_from_tokens(empty.token_iter())))
+}
+
+fn program_entries_are_visible(entries: &[ProgramEntry<'_>]) -> bool {
+    entries.iter().any(|entry| match entry {
+        ProgramEntry::Declaration(declaration) => declaration_is_visible(*declaration),
+        ProgramEntry::Package(_)
+        | ProgramEntry::Import(_)
+        | ProgramEntry::Module(_)
+        | ProgramEntry::Raw(_, _) => true,
+    })
+}
+
+fn flush_imports<'source>(
+    imports: &mut Vec<ImportDeclaration<'source>>,
+    sections: &mut Vec<(Doc<'source>, bool, bool)>,
     doc: &mut DocBuilder<'source>,
 ) {
-    let is_eof = is_recovered_eof_token(&item);
-    let Some(item_doc) = format_recovered_compilation_unit_item(item, doc) else {
-        return;
-    };
-    if is_eof && let Some(previous) = sections.last_mut() {
-        previous.hard_line_after = true;
+    if let Some(imports) = format_imports(std::mem::take(imports), doc) {
+        sections.push((imports, true, false));
     }
-    sections.push(ProgramSection {
-        doc: item_doc,
-        hard_line_after: false,
-    });
 }
 
 fn join_program_sections<'source>(
-    sections: Vec<ProgramSection<'source>>,
     doc: &mut DocBuilder<'source>,
+    sections: Vec<(Doc<'source>, bool, bool)>,
 ) -> Doc<'source> {
-    let mut previous_hard_line_after = false;
+    let mut saw_visible = false;
+    let mut previous_was_comment = false;
     doc.concat_list(|joined| {
-        for section in sections {
-            if !joined.is_empty() {
-                let separator = if previous_hard_line_after {
+        for (section, visible, comment_only) in sections {
+            if visible && saw_visible {
+                let separator = if previous_was_comment {
                     joined.hard_line()
                 } else {
                     joined.empty_line()
                 };
                 joined.push(separator);
             }
-            joined.push(section.doc);
-            previous_hard_line_after = section.hard_line_after;
+            joined.push(section);
+            saw_visible |= visible;
+            if visible {
+                previous_was_comment = comment_only;
+            }
         }
     })
 }
 
-struct ProgramSection<'source> {
-    doc: Doc<'source>,
-    hard_line_after: bool,
-}
-
-fn compilation_unit_item_token_range(item: &CompilationUnitItem<'_>) -> Option<Range<usize>> {
-    Some(token_range_between(
-        &item.first_token()?,
-        &item.last_token()?,
-    ))
-}
-
-fn recovered_compilation_unit_item_token_range(
-    item: &jolt_java_syntax::RecoveredSeparatedListEntry<'_, CompilationUnitItem<'_>>,
-) -> Option<Range<usize>> {
-    match item {
-        jolt_java_syntax::RecoveredSeparatedListEntry::Entry(item) => {
-            compilation_unit_item_token_range(item)
-        }
-        jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
-            Some(token_range_between(token, token))
-        }
-        jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => Some(token_range_between(
-            &error.first_token()?,
-            &error.last_token()?,
-        )),
-        jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => Some(token_range_between(
-            &node.first_token()?,
-            &node.last_token()?,
-        )),
-    }
-}
-
-fn format_recovered_compilation_unit_item<'source>(
-    item: jolt_java_syntax::RecoveredSeparatedListEntry<'source, CompilationUnitItem<'source>>,
+fn format_program_entries_with_ignored<'source>(
+    entries: Vec<ProgramEntry<'source>>,
+    runs: &[FormatterIgnoreRun<'source>],
     doc: &mut DocBuilder<'source>,
-) -> Option<Doc<'source>> {
-    match item {
-        jolt_java_syntax::RecoveredSeparatedListEntry::Entry(_) => None,
-        jolt_java_syntax::RecoveredSeparatedListEntry::Token(token) => {
-            if token.kind() == JavaSyntaxKind::Eof {
-                Some(doc.concat_list(|comments| {
-                    for comment in token.leading_comments().chain(token.trailing_comments()) {
-                        if !comments.is_empty() {
-                            let hard_line = comments.hard_line();
-                            comments.push(hard_line);
-                        }
-                        let comment = format_comment(comments, &comment);
-                        comments.push(comment);
-                    }
-                }))
-            } else {
-                Some(format_token_sequence(
-                    doc,
-                    std::iter::once(token),
-                    LeadingTrivia::Preserve,
-                ))
+) -> Doc<'source> {
+    let mut sections: Vec<(Doc<'source>, bool, bool)> = Vec::new();
+    let mut retained = Vec::new();
+    let mut run_index = 0;
+    let mut skip_index = 0;
+    for (index, entry) in entries.into_iter().enumerate() {
+        while runs
+            .get(run_index)
+            .is_some_and(|run| run.insert_index == index)
+        {
+            if !retained.is_empty() {
+                let visible = program_entries_are_visible(&retained);
+                sections.push((
+                    format_program_entries(std::mem::take(&mut retained), doc),
+                    visible,
+                    false,
+                ));
             }
+            sections.push((formatter_ignore_run_doc(&runs[run_index], doc), true, true));
+            run_index += 1;
         }
-        jolt_java_syntax::RecoveredSeparatedListEntry::Error(error) => Some(format_token_sequence(
-            doc,
-            error.token_iter(),
-            LeadingTrivia::Preserve,
-        )),
-        jolt_java_syntax::RecoveredSeparatedListEntry::Node(node) => Some(format_token_sequence(
-            doc,
-            node.token_iter(),
-            LeadingTrivia::Preserve,
-        )),
+        while runs
+            .get(skip_index)
+            .is_some_and(|run| run.skip_end <= index)
+        {
+            skip_index += 1;
+        }
+        if runs.get(skip_index).is_some_and(|run| run.skips(index)) {
+            continue;
+        }
+        retained.push(entry);
     }
+    if !retained.is_empty() {
+        let visible = program_entries_are_visible(&retained);
+        sections.push((format_program_entries(retained, doc), visible, false));
+    }
+    while let Some(run) = runs.get(run_index) {
+        sections.push((formatter_ignore_run_doc(run, doc), true, true));
+        run_index += 1;
+    }
+    let mut saw_visible = false;
+    let mut previous_was_ignored = false;
+    doc.concat_list(|joined| {
+        for (section, visible, ignored) in sections {
+            if visible && saw_visible {
+                let separator = if previous_was_ignored {
+                    joined.hard_line()
+                } else {
+                    joined.empty_line()
+                };
+                joined.push(separator);
+            }
+            joined.push(section);
+            saw_visible |= visible;
+            previous_was_ignored = ignored;
+        }
+    })
+}
+
+fn format_compilation_unit_declaration<'source>(
+    declaration: CompilationUnitDeclaration<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    if let Some(declaration) = declaration.cast_family::<TypeDeclaration<'source>>() {
+        return format_type_declaration(&declaration, doc);
+    }
+    if let Some(declaration) = declaration.cast_node::<FieldDeclaration<'source>>() {
+        return format_field_declaration(&declaration, doc);
+    }
+    if let Some(declaration) = declaration.cast_node::<MethodDeclaration<'source>>() {
+        return format_method_declaration(&declaration, doc);
+    }
+    if let Some(declaration) = declaration.cast_node::<EmptyDeclaration<'source>>() {
+        return match crate::helpers::recovery::resolve_required_field(declaration.semicolon(), doc)
+        {
+            JavaFormatField::Present(_) => {
+                let removed = declaration
+                    .separator_removal_claim()
+                    .map_or_else(Doc::nil, |claim| doc.removed_source(claim));
+                let comments =
+                    format_removed_comments(doc, comments_from_tokens(declaration.token_iter()))
+                        .unwrap_or_else(Doc::nil);
+                doc_concat!(doc, [removed, comments])
+            }
+            JavaFormatField::Malformed(recovery) => recovery,
+        };
+    }
+    doc.block_on_invariant("compilation-unit declaration contradicted its declared role");
+    Doc::nil()
 }
 
 fn format_package_declaration<'source>(
     package: &PackageDeclaration<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let mut has_annotations = false;
-    let annotations = doc.concat_list(|annotations| {
-        for annotation in package.annotations() {
-            if !annotations.is_empty() {
-                let hard_line = annotations.hard_line();
-                annotations.push(hard_line);
-            }
-            let annotation = format_annotation(&annotation, annotations);
-            annotations.push(annotation);
+    format_or_verbatim(package, doc, |doc| {
+        let annotations = format_required_field(package.annotations(), doc, |list, doc| {
+            doc.concat_list(|docs| {
+                for part in list.parts() {
+                    match resolve_list_part(part, docs) {
+                        JavaFormatListPart::Item(annotation) => {
+                            if !docs.is_empty() {
+                                let line = docs.hard_line();
+                                docs.push(line);
+                            }
+                            let annotation = format_annotation(&annotation, docs);
+                            docs.push(annotation);
+                        }
+                        JavaFormatListPart::Separator(separator) => {
+                            let separator = format_token_with_comments(docs, &separator);
+                            docs.push(separator);
+                        }
+                        JavaFormatListPart::Malformed(malformed) => docs.push(malformed),
+                    }
+                }
+            })
+        });
+        let keyword = format_required_field(package.package_keyword(), doc, |token, doc| {
+            doc_concat!(doc, [format_token_with_comments(doc, &token), doc.space()])
+        });
+        let name = format_required_field(package.name(), doc, |name, doc| format_name(&name, doc));
+        let semicolon = format_required_field(package.semicolon(), doc, |token, doc| {
+            format_token_with_comments(doc, &token)
+        });
+        let declaration = doc_concat!(doc, [keyword, name, semicolon]);
+        if annotations == Doc::nil() {
+            declaration
+        } else {
+            doc_concat!(doc, [annotations, doc.hard_line(), declaration])
         }
-        has_annotations = !annotations.is_empty();
-    });
-
-    let package_token = match package.package_token() {
-        Some(token) => {
-            let token = format_token_with_comments(doc, &token);
-            let space = doc.space();
-            doc_concat!(doc, [token, space])
-        }
-        None => Doc::nil(),
-    };
-    let name = match package.name() {
-        Some(name) => format_name(&name, doc),
-        None => Doc::nil(),
-    };
-    let semicolon = match package.semicolon() {
-        Some(token) => format_token_with_comments(doc, &token),
-        None => Doc::nil(),
-    };
-    let declaration = doc_concat!(doc, [package_token, name, semicolon]);
-
-    if has_annotations {
-        let hard_line = doc.hard_line();
-        doc_concat!(doc, [annotations, hard_line, declaration])
-    } else {
-        declaration
-    }
+    })
 }

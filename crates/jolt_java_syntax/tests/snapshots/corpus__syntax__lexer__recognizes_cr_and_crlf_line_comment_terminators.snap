@@ -9,27 +9,32 @@ int c;
 syntax:
 syntax:
 CompilationUnit
-  FieldDeclaration
-    PrimitiveType
-      IntKw "int" @ 0..3 trailing=[Whitespace " "]
-    VariableDeclaratorList
-      VariableDeclarator
-        Identifier "a" @ 4..5
-    Semicolon ";" @ 5..6 trailing=[Whitespace " ", LineComment "// cr"]
-  FieldDeclaration
-    PrimitiveType
-      IntKw "int" @ 13..16 leading=[Newline "\r"] trailing=[Whitespace " "]
-    VariableDeclaratorList
-      VariableDeclarator
-        Identifier "b" @ 17..18
-    Semicolon ";" @ 18..19 trailing=[Whitespace " ", LineComment "// crlf"]
-  FieldDeclaration
-    PrimitiveType
-      IntKw "int" @ 29..32 leading=[Newline "\r\n"] trailing=[Whitespace " "]
-    VariableDeclaratorList
-      VariableDeclarator
-        Identifier "c" @ 33..34
-    Semicolon ";" @ 34..35
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    FieldDeclaration
+      PrimitiveType
+        AnnotationList
+        IntKw "int" @ 0..3 trailing=[Whitespace " "]
+      VariableDeclaratorList
+        VariableDeclarator
+          Identifier "a" @ 4..5
+      Semicolon ";" @ 5..6 trailing=[Whitespace " ", LineComment "// cr"]
+    FieldDeclaration
+      PrimitiveType
+        AnnotationList
+        IntKw "int" @ 13..16 leading=[Newline "\r"] trailing=[Whitespace " "]
+      VariableDeclaratorList
+        VariableDeclarator
+          Identifier "b" @ 17..18
+      Semicolon ";" @ 18..19 trailing=[Whitespace " ", LineComment "// crlf"]
+    FieldDeclaration
+      PrimitiveType
+        AnnotationList
+        IntKw "int" @ 29..32 leading=[Newline "\r\n"] trailing=[Whitespace " "]
+      VariableDeclaratorList
+        VariableDeclarator
+          Identifier "c" @ 33..34
+      Semicolon ";" @ 34..35
   Eof "" @ 35..35
 
 diagnostics:

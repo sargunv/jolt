@@ -8,8 +8,10 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    StringLiteral "\"a\u{2028}b\"" @ 0..7
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      StringLiteral "\"a\u{2028}b\"" @ 0..7
   Eof "" @ 7..7
 
 diagnostics:

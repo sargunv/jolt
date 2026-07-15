@@ -6,14 +6,16 @@ impl Parser<'_> {
         let error = self.start();
         self.unexpected_here("unexpected token at top level");
         self.recover_top_level();
-        self.complete(error, JavaSyntaxKind::ErrorNode);
+        self.complete(error, JavaSyntaxKind::BogusTypeDeclaration);
     }
 
     pub(in crate::parser::grammar) fn error_unexpected_module_token(&mut self) {
+        let module_directive = self.start();
         let error = self.start();
         self.unexpected_here("unexpected token in module declaration");
         self.recover_module_directive();
-        self.complete(error, JavaSyntaxKind::ErrorNode);
+        self.complete(error, JavaSyntaxKind::BogusModuleDirective);
+        self.complete(module_directive, JavaSyntaxKind::ModuleDirective);
     }
 
     pub(in crate::parser::grammar) fn recover_top_level(&mut self) {

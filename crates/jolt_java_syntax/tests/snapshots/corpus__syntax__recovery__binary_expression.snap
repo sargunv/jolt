@@ -8,49 +8,41 @@ class C { void m() { value + /* rhs */ ; } }
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "C" @ 6..7 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 8..9 trailing=[Whitespace " "]
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 10..14 trailing=[Whitespace " "]
-          Identifier "m" @ 15..16
-          LParen "(" @ 16..17
-          RParen ")" @ 17..18 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 19..20 trailing=[Whitespace " "]
-            BlockStatement
-              ExpressionStatement
-                ErrorNode
-                  BinaryExpression
-                    NameExpression
-                      Identifier "value" @ 21..26 trailing=[Whitespace " "]
-                    Plus "+" @ 27..28 trailing=[Whitespace " ", BlockComment "/* rhs */", Whitespace " "]
-                    ErrorNode
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "C" @ 6..7 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 8..9 trailing=[Whitespace " "]
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 10..14 trailing=[Whitespace " "]
+              Identifier "m" @ 15..16
+              LParen "(" @ 16..17
+              RParen ")" @ 17..18 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 19..20 trailing=[Whitespace " "]
+                BlockStatementList
+                  BlockStatement
+                    ExpressionStatement
+                      ErrorNode
+                        BinaryExpression
+                          NameExpression
+                            Identifier "value" @ 21..26 trailing=[Whitespace " "]
+                          Plus "+" @ 27..28 trailing=[Whitespace " ", BlockComment "/* rhs */", Whitespace " "]
+                          ErrorNode
                       Semicolon ";" @ 39..40 trailing=[Whitespace " "]
-                ErrorNode
-                  RBrace "}" @ 41..42 trailing=[Whitespace " "]
-                ErrorNode
-                  RBrace "}" @ 43..44
+                RBrace "}" @ 41..42 trailing=[Whitespace " "]
+        RBrace "}" @ 43..44
   Eof "" @ 45..45 leading=[Newline "\n"]
 
 diagnostics:
   code=java.parse.expected_syntax severity=Error stage=Parser range=39..40 message="expected expression"
-  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=41..42 message="expected statement expression"
-  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=41..42 message="unexpected token in statement expression"
-  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=43..44 message="unexpected token in statement expression"
-  code=java.parse.expected_syntax severity=Error stage=Parser range=45..45 message="expected `;` after expression statement"
-  code=java.parse.expected_syntax severity=Error stage=Parser range=45..45 message="expected `}` after block"
-  code=java.parse.expected_syntax severity=Error stage=Parser range=45..45 message="expected `}` after type body"
+  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=39..40 message="expected statement expression"
 
 diagnostics:
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(39), end: TextSize(40) }) message=expected expression
-code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(41), end: TextSize(42) }) message=expected statement expression
-code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(41), end: TextSize(42) }) message=unexpected token in statement expression
-code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(43), end: TextSize(44) }) message=unexpected token in statement expression
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(45), end: TextSize(45) }) message=expected `;` after expression statement
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(45), end: TextSize(45) }) message=expected `}` after block
-code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(45), end: TextSize(45) }) message=expected `}` after type body
+code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(39), end: TextSize(40) }) message=expected statement expression

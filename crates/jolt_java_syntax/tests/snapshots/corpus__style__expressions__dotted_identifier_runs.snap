@@ -15,90 +15,105 @@ return com.example.deep.config.ConflictResolutionFactory.newBuilder().build();
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "DottedIdentifierRuns" @ 6..26 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 27..28
-      ClassBodyDeclaration
-        MethodDeclaration
-          PrimitiveType
-            IntKw "int" @ 29..32 leading=[Newline "\n"] trailing=[Whitespace " "]
-          Identifier "value" @ 33..38
-          LParen "(" @ 38..39
-          RParen ")" @ 39..40 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 41..42
-            BlockStatement
-              ReturnStatement
-                ReturnKw "return" @ 43..49 leading=[Newline "\n"] trailing=[Whitespace " "]
-                MethodInvocationExpression
-                  FieldAccessExpression
-                    FieldAccessExpression
-                      FieldAccessExpression
-                        FieldAccessExpression
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "DottedIdentifierRuns" @ 6..26 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 27..28
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              PrimitiveType
+                AnnotationList
+                IntKw "int" @ 29..32 leading=[Newline "\n"] trailing=[Whitespace " "]
+              Identifier "value" @ 33..38
+              LParen "(" @ 38..39
+              RParen ")" @ 39..40 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 41..42
+                BlockStatementList
+                  BlockStatement
+                    ReturnStatement
+                      ReturnKw "return" @ 43..49 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      MethodInvocationExpression
+                        QualifiedMethodInvocation
                           FieldAccessExpression
-                            NameExpression
-                              Identifier "com" @ 50..53
-                            Dot "." @ 53..54
-                            Identifier "example" @ 54..61
-                          Dot "." @ 61..62
-                          Identifier "deep" @ 62..66
-                        Dot "." @ 66..67
-                        Identifier "config" @ 67..73
-                      Dot "." @ 73..74
-                      Identifier "ConflictResolutionFactory" @ 74..99
-                    Dot "." @ 99..100
-                    Identifier "DEFAULT_VALUE" @ 100..113
-                  Dot "." @ 113..114
-                  Identifier "getNumber" @ 114..123
-                  ArgumentList
-                    LParen "(" @ 123..124
-                    RParen ")" @ 124..125
-                Semicolon ";" @ 125..126
-            RBrace "}" @ 127..128 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        MethodDeclaration
-          ClassType
-            Name
-              Identifier "Object" @ 129..135 leading=[Newline "\n"] trailing=[Whitespace " "]
-          Identifier "builder" @ 136..143
-          LParen "(" @ 143..144
-          RParen ")" @ 144..145 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 146..147
-            BlockStatement
-              ReturnStatement
-                ReturnKw "return" @ 148..154 leading=[Newline "\n"] trailing=[Whitespace " "]
-                MethodInvocationExpression
-                  MethodInvocationExpression
-                    FieldAccessExpression
-                      FieldAccessExpression
-                        FieldAccessExpression
-                          FieldAccessExpression
-                            NameExpression
-                              Identifier "com" @ 155..158
-                            Dot "." @ 158..159
-                            Identifier "example" @ 159..166
-                          Dot "." @ 166..167
-                          Identifier "deep" @ 167..171
-                        Dot "." @ 171..172
-                        Identifier "config" @ 172..178
-                      Dot "." @ 178..179
-                      Identifier "ConflictResolutionFactory" @ 179..204
-                    Dot "." @ 204..205
-                    Identifier "newBuilder" @ 205..215
-                    ArgumentList
-                      LParen "(" @ 215..216
-                      RParen ")" @ 216..217
-                  Dot "." @ 217..218
-                  Identifier "build" @ 218..223
-                  ArgumentList
-                    LParen "(" @ 223..224
-                    RParen ")" @ 224..225
-                Semicolon ";" @ 225..226
-            RBrace "}" @ 227..228 leading=[Newline "\n"]
-      RBrace "}" @ 229..230 leading=[Newline "\n"]
+                            FieldAccessExpression
+                              FieldAccessExpression
+                                FieldAccessExpression
+                                  FieldAccessExpression
+                                    NameExpression
+                                      Identifier "com" @ 50..53
+                                    Dot "." @ 53..54
+                                    Identifier "example" @ 54..61
+                                  Dot "." @ 61..62
+                                  Identifier "deep" @ 62..66
+                                Dot "." @ 66..67
+                                Identifier "config" @ 67..73
+                              Dot "." @ 73..74
+                              Identifier "ConflictResolutionFactory" @ 74..99
+                            Dot "." @ 99..100
+                            Identifier "DEFAULT_VALUE" @ 100..113
+                          Dot "." @ 113..114
+                          Identifier "getNumber" @ 114..123
+                          ArgumentList
+                            LParen "(" @ 123..124
+                            ExpressionList
+                            RParen ")" @ 124..125
+                      Semicolon ";" @ 125..126
+                RBrace "}" @ 127..128 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            MethodDeclaration
+              ClassType
+                ClassTypeSegmentList
+                  ClassTypeSegmentNode
+                    AnnotationList
+                    Name
+                      Identifier "Object" @ 129..135 leading=[Newline "\n"] trailing=[Whitespace " "]
+              Identifier "builder" @ 136..143
+              LParen "(" @ 143..144
+              RParen ")" @ 144..145 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 146..147
+                BlockStatementList
+                  BlockStatement
+                    ReturnStatement
+                      ReturnKw "return" @ 148..154 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      MethodInvocationExpression
+                        QualifiedMethodInvocation
+                          MethodInvocationExpression
+                            QualifiedMethodInvocation
+                              FieldAccessExpression
+                                FieldAccessExpression
+                                  FieldAccessExpression
+                                    FieldAccessExpression
+                                      NameExpression
+                                        Identifier "com" @ 155..158
+                                      Dot "." @ 158..159
+                                      Identifier "example" @ 159..166
+                                    Dot "." @ 166..167
+                                    Identifier "deep" @ 167..171
+                                  Dot "." @ 171..172
+                                  Identifier "config" @ 172..178
+                                Dot "." @ 178..179
+                                Identifier "ConflictResolutionFactory" @ 179..204
+                              Dot "." @ 204..205
+                              Identifier "newBuilder" @ 205..215
+                              ArgumentList
+                                LParen "(" @ 215..216
+                                ExpressionList
+                                RParen ")" @ 216..217
+                          Dot "." @ 217..218
+                          Identifier "build" @ 218..223
+                          ArgumentList
+                            LParen "(" @ 223..224
+                            ExpressionList
+                            RParen ")" @ 224..225
+                      Semicolon ";" @ 225..226
+                RBrace "}" @ 227..228 leading=[Newline "\n"]
+        RBrace "}" @ 229..230 leading=[Newline "\n"]
   Eof "" @ 231..231 leading=[Newline "\n"]
 
 diagnostics:

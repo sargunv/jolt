@@ -1,21 +1,70 @@
 use std::cmp::Ordering;
 
 use jolt_fmt_ir::{Doc, DocBuilder};
-use jolt_java_syntax::{JavaComment, JavaSyntaxToken, NameSegment, NameSyntax};
+use jolt_java_syntax::{
+    JavaComment, JavaSyntaxField, JavaSyntaxListPart, JavaSyntaxToken, NameSyntax,
+};
 
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, comment_forces_line, format_comment, format_token,
 };
+use crate::helpers::recovery::{
+    JavaFormatListPart, format_malformed, format_missing, resolve_list_part,
+};
+
+fn name_identifier_texts<'source>(name: &NameSyntax<'source>) -> Option<Vec<&'source str>> {
+    fn identifier<'source>(
+        field: Result<
+            JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
+            jolt_java_syntax::JavaSyntaxInvariantError,
+        >,
+    ) -> Option<&'source str> {
+        match field.ok()? {
+            JavaSyntaxField::Present(token) => Some(token.text()),
+            JavaSyntaxField::Missing(_) | JavaSyntaxField::Malformed(_) => None,
+        }
+    }
+
+    match name {
+        NameSyntax::Name(name) => Some(vec![identifier(name.identifier())?]),
+        NameSyntax::QualifiedName(name) => {
+            let first = match name.first_segment().ok()? {
+                JavaSyntaxField::Present(segment) => identifier(segment.identifier())?,
+                JavaSyntaxField::Missing(_) | JavaSyntaxField::Malformed(_) => return None,
+            };
+            let mut identifiers = vec![first];
+            let segments = match name.remaining_segments().ok()? {
+                JavaSyntaxField::Present(segments) => segments,
+                JavaSyntaxField::Missing(_) | JavaSyntaxField::Malformed(_) => return None,
+            };
+            for part in segments.parts() {
+                match part.ok()? {
+                    JavaSyntaxListPart::Item(segment) => {
+                        identifiers.push(identifier(segment.identifier())?);
+                    }
+                    JavaSyntaxListPart::Separator(_) => {}
+                    JavaSyntaxListPart::Missing(_) | JavaSyntaxListPart::Malformed(_) => {
+                        return None;
+                    }
+                }
+            }
+            Some(identifiers)
+        }
+        NameSyntax::BogusName(_) => None,
+    }
+}
 
 pub(crate) fn format_name<'source>(
     name: &NameSyntax<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    if segments_have_line_comments(name.segments_with_annotations()) {
-        return format_multiline_name(doc, name.segments_with_annotations());
+    let multiline = name_has_line_comments(name);
+    let contents = doc.concat_list(|docs| format_name_parts(name, multiline, docs));
+    if multiline {
+        doc_indent!(doc, contents)
+    } else {
+        contents
     }
-
-    format_inline_name(doc, name.segments_with_annotations())
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -27,7 +76,7 @@ pub(crate) struct NameSortKey<'source> {
 impl<'source> NameSortKey<'source> {
     pub(crate) fn new(name: &NameSyntax<'source>, on_demand: bool) -> Self {
         Self {
-            segments: name.segments().map(|segment| segment.text()).collect(),
+            segments: name_identifier_texts(name).unwrap_or_default(),
             on_demand,
         }
     }
@@ -66,16 +115,33 @@ impl PartialOrd for NameSortKey<'_> {
     }
 }
 
-fn segments_have_line_comments<'source>(
-    segments: impl IntoIterator<Item = NameSegment<'source>>,
-) -> bool {
-    segments.into_iter().any(|segment| {
-        token_has_line_comments(&segment.identifier)
-            || segment
-                .dot_before
-                .as_ref()
-                .is_some_and(token_has_line_comments)
-    })
+fn name_has_line_comments(name: &NameSyntax<'_>) -> bool {
+    let field_has_comments = |field| matches!(field, Ok(JavaSyntaxField::Present(token)) if token_has_line_comments(&token));
+    match name {
+        NameSyntax::Name(name) => field_has_comments(name.identifier()),
+        NameSyntax::QualifiedName(name) => {
+            matches!(name.first_segment(), Ok(JavaSyntaxField::Present(segment)) if field_has_comments(segment.identifier()))
+                || field_has_comments(name.first_dot())
+                || match name.remaining_segments() {
+                    Ok(JavaSyntaxField::Present(segments)) => {
+                        segments.parts().any(|part| match part {
+                            Ok(JavaSyntaxListPart::Item(segment)) => {
+                                field_has_comments(segment.identifier())
+                            }
+                            Ok(JavaSyntaxListPart::Separator(token)) => {
+                                token_has_line_comments(&token)
+                            }
+                            Ok(
+                                JavaSyntaxListPart::Missing(_) | JavaSyntaxListPart::Malformed(_),
+                            )
+                            | Err(_) => false,
+                        })
+                    }
+                    _ => false,
+                }
+        }
+        NameSyntax::BogusName(_) => false,
+    }
 }
 
 fn token_has_line_comments(token: &JavaSyntaxToken<'_>) -> bool {
@@ -85,70 +151,133 @@ fn token_has_line_comments(token: &JavaSyntaxToken<'_>) -> bool {
         .any(|comment| comment_forces_line(&comment))
 }
 
-fn format_inline_name<'source>(
-    doc: &mut DocBuilder<'source>,
-    segments: impl IntoIterator<Item = NameSegment<'source>>,
-) -> Doc<'source> {
-    let mut segments = segments.into_iter().peekable();
-    let mut index = 0;
-    doc.concat_list(|docs| {
-        while let Some(segment) = segments.next() {
-            if index > 0 {
-                let dot = segment
-                    .dot_before
-                    .as_ref()
-                    .map_or_else(Doc::nil, |dot| format_name_dot(docs, dot));
-                docs.push(dot);
+fn format_name_parts<'source>(
+    name: &NameSyntax<'source>,
+    multiline: bool,
+    docs: &mut jolt_fmt_ir::ConcatBuilder<'_, 'source>,
+) {
+    match name {
+        NameSyntax::Name(name) => {
+            push_identifier_doc(name.identifier(), false, multiline, docs);
+        }
+        NameSyntax::QualifiedName(name) => {
+            let first_has_dot = matches!(name.first_dot(), Ok(JavaSyntaxField::Present(_)));
+            match name.first_segment() {
+                Ok(JavaSyntaxField::Present(segment)) => {
+                    push_identifier_doc(segment.identifier(), first_has_dot, multiline, docs);
+                }
+                Ok(JavaSyntaxField::Missing(missing)) => {
+                    let recovery = format_missing(&missing, docs);
+                    docs.push(recovery);
+                }
+                Ok(JavaSyntaxField::Malformed(malformed)) => {
+                    let recovery = format_malformed(&malformed, docs);
+                    docs.push(recovery);
+                }
+                Err(error) => docs.block_on_invariant(error.to_string()),
             }
-            let identifier =
-                format_inline_name_segment_identifier(docs, &segment, segments.peek().is_some());
-            docs.push(identifier);
-            index += 1;
+            push_dot_doc(name.first_dot(), multiline, docs);
+            match name.remaining_segments() {
+                Ok(JavaSyntaxField::Present(segments)) => {
+                    let mut parts = segments.parts().peekable();
+                    while let Some(part) = parts.next() {
+                        match resolve_list_part(part, docs) {
+                            JavaFormatListPart::Item(segment) => {
+                                let followed_by_dot = matches!(
+                                    parts.peek(),
+                                    Some(Ok(JavaSyntaxListPart::Separator(_)))
+                                );
+                                push_identifier_doc(
+                                    segment.identifier(),
+                                    followed_by_dot,
+                                    multiline,
+                                    docs,
+                                );
+                            }
+                            JavaFormatListPart::Separator(dot) => {
+                                push_dot_token_doc(&dot, multiline, docs);
+                            }
+                            JavaFormatListPart::Malformed(recovery) => docs.push(recovery),
+                        }
+                    }
+                }
+                Ok(JavaSyntaxField::Missing(missing)) => {
+                    let recovery = format_missing(&missing, docs);
+                    docs.push(recovery);
+                }
+                Ok(JavaSyntaxField::Malformed(malformed)) => {
+                    let recovery = format_malformed(&malformed, docs);
+                    docs.push(recovery);
+                }
+                Err(error) => docs.block_on_invariant(error.to_string()),
+            }
         }
-    })
+        NameSyntax::BogusName(name) => {
+            let recovery = format_malformed(name, docs);
+            docs.push(recovery);
+        }
+    }
 }
 
-fn format_multiline_name<'source>(
-    doc: &mut DocBuilder<'source>,
-    segments: impl IntoIterator<Item = NameSegment<'source>>,
-) -> Doc<'source> {
-    let mut segments = segments.into_iter();
-    let Some(first) = segments.next() else {
-        return Doc::nil();
+fn push_identifier_doc<'source>(
+    field: Result<
+        JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
+        jolt_java_syntax::JavaSyntaxInvariantError,
+    >,
+    followed_by_dot: bool,
+    multiline: bool,
+    docs: &mut jolt_fmt_ir::ConcatBuilder<'_, 'source>,
+) {
+    let formatted = match field {
+        Ok(JavaSyntaxField::Present(identifier)) if multiline => {
+            format_name_segment_identifier(docs, &identifier)
+        }
+        Ok(JavaSyntaxField::Present(identifier)) => {
+            format_inline_name_segment_identifier(docs, &identifier, followed_by_dot)
+        }
+        Ok(JavaSyntaxField::Missing(missing)) => format_missing(&missing, docs),
+        Ok(JavaSyntaxField::Malformed(malformed)) => format_malformed(&malformed, docs),
+        Err(error) => {
+            docs.block_on_invariant(error.to_string());
+            Doc::nil()
+        }
     };
-
-    let rest = doc.concat_list(|rest| {
-        for segment in segments {
-            let hard_line = rest.hard_line();
-            let segment = format_leading_dot_segment(rest, &segment);
-            let segment = doc_concat!(rest, [hard_line, segment]);
-            rest.push(segment);
-        }
-    });
-
-    doc_concat!(
-        doc,
-        [
-            format_name_segment_identifier(doc, &first),
-            doc_indent!(doc, rest),
-        ]
-    )
+    docs.push(formatted);
 }
 
-fn format_leading_dot_segment<'source>(
-    doc: &mut DocBuilder<'source>,
-    segment: &NameSegment<'source>,
-) -> Doc<'source> {
-    doc_concat!(
-        doc,
-        [
-            segment
-                .dot_before
-                .as_ref()
-                .map_or_else(Doc::nil, |dot| format_name_dot(doc, dot)),
-            format_name_segment_identifier(doc, segment),
-        ]
-    )
+fn push_dot_doc<'source>(
+    field: Result<
+        JavaSyntaxField<'source, JavaSyntaxToken<'source>>,
+        jolt_java_syntax::JavaSyntaxInvariantError,
+    >,
+    multiline: bool,
+    docs: &mut jolt_fmt_ir::ConcatBuilder<'_, 'source>,
+) {
+    match field {
+        Ok(JavaSyntaxField::Present(dot)) => push_dot_token_doc(&dot, multiline, docs),
+        Ok(JavaSyntaxField::Missing(missing)) => {
+            let recovery = format_missing(&missing, docs);
+            docs.push(recovery);
+        }
+        Ok(JavaSyntaxField::Malformed(malformed)) => {
+            let recovery = format_malformed(&malformed, docs);
+            docs.push(recovery);
+        }
+        Err(error) => docs.block_on_invariant(error.to_string()),
+    }
+}
+
+fn push_dot_token_doc<'source>(
+    dot: &JavaSyntaxToken<'source>,
+    multiline: bool,
+    docs: &mut jolt_fmt_ir::ConcatBuilder<'_, 'source>,
+) {
+    if multiline {
+        let line = docs.hard_line();
+        docs.push(line);
+    }
+    let dot = format_name_dot(docs, dot);
+    docs.push(dot);
 }
 
 fn format_name_dot<'source>(
@@ -172,11 +301,11 @@ fn format_name_dot<'source>(
 
 fn format_name_segment_identifier<'source>(
     doc: &mut DocBuilder<'source>,
-    segment: &NameSegment<'source>,
+    identifier: &JavaSyntaxToken<'source>,
 ) -> Doc<'source> {
     format_token(
         doc,
-        &segment.identifier,
+        identifier,
         LeadingTrivia::Preserve,
         TrailingTrivia::BeforeLineBreak,
     )
@@ -184,23 +313,23 @@ fn format_name_segment_identifier<'source>(
 
 fn format_inline_name_segment_identifier<'source>(
     doc: &mut DocBuilder<'source>,
-    segment: &NameSegment<'source>,
+    identifier: &JavaSyntaxToken<'source>,
     followed_by_dot: bool,
 ) -> Doc<'source> {
     doc_concat!(
         doc,
         [
-            format_inline_comments(doc, segment.identifier.leading_comments()),
+            format_inline_comments(doc, identifier.leading_comments()),
             format_token(
                 doc,
-                &segment.identifier,
+                identifier,
                 LeadingTrivia::SuppressAlreadyHandled,
                 TrailingTrivia::RelocatedToEnclosingContext,
             ),
             if followed_by_dot {
-                format_leading_dot_comments(doc, segment.identifier.trailing_comments())
+                format_leading_dot_comments(doc, identifier.trailing_comments())
             } else {
-                format_inline_comments(doc, segment.identifier.trailing_comments())
+                format_inline_comments(doc, identifier.trailing_comments())
             },
         ]
     )

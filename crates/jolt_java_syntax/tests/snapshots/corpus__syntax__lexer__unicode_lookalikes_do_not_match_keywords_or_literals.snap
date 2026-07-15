@@ -8,19 +8,27 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  FieldDeclaration
-    ClassType
-      Name
-        Identifier "ｉｆ" @ 0..6 trailing=[Whitespace " "]
-    VariableDeclaratorList
-      VariableDeclarator
-        Identifier "ｔｒｕｅ" @ 7..19 trailing=[Whitespace " "]
-  FieldDeclaration
-    ClassType
-      Name
-        Identifier "ｎｕｌｌ" @ 20..32
-    VariableDeclaratorList
-      VariableDeclarator
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    FieldDeclaration
+      ClassType
+        ClassTypeSegmentList
+          ClassTypeSegmentNode
+            AnnotationList
+            Name
+              Identifier "ｉｆ" @ 0..6 trailing=[Whitespace " "]
+      VariableDeclaratorList
+        VariableDeclarator
+          Identifier "ｔｒｕｅ" @ 7..19 trailing=[Whitespace " "]
+    FieldDeclaration
+      ClassType
+        ClassTypeSegmentList
+          ClassTypeSegmentNode
+            AnnotationList
+            Name
+              Identifier "ｎｕｌｌ" @ 20..32
+      VariableDeclaratorList
+        VariableDeclarator
   Eof "" @ 32..32
 
 diagnostics:

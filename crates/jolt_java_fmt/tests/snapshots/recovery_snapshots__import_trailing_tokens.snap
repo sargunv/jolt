@@ -8,10 +8,10 @@ import com.example + lost;
 class ImportTrailingTokens {}
 
 formatted:
-import com.example+lost;
+import com.example + lost;
 
 class ImportTrailingTokens {
 }
 
 diagnostics:
-(none)
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(19), end: TextSize(20) }) message=unexpected token in import declaration

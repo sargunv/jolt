@@ -17,56 +17,67 @@ enum MissingEnumConstantName { , }
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "MissingDeclarationNames" @ 6..29 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 30..31
-      ClassBodyDeclaration
-        ConstructorDeclaration
-          TypeParameterList
-            Lt "<" @ 36..37 leading=[Newline "\n", Whitespace "    "]
-            TypeParameter
-              Identifier "T" @ 37..38
-            Gt ">" @ 38..39
-          LParen "(" @ 39..40
-          RParen ")" @ 40..41 trailing=[Whitespace " "]
-          ConstructorBody
-            LBrace "{" @ 42..43
-            RBrace "}" @ 43..44
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 49..53 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          LParen "(" @ 54..55
-          RParen ")" @ 55..56 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 57..58
-            RBrace "}" @ 58..59
-      RBrace "}" @ 60..61 leading=[Newline "\n"]
-  AnnotationInterfaceDeclaration
-    At "@" @ 63..64 leading=[Newline "\n", Newline "\n"]
-    InterfaceKw "interface" @ 64..73 trailing=[Whitespace " "]
-    Identifier "MissingAnnotationElementName" @ 74..102 trailing=[Whitespace " "]
-    AnnotationInterfaceBody
-      LBrace "{" @ 103..104
-      AnnotationElementList
-        AnnotationElementDeclaration
-          PrimitiveType
-            IntKw "int" @ 109..112 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          LParen "(" @ 113..114
-          RParen ")" @ 114..115
-          Semicolon ";" @ 115..116
-      RBrace "}" @ 117..118 leading=[Newline "\n"]
-  EnumDeclaration
-    EnumKw "enum" @ 120..124 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "MissingEnumConstantName" @ 125..148 trailing=[Whitespace " "]
-    EnumBody
-      LBrace "{" @ 149..150 trailing=[Whitespace " "]
-      EnumConstantList
-        EnumConstant
-        Comma "," @ 151..152 trailing=[Whitespace " "]
-      RBrace "}" @ 153..154
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "MissingDeclarationNames" @ 6..29 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 30..31
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            ConstructorDeclaration
+              TypeParameterList
+                Lt "<" @ 36..37 leading=[Newline "\n", Whitespace "    "]
+                TypeParameterSeparatedList
+                  TypeParameter
+                    AnnotationList
+                    Identifier "T" @ 37..38
+                Gt ">" @ 38..39
+              LParen "(" @ 39..40
+              RParen ")" @ 40..41 trailing=[Whitespace " "]
+              ConstructorBody
+                LBrace "{" @ 42..43
+                ConstructorBodyEntryList
+                RBrace "}" @ 43..44
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 49..53 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              LParen "(" @ 54..55
+              RParen ")" @ 55..56 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 57..58
+                BlockStatementList
+                RBrace "}" @ 58..59
+        RBrace "}" @ 60..61 leading=[Newline "\n"]
+    AnnotationInterfaceDeclaration
+      At "@" @ 63..64 leading=[Newline "\n", Newline "\n"]
+      InterfaceKw "interface" @ 64..73 trailing=[Whitespace " "]
+      Identifier "MissingAnnotationElementName" @ 74..102 trailing=[Whitespace " "]
+      AnnotationInterfaceBody
+        LBrace "{" @ 103..104
+        AnnotationElementList
+          AnnotationInterfaceBodyMemberList
+            AnnotationElementDeclaration
+              PrimitiveType
+                AnnotationList
+                IntKw "int" @ 109..112 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              LParen "(" @ 113..114
+              RParen ")" @ 114..115
+              Semicolon ";" @ 115..116
+        RBrace "}" @ 117..118 leading=[Newline "\n"]
+    EnumDeclaration
+      EnumKw "enum" @ 120..124 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "MissingEnumConstantName" @ 125..148 trailing=[Whitespace " "]
+      EnumBody
+        LBrace "{" @ 149..150 trailing=[Whitespace " "]
+        EnumConstantList
+          EnumConstant
+            AnnotationList
+          Comma "," @ 151..152 trailing=[Whitespace " "]
+        ClassBodyMemberList
+        RBrace "}" @ 153..154
   Eof "" @ 155..155 leading=[Newline "\n"]
 
 diagnostics:

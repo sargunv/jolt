@@ -5,9 +5,8 @@ use jolt_java_syntax::{
     AnnotationElementDeclaration, AnnotationInterfaceBodyMember, AnnotationInterfaceDeclaration,
     ClassBody, ClassBodyMember, ClassDeclaration, ConstructorInvocation, EnumConstant,
     EnumDeclaration, ExtendsClause, FormalParameterList, ImplementsClause, InterfaceBody,
-    InterfaceBodyMember, InterfaceDeclaration, JavaSyntaxToken, MethodDeclaration, ModifierList,
-    PermitsClause, PermitsClauseEntry, RecordBody, RecordDeclaration, ThrowsClause,
-    ThrowsClauseEntry, TypeClauseEntry, TypeDeclaration,
+    InterfaceBodyMember, InterfaceDeclaration, JavaSyntaxToken, MethodDeclaration, PermitsClause,
+    RecordBody, RecordDeclaration, ThrowsClause, TypeDeclaration,
 };
 
 use crate::helpers::blocks::{BodyItem, join_body_items, source_braced_body};
@@ -16,31 +15,28 @@ use crate::helpers::comments::{
     comments_from_tokens, format_comment, format_construct_leading_comments,
     format_dangling_comments, format_leading_comment_list, format_removed_comments,
     format_separator_with_comments, format_token, format_token_after_construct_leading_comments,
-    format_token_sequence, format_token_with_comments, has_removed_comments,
+    format_token_with_comments, has_removed_comments,
 };
 use crate::helpers::formatter_ignore::{
     formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
     is_formatter_control_marker, relative_token_range_between,
 };
-use crate::helpers::lists::{
-    CommaListItem, comma_list, parenthesized_list, recovered_comma_list_items,
-};
+use crate::helpers::lists::{CommaListItem, comma_list, parenthesized_list};
 use crate::helpers::member_body::{
     MemberBodyCategory as MemberCategory, MemberBodyItem as FormattedMember,
     join_member_body as join_member_docs,
 };
+use crate::helpers::recovery::{format_malformed, resolve_required_delimiter};
 use crate::rules::annotations::format_annotation_element_value;
 use crate::rules::expressions::{format_argument_list, format_expression};
-use crate::rules::modifiers::{
-    format_modifier_prefix, format_modifier_prefix_from_parts, format_typed_modifier_prefix,
-};
+use crate::rules::modifiers::{format_modifier_prefix, format_typed_modifier_prefix};
 use crate::rules::names::format_name;
 use crate::rules::statements::{
-    format_block, format_block_statement_item_or_recovered, format_statement_semicolon,
+    format_block, format_block_statement_item, format_statement_semicolon,
 };
 use crate::rules::types::{
-    format_array_dimensions, format_inline_annotations, format_type, format_type_argument_list,
-    format_type_parameter_list, format_type_without_leading_comments,
+    format_array_dimensions, format_type, format_type_argument_list, format_type_parameter_list,
+    format_type_without_leading_comments,
 };
 use crate::rules::variables::{
     format_field_declaration, format_formal_parameter, format_receiver_parameter,
@@ -83,6 +79,7 @@ pub(crate) fn format_type_declaration<'source>(
         TypeDeclaration::AnnotationInterfaceDeclaration(annotation) => {
             format_annotation_interface_declaration(annotation, doc)
         }
+        TypeDeclaration::BogusTypeDeclaration(bogus) => format_malformed(bogus, doc),
     }
 }
 
@@ -90,8 +87,8 @@ pub(crate) fn format_anonymous_class_body<'source>(
     body: &ClassBody<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let open = body.open_brace();
-    let close = body.close_brace();
+    let open = resolve_required_delimiter(body.open_brace(), doc);
+    let close = resolve_required_delimiter(body.close_brace(), doc);
     let body_doc = format_class_body(body, doc);
-    source_braced_body(doc, open.as_ref(), close.as_ref(), body_doc)
+    source_braced_body(doc, open, close, body_doc)
 }

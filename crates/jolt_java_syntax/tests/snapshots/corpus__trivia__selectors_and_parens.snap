@@ -29,144 +29,184 @@ class SelectorsAndParens {
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "SelectorsAndParens" @ 6..24 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 25..26
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 29..33 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-          Identifier "run" @ 34..37
-          LParen "(" @ 37..38
-          RParen ")" @ 38..39 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 40..41
-            BlockStatement
-              LocalVariableDeclaration
-                ClassType
-                  Name
-                    Identifier "SelectorsAndParens" @ 46..64 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "value" @ 65..70 trailing=[Whitespace " "]
-                    Assign "=" @ 71..72 trailing=[Whitespace " "]
-                    VariableInitializer
-                      ThisExpression
-                        ThisKw "this" @ 73..77
-              Semicolon ";" @ 77..78
-            BlockStatement
-              ExpressionStatement
-                AssignmentExpression
-                  FieldAccessExpression
-                    MethodInvocationExpression
-                      MethodInvocationExpression
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "SelectorsAndParens" @ 6..24 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 25..26
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 29..33 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Identifier "run" @ 34..37
+              LParen "(" @ 37..38
+              RParen ")" @ 38..39 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 40..41
+                BlockStatementList
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
+                            AnnotationList
+                            Name
+                              Identifier "SelectorsAndParens" @ 46..64 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "value" @ 65..70 trailing=[Whitespace " "]
+                          Assign "=" @ 71..72 trailing=[Whitespace " "]
+                          VariableInitializer
+                            ThisExpression
+                              ThisKw "this" @ 73..77
+                    Semicolon ";" @ 77..78
+                  BlockStatement
+                    ExpressionStatement
+                      AssignmentExpression
+                        FieldAccessExpression
+                          MethodInvocationExpression
+                            QualifiedMethodInvocation
+                              MethodInvocationExpression
+                                QualifiedMethodInvocation
+                                  NameExpression
+                                    Identifier "value" @ 83..88 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:selector-target */", Whitespace " "]
+                                  Dot "." @ 123..124 trailing=[Whitespace " "]
+                                  Identifier "child" @ 125..130 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:selector-name-before-call */", Whitespace " "]
+                                  ArgumentList
+                                    LParen "(" @ 175..176
+                                    ExpressionList
+                                    RParen ")" @ 176..177
+                              Dot "." @ 186..187 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                              Identifier "child" @ 188..193 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:second-selector-name-before-call */", Whitespace " "]
+                              ArgumentList
+                                LParen "(" @ 245..246
+                                ExpressionList
+                                RParen ")" @ 246..247
+                          Dot "." @ 256..257 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                          Identifier "field" @ 258..263 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:field-select-before-equals */", Whitespace " "]
+                        Assign "=" @ 309..310 trailing=[Whitespace " "]
                         NameExpression
-                          Identifier "value" @ 83..88 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:selector-target */", Whitespace " "]
-                        Dot "." @ 123..124 trailing=[Whitespace " "]
-                        Identifier "child" @ 125..130 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:selector-name-before-call */", Whitespace " "]
-                        ArgumentList
-                          LParen "(" @ 175..176
-                          RParen ")" @ 176..177
-                      Dot "." @ 186..187 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                      Identifier "child" @ 188..193 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:second-selector-name-before-call */", Whitespace " "]
-                      ArgumentList
-                        LParen "(" @ 245..246
-                        RParen ")" @ 246..247
-                    Dot "." @ 256..257 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                    Identifier "field" @ 258..263 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:field-select-before-equals */", Whitespace " "]
-                  Assign "=" @ 309..310 trailing=[Whitespace " "]
-                  NameExpression
-                    Identifier "value" @ 311..316 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:field-select-before-semi */"]
-                Semicolon ";" @ 359..360
-            BlockStatement
-              LocalVariableDeclaration
-                ClassType
-                  Name
-                    Identifier "String" @ 365..371 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "s" @ 372..373 trailing=[Whitespace " "]
-                    Assign "=" @ 374..375
-                    VariableInitializer
-                      ParenthesizedExpression
-                        LParen "(" @ 384..385 leading=[Newline "\n", Whitespace "        "]
-                        CastExpression
-                          LParen "(" @ 385..386 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:outer-paren-open */", Whitespace " "]
-                          ClassType
+                          Identifier "value" @ 311..316 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:field-select-before-semi */"]
+                      Semicolon ";" @ 359..360
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
+                            AnnotationList
                             Name
-                              Identifier "String" @ 422..428 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:cast-type-before-close */"]
-                          RParen ")" @ 469..470
-                          CastExpression
-                            LParen "(" @ 522..523 leading=[Newline "\n", Whitespace "                ", BlockComment "/* JOLT-TRIVIA:after-cast-paren */", Whitespace " "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:inner-paren-open */", Whitespace " "]
-                            ClassType
+                              Identifier "String" @ 365..371 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "s" @ 372..373 trailing=[Whitespace " "]
+                          Assign "=" @ 374..375
+                          VariableInitializer
+                            ParenthesizedExpression
+                              LParen "(" @ 384..385 leading=[Newline "\n", Whitespace "        "]
+                              CastExpression
+                                LParen "(" @ 385..386 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:outer-paren-open */", Whitespace " "]
+                                ClassType
+                                  ClassTypeSegmentList
+                                    ClassTypeSegmentNode
+                                      AnnotationList
+                                      Name
+                                        Identifier "String" @ 422..428 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:cast-type-before-close */"]
+                                RParen ")" @ 469..470
+                                CastExpression
+                                  LParen "(" @ 522..523 leading=[Newline "\n", Whitespace "                ", BlockComment "/* JOLT-TRIVIA:after-cast-paren */", Whitespace " "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:inner-paren-open */", Whitespace " "]
+                                  ClassType
+                                    ClassTypeSegmentList
+                                      ClassTypeSegmentNode
+                                        AnnotationList
+                                        Name
+                                          Identifier "Object" @ 559..565 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:inner-type-name */"]
+                                  RParen ")" @ 599..600 trailing=[Whitespace " "]
+                                  LiteralExpression
+                                    StringLiteral "\"x\"" @ 601..604
+                              RParen ")" @ 604..605
+                    Semicolon ";" @ 663..664 leading=[Newline "\n", Whitespace "            ", BlockComment "/* JOLT-TRIVIA:cast-expression-before-semi */"]
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      ArrayType
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
                               Name
-                                Identifier "Object" @ 559..565 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:inner-type-name */"]
-                            RParen ")" @ 599..600 trailing=[Whitespace " "]
-                            LiteralExpression
-                              StringLiteral "\"x\"" @ 601..604
-                        RParen ")" @ 604..605
-              Semicolon ";" @ 663..664 leading=[Newline "\n", Whitespace "            ", BlockComment "/* JOLT-TRIVIA:cast-expression-before-semi */"]
-            BlockStatement
-              LocalVariableDeclaration
-                ArrayType
-                  ClassType
+                                Identifier "Object" @ 669..675 leading=[Newline "\n", Whitespace "    "]
+                        ArrayDimensions
+                          ArrayDimension
+                            AnnotationList
+                            LBracket "[" @ 675..676
+                            RBracket "]" @ 676..677 trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "values" @ 678..684 trailing=[Whitespace " "]
+                          Assign "=" @ 685..686
+                          VariableInitializer
+                            ArrayCreationExpression
+                              NewKw "new" @ 695..698 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                              ArrayType
+                                ClassType
+                                  ClassTypeSegmentList
+                                    ClassTypeSegmentNode
+                                      AnnotationList
+                                      Name
+                                        Identifier "Object" @ 699..705 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:array-type-before-empty-dims */", Whitespace " "]
+                                ArrayDimensions
+                                  ArrayDimension
+                                    AnnotationList
+                                    LBracket "[" @ 753..754
+                                    RBracket "]" @ 754..755 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:array-empty-dims-before-init */", Whitespace " "]
+                              DimExpressionList
+                              ArrayInitializer
+                                LBrace "{" @ 803..804
+                                VariableInitializerList
+                                  NameExpression
+                                    Identifier "value" @ 815..820 leading=[Newline "\n", Whitespace "          "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:array-init-element */"]
+                                RBrace "}" @ 866..867 leading=[Newline "\n", Whitespace "        "]
+                    Semicolon ";" @ 867..868
+                RBrace "}" @ 871..872 leading=[Newline "\n", Whitespace "  "]
+          ClassBodyDeclaration
+            MethodDeclaration
+              ClassType
+                ClassTypeSegmentList
+                  ClassTypeSegmentNode
+                    AnnotationList
                     Name
-                      Identifier "Object" @ 669..675 leading=[Newline "\n", Whitespace "    "]
-                  ArrayDimensions
-                    ArrayDimension
-                      LBracket "[" @ 675..676
-                      RBracket "]" @ 676..677 trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "values" @ 678..684 trailing=[Whitespace " "]
-                    Assign "=" @ 685..686
-                    VariableInitializer
-                      ArrayCreationExpression
-                        NewKw "new" @ 695..698 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                        ArrayType
-                          ClassType
-                            Name
-                              Identifier "Object" @ 699..705 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:array-type-before-empty-dims */", Whitespace " "]
-                          ArrayDimensions
-                            ArrayDimension
-                              LBracket "[" @ 753..754
-                              RBracket "]" @ 754..755 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:array-empty-dims-before-init */", Whitespace " "]
-                        ArrayInitializer
-                          LBrace "{" @ 803..804
-                          NameExpression
-                            Identifier "value" @ 815..820 leading=[Newline "\n", Whitespace "          "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:array-init-element */"]
-                          RBrace "}" @ 866..867 leading=[Newline "\n", Whitespace "        "]
-              Semicolon ";" @ 867..868
-            RBrace "}" @ 871..872 leading=[Newline "\n", Whitespace "  "]
-      ClassBodyDeclaration
-        MethodDeclaration
-          ClassType
-            Name
-              Identifier "SelectorsAndParens" @ 876..894 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-          Identifier "child" @ 895..900
-          LParen "(" @ 900..901
-          RParen ")" @ 901..902 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 903..904
-            BlockStatement
-              ReturnStatement
-                ReturnKw "return" @ 909..915 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                ThisExpression
-                  ThisKw "this" @ 916..920
-                Semicolon ";" @ 920..921
-            RBrace "}" @ 924..925 leading=[Newline "\n", Whitespace "  "]
-      ClassBodyDeclaration
-        FieldDeclaration
-          ClassType
-            Name
-              Identifier "SelectorsAndParens" @ 929..947 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-          VariableDeclaratorList
-            VariableDeclarator
-              Identifier "field" @ 948..953
-          Semicolon ";" @ 953..954
-      RBrace "}" @ 955..956 leading=[Newline "\n"]
+                      Identifier "SelectorsAndParens" @ 876..894 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Identifier "child" @ 895..900
+              LParen "(" @ 900..901
+              RParen ")" @ 901..902 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 903..904
+                BlockStatementList
+                  BlockStatement
+                    ReturnStatement
+                      ReturnKw "return" @ 909..915 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      ThisExpression
+                        ThisKw "this" @ 916..920
+                      Semicolon ";" @ 920..921
+                RBrace "}" @ 924..925 leading=[Newline "\n", Whitespace "  "]
+          ClassBodyDeclaration
+            FieldDeclaration
+              ClassType
+                ClassTypeSegmentList
+                  ClassTypeSegmentNode
+                    AnnotationList
+                    Name
+                      Identifier "SelectorsAndParens" @ 929..947 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              VariableDeclaratorList
+                VariableDeclarator
+                  Identifier "field" @ 948..953
+              Semicolon ";" @ 953..954
+        RBrace "}" @ 955..956 leading=[Newline "\n"]
   Eof "" @ 957..957 leading=[Newline "\n"]
 
 diagnostics:

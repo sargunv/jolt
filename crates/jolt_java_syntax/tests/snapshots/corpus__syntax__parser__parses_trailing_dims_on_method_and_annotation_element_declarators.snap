@@ -14,43 +14,51 @@ class TrailingMethodDims {
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "TrailingMethodDims" @ 6..24 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 25..26
-      ClassBodyDeclaration
-        MethodDeclaration
-          PrimitiveType
-            IntKw "int" @ 31..34 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "values" @ 35..41
-          LParen "(" @ 41..42
-          RParen ")" @ 42..43
-          ArrayDimensions
-            ArrayDimension
-              LBracket "[" @ 43..44
-              RBracket "]" @ 44..45
-          Semicolon ";" @ 45..46
-      RBrace "}" @ 47..48 leading=[Newline "\n"]
-  AnnotationInterfaceDeclaration
-    At "@" @ 50..51 leading=[Newline "\n", Newline "\n"]
-    InterfaceKw "interface" @ 51..60 trailing=[Whitespace " "]
-    Identifier "TrailingAnnotationElementDims" @ 61..90 trailing=[Whitespace " "]
-    AnnotationInterfaceBody
-      LBrace "{" @ 91..92
-      AnnotationElementList
-        AnnotationElementDeclaration
-          PrimitiveType
-            IntKw "int" @ 97..100 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "value" @ 101..106
-          LParen "(" @ 106..107
-          RParen ")" @ 107..108
-          ArrayDimensions
-            ArrayDimension
-              LBracket "[" @ 108..109
-              RBracket "]" @ 109..110
-          Semicolon ";" @ 110..111
-      RBrace "}" @ 112..113 leading=[Newline "\n"]
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "TrailingMethodDims" @ 6..24 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 25..26
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              PrimitiveType
+                AnnotationList
+                IntKw "int" @ 31..34 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Identifier "values" @ 35..41
+              LParen "(" @ 41..42
+              RParen ")" @ 42..43
+              ArrayDimensions
+                ArrayDimension
+                  AnnotationList
+                  LBracket "[" @ 43..44
+                  RBracket "]" @ 44..45
+              Semicolon ";" @ 45..46
+        RBrace "}" @ 47..48 leading=[Newline "\n"]
+    AnnotationInterfaceDeclaration
+      At "@" @ 50..51 leading=[Newline "\n", Newline "\n"]
+      InterfaceKw "interface" @ 51..60 trailing=[Whitespace " "]
+      Identifier "TrailingAnnotationElementDims" @ 61..90 trailing=[Whitespace " "]
+      AnnotationInterfaceBody
+        LBrace "{" @ 91..92
+        AnnotationElementList
+          AnnotationInterfaceBodyMemberList
+            AnnotationElementDeclaration
+              PrimitiveType
+                AnnotationList
+                IntKw "int" @ 97..100 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Identifier "value" @ 101..106
+              LParen "(" @ 106..107
+              RParen ")" @ 107..108
+              ArrayDimensions
+                ArrayDimension
+                  AnnotationList
+                  LBracket "[" @ 108..109
+                  RBracket "]" @ 109..110
+              Semicolon ";" @ 110..111
+        RBrace "}" @ 112..113 leading=[Newline "\n"]
   Eof "" @ 114..114 leading=[Newline "\n"]
 
 diagnostics:

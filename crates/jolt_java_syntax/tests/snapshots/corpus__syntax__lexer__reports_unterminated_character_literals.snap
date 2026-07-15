@@ -8,8 +8,10 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    CharacterLiteral "'a" @ 0..2
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      CharacterLiteral "'a" @ 0..2
   Eof "" @ 3..3 leading=[Newline "\n"]
 
 diagnostics:

@@ -9,9 +9,11 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    CharacterLiteral "'\\" @ 0..2
-    CharacterLiteral "'" @ 3..4 leading=[Newline "\n"]
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      CharacterLiteral "'\\" @ 0..2
+      CharacterLiteral "'" @ 3..4 leading=[Newline "\n"]
   Eof "" @ 4..4
 
 diagnostics:

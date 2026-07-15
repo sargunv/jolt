@@ -8,10 +8,18 @@ use crate::parser::JavaParseDiagnosticCode;
 /// Java language binding for the shared syntax tree infrastructure.
 pub enum JavaLanguage {}
 
+#[doc(hidden)]
+#[derive(Clone, Copy)]
+pub struct JavaNormalizationAuthority(pub(crate) ());
+
+pub(crate) const NORMALIZATION_AUTHORITY: JavaNormalizationAuthority =
+    JavaNormalizationAuthority(());
+
 impl Language for JavaLanguage {
     type Kind = JavaSyntaxKind;
 
     type Lexer<'source> = JavaLexer<'source>;
+    type NormalizationAuthority = JavaNormalizationAuthority;
 
     fn kind_from_raw(raw: RawSyntaxKind) -> Self::Kind {
         JavaSyntaxKind::from_raw(raw).expect("raw Java syntax kind must be valid")

@@ -8,13 +8,16 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  FieldDeclaration
-    PrimitiveType
-      IntKw "int" @ 11..14 leading=[BlockComment "/* 𝒂 */", Whitespace " "] trailing=[Whitespace " "]
-    VariableDeclaratorList
-      VariableDeclarator
-        Identifier "x" @ 15..16
-    Semicolon ";" @ 16..17
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    FieldDeclaration
+      PrimitiveType
+        AnnotationList
+        IntKw "int" @ 11..14 leading=[BlockComment "/* 𝒂 */", Whitespace " "] trailing=[Whitespace " "]
+      VariableDeclaratorList
+        VariableDeclarator
+          Identifier "x" @ 15..16
+      Semicolon ";" @ 16..17
   Eof "" @ 17..17
 
 diagnostics:

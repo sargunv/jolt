@@ -8,12 +8,17 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  FieldDeclaration
-    ClassType
-      Name
-        Identifier "¢value" @ 0..7
-    VariableDeclaratorList
-      VariableDeclarator
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    FieldDeclaration
+      ClassType
+        ClassTypeSegmentList
+          ClassTypeSegmentNode
+            AnnotationList
+            Name
+              Identifier "¢value" @ 0..7
+      VariableDeclaratorList
+        VariableDeclarator
   Eof "" @ 7..7
 
 diagnostics:

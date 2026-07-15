@@ -8,9 +8,11 @@ true false
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    BooleanLiteral "true" @ 0..4 trailing=[Whitespace " "]
-    BooleanLiteral "false" @ 5..10
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      BooleanLiteral "true" @ 0..4 trailing=[Whitespace " "]
+      BooleanLiteral "false" @ 5..10
   Eof "" @ 10..10
 
 diagnostics:

@@ -12,46 +12,58 @@ class AnonymousCreation {
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "AnonymousCreation" @ 6..23 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 24..25
-      ClassBodyDeclaration
-        FieldDeclaration
-          ClassType
-            Name
-              Identifier "Runnable" @ 30..38 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          VariableDeclaratorList
-            VariableDeclarator
-              Identifier "runnable" @ 39..47 trailing=[Whitespace " "]
-              Assign "=" @ 48..49 trailing=[Whitespace " "]
-              VariableInitializer
-                ObjectCreationExpression
-                  NewKw "new" @ 50..53 trailing=[Whitespace " "]
-                  ClassType
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "AnonymousCreation" @ 6..23 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 24..25
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            FieldDeclaration
+              ClassType
+                ClassTypeSegmentList
+                  ClassTypeSegmentNode
+                    AnnotationList
                     Name
-                      Identifier "Runnable" @ 54..62
-                  ArgumentList
-                    LParen "(" @ 62..63
-                    RParen ")" @ 63..64 trailing=[Whitespace " "]
-                  ClassBody
-                    LBrace "{" @ 65..66
-                    ClassBodyDeclaration
-                      MethodDeclaration
-                        ModifierList
-                          PublicKw "public" @ 75..81 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                        VoidType
-                          VoidKw "void" @ 82..86 trailing=[Whitespace " "]
-                        Identifier "run" @ 87..90
-                        LParen "(" @ 90..91
-                        RParen ")" @ 91..92 trailing=[Whitespace " "]
-                        Block
-                          LBrace "{" @ 93..94
-                          RBrace "}" @ 94..95
-                    RBrace "}" @ 100..101 leading=[Newline "\n", Whitespace "    "]
-          Semicolon ";" @ 101..102
-      RBrace "}" @ 103..104 leading=[Newline "\n"]
+                      Identifier "Runnable" @ 30..38 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              VariableDeclaratorList
+                VariableDeclarator
+                  Identifier "runnable" @ 39..47 trailing=[Whitespace " "]
+                  Assign "=" @ 48..49 trailing=[Whitespace " "]
+                  VariableInitializer
+                    ObjectCreationExpression
+                      NewKw "new" @ 50..53 trailing=[Whitespace " "]
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
+                            AnnotationList
+                            Name
+                              Identifier "Runnable" @ 54..62
+                      ArgumentList
+                        LParen "(" @ 62..63
+                        ExpressionList
+                        RParen ")" @ 63..64 trailing=[Whitespace " "]
+                      ClassBody
+                        LBrace "{" @ 65..66
+                        ClassBodyMemberList
+                          ClassBodyDeclaration
+                            MethodDeclaration
+                              ModifierList
+                                PublicKw "public" @ 75..81 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                              VoidType
+                                VoidKw "void" @ 82..86 trailing=[Whitespace " "]
+                              Identifier "run" @ 87..90
+                              LParen "(" @ 90..91
+                              RParen ")" @ 91..92 trailing=[Whitespace " "]
+                              Block
+                                LBrace "{" @ 93..94
+                                BlockStatementList
+                                RBrace "}" @ 94..95
+                        RBrace "}" @ 100..101 leading=[Newline "\n", Whitespace "    "]
+              Semicolon ";" @ 101..102
+        RBrace "}" @ 103..104 leading=[Newline "\n"]
   Eof "" @ 105..105 leading=[Newline "\n"]
 
 diagnostics:

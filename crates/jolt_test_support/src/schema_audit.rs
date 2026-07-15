@@ -5,13 +5,14 @@ use jolt_syntax::schema::{
     Cardinality, Disambiguation, Matcher, NodeClass, Repeat, SlotShape, SyntaxSchema,
     TrailingSeparator,
 };
-use jolt_syntax::{Language, SyntaxElement, SyntaxNode};
+use jolt_syntax::{Language, SyntaxElement, SyntaxNode, SyntaxSlot};
 
 /// Corpus-only audit of declarative syntax shapes. The matcher intentionally
 /// lives in test support: its search is bounded by each fixture node's direct
 /// child count and is not the production syntax-factory algorithm.
 pub struct SchemaAudit<K> {
     language: &'static str,
+    representation: SchemaRepresentation,
     files: usize,
     diagnostic_files: usize,
     nodes: usize,
@@ -25,11 +26,29 @@ pub struct SchemaAudit<K> {
     kind: PhantomData<K>,
 }
 
+#[derive(Clone, Copy, Eq, PartialEq)]
+enum SchemaRepresentation {
+    ExhaustiveSlots,
+    RawChildren,
+}
+
 impl<K: Copy + Eq + Debug> SchemaAudit<K> {
     #[must_use]
     pub fn new(language: &'static str) -> Self {
+        Self::with_representation(language, SchemaRepresentation::ExhaustiveSlots)
+    }
+
+    /// Audits a parser that still stores constructed and list fields inline in
+    /// its owner's raw child sequence.
+    #[must_use]
+    pub fn new_raw(language: &'static str) -> Self {
+        Self::with_representation(language, SchemaRepresentation::RawChildren)
+    }
+
+    fn with_representation(language: &'static str, representation: SchemaRepresentation) -> Self {
         Self {
             language,
+            representation,
             files: 0,
             diagnostic_files: 0,
             nodes: 0,
@@ -82,6 +101,20 @@ impl<K: Copy + Eq + Debug> SchemaAudit<K> {
             1
         };
         let node_label = format!("{label}: {:?} occurrence {occurrence}", node.kind());
+        for index in 0..node.slot_count() {
+            if let Some(SyntaxSlot::Node(child)) = node.slot_at(index) {
+                assert_eq!(
+                    child.parent(),
+                    Some(node),
+                    "incorrect physical parent for {node_label} slot {index}"
+                );
+                assert_eq!(
+                    child.index(),
+                    index,
+                    "incorrect physical parent slot for {node_label} slot {index}"
+                );
+            }
+        }
         if node.kind() == L::error_node_kind() {
             let owner = node.parent().map_or_else(
                 || "<root>".to_owned(),
@@ -102,7 +135,22 @@ impl<K: Copy + Eq + Debug> SchemaAudit<K> {
                     }
                     return;
                 }
-                let exact = match_slots(schema, shape.slots, &children, false);
+                if node.is_directly_malformed() {
+                    let range = node.text_range();
+                    unexpected_for(self, has_diagnostics).push(format!(
+                        "{node_label} has valid kind with direct malformed ownership \
+                         [bytes={}, tokens={}, children={}] ({})",
+                        range.len().get(),
+                        node.tokens().count(),
+                        children.len(),
+                        render_children(&children)
+                    ));
+                    for child in node.children() {
+                        self.visit_node(schema, label, child, has_diagnostics, occurrences);
+                    }
+                    return;
+                }
+                let exact = match_slots(schema, shape.slots, &children, false, self.representation);
                 let exact_paths = path_count(&exact, children.len(), false);
                 assert!(
                     exact_paths < 2,
@@ -112,7 +160,8 @@ impl<K: Copy + Eq + Debug> SchemaAudit<K> {
                 if exact_paths == 1 {
                     self.exact += 1;
                 } else {
-                    let allowing_missing = match_slots(schema, shape.slots, &children, true);
+                    let allowing_missing =
+                        match_slots(schema, shape.slots, &children, true, self.representation);
                     let detail = format!("{node_label} ({})", render_children(&children));
                     let missing_paths = allowing_missing
                         .iter()
@@ -265,6 +314,7 @@ fn match_slots<L, C>(
     slots: &[SlotShape<L::Kind, C>],
     children: &[SyntaxElement<'_, L>],
     allow_missing: bool,
+    representation: SchemaRepresentation,
 ) -> Vec<State>
 where
     L: Language,
@@ -278,12 +328,17 @@ where
     for slot in slots {
         let mut next = Vec::new();
         for state in states {
-            let ends = slot_ends(schema, *slot, children, state.position);
+            let ends = slot_ends(schema, *slot, children, state.position, representation);
             let constructed_at_position = ends.iter().any(|(end, paths)| {
                 *end == state.position && *paths > 0 && matches!(slot.matcher, Matcher::List(_))
             });
             let owns_available_match = slot.disambiguation == Disambiguation::LeftmostLongest
                 && ends.iter().any(|(_, paths)| *paths > 0);
+            let owns_recovery = representation == SchemaRepresentation::ExhaustiveSlots
+                && slot.cardinality != Cardinality::Optional
+                && children.get(state.position).is_some_and(
+                    |child| matches!(child, SyntaxElement::Node(node) if node.is_directly_malformed()),
+                );
             for (end, paths) in ends {
                 add_state(
                     &mut next,
@@ -296,6 +351,7 @@ where
                 && slot_required(*slot)
                 && !constructed_at_position
                 && !owns_available_match
+                && !owns_recovery
             {
                 add_state(&mut next, state.position, true, state.paths);
             }
@@ -320,6 +376,7 @@ fn slot_ends<L, C>(
     slot: SlotShape<L::Kind, C>,
     children: &[SyntaxElement<'_, L>],
     start: usize,
+    representation: SchemaRepresentation,
 ) -> Vec<(usize, u8)>
 where
     L: Language,
@@ -333,6 +390,7 @@ where
             slot.disambiguation,
             children,
             start,
+            representation,
         ),
         Repeat::Separated {
             separator,
@@ -348,6 +406,7 @@ where
             slot.disambiguation,
             children,
             start,
+            representation,
         ),
     };
     if slot.disambiguation == Disambiguation::LeftmostLongest
@@ -380,6 +439,7 @@ fn repeated<L, C>(
     policy: Disambiguation,
     children: &[SyntaxElement<'_, L>],
     start: usize,
+    representation: SchemaRepresentation,
 ) -> Vec<(usize, u8)>
 where
     L: Language,
@@ -399,7 +459,15 @@ where
     for count in 1..=maximum {
         let mut next = Vec::new();
         for (position, paths) in frontier {
-            for (end, matched) in matcher_ends(schema, matcher, policy, children, position) {
+            for (end, matched) in matcher_ends(
+                schema,
+                matcher,
+                policy,
+                children,
+                position,
+                cardinality != Cardinality::Optional,
+                representation,
+            ) {
                 if end != position || matches!(matcher, Matcher::List(_)) {
                     add_end(&mut next, end, paths.saturating_mul(matched).min(2));
                 }
@@ -428,6 +496,7 @@ fn separated<L, C>(
     policy: Disambiguation,
     children: &[SyntaxElement<'_, L>],
     start: usize,
+    representation: SchemaRepresentation,
 ) -> Vec<(usize, u8)>
 where
     L: Language,
@@ -437,7 +506,15 @@ where
     if minimum == 0 && trailing != TrailingSeparator::Required {
         results.push((start, 1));
     }
-    let mut elements = matcher_ends(schema, element, policy, children, start);
+    let mut elements = matcher_ends(
+        schema,
+        element,
+        policy,
+        children,
+        start,
+        true,
+        representation,
+    );
     let mut count = 1_u16;
     while !elements.is_empty() {
         if count >= minimum && trailing != TrailingSeparator::Required {
@@ -447,7 +524,15 @@ where
         }
         let mut separators = Vec::new();
         for (position, paths) in elements {
-            for (end, matched) in matcher_ends(schema, separator, policy, children, position) {
+            for (end, matched) in matcher_ends(
+                schema,
+                separator,
+                policy,
+                children,
+                position,
+                false,
+                representation,
+            ) {
                 if end != position {
                     add_end(&mut separators, end, paths.saturating_mul(matched).min(2));
                 }
@@ -460,7 +545,15 @@ where
         }
         let mut next = Vec::new();
         for (position, paths) in separators {
-            for (end, matched) in matcher_ends(schema, element, policy, children, position) {
+            for (end, matched) in matcher_ends(
+                schema,
+                element,
+                policy,
+                children,
+                position,
+                true,
+                representation,
+            ) {
                 if end != position {
                     add_end(&mut next, end, paths.saturating_mul(matched).min(2));
                 }
@@ -478,17 +571,30 @@ fn matcher_ends<L, C>(
     policy: Disambiguation,
     children: &[SyntaxElement<'_, L>],
     start: usize,
+    accept_recovery: bool,
+    representation: SchemaRepresentation,
 ) -> Vec<(usize, u8)>
 where
     L: Language,
     C: Copy + Eq,
 {
+    if representation == SchemaRepresentation::ExhaustiveSlots
+        && accept_recovery
+        && children.get(start).is_some_and(
+            |child| matches!(child, SyntaxElement::Node(node) if node.is_directly_malformed()),
+        )
+    {
+        return vec![(start + 1, 1)];
+    }
     match matcher {
         Matcher::Constructed(kind) | Matcher::List(kind) => {
             if let Some(SyntaxElement::Node(node)) = children.get(start)
                 && node.kind() == kind
             {
                 return vec![(start + 1, 1)];
+            }
+            if representation == SchemaRepresentation::ExhaustiveSlots {
+                return Vec::new();
             }
 
             let shape = schema
@@ -501,18 +607,32 @@ where
             } else {
                 assert_eq!(shape.class, NodeClass::Valid);
             }
-            match_slots(schema, shape.slots, &children[start..], false)
-                .into_iter()
-                .filter(|state| !state.missing)
-                .map(|state| (start + state.position, state.paths))
-                .collect()
+            match_slots(
+                schema,
+                shape.slots,
+                &children[start..],
+                false,
+                representation,
+            )
+            .into_iter()
+            .filter(|state| !state.missing)
+            .map(|state| (start + state.position, state.paths))
+            .collect()
         }
         Matcher::Choice(choices) => {
             if policy == Disambiguation::LongestThenFirst {
                 let mut selected = Vec::new();
                 let mut longest = None;
                 for choice in choices {
-                    let ends = matcher_ends(schema, *choice, policy, children, start);
+                    let ends = matcher_ends(
+                        schema,
+                        *choice,
+                        policy,
+                        children,
+                        start,
+                        accept_recovery,
+                        representation,
+                    );
                     let choice_longest = ends.iter().map(|(end, _)| *end).max();
                     if choice_longest > longest {
                         longest = choice_longest;
@@ -525,7 +645,15 @@ where
             } else {
                 let mut results = Vec::new();
                 for choice in choices {
-                    for (end, paths) in matcher_ends(schema, *choice, policy, children, start) {
+                    for (end, paths) in matcher_ends(
+                        schema,
+                        *choice,
+                        policy,
+                        children,
+                        start,
+                        accept_recovery,
+                        representation,
+                    ) {
                         add_end(&mut results, end, paths);
                     }
                 }
@@ -534,23 +662,26 @@ where
         }
         _ => children
             .get(start)
-            .filter(|child| accepts(schema, matcher, **child))
+            .filter(|child| accepts(schema, matcher, **child, representation))
             .map_or_else(Vec::new, |_| vec![(start + 1, 1)]),
     }
 }
 
-fn category_kinds<K: Copy + Eq, C: Copy + Eq>(schema: &SyntaxSchema<K, C>, category: C) -> &[K] {
+fn category_shape<K: Copy + Eq, C: Copy + Eq>(
+    schema: &SyntaxSchema<K, C>,
+    category: C,
+) -> &jolt_syntax::schema::CategoryShape<K, C> {
     schema
         .categories
         .iter()
         .find(|shape| shape.category == category)
         .expect("declared category")
-        .kinds
 }
 fn accepts<L, C>(
     schema: &SyntaxSchema<L::Kind, C>,
     matcher: Matcher<L::Kind, C>,
     child: SyntaxElement<'_, L>,
+    representation: SchemaRepresentation,
 ) -> bool
 where
     L: Language,
@@ -572,7 +703,10 @@ where
             SyntaxElement::Node(node),
         ) => node.kind() == kind,
         (Matcher::Category(category), SyntaxElement::Node(node)) => {
-            category_kinds(schema, category).contains(&node.kind())
+            let category = category_shape(schema, category);
+            (representation == SchemaRepresentation::ExhaustiveSlots
+                && node.kind() == category.bogus)
+                || category.kinds.contains(&node.kind())
         }
         (Matcher::AnyNode, SyntaxElement::Node(_)) | (Matcher::AnyElement, _) => true,
         _ => false,
@@ -703,12 +837,12 @@ fn validate_node_matchers<K, C>(
             index,
             errors,
         );
-        if nullable(schema, slot.matcher) && !matches!(slot.matcher, Matcher::List(_)) {
+        if nullable(slot.matcher) && !matches!(slot.matcher, Matcher::List(_)) {
             errors.push(format!("{:?}[{index}]: nullable slot matcher", node.kind));
         }
         if slot.cardinality == Cardinality::Optional
             && matches!(slot.matcher, Matcher::List(_))
-            && nullable(schema, slot.matcher)
+            && nullable(slot.matcher)
         {
             errors.push(format!(
                 "{:?}[{index}]: optional empty list has two absence representations",
@@ -722,7 +856,7 @@ fn validate_node_matchers<K, C>(
             ..
         } = slot.repeat
         {
-            if nullable(schema, separator) {
+            if nullable(separator) {
                 errors.push(format!("{:?}[{index}]: nullable separator", node.kind));
             }
             if overlap(schema, slot.matcher, separator) {
@@ -752,7 +886,7 @@ fn validate_node_matchers<K, C>(
                 &node.slots[index + 1..],
                 errors,
             );
-        } else if nullable(schema, slot.matcher)
+        } else if nullable(slot.matcher)
             || matches!(
                 slot.cardinality,
                 Cardinality::Optional | Cardinality::Many | Cardinality::OneOrMore
@@ -769,7 +903,7 @@ fn validate_node_matchers<K, C>(
             );
         }
         if matches!(slot.cardinality, Cardinality::Many | Cardinality::OneOrMore)
-            && nullable(schema, slot.matcher)
+            && nullable(slot.matcher)
         {
             errors.push(format!(
                 "{:?}[{index}]: nullable repeated matcher",
@@ -893,8 +1027,7 @@ fn validate_matcher<K: Copy + Eq + Debug, C: Copy + Eq>(
             }
             for (left_index, left) in choices.iter().enumerate() {
                 for right in &choices[left_index + 1..] {
-                    if (nullable(schema, *left) && nullable(schema, *right)
-                        || overlap(schema, *left, *right))
+                    if (nullable(*left) && nullable(*right) || overlap(schema, *left, *right))
                         && policy != Disambiguation::LongestThenFirst
                     {
                         errors.push(format!(
@@ -972,16 +1105,8 @@ fn first<K: Copy + Eq, C: Copy + Eq>(
 ) -> First<K> {
     let mut set = First::default();
     match matcher {
-        Matcher::Token(k) | Matcher::Node(k) => set.insert(k),
-        Matcher::Constructed(k) | Matcher::List(k) => {
-            let shape = schema
-                .nodes
-                .iter()
-                .find(|shape| shape.kind == k)
-                .expect("constructed matcher must reference a declared node");
-            if let Some(first) = following_first(schema, shape.slots) {
-                set.extend(first);
-            }
+        Matcher::Token(k) | Matcher::Node(k) | Matcher::Constructed(k) | Matcher::List(k) => {
+            set.insert(k);
         }
         Matcher::Contextual { kind, text } => set.contextual.push((kind, text)),
         Matcher::TokenSet(k) | Matcher::NodeSet(k) | Matcher::ElementSet(k) => {
@@ -990,7 +1115,9 @@ fn first<K: Copy + Eq, C: Copy + Eq>(
             }
         }
         Matcher::Category(c) => {
-            for x in category_kinds(schema, c) {
+            let category = category_shape(schema, c);
+            set.insert(category.bogus);
+            for x in category.kinds {
                 set.insert(*x);
             }
         }
@@ -1004,17 +1131,9 @@ fn first<K: Copy + Eq, C: Copy + Eq>(
     }
     set
 }
-fn nullable<K: Copy + Eq, C: Copy + Eq>(
-    schema: &SyntaxSchema<K, C>,
-    matcher: Matcher<K, C>,
-) -> bool {
+fn nullable<K: Copy + Eq, C: Copy + Eq>(matcher: Matcher<K, C>) -> bool {
     match matcher {
-        Matcher::Constructed(k) | Matcher::List(k) => schema
-            .nodes
-            .iter()
-            .find(|shape| shape.kind == k)
-            .is_some_and(|shape| shape.slots.iter().all(|slot| !slot_required(*slot))),
-        Matcher::Choice(c) => c.iter().any(|x| nullable(schema, *x)),
+        Matcher::Choice(c) => c.iter().any(|x| nullable(*x)),
         _ => false,
     }
 }
@@ -1061,7 +1180,7 @@ fn following_first<K: Copy + Eq, C: Copy + Eq>(
     let mut set = First::default();
     for slot in slots {
         set.extend(first(schema, slot.matcher));
-        if slot_required(*slot) && !nullable(schema, slot.matcher) {
+        if slot_required(*slot) && !nullable(slot.matcher) {
             return Some(set);
         }
     }

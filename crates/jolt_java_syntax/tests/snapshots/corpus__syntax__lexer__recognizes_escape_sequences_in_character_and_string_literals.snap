@@ -8,20 +8,22 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    CharacterLiteral "'\\b'" @ 0..4 trailing=[Whitespace " "]
-    CharacterLiteral "'\\s'" @ 5..9 trailing=[Whitespace " "]
-    CharacterLiteral "'\\t'" @ 10..14 trailing=[Whitespace " "]
-    CharacterLiteral "'\\n'" @ 15..19 trailing=[Whitespace " "]
-    CharacterLiteral "'\\f'" @ 20..24 trailing=[Whitespace " "]
-    CharacterLiteral "'\\r'" @ 25..29 trailing=[Whitespace " "]
-    CharacterLiteral "'\\\"'" @ 30..34 trailing=[Whitespace " "]
-    CharacterLiteral "'\\''" @ 35..39 trailing=[Whitespace " "]
-    CharacterLiteral "'\\\\'" @ 40..44 trailing=[Whitespace " "]
-    CharacterLiteral "'\\0'" @ 45..49 trailing=[Whitespace " "]
-    CharacterLiteral "'\\77'" @ 50..55 trailing=[Whitespace " "]
-    CharacterLiteral "'\\377'" @ 56..62 trailing=[Whitespace " "]
-    StringLiteral "\"\\b\\s\\t\\n\\f\\r\\\"\\'\\\\\\0\\77\\377\"" @ 63..92
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      CharacterLiteral "'\\b'" @ 0..4 trailing=[Whitespace " "]
+      CharacterLiteral "'\\s'" @ 5..9 trailing=[Whitespace " "]
+      CharacterLiteral "'\\t'" @ 10..14 trailing=[Whitespace " "]
+      CharacterLiteral "'\\n'" @ 15..19 trailing=[Whitespace " "]
+      CharacterLiteral "'\\f'" @ 20..24 trailing=[Whitespace " "]
+      CharacterLiteral "'\\r'" @ 25..29 trailing=[Whitespace " "]
+      CharacterLiteral "'\\\"'" @ 30..34 trailing=[Whitespace " "]
+      CharacterLiteral "'\\''" @ 35..39 trailing=[Whitespace " "]
+      CharacterLiteral "'\\\\'" @ 40..44 trailing=[Whitespace " "]
+      CharacterLiteral "'\\0'" @ 45..49 trailing=[Whitespace " "]
+      CharacterLiteral "'\\77'" @ 50..55 trailing=[Whitespace " "]
+      CharacterLiteral "'\\377'" @ 56..62 trailing=[Whitespace " "]
+      StringLiteral "\"\\b\\s\\t\\n\\f\\r\\\"\\'\\\\\\0\\77\\377\"" @ 63..92
   Eof "" @ 92..92
 
 diagnostics:

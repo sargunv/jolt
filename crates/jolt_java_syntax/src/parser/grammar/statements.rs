@@ -5,9 +5,11 @@ impl Parser<'_> {
         let block = self.start();
         self.expect(JavaSyntaxKind::LBrace, "expected block");
 
+        let statements = self.start();
         while !self.at_eof() && !self.at(JavaSyntaxKind::RBrace) {
             self.parse_block_statement();
         }
+        self.complete(statements, JavaSyntaxKind::BlockStatementList);
 
         self.expect(JavaSyntaxKind::RBrace, "expected `}` after block");
         self.complete(block, JavaSyntaxKind::Block);
@@ -340,10 +342,12 @@ impl Parser<'_> {
             self.expect(JavaSyntaxKind::TryKw, "expected `try`");
             self.parse_block();
             let mut saw_handler = false;
+            let catches = self.start();
             while self.at(JavaSyntaxKind::CatchKw) {
                 self.parse_catch_clause();
                 saw_handler = true;
             }
+            self.complete(catches, JavaSyntaxKind::CatchClauseList);
             if self.at(JavaSyntaxKind::FinallyKw) {
                 self.parse_finally_clause();
                 saw_handler = true;
@@ -381,9 +385,11 @@ impl Parser<'_> {
         self.expect(JavaSyntaxKind::RParen, "expected `)` after resources");
         self.complete(specification, JavaSyntaxKind::ResourceSpecification);
         self.parse_block();
+        let catches = self.start();
         while self.at(JavaSyntaxKind::CatchKw) {
             self.parse_catch_clause();
         }
+        self.complete(catches, JavaSyntaxKind::CatchClauseList);
         if self.at(JavaSyntaxKind::FinallyKw) {
             self.parse_finally_clause();
         }
@@ -532,6 +538,7 @@ impl Parser<'_> {
     pub(super) fn parse_switch_block(&mut self) {
         let block = self.start();
         self.expect(JavaSyntaxKind::LBrace, "expected switch block");
+        let entries = self.start();
         while !self.at_eof() && !self.at(JavaSyntaxKind::RBrace) {
             if self.starts_switch_label() {
                 if self.switch_label_is_rule() {
@@ -540,9 +547,12 @@ impl Parser<'_> {
                     self.parse_switch_block_statement_group_or_label();
                 }
             } else {
+                let error = self.start();
                 self.parse_block_statement();
+                self.complete(error, JavaSyntaxKind::ErrorNode);
             }
         }
+        self.complete(entries, JavaSyntaxKind::SwitchEntryList);
         self.expect(JavaSyntaxKind::RBrace, "expected `}` after switch block");
         self.complete(block, JavaSyntaxKind::SwitchBlock);
     }
@@ -564,6 +574,7 @@ impl Parser<'_> {
 
     pub(super) fn parse_switch_block_statement_group_or_label(&mut self) {
         let group = self.start();
+        let labels = self.start();
         loop {
             self.parse_switch_label();
             self.expect(JavaSyntaxKind::Colon, "expected `:` after switch label");
@@ -571,26 +582,32 @@ impl Parser<'_> {
                 break;
             }
         }
+        self.complete(labels, JavaSyntaxKind::SwitchLabelColonList);
 
         if self.starts_switch_label() || self.at(JavaSyntaxKind::RBrace) {
             self.complete(group, JavaSyntaxKind::SwitchBlockStatementGroup);
             return;
         }
 
+        let statements = self.start();
         while !self.at_eof() && !self.at(JavaSyntaxKind::RBrace) && !self.starts_switch_label() {
             self.parse_block_statement();
         }
+        self.complete(statements, JavaSyntaxKind::BlockStatementList);
         self.complete(group, JavaSyntaxKind::SwitchBlockStatementGroup);
     }
 
     pub(super) fn parse_switch_label(&mut self) {
         let label = self.start();
         if self.eat(JavaSyntaxKind::DefaultKw) {
+            let items = self.start();
+            self.complete(items, JavaSyntaxKind::SwitchLabelItemList);
             self.complete(label, JavaSyntaxKind::SwitchLabel);
             return;
         }
 
         self.expect(JavaSyntaxKind::CaseKw, "expected `case`");
+        let items = self.start();
         let mut saw_case_item = false;
         let mut previous_was_pattern = false;
         while !self.at_eof()
@@ -603,8 +620,7 @@ impl Parser<'_> {
                 saw_case_item = false;
                 previous_was_pattern = false;
             } else if self.at_contextual("when") && previous_was_pattern {
-                self.parse_guard();
-                previous_was_pattern = false;
+                break;
             } else if self.at_contextual("when") && saw_case_item {
                 let error = self.start();
                 self.invalid_switch_guard_here("switch guard requires a pattern");
@@ -630,6 +646,10 @@ impl Parser<'_> {
                 saw_case_item = true;
                 previous_was_pattern = false;
             }
+        }
+        self.complete(items, JavaSyntaxKind::SwitchLabelItemList);
+        if self.at_contextual("when") && previous_was_pattern {
+            self.parse_guard();
         }
         self.complete(label, JavaSyntaxKind::SwitchLabel);
     }

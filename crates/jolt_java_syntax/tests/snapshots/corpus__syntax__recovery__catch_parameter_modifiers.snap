@@ -8,42 +8,53 @@ class C { void m() { try {} catch (final /* mod */ E e) {} } }
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "C" @ 6..7 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 8..9 trailing=[Whitespace " "]
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 10..14 trailing=[Whitespace " "]
-          Identifier "m" @ 15..16
-          LParen "(" @ 16..17
-          RParen ")" @ 17..18 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 19..20 trailing=[Whitespace " "]
-            BlockStatement
-              TryStatement
-                TryKw "try" @ 21..24 trailing=[Whitespace " "]
-                Block
-                  LBrace "{" @ 25..26
-                  RBrace "}" @ 26..27 trailing=[Whitespace " "]
-                CatchClause
-                  CatchKw "catch" @ 28..33 trailing=[Whitespace " "]
-                  LParen "(" @ 34..35
-                  CatchParameter
-                    FinalKw "final" @ 35..40 trailing=[Whitespace " ", BlockComment "/* mod */", Whitespace " "]
-                    CatchTypeList
-                      ClassType
-                        Name
-                          Identifier "E" @ 51..52 trailing=[Whitespace " "]
-                    Identifier "e" @ 53..54
-                  RParen ")" @ 54..55 trailing=[Whitespace " "]
-                  Block
-                    LBrace "{" @ 56..57
-                    RBrace "}" @ 57..58 trailing=[Whitespace " "]
-            RBrace "}" @ 59..60 trailing=[Whitespace " "]
-      RBrace "}" @ 61..62
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "C" @ 6..7 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 8..9 trailing=[Whitespace " "]
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 10..14 trailing=[Whitespace " "]
+              Identifier "m" @ 15..16
+              LParen "(" @ 16..17
+              RParen ")" @ 17..18 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 19..20 trailing=[Whitespace " "]
+                BlockStatementList
+                  BlockStatement
+                    TryStatement
+                      TryKw "try" @ 21..24 trailing=[Whitespace " "]
+                      Block
+                        LBrace "{" @ 25..26
+                        BlockStatementList
+                        RBrace "}" @ 26..27 trailing=[Whitespace " "]
+                      CatchClauseList
+                        CatchClause
+                          CatchKw "catch" @ 28..33 trailing=[Whitespace " "]
+                          LParen "(" @ 34..35
+                          CatchParameter
+                            ParameterModifierList
+                              FinalKw "final" @ 35..40 trailing=[Whitespace " ", BlockComment "/* mod */", Whitespace " "]
+                            CatchTypeList
+                              ClassType
+                                ClassTypeSegmentList
+                                  ClassTypeSegmentNode
+                                    AnnotationList
+                                    Name
+                                      Identifier "E" @ 51..52 trailing=[Whitespace " "]
+                            Identifier "e" @ 53..54
+                          RParen ")" @ 54..55 trailing=[Whitespace " "]
+                          Block
+                            LBrace "{" @ 56..57
+                            BlockStatementList
+                            RBrace "}" @ 57..58 trailing=[Whitespace " "]
+                RBrace "}" @ 59..60 trailing=[Whitespace " "]
+        RBrace "}" @ 61..62
   Eof "" @ 63..63 leading=[Newline "\n"]
 
 diagnostics:

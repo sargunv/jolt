@@ -9,6 +9,8 @@ input:
 syntax:
 syntax:
 CompilationUnit
+  ImportDeclarationList
+  CompilationUnitDeclarationList
   Eof "" @ 30..30 leading=[LineComment "// file header", Newline "\n", BlockComment "/* retained */", Newline "\n"]
 
 diagnostics:

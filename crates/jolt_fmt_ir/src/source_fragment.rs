@@ -1,14 +1,17 @@
+#[cfg(debug_assertions)]
 use std::borrow::Cow;
 
+#[cfg(debug_assertions)]
+use jolt_syntax::SourceIdentity;
 use jolt_syntax::{
-    ConservationError, Language, SourceIdentity, SourceTokenId, SyntaxConservationTracker,
-    SyntaxToken,
+    ConservationError, Language, NormalizedToken, RawSyntaxKind, RemovalReason, SourceTokenId,
+    SyntaxConservationTracker, SyntaxToken,
 };
+use jolt_text::TextRange;
 
-use crate::{
-    Doc,
-    width::{TextWidth, literal_text_metrics},
-};
+use crate::Doc;
+#[cfg(debug_assertions)]
+use crate::width::{TextWidth, literal_text_metrics};
 
 /// The lexical class at one edge of an exceptional source fragment.
 ///
@@ -22,6 +25,15 @@ pub enum LexicalAtomKind {
     String,
     Punctuation,
     Comment,
+}
+
+pub(crate) const fn normalized_lexical_kind(token: NormalizedToken) -> LexicalAtomKind {
+    match token {
+        NormalizedToken::ImportKeyword | NormalizedToken::ImportAliasKeyword => {
+            LexicalAtomKind::Identifier
+        }
+        _ => LexicalAtomKind::Punctuation,
+    }
 }
 
 /// A borrowed lexical atom at an exceptional fragment boundary.
@@ -138,109 +150,13 @@ impl<'source> ExceptionalFragment<'source> {
     }
 }
 
-/// A closed, semantics-preserving token normalization already used by Jolt.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum NormalizedToken {
-    OpenBlockBrace,
-    CloseBlockBrace,
-    OpenPrecedenceParenthesis,
-    ClosePrecedenceParenthesis,
-    TrailingComma,
-    EnumComma,
-    EnumSemicolon,
-    ImportKeyword,
-    ImportAliasKeyword,
-}
-
-impl NormalizedToken {
-    #[must_use]
-    pub const fn text(self) -> &'static str {
-        match self {
-            Self::OpenBlockBrace => "{",
-            Self::CloseBlockBrace => "}",
-            Self::OpenPrecedenceParenthesis => "(",
-            Self::ClosePrecedenceParenthesis => ")",
-            Self::TrailingComma | Self::EnumComma => ",",
-            Self::EnumSemicolon => ";",
-            Self::ImportKeyword => "import",
-            Self::ImportAliasKeyword => "as",
-        }
-    }
-
-    pub(crate) const fn lexical_kind(self) -> LexicalAtomKind {
-        match self {
-            Self::ImportKeyword | Self::ImportAliasKeyword => LexicalAtomKind::Identifier,
-            _ => LexicalAtomKind::Punctuation,
-        }
-    }
-}
-
-/// A closed reason for consuming represented syntax without emitting it.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum RemovalReason {
-    DuplicateImport,
-    RedundantSeparator,
-}
-
-/// Syntax-authorized permission to replace one represented source token.
-///
-/// The syntax layer will construct these claims once generated grammar roles
-/// can prove that the normalization is valid at the owning slot. Formatter
-/// rules cannot manufacture a claim from an arbitrary token identity.
-pub struct ReplacementClaim<'tree> {
-    source: SourceTokenId<'tree>,
-    token: NormalizedToken,
-}
-
-impl<'tree> ReplacementClaim<'tree> {
-    pub(crate) const fn into_parts(self) -> (SourceTokenId<'tree>, NormalizedToken) {
-        (self.source, self.token)
-    }
-
-    #[cfg(test)]
-    pub(crate) const fn for_test(source: SourceTokenId<'tree>, token: NormalizedToken) -> Self {
-        Self { source, token }
-    }
-}
-
-/// Syntax-authorized permission to consume represented syntax without output.
-pub struct RemovalClaim<'tree> {
-    source: SourceIdentity<'tree>,
-    reason: RemovalReason,
-}
-
-impl<'tree> RemovalClaim<'tree> {
-    pub(crate) const fn into_parts(self) -> (SourceIdentity<'tree>, RemovalReason) {
-        (self.source, self.reason)
-    }
-
-    #[cfg(test)]
-    pub(crate) const fn for_test(source: SourceIdentity<'tree>, reason: RemovalReason) -> Self {
-        Self { source, reason }
-    }
-}
-
-/// Syntax-authorized permission to synthesize one normalization token.
-pub struct SynthesisClaim<'tree> {
-    anchor: SourceTokenId<'tree>,
-    token: NormalizedToken,
-}
-
-impl<'tree> SynthesisClaim<'tree> {
-    pub(crate) const fn into_parts(self) -> (SourceTokenId<'tree>, NormalizedToken) {
-        (self.anchor, self.token)
-    }
-
-    #[cfg(test)]
-    pub(crate) const fn for_test(anchor: SourceTokenId<'tree>, token: NormalizedToken) -> Self {
-        Self { anchor, token }
-    }
-}
-
 /// The exceptional source operation represented by a fragment.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SourceFragmentKind<'tree> {
-    MalformedVerbatim,
+    MalformedVerbatim {
+        kind: RawSyntaxKind,
+        range: TextRange,
+    },
     Replaced {
         token: NormalizedToken,
     },
@@ -281,6 +197,7 @@ impl<'tree> RenderProof<'tree> {
         }
     }
 
+    #[cfg(debug_assertions)]
     pub(crate) fn render_fragment<'source>(
         &mut self,
         fragment: &SourceFragment<'source, 'tree>,
@@ -335,6 +252,7 @@ impl<'tree> CompletedRenderProof<'tree> {
     }
 }
 
+#[cfg(debug_assertions)]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct SourceFragment<'source, 'tree> {
     pub(crate) text: Cow<'source, str>,
@@ -350,6 +268,7 @@ pub(crate) struct SourceFragment<'source, 'tree> {
     line_count: usize,
 }
 
+#[cfg(debug_assertions)]
 impl<'source, 'tree> SourceFragment<'source, 'tree> {
     pub(crate) fn new(
         text: Cow<'source, str>,
@@ -381,5 +300,9 @@ impl<'source, 'tree> SourceFragment<'source, 'tree> {
 
     pub(crate) const fn is_multiline(&self) -> bool {
         self.line_count > 1
+    }
+
+    pub(crate) fn is_claim_marker(&self) -> bool {
+        self.provenance.is_none() && self.text.is_empty()
     }
 }

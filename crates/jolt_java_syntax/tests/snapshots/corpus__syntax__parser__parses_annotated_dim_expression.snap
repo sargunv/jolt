@@ -14,63 +14,77 @@ class AnnotatedDimExpression {
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "AnnotatedDimExpression" @ 6..28 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 29..30
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 35..39 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "method" @ 40..46
-          LParen "(" @ 46..47
-          FormalParameterList
-            FormalParameter
-              PrimitiveType
-                IntKw "int" @ 47..50 trailing=[Whitespace " "]
-              Identifier "n" @ 51..52
-          RParen ")" @ 52..53 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 54..55
-            BlockStatement
-              LocalVariableDeclaration
-                ArrayType
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "AnnotatedDimExpression" @ 6..28 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 29..30
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 35..39 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Identifier "method" @ 40..46
+              LParen "(" @ 46..47
+              FormalParameterList
+                FormalParameter
+                  ParameterModifierList
                   PrimitiveType
-                    IntKw "int" @ 64..67 leading=[Newline "\n", Whitespace "        "]
-                  ArrayDimensions
-                    ArrayDimension
-                      LBracket "[" @ 67..68
-                      RBracket "]" @ 68..69 trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "values" @ 70..76 trailing=[Whitespace " "]
-                    Assign "=" @ 77..78 trailing=[Whitespace " "]
-                    VariableInitializer
-                      ArrayCreationExpression
-                        NewKw "new" @ 79..82 trailing=[Whitespace " "]
+                    AnnotationList
+                    IntKw "int" @ 47..50 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "n" @ 51..52
+              RParen ")" @ 52..53 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 54..55
+                BlockStatementList
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      ArrayType
                         PrimitiveType
-                          IntKw "int" @ 83..86 trailing=[Whitespace " "]
-                        DimExpression
-                          Annotation
-                            At "@" @ 87..88
-                            Name
-                              Identifier "Marker" @ 88..94 trailing=[Whitespace " "]
-                          LBracket "[" @ 95..96
-                          NameExpression
-                            Identifier "n" @ 96..97
-                          RBracket "]" @ 97..98
-              Semicolon ";" @ 98..99
-            RBrace "}" @ 104..105 leading=[Newline "\n", Whitespace "    "]
-      RBrace "}" @ 106..107 leading=[Newline "\n"]
-  AnnotationInterfaceDeclaration
-    At "@" @ 109..110 leading=[Newline "\n", Newline "\n"]
-    InterfaceKw "interface" @ 110..119 trailing=[Whitespace " "]
-    Identifier "Marker" @ 120..126 trailing=[Whitespace " "]
-    AnnotationInterfaceBody
-      LBrace "{" @ 127..128
-      AnnotationElementList
-      RBrace "}" @ 128..129
+                          AnnotationList
+                          IntKw "int" @ 64..67 leading=[Newline "\n", Whitespace "        "]
+                        ArrayDimensions
+                          ArrayDimension
+                            AnnotationList
+                            LBracket "[" @ 67..68
+                            RBracket "]" @ 68..69 trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "values" @ 70..76 trailing=[Whitespace " "]
+                          Assign "=" @ 77..78 trailing=[Whitespace " "]
+                          VariableInitializer
+                            ArrayCreationExpression
+                              NewKw "new" @ 79..82 trailing=[Whitespace " "]
+                              PrimitiveType
+                                AnnotationList
+                                IntKw "int" @ 83..86 trailing=[Whitespace " "]
+                              DimExpressionList
+                                DimExpression
+                                  AnnotationList
+                                    Annotation
+                                      At "@" @ 87..88
+                                      Name
+                                        Identifier "Marker" @ 88..94 trailing=[Whitespace " "]
+                                  LBracket "[" @ 95..96
+                                  NameExpression
+                                    Identifier "n" @ 96..97
+                                  RBracket "]" @ 97..98
+                    Semicolon ";" @ 98..99
+                RBrace "}" @ 104..105 leading=[Newline "\n", Whitespace "    "]
+        RBrace "}" @ 106..107 leading=[Newline "\n"]
+    AnnotationInterfaceDeclaration
+      At "@" @ 109..110 leading=[Newline "\n", Newline "\n"]
+      InterfaceKw "interface" @ 110..119 trailing=[Whitespace " "]
+      Identifier "Marker" @ 120..126 trailing=[Whitespace " "]
+      AnnotationInterfaceBody
+        LBrace "{" @ 127..128
+        AnnotationElementList
+          AnnotationInterfaceBodyMemberList
+        RBrace "}" @ 128..129
   Eof "" @ 130..130 leading=[Newline "\n"]
 
 diagnostics:

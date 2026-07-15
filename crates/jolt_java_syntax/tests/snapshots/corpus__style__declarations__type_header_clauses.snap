@@ -16,216 +16,323 @@ enum LongEnum implements Xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "Derived" @ 6..13
-    TypeParameterList
-      Lt "<" @ 13..14
-      TypeParameter
-        Identifier "T" @ 14..15
-      Gt ">" @ 15..16 trailing=[Whitespace " "]
-    ExtendsClause
-      ExtendsKw "extends" @ 17..24 trailing=[Whitespace " ", BlockComment "/* base */", Whitespace " "]
-      ClassType
-        QualifiedName
-          Identifier "base" @ 36..40
-          Dot "." @ 40..41
-          Annotation
-            At "@" @ 41..42
-            Name
-              Identifier "Marker" @ 42..48 trailing=[Whitespace " "]
-          Identifier "Parent" @ 49..55
-        TypeArgumentList
-          Lt "<" @ 55..56
-          TypeArgument
-            ClassType
-              Name
-                Identifier "String" @ 56..62
-          Gt ">" @ 62..63 trailing=[Whitespace " "]
-    ImplementsClause
-      ImplementsKw "implements" @ 64..74 trailing=[Whitespace " "]
-      ClassType
-        Name
-          Identifier "First" @ 75..80
-      Comma "," @ 80..81 trailing=[Whitespace " ", LineComment "// first"]
-      ClassType
-        QualifiedName
-          Identifier "pkg" @ 91..94 leading=[Newline "\n"]
-          Dot "." @ 94..95
-          Identifier "Second" @ 95..101 trailing=[Whitespace " "]
-    PermitsClause
-      Identifier "permits" @ 102..109 trailing=[Whitespace " "]
-      Name
-        Identifier "Child" @ 110..115
-      Comma "," @ 115..116 trailing=[Whitespace " ", LineComment "// child"]
-      QualifiedName
-        Identifier "other" @ 126..131 leading=[Newline "\n"]
-        Dot "." @ 131..132
-        Identifier "Child" @ 132..137 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 138..139
-      RBrace "}" @ 139..140 trailing=[Whitespace " "]
-  InterfaceDeclaration
-    InterfaceKw "interface" @ 141..150 trailing=[Whitespace " "]
-    Identifier "Shape" @ 151..156 trailing=[Whitespace " "]
-    ExtendsClause
-      ExtendsKw "extends" @ 157..164 trailing=[Whitespace " "]
-      ClassType
-        Name
-          Identifier "Drawable" @ 165..173
-      Comma "," @ 173..174 trailing=[Whitespace " "]
-      ClassType
-        Name
-          Identifier "Scalable" @ 175..183 trailing=[Whitespace " "]
-    PermitsClause
-      Identifier "permits" @ 184..191 trailing=[Whitespace " "]
-      Name
-        Identifier "Circle" @ 192..198
-      Comma "," @ 198..199 trailing=[Whitespace " "]
-      Name
-        Identifier "Square" @ 200..206 trailing=[Whitespace " "]
-    InterfaceBody
-      LBrace "{" @ 207..208
-      RBrace "}" @ 208..209 trailing=[Whitespace " "]
-  RecordDeclaration
-    Identifier "record" @ 210..216 trailing=[Whitespace " "]
-    Identifier "Point" @ 217..222
-    LParen "(" @ 222..223
-    RecordComponentList
-      RecordComponent
-        PrimitiveType
-          IntKw "int" @ 223..226 trailing=[Whitespace " "]
-        Identifier "x" @ 227..228
-    RParen ")" @ 228..229 trailing=[Whitespace " "]
-    ImplementsClause
-      ImplementsKw "implements" @ 230..240 trailing=[Whitespace " "]
-      ClassType
-        Name
-          Identifier "Named" @ 241..246
-      Comma "," @ 246..247 trailing=[Whitespace " "]
-      ClassType
-        Name
-          Identifier "Located" @ 248..255 trailing=[Whitespace " "]
-    RecordBody
-      LBrace "{" @ 256..257
-      RBrace "}" @ 257..258 trailing=[Whitespace " "]
-  EnumDeclaration
-    EnumKw "enum" @ 259..263 trailing=[Whitespace " "]
-    Identifier "Color" @ 264..269 trailing=[Whitespace " "]
-    ImplementsClause
-      ImplementsKw "implements" @ 270..280 trailing=[Whitespace " "]
-      ClassType
-        Name
-          Identifier "Named" @ 281..286
-      Comma "," @ 286..287 trailing=[Whitespace " "]
-      ClassType
-        QualifiedName
-          Identifier "java" @ 288..292
-          Dot "." @ 292..293
-          Identifier "io" @ 293..295
-          Dot "." @ 295..296
-          Identifier "Serializable" @ 296..308 trailing=[Whitespace " "]
-    EnumBody
-      LBrace "{" @ 309..310
-      RBrace "}" @ 310..311
-  ClassDeclaration
-    ClassKw "class" @ 312..317 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Identifier "LongExtends" @ 318..329 trailing=[Whitespace " "]
-    ExtendsClause
-      ExtendsKw "extends" @ 330..337 trailing=[Whitespace " "]
-      ClassType
-        Name
-          Identifier "Xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" @ 338..424 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 425..426
-      RBrace "}" @ 426..427
-  ClassDeclaration
-    ModifierList
-      Identifier "sealed" @ 428..434 leading=[Newline "\n"] trailing=[Whitespace " "]
-    ClassKw "class" @ 435..440 trailing=[Whitespace " "]
-    Identifier "LongPermits" @ 441..452 trailing=[Whitespace " "]
-    PermitsClause
-      Identifier "permits" @ 453..460 trailing=[Whitespace " "]
-      Name
-        Identifier "Xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" @ 461..547 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 548..549
-      RBrace "}" @ 549..550
-  ClassDeclaration
-    ModifierList
-      Identifier "sealed" @ 551..557 leading=[Newline "\n"] trailing=[Whitespace " "]
-    ClassKw "class" @ 558..563 trailing=[Whitespace " "]
-    Identifier "LongClauses" @ 564..575 trailing=[Whitespace " "]
-    ImplementsClause
-      ImplementsKw "implements" @ 576..586 trailing=[Whitespace " "]
-      ClassType
-        Name
-          Identifier "Xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" @ 587..670 trailing=[Whitespace " "]
-    PermitsClause
-      Identifier "permits" @ 671..678 trailing=[Whitespace " "]
-      Name
-        Identifier "Xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" @ 679..763
-      Comma "," @ 763..764 trailing=[Whitespace " "]
-      Name
-        Identifier "Yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy" @ 765..849 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 850..851
-      RBrace "}" @ 851..852
-  InterfaceDeclaration
-    ModifierList
-      Identifier "sealed" @ 853..859 leading=[Newline "\n"] trailing=[Whitespace " "]
-    InterfaceKw "interface" @ 860..869 trailing=[Whitespace " "]
-    Identifier "LongInterface" @ 870..883 trailing=[Whitespace " "]
-    PermitsClause
-      Identifier "permits" @ 884..891 trailing=[Whitespace " "]
-      Name
-        Identifier "Xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" @ 892..978
-      Comma "," @ 978..979 trailing=[Whitespace " "]
-      Name
-        Identifier "Yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy" @ 980..1064 trailing=[Whitespace " "]
-    InterfaceBody
-      LBrace "{" @ 1065..1066
-      RBrace "}" @ 1066..1067
-  RecordDeclaration
-    Identifier "record" @ 1068..1074 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Identifier "LongRecord" @ 1075..1085
-    LParen "(" @ 1085..1086
-    RecordComponentList
-      RecordComponent
-        PrimitiveType
-          IntKw "int" @ 1086..1089 trailing=[Whitespace " "]
-        Identifier "value" @ 1090..1095
-    RParen ")" @ 1095..1096 trailing=[Whitespace " "]
-    ImplementsClause
-      ImplementsKw "implements" @ 1097..1107 trailing=[Whitespace " "]
-      ClassType
-        Name
-          Identifier "Xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" @ 1108..1191
-      Comma "," @ 1191..1192 trailing=[Whitespace " "]
-      ClassType
-        Name
-          Identifier "Yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy" @ 1193..1277 trailing=[Whitespace " "]
-    RecordBody
-      LBrace "{" @ 1278..1279
-      RBrace "}" @ 1279..1280
-  EnumDeclaration
-    EnumKw "enum" @ 1281..1285 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Identifier "LongEnum" @ 1286..1294 trailing=[Whitespace " "]
-    ImplementsClause
-      ImplementsKw "implements" @ 1295..1305 trailing=[Whitespace " "]
-      ClassType
-        Name
-          Identifier "Xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" @ 1306..1389
-      Comma "," @ 1389..1390 trailing=[Whitespace " "]
-      ClassType
-        Name
-          Identifier "Yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy" @ 1391..1475 trailing=[Whitespace " "]
-    EnumBody
-      LBrace "{" @ 1476..1477 trailing=[Whitespace " "]
-      EnumConstantList
-        EnumConstant
-          Identifier "ONE" @ 1478..1481 trailing=[Whitespace " "]
-      RBrace "}" @ 1482..1483
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "Derived" @ 6..13
+      TypeParameterList
+        Lt "<" @ 13..14
+        TypeParameterSeparatedList
+          TypeParameter
+            AnnotationList
+            Identifier "T" @ 14..15
+        Gt ">" @ 15..16 trailing=[Whitespace " "]
+      ExtendsClause
+        ExtendsKw "extends" @ 17..24 trailing=[Whitespace " ", BlockComment "/* base */", Whitespace " "]
+        TypeList
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                QualifiedName
+                  QualifiedNameSegmentNode
+                    AnnotationList
+                    Identifier "base" @ 36..40
+                  Dot "." @ 40..41
+                  NameSegmentDotList
+                    QualifiedNameSegmentNode
+                      AnnotationList
+                        Annotation
+                          At "@" @ 41..42
+                          Name
+                            Identifier "Marker" @ 42..48 trailing=[Whitespace " "]
+                      Identifier "Parent" @ 49..55
+                TypeArgumentList
+                  Lt "<" @ 55..56
+                  TypeArgumentSeparatedList
+                    TypeArgument
+                      AnnotationList
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
+                            AnnotationList
+                            Name
+                              Identifier "String" @ 56..62
+                  Gt ">" @ 62..63 trailing=[Whitespace " "]
+      ImplementsClause
+        ImplementsKw "implements" @ 64..74 trailing=[Whitespace " "]
+        TypeList
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "First" @ 75..80
+          Comma "," @ 80..81 trailing=[Whitespace " ", LineComment "// first"]
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                QualifiedName
+                  QualifiedNameSegmentNode
+                    AnnotationList
+                    Identifier "pkg" @ 91..94 leading=[Newline "\n"]
+                  Dot "." @ 94..95
+                  NameSegmentDotList
+                    QualifiedNameSegmentNode
+                      AnnotationList
+                      Identifier "Second" @ 95..101 trailing=[Whitespace " "]
+      PermitsClause
+        Identifier "permits" @ 102..109 trailing=[Whitespace " "]
+        NameList
+          Name
+            Identifier "Child" @ 110..115
+          Comma "," @ 115..116 trailing=[Whitespace " ", LineComment "// child"]
+          QualifiedName
+            QualifiedNameSegmentNode
+              AnnotationList
+              Identifier "other" @ 126..131 leading=[Newline "\n"]
+            Dot "." @ 131..132
+            NameSegmentDotList
+              QualifiedNameSegmentNode
+                AnnotationList
+                Identifier "Child" @ 132..137 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 138..139
+        ClassBodyMemberList
+        RBrace "}" @ 139..140 trailing=[Whitespace " "]
+    InterfaceDeclaration
+      InterfaceKw "interface" @ 141..150 trailing=[Whitespace " "]
+      Identifier "Shape" @ 151..156 trailing=[Whitespace " "]
+      ExtendsClause
+        ExtendsKw "extends" @ 157..164 trailing=[Whitespace " "]
+        TypeList
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "Drawable" @ 165..173
+          Comma "," @ 173..174 trailing=[Whitespace " "]
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "Scalable" @ 175..183 trailing=[Whitespace " "]
+      PermitsClause
+        Identifier "permits" @ 184..191 trailing=[Whitespace " "]
+        NameList
+          Name
+            Identifier "Circle" @ 192..198
+          Comma "," @ 198..199 trailing=[Whitespace " "]
+          Name
+            Identifier "Square" @ 200..206 trailing=[Whitespace " "]
+      InterfaceBody
+        LBrace "{" @ 207..208
+        InterfaceBodyMemberList
+        RBrace "}" @ 208..209 trailing=[Whitespace " "]
+    RecordDeclaration
+      Identifier "record" @ 210..216 trailing=[Whitespace " "]
+      Identifier "Point" @ 217..222
+      LParen "(" @ 222..223
+      RecordComponentList
+        RecordComponent
+          ParameterModifierList
+          PrimitiveType
+            AnnotationList
+            IntKw "int" @ 223..226 trailing=[Whitespace " "]
+          AnnotationList
+          Identifier "x" @ 227..228
+      RParen ")" @ 228..229 trailing=[Whitespace " "]
+      ImplementsClause
+        ImplementsKw "implements" @ 230..240 trailing=[Whitespace " "]
+        TypeList
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "Named" @ 241..246
+          Comma "," @ 246..247 trailing=[Whitespace " "]
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "Located" @ 248..255 trailing=[Whitespace " "]
+      RecordBody
+        LBrace "{" @ 256..257
+        RecordBodyMemberList
+        RBrace "}" @ 257..258 trailing=[Whitespace " "]
+    EnumDeclaration
+      EnumKw "enum" @ 259..263 trailing=[Whitespace " "]
+      Identifier "Color" @ 264..269 trailing=[Whitespace " "]
+      ImplementsClause
+        ImplementsKw "implements" @ 270..280 trailing=[Whitespace " "]
+        TypeList
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "Named" @ 281..286
+          Comma "," @ 286..287 trailing=[Whitespace " "]
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                QualifiedName
+                  QualifiedNameSegmentNode
+                    AnnotationList
+                    Identifier "java" @ 288..292
+                  Dot "." @ 292..293
+                  NameSegmentDotList
+                    QualifiedNameSegmentNode
+                      AnnotationList
+                      Identifier "io" @ 293..295
+                    Dot "." @ 295..296
+                    QualifiedNameSegmentNode
+                      AnnotationList
+                      Identifier "Serializable" @ 296..308 trailing=[Whitespace " "]
+      EnumBody
+        LBrace "{" @ 309..310
+        ClassBodyMemberList
+        RBrace "}" @ 310..311
+    ClassDeclaration
+      ClassKw "class" @ 312..317 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "LongExtends" @ 318..329 trailing=[Whitespace " "]
+      ExtendsClause
+        ExtendsKw "extends" @ 330..337 trailing=[Whitespace " "]
+        TypeList
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "Xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" @ 338..424 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 425..426
+        ClassBodyMemberList
+        RBrace "}" @ 426..427
+    ClassDeclaration
+      ModifierList
+        Identifier "sealed" @ 428..434 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ClassKw "class" @ 435..440 trailing=[Whitespace " "]
+      Identifier "LongPermits" @ 441..452 trailing=[Whitespace " "]
+      PermitsClause
+        Identifier "permits" @ 453..460 trailing=[Whitespace " "]
+        NameList
+          Name
+            Identifier "Xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" @ 461..547 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 548..549
+        ClassBodyMemberList
+        RBrace "}" @ 549..550
+    ClassDeclaration
+      ModifierList
+        Identifier "sealed" @ 551..557 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ClassKw "class" @ 558..563 trailing=[Whitespace " "]
+      Identifier "LongClauses" @ 564..575 trailing=[Whitespace " "]
+      ImplementsClause
+        ImplementsKw "implements" @ 576..586 trailing=[Whitespace " "]
+        TypeList
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "Xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" @ 587..670 trailing=[Whitespace " "]
+      PermitsClause
+        Identifier "permits" @ 671..678 trailing=[Whitespace " "]
+        NameList
+          Name
+            Identifier "Xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" @ 679..763
+          Comma "," @ 763..764 trailing=[Whitespace " "]
+          Name
+            Identifier "Yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy" @ 765..849 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 850..851
+        ClassBodyMemberList
+        RBrace "}" @ 851..852
+    InterfaceDeclaration
+      ModifierList
+        Identifier "sealed" @ 853..859 leading=[Newline "\n"] trailing=[Whitespace " "]
+      InterfaceKw "interface" @ 860..869 trailing=[Whitespace " "]
+      Identifier "LongInterface" @ 870..883 trailing=[Whitespace " "]
+      PermitsClause
+        Identifier "permits" @ 884..891 trailing=[Whitespace " "]
+        NameList
+          Name
+            Identifier "Xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" @ 892..978
+          Comma "," @ 978..979 trailing=[Whitespace " "]
+          Name
+            Identifier "Yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy" @ 980..1064 trailing=[Whitespace " "]
+      InterfaceBody
+        LBrace "{" @ 1065..1066
+        InterfaceBodyMemberList
+        RBrace "}" @ 1066..1067
+    RecordDeclaration
+      Identifier "record" @ 1068..1074 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "LongRecord" @ 1075..1085
+      LParen "(" @ 1085..1086
+      RecordComponentList
+        RecordComponent
+          ParameterModifierList
+          PrimitiveType
+            AnnotationList
+            IntKw "int" @ 1086..1089 trailing=[Whitespace " "]
+          AnnotationList
+          Identifier "value" @ 1090..1095
+      RParen ")" @ 1095..1096 trailing=[Whitespace " "]
+      ImplementsClause
+        ImplementsKw "implements" @ 1097..1107 trailing=[Whitespace " "]
+        TypeList
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "Xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" @ 1108..1191
+          Comma "," @ 1191..1192 trailing=[Whitespace " "]
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "Yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy" @ 1193..1277 trailing=[Whitespace " "]
+      RecordBody
+        LBrace "{" @ 1278..1279
+        RecordBodyMemberList
+        RBrace "}" @ 1279..1280
+    EnumDeclaration
+      EnumKw "enum" @ 1281..1285 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "LongEnum" @ 1286..1294 trailing=[Whitespace " "]
+      ImplementsClause
+        ImplementsKw "implements" @ 1295..1305 trailing=[Whitespace " "]
+        TypeList
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "Xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" @ 1306..1389
+          Comma "," @ 1389..1390 trailing=[Whitespace " "]
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "Yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy" @ 1391..1475 trailing=[Whitespace " "]
+      EnumBody
+        LBrace "{" @ 1476..1477 trailing=[Whitespace " "]
+        EnumConstantList
+          EnumConstant
+            AnnotationList
+            Identifier "ONE" @ 1478..1481 trailing=[Whitespace " "]
+        ClassBodyMemberList
+        RBrace "}" @ 1482..1483
   Eof "" @ 1484..1484 leading=[Newline "\n"]
 
 diagnostics:

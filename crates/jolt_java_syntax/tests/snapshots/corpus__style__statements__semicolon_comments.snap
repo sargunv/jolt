@@ -21,153 +21,163 @@ class Example {
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "Example" @ 6..13 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 14..15
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 18..22 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-          Identifier "run" @ 23..26
-          LParen "(" @ 26..27
-          RParen ")" @ 27..28 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 29..30
-            BlockStatement
-              LocalVariableDeclaration
-                PrimitiveType
-                  IntKw "int" @ 35..38 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "value" @ 39..44 trailing=[Whitespace " "]
-                    Assign "=" @ 45..46 trailing=[Whitespace " "]
-                    VariableInitializer
-                      MethodInvocationExpression
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "Example" @ 6..13 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 14..15
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 18..22 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Identifier "run" @ 23..26
+              LParen "(" @ 26..27
+              RParen ")" @ 27..28 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 29..30
+                BlockStatementList
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      PrimitiveType
+                        AnnotationList
+                        IntKw "int" @ 35..38 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "value" @ 39..44 trailing=[Whitespace " "]
+                          Assign "=" @ 45..46 trailing=[Whitespace " "]
+                          VariableInitializer
+                            MethodInvocationExpression
+                              UnqualifiedMethodInvocation
+                                NameExpression
+                                  Identifier "compute" @ 47..54
+                                ArgumentList
+                                  LParen "(" @ 54..55
+                                  ExpressionList
+                                  RParen ")" @ 55..56
+                    Semicolon ";" @ 56..57 trailing=[Whitespace " ", LineComment "// local value"]
+                  BlockStatement
+                    ExpressionStatement
+                      PostfixExpression
                         NameExpression
-                          Identifier "compute" @ 47..54
-                        ArgumentList
-                          LParen "(" @ 54..55
-                          RParen ")" @ 55..56
-              Semicolon ";" @ 56..57 trailing=[Whitespace " ", LineComment "// local value"]
-            BlockStatement
-              ExpressionStatement
-                PostfixExpression
-                  NameExpression
-                    Identifier "value" @ 77..82 leading=[Newline "\n", Whitespace "    "]
-                  PlusPlus "++" @ 82..84
-                Semicolon ";" @ 84..85 trailing=[Whitespace " ", LineComment "// expression statement"]
-            BlockStatement
-              AssertStatement
-                AssertKw "assert" @ 114..120 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                BinaryExpression
-                  NameExpression
-                    Identifier "value" @ 121..126 trailing=[Whitespace " "]
-                  Gt ">" @ 127..128 trailing=[Whitespace " "]
-                  LiteralExpression
-                    IntegerLiteral "0" @ 129..130 trailing=[Whitespace " "]
-                Colon ":" @ 131..132 trailing=[Whitespace " "]
-                NameExpression
-                  Identifier "value" @ 133..138
-                Semicolon ";" @ 138..139 trailing=[Whitespace " ", LineComment "// assert detail"]
-            BlockStatement
-              IfStatement
-                IfKw "if" @ 161..163 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                LParen "(" @ 164..165
-                BinaryExpression
-                  NameExpression
-                    Identifier "value" @ 165..170 trailing=[Whitespace " "]
-                  EqEq "==" @ 171..173 trailing=[Whitespace " "]
-                  LiteralExpression
-                    IntegerLiteral "0" @ 174..175
-                RParen ")" @ 175..176 trailing=[Whitespace " "]
-                ReturnStatement
-                  ReturnKw "return" @ 177..183
-                  Semicolon ";" @ 183..184 trailing=[Whitespace " ", LineComment "// return no value"]
-            BlockStatement
-              IfStatement
-                IfKw "if" @ 208..210 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                LParen "(" @ 211..212
-                BinaryExpression
-                  NameExpression
-                    Identifier "value" @ 212..217 trailing=[Whitespace " "]
-                  EqEq "==" @ 218..220 trailing=[Whitespace " "]
-                  LiteralExpression
-                    IntegerLiteral "1" @ 221..222
-                RParen ")" @ 222..223 trailing=[Whitespace " "]
-                ReturnStatement
-                  ReturnKw "return" @ 224..230 trailing=[Whitespace " "]
-                  NameExpression
-                    Identifier "value" @ 231..236 trailing=[Whitespace " ", BlockComment "/* returned value */"]
-                  Semicolon ";" @ 257..258 trailing=[Whitespace " ", LineComment "// return value"]
-            BlockStatement
-              IfStatement
-                IfKw "if" @ 279..281 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                LParen "(" @ 282..283
-                BinaryExpression
-                  NameExpression
-                    Identifier "value" @ 283..288 trailing=[Whitespace " "]
-                  EqEq "==" @ 289..291 trailing=[Whitespace " "]
-                  LiteralExpression
-                    IntegerLiteral "4" @ 292..293
-                RParen ")" @ 293..294 trailing=[Whitespace " "]
-                ReturnStatement
-                  ReturnKw "return" @ 295..301 trailing=[Whitespace " ", LineComment "// return line"]
-                  NameExpression
-                    Identifier "value" @ 321..326 leading=[Newline "\n", Whitespace "    "]
-                  Semicolon ";" @ 326..327
-            BlockStatement
-              IfStatement
-                IfKw "if" @ 332..334 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                LParen "(" @ 335..336
-                BinaryExpression
-                  NameExpression
-                    Identifier "value" @ 336..341 trailing=[Whitespace " "]
-                  EqEq "==" @ 342..344 trailing=[Whitespace " "]
-                  LiteralExpression
-                    IntegerLiteral "2" @ 345..346
-                RParen ")" @ 346..347 trailing=[Whitespace " "]
-                BreakStatement
-                  BreakKw "break" @ 348..353 trailing=[Whitespace " "]
-                  Identifier "label" @ 354..359
-                  Semicolon ";" @ 359..360 trailing=[Whitespace " ", LineComment "// break label"]
-            BlockStatement
-              IfStatement
-                IfKw "if" @ 380..382 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                LParen "(" @ 383..384
-                BinaryExpression
-                  NameExpression
-                    Identifier "value" @ 384..389 trailing=[Whitespace " "]
-                  EqEq "==" @ 390..392 trailing=[Whitespace " "]
-                  LiteralExpression
-                    IntegerLiteral "3" @ 393..394
-                RParen ")" @ 394..395 trailing=[Whitespace " "]
-                ContinueStatement
-                  ContinueKw "continue" @ 396..404 trailing=[Whitespace " "]
-                  Identifier "label" @ 405..410
-                  Semicolon ";" @ 410..411 trailing=[Whitespace " ", LineComment "// continue label"]
-            BlockStatement
-              DoStatement
-                DoKw "do" @ 434..436 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                ExpressionStatement
-                  PostfixExpression
-                    NameExpression
-                      Identifier "value" @ 437..442
-                    PlusPlus "++" @ 442..444
-                  Semicolon ";" @ 444..445 trailing=[Whitespace " "]
-                WhileKw "while" @ 446..451 trailing=[Whitespace " "]
-                LParen "(" @ 452..453
-                MethodInvocationExpression
-                  NameExpression
-                    Identifier "advance" @ 453..460
-                  ArgumentList
-                    LParen "(" @ 460..461
-                    RParen ")" @ 461..462
-                RParen ")" @ 462..463
-                Semicolon ";" @ 463..464 trailing=[Whitespace " ", LineComment "// do while"]
-            RBrace "}" @ 479..480 leading=[Newline "\n", Whitespace "  "]
-      RBrace "}" @ 481..482 leading=[Newline "\n"]
+                          Identifier "value" @ 77..82 leading=[Newline "\n", Whitespace "    "]
+                        PlusPlus "++" @ 82..84
+                      Semicolon ";" @ 84..85 trailing=[Whitespace " ", LineComment "// expression statement"]
+                  BlockStatement
+                    AssertStatement
+                      AssertKw "assert" @ 114..120 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      BinaryExpression
+                        NameExpression
+                          Identifier "value" @ 121..126 trailing=[Whitespace " "]
+                        Gt ">" @ 127..128 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "0" @ 129..130 trailing=[Whitespace " "]
+                      Colon ":" @ 131..132 trailing=[Whitespace " "]
+                      NameExpression
+                        Identifier "value" @ 133..138
+                      Semicolon ";" @ 138..139 trailing=[Whitespace " ", LineComment "// assert detail"]
+                  BlockStatement
+                    IfStatement
+                      IfKw "if" @ 161..163 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      LParen "(" @ 164..165
+                      BinaryExpression
+                        NameExpression
+                          Identifier "value" @ 165..170 trailing=[Whitespace " "]
+                        EqEq "==" @ 171..173 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "0" @ 174..175
+                      RParen ")" @ 175..176 trailing=[Whitespace " "]
+                      ReturnStatement
+                        ReturnKw "return" @ 177..183
+                        Semicolon ";" @ 183..184 trailing=[Whitespace " ", LineComment "// return no value"]
+                  BlockStatement
+                    IfStatement
+                      IfKw "if" @ 208..210 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      LParen "(" @ 211..212
+                      BinaryExpression
+                        NameExpression
+                          Identifier "value" @ 212..217 trailing=[Whitespace " "]
+                        EqEq "==" @ 218..220 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "1" @ 221..222
+                      RParen ")" @ 222..223 trailing=[Whitespace " "]
+                      ReturnStatement
+                        ReturnKw "return" @ 224..230 trailing=[Whitespace " "]
+                        NameExpression
+                          Identifier "value" @ 231..236 trailing=[Whitespace " ", BlockComment "/* returned value */"]
+                        Semicolon ";" @ 257..258 trailing=[Whitespace " ", LineComment "// return value"]
+                  BlockStatement
+                    IfStatement
+                      IfKw "if" @ 279..281 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      LParen "(" @ 282..283
+                      BinaryExpression
+                        NameExpression
+                          Identifier "value" @ 283..288 trailing=[Whitespace " "]
+                        EqEq "==" @ 289..291 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "4" @ 292..293
+                      RParen ")" @ 293..294 trailing=[Whitespace " "]
+                      ReturnStatement
+                        ReturnKw "return" @ 295..301 trailing=[Whitespace " ", LineComment "// return line"]
+                        NameExpression
+                          Identifier "value" @ 321..326 leading=[Newline "\n", Whitespace "    "]
+                        Semicolon ";" @ 326..327
+                  BlockStatement
+                    IfStatement
+                      IfKw "if" @ 332..334 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      LParen "(" @ 335..336
+                      BinaryExpression
+                        NameExpression
+                          Identifier "value" @ 336..341 trailing=[Whitespace " "]
+                        EqEq "==" @ 342..344 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "2" @ 345..346
+                      RParen ")" @ 346..347 trailing=[Whitespace " "]
+                      BreakStatement
+                        BreakKw "break" @ 348..353 trailing=[Whitespace " "]
+                        Identifier "label" @ 354..359
+                        Semicolon ";" @ 359..360 trailing=[Whitespace " ", LineComment "// break label"]
+                  BlockStatement
+                    IfStatement
+                      IfKw "if" @ 380..382 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      LParen "(" @ 383..384
+                      BinaryExpression
+                        NameExpression
+                          Identifier "value" @ 384..389 trailing=[Whitespace " "]
+                        EqEq "==" @ 390..392 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "3" @ 393..394
+                      RParen ")" @ 394..395 trailing=[Whitespace " "]
+                      ContinueStatement
+                        ContinueKw "continue" @ 396..404 trailing=[Whitespace " "]
+                        Identifier "label" @ 405..410
+                        Semicolon ";" @ 410..411 trailing=[Whitespace " ", LineComment "// continue label"]
+                  BlockStatement
+                    DoStatement
+                      DoKw "do" @ 434..436 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      ExpressionStatement
+                        PostfixExpression
+                          NameExpression
+                            Identifier "value" @ 437..442
+                          PlusPlus "++" @ 442..444
+                        Semicolon ";" @ 444..445 trailing=[Whitespace " "]
+                      WhileKw "while" @ 446..451 trailing=[Whitespace " "]
+                      LParen "(" @ 452..453
+                      MethodInvocationExpression
+                        UnqualifiedMethodInvocation
+                          NameExpression
+                            Identifier "advance" @ 453..460
+                          ArgumentList
+                            LParen "(" @ 460..461
+                            ExpressionList
+                            RParen ")" @ 461..462
+                      RParen ")" @ 462..463
+                      Semicolon ";" @ 463..464 trailing=[Whitespace " ", LineComment "// do while"]
+                RBrace "}" @ 479..480 leading=[Newline "\n", Whitespace "  "]
+        RBrace "}" @ 481..482 leading=[Newline "\n"]
   Eof "" @ 483..483 leading=[Newline "\n"]
 
 diagnostics:

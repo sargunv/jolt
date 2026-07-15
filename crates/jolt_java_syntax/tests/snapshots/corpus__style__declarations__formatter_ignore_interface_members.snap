@@ -15,61 +15,70 @@ int after=2;
 syntax:
 syntax:
 CompilationUnit
-  InterfaceDeclaration
-    InterfaceKw "interface" @ 0..9 trailing=[Whitespace " "]
-    Identifier "Example" @ 10..17 trailing=[Whitespace " "]
-    InterfaceBody
-      LBrace "{" @ 18..19
-      FieldDeclaration
-        PrimitiveType
-          IntKw "int" @ 20..23 leading=[Newline "\n"] trailing=[Whitespace " "]
-        VariableDeclaratorList
-          VariableDeclarator
-            Identifier "before" @ 24..30
-            Assign "=" @ 30..31
-            VariableInitializer
-              LiteralExpression
-                IntegerLiteral "1" @ 31..32
-        Semicolon ";" @ 32..33
-      FieldDeclaration
-        PrimitiveType
-          IntKw "int" @ 56..59 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-        VariableDeclaratorList
-          VariableDeclarator
-            Identifier "raw" @ 60..63
-            Assign "=" @ 63..64
-            VariableInitializer
-              BinaryExpression
-                LiteralExpression
-                  IntegerLiteral "1" @ 64..65
-                Plus "+" @ 65..66
-                LiteralExpression
-                  IntegerLiteral "2" @ 66..67
-        Semicolon ";" @ 67..68
-      FieldDeclaration
-        ClassType
-          Name
-            Identifier "String" @ 71..77 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-        VariableDeclaratorList
-          VariableDeclarator
-            Identifier "label" @ 78..83
-            Assign "=" @ 83..84
-            VariableInitializer
-              LiteralExpression
-                StringLiteral "\"x\"" @ 84..87
-        Semicolon ";" @ 87..88
-      FieldDeclaration
-        PrimitiveType
-          IntKw "int" @ 108..111 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n"] trailing=[Whitespace " "]
-        VariableDeclaratorList
-          VariableDeclarator
-            Identifier "after" @ 112..117
-            Assign "=" @ 117..118
-            VariableInitializer
-              LiteralExpression
-                IntegerLiteral "2" @ 118..119
-        Semicolon ";" @ 119..120
-      RBrace "}" @ 121..122 leading=[Newline "\n"]
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    InterfaceDeclaration
+      InterfaceKw "interface" @ 0..9 trailing=[Whitespace " "]
+      Identifier "Example" @ 10..17 trailing=[Whitespace " "]
+      InterfaceBody
+        LBrace "{" @ 18..19
+        InterfaceBodyMemberList
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 20..23 leading=[Newline "\n"] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "before" @ 24..30
+                Assign "=" @ 30..31
+                VariableInitializer
+                  LiteralExpression
+                    IntegerLiteral "1" @ 31..32
+            Semicolon ";" @ 32..33
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 56..59 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "raw" @ 60..63
+                Assign "=" @ 63..64
+                VariableInitializer
+                  BinaryExpression
+                    LiteralExpression
+                      IntegerLiteral "1" @ 64..65
+                    Plus "+" @ 65..66
+                    LiteralExpression
+                      IntegerLiteral "2" @ 66..67
+            Semicolon ";" @ 67..68
+          FieldDeclaration
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  Name
+                    Identifier "String" @ 71..77 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "label" @ 78..83
+                Assign "=" @ 83..84
+                VariableInitializer
+                  LiteralExpression
+                    StringLiteral "\"x\"" @ 84..87
+            Semicolon ";" @ 87..88
+          FieldDeclaration
+            PrimitiveType
+              AnnotationList
+              IntKw "int" @ 108..111 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n"] trailing=[Whitespace " "]
+            VariableDeclaratorList
+              VariableDeclarator
+                Identifier "after" @ 112..117
+                Assign "=" @ 117..118
+                VariableInitializer
+                  LiteralExpression
+                    IntegerLiteral "2" @ 118..119
+            Semicolon ";" @ 119..120
+        RBrace "}" @ 121..122 leading=[Newline "\n"]
   Eof "" @ 123..123 leading=[Newline "\n"]
 
 diagnostics:

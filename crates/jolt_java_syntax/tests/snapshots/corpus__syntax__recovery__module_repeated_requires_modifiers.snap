@@ -8,24 +8,36 @@ module com.example.repeated { requires static /* JOLT-TRIVIA:repeated-requires-s
 syntax:
 syntax:
 CompilationUnit
+  ImportDeclarationList
   ModuleDeclaration
+    AnnotationList
     Identifier "module" @ 0..6 trailing=[Whitespace " "]
     QualifiedName
-      Identifier "com" @ 7..10
+      QualifiedNameSegmentNode
+        AnnotationList
+        Identifier "com" @ 7..10
       Dot "." @ 10..11
-      Identifier "example" @ 11..18
-      Dot "." @ 18..19
-      Identifier "repeated" @ 19..27 trailing=[Whitespace " "]
+      NameSegmentDotList
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "example" @ 11..18
+        Dot "." @ 18..19
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "repeated" @ 19..27 trailing=[Whitespace " "]
     LBrace "{" @ 28..29 trailing=[Whitespace " "]
-    ModuleDirective
-      RequiresDirective
-        Identifier "requires" @ 30..38 trailing=[Whitespace " "]
-        StaticKw "static" @ 39..45 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:repeated-requires-static */", Whitespace " "]
-        StaticKw "static" @ 89..95 trailing=[Whitespace " "]
-        Name
-          Identifier "dependency" @ 96..106
-        Semicolon ";" @ 106..107 trailing=[Whitespace " "]
+    ModuleDirectiveList
+      ModuleDirective
+        RequiresDirective
+          Identifier "requires" @ 30..38 trailing=[Whitespace " "]
+          RequiresModifierList
+            StaticKw "static" @ 39..45 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:repeated-requires-static */", Whitespace " "]
+            StaticKw "static" @ 89..95 trailing=[Whitespace " "]
+          Name
+            Identifier "dependency" @ 96..106
+          Semicolon ";" @ 106..107 trailing=[Whitespace " "]
     RBrace "}" @ 108..109
+  CompilationUnitDeclarationList
   Eof "" @ 110..110 leading=[Newline "\n"]
 
 diagnostics:

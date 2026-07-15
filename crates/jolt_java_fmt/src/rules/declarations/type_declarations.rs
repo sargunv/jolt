@@ -1,198 +1,352 @@
 use super::{
     AnnotationInterfaceDeclaration, ClassDeclaration, CommaListItem, Doc, EnumDeclaration,
     ExtendsClause, ImplementsClause, InterfaceDeclaration, JavaSyntaxToken, LeadingTrivia,
-    ModifierList, PermitsClause, PermitsClauseEntry, RecordDeclaration, TrailingTrivia,
-    TypeClauseEntry, comma_list, comment_forces_line, format_annotation_interface_body,
-    format_class_body, format_construct_leading_comments, format_enum_body_contents,
-    format_interface_body, format_leading_comment_list, format_modifier_prefix, format_name,
-    format_record_body, format_record_component, format_token, format_token_with_comments,
-    format_type_parameter_list, format_type_without_leading_comments, parenthesized_list,
-    recovered_comma_list_items, source_braced_body,
+    PermitsClause, RecordDeclaration, TrailingTrivia, comma_list, comment_forces_line,
+    format_annotation_interface_body, format_class_body, format_construct_leading_comments,
+    format_enum_body_contents, format_interface_body, format_leading_comment_list,
+    format_modifier_prefix, format_name, format_record_body, format_record_component, format_token,
+    format_token_with_comments, format_type_parameter_list, format_type_without_leading_comments,
+    parenthesized_list, source_braced_body,
 };
-use crate::helpers::comments::format_token_after_relocated_leading_comments;
+use crate::helpers::{
+    comments::format_token_after_relocated_leading_comments,
+    recovery::{
+        JavaFormatDelimiter, JavaFormatField, JavaFormatListPart, format_or_verbatim,
+        resolve_list_part, resolve_optional_field, resolve_required_delimiter,
+        resolve_required_field,
+    },
+};
 use jolt_fmt_ir::DocBuilder;
-use jolt_java_syntax::RecoveredSeparatedListEntry;
 
-pub(super) fn format_class_declaration<'source>(
+macro_rules! type_declaration_formatter {
+    ($name:ident, $structured:ident, $ty:ty) => {
+        pub(super) fn $name<'source>(node: &$ty, doc: &mut DocBuilder<'source>) -> Doc<'source> {
+            format_or_verbatim(node, doc, |doc| $structured(node, doc))
+        }
+    };
+}
+
+type_declaration_formatter!(
+    format_class_declaration,
+    format_class_structured,
+    ClassDeclaration<'source>
+);
+type_declaration_formatter!(
+    format_interface_declaration,
+    format_interface_structured,
+    InterfaceDeclaration<'source>
+);
+type_declaration_formatter!(
+    format_record_declaration,
+    format_record_structured,
+    RecordDeclaration<'source>
+);
+type_declaration_formatter!(
+    format_enum_declaration,
+    format_enum_structured,
+    EnumDeclaration<'source>
+);
+type_declaration_formatter!(
+    format_annotation_interface_declaration,
+    format_annotation_structured,
+    AnnotationInterfaceDeclaration<'source>
+);
+
+fn format_class_structured<'source>(
     class: &ClassDeclaration<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let body = class.body();
-    let open = body
-        .as_ref()
-        .and_then(jolt_java_syntax::ClassBody::open_brace);
-    let close = body
-        .as_ref()
-        .and_then(jolt_java_syntax::ClassBody::close_brace);
-    let body_doc = body.as_ref().and_then(|body| format_class_body(body, doc));
-    format_type_declaration_with_body(
+    let modifiers = optional_doc(class.modifiers(), doc, |modifiers, doc| {
+        format_modifier_prefix(Some(modifiers), doc)
+    });
+    let keyword = required_doc(class.class_keyword(), doc, |keyword, doc| {
+        keyword_without_space(keyword, doc)
+    });
+    let (name, name_is_structured) = required_doc_with_presence(class.name(), doc, |name, doc| {
+        format_token_with_comments(doc, &name)
+    });
+    let name_separator = structured_separator(name_is_structured, doc);
+    let parameters = optional_doc(class.type_parameters(), doc, |parameters, doc| {
+        format_type_parameter_list(Some(parameters), doc)
+    });
+    let extends = optional_doc(class.extends(), doc, |extends, doc| {
+        format_extends(&extends, doc)
+    });
+    let implements = optional_doc(class.implements(), doc, |implements, doc| {
+        format_implements(&implements, doc)
+    });
+    let permits = optional_doc(class.permits(), doc, |permits, doc| {
+        format_permits(&permits, doc)
+    });
+    let (body, body_is_structured) = required_doc_with_presence(class.body(), doc, |body, doc| {
+        let open = resolve_required_delimiter(body.open_brace(), doc);
+        let close = resolve_required_delimiter(body.close_brace(), doc);
+        let contents = format_class_body(&body, doc);
+        source_braced_body(doc, open, close, contents)
+    });
+    type_with_body(
         class.first_token().as_ref(),
-        class.modifiers(),
+        modifiers,
         doc_concat!(
             doc,
             [
-                format_keyword_with_space(class.keyword(), doc),
-                class
-                    .name()
-                    .map_or_else(Doc::nil, |name| format_token_with_comments(doc, &name)),
-                format_type_parameter_list(class.type_parameters(), doc),
-                format_extends_clause(class.extends_clause(), doc),
-                format_implements_clause(class.implements_clause(), doc),
-                format_permits_clause(class.permits_clause(), doc),
+                keyword,
+                name_separator,
+                name,
+                parameters,
+                extends,
+                implements,
+                permits
             ]
         ),
-        (open, close, body_doc),
-        class.missing_body_semicolon(),
+        body,
+        body_is_structured,
         doc,
     )
 }
 
-pub(super) fn format_interface_declaration<'source>(
+fn format_interface_structured<'source>(
     interface: &InterfaceDeclaration<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let body = interface.body();
-    let open = body
-        .as_ref()
-        .and_then(jolt_java_syntax::InterfaceBody::open_brace);
-    let close = body
-        .as_ref()
-        .and_then(jolt_java_syntax::InterfaceBody::close_brace);
-    let body_doc = body
-        .as_ref()
-        .and_then(|body| format_interface_body(body, doc));
-    format_type_declaration_with_body(
+    let modifiers = optional_doc(interface.modifiers(), doc, |modifiers, doc| {
+        format_modifier_prefix(Some(modifiers), doc)
+    });
+    let keyword = required_doc(interface.interface_keyword(), doc, |keyword, doc| {
+        keyword_without_space(keyword, doc)
+    });
+    let (name, name_is_structured) =
+        required_doc_with_presence(interface.name(), doc, |name, doc| {
+            format_token_with_comments(doc, &name)
+        });
+    let name_separator = structured_separator(name_is_structured, doc);
+    let parameters = optional_doc(interface.type_parameters(), doc, |parameters, doc| {
+        format_type_parameter_list(Some(parameters), doc)
+    });
+    let extends = optional_doc(interface.extends(), doc, |extends, doc| {
+        format_extends(&extends, doc)
+    });
+    let permits = optional_doc(interface.permits(), doc, |permits, doc| {
+        format_permits(&permits, doc)
+    });
+    let (body, body_is_structured) =
+        required_doc_with_presence(interface.body(), doc, |body, doc| {
+            let open = resolve_required_delimiter(body.open_brace(), doc);
+            let close = resolve_required_delimiter(body.close_brace(), doc);
+            let contents = format_interface_body(&body, doc);
+            source_braced_body(doc, open, close, contents)
+        });
+    type_with_body(
         interface.first_token().as_ref(),
-        interface.modifiers(),
+        modifiers,
         doc_concat!(
             doc,
-            [
-                format_keyword_with_space(interface.keyword(), doc),
-                interface
-                    .name()
-                    .map_or_else(Doc::nil, |name| format_token_with_comments(doc, &name)),
-                format_type_parameter_list(interface.type_parameters(), doc),
-                format_extends_clause(interface.extends_clause(), doc),
-                format_permits_clause(interface.permits_clause(), doc),
-            ]
+            [keyword, name_separator, name, parameters, extends, permits]
         ),
-        (open, close, body_doc),
-        None,
+        body,
+        body_is_structured,
         doc,
     )
 }
 
-pub(super) fn format_record_declaration<'source>(
+fn format_record_structured<'source>(
     record: &RecordDeclaration<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let body = record.body();
-    let open = body
-        .as_ref()
-        .and_then(jolt_java_syntax::RecordBody::open_brace);
-    let close = body
-        .as_ref()
-        .and_then(jolt_java_syntax::RecordBody::close_brace);
-    let body_doc = body.as_ref().and_then(|body| format_record_body(body, doc));
-    format_type_declaration_with_body(
+    let modifiers = optional_doc(record.modifiers(), doc, |modifiers, doc| {
+        format_modifier_prefix(Some(modifiers), doc)
+    });
+    let keyword = required_doc(record.record_keyword(), doc, |keyword, doc| {
+        keyword_without_space(keyword, doc)
+    });
+    let (name, name_is_structured) = required_doc_with_presence(record.name(), doc, |name, doc| {
+        format_token_with_comments(doc, &name)
+    });
+    let name_separator = structured_separator(name_is_structured, doc);
+    let parameters = optional_doc(record.type_parameters(), doc, |parameters, doc| {
+        format_type_parameter_list(Some(parameters), doc)
+    });
+    let component_open = resolve_required_delimiter(record.open_paren(), doc);
+    let components = resolve_optional_field(record.components(), doc);
+    let component_close = resolve_required_delimiter(record.close_paren(), doc);
+    let component_doc = format_record_components(component_open, components, component_close, doc);
+    let implements = optional_doc(record.implements(), doc, |implements, doc| {
+        format_implements(&implements, doc)
+    });
+    let (body, body_is_structured) = required_doc_with_presence(record.body(), doc, |body, doc| {
+        let open = resolve_required_delimiter(body.open_brace(), doc);
+        let close = resolve_required_delimiter(body.close_brace(), doc);
+        let contents = format_record_body(&body, doc);
+        source_braced_body(doc, open, close, contents)
+    });
+    type_with_body(
         record.first_token().as_ref(),
-        record.modifiers(),
+        modifiers,
         doc_group!(
             doc,
             doc_concat!(
                 doc,
                 [
-                    format_keyword_with_space(record.keyword(), doc),
-                    record
-                        .name()
-                        .map_or_else(Doc::nil, |name| format_token_with_comments(doc, &name)),
-                    format_type_parameter_list(record.type_parameters(), doc),
-                    format_record_components(record, doc),
-                    format_implements_clause(record.implements_clause(), doc),
+                    keyword,
+                    name_separator,
+                    name,
+                    parameters,
+                    component_doc,
+                    implements
+                ]
+            )
+        ),
+        body,
+        body_is_structured,
+        doc,
+    )
+}
+
+fn format_enum_structured<'source>(
+    node: &EnumDeclaration<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    let modifiers = optional_doc(node.modifiers(), doc, |modifiers, doc| {
+        format_modifier_prefix(Some(modifiers), doc)
+    });
+    let keyword = required_doc(node.enum_keyword(), doc, |keyword, doc| {
+        keyword_without_space(keyword, doc)
+    });
+    let (name, name_is_structured) = required_doc_with_presence(node.name(), doc, |name, doc| {
+        format_token_with_comments(doc, &name)
+    });
+    let name_separator = structured_separator(name_is_structured, doc);
+    let implements = optional_doc(node.implements(), doc, |implements, doc| {
+        format_implements(&implements, doc)
+    });
+    let (body, body_is_structured) = required_doc_with_presence(node.body(), doc, |body, doc| {
+        let open = resolve_required_delimiter(body.open_brace(), doc);
+        let close = resolve_required_delimiter(body.close_brace(), doc);
+        let contents = format_enum_body_contents(&body, doc);
+        source_braced_body(doc, open, close, contents)
+    });
+    type_with_body(
+        node.first_token().as_ref(),
+        modifiers,
+        doc_concat!(doc, [keyword, name_separator, name, implements]),
+        body,
+        body_is_structured,
+        doc,
+    )
+}
+
+fn format_annotation_structured<'source>(
+    node: &AnnotationInterfaceDeclaration<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    let modifiers = optional_doc(node.modifiers(), doc, |modifiers, doc| {
+        format_modifier_prefix(Some(modifiers), doc)
+    });
+    let at = required_doc(node.at(), doc, |at, doc| {
+        format_token_after_relocated_leading_comments(doc, &at, TrailingTrivia::Preserve)
+    });
+    let interface = required_doc(node.interface_keyword(), doc, |interface, doc| {
+        keyword_without_space(interface, doc)
+    });
+    let (name, name_is_structured) = required_doc_with_presence(node.name(), doc, |name, doc| {
+        format_token_with_comments(doc, &name)
+    });
+    let name_separator = structured_separator(name_is_structured, doc);
+    let (body, body_is_structured) = required_doc_with_presence(node.body(), doc, |body, doc| {
+        let open = resolve_required_delimiter(body.open_brace(), doc);
+        let close = resolve_required_delimiter(body.close_brace(), doc);
+        let contents = format_annotation_interface_body(&body, doc);
+        source_braced_body(doc, open, close, contents)
+    });
+    type_with_body(
+        node.first_token().as_ref(),
+        modifiers,
+        doc_concat!(doc, [at, interface, name_separator, name]),
+        body,
+        body_is_structured,
+        doc,
+    )
+}
+
+fn type_with_body<'source>(
+    first: Option<&JavaSyntaxToken<'source>>,
+    modifiers: Doc<'source>,
+    header: Doc<'source>,
+    body: Doc<'source>,
+    body_is_structured: bool,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    let body_separator = structured_separator(body_is_structured, doc);
+    doc_concat!(
+        doc,
+        [
+            doc_concat!(
+                doc,
+                [
+                    format_leading_comment_list(
+                        doc,
+                        first
+                            .into_iter()
+                            .flat_map(JavaSyntaxToken::leading_comments)
+                    ),
+                    modifiers
                 ]
             ),
-        ),
-        (open, close, body_doc),
-        None,
-        doc,
+            doc_group!(doc, header),
+            body_separator,
+            body,
+        ]
     )
 }
 
-pub(super) fn format_enum_declaration<'source>(
-    enum_: &EnumDeclaration<'source>,
+fn required_doc_with_presence<'source, T>(
+    field: Result<
+        jolt_java_syntax::JavaSyntaxField<'source, T>,
+        jolt_java_syntax::JavaSyntaxInvariantError,
+    >,
     doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let body = enum_.body();
-    let open = body
-        .as_ref()
-        .and_then(jolt_java_syntax::EnumBody::open_brace);
-    let close = body
-        .as_ref()
-        .and_then(jolt_java_syntax::EnumBody::close_brace);
-    let body_doc = body
-        .as_ref()
-        .and_then(|body| format_enum_body_contents(body, doc));
-
-    format_type_declaration_with_body(
-        enum_.first_token().as_ref(),
-        enum_.modifiers(),
-        doc_concat!(
-            doc,
-            [
-                format_keyword_with_space(enum_.keyword(), doc),
-                enum_
-                    .name()
-                    .map_or_else(Doc::nil, |name| format_token_with_comments(doc, &name)),
-                format_implements_clause(enum_.implements_clause(), doc),
-            ]
-        ),
-        (open, close, body_doc),
-        None,
-        doc,
-    )
+    present: impl FnOnce(T, &mut DocBuilder<'source>) -> Doc<'source>,
+) -> (Doc<'source>, bool) {
+    match resolve_required_field(field, doc) {
+        JavaFormatField::Present(value) => (present(value, doc), true),
+        JavaFormatField::Malformed(malformed) => (malformed, false),
+    }
 }
 
-pub(super) fn format_annotation_interface_declaration<'source>(
-    annotation: &AnnotationInterfaceDeclaration<'source>,
+fn structured_separator<'source>(present: bool, doc: &mut DocBuilder<'source>) -> Doc<'source> {
+    if present { doc.space() } else { Doc::nil() }
+}
+
+fn required_doc<'source, T>(
+    field: Result<
+        jolt_java_syntax::JavaSyntaxField<'source, T>,
+        jolt_java_syntax::JavaSyntaxInvariantError,
+    >,
     doc: &mut DocBuilder<'source>,
+    present: impl FnOnce(T, &mut DocBuilder<'source>) -> Doc<'source>,
 ) -> Doc<'source> {
-    let body = annotation.body();
-    let open = body
-        .as_ref()
-        .and_then(jolt_java_syntax::AnnotationInterfaceBody::open_brace);
-    let close = body
-        .as_ref()
-        .and_then(jolt_java_syntax::AnnotationInterfaceBody::close_brace);
-    let body_doc = body
-        .as_ref()
-        .and_then(|body| format_annotation_interface_body(body, doc));
-
-    format_type_declaration_with_body(
-        annotation.first_token().as_ref(),
-        annotation.modifiers(),
-        doc_concat!(
-            doc,
-            [
-                annotation.at_token().map_or_else(Doc::nil, |token| {
-                    format_token_after_relocated_leading_comments(
-                        doc,
-                        &token,
-                        TrailingTrivia::Preserve,
-                    )
-                },),
-                format_keyword_with_space(annotation.interface_token(), doc),
-                annotation
-                    .name()
-                    .map_or_else(Doc::nil, |name| format_token_with_comments(doc, &name)),
-            ]
-        ),
-        (open, close, body_doc),
-        None,
-        doc,
-    )
+    match resolve_required_field(field, doc) {
+        JavaFormatField::Present(value) => present(value, doc),
+        JavaFormatField::Malformed(malformed) => malformed,
+    }
 }
 
-fn format_keyword_with_space<'source>(
+fn optional_doc<'source, T>(
+    field: Result<
+        jolt_java_syntax::JavaSyntaxField<'source, T>,
+        jolt_java_syntax::JavaSyntaxInvariantError,
+    >,
+    doc: &mut DocBuilder<'source>,
+    present: impl FnOnce(T, &mut DocBuilder<'source>) -> Doc<'source>,
+) -> Doc<'source> {
+    match resolve_optional_field(field, doc) {
+        JavaFormatField::Present(Some(value)) => present(value, doc),
+        JavaFormatField::Present(None) => Doc::nil(),
+        JavaFormatField::Malformed(malformed) => malformed,
+    }
+}
+
+fn keyword_with_space<'source>(
     keyword: Option<JavaSyntaxToken<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
@@ -203,282 +357,240 @@ fn format_keyword_with_space<'source>(
                 format_token_after_relocated_leading_comments(
                     doc,
                     &keyword,
-                    TrailingTrivia::Preserve,
+                    TrailingTrivia::Preserve
                 ),
-                doc.space(),
+                doc.space()
             ]
         )
     })
 }
 
-fn format_type_declaration_with_body<'source>(
-    first_token: Option<&jolt_java_syntax::JavaSyntaxToken<'source>>,
-    modifiers: Option<ModifierList<'source>>,
-    header_tail: Doc<'source>,
-    body: (
-        Option<JavaSyntaxToken<'source>>,
-        Option<JavaSyntaxToken<'source>>,
-        Option<Doc<'source>>,
-    ),
-    missing_body_semicolon: Option<JavaSyntaxToken<'source>>,
+fn keyword_without_space<'source>(
+    keyword: JavaSyntaxToken<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let (open_brace, close_brace, body) = body;
-    doc_concat!(
-        doc,
-        [
-            doc_concat!(
-                doc,
-                [
-                    format_leading_comment_list(
-                        doc,
-                        first_token
-                            .into_iter()
-                            .flat_map(jolt_java_syntax::JavaSyntaxToken::leading_comments),
-                    ),
-                    format_modifier_prefix(modifiers, doc),
-                ]
-            ),
-            doc_group!(doc, header_tail),
-            doc.space(),
-            source_braced_body(doc, open_brace.as_ref(), close_brace.as_ref(), body),
-            missing_body_semicolon.map_or_else(Doc::nil, |semicolon| {
-                format_token_with_comments(doc, &semicolon)
-            }),
-        ]
-    )
+    format_token_after_relocated_leading_comments(doc, &keyword, TrailingTrivia::Preserve)
 }
 
 fn format_record_components<'source>(
-    record: &RecordDeclaration<'source>,
+    open: JavaFormatDelimiter<'source>,
+    components: JavaFormatField<'source, Option<jolt_java_syntax::RecordComponentList<'source>>>,
+    close: JavaFormatDelimiter<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let Some(components) = record.components() else {
-        let open = record.open_paren();
-        let close = record.close_paren();
-        return parenthesized_list(doc, open.as_ref(), close.as_ref(), std::iter::empty());
-    };
-
-    let open = components.open_paren();
-    let close = components.close_paren();
-    let items = record_component_list_items(&components, doc);
-    parenthesized_list(doc, open.as_ref(), close.as_ref(), items)
-}
-
-fn record_component_list_items<'source, 'fmt>(
-    components: &'fmt jolt_java_syntax::RecordComponentList<'source>,
-    doc: &'fmt mut DocBuilder<'source>,
-) -> Vec<CommaListItem<'source>> {
-    recovered_comma_list_items(doc, components.entries_with_recovered(), |entry, doc| {
-        CommaListItem {
-            doc: format_record_component(&entry.component, doc),
-            comma: entry.comma,
+    match components {
+        JavaFormatField::Present(Some(components)) => {
+            let parts = components.parts();
+            let (lower, _) = parts.size_hint();
+            let mut items = Vec::with_capacity(lower);
+            for part in parts {
+                match resolve_list_part(part, doc) {
+                    JavaFormatListPart::Item(component) => items.push(CommaListItem {
+                        doc: format_record_component(&component, doc),
+                        comma: None,
+                    }),
+                    JavaFormatListPart::Separator(comma) => {
+                        if let Some(item) = items.last_mut() {
+                            item.comma = Some(comma);
+                        } else {
+                            doc.block_on_invariant(
+                                "record component separator had no preceding component",
+                            );
+                        }
+                    }
+                    JavaFormatListPart::Malformed(malformed) => items.push(CommaListItem {
+                        doc: malformed,
+                        comma: None,
+                    }),
+                }
+            }
+            parenthesized_list(doc, open, close, items)
         }
-    })
-}
-
-fn format_extends_clause<'source>(
-    clause: Option<ExtendsClause<'source>>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let Some(clause) = clause else {
-        return Doc::nil();
-    };
-    let keyword = clause.keyword();
-    format_type_header_clause(
-        keyword.as_ref(),
-        "extends",
-        clause.entries_with_recovered(),
-        doc,
-    )
-}
-
-fn format_implements_clause<'source>(
-    clause: Option<ImplementsClause<'source>>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let Some(clause) = clause else {
-        return Doc::nil();
-    };
-    let keyword = clause.keyword();
-    format_type_header_clause(
-        keyword.as_ref(),
-        "implements",
-        clause.entries_with_recovered(),
-        doc,
-    )
-}
-
-fn format_permits_clause<'source>(
-    clause: Option<PermitsClause<'source>>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let Some(clause) = clause else {
-        return Doc::nil();
-    };
-    let keyword = clause.keyword();
-    format_permits_header_clause(
-        keyword.as_ref(),
-        "permits",
-        clause.entries_with_recovered(),
-        doc,
-    )
-}
-
-fn format_type_header_clause<'source>(
-    keyword: Option<&JavaSyntaxToken<'source>>,
-    fallback: &'static str,
-    entries: impl IntoIterator<Item = RecoveredSeparatedListEntry<'source, TypeClauseEntry<'source>>>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let mut entries = entries.into_iter().peekable();
-    if entries.peek().is_none() {
-        return doc_indent!(
+        JavaFormatField::Present(None) => parenthesized_list(doc, open, close, []),
+        JavaFormatField::Malformed(malformed) => parenthesized_list(
             doc,
-            doc_concat!(
-                doc,
-                [
-                    doc.line(),
-                    format_header_clause_keyword(keyword, fallback, doc),
-                ]
-            )
-        );
+            open,
+            close,
+            [CommaListItem {
+                doc: malformed,
+                comma: None,
+            }],
+        ),
     }
+}
 
-    doc_indent!(
-        doc,
-        doc_concat!(
+fn format_extends<'source>(
+    clause: &ExtendsClause<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    let keyword = resolve_required_field(clause.extends_keyword(), doc);
+    let types = resolve_required_field(clause.types(), doc);
+    format_type_clause_fields(keyword, types, doc)
+}
+
+fn format_implements<'source>(
+    clause: &ImplementsClause<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    let keyword = resolve_required_field(clause.implements_keyword(), doc);
+    let types = resolve_required_field(clause.types(), doc);
+    format_type_clause_fields(keyword, types, doc)
+}
+
+fn format_permits<'source>(
+    clause: &PermitsClause<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    let keyword = resolve_required_field(clause.permits_keyword(), doc);
+    let names = match resolve_required_field(clause.names(), doc) {
+        JavaFormatField::Present(names) => names,
+        JavaFormatField::Malformed(names) => {
+            let keyword = field_token_with_space(keyword, doc);
+            return doc_concat!(doc, [keyword, names]);
+        }
+    };
+    let parts = names.parts();
+    let (lower, _) = parts.size_hint();
+    let mut items = Vec::with_capacity(lower);
+    for part in parts {
+        match resolve_list_part(part, doc) {
+            JavaFormatListPart::Item(name) => items.push(CommaListItem {
+                doc: doc_concat!(
+                    doc,
+                    [
+                        format_construct_leading_comments(doc, name.first_token().as_ref()),
+                        format_name(&name, doc)
+                    ]
+                ),
+                comma: None,
+            }),
+            JavaFormatListPart::Separator(comma) => {
+                if let Some(item) = items.last_mut() {
+                    item.comma = Some(comma);
+                }
+            }
+            JavaFormatListPart::Malformed(malformed) => items.push(CommaListItem {
+                doc: malformed,
+                comma: None,
+            }),
+        }
+    }
+    match keyword {
+        JavaFormatField::Present(keyword) => header_clause(Some(&keyword), items, doc),
+        JavaFormatField::Malformed(keyword) => {
+            doc_concat!(doc, [keyword, header_clause(None, items, doc)])
+        }
+    }
+}
+
+fn format_type_clause_fields<'source>(
+    keyword: JavaFormatField<'source, JavaSyntaxToken<'source>>,
+    types: JavaFormatField<'source, jolt_java_syntax::TypeList<'source>>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    match (keyword, types) {
+        (JavaFormatField::Present(keyword), JavaFormatField::Present(types)) => {
+            format_type_clause(Some(&keyword), types.parts(), doc)
+        }
+        (keyword, JavaFormatField::Present(types)) => doc_concat!(
             doc,
             [
-                doc.line(),
-                format_header_clause_keyword(keyword, fallback, doc),
-                doc_indent!(
-                    doc,
-                    doc_group!(
-                        doc,
-                        doc_concat!(
-                            doc,
-                            [
-                                format_header_clause_keyword_break(keyword, doc),
-                                format_type_clause_entries_broken(entries, doc),
-                            ]
-                        )
-                    )
-                ),
+                field_token_with_space(keyword, doc),
+                format_type_clause(None, types.parts(), doc)
             ]
-        )
-    )
-}
-
-fn format_permits_header_clause<'source>(
-    keyword: Option<&JavaSyntaxToken<'source>>,
-    fallback: &'static str,
-    entries: impl IntoIterator<Item = RecoveredSeparatedListEntry<'source, PermitsClauseEntry<'source>>>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let mut entries = entries.into_iter().peekable();
-    if entries.peek().is_none() {
-        return doc_indent!(
-            doc,
-            doc_concat!(
-                doc,
-                [
-                    doc.line(),
-                    format_header_clause_keyword(keyword, fallback, doc),
-                ]
-            )
-        );
+        ),
+        (keyword, JavaFormatField::Malformed(types)) => {
+            doc_concat!(doc, [field_token_with_space(keyword, doc), types])
+        }
     }
-
-    doc_indent!(
-        doc,
-        doc_concat!(
-            doc,
-            [
-                doc.line(),
-                format_header_clause_keyword(keyword, fallback, doc),
-                doc_indent!(
-                    doc,
-                    doc_group!(
-                        doc,
-                        doc_concat!(
-                            doc,
-                            [
-                                format_header_clause_keyword_break(keyword, doc),
-                                format_permits_clause_entries_broken(entries, doc),
-                            ]
-                        )
-                    )
-                ),
-            ]
-        )
-    )
 }
 
-fn format_header_clause_keyword<'source>(
-    keyword: Option<&JavaSyntaxToken<'source>>,
-    _fallback: &'static str,
+fn field_token_with_space<'source>(
+    field: JavaFormatField<'source, JavaSyntaxToken<'source>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    keyword.map_or_else(Doc::nil, |keyword| {
+    match field {
+        JavaFormatField::Present(token) => keyword_with_space(Some(token), doc),
+        JavaFormatField::Malformed(malformed) => malformed,
+    }
+}
+
+fn format_type_clause<'source>(
+    keyword: Option<&JavaSyntaxToken<'source>>,
+    parts: impl IntoIterator<
+        Item = Result<
+            jolt_java_syntax::JavaSyntaxListPart<'source, jolt_java_syntax::Type<'source>>,
+            jolt_java_syntax::JavaSyntaxInvariantError,
+        >,
+    >,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    let parts = parts.into_iter();
+    let (lower, _) = parts.size_hint();
+    let mut items = Vec::with_capacity(lower);
+    for part in parts {
+        match resolve_list_part(part, doc) {
+            JavaFormatListPart::Item(ty) => items.push(CommaListItem {
+                doc: doc_concat!(
+                    doc,
+                    [
+                        format_construct_leading_comments(doc, ty.first_token().as_ref()),
+                        format_type_without_leading_comments(&ty, doc)
+                    ]
+                ),
+                comma: None,
+            }),
+            JavaFormatListPart::Separator(comma) => {
+                if let Some(item) = items.last_mut() {
+                    item.comma = Some(comma);
+                }
+            }
+            JavaFormatListPart::Malformed(malformed) => items.push(CommaListItem {
+                doc: malformed,
+                comma: None,
+            }),
+        }
+    }
+    header_clause(keyword, items, doc)
+}
+
+fn header_clause<'source>(
+    keyword: Option<&JavaSyntaxToken<'source>>,
+    items: Vec<CommaListItem<'source>>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    let keyword_doc = keyword.map_or_else(Doc::nil, |keyword| {
         format_token(
             doc,
             keyword,
             LeadingTrivia::Preserve,
             TrailingTrivia::BeforeLineBreak,
         )
-    })
-}
-
-fn format_header_clause_keyword_break<'source>(
-    keyword: Option<&JavaSyntaxToken<'source>>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    if header_keyword_forces_line(keyword) {
+    });
+    if items.is_empty() {
+        return doc_indent!(doc, doc_concat!(doc, [doc.line(), keyword_doc]));
+    }
+    let break_doc = if keyword.is_some_and(|token| {
+        token
+            .trailing_comments()
+            .any(|comment| comment_forces_line(&comment))
+    }) {
         doc.hard_line()
     } else {
         doc.line()
-    }
-}
-
-fn header_keyword_forces_line(keyword: Option<&JavaSyntaxToken<'_>>) -> bool {
-    keyword.is_some_and(|keyword| {
-        keyword
-            .trailing_comments()
-            .any(|comment| comment_forces_line(&comment))
-    })
-}
-
-fn format_type_clause_entries_broken<'source>(
-    entries: impl IntoIterator<Item = RecoveredSeparatedListEntry<'source, TypeClauseEntry<'source>>>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let items = recovered_comma_list_items(doc, entries, |entry, doc| CommaListItem {
-        doc: doc_concat!(
+    };
+    doc_indent!(
+        doc,
+        doc_concat!(
             doc,
             [
-                format_construct_leading_comments(doc, entry.ty.first_token().as_ref()),
-                format_type_without_leading_comments(&entry.ty, doc),
+                doc.line(),
+                keyword_doc,
+                doc_indent!(
+                    doc,
+                    doc_group!(doc, doc_concat!(doc, [break_doc, comma_list(doc, items)]))
+                )
             ]
-        ),
-        comma: entry.comma,
-    });
-    comma_list(doc, items)
-}
-
-fn format_permits_clause_entries_broken<'source>(
-    entries: impl IntoIterator<Item = RecoveredSeparatedListEntry<'source, PermitsClauseEntry<'source>>>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let items = recovered_comma_list_items(doc, entries, |entry, doc| CommaListItem {
-        doc: doc_concat!(
-            doc,
-            [
-                format_construct_leading_comments(doc, entry.name.first_token().as_ref()),
-                format_name(&entry.name, doc),
-            ]
-        ),
-        comma: entry.comma,
-    });
-    comma_list(doc, items)
+        )
+    )
 }

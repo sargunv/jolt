@@ -12,63 +12,91 @@ class MixedDeepGenericCloseAndGreaterThan {
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "MixedDeepGenericCloseAndGreaterThan" @ 6..41 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 42..43
-      ClassBodyDeclaration
-        MethodDeclaration
-          PrimitiveType
-            BooleanKw "boolean" @ 48..55 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "method" @ 56..62
-          LParen "(" @ 62..63
-          FormalParameterList
-            FormalParameter
-              ClassType
-                Name
-                  Identifier "Object" @ 63..69 trailing=[Whitespace " "]
-              Identifier "value" @ 70..75
-            Comma "," @ 75..76 trailing=[Whitespace " "]
-            FormalParameter
-              ClassType
-                Name
-                  Identifier "Object" @ 77..83 trailing=[Whitespace " "]
-              Identifier "limit" @ 84..89
-          RParen ")" @ 89..90 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 91..92
-            BlockStatement
-              ReturnStatement
-                ReturnKw "return" @ 101..107 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                BinaryExpression
-                  InstanceofExpression
-                    NameExpression
-                      Identifier "value" @ 108..113 trailing=[Whitespace " "]
-                    InstanceofKw "instanceof" @ 114..124 trailing=[Whitespace " "]
-                    ClassType
-                      Name
-                        Identifier "Box" @ 125..128
-                      TypeArgumentList
-                        Lt "<" @ 128..129
-                        TypeArgument
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "MixedDeepGenericCloseAndGreaterThan" @ 6..41 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 42..43
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              PrimitiveType
+                AnnotationList
+                BooleanKw "boolean" @ 48..55 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Identifier "method" @ 56..62
+              LParen "(" @ 62..63
+              FormalParameterList
+                FormalParameter
+                  ParameterModifierList
+                  ClassType
+                    ClassTypeSegmentList
+                      ClassTypeSegmentNode
+                        AnnotationList
+                        Name
+                          Identifier "Object" @ 63..69 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "value" @ 70..75
+                Comma "," @ 75..76 trailing=[Whitespace " "]
+                FormalParameter
+                  ParameterModifierList
+                  ClassType
+                    ClassTypeSegmentList
+                      ClassTypeSegmentNode
+                        AnnotationList
+                        Name
+                          Identifier "Object" @ 77..83 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "limit" @ 84..89
+              RParen ")" @ 89..90 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 91..92
+                BlockStatementList
+                  BlockStatement
+                    ReturnStatement
+                      ReturnKw "return" @ 101..107 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      BinaryExpression
+                        InstanceofExpression
+                          NameExpression
+                            Identifier "value" @ 108..113 trailing=[Whitespace " "]
+                          InstanceofKw "instanceof" @ 114..124 trailing=[Whitespace " "]
                           ClassType
-                            Name
-                              Identifier "List" @ 129..133
-                            TypeArgumentList
-                              Lt "<" @ 133..134
-                              TypeArgument
-                                ClassType
-                                  Name
-                                    Identifier "String" @ 134..140
-                              Gt ">" @ 140..141
-                        Gt ">" @ 141..142
-                  Gt ">" @ 142..143 trailing=[Whitespace " "]
-                  NameExpression
-                    Identifier "limit" @ 144..149
-                Semicolon ";" @ 149..150
-            RBrace "}" @ 155..156 leading=[Newline "\n", Whitespace "    "]
-      RBrace "}" @ 157..158 leading=[Newline "\n"]
+                            ClassTypeSegmentList
+                              ClassTypeSegmentNode
+                                AnnotationList
+                                Name
+                                  Identifier "Box" @ 125..128
+                                TypeArgumentList
+                                  Lt "<" @ 128..129
+                                  TypeArgumentSeparatedList
+                                    TypeArgument
+                                      AnnotationList
+                                      ClassType
+                                        ClassTypeSegmentList
+                                          ClassTypeSegmentNode
+                                            AnnotationList
+                                            Name
+                                              Identifier "List" @ 129..133
+                                            TypeArgumentList
+                                              Lt "<" @ 133..134
+                                              TypeArgumentSeparatedList
+                                                TypeArgument
+                                                  AnnotationList
+                                                  ClassType
+                                                    ClassTypeSegmentList
+                                                      ClassTypeSegmentNode
+                                                        AnnotationList
+                                                        Name
+                                                          Identifier "String" @ 134..140
+                                              Gt ">" @ 140..141
+                                  Gt ">" @ 141..142
+                        Gt ">" @ 142..143 trailing=[Whitespace " "]
+                        NameExpression
+                          Identifier "limit" @ 144..149
+                      Semicolon ";" @ 149..150
+                RBrace "}" @ 155..156 leading=[Newline "\n", Whitespace "    "]
+        RBrace "}" @ 157..158 leading=[Newline "\n"]
   Eof "" @ 159..159 leading=[Newline "\n"]
 
 diagnostics:

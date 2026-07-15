@@ -8,8 +8,10 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    StringLiteral "\"Hello \\{name}\"" @ 0..15
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      StringLiteral "\"Hello \\{name}\"" @ 0..15
   Eof "" @ 15..15
 
 diagnostics:

@@ -9,7 +9,9 @@ use std::slice;
 
 use jolt_text::{TextRange, TextSize};
 
-use crate::{SyntaxTrivia, TriviaKind};
+#[cfg(debug_assertions)]
+use crate::{SourceTokenId, SourceTriviaId, SourceTriviaSide};
+use crate::{SourceTriviaPiece, SyntaxTrivia, TriviaKind};
 
 /// A comment kind exposed from syntax trivia.
 ///
@@ -31,7 +33,12 @@ pub enum CommentKind {
 pub struct Comment<'source> {
     kind: CommentKind,
     source: &'source str,
+    #[cfg(not(debug_assertions))]
     text_range: TextRange,
+    #[cfg(debug_assertions)]
+    piece: SourceTriviaPiece<'source>,
+    #[cfg(debug_assertions)]
+    line_terminator: Option<SourceTriviaPiece<'source>>,
 }
 
 impl<'source> Comment<'source> {
@@ -44,15 +51,57 @@ impl<'source> Comment<'source> {
     /// Returns the raw comment text.
     #[must_use]
     pub fn text(&self) -> &'source str {
-        &self.source[self.text_range.start().get()..self.text_range.end().get()]
+        let range = self.text_range();
+        &self.source[range.start().get()..range.end().get()]
     }
 
     /// Returns the source range covered by this comment.
     #[must_use]
     pub fn text_range(&self) -> TextRange {
-        self.text_range
+        #[cfg(debug_assertions)]
+        {
+            self.piece.text_range()
+        }
+        #[cfg(not(debug_assertions))]
+        {
+            self.text_range
+        }
     }
 
+    #[cfg(debug_assertions)]
+    #[must_use]
+    pub const fn source_piece(&self) -> SourceTriviaPiece<'source> {
+        self.piece
+    }
+
+    #[cfg(debug_assertions)]
+    pub fn source_pieces(&self) -> impl Iterator<Item = SourceTriviaPiece<'source>> + use<'source> {
+        [Some(self.piece), self.line_terminator]
+            .into_iter()
+            .flatten()
+    }
+
+    #[cfg(not(debug_assertions))]
+    pub fn source_pieces(&self) -> impl Iterator<Item = SourceTriviaPiece<'source>> + use<'source> {
+        std::iter::empty()
+    }
+
+    #[cfg(debug_assertions)]
+    pub(crate) const fn new(
+        kind: CommentKind,
+        source: &'source str,
+        piece: SourceTriviaPiece<'source>,
+        line_terminator: Option<SourceTriviaPiece<'source>>,
+    ) -> Self {
+        Self {
+            kind,
+            source,
+            piece,
+            line_terminator,
+        }
+    }
+
+    #[cfg(not(debug_assertions))]
     pub(crate) const fn new(
         kind: CommentKind,
         source: &'source str,
@@ -71,10 +120,39 @@ impl<'source> Comment<'source> {
 pub struct Comments<'source> {
     source: &'source str,
     trivia: slice::Iter<'source, SyntaxTrivia>,
+    #[cfg(debug_assertions)]
+    token: SourceTokenId<'source>,
+    #[cfg(debug_assertions)]
+    side: SourceTriviaSide,
+    #[cfg(debug_assertions)]
+    ordinal: usize,
     offset: TextSize,
+    #[cfg(debug_assertions)]
+    following_line_terminator: Option<SourceTriviaPiece<'source>>,
 }
 
 impl<'source> Comments<'source> {
+    #[cfg(debug_assertions)]
+    pub(crate) fn new(
+        source: &'source str,
+        trivia: &'source [SyntaxTrivia],
+        token: SourceTokenId<'source>,
+        side: SourceTriviaSide,
+        offset: TextSize,
+        following_line_terminator: Option<SourceTriviaPiece<'source>>,
+    ) -> Self {
+        Self {
+            source,
+            trivia: trivia.iter(),
+            token,
+            side,
+            ordinal: 0,
+            offset,
+            following_line_terminator,
+        }
+    }
+
+    #[cfg(not(debug_assertions))]
     pub(crate) fn new(
         source: &'source str,
         trivia: &'source [SyntaxTrivia],
@@ -109,12 +187,49 @@ impl<'source> Iterator for Comments<'source> {
         for trivia in self.trivia.by_ref() {
             let text_range = TextRange::new(self.offset, self.offset + trivia.text_len());
             self.offset = text_range.end();
+            #[cfg(debug_assertions)]
+            let id = SourceTriviaId::new(self.token, self.side, self.ordinal);
+            #[cfg(debug_assertions)]
+            {
+                self.ordinal += 1;
+            }
             let kind = match trivia.kind() {
                 TriviaKind::LineComment | TriviaKind::ShebangComment => CommentKind::Line,
                 TriviaKind::BlockComment => CommentKind::Block,
                 TriviaKind::DocComment => CommentKind::Doc,
                 TriviaKind::Whitespace | TriviaKind::Newline | TriviaKind::Ignored => continue,
             };
+            #[cfg(debug_assertions)]
+            let line_terminator = if matches!(kind, CommentKind::Line) {
+                (|| {
+                    let trivia = *self.trivia.as_slice().first()?;
+                    (trivia.kind() == TriviaKind::Newline).then(|| {
+                        let range = TextRange::new(self.offset, self.offset + trivia.text_len());
+                        SourceTriviaPiece::new(
+                            SourceTriviaId::new(self.token, self.side, self.ordinal),
+                            trivia,
+                            range,
+                        )
+                    })
+                })()
+                .or_else(|| {
+                    self.trivia
+                        .as_slice()
+                        .is_empty()
+                        .then(|| self.following_line_terminator.take())
+                        .flatten()
+                })
+            } else {
+                None
+            };
+            #[cfg(debug_assertions)]
+            return Some(Comment::new(
+                kind,
+                self.source,
+                SourceTriviaPiece::new(id, *trivia, text_range),
+                line_terminator,
+            ));
+            #[cfg(not(debug_assertions))]
             return Some(Comment::new(kind, self.source, text_range));
         }
 

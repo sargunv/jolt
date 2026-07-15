@@ -10,8 +10,10 @@ hello
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    TextBlockLiteral "\"\"\" \t\u{c}\r\nhello\r\n\"\"\"" @ 0..18
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      TextBlockLiteral "\"\"\" \t\u{c}\r\nhello\r\n\"\"\"" @ 0..18
   Eof "" @ 18..18
 
 diagnostics:

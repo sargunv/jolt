@@ -3,29 +3,39 @@ use super::{
     PostfixExpression, UnaryExpression, format_expression, format_token_with_comments,
 };
 use crate::helpers::comments::token_has_comments;
-use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, format_token, format_token_sequence,
-};
-use crate::helpers::syntax_tokens::{FormatterInsertedToken, inserted_syntax_token};
+use crate::helpers::recovery::format_required_field;
+use crate::helpers::syntax_tokens::inserted_syntax_token;
 use jolt_fmt_ir::DocBuilder;
-use jolt_java_syntax::{ExpressionParentRole, JavaOperator};
+use jolt_java_syntax::{
+    ExpressionParentRole, JavaOperator, JavaOperatorKind, JavaSyntaxField, JavaSyntaxView,
+    binary_operator_precedence, is_bitwise_or_shift_operator, is_multiplicative_operator,
+    is_shift_operator,
+};
 
 pub(super) fn format_assignment_expression<'source>(
     expression: &AssignmentExpression<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let left = match expression.left() {
-        Some(left) => format_expression(&left, doc),
-        None => Doc::nil(),
-    };
-    let operator = match expression.operator() {
-        Some(operator) => format_operator_with_comments(&operator, doc),
-        None => Doc::nil(),
-    };
-    let right = match expression.right() {
-        Some(right) => format_expression(&right, doc),
-        None => Doc::nil(),
-    };
+    let left = format_required_field(expression.left(), doc, |left, doc| {
+        let Some(left) = left.cast_family::<Expression<'source>>() else {
+            doc.block_on_invariant("assignment target was not an expression");
+            return Doc::nil();
+        };
+        format_expression(&left, doc)
+    });
+    let operator = format_required_field(expression.operator(), doc, |operator, doc| {
+        let operator = match operator.as_operator() {
+            Ok(operator) => operator,
+            Err(error) => {
+                doc.block_on_invariant(error.to_string());
+                return Doc::nil();
+            }
+        };
+        format_operator_with_comments(&operator, doc)
+    });
+    let right = format_required_field(expression.right(), doc, |right, doc| {
+        format_expression(&right, doc)
+    });
 
     assignment_expression(doc, left, operator, right)
 }
@@ -34,26 +44,21 @@ pub(super) fn format_conditional_expression<'source>(
     expression: &ConditionalExpression<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let condition = match expression.condition() {
-        Some(condition) => format_expression(&condition, doc),
-        None => Doc::nil(),
-    };
-    let question = match expression.question_token() {
-        Some(token) => format_token_with_comments(doc, &token),
-        None => Doc::nil(),
-    };
-    let consequence = match expression.true_expression() {
-        Some(expression) => format_expression(&expression, doc),
-        None => Doc::nil(),
-    };
-    let colon = match expression.colon_token() {
-        Some(token) => format_token_with_comments(doc, &token),
-        None => Doc::nil(),
-    };
-    let alternative = match expression.false_expression() {
-        Some(expression) => format_expression(&expression, doc),
-        None => Doc::nil(),
-    };
+    let condition = format_required_field(expression.condition(), doc, |condition, doc| {
+        format_expression(&condition, doc)
+    });
+    let question = format_required_field(expression.question(), doc, |token, doc| {
+        format_token_with_comments(doc, &token)
+    });
+    let consequence = format_required_field(expression.then_expression(), doc, |value, doc| {
+        format_expression(&value, doc)
+    });
+    let colon = format_required_field(expression.colon(), doc, |token, doc| {
+        format_token_with_comments(doc, &token)
+    });
+    let alternative = format_required_field(expression.else_expression(), doc, |value, doc| {
+        format_expression(&value, doc)
+    });
 
     ternary_expression(
         doc,
@@ -70,104 +75,65 @@ pub(super) fn format_binary_expression<'source>(
     expression: &BinaryExpression<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let Some(operator) = expression.operator() else {
-        return format_binary_expression_without_operator(expression, doc);
-    };
-
-    if expression.left().is_none() {
-        let operator = format_operator_with_comments(&operator, doc);
-        let right = match expression.right() {
-            Some(right) => format_expression(&right, doc),
-            None => Doc::nil(),
-        };
-        let rest = doc.concat_list(|rest| {
-            let item = binary_chain_item(operator, right, rest);
-            rest.push(item);
-        });
-        let binary = binary_chain(doc, Doc::nil(), rest, true);
-        return append_recovered_binary_tokens(expression, binary, doc);
+    if !expression.is_recovery_free() {
+        return format_recovered_binary_expression(expression, doc);
     }
 
-    let parent_operator = operator.text();
-    let (first, rest, has_rest) = flatten_binary_expression(expression, doc);
+    let Some(operator) = binary_operator(expression) else {
+        doc.block_on_invariant("recovery-free binary expression lacked an operator");
+        return Doc::nil();
+    };
+
+    let parent_operator = operator.kind();
+    let (first, rest, has_rest) = flatten_binary_expression(expression, operator, doc);
     let first = format_binary_operand(&first, parent_operator, doc);
-    let binary = binary_chain(doc, first, rest, has_rest);
-    append_recovered_binary_tokens(expression, binary, doc)
+    binary_chain(doc, first, rest, has_rest)
 }
 
-fn format_binary_expression_without_operator<'source>(
+fn format_recovered_binary_expression<'source>(
     expression: &BinaryExpression<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let left = expression.left();
-    let right = expression.right();
-    if left.is_none() && right.is_none() {
-        return format_token_sequence(doc, expression.token_iter(), LeadingTrivia::Preserve);
-    }
-    let left = match left {
-        Some(left) => format_expression(&left, doc),
-        None => Doc::nil(),
-    };
-    let right = match right {
-        Some(right) => format_expression(&right, doc),
-        None => Doc::nil(),
-    };
-
-    doc_concat!(doc, [left, right])
+    let left = format_required_field(expression.left(), doc, |left, doc| {
+        format_expression(&left, doc)
+    });
+    let operator = format_required_field(expression.operator(), doc, |operator, doc| {
+        let operator = match operator.as_operator() {
+            Ok(operator) => operator,
+            Err(error) => {
+                doc.block_on_invariant(error.to_string());
+                return Doc::nil();
+            }
+        };
+        format_operator_with_comments(&operator, doc)
+    });
+    let right = format_required_field(expression.right(), doc, |right, doc| {
+        format_expression(&right, doc)
+    });
+    doc_concat!(doc, [left, doc.space(), operator, doc.space(), right])
 }
 
 pub(super) fn format_unary_expression<'source>(
     expression: &UnaryExpression<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let operator = expression.operator().map_or_else(Doc::nil, |operator| {
+    let operator = format_required_field(expression.operator(), doc, |operator, doc| {
         format_token_with_comments(doc, &operator)
     });
-    let operand = expression
-        .operand()
-        .map_or_else(Doc::nil, |operand| format_expression(&operand, doc));
-
-    let recovered = doc.concat_list(|tokens| {
-        for token in expression.recovered_tokens() {
-            let token = format_token(
-                tokens,
-                &token,
-                LeadingTrivia::Preserve,
-                TrailingTrivia::Preserve,
-            );
-            tokens.push(token);
-        }
+    let operand = format_required_field(expression.operand(), doc, |operand, doc| {
+        format_expression(&operand, doc)
     });
-    doc_concat!(doc, [operator, operand, recovered])
-}
-
-fn append_recovered_binary_tokens<'source>(
-    expression: &BinaryExpression<'source>,
-    binary: Doc<'source>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let recovered = doc.concat_list(|tokens| {
-        for token in expression.recovered_tokens() {
-            let token = format_token(
-                tokens,
-                &token,
-                LeadingTrivia::Preserve,
-                TrailingTrivia::Preserve,
-            );
-            tokens.push(token);
-        }
-    });
-    doc_concat!(doc, [binary, recovered])
+    doc_concat!(doc, [operator, operand])
 }
 
 pub(super) fn format_postfix_expression<'source>(
     expression: &PostfixExpression<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let operand = expression
-        .operand()
-        .map_or_else(Doc::nil, |operand| format_expression(&operand, doc));
-    let operator = expression.operator().map_or_else(Doc::nil, |operator| {
+    let operand = format_required_field(expression.operand(), doc, |operand, doc| {
+        format_expression(&operand, doc)
+    });
+    let operator = format_required_field(expression.operator(), doc, |operator, doc| {
         format_token_with_comments(doc, &operator)
     });
 
@@ -176,30 +142,21 @@ pub(super) fn format_postfix_expression<'source>(
 
 fn flatten_binary_expression<'source>(
     expression: &BinaryExpression<'source>,
+    operator: JavaOperator<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> (Expression<'source>, Doc<'source>, bool) {
-    let Some(operator) = expression.operator() else {
-        let mut has_rest = false;
-        let rest = doc.concat_list(|rest| {
-            if let Some(right) = expression.right() {
-                let right = format_expression(&right, rest);
-                let item = binary_chain_item(Doc::nil(), right, rest);
-                rest.push(item);
-            }
-            has_rest = !rest.is_empty();
-        });
-        return (
-            expression
-                .left()
-                .unwrap_or_else(|| Expression::from(*expression)),
-            rest,
-            has_rest,
-        );
-    };
     let root = Expression::from(*expression);
     let mut operands = Vec::new();
     let mut operators = Vec::new();
-    collect_binary_chain(root, &mut operands, &mut operators);
+    let mut removed_parentheses = Vec::new();
+    collect_binary_chain(
+        *expression,
+        operator,
+        None,
+        &mut operands,
+        &mut operators,
+        &mut removed_parentheses,
+    );
     if operators.len() + 1 != operands.len() {
         return unflattened_binary_expression(expression, doc, &operator);
     }
@@ -208,8 +165,19 @@ fn flatten_binary_expression<'source>(
     let first = operands.next().unwrap_or(root);
     let mut has_rest = false;
     let rest = doc.concat_list(|rest| {
+        for parentheses in removed_parentheses {
+            let removals = parentheses.redundant_parenthesis_removal_claims();
+            if let Some(open) = removals.open {
+                let removed = rest.removed_source(open);
+                rest.push(removed);
+            }
+            if let Some(close) = removals.close {
+                let removed = rest.removed_source(close);
+                rest.push(removed);
+            }
+        }
         for (operator, operand) in operators.into_iter().zip(operands) {
-            let operand = format_binary_operand(&operand, operator.text(), rest);
+            let operand = format_binary_operand(&operand, operator.kind(), rest);
             let operator = format_operator_with_comments(&operator, rest);
             let item = binary_chain_item(operator, operand, rest);
             rest.push(item);
@@ -222,16 +190,20 @@ fn flatten_binary_expression<'source>(
 
 fn format_binary_operand<'source>(
     expression: &Expression<'source>,
-    parent_operator: &str,
+    parent_operator: JavaOperatorKind,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
     let formatted = format_expression(expression, doc);
     if should_parenthesize_binary_operand(expression, parent_operator) {
-        let open = inserted_syntax_token(doc, "(", FormatterInsertedToken::PrecedenceParenthesis);
+        let Some(claims) = expression.precedence_parenthesis_claims() else {
+            doc.block_on_invariant("valid binary operand lacked parenthesis normalization claims");
+            return formatted;
+        };
+        let open = inserted_syntax_token(doc, claims.open);
         let line = doc.soft_line();
         let indented = doc_indent!(doc, doc_concat!(doc, [line, formatted]));
         let line = doc.soft_line();
-        let close = inserted_syntax_token(doc, ")", FormatterInsertedToken::PrecedenceParenthesis);
+        let close = inserted_syntax_token(doc, claims.close);
         doc_group!(
             doc,
             doc_concat!(
@@ -257,87 +229,115 @@ fn unflattened_binary_expression<'source>(
     operator: &JavaOperator<'source>,
 ) -> (Expression<'source>, Doc<'source>, bool) {
     let operator = format_operator_with_comments(operator, doc);
-    let right = expression
-        .right()
-        .map_or_else(Doc::nil, |right| format_expression(&right, doc));
+    let right =
+        present(expression.right()).map_or_else(Doc::nil, |right| format_expression(&right, doc));
     let rest = doc.concat_list(|rest| {
         let item = binary_chain_item(operator, right, rest);
         rest.push(item);
     });
 
     (
-        expression
-            .left()
-            .unwrap_or_else(|| Expression::from(*expression)),
+        present(expression.left()).unwrap_or_else(|| Expression::from(*expression)),
         rest,
         true,
     )
 }
 
 fn collect_binary_chain<'source>(
-    expression: Expression<'source>,
+    binary: BinaryExpression<'source>,
+    operator: JavaOperator<'source>,
+    parentheses: Option<jolt_java_syntax::ParenthesizedExpression<'source>>,
     operands: &mut Vec<Expression<'source>>,
     operators: &mut Vec<JavaOperator<'source>>,
+    removed_parentheses: &mut Vec<jolt_java_syntax::ParenthesizedExpression<'source>>,
 ) {
-    let Some(binary) = binary_for_chain(expression) else {
-        operands.push(expression);
-        return;
-    };
-    let Some(operator) = binary.operator() else {
-        operands.push(expression);
-        return;
-    };
+    removed_parentheses.extend(parentheses);
 
-    if let Some(left) = binary.left() {
-        collect_binary_left(left, operator.text(), operands, operators);
+    if let Some(left) = present(binary.left()) {
+        collect_binary_left(
+            left,
+            operator.kind(),
+            operands,
+            operators,
+            removed_parentheses,
+        );
     }
     operators.push(operator);
-    if let Some(right) = binary.right() {
+    if let Some(right) = present(binary.right()) {
         operands.push(right);
     }
 }
 
 fn collect_binary_left<'source>(
     expression: Expression<'source>,
-    parent_operator: &str,
+    parent_operator: JavaOperatorKind,
     operands: &mut Vec<Expression<'source>>,
     operators: &mut Vec<JavaOperator<'source>>,
+    removed_parentheses: &mut Vec<jolt_java_syntax::ParenthesizedExpression<'source>>,
 ) {
-    let Some(binary) = binary_for_chain(expression) else {
+    let Some((binary, parentheses)) = binary_for_chain(expression) else {
         operands.push(expression);
         return;
     };
-    let Some(operator) = binary.operator() else {
+    let Some(operator) = binary_operator(&binary) else {
         operands.push(expression);
         return;
     };
 
-    if !should_flatten_binary(parent_operator, operator.text()) {
+    if !should_flatten_binary(parent_operator, operator.kind()) {
         operands.push(expression);
         return;
     }
 
-    collect_binary_chain(Expression::from(binary), operands, operators);
+    removed_parentheses.extend(parentheses);
+    collect_binary_chain(
+        binary,
+        operator,
+        None,
+        operands,
+        operators,
+        removed_parentheses,
+    );
 }
 
-fn binary_for_chain(expression: Expression<'_>) -> Option<BinaryExpression<'_>> {
+fn binary_for_chain(
+    expression: Expression<'_>,
+) -> Option<(
+    BinaryExpression<'_>,
+    Option<jolt_java_syntax::ParenthesizedExpression<'_>>,
+)> {
     match expression {
-        Expression::BinaryExpression(binary) => Some(binary),
+        Expression::BinaryExpression(binary) => Some((binary, None)),
         Expression::ParenthesizedExpression(parenthesized)
             if parenthesized
                 .open_paren()
-                .is_none_or(|token| !token_has_comments(&token))
+                .is_ok_and(|field| matches!(field, JavaSyntaxField::Present(token) if !token_has_comments(&token)))
                 && parenthesized
                     .close_paren()
-                    .is_none_or(|token| !token_has_comments(&token)) =>
+                    .is_ok_and(|field| matches!(field, JavaSyntaxField::Present(token) if !token_has_comments(&token))) =>
         {
-            match parenthesized.expression() {
-                Some(Expression::BinaryExpression(binary)) => Some(binary),
+            match present(parenthesized.expression()) {
+                Some(Expression::BinaryExpression(binary)) => Some((binary, Some(parenthesized))),
                 _ => None,
             }
         }
         _ => None,
     }
+}
+
+fn present<T>(
+    field: Result<JavaSyntaxField<'_, T>, jolt_java_syntax::JavaSyntaxInvariantError>,
+) -> Option<T> {
+    match field.ok()? {
+        JavaSyntaxField::Present(value) => Some(value),
+        JavaSyntaxField::Missing(_) | JavaSyntaxField::Malformed(_) => None,
+    }
+}
+
+fn binary_operator<'source>(
+    expression: &BinaryExpression<'source>,
+) -> Option<JavaOperator<'source>> {
+    present(expression.operator())?.as_operator().ok()
 }
 
 fn format_operator_with_comments<'source>(
@@ -348,26 +348,15 @@ fn format_operator_with_comments<'source>(
         return format_token_with_comments(doc, token);
     }
 
-    let mut tokens = operator.tokens().enumerate().peekable();
+    let components = operator.components();
     doc.concat_list(|docs| {
-        while let Some((index, token)) = tokens.next() {
-            let is_first = index == 0;
-            let is_last = tokens.peek().is_none();
-            let token = format_token(
+        for component in components {
+            let component = crate::helpers::recovery::format_required_field(
+                Ok(component),
                 docs,
-                &token,
-                if is_first {
-                    LeadingTrivia::Preserve
-                } else {
-                    LeadingTrivia::SuppressAlreadyHandled
-                },
-                if is_last {
-                    TrailingTrivia::Preserve
-                } else {
-                    TrailingTrivia::RelocatedToEnclosingContext
-                },
+                |token, docs| format_token_with_comments(docs, &token),
             );
-            docs.push(token);
+            docs.push(component);
         }
     })
 }
@@ -463,7 +452,10 @@ fn should_force_conditional_break(expression: &ConditionalExpression<'_>) -> boo
     )
 }
 
-fn should_flatten_binary(parent_operator: &str, child_operator: &str) -> bool {
+fn should_flatten_binary(
+    parent_operator: JavaOperatorKind,
+    child_operator: JavaOperatorKind,
+) -> bool {
     let Some(parent_precedence) = binary_operator_precedence(parent_operator) else {
         return false;
     };
@@ -479,46 +471,19 @@ fn should_flatten_binary(parent_operator: &str, child_operator: &str) -> bool {
     }
 
     if is_multiplicative_operator(parent_operator) && is_multiplicative_operator(child_operator) {
-        return parent_operator == child_operator
-            && parent_operator != "%"
-            && child_operator != "%";
+        return parent_operator == child_operator && parent_operator != JavaOperatorKind::Percent;
     }
 
     true
 }
 
-fn should_parenthesize_binary_operand(expression: &Expression, parent_operator: &str) -> bool {
+fn should_parenthesize_binary_operand(
+    expression: &Expression,
+    parent_operator: JavaOperatorKind,
+) -> bool {
     if !is_bitwise_or_shift_operator(parent_operator) {
         return false;
     }
 
     matches!(expression, Expression::BinaryExpression(_))
-}
-
-fn binary_operator_precedence(operator: &str) -> Option<u8> {
-    Some(match operator {
-        "||" => 1,
-        "&&" => 2,
-        "|" => 3,
-        "^" => 4,
-        "&" => 5,
-        "==" | "!=" => 6,
-        "<" | ">" | "<=" | ">=" => 7,
-        "<<" | ">>" | ">>>" => 8,
-        "+" | "-" => 9,
-        "*" | "/" | "%" => 10,
-        _ => return None,
-    })
-}
-
-fn is_shift_operator(operator: &str) -> bool {
-    matches!(operator, "<<" | ">>" | ">>>")
-}
-
-fn is_bitwise_or_shift_operator(operator: &str) -> bool {
-    matches!(operator, "|" | "^" | "&" | "<<" | ">>" | ">>>")
-}
-
-fn is_multiplicative_operator(operator: &str) -> bool {
-    matches!(operator, "*" | "/" | "%")
 }

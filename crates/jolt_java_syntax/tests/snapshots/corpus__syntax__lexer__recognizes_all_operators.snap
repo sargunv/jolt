@@ -8,54 +8,56 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    Assign "=" @ 0..1 trailing=[Whitespace " "]
-    Gt ">" @ 2..3 trailing=[Whitespace " "]
-    Lt "<" @ 4..5 trailing=[Whitespace " "]
-    Bang "!" @ 6..7 trailing=[Whitespace " "]
-    Tilde "~" @ 8..9 trailing=[Whitespace " "]
-    Question "?" @ 10..11 trailing=[Whitespace " "]
-    Colon ":" @ 12..13 trailing=[Whitespace " "]
-    Arrow "->" @ 14..16 trailing=[Whitespace " "]
-    EqEq "==" @ 17..19 trailing=[Whitespace " "]
-    Gt ">" @ 20..21
-    Assign "=" @ 21..22 trailing=[Whitespace " "]
-    LtEq "<=" @ 23..25 trailing=[Whitespace " "]
-    BangEq "!=" @ 26..28 trailing=[Whitespace " "]
-    AndAnd "&&" @ 29..31 trailing=[Whitespace " "]
-    OrOr "||" @ 32..34 trailing=[Whitespace " "]
-    PlusPlus "++" @ 35..37 trailing=[Whitespace " "]
-    MinusMinus "--" @ 38..40 trailing=[Whitespace " "]
-    Plus "+" @ 41..42 trailing=[Whitespace " "]
-    Minus "-" @ 43..44 trailing=[Whitespace " "]
-    Star "*" @ 45..46 trailing=[Whitespace " "]
-    Slash "/" @ 47..48 trailing=[Whitespace " "]
-    Amp "&" @ 49..50 trailing=[Whitespace " "]
-    Bar "|" @ 51..52 trailing=[Whitespace " "]
-    Caret "^" @ 53..54 trailing=[Whitespace " "]
-    Percent "%" @ 55..56 trailing=[Whitespace " "]
-    LShift "<<" @ 57..59 trailing=[Whitespace " "]
-    Gt ">" @ 60..61
-    Gt ">" @ 61..62 trailing=[Whitespace " "]
-    Gt ">" @ 63..64
-    Gt ">" @ 64..65
-    Gt ">" @ 65..66 trailing=[Whitespace " "]
-    PlusEq "+=" @ 67..69 trailing=[Whitespace " "]
-    MinusEq "-=" @ 70..72 trailing=[Whitespace " "]
-    StarEq "*=" @ 73..75 trailing=[Whitespace " "]
-    SlashEq "/=" @ 76..78 trailing=[Whitespace " "]
-    AmpEq "&=" @ 79..81 trailing=[Whitespace " "]
-    BarEq "|=" @ 82..84 trailing=[Whitespace " "]
-    CaretEq "^=" @ 85..87 trailing=[Whitespace " "]
-    PercentEq "%=" @ 88..90 trailing=[Whitespace " "]
-    LShiftEq "<<=" @ 91..94 trailing=[Whitespace " "]
-    Gt ">" @ 95..96
-    Gt ">" @ 96..97
-    Assign "=" @ 97..98 trailing=[Whitespace " "]
-    Gt ">" @ 99..100
-    Gt ">" @ 100..101
-    Gt ">" @ 101..102
-    Assign "=" @ 102..103
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      Assign "=" @ 0..1 trailing=[Whitespace " "]
+      Gt ">" @ 2..3 trailing=[Whitespace " "]
+      Lt "<" @ 4..5 trailing=[Whitespace " "]
+      Bang "!" @ 6..7 trailing=[Whitespace " "]
+      Tilde "~" @ 8..9 trailing=[Whitespace " "]
+      Question "?" @ 10..11 trailing=[Whitespace " "]
+      Colon ":" @ 12..13 trailing=[Whitespace " "]
+      Arrow "->" @ 14..16 trailing=[Whitespace " "]
+      EqEq "==" @ 17..19 trailing=[Whitespace " "]
+      Gt ">" @ 20..21
+      Assign "=" @ 21..22 trailing=[Whitespace " "]
+      LtEq "<=" @ 23..25 trailing=[Whitespace " "]
+      BangEq "!=" @ 26..28 trailing=[Whitespace " "]
+      AndAnd "&&" @ 29..31 trailing=[Whitespace " "]
+      OrOr "||" @ 32..34 trailing=[Whitespace " "]
+      PlusPlus "++" @ 35..37 trailing=[Whitespace " "]
+      MinusMinus "--" @ 38..40 trailing=[Whitespace " "]
+      Plus "+" @ 41..42 trailing=[Whitespace " "]
+      Minus "-" @ 43..44 trailing=[Whitespace " "]
+      Star "*" @ 45..46 trailing=[Whitespace " "]
+      Slash "/" @ 47..48 trailing=[Whitespace " "]
+      Amp "&" @ 49..50 trailing=[Whitespace " "]
+      Bar "|" @ 51..52 trailing=[Whitespace " "]
+      Caret "^" @ 53..54 trailing=[Whitespace " "]
+      Percent "%" @ 55..56 trailing=[Whitespace " "]
+      LShift "<<" @ 57..59 trailing=[Whitespace " "]
+      Gt ">" @ 60..61
+      Gt ">" @ 61..62 trailing=[Whitespace " "]
+      Gt ">" @ 63..64
+      Gt ">" @ 64..65
+      Gt ">" @ 65..66 trailing=[Whitespace " "]
+      PlusEq "+=" @ 67..69 trailing=[Whitespace " "]
+      MinusEq "-=" @ 70..72 trailing=[Whitespace " "]
+      StarEq "*=" @ 73..75 trailing=[Whitespace " "]
+      SlashEq "/=" @ 76..78 trailing=[Whitespace " "]
+      AmpEq "&=" @ 79..81 trailing=[Whitespace " "]
+      BarEq "|=" @ 82..84 trailing=[Whitespace " "]
+      CaretEq "^=" @ 85..87 trailing=[Whitespace " "]
+      PercentEq "%=" @ 88..90 trailing=[Whitespace " "]
+      LShiftEq "<<=" @ 91..94 trailing=[Whitespace " "]
+      Gt ">" @ 95..96
+      Gt ">" @ 96..97
+      Assign "=" @ 97..98 trailing=[Whitespace " "]
+      Gt ">" @ 99..100
+      Gt ">" @ 100..101
+      Gt ">" @ 101..102
+      Assign "=" @ 102..103
   Eof "" @ 103..103
 
 diagnostics:

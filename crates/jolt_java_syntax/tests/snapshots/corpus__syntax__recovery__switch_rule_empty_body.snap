@@ -8,46 +8,55 @@ class C { void m(int value) { switch (value) { case 1 -> /* empty */ ; } } }
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "C" @ 6..7 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 8..9 trailing=[Whitespace " "]
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 10..14 trailing=[Whitespace " "]
-          Identifier "m" @ 15..16
-          LParen "(" @ 16..17
-          FormalParameterList
-            FormalParameter
-              PrimitiveType
-                IntKw "int" @ 17..20 trailing=[Whitespace " "]
-              Identifier "value" @ 21..26
-          RParen ")" @ 26..27 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 28..29 trailing=[Whitespace " "]
-            BlockStatement
-              SwitchStatement
-                SwitchKw "switch" @ 30..36 trailing=[Whitespace " "]
-                LParen "(" @ 37..38
-                NameExpression
-                  Identifier "value" @ 38..43
-                RParen ")" @ 43..44 trailing=[Whitespace " "]
-                SwitchBlock
-                  LBrace "{" @ 45..46 trailing=[Whitespace " "]
-                  SwitchRule
-                    SwitchLabel
-                      CaseKw "case" @ 47..51 trailing=[Whitespace " "]
-                      CaseConstant
-                        LiteralExpression
-                          IntegerLiteral "1" @ 52..53 trailing=[Whitespace " "]
-                    Arrow "->" @ 54..56 trailing=[Whitespace " ", BlockComment "/* empty */", Whitespace " "]
-                    ErrorNode
-                    Semicolon ";" @ 69..70 trailing=[Whitespace " "]
-                  RBrace "}" @ 71..72 trailing=[Whitespace " "]
-            RBrace "}" @ 73..74 trailing=[Whitespace " "]
-      RBrace "}" @ 75..76
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "C" @ 6..7 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 8..9 trailing=[Whitespace " "]
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 10..14 trailing=[Whitespace " "]
+              Identifier "m" @ 15..16
+              LParen "(" @ 16..17
+              FormalParameterList
+                FormalParameter
+                  ParameterModifierList
+                  PrimitiveType
+                    AnnotationList
+                    IntKw "int" @ 17..20 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "value" @ 21..26
+              RParen ")" @ 26..27 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 28..29 trailing=[Whitespace " "]
+                BlockStatementList
+                  BlockStatement
+                    SwitchStatement
+                      SwitchKw "switch" @ 30..36 trailing=[Whitespace " "]
+                      LParen "(" @ 37..38
+                      NameExpression
+                        Identifier "value" @ 38..43
+                      RParen ")" @ 43..44 trailing=[Whitespace " "]
+                      SwitchBlock
+                        LBrace "{" @ 45..46 trailing=[Whitespace " "]
+                        SwitchEntryList
+                          SwitchRule
+                            SwitchLabel
+                              CaseKw "case" @ 47..51 trailing=[Whitespace " "]
+                              SwitchLabelItemList
+                                CaseConstant
+                                  LiteralExpression
+                                    IntegerLiteral "1" @ 52..53 trailing=[Whitespace " "]
+                            Arrow "->" @ 54..56 trailing=[Whitespace " ", BlockComment "/* empty */", Whitespace " "]
+                            ErrorNode
+                            Semicolon ";" @ 69..70 trailing=[Whitespace " "]
+                        RBrace "}" @ 71..72 trailing=[Whitespace " "]
+                RBrace "}" @ 73..74 trailing=[Whitespace " "]
+        RBrace "}" @ 75..76
   Eof "" @ 77..77 leading=[Newline "\n"]
 
 diagnostics:

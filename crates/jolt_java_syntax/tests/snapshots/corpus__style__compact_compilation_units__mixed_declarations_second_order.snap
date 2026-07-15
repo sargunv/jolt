@@ -18,158 +18,200 @@ syntax:
 syntax:
 CompilationUnit
   PackageDeclaration
+    AnnotationList
     PackageKw "package" @ 0..7 trailing=[Whitespace " "]
     Name
       Identifier "demo" @ 8..12
     Semicolon ";" @ 12..13
-  ImportDeclaration
-    ImportKw "import" @ 14..20 leading=[Newline "\n"] trailing=[Whitespace " "]
-    QualifiedName
-      Identifier "java" @ 21..25
-      Dot "." @ 25..26
-      Identifier "util" @ 26..30
-      Dot "." @ 30..31
-      Identifier "Map" @ 31..34
-    Semicolon ";" @ 34..35
-  EmptyDeclaration
-    Semicolon ";" @ 36..37 leading=[Newline "\n"]
-  MethodDeclaration
-    VoidType
-      VoidKw "void" @ 38..42 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Identifier "main" @ 43..47
-    LParen "(" @ 47..48
-    RParen ")" @ 48..49
-    Block
-      LBrace "{" @ 49..50
-      BlockStatement
-        ExpressionStatement
-          MethodInvocationExpression
-            NameExpression
-              Identifier "Runner" @ 50..56
-            Dot "." @ 56..57
-            Identifier "run" @ 57..60
-            ArgumentList
-              LParen "(" @ 60..61
-              RParen ")" @ 61..62
-          Semicolon ";" @ 62..63
-      RBrace "}" @ 63..64
-  RecordDeclaration
-    Identifier "record" @ 65..71 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Identifier "Point" @ 72..77
-    LParen "(" @ 77..78
-    RecordComponentList
-      RecordComponent
-        PrimitiveType
-          IntKw "int" @ 78..81 trailing=[Whitespace " "]
-        Identifier "x" @ 82..83
-      Comma "," @ 83..84
-      RecordComponent
-        PrimitiveType
-          IntKw "int" @ 84..87 trailing=[Whitespace " "]
-        Identifier "y" @ 88..89
-    RParen ")" @ 89..90
-    RecordBody
-      LBrace "{" @ 90..91
-      RBrace "}" @ 91..92
-  FieldDeclaration
-    ModifierList
-      StaticKw "static" @ 93..99 leading=[Newline "\n"] trailing=[Whitespace " "]
-      FinalKw "final" @ 100..105 trailing=[Whitespace " "]
-    ClassType
-      Name
-        Identifier "Map" @ 106..109
-      TypeArgumentList
-        Lt "<" @ 109..110
-        TypeArgument
-          ClassType
-            Name
-              Identifier "String" @ 110..116
-        Comma "," @ 116..117
-        TypeArgument
-          ClassType
-            Name
-              Identifier "Integer" @ 117..124
-        Gt ">" @ 124..125 trailing=[Whitespace " "]
-    VariableDeclaratorList
-      VariableDeclarator
-        Identifier "COUNTS" @ 126..132
-        Assign "=" @ 132..133
-        VariableInitializer
-          MethodInvocationExpression
-            NameExpression
-              Identifier "Map" @ 133..136
-            Dot "." @ 136..137
-            Identifier "of" @ 137..139
-            ArgumentList
-              LParen "(" @ 139..140
-              LiteralExpression
-                StringLiteral "\"one\"" @ 140..145
-              Comma "," @ 145..146
-              LiteralExpression
-                IntegerLiteral "1" @ 146..147
-              RParen ")" @ 147..148
-    Semicolon ";" @ 148..149
-  ClassDeclaration
-    ClassKw "class" @ 150..155 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Identifier "Runner" @ 156..162
-    ClassBody
-      LBrace "{" @ 162..163
-      ClassBodyDeclaration
-        MethodDeclaration
-          ModifierList
-            StaticKw "static" @ 163..169 trailing=[Whitespace " "]
-          VoidType
-            VoidKw "void" @ 170..174 trailing=[Whitespace " "]
-          Identifier "run" @ 175..178
-          LParen "(" @ 178..179
-          RParen ")" @ 179..180
-          Block
-            LBrace "{" @ 180..181
-            BlockStatement
-              ExpressionStatement
-                MethodInvocationExpression
+  ImportDeclarationList
+    ImportDeclaration
+      ImportKw "import" @ 14..20 leading=[Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "java" @ 21..25
+        Dot "." @ 25..26
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "util" @ 26..30
+          Dot "." @ 30..31
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "Map" @ 31..34
+      Semicolon ";" @ 34..35
+  CompilationUnitDeclarationList
+    EmptyDeclaration
+      Semicolon ";" @ 36..37 leading=[Newline "\n"]
+    MethodDeclaration
+      VoidType
+        VoidKw "void" @ 38..42 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "main" @ 43..47
+      LParen "(" @ 47..48
+      RParen ")" @ 48..49
+      Block
+        LBrace "{" @ 49..50
+        BlockStatementList
+          BlockStatement
+            ExpressionStatement
+              MethodInvocationExpression
+                QualifiedMethodInvocation
                   NameExpression
-                    Identifier "IO" @ 181..183
-                  Dot "." @ 183..184
-                  Identifier "println" @ 184..191
+                    Identifier "Runner" @ 50..56
+                  Dot "." @ 56..57
+                  Identifier "run" @ 57..60
                   ArgumentList
-                    LParen "(" @ 191..192
-                    NameExpression
-                      Identifier "COUNTS" @ 192..198
-                    RParen ")" @ 198..199
-                Semicolon ";" @ 199..200
-            RBrace "}" @ 200..201
-      RBrace "}" @ 201..202
-  InterfaceDeclaration
-    InterfaceKw "interface" @ 203..212 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Identifier "Job" @ 213..216
-    InterfaceBody
-      LBrace "{" @ 216..217
-      MethodDeclaration
-        VoidType
-          VoidKw "void" @ 217..221 trailing=[Whitespace " "]
-        Identifier "run" @ 222..225
-        LParen "(" @ 225..226
-        RParen ")" @ 226..227
-        Semicolon ";" @ 227..228
-      RBrace "}" @ 228..229
-  EnumDeclaration
-    EnumKw "enum" @ 230..234 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Identifier "Status" @ 235..241
-    EnumBody
-      LBrace "{" @ 241..242
-      EnumConstantList
-        EnumConstant
-          Identifier "READY" @ 242..247
-      RBrace "}" @ 247..248
-  AnnotationInterfaceDeclaration
-    At "@" @ 249..250 leading=[Newline "\n"]
-    InterfaceKw "interface" @ 250..259 trailing=[Whitespace " "]
-    Identifier "Tag" @ 260..263
-    AnnotationInterfaceBody
-      LBrace "{" @ 263..264
-      AnnotationElementList
-      RBrace "}" @ 264..265
+                    LParen "(" @ 60..61
+                    ExpressionList
+                    RParen ")" @ 61..62
+              Semicolon ";" @ 62..63
+        RBrace "}" @ 63..64
+    RecordDeclaration
+      Identifier "record" @ 65..71 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "Point" @ 72..77
+      LParen "(" @ 77..78
+      RecordComponentList
+        RecordComponent
+          ParameterModifierList
+          PrimitiveType
+            AnnotationList
+            IntKw "int" @ 78..81 trailing=[Whitespace " "]
+          AnnotationList
+          Identifier "x" @ 82..83
+        Comma "," @ 83..84
+        RecordComponent
+          ParameterModifierList
+          PrimitiveType
+            AnnotationList
+            IntKw "int" @ 84..87 trailing=[Whitespace " "]
+          AnnotationList
+          Identifier "y" @ 88..89
+      RParen ")" @ 89..90
+      RecordBody
+        LBrace "{" @ 90..91
+        RecordBodyMemberList
+        RBrace "}" @ 91..92
+    FieldDeclaration
+      ModifierList
+        StaticKw "static" @ 93..99 leading=[Newline "\n"] trailing=[Whitespace " "]
+        FinalKw "final" @ 100..105 trailing=[Whitespace " "]
+      ClassType
+        ClassTypeSegmentList
+          ClassTypeSegmentNode
+            AnnotationList
+            Name
+              Identifier "Map" @ 106..109
+            TypeArgumentList
+              Lt "<" @ 109..110
+              TypeArgumentSeparatedList
+                TypeArgument
+                  AnnotationList
+                  ClassType
+                    ClassTypeSegmentList
+                      ClassTypeSegmentNode
+                        AnnotationList
+                        Name
+                          Identifier "String" @ 110..116
+                Comma "," @ 116..117
+                TypeArgument
+                  AnnotationList
+                  ClassType
+                    ClassTypeSegmentList
+                      ClassTypeSegmentNode
+                        AnnotationList
+                        Name
+                          Identifier "Integer" @ 117..124
+              Gt ">" @ 124..125 trailing=[Whitespace " "]
+      VariableDeclaratorList
+        VariableDeclarator
+          Identifier "COUNTS" @ 126..132
+          Assign "=" @ 132..133
+          VariableInitializer
+            MethodInvocationExpression
+              QualifiedMethodInvocation
+                NameExpression
+                  Identifier "Map" @ 133..136
+                Dot "." @ 136..137
+                Identifier "of" @ 137..139
+                ArgumentList
+                  LParen "(" @ 139..140
+                  ExpressionList
+                    LiteralExpression
+                      StringLiteral "\"one\"" @ 140..145
+                    Comma "," @ 145..146
+                    LiteralExpression
+                      IntegerLiteral "1" @ 146..147
+                  RParen ")" @ 147..148
+      Semicolon ";" @ 148..149
+    ClassDeclaration
+      ClassKw "class" @ 150..155 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "Runner" @ 156..162
+      ClassBody
+        LBrace "{" @ 162..163
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              ModifierList
+                StaticKw "static" @ 163..169 trailing=[Whitespace " "]
+              VoidType
+                VoidKw "void" @ 170..174 trailing=[Whitespace " "]
+              Identifier "run" @ 175..178
+              LParen "(" @ 178..179
+              RParen ")" @ 179..180
+              Block
+                LBrace "{" @ 180..181
+                BlockStatementList
+                  BlockStatement
+                    ExpressionStatement
+                      MethodInvocationExpression
+                        QualifiedMethodInvocation
+                          NameExpression
+                            Identifier "IO" @ 181..183
+                          Dot "." @ 183..184
+                          Identifier "println" @ 184..191
+                          ArgumentList
+                            LParen "(" @ 191..192
+                            ExpressionList
+                              NameExpression
+                                Identifier "COUNTS" @ 192..198
+                            RParen ")" @ 198..199
+                      Semicolon ";" @ 199..200
+                RBrace "}" @ 200..201
+        RBrace "}" @ 201..202
+    InterfaceDeclaration
+      InterfaceKw "interface" @ 203..212 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "Job" @ 213..216
+      InterfaceBody
+        LBrace "{" @ 216..217
+        InterfaceBodyMemberList
+          MethodDeclaration
+            VoidType
+              VoidKw "void" @ 217..221 trailing=[Whitespace " "]
+            Identifier "run" @ 222..225
+            LParen "(" @ 225..226
+            RParen ")" @ 226..227
+            Semicolon ";" @ 227..228
+        RBrace "}" @ 228..229
+    EnumDeclaration
+      EnumKw "enum" @ 230..234 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "Status" @ 235..241
+      EnumBody
+        LBrace "{" @ 241..242
+        EnumConstantList
+          EnumConstant
+            AnnotationList
+            Identifier "READY" @ 242..247
+        ClassBodyMemberList
+        RBrace "}" @ 247..248
+    AnnotationInterfaceDeclaration
+      At "@" @ 249..250 leading=[Newline "\n"]
+      InterfaceKw "interface" @ 250..259 trailing=[Whitespace " "]
+      Identifier "Tag" @ 260..263
+      AnnotationInterfaceBody
+        LBrace "{" @ 263..264
+        AnnotationElementList
+          AnnotationInterfaceBodyMemberList
+        RBrace "}" @ 264..265
   Eof "" @ 266..266 leading=[Newline "\n"]
 
 diagnostics:

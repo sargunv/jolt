@@ -12,35 +12,44 @@ class ConstructorReceiverOuter {
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "ConstructorReceiverOuter" @ 6..30 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 31..32
-      ClassBodyDeclaration
-        ClassDeclaration
-          ClassKw "class" @ 37..42 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "ConstructorReceiverInner" @ 43..67 trailing=[Whitespace " "]
-          ClassBody
-            LBrace "{" @ 68..69
-            ClassBodyDeclaration
-              ConstructorDeclaration
-                Identifier "ConstructorReceiverInner" @ 78..102 leading=[Newline "\n", Whitespace "        "]
-                LParen "(" @ 102..103
-                FormalParameterList
-                  ReceiverParameter
-                    ClassType
-                      Name
-                        Identifier "ConstructorReceiverOuter" @ 103..127 trailing=[Whitespace " "]
-                    Identifier "ConstructorReceiverOuter" @ 128..152
-                    Dot "." @ 152..153
-                    ThisKw "this" @ 153..157
-                RParen ")" @ 157..158 trailing=[Whitespace " "]
-                ConstructorBody
-                  LBrace "{" @ 159..160
-                  RBrace "}" @ 160..161
-            RBrace "}" @ 166..167 leading=[Newline "\n", Whitespace "    "]
-      RBrace "}" @ 168..169 leading=[Newline "\n"]
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "ConstructorReceiverOuter" @ 6..30 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 31..32
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            ClassDeclaration
+              ClassKw "class" @ 37..42 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Identifier "ConstructorReceiverInner" @ 43..67 trailing=[Whitespace " "]
+              ClassBody
+                LBrace "{" @ 68..69
+                ClassBodyMemberList
+                  ClassBodyDeclaration
+                    ConstructorDeclaration
+                      Identifier "ConstructorReceiverInner" @ 78..102 leading=[Newline "\n", Whitespace "        "]
+                      LParen "(" @ 102..103
+                      FormalParameterList
+                        ReceiverParameter
+                          AnnotationList
+                          ClassType
+                            ClassTypeSegmentList
+                              ClassTypeSegmentNode
+                                AnnotationList
+                                Name
+                                  Identifier "ConstructorReceiverOuter" @ 103..127 trailing=[Whitespace " "]
+                          Identifier "ConstructorReceiverOuter" @ 128..152
+                          Dot "." @ 152..153
+                          ThisKw "this" @ 153..157
+                      RParen ")" @ 157..158 trailing=[Whitespace " "]
+                      ConstructorBody
+                        LBrace "{" @ 159..160
+                        ConstructorBodyEntryList
+                        RBrace "}" @ 160..161
+                RBrace "}" @ 166..167 leading=[Newline "\n", Whitespace "    "]
+        RBrace "}" @ 168..169 leading=[Newline "\n"]
   Eof "" @ 170..170 leading=[Newline "\n"]
 
 diagnostics:

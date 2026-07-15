@@ -123,7 +123,7 @@ pub fn parse_kotlin_file(source: &str) -> KotlinParse<'_> {
 
 fn finish_parse(source: &str, parse: source::ParseEvents) -> KotlinParse<'_> {
     let mut diagnostics = parse.diagnostics;
-    let tree = match build_syntax_tree(parse.events, parse.tokens, parse.trivia) {
+    let tree = match build_syntax_tree(&parse.events, parse.tokens, parse.trivia) {
         Ok(tree) => tree,
         Err(error) => {
             diagnostics.push(invalid_event_stream_diagnostic(&error));
@@ -134,9 +134,6 @@ fn finish_parse(source: &str, parse: source::ParseEvents) -> KotlinParse<'_> {
             };
         }
     };
-    let (tree, parser_diagnostics) = tree;
-    diagnostics.extend(parser_diagnostics);
-
     KotlinParse {
         source,
         tree: Some(tree),

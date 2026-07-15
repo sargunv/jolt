@@ -12,47 +12,59 @@ class CastLambda {
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "CastLambda" @ 6..16 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 17..18
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 23..27 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "method" @ 28..34
-          LParen "(" @ 34..35
-          RParen ")" @ 35..36 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 37..38
-            BlockStatement
-              LocalVariableDeclaration
-                ClassType
-                  Name
-                    Identifier "Runnable" @ 47..55 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "runnable" @ 56..64 trailing=[Whitespace " "]
-                    Assign "=" @ 65..66 trailing=[Whitespace " "]
-                    VariableInitializer
-                      CastExpression
-                        LParen "(" @ 67..68
-                        ClassType
-                          Name
-                            Identifier "Runnable" @ 68..76
-                        RParen ")" @ 76..77 trailing=[Whitespace " "]
-                        LambdaExpression
-                          LParen "(" @ 78..79
-                          LambdaParameterList
-                          RParen ")" @ 79..80 trailing=[Whitespace " "]
-                          Arrow "->" @ 81..83 trailing=[Whitespace " "]
-                          Block
-                            LBrace "{" @ 84..85
-                            RBrace "}" @ 85..86
-              Semicolon ";" @ 86..87
-            RBrace "}" @ 92..93 leading=[Newline "\n", Whitespace "    "]
-      RBrace "}" @ 94..95 leading=[Newline "\n"]
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "CastLambda" @ 6..16 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 17..18
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 23..27 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Identifier "method" @ 28..34
+              LParen "(" @ 34..35
+              RParen ")" @ 35..36 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 37..38
+                BlockStatementList
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
+                            AnnotationList
+                            Name
+                              Identifier "Runnable" @ 47..55 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "runnable" @ 56..64 trailing=[Whitespace " "]
+                          Assign "=" @ 65..66 trailing=[Whitespace " "]
+                          VariableInitializer
+                            CastExpression
+                              LParen "(" @ 67..68
+                              ClassType
+                                ClassTypeSegmentList
+                                  ClassTypeSegmentNode
+                                    AnnotationList
+                                    Name
+                                      Identifier "Runnable" @ 68..76
+                              RParen ")" @ 76..77 trailing=[Whitespace " "]
+                              LambdaExpression
+                                LParen "(" @ 78..79
+                                LambdaParameterList
+                                RParen ")" @ 79..80 trailing=[Whitespace " "]
+                                Arrow "->" @ 81..83 trailing=[Whitespace " "]
+                                Block
+                                  LBrace "{" @ 84..85
+                                  BlockStatementList
+                                  RBrace "}" @ 85..86
+                    Semicolon ";" @ 86..87
+                RBrace "}" @ 92..93 leading=[Newline "\n", Whitespace "    "]
+        RBrace "}" @ 94..95 leading=[Newline "\n"]
   Eof "" @ 96..96 leading=[Newline "\n"]
 
 diagnostics:

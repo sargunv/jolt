@@ -46,21 +46,31 @@ impl Parser<'_> {
         }
 
         let name = self.start();
-        self.bump();
-        let mut qualified = false;
-        while self.at(JavaSyntaxKind::Dot) && self.nth_is_name_segment(1) {
-            qualified = true;
+        if self.nth_kind(1) != JavaSyntaxKind::Dot || !self.nth_is_name_segment(2) {
             self.bump();
+            self.complete(name, JavaSyntaxKind::Name);
+            return true;
+        }
+
+        let first_segment = self.start();
+        self.parse_annotations();
+        self.bump();
+        self.complete(first_segment, JavaSyntaxKind::QualifiedNameSegmentNode);
+        self.bump();
+
+        let remaining_segments = self.start();
+        loop {
+            let segment = self.start();
+            self.parse_annotations();
+            self.bump();
+            self.complete(segment, JavaSyntaxKind::QualifiedNameSegmentNode);
+            if !self.at(JavaSyntaxKind::Dot) || !self.nth_is_name_segment(1) {
+                break;
+            }
             self.bump();
         }
-        self.complete(
-            name,
-            if qualified {
-                JavaSyntaxKind::QualifiedName
-            } else {
-                JavaSyntaxKind::Name
-            },
-        );
+        self.complete(remaining_segments, JavaSyntaxKind::NameSegmentDotList);
+        self.complete(name, JavaSyntaxKind::QualifiedName);
         true
     }
 

@@ -7,10 +7,10 @@ sealed class C extends Base, /* extends */ , Other implements A, /* implements *
 
 formatted:
 sealed class C
-  extends Base, /* extends */  , Other
-  implements A, /* implements */  , B
+  extends Base, /* extends */ , Other
+  implements A, /* implements */ , B
   permits C, /* permits */ , D {
-  void m() throws E, /* throws */  , F {
+  void m() throws E, /* throws */ , F {
   }
 }
 

@@ -9,14 +9,11 @@ formatted:
 class C {
   C() {
     this(); /* body */
-    +;int value=1;
+    +;
+    int value = 1;
   }
 }
 
 diagnostics:
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(37), end: TextSize(38) }) message=expected expression
-code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(39), end: TextSize(42) }) message=expected statement expression
-code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(39), end: TextSize(42) }) message=unexpected token in statement expression
-code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(43), end: TextSize(48) }) message=unexpected token in statement expression
-code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(49), end: TextSize(50) }) message=unexpected token in statement expression
-code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(51), end: TextSize(52) }) message=unexpected token in statement expression
+code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(37), end: TextSize(38) }) message=expected statement expression

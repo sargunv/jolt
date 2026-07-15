@@ -14,20 +14,24 @@ class Second {}
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "First" @ 6..11 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 12..13
-      RBrace "}" @ 13..14
-  EmptyDeclaration
-    Semicolon ";" @ 17..18 leading=[Newline "\n", Newline "\n", Newline "\n"]
-  ClassDeclaration
-    ClassKw "class" @ 21..26 leading=[Newline "\n", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "Second" @ 27..33 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 34..35
-      RBrace "}" @ 35..36
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "First" @ 6..11 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 12..13
+        ClassBodyMemberList
+        RBrace "}" @ 13..14
+    EmptyDeclaration
+      Semicolon ";" @ 17..18 leading=[Newline "\n", Newline "\n", Newline "\n"]
+    ClassDeclaration
+      ClassKw "class" @ 21..26 leading=[Newline "\n", Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "Second" @ 27..33 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 34..35
+        ClassBodyMemberList
+        RBrace "}" @ 35..36
   Eof "" @ 37..37 leading=[Newline "\n"]
 
 diagnostics:

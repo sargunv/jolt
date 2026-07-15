@@ -8,20 +8,24 @@ int a; /****/ int b;
 syntax:
 syntax:
 CompilationUnit
-  FieldDeclaration
-    PrimitiveType
-      IntKw "int" @ 0..3 trailing=[Whitespace " "]
-    VariableDeclaratorList
-      VariableDeclarator
-        Identifier "a" @ 4..5
-    Semicolon ";" @ 5..6 trailing=[Whitespace " ", DocComment "/****/", Whitespace " "]
-  FieldDeclaration
-    PrimitiveType
-      IntKw "int" @ 14..17 trailing=[Whitespace " "]
-    VariableDeclaratorList
-      VariableDeclarator
-        Identifier "b" @ 18..19
-    Semicolon ";" @ 19..20
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    FieldDeclaration
+      PrimitiveType
+        AnnotationList
+        IntKw "int" @ 0..3 trailing=[Whitespace " "]
+      VariableDeclaratorList
+        VariableDeclarator
+          Identifier "a" @ 4..5
+      Semicolon ";" @ 5..6 trailing=[Whitespace " ", DocComment "/****/", Whitespace " "]
+    FieldDeclaration
+      PrimitiveType
+        AnnotationList
+        IntKw "int" @ 14..17 trailing=[Whitespace " "]
+      VariableDeclaratorList
+        VariableDeclarator
+          Identifier "b" @ 18..19
+      Semicolon ";" @ 19..20
   Eof "" @ 20..20
 
 diagnostics:

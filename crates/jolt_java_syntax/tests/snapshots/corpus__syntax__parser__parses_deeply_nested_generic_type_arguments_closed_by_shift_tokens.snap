@@ -11,132 +11,245 @@ class DeepNestedGenericClose {
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "DeepNestedGenericClose" @ 6..28 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 29..30
-      ClassBodyDeclaration
-        FieldDeclaration
-          ClassType
-            QualifiedName
-              Identifier "java" @ 35..39 leading=[Newline "\n", Whitespace "    "]
-              Dot "." @ 39..40
-              Identifier "util" @ 40..44
-              Dot "." @ 44..45
-              Identifier "Map" @ 45..48
-            TypeArgumentList
-              Lt "<" @ 48..49
-              TypeArgument
-                ClassType
-                  Name
-                    Identifier "String" @ 49..55
-              Comma "," @ 55..56 trailing=[Whitespace " "]
-              TypeArgument
-                ClassType
-                  QualifiedName
-                    Identifier "java" @ 57..61
-                    Dot "." @ 61..62
-                    Identifier "util" @ 62..66
-                    Dot "." @ 66..67
-                    Identifier "Map" @ 67..70
-                  TypeArgumentList
-                    Lt "<" @ 70..71
-                    TypeArgument
-                      ClassType
-                        Name
-                          Identifier "Integer" @ 71..78
-                    Comma "," @ 78..79 trailing=[Whitespace " "]
-                    TypeArgument
-                      ClassType
-                        QualifiedName
-                          Identifier "java" @ 80..84
-                          Dot "." @ 84..85
-                          Identifier "util" @ 85..89
-                          Dot "." @ 89..90
-                          Identifier "List" @ 90..94
-                        TypeArgumentList
-                          Lt "<" @ 94..95
-                          TypeArgument
-                            ClassType
-                              Name
-                                Identifier "Long" @ 95..99
-                          Gt ">" @ 99..100
-                    Gt ">" @ 100..101
-              Gt ">" @ 101..102 trailing=[Whitespace " "]
-          VariableDeclaratorList
-            VariableDeclarator
-              Identifier "triple" @ 103..109
-          Semicolon ";" @ 109..110
-      ClassBodyDeclaration
-        FieldDeclaration
-          ClassType
-            QualifiedName
-              Identifier "java" @ 115..119 leading=[Newline "\n", Whitespace "    "]
-              Dot "." @ 119..120
-              Identifier "util" @ 120..124
-              Dot "." @ 124..125
-              Identifier "Map" @ 125..128
-            TypeArgumentList
-              Lt "<" @ 128..129
-              TypeArgument
-                ClassType
-                  Name
-                    Identifier "String" @ 129..135
-              Comma "," @ 135..136 trailing=[Whitespace " "]
-              TypeArgument
-                ClassType
-                  QualifiedName
-                    Identifier "java" @ 137..141
-                    Dot "." @ 141..142
-                    Identifier "util" @ 142..146
-                    Dot "." @ 146..147
-                    Identifier "Map" @ 147..150
-                  TypeArgumentList
-                    Lt "<" @ 150..151
-                    TypeArgument
-                      ClassType
-                        Name
-                          Identifier "Integer" @ 151..158
-                    Comma "," @ 158..159 trailing=[Whitespace " "]
-                    TypeArgument
-                      ClassType
-                        QualifiedName
-                          Identifier "java" @ 160..164
-                          Dot "." @ 164..165
-                          Identifier "util" @ 165..169
-                          Dot "." @ 169..170
-                          Identifier "Map" @ 170..173
-                        TypeArgumentList
-                          Lt "<" @ 173..174
-                          TypeArgument
-                            ClassType
-                              Name
-                                Identifier "Long" @ 174..178
-                          Comma "," @ 178..179 trailing=[Whitespace " "]
-                          TypeArgument
-                            ClassType
-                              QualifiedName
-                                Identifier "java" @ 180..184
-                                Dot "." @ 184..185
-                                Identifier "util" @ 185..189
-                                Dot "." @ 189..190
-                                Identifier "List" @ 190..194
-                              TypeArgumentList
-                                Lt "<" @ 194..195
-                                TypeArgument
-                                  ClassType
-                                    Name
-                                      Identifier "Double" @ 195..201
-                                Gt ">" @ 201..202
-                          Gt ">" @ 202..203
-                    Gt ">" @ 203..204
-              Gt ">" @ 204..205 trailing=[Whitespace " "]
-          VariableDeclaratorList
-            VariableDeclarator
-              Identifier "quadruple" @ 206..215
-          Semicolon ";" @ 215..216
-      RBrace "}" @ 217..218 leading=[Newline "\n"]
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "DeepNestedGenericClose" @ 6..28 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 29..30
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            FieldDeclaration
+              ClassType
+                ClassTypeSegmentList
+                  ClassTypeSegmentNode
+                    AnnotationList
+                    QualifiedName
+                      QualifiedNameSegmentNode
+                        AnnotationList
+                        Identifier "java" @ 35..39 leading=[Newline "\n", Whitespace "    "]
+                      Dot "." @ 39..40
+                      NameSegmentDotList
+                        QualifiedNameSegmentNode
+                          AnnotationList
+                          Identifier "util" @ 40..44
+                        Dot "." @ 44..45
+                        QualifiedNameSegmentNode
+                          AnnotationList
+                          Identifier "Map" @ 45..48
+                    TypeArgumentList
+                      Lt "<" @ 48..49
+                      TypeArgumentSeparatedList
+                        TypeArgument
+                          AnnotationList
+                          ClassType
+                            ClassTypeSegmentList
+                              ClassTypeSegmentNode
+                                AnnotationList
+                                Name
+                                  Identifier "String" @ 49..55
+                        Comma "," @ 55..56 trailing=[Whitespace " "]
+                        TypeArgument
+                          AnnotationList
+                          ClassType
+                            ClassTypeSegmentList
+                              ClassTypeSegmentNode
+                                AnnotationList
+                                QualifiedName
+                                  QualifiedNameSegmentNode
+                                    AnnotationList
+                                    Identifier "java" @ 57..61
+                                  Dot "." @ 61..62
+                                  NameSegmentDotList
+                                    QualifiedNameSegmentNode
+                                      AnnotationList
+                                      Identifier "util" @ 62..66
+                                    Dot "." @ 66..67
+                                    QualifiedNameSegmentNode
+                                      AnnotationList
+                                      Identifier "Map" @ 67..70
+                                TypeArgumentList
+                                  Lt "<" @ 70..71
+                                  TypeArgumentSeparatedList
+                                    TypeArgument
+                                      AnnotationList
+                                      ClassType
+                                        ClassTypeSegmentList
+                                          ClassTypeSegmentNode
+                                            AnnotationList
+                                            Name
+                                              Identifier "Integer" @ 71..78
+                                    Comma "," @ 78..79 trailing=[Whitespace " "]
+                                    TypeArgument
+                                      AnnotationList
+                                      ClassType
+                                        ClassTypeSegmentList
+                                          ClassTypeSegmentNode
+                                            AnnotationList
+                                            QualifiedName
+                                              QualifiedNameSegmentNode
+                                                AnnotationList
+                                                Identifier "java" @ 80..84
+                                              Dot "." @ 84..85
+                                              NameSegmentDotList
+                                                QualifiedNameSegmentNode
+                                                  AnnotationList
+                                                  Identifier "util" @ 85..89
+                                                Dot "." @ 89..90
+                                                QualifiedNameSegmentNode
+                                                  AnnotationList
+                                                  Identifier "List" @ 90..94
+                                            TypeArgumentList
+                                              Lt "<" @ 94..95
+                                              TypeArgumentSeparatedList
+                                                TypeArgument
+                                                  AnnotationList
+                                                  ClassType
+                                                    ClassTypeSegmentList
+                                                      ClassTypeSegmentNode
+                                                        AnnotationList
+                                                        Name
+                                                          Identifier "Long" @ 95..99
+                                              Gt ">" @ 99..100
+                                  Gt ">" @ 100..101
+                      Gt ">" @ 101..102 trailing=[Whitespace " "]
+              VariableDeclaratorList
+                VariableDeclarator
+                  Identifier "triple" @ 103..109
+              Semicolon ";" @ 109..110
+          ClassBodyDeclaration
+            FieldDeclaration
+              ClassType
+                ClassTypeSegmentList
+                  ClassTypeSegmentNode
+                    AnnotationList
+                    QualifiedName
+                      QualifiedNameSegmentNode
+                        AnnotationList
+                        Identifier "java" @ 115..119 leading=[Newline "\n", Whitespace "    "]
+                      Dot "." @ 119..120
+                      NameSegmentDotList
+                        QualifiedNameSegmentNode
+                          AnnotationList
+                          Identifier "util" @ 120..124
+                        Dot "." @ 124..125
+                        QualifiedNameSegmentNode
+                          AnnotationList
+                          Identifier "Map" @ 125..128
+                    TypeArgumentList
+                      Lt "<" @ 128..129
+                      TypeArgumentSeparatedList
+                        TypeArgument
+                          AnnotationList
+                          ClassType
+                            ClassTypeSegmentList
+                              ClassTypeSegmentNode
+                                AnnotationList
+                                Name
+                                  Identifier "String" @ 129..135
+                        Comma "," @ 135..136 trailing=[Whitespace " "]
+                        TypeArgument
+                          AnnotationList
+                          ClassType
+                            ClassTypeSegmentList
+                              ClassTypeSegmentNode
+                                AnnotationList
+                                QualifiedName
+                                  QualifiedNameSegmentNode
+                                    AnnotationList
+                                    Identifier "java" @ 137..141
+                                  Dot "." @ 141..142
+                                  NameSegmentDotList
+                                    QualifiedNameSegmentNode
+                                      AnnotationList
+                                      Identifier "util" @ 142..146
+                                    Dot "." @ 146..147
+                                    QualifiedNameSegmentNode
+                                      AnnotationList
+                                      Identifier "Map" @ 147..150
+                                TypeArgumentList
+                                  Lt "<" @ 150..151
+                                  TypeArgumentSeparatedList
+                                    TypeArgument
+                                      AnnotationList
+                                      ClassType
+                                        ClassTypeSegmentList
+                                          ClassTypeSegmentNode
+                                            AnnotationList
+                                            Name
+                                              Identifier "Integer" @ 151..158
+                                    Comma "," @ 158..159 trailing=[Whitespace " "]
+                                    TypeArgument
+                                      AnnotationList
+                                      ClassType
+                                        ClassTypeSegmentList
+                                          ClassTypeSegmentNode
+                                            AnnotationList
+                                            QualifiedName
+                                              QualifiedNameSegmentNode
+                                                AnnotationList
+                                                Identifier "java" @ 160..164
+                                              Dot "." @ 164..165
+                                              NameSegmentDotList
+                                                QualifiedNameSegmentNode
+                                                  AnnotationList
+                                                  Identifier "util" @ 165..169
+                                                Dot "." @ 169..170
+                                                QualifiedNameSegmentNode
+                                                  AnnotationList
+                                                  Identifier "Map" @ 170..173
+                                            TypeArgumentList
+                                              Lt "<" @ 173..174
+                                              TypeArgumentSeparatedList
+                                                TypeArgument
+                                                  AnnotationList
+                                                  ClassType
+                                                    ClassTypeSegmentList
+                                                      ClassTypeSegmentNode
+                                                        AnnotationList
+                                                        Name
+                                                          Identifier "Long" @ 174..178
+                                                Comma "," @ 178..179 trailing=[Whitespace " "]
+                                                TypeArgument
+                                                  AnnotationList
+                                                  ClassType
+                                                    ClassTypeSegmentList
+                                                      ClassTypeSegmentNode
+                                                        AnnotationList
+                                                        QualifiedName
+                                                          QualifiedNameSegmentNode
+                                                            AnnotationList
+                                                            Identifier "java" @ 180..184
+                                                          Dot "." @ 184..185
+                                                          NameSegmentDotList
+                                                            QualifiedNameSegmentNode
+                                                              AnnotationList
+                                                              Identifier "util" @ 185..189
+                                                            Dot "." @ 189..190
+                                                            QualifiedNameSegmentNode
+                                                              AnnotationList
+                                                              Identifier "List" @ 190..194
+                                                        TypeArgumentList
+                                                          Lt "<" @ 194..195
+                                                          TypeArgumentSeparatedList
+                                                            TypeArgument
+                                                              AnnotationList
+                                                              ClassType
+                                                                ClassTypeSegmentList
+                                                                  ClassTypeSegmentNode
+                                                                    AnnotationList
+                                                                    Name
+                                                                      Identifier "Double" @ 195..201
+                                                          Gt ">" @ 201..202
+                                              Gt ">" @ 202..203
+                                  Gt ">" @ 203..204
+                      Gt ">" @ 204..205 trailing=[Whitespace " "]
+              VariableDeclaratorList
+                VariableDeclarator
+                  Identifier "quadruple" @ 206..215
+              Semicolon ";" @ 215..216
+        RBrace "}" @ 217..218 leading=[Newline "\n"]
   Eof "" @ 219..219 leading=[Newline "\n"]
 
 diagnostics:

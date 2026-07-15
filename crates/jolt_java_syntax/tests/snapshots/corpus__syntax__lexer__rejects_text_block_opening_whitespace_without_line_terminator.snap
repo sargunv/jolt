@@ -8,8 +8,10 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    TextBlockLiteral "\"\"\" \t\u{c}hello\"\"\"" @ 0..14
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      TextBlockLiteral "\"\"\" \t\u{c}hello\"\"\"" @ 0..14
   Eof "" @ 14..14
 
 diagnostics:

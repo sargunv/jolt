@@ -12,39 +12,48 @@ enum StructuredEnumClassBodyArguments {
 syntax:
 syntax:
 CompilationUnit
-  EnumDeclaration
-    EnumKw "enum" @ 0..4 trailing=[Whitespace " "]
-    Identifier "StructuredEnumClassBodyArguments" @ 5..37 trailing=[Whitespace " "]
-    EnumBody
-      LBrace "{" @ 38..39
-      EnumConstantList
-        EnumConstant
-          Identifier "SPECIAL" @ 44..51 leading=[Newline "\n", Whitespace "    "]
-          ArgumentList
-            LParen "(" @ 51..52
-            MethodInvocationExpression
-              NameExpression
-                Identifier "helper" @ 52..58
-              ArgumentList
-                LParen "(" @ 58..59
-                LiteralExpression
-                  IntegerLiteral "1" @ 59..60
-                RParen ")" @ 60..61
-            RParen ")" @ 61..62 trailing=[Whitespace " "]
-          ClassBody
-            LBrace "{" @ 63..64
-            ClassBodyDeclaration
-              MethodDeclaration
-                VoidType
-                  VoidKw "void" @ 73..77 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                Identifier "run" @ 78..81
-                LParen "(" @ 81..82
-                RParen ")" @ 82..83 trailing=[Whitespace " "]
-                Block
-                  LBrace "{" @ 84..85
-                  RBrace "}" @ 85..86
-            RBrace "}" @ 91..92 leading=[Newline "\n", Whitespace "    "]
-      RBrace "}" @ 93..94 leading=[Newline "\n"]
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    EnumDeclaration
+      EnumKw "enum" @ 0..4 trailing=[Whitespace " "]
+      Identifier "StructuredEnumClassBodyArguments" @ 5..37 trailing=[Whitespace " "]
+      EnumBody
+        LBrace "{" @ 38..39
+        EnumConstantList
+          EnumConstant
+            AnnotationList
+            Identifier "SPECIAL" @ 44..51 leading=[Newline "\n", Whitespace "    "]
+            ArgumentList
+              LParen "(" @ 51..52
+              ExpressionList
+                MethodInvocationExpression
+                  UnqualifiedMethodInvocation
+                    NameExpression
+                      Identifier "helper" @ 52..58
+                    ArgumentList
+                      LParen "(" @ 58..59
+                      ExpressionList
+                        LiteralExpression
+                          IntegerLiteral "1" @ 59..60
+                      RParen ")" @ 60..61
+              RParen ")" @ 61..62 trailing=[Whitespace " "]
+            ClassBody
+              LBrace "{" @ 63..64
+              ClassBodyMemberList
+                ClassBodyDeclaration
+                  MethodDeclaration
+                    VoidType
+                      VoidKw "void" @ 73..77 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                    Identifier "run" @ 78..81
+                    LParen "(" @ 81..82
+                    RParen ")" @ 82..83 trailing=[Whitespace " "]
+                    Block
+                      LBrace "{" @ 84..85
+                      BlockStatementList
+                      RBrace "}" @ 85..86
+              RBrace "}" @ 91..92 leading=[Newline "\n", Whitespace "    "]
+        ClassBodyMemberList
+        RBrace "}" @ 93..94 leading=[Newline "\n"]
   Eof "" @ 95..95 leading=[Newline "\n"]
 
 diagnostics:

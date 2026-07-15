@@ -71,12 +71,15 @@ reproductions do not by themselves close the broader architecture items below.
       `crates/jolt_java_fmt/src/rules/declarations/type_declarations.rs:20-48`.
 - [x] Preserve restricted recovered declaration names and invalid modifiers:
       `fixtures/java/syntax/recovery/recovered-declaration-names-and-modifiers.java`;
-      recovery accessors at
-      `crates/jolt_java_syntax/src/nodes/accessors.rs:243-245,286-288,359-362,4087-4095`.
+      generated declaration slots are defined in
+      `crates/jolt_java_syntax/src/schema.rs:530-628` and consumed structurally
+      by `crates/jolt_java_fmt/src/rules/declarations/callables.rs` and
+      `crates/jolt_java_fmt/src/rules/variables.rs`.
 - [x] Preserve repeated `requires` modifiers:
       `fixtures/java/syntax/recovery/module-repeated-requires-modifiers.java`;
-      recovered modifier accessors at
-      `crates/jolt_java_syntax/src/nodes/accessors.rs:4313-4321`.
+      physical list slots are defined in
+      `crates/jolt_java_syntax/src/schema.rs:1123-1125` and consumed through the
+      generated list view in `crates/jolt_java_fmt/src/rules/modules.rs`.
 
 ### Kotlin
 
@@ -381,12 +384,14 @@ roles and list shapes. Do not add TOML, Python, a build script, a procedural
 macro, checked-in generated Rust, or a code-generation task.
 
 Every ordinary valid field must be one required or optional target slot. Model
-repetition with an explicit syntax-list node stored in one parent slot, and
-model a compound semantic value with an explicit fixed-field constructed node;
-do not call a variable child span or multi-element group one named slot. The
-Rust static audit rejects any ordinary node that is not representable by this
-fixed-slot contract. Audit-time expansion of list and constructed nodes is only
-the migration bridge from the current compact parser tree.
+repetition with an explicit syntax-list role stored in one parent slot, and
+model a compound semantic value with an explicit fixed-field constructed role;
+do not leave either shape as an unnamed child range. The Rust static audit
+rejects any ordinary node that is not representable by this fixed-slot contract.
+Audit-time expansion of list and constructed roles is only the migration bridge
+from the current compact parser tree; the production pivot stores them as
+compact ordinary physical nodes. Categories and aliases remain typed views and
+allocate no structural node.
 
 Add a Rust audit-only corpus gate that parses the existing fixture sources and
 runs current compact direct-child sequences through the macro-defined matcher
@@ -435,32 +440,183 @@ pivot from the counting command in the implementation-size contract.
 
 ### New Phase 8: Java Whole-Language Construction And Formatting Pivot
 
-For every Java node in one commit, add contextual token roles, explicit
-structural diagnostic ownership, construction-time shape validation, stored
-`TreeSlot::Empty`, generated constant-time accessors/list views, category bogus
-unions, sealed `Valid`/`Bogus`/`InvariantError` classification, syntax-derived
-malformed boundaries, lexical safety, and syntax-owned normalization permits.
-Wire Java token/comment/formatter-ignore claims and generic bogus dispatch, then
-switch the Java root to tracked rendering only after every Java output path is
-accounted. Delete Java's compact/fallback construction and direct child-search
-recovery accessors in the same commit. Existing valid family layout remains
-unchanged.
+Implementation status: **implemented and gate-green, uncommitted, awaiting
+review**. The uniform physical-node pivot has been rebuilt from approved Phase
+7. The earlier virtual-span rewrite described below remains rejected production
+architecture; only its fixtures, snapshots, recovery behavior, exact
+differential checks, and benchmark reports were retained as an oracle.
+
+For every Java node in one atomic review point:
+
+- use one compact physical node representation for every token/child-owning
+  grammar construct, including all lists and constructed values;
+- keep categories, unions, and aliases as generated typed views only;
+- replace role events with ordinary compact node events and keep diagnostics in
+  separate storage;
+- generate one exhaustive production factory from the Phase 7 Rust schema;
+- store one packed `Node`/`Token`/`Empty` slot for every declared field;
+- assign parent links, ranges, and recovery aggregates during construction;
+- generate constant-time node/list accessors, category bogus unions, sealed
+  `Valid`/`Bogus`/`InvariantError` classification, syntax-derived malformed
+  boundaries, lexical safety, and syntax-owned normalization permits; and
+- wire Java token/comment/formatter-ignore claims and generic bogus dispatch,
+  switching the root only after every output path is accounted.
+
+Delete the old compact/fallback construction, direct child-search recovery
+accessors, `TreeSpan`, `SyntaxRole`, role markers/events/indexes, dual
+factories, and recursive layout postpass in the same change. Existing valid
+family layout remains unchanged. The algorithm visits every event once, advances
+once through each direct-child sequence with schema-bounded matching, writes
+each final slot and parent link once, and performs no whole-tree pass.
+
+No intermediate construction architecture is an accepted phase or commit. The
+next review point is the complete uncommitted Java pivot. Phase 8 passes only
+when correctness, conservation, idempotence, WASM, allocation, memory, timing,
+and implementation-size gates all pass.
+
+#### Rejected virtual-span prototype record
+
+The remainder of this Phase 8 section records the rejected prototype as
+attribution evidence. References to what that prototype “implements” or what a
+smaller optimization could do are historical, not the selected roadmap.
+
+Implementation status: virtual-span rewrite complete and correctness-green, but
+not accepted because the parse-performance gate remains red. The rejected first
+prototype emitted every nonempty list and constructed role as a physical node.
+The rewrite instead converts all 40 Java list kinds and 10 constructed kinds to
+syntax-owned virtual spans. A parser `RoleMarker` records a zero-event
+checkpoint and completion emits one `FinishRole`; construction validates that
+interval once and appends one compact `TreeSpan`. There is no paired start
+event, physical boundary node, or formatter-time boundary reconstruction.
+
+`TreeSlot::Span(SpanId)` keeps `TreeSlot` at eight bytes. A native `TreeSpan` is
+at most 32 bytes versus a 48-byte `TreeNode`; compact IDs and ranges remain
+`u32`. A packed eight-byte `ParentLink` identifies a physical parent or logical
+span/index, while each span records its physical owner. Generated Java accessors
+return borrowed `SyntaxRole` views over those slots. Generic syntax traversal
+flattens nested roles to preserve the physical child/token stream; typed access
+and debug snapshots retain the declared logical layers. Empty and nonempty roles
+use the same representation, and required missing fields keep exact empty-slot
+anchors.
+
+Representable recovered roles remain structured. Only construction-established
+physical malformed/error nodes—including physical overflow owners created when a
+role cannot represent its input—select tracked verbatim. Java formatting
+consumes generated typed roles, syntax-owned malformed classification,
+normalization permits, and lexical safety; valid formatter fallback,
+formatter-side token parsing, whole-list raw fallback, and the old Java
+entry/segment recovery structs are gone.
+
+The Java syntax and formatter corpora, recovery snapshots, parser losslessness
+and progress tests, schema audit, conservation, idempotence, tracked completion,
+CLI, dprint, and Kotlin compatibility tests pass. Two malformed CLI expectations
+changed because missing class names no longer create doubled synthesized space.
+The only valid-layout correction is `ArrayList::<@A String>new` becoming
+`ArrayList<@A String>::new`.
+
+The following table records the rejected physical-boundary prototype, not the
+virtual-span result. It remains useful attribution evidence but must not be used
+to accept or reject the rewrite:
+
+| Spring Java metric        |     Phase 3 | Physical prototype |   Delta |
+| ------------------------- | ----------: | -----------------: | ------: |
+| Parse median              |  412.952 ms |         622.029 ms | +50.63% |
+| Format median             |  572.324 ms |         695.989 ms | +21.61% |
+| End-to-end median         |  973.780 ms |       1,318.134 ms | +35.36% |
+| Parse allocation count    |     237,499 |            259,926 |  +9.44% |
+| Format allocation count   |   1,535,738 |          1,589,776 |  +3.52% |
+| Parse peak RSS            | 144,228,352 |        172,752,896 | +19.78% |
+| End-to-end peak RSS       | 153,239,552 |        181,010,432 | +18.12% |
+| Tree reserved bytes/token |      251.47 |             225.46 | -10.34% |
+
+The physical prototype's tree storage density passed, but time, allocation, and
+peak-RSS goals failed. Its shared changes also exceeded the Kotlin gate: parse,
+format, and end-to-end medians move from 9.199, 13.044, and 21.455 ms to 9.859,
+14.163, and 24.318 ms (+7.17%, +8.58%, and +13.34%), while Kotlin parse
+allocation count rises from 10,629 to 11,114 (+4.56%). The dominant Java work is
+approximately 2.26 million physical list and constructed boundaries; the Kotlin
+regression shows that shared ID, range, tree, or IR changes also require
+separate attribution.
+
+The canonical optimized virtual-span report on the same Phase 3 machine and
+corpora is:
+
+| Spring Java metric        |     Phase 3 | Virtual spans |   Delta |
+| ------------------------- | ----------: | ------------: | ------: |
+| Parse median              |  412.952 ms |       ~567 ms |    ~37% |
+| Format median             |  572.324 ms |       ~698 ms |    ~22% |
+| End-to-end median         |  973.780 ms |     ~1,267 ms |    ~30% |
+| Parse allocation count    |     237,499 |       285,631 | +20.27% |
+| Parse allocated bytes     |      5.679G |        6.017G |  +5.96% |
+| Parse peak RSS            | 144,228,352 |  about 155.9M |     ~8% |
+| Format allocation count   |   1,535,738 |     1,589,776 |  +3.52% |
+| Format allocated bytes    |      2.728G |        2.666G |  -2.27% |
+| End-to-end peak RSS       | 153,239,552 |   121,733,120 | -20.56% |
+| Tree reserved bytes/token |      251.47 |        218.65 | -13.05% |
+| Tree reserved bytes/node  |      321.02 |        295.82 |  -7.85% |
+| Document nodes/token      |        3.14 |          3.15 |  +0.29% |
+
+The canonical format timing was affected by machine-frequency drift. A fair
+alternating Rust 1.96 build of Phase 7 and the virtual implementation measured
+format at 661.406 and 729.091 ms (+10.2%); a stabilized post-inlining run was
+699.77 ms, effectively equal to the 695.99 ms physical prototype. That
+optimization removed `JavaFixedSyntax::slot_at` from the profile without
+changing its 1,589,776 allocations. It therefore resolves the
+virtual-accessor-specific formatter cost, but it does not make the whole Phase 8
+stack acceptable relative to Phase 3.
+
+The first alternating run measured parse at 425.434 ms for Phase 7 and 687.170
+ms for virtual spans (+61.5%). The generated Java factory now compiles each
+schema declaration into an exhaustive clean layout: fixed nodes and constructed
+roles return their slot count and presence mask, while lists validate their
+item/separator policy directly. Shared construction appends those slots using
+the parser's existing token range and text length. Missing, malformed, or
+unexpected input still falls through to the unchanged generic recovery
+materializer. An exact 398-fixture differential test compares every node, role,
+token, trivia sequence, range, recovery flag, and `Empty` slot against that
+generic reference.
+
+This removes generic matcher interpretation from the clean path and reduces the
+stable Spring parse median to approximately 567 ms, about 17% faster than the
+unoptimized virtual implementation but still roughly 37% slower than Phase 3.
+The remaining sampled cost includes virtual-role construction, event indexing,
+and recursive parent/offset layout. These measurements reject the two-model
+architecture; they do not prescribe a sequence of local deletions. Phase 9 stays
+blocked until Phase 8 is rebuilt as the uniform physical-node design.
+
+Kotlin remains on the compact matcher but shares the changed tree/IR runtime.
+Its canonical parse, format, and end-to-end medians are approximately 10.5,
+18.9, and 29.7 ms versus 9.199, 13.044, and 21.455 ms (about +15%, +45%, and
++39%). Parse allocations rise from 10,629 to 11,114 (+4.56%); format allocations
+are unchanged. This shared regression also must be attributed before Phase 9.
+
+The virtual rewrite plus generated factory is +14,169/-12,912 Rust lines versus
+Phase 7, net +1,257. The full stack is +21,738/-14,413 versus `2197128`, net
++7,325. This count includes untracked Rust implementation and test-support files
+but excludes fixtures, snapshots, benchmark JSON, and documentation. The final
+net-negative-from-main gate remains binding.
 
 ### New Phase 9: Kotlin Whole-Language Construction And Formatting Pivot
 
-Apply the complete Phase 8 construction and formatting pivot to every Kotlin
-node, including soft/contextual token roles. Switch the Kotlin root to tracked
-rendering only after Kotlin token, comment, formatter-ignore, removal,
-normalization, bogus, and lexical-boundary paths all carry exact claims. Delete
-Kotlin's compact/fallback construction and direct child-search recovery
-accessors in the same commit. No mixed compact/slot runtime survives Phase 9.
+After Java proves the architecture, apply the uniform compact physical-node
+construction and formatting pivot atomically to Kotlin, including
+soft/contextual token roles. Replace Kotlin's bounded compact audit matcher with
+ordinary node events and the same generated production factory used by Java.
+Lists and constructed values become ordinary nodes; categories and aliases
+remain typed views. Switch the Kotlin root to tracked rendering only after all
+token, comment, formatter-ignore, removal, normalization, bogus, and
+lexical-boundary paths carry exact claims. Delete Kotlin's compact/fallback
+construction and direct child-search recovery accessors in the same commit.
 
-### New Phase 10: Shared Slot-Architecture Closeout
+### New Phase 10: Shared Uniform-Tree Architecture Closeout
 
-Remove temporary compact-factory capability, the generic-error-only malformed
-owner, IR-owned normalization carriers, and both formatter-local
-`FormatterInsertedToken` enums. Enable forbidden-pattern, bidirectional
-diagnostic-owner, direct-slot exhaustiveness, clean-zero-verbatim, malformed
+Remove test-only reference construction, temporary audit carriers, the
+generic-error-only malformed owner, and both formatter-local
+`FormatterInsertedToken` enums. Retain only the single physical node/slot model,
+one generated factory per language, typed borrowed views, and the compact parent
+overlay. Pre-size the formatter document arena only if measurement confirms a
+remaining growth cost. Enable forbidden-pattern, bidirectional diagnostic-owner,
+node-slot exhaustiveness, clean-zero-verbatim, malformed
 conservation/idempotence, production LOC, and benchmark-ready performance gates.
 The existing realistic benchmark remains the only performance harness.
 

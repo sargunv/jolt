@@ -15,104 +15,132 @@ class SwitchCasePatternGuard {
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "SwitchCasePatternGuard" @ 6..28 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 29..30
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 35..39 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "method" @ 40..46
-          LParen "(" @ 46..47
-          FormalParameterList
-            FormalParameter
-              ClassType
-                Name
-                  Identifier "Object" @ 47..53 trailing=[Whitespace " "]
-              Identifier "value" @ 54..59
-          RParen ")" @ 59..60 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 61..62
-            BlockStatement
-              SwitchStatement
-                SwitchKw "switch" @ 71..77 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                LParen "(" @ 78..79
-                NameExpression
-                  Identifier "value" @ 79..84
-                RParen ")" @ 84..85 trailing=[Whitespace " "]
-                SwitchBlock
-                  LBrace "{" @ 86..87
-                  SwitchRule
-                    SwitchLabel
-                      CaseKw "case" @ 100..104 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                      CasePattern
-                        TypePattern
-                          LocalVariableDeclaration
-                            ClassType
-                              Name
-                                Identifier "String" @ 105..111 trailing=[Whitespace " "]
-                            VariableDeclaratorList
-                              VariableDeclarator
-                                Identifier "s" @ 112..113 trailing=[Whitespace " "]
-                      Guard
-                        Identifier "when" @ 114..118 trailing=[Whitespace " "]
-                        MethodInvocationExpression
-                          NameExpression
-                            Identifier "s" @ 119..120
-                          Dot "." @ 120..121
-                          Identifier "isEmpty" @ 121..128
-                          ArgumentList
-                            LParen "(" @ 128..129
-                            RParen ")" @ 129..130 trailing=[Whitespace " "]
-                    Arrow "->" @ 131..133 trailing=[Whitespace " "]
-                    MethodInvocationExpression
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "SwitchCasePatternGuard" @ 6..28 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 29..30
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 35..39 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Identifier "method" @ 40..46
+              LParen "(" @ 46..47
+              FormalParameterList
+                FormalParameter
+                  ParameterModifierList
+                  ClassType
+                    ClassTypeSegmentList
+                      ClassTypeSegmentNode
+                        AnnotationList
+                        Name
+                          Identifier "Object" @ 47..53 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "value" @ 54..59
+              RParen ")" @ 59..60 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 61..62
+                BlockStatementList
+                  BlockStatement
+                    SwitchStatement
+                      SwitchKw "switch" @ 71..77 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      LParen "(" @ 78..79
                       NameExpression
-                        Identifier "s" @ 134..135
-                      Dot "." @ 135..136
-                      Identifier "trim" @ 136..140
-                      ArgumentList
-                        LParen "(" @ 140..141
-                        RParen ")" @ 141..142
-                    Semicolon ";" @ 142..143
-                  SwitchRule
-                    SwitchLabel
-                      CaseKw "case" @ 156..160 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                      CasePattern
-                        TypePattern
-                          LocalVariableDeclaration
-                            ClassType
-                              Name
-                                Identifier "String" @ 161..167 trailing=[Whitespace " "]
-                            VariableDeclaratorList
-                              VariableDeclarator
-                                Identifier "s" @ 168..169 trailing=[Whitespace " "]
-                      Guard
-                        Identifier "when" @ 170..174 trailing=[Whitespace " "]
-                        LParen "(" @ 175..176
-                        MethodInvocationExpression
-                          NameExpression
-                            Identifier "s" @ 176..177
-                          Dot "." @ 177..178
-                          Identifier "isBlank" @ 178..185
-                          ArgumentList
-                            LParen "(" @ 185..186
-                            RParen ")" @ 186..187
-                        RParen ")" @ 187..188 trailing=[Whitespace " "]
-                    Arrow "->" @ 189..191 trailing=[Whitespace " "]
-                    MethodInvocationExpression
-                      NameExpression
-                        Identifier "s" @ 192..193
-                      Dot "." @ 193..194
-                      Identifier "trim" @ 194..198
-                      ArgumentList
-                        LParen "(" @ 198..199
-                        RParen ")" @ 199..200
-                    Semicolon ";" @ 200..201
-                  RBrace "}" @ 210..211 leading=[Newline "\n", Whitespace "        "]
-            RBrace "}" @ 216..217 leading=[Newline "\n", Whitespace "    "]
-      RBrace "}" @ 218..219 leading=[Newline "\n"]
+                        Identifier "value" @ 79..84
+                      RParen ")" @ 84..85 trailing=[Whitespace " "]
+                      SwitchBlock
+                        LBrace "{" @ 86..87
+                        SwitchEntryList
+                          SwitchRule
+                            SwitchLabel
+                              CaseKw "case" @ 100..104 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                              SwitchLabelItemList
+                                CasePattern
+                                  TypePattern
+                                    LocalVariableDeclaration
+                                      ParameterModifierList
+                                      ClassType
+                                        ClassTypeSegmentList
+                                          ClassTypeSegmentNode
+                                            AnnotationList
+                                            Name
+                                              Identifier "String" @ 105..111 trailing=[Whitespace " "]
+                                      VariableDeclaratorList
+                                        VariableDeclarator
+                                          Identifier "s" @ 112..113 trailing=[Whitespace " "]
+                              Guard
+                                Identifier "when" @ 114..118 trailing=[Whitespace " "]
+                                MethodInvocationExpression
+                                  QualifiedMethodInvocation
+                                    NameExpression
+                                      Identifier "s" @ 119..120
+                                    Dot "." @ 120..121
+                                    Identifier "isEmpty" @ 121..128
+                                    ArgumentList
+                                      LParen "(" @ 128..129
+                                      ExpressionList
+                                      RParen ")" @ 129..130 trailing=[Whitespace " "]
+                            Arrow "->" @ 131..133 trailing=[Whitespace " "]
+                            MethodInvocationExpression
+                              QualifiedMethodInvocation
+                                NameExpression
+                                  Identifier "s" @ 134..135
+                                Dot "." @ 135..136
+                                Identifier "trim" @ 136..140
+                                ArgumentList
+                                  LParen "(" @ 140..141
+                                  ExpressionList
+                                  RParen ")" @ 141..142
+                            Semicolon ";" @ 142..143
+                          SwitchRule
+                            SwitchLabel
+                              CaseKw "case" @ 156..160 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                              SwitchLabelItemList
+                                CasePattern
+                                  TypePattern
+                                    LocalVariableDeclaration
+                                      ParameterModifierList
+                                      ClassType
+                                        ClassTypeSegmentList
+                                          ClassTypeSegmentNode
+                                            AnnotationList
+                                            Name
+                                              Identifier "String" @ 161..167 trailing=[Whitespace " "]
+                                      VariableDeclaratorList
+                                        VariableDeclarator
+                                          Identifier "s" @ 168..169 trailing=[Whitespace " "]
+                              Guard
+                                Identifier "when" @ 170..174 trailing=[Whitespace " "]
+                                LParen "(" @ 175..176
+                                MethodInvocationExpression
+                                  QualifiedMethodInvocation
+                                    NameExpression
+                                      Identifier "s" @ 176..177
+                                    Dot "." @ 177..178
+                                    Identifier "isBlank" @ 178..185
+                                    ArgumentList
+                                      LParen "(" @ 185..186
+                                      ExpressionList
+                                      RParen ")" @ 186..187
+                                RParen ")" @ 187..188 trailing=[Whitespace " "]
+                            Arrow "->" @ 189..191 trailing=[Whitespace " "]
+                            MethodInvocationExpression
+                              QualifiedMethodInvocation
+                                NameExpression
+                                  Identifier "s" @ 192..193
+                                Dot "." @ 193..194
+                                Identifier "trim" @ 194..198
+                                ArgumentList
+                                  LParen "(" @ 198..199
+                                  ExpressionList
+                                  RParen ")" @ 199..200
+                            Semicolon ";" @ 200..201
+                        RBrace "}" @ 210..211 leading=[Newline "\n", Whitespace "        "]
+                RBrace "}" @ 216..217 leading=[Newline "\n", Whitespace "    "]
+        RBrace "}" @ 218..219 leading=[Newline "\n"]
   Eof "" @ 220..220 leading=[Newline "\n"]
 
 diagnostics:

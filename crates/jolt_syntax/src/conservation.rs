@@ -58,6 +58,21 @@ pub struct SourceTriviaId<'tree> {
     ordinal: usize,
 }
 
+impl<'tree> SourceTriviaId<'tree> {
+    #[cfg(debug_assertions)]
+    pub(crate) const fn new(
+        token: SourceTokenId<'tree>,
+        side: SourceTriviaSide,
+        ordinal: usize,
+    ) -> Self {
+        Self {
+            token,
+            side,
+            ordinal,
+        }
+    }
+}
+
 /// A represented source identity handled by formatter output.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum SourceIdentity<'tree> {
@@ -66,7 +81,7 @@ pub enum SourceIdentity<'tree> {
 }
 
 /// A trivia piece paired with its parse-local identity and exact source range.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct SourceTriviaPiece<'tree> {
     id: SourceTriviaId<'tree>,
     trivia: SyntaxTrivia,
@@ -74,6 +89,18 @@ pub struct SourceTriviaPiece<'tree> {
 }
 
 impl<'tree> SourceTriviaPiece<'tree> {
+    #[cfg(debug_assertions)]
+    pub(crate) const fn new(
+        id: SourceTriviaId<'tree>,
+        trivia: SyntaxTrivia,
+        text_range: TextRange,
+    ) -> Self {
+        Self {
+            id,
+            trivia,
+            text_range,
+        }
+    }
     #[must_use]
     pub const fn id(self) -> SourceTriviaId<'tree> {
         self.id
@@ -498,6 +525,8 @@ fn mark_conserved_trivia(tree: &SyntaxTree, states: &mut [ClaimState]) {
 pub struct SyntaxVerbatimCore<'tree, L: Language> {
     node: SyntaxNode<'tree, L>,
     range: TextRange,
+    previous: Option<TokenId>,
+    next: Option<TokenId>,
 }
 
 impl<'tree, L: Language> SyntaxVerbatimCore<'tree, L> {
@@ -529,7 +558,34 @@ impl<'tree, L: Language> SyntaxVerbatimCore<'tree, L> {
         } else {
             TextRange::empty(node.text_range().start())
         };
-        Self { node, range }
+        let previous = node
+            .first_token()
+            .and_then(|token| token.source_id().id.index().checked_sub(1))
+            .map(TokenId::new);
+        let next = node.last_token().and_then(|token| {
+            let index = token.source_id().id.index() + 1;
+            (index < node.tree().token_count()).then(|| TokenId::new(index))
+        });
+        Self {
+            node,
+            range,
+            previous,
+            next,
+        }
+    }
+
+    pub(crate) const fn empty(
+        node: SyntaxNode<'tree, L>,
+        range: TextRange,
+        previous: Option<TokenId>,
+        next: Option<TokenId>,
+    ) -> Self {
+        Self {
+            node,
+            range,
+            previous,
+            next,
+        }
     }
 
     #[must_use]
@@ -538,12 +594,89 @@ impl<'tree, L: Language> SyntaxVerbatimCore<'tree, L> {
     }
 
     #[must_use]
+    pub fn contains(&self, range: TextRange) -> bool {
+        range_contains(self.range, range)
+    }
+
+    #[must_use]
+    pub fn first_token(&self) -> Option<SyntaxToken<'tree, L>> {
+        self.node.first_token()
+    }
+
+    #[must_use]
+    pub fn last_token(&self) -> Option<SyntaxToken<'tree, L>> {
+        self.node.last_token()
+    }
+
+    #[must_use]
+    pub fn raw_kind(&self) -> crate::RawSyntaxKind {
+        self.node.raw_kind()
+    }
+
+    /// Returns the nearest represented source token before this core.
+    #[must_use]
+    pub fn previous_token(&self) -> Option<SyntaxToken<'tree, L>> {
+        self.previous
+            .map(|id| SyntaxToken::new(self.node.source(), self.node.tree(), id))
+    }
+
+    /// Returns the nearest represented non-EOF source token after this core.
+    #[must_use]
+    pub fn next_token(&self) -> Option<SyntaxToken<'tree, L>> {
+        let id = self.next?;
+        let token = self.node.tree().token(id);
+        (token.raw_kind() != L::kind_to_raw(L::eof_kind()))
+            .then(|| SyntaxToken::new(self.node.source(), self.node.tree(), id))
+    }
+
+    #[must_use]
+    pub fn ends_with_line_comment(&self) -> bool {
+        let mut ends_with_line_comment = false;
+        for token in self.node.tokens() {
+            for piece in token.leading_trivia_with_ids() {
+                if !range_contains(self.range, piece.text_range()) {
+                    continue;
+                }
+                ends_with_line_comment = match piece.trivia().kind() {
+                    TriviaKind::LineComment | TriviaKind::ShebangComment => true,
+                    TriviaKind::Whitespace => ends_with_line_comment,
+                    TriviaKind::Newline
+                    | TriviaKind::BlockComment
+                    | TriviaKind::DocComment
+                    | TriviaKind::Ignored => false,
+                };
+            }
+            if range_contains(self.range, token.token_text_range()) && !token.text().is_empty() {
+                ends_with_line_comment = false;
+            }
+            for piece in token.trailing_trivia_with_ids() {
+                if !range_contains(self.range, piece.text_range()) {
+                    continue;
+                }
+                ends_with_line_comment = match piece.trivia().kind() {
+                    TriviaKind::LineComment | TriviaKind::ShebangComment => true,
+                    TriviaKind::Whitespace => ends_with_line_comment,
+                    TriviaKind::Newline
+                    | TriviaKind::BlockComment
+                    | TriviaKind::DocComment
+                    | TriviaKind::Ignored => false,
+                };
+            }
+        }
+        ends_with_line_comment
+    }
+
+    #[must_use]
     pub fn text(&self) -> &'tree str {
         &self.node.source()[self.range.start().get()..self.range.end().get()]
     }
 
     pub fn tokens(&self) -> impl Iterator<Item = SyntaxToken<'tree, L>> + use<'tree, L> {
-        self.node.tokens()
+        let range = self.range;
+        self.node.tokens().filter(move |token| {
+            token.token_text_range().start() != token.token_text_range().end()
+                && range_contains(range, token.token_text_range())
+        })
     }
 
     /// Returns every conserved source identity wholly owned by this core.
@@ -595,17 +728,17 @@ fn range_contains(outer: TextRange, inner: TextRange) -> bool {
     outer.start() <= inner.start() && inner.end() <= outer.end()
 }
 
-pub(crate) fn source_trivia_pieces<'tree>(
-    token: SourceTokenId<'tree>,
+pub(crate) fn source_trivia_pieces(
+    token: SourceTokenId<'_>,
     side: SourceTriviaSide,
-    range: &std::ops::Range<usize>,
-) -> SourceTriviaPieces<'tree> {
+    range: std::ops::Range<usize>,
+) -> SourceTriviaPieces<'_> {
     let data = token.tree.token(token.id);
     let offset = match side {
-        SourceTriviaSide::Leading => data.offset,
+        SourceTriviaSide::Leading => data.full_text_range.start(),
         SourceTriviaSide::Trailing => data.token_text_range.end(),
     };
-    SourceTriviaPieces::new(token, side, token.tree.trivia(range), offset)
+    SourceTriviaPieces::new(token, side, token.tree.trivia(&range), offset)
 }
 
 #[cfg(test)]
@@ -634,6 +767,7 @@ mod tests {
     impl Language for TestLanguage {
         type Kind = TestKind;
         type Lexer<'source> = UnusedLexer;
+        type NormalizationAuthority = ();
 
         fn kind_from_raw(raw: RawSyntaxKind) -> Self::Kind {
             match raw.get() {
@@ -704,43 +838,42 @@ mod tests {
         let tokens = vec![
             SyntaxTokenData::new(
                 RawSyntaxKind::new(1),
+                TextRange::new(TextSize::new(0), TextSize::new(5)),
                 TextRange::new(TextSize::new(0), TextSize::new(1)),
                 0..0,
                 0..1,
-                TextSize::new(5),
             ),
             SyntaxTokenData::new(
                 RawSyntaxKind::new(1),
+                TextRange::new(TextSize::new(5), TextSize::new(9)),
                 TextRange::new(TextSize::new(7), TextSize::new(8)),
                 1..3,
                 3..4,
-                TextSize::new(4),
             ),
             SyntaxTokenData::new(
                 RawSyntaxKind::new(2),
                 TextRange::empty(TextSize::new(9)),
+                TextRange::empty(TextSize::new(9)),
                 4..4,
                 4..4,
-                TextSize::new(0),
             ),
         ];
         let events = vec![
-            Event::StartNode {
+            Event::Start {
                 kind: RawSyntaxKind::new(0),
-                forward_parent: None,
+                forward_parent: 0,
             },
             Event::Token,
-            Event::StartNode {
+            Event::Start {
                 kind: RawSyntaxKind::new(0),
-                forward_parent: None,
+                forward_parent: 0,
             },
             Event::Token,
-            Event::FinishNode,
+            Event::Finish,
             Event::Token,
-            Event::FinishNode,
+            Event::Finish,
         ];
-        let (tree, diagnostics) = build_syntax_tree(events, tokens, trivia).expect("valid tree");
-        assert!(diagnostics.is_empty());
+        let tree = build_syntax_tree(&events, tokens, trivia).expect("valid tree");
         (source, tree)
     }
 
@@ -918,5 +1051,7 @@ mod tests {
         );
         assert_eq!(core.text(), "!\u{1a}");
         assert_eq!(core.tokens().count(), 1);
+        assert_eq!(core.previous_token().expect("left boundary").text(), "x");
+        assert!(core.next_token().is_none(), "EOF is not a lexical boundary");
     }
 }

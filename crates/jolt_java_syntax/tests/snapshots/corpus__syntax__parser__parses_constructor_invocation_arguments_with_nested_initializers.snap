@@ -14,83 +14,114 @@ class ConstructorInvocationArguments {
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "ConstructorInvocationArguments" @ 6..36 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 37..38
-      ClassBodyDeclaration
-        ConstructorDeclaration
-          Identifier "ConstructorInvocationArguments" @ 43..73 leading=[Newline "\n", Whitespace "    "]
-          LParen "(" @ 73..74
-          FormalParameterList
-            FormalParameter
-              ClassType
-                Name
-                  Identifier "String" @ 74..80 trailing=[Whitespace " "]
-              Identifier "value" @ 81..86
-          RParen ")" @ 86..87 trailing=[Whitespace " "]
-          ConstructorBody
-            LBrace "{" @ 88..89
-            ConstructorInvocation
-              ThisKw "this" @ 98..102 leading=[Newline "\n", Whitespace "        "]
-              ArgumentList
-                LParen "(" @ 102..103
-                ArrayCreationExpression
-                  NewKw "new" @ 103..106 trailing=[Whitespace " "]
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "ConstructorInvocationArguments" @ 6..36 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 37..38
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            ConstructorDeclaration
+              Identifier "ConstructorInvocationArguments" @ 43..73 leading=[Newline "\n", Whitespace "    "]
+              LParen "(" @ 73..74
+              FormalParameterList
+                FormalParameter
+                  ParameterModifierList
+                  ClassType
+                    ClassTypeSegmentList
+                      ClassTypeSegmentNode
+                        AnnotationList
+                        Name
+                          Identifier "String" @ 74..80 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "value" @ 81..86
+              RParen ")" @ 86..87 trailing=[Whitespace " "]
+              ConstructorBody
+                LBrace "{" @ 88..89
+                ConstructorBodyEntryList
+                  ConstructorInvocation
+                    ThisKw "this" @ 98..102 leading=[Newline "\n", Whitespace "        "]
+                    ArgumentList
+                      LParen "(" @ 102..103
+                      ExpressionList
+                        ArrayCreationExpression
+                          NewKw "new" @ 103..106 trailing=[Whitespace " "]
+                          ArrayType
+                            ClassType
+                              ClassTypeSegmentList
+                                ClassTypeSegmentNode
+                                  AnnotationList
+                                  Name
+                                    Identifier "String" @ 107..113
+                            ArrayDimensions
+                              ArrayDimension
+                                AnnotationList
+                                LBracket "[" @ 113..114
+                                RBracket "]" @ 114..115 trailing=[Whitespace " "]
+                          DimExpressionList
+                          ArrayInitializer
+                            LBrace "{" @ 116..117
+                            VariableInitializerList
+                              NameExpression
+                                Identifier "value" @ 117..122
+                            RBrace "}" @ 122..123
+                        Comma "," @ 123..124 trailing=[Whitespace " "]
+                        LiteralExpression
+                          BooleanLiteral "true" @ 125..129
+                        Comma "," @ 129..130 trailing=[Whitespace " "]
+                        LiteralExpression
+                          NullLiteral "null" @ 131..135
+                      RParen ")" @ 135..136
+                    Semicolon ";" @ 136..137
+                RBrace "}" @ 142..143 leading=[Newline "\n", Whitespace "    "]
+          ClassBodyDeclaration
+            ConstructorDeclaration
+              Identifier "ConstructorInvocationArguments" @ 149..179 leading=[Newline "\n", Newline "\n", Whitespace "    "]
+              LParen "(" @ 179..180
+              FormalParameterList
+                FormalParameter
+                  ParameterModifierList
                   ArrayType
                     ClassType
-                      Name
-                        Identifier "String" @ 107..113
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
+                          Name
+                            Identifier "String" @ 180..186
                     ArrayDimensions
                       ArrayDimension
-                        LBracket "[" @ 113..114
-                        RBracket "]" @ 114..115 trailing=[Whitespace " "]
-                  ArrayInitializer
-                    LBrace "{" @ 116..117
-                    NameExpression
-                      Identifier "value" @ 117..122
-                    RBrace "}" @ 122..123
-                Comma "," @ 123..124 trailing=[Whitespace " "]
-                LiteralExpression
-                  BooleanLiteral "true" @ 125..129
-                Comma "," @ 129..130 trailing=[Whitespace " "]
-                LiteralExpression
-                  NullLiteral "null" @ 131..135
-                RParen ")" @ 135..136
-              Semicolon ";" @ 136..137
-            RBrace "}" @ 142..143 leading=[Newline "\n", Whitespace "    "]
-      ClassBodyDeclaration
-        ConstructorDeclaration
-          Identifier "ConstructorInvocationArguments" @ 149..179 leading=[Newline "\n", Newline "\n", Whitespace "    "]
-          LParen "(" @ 179..180
-          FormalParameterList
-            FormalParameter
-              ArrayType
-                ClassType
-                  Name
-                    Identifier "String" @ 180..186
-                ArrayDimensions
-                  ArrayDimension
-                    LBracket "[" @ 186..187
-                    RBracket "]" @ 187..188 trailing=[Whitespace " "]
-              Identifier "values" @ 189..195
-            Comma "," @ 195..196 trailing=[Whitespace " "]
-            FormalParameter
-              PrimitiveType
-                BooleanKw "boolean" @ 197..204 trailing=[Whitespace " "]
-              Identifier "flag" @ 205..209
-            Comma "," @ 209..210 trailing=[Whitespace " "]
-            FormalParameter
-              ClassType
-                Name
-                  Identifier "Object" @ 211..217 trailing=[Whitespace " "]
-              Identifier "extra" @ 218..223
-          RParen ")" @ 223..224 trailing=[Whitespace " "]
-          ConstructorBody
-            LBrace "{" @ 225..226
-            RBrace "}" @ 226..227
-      RBrace "}" @ 228..229 leading=[Newline "\n"]
+                        AnnotationList
+                        LBracket "[" @ 186..187
+                        RBracket "]" @ 187..188 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "values" @ 189..195
+                Comma "," @ 195..196 trailing=[Whitespace " "]
+                FormalParameter
+                  ParameterModifierList
+                  PrimitiveType
+                    AnnotationList
+                    BooleanKw "boolean" @ 197..204 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "flag" @ 205..209
+                Comma "," @ 209..210 trailing=[Whitespace " "]
+                FormalParameter
+                  ParameterModifierList
+                  ClassType
+                    ClassTypeSegmentList
+                      ClassTypeSegmentNode
+                        AnnotationList
+                        Name
+                          Identifier "Object" @ 211..217 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "extra" @ 218..223
+              RParen ")" @ 223..224 trailing=[Whitespace " "]
+              ConstructorBody
+                LBrace "{" @ 225..226
+                ConstructorBodyEntryList
+                RBrace "}" @ 226..227
+        RBrace "}" @ 228..229 leading=[Newline "\n"]
   Eof "" @ 230..230 leading=[Newline "\n"]
 
 diagnostics:

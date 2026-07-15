@@ -16,72 +16,78 @@ class YieldIdentifierStatementExpressions {
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "YieldIdentifierStatementExpressions" @ 6..41 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 42..43
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 48..52 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "method" @ 53..59
-          LParen "(" @ 59..60
-          RParen ")" @ 60..61 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 62..63
-            BlockStatement
-              ExpressionStatement
-                AssignmentExpression
-                  NameExpression
-                    Identifier "yield" @ 72..77 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                  Assign "=" @ 78..79 trailing=[Whitespace " "]
-                  LiteralExpression
-                    IntegerLiteral "1" @ 80..81
-                Semicolon ";" @ 81..82
-            BlockStatement
-              ExpressionStatement
-                AssignmentExpression
-                  NameExpression
-                    Identifier "yield" @ 91..96 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                  PlusEq "+=" @ 97..99 trailing=[Whitespace " "]
-                  LiteralExpression
-                    IntegerLiteral "2" @ 100..101
-                Semicolon ";" @ 101..102
-            BlockStatement
-              ExpressionStatement
-                AssignmentExpression
-                  ArrayAccessExpression
-                    NameExpression
-                      Identifier "yield" @ 111..116 leading=[Newline "\n", Whitespace "        "]
-                    LBracket "[" @ 116..117
-                    LiteralExpression
-                      IntegerLiteral "0" @ 117..118
-                    RBracket "]" @ 118..119 trailing=[Whitespace " "]
-                  Assign "=" @ 120..121 trailing=[Whitespace " "]
-                  LiteralExpression
-                    IntegerLiteral "3" @ 122..123
-                Semicolon ";" @ 123..124
-            BlockStatement
-              ExpressionStatement
-                PostfixExpression
-                  NameExpression
-                    Identifier "yield" @ 133..138 leading=[Newline "\n", Whitespace "        "]
-                  PlusPlus "++" @ 138..140
-                Semicolon ";" @ 140..141
-            BlockStatement
-              ExpressionStatement
-                MethodInvocationExpression
-                  NameExpression
-                    Identifier "yield" @ 150..155 leading=[Newline "\n", Whitespace "        "]
-                  Dot "." @ 155..156
-                  Identifier "foo" @ 156..159
-                  ArgumentList
-                    LParen "(" @ 159..160
-                    RParen ")" @ 160..161
-                Semicolon ";" @ 161..162
-            RBrace "}" @ 167..168 leading=[Newline "\n", Whitespace "    "]
-      RBrace "}" @ 169..170 leading=[Newline "\n"]
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "YieldIdentifierStatementExpressions" @ 6..41 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 42..43
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 48..52 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Identifier "method" @ 53..59
+              LParen "(" @ 59..60
+              RParen ")" @ 60..61 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 62..63
+                BlockStatementList
+                  BlockStatement
+                    ExpressionStatement
+                      AssignmentExpression
+                        NameExpression
+                          Identifier "yield" @ 72..77 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                        Assign "=" @ 78..79 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "1" @ 80..81
+                      Semicolon ";" @ 81..82
+                  BlockStatement
+                    ExpressionStatement
+                      AssignmentExpression
+                        NameExpression
+                          Identifier "yield" @ 91..96 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                        PlusEq "+=" @ 97..99 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "2" @ 100..101
+                      Semicolon ";" @ 101..102
+                  BlockStatement
+                    ExpressionStatement
+                      AssignmentExpression
+                        ArrayAccessExpression
+                          NameExpression
+                            Identifier "yield" @ 111..116 leading=[Newline "\n", Whitespace "        "]
+                          LBracket "[" @ 116..117
+                          LiteralExpression
+                            IntegerLiteral "0" @ 117..118
+                          RBracket "]" @ 118..119 trailing=[Whitespace " "]
+                        Assign "=" @ 120..121 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "3" @ 122..123
+                      Semicolon ";" @ 123..124
+                  BlockStatement
+                    ExpressionStatement
+                      PostfixExpression
+                        NameExpression
+                          Identifier "yield" @ 133..138 leading=[Newline "\n", Whitespace "        "]
+                        PlusPlus "++" @ 138..140
+                      Semicolon ";" @ 140..141
+                  BlockStatement
+                    ExpressionStatement
+                      MethodInvocationExpression
+                        QualifiedMethodInvocation
+                          NameExpression
+                            Identifier "yield" @ 150..155 leading=[Newline "\n", Whitespace "        "]
+                          Dot "." @ 155..156
+                          Identifier "foo" @ 156..159
+                          ArgumentList
+                            LParen "(" @ 159..160
+                            ExpressionList
+                            RParen ")" @ 160..161
+                      Semicolon ";" @ 161..162
+                RBrace "}" @ 167..168 leading=[Newline "\n", Whitespace "    "]
+        RBrace "}" @ 169..170 leading=[Newline "\n"]
   Eof "" @ 171..171 leading=[Newline "\n"]
 
 diagnostics:

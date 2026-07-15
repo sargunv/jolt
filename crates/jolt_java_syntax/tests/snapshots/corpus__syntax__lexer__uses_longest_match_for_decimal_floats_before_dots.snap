@@ -8,12 +8,14 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    FloatingPointLiteral "1." @ 0..2
-    Dot "." @ 2..3
-    Dot "." @ 3..4 trailing=[Whitespace " "]
-    FloatingPointLiteral "1." @ 5..7
-    FloatingPointLiteral ".2" @ 7..9
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      FloatingPointLiteral "1." @ 0..2
+      Dot "." @ 2..3
+      Dot "." @ 3..4 trailing=[Whitespace " "]
+      FloatingPointLiteral "1." @ 5..7
+      FloatingPointLiteral ".2" @ 7..9
   Eof "" @ 9..9
 
 diagnostics:

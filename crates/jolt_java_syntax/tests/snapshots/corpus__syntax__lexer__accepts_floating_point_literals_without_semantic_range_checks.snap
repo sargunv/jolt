@@ -8,15 +8,17 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    FloatingPointLiteral "3.4028235e38f" @ 0..13 trailing=[Whitespace " "]
-    FloatingPointLiteral "1.4e-45f" @ 14..22 trailing=[Whitespace " "]
-    FloatingPointLiteral "1.7976931348623157e308" @ 23..45 trailing=[Whitespace " "]
-    FloatingPointLiteral "4.9e-324" @ 46..54 trailing=[Whitespace " "]
-    FloatingPointLiteral "3.5e38f" @ 55..62 trailing=[Whitespace " "]
-    FloatingPointLiteral "1e-46f" @ 63..69 trailing=[Whitespace " "]
-    FloatingPointLiteral "1e309" @ 70..75 trailing=[Whitespace " "]
-    FloatingPointLiteral "1e-325" @ 76..82
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      FloatingPointLiteral "3.4028235e38f" @ 0..13 trailing=[Whitespace " "]
+      FloatingPointLiteral "1.4e-45f" @ 14..22 trailing=[Whitespace " "]
+      FloatingPointLiteral "1.7976931348623157e308" @ 23..45 trailing=[Whitespace " "]
+      FloatingPointLiteral "4.9e-324" @ 46..54 trailing=[Whitespace " "]
+      FloatingPointLiteral "3.5e38f" @ 55..62 trailing=[Whitespace " "]
+      FloatingPointLiteral "1e-46f" @ 63..69 trailing=[Whitespace " "]
+      FloatingPointLiteral "1e309" @ 70..75 trailing=[Whitespace " "]
+      FloatingPointLiteral "1e-325" @ 76..82
   Eof "" @ 82..82
 
 diagnostics:

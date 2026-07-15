@@ -10,8 +10,10 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    TextBlockLiteral "\"\"\"\n𝒂\n\"\"\"" @ 0..12
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      TextBlockLiteral "\"\"\"\n𝒂\n\"\"\"" @ 0..12
   Eof "" @ 12..12
 
 diagnostics:

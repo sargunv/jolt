@@ -1,10 +1,25 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
-use jolt_java_syntax::{JavaSyntaxKind, JavaSyntaxToken, ModifierEntry};
+use jolt_java_syntax::{JavaSyntaxKind, JavaSyntaxToken, NonSealedModifier};
 
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, format_token, format_token_after_relocated_leading_comments,
     token_has_comments,
 };
+use crate::helpers::recovery::format_required_field;
+
+#[derive(Clone, Copy)]
+pub(crate) enum ModifierEntry<'source> {
+    Token(JavaSyntaxToken<'source>),
+    Sealed(JavaSyntaxToken<'source>),
+    NonSealed(NonSealedModifier<'source>),
+    Malformed(Doc<'source>),
+}
+
+impl ModifierEntry<'_> {
+    fn is_structured(&self) -> bool {
+        !matches!(self, Self::Malformed(_))
+    }
+}
 
 pub(crate) fn modifier_prefix_from_docs<'source>(
     doc: &mut DocBuilder<'source>,
@@ -19,21 +34,28 @@ pub(crate) fn modifier_prefix_from_docs<'source>(
             docs.push(hard_line);
         }
         let mut has_modifiers = false;
+        let mut last_modifier_is_structured = false;
         let modifiers = docs.concat_list(|modifiers| {
+            let mut previous_is_structured = false;
             for entry in modifier_entries {
-                if !modifiers.is_empty() {
+                let entry_is_structured = entry.is_structured();
+                if !modifiers.is_empty() && previous_is_structured && entry_is_structured {
                     let space = modifiers.space();
                     modifiers.push(space);
                 }
                 let entry = format_modifier_entry(modifiers, &entry, LeadingComments::Suppress);
                 modifiers.push(entry);
+                previous_is_structured = entry_is_structured;
             }
             has_modifiers = !modifiers.is_empty();
+            last_modifier_is_structured = previous_is_structured;
         });
         if has_modifiers {
             docs.push(modifiers);
-            let space = docs.space();
-            docs.push(space);
+            if last_modifier_is_structured {
+                let space = docs.space();
+                docs.push(space);
+            }
         }
     })
 }
@@ -45,6 +67,7 @@ pub(crate) fn inline_modifier_prefix_from_docs<'source>(
 ) -> Doc<'source> {
     let modifier_entries = sorted_modifier_entries(modifier_entries);
     let mut has_docs = false;
+    let mut ends_with_structured = false;
     let docs = doc.concat_list(|docs| {
         for annotation in annotation_docs {
             if !docs.is_empty() {
@@ -53,29 +76,49 @@ pub(crate) fn inline_modifier_prefix_from_docs<'source>(
             }
             docs.push(annotation);
         }
+        let mut previous_is_structured = !docs.is_empty();
         for entry in modifier_entries {
-            if !docs.is_empty() {
+            let entry_is_structured = entry.is_structured();
+            if !docs.is_empty() && previous_is_structured && entry_is_structured {
                 let space = docs.space();
                 docs.push(space);
             }
             let entry = format_modifier_entry(docs, &entry, LeadingComments::Preserve);
             docs.push(entry);
+            previous_is_structured = entry_is_structured;
         }
         has_docs = !docs.is_empty();
+        ends_with_structured = previous_is_structured;
     });
     if !has_docs {
         return Doc::nil();
     }
-
-    let space = doc.space();
-    doc_concat!(doc, [docs, space])
+    if ends_with_structured {
+        let space = doc.space();
+        doc_concat!(doc, [docs, space])
+    } else {
+        docs
+    }
 }
 
 fn sorted_modifier_entries(mut entries: Vec<ModifierEntry<'_>>) -> Vec<ModifierEntry<'_>> {
     sort_modifier_runs(
         &mut entries,
-        |entry| entry.tokens().any(token_has_comments),
-        |run| run.sort_by_key(modifier_entry_order),
+        |entry| match entry {
+            ModifierEntry::Token(token) | ModifierEntry::Sealed(token) => token_has_comments(token),
+            ModifierEntry::NonSealed(non_sealed) => non_sealed
+                .token_iter()
+                .any(|token| token_has_comments(&token)),
+            ModifierEntry::Malformed(_) => true,
+        },
+        |run| {
+            if !run
+                .windows(2)
+                .all(|pair| modifier_entry_order(&pair[0]) <= modifier_entry_order(&pair[1]))
+            {
+                run.sort_by_key(modifier_entry_order);
+            }
+        },
     );
     entries
 }
@@ -110,15 +153,11 @@ fn sort_modifier_runs<T>(
 }
 
 fn modifier_entry_order(entry: &ModifierEntry<'_>) -> u8 {
-    if entry.is_sealed() {
-        11
-    } else if entry.is_non_sealed() {
-        12
-    } else {
-        entry
-            .tokens()
-            .next()
-            .map_or(u8::MAX, |token| modifier_order(token.kind()))
+    match entry {
+        ModifierEntry::Token(token) => modifier_order(token.kind()),
+        ModifierEntry::Sealed(_) => 11,
+        ModifierEntry::NonSealed(_) => 12,
+        ModifierEntry::Malformed(_) => u8::MAX,
     }
 }
 
@@ -127,12 +166,26 @@ fn format_modifier_entry<'source>(
     entry: &ModifierEntry<'source>,
     leading_comments: LeadingComments,
 ) -> Doc<'source> {
-    doc.concat_list(|docs| {
-        for token in entry.tokens() {
-            let token = format_modifier_token(docs, token, leading_comments);
-            docs.push(token);
+    match entry {
+        ModifierEntry::Token(token) | ModifierEntry::Sealed(token) => {
+            format_modifier_token(doc, token, leading_comments)
         }
-    })
+        ModifierEntry::Malformed(malformed) => *malformed,
+        ModifierEntry::NonSealed(non_sealed) => doc.concat_list(|docs| {
+            let non = format_required_field(non_sealed.non_keyword(), docs, |token, docs| {
+                format_modifier_token(docs, &token, leading_comments)
+            });
+            docs.push(non);
+            let minus = format_required_field(non_sealed.minus(), docs, |token, docs| {
+                format_modifier_token(docs, &token, leading_comments)
+            });
+            docs.push(minus);
+            let sealed = format_required_field(non_sealed.sealed_keyword(), docs, |token, docs| {
+                format_modifier_token(docs, &token, leading_comments)
+            });
+            docs.push(sealed);
+        }),
+    }
 }
 
 fn format_modifier_token<'source>(

@@ -1,6 +1,7 @@
 use super::{
     Doc, SwitchExpression, format_expression, format_switch_block, format_token_with_comments,
 };
+use crate::helpers::recovery::format_required_field;
 use jolt_fmt_ir::DocBuilder;
 
 pub(super) fn format_switch_expression<'source>(
@@ -10,30 +11,23 @@ pub(super) fn format_switch_expression<'source>(
     doc_concat!(
         doc,
         [
-            expression
-                .keyword()
-                .as_ref()
-                .map_or_else(Doc::nil, |token| doc_concat!(
-                    doc,
-                    [format_token_with_comments(doc, token), doc.space()]
-                ),),
-            expression
-                .open_paren()
-                .as_ref()
-                .map_or_else(Doc::nil, |token| format_token_with_comments(doc, token)),
-            expression
-                .selector()
-                .map_or_else(Doc::nil, |selector| format_expression(&selector, doc),),
-            expression
-                .close_paren()
-                .as_ref()
-                .map_or_else(Doc::nil, |token| doc_concat!(
-                    doc,
-                    [format_token_with_comments(doc, token), doc.space()]
-                ),),
-            expression
-                .block()
-                .map_or_else(Doc::nil, |block| format_switch_block(&block, doc)),
+            format_required_field(expression.switch_keyword(), doc, |token, doc| doc_concat!(
+                doc,
+                [format_token_with_comments(doc, &token), doc.space()]
+            )),
+            format_required_field(expression.open_paren(), doc, |token, doc| {
+                format_token_with_comments(doc, &token)
+            }),
+            format_required_field(expression.selector(), doc, |selector, doc| {
+                format_expression(&selector, doc)
+            }),
+            format_required_field(expression.close_paren(), doc, |token, doc| doc_concat!(
+                doc,
+                [format_token_with_comments(doc, &token), doc.space()]
+            )),
+            format_required_field(expression.body(), doc, |block, doc| {
+                format_switch_block(&block, doc)
+            }),
         ]
     )
 }

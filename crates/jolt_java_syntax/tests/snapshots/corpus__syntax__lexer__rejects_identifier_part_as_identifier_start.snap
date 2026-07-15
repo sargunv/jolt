@@ -8,9 +8,11 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    Unknown "\u{301}" @ 0..2
-    Identifier "a" @ 2..3
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      Unknown "\u{301}" @ 0..2
+      Identifier "a" @ 2..3
   Eof "" @ 3..3
 
 diagnostics:

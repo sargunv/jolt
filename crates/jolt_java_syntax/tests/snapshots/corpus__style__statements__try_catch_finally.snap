@@ -24,316 +24,438 @@ try { risky(); } catch (java.io.IOException | /* runtime */ RuntimeException ex)
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "Example" @ 6..13 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 14..15
-      ClassBodyDeclaration
-        MethodDeclaration
-          PrimitiveType
-            IntKw "int" @ 16..19 leading=[Newline "\n"] trailing=[Whitespace " "]
-          Identifier "run" @ 20..23
-          LParen "(" @ 23..24
-          RParen ")" @ 24..25 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 26..27
-            BlockStatement
-              TryStatement
-                TryKw "try" @ 28..31 leading=[Newline "\n"] trailing=[Whitespace " "]
-                Block
-                  LBrace "{" @ 32..33 trailing=[Whitespace " "]
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "Example" @ 6..13 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 14..15
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              PrimitiveType
+                AnnotationList
+                IntKw "int" @ 16..19 leading=[Newline "\n"] trailing=[Whitespace " "]
+              Identifier "run" @ 20..23
+              LParen "(" @ 23..24
+              RParen ")" @ 24..25 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 26..27
+                BlockStatementList
                   BlockStatement
-                    ExpressionStatement
-                      MethodInvocationExpression
-                        NameExpression
-                          Identifier "risky" @ 34..39
-                        ArgumentList
-                          LParen "(" @ 39..40
-                          RParen ")" @ 40..41
-                      Semicolon ";" @ 41..42 trailing=[Whitespace " "]
-                  RBrace "}" @ 43..44 trailing=[Whitespace " "]
-                CatchClause
-                  CatchKw "catch" @ 45..50 trailing=[Whitespace " "]
-                  LParen "(" @ 51..52
-                  CatchParameter
-                    CatchTypeList
-                      UnionType
-                        ClassType
-                          QualifiedName
-                            Identifier "java" @ 52..56
-                            Dot "." @ 56..57
-                            Identifier "io" @ 57..59
-                            Dot "." @ 59..60
-                            Identifier "IOException" @ 60..71 trailing=[Whitespace " "]
-                        Bar "|" @ 72..73 trailing=[Whitespace " "]
-                        ClassType
-                          Name
-                            Identifier "RuntimeException" @ 74..90 trailing=[Whitespace " "]
-                    Identifier "ex" @ 91..93
-                  RParen ")" @ 93..94 trailing=[Whitespace " "]
-                  Block
-                    LBrace "{" @ 95..96 trailing=[Whitespace " "]
-                    BlockStatement
-                      ReturnStatement
-                        ReturnKw "return" @ 97..103 trailing=[Whitespace " "]
-                        LiteralExpression
-                          IntegerLiteral "1" @ 104..105
-                        Semicolon ";" @ 105..106 trailing=[Whitespace " "]
-                    RBrace "}" @ 107..108 trailing=[Whitespace " "]
-                CatchClause
-                  CatchKw "catch" @ 109..114
-                  LParen "(" @ 114..115
-                  CatchParameter
-                    CatchTypeList
-                      ClassType
-                        Name
-                          Identifier "Exception" @ 115..124 trailing=[Whitespace " "]
-                    Identifier "ex" @ 125..127
-                  RParen ")" @ 127..128 trailing=[Whitespace " "]
-                  Block
-                    LBrace "{" @ 129..130 trailing=[Whitespace " "]
-                    BlockStatement
-                      ThrowStatement
-                        ThrowKw "throw" @ 131..136 trailing=[Whitespace " "]
-                        NameExpression
-                          Identifier "ex" @ 137..139
-                        Semicolon ";" @ 139..140 trailing=[Whitespace " "]
-                    RBrace "}" @ 141..142 trailing=[Whitespace " "]
-                FinallyClause
-                  FinallyKw "finally" @ 143..150 trailing=[Whitespace " "]
-                  Block
-                    LBrace "{" @ 151..152 trailing=[Whitespace " "]
-                    BlockStatement
-                      ExpressionStatement
-                        MethodInvocationExpression
-                          NameExpression
-                            Identifier "cleanup" @ 153..160
-                          ArgumentList
-                            LParen "(" @ 160..161
-                            RParen ")" @ 161..162
-                        Semicolon ";" @ 162..163 trailing=[Whitespace " "]
-                    RBrace "}" @ 164..165
-            RBrace "}" @ 166..167 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        MethodDeclaration
-          PrimitiveType
-            IntKw "int" @ 168..171 leading=[Newline "\n"] trailing=[Whitespace " "]
-          Identifier "recoverLong" @ 172..183
-          LParen "(" @ 183..184
-          RParen ")" @ 184..185 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 186..187
-            BlockStatement
-              TryStatement
-                TryKw "try" @ 188..191 leading=[Newline "\n"] trailing=[Whitespace " "]
-                Block
-                  LBrace "{" @ 192..193 trailing=[Whitespace " "]
+                    TryStatement
+                      TryKw "try" @ 28..31 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      Block
+                        LBrace "{" @ 32..33 trailing=[Whitespace " "]
+                        BlockStatementList
+                          BlockStatement
+                            ExpressionStatement
+                              MethodInvocationExpression
+                                UnqualifiedMethodInvocation
+                                  NameExpression
+                                    Identifier "risky" @ 34..39
+                                  ArgumentList
+                                    LParen "(" @ 39..40
+                                    ExpressionList
+                                    RParen ")" @ 40..41
+                              Semicolon ";" @ 41..42 trailing=[Whitespace " "]
+                        RBrace "}" @ 43..44 trailing=[Whitespace " "]
+                      CatchClauseList
+                        CatchClause
+                          CatchKw "catch" @ 45..50 trailing=[Whitespace " "]
+                          LParen "(" @ 51..52
+                          CatchParameter
+                            ParameterModifierList
+                            CatchTypeList
+                              UnionType
+                                ClassType
+                                  ClassTypeSegmentList
+                                    ClassTypeSegmentNode
+                                      AnnotationList
+                                      QualifiedName
+                                        QualifiedNameSegmentNode
+                                          AnnotationList
+                                          Identifier "java" @ 52..56
+                                        Dot "." @ 56..57
+                                        NameSegmentDotList
+                                          QualifiedNameSegmentNode
+                                            AnnotationList
+                                            Identifier "io" @ 57..59
+                                          Dot "." @ 59..60
+                                          QualifiedNameSegmentNode
+                                            AnnotationList
+                                            Identifier "IOException" @ 60..71 trailing=[Whitespace " "]
+                                Bar "|" @ 72..73 trailing=[Whitespace " "]
+                                TypeBarList
+                                  ClassType
+                                    ClassTypeSegmentList
+                                      ClassTypeSegmentNode
+                                        AnnotationList
+                                        Name
+                                          Identifier "RuntimeException" @ 74..90 trailing=[Whitespace " "]
+                            Identifier "ex" @ 91..93
+                          RParen ")" @ 93..94 trailing=[Whitespace " "]
+                          Block
+                            LBrace "{" @ 95..96 trailing=[Whitespace " "]
+                            BlockStatementList
+                              BlockStatement
+                                ReturnStatement
+                                  ReturnKw "return" @ 97..103 trailing=[Whitespace " "]
+                                  LiteralExpression
+                                    IntegerLiteral "1" @ 104..105
+                                  Semicolon ";" @ 105..106 trailing=[Whitespace " "]
+                            RBrace "}" @ 107..108 trailing=[Whitespace " "]
+                        CatchClause
+                          CatchKw "catch" @ 109..114
+                          LParen "(" @ 114..115
+                          CatchParameter
+                            ParameterModifierList
+                            CatchTypeList
+                              ClassType
+                                ClassTypeSegmentList
+                                  ClassTypeSegmentNode
+                                    AnnotationList
+                                    Name
+                                      Identifier "Exception" @ 115..124 trailing=[Whitespace " "]
+                            Identifier "ex" @ 125..127
+                          RParen ")" @ 127..128 trailing=[Whitespace " "]
+                          Block
+                            LBrace "{" @ 129..130 trailing=[Whitespace " "]
+                            BlockStatementList
+                              BlockStatement
+                                ThrowStatement
+                                  ThrowKw "throw" @ 131..136 trailing=[Whitespace " "]
+                                  NameExpression
+                                    Identifier "ex" @ 137..139
+                                  Semicolon ";" @ 139..140 trailing=[Whitespace " "]
+                            RBrace "}" @ 141..142 trailing=[Whitespace " "]
+                      FinallyClause
+                        FinallyKw "finally" @ 143..150 trailing=[Whitespace " "]
+                        Block
+                          LBrace "{" @ 151..152 trailing=[Whitespace " "]
+                          BlockStatementList
+                            BlockStatement
+                              ExpressionStatement
+                                MethodInvocationExpression
+                                  UnqualifiedMethodInvocation
+                                    NameExpression
+                                      Identifier "cleanup" @ 153..160
+                                    ArgumentList
+                                      LParen "(" @ 160..161
+                                      ExpressionList
+                                      RParen ")" @ 161..162
+                                Semicolon ";" @ 162..163 trailing=[Whitespace " "]
+                          RBrace "}" @ 164..165
+                RBrace "}" @ 166..167 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            MethodDeclaration
+              PrimitiveType
+                AnnotationList
+                IntKw "int" @ 168..171 leading=[Newline "\n"] trailing=[Whitespace " "]
+              Identifier "recoverLong" @ 172..183
+              LParen "(" @ 183..184
+              RParen ")" @ 184..185 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 186..187
+                BlockStatementList
                   BlockStatement
-                    ExpressionStatement
-                      MethodInvocationExpression
-                        NameExpression
-                          Identifier "risky" @ 194..199
-                        ArgumentList
-                          LParen "(" @ 199..200
-                          RParen ")" @ 200..201
-                      Semicolon ";" @ 201..202 trailing=[Whitespace " "]
-                  RBrace "}" @ 203..204 trailing=[Whitespace " "]
-                CatchClause
-                  CatchKw "catch" @ 205..210 trailing=[Whitespace " "]
-                  LParen "(" @ 211..212
-                  CatchParameter
-                    CatchTypeList
-                      UnionType
-                        ClassType
-                          QualifiedName
-                            Identifier "com" @ 212..215
-                            Dot "." @ 215..216
-                            Identifier "example" @ 216..223
-                            Dot "." @ 223..224
-                            Identifier "recovery" @ 224..232
-                            Dot "." @ 232..233
-                            Identifier "FirstVeryLongRecoverableException" @ 233..266 trailing=[Whitespace " "]
-                        Bar "|" @ 267..268 trailing=[Whitespace " "]
-                        ClassType
-                          QualifiedName
-                            Identifier "com" @ 269..272
-                            Dot "." @ 272..273
-                            Identifier "example" @ 273..280
-                            Dot "." @ 280..281
-                            Identifier "recovery" @ 281..289
-                            Dot "." @ 289..290
-                            Identifier "SecondVeryLongRecoverableException" @ 290..324 trailing=[Whitespace " "]
-                        Bar "|" @ 325..326 trailing=[Whitespace " "]
-                        ClassType
-                          QualifiedName
-                            Identifier "com" @ 327..330
-                            Dot "." @ 330..331
-                            Identifier "example" @ 331..338
-                            Dot "." @ 338..339
-                            Identifier "recovery" @ 339..347
-                            Dot "." @ 347..348
-                            Identifier "ThirdVeryLongRecoverableException" @ 348..381 trailing=[Whitespace " "]
-                    Identifier "ex" @ 382..384
-                  RParen ")" @ 384..385 trailing=[Whitespace " "]
-                  Block
-                    LBrace "{" @ 386..387 trailing=[Whitespace " "]
-                    BlockStatement
-                      ReturnStatement
-                        ReturnKw "return" @ 388..394 trailing=[Whitespace " "]
-                        LiteralExpression
-                          IntegerLiteral "2" @ 395..396
-                        Semicolon ";" @ 396..397 trailing=[Whitespace " "]
-                    RBrace "}" @ 398..399
-            RBrace "}" @ 400..401 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        MethodDeclaration
-          PrimitiveType
-            IntKw "int" @ 402..405 leading=[Newline "\n"] trailing=[Whitespace " "]
-          Identifier "recoverAnnotated" @ 406..422
-          LParen "(" @ 422..423
-          RParen ")" @ 423..424 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 425..426
-            BlockStatement
-              TryStatement
-                TryKw "try" @ 427..430 leading=[Newline "\n"] trailing=[Whitespace " "]
-                Block
-                  LBrace "{" @ 431..432 trailing=[Whitespace " "]
+                    TryStatement
+                      TryKw "try" @ 188..191 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      Block
+                        LBrace "{" @ 192..193 trailing=[Whitespace " "]
+                        BlockStatementList
+                          BlockStatement
+                            ExpressionStatement
+                              MethodInvocationExpression
+                                UnqualifiedMethodInvocation
+                                  NameExpression
+                                    Identifier "risky" @ 194..199
+                                  ArgumentList
+                                    LParen "(" @ 199..200
+                                    ExpressionList
+                                    RParen ")" @ 200..201
+                              Semicolon ";" @ 201..202 trailing=[Whitespace " "]
+                        RBrace "}" @ 203..204 trailing=[Whitespace " "]
+                      CatchClauseList
+                        CatchClause
+                          CatchKw "catch" @ 205..210 trailing=[Whitespace " "]
+                          LParen "(" @ 211..212
+                          CatchParameter
+                            ParameterModifierList
+                            CatchTypeList
+                              UnionType
+                                ClassType
+                                  ClassTypeSegmentList
+                                    ClassTypeSegmentNode
+                                      AnnotationList
+                                      QualifiedName
+                                        QualifiedNameSegmentNode
+                                          AnnotationList
+                                          Identifier "com" @ 212..215
+                                        Dot "." @ 215..216
+                                        NameSegmentDotList
+                                          QualifiedNameSegmentNode
+                                            AnnotationList
+                                            Identifier "example" @ 216..223
+                                          Dot "." @ 223..224
+                                          QualifiedNameSegmentNode
+                                            AnnotationList
+                                            Identifier "recovery" @ 224..232
+                                          Dot "." @ 232..233
+                                          QualifiedNameSegmentNode
+                                            AnnotationList
+                                            Identifier "FirstVeryLongRecoverableException" @ 233..266 trailing=[Whitespace " "]
+                                Bar "|" @ 267..268 trailing=[Whitespace " "]
+                                TypeBarList
+                                  ClassType
+                                    ClassTypeSegmentList
+                                      ClassTypeSegmentNode
+                                        AnnotationList
+                                        QualifiedName
+                                          QualifiedNameSegmentNode
+                                            AnnotationList
+                                            Identifier "com" @ 269..272
+                                          Dot "." @ 272..273
+                                          NameSegmentDotList
+                                            QualifiedNameSegmentNode
+                                              AnnotationList
+                                              Identifier "example" @ 273..280
+                                            Dot "." @ 280..281
+                                            QualifiedNameSegmentNode
+                                              AnnotationList
+                                              Identifier "recovery" @ 281..289
+                                            Dot "." @ 289..290
+                                            QualifiedNameSegmentNode
+                                              AnnotationList
+                                              Identifier "SecondVeryLongRecoverableException" @ 290..324 trailing=[Whitespace " "]
+                                  Bar "|" @ 325..326 trailing=[Whitespace " "]
+                                  ClassType
+                                    ClassTypeSegmentList
+                                      ClassTypeSegmentNode
+                                        AnnotationList
+                                        QualifiedName
+                                          QualifiedNameSegmentNode
+                                            AnnotationList
+                                            Identifier "com" @ 327..330
+                                          Dot "." @ 330..331
+                                          NameSegmentDotList
+                                            QualifiedNameSegmentNode
+                                              AnnotationList
+                                              Identifier "example" @ 331..338
+                                            Dot "." @ 338..339
+                                            QualifiedNameSegmentNode
+                                              AnnotationList
+                                              Identifier "recovery" @ 339..347
+                                            Dot "." @ 347..348
+                                            QualifiedNameSegmentNode
+                                              AnnotationList
+                                              Identifier "ThirdVeryLongRecoverableException" @ 348..381 trailing=[Whitespace " "]
+                            Identifier "ex" @ 382..384
+                          RParen ")" @ 384..385 trailing=[Whitespace " "]
+                          Block
+                            LBrace "{" @ 386..387 trailing=[Whitespace " "]
+                            BlockStatementList
+                              BlockStatement
+                                ReturnStatement
+                                  ReturnKw "return" @ 388..394 trailing=[Whitespace " "]
+                                  LiteralExpression
+                                    IntegerLiteral "2" @ 395..396
+                                  Semicolon ";" @ 396..397 trailing=[Whitespace " "]
+                            RBrace "}" @ 398..399
+                RBrace "}" @ 400..401 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            MethodDeclaration
+              PrimitiveType
+                AnnotationList
+                IntKw "int" @ 402..405 leading=[Newline "\n"] trailing=[Whitespace " "]
+              Identifier "recoverAnnotated" @ 406..422
+              LParen "(" @ 422..423
+              RParen ")" @ 423..424 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 425..426
+                BlockStatementList
                   BlockStatement
-                    ExpressionStatement
-                      MethodInvocationExpression
-                        NameExpression
-                          Identifier "risky" @ 433..438
-                        ArgumentList
-                          LParen "(" @ 438..439
-                          RParen ")" @ 439..440
-                      Semicolon ";" @ 440..441 trailing=[Whitespace " "]
-                  RBrace "}" @ 442..443 trailing=[Whitespace " "]
-                CatchClause
-                  CatchKw "catch" @ 444..449 trailing=[Whitespace " "]
-                  LParen "(" @ 450..451
-                  CatchParameter
-                    Annotation
-                      At "@" @ 451..452
-                      Name
-                        Identifier "Nonnull" @ 452..459 trailing=[Whitespace " "]
-                    FinalKw "final" @ 460..465 trailing=[Whitespace " "]
-                    CatchTypeList
-                      ClassType
-                        Name
-                          Identifier "Exception" @ 466..475 trailing=[Whitespace " "]
-                    Identifier "ex" @ 476..478
-                  RParen ")" @ 478..479 trailing=[Whitespace " "]
-                  Block
-                    LBrace "{" @ 480..481 trailing=[Whitespace " "]
-                    BlockStatement
-                      ReturnStatement
-                        ReturnKw "return" @ 482..488 trailing=[Whitespace " "]
-                        LiteralExpression
-                          IntegerLiteral "3" @ 489..490
-                        Semicolon ";" @ 490..491 trailing=[Whitespace " "]
-                    RBrace "}" @ 492..493
-            RBrace "}" @ 494..495 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        MethodDeclaration
-          PrimitiveType
-            IntKw "int" @ 496..499 leading=[Newline "\n"] trailing=[Whitespace " "]
-          Identifier "recoverCommented" @ 500..516
-          LParen "(" @ 516..517
-          RParen ")" @ 517..518 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 519..520
-            BlockStatement
-              TryStatement
-                TryKw "try" @ 521..524 leading=[Newline "\n"] trailing=[Whitespace " "]
-                Block
-                  LBrace "{" @ 525..526 trailing=[Whitespace " "]
+                    TryStatement
+                      TryKw "try" @ 427..430 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      Block
+                        LBrace "{" @ 431..432 trailing=[Whitespace " "]
+                        BlockStatementList
+                          BlockStatement
+                            ExpressionStatement
+                              MethodInvocationExpression
+                                UnqualifiedMethodInvocation
+                                  NameExpression
+                                    Identifier "risky" @ 433..438
+                                  ArgumentList
+                                    LParen "(" @ 438..439
+                                    ExpressionList
+                                    RParen ")" @ 439..440
+                              Semicolon ";" @ 440..441 trailing=[Whitespace " "]
+                        RBrace "}" @ 442..443 trailing=[Whitespace " "]
+                      CatchClauseList
+                        CatchClause
+                          CatchKw "catch" @ 444..449 trailing=[Whitespace " "]
+                          LParen "(" @ 450..451
+                          CatchParameter
+                            ParameterModifierList
+                              Annotation
+                                At "@" @ 451..452
+                                Name
+                                  Identifier "Nonnull" @ 452..459 trailing=[Whitespace " "]
+                              FinalKw "final" @ 460..465 trailing=[Whitespace " "]
+                            CatchTypeList
+                              ClassType
+                                ClassTypeSegmentList
+                                  ClassTypeSegmentNode
+                                    AnnotationList
+                                    Name
+                                      Identifier "Exception" @ 466..475 trailing=[Whitespace " "]
+                            Identifier "ex" @ 476..478
+                          RParen ")" @ 478..479 trailing=[Whitespace " "]
+                          Block
+                            LBrace "{" @ 480..481 trailing=[Whitespace " "]
+                            BlockStatementList
+                              BlockStatement
+                                ReturnStatement
+                                  ReturnKw "return" @ 482..488 trailing=[Whitespace " "]
+                                  LiteralExpression
+                                    IntegerLiteral "3" @ 489..490
+                                  Semicolon ";" @ 490..491 trailing=[Whitespace " "]
+                            RBrace "}" @ 492..493
+                RBrace "}" @ 494..495 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            MethodDeclaration
+              PrimitiveType
+                AnnotationList
+                IntKw "int" @ 496..499 leading=[Newline "\n"] trailing=[Whitespace " "]
+              Identifier "recoverCommented" @ 500..516
+              LParen "(" @ 516..517
+              RParen ")" @ 517..518 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 519..520
+                BlockStatementList
                   BlockStatement
-                    ExpressionStatement
-                      MethodInvocationExpression
-                        NameExpression
-                          Identifier "risky" @ 527..532
-                        ArgumentList
-                          LParen "(" @ 532..533
-                          RParen ")" @ 533..534
-                      Semicolon ";" @ 534..535 trailing=[Whitespace " "]
-                  RBrace "}" @ 536..537 trailing=[Whitespace " "]
-                CatchClause
-                  CatchKw "catch" @ 538..543 trailing=[Whitespace " "]
-                  LParen "(" @ 544..545
-                  CatchParameter
-                    FinalKw "final" @ 545..550 trailing=[Whitespace " ", BlockComment "/* keep */", Whitespace " "]
-                    CatchTypeList
-                      ClassType
-                        Name
-                          Identifier "Exception" @ 562..571 trailing=[Whitespace " "]
-                    Identifier "ex" @ 572..574 trailing=[Whitespace " ", BlockComment "/* handled */"]
-                  RParen ")" @ 588..589 trailing=[Whitespace " "]
-                  Block
-                    LBrace "{" @ 590..591 trailing=[Whitespace " "]
-                    BlockStatement
-                      ReturnStatement
-                        ReturnKw "return" @ 592..598 trailing=[Whitespace " "]
-                        LiteralExpression
-                          IntegerLiteral "4" @ 599..600
-                        Semicolon ";" @ 600..601 trailing=[Whitespace " "]
-                    RBrace "}" @ 602..603
-            RBrace "}" @ 604..605 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        MethodDeclaration
-          PrimitiveType
-            IntKw "int" @ 606..609 leading=[Newline "\n"] trailing=[Whitespace " "]
-          Identifier "recoverUnionCommented" @ 610..631
-          LParen "(" @ 631..632
-          RParen ")" @ 632..633 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 634..635
-            BlockStatement
-              TryStatement
-                TryKw "try" @ 636..639 leading=[Newline "\n"] trailing=[Whitespace " "]
-                Block
-                  LBrace "{" @ 640..641 trailing=[Whitespace " "]
+                    TryStatement
+                      TryKw "try" @ 521..524 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      Block
+                        LBrace "{" @ 525..526 trailing=[Whitespace " "]
+                        BlockStatementList
+                          BlockStatement
+                            ExpressionStatement
+                              MethodInvocationExpression
+                                UnqualifiedMethodInvocation
+                                  NameExpression
+                                    Identifier "risky" @ 527..532
+                                  ArgumentList
+                                    LParen "(" @ 532..533
+                                    ExpressionList
+                                    RParen ")" @ 533..534
+                              Semicolon ";" @ 534..535 trailing=[Whitespace " "]
+                        RBrace "}" @ 536..537 trailing=[Whitespace " "]
+                      CatchClauseList
+                        CatchClause
+                          CatchKw "catch" @ 538..543 trailing=[Whitespace " "]
+                          LParen "(" @ 544..545
+                          CatchParameter
+                            ParameterModifierList
+                              FinalKw "final" @ 545..550 trailing=[Whitespace " ", BlockComment "/* keep */", Whitespace " "]
+                            CatchTypeList
+                              ClassType
+                                ClassTypeSegmentList
+                                  ClassTypeSegmentNode
+                                    AnnotationList
+                                    Name
+                                      Identifier "Exception" @ 562..571 trailing=[Whitespace " "]
+                            Identifier "ex" @ 572..574 trailing=[Whitespace " ", BlockComment "/* handled */"]
+                          RParen ")" @ 588..589 trailing=[Whitespace " "]
+                          Block
+                            LBrace "{" @ 590..591 trailing=[Whitespace " "]
+                            BlockStatementList
+                              BlockStatement
+                                ReturnStatement
+                                  ReturnKw "return" @ 592..598 trailing=[Whitespace " "]
+                                  LiteralExpression
+                                    IntegerLiteral "4" @ 599..600
+                                  Semicolon ";" @ 600..601 trailing=[Whitespace " "]
+                            RBrace "}" @ 602..603
+                RBrace "}" @ 604..605 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            MethodDeclaration
+              PrimitiveType
+                AnnotationList
+                IntKw "int" @ 606..609 leading=[Newline "\n"] trailing=[Whitespace " "]
+              Identifier "recoverUnionCommented" @ 610..631
+              LParen "(" @ 631..632
+              RParen ")" @ 632..633 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 634..635
+                BlockStatementList
                   BlockStatement
-                    ExpressionStatement
-                      MethodInvocationExpression
-                        NameExpression
-                          Identifier "risky" @ 642..647
-                        ArgumentList
-                          LParen "(" @ 647..648
-                          RParen ")" @ 648..649
-                      Semicolon ";" @ 649..650 trailing=[Whitespace " "]
-                  RBrace "}" @ 651..652 trailing=[Whitespace " "]
-                CatchClause
-                  CatchKw "catch" @ 653..658 trailing=[Whitespace " "]
-                  LParen "(" @ 659..660
-                  CatchParameter
-                    CatchTypeList
-                      UnionType
-                        ClassType
-                          QualifiedName
-                            Identifier "java" @ 660..664
-                            Dot "." @ 664..665
-                            Identifier "io" @ 665..667
-                            Dot "." @ 667..668
-                            Identifier "IOException" @ 668..679 trailing=[Whitespace " "]
-                        Bar "|" @ 680..681 trailing=[Whitespace " ", BlockComment "/* runtime */", Whitespace " "]
-                        ClassType
-                          Name
-                            Identifier "RuntimeException" @ 696..712 trailing=[Whitespace " "]
-                    Identifier "ex" @ 713..715
-                  RParen ")" @ 715..716 trailing=[Whitespace " "]
-                  Block
-                    LBrace "{" @ 717..718 trailing=[Whitespace " "]
-                    BlockStatement
-                      ReturnStatement
-                        ReturnKw "return" @ 719..725 trailing=[Whitespace " "]
-                        LiteralExpression
-                          IntegerLiteral "5" @ 726..727
-                        Semicolon ";" @ 727..728 trailing=[Whitespace " "]
-                    RBrace "}" @ 729..730
-            RBrace "}" @ 731..732 leading=[Newline "\n"]
-      RBrace "}" @ 733..734 leading=[Newline "\n"]
+                    TryStatement
+                      TryKw "try" @ 636..639 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      Block
+                        LBrace "{" @ 640..641 trailing=[Whitespace " "]
+                        BlockStatementList
+                          BlockStatement
+                            ExpressionStatement
+                              MethodInvocationExpression
+                                UnqualifiedMethodInvocation
+                                  NameExpression
+                                    Identifier "risky" @ 642..647
+                                  ArgumentList
+                                    LParen "(" @ 647..648
+                                    ExpressionList
+                                    RParen ")" @ 648..649
+                              Semicolon ";" @ 649..650 trailing=[Whitespace " "]
+                        RBrace "}" @ 651..652 trailing=[Whitespace " "]
+                      CatchClauseList
+                        CatchClause
+                          CatchKw "catch" @ 653..658 trailing=[Whitespace " "]
+                          LParen "(" @ 659..660
+                          CatchParameter
+                            ParameterModifierList
+                            CatchTypeList
+                              UnionType
+                                ClassType
+                                  ClassTypeSegmentList
+                                    ClassTypeSegmentNode
+                                      AnnotationList
+                                      QualifiedName
+                                        QualifiedNameSegmentNode
+                                          AnnotationList
+                                          Identifier "java" @ 660..664
+                                        Dot "." @ 664..665
+                                        NameSegmentDotList
+                                          QualifiedNameSegmentNode
+                                            AnnotationList
+                                            Identifier "io" @ 665..667
+                                          Dot "." @ 667..668
+                                          QualifiedNameSegmentNode
+                                            AnnotationList
+                                            Identifier "IOException" @ 668..679 trailing=[Whitespace " "]
+                                Bar "|" @ 680..681 trailing=[Whitespace " ", BlockComment "/* runtime */", Whitespace " "]
+                                TypeBarList
+                                  ClassType
+                                    ClassTypeSegmentList
+                                      ClassTypeSegmentNode
+                                        AnnotationList
+                                        Name
+                                          Identifier "RuntimeException" @ 696..712 trailing=[Whitespace " "]
+                            Identifier "ex" @ 713..715
+                          RParen ")" @ 715..716 trailing=[Whitespace " "]
+                          Block
+                            LBrace "{" @ 717..718 trailing=[Whitespace " "]
+                            BlockStatementList
+                              BlockStatement
+                                ReturnStatement
+                                  ReturnKw "return" @ 719..725 trailing=[Whitespace " "]
+                                  LiteralExpression
+                                    IntegerLiteral "5" @ 726..727
+                                  Semicolon ";" @ 727..728 trailing=[Whitespace " "]
+                            RBrace "}" @ 729..730
+                RBrace "}" @ 731..732 leading=[Newline "\n"]
+        RBrace "}" @ 733..734 leading=[Newline "\n"]
   Eof "" @ 735..735 leading=[Newline "\n"]
 
 diagnostics:

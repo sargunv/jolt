@@ -33,15 +33,26 @@ impl Parser<'_> {
     }
 
     pub(super) fn parse_type_body(&mut self, kind: JavaSyntaxKind, type_name: Option<usize>) {
+        let body = self.start();
         if !self.at(JavaSyntaxKind::LBrace) {
-            let error = self.start();
             self.expected_here("expected type body");
             self.eat(JavaSyntaxKind::Semicolon);
-            self.complete(error, JavaSyntaxKind::ErrorNode);
+            let members = self.start();
+            self.complete(
+                members,
+                match kind {
+                    JavaSyntaxKind::AnnotationInterfaceBody => {
+                        JavaSyntaxKind::AnnotationInterfaceBodyMemberList
+                    }
+                    JavaSyntaxKind::InterfaceBody => JavaSyntaxKind::InterfaceBodyMemberList,
+                    JavaSyntaxKind::RecordBody => JavaSyntaxKind::RecordBodyMemberList,
+                    _ => JavaSyntaxKind::ClassBodyMemberList,
+                },
+            );
+            self.complete(body, kind);
             return;
         }
 
-        let body = self.start();
         self.bump();
 
         if kind == JavaSyntaxKind::EnumBody {
@@ -49,9 +60,19 @@ impl Parser<'_> {
         } else if kind == JavaSyntaxKind::AnnotationInterfaceBody {
             self.parse_annotation_interface_body_contents();
         } else {
+            let members = self.start();
             while !self.at_eof() && !self.at(JavaSyntaxKind::RBrace) {
                 self.parse_body_declaration(kind, type_name);
             }
+            self.complete(
+                members,
+                match kind {
+                    JavaSyntaxKind::ClassBody => JavaSyntaxKind::ClassBodyMemberList,
+                    JavaSyntaxKind::RecordBody => JavaSyntaxKind::RecordBodyMemberList,
+                    JavaSyntaxKind::InterfaceBody => JavaSyntaxKind::InterfaceBodyMemberList,
+                    _ => unreachable!("non-special type bodies own a member-list role"),
+                },
+            );
         }
 
         self.expect(JavaSyntaxKind::RBrace, "expected `}` after type body");
@@ -121,9 +142,32 @@ impl Parser<'_> {
     }
 
     pub(super) fn parse_annotations(&mut self) {
+        let annotations = self.start();
         while self.at(JavaSyntaxKind::At) && self.nth_kind(1) != JavaSyntaxKind::InterfaceKw {
             self.parse_annotation();
         }
+        self.complete(annotations, JavaSyntaxKind::AnnotationList);
+    }
+
+    fn parse_optional_annotations(&mut self) {
+        let annotations = self.start();
+        let start = self.position();
+        while self.at(JavaSyntaxKind::At) && self.nth_kind(1) != JavaSyntaxKind::InterfaceKw {
+            self.parse_annotation();
+        }
+        if self.position() == start {
+            self.abandon(annotations);
+        } else {
+            self.complete(annotations, JavaSyntaxKind::AnnotationList);
+        }
+    }
+
+    fn parse_parameter_annotations(&mut self) {
+        let modifiers = self.start();
+        while self.at(JavaSyntaxKind::At) && self.nth_kind(1) != JavaSyntaxKind::InterfaceKw {
+            self.parse_annotation();
+        }
+        self.complete(modifiers, JavaSyntaxKind::ParameterModifierList);
     }
 
     pub(super) fn parse_annotation(&mut self) {
@@ -177,12 +221,14 @@ impl Parser<'_> {
 
         let list = self.start();
         self.bump();
+        let parameters = self.start();
         while !self.at_eof() && !self.at_type_argument_close() {
             self.parse_type_parameter();
             if !self.eat(JavaSyntaxKind::Comma) {
                 break;
             }
         }
+        self.complete(parameters, JavaSyntaxKind::TypeParameterSeparatedList);
         self.eat_type_argument_close();
         self.complete(list, JavaSyntaxKind::TypeParameterList);
         true
@@ -235,21 +281,25 @@ impl Parser<'_> {
     }
 
     pub(super) fn parse_type_list_until_clause_end(&mut self) {
+        let types = self.start();
         while !self.at_eof() && !self.at_header_clause_end() {
             self.parse_class_type();
             if !self.eat(JavaSyntaxKind::Comma) {
                 break;
             }
         }
+        self.complete(types, JavaSyntaxKind::TypeList);
     }
 
     pub(super) fn parse_type_name_list_until_clause_end(&mut self) {
+        let names = self.start();
         while !self.at_eof() && !self.at_header_clause_end() {
             self.consume_qualified_name();
             if !self.eat(JavaSyntaxKind::Comma) {
                 break;
             }
         }
+        self.complete(names, JavaSyntaxKind::NameList);
     }
 
     pub(super) fn parse_record_header(&mut self) {
@@ -274,7 +324,7 @@ impl Parser<'_> {
 
     pub(super) fn parse_record_component(&mut self) {
         let component = self.start();
-        self.parse_annotations();
+        self.parse_parameter_annotations();
         self.parse_type();
         self.parse_annotations();
         self.eat(JavaSyntaxKind::Ellipsis);
@@ -434,7 +484,7 @@ impl Parser<'_> {
         let method = self.start();
         self.parse_method_modifier_list();
         self.parse_optional_type_parameter_list();
-        self.parse_annotations();
+        self.parse_optional_annotations();
         self.parse_result_type();
         self.expect_method_identifier("expected method name");
         self.parse_formal_parameter_section();
@@ -561,6 +611,7 @@ impl Parser<'_> {
     }
 
     pub(super) fn parse_variable_modifiers(&mut self) -> bool {
+        let modifiers = self.start();
         let start = self.position();
         loop {
             if self.at(JavaSyntaxKind::At) && self.nth_kind(1) != JavaSyntaxKind::InterfaceKw {
@@ -571,7 +622,9 @@ impl Parser<'_> {
                 break;
             }
         }
-        self.position() != start
+        let has_modifiers = self.position() != start;
+        self.complete(modifiers, JavaSyntaxKind::ParameterModifierList);
+        has_modifiers
     }
 
     pub(super) fn parse_optional_throws_clause(&mut self) {
@@ -581,6 +634,7 @@ impl Parser<'_> {
 
         let clause = self.start();
         self.bump();
+        let types = self.start();
         while !self.at_eof()
             && !matches!(
                 self.current_kind(),
@@ -592,6 +646,7 @@ impl Parser<'_> {
                 break;
             }
         }
+        self.complete(types, JavaSyntaxKind::TypeList);
         self.complete(clause, JavaSyntaxKind::ThrowsClause);
     }
 
@@ -606,6 +661,7 @@ impl Parser<'_> {
     pub(super) fn parse_constructor_block(&mut self) {
         let block = self.start();
         self.expect(JavaSyntaxKind::LBrace, "expected constructor body");
+        let entries = self.start();
         let mut saw_constructor_invocation = false;
         while !self.at_eof() && !self.at(JavaSyntaxKind::RBrace) {
             if self.starts_constructor_invocation_statement() && !saw_constructor_invocation {
@@ -622,6 +678,7 @@ impl Parser<'_> {
                 self.parse_block_statement();
             }
         }
+        self.complete(entries, JavaSyntaxKind::ConstructorBodyEntryList);
         self.expect(
             JavaSyntaxKind::RBrace,
             "expected `}` after constructor body",
@@ -641,10 +698,18 @@ impl Parser<'_> {
             self.parse_optional_type_argument_list();
             if self.at(JavaSyntaxKind::ThisKw) || self.at(JavaSyntaxKind::SuperKw) {
                 self.bump();
+                self.parse_argument_list();
             } else {
                 self.expected_here("expected `this` or `super` in constructor invocation");
+                let malformed = self.start();
+                while !self.at_eof()
+                    && !self.at(JavaSyntaxKind::Semicolon)
+                    && !self.at(JavaSyntaxKind::RBrace)
+                {
+                    self.bump();
+                }
+                self.complete(malformed, JavaSyntaxKind::ErrorNode);
             }
-            self.parse_argument_list();
         } else {
             self.parse_constructor_invocation_qualifier();
             self.expect(JavaSyntaxKind::Dot, "expected `.` before `super`");
@@ -677,8 +742,10 @@ impl Parser<'_> {
         loop {
             match self.current_kind() {
                 JavaSyntaxKind::LParen => {
-                    let invocation = self.precede(expression);
                     self.parse_argument_list();
+                    let form = self.precede(expression);
+                    let form = self.complete(form, JavaSyntaxKind::UnqualifiedMethodInvocation);
+                    let invocation = self.precede(form);
                     expression =
                         self.complete(invocation, JavaSyntaxKind::MethodInvocationExpression);
                 }
@@ -713,11 +780,14 @@ impl Parser<'_> {
             self.eat(JavaSyntaxKind::Comma);
         }
 
-        if self.eat(JavaSyntaxKind::Semicolon) {
+        let has_body_separator = self.eat(JavaSyntaxKind::Semicolon);
+        let members = self.start();
+        if has_body_separator {
             while !self.at_eof() && !self.at(JavaSyntaxKind::RBrace) {
                 self.parse_body_declaration(JavaSyntaxKind::ClassBody, type_name);
             }
         }
+        self.complete(members, JavaSyntaxKind::ClassBodyMemberList);
     }
 
     pub(super) fn parse_enum_constant(&mut self) {
@@ -735,6 +805,7 @@ impl Parser<'_> {
 
     pub(super) fn parse_annotation_interface_body_contents(&mut self) {
         let list = self.start();
+        let members = self.start();
         while !self.at_eof() && !self.at(JavaSyntaxKind::RBrace) {
             if self.at(JavaSyntaxKind::Semicolon) {
                 self.parse_empty_declaration();
@@ -742,6 +813,7 @@ impl Parser<'_> {
                 self.parse_member_declaration(None, true);
             }
         }
+        self.complete(members, JavaSyntaxKind::AnnotationInterfaceBodyMemberList);
         self.complete(list, JavaSyntaxKind::AnnotationElementList);
     }
 

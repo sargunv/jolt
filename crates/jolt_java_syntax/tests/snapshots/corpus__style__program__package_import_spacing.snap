@@ -12,49 +12,71 @@ syntax:
 syntax:
 CompilationUnit
   PackageDeclaration
-    Annotation
-      At "@" @ 0..1
-      Name
-        Identifier "Beta" @ 1..5 trailing=[Whitespace " "]
-    Annotation
-      At "@" @ 6..7
-      Name
-        Identifier "Generated" @ 7..16
-      AnnotationArgumentList
-        LParen "(" @ 16..17
-        AnnotationElementList
-          AnnotationElementValue
-            LiteralExpression
-              StringLiteral "\"tool\"" @ 17..23
-        RParen ")" @ 23..24 trailing=[Whitespace " "]
+    AnnotationList
+      Annotation
+        At "@" @ 0..1
+        Name
+          Identifier "Beta" @ 1..5 trailing=[Whitespace " "]
+      Annotation
+        At "@" @ 6..7
+        Name
+          Identifier "Generated" @ 7..16
+        AnnotationArgumentList
+          LParen "(" @ 16..17
+          AnnotationElementList
+            AnnotationElementArgumentList
+              AnnotationElementValue
+                LiteralExpression
+                  StringLiteral "\"tool\"" @ 17..23
+          RParen ")" @ 23..24 trailing=[Whitespace " "]
     PackageKw "package" @ 25..32 trailing=[Whitespace "   "]
     QualifiedName
-      Identifier "com" @ 35..38
+      QualifiedNameSegmentNode
+        AnnotationList
+        Identifier "com" @ 35..38
       Dot "." @ 38..39
-      Identifier "example" @ 39..46
-      Dot "." @ 46..47
-      Identifier "demo" @ 47..51
+      NameSegmentDotList
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "example" @ 39..46
+        Dot "." @ 46..47
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "demo" @ 47..51
     Semicolon ";" @ 51..52
-  ImportDeclaration
-    ImportKw "import" @ 53..59 leading=[Newline "\n"] trailing=[Whitespace " "]
-    QualifiedName
-      Identifier "z" @ 60..61
-      Dot "." @ 61..62
-      Identifier "Zed" @ 62..65
-    Semicolon ";" @ 65..66
-  ImportDeclaration
-    ImportKw "import" @ 67..73 leading=[Newline "\n"] trailing=[Whitespace " "]
-    QualifiedName
-      Identifier "a" @ 74..75
-      Dot "." @ 75..76
-      Identifier "Alpha" @ 76..81
-    Semicolon ";" @ 81..82
-  ClassDeclaration
-    ClassKw "class" @ 83..88 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Identifier "A" @ 89..90 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 91..92
-      RBrace "}" @ 92..93
+  ImportDeclarationList
+    ImportDeclaration
+      ImportKw "import" @ 53..59 leading=[Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "z" @ 60..61
+        Dot "." @ 61..62
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "Zed" @ 62..65
+      Semicolon ";" @ 65..66
+    ImportDeclaration
+      ImportKw "import" @ 67..73 leading=[Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "a" @ 74..75
+        Dot "." @ 75..76
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "Alpha" @ 76..81
+      Semicolon ";" @ 81..82
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 83..88 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "A" @ 89..90 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 91..92
+        ClassBodyMemberList
+        RBrace "}" @ 92..93
   Eof "" @ 94..94 leading=[Newline "\n"]
 
 diagnostics:

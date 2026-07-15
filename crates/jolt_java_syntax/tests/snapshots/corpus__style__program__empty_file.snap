@@ -8,6 +8,8 @@ input:
 syntax:
 syntax:
 CompilationUnit
+  ImportDeclarationList
+  CompilationUnitDeclarationList
   Eof "" @ 1..1 leading=[Newline "\n"]
 
 diagnostics:

@@ -8,15 +8,17 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    Unknown "\\" @ 0..1
-    Identifier "u12G4" @ 1..6 trailing=[Whitespace " "]
-    Unknown "\\" @ 7..8
-    Identifier "u" @ 8..9 trailing=[Whitespace " "]
-    Unknown "\\" @ 10..11
-    Identifier "u123" @ 11..15 trailing=[Whitespace " "]
-    Unknown "\\" @ 16..17
-    Identifier "uu12" @ 17..21
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      Unknown "\\" @ 0..1
+      Identifier "u12G4" @ 1..6 trailing=[Whitespace " "]
+      Unknown "\\" @ 7..8
+      Identifier "u" @ 8..9 trailing=[Whitespace " "]
+      Unknown "\\" @ 10..11
+      Identifier "u123" @ 11..15 trailing=[Whitespace " "]
+      Unknown "\\" @ 16..17
+      Identifier "uu12" @ 17..21
   Eof "" @ 21..21
 
 diagnostics:

@@ -8,75 +8,76 @@ class C { void m(int value) { switch (value) { /* block */ + ; case 1 -> use(); 
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "C" @ 6..7 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 8..9 trailing=[Whitespace " "]
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 10..14 trailing=[Whitespace " "]
-          Identifier "m" @ 15..16
-          LParen "(" @ 16..17
-          FormalParameterList
-            FormalParameter
-              PrimitiveType
-                IntKw "int" @ 17..20 trailing=[Whitespace " "]
-              Identifier "value" @ 21..26
-          RParen ")" @ 26..27 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 28..29 trailing=[Whitespace " "]
-            BlockStatement
-              SwitchStatement
-                SwitchKw "switch" @ 30..36 trailing=[Whitespace " "]
-                LParen "(" @ 37..38
-                NameExpression
-                  Identifier "value" @ 38..43
-                RParen ")" @ 43..44 trailing=[Whitespace " "]
-                SwitchBlock
-                  LBrace "{" @ 45..46 trailing=[Whitespace " ", BlockComment "/* block */", Whitespace " "]
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "C" @ 6..7 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 8..9 trailing=[Whitespace " "]
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 10..14 trailing=[Whitespace " "]
+              Identifier "m" @ 15..16
+              LParen "(" @ 16..17
+              FormalParameterList
+                FormalParameter
+                  ParameterModifierList
+                  PrimitiveType
+                    AnnotationList
+                    IntKw "int" @ 17..20 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "value" @ 21..26
+              RParen ")" @ 26..27 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 28..29 trailing=[Whitespace " "]
+                BlockStatementList
                   BlockStatement
-                    ExpressionStatement
-                      ErrorNode
-                        UnaryExpression
-                          Plus "+" @ 59..60 trailing=[Whitespace " "]
+                    SwitchStatement
+                      SwitchKw "switch" @ 30..36 trailing=[Whitespace " "]
+                      LParen "(" @ 37..38
+                      NameExpression
+                        Identifier "value" @ 38..43
+                      RParen ")" @ 43..44 trailing=[Whitespace " "]
+                      SwitchBlock
+                        LBrace "{" @ 45..46 trailing=[Whitespace " ", BlockComment "/* block */", Whitespace " "]
+                        SwitchEntryList
                           ErrorNode
-                            Semicolon ";" @ 61..62 trailing=[Whitespace " "]
-                      ErrorNode
-                        CaseKw "case" @ 63..67 trailing=[Whitespace " "]
-                      ErrorNode
-                        IntegerLiteral "1" @ 68..69 trailing=[Whitespace " "]
-                      ErrorNode
-                        Arrow "->" @ 70..72 trailing=[Whitespace " "]
-                      ErrorNode
-                        Identifier "use" @ 73..76
-                      ErrorNode
-                        LParen "(" @ 76..77
-                      ErrorNode
-                        RParen ")" @ 77..78
-                      Semicolon ";" @ 78..79 trailing=[Whitespace " "]
-                  RBrace "}" @ 80..81 trailing=[Whitespace " "]
-            RBrace "}" @ 82..83 trailing=[Whitespace " "]
-      RBrace "}" @ 84..85
+                            BlockStatement
+                              ExpressionStatement
+                                ErrorNode
+                                  UnaryExpression
+                                    Plus "+" @ 59..60 trailing=[Whitespace " "]
+                                    ErrorNode
+                                Semicolon ";" @ 61..62 trailing=[Whitespace " "]
+                          SwitchRule
+                            SwitchLabel
+                              CaseKw "case" @ 63..67 trailing=[Whitespace " "]
+                              SwitchLabelItemList
+                                CaseConstant
+                                  LiteralExpression
+                                    IntegerLiteral "1" @ 68..69 trailing=[Whitespace " "]
+                            Arrow "->" @ 70..72 trailing=[Whitespace " "]
+                            MethodInvocationExpression
+                              UnqualifiedMethodInvocation
+                                NameExpression
+                                  Identifier "use" @ 73..76
+                                ArgumentList
+                                  LParen "(" @ 76..77
+                                  ExpressionList
+                                  RParen ")" @ 77..78
+                            Semicolon ";" @ 78..79 trailing=[Whitespace " "]
+                        RBrace "}" @ 80..81 trailing=[Whitespace " "]
+                RBrace "}" @ 82..83 trailing=[Whitespace " "]
+        RBrace "}" @ 84..85
   Eof "" @ 86..86 leading=[Newline "\n"]
 
 diagnostics:
   code=java.parse.expected_syntax severity=Error stage=Parser range=61..62 message="expected expression"
-  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=63..67 message="expected statement expression"
-  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=63..67 message="unexpected token in statement expression"
-  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=68..69 message="unexpected token in statement expression"
-  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=70..72 message="unexpected token in statement expression"
-  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=73..76 message="unexpected token in statement expression"
-  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=76..77 message="unexpected token in statement expression"
-  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=77..78 message="unexpected token in statement expression"
+  code=java.parse.invalid_statement_expression severity=Error stage=Parser range=61..62 message="expected statement expression"
 
 diagnostics:
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(61), end: TextSize(62) }) message=expected expression
-code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(63), end: TextSize(67) }) message=expected statement expression
-code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(63), end: TextSize(67) }) message=unexpected token in statement expression
-code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(68), end: TextSize(69) }) message=unexpected token in statement expression
-code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(70), end: TextSize(72) }) message=unexpected token in statement expression
-code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(73), end: TextSize(76) }) message=unexpected token in statement expression
-code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(76), end: TextSize(77) }) message=unexpected token in statement expression
-code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(77), end: TextSize(78) }) message=unexpected token in statement expression
+code=java.parse.invalid_statement_expression severity=Error stage=Parser range=Some(TextRange { start: TextSize(61), end: TextSize(62) }) message=expected statement expression

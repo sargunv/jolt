@@ -1,28 +1,26 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
 use jolt_java_syntax::{
     AssertStatement, BasicForStatement, Block, BlockItem, BlockStatement, CatchClause,
-    CatchParameter, CatchTypeList, DoStatement, EnhancedForStatement, Expression,
-    ExpressionStatement, FinallyClause, ForInitializer, ForStatement, ForUpdate, IfStatement,
-    JavaSyntaxToken, LabeledStatement, Resource, ResourceList, ReturnStatement, Statement,
-    StatementBody, StatementExpressionList, SwitchBlock, SwitchBlockEntry,
-    SwitchBlockStatementGroup, SwitchLabel, SwitchLabelCaseEntry, SwitchLabelCaseItem, SwitchRule,
+    CatchParameter, DoStatement, EnhancedForStatement, ExpressionStatement, FinallyClause,
+    ForStatement, IfStatement, JavaSyntaxToken, LabeledStatement, Resource, ResourceList,
+    ReturnStatement, Statement, SwitchBlock, SwitchBlockStatementGroup, SwitchLabel, SwitchRule,
     SwitchStatement, SynchronizedStatement, ThrowStatement, TryStatement,
-    TryWithResourcesStatement, Type, WhileStatement, YieldStatement,
+    TryWithResourcesStatement, WhileStatement, YieldStatement,
 };
 use std::ops::Range;
 
-use crate::helpers::blocks::{BodyItem, empty_block, inserted_braced_body, join_body_items};
+use crate::helpers::blocks::{BodyItem, inserted_braced_body, join_body_items};
 use crate::helpers::comments::{
     LeadingTrivia, TrailingTrivia, comment_forces_line, comments_from_tokens,
     format_dangling_comments, format_removed_comments, format_separator_with_comments,
-    format_token, format_token_before_relocated_trailing_comments, format_token_sequence,
-    format_token_with_comments, format_trailing_comments_before_line_break,
-    trailing_comments_force_line,
+    format_token, format_token_before_relocated_trailing_comments, format_token_with_comments,
+    format_trailing_comments_before_line_break, trailing_comments_force_line,
 };
 use crate::helpers::formatter_ignore::{
     FormatterIgnoreRange, formatter_ignore_ranges, formatter_ignore_run_doc, formatter_ignore_runs,
     relative_token_range_between,
 };
+use crate::helpers::recovery::{JavaFormatField, format_malformed, resolve_required_field};
 use crate::rules::annotations::format_annotation;
 use crate::rules::declarations::format_type_declaration;
 use crate::rules::expressions::format_expression;
@@ -36,7 +34,7 @@ mod simple;
 mod switches;
 mod try_resources;
 
-pub(crate) use blocks::{format_block, format_block_statement_item_or_recovered};
+pub(crate) use blocks::{format_block, format_block_statement_item};
 use control_flow::{
     format_do_statement, format_for_statement, format_if_statement, format_synchronized_statement,
     format_while_statement,
@@ -67,16 +65,14 @@ fn format_statement<'source>(
         Statement::DoStatement(statement) => format_do_statement(statement, doc),
         Statement::ForStatement(statement) => format_for_statement(statement, doc),
         Statement::BreakStatement(statement) => format_jump_statement(
-            statement.keyword(),
-            "break",
+            statement.break_keyword(),
             statement.label(),
             statement.semicolon(),
             doc,
         ),
         Statement::YieldStatement(statement) => format_yield_statement(statement, doc),
         Statement::ContinueStatement(statement) => format_jump_statement(
-            statement.keyword(),
-            "continue",
+            statement.continue_keyword(),
             statement.label(),
             statement.semicolon(),
             doc,
@@ -90,23 +86,38 @@ fn format_statement<'source>(
         Statement::TryWithResourcesStatement(statement) => {
             format_try_with_resources_statement(statement, doc)
         }
+        Statement::BogusStatement(statement) => format_malformed(statement, doc),
     }
 }
 
 fn statement_body_as_block<'source>(
-    body: Option<&StatementBody<'source>>,
+    body: Result<
+        jolt_java_syntax::JavaSyntaxField<'source, Statement<'source>>,
+        jolt_java_syntax::JavaSyntaxInvariantError,
+    >,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    match body {
-        Some(StatementBody::Block(block)) => format_block(block, doc),
-        Some(StatementBody::Empty(statement)) => {
-            format_empty_statement_body(statement, doc).unwrap_or_else(|| empty_block(doc))
+    match resolve_required_field(body, doc) {
+        JavaFormatField::Present(Statement::Block(block)) => format_block(&block, doc),
+        JavaFormatField::Present(Statement::EmptyStatement(statement)) => {
+            match statement.block_brace_claims() {
+                Some(claims) => {
+                    let body = format_empty_statement_comments(&statement, doc);
+                    let removed = empty_statement_removal(&statement, doc);
+                    let block = inserted_braced_body(doc, body, claims);
+                    doc_concat!(doc, [removed, block])
+                }
+                None => format_empty_statement(&statement, doc),
+            }
         }
-        None => empty_block(doc),
-        Some(StatementBody::Unbraced(statement)) => {
-            let body = format_statement(statement, doc);
-            inserted_braced_body(doc, Some(body))
+        JavaFormatField::Present(statement) => {
+            let body = format_statement(&statement, doc);
+            statement.block_brace_claims().map_or_else(
+                || body,
+                |claims| inserted_braced_body(doc, Some(body), claims),
+            )
         }
+        JavaFormatField::Malformed(recovery) => recovery,
     }
 }
 
@@ -114,15 +125,23 @@ fn format_empty_statement<'source>(
     statement: &jolt_java_syntax::EmptyStatement<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    format_empty_statement_comments(statement, doc).unwrap_or_else(Doc::nil)
+    match resolve_required_field(statement.semicolon(), doc) {
+        JavaFormatField::Present(_) => {
+            let removed = empty_statement_removal(statement, doc);
+            let comments = format_empty_statement_comments(statement, doc).unwrap_or_else(Doc::nil);
+            doc_concat!(doc, [removed, comments])
+        }
+        JavaFormatField::Malformed(recovery) => recovery,
+    }
 }
 
-fn format_empty_statement_body<'source>(
+fn empty_statement_removal<'source>(
     statement: &jolt_java_syntax::EmptyStatement<'source>,
     doc: &mut DocBuilder<'source>,
-) -> Option<Doc<'source>> {
-    format_empty_statement_comments(statement, doc)
-        .map(|comments| inserted_braced_body(doc, Some(comments)))
+) -> Doc<'source> {
+    statement
+        .separator_removal_claim()
+        .map_or_else(Doc::nil, |claim| doc.removed_source(claim))
 }
 
 fn format_empty_statement_comments<'source>(
@@ -132,11 +151,9 @@ fn format_empty_statement_comments<'source>(
     format_removed_comments(doc, comments_from_tokens(statement.token_iter()))
 }
 
-fn statement_body_trailing_comments_force_line(body: Option<&StatementBody<'_>>) -> bool {
-    let Some(StatementBody::Block(block)) = body else {
+fn statement_body_trailing_comments_force_line(body: &Statement<'_>) -> bool {
+    let Statement::Block(block) = body else {
         return false;
     };
-    block
-        .close_brace()
-        .is_some_and(|close| trailing_comments_force_line(&close))
+    matches!(block.close_brace(), Ok(jolt_java_syntax::JavaSyntaxField::Present(close)) if trailing_comments_force_line(&close))
 }

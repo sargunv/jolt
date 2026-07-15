@@ -1,34 +1,39 @@
-use std::ops::Range;
+use std::{num::NonZeroU32, ops::Range};
 
 use jolt_text::{TextRange, TextSize};
 
-use jolt_diagnostics::Diagnostic;
+use crate::{Event, RawSyntaxKind, event::NO_FORWARD_PARENT};
 
-use crate::{Event, RawSyntaxKind};
+const MAX_PACKED_INDEX: u32 = (1 << 30) - 1;
+const DIRECT_MALFORMED: u16 = 1 << 0;
+const CONTAINS_RECOVERY: u16 = 1 << 1;
+const PARSED_DIRECT_MALFORMED: u16 = 1 << 0;
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub(crate) struct NodeId(usize);
+pub(crate) struct NodeId(NonZeroU32);
 
 impl NodeId {
-    const fn new(index: usize) -> Self {
-        Self(index)
+    fn new(index: usize) -> Self {
+        let value = u32::try_from(index + 1).expect("syntax node index must fit in u32");
+        Self(NonZeroU32::new(value).expect("syntax node ids are one-based"))
     }
 
-    pub(crate) const fn index(self) -> usize {
-        self.0
+    pub(crate) fn index(self) -> usize {
+        self.0.get() as usize - 1
     }
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub(crate) struct TokenId(usize);
+pub(crate) struct TokenId(NonZeroU32);
 
 impl TokenId {
-    pub(crate) const fn new(index: usize) -> Self {
-        Self(index)
+    pub(crate) fn new(index: usize) -> Self {
+        let value = u32::try_from(index + 1).expect("syntax token index must fit in u32");
+        Self(NonZeroU32::new(value).expect("syntax token ids are one-based"))
     }
 
-    pub(crate) const fn index(self) -> usize {
-        self.0
+    pub(crate) fn index(self) -> usize {
+        self.0.get() as usize - 1
     }
 }
 
@@ -38,22 +43,73 @@ pub(crate) enum TreeElement {
     Token(TokenId),
 }
 
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub(crate) enum TreeSlot {
+    Node(NodeId),
+    Token(TokenId),
+    Empty,
+}
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+struct PackedSlot(u32);
+
+impl PackedSlot {
+    const EMPTY: Self = Self(3 << 30);
+
+    fn node(id: NodeId) -> Self {
+        let index = u32::try_from(id.index()).expect("syntax node index fits u32");
+        assert!(
+            index <= MAX_PACKED_INDEX,
+            "syntax node index exceeds packed slot"
+        );
+        Self(index)
+    }
+
+    fn token(id: TokenId) -> Self {
+        let index = u32::try_from(id.index()).expect("syntax token index fits u32");
+        assert!(
+            index <= MAX_PACKED_INDEX,
+            "syntax token index exceeds packed slot"
+        );
+        Self((1 << 30) | index)
+    }
+
+    const fn is_node(self) -> bool {
+        self.0 >> 30 == 0
+    }
+
+    const fn is_token(self) -> bool {
+        self.0 >> 30 == 1
+    }
+
+    fn element(self) -> Option<TreeElement> {
+        let index = usize::try_from(self.0 & MAX_PACKED_INDEX).expect("packed index fits usize");
+        match self.0 >> 30 {
+            0 => Some(TreeElement::Node(NodeId::new(index))),
+            1 => Some(TreeElement::Token(TokenId::new(index))),
+            3 => None,
+            _ => unreachable!("reserved packed syntax slot tag"),
+        }
+    }
+
+    fn slot(self) -> TreeSlot {
+        match self.element() {
+            Some(TreeElement::Node(id)) => TreeSlot::Node(id),
+            Some(TreeElement::Token(id)) => TreeSlot::Token(id),
+            None => TreeSlot::Empty,
+        }
+    }
+}
+
 /// A token trivia kind.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum TriviaKind {
-    /// Spaces or tabs.
     Whitespace,
-    /// A line break.
     Newline,
-    /// A `//` comment.
     LineComment,
-    /// A shebang comment at the start of a file.
     ShebangComment,
-    /// A `/* */` comment that is not documentation.
     BlockComment,
-    /// A documentation comment.
     DocComment,
-    /// Text ignored by the lexer.
     Ignored,
 }
 
@@ -85,33 +141,27 @@ impl SyntaxTrivia {
 #[derive(Debug, Eq, Hash, PartialEq)]
 pub struct SyntaxTokenData {
     pub(crate) kind: RawSyntaxKind,
+    pub(crate) full_text_range: TextRange,
     pub(crate) token_text_range: TextRange,
-    pub(crate) text_len: TextSize,
-    pub(crate) leading: Range<usize>,
-    pub(crate) trailing: Range<usize>,
-    pub(crate) parent: Option<NodeId>,
-    pub(crate) offset: TextSize,
-    pub(crate) index: usize,
+    leading: CompactRange,
+    trailing: CompactRange,
 }
 
 impl SyntaxTokenData {
     #[must_use]
     pub fn new(
         kind: RawSyntaxKind,
+        full_text_range: TextRange,
         token_text_range: TextRange,
         leading: Range<usize>,
         trailing: Range<usize>,
-        text_len: TextSize,
     ) -> Self {
         Self {
             kind,
+            full_text_range,
             token_text_range,
-            text_len,
-            leading,
-            trailing,
-            parent: None,
-            offset: TextSize::new(0),
-            index: 0,
+            leading: CompactRange::from_usize(leading, "leading trivia range"),
+            trailing: CompactRange::from_usize(trailing, "trailing trivia range"),
         }
     }
 
@@ -126,38 +176,67 @@ impl SyntaxTokenData {
     }
 
     #[must_use]
-    pub fn leading(&self) -> &Range<usize> {
-        &self.leading
+    pub const fn full_text_range(&self) -> TextRange {
+        self.full_text_range
     }
 
     #[must_use]
-    pub fn trailing(&self) -> &Range<usize> {
-        &self.trailing
+    pub fn leading(&self) -> Range<usize> {
+        self.leading.as_usize()
+    }
+
+    #[must_use]
+    pub fn trailing(&self) -> Range<usize> {
+        self.trailing.as_usize()
     }
 }
 
 #[derive(Debug, Eq, Hash, PartialEq)]
 pub(crate) struct TreeNode {
     pub(crate) kind: RawSyntaxKind,
-    pub(crate) children: Range<usize>,
-    pub(crate) tokens: Range<usize>,
-    pub(crate) parent: Option<NodeId>,
-    pub(crate) offset: TextSize,
-    pub(crate) text_len: TextSize,
-    pub(crate) index: usize,
+    flags: u16,
+    children: CompactRange,
+    tokens: CompactRange,
+    parent: Option<NodeId>,
+    index: u32,
 }
 
-/// A flat syntax tree arena.
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+struct CompactRange {
+    start: u32,
+    end: u32,
+}
+
+impl CompactRange {
+    fn from_usize(range: Range<usize>, label: &str) -> Self {
+        Self {
+            start: u32::try_from(range.start).unwrap_or_else(|_| panic!("{label} start fits u32")),
+            end: u32::try_from(range.end).unwrap_or_else(|_| panic!("{label} end fits u32")),
+        }
+    }
+
+    fn as_usize(self) -> Range<usize> {
+        self.start as usize..self.end as usize
+    }
+}
+
+const _: () = {
+    assert!(std::mem::size_of::<PackedSlot>() == 4);
+    assert!(std::mem::size_of::<CompactRange>() == 8);
+    assert!(std::mem::size_of::<TreeNode>() <= 28);
+    assert!(std::mem::size_of::<SyntaxTokenData>() <= 56);
+};
+
+/// A flat, lossless syntax tree containing one uniform physical node model.
 #[derive(Debug, Eq, Hash, PartialEq)]
 pub struct SyntaxTree {
     root: NodeId,
     nodes: Vec<TreeNode>,
-    children: Vec<TreeElement>,
+    slots: Vec<PackedSlot>,
     tokens: Vec<SyntaxTokenData>,
     trivia: Vec<SyntaxTrivia>,
 }
 
-/// Flat syntax arena measurements exposed only to the benchmark driver.
 #[cfg(feature = "bench")]
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct SyntaxTreeMetrics {
@@ -170,59 +249,122 @@ pub struct SyntaxTreeMetrics {
 }
 
 impl SyntaxTree {
-    /// Returns allocation-independent size and capacity measurements.
+    #[must_use]
+    pub(crate) fn token_count(&self) -> usize {
+        self.tokens.len()
+    }
+
     #[cfg(feature = "bench")]
     #[must_use]
     pub fn benchmark_metrics(&self) -> SyntaxTreeMetrics {
         use std::mem::size_of;
-
         let logical_bytes = self.nodes.len() * size_of::<TreeNode>()
-            + self.children.len() * size_of::<TreeElement>()
+            + self.slots.len() * size_of::<PackedSlot>()
             + self.tokens.len() * size_of::<SyntaxTokenData>()
             + self.trivia.len() * size_of::<SyntaxTrivia>();
         let reserved_bytes = self.nodes.capacity() * size_of::<TreeNode>()
-            + self.children.capacity() * size_of::<TreeElement>()
+            + self.slots.capacity() * size_of::<PackedSlot>()
             + self.tokens.capacity() * size_of::<SyntaxTokenData>()
             + self.trivia.capacity() * size_of::<SyntaxTrivia>();
         SyntaxTreeMetrics {
             nodes: self.nodes.len(),
-            children: self.children.len(),
+            children: self.slots.len(),
             tokens: self.tokens.len(),
             trivia: self.trivia.len(),
             logical_bytes,
             reserved_bytes,
         }
     }
-    #[must_use]
+
     pub(crate) const fn root(&self) -> NodeId {
         self.root
     }
 
-    #[must_use]
     pub(crate) fn node(&self, id: NodeId) -> &TreeNode {
         &self.nodes[id.index()]
     }
 
-    #[must_use]
     pub(crate) fn token(&self, id: TokenId) -> &SyntaxTokenData {
         &self.tokens[id.index()]
     }
 
-    pub(crate) fn token_mut(&mut self, id: TokenId) -> &mut SyntaxTokenData {
-        &mut self.tokens[id.index()]
+    pub(crate) fn parent(&self, id: NodeId) -> Option<NodeId> {
+        self.node(id).parent
     }
 
-    pub(crate) fn node_mut(&mut self, id: NodeId) -> &mut TreeNode {
-        &mut self.nodes[id.index()]
+    pub(crate) fn index(&self, id: NodeId) -> u32 {
+        self.node(id).index
     }
 
-    #[must_use]
-    pub(crate) fn children(&self, id: NodeId) -> &[TreeElement] {
-        let children = &self.node(id).children;
-        &self.children[children.start..children.end]
+    pub(crate) fn is_directly_malformed(&self, id: NodeId) -> bool {
+        self.node(id).flags & DIRECT_MALFORMED != 0
     }
 
-    #[must_use]
+    pub(crate) fn is_recovery_free(&self, id: NodeId) -> bool {
+        self.node(id).flags & CONTAINS_RECOVERY == 0
+    }
+
+    pub(crate) fn children(&self, id: NodeId) -> impl Iterator<Item = TreeElement> + '_ {
+        let node = self.node(id);
+        self.slots[node.children.start as usize..node.children.end as usize]
+            .iter()
+            .filter_map(|slot| slot.element())
+    }
+
+    pub(crate) fn slot_count(&self, id: NodeId) -> usize {
+        let node = self.node(id);
+        (node.children.end - node.children.start) as usize
+    }
+
+    pub(crate) fn slot_at(&self, id: NodeId, index: usize) -> Option<TreeSlot> {
+        let node = self.node(id);
+        self.slots
+            .get(node.children.start as usize + index)
+            .filter(|_| index < self.slot_count(id))
+            .map(|slot| slot.slot())
+    }
+
+    pub(crate) fn child_at(&self, id: NodeId, index: usize) -> Option<TreeElement> {
+        let node = self.node(id);
+        self.slots
+            .get(node.children.start as usize + index)
+            .filter(|_| index < self.slot_count(id))
+            .and_then(|slot| slot.element())
+    }
+
+    pub(crate) fn token_range(&self, id: NodeId) -> Range<usize> {
+        let node = self.node(id);
+        node.tokens.start as usize..node.tokens.end as usize
+    }
+
+    pub(crate) fn token_offset(&self, id: TokenId) -> TextSize {
+        self.token(id).full_text_range.start()
+    }
+
+    pub(crate) fn node_offset(&self, id: NodeId) -> TextSize {
+        let range = self.token_range(id);
+        self.token_anchor(range.start)
+    }
+
+    pub(crate) fn node_text_len(&self, id: NodeId) -> TextSize {
+        let range = self.token_range(id);
+        if range.start == range.end {
+            return TextSize::new(0);
+        }
+        self.tokens[range.end - 1].full_text_range.end() - self.token_anchor(range.start)
+    }
+
+    fn token_anchor(&self, index: usize) -> TextSize {
+        self.tokens.get(index).map_or_else(
+            || {
+                self.tokens
+                    .last()
+                    .map_or(TextSize::new(0), |token| token.full_text_range.end())
+            },
+            |token| token.full_text_range.start(),
+        )
+    }
+
     pub(crate) fn trivia(&self, range: &Range<usize>) -> &[SyntaxTrivia] {
         &self.trivia[range.start..range.end]
     }
@@ -242,7 +384,6 @@ impl SyntaxTree {
     }
 }
 
-/// An event-to-tree construction error.
 #[derive(Debug, Eq, PartialEq)]
 pub enum BuildSyntaxTreeError {
     TokenOutsideNode { token_index: usize },
@@ -254,272 +395,486 @@ pub enum BuildSyntaxTreeError {
     UnconsumedTokens { first_unconsumed: usize },
     UnresolvedMarker { position: usize },
     InvalidForwardParent { position: usize, target: usize },
+    FactoryMismatch { kind: RawSyntaxKind },
 }
 
-/// Builds a flat syntax tree from parser events and committed tokens.
-///
-/// Error events are collected as diagnostics and do not affect tree shape.
+#[derive(Clone, Copy)]
+struct ParsedChild {
+    element: PackedSlot,
+    kind: RawSyntaxKind,
+    flags: u16,
+}
+
+impl ParsedChild {
+    fn node(id: NodeId, kind: RawSyntaxKind, directly_malformed: bool) -> Self {
+        Self {
+            element: PackedSlot::node(id),
+            kind,
+            flags: u16::from(directly_malformed) * PARSED_DIRECT_MALFORMED,
+        }
+    }
+
+    fn token(id: TokenId, kind: RawSyntaxKind) -> Self {
+        Self {
+            element: PackedSlot::token(id),
+            kind,
+            flags: 0,
+        }
+    }
+
+    fn element(self) -> TreeElement {
+        self.element
+            .element()
+            .expect("pending parser children cannot contain empty slots")
+    }
+
+    const fn is_node(self) -> bool {
+        self.element.is_node()
+    }
+
+    const fn is_token(self) -> bool {
+        self.element.is_token()
+    }
+
+    const fn is_directly_malformed(self) -> bool {
+        self.flags & PARSED_DIRECT_MALFORMED != 0
+    }
+}
+
+const _: () = assert!(std::mem::size_of::<ParsedChild>() == 8);
+
+/// Borrowed direct parser children supplied to a language syntax factory.
+#[doc(hidden)]
+#[derive(Clone, Copy)]
+pub struct ParsedChildren<'a> {
+    children: &'a [ParsedChild],
+    tokens: &'a [SyntaxTokenData],
+    source: &'a str,
+}
+
+impl ParsedChildren<'_> {
+    #[must_use]
+    pub const fn len(self) -> usize {
+        self.children.len()
+    }
+
+    #[must_use]
+    pub const fn is_empty(self) -> bool {
+        self.children.is_empty()
+    }
+
+    #[must_use]
+    pub fn kind(self, index: usize) -> Option<RawSyntaxKind> {
+        self.children.get(index).map(|child| child.kind)
+    }
+
+    #[must_use]
+    pub fn is_node(self, index: usize) -> bool {
+        self.children
+            .get(index)
+            .is_some_and(|child| child.is_node())
+    }
+
+    #[must_use]
+    pub fn is_token(self, index: usize) -> bool {
+        self.children
+            .get(index)
+            .is_some_and(|child| child.is_token())
+    }
+
+    /// Returns whether the parser/syntax layer assigned malformed ownership
+    /// directly to this child node.
+    #[must_use]
+    pub fn is_directly_malformed(self, index: usize) -> bool {
+        self.children
+            .get(index)
+            .is_some_and(|child| child.is_directly_malformed())
+    }
+
+    #[must_use]
+    pub fn token_text_is(self, index: usize, expected: &str) -> bool {
+        let Some(child) = self.children.get(index) else {
+            return false;
+        };
+        let TreeElement::Token(id) = child.element() else {
+            return false;
+        };
+        let range = self.tokens[id.index()].token_text_range;
+        &self.source[range.start().get()..range.end().get()] == expected
+    }
+}
+
+/// A node constructed by a syntax factory.
+#[doc(hidden)]
+#[derive(Clone, Copy)]
+pub struct FactoryNode(NodeId);
+
+/// One final physical node slot selected by a syntax factory.
+#[doc(hidden)]
+#[derive(Clone, Copy)]
+pub enum FactorySlot {
+    Input(usize),
+    /// A valid unoccupied optional grammar slot.
+    Absent,
+    /// A required grammar slot missing through parser recovery.
+    Missing,
+}
+
+/// Language-owned node placement over parser-produced direct children.
+#[doc(hidden)]
+pub trait SyntaxFactory {
+    fn make_syntax(
+        &self,
+        kind: RawSyntaxKind,
+        children: ParsedChildren<'_>,
+        sink: &mut SyntaxTreeSink<'_>,
+    ) -> Result<FactoryNode, BuildSyntaxTreeError>;
+}
+
+/// Append-only tree sink used by generated syntax factories.
+#[doc(hidden)]
+pub struct SyntaxTreeSink<'a> {
+    nodes: &'a mut Vec<TreeNode>,
+    slots: &'a mut Vec<PackedSlot>,
+    input: &'a [ParsedChild],
+    parser_tokens: Range<usize>,
+}
+
+impl SyntaxTreeSink<'_> {
+    #[must_use]
+    pub fn raw(&mut self, kind: RawSyntaxKind) -> FactoryNode {
+        self.push_node(
+            kind,
+            self.parser_tokens.clone(),
+            (0..self.input.len()).map(FactorySlot::Input),
+            false,
+        )
+    }
+
+    /// Preserves parser-owned malformed children in their raw represented order.
+    #[must_use]
+    pub fn raw_malformed(&mut self, kind: RawSyntaxKind) -> FactoryNode {
+        self.push_node(
+            kind,
+            self.parser_tokens.clone(),
+            (0..self.input.len()).map(FactorySlot::Input),
+            true,
+        )
+    }
+
+    #[must_use]
+    pub fn fixed(
+        &mut self,
+        kind: RawSyntaxKind,
+        slots: impl IntoIterator<Item = FactorySlot>,
+    ) -> FactoryNode {
+        self.push_node(kind, self.parser_tokens.clone(), slots, false)
+    }
+
+    fn push_node(
+        &mut self,
+        kind: RawSyntaxKind,
+        tokens: Range<usize>,
+        final_slots: impl IntoIterator<Item = FactorySlot>,
+        directly_malformed: bool,
+    ) -> FactoryNode {
+        let children_start = u32::try_from(self.slots.len()).expect("syntax slot offset fits u32");
+        let node_id = NodeId::new(self.nodes.len());
+        let mut contains_recovery = directly_malformed;
+        for (index, slot) in final_slots.into_iter().enumerate() {
+            let packed = match slot {
+                FactorySlot::Input(input) => match self.input[input].element() {
+                    TreeElement::Node(child) => {
+                        contains_recovery |=
+                            self.nodes[child.index()].flags & CONTAINS_RECOVERY != 0;
+                        let child_node = &mut self.nodes[child.index()];
+                        child_node.parent = Some(node_id);
+                        child_node.index = u32::try_from(index).expect("child index fits u32");
+                        PackedSlot::node(child)
+                    }
+                    TreeElement::Token(token) => PackedSlot::token(token),
+                },
+                FactorySlot::Absent => PackedSlot::EMPTY,
+                FactorySlot::Missing => {
+                    contains_recovery = true;
+                    PackedSlot::EMPTY
+                }
+            };
+            self.slots.push(packed);
+        }
+        let children_end = u32::try_from(self.slots.len()).expect("syntax slot offset fits u32");
+        let mut flags = 0;
+        if directly_malformed {
+            flags |= DIRECT_MALFORMED;
+        }
+        if contains_recovery {
+            flags |= CONTAINS_RECOVERY;
+        }
+        self.nodes.push(TreeNode {
+            kind,
+            flags,
+            children: CompactRange {
+                start: children_start,
+                end: children_end,
+            },
+            tokens: CompactRange {
+                start: u32::try_from(tokens.start).expect("token offset fits u32"),
+                end: u32::try_from(tokens.end).expect("token offset fits u32"),
+            },
+            parent: None,
+            index: 0,
+        });
+        FactoryNode(node_id)
+    }
+}
+
+struct RawFactory;
+
+impl SyntaxFactory for RawFactory {
+    fn make_syntax(
+        &self,
+        kind: RawSyntaxKind,
+        _children: ParsedChildren<'_>,
+        sink: &mut SyntaxTreeSink<'_>,
+    ) -> Result<FactoryNode, BuildSyntaxTreeError> {
+        Ok(sink.raw(kind))
+    }
+}
+
+/// Builds a raw lossless tree without language-specific slot placement.
 ///
 /// # Errors
 ///
-/// Returns an error when the event stream is structurally invalid or does not
-/// consume the supplied tokens exactly once.
+/// Returns an error when parser events are structurally inconsistent with
+/// their represented tokens.
 pub fn build_syntax_tree(
-    events: Vec<Event>,
+    events: &[Event],
     tokens: Vec<SyntaxTokenData>,
     trivia: Vec<SyntaxTrivia>,
-) -> Result<(SyntaxTree, Vec<Diagnostic>), BuildSyntaxTreeError> {
-    let event_count = events.len();
-    let token_count = tokens.len();
-    let estimated_node_count = events
-        .iter()
-        .filter(|event| matches!(event, Event::StartNode { .. }))
-        .count();
-    let estimated_child_count = estimated_node_count.saturating_add(token_count);
-    let builder = SyntaxTreeBuilder {
-        nodes: Vec::with_capacity(estimated_node_count),
-        children: Vec::with_capacity(estimated_child_count),
-        pending_children: Vec::with_capacity(token_count),
-        tokens,
-        trivia,
-        stack: Vec::with_capacity(64),
-        root: None,
-        token_index: 0,
-        diagnostics: Vec::new(),
-        skip_events: vec![false; event_count],
-    };
+) -> Result<SyntaxTree, BuildSyntaxTreeError> {
+    build_syntax_tree_with_factory("", events, tokens, trivia, &RawFactory)
+}
 
-    builder.build(events)
+#[doc(hidden)]
+pub fn build_syntax_tree_with_factory(
+    source: &str,
+    events: &[Event],
+    tokens: Vec<SyntaxTokenData>,
+    trivia: Vec<SyntaxTrivia>,
+    factory: &impl SyntaxFactory,
+) -> Result<SyntaxTree, BuildSyntaxTreeError> {
+    SyntaxTreeBuilder::new(tokens, trivia, events.len()).build(source, events, factory)
 }
 
 struct SyntaxTreeBuilder {
     nodes: Vec<TreeNode>,
-    children: Vec<TreeElement>,
-    pending_children: Vec<TreeElement>,
+    slots: Vec<PackedSlot>,
+    pending: Vec<ParsedChild>,
     tokens: Vec<SyntaxTokenData>,
     trivia: Vec<SyntaxTrivia>,
     stack: Vec<PartialNode>,
     root: Option<NodeId>,
     token_index: usize,
-    diagnostics: Vec<Diagnostic>,
     skip_events: Vec<bool>,
 }
 
 impl SyntaxTreeBuilder {
+    fn new(tokens: Vec<SyntaxTokenData>, trivia: Vec<SyntaxTrivia>, event_count: usize) -> Self {
+        let token_count = tokens.len();
+        Self {
+            nodes: Vec::with_capacity(event_count / 2),
+            slots: Vec::with_capacity(event_count),
+            pending: Vec::with_capacity(token_count),
+            tokens,
+            trivia,
+            stack: Vec::with_capacity(64),
+            root: None,
+            token_index: 0,
+            skip_events: vec![false; event_count],
+        }
+    }
+
     fn build(
         mut self,
-        mut events: Vec<Event>,
-    ) -> Result<(SyntaxTree, Vec<Diagnostic>), BuildSyntaxTreeError> {
-        let mut event_index = 0;
-
-        while event_index < events.len() {
-            if self.skip_events[event_index] {
-                event_index += 1;
+        source: &str,
+        events: &[Event],
+        factory: &impl SyntaxFactory,
+    ) -> Result<SyntaxTree, BuildSyntaxTreeError> {
+        for (position, event) in events.iter().enumerate() {
+            if self.skip_events[position] {
                 continue;
             }
-
-            match &events[event_index] {
-                Event::StartNode {
+            match *event {
+                Event::Start {
                     kind,
                     forward_parent,
                 } => {
-                    if forward_parent.is_none() {
-                        self.start_node(*kind);
+                    if forward_parent == NO_FORWARD_PARENT {
+                        self.start_node(kind);
                     } else {
-                        self.start_forward_parent_nodes(&events, event_index)?;
+                        self.start_forward_parents(events, position)?;
                     }
                 }
                 Event::Token => self.push_token()?,
-                Event::FinishNode => self.finish_node()?,
-                Event::Error(_) => {
-                    let Event::Error(diagnostic) =
-                        std::mem::replace(&mut events[event_index], Event::Tombstone)
-                    else {
-                        unreachable!("event kind was checked before moving diagnostic")
-                    };
-                    self.diagnostics.push(diagnostic);
-                }
+                Event::Finish => self.finish_node(source, factory)?,
                 Event::Tombstone => {
-                    return Err(BuildSyntaxTreeError::UnresolvedMarker {
-                        position: event_index,
-                    });
+                    return Err(BuildSyntaxTreeError::UnresolvedMarker { position });
                 }
             }
-
-            event_index += 1;
         }
-
         if !self.stack.is_empty() {
             return Err(BuildSyntaxTreeError::UnclosedNodes {
                 count: self.stack.len(),
             });
         }
-
         if self.token_index < self.tokens.len() {
             return Err(BuildSyntaxTreeError::UnconsumedTokens {
                 first_unconsumed: self.token_index,
             });
         }
-
-        let root = self.root.ok_or(BuildSyntaxTreeError::MissingRoot)?;
-        let mut tree = SyntaxTree {
-            root,
+        Ok(SyntaxTree {
+            root: self.root.ok_or(BuildSyntaxTreeError::MissingRoot)?,
             nodes: self.nodes,
-            children: self.children,
+            slots: self.slots,
             tokens: self.tokens,
             trivia: self.trivia,
-        };
-        assign_layout(&mut tree, root, None, TextSize::new(0), 0);
-
-        Ok((tree, self.diagnostics))
+        })
     }
 
     fn start_node(&mut self, kind: RawSyntaxKind) {
         self.stack.push(PartialNode {
             kind,
-            children_start: self.pending_children.len(),
+            children_start: self.pending.len(),
             tokens_start: self.token_index,
-            text_len: TextSize::new(0),
         });
     }
 
-    fn start_forward_parent_nodes(
+    fn start_forward_parents(
         &mut self,
         events: &[Event],
         position: usize,
     ) -> Result<(), BuildSyntaxTreeError> {
-        let Event::StartNode {
-            kind,
-            forward_parent,
-        } = events
-            .get(position)
-            .ok_or(BuildSyntaxTreeError::InvalidForwardParent {
-                position,
-                target: position,
-            })?
-        else {
-            return Err(BuildSyntaxTreeError::InvalidForwardParent {
-                position,
-                target: position,
-            });
-        };
-
-        if let Some(forward_parent) = forward_parent {
-            let target = position.checked_add(*forward_parent).ok_or(
+        let stack_start = self.stack.len();
+        let mut current = position;
+        loop {
+            let Event::Start {
+                kind,
+                forward_parent,
+            } = events[current]
+            else {
+                return Err(BuildSyntaxTreeError::InvalidForwardParent {
+                    position: current,
+                    target: current,
+                });
+            };
+            self.start_node(kind);
+            if forward_parent == NO_FORWARD_PARENT {
+                break;
+            }
+            let target = current.checked_add(forward_parent as usize).ok_or(
                 BuildSyntaxTreeError::InvalidForwardParent {
-                    position,
+                    position: current,
                     target: usize::MAX,
                 },
             )?;
-
-            if target <= position || target >= events.len() || self.skip_events[target] {
-                return Err(BuildSyntaxTreeError::InvalidForwardParent { position, target });
+            if target <= current || target >= events.len() || self.skip_events[target] {
+                return Err(BuildSyntaxTreeError::InvalidForwardParent {
+                    position: current,
+                    target,
+                });
             }
-
             self.skip_events[target] = true;
-            self.start_forward_parent_nodes(events, target)?;
+            current = target;
         }
-
-        self.start_node(*kind);
+        // Forward parents are encountered from the innermost node outwards,
+        // while the construction stack must hold the outermost node first.
+        // Reuse the construction stack itself as the bounded scratch space.
+        self.stack[stack_start..].reverse();
         Ok(())
     }
 
     fn push_token(&mut self) -> Result<(), BuildSyntaxTreeError> {
-        let parent = self
-            .stack
-            .last_mut()
-            .ok_or(BuildSyntaxTreeError::TokenOutsideNode {
+        if self.stack.is_empty() {
+            return Err(BuildSyntaxTreeError::TokenOutsideNode {
                 token_index: self.token_index,
-            })?;
-
+            });
+        }
         if self.token_index == self.tokens.len() {
             return Err(BuildSyntaxTreeError::MissingToken {
                 token_index: self.token_index,
             });
         }
-
-        let token = TokenId::new(self.token_index);
-        parent.text_len += self.tokens[token.index()].text_len;
-        self.pending_children.push(TreeElement::Token(token));
+        self.pending.push(ParsedChild::token(
+            TokenId::new(self.token_index),
+            self.tokens[self.token_index].kind,
+        ));
         self.token_index += 1;
-
         Ok(())
     }
 
-    fn finish_node(&mut self) -> Result<(), BuildSyntaxTreeError> {
-        let node = self
+    fn finish_node(
+        &mut self,
+        source: &str,
+        factory: &impl SyntaxFactory,
+    ) -> Result<(), BuildSyntaxTreeError> {
+        let partial = self
             .stack
             .pop()
             .ok_or(BuildSyntaxTreeError::UnexpectedFinishNode)?;
-        let children_start = self.children.len();
-        self.children
-            .extend_from_slice(&self.pending_children[node.children_start..]);
-        let children = children_start..self.children.len();
-        self.pending_children.truncate(node.children_start);
-        let node_id = NodeId::new(self.nodes.len());
-        self.nodes.push(TreeNode {
-            kind: node.kind,
-            children,
-            tokens: node.tokens_start..self.token_index,
-            parent: None,
-            offset: TextSize::new(0),
-            text_len: node.text_len,
-            index: 0,
-        });
-
-        if let Some(parent) = self.stack.last_mut() {
-            parent.text_len += node.text_len;
-            self.pending_children.push(TreeElement::Node(node_id));
-        } else if self.root.replace(node_id).is_some() {
-            return Err(BuildSyntaxTreeError::MultipleRoots);
+        let factory_children = &self.pending[partial.children_start..];
+        let input = ParsedChildren {
+            children: factory_children,
+            tokens: &self.tokens,
+            source,
+        };
+        let mut sink = SyntaxTreeSink {
+            nodes: &mut self.nodes,
+            slots: &mut self.slots,
+            input: factory_children,
+            parser_tokens: partial.tokens_start..self.token_index,
+        };
+        let FactoryNode(node) = factory.make_syntax(partial.kind, input, &mut sink)?;
+        self.pending.truncate(partial.children_start);
+        if self.stack.is_empty() {
+            if self.root.replace(node).is_some() {
+                return Err(BuildSyntaxTreeError::MultipleRoots);
+            }
+        } else {
+            self.pending.push(ParsedChild::node(
+                node,
+                self.nodes[node.index()].kind,
+                self.nodes[node.index()].flags & DIRECT_MALFORMED != 0,
+            ));
         }
-
         Ok(())
     }
 }
 
-#[derive(Debug)]
 struct PartialNode {
     kind: RawSyntaxKind,
     children_start: usize,
     tokens_start: usize,
-    text_len: TextSize,
 }
 
-fn assign_layout(
-    tree: &mut SyntaxTree,
-    node: NodeId,
-    parent: Option<NodeId>,
-    offset: TextSize,
-    index: usize,
-) {
-    {
-        let node_data = tree.node_mut(node);
-        node_data.parent = parent;
-        node_data.offset = offset;
-        node_data.index = index;
-    }
+#[cfg(test)]
+mod tests {
+    use crate::{Event, RawSyntaxKind, build_syntax_tree};
 
-    let children = {
-        let range = &tree.node(node).children;
-        range.start..range.end
-    };
-    let mut child_offset = offset;
-    for (child_index, child_position) in children.enumerate() {
-        let child = tree.children[child_position];
-        match child {
-            TreeElement::Node(child_node) => {
-                assign_layout(tree, child_node, Some(node), child_offset, child_index);
-                child_offset += tree.node(child_node).text_len;
-            }
-            TreeElement::Token(token) => {
-                let text_len = tree.token(token).text_len;
-                let token_data = tree.token_mut(token);
-                token_data.parent = Some(node);
-                token_data.offset = child_offset;
-                token_data.index = child_index;
-                child_offset += text_len;
-            }
+    #[test]
+    fn deep_forward_parent_chain_builds_iteratively() {
+        const DEPTH: usize = 16_384;
+        let mut events = Vec::with_capacity(DEPTH * 2);
+        for index in 0..DEPTH {
+            events.push(Event::Start {
+                kind: RawSyntaxKind::new(1),
+                forward_parent: u32::from(index + 1 < DEPTH),
+            });
         }
+        events.extend(std::iter::repeat_n(Event::Finish, DEPTH));
+
+        let tree = build_syntax_tree(&events, Vec::new(), Vec::new())
+            .expect("deep forward-parent chain is a valid tree");
+
+        assert_eq!(tree.nodes.len(), DEPTH);
     }
 }

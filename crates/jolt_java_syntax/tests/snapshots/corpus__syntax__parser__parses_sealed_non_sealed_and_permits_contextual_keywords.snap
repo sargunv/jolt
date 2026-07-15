@@ -13,76 +13,99 @@ non-sealed interface OpenInterface extends SealedInterface {}
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ModifierList
-      Identifier "sealed" @ 0..6 trailing=[Whitespace " "]
-    ClassKw "class" @ 7..12 trailing=[Whitespace " "]
-    Identifier "SealedClass" @ 13..24 trailing=[Whitespace " "]
-    PermitsClause
-      Identifier "permits" @ 25..32 trailing=[Whitespace " "]
-      Name
-        Identifier "FinalClass" @ 33..43
-      Comma "," @ 43..44 trailing=[Whitespace " "]
-      Name
-        Identifier "OpenClass" @ 45..54 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 55..56
-      RBrace "}" @ 56..57
-  ClassDeclaration
-    ModifierList
-      FinalKw "final" @ 58..63 leading=[Newline "\n"] trailing=[Whitespace " "]
-    ClassKw "class" @ 64..69 trailing=[Whitespace " "]
-    Identifier "FinalClass" @ 70..80 trailing=[Whitespace " "]
-    ExtendsClause
-      ExtendsKw "extends" @ 81..88 trailing=[Whitespace " "]
-      ClassType
-        Name
-          Identifier "SealedClass" @ 89..100 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 101..102
-      RBrace "}" @ 102..103
-  ClassDeclaration
-    ModifierList
-      Identifier "non" @ 104..107 leading=[Newline "\n"]
-      Minus "-" @ 107..108
-      Identifier "sealed" @ 108..114 trailing=[Whitespace " "]
-    ClassKw "class" @ 115..120 trailing=[Whitespace " "]
-    Identifier "OpenClass" @ 121..130 trailing=[Whitespace " "]
-    ExtendsClause
-      ExtendsKw "extends" @ 131..138 trailing=[Whitespace " "]
-      ClassType
-        Name
-          Identifier "SealedClass" @ 139..150 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 151..152
-      RBrace "}" @ 152..153
-  InterfaceDeclaration
-    ModifierList
-      Identifier "sealed" @ 155..161 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    InterfaceKw "interface" @ 162..171 trailing=[Whitespace " "]
-    Identifier "SealedInterface" @ 172..187 trailing=[Whitespace " "]
-    PermitsClause
-      Identifier "permits" @ 188..195 trailing=[Whitespace " "]
-      Name
-        Identifier "OpenInterface" @ 196..209 trailing=[Whitespace " "]
-    InterfaceBody
-      LBrace "{" @ 210..211
-      RBrace "}" @ 211..212
-  InterfaceDeclaration
-    ModifierList
-      Identifier "non" @ 213..216 leading=[Newline "\n"]
-      Minus "-" @ 216..217
-      Identifier "sealed" @ 217..223 trailing=[Whitespace " "]
-    InterfaceKw "interface" @ 224..233 trailing=[Whitespace " "]
-    Identifier "OpenInterface" @ 234..247 trailing=[Whitespace " "]
-    ExtendsClause
-      ExtendsKw "extends" @ 248..255 trailing=[Whitespace " "]
-      ClassType
-        Name
-          Identifier "SealedInterface" @ 256..271 trailing=[Whitespace " "]
-    InterfaceBody
-      LBrace "{" @ 272..273
-      RBrace "}" @ 273..274
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ModifierList
+        Identifier "sealed" @ 0..6 trailing=[Whitespace " "]
+      ClassKw "class" @ 7..12 trailing=[Whitespace " "]
+      Identifier "SealedClass" @ 13..24 trailing=[Whitespace " "]
+      PermitsClause
+        Identifier "permits" @ 25..32 trailing=[Whitespace " "]
+        NameList
+          Name
+            Identifier "FinalClass" @ 33..43
+          Comma "," @ 43..44 trailing=[Whitespace " "]
+          Name
+            Identifier "OpenClass" @ 45..54 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 55..56
+        ClassBodyMemberList
+        RBrace "}" @ 56..57
+    ClassDeclaration
+      ModifierList
+        FinalKw "final" @ 58..63 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ClassKw "class" @ 64..69 trailing=[Whitespace " "]
+      Identifier "FinalClass" @ 70..80 trailing=[Whitespace " "]
+      ExtendsClause
+        ExtendsKw "extends" @ 81..88 trailing=[Whitespace " "]
+        TypeList
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "SealedClass" @ 89..100 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 101..102
+        ClassBodyMemberList
+        RBrace "}" @ 102..103
+    ClassDeclaration
+      ModifierList
+        NonSealedModifier
+          Identifier "non" @ 104..107 leading=[Newline "\n"]
+          Minus "-" @ 107..108
+          Identifier "sealed" @ 108..114 trailing=[Whitespace " "]
+      ClassKw "class" @ 115..120 trailing=[Whitespace " "]
+      Identifier "OpenClass" @ 121..130 trailing=[Whitespace " "]
+      ExtendsClause
+        ExtendsKw "extends" @ 131..138 trailing=[Whitespace " "]
+        TypeList
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "SealedClass" @ 139..150 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 151..152
+        ClassBodyMemberList
+        RBrace "}" @ 152..153
+    InterfaceDeclaration
+      ModifierList
+        Identifier "sealed" @ 155..161 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      InterfaceKw "interface" @ 162..171 trailing=[Whitespace " "]
+      Identifier "SealedInterface" @ 172..187 trailing=[Whitespace " "]
+      PermitsClause
+        Identifier "permits" @ 188..195 trailing=[Whitespace " "]
+        NameList
+          Name
+            Identifier "OpenInterface" @ 196..209 trailing=[Whitespace " "]
+      InterfaceBody
+        LBrace "{" @ 210..211
+        InterfaceBodyMemberList
+        RBrace "}" @ 211..212
+    InterfaceDeclaration
+      ModifierList
+        NonSealedModifier
+          Identifier "non" @ 213..216 leading=[Newline "\n"]
+          Minus "-" @ 216..217
+          Identifier "sealed" @ 217..223 trailing=[Whitespace " "]
+      InterfaceKw "interface" @ 224..233 trailing=[Whitespace " "]
+      Identifier "OpenInterface" @ 234..247 trailing=[Whitespace " "]
+      ExtendsClause
+        ExtendsKw "extends" @ 248..255 trailing=[Whitespace " "]
+        TypeList
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "SealedInterface" @ 256..271 trailing=[Whitespace " "]
+      InterfaceBody
+        LBrace "{" @ 272..273
+        InterfaceBodyMemberList
+        RBrace "}" @ 273..274
   Eof "" @ 275..275 leading=[Newline "\n"]
 
 diagnostics:

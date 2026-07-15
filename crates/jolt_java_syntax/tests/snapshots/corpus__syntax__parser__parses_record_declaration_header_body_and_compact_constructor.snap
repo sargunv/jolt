@@ -18,86 +18,109 @@ interface Named {}
 syntax:
 syntax:
 CompilationUnit
-  RecordDeclaration
-    Identifier "record" @ 0..6 trailing=[Whitespace " "]
-    Identifier "Point" @ 7..12
-    LParen "(" @ 12..13
-    RecordComponentList
-      RecordComponent
-        Annotation
-          At "@" @ 13..14
-          Name
-            Identifier "Deprecated" @ 14..24 trailing=[Whitespace " "]
-        PrimitiveType
-          IntKw "int" @ 25..28 trailing=[Whitespace " "]
-        Identifier "x" @ 29..30
-      Comma "," @ 30..31 trailing=[Whitespace " "]
-      RecordComponent
-        ClassType
-          Name
-            Identifier "String" @ 32..38
-        Ellipsis "..." @ 38..41 trailing=[Whitespace " "]
-        Identifier "labels" @ 42..48
-    RParen ")" @ 48..49 trailing=[Whitespace " "]
-    ImplementsClause
-      ImplementsKw "implements" @ 50..60 trailing=[Whitespace " "]
-      ClassType
-        Name
-          Identifier "Named" @ 61..66 trailing=[Whitespace " "]
-    RecordBody
-      LBrace "{" @ 67..68
-      ClassBodyDeclaration
-        CompactConstructorDeclaration
-          Identifier "Point" @ 73..78 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          ConstructorBody
-            LBrace "{" @ 79..80
-            BlockStatement
-              ExpressionStatement
-                AssignmentExpression
-                  NameExpression
-                    Identifier "labels" @ 89..95 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                  Assign "=" @ 96..97 trailing=[Whitespace " "]
-                  MethodInvocationExpression
-                    NameExpression
-                      Identifier "labels" @ 98..104
-                    Dot "." @ 104..105
-                    Identifier "clone" @ 105..110
-                    ArgumentList
-                      LParen "(" @ 110..111
-                      RParen ")" @ 111..112
-                Semicolon ";" @ 112..113
-            RBrace "}" @ 118..119 leading=[Newline "\n", Whitespace "    "]
-      ClassBodyDeclaration
-        MethodDeclaration
-          ModifierList
-            PublicKw "public" @ 125..131 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    RecordDeclaration
+      Identifier "record" @ 0..6 trailing=[Whitespace " "]
+      Identifier "Point" @ 7..12
+      LParen "(" @ 12..13
+      RecordComponentList
+        RecordComponent
+          ParameterModifierList
+            Annotation
+              At "@" @ 13..14
+              Name
+                Identifier "Deprecated" @ 14..24 trailing=[Whitespace " "]
+          PrimitiveType
+            AnnotationList
+            IntKw "int" @ 25..28 trailing=[Whitespace " "]
+          AnnotationList
+          Identifier "x" @ 29..30
+        Comma "," @ 30..31 trailing=[Whitespace " "]
+        RecordComponent
+          ParameterModifierList
           ClassType
-            Name
-              Identifier "String" @ 132..138 trailing=[Whitespace " "]
-          Identifier "name" @ 139..143
-          LParen "(" @ 143..144
-          RParen ")" @ 144..145 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 146..147
-            BlockStatement
-              ReturnStatement
-                ReturnKw "return" @ 156..162 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                ArrayAccessExpression
-                  NameExpression
-                    Identifier "labels" @ 163..169
-                  LBracket "[" @ 169..170
-                  LiteralExpression
-                    IntegerLiteral "0" @ 170..171
-                  RBracket "]" @ 171..172
-                Semicolon ";" @ 172..173
-            RBrace "}" @ 178..179 leading=[Newline "\n", Whitespace "    "]
-      RBrace "}" @ 180..181 leading=[Newline "\n"]
-  InterfaceDeclaration
-    InterfaceKw "interface" @ 183..192 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "Named" @ 193..198 trailing=[Whitespace " "]
-    InterfaceBody
-      LBrace "{" @ 199..200
-      RBrace "}" @ 200..201
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "String" @ 32..38
+          AnnotationList
+          Ellipsis "..." @ 38..41 trailing=[Whitespace " "]
+          Identifier "labels" @ 42..48
+      RParen ")" @ 48..49 trailing=[Whitespace " "]
+      ImplementsClause
+        ImplementsKw "implements" @ 50..60 trailing=[Whitespace " "]
+        TypeList
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "Named" @ 61..66 trailing=[Whitespace " "]
+      RecordBody
+        LBrace "{" @ 67..68
+        RecordBodyMemberList
+          ClassBodyDeclaration
+            CompactConstructorDeclaration
+              Identifier "Point" @ 73..78 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ConstructorBody
+                LBrace "{" @ 79..80
+                ConstructorBodyEntryList
+                  BlockStatement
+                    ExpressionStatement
+                      AssignmentExpression
+                        NameExpression
+                          Identifier "labels" @ 89..95 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                        Assign "=" @ 96..97 trailing=[Whitespace " "]
+                        MethodInvocationExpression
+                          QualifiedMethodInvocation
+                            NameExpression
+                              Identifier "labels" @ 98..104
+                            Dot "." @ 104..105
+                            Identifier "clone" @ 105..110
+                            ArgumentList
+                              LParen "(" @ 110..111
+                              ExpressionList
+                              RParen ")" @ 111..112
+                      Semicolon ";" @ 112..113
+                RBrace "}" @ 118..119 leading=[Newline "\n", Whitespace "    "]
+          ClassBodyDeclaration
+            MethodDeclaration
+              ModifierList
+                PublicKw "public" @ 125..131 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              ClassType
+                ClassTypeSegmentList
+                  ClassTypeSegmentNode
+                    AnnotationList
+                    Name
+                      Identifier "String" @ 132..138 trailing=[Whitespace " "]
+              Identifier "name" @ 139..143
+              LParen "(" @ 143..144
+              RParen ")" @ 144..145 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 146..147
+                BlockStatementList
+                  BlockStatement
+                    ReturnStatement
+                      ReturnKw "return" @ 156..162 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      ArrayAccessExpression
+                        NameExpression
+                          Identifier "labels" @ 163..169
+                        LBracket "[" @ 169..170
+                        LiteralExpression
+                          IntegerLiteral "0" @ 170..171
+                        RBracket "]" @ 171..172
+                      Semicolon ";" @ 172..173
+                RBrace "}" @ 178..179 leading=[Newline "\n", Whitespace "    "]
+        RBrace "}" @ 180..181 leading=[Newline "\n"]
+    InterfaceDeclaration
+      InterfaceKw "interface" @ 183..192 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "Named" @ 193..198 trailing=[Whitespace " "]
+      InterfaceBody
+        LBrace "{" @ 199..200
+        InterfaceBodyMemberList
+        RBrace "}" @ 200..201
   Eof "" @ 202..202 leading=[Newline "\n"]
 
 diagnostics:

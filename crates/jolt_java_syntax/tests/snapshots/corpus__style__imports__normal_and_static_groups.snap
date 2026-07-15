@@ -14,63 +14,102 @@ class A {}
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclaration
-    ImportKw "import" @ 0..6 trailing=[Whitespace " "]
-    StaticKw "static" @ 7..13 trailing=[Whitespace " "]
-    QualifiedName
-      Identifier "z" @ 14..15
-      Dot "." @ 15..16
-      Identifier "Zed" @ 16..19
-      Dot "." @ 19..20
-      Identifier "z" @ 20..21
-    Semicolon ";" @ 21..22
-  ImportDeclaration
-    ImportKw "import" @ 23..29 leading=[Newline "\n"] trailing=[Whitespace " "]
-    QualifiedName
-      Identifier "module" @ 30..36
-      Dot "." @ 36..37
-      Identifier "foo" @ 37..40
-      Dot "." @ 40..41
-      Identifier "Bar" @ 41..44
-    Semicolon ";" @ 44..45
-  ImportDeclaration
-    ImportKw "import" @ 46..52 leading=[Newline "\n"] trailing=[Whitespace " "]
-    QualifiedName
-      Identifier "b" @ 53..54
-      Dot "." @ 54..55
-      Identifier "Beta" @ 55..59
-    Semicolon ";" @ 59..60
-  ImportDeclaration
-    ImportKw "import" @ 61..67 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Identifier "module" @ 68..74 trailing=[Whitespace " "]
-    QualifiedName
-      Identifier "java" @ 75..79
-      Dot "." @ 79..80
-      Identifier "base" @ 80..84
-    Semicolon ";" @ 84..85
-  ImportDeclaration
-    ImportKw "import" @ 86..92 leading=[Newline "\n"] trailing=[Whitespace " "]
-    StaticKw "static" @ 93..99 trailing=[Whitespace " "]
-    QualifiedName
-      Identifier "a" @ 100..101
-      Dot "." @ 101..102
-      Identifier "Alpha" @ 102..107
-      Dot "." @ 107..108
-      Identifier "alpha" @ 108..113
-    Semicolon ";" @ 113..114
-  ImportDeclaration
-    ImportKw "import" @ 115..121 leading=[Newline "\n"] trailing=[Whitespace " "]
-    QualifiedName
-      Identifier "a" @ 122..123
-      Dot "." @ 123..124
-      Identifier "Alpha" @ 124..129
-    Semicolon ";" @ 129..130
-  ClassDeclaration
-    ClassKw "class" @ 131..136 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Identifier "A" @ 137..138 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 139..140
-      RBrace "}" @ 140..141
+  ImportDeclarationList
+    ImportDeclaration
+      ImportKw "import" @ 0..6 trailing=[Whitespace " "]
+      StaticKw "static" @ 7..13 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "z" @ 14..15
+        Dot "." @ 15..16
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "Zed" @ 16..19
+          Dot "." @ 19..20
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "z" @ 20..21
+      Semicolon ";" @ 21..22
+    ImportDeclaration
+      ImportKw "import" @ 23..29 leading=[Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "module" @ 30..36
+        Dot "." @ 36..37
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "foo" @ 37..40
+          Dot "." @ 40..41
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "Bar" @ 41..44
+      Semicolon ";" @ 44..45
+    ImportDeclaration
+      ImportKw "import" @ 46..52 leading=[Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "b" @ 53..54
+        Dot "." @ 54..55
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "Beta" @ 55..59
+      Semicolon ";" @ 59..60
+    ImportDeclaration
+      ImportKw "import" @ 61..67 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "module" @ 68..74 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "java" @ 75..79
+        Dot "." @ 79..80
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "base" @ 80..84
+      Semicolon ";" @ 84..85
+    ImportDeclaration
+      ImportKw "import" @ 86..92 leading=[Newline "\n"] trailing=[Whitespace " "]
+      StaticKw "static" @ 93..99 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "a" @ 100..101
+        Dot "." @ 101..102
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "Alpha" @ 102..107
+          Dot "." @ 107..108
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "alpha" @ 108..113
+      Semicolon ";" @ 113..114
+    ImportDeclaration
+      ImportKw "import" @ 115..121 leading=[Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "a" @ 122..123
+        Dot "." @ 123..124
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "Alpha" @ 124..129
+      Semicolon ";" @ 129..130
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 131..136 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "A" @ 137..138 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 139..140
+        ClassBodyMemberList
+        RBrace "}" @ 140..141
   Eof "" @ 142..142 leading=[Newline "\n"]
 
 diagnostics:

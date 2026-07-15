@@ -20,80 +20,97 @@ class Base {
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "SuperFieldAccess" @ 6..22 trailing=[Whitespace " "]
-    ExtendsClause
-      ExtendsKw "extends" @ 23..30 trailing=[Whitespace " "]
-      ClassType
-        Name
-          Identifier "Base" @ 31..35 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 36..37
-      ClassBodyDeclaration
-        FieldDeclaration
-          PrimitiveType
-            IntKw "int" @ 42..45 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          VariableDeclaratorList
-            VariableDeclarator
-              Identifier "field" @ 46..51
-          Semicolon ";" @ 51..52
-      ClassBodyDeclaration
-        ClassDeclaration
-          ClassKw "class" @ 58..63 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "Inner" @ 64..69 trailing=[Whitespace " "]
-          ExtendsClause
-            ExtendsKw "extends" @ 70..77 trailing=[Whitespace " "]
-            ClassType
-              Name
-                Identifier "Base" @ 78..82 trailing=[Whitespace " "]
-          ClassBody
-            LBrace "{" @ 83..84
-            ClassBodyDeclaration
-              MethodDeclaration
-                PrimitiveType
-                  IntKw "int" @ 93..96 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                Identifier "method" @ 97..103
-                LParen "(" @ 103..104
-                RParen ")" @ 104..105 trailing=[Whitespace " "]
-                Block
-                  LBrace "{" @ 106..107
-                  BlockStatement
-                    ReturnStatement
-                      ReturnKw "return" @ 120..126 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                      BinaryExpression
-                        FieldAccessExpression
-                          SuperExpression
-                            SuperKw "super" @ 127..132
-                          Dot "." @ 132..133
-                          Identifier "field" @ 133..138 trailing=[Whitespace " "]
-                        Plus "+" @ 139..140 trailing=[Whitespace " "]
-                        FieldAccessExpression
-                          SuperExpression
-                            NameExpression
-                              Identifier "SuperFieldAccess" @ 141..157
-                            Dot "." @ 157..158
-                            SuperKw "super" @ 158..163
-                          Dot "." @ 163..164
-                          Identifier "field" @ 164..169
-                      Semicolon ";" @ 169..170
-                  RBrace "}" @ 179..180 leading=[Newline "\n", Whitespace "        "]
-            RBrace "}" @ 185..186 leading=[Newline "\n", Whitespace "    "]
-      RBrace "}" @ 187..188 leading=[Newline "\n"]
-  ClassDeclaration
-    ClassKw "class" @ 190..195 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "Base" @ 196..200 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 201..202
-      ClassBodyDeclaration
-        FieldDeclaration
-          PrimitiveType
-            IntKw "int" @ 207..210 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          VariableDeclaratorList
-            VariableDeclarator
-              Identifier "field" @ 211..216
-          Semicolon ";" @ 216..217
-      RBrace "}" @ 218..219 leading=[Newline "\n"]
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "SuperFieldAccess" @ 6..22 trailing=[Whitespace " "]
+      ExtendsClause
+        ExtendsKw "extends" @ 23..30 trailing=[Whitespace " "]
+        TypeList
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "Base" @ 31..35 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 36..37
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            FieldDeclaration
+              PrimitiveType
+                AnnotationList
+                IntKw "int" @ 42..45 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              VariableDeclaratorList
+                VariableDeclarator
+                  Identifier "field" @ 46..51
+              Semicolon ";" @ 51..52
+          ClassBodyDeclaration
+            ClassDeclaration
+              ClassKw "class" @ 58..63 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Identifier "Inner" @ 64..69 trailing=[Whitespace " "]
+              ExtendsClause
+                ExtendsKw "extends" @ 70..77 trailing=[Whitespace " "]
+                TypeList
+                  ClassType
+                    ClassTypeSegmentList
+                      ClassTypeSegmentNode
+                        AnnotationList
+                        Name
+                          Identifier "Base" @ 78..82 trailing=[Whitespace " "]
+              ClassBody
+                LBrace "{" @ 83..84
+                ClassBodyMemberList
+                  ClassBodyDeclaration
+                    MethodDeclaration
+                      PrimitiveType
+                        AnnotationList
+                        IntKw "int" @ 93..96 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      Identifier "method" @ 97..103
+                      LParen "(" @ 103..104
+                      RParen ")" @ 104..105 trailing=[Whitespace " "]
+                      Block
+                        LBrace "{" @ 106..107
+                        BlockStatementList
+                          BlockStatement
+                            ReturnStatement
+                              ReturnKw "return" @ 120..126 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                              BinaryExpression
+                                FieldAccessExpression
+                                  SuperExpression
+                                    SuperKw "super" @ 127..132
+                                  Dot "." @ 132..133
+                                  Identifier "field" @ 133..138 trailing=[Whitespace " "]
+                                Plus "+" @ 139..140 trailing=[Whitespace " "]
+                                FieldAccessExpression
+                                  SuperExpression
+                                    NameExpression
+                                      Identifier "SuperFieldAccess" @ 141..157
+                                    Dot "." @ 157..158
+                                    SuperKw "super" @ 158..163
+                                  Dot "." @ 163..164
+                                  Identifier "field" @ 164..169
+                              Semicolon ";" @ 169..170
+                        RBrace "}" @ 179..180 leading=[Newline "\n", Whitespace "        "]
+                RBrace "}" @ 185..186 leading=[Newline "\n", Whitespace "    "]
+        RBrace "}" @ 187..188 leading=[Newline "\n"]
+    ClassDeclaration
+      ClassKw "class" @ 190..195 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "Base" @ 196..200 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 201..202
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            FieldDeclaration
+              PrimitiveType
+                AnnotationList
+                IntKw "int" @ 207..210 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              VariableDeclaratorList
+                VariableDeclarator
+                  Identifier "field" @ 211..216
+              Semicolon ";" @ 216..217
+        RBrace "}" @ 218..219 leading=[Newline "\n"]
   Eof "" @ 220..220 leading=[Newline "\n"]
 
 diagnostics:

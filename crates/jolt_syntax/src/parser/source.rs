@@ -20,6 +20,7 @@ pub struct Parser<'source, L: Language> {
     pub buffer: TokenBuffer<'source, L>,
     cursor: TokenCursor,
     events: Vec<Event>,
+    diagnostics: Vec<Diagnostic>,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -39,14 +40,21 @@ impl<'source, L: Language> Parser<'source, L> {
             source,
             buffer: TokenBuffer::new(source),
             cursor: TokenCursor::new(),
-            events: Vec::new(),
+            // The uniform physical tree averages just under one parser event
+            // per two source bytes on the realistic corpora. Reserve that
+            // measured shape once so growing the stream does not copy it.
+            // The small floor also covers the root of empty and tiny files.
+            events: Vec::with_capacity(source.len().div_ceil(2).max(8)),
+            diagnostics: Vec::new(),
         }
     }
 
     pub fn finish(self) -> ParseEvents {
         let events = self.events;
+        let mut parser_diagnostics = self.diagnostics;
         let committed_len = self.cursor.position();
-        let (tokens, trivia, diagnostics) = self.buffer.finish(committed_len);
+        let (tokens, trivia, mut diagnostics) = self.buffer.finish(committed_len);
+        diagnostics.append(&mut parser_diagnostics);
         ParseEvents {
             events,
             tokens,
@@ -134,13 +142,13 @@ impl<'source, L: Language> Parser<'source, L> {
             .range(&mut self.buffer)
             .or_else(|| self.buffer.last_token_range())
             .expect("parser token stream must include EOF");
-        self.events.push(Event::Error(Diagnostic {
+        self.diagnostics.push(Diagnostic {
             code,
             severity: Severity::Error,
             stage: DiagnosticStage::Parser,
             message: message.to_owned(),
             range: Some(range),
-        }));
+        });
     }
 
     pub fn start(&mut self) -> Marker {
@@ -281,7 +289,7 @@ impl<'source, L: Language> TokenBuffer<'source, L> {
         })
     }
 
-    pub fn trivia_has_newline(&self, range: &Range<usize>) -> bool {
+    pub fn trivia_has_newline(&self, range: Range<usize>) -> bool {
         self.trivia[range.start..range.end]
             .iter()
             .any(|trivia| trivia.kind() == crate::TriviaKind::Newline)
@@ -356,14 +364,15 @@ impl<'source, L: Language> TokenBuffer<'source, L> {
         leading: Range<usize>,
         trailing: Range<usize>,
     ) {
-        let text_len =
-            self.trivia_text_len(&leading) + range.len() + self.trivia_text_len(&trailing);
+        let leading_len = self.trivia_text_len(&leading);
+        let text_len = leading_len + range.len() + self.trivia_text_len(&trailing);
+        let full_start = range.start() - leading_len;
         self.tokens.push(SyntaxTokenData::new(
             L::kind_to_raw(kind),
+            TextRange::new(full_start, full_start + text_len),
             range,
             leading,
             trailing,
-            text_len,
         ));
     }
 

@@ -18,39 +18,47 @@ void run(){}
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "Example" @ 6..13 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 14..15
-      ClassBodyDeclaration
-        MethodDeclaration
-          ClassType
-            Name
-              Identifier "String" @ 59..65 leading=[Newline "\n", DocComment "/** Gets the name.\n*\n* @return the name\n*/", Newline "\n"] trailing=[Whitespace " "]
-          Identifier "name" @ 66..70
-          LParen "(" @ 70..71
-          RParen ")" @ 71..72
-          Block
-            LBrace "{" @ 72..73 trailing=[Whitespace " "]
-            BlockStatement
-              ReturnStatement
-                ReturnKw "return" @ 74..80 trailing=[Whitespace " "]
-                LiteralExpression
-                  StringLiteral "\"Ada\"" @ 81..86
-                Semicolon ";" @ 86..87 trailing=[Whitespace " "]
-            RBrace "}" @ 88..89
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 114..118 leading=[Newline "\n", BlockComment "/*\n * Runs the task.\n*/", Newline "\n"] trailing=[Whitespace " "]
-          Identifier "run" @ 119..122
-          LParen "(" @ 122..123
-          RParen ")" @ 123..124
-          Block
-            LBrace "{" @ 124..125
-            RBrace "}" @ 125..126
-      RBrace "}" @ 127..128 leading=[Newline "\n"]
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "Example" @ 6..13 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 14..15
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              ClassType
+                ClassTypeSegmentList
+                  ClassTypeSegmentNode
+                    AnnotationList
+                    Name
+                      Identifier "String" @ 59..65 leading=[Newline "\n", DocComment "/** Gets the name.\n*\n* @return the name\n*/", Newline "\n"] trailing=[Whitespace " "]
+              Identifier "name" @ 66..70
+              LParen "(" @ 70..71
+              RParen ")" @ 71..72
+              Block
+                LBrace "{" @ 72..73 trailing=[Whitespace " "]
+                BlockStatementList
+                  BlockStatement
+                    ReturnStatement
+                      ReturnKw "return" @ 74..80 trailing=[Whitespace " "]
+                      LiteralExpression
+                        StringLiteral "\"Ada\"" @ 81..86
+                      Semicolon ";" @ 86..87 trailing=[Whitespace " "]
+                RBrace "}" @ 88..89
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 114..118 leading=[Newline "\n", BlockComment "/*\n * Runs the task.\n*/", Newline "\n"] trailing=[Whitespace " "]
+              Identifier "run" @ 119..122
+              LParen "(" @ 122..123
+              RParen ")" @ 123..124
+              Block
+                LBrace "{" @ 124..125
+                BlockStatementList
+                RBrace "}" @ 125..126
+        RBrace "}" @ 127..128 leading=[Newline "\n"]
   Eof "" @ 129..129 leading=[Newline "\n"]
 
 diagnostics:

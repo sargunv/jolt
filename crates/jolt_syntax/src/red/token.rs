@@ -2,6 +2,8 @@ use std::{fmt, marker::PhantomData};
 
 use jolt_text::{TextRange, TextSize};
 
+#[cfg(debug_assertions)]
+use crate::TriviaKind;
 use crate::{
     Comments, Language, RawSyntaxKind, SourceTokenId, SourceTriviaPiece, SourceTriviaSide,
     SyntaxTrivia,
@@ -68,7 +70,7 @@ impl<'tree, L: Language> SyntaxToken<'tree, L> {
     /// Returns the byte offset where this token starts, including leading trivia.
     #[must_use]
     pub fn offset(&self) -> TextSize {
-        self.tree.token(self.id).offset
+        self.tree.token_offset(self.id)
     }
 
     /// Returns the token text without attached trivia.
@@ -81,7 +83,7 @@ impl<'tree, L: Language> SyntaxToken<'tree, L> {
     /// Returns the byte length covered by this token, including attached trivia.
     #[must_use]
     pub(crate) fn text_len(&self) -> TextSize {
-        self.tree.token(self.id).text_len
+        self.tree.token(self.id).full_text_range.len()
     }
 
     /// Returns the full source range covered by this token, including attached trivia.
@@ -99,13 +101,13 @@ impl<'tree, L: Language> SyntaxToken<'tree, L> {
     /// Returns trivia attached before this token.
     #[must_use]
     pub fn leading(&self) -> &'tree [SyntaxTrivia] {
-        self.tree.trivia(&self.tree.token(self.id).leading)
+        self.tree.trivia(&self.tree.token(self.id).leading())
     }
 
     /// Returns trivia attached after this token.
     #[must_use]
     pub fn trailing(&self) -> &'tree [SyntaxTrivia] {
-        self.tree.trivia(&self.tree.token(self.id).trailing)
+        self.tree.trivia(&self.tree.token(self.id).trailing())
     }
 
     /// Returns leading trivia paired with exact parse-local identities.
@@ -135,13 +137,49 @@ impl<'tree, L: Language> SyntaxToken<'tree, L> {
     /// Returns comments attached before this token.
     #[must_use]
     pub fn leading_comments(&self) -> Comments<'tree> {
-        Comments::new(self.source, self.leading(), self.offset())
+        #[cfg(debug_assertions)]
+        {
+            Comments::new(
+                self.source,
+                self.leading(),
+                self.source_id(),
+                SourceTriviaSide::Leading,
+                self.offset(),
+                None,
+            )
+        }
+        #[cfg(not(debug_assertions))]
+        {
+            Comments::new(self.source, self.leading(), self.offset())
+        }
     }
 
     /// Returns comments attached after this token.
     #[must_use]
     pub fn trailing_comments(&self) -> Comments<'tree> {
-        Comments::new(self.source, self.trailing(), self.token_text_range().end())
+        #[cfg(debug_assertions)]
+        {
+            let following_line_terminator = (self.id.index() + 1 < self.tree.token_count())
+                .then(|| {
+                    Self::new(self.source, self.tree, TokenId::new(self.id.index() + 1))
+                        .leading_trivia_with_ids()
+                        .next()
+                })
+                .flatten()
+                .filter(|piece| piece.trivia().kind() == TriviaKind::Newline);
+            Comments::new(
+                self.source,
+                self.trailing(),
+                self.source_id(),
+                SourceTriviaSide::Trailing,
+                self.token_text_range().end(),
+                following_line_terminator,
+            )
+        }
+        #[cfg(not(debug_assertions))]
+        {
+            Comments::new(self.source, self.trailing(), self.token_text_range().end())
+        }
     }
 
     /// Returns true when the token's leading trivia contains an intentional

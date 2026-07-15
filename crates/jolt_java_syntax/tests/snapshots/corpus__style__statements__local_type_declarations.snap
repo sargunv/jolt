@@ -16,72 +16,82 @@ class Example {
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "Example" @ 6..13 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 14..15
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 18..22 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-          Identifier "run" @ 23..26
-          LParen "(" @ 26..27
-          RParen ")" @ 27..28 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 29..30
-            BlockStatement
-              LocalClassOrInterfaceDeclaration
-                ClassDeclaration
-                  ClassKw "class" @ 35..40 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                  Identifier "Local" @ 41..46 trailing=[Whitespace " "]
-                  ClassBody
-                    LBrace "{" @ 47..48 trailing=[Whitespace " "]
-                    ClassBodyDeclaration
-                      FieldDeclaration
-                        PrimitiveType
-                          IntKw "int" @ 49..52 trailing=[Whitespace " "]
-                        VariableDeclaratorList
-                          VariableDeclarator
-                            Identifier "value" @ 53..58
-                        Semicolon ";" @ 58..59 trailing=[Whitespace " "]
-                    ClassBodyDeclaration
-                      MethodDeclaration
-                        VoidType
-                          VoidKw "void" @ 60..64 trailing=[Whitespace " "]
-                        Identifier "touch" @ 65..70
-                        LParen "(" @ 70..71
-                        RParen ")" @ 71..72 trailing=[Whitespace " "]
-                        Block
-                          LBrace "{" @ 73..74
-                          RBrace "}" @ 74..75 trailing=[Whitespace " "]
-                    RBrace "}" @ 76..77
-            BlockStatement
-              LocalClassOrInterfaceDeclaration
-                InterfaceDeclaration
-                  InterfaceKw "interface" @ 84..93 leading=[Newline "\n", Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                  Identifier "Worker" @ 94..100 trailing=[Whitespace " "]
-                  InterfaceBody
-                    LBrace "{" @ 101..102 trailing=[Whitespace " "]
-                    MethodDeclaration
-                      VoidType
-                        VoidKw "void" @ 103..107 trailing=[Whitespace " "]
-                      Identifier "work" @ 108..112
-                      LParen "(" @ 112..113
-                      RParen ")" @ 113..114
-                      Semicolon ";" @ 114..115 trailing=[Whitespace " "]
-                    RBrace "}" @ 116..117
-            BlockStatement
-              ExpressionStatement
-                MethodInvocationExpression
-                  NameExpression
-                    Identifier "execute" @ 122..129 leading=[Newline "\n", Whitespace "    "]
-                  ArgumentList
-                    LParen "(" @ 129..130
-                    RParen ")" @ 130..131
-                Semicolon ";" @ 131..132
-            RBrace "}" @ 135..136 leading=[Newline "\n", Whitespace "  "]
-      RBrace "}" @ 137..138 leading=[Newline "\n"]
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "Example" @ 6..13 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 14..15
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 18..22 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Identifier "run" @ 23..26
+              LParen "(" @ 26..27
+              RParen ")" @ 27..28 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 29..30
+                BlockStatementList
+                  BlockStatement
+                    LocalClassOrInterfaceDeclaration
+                      ClassDeclaration
+                        ClassKw "class" @ 35..40 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                        Identifier "Local" @ 41..46 trailing=[Whitespace " "]
+                        ClassBody
+                          LBrace "{" @ 47..48 trailing=[Whitespace " "]
+                          ClassBodyMemberList
+                            ClassBodyDeclaration
+                              FieldDeclaration
+                                PrimitiveType
+                                  AnnotationList
+                                  IntKw "int" @ 49..52 trailing=[Whitespace " "]
+                                VariableDeclaratorList
+                                  VariableDeclarator
+                                    Identifier "value" @ 53..58
+                                Semicolon ";" @ 58..59 trailing=[Whitespace " "]
+                            ClassBodyDeclaration
+                              MethodDeclaration
+                                VoidType
+                                  VoidKw "void" @ 60..64 trailing=[Whitespace " "]
+                                Identifier "touch" @ 65..70
+                                LParen "(" @ 70..71
+                                RParen ")" @ 71..72 trailing=[Whitespace " "]
+                                Block
+                                  LBrace "{" @ 73..74
+                                  BlockStatementList
+                                  RBrace "}" @ 74..75 trailing=[Whitespace " "]
+                          RBrace "}" @ 76..77
+                  BlockStatement
+                    LocalClassOrInterfaceDeclaration
+                      InterfaceDeclaration
+                        InterfaceKw "interface" @ 84..93 leading=[Newline "\n", Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                        Identifier "Worker" @ 94..100 trailing=[Whitespace " "]
+                        InterfaceBody
+                          LBrace "{" @ 101..102 trailing=[Whitespace " "]
+                          InterfaceBodyMemberList
+                            MethodDeclaration
+                              VoidType
+                                VoidKw "void" @ 103..107 trailing=[Whitespace " "]
+                              Identifier "work" @ 108..112
+                              LParen "(" @ 112..113
+                              RParen ")" @ 113..114
+                              Semicolon ";" @ 114..115 trailing=[Whitespace " "]
+                          RBrace "}" @ 116..117
+                  BlockStatement
+                    ExpressionStatement
+                      MethodInvocationExpression
+                        UnqualifiedMethodInvocation
+                          NameExpression
+                            Identifier "execute" @ 122..129 leading=[Newline "\n", Whitespace "    "]
+                          ArgumentList
+                            LParen "(" @ 129..130
+                            ExpressionList
+                            RParen ")" @ 130..131
+                      Semicolon ";" @ 131..132
+                RBrace "}" @ 135..136 leading=[Newline "\n", Whitespace "  "]
+        RBrace "}" @ 137..138 leading=[Newline "\n"]
   Eof "" @ 139..139 leading=[Newline "\n"]
 
 diagnostics:

@@ -8,65 +8,94 @@ sealed class C extends Base, /* extends */ , Other implements A, /* implements *
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ModifierList
-      Identifier "sealed" @ 0..6 trailing=[Whitespace " "]
-    ClassKw "class" @ 7..12 trailing=[Whitespace " "]
-    Identifier "C" @ 13..14 trailing=[Whitespace " "]
-    ExtendsClause
-      ExtendsKw "extends" @ 15..22 trailing=[Whitespace " "]
-      ClassType
-        Name
-          Identifier "Base" @ 23..27
-      Comma "," @ 27..28 trailing=[Whitespace " ", BlockComment "/* extends */", Whitespace " "]
-      ErrorNode
-      Comma "," @ 43..44 trailing=[Whitespace " "]
-      ClassType
-        Name
-          Identifier "Other" @ 45..50 trailing=[Whitespace " "]
-    ImplementsClause
-      ImplementsKw "implements" @ 51..61 trailing=[Whitespace " "]
-      ClassType
-        Name
-          Identifier "A" @ 62..63
-      Comma "," @ 63..64 trailing=[Whitespace " ", BlockComment "/* implements */", Whitespace " "]
-      ErrorNode
-      Comma "," @ 82..83 trailing=[Whitespace " "]
-      ClassType
-        Name
-          Identifier "B" @ 84..85 trailing=[Whitespace " "]
-    PermitsClause
-      Identifier "permits" @ 86..93 trailing=[Whitespace " "]
-      Name
-        Identifier "C" @ 94..95
-      Comma "," @ 95..96 trailing=[Whitespace " ", BlockComment "/* permits */", Whitespace " "]
-      Comma "," @ 111..112 trailing=[Whitespace " "]
-      Name
-        Identifier "D" @ 113..114 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 115..116 trailing=[Whitespace " "]
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 117..121 trailing=[Whitespace " "]
-          Identifier "m" @ 122..123
-          LParen "(" @ 123..124
-          RParen ")" @ 124..125 trailing=[Whitespace " "]
-          ThrowsClause
-            ThrowsKw "throws" @ 126..132 trailing=[Whitespace " "]
-            ClassType
-              Name
-                Identifier "E" @ 133..134
-            Comma "," @ 134..135 trailing=[Whitespace " ", BlockComment "/* throws */", Whitespace " "]
-            ErrorNode
-            Comma "," @ 149..150 trailing=[Whitespace " "]
-            ClassType
-              Name
-                Identifier "F" @ 151..152 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 153..154
-            RBrace "}" @ 154..155 trailing=[Whitespace " "]
-      RBrace "}" @ 156..157
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ModifierList
+        Identifier "sealed" @ 0..6 trailing=[Whitespace " "]
+      ClassKw "class" @ 7..12 trailing=[Whitespace " "]
+      Identifier "C" @ 13..14 trailing=[Whitespace " "]
+      ExtendsClause
+        ExtendsKw "extends" @ 15..22 trailing=[Whitespace " "]
+        TypeList
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "Base" @ 23..27
+          Comma "," @ 27..28 trailing=[Whitespace " ", BlockComment "/* extends */", Whitespace " "]
+          ErrorNode
+            AnnotationList
+          Comma "," @ 43..44 trailing=[Whitespace " "]
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "Other" @ 45..50 trailing=[Whitespace " "]
+      ImplementsClause
+        ImplementsKw "implements" @ 51..61 trailing=[Whitespace " "]
+        TypeList
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "A" @ 62..63
+          Comma "," @ 63..64 trailing=[Whitespace " ", BlockComment "/* implements */", Whitespace " "]
+          ErrorNode
+            AnnotationList
+          Comma "," @ 82..83 trailing=[Whitespace " "]
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "B" @ 84..85 trailing=[Whitespace " "]
+      PermitsClause
+        Identifier "permits" @ 86..93 trailing=[Whitespace " "]
+        NameList
+          Name
+            Identifier "C" @ 94..95
+          Comma "," @ 95..96 trailing=[Whitespace " ", BlockComment "/* permits */", Whitespace " "]
+          Comma "," @ 111..112 trailing=[Whitespace " "]
+          Name
+            Identifier "D" @ 113..114 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 115..116 trailing=[Whitespace " "]
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 117..121 trailing=[Whitespace " "]
+              Identifier "m" @ 122..123
+              LParen "(" @ 123..124
+              RParen ")" @ 124..125 trailing=[Whitespace " "]
+              ThrowsClause
+                ThrowsKw "throws" @ 126..132 trailing=[Whitespace " "]
+                TypeList
+                  ClassType
+                    ClassTypeSegmentList
+                      ClassTypeSegmentNode
+                        AnnotationList
+                        Name
+                          Identifier "E" @ 133..134
+                  Comma "," @ 134..135 trailing=[Whitespace " ", BlockComment "/* throws */", Whitespace " "]
+                  ErrorNode
+                    AnnotationList
+                  Comma "," @ 149..150 trailing=[Whitespace " "]
+                  ClassType
+                    ClassTypeSegmentList
+                      ClassTypeSegmentNode
+                        AnnotationList
+                        Name
+                          Identifier "F" @ 151..152 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 153..154
+                BlockStatementList
+                RBrace "}" @ 154..155 trailing=[Whitespace " "]
+        RBrace "}" @ 156..157
   Eof "" @ 158..158 leading=[Newline "\n"]
 
 diagnostics:

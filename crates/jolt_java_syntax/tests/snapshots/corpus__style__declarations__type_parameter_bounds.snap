@@ -10,47 +10,66 @@ public <T extends FirstBound & SecondBound & ThirdBound & FourthBound> void run(
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "Bounds" @ 6..12 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 13..14
-      ClassBodyDeclaration
-        MethodDeclaration
-          ModifierList
-            PublicKw "public" @ 15..21 leading=[Newline "\n"] trailing=[Whitespace " "]
-          TypeParameterList
-            Lt "<" @ 22..23
-            TypeParameter
-              Identifier "T" @ 23..24 trailing=[Whitespace " "]
-              TypeBoundList
-                ExtendsKw "extends" @ 25..32 trailing=[Whitespace " "]
-                IntersectionType
-                  ClassType
-                    Name
-                      Identifier "FirstBound" @ 33..43 trailing=[Whitespace " "]
-                  Amp "&" @ 44..45 trailing=[Whitespace " "]
-                  ClassType
-                    Name
-                      Identifier "SecondBound" @ 46..57 trailing=[Whitespace " "]
-                  Amp "&" @ 58..59 trailing=[Whitespace " "]
-                  ClassType
-                    Name
-                      Identifier "ThirdBound" @ 60..70 trailing=[Whitespace " "]
-                  Amp "&" @ 71..72 trailing=[Whitespace " "]
-                  ClassType
-                    Name
-                      Identifier "FourthBound" @ 73..84
-            Gt ">" @ 84..85 trailing=[Whitespace " "]
-          VoidType
-            VoidKw "void" @ 86..90 trailing=[Whitespace " "]
-          Identifier "run" @ 91..94
-          LParen "(" @ 94..95
-          RParen ")" @ 95..96 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 97..98
-            RBrace "}" @ 98..99
-      RBrace "}" @ 100..101 leading=[Newline "\n"]
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "Bounds" @ 6..12 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 13..14
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              ModifierList
+                PublicKw "public" @ 15..21 leading=[Newline "\n"] trailing=[Whitespace " "]
+              TypeParameterList
+                Lt "<" @ 22..23
+                TypeParameterSeparatedList
+                  TypeParameter
+                    AnnotationList
+                    Identifier "T" @ 23..24 trailing=[Whitespace " "]
+                    TypeBoundList
+                      ExtendsKw "extends" @ 25..32 trailing=[Whitespace " "]
+                      IntersectionType
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "FirstBound" @ 33..43 trailing=[Whitespace " "]
+                        Amp "&" @ 44..45 trailing=[Whitespace " "]
+                        TypeAmpList
+                          ClassType
+                            ClassTypeSegmentList
+                              ClassTypeSegmentNode
+                                AnnotationList
+                                Name
+                                  Identifier "SecondBound" @ 46..57 trailing=[Whitespace " "]
+                          Amp "&" @ 58..59 trailing=[Whitespace " "]
+                          ClassType
+                            ClassTypeSegmentList
+                              ClassTypeSegmentNode
+                                AnnotationList
+                                Name
+                                  Identifier "ThirdBound" @ 60..70 trailing=[Whitespace " "]
+                          Amp "&" @ 71..72 trailing=[Whitespace " "]
+                          ClassType
+                            ClassTypeSegmentList
+                              ClassTypeSegmentNode
+                                AnnotationList
+                                Name
+                                  Identifier "FourthBound" @ 73..84
+                Gt ">" @ 84..85 trailing=[Whitespace " "]
+              VoidType
+                VoidKw "void" @ 86..90 trailing=[Whitespace " "]
+              Identifier "run" @ 91..94
+              LParen "(" @ 94..95
+              RParen ")" @ 95..96 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 97..98
+                BlockStatementList
+                RBrace "}" @ 98..99
+        RBrace "}" @ 100..101 leading=[Newline "\n"]
   Eof "" @ 102..102 leading=[Newline "\n"]
 
 diagnostics:

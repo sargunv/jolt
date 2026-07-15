@@ -8,17 +8,19 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    FloatingPointLiteral "1e+" @ 0..3 trailing=[Whitespace " "]
-    FloatingPointLiteral "1_f" @ 4..7 trailing=[Whitespace " "]
-    FloatingPointLiteral "1_e2" @ 8..12 trailing=[Whitespace " "]
-    FloatingPointLiteral "1.0_f" @ 13..18 trailing=[Whitespace " "]
-    FloatingPointLiteral "1_.0" @ 19..23 trailing=[Whitespace " "]
-    FloatingPointLiteral "1._0" @ 24..28 trailing=[Whitespace " "]
-    FloatingPointLiteral "0x1_.p0" @ 29..36 trailing=[Whitespace " "]
-    FloatingPointLiteral "0x1._p0" @ 37..44 trailing=[Whitespace " "]
-    FloatingPointLiteral "1e_2" @ 45..49 trailing=[Whitespace " "]
-    FloatingPointLiteral "1e+_2" @ 50..55
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      FloatingPointLiteral "1e+" @ 0..3 trailing=[Whitespace " "]
+      FloatingPointLiteral "1_f" @ 4..7 trailing=[Whitespace " "]
+      FloatingPointLiteral "1_e2" @ 8..12 trailing=[Whitespace " "]
+      FloatingPointLiteral "1.0_f" @ 13..18 trailing=[Whitespace " "]
+      FloatingPointLiteral "1_.0" @ 19..23 trailing=[Whitespace " "]
+      FloatingPointLiteral "1._0" @ 24..28 trailing=[Whitespace " "]
+      FloatingPointLiteral "0x1_.p0" @ 29..36 trailing=[Whitespace " "]
+      FloatingPointLiteral "0x1._p0" @ 37..44 trailing=[Whitespace " "]
+      FloatingPointLiteral "1e_2" @ 45..49 trailing=[Whitespace " "]
+      FloatingPointLiteral "1e+_2" @ 50..55
   Eof "" @ 55..55
 
 diagnostics:

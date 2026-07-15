@@ -4,10 +4,28 @@ use jolt_text::{TextRange, TextSize};
 
 use crate::{
     Language, RawSyntaxKind, SyntaxConservationTracker, SyntaxVerbatimCore,
-    syntax_tree::{NodeId, SyntaxTree, TokenId, TreeElement},
+    syntax_tree::{NodeId, SyntaxTree, TokenId, TreeElement, TreeSlot},
 };
 
-use super::{SyntaxElement, SyntaxToken};
+use super::{SyntaxElement, SyntaxSlot, SyntaxToken};
+
+impl<'tree, L: Language> SyntaxSlot<'tree, L> {
+    fn first_token(self) -> Option<SyntaxToken<'tree, L>> {
+        match self {
+            Self::Node(node) => node.first_token(),
+            Self::Token(token) => Some(token),
+            Self::Empty => None,
+        }
+    }
+
+    fn last_token(self) -> Option<SyntaxToken<'tree, L>> {
+        match self {
+            Self::Node(node) => node.last_token(),
+            Self::Token(token) => Some(token),
+            Self::Empty => None,
+        }
+    }
+}
 
 /// A parent-aware borrowed cursor over a syntax tree node.
 pub struct SyntaxNode<'tree, L: Language> {
@@ -56,11 +74,53 @@ impl<'tree, L: Language> SyntaxNode<'tree, L> {
     /// is the language's current parser error node.
     #[must_use]
     pub fn malformed_verbatim_core(&self) -> Option<SyntaxVerbatimCore<'tree, L>> {
-        (self.raw_kind() == L::kind_to_raw(L::error_node_kind()))
+        self.is_directly_malformed()
             .then(|| SyntaxVerbatimCore::new(*self))
     }
 
-    #[cfg(debug_assertions)]
+    /// Returns the syntax-owned zero-width core for an empty grammar slot.
+    #[must_use]
+    pub fn missing_verbatim_core(&self, slot: usize) -> Option<SyntaxVerbatimCore<'tree, L>> {
+        matches!(self.slot_at(slot), Some(SyntaxSlot::Empty)).then(|| {
+            let previous = (0..slot)
+                .rev()
+                .find_map(|index| self.slot_at(index)?.last_token());
+            let next =
+                (slot + 1..self.slot_count()).find_map(|index| self.slot_at(index)?.first_token());
+            let offset = next.map_or_else(
+                || {
+                    previous.map_or_else(
+                        || self.text_range().start(),
+                        |token| token.token_text_range().end(),
+                    )
+                },
+                |token| token.token_text_range().start(),
+            );
+            SyntaxVerbatimCore::empty(
+                *self,
+                TextRange::empty(offset),
+                previous.map(|token| token.source_id().id),
+                next.map(|token| token.source_id().id),
+            )
+        })
+    }
+
+    /// Returns whether the parser/syntax factory assigned malformed ownership
+    /// directly to this node.
+    #[must_use]
+    pub fn is_directly_malformed(&self) -> bool {
+        self.tree.is_directly_malformed(self.id)
+            // Kotlin still uses the raw factory until its typed syntax phase.
+            || self.raw_kind() == L::kind_to_raw(L::error_node_kind())
+    }
+
+    /// Returns whether this subtree contains no malformed node or missing slot.
+    #[must_use]
+    pub fn is_recovery_free(&self) -> bool {
+        self.tree.is_recovery_free(self.id)
+            && self.raw_kind() != L::kind_to_raw(L::error_node_kind())
+    }
+
     pub(crate) const fn tree(&self) -> &'tree SyntaxTree {
         self.tree
     }
@@ -81,27 +141,26 @@ impl<'tree, L: Language> SyntaxNode<'tree, L> {
     #[must_use]
     pub fn parent(&self) -> Option<Self> {
         self.tree
-            .node(self.id)
-            .parent
+            .parent(self.id)
             .map(|id| Self::new_child(self.source, self.tree, id))
     }
 
     /// Returns this node's index among its parent's children.
     #[must_use]
     pub fn index(&self) -> usize {
-        self.tree.node(self.id).index
+        self.tree.index(self.id) as usize
     }
 
     /// Returns the byte offset where this node starts.
     #[must_use]
     pub(crate) fn offset(&self) -> TextSize {
-        self.tree.node(self.id).offset
+        self.tree.node_offset(self.id)
     }
 
     /// Returns the byte length covered by this node.
     #[must_use]
     pub(crate) fn text_len(&self) -> TextSize {
-        self.tree.node(self.id).text_len
+        self.tree.node_text_len(self.id)
     }
 
     /// Returns the full source range covered by this node.
@@ -116,44 +175,50 @@ impl<'tree, L: Language> SyntaxNode<'tree, L> {
     ) -> impl Iterator<Item = SyntaxElement<'tree, L>> + use<'tree, L> {
         let source = self.source;
         let tree = self.tree;
-        self.tree
-            .children(self.id)
-            .iter()
-            .copied()
-            .map(move |child| match child {
-                TreeElement::Node(id) => SyntaxElement::Node(Self::new_child(source, tree, id)),
-                TreeElement::Token(id) => SyntaxElement::Token(SyntaxToken::new(source, tree, id)),
-            })
+        self.tree.children(self.id).map(move |child| match child {
+            TreeElement::Node(id) => SyntaxElement::Node(Self::new_child(source, tree, id)),
+            TreeElement::Token(id) => SyntaxElement::Token(SyntaxToken::new(source, tree, id)),
+        })
+    }
+
+    /// Returns the number of physical grammar slots stored for this node.
+    #[doc(hidden)]
+    #[must_use]
+    pub fn slot_count(&self) -> usize {
+        self.tree.slot_count(self.id)
+    }
+
+    /// Returns a physical grammar slot, preserving empty positions.
+    #[doc(hidden)]
+    #[must_use]
+    pub fn slot_at(&self, index: usize) -> Option<SyntaxSlot<'tree, L>> {
+        self.tree.slot_at(self.id, index).map(|slot| match slot {
+            TreeSlot::Node(id) => SyntaxSlot::Node(Self::new_child(self.source, self.tree, id)),
+            TreeSlot::Token(id) => SyntaxSlot::Token(SyntaxToken::new(self.source, self.tree, id)),
+            TreeSlot::Empty => SyntaxSlot::Empty,
+        })
     }
 
     /// Returns this node's child nodes.
     pub fn children(&self) -> impl Iterator<Item = Self> + use<'tree, L> {
-        self.tree
-            .children(self.id)
-            .iter()
-            .copied()
-            .filter_map(|child| match child {
-                TreeElement::Node(id) => Some(Self::new_child(self.source, self.tree, id)),
-                TreeElement::Token(_) => None,
-            })
+        self.tree.children(self.id).filter_map(|child| match child {
+            TreeElement::Node(id) => Some(Self::new_child(self.source, self.tree, id)),
+            TreeElement::Token(_) => None,
+        })
     }
 
     /// Returns this node's child tokens.
     pub fn child_tokens(&self) -> impl Iterator<Item = SyntaxToken<'tree, L>> + use<'tree, L> {
-        self.tree
-            .children(self.id)
-            .iter()
-            .copied()
-            .filter_map(|child| match child {
-                TreeElement::Node(_) => None,
-                TreeElement::Token(id) => Some(SyntaxToken::new(self.source, self.tree, id)),
-            })
+        self.tree.children(self.id).filter_map(|child| match child {
+            TreeElement::Node(_) => None,
+            TreeElement::Token(id) => Some(SyntaxToken::new(self.source, self.tree, id)),
+        })
     }
 
     /// Returns the first token contained by this node.
     #[must_use]
     pub fn first_token(&self) -> Option<SyntaxToken<'tree, L>> {
-        let tokens = &self.tree.node(self.id).tokens;
+        let tokens = self.tree.token_range(self.id);
         (tokens.start < tokens.end)
             .then(|| SyntaxToken::new(self.source, self.tree, TokenId::new(tokens.start)))
     }
@@ -161,7 +226,7 @@ impl<'tree, L: Language> SyntaxNode<'tree, L> {
     /// Returns the last token contained by this node.
     #[must_use]
     pub fn last_token(&self) -> Option<SyntaxToken<'tree, L>> {
-        let tokens = &self.tree.node(self.id).tokens;
+        let tokens = self.tree.token_range(self.id);
         (tokens.start < tokens.end)
             .then(|| SyntaxToken::new(self.source, self.tree, TokenId::new(tokens.end - 1)))
     }
@@ -187,9 +252,7 @@ impl<'tree, L: Language> SyntaxNode<'tree, L> {
 
     pub(super) fn child_element_at(&self, index: usize) -> Option<SyntaxElement<'tree, L>> {
         self.tree
-            .children(self.id)
-            .get(index)
-            .copied()
+            .child_at(self.id, index)
             .map(|child| self.child_element(child))
     }
 
@@ -273,7 +336,7 @@ impl<'tree, L: Language> Tokens<'tree, L> {
         Self {
             source: root.source,
             tree: root.tree,
-            range: root.tree.node(root.id).tokens.clone(),
+            range: root.tree.token_range(root.id),
             language: PhantomData,
         }
     }

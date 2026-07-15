@@ -10,6 +10,9 @@ mod width;
 #[cfg(feature = "bench")]
 pub use document::DocArenaMetrics;
 pub use document::{ConcatBuilder, Doc, DocArena, DocBuilder, DocId};
+pub use jolt_syntax::{
+    NormalizedToken, RemovalClaim, RemovalReason, ReplacementClaim, SynthesisClaim,
+};
 pub use options::{FormatOptions, FormatSinkResult};
 pub use render::{
     IndentStyle, RenderControl, RenderError, RenderOptions, RenderOutcome, RenderSink,
@@ -17,7 +20,6 @@ pub use render::{
 };
 pub use source_fragment::{
     CompletedRenderProof, ExceptionalFragment, ExceptionalSeparator, FragmentBoundary, LexicalAtom,
-    LexicalAtomKind, LexicalSafety, NormalizedToken, RemovalClaim, RemovalReason, RenderProof,
-    RenderedSourceFragment, ReplacementClaim, SourceFragmentKind, SynthesisClaim,
+    LexicalAtomKind, LexicalSafety, RenderProof, RenderedSourceFragment, SourceFragmentKind,
 };
 pub use width::TextWidth;

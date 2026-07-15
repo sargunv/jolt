@@ -8,20 +8,28 @@ publicstatic truex falsex nullx
 syntax:
 syntax:
 CompilationUnit
-  FieldDeclaration
-    ClassType
-      Name
-        Identifier "publicstatic" @ 0..12 trailing=[Whitespace " "]
-    VariableDeclaratorList
-      VariableDeclarator
-        Identifier "truex" @ 13..18 trailing=[Whitespace " "]
-  FieldDeclaration
-    ClassType
-      Name
-        Identifier "falsex" @ 19..25 trailing=[Whitespace " "]
-    VariableDeclaratorList
-      VariableDeclarator
-        Identifier "nullx" @ 26..31
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    FieldDeclaration
+      ClassType
+        ClassTypeSegmentList
+          ClassTypeSegmentNode
+            AnnotationList
+            Name
+              Identifier "publicstatic" @ 0..12 trailing=[Whitespace " "]
+      VariableDeclaratorList
+        VariableDeclarator
+          Identifier "truex" @ 13..18 trailing=[Whitespace " "]
+    FieldDeclaration
+      ClassType
+        ClassTypeSegmentList
+          ClassTypeSegmentNode
+            AnnotationList
+            Name
+              Identifier "falsex" @ 19..25 trailing=[Whitespace " "]
+      VariableDeclaratorList
+        VariableDeclarator
+          Identifier "nullx" @ 26..31
   Eof "" @ 31..31
 
 diagnostics:

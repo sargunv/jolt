@@ -8,10 +8,12 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    CharacterLiteral "'a'" @ 0..3 trailing=[Whitespace " "]
-    CharacterLiteral "'%'" @ 4..7 trailing=[Whitespace " "]
-    CharacterLiteral "'™'" @ 8..13
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      CharacterLiteral "'a'" @ 0..3 trailing=[Whitespace " "]
+      CharacterLiteral "'%'" @ 4..7 trailing=[Whitespace " "]
+      CharacterLiteral "'™'" @ 8..13
   Eof "" @ 13..13
 
 diagnostics:

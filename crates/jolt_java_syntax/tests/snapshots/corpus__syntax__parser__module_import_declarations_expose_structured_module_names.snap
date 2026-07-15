@@ -10,20 +10,28 @@ class ModuleImportName {}
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclaration
-    ImportKw "import" @ 0..6 trailing=[Whitespace " "]
-    Identifier "module" @ 7..13 trailing=[Whitespace " "]
-    QualifiedName
-      Identifier "java" @ 14..18
-      Dot "." @ 18..19
-      Identifier "base" @ 19..23
-    Semicolon ";" @ 23..24
-  ClassDeclaration
-    ClassKw "class" @ 26..31 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "ModuleImportName" @ 32..48 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 49..50
-      RBrace "}" @ 50..51
+  ImportDeclarationList
+    ImportDeclaration
+      ImportKw "import" @ 0..6 trailing=[Whitespace " "]
+      Identifier "module" @ 7..13 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "java" @ 14..18
+        Dot "." @ 18..19
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "base" @ 19..23
+      Semicolon ";" @ 23..24
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 26..31 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "ModuleImportName" @ 32..48 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 49..50
+        ClassBodyMemberList
+        RBrace "}" @ 50..51
   Eof "" @ 52..52 leading=[Newline "\n"]
 
 diagnostics:

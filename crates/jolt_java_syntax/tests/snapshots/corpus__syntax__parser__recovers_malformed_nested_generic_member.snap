@@ -11,55 +11,90 @@ class MalformedGenericClose {
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "MalformedGenericClose" @ 6..27 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 28..29
-      ClassBodyDeclaration
-        FieldDeclaration
-          ClassType
-            QualifiedName
-              Identifier "java" @ 34..38 leading=[Newline "\n", Whitespace "    "]
-              Dot "." @ 38..39
-              Identifier "util" @ 39..43
-              Dot "." @ 43..44
-              Identifier "Map" @ 44..47
-            TypeArgumentList
-              Lt "<" @ 47..48
-              TypeArgument
-                ClassType
-                  Name
-                    Identifier "String" @ 48..54
-              Comma "," @ 54..55 trailing=[Whitespace " "]
-              TypeArgument
-                ClassType
-                  QualifiedName
-                    Identifier "java" @ 56..60
-                    Dot "." @ 60..61
-                    Identifier "util" @ 61..65
-                    Dot "." @ 65..66
-                    Identifier "List" @ 66..70
-                  TypeArgumentList
-                    Lt "<" @ 70..71
-                    TypeArgument
-                      ClassType
-                        Name
-                          Identifier "Integer" @ 71..78
-                    Gt ">" @ 78..79
-              Gt ">" @ 79..80
-          VariableDeclaratorList
-            VariableDeclarator
-          Semicolon ";" @ 80..81
-      ClassBodyDeclaration
-        FieldDeclaration
-          PrimitiveType
-            IntKw "int" @ 86..89 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          VariableDeclaratorList
-            VariableDeclarator
-              Identifier "after" @ 90..95
-          Semicolon ";" @ 95..96
-      RBrace "}" @ 97..98 leading=[Newline "\n"]
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "MalformedGenericClose" @ 6..27 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 28..29
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            FieldDeclaration
+              ClassType
+                ClassTypeSegmentList
+                  ClassTypeSegmentNode
+                    AnnotationList
+                    QualifiedName
+                      QualifiedNameSegmentNode
+                        AnnotationList
+                        Identifier "java" @ 34..38 leading=[Newline "\n", Whitespace "    "]
+                      Dot "." @ 38..39
+                      NameSegmentDotList
+                        QualifiedNameSegmentNode
+                          AnnotationList
+                          Identifier "util" @ 39..43
+                        Dot "." @ 43..44
+                        QualifiedNameSegmentNode
+                          AnnotationList
+                          Identifier "Map" @ 44..47
+                    TypeArgumentList
+                      Lt "<" @ 47..48
+                      TypeArgumentSeparatedList
+                        TypeArgument
+                          AnnotationList
+                          ClassType
+                            ClassTypeSegmentList
+                              ClassTypeSegmentNode
+                                AnnotationList
+                                Name
+                                  Identifier "String" @ 48..54
+                        Comma "," @ 54..55 trailing=[Whitespace " "]
+                        TypeArgument
+                          AnnotationList
+                          ClassType
+                            ClassTypeSegmentList
+                              ClassTypeSegmentNode
+                                AnnotationList
+                                QualifiedName
+                                  QualifiedNameSegmentNode
+                                    AnnotationList
+                                    Identifier "java" @ 56..60
+                                  Dot "." @ 60..61
+                                  NameSegmentDotList
+                                    QualifiedNameSegmentNode
+                                      AnnotationList
+                                      Identifier "util" @ 61..65
+                                    Dot "." @ 65..66
+                                    QualifiedNameSegmentNode
+                                      AnnotationList
+                                      Identifier "List" @ 66..70
+                                TypeArgumentList
+                                  Lt "<" @ 70..71
+                                  TypeArgumentSeparatedList
+                                    TypeArgument
+                                      AnnotationList
+                                      ClassType
+                                        ClassTypeSegmentList
+                                          ClassTypeSegmentNode
+                                            AnnotationList
+                                            Name
+                                              Identifier "Integer" @ 71..78
+                                  Gt ">" @ 78..79
+                      Gt ">" @ 79..80
+              VariableDeclaratorList
+                VariableDeclarator
+              Semicolon ";" @ 80..81
+          ClassBodyDeclaration
+            FieldDeclaration
+              PrimitiveType
+                AnnotationList
+                IntKw "int" @ 86..89 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              VariableDeclaratorList
+                VariableDeclarator
+                  Identifier "after" @ 90..95
+              Semicolon ";" @ 95..96
+        RBrace "}" @ 97..98 leading=[Newline "\n"]
   Eof "" @ 99..99 leading=[Newline "\n"]
 
 diagnostics:

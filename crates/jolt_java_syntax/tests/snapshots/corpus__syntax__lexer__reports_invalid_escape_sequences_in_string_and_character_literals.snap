@@ -8,13 +8,15 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    StringLiteral "\"\\q\"" @ 0..4 trailing=[Whitespace " "]
-    CharacterLiteral "'\\q'" @ 5..9 trailing=[Whitespace " "]
-    StringLiteral "\"\\8\"" @ 10..14 trailing=[Whitespace " "]
-    StringLiteral "\"\\9\"" @ 15..19 trailing=[Whitespace " "]
-    CharacterLiteral "'\\8'" @ 20..24 trailing=[Whitespace " "]
-    CharacterLiteral "'\\9'" @ 25..29
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      StringLiteral "\"\\q\"" @ 0..4 trailing=[Whitespace " "]
+      CharacterLiteral "'\\q'" @ 5..9 trailing=[Whitespace " "]
+      StringLiteral "\"\\8\"" @ 10..14 trailing=[Whitespace " "]
+      StringLiteral "\"\\9\"" @ 15..19 trailing=[Whitespace " "]
+      CharacterLiteral "'\\8'" @ 20..24 trailing=[Whitespace " "]
+      CharacterLiteral "'\\9'" @ 25..29
   Eof "" @ 29..29
 
 diagnostics:

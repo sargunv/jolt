@@ -9,8 +9,10 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    TextBlockLiteral "\"\"\"\n\"\"\"" @ 0..7
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      TextBlockLiteral "\"\"\"\n\"\"\"" @ 0..7
   Eof "" @ 7..7
 
 diagnostics:

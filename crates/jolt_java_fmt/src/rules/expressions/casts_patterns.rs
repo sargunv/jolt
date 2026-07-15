@@ -3,29 +3,38 @@ use super::{
     TrailingTrivia, format_expression, format_pattern, format_token, format_token_with_comments,
     format_token_with_inline_leading_comments, format_type, trailing_comments_force_line,
 };
+use crate::helpers::recovery::{JavaFormatField, format_required_field, resolve_required_field};
 use jolt_fmt_ir::DocBuilder;
+use jolt_java_syntax::{Pattern, Type};
 
 pub(super) fn format_cast_expression<'source>(
     expression: &CastExpression<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let open_paren = expression.open_paren();
-    let close_paren = expression.close_paren();
-    let ty = expression
-        .ty()
-        .map_or_else(Doc::nil, |ty| format_type(&ty, doc));
-    let expression_doc = expression
-        .expression()
-        .map_or_else(Doc::nil, |expression| format_expression(&expression, doc));
+    let (open_paren, open_recovery) = match resolve_required_field(expression.open_paren(), doc) {
+        JavaFormatField::Present(token) => (Some(token), Doc::nil()),
+        JavaFormatField::Malformed(recovery) => (None, recovery),
+    };
+    let (close_paren, close_recovery) = match resolve_required_field(expression.close_paren(), doc)
+    {
+        JavaFormatField::Present(token) => (Some(token), Doc::nil()),
+        JavaFormatField::Malformed(recovery) => (None, recovery),
+    };
+    let ty = format_required_field(expression.r#type(), doc, |ty, doc| format_type(&ty, doc));
+    let expression_doc = format_required_field(expression.expression(), doc, |expression, doc| {
+        format_expression(&expression, doc)
+    });
 
     doc_group!(
         doc,
         doc_concat!(
             doc,
             [
+                open_recovery,
                 format_cast_open_paren(open_paren.as_ref(), doc),
                 ty,
                 format_cast_close_paren(close_paren.as_ref(), doc),
+                close_recovery,
                 if close_paren
                     .as_ref()
                     .is_some_and(trailing_comments_force_line)
@@ -78,18 +87,22 @@ pub(super) fn format_instanceof_expression<'source>(
     expression: &InstanceofExpression<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let expression_doc = expression
-        .expression()
-        .map_or_else(Doc::nil, |expression| format_expression(&expression, doc));
-    let operator = expression
-        .instanceof_token()
-        .map_or_else(Doc::nil, |token| format_instanceof_operator(&token, doc));
-    let rhs = match expression.ty() {
-        Some(ty) => format_type(&ty, doc),
-        None => expression
-            .pattern()
-            .map_or_else(Doc::nil, |pattern| format_pattern(&pattern, doc)),
-    };
+    let expression_doc = format_required_field(expression.expression(), doc, |expression, doc| {
+        format_expression(&expression, doc)
+    });
+    let operator = format_required_field(expression.instanceof_keyword(), doc, |token, doc| {
+        format_instanceof_operator(&token, doc)
+    });
+    let rhs = format_required_field(expression.target(), doc, |target, doc| {
+        if let Some(ty) = target.cast_family::<Type<'source>>() {
+            format_type(&ty, doc)
+        } else if let Some(pattern) = target.cast_family::<Pattern<'source>>() {
+            format_pattern(&pattern, doc)
+        } else {
+            doc.block_on_invariant("instanceof target was neither a type nor a pattern");
+            Doc::nil()
+        }
+    });
 
     doc_concat!(doc, [expression_doc, doc.space(), operator, rhs])
 }

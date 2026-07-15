@@ -21,441 +21,461 @@ return x;
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "Example" @ 6..13 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 14..15
-      ClassBodyDeclaration
-        MethodDeclaration
-          PrimitiveType
-            IntKw "int" @ 16..19 leading=[Newline "\n"] trailing=[Whitespace " "]
-          Identifier "parenthesized" @ 20..33
-          LParen "(" @ 33..34
-          FormalParameterList
-            FormalParameter
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "Example" @ 6..13 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 14..15
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
               PrimitiveType
-                IntKw "int" @ 34..37 trailing=[Whitespace " "]
-              Identifier "x" @ 38..39
-          RParen ")" @ 39..40 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 41..42
-            BlockStatement
-              ReturnStatement
-                ReturnKw "return" @ 43..49 leading=[Newline "\n"] trailing=[Whitespace " "]
-                BinaryExpression
-                  ParenthesizedExpression
-                    LParen "(" @ 50..51
-                    BinaryExpression
-                      ParenthesizedExpression
-                        LParen "(" @ 51..52
-                        BinaryExpression
-                          ParenthesizedExpression
-                            LParen "(" @ 52..53
-                            BinaryExpression
-                              ParenthesizedExpression
-                                LParen "(" @ 53..54
-                                BinaryExpression
-                                  ParenthesizedExpression
-                                    LParen "(" @ 54..55
-                                    BinaryExpression
-                                      ParenthesizedExpression
-                                        LParen "(" @ 55..56
-                                        BinaryExpression
-                                          ParenthesizedExpression
-                                            LParen "(" @ 56..57
-                                            BinaryExpression
-                                              ParenthesizedExpression
-                                                LParen "(" @ 57..58
-                                                BinaryExpression
-                                                  ParenthesizedExpression
-                                                    LParen "(" @ 58..59
-                                                    BinaryExpression
-                                                      ParenthesizedExpression
-                                                        LParen "(" @ 59..60
-                                                        BinaryExpression
-                                                          ParenthesizedExpression
-                                                            LParen "(" @ 60..61
-                                                            BinaryExpression
-                                                              ParenthesizedExpression
-                                                                LParen "(" @ 61..62
-                                                                BinaryExpression
-                                                                  ParenthesizedExpression
-                                                                    LParen "(" @ 62..63
-                                                                    BinaryExpression
-                                                                      ParenthesizedExpression
-                                                                        LParen "(" @ 63..64
-                                                                        BinaryExpression
-                                                                          ParenthesizedExpression
-                                                                            LParen "(" @ 64..65
-                                                                            BinaryExpression
-                                                                              ParenthesizedExpression
-                                                                                LParen "(" @ 65..66
-                                                                                BinaryExpression
-                                                                                  ParenthesizedExpression
-                                                                                    LParen "(" @ 66..67
-                                                                                    BinaryExpression
-                                                                                      ParenthesizedExpression
-                                                                                        LParen "(" @ 67..68
-                                                                                        BinaryExpression
-                                                                                          ParenthesizedExpression
-                                                                                            LParen "(" @ 68..69
-                                                                                            BinaryExpression
-                                                                                              ParenthesizedExpression
-                                                                                                LParen "(" @ 69..70
-                                                                                                BinaryExpression
-                                                                                                  NameExpression
-                                                                                                    Identifier "x" @ 70..71 trailing=[Whitespace " "]
-                                                                                                  Plus "+" @ 72..73 trailing=[Whitespace " "]
-                                                                                                  NameExpression
-                                                                                                    Identifier "x" @ 74..75
-                                                                                                RParen ")" @ 75..76 trailing=[Whitespace " "]
-                                                                                              Minus "-" @ 77..78 trailing=[Whitespace " "]
-                                                                                              NameExpression
-                                                                                                Identifier "x" @ 79..80
-                                                                                            RParen ")" @ 80..81 trailing=[Whitespace " "]
-                                                                                          Plus "+" @ 82..83 trailing=[Whitespace " "]
-                                                                                          NameExpression
-                                                                                            Identifier "x" @ 84..85
-                                                                                        RParen ")" @ 85..86 trailing=[Whitespace " "]
-                                                                                      Minus "-" @ 87..88 trailing=[Whitespace " "]
-                                                                                      NameExpression
-                                                                                        Identifier "x" @ 89..90
-                                                                                    RParen ")" @ 90..91 trailing=[Whitespace " "]
-                                                                                  Plus "+" @ 92..93 trailing=[Whitespace " "]
-                                                                                  NameExpression
-                                                                                    Identifier "x" @ 94..95
-                                                                                RParen ")" @ 95..96 trailing=[Whitespace " "]
-                                                                              Minus "-" @ 97..98 trailing=[Whitespace " "]
-                                                                              NameExpression
-                                                                                Identifier "x" @ 99..100
-                                                                            RParen ")" @ 100..101 trailing=[Whitespace " "]
-                                                                          Plus "+" @ 102..103 trailing=[Whitespace " "]
-                                                                          NameExpression
-                                                                            Identifier "x" @ 104..105
-                                                                        RParen ")" @ 105..106 trailing=[Whitespace " "]
-                                                                      Minus "-" @ 107..108 trailing=[Whitespace " "]
-                                                                      NameExpression
-                                                                        Identifier "x" @ 109..110
-                                                                    RParen ")" @ 110..111 trailing=[Whitespace " "]
-                                                                  Plus "+" @ 112..113 trailing=[Whitespace " "]
-                                                                  NameExpression
-                                                                    Identifier "x" @ 114..115
-                                                                RParen ")" @ 115..116 trailing=[Whitespace " "]
-                                                              Minus "-" @ 117..118 trailing=[Whitespace " "]
-                                                              NameExpression
-                                                                Identifier "x" @ 119..120
-                                                            RParen ")" @ 120..121 trailing=[Whitespace " "]
-                                                          Plus "+" @ 122..123 trailing=[Whitespace " "]
-                                                          NameExpression
-                                                            Identifier "x" @ 124..125
-                                                        RParen ")" @ 125..126 trailing=[Whitespace " "]
-                                                      Minus "-" @ 127..128 trailing=[Whitespace " "]
-                                                      NameExpression
-                                                        Identifier "x" @ 129..130
-                                                    RParen ")" @ 130..131 trailing=[Whitespace " "]
-                                                  Plus "+" @ 132..133 trailing=[Whitespace " "]
-                                                  NameExpression
-                                                    Identifier "x" @ 134..135
-                                                RParen ")" @ 135..136 trailing=[Whitespace " "]
-                                              Minus "-" @ 137..138 trailing=[Whitespace " "]
-                                              NameExpression
-                                                Identifier "x" @ 139..140
-                                            RParen ")" @ 140..141 trailing=[Whitespace " "]
-                                          Plus "+" @ 142..143 trailing=[Whitespace " "]
-                                          NameExpression
-                                            Identifier "x" @ 144..145
-                                        RParen ")" @ 145..146 trailing=[Whitespace " "]
-                                      Minus "-" @ 147..148 trailing=[Whitespace " "]
-                                      NameExpression
-                                        Identifier "x" @ 149..150
-                                    RParen ")" @ 150..151 trailing=[Whitespace " "]
-                                  Plus "+" @ 152..153 trailing=[Whitespace " "]
-                                  NameExpression
-                                    Identifier "x" @ 154..155
-                                RParen ")" @ 155..156 trailing=[Whitespace " "]
-                              Minus "-" @ 157..158 trailing=[Whitespace " "]
-                              NameExpression
-                                Identifier "x" @ 159..160
-                            RParen ")" @ 160..161 trailing=[Whitespace " "]
-                          Plus "+" @ 162..163 trailing=[Whitespace " "]
-                          NameExpression
-                            Identifier "x" @ 164..165
-                        RParen ")" @ 165..166 trailing=[Whitespace " "]
-                      Minus "-" @ 167..168 trailing=[Whitespace " "]
-                      NameExpression
-                        Identifier "x" @ 169..170
-                    RParen ")" @ 170..171 trailing=[Whitespace " "]
-                  Plus "+" @ 172..173 trailing=[Whitespace " "]
-                  NameExpression
-                    Identifier "x" @ 174..175
-                Semicolon ";" @ 175..176
-            RBrace "}" @ 177..178 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        MethodDeclaration
-          PrimitiveType
-            IntKw "int" @ 179..182 leading=[Newline "\n"] trailing=[Whitespace " "]
-          Identifier "mixedPrecedence" @ 183..198
-          LParen "(" @ 198..199
-          RParen ")" @ 199..200 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 201..202
-            BlockStatement
-              LocalVariableDeclaration
-                PrimitiveType
-                  IntKw "int" @ 203..206 leading=[Newline "\n"] trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "x" @ 207..208 trailing=[Whitespace " "]
-                    Assign "=" @ 209..210
-                    VariableInitializer
+                AnnotationList
+                IntKw "int" @ 16..19 leading=[Newline "\n"] trailing=[Whitespace " "]
+              Identifier "parenthesized" @ 20..33
+              LParen "(" @ 33..34
+              FormalParameterList
+                FormalParameter
+                  ParameterModifierList
+                  PrimitiveType
+                    AnnotationList
+                    IntKw "int" @ 34..37 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "x" @ 38..39
+              RParen ")" @ 39..40 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 41..42
+                BlockStatementList
+                  BlockStatement
+                    ReturnStatement
+                      ReturnKw "return" @ 43..49 leading=[Newline "\n"] trailing=[Whitespace " "]
                       BinaryExpression
-                        BinaryExpression
+                        ParenthesizedExpression
+                          LParen "(" @ 50..51
                           BinaryExpression
+                            ParenthesizedExpression
+                              LParen "(" @ 51..52
+                              BinaryExpression
+                                ParenthesizedExpression
+                                  LParen "(" @ 52..53
+                                  BinaryExpression
+                                    ParenthesizedExpression
+                                      LParen "(" @ 53..54
+                                      BinaryExpression
+                                        ParenthesizedExpression
+                                          LParen "(" @ 54..55
+                                          BinaryExpression
+                                            ParenthesizedExpression
+                                              LParen "(" @ 55..56
+                                              BinaryExpression
+                                                ParenthesizedExpression
+                                                  LParen "(" @ 56..57
+                                                  BinaryExpression
+                                                    ParenthesizedExpression
+                                                      LParen "(" @ 57..58
+                                                      BinaryExpression
+                                                        ParenthesizedExpression
+                                                          LParen "(" @ 58..59
+                                                          BinaryExpression
+                                                            ParenthesizedExpression
+                                                              LParen "(" @ 59..60
+                                                              BinaryExpression
+                                                                ParenthesizedExpression
+                                                                  LParen "(" @ 60..61
+                                                                  BinaryExpression
+                                                                    ParenthesizedExpression
+                                                                      LParen "(" @ 61..62
+                                                                      BinaryExpression
+                                                                        ParenthesizedExpression
+                                                                          LParen "(" @ 62..63
+                                                                          BinaryExpression
+                                                                            ParenthesizedExpression
+                                                                              LParen "(" @ 63..64
+                                                                              BinaryExpression
+                                                                                ParenthesizedExpression
+                                                                                  LParen "(" @ 64..65
+                                                                                  BinaryExpression
+                                                                                    ParenthesizedExpression
+                                                                                      LParen "(" @ 65..66
+                                                                                      BinaryExpression
+                                                                                        ParenthesizedExpression
+                                                                                          LParen "(" @ 66..67
+                                                                                          BinaryExpression
+                                                                                            ParenthesizedExpression
+                                                                                              LParen "(" @ 67..68
+                                                                                              BinaryExpression
+                                                                                                ParenthesizedExpression
+                                                                                                  LParen "(" @ 68..69
+                                                                                                  BinaryExpression
+                                                                                                    ParenthesizedExpression
+                                                                                                      LParen "(" @ 69..70
+                                                                                                      BinaryExpression
+                                                                                                        NameExpression
+                                                                                                          Identifier "x" @ 70..71 trailing=[Whitespace " "]
+                                                                                                        Plus "+" @ 72..73 trailing=[Whitespace " "]
+                                                                                                        NameExpression
+                                                                                                          Identifier "x" @ 74..75
+                                                                                                      RParen ")" @ 75..76 trailing=[Whitespace " "]
+                                                                                                    Minus "-" @ 77..78 trailing=[Whitespace " "]
+                                                                                                    NameExpression
+                                                                                                      Identifier "x" @ 79..80
+                                                                                                  RParen ")" @ 80..81 trailing=[Whitespace " "]
+                                                                                                Plus "+" @ 82..83 trailing=[Whitespace " "]
+                                                                                                NameExpression
+                                                                                                  Identifier "x" @ 84..85
+                                                                                              RParen ")" @ 85..86 trailing=[Whitespace " "]
+                                                                                            Minus "-" @ 87..88 trailing=[Whitespace " "]
+                                                                                            NameExpression
+                                                                                              Identifier "x" @ 89..90
+                                                                                          RParen ")" @ 90..91 trailing=[Whitespace " "]
+                                                                                        Plus "+" @ 92..93 trailing=[Whitespace " "]
+                                                                                        NameExpression
+                                                                                          Identifier "x" @ 94..95
+                                                                                      RParen ")" @ 95..96 trailing=[Whitespace " "]
+                                                                                    Minus "-" @ 97..98 trailing=[Whitespace " "]
+                                                                                    NameExpression
+                                                                                      Identifier "x" @ 99..100
+                                                                                  RParen ")" @ 100..101 trailing=[Whitespace " "]
+                                                                                Plus "+" @ 102..103 trailing=[Whitespace " "]
+                                                                                NameExpression
+                                                                                  Identifier "x" @ 104..105
+                                                                              RParen ")" @ 105..106 trailing=[Whitespace " "]
+                                                                            Minus "-" @ 107..108 trailing=[Whitespace " "]
+                                                                            NameExpression
+                                                                              Identifier "x" @ 109..110
+                                                                          RParen ")" @ 110..111 trailing=[Whitespace " "]
+                                                                        Plus "+" @ 112..113 trailing=[Whitespace " "]
+                                                                        NameExpression
+                                                                          Identifier "x" @ 114..115
+                                                                      RParen ")" @ 115..116 trailing=[Whitespace " "]
+                                                                    Minus "-" @ 117..118 trailing=[Whitespace " "]
+                                                                    NameExpression
+                                                                      Identifier "x" @ 119..120
+                                                                  RParen ")" @ 120..121 trailing=[Whitespace " "]
+                                                                Plus "+" @ 122..123 trailing=[Whitespace " "]
+                                                                NameExpression
+                                                                  Identifier "x" @ 124..125
+                                                              RParen ")" @ 125..126 trailing=[Whitespace " "]
+                                                            Minus "-" @ 127..128 trailing=[Whitespace " "]
+                                                            NameExpression
+                                                              Identifier "x" @ 129..130
+                                                          RParen ")" @ 130..131 trailing=[Whitespace " "]
+                                                        Plus "+" @ 132..133 trailing=[Whitespace " "]
+                                                        NameExpression
+                                                          Identifier "x" @ 134..135
+                                                      RParen ")" @ 135..136 trailing=[Whitespace " "]
+                                                    Minus "-" @ 137..138 trailing=[Whitespace " "]
+                                                    NameExpression
+                                                      Identifier "x" @ 139..140
+                                                  RParen ")" @ 140..141 trailing=[Whitespace " "]
+                                                Plus "+" @ 142..143 trailing=[Whitespace " "]
+                                                NameExpression
+                                                  Identifier "x" @ 144..145
+                                              RParen ")" @ 145..146 trailing=[Whitespace " "]
+                                            Minus "-" @ 147..148 trailing=[Whitespace " "]
+                                            NameExpression
+                                              Identifier "x" @ 149..150
+                                          RParen ")" @ 150..151 trailing=[Whitespace " "]
+                                        Plus "+" @ 152..153 trailing=[Whitespace " "]
+                                        NameExpression
+                                          Identifier "x" @ 154..155
+                                      RParen ")" @ 155..156 trailing=[Whitespace " "]
+                                    Minus "-" @ 157..158 trailing=[Whitespace " "]
+                                    NameExpression
+                                      Identifier "x" @ 159..160
+                                  RParen ")" @ 160..161 trailing=[Whitespace " "]
+                                Plus "+" @ 162..163 trailing=[Whitespace " "]
+                                NameExpression
+                                  Identifier "x" @ 164..165
+                              RParen ")" @ 165..166 trailing=[Whitespace " "]
+                            Minus "-" @ 167..168 trailing=[Whitespace " "]
+                            NameExpression
+                              Identifier "x" @ 169..170
+                          RParen ")" @ 170..171 trailing=[Whitespace " "]
+                        Plus "+" @ 172..173 trailing=[Whitespace " "]
+                        NameExpression
+                          Identifier "x" @ 174..175
+                      Semicolon ";" @ 175..176
+                RBrace "}" @ 177..178 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            MethodDeclaration
+              PrimitiveType
+                AnnotationList
+                IntKw "int" @ 179..182 leading=[Newline "\n"] trailing=[Whitespace " "]
+              Identifier "mixedPrecedence" @ 183..198
+              LParen "(" @ 198..199
+              RParen ")" @ 199..200 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 201..202
+                BlockStatementList
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      PrimitiveType
+                        AnnotationList
+                        IntKw "int" @ 203..206 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "x" @ 207..208 trailing=[Whitespace " "]
+                          Assign "=" @ 209..210
+                          VariableInitializer
                             BinaryExpression
                               BinaryExpression
-                                LiteralExpression
-                                  IntegerLiteral "0" @ 217..218 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
-                                Gt ">" @ 219..220
-                                Gt ">" @ 220..221
-                                Gt ">" @ 221..222 trailing=[Whitespace " "]
                                 BinaryExpression
                                   BinaryExpression
-                                    LiteralExpression
-                                      IntegerLiteral "0" @ 223..224 trailing=[Whitespace " "]
-                                    Plus "+" @ 225..226 trailing=[Whitespace " "]
+                                    BinaryExpression
+                                      LiteralExpression
+                                        IntegerLiteral "0" @ 217..218 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+                                      UnsignedRightShiftOperator
+                                        Gt ">" @ 219..220
+                                        Gt ">" @ 220..221
+                                        Gt ">" @ 221..222 trailing=[Whitespace " "]
+                                      BinaryExpression
+                                        BinaryExpression
+                                          LiteralExpression
+                                            IntegerLiteral "0" @ 223..224 trailing=[Whitespace " "]
+                                          Plus "+" @ 225..226 trailing=[Whitespace " "]
+                                          BinaryExpression
+                                            BinaryExpression
+                                              LiteralExpression
+                                                IntegerLiteral "0" @ 227..228 trailing=[Whitespace " "]
+                                              Slash "/" @ 229..230 trailing=[Whitespace " "]
+                                              LiteralExpression
+                                                IntegerLiteral "0" @ 231..232 trailing=[Whitespace " "]
+                                            Star "*" @ 233..234 trailing=[Whitespace " "]
+                                            LiteralExpression
+                                              IntegerLiteral "0" @ 235..236 trailing=[Whitespace " "]
+                                        Minus "-" @ 237..238 trailing=[Whitespace " "]
+                                        LiteralExpression
+                                          IntegerLiteral "0" @ 239..240 trailing=[Whitespace " "]
+                                    Amp "&" @ 241..242 trailing=[Whitespace " "]
                                     BinaryExpression
                                       BinaryExpression
                                         LiteralExpression
-                                          IntegerLiteral "0" @ 227..228 trailing=[Whitespace " "]
-                                        Slash "/" @ 229..230 trailing=[Whitespace " "]
+                                          IntegerLiteral "0" @ 243..244 trailing=[Whitespace " "]
+                                        LShift "<<" @ 245..247 trailing=[Whitespace " "]
+                                        BinaryExpression
+                                          BinaryExpression
+                                            LiteralExpression
+                                              IntegerLiteral "0" @ 248..249 trailing=[Whitespace " "]
+                                            Star "*" @ 250..251 trailing=[Whitespace " "]
+                                            LiteralExpression
+                                              IntegerLiteral "0" @ 252..253 trailing=[Whitespace " "]
+                                          Slash "/" @ 254..255 trailing=[Whitespace " "]
+                                          LiteralExpression
+                                            IntegerLiteral "0" @ 256..257 trailing=[Whitespace " "]
+                                      RightShiftOperator
+                                        Gt ">" @ 258..259
+                                        Gt ">" @ 259..260 trailing=[Whitespace " "]
+                                      BinaryExpression
                                         LiteralExpression
-                                          IntegerLiteral "0" @ 231..232 trailing=[Whitespace " "]
-                                      Star "*" @ 233..234 trailing=[Whitespace " "]
-                                      LiteralExpression
-                                        IntegerLiteral "0" @ 235..236 trailing=[Whitespace " "]
-                                  Minus "-" @ 237..238 trailing=[Whitespace " "]
-                                  LiteralExpression
-                                    IntegerLiteral "0" @ 239..240 trailing=[Whitespace " "]
-                              Amp "&" @ 241..242 trailing=[Whitespace " "]
-                              BinaryExpression
-                                BinaryExpression
-                                  LiteralExpression
-                                    IntegerLiteral "0" @ 243..244 trailing=[Whitespace " "]
-                                  LShift "<<" @ 245..247 trailing=[Whitespace " "]
+                                          IntegerLiteral "0" @ 261..262 trailing=[Whitespace " "]
+                                        Minus "-" @ 263..264 trailing=[Whitespace " "]
+                                        LiteralExpression
+                                          IntegerLiteral "0" @ 265..266
+                                  Caret "^" @ 273..274 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
                                   BinaryExpression
                                     BinaryExpression
+                                      BinaryExpression
+                                        BinaryExpression
+                                          LiteralExpression
+                                            IntegerLiteral "0" @ 275..276 trailing=[Whitespace " "]
+                                          Star "*" @ 277..278 trailing=[Whitespace " "]
+                                          LiteralExpression
+                                            IntegerLiteral "0" @ 279..280 trailing=[Whitespace " "]
+                                        Slash "/" @ 281..282 trailing=[Whitespace " "]
+                                        LiteralExpression
+                                          IntegerLiteral "0" @ 283..284 trailing=[Whitespace " "]
+                                      UnsignedRightShiftOperator
+                                        Gt ">" @ 285..286
+                                        Gt ">" @ 286..287
+                                        Gt ">" @ 287..288 trailing=[Whitespace " "]
                                       LiteralExpression
-                                        IntegerLiteral "0" @ 248..249 trailing=[Whitespace " "]
-                                      Star "*" @ 250..251 trailing=[Whitespace " "]
-                                      LiteralExpression
-                                        IntegerLiteral "0" @ 252..253 trailing=[Whitespace " "]
-                                    Slash "/" @ 254..255 trailing=[Whitespace " "]
-                                    LiteralExpression
-                                      IntegerLiteral "0" @ 256..257 trailing=[Whitespace " "]
-                                Gt ">" @ 258..259
-                                Gt ">" @ 259..260 trailing=[Whitespace " "]
-                                BinaryExpression
-                                  LiteralExpression
-                                    IntegerLiteral "0" @ 261..262 trailing=[Whitespace " "]
-                                  Minus "-" @ 263..264 trailing=[Whitespace " "]
-                                  LiteralExpression
-                                    IntegerLiteral "0" @ 265..266
-                            Caret "^" @ 273..274 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
-                            BinaryExpression
-                              BinaryExpression
-                                BinaryExpression
-                                  BinaryExpression
-                                    LiteralExpression
-                                      IntegerLiteral "0" @ 275..276 trailing=[Whitespace " "]
-                                    Star "*" @ 277..278 trailing=[Whitespace " "]
-                                    LiteralExpression
-                                      IntegerLiteral "0" @ 279..280 trailing=[Whitespace " "]
-                                  Slash "/" @ 281..282 trailing=[Whitespace " "]
-                                  LiteralExpression
-                                    IntegerLiteral "0" @ 283..284 trailing=[Whitespace " "]
-                                Gt ">" @ 285..286
-                                Gt ">" @ 286..287
-                                Gt ">" @ 287..288 trailing=[Whitespace " "]
-                                LiteralExpression
-                                  IntegerLiteral "0" @ 289..290 trailing=[Whitespace " "]
-                              LShift "<<" @ 291..293 trailing=[Whitespace " "]
-                              BinaryExpression
-                                BinaryExpression
-                                  LiteralExpression
-                                    IntegerLiteral "0" @ 294..295 trailing=[Whitespace " "]
-                                  Star "*" @ 296..297 trailing=[Whitespace " "]
-                                  LiteralExpression
-                                    IntegerLiteral "0" @ 298..299 trailing=[Whitespace " "]
-                                Minus "-" @ 300..301 trailing=[Whitespace " "]
-                                BinaryExpression
-                                  LiteralExpression
-                                    IntegerLiteral "0" @ 302..303 trailing=[Whitespace " "]
-                                  Slash "/" @ 304..305 trailing=[Whitespace " "]
-                                  LiteralExpression
-                                    IntegerLiteral "0" @ 306..307
-                          Bar "|" @ 314..315 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
-                          BinaryExpression
-                            BinaryExpression
-                              BinaryExpression
-                                BinaryExpression
-                                  LiteralExpression
-                                    IntegerLiteral "0" @ 316..317 trailing=[Whitespace " "]
-                                  Star "*" @ 318..319 trailing=[Whitespace " "]
-                                  LiteralExpression
-                                    IntegerLiteral "0" @ 320..321 trailing=[Whitespace " "]
-                                Gt ">" @ 322..323
-                                Gt ">" @ 323..324 trailing=[Whitespace " "]
-                                BinaryExpression
-                                  BinaryExpression
-                                    LiteralExpression
-                                      IntegerLiteral "0" @ 325..326 trailing=[Whitespace " "]
-                                    Plus "+" @ 327..328 trailing=[Whitespace " "]
+                                        IntegerLiteral "0" @ 289..290 trailing=[Whitespace " "]
+                                    LShift "<<" @ 291..293 trailing=[Whitespace " "]
                                     BinaryExpression
                                       BinaryExpression
                                         LiteralExpression
-                                          IntegerLiteral "0" @ 329..330 trailing=[Whitespace " "]
-                                        Slash "/" @ 331..332 trailing=[Whitespace " "]
+                                          IntegerLiteral "0" @ 294..295 trailing=[Whitespace " "]
+                                        Star "*" @ 296..297 trailing=[Whitespace " "]
                                         LiteralExpression
-                                          IntegerLiteral "0" @ 333..334 trailing=[Whitespace " "]
-                                      Star "*" @ 335..336 trailing=[Whitespace " "]
-                                      LiteralExpression
-                                        IntegerLiteral "0" @ 337..338 trailing=[Whitespace " "]
-                                  Minus "-" @ 339..340 trailing=[Whitespace " "]
-                                  LiteralExpression
-                                    IntegerLiteral "0" @ 341..342 trailing=[Whitespace " "]
-                              LShift "<<" @ 343..345 trailing=[Whitespace " "]
-                              LiteralExpression
-                                IntegerLiteral "0" @ 346..347
-                            Amp "&" @ 354..355 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
-                            BinaryExpression
+                                          IntegerLiteral "0" @ 298..299 trailing=[Whitespace " "]
+                                      Minus "-" @ 300..301 trailing=[Whitespace " "]
+                                      BinaryExpression
+                                        LiteralExpression
+                                          IntegerLiteral "0" @ 302..303 trailing=[Whitespace " "]
+                                        Slash "/" @ 304..305 trailing=[Whitespace " "]
+                                        LiteralExpression
+                                          IntegerLiteral "0" @ 306..307
+                                Bar "|" @ 314..315 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+                                BinaryExpression
+                                  BinaryExpression
+                                    BinaryExpression
+                                      BinaryExpression
+                                        LiteralExpression
+                                          IntegerLiteral "0" @ 316..317 trailing=[Whitespace " "]
+                                        Star "*" @ 318..319 trailing=[Whitespace " "]
+                                        LiteralExpression
+                                          IntegerLiteral "0" @ 320..321 trailing=[Whitespace " "]
+                                      RightShiftOperator
+                                        Gt ">" @ 322..323
+                                        Gt ">" @ 323..324 trailing=[Whitespace " "]
+                                      BinaryExpression
+                                        BinaryExpression
+                                          LiteralExpression
+                                            IntegerLiteral "0" @ 325..326 trailing=[Whitespace " "]
+                                          Plus "+" @ 327..328 trailing=[Whitespace " "]
+                                          BinaryExpression
+                                            BinaryExpression
+                                              LiteralExpression
+                                                IntegerLiteral "0" @ 329..330 trailing=[Whitespace " "]
+                                              Slash "/" @ 331..332 trailing=[Whitespace " "]
+                                              LiteralExpression
+                                                IntegerLiteral "0" @ 333..334 trailing=[Whitespace " "]
+                                            Star "*" @ 335..336 trailing=[Whitespace " "]
+                                            LiteralExpression
+                                              IntegerLiteral "0" @ 337..338 trailing=[Whitespace " "]
+                                        Minus "-" @ 339..340 trailing=[Whitespace " "]
+                                        LiteralExpression
+                                          IntegerLiteral "0" @ 341..342 trailing=[Whitespace " "]
+                                    LShift "<<" @ 343..345 trailing=[Whitespace " "]
+                                    LiteralExpression
+                                      IntegerLiteral "0" @ 346..347
+                                  Amp "&" @ 354..355 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+                                  BinaryExpression
+                                    BinaryExpression
+                                      BinaryExpression
+                                        BinaryExpression
+                                          BinaryExpression
+                                            LiteralExpression
+                                              IntegerLiteral "0" @ 356..357 trailing=[Whitespace " "]
+                                            Star "*" @ 358..359 trailing=[Whitespace " "]
+                                            LiteralExpression
+                                              IntegerLiteral "0" @ 360..361 trailing=[Whitespace " "]
+                                          Slash "/" @ 362..363 trailing=[Whitespace " "]
+                                          LiteralExpression
+                                            IntegerLiteral "0" @ 364..365 trailing=[Whitespace " "]
+                                        UnsignedRightShiftOperator
+                                          Gt ">" @ 366..367
+                                          Gt ">" @ 367..368
+                                          Gt ">" @ 368..369 trailing=[Whitespace " "]
+                                        BinaryExpression
+                                          LiteralExpression
+                                            IntegerLiteral "0" @ 370..371 trailing=[Whitespace " "]
+                                          Minus "-" @ 372..373 trailing=[Whitespace " "]
+                                          BinaryExpression
+                                            LiteralExpression
+                                              IntegerLiteral "0" @ 374..375 trailing=[Whitespace " "]
+                                            Star "*" @ 376..377 trailing=[Whitespace " "]
+                                            LiteralExpression
+                                              IntegerLiteral "0" @ 378..379 trailing=[Whitespace " "]
+                                      RightShiftOperator
+                                        Gt ">" @ 380..381
+                                        Gt ">" @ 381..382 trailing=[Whitespace " "]
+                                      BinaryExpression
+                                        LiteralExpression
+                                          IntegerLiteral "0" @ 383..384 trailing=[Whitespace " "]
+                                        Slash "/" @ 385..386 trailing=[Whitespace " "]
+                                        LiteralExpression
+                                          IntegerLiteral "0" @ 387..388 trailing=[Whitespace " "]
+                                    LShift "<<" @ 389..391 trailing=[Whitespace " "]
+                                    BinaryExpression
+                                      BinaryExpression
+                                        BinaryExpression
+                                          LiteralExpression
+                                            IntegerLiteral "0" @ 392..393 trailing=[Whitespace " "]
+                                          Star "*" @ 394..395 trailing=[Whitespace " "]
+                                          LiteralExpression
+                                            IntegerLiteral "0" @ 396..397 trailing=[Whitespace " "]
+                                        Plus "+" @ 398..399 trailing=[Whitespace " "]
+                                        LiteralExpression
+                                          IntegerLiteral "0" @ 400..401 trailing=[Whitespace " "]
+                                      Minus "-" @ 402..403 trailing=[Whitespace " "]
+                                      BinaryExpression
+                                        BinaryExpression
+                                          LiteralExpression
+                                            IntegerLiteral "0" @ 404..405 trailing=[Whitespace " "]
+                                          Slash "/" @ 406..407 trailing=[Whitespace " "]
+                                          LiteralExpression
+                                            IntegerLiteral "0" @ 408..409 trailing=[Whitespace " "]
+                                        Star "*" @ 410..411 trailing=[Whitespace " "]
+                                        LiteralExpression
+                                          IntegerLiteral "0" @ 412..413
+                              Bar "|" @ 420..421 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
                               BinaryExpression
                                 BinaryExpression
                                   BinaryExpression
                                     BinaryExpression
+                                      BinaryExpression
+                                        LiteralExpression
+                                          IntegerLiteral "0" @ 422..423 trailing=[Whitespace " "]
+                                        Minus "-" @ 424..425 trailing=[Whitespace " "]
+                                        BinaryExpression
+                                          LiteralExpression
+                                            IntegerLiteral "0" @ 426..427 trailing=[Whitespace " "]
+                                          Star "*" @ 428..429 trailing=[Whitespace " "]
+                                          LiteralExpression
+                                            IntegerLiteral "0" @ 430..431 trailing=[Whitespace " "]
+                                      UnsignedRightShiftOperator
+                                        Gt ">" @ 432..433
+                                        Gt ">" @ 433..434
+                                        Gt ">" @ 434..435 trailing=[Whitespace " "]
                                       LiteralExpression
-                                        IntegerLiteral "0" @ 356..357 trailing=[Whitespace " "]
-                                      Star "*" @ 358..359 trailing=[Whitespace " "]
+                                        IntegerLiteral "0" @ 436..437 trailing=[Whitespace " "]
+                                    LShift "<<" @ 438..440 trailing=[Whitespace " "]
+                                    BinaryExpression
+                                      BinaryExpression
+                                        LiteralExpression
+                                          IntegerLiteral "0" @ 441..442 trailing=[Whitespace " "]
+                                        Slash "/" @ 443..444 trailing=[Whitespace " "]
+                                        LiteralExpression
+                                          IntegerLiteral "0" @ 445..446 trailing=[Whitespace " "]
+                                      Star "*" @ 447..448 trailing=[Whitespace " "]
                                       LiteralExpression
-                                        IntegerLiteral "0" @ 360..361 trailing=[Whitespace " "]
-                                    Slash "/" @ 362..363 trailing=[Whitespace " "]
-                                    LiteralExpression
-                                      IntegerLiteral "0" @ 364..365 trailing=[Whitespace " "]
-                                  Gt ">" @ 366..367
-                                  Gt ">" @ 367..368
-                                  Gt ">" @ 368..369 trailing=[Whitespace " "]
+                                        IntegerLiteral "0" @ 449..450 trailing=[Whitespace " "]
+                                  RightShiftOperator
+                                    Gt ">" @ 451..452
+                                    Gt ">" @ 452..453 trailing=[Whitespace " "]
                                   BinaryExpression
                                     LiteralExpression
-                                      IntegerLiteral "0" @ 370..371 trailing=[Whitespace " "]
-                                    Minus "-" @ 372..373 trailing=[Whitespace " "]
+                                      IntegerLiteral "0" @ 454..455 trailing=[Whitespace " "]
+                                    Minus "-" @ 456..457 trailing=[Whitespace " "]
+                                    LiteralExpression
+                                      IntegerLiteral "0" @ 458..459 trailing=[Whitespace " "]
+                                Caret "^" @ 460..461 trailing=[Whitespace " "]
+                                BinaryExpression
+                                  BinaryExpression
                                     BinaryExpression
                                       LiteralExpression
-                                        IntegerLiteral "0" @ 374..375 trailing=[Whitespace " "]
-                                      Star "*" @ 376..377 trailing=[Whitespace " "]
+                                        IntegerLiteral "0" @ 462..463 trailing=[Whitespace " "]
+                                      Star "*" @ 464..465 trailing=[Whitespace " "]
                                       LiteralExpression
-                                        IntegerLiteral "0" @ 378..379 trailing=[Whitespace " "]
-                                Gt ">" @ 380..381
-                                Gt ">" @ 381..382 trailing=[Whitespace " "]
-                                BinaryExpression
-                                  LiteralExpression
-                                    IntegerLiteral "0" @ 383..384 trailing=[Whitespace " "]
-                                  Slash "/" @ 385..386 trailing=[Whitespace " "]
-                                  LiteralExpression
-                                    IntegerLiteral "0" @ 387..388 trailing=[Whitespace " "]
-                              LShift "<<" @ 389..391 trailing=[Whitespace " "]
-                              BinaryExpression
-                                BinaryExpression
+                                        IntegerLiteral "0" @ 466..467 trailing=[Whitespace " "]
+                                    Slash "/" @ 468..469 trailing=[Whitespace " "]
+                                    LiteralExpression
+                                      IntegerLiteral "0" @ 470..471 trailing=[Whitespace " "]
+                                  Amp "&" @ 472..473 trailing=[Whitespace " "]
                                   BinaryExpression
                                     LiteralExpression
-                                      IntegerLiteral "0" @ 392..393 trailing=[Whitespace " "]
-                                    Star "*" @ 394..395 trailing=[Whitespace " "]
-                                    LiteralExpression
-                                      IntegerLiteral "0" @ 396..397 trailing=[Whitespace " "]
-                                  Plus "+" @ 398..399 trailing=[Whitespace " "]
-                                  LiteralExpression
-                                    IntegerLiteral "0" @ 400..401 trailing=[Whitespace " "]
-                                Minus "-" @ 402..403 trailing=[Whitespace " "]
-                                BinaryExpression
-                                  BinaryExpression
-                                    LiteralExpression
-                                      IntegerLiteral "0" @ 404..405 trailing=[Whitespace " "]
-                                    Slash "/" @ 406..407 trailing=[Whitespace " "]
-                                    LiteralExpression
-                                      IntegerLiteral "0" @ 408..409 trailing=[Whitespace " "]
-                                  Star "*" @ 410..411 trailing=[Whitespace " "]
-                                  LiteralExpression
-                                    IntegerLiteral "0" @ 412..413
-                        Bar "|" @ 420..421 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
-                        BinaryExpression
-                          BinaryExpression
-                            BinaryExpression
-                              BinaryExpression
-                                BinaryExpression
-                                  LiteralExpression
-                                    IntegerLiteral "0" @ 422..423 trailing=[Whitespace " "]
-                                  Minus "-" @ 424..425 trailing=[Whitespace " "]
-                                  BinaryExpression
-                                    LiteralExpression
-                                      IntegerLiteral "0" @ 426..427 trailing=[Whitespace " "]
-                                    Star "*" @ 428..429 trailing=[Whitespace " "]
-                                    LiteralExpression
-                                      IntegerLiteral "0" @ 430..431 trailing=[Whitespace " "]
-                                Gt ">" @ 432..433
-                                Gt ">" @ 433..434
-                                Gt ">" @ 434..435 trailing=[Whitespace " "]
-                                LiteralExpression
-                                  IntegerLiteral "0" @ 436..437 trailing=[Whitespace " "]
-                              LShift "<<" @ 438..440 trailing=[Whitespace " "]
-                              BinaryExpression
-                                BinaryExpression
-                                  LiteralExpression
-                                    IntegerLiteral "0" @ 441..442 trailing=[Whitespace " "]
-                                  Slash "/" @ 443..444 trailing=[Whitespace " "]
-                                  LiteralExpression
-                                    IntegerLiteral "0" @ 445..446 trailing=[Whitespace " "]
-                                Star "*" @ 447..448 trailing=[Whitespace " "]
-                                LiteralExpression
-                                  IntegerLiteral "0" @ 449..450 trailing=[Whitespace " "]
-                            Gt ">" @ 451..452
-                            Gt ">" @ 452..453 trailing=[Whitespace " "]
-                            BinaryExpression
-                              LiteralExpression
-                                IntegerLiteral "0" @ 454..455 trailing=[Whitespace " "]
-                              Minus "-" @ 456..457 trailing=[Whitespace " "]
-                              LiteralExpression
-                                IntegerLiteral "0" @ 458..459 trailing=[Whitespace " "]
-                          Caret "^" @ 460..461 trailing=[Whitespace " "]
-                          BinaryExpression
-                            BinaryExpression
-                              BinaryExpression
-                                LiteralExpression
-                                  IntegerLiteral "0" @ 462..463 trailing=[Whitespace " "]
-                                Star "*" @ 464..465 trailing=[Whitespace " "]
-                                LiteralExpression
-                                  IntegerLiteral "0" @ 466..467 trailing=[Whitespace " "]
-                              Slash "/" @ 468..469 trailing=[Whitespace " "]
-                              LiteralExpression
-                                IntegerLiteral "0" @ 470..471 trailing=[Whitespace " "]
-                            Amp "&" @ 472..473 trailing=[Whitespace " "]
-                            BinaryExpression
-                              LiteralExpression
-                                IntegerLiteral "0" @ 474..475 trailing=[Whitespace " "]
-                              LShift "<<" @ 476..478 trailing=[Whitespace " "]
-                              BinaryExpression
-                                LiteralExpression
-                                  IntegerLiteral "0" @ 479..480 trailing=[Whitespace " "]
-                                Plus "+" @ 481..482 trailing=[Whitespace " "]
-                                LiteralExpression
-                                  IntegerLiteral "0" @ 483..484
-              Semicolon ";" @ 484..485
-            BlockStatement
-              ReturnStatement
-                ReturnKw "return" @ 486..492 leading=[Newline "\n"] trailing=[Whitespace " "]
-                NameExpression
-                  Identifier "x" @ 493..494
-                Semicolon ";" @ 494..495
-            RBrace "}" @ 496..497 leading=[Newline "\n"]
-      RBrace "}" @ 498..499 leading=[Newline "\n"]
+                                      IntegerLiteral "0" @ 474..475 trailing=[Whitespace " "]
+                                    LShift "<<" @ 476..478 trailing=[Whitespace " "]
+                                    BinaryExpression
+                                      LiteralExpression
+                                        IntegerLiteral "0" @ 479..480 trailing=[Whitespace " "]
+                                      Plus "+" @ 481..482 trailing=[Whitespace " "]
+                                      LiteralExpression
+                                        IntegerLiteral "0" @ 483..484
+                    Semicolon ";" @ 484..485
+                  BlockStatement
+                    ReturnStatement
+                      ReturnKw "return" @ 486..492 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      NameExpression
+                        Identifier "x" @ 493..494
+                      Semicolon ";" @ 494..495
+                RBrace "}" @ 496..497 leading=[Newline "\n"]
+        RBrace "}" @ 498..499 leading=[Newline "\n"]
   Eof "" @ 500..500 leading=[Newline "\n"]
 
 diagnostics:

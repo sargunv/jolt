@@ -15,65 +15,74 @@ int after=2;
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "Example" @ 6..13 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 14..15
-      ClassBodyDeclaration
-        FieldDeclaration
-          PrimitiveType
-            IntKw "int" @ 16..19 leading=[Newline "\n"] trailing=[Whitespace " "]
-          VariableDeclaratorList
-            VariableDeclarator
-              Identifier "before" @ 20..26
-              Assign "=" @ 26..27
-              VariableInitializer
-                LiteralExpression
-                  IntegerLiteral "1" @ 27..28
-          Semicolon ";" @ 28..29
-      ClassBodyDeclaration
-        FieldDeclaration
-          PrimitiveType
-            IntKw "int" @ 52..55 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-          VariableDeclaratorList
-            VariableDeclarator
-              Identifier "raw" @ 56..59
-              Assign "=" @ 59..60
-              VariableInitializer
-                BinaryExpression
-                  LiteralExpression
-                    IntegerLiteral "1" @ 60..61
-                  Plus "+" @ 61..62
-                  LiteralExpression
-                    IntegerLiteral "2" @ 62..63
-          Semicolon ";" @ 63..64
-      ClassBodyDeclaration
-        FieldDeclaration
-          ClassType
-            Name
-              Identifier "String" @ 67..73 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-          VariableDeclaratorList
-            VariableDeclarator
-              Identifier "label" @ 74..79
-              Assign "=" @ 79..80
-              VariableInitializer
-                LiteralExpression
-                  StringLiteral "\"x\"" @ 80..83
-          Semicolon ";" @ 83..84
-      ClassBodyDeclaration
-        FieldDeclaration
-          PrimitiveType
-            IntKw "int" @ 104..107 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n"] trailing=[Whitespace " "]
-          VariableDeclaratorList
-            VariableDeclarator
-              Identifier "after" @ 108..113
-              Assign "=" @ 113..114
-              VariableInitializer
-                LiteralExpression
-                  IntegerLiteral "2" @ 114..115
-          Semicolon ";" @ 115..116
-      RBrace "}" @ 117..118 leading=[Newline "\n"]
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "Example" @ 6..13 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 14..15
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            FieldDeclaration
+              PrimitiveType
+                AnnotationList
+                IntKw "int" @ 16..19 leading=[Newline "\n"] trailing=[Whitespace " "]
+              VariableDeclaratorList
+                VariableDeclarator
+                  Identifier "before" @ 20..26
+                  Assign "=" @ 26..27
+                  VariableInitializer
+                    LiteralExpression
+                      IntegerLiteral "1" @ 27..28
+              Semicolon ";" @ 28..29
+          ClassBodyDeclaration
+            FieldDeclaration
+              PrimitiveType
+                AnnotationList
+                IntKw "int" @ 52..55 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:off", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              VariableDeclaratorList
+                VariableDeclarator
+                  Identifier "raw" @ 56..59
+                  Assign "=" @ 59..60
+                  VariableInitializer
+                    BinaryExpression
+                      LiteralExpression
+                        IntegerLiteral "1" @ 60..61
+                      Plus "+" @ 61..62
+                      LiteralExpression
+                        IntegerLiteral "2" @ 62..63
+              Semicolon ";" @ 63..64
+          ClassBodyDeclaration
+            FieldDeclaration
+              ClassType
+                ClassTypeSegmentList
+                  ClassTypeSegmentNode
+                    AnnotationList
+                    Name
+                      Identifier "String" @ 67..73 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              VariableDeclaratorList
+                VariableDeclarator
+                  Identifier "label" @ 74..79
+                  Assign "=" @ 79..80
+                  VariableInitializer
+                    LiteralExpression
+                      StringLiteral "\"x\"" @ 80..83
+              Semicolon ";" @ 83..84
+          ClassBodyDeclaration
+            FieldDeclaration
+              PrimitiveType
+                AnnotationList
+                IntKw "int" @ 104..107 leading=[Newline "\n", Whitespace "  ", LineComment "// @formatter:on", Newline "\n"] trailing=[Whitespace " "]
+              VariableDeclaratorList
+                VariableDeclarator
+                  Identifier "after" @ 108..113
+                  Assign "=" @ 113..114
+                  VariableInitializer
+                    LiteralExpression
+                      IntegerLiteral "2" @ 114..115
+              Semicolon ";" @ 115..116
+        RBrace "}" @ 117..118 leading=[Newline "\n"]
   Eof "" @ 119..119 leading=[Newline "\n"]
 
 diagnostics:

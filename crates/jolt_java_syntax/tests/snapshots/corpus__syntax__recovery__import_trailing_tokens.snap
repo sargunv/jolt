@@ -10,25 +10,34 @@ class ImportTrailingTokens {}
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclaration
-    ImportKw "import" @ 0..6 trailing=[Whitespace " "]
-    QualifiedName
-      Identifier "com" @ 7..10
-      Dot "." @ 10..11
-      Identifier "example" @ 11..18 trailing=[Whitespace " "]
-    Plus "+" @ 19..20 trailing=[Whitespace " "]
-    Identifier "lost" @ 21..25
-    Semicolon ";" @ 25..26
-  ClassDeclaration
-    ClassKw "class" @ 28..33 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "ImportTrailingTokens" @ 34..54 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 55..56
-      RBrace "}" @ 56..57
+  ImportDeclarationList
+    ImportDeclaration
+      ImportKw "import" @ 0..6 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "com" @ 7..10
+        Dot "." @ 10..11
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "example" @ 11..18 trailing=[Whitespace " "]
+      ErrorNode
+        Plus "+" @ 19..20 trailing=[Whitespace " "]
+        Identifier "lost" @ 21..25
+      Semicolon ";" @ 25..26
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 28..33 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "ImportTrailingTokens" @ 34..54 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 55..56
+        ClassBodyMemberList
+        RBrace "}" @ 56..57
   Eof "" @ 58..58 leading=[Newline "\n"]
 
 diagnostics:
-  (none)
+  code=java.parse.unexpected_syntax severity=Error stage=Parser range=19..20 message="unexpected token in import declaration"
 
 diagnostics:
-(none)
+code=java.parse.unexpected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(19), end: TextSize(20) }) message=unexpected token in import declaration

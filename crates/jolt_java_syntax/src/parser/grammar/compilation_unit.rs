@@ -8,15 +8,27 @@ impl Parser<'_> {
             self.parse_package_declaration();
         }
 
+        let imports = self.start();
         while self.at(JavaSyntaxKind::ImportKw) {
             self.parse_import_declaration();
         }
+        self.complete(imports, JavaSyntaxKind::ImportDeclarationList);
 
+        if self.starts_module_declaration() {
+            self.parse_module_declaration();
+        }
+
+        let declarations = self.start();
         while !self.at_eof() {
             if self.at(JavaSyntaxKind::Semicolon) {
                 self.parse_empty_declaration();
             } else if self.starts_module_declaration() {
+                // A module after a type declaration is invalid, but it must not
+                // make the entire top-level declaration list malformed. Keep
+                // the parsed module inside the list's narrow bogus item.
+                let bogus = self.start();
                 self.parse_module_declaration();
+                self.complete(bogus, JavaSyntaxKind::BogusTypeDeclaration);
             } else if self.starts_top_level_type_declaration() {
                 self.parse_type_declaration();
             } else if self.starts_misspelled_non_sealed_type_declaration() {
@@ -27,6 +39,7 @@ impl Parser<'_> {
                 self.error_unexpected_top_level_token();
             }
         }
+        self.complete(declarations, JavaSyntaxKind::CompilationUnitDeclarationList);
 
         self.bump();
         self.complete(unit, JavaSyntaxKind::CompilationUnit);
@@ -68,8 +81,13 @@ impl Parser<'_> {
             self.bump();
             self.bump();
         }
-        while !self.at_eof() && !self.at(JavaSyntaxKind::Semicolon) {
-            self.bump();
+        if !self.at_eof() && !self.at(JavaSyntaxKind::Semicolon) {
+            let error = self.start();
+            self.unexpected_here("unexpected token in import declaration");
+            while !self.at_eof() && !self.at(JavaSyntaxKind::Semicolon) {
+                self.bump();
+            }
+            self.complete(error, JavaSyntaxKind::ErrorNode);
         }
         self.expect(
             JavaSyntaxKind::Semicolon,
@@ -86,6 +104,7 @@ impl Parser<'_> {
         self.consume_qualified_name();
 
         if self.eat(JavaSyntaxKind::LBrace) {
+            let directives = self.start();
             while !self.at_eof() && !self.at(JavaSyntaxKind::RBrace) {
                 if self.at_module_directive_start() {
                     self.parse_module_directive();
@@ -93,6 +112,7 @@ impl Parser<'_> {
                     self.error_unexpected_module_token();
                 }
             }
+            self.complete(directives, JavaSyntaxKind::ModuleDirectiveList);
             self.expect(
                 JavaSyntaxKind::RBrace,
                 "expected `}` after module declaration",
@@ -110,6 +130,7 @@ impl Parser<'_> {
         let kind = match self.current_text() {
             Some("requires") => {
                 self.bump();
+                let modifiers = self.start();
                 while self.at(JavaSyntaxKind::StaticKw)
                     || (self.at_contextual("transitive")
                         && !matches!(
@@ -119,6 +140,7 @@ impl Parser<'_> {
                 {
                     self.bump();
                 }
+                self.complete(modifiers, JavaSyntaxKind::RequiresModifierList);
                 self.consume_qualified_name();
                 self.expect(
                     JavaSyntaxKind::Semicolon,
@@ -159,10 +181,12 @@ impl Parser<'_> {
                 self.bump();
                 self.consume_qualified_name();
                 self.expect_contextual("with", "expected `with` in provides directive");
+                let implementations = self.start();
                 self.consume_qualified_name();
                 while self.eat(JavaSyntaxKind::Comma) {
                     self.consume_qualified_name();
                 }
+                self.complete(implementations, JavaSyntaxKind::NameList);
                 self.expect(
                     JavaSyntaxKind::Semicolon,
                     "expected `;` after provides directive",
@@ -181,12 +205,16 @@ impl Parser<'_> {
 
     pub(super) fn parse_optional_module_list_after_to(&mut self) {
         if !self.eat_contextual("to") {
+            let modules = self.start();
+            self.complete(modules, JavaSyntaxKind::NameList);
             return;
         }
 
+        let modules = self.start();
         self.consume_qualified_name();
         while self.eat(JavaSyntaxKind::Comma) {
             self.consume_qualified_name();
         }
+        self.complete(modules, JavaSyntaxKind::NameList);
     }
 }

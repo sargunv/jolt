@@ -10,21 +10,26 @@ enum	assertwhile
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    StaticKw "static" @ 0..6 trailing=[Whitespace " "]
-    VoidKw "void" @ 7..11
-  ClassDeclaration
-    ClassKw "class" @ 12..17 leading=[Newline "\n"]
-    ErrorNode
-  InterfaceDeclaration
-    InterfaceKw "interface" @ 18..27 leading=[Newline "\r"]
-    ErrorNode
-  EnumDeclaration
-    EnumKw "enum" @ 29..33 leading=[Newline "\r\n"] trailing=[Whitespace "\t"]
-    ErrorNode
-  ErrorNode
-    AssertKw "assert" @ 34..40 trailing=[Whitespace "\u{c}"]
-    WhileKw "while" @ 41..46
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      StaticKw "static" @ 0..6 trailing=[Whitespace " "]
+      VoidKw "void" @ 7..11
+    ClassDeclaration
+      ClassKw "class" @ 12..17 leading=[Newline "\n"]
+      ClassBody
+        ClassBodyMemberList
+    InterfaceDeclaration
+      InterfaceKw "interface" @ 18..27 leading=[Newline "\r"]
+      InterfaceBody
+        InterfaceBodyMemberList
+    EnumDeclaration
+      EnumKw "enum" @ 29..33 leading=[Newline "\r\n"] trailing=[Whitespace "\t"]
+      EnumBody
+        ClassBodyMemberList
+    BogusTypeDeclaration
+      AssertKw "assert" @ 34..40 trailing=[Whitespace "\u{c}"]
+      WhileKw "while" @ 41..46
   Eof "" @ 46..46
 
 diagnostics:

@@ -25,119 +25,144 @@ class DelimiterTrivia {
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "DelimiterTrivia" @ 6..21 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 22..23
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 26..30 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-          Identifier "emptyBlock" @ 31..41
-          LParen "(" @ 41..42
-          RParen ")" @ 42..43 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 44..45 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:empty-block-open */", Whitespace " "]
-            RBrace "}" @ 155..156 leading=[LineComment "// JOLT-TRIVIA:empty-block-line", Newline "\n", Whitespace "    ", BlockComment "/* JOLT-TRIVIA:empty-block-close */", Newline "\n", Whitespace "  "]
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 160..164 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-          Identifier "emptyArguments" @ 165..179
-          LParen "(" @ 179..180
-          RParen ")" @ 180..181 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 182..183
-            BlockStatement
-              ExpressionStatement
-                MethodInvocationExpression
-                  NameExpression
-                    Identifier "call" @ 188..192 leading=[Newline "\n", Whitespace "    "]
-                  ArgumentList
-                    LParen "(" @ 192..193 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:empty-call-open */"]
-                    RParen ")" @ 273..274 leading=[Newline "\n", Whitespace "      ", BlockComment "/* JOLT-TRIVIA:empty-call-close */", Newline "\n", Whitespace "    "]
-                Semicolon ";" @ 274..275
-            RBrace "}" @ 278..279 leading=[Newline "\n", Whitespace "  "]
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 283..287 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-          Identifier "mixedDelimiters" @ 288..303
-          LParen "(" @ 303..304
-          RParen ")" @ 304..305 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 306..307
-            BlockStatement
-              LocalVariableDeclaration
-                ArrayType
-                  PrimitiveType
-                    IntKw "int" @ 312..315 leading=[Newline "\n", Whitespace "    "]
-                  ArrayDimensions
-                    ArrayDimension
-                      LBracket "[" @ 315..316
-                      RBracket "]" @ 316..317 trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "values" @ 318..324 trailing=[Whitespace " "]
-                    Assign "=" @ 325..326 trailing=[Whitespace " "]
-                    VariableInitializer
-                      ArrayCreationExpression
-                        NewKw "new" @ 327..330 trailing=[Whitespace " "]
-                        ArrayType
-                          PrimitiveType
-                            IntKw "int" @ 331..334
-                          ArrayDimensions
-                            ArrayDimension
-                              LBracket "[" @ 334..335
-                              RBracket "]" @ 335..336 trailing=[Whitespace " "]
-                        ArrayInitializer
-                          LBrace "{" @ 337..338 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:array-open */", Whitespace " "]
-                          LiteralExpression
-                            IntegerLiteral "1" @ 368..369
-                          Comma "," @ 369..370 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:array-middle */", Whitespace " "]
-                          LiteralExpression
-                            IntegerLiteral "2" @ 402..403 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:array-tail */", Whitespace " "]
-                          RBrace "}" @ 433..434
-              Semicolon ";" @ 434..435
-            BlockStatement
-              LocalVariableDeclaration
-                ClassType
-                  Name
-                    Identifier "Object" @ 440..446 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "nested" @ 447..453 trailing=[Whitespace " "]
-                    Assign "=" @ 454..455 trailing=[Whitespace " "]
-                    VariableInitializer
-                      ParenthesizedExpression
-                        LParen "(" @ 456..457
-                        ParenthesizedExpression
-                          LParen "(" @ 457..458 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:paren-open */", Whitespace " "]
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "DelimiterTrivia" @ 6..21 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 22..23
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 26..30 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Identifier "emptyBlock" @ 31..41
+              LParen "(" @ 41..42
+              RParen ")" @ 42..43 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 44..45 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:empty-block-open */", Whitespace " "]
+                BlockStatementList
+                RBrace "}" @ 155..156 leading=[LineComment "// JOLT-TRIVIA:empty-block-line", Newline "\n", Whitespace "    ", BlockComment "/* JOLT-TRIVIA:empty-block-close */", Newline "\n", Whitespace "  "]
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 160..164 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Identifier "emptyArguments" @ 165..179
+              LParen "(" @ 179..180
+              RParen ")" @ 180..181 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 182..183
+                BlockStatementList
+                  BlockStatement
+                    ExpressionStatement
+                      MethodInvocationExpression
+                        UnqualifiedMethodInvocation
                           NameExpression
-                            Identifier "values" @ 488..494 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:paren-close */", Whitespace " "]
-                          RParen ")" @ 525..526
-                        RParen ")" @ 526..527
-              Semicolon ";" @ 527..528
-            RBrace "}" @ 531..532 leading=[Newline "\n", Whitespace "  "]
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 536..540 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-          Identifier "call" @ 541..545
-          LParen "(" @ 545..546
-          FormalParameterList
-            FormalParameter
-              ClassType
-                Name
-                  Identifier "Object" @ 546..552
-              Ellipsis "..." @ 552..555 trailing=[Whitespace " "]
-              Identifier "args" @ 556..560
-          RParen ")" @ 560..561 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 562..563
-            RBrace "}" @ 563..564
-      RBrace "}" @ 565..566 leading=[Newline "\n"]
+                            Identifier "call" @ 188..192 leading=[Newline "\n", Whitespace "    "]
+                          ArgumentList
+                            LParen "(" @ 192..193 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:empty-call-open */"]
+                            ExpressionList
+                            RParen ")" @ 273..274 leading=[Newline "\n", Whitespace "      ", BlockComment "/* JOLT-TRIVIA:empty-call-close */", Newline "\n", Whitespace "    "]
+                      Semicolon ";" @ 274..275
+                RBrace "}" @ 278..279 leading=[Newline "\n", Whitespace "  "]
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 283..287 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Identifier "mixedDelimiters" @ 288..303
+              LParen "(" @ 303..304
+              RParen ")" @ 304..305 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 306..307
+                BlockStatementList
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      ArrayType
+                        PrimitiveType
+                          AnnotationList
+                          IntKw "int" @ 312..315 leading=[Newline "\n", Whitespace "    "]
+                        ArrayDimensions
+                          ArrayDimension
+                            AnnotationList
+                            LBracket "[" @ 315..316
+                            RBracket "]" @ 316..317 trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "values" @ 318..324 trailing=[Whitespace " "]
+                          Assign "=" @ 325..326 trailing=[Whitespace " "]
+                          VariableInitializer
+                            ArrayCreationExpression
+                              NewKw "new" @ 327..330 trailing=[Whitespace " "]
+                              ArrayType
+                                PrimitiveType
+                                  AnnotationList
+                                  IntKw "int" @ 331..334
+                                ArrayDimensions
+                                  ArrayDimension
+                                    AnnotationList
+                                    LBracket "[" @ 334..335
+                                    RBracket "]" @ 335..336 trailing=[Whitespace " "]
+                              DimExpressionList
+                              ArrayInitializer
+                                LBrace "{" @ 337..338 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:array-open */", Whitespace " "]
+                                VariableInitializerList
+                                  LiteralExpression
+                                    IntegerLiteral "1" @ 368..369
+                                  Comma "," @ 369..370 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:array-middle */", Whitespace " "]
+                                  LiteralExpression
+                                    IntegerLiteral "2" @ 402..403 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:array-tail */", Whitespace " "]
+                                RBrace "}" @ 433..434
+                    Semicolon ";" @ 434..435
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
+                            AnnotationList
+                            Name
+                              Identifier "Object" @ 440..446 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "nested" @ 447..453 trailing=[Whitespace " "]
+                          Assign "=" @ 454..455 trailing=[Whitespace " "]
+                          VariableInitializer
+                            ParenthesizedExpression
+                              LParen "(" @ 456..457
+                              ParenthesizedExpression
+                                LParen "(" @ 457..458 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:paren-open */", Whitespace " "]
+                                NameExpression
+                                  Identifier "values" @ 488..494 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:paren-close */", Whitespace " "]
+                                RParen ")" @ 525..526
+                              RParen ")" @ 526..527
+                    Semicolon ";" @ 527..528
+                RBrace "}" @ 531..532 leading=[Newline "\n", Whitespace "  "]
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 536..540 leading=[Newline "\n", Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Identifier "call" @ 541..545
+              LParen "(" @ 545..546
+              FormalParameterList
+                FormalParameter
+                  ParameterModifierList
+                  ClassType
+                    ClassTypeSegmentList
+                      ClassTypeSegmentNode
+                        AnnotationList
+                        Name
+                          Identifier "Object" @ 546..552
+                  AnnotationList
+                  Ellipsis "..." @ 552..555 trailing=[Whitespace " "]
+                  Identifier "args" @ 556..560
+              RParen ")" @ 560..561 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 562..563
+                BlockStatementList
+                RBrace "}" @ 563..564
+        RBrace "}" @ 565..566 leading=[Newline "\n"]
   Eof "" @ 567..567 leading=[Newline "\n"]
 
 diagnostics:

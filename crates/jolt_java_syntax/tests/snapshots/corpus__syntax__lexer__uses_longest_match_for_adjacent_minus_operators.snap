@@ -8,22 +8,27 @@ a--b a- -b a -> b
 syntax:
 syntax:
 CompilationUnit
-  FieldDeclaration
-    ClassType
-      Name
-        Identifier "a" @ 0..1
-    VariableDeclaratorList
-      VariableDeclarator
-  ErrorNode
-    MinusMinus "--" @ 1..3
-    Identifier "b" @ 3..4 trailing=[Whitespace " "]
-    Identifier "a" @ 5..6
-    Minus "-" @ 6..7 trailing=[Whitespace " "]
-    Minus "-" @ 8..9
-    Identifier "b" @ 9..10 trailing=[Whitespace " "]
-    Identifier "a" @ 11..12 trailing=[Whitespace " "]
-    Arrow "->" @ 13..15 trailing=[Whitespace " "]
-    Identifier "b" @ 16..17
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    FieldDeclaration
+      ClassType
+        ClassTypeSegmentList
+          ClassTypeSegmentNode
+            AnnotationList
+            Name
+              Identifier "a" @ 0..1
+      VariableDeclaratorList
+        VariableDeclarator
+    BogusTypeDeclaration
+      MinusMinus "--" @ 1..3
+      Identifier "b" @ 3..4 trailing=[Whitespace " "]
+      Identifier "a" @ 5..6
+      Minus "-" @ 6..7 trailing=[Whitespace " "]
+      Minus "-" @ 8..9
+      Identifier "b" @ 9..10 trailing=[Whitespace " "]
+      Identifier "a" @ 11..12 trailing=[Whitespace " "]
+      Arrow "->" @ 13..15 trailing=[Whitespace " "]
+      Identifier "b" @ 16..17
   Eof "" @ 17..17
 
 diagnostics:

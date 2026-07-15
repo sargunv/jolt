@@ -25,102 +25,129 @@ class Base {}
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ModifierList
-      Annotation
-        At "@" @ 0..1
-        Name
-          Identifier "Deprecated" @ 1..11 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:after-annotation */"]
-      PublicKw "public" @ 47..53 leading=[Newline "\n"] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:after-public */", Whitespace " "]
-      FinalKw "final" @ 85..90 trailing=[Whitespace " "]
-    ClassKw "class" @ 91..96 trailing=[Whitespace " "]
-    Identifier "DeclarationHeaders" @ 97..115
-    TypeParameterList
-      Lt "<" @ 120..121 leading=[Newline "\n", Whitespace "    "]
-      TypeParameter
-        Identifier "T" @ 121..122 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:type-param */", Whitespace " "]
-        TypeBoundList
-          ExtendsKw "extends" @ 152..159 trailing=[Whitespace " "]
-          ClassType
-            Name
-              Identifier "Number" @ 160..166 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:type-bound */"]
-      Gt ">" @ 195..196
-    ExtendsClause
-      ExtendsKw "extends" @ 201..208 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-      ClassType
-        Name
-          Identifier "Base" @ 209..213 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:after-extends */"]
-    ImplementsClause
-      ImplementsKw "implements" @ 250..260 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-      ClassType
-        Name
-          Identifier "Runnable" @ 261..269 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:after-implements */", Whitespace " "]
-    ClassBody
-      LBrace "{" @ 305..306
-      ClassBodyDeclaration
-        FieldDeclaration
-          ModifierList
-            PrivateKw "private" @ 340..347 leading=[Newline "\n", Whitespace "  ", DocComment "/** JOLT-TRIVIA:field-doc */", Newline "\n", Whitespace "  "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:field-modifier */", Whitespace " "]
-          ClassType
-            Name
-              Identifier "String" @ 381..387 trailing=[Whitespace " "]
-          VariableDeclaratorList
-            VariableDeclarator
-              Identifier "name" @ 388..392 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:field-name */", Whitespace " "]
-              Assign "=" @ 422..423 trailing=[Whitespace " "]
-              VariableInitializer
-                LiteralExpression
-                  StringLiteral "\"x\"" @ 424..427
-          Semicolon ";" @ 427..428
-      ClassBodyDeclaration
-        ConstructorDeclaration
-          Identifier "DeclarationHeaders" @ 432..450 leading=[Newline "\n", Newline "\n", Whitespace "  "]
-          LParen "(" @ 450..451
-          FormalParameterList
-            FormalParameter
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ModifierList
+        Annotation
+          At "@" @ 0..1
+          Name
+            Identifier "Deprecated" @ 1..11 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:after-annotation */"]
+        PublicKw "public" @ 47..53 leading=[Newline "\n"] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:after-public */", Whitespace " "]
+        FinalKw "final" @ 85..90 trailing=[Whitespace " "]
+      ClassKw "class" @ 91..96 trailing=[Whitespace " "]
+      Identifier "DeclarationHeaders" @ 97..115
+      TypeParameterList
+        Lt "<" @ 120..121 leading=[Newline "\n", Whitespace "    "]
+        TypeParameterSeparatedList
+          TypeParameter
+            AnnotationList
+            Identifier "T" @ 121..122 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:type-param */", Whitespace " "]
+            TypeBoundList
+              ExtendsKw "extends" @ 152..159 trailing=[Whitespace " "]
               ClassType
+                ClassTypeSegmentList
+                  ClassTypeSegmentNode
+                    AnnotationList
+                    Name
+                      Identifier "Number" @ 160..166 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:type-bound */"]
+        Gt ">" @ 195..196
+      ExtendsClause
+        ExtendsKw "extends" @ 201..208 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        TypeList
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
                 Name
-                  Identifier "String" @ 495..501 leading=[Newline "\n", Whitespace "      ", BlockComment "/* JOLT-TRIVIA:ctor-param-leading */", Whitespace " "] trailing=[Whitespace " "]
-              Identifier "name" @ 502..506 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:ctor-param-trailing */"]
-          RParen ")" @ 544..545 trailing=[Whitespace " "]
-          ConstructorBody
-            LBrace "{" @ 546..547
-            BlockStatement
-              ExpressionStatement
-                AssignmentExpression
-                  FieldAccessExpression
-                    ThisExpression
-                      ThisKw "this" @ 552..556 leading=[Newline "\n", Whitespace "    "]
-                    Dot "." @ 556..557
-                    Identifier "name" @ 557..561 trailing=[Whitespace " "]
-                  Assign "=" @ 562..563 trailing=[Whitespace " "]
-                  NameExpression
-                    Identifier "name" @ 564..568
-                Semicolon ";" @ 568..569
-            RBrace "}" @ 572..573 leading=[Newline "\n", Whitespace "  "]
-      ClassBodyDeclaration
-        MethodDeclaration
-          ModifierList
-            Annotation
-              At "@" @ 577..578 leading=[Newline "\n", Newline "\n", Whitespace "  "]
-              Name
-                Identifier "Override" @ 578..586
-            PublicKw "public" @ 589..595 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-          VoidType
-            VoidKw "void" @ 596..600 trailing=[Whitespace " "]
-          Identifier "run" @ 601..604
-          LParen "(" @ 604..605
-          RParen ")" @ 605..606 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 607..608
-            RBrace "}" @ 608..609
-      RBrace "}" @ 610..611 leading=[Newline "\n"]
-  ClassDeclaration
-    ClassKw "class" @ 613..618 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "Base" @ 619..623 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 624..625
-      RBrace "}" @ 625..626
+                  Identifier "Base" @ 209..213 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:after-extends */"]
+      ImplementsClause
+        ImplementsKw "implements" @ 250..260 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+        TypeList
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "Runnable" @ 261..269 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:after-implements */", Whitespace " "]
+      ClassBody
+        LBrace "{" @ 305..306
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            FieldDeclaration
+              ModifierList
+                PrivateKw "private" @ 340..347 leading=[Newline "\n", Whitespace "  ", DocComment "/** JOLT-TRIVIA:field-doc */", Newline "\n", Whitespace "  "] trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:field-modifier */", Whitespace " "]
+              ClassType
+                ClassTypeSegmentList
+                  ClassTypeSegmentNode
+                    AnnotationList
+                    Name
+                      Identifier "String" @ 381..387 trailing=[Whitespace " "]
+              VariableDeclaratorList
+                VariableDeclarator
+                  Identifier "name" @ 388..392 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:field-name */", Whitespace " "]
+                  Assign "=" @ 422..423 trailing=[Whitespace " "]
+                  VariableInitializer
+                    LiteralExpression
+                      StringLiteral "\"x\"" @ 424..427
+              Semicolon ";" @ 427..428
+          ClassBodyDeclaration
+            ConstructorDeclaration
+              Identifier "DeclarationHeaders" @ 432..450 leading=[Newline "\n", Newline "\n", Whitespace "  "]
+              LParen "(" @ 450..451
+              FormalParameterList
+                FormalParameter
+                  ParameterModifierList
+                  ClassType
+                    ClassTypeSegmentList
+                      ClassTypeSegmentNode
+                        AnnotationList
+                        Name
+                          Identifier "String" @ 495..501 leading=[Newline "\n", Whitespace "      ", BlockComment "/* JOLT-TRIVIA:ctor-param-leading */", Whitespace " "] trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "name" @ 502..506 trailing=[Whitespace " ", BlockComment "/* JOLT-TRIVIA:ctor-param-trailing */"]
+              RParen ")" @ 544..545 trailing=[Whitespace " "]
+              ConstructorBody
+                LBrace "{" @ 546..547
+                ConstructorBodyEntryList
+                  BlockStatement
+                    ExpressionStatement
+                      AssignmentExpression
+                        FieldAccessExpression
+                          ThisExpression
+                            ThisKw "this" @ 552..556 leading=[Newline "\n", Whitespace "    "]
+                          Dot "." @ 556..557
+                          Identifier "name" @ 557..561 trailing=[Whitespace " "]
+                        Assign "=" @ 562..563 trailing=[Whitespace " "]
+                        NameExpression
+                          Identifier "name" @ 564..568
+                      Semicolon ";" @ 568..569
+                RBrace "}" @ 572..573 leading=[Newline "\n", Whitespace "  "]
+          ClassBodyDeclaration
+            MethodDeclaration
+              ModifierList
+                Annotation
+                  At "@" @ 577..578 leading=[Newline "\n", Newline "\n", Whitespace "  "]
+                  Name
+                    Identifier "Override" @ 578..586
+                PublicKw "public" @ 589..595 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              VoidType
+                VoidKw "void" @ 596..600 trailing=[Whitespace " "]
+              Identifier "run" @ 601..604
+              LParen "(" @ 604..605
+              RParen ")" @ 605..606 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 607..608
+                BlockStatementList
+                RBrace "}" @ 608..609
+        RBrace "}" @ 610..611 leading=[Newline "\n"]
+    ClassDeclaration
+      ClassKw "class" @ 613..618 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "Base" @ 619..623 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 624..625
+        ClassBodyMemberList
+        RBrace "}" @ 625..626
   Eof "" @ 627..627 leading=[Newline "\n"]
 
 diagnostics:

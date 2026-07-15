@@ -8,9 +8,11 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    StringLiteral "\"/* not a comment */\"" @ 0..21 trailing=[Whitespace " "]
-    StringLiteral "\"// not a comment\"" @ 22..40
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      StringLiteral "\"/* not a comment */\"" @ 0..21 trailing=[Whitespace " "]
+      StringLiteral "\"// not a comment\"" @ 22..40
   Eof "" @ 40..40
 
 diagnostics:

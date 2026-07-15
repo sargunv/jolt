@@ -47,7 +47,7 @@ fn format_syntax_to_sink<S: RenderSink + ?Sized>(
     options: FormatOptions,
     sink: &mut S,
 ) -> (FormatSinkResult, DocBuilderMetrics) {
-    let mut builder = DocBuilder::new();
+    let mut builder = DocBuilder::with_source_capacity(syntax.source_text().len());
     let doc = format_file(syntax, &mut builder);
     let render_options = render_options(options);
     let arena = builder.into_arena();

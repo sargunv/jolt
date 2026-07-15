@@ -2,13 +2,18 @@ use std::borrow::Cow;
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
 
+#[cfg(debug_assertions)]
+use crate::source_fragment::SourceFragment;
 use crate::width::{TextWidth, display_width, literal_text_metrics};
 use crate::{
     ExceptionalFragment, ExceptionalSeparator, FragmentBoundary, LexicalAtom, LexicalSafety,
-    RemovalClaim, ReplacementClaim, SourceFragmentKind, SynthesisClaim,
-    source_fragment::{SourceFragment, exceptional_separators},
+    SourceFragmentKind,
+    source_fragment::{exceptional_separators, normalized_lexical_kind},
 };
-use jolt_syntax::{Language, SourceIdentity, SourceTriviaPiece, SyntaxToken, SyntaxVerbatimCore};
+use jolt_syntax::{
+    Language, RemovalClaim, ReplacementClaim, SourceIdentity, SourceTriviaPiece, SyntaxToken,
+    SyntaxVerbatimCore, SynthesisClaim,
+};
 
 pub(crate) const INLINE_CONCAT_CAPACITY: usize = 4;
 
@@ -37,8 +42,8 @@ impl Doc<'_> {
         }
     }
 
-    pub(crate) const fn id(self) -> DocId {
-        self.id
+    const fn node_index(self) -> u32 {
+        self.id.0
     }
 
     pub(crate) const fn is_nil(self) -> bool {
@@ -53,6 +58,7 @@ pub struct DocId(u32);
 pub struct DocArena<'source> {
     nodes: Vec<DocNode<'source>>,
     children: Vec<Doc<'source>>,
+    invariant_error: Option<String>,
     #[cfg(debug_assertions)]
     source_claims: Vec<SourceIdentity<'source>>,
 }
@@ -68,6 +74,10 @@ pub struct DocArenaMetrics {
 }
 
 impl<'source> DocArena<'source> {
+    pub(crate) fn invariant_error(&self) -> Option<&str> {
+        self.invariant_error.as_deref()
+    }
+
     /// Returns allocation-independent size and capacity measurements.
     #[cfg(feature = "bench")]
     #[must_use]
@@ -87,29 +97,21 @@ impl<'source> DocArena<'source> {
         if doc.is_nil() {
             return None;
         }
-        self.nodes.get(usize::try_from(doc.id().0).ok()?)
+        self.nodes.get(usize::try_from(doc.node_index()).ok()?)
     }
 
     pub(crate) fn child(&self, index: u32) -> Doc<'source> {
         self.children[usize::try_from(index).expect("doc child index fits usize")]
     }
 
+    #[cfg(debug_assertions)]
     pub(crate) fn source_claims(
         &self,
         fragment: &SourceFragment<'source, 'source>,
     ) -> &[SourceIdentity<'source>] {
-        #[cfg(debug_assertions)]
-        {
-            let start =
-                usize::try_from(fragment.claims_start).expect("source claim index fits usize");
-            let len = usize::try_from(fragment.claims_len).expect("source claim length fits usize");
-            &self.source_claims[start..start + len]
-        }
-        #[cfg(not(debug_assertions))]
-        {
-            let _ = fragment;
-            &[]
-        }
+        let start = usize::try_from(fragment.claims_start).expect("source claim index fits usize");
+        let len = usize::try_from(fragment.claims_len).expect("source claim length fits usize");
+        &self.source_claims[start..start + len]
     }
 
     fn child_count(&self) -> u32 {
@@ -126,6 +128,7 @@ impl<'source> DocArena<'source> {
                 .try_into()
                 .expect("doc arena node count fits u32"),
         );
+        assert_ne!(id, Doc::NIL_ID, "doc arena node count fits u32");
         self.nodes.push(node);
         Doc::new(id)
     }
@@ -149,6 +152,36 @@ impl<'source> DocBuilder<'source> {
     #[must_use]
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Creates one document arena with a linear reservation derived from the
+    /// source it will format.
+    ///
+    /// Realistic Java and Kotlin both produce about two document nodes per
+    /// five source bytes. Child ranges are less dense; one slot per eight
+    /// bytes is a conservative estimate. These fixed ratios avoid geometric
+    /// arena growth without inspecting syntax twice or introducing per-rule
+    /// allocation pools.
+    #[must_use]
+    pub fn with_source_capacity(source_len: usize) -> Self {
+        // Allocator size-class rounding dominates these estimates for small
+        // files. Let the ordinary arena grow inline there; reserve once only
+        // when the source is large enough for the estimate to be meaningful.
+        if source_len < 4 * 1024 {
+            return Self::new();
+        }
+        let node_capacity = source_len.saturating_mul(2).div_ceil(5);
+        let child_capacity = source_len.div_ceil(8);
+        Self {
+            arena: DocArena {
+                nodes: Vec::with_capacity(node_capacity),
+                children: Vec::with_capacity(child_capacity),
+                invariant_error: None,
+                #[cfg(debug_assertions)]
+                source_claims: Vec::new(),
+            },
+            list_scratch: Vec::new(),
+        }
     }
 
     #[must_use]
@@ -205,6 +238,48 @@ impl<'source> DocBuilder<'source> {
         )
     }
 
+    /// Associates represented source identities with an arbitrary structured
+    /// document. Claims are consumed only when this document branch renders.
+    #[must_use]
+    pub fn claimed_source(
+        &mut self,
+        contents: Doc<'source>,
+        claims: impl IntoIterator<Item = SourceIdentity<'source>>,
+    ) -> Doc<'source> {
+        #[cfg(debug_assertions)]
+        {
+            let claim = self.source_fragment(Cow::Borrowed(""), None, claims);
+            self.concat([claim, contents])
+        }
+        #[cfg(not(debug_assertions))]
+        {
+            let _ = claims;
+            contents
+        }
+    }
+
+    /// Associates represented trivia with an arbitrary structured document.
+    #[must_use]
+    pub fn claimed_trivia(
+        &mut self,
+        contents: Doc<'source>,
+        pieces: impl IntoIterator<Item = SourceTriviaPiece<'source>>,
+    ) -> Doc<'source> {
+        self.claimed_source(
+            contents,
+            pieces
+                .into_iter()
+                .map(|piece| SourceIdentity::Trivia(piece.id())),
+        )
+    }
+
+    /// Records a syntax/schema contradiction that must block the entire render.
+    pub fn block_on_invariant(&mut self, error: impl Into<String>) {
+        if self.arena.invariant_error.is_none() {
+            self.arena.invariant_error = Some(error.into());
+        }
+    }
+
     /// Emits one borrowed malformed source core and records every identity it
     /// covers. An empty core and empty claim set still records malformed
     /// dispatch.
@@ -216,10 +291,31 @@ impl<'source> DocBuilder<'source> {
     ) -> ExceptionalFragment<'source> {
         let doc = self.source_fragment(
             Cow::Borrowed(core.text()),
-            Some(SourceFragmentKind::MalformedVerbatim),
+            Some(SourceFragmentKind::MalformedVerbatim {
+                kind: core.raw_kind(),
+                range: core.text_range(),
+            }),
             core.identities(),
         );
         ExceptionalFragment::new(doc, boundary)
+    }
+
+    /// Emits malformed source and derives lexical boundaries from syntax.
+    #[must_use]
+    pub fn malformed_verbatim_with_safety<L: Language>(
+        &mut self,
+        core: &SyntaxVerbatimCore<'source, L>,
+        safety: &mut impl LexicalSafety<L>,
+    ) -> ExceptionalFragment<'source> {
+        let mut tokens = core.tokens().filter(|token| !token.text().is_empty());
+        let first = tokens.next();
+        let last = tokens.last().or(first);
+        let boundary = FragmentBoundary {
+            first: first.map(|token| LexicalAtom::new(safety.classify(&token), token.text())),
+            last: last.map(|token| LexicalAtom::new(safety.classify(&token), token.text())),
+            ends_with_line_comment: core.ends_with_line_comment(),
+        };
+        self.malformed_verbatim(core, boundary)
     }
 
     /// Emits normalized spelling while consuming the replaced source identity.
@@ -235,7 +331,7 @@ impl<'source> DocBuilder<'source> {
             Some(SourceFragmentKind::Replaced { token }),
             [SourceIdentity::Token(source)],
         );
-        let atom = LexicalAtom::new(token.lexical_kind(), text);
+        let atom = LexicalAtom::new(normalized_lexical_kind(token), text);
         ExceptionalFragment::new(
             doc,
             FragmentBoundary {
@@ -270,7 +366,7 @@ impl<'source> DocBuilder<'source> {
             Some(SourceFragmentKind::Synthesized { token, anchor }),
             [],
         );
-        let atom = LexicalAtom::new(token.lexical_kind(), text);
+        let atom = LexicalAtom::new(normalized_lexical_kind(token), text);
         ExceptionalFragment::new(
             doc,
             FragmentBoundary {
@@ -483,16 +579,20 @@ impl<'source> DocBuilder<'source> {
                 - start;
             (start, len)
         };
+        #[cfg(debug_assertions)]
+        {
+            self.push_node(DocNode::SourceFragment(SourceFragment::new(
+                text,
+                provenance,
+                claims_start,
+                claims_len,
+            )))
+        }
         #[cfg(not(debug_assertions))]
-        let _ = claims;
-        self.push_node(DocNode::SourceFragment(SourceFragment::new(
-            text,
-            provenance,
-            #[cfg(debug_assertions)]
-            claims_start,
-            #[cfg(debug_assertions)]
-            claims_len,
-        )))
+        {
+            let _ = (provenance, claims);
+            self.literal_text(text)
+        }
     }
 
     fn exceptional_separator(&mut self, separator: ExceptionalSeparator) -> Doc<'source> {
@@ -671,6 +771,7 @@ impl<'source> ConcatAppender<'source> {
 pub(crate) enum DocNode<'source> {
     Text(Text<'source>),
     LiteralText(LiteralText<'source>),
+    #[cfg(debug_assertions)]
     SourceFragment(SourceFragment<'source, 'source>),
     InlineConcat {
         docs: [Doc<'source>; INLINE_CONCAT_CAPACITY],
@@ -709,10 +810,7 @@ pub(crate) struct LiteralText<'source> {
 }
 
 #[cfg(not(debug_assertions))]
-const _: () = assert!(
-    std::mem::size_of::<SourceFragment<'static, 'static>>()
-        <= std::mem::size_of::<LiteralText<'static>>()
-);
+const _: () = assert!(std::mem::size_of::<DocNode<'static>>() <= 40);
 
 impl LiteralText<'_> {
     pub(crate) const fn final_width(&self) -> TextWidth {

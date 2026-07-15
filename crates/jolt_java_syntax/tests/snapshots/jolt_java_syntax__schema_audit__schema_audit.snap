@@ -4,15 +4,15 @@ expression: audit.render()
 ---
 language = java
 fixture_files = 398
-diagnostic_fixture_files = 147
-audited_nodes = 14728
-exact_valid_shapes = 14246
-malformed_nodes = 226
+diagnostic_fixture_files = 148
+audited_nodes = 24656
+exact_valid_shapes = 24360
+malformed_nodes = 201
 clean_missing_required_shapes = 0
-diagnostic_missing_required_shapes = 58
-clean_unexpected_shapes = 1
-diagnostic_unexpected_shapes = 197
-error_node_owners = 226
+diagnostic_missing_required_shapes = 73
+clean_unexpected_shapes = 0
+diagnostic_unexpected_shapes = 22
+error_node_owners = 95
 
 [clean_missing_required]
 
@@ -22,6 +22,8 @@ syntax__lexer__contextual_keyword_spellings_remain_identifiers_without_parser_co
 syntax__lexer__contextual_keyword_spellings_remain_identifiers_without_parser_context: FieldDeclaration occurrence 3 (ClassType VariableDeclaratorList)
 syntax__lexer__contextual_keyword_spellings_remain_identifiers_without_parser_context: FieldDeclaration occurrence 4 (ClassType VariableDeclaratorList)
 syntax__lexer__contextual_keyword_spellings_remain_identifiers_without_parser_context: FieldDeclaration occurrence 5 (ClassType VariableDeclaratorList)
+syntax__lexer__contextual_keyword_spellings_remain_identifiers_without_parser_context: RecordDeclaration occurrence 1 (Identifier("record") Identifier("transitive") RecordBody)
+syntax__lexer__contextual_keyword_spellings_remain_identifiers_without_parser_context: RecordBody occurrence 1 (RecordBodyMemberList)
 syntax__lexer__contextual_keyword_spellings_remain_identifiers_without_parser_context: FieldDeclaration occurrence 6 (ClassType VariableDeclaratorList)
 syntax__lexer__contextual_keyword_spellings_remain_identifiers_without_parser_context: FieldDeclaration occurrence 7 (ClassType VariableDeclaratorList)
 syntax__lexer__does_not_ignore_non_trailing_sub_character: FieldDeclaration occurrence 1 (ClassType VariableDeclaratorList)
@@ -31,6 +33,12 @@ syntax__lexer__keeps_crlf_as_one_line_terminator_trivia: FieldDeclaration occurr
 syntax__lexer__keeps_unicode_escape_crlf_as_one_line_terminator_trivia: FieldDeclaration occurrence 1 (ClassType VariableDeclaratorList)
 syntax__lexer__raw_backslash_without_lowercase_u_remains_input: FieldDeclaration occurrence 1 (ClassType VariableDeclaratorList)
 syntax__lexer__raw_backslash_without_lowercase_u_remains_input: VariableDeclarator occurrence 1 ()
+syntax__lexer__recognizes_all_reserved_keywords: ClassDeclaration occurrence 1 (ClassKw("class") ClassBody)
+syntax__lexer__recognizes_all_reserved_keywords: ClassBody occurrence 1 (ClassBodyMemberList)
+syntax__lexer__recognizes_all_reserved_keywords: EnumDeclaration occurrence 1 (EnumKw("enum") EnumBody)
+syntax__lexer__recognizes_all_reserved_keywords: EnumBody occurrence 1 (ClassBodyMemberList)
+syntax__lexer__recognizes_all_reserved_keywords: InterfaceDeclaration occurrence 1 (InterfaceKw("interface") InterfaceBody)
+syntax__lexer__recognizes_all_reserved_keywords: InterfaceBody occurrence 1 (InterfaceBodyMemberList)
 syntax__lexer__recognizes_all_reserved_keywords: FieldDeclaration occurrence 1 (PrimitiveType VariableDeclaratorList)
 syntax__lexer__recognizes_all_reserved_keywords: VariableDeclarator occurrence 1 ()
 syntax__lexer__recognizes_dollar_and_digits_in_identifiers: FieldDeclaration occurrence 1 (ClassType VariableDeclaratorList)
@@ -48,6 +56,12 @@ syntax__lexer__recognizes_unicode_escape_surrogate_pair_identifier: FieldDeclara
 syntax__lexer__recognizes_unicode_escape_surrogate_pair_identifier: VariableDeclarator occurrence 1 ()
 syntax__lexer__rejects_non_ascii_separator_and_operator_lookalikes: FieldDeclaration occurrence 1 (ClassType VariableDeclaratorList)
 syntax__lexer__rejects_non_ascii_separator_and_operator_lookalikes: VariableDeclarator occurrence 1 ()
+syntax__lexer__separates_tokens_with_all_jls_whitespace: ClassDeclaration occurrence 1 (ClassKw("class") ClassBody)
+syntax__lexer__separates_tokens_with_all_jls_whitespace: ClassBody occurrence 1 (ClassBodyMemberList)
+syntax__lexer__separates_tokens_with_all_jls_whitespace: InterfaceDeclaration occurrence 1 (InterfaceKw("interface") InterfaceBody)
+syntax__lexer__separates_tokens_with_all_jls_whitespace: InterfaceBody occurrence 1 (InterfaceBodyMemberList)
+syntax__lexer__separates_tokens_with_all_jls_whitespace: EnumDeclaration occurrence 1 (EnumKw("enum") EnumBody)
+syntax__lexer__separates_tokens_with_all_jls_whitespace: EnumBody occurrence 1 (ClassBodyMemberList)
 syntax__lexer__unicode_lookalikes_do_not_match_keywords_or_literals: FieldDeclaration occurrence 1 (ClassType VariableDeclaratorList)
 syntax__lexer__unicode_lookalikes_do_not_match_keywords_or_literals: FieldDeclaration occurrence 2 (ClassType VariableDeclaratorList)
 syntax__lexer__unicode_lookalikes_do_not_match_keywords_or_literals: VariableDeclarator occurrence 2 ()
@@ -56,339 +70,57 @@ syntax__lexer__uses_longest_match_for_adjacent_minus_operators: VariableDeclarat
 syntax__lexer__uses_longest_match_for_keyword_and_literal_prefixes: FieldDeclaration occurrence 1 (ClassType VariableDeclaratorList)
 syntax__lexer__uses_longest_match_for_keyword_and_literal_prefixes: FieldDeclaration occurrence 2 (ClassType VariableDeclaratorList)
 syntax__parser__diagnoses_invalid_expression_forms: ParenthesizedExpression occurrence 1 (LParen("(") RParen(")"))
-syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: PackageDeclaration occurrence 1 (PackageKw("package"))
+syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: PackageDeclaration occurrence 1 (AnnotationList PackageKw("package"))
 syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: FieldDeclaration occurrence 1 (PrimitiveType VariableDeclaratorList)
 syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: VariableDeclarator occurrence 1 ()
 syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: FieldDeclaration occurrence 2 (PrimitiveType VariableDeclaratorList)
 syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: VariableDeclarator occurrence 2 ()
 syntax__parser__recovers_invalid_syntax_with_error_nodes_and_diagnostics: MethodDeclaration occurrence 1 (VoidType Identifier("method") LParen("(") FormalParameterList Block)
+syntax__parser__recovers_invalid_syntax_with_error_nodes_and_diagnostics: FormalParameter occurrence 1 (ParameterModifierList ErrorNode AnnotationList)
 syntax__parser__recovers_malformed_nested_generic_member: VariableDeclarator occurrence 1 ()
 syntax__parser__recovers_missing_declaration_names: ConstructorDeclaration occurrence 1 (TypeParameterList LParen("(") RParen(")") ConstructorBody)
 syntax__parser__recovers_missing_declaration_names: MethodDeclaration occurrence 1 (VoidType LParen("(") RParen(")") Block)
 syntax__parser__recovers_missing_declaration_names: AnnotationElementDeclaration occurrence 1 (PrimitiveType LParen("(") RParen(")") Semicolon(";"))
-syntax__parser__recovers_missing_declaration_names: EnumConstant occurrence 1 ()
-syntax__recovery__binary_expression: ClassBody occurrence 1 (LBrace("{") ClassBodyDeclaration)
-syntax__recovery__binary_expression: Block occurrence 1 (LBrace("{") BlockStatement)
-syntax__recovery__enum_pattern_and_for_lists: EnumConstant occurrence 2 ()
+syntax__parser__recovers_missing_declaration_names: EnumConstant occurrence 1 (AnnotationList)
+syntax__recovery__enum_pattern_and_for_lists: EnumConstant occurrence 2 (AnnotationList)
 syntax__recovery__enum_pattern_and_for_lists: VariableDeclarator occurrence 2 ()
 syntax__recovery__import_and_module_directives: ImportDeclaration occurrence 1 (ImportKw("import") Semicolon(";"))
-syntax__recovery__import_and_module_directives: RequiresDirective occurrence 1 (Identifier("requires") Semicolon(";"))
-syntax__recovery__qualifier_dots_without_qualifiers: ConstructorInvocation occurrence 1 (TypeArgumentList ArgumentList Semicolon(";"))
-syntax__recovery__type_annotation_and_parameter_lists: TypeParameter occurrence 2 ()
+syntax__recovery__import_and_module_directives: RequiresDirective occurrence 1 (Identifier("requires") RequiresModifierList Semicolon(";"))
+syntax__recovery__method_invocation_without_name: QualifiedMethodInvocation occurrence 1 (NameExpression Dot(".") ArgumentList)
+syntax__recovery__qualifier_dots_without_qualifiers: ConstructorInvocation occurrence 1 (TypeArgumentList ErrorNode Semicolon(";"))
+syntax__recovery__type_annotation_and_parameter_lists: TypeParameter occurrence 2 (AnnotationList)
+syntax__recovery__type_annotation_and_parameter_lists: FormalParameter occurrence 2 (ParameterModifierList ErrorNode AnnotationList)
 
 [clean_unexpected]
-syntax__recovery__import_trailing_tokens: ImportDeclaration occurrence 1 (ImportKw("import") QualifiedName Plus("+") Identifier("lost") Semicolon(";"))
 
 [diagnostic_unexpected]
-syntax__lexer__accepts_alternate_hexadecimal_minimum_floating_point_literals: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__accepts_binary_and_octal_integer_literals_without_semantic_width_checks: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__accepts_floating_point_literals_without_semantic_range_checks: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__accepts_hexadecimal_floating_point_literals_without_semantic_range_checks: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__accepts_integer_literals_without_semantic_range_checks: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__accepts_unicode_escapes_with_multiple_u_markers: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__comment_markers_inside_character_literals_are_literal_content: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__comment_markers_inside_string_literals_are_literal_content: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__comment_markers_inside_text_blocks_are_literal_content: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__comments_separate_otherwise_adjacent_tokens: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__contextual_keyword_spellings_remain_identifiers_without_parser_context: CompilationUnit occurrence 1 (FieldDeclaration FieldDeclaration FieldDeclaration FieldDeclaration FieldDeclaration ErrorNode RecordDeclaration FieldDeclaration FieldDeclaration ErrorNode Eof(""))
-syntax__lexer__contextual_keyword_spellings_remain_identifiers_without_parser_context: RecordDeclaration occurrence 1 (Identifier("record") Identifier("transitive") ErrorNode)
-syntax__lexer__diagnoses_hex_floats_without_binary_exponent: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__diagnoses_invalid_binary_digits: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__diagnoses_invalid_hexadecimal_digits: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__diagnoses_invalid_octal_digits: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__diagnoses_malformed_eligible_unicode_escapes: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__diagnoses_malformed_integer_literals: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__diagnoses_underscores_next_to_floating_point_parts: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__does_not_ignore_non_trailing_sub_outside_identifier: CompilationUnit occurrence 1 (FieldDeclaration ErrorNode Eof(""))
-syntax__lexer__escaped_quote_prevents_text_block_closing_delimiter: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__fourth_quote_after_text_block_closing_delimiter_is_outside_token: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__permits_line_continuation_escape_in_text_blocks: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__permits_multiple_underscores_between_floating_point_digits: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__permits_multiple_underscores_between_integer_digits: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__permits_nonzero_floating_point_literals_that_round_to_subnormal: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__permits_text_block_opening_cr_line_terminator: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__permits_text_block_opening_whitespace_before_line_terminator: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__permits_unescaped_double_quotes_inside_text_blocks: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__permits_zero_floating_point_literals_with_extreme_exponents: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__raw_backslash_without_lowercase_u_is_not_a_unicode_escape: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__raw_backslash_without_lowercase_u_remains_input: CompilationUnit occurrence 1 (FieldDeclaration ErrorNode Eof(""))
-syntax__lexer__recognizes_all_operators: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__recognizes_all_reserved_keywords: CompilationUnit occurrence 1 (ErrorNode ClassDeclaration ErrorNode EnumDeclaration ErrorNode ErrorNode InterfaceDeclaration FieldDeclaration ErrorNode Eof(""))
-syntax__lexer__recognizes_all_reserved_keywords: ClassDeclaration occurrence 1 (ClassKw("class") ErrorNode)
-syntax__lexer__recognizes_all_reserved_keywords: EnumDeclaration occurrence 1 (EnumKw("enum") ErrorNode)
-syntax__lexer__recognizes_all_reserved_keywords: InterfaceDeclaration occurrence 1 (InterfaceKw("interface") ErrorNode)
-syntax__lexer__recognizes_all_separators: CompilationUnit occurrence 1 (ErrorNode ErrorNode Eof(""))
-syntax__lexer__recognizes_boolean_literals: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__recognizes_decimal_floating_point_literal_forms: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__recognizes_empty_string_literals: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__recognizes_empty_text_blocks: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__recognizes_escape_sequences_in_character_and_string_literals: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__recognizes_escape_sequences_in_text_blocks: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__recognizes_hexadecimal_floating_point_literal_forms: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__recognizes_integer_literal_radices_and_suffixes: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__recognizes_longest_match_greater_than_operators: CompilationUnit occurrence 1 (FieldDeclaration ErrorNode Eof(""))
-syntax__lexer__recognizes_lowercase_integer_suffix_for_non_decimal_radices: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__recognizes_non_ascii_string_literal_content: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__recognizes_non_ascii_text_block_content: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__recognizes_non_empty_string_literals: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__recognizes_null_literal: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__recognizes_raw_double_quote_character_literal: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__recognizes_raw_single_quote_string_literal_content: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__recognizes_single_character_literals: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__recognizes_single_utf16_code_unit_character_literals: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__recognizes_supplementary_string_literal_content: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__recognizes_template_embedded_expression_escape_01: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__rejects_character_literals_with_multiple_utf16_code_units_01: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__rejects_character_literals_with_multiple_utf16_code_units_02: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__rejects_empty_and_multi_character_literals: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__rejects_identifier_part_as_identifier_start: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__rejects_line_continuation_escape_in_character_literals: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__rejects_line_continuation_escape_in_string_literals: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__rejects_non_ascii_numeric_lookalikes_01: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__rejects_non_ascii_numeric_lookalikes_02: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__rejects_non_ascii_separator_and_operator_lookalikes: CompilationUnit occurrence 1 (FieldDeclaration ErrorNode Eof(""))
-syntax__lexer__rejects_non_jls_whitespace_as_token_separator: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__rejects_raw_cr_and_crlf_in_character_literals: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__rejects_raw_cr_and_crlf_in_string_literals: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__rejects_text_block_opening_non_jls_whitespace: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__rejects_text_block_opening_whitespace_without_line_terminator: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__rejects_text_block_without_opening_line_terminator: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__reports_character_literals_unterminated_at_eof_01: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__reports_character_literals_unterminated_at_eof_02: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__reports_invalid_escape_sequences_in_string_and_character_literals: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__reports_invalid_text_block_escapes: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__reports_string_literals_unterminated_at_eof: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__reports_unterminated_character_literals: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__reports_unterminated_string_literals: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__reports_unterminated_text_blocks: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__respects_unicode_escape_backslash_eligibility: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__separates_tokens_with_all_jls_whitespace: CompilationUnit occurrence 1 (ErrorNode ClassDeclaration InterfaceDeclaration EnumDeclaration ErrorNode Eof(""))
-syntax__lexer__separates_tokens_with_all_jls_whitespace: ClassDeclaration occurrence 1 (ClassKw("class") ErrorNode)
-syntax__lexer__separates_tokens_with_all_jls_whitespace: InterfaceDeclaration occurrence 1 (InterfaceKw("interface") ErrorNode)
-syntax__lexer__separates_tokens_with_all_jls_whitespace: EnumDeclaration occurrence 1 (EnumKw("enum") ErrorNode)
-syntax__lexer__separates_tokens_with_tab_and_form_feed_whitespace: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__two_digit_octal_escape_before_non_octal_digit_falls_back_01: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__two_digit_octal_escape_before_non_octal_digit_falls_back_02: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__two_digit_octal_escape_followed_by_digit_is_extra_character_in_char_literals: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__two_digit_octal_escape_followed_by_digit_is_valid_in_string_literals: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__unescaped_triple_quote_closes_text_blocks: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__unicode_escapes_become_character_literal_delimiters_before_scanning: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__unicode_escapes_become_string_literal_delimiters_before_scanning: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__unicode_line_escape_is_a_newline_before_character_scanning: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__unicode_line_escape_is_a_newline_before_string_scanning: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__unicode_newline_like_characters_are_not_line_terminators_02: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__uses_longest_match_for_adjacent_minus_operators: CompilationUnit occurrence 1 (FieldDeclaration ErrorNode Eof(""))
-syntax__lexer__uses_longest_match_for_adjacent_separators: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__lexer__uses_longest_match_for_decimal_floats_before_dots: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__parser__diagnoses_expression_try_with_resource: Resource occurrence 1 (ErrorNode)
-syntax__parser__diagnoses_invalid_declaration_contexts: TypeBoundList occurrence 1 (ExtendsKw("extends") ErrorNode)
-syntax__parser__diagnoses_invalid_declaration_contexts: ThrowsClause occurrence 1 (ThrowsKw("throws") ErrorNode)
-syntax__parser__diagnoses_invalid_declaration_contexts: VariableDeclarator occurrence 1 (Identifier("value") Assign("=") ErrorNode)
+syntax__parser__diagnoses_invalid_declaration_contexts: VariableDeclarator occurrence 1 has valid kind with direct malformed ownership [bytes=13, tokens=3, children=3] (Identifier("value") Assign("=") ErrorNode)
 syntax__parser__diagnoses_invalid_declaration_contexts: VariableDeclaratorList occurrence 2 (VariableDeclarator ErrorNode)
 syntax__parser__diagnoses_invalid_declaration_contexts: VariableDeclaratorList occurrence 3 (VariableDeclarator ErrorNode)
-syntax__parser__diagnoses_invalid_declaration_contexts: VariableDeclarator occurrence 4 (Identifier("missing") ErrorNode)
+syntax__parser__diagnoses_invalid_declaration_contexts: VariableDeclarator occurrence 4 has valid kind with direct malformed ownership [bytes=7, tokens=1, children=2] (Identifier("missing") ErrorNode)
 syntax__parser__diagnoses_invalid_declaration_contexts: VariableDeclaratorList occurrence 4 (VariableDeclarator ErrorNode)
-syntax__parser__diagnoses_invalid_declaration_contexts: CatchTypeList occurrence 1 (ErrorNode)
-syntax__parser__diagnoses_invalid_declaration_contexts: ModifierList occurrence 1 (ErrorNode)
-syntax__parser__diagnoses_invalid_declaration_contexts: ModifierList occurrence 2 (ErrorNode)
-syntax__parser__diagnoses_invalid_declaration_contexts: ModifierList occurrence 3 (ErrorNode)
-syntax__parser__diagnoses_invalid_expression_forms: ExpressionStatement occurrence 1 (ErrorNode Semicolon(";"))
-syntax__parser__diagnoses_invalid_expression_forms: ExpressionStatement occurrence 2 (ErrorNode ErrorNode ErrorNode Semicolon(";"))
-syntax__parser__diagnoses_invalid_expression_forms: ExpressionStatement occurrence 3 (ObjectCreationExpression ErrorNode ErrorNode Semicolon(";"))
-syntax__parser__diagnoses_invalid_expression_forms: AssignmentExpression occurrence 1 (ErrorNode Assign("=") NameExpression)
-syntax__parser__diagnoses_invalid_expression_forms: AssignmentExpression occurrence 2 (ErrorNode Assign("=") NameExpression)
-syntax__parser__diagnoses_invalid_expression_forms: AssignmentExpression occurrence 3 (ErrorNode Assign("=") NameExpression)
-syntax__parser__diagnoses_invalid_expression_forms: ObjectCreationExpression occurrence 2 (NewKw("new") ClassType ErrorNode)
-syntax__parser__diagnoses_invalid_expression_forms: ObjectCreationExpression occurrence 3 (NewKw("new") ClassType ErrorNode ClassBody)
-syntax__parser__diagnoses_invalid_expression_forms: ObjectCreationExpression occurrence 4 (NewKw("new") ErrorNode ArgumentList)
-syntax__parser__diagnoses_invalid_expression_forms: QualifiedName occurrence 1 (Identifier("Outer") ErrorNode Dot(".") Identifier("Inner"))
-syntax__parser__diagnoses_invalid_expression_forms: ArrayCreationExpression occurrence 1 (NewKw("new") ArrayType ErrorNode)
-syntax__parser__diagnoses_invalid_expression_forms: ArrayCreationExpression occurrence 2 (NewKw("new") PrimitiveType DimExpression ErrorNode)
-syntax__parser__diagnoses_invalid_expression_forms: InstanceofExpression occurrence 1 (NameExpression InstanceofKw("instanceof") ErrorNode)
+syntax__parser__diagnoses_invalid_expression_forms: ExpressionStatement occurrence 2 has valid kind with direct malformed ownership [bytes=16, tokens=4, children=4] (ErrorNode ErrorNode ErrorNode Semicolon(";"))
+syntax__parser__diagnoses_invalid_expression_forms: ExpressionStatement occurrence 3 has valid kind with direct malformed ownership [bytes=19, tokens=7, children=4] (ObjectCreationExpression ErrorNode ErrorNode Semicolon(";"))
+syntax__parser__diagnoses_invalid_expression_forms: ArrayCreationExpression occurrence 2 has valid kind with direct malformed ownership [bytes=17, tokens=10, children=4] (NewKw("new") PrimitiveType DimExpressionList ErrorNode)
 syntax__parser__diagnoses_invalid_lambda_parameters: LambdaParameterList occurrence 1 (LambdaParameter Comma(",") LambdaParameter ErrorNode)
 syntax__parser__diagnoses_invalid_lambda_parameters: LambdaParameterList occurrence 2 (LambdaParameter Comma(",") LambdaParameter ErrorNode)
 syntax__parser__diagnoses_invalid_lambda_parameters: LambdaParameterList occurrence 3 (LambdaParameter ErrorNode LambdaParameter)
-syntax__parser__diagnoses_invalid_lambda_parameters: LambdaParameter occurrence 7 (FinalKw("final") ErrorNode)
-syntax__parser__diagnoses_invalid_lambda_parameters: LambdaParameter occurrence 8 (Annotation ErrorNode)
-syntax__parser__diagnoses_invalid_statement_expressions: ExpressionStatement occurrence 1 (ErrorNode Semicolon(";"))
-syntax__parser__diagnoses_invalid_statement_expressions: ExpressionStatement occurrence 2 (ErrorNode Semicolon(";"))
-syntax__parser__diagnoses_invalid_statement_expressions: StatementExpressionList occurrence 1 (ErrorNode)
-syntax__parser__diagnoses_invalid_statement_expressions: StatementExpressionList occurrence 2 (ErrorNode)
-syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: CompilationUnit occurrence 1 (PackageDeclaration ErrorNode ClassDeclaration Eof(""))
-syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: ClassBodyDeclaration occurrence 2 (ErrorNode)
-syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: ClassBodyDeclaration occurrence 4 (ErrorNode)
-syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: ClassBodyDeclaration occurrence 5 (ErrorNode)
-syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: ClassBodyDeclaration occurrence 6 (ErrorNode)
-syntax__parser__diagnoses_misplaced_explicit_constructor_invocations: ConstructorBody occurrence 1 (LBrace("{") BlockStatement ConstructorInvocation ErrorNode RBrace("}"))
-syntax__parser__diagnoses_misplaced_receiver_parameter: FormalParameterList occurrence 1 (FormalParameter Comma(",") ErrorNode)
-syntax__parser__diagnoses_missing_class_body: ClassDeclaration occurrence 1 (ClassKw("class") Identifier("A") ErrorNode)
-syntax__parser__disambiguates_when_in_switch_labels__invalid_guard: SwitchLabel occurrence 1 (CaseKw("case") CaseConstant ErrorNode)
-syntax__parser__recovers_contextual_keyword_missing_space_before_class: CompilationUnit occurrence 1 (ErrorNode Eof(""))
-syntax__parser__recovers_from_invalid_void_field: ClassBodyDeclaration occurrence 1 (ErrorNode)
-syntax__parser__recovers_invalid_syntax_with_error_nodes_and_diagnostics: FormalParameter occurrence 1 (ErrorNode)
-syntax__parser__recovers_invalid_syntax_with_error_nodes_and_diagnostics: VariableInitializer occurrence 1 (ErrorNode)
-syntax__parser__recovers_restricted_type_identifiers: ClassDeclaration occurrence 1 (ClassKw("class") ErrorNode ClassBody)
-syntax__parser__recovers_restricted_type_identifiers: ClassDeclaration occurrence 2 (ClassKw("class") ErrorNode ClassBody)
-syntax__parser__recovers_restricted_type_identifiers: ClassDeclaration occurrence 3 (ClassKw("class") ErrorNode ClassBody)
-syntax__parser__recovers_restricted_type_identifiers: RecordDeclaration occurrence 1 (Identifier("record") ErrorNode LParen("(") RecordComponentList RParen(")") RecordBody)
-syntax__parser__recovers_restricted_type_identifiers: InterfaceDeclaration occurrence 1 (InterfaceKw("interface") ErrorNode InterfaceBody)
-syntax__parser__recovers_unqualified_yield_method_invocation: ExpressionStatement occurrence 1 (ErrorNode Semicolon(";"))
-syntax__recovery__argument_list: ArgumentList occurrence 1 (LParen("(") NameExpression Comma(",") ErrorNode Comma(",") NameExpression RParen(")"))
-syntax__recovery__binary_expression: ExpressionStatement occurrence 1 (ErrorNode ErrorNode ErrorNode)
-syntax__recovery__binary_expression: BinaryExpression occurrence 1 (NameExpression Plus("+") ErrorNode)
-syntax__recovery__block_statement: VariableInitializer occurrence 1 (ErrorNode)
-syntax__recovery__block_with_formatter_ignore: ExpressionStatement occurrence 1 (ErrorNode ErrorNode ErrorNode Semicolon(";"))
-syntax__recovery__block_with_formatter_ignore: UnaryExpression occurrence 1 (Plus("+") ErrorNode)
-syntax__recovery__compilation_unit_top_level: CompilationUnit occurrence 1 (ErrorNode ClassDeclaration Eof(""))
-syntax__recovery__constructor_body: ExpressionStatement occurrence 1 (ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode Semicolon(";"))
-syntax__recovery__constructor_body: UnaryExpression occurrence 1 (Plus("+") ErrorNode)
-syntax__recovery__empty_clauses: CompilationUnit occurrence 1 (ClassDeclaration ClassDeclaration ClassDeclaration ModuleDeclaration Eof(""))
-syntax__recovery__enum_pattern_and_for_lists: LocalVariableDeclaration occurrence 2 (ErrorNode VariableDeclaratorList)
-syntax__recovery__enum_pattern_and_for_lists: StatementExpressionList occurrence 1 (AssignmentExpression Comma(",") ErrorNode Comma(",") AssignmentExpression)
-syntax__recovery__enum_pattern_and_for_lists: StatementExpressionList occurrence 2 (PostfixExpression Comma(",") ErrorNode Comma(",") PostfixExpression)
-syntax__recovery__header_clauses: ExtendsClause occurrence 1 (ExtendsKw("extends") ClassType Comma(",") ErrorNode Comma(",") ClassType)
-syntax__recovery__header_clauses: ImplementsClause occurrence 1 (ImplementsKw("implements") ClassType Comma(",") ErrorNode Comma(",") ClassType)
-syntax__recovery__header_clauses: PermitsClause occurrence 1 (Identifier("permits") Name Comma(",") Comma(",") Name)
-syntax__recovery__header_clauses: ThrowsClause occurrence 1 (ThrowsKw("throws") ClassType Comma(",") ErrorNode Comma(",") ClassType)
-syntax__recovery__member_body_unowned_tokens: ClassBodyDeclaration occurrence 2 (ErrorNode)
-syntax__recovery__member_body_with_formatter_ignore: ClassBodyDeclaration occurrence 2 (ErrorNode)
-syntax__recovery__method_invocation_without_name: MethodInvocationExpression occurrence 1 (NameExpression Dot(".") ArgumentList)
-syntax__recovery__missing_type_body_token: ClassDeclaration occurrence 1 (ClassKw("class") Identifier("MissingTypeBody") ErrorNode)
-syntax__recovery__module_body: ModuleDeclaration occurrence 1 (Identifier("module") Name LBrace("{") ModuleDirective ErrorNode ModuleDirective RBrace("}"))
-syntax__recovery__qualifier_dots_without_qualifiers: ArgumentList occurrence 1 (ErrorNode ErrorNode ErrorNode RParen(")"))
-syntax__recovery__qualifier_dots_without_qualifiers: ExpressionStatement occurrence 1 (ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode Semicolon(";"))
-syntax__recovery__qualifier_dots_without_qualifiers: ExpressionStatement occurrence 2 (ErrorNode ErrorNode Semicolon(";"))
-syntax__recovery__qualifier_dots_without_qualifiers: ExpressionStatement occurrence 3 (ErrorNode ErrorNode Semicolon(";"))
-syntax__recovery__recovered_declaration_names_and_modifiers: RecordDeclaration occurrence 1 (Identifier("record") ErrorNode LParen("(") RecordComponentList RParen(")") RecordBody)
-syntax__recovery__recovered_declaration_names_and_modifiers: ModifierList occurrence 1 (ErrorNode)
-syntax__recovery__resource_and_catch_lists: Resource occurrence 1 (ErrorNode)
-syntax__recovery__resource_and_catch_lists: BinaryExpression occurrence 1 (NameExpression Plus("+") ErrorNode)
-syntax__recovery__resource_and_catch_lists: UnionType occurrence 1 (ClassType Bar("|") ErrorNode Bar("|") ClassType)
-syntax__recovery__switch_and_module_lists: CompilationUnit occurrence 1 (ClassDeclaration ModuleDeclaration Eof(""))
-syntax__recovery__switch_and_module_lists: SwitchLabel occurrence 1 (CaseKw("case") CaseConstant Comma(",") Comma(",") CaseConstant)
-syntax__recovery__switch_and_module_lists: ExportsDirective occurrence 1 (Identifier("exports") Name Identifier("to") Name Comma(",") Comma(",") Name Semicolon(";"))
-syntax__recovery__switch_block_unowned_tokens: SwitchBlock occurrence 1 (LBrace("{") BlockStatement RBrace("}"))
-syntax__recovery__switch_block_unowned_tokens: ExpressionStatement occurrence 1 (ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode Semicolon(";"))
-syntax__recovery__switch_block_unowned_tokens: UnaryExpression occurrence 1 (Plus("+") ErrorNode)
-syntax__recovery__switch_rule_empty_body: SwitchRule occurrence 1 (SwitchLabel Arrow("->") ErrorNode Semicolon(";"))
-syntax__recovery__switch_statement_group: ExpressionStatement occurrence 1 (ErrorNode ErrorNode ErrorNode ErrorNode Semicolon(";"))
-syntax__recovery__switch_statement_group: UnaryExpression occurrence 1 (Plus("+") ErrorNode)
-syntax__recovery__type_annotation_and_parameter_lists: AnnotationElementValue occurrence 2 (ErrorNode)
-syntax__recovery__type_annotation_and_parameter_lists: FormalParameter occurrence 2 (ErrorNode)
-syntax__recovery__wildcard_bounds_and_type_argument_annotations: WildcardType occurrence 1 (Question("?") ExtendsKw("extends") ErrorNode)
-syntax__recovery__wildcard_bounds_and_type_argument_annotations: TypeArgument occurrence 2 (Annotation ErrorNode)
+syntax__parser__diagnoses_missing_class_body: ClassBody occurrence 1 has valid kind with direct malformed ownership [bytes=1, tokens=1, children=2] (Semicolon(";") ClassBodyMemberList)
+syntax__parser__disambiguates_when_in_switch_labels__invalid_guard: SwitchLabelItemList occurrence 1 (CaseConstant ErrorNode)
+syntax__recovery__header_clauses: NameList occurrence 1 (Name Comma(",") Comma(",") Name)
+syntax__recovery__import_trailing_tokens: ImportDeclaration occurrence 1 has valid kind with direct malformed ownership [bytes=26, tokens=7, children=4] (ImportKw("import") QualifiedName ErrorNode Semicolon(";"))
+syntax__recovery__missing_type_body_token: ClassBody occurrence 1 has valid kind with direct malformed ownership [bytes=1, tokens=1, children=2] (Semicolon(";") ClassBodyMemberList)
+syntax__recovery__qualifier_dots_without_qualifiers: ExpressionStatement occurrence 1 has valid kind with direct malformed ownership [bytes=15, tokens=6, children=6] (ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode Semicolon(";"))
+syntax__recovery__qualifier_dots_without_qualifiers: ExpressionStatement occurrence 2 has valid kind with direct malformed ownership [bytes=7, tokens=3, children=3] (ErrorNode ErrorNode Semicolon(";"))
+syntax__recovery__qualifier_dots_without_qualifiers: ExpressionStatement occurrence 3 has valid kind with direct malformed ownership [bytes=8, tokens=3, children=3] (ErrorNode ErrorNode Semicolon(";"))
+syntax__recovery__switch_and_module_lists: SwitchLabelItemList occurrence 1 (CaseConstant Comma(",") Comma(",") CaseConstant)
+syntax__recovery__switch_and_module_lists: NameList occurrence 1 (Name Comma(",") Comma(",") Name)
+syntax__recovery__wildcard_bounds_and_type_argument_annotations: WildcardType occurrence 1 has valid kind with direct malformed ownership [bytes=21, tokens=2, children=3] (Question("?") ExtendsKw("extends") ErrorNode)
 
 [error_node_ownership]
-syntax__lexer__accepts_alternate_hexadecimal_minimum_floating_point_literals: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__accepts_binary_and_octal_integer_literals_without_semantic_width_checks: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__accepts_floating_point_literals_without_semantic_range_checks: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__accepts_hexadecimal_floating_point_literals_without_semantic_range_checks: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__accepts_integer_literals_without_semantic_range_checks: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__accepts_unicode_escapes_with_multiple_u_markers: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__comment_markers_inside_character_literals_are_literal_content: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__comment_markers_inside_string_literals_are_literal_content: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__comment_markers_inside_text_blocks_are_literal_content: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__comments_separate_otherwise_adjacent_tokens: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__contextual_keyword_spellings_remain_identifiers_without_parser_context: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__contextual_keyword_spellings_remain_identifiers_without_parser_context: ErrorNode occurrence 2 owned by RecordDeclaration
-syntax__lexer__contextual_keyword_spellings_remain_identifiers_without_parser_context: ErrorNode occurrence 3 owned by CompilationUnit
-syntax__lexer__diagnoses_hex_floats_without_binary_exponent: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__diagnoses_invalid_binary_digits: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__diagnoses_invalid_hexadecimal_digits: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__diagnoses_invalid_octal_digits: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__diagnoses_malformed_eligible_unicode_escapes: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__diagnoses_malformed_integer_literals: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__diagnoses_underscores_next_to_floating_point_parts: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__does_not_ignore_non_trailing_sub_outside_identifier: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__escaped_quote_prevents_text_block_closing_delimiter: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__fourth_quote_after_text_block_closing_delimiter_is_outside_token: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__permits_line_continuation_escape_in_text_blocks: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__permits_multiple_underscores_between_floating_point_digits: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__permits_multiple_underscores_between_integer_digits: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__permits_nonzero_floating_point_literals_that_round_to_subnormal: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__permits_text_block_opening_cr_line_terminator: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__permits_text_block_opening_whitespace_before_line_terminator: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__permits_unescaped_double_quotes_inside_text_blocks: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__permits_zero_floating_point_literals_with_extreme_exponents: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__raw_backslash_without_lowercase_u_is_not_a_unicode_escape: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__raw_backslash_without_lowercase_u_remains_input: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__recognizes_all_operators: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__recognizes_all_reserved_keywords: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__recognizes_all_reserved_keywords: ErrorNode occurrence 2 owned by ClassDeclaration
-syntax__lexer__recognizes_all_reserved_keywords: ErrorNode occurrence 3 owned by CompilationUnit
-syntax__lexer__recognizes_all_reserved_keywords: ErrorNode occurrence 4 owned by EnumDeclaration
-syntax__lexer__recognizes_all_reserved_keywords: ErrorNode occurrence 5 owned by CompilationUnit
-syntax__lexer__recognizes_all_reserved_keywords: ErrorNode occurrence 6 owned by CompilationUnit
-syntax__lexer__recognizes_all_reserved_keywords: ErrorNode occurrence 7 owned by InterfaceDeclaration
-syntax__lexer__recognizes_all_reserved_keywords: ErrorNode occurrence 8 owned by CompilationUnit
-syntax__lexer__recognizes_all_separators: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__recognizes_all_separators: ErrorNode occurrence 2 owned by CompilationUnit
-syntax__lexer__recognizes_boolean_literals: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__recognizes_decimal_floating_point_literal_forms: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__recognizes_empty_string_literals: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__recognizes_empty_text_blocks: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__recognizes_escape_sequences_in_character_and_string_literals: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__recognizes_escape_sequences_in_text_blocks: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__recognizes_hexadecimal_floating_point_literal_forms: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__recognizes_integer_literal_radices_and_suffixes: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__recognizes_longest_match_greater_than_operators: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__recognizes_lowercase_integer_suffix_for_non_decimal_radices: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__recognizes_non_ascii_string_literal_content: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__recognizes_non_ascii_text_block_content: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__recognizes_non_empty_string_literals: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__recognizes_null_literal: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__recognizes_raw_double_quote_character_literal: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__recognizes_raw_single_quote_string_literal_content: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__recognizes_single_character_literals: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__recognizes_single_utf16_code_unit_character_literals: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__recognizes_supplementary_string_literal_content: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__recognizes_template_embedded_expression_escape_01: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__rejects_character_literals_with_multiple_utf16_code_units_01: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__rejects_character_literals_with_multiple_utf16_code_units_02: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__rejects_empty_and_multi_character_literals: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__rejects_identifier_part_as_identifier_start: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__rejects_line_continuation_escape_in_character_literals: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__rejects_line_continuation_escape_in_string_literals: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__rejects_non_ascii_numeric_lookalikes_01: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__rejects_non_ascii_numeric_lookalikes_02: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__rejects_non_ascii_separator_and_operator_lookalikes: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__rejects_non_jls_whitespace_as_token_separator: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__rejects_raw_cr_and_crlf_in_character_literals: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__rejects_raw_cr_and_crlf_in_string_literals: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__rejects_text_block_opening_non_jls_whitespace: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__rejects_text_block_opening_whitespace_without_line_terminator: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__rejects_text_block_without_opening_line_terminator: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__reports_character_literals_unterminated_at_eof_01: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__reports_character_literals_unterminated_at_eof_02: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__reports_invalid_escape_sequences_in_string_and_character_literals: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__reports_invalid_text_block_escapes: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__reports_string_literals_unterminated_at_eof: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__reports_unterminated_character_literals: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__reports_unterminated_string_literals: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__reports_unterminated_text_blocks: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__respects_unicode_escape_backslash_eligibility: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__separates_tokens_with_all_jls_whitespace: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__separates_tokens_with_all_jls_whitespace: ErrorNode occurrence 2 owned by ClassDeclaration
-syntax__lexer__separates_tokens_with_all_jls_whitespace: ErrorNode occurrence 3 owned by InterfaceDeclaration
-syntax__lexer__separates_tokens_with_all_jls_whitespace: ErrorNode occurrence 4 owned by EnumDeclaration
-syntax__lexer__separates_tokens_with_all_jls_whitespace: ErrorNode occurrence 5 owned by CompilationUnit
-syntax__lexer__separates_tokens_with_tab_and_form_feed_whitespace: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__two_digit_octal_escape_before_non_octal_digit_falls_back_01: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__two_digit_octal_escape_before_non_octal_digit_falls_back_02: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__two_digit_octal_escape_followed_by_digit_is_extra_character_in_char_literals: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__two_digit_octal_escape_followed_by_digit_is_valid_in_string_literals: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__unescaped_triple_quote_closes_text_blocks: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__unicode_escapes_become_character_literal_delimiters_before_scanning: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__unicode_escapes_become_string_literal_delimiters_before_scanning: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__unicode_line_escape_is_a_newline_before_character_scanning: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__unicode_line_escape_is_a_newline_before_string_scanning: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__unicode_newline_like_characters_are_not_line_terminators_02: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__uses_longest_match_for_adjacent_minus_operators: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__uses_longest_match_for_adjacent_separators: ErrorNode occurrence 1 owned by CompilationUnit
-syntax__lexer__uses_longest_match_for_decimal_floats_before_dots: ErrorNode occurrence 1 owned by CompilationUnit
 syntax__parser__diagnoses_expression_try_with_resource: ErrorNode occurrence 1 owned by Resource
 syntax__parser__diagnoses_invalid_declaration_contexts: ErrorNode occurrence 1 owned by TypeBoundList
-syntax__parser__diagnoses_invalid_declaration_contexts: ErrorNode occurrence 2 owned by ThrowsClause
+syntax__parser__diagnoses_invalid_declaration_contexts: ErrorNode occurrence 2 owned by TypeList
 syntax__parser__diagnoses_invalid_declaration_contexts: ErrorNode occurrence 3 owned by VariableDeclarator
 syntax__parser__diagnoses_invalid_declaration_contexts: ErrorNode occurrence 4 owned by VariableDeclaratorList
 syntax__parser__diagnoses_invalid_declaration_contexts: ErrorNode occurrence 5 owned by VariableDeclarator
@@ -410,8 +142,8 @@ syntax__parser__diagnoses_invalid_expression_forms: ErrorNode occurrence 9 owned
 syntax__parser__diagnoses_invalid_expression_forms: ErrorNode occurrence 10 owned by ObjectCreationExpression
 syntax__parser__diagnoses_invalid_expression_forms: ErrorNode occurrence 11 owned by ObjectCreationExpression
 syntax__parser__diagnoses_invalid_expression_forms: ErrorNode occurrence 12 owned by ObjectCreationExpression
-syntax__parser__diagnoses_invalid_expression_forms: ErrorNode occurrence 13 owned by QualifiedName
-syntax__parser__diagnoses_invalid_expression_forms: ErrorNode occurrence 14 owned by ArrayCreationExpression
+syntax__parser__diagnoses_invalid_expression_forms: ErrorNode occurrence 13 owned by ObjectCreationExpression
+syntax__parser__diagnoses_invalid_expression_forms: ErrorNode occurrence 14 owned by DimExpressionList
 syntax__parser__diagnoses_invalid_expression_forms: ErrorNode occurrence 15 owned by ArrayCreationExpression
 syntax__parser__diagnoses_invalid_expression_forms: ErrorNode occurrence 16 owned by InstanceofExpression
 syntax__parser__diagnoses_invalid_lambda_parameters: ErrorNode occurrence 1 owned by LambdaParameterList
@@ -423,16 +155,13 @@ syntax__parser__diagnoses_invalid_statement_expressions: ErrorNode occurrence 1 
 syntax__parser__diagnoses_invalid_statement_expressions: ErrorNode occurrence 2 owned by ExpressionStatement
 syntax__parser__diagnoses_invalid_statement_expressions: ErrorNode occurrence 3 owned by StatementExpressionList
 syntax__parser__diagnoses_invalid_statement_expressions: ErrorNode occurrence 4 owned by StatementExpressionList
-syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: ErrorNode occurrence 1 owned by CompilationUnit
+syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: ErrorNode occurrence 1 owned by ClassBodyDeclaration
 syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: ErrorNode occurrence 2 owned by ClassBodyDeclaration
 syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: ErrorNode occurrence 3 owned by ClassBodyDeclaration
 syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: ErrorNode occurrence 4 owned by ClassBodyDeclaration
-syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: ErrorNode occurrence 5 owned by ClassBodyDeclaration
-syntax__parser__diagnoses_misplaced_explicit_constructor_invocations: ErrorNode occurrence 1 owned by ConstructorBody
+syntax__parser__diagnoses_misplaced_explicit_constructor_invocations: ErrorNode occurrence 1 owned by ConstructorBodyEntryList
 syntax__parser__diagnoses_misplaced_receiver_parameter: ErrorNode occurrence 1 owned by FormalParameterList
-syntax__parser__diagnoses_missing_class_body: ErrorNode occurrence 1 owned by ClassDeclaration
-syntax__parser__disambiguates_when_in_switch_labels__invalid_guard: ErrorNode occurrence 1 owned by SwitchLabel
-syntax__parser__recovers_contextual_keyword_missing_space_before_class: ErrorNode occurrence 1 owned by CompilationUnit
+syntax__parser__disambiguates_when_in_switch_labels__invalid_guard: ErrorNode occurrence 1 owned by SwitchLabelItemList
 syntax__parser__recovers_from_invalid_void_field: ErrorNode occurrence 1 owned by ClassBodyDeclaration
 syntax__parser__recovers_invalid_syntax_with_error_nodes_and_diagnostics: ErrorNode occurrence 1 owned by FormalParameter
 syntax__parser__recovers_invalid_syntax_with_error_nodes_and_diagnostics: ErrorNode occurrence 2 owned by VariableInitializer
@@ -442,36 +171,26 @@ syntax__parser__recovers_restricted_type_identifiers: ErrorNode occurrence 3 own
 syntax__parser__recovers_restricted_type_identifiers: ErrorNode occurrence 4 owned by RecordDeclaration
 syntax__parser__recovers_restricted_type_identifiers: ErrorNode occurrence 5 owned by InterfaceDeclaration
 syntax__parser__recovers_unqualified_yield_method_invocation: ErrorNode occurrence 1 owned by ExpressionStatement
-syntax__recovery__argument_list: ErrorNode occurrence 1 owned by ArgumentList
+syntax__recovery__argument_list: ErrorNode occurrence 1 owned by ExpressionList
 syntax__recovery__binary_expression: ErrorNode occurrence 1 owned by ExpressionStatement
 syntax__recovery__binary_expression: ErrorNode occurrence 2 owned by BinaryExpression
-syntax__recovery__binary_expression: ErrorNode occurrence 3 owned by ExpressionStatement
-syntax__recovery__binary_expression: ErrorNode occurrence 4 owned by ExpressionStatement
 syntax__recovery__block_statement: ErrorNode occurrence 1 owned by VariableInitializer
 syntax__recovery__block_with_formatter_ignore: ErrorNode occurrence 1 owned by ExpressionStatement
 syntax__recovery__block_with_formatter_ignore: ErrorNode occurrence 2 owned by UnaryExpression
-syntax__recovery__block_with_formatter_ignore: ErrorNode occurrence 3 owned by ExpressionStatement
-syntax__recovery__block_with_formatter_ignore: ErrorNode occurrence 4 owned by ExpressionStatement
-syntax__recovery__compilation_unit_top_level: ErrorNode occurrence 1 owned by CompilationUnit
 syntax__recovery__constructor_body: ErrorNode occurrence 1 owned by ExpressionStatement
 syntax__recovery__constructor_body: ErrorNode occurrence 2 owned by UnaryExpression
-syntax__recovery__constructor_body: ErrorNode occurrence 3 owned by ExpressionStatement
-syntax__recovery__constructor_body: ErrorNode occurrence 4 owned by ExpressionStatement
-syntax__recovery__constructor_body: ErrorNode occurrence 5 owned by ExpressionStatement
-syntax__recovery__constructor_body: ErrorNode occurrence 6 owned by ExpressionStatement
 syntax__recovery__enum_pattern_and_for_lists: ErrorNode occurrence 1 owned by LocalVariableDeclaration
 syntax__recovery__enum_pattern_and_for_lists: ErrorNode occurrence 2 owned by StatementExpressionList
 syntax__recovery__enum_pattern_and_for_lists: ErrorNode occurrence 3 owned by StatementExpressionList
-syntax__recovery__header_clauses: ErrorNode occurrence 1 owned by ExtendsClause
-syntax__recovery__header_clauses: ErrorNode occurrence 2 owned by ImplementsClause
-syntax__recovery__header_clauses: ErrorNode occurrence 3 owned by ThrowsClause
+syntax__recovery__header_clauses: ErrorNode occurrence 1 owned by TypeList
+syntax__recovery__header_clauses: ErrorNode occurrence 2 owned by TypeList
+syntax__recovery__header_clauses: ErrorNode occurrence 3 owned by TypeList
+syntax__recovery__import_trailing_tokens: ErrorNode occurrence 1 owned by ImportDeclaration
 syntax__recovery__member_body_unowned_tokens: ErrorNode occurrence 1 owned by ClassBodyDeclaration
 syntax__recovery__member_body_with_formatter_ignore: ErrorNode occurrence 1 owned by ClassBodyDeclaration
-syntax__recovery__missing_type_body_token: ErrorNode occurrence 1 owned by ClassDeclaration
-syntax__recovery__module_body: ErrorNode occurrence 1 owned by ModuleDeclaration
-syntax__recovery__qualifier_dots_without_qualifiers: ErrorNode occurrence 1 owned by ArgumentList
-syntax__recovery__qualifier_dots_without_qualifiers: ErrorNode occurrence 2 owned by ArgumentList
-syntax__recovery__qualifier_dots_without_qualifiers: ErrorNode occurrence 3 owned by ArgumentList
+syntax__recovery__qualifier_dots_without_qualifiers: ErrorNode occurrence 1 owned by ConstructorInvocation
+syntax__recovery__qualifier_dots_without_qualifiers: ErrorNode occurrence 2 owned by ExpressionStatement
+syntax__recovery__qualifier_dots_without_qualifiers: ErrorNode occurrence 3 owned by ExpressionStatement
 syntax__recovery__qualifier_dots_without_qualifiers: ErrorNode occurrence 4 owned by ExpressionStatement
 syntax__recovery__qualifier_dots_without_qualifiers: ErrorNode occurrence 5 owned by ExpressionStatement
 syntax__recovery__qualifier_dots_without_qualifiers: ErrorNode occurrence 6 owned by ExpressionStatement
@@ -479,28 +198,17 @@ syntax__recovery__qualifier_dots_without_qualifiers: ErrorNode occurrence 7 owne
 syntax__recovery__qualifier_dots_without_qualifiers: ErrorNode occurrence 8 owned by ExpressionStatement
 syntax__recovery__qualifier_dots_without_qualifiers: ErrorNode occurrence 9 owned by ExpressionStatement
 syntax__recovery__qualifier_dots_without_qualifiers: ErrorNode occurrence 10 owned by ExpressionStatement
-syntax__recovery__qualifier_dots_without_qualifiers: ErrorNode occurrence 11 owned by ExpressionStatement
-syntax__recovery__qualifier_dots_without_qualifiers: ErrorNode occurrence 12 owned by ExpressionStatement
 syntax__recovery__recovered_declaration_names_and_modifiers: ErrorNode occurrence 1 owned by RecordDeclaration
 syntax__recovery__recovered_declaration_names_and_modifiers: ErrorNode occurrence 2 owned by ModifierList
 syntax__recovery__resource_and_catch_lists: ErrorNode occurrence 1 owned by Resource
 syntax__recovery__resource_and_catch_lists: ErrorNode occurrence 2 owned by BinaryExpression
-syntax__recovery__resource_and_catch_lists: ErrorNode occurrence 3 owned by ErrorNode
-syntax__recovery__resource_and_catch_lists: ErrorNode occurrence 4 owned by UnionType
-syntax__recovery__switch_block_unowned_tokens: ErrorNode occurrence 1 owned by ExpressionStatement
-syntax__recovery__switch_block_unowned_tokens: ErrorNode occurrence 2 owned by UnaryExpression
-syntax__recovery__switch_block_unowned_tokens: ErrorNode occurrence 3 owned by ExpressionStatement
-syntax__recovery__switch_block_unowned_tokens: ErrorNode occurrence 4 owned by ExpressionStatement
-syntax__recovery__switch_block_unowned_tokens: ErrorNode occurrence 5 owned by ExpressionStatement
-syntax__recovery__switch_block_unowned_tokens: ErrorNode occurrence 6 owned by ExpressionStatement
-syntax__recovery__switch_block_unowned_tokens: ErrorNode occurrence 7 owned by ExpressionStatement
-syntax__recovery__switch_block_unowned_tokens: ErrorNode occurrence 8 owned by ExpressionStatement
+syntax__recovery__resource_and_catch_lists: ErrorNode occurrence 3 owned by TypeBarList
+syntax__recovery__switch_block_unowned_tokens: ErrorNode occurrence 1 owned by SwitchEntryList
+syntax__recovery__switch_block_unowned_tokens: ErrorNode occurrence 2 owned by ExpressionStatement
+syntax__recovery__switch_block_unowned_tokens: ErrorNode occurrence 3 owned by UnaryExpression
 syntax__recovery__switch_rule_empty_body: ErrorNode occurrence 1 owned by SwitchRule
 syntax__recovery__switch_statement_group: ErrorNode occurrence 1 owned by ExpressionStatement
 syntax__recovery__switch_statement_group: ErrorNode occurrence 2 owned by UnaryExpression
-syntax__recovery__switch_statement_group: ErrorNode occurrence 3 owned by ExpressionStatement
-syntax__recovery__switch_statement_group: ErrorNode occurrence 4 owned by ExpressionStatement
-syntax__recovery__switch_statement_group: ErrorNode occurrence 5 owned by ExpressionStatement
 syntax__recovery__type_annotation_and_parameter_lists: ErrorNode occurrence 1 owned by AnnotationElementValue
 syntax__recovery__type_annotation_and_parameter_lists: ErrorNode occurrence 2 owned by FormalParameter
 syntax__recovery__wildcard_bounds_and_type_argument_annotations: ErrorNode occurrence 1 owned by WildcardType

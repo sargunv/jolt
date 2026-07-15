@@ -8,21 +8,27 @@ enum Color { RED, GREEN, BLUE }
 syntax:
 syntax:
 CompilationUnit
-  EnumDeclaration
-    EnumKw "enum" @ 0..4 trailing=[Whitespace " "]
-    Identifier "Color" @ 5..10 trailing=[Whitespace " "]
-    EnumBody
-      LBrace "{" @ 11..12 trailing=[Whitespace " "]
-      EnumConstantList
-        EnumConstant
-          Identifier "RED" @ 13..16
-        Comma "," @ 16..17 trailing=[Whitespace " "]
-        EnumConstant
-          Identifier "GREEN" @ 18..23
-        Comma "," @ 23..24 trailing=[Whitespace " "]
-        EnumConstant
-          Identifier "BLUE" @ 25..29 trailing=[Whitespace " "]
-      RBrace "}" @ 30..31
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    EnumDeclaration
+      EnumKw "enum" @ 0..4 trailing=[Whitespace " "]
+      Identifier "Color" @ 5..10 trailing=[Whitespace " "]
+      EnumBody
+        LBrace "{" @ 11..12 trailing=[Whitespace " "]
+        EnumConstantList
+          EnumConstant
+            AnnotationList
+            Identifier "RED" @ 13..16
+          Comma "," @ 16..17 trailing=[Whitespace " "]
+          EnumConstant
+            AnnotationList
+            Identifier "GREEN" @ 18..23
+          Comma "," @ 23..24 trailing=[Whitespace " "]
+          EnumConstant
+            AnnotationList
+            Identifier "BLUE" @ 25..29 trailing=[Whitespace " "]
+        ClassBodyMemberList
+        RBrace "}" @ 30..31
   Eof "" @ 32..32 leading=[Newline "\n"]
 
 diagnostics:

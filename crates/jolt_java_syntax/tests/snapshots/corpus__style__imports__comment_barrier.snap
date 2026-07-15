@@ -12,33 +12,51 @@ class A {}
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclaration
-    ImportKw "import" @ 0..6 trailing=[Whitespace " "]
-    QualifiedName
-      Identifier "z" @ 7..8
-      Dot "." @ 8..9
-      Identifier "Zed" @ 9..12
-    Semicolon ";" @ 12..13
-  ImportDeclaration
-    ImportKw "import" @ 45..51 leading=[Newline "\n", LineComment "// Used by generated adapters.", Newline "\n"] trailing=[Whitespace " "]
-    QualifiedName
-      Identifier "a" @ 52..53
-      Dot "." @ 53..54
-      Identifier "Adapter" @ 54..61
-    Semicolon ";" @ 61..62
-  ImportDeclaration
-    ImportKw "import" @ 63..69 leading=[Newline "\n"] trailing=[Whitespace " "]
-    QualifiedName
-      Identifier "m" @ 70..71
-      Dot "." @ 71..72
-      Identifier "Middle" @ 72..78
-    Semicolon ";" @ 78..79
-  ClassDeclaration
-    ClassKw "class" @ 80..85 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Identifier "A" @ 86..87 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 88..89
-      RBrace "}" @ 89..90
+  ImportDeclarationList
+    ImportDeclaration
+      ImportKw "import" @ 0..6 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "z" @ 7..8
+        Dot "." @ 8..9
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "Zed" @ 9..12
+      Semicolon ";" @ 12..13
+    ImportDeclaration
+      ImportKw "import" @ 45..51 leading=[Newline "\n", LineComment "// Used by generated adapters.", Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "a" @ 52..53
+        Dot "." @ 53..54
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "Adapter" @ 54..61
+      Semicolon ";" @ 61..62
+    ImportDeclaration
+      ImportKw "import" @ 63..69 leading=[Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "m" @ 70..71
+        Dot "." @ 71..72
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "Middle" @ 72..78
+      Semicolon ";" @ 78..79
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 80..85 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "A" @ 86..87 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 88..89
+        ClassBodyMemberList
+        RBrace "}" @ 89..90
   Eof "" @ 91..91 leading=[Newline "\n"]
 
 diagnostics:

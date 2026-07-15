@@ -13,133 +13,143 @@ return j;
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "Example" @ 6..13 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 14..15
-      ClassBodyDeclaration
-        MethodDeclaration
-          PrimitiveType
-            IntKw "int" @ 16..19 leading=[Newline "\n"] trailing=[Whitespace " "]
-          Identifier "nestedTernary" @ 20..33
-          LParen "(" @ 33..34
-          FormalParameterList
-            FormalParameter
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "Example" @ 6..13 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 14..15
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
               PrimitiveType
-                IntKw "int" @ 34..37 trailing=[Whitespace " "]
-              Identifier "i" @ 38..39
-          RParen ")" @ 39..40 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 41..42
-            BlockStatement
-              LocalVariableDeclaration
-                PrimitiveType
-                  IntKw "int" @ 43..46 leading=[Newline "\n"] trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "j" @ 47..48 trailing=[Whitespace " "]
-                    Assign "=" @ 49..50 trailing=[Whitespace " "]
-                    VariableInitializer
-                      ConditionalExpression
-                        BinaryExpression
-                          NameExpression
-                            Identifier "i" @ 51..52 trailing=[Whitespace " "]
-                          EqEq "==" @ 53..55 trailing=[Whitespace " "]
-                          LiteralExpression
-                            IntegerLiteral "0" @ 56..57 trailing=[Whitespace " "]
-                        Question "?" @ 58..59 trailing=[Whitespace " "]
-                        LiteralExpression
-                          IntegerLiteral "0" @ 60..61 trailing=[Whitespace " "]
-                        Colon ":" @ 62..63 trailing=[Whitespace " "]
-                        ConditionalExpression
-                          BinaryExpression
-                            NameExpression
-                              Identifier "i" @ 64..65 trailing=[Whitespace " "]
-                            EqEq "==" @ 66..68 trailing=[Whitespace " "]
-                            LiteralExpression
-                              IntegerLiteral "1" @ 69..70 trailing=[Whitespace " "]
-                          Question "?" @ 71..72 trailing=[Whitespace " "]
-                          LiteralExpression
-                            IntegerLiteral "1" @ 73..74 trailing=[Whitespace " "]
-                          Colon ":" @ 75..76 trailing=[Whitespace " "]
-                          ConditionalExpression
-                            BinaryExpression
-                              NameExpression
-                                Identifier "i" @ 77..78 trailing=[Whitespace " "]
-                              EqEq "==" @ 79..81 trailing=[Whitespace " "]
-                              LiteralExpression
-                                IntegerLiteral "2" @ 82..83 trailing=[Whitespace " "]
-                            Question "?" @ 84..85 trailing=[Whitespace " "]
-                            LiteralExpression
-                              IntegerLiteral "2" @ 86..87 trailing=[Whitespace " "]
-                            Colon ":" @ 88..89 trailing=[Whitespace " "]
+                AnnotationList
+                IntKw "int" @ 16..19 leading=[Newline "\n"] trailing=[Whitespace " "]
+              Identifier "nestedTernary" @ 20..33
+              LParen "(" @ 33..34
+              FormalParameterList
+                FormalParameter
+                  ParameterModifierList
+                  PrimitiveType
+                    AnnotationList
+                    IntKw "int" @ 34..37 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "i" @ 38..39
+              RParen ")" @ 39..40 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 41..42
+                BlockStatementList
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      PrimitiveType
+                        AnnotationList
+                        IntKw "int" @ 43..46 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "j" @ 47..48 trailing=[Whitespace " "]
+                          Assign "=" @ 49..50 trailing=[Whitespace " "]
+                          VariableInitializer
                             ConditionalExpression
                               BinaryExpression
                                 NameExpression
-                                  Identifier "i" @ 90..91 trailing=[Whitespace " "]
-                                EqEq "==" @ 92..94 trailing=[Whitespace " "]
+                                  Identifier "i" @ 51..52 trailing=[Whitespace " "]
+                                EqEq "==" @ 53..55 trailing=[Whitespace " "]
                                 LiteralExpression
-                                  IntegerLiteral "3" @ 95..96 trailing=[Whitespace " "]
-                              Question "?" @ 97..98 trailing=[Whitespace " "]
+                                  IntegerLiteral "0" @ 56..57 trailing=[Whitespace " "]
+                              Question "?" @ 58..59 trailing=[Whitespace " "]
                               LiteralExpression
-                                IntegerLiteral "3" @ 99..100 trailing=[Whitespace " "]
-                              Colon ":" @ 101..102 trailing=[Whitespace " "]
+                                IntegerLiteral "0" @ 60..61 trailing=[Whitespace " "]
+                              Colon ":" @ 62..63 trailing=[Whitespace " "]
                               ConditionalExpression
                                 BinaryExpression
                                   NameExpression
-                                    Identifier "i" @ 103..104 trailing=[Whitespace " "]
-                                  EqEq "==" @ 105..107 trailing=[Whitespace " "]
+                                    Identifier "i" @ 64..65 trailing=[Whitespace " "]
+                                  EqEq "==" @ 66..68 trailing=[Whitespace " "]
                                   LiteralExpression
-                                    IntegerLiteral "4" @ 108..109 trailing=[Whitespace " "]
-                                Question "?" @ 110..111 trailing=[Whitespace " "]
+                                    IntegerLiteral "1" @ 69..70 trailing=[Whitespace " "]
+                                Question "?" @ 71..72 trailing=[Whitespace " "]
                                 LiteralExpression
-                                  IntegerLiteral "4" @ 112..113 trailing=[Whitespace " "]
-                                Colon ":" @ 114..115 trailing=[Whitespace " "]
+                                  IntegerLiteral "1" @ 73..74 trailing=[Whitespace " "]
+                                Colon ":" @ 75..76 trailing=[Whitespace " "]
                                 ConditionalExpression
                                   BinaryExpression
                                     NameExpression
-                                      Identifier "i" @ 116..117 trailing=[Whitespace " "]
-                                    EqEq "==" @ 118..120 trailing=[Whitespace " "]
+                                      Identifier "i" @ 77..78 trailing=[Whitespace " "]
+                                    EqEq "==" @ 79..81 trailing=[Whitespace " "]
                                     LiteralExpression
-                                      IntegerLiteral "5" @ 121..122 trailing=[Whitespace " "]
-                                  Question "?" @ 123..124 trailing=[Whitespace " "]
+                                      IntegerLiteral "2" @ 82..83 trailing=[Whitespace " "]
+                                  Question "?" @ 84..85 trailing=[Whitespace " "]
                                   LiteralExpression
-                                    IntegerLiteral "5" @ 125..126 trailing=[Whitespace " "]
-                                  Colon ":" @ 127..128 trailing=[Whitespace " "]
+                                    IntegerLiteral "2" @ 86..87 trailing=[Whitespace " "]
+                                  Colon ":" @ 88..89 trailing=[Whitespace " "]
                                   ConditionalExpression
                                     BinaryExpression
                                       NameExpression
-                                        Identifier "i" @ 129..130 trailing=[Whitespace " "]
-                                      EqEq "==" @ 131..133 trailing=[Whitespace " "]
+                                        Identifier "i" @ 90..91 trailing=[Whitespace " "]
+                                      EqEq "==" @ 92..94 trailing=[Whitespace " "]
                                       LiteralExpression
-                                        IntegerLiteral "6" @ 134..135 trailing=[Whitespace " "]
-                                    Question "?" @ 136..137 trailing=[Whitespace " "]
+                                        IntegerLiteral "3" @ 95..96 trailing=[Whitespace " "]
+                                    Question "?" @ 97..98 trailing=[Whitespace " "]
                                     LiteralExpression
-                                      IntegerLiteral "6" @ 138..139 trailing=[Whitespace " "]
-                                    Colon ":" @ 140..141 trailing=[Whitespace " "]
+                                      IntegerLiteral "3" @ 99..100 trailing=[Whitespace " "]
+                                    Colon ":" @ 101..102 trailing=[Whitespace " "]
                                     ConditionalExpression
                                       BinaryExpression
                                         NameExpression
-                                          Identifier "i" @ 142..143 trailing=[Whitespace " "]
-                                        EqEq "==" @ 144..146 trailing=[Whitespace " "]
+                                          Identifier "i" @ 103..104 trailing=[Whitespace " "]
+                                        EqEq "==" @ 105..107 trailing=[Whitespace " "]
                                         LiteralExpression
-                                          IntegerLiteral "7" @ 147..148 trailing=[Whitespace " "]
-                                      Question "?" @ 149..150 trailing=[Whitespace " "]
+                                          IntegerLiteral "4" @ 108..109 trailing=[Whitespace " "]
+                                      Question "?" @ 110..111 trailing=[Whitespace " "]
                                       LiteralExpression
-                                        IntegerLiteral "7" @ 151..152 trailing=[Whitespace " "]
-                                      Colon ":" @ 153..154 trailing=[Whitespace " "]
-                                      NameExpression
-                                        Identifier "i" @ 155..156
-              Semicolon ";" @ 156..157
-            BlockStatement
-              ReturnStatement
-                ReturnKw "return" @ 158..164 leading=[Newline "\n"] trailing=[Whitespace " "]
-                NameExpression
-                  Identifier "j" @ 165..166
-                Semicolon ";" @ 166..167
-            RBrace "}" @ 168..169 leading=[Newline "\n"]
-      RBrace "}" @ 170..171 leading=[Newline "\n"]
+                                        IntegerLiteral "4" @ 112..113 trailing=[Whitespace " "]
+                                      Colon ":" @ 114..115 trailing=[Whitespace " "]
+                                      ConditionalExpression
+                                        BinaryExpression
+                                          NameExpression
+                                            Identifier "i" @ 116..117 trailing=[Whitespace " "]
+                                          EqEq "==" @ 118..120 trailing=[Whitespace " "]
+                                          LiteralExpression
+                                            IntegerLiteral "5" @ 121..122 trailing=[Whitespace " "]
+                                        Question "?" @ 123..124 trailing=[Whitespace " "]
+                                        LiteralExpression
+                                          IntegerLiteral "5" @ 125..126 trailing=[Whitespace " "]
+                                        Colon ":" @ 127..128 trailing=[Whitespace " "]
+                                        ConditionalExpression
+                                          BinaryExpression
+                                            NameExpression
+                                              Identifier "i" @ 129..130 trailing=[Whitespace " "]
+                                            EqEq "==" @ 131..133 trailing=[Whitespace " "]
+                                            LiteralExpression
+                                              IntegerLiteral "6" @ 134..135 trailing=[Whitespace " "]
+                                          Question "?" @ 136..137 trailing=[Whitespace " "]
+                                          LiteralExpression
+                                            IntegerLiteral "6" @ 138..139 trailing=[Whitespace " "]
+                                          Colon ":" @ 140..141 trailing=[Whitespace " "]
+                                          ConditionalExpression
+                                            BinaryExpression
+                                              NameExpression
+                                                Identifier "i" @ 142..143 trailing=[Whitespace " "]
+                                              EqEq "==" @ 144..146 trailing=[Whitespace " "]
+                                              LiteralExpression
+                                                IntegerLiteral "7" @ 147..148 trailing=[Whitespace " "]
+                                            Question "?" @ 149..150 trailing=[Whitespace " "]
+                                            LiteralExpression
+                                              IntegerLiteral "7" @ 151..152 trailing=[Whitespace " "]
+                                            Colon ":" @ 153..154 trailing=[Whitespace " "]
+                                            NameExpression
+                                              Identifier "i" @ 155..156
+                    Semicolon ";" @ 156..157
+                  BlockStatement
+                    ReturnStatement
+                      ReturnKw "return" @ 158..164 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      NameExpression
+                        Identifier "j" @ 165..166
+                      Semicolon ";" @ 166..167
+                RBrace "}" @ 168..169 leading=[Newline "\n"]
+        RBrace "}" @ 170..171 leading=[Newline "\n"]
   Eof "" @ 172..172 leading=[Newline "\n"]
 
 diagnostics:

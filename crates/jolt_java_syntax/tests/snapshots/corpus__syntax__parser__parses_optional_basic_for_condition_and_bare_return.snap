@@ -14,37 +14,42 @@ class OptionalFlowExpressions {
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "OptionalFlowExpressions" @ 6..29 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 30..31
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 36..40 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "method" @ 41..47
-          LParen "(" @ 47..48
-          RParen ")" @ 48..49 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 50..51
-            BlockStatement
-              ForStatement
-                BasicForStatement
-                  ForKw "for" @ 60..63 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                  LParen "(" @ 64..65
-                  Semicolon ";" @ 65..66
-                  Semicolon ";" @ 66..67
-                  RParen ")" @ 67..68 trailing=[Whitespace " "]
-                  Block
-                    LBrace "{" @ 69..70
-                    BlockStatement
-                      ReturnStatement
-                        ReturnKw "return" @ 83..89 leading=[Newline "\n", Whitespace "            "]
-                        Semicolon ";" @ 89..90
-                    RBrace "}" @ 99..100 leading=[Newline "\n", Whitespace "        "]
-            RBrace "}" @ 105..106 leading=[Newline "\n", Whitespace "    "]
-      RBrace "}" @ 107..108 leading=[Newline "\n"]
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "OptionalFlowExpressions" @ 6..29 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 30..31
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 36..40 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Identifier "method" @ 41..47
+              LParen "(" @ 47..48
+              RParen ")" @ 48..49 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 50..51
+                BlockStatementList
+                  BlockStatement
+                    ForStatement
+                      BasicForStatement
+                        ForKw "for" @ 60..63 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                        LParen "(" @ 64..65
+                        Semicolon ";" @ 65..66
+                        Semicolon ";" @ 66..67
+                        RParen ")" @ 67..68 trailing=[Whitespace " "]
+                        Block
+                          LBrace "{" @ 69..70
+                          BlockStatementList
+                            BlockStatement
+                              ReturnStatement
+                                ReturnKw "return" @ 83..89 leading=[Newline "\n", Whitespace "            "]
+                                Semicolon ";" @ 89..90
+                          RBrace "}" @ 99..100 leading=[Newline "\n", Whitespace "        "]
+                RBrace "}" @ 105..106 leading=[Newline "\n", Whitespace "    "]
+        RBrace "}" @ 107..108 leading=[Newline "\n"]
   Eof "" @ 109..109 leading=[Newline "\n"]
 
 diagnostics:

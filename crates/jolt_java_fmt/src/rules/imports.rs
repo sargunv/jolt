@@ -1,11 +1,14 @@
 use jolt_fmt_ir::{Doc, DocBuilder};
-use jolt_java_syntax::{ImportDeclaration, ImportKind};
+use jolt_java_syntax::{ImportDeclaration, JavaSyntaxView, NameSyntax};
 
+use crate::helpers::blocks::join_empty_lines;
 use crate::helpers::comments::{
-    LeadingTrivia, TrailingTrivia, format_comment, format_inline_trailing_comment_list,
-    format_leading_comment_runs, format_token, format_token_after_relocated_leading_comments,
-    format_token_before_relocated_trailing_comments, format_token_sequence,
-    format_token_with_comments,
+    LeadingTrivia, TrailingTrivia, format_comment, format_token_after_relocated_leading_comments,
+    format_token_before_relocated_trailing_comments, format_token_with_comments,
+};
+use crate::helpers::recovery::{
+    JavaFormatField, format_optional_field, format_or_verbatim, format_required_field,
+    resolve_optional_field, resolve_required_field,
 };
 use crate::rules::names::{NameSortKey, format_name};
 
@@ -17,55 +20,92 @@ pub(crate) fn format_imports<'source>(
         return None;
     }
 
-    let formatted_imports = imports
-        .into_iter()
-        .map(|import| FormattedImport::from_declaration(&import, doc))
-        .collect::<Vec<_>>();
-    Some(format_leading_comment_runs(
-        doc,
-        formatted_imports,
-        FormattedImport::has_leading_comments,
-        format_import_run,
-    ))
-}
-
-fn format_import_run<'source>(
-    imports: Vec<FormattedImport<'source>>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    let mut normal_imports = Vec::with_capacity(imports.len());
-    let mut static_imports = Vec::new();
-
+    // Malformed imports are fixed boundaries: only consecutive fully structured
+    // imports may be reordered. This keeps recovery source in place while retaining
+    // the normal/static grouping and stable name sort for valid syntax.
+    let mut sections = Vec::new();
+    let mut sortable = Vec::new();
     for import in imports {
-        if import.is_static {
-            static_imports.push(import);
+        if is_sortable_import(&import) {
+            if !sortable.is_empty()
+                && import
+                    .first_token()
+                    .is_some_and(|token| !token.leading_comments().is_empty())
+            {
+                flush_sortable(&mut sortable, &mut sections, doc);
+            }
+            sortable.push(FormattedImport::new(import, doc));
         } else {
-            normal_imports.push(import);
+            flush_sortable(&mut sortable, &mut sections, doc);
+            sections.push(format_or_verbatim(&import, doc, |doc| {
+                format_import_body(&import, doc)
+            }));
         }
     }
+    flush_sortable(&mut sortable, &mut sections, doc);
+    Some(join_empty_lines(doc, sections))
+}
 
-    // Cost model: for each comment-delimited run, the two stable comparison
-    // sorts perform O(r log r) comparisons. A comparison streams at most the
-    // longer borrowed name key (`p` Unicode scalars), so the run is bounded by
-    // O(r log r * p) time and O(r) formatter-owned storage. Runs partition the
-    // represented imports; there is no layout search or retry.
-    normal_imports.sort_by(|lhs, rhs| lhs.path.cmp(&rhs.path));
-    static_imports.sort_by(|lhs, rhs| lhs.path.cmp(&rhs.path));
+fn is_sortable_import(import: &ImportDeclaration<'_>) -> bool {
+    #[allow(clippy::needless_pass_by_value)]
+    fn required<T>(
+        field: Result<
+            jolt_java_syntax::JavaSyntaxField<'_, T>,
+            jolt_java_syntax::JavaSyntaxInvariantError,
+        >,
+    ) -> bool {
+        matches!(field, Ok(jolt_java_syntax::JavaSyntaxField::Present(_)))
+    }
+    #[allow(clippy::needless_pass_by_value)]
+    fn optional<T>(
+        field: Result<
+            jolt_java_syntax::JavaSyntaxField<'_, T>,
+            jolt_java_syntax::JavaSyntaxInvariantError,
+        >,
+    ) -> bool {
+        matches!(
+            field,
+            Ok(jolt_java_syntax::JavaSyntaxField::Present(_)
+                | jolt_java_syntax::JavaSyntaxField::Missing(_))
+        )
+    }
+    import.is_recovery_free()
+        && required(import.import_keyword())
+        && optional(import.module_keyword())
+        && optional(import.static_keyword())
+        && matches!(import.name(), Ok(jolt_java_syntax::JavaSyntaxField::Present(ref name)) if name.is_recovery_free())
+        && optional(import.on_demand_dot())
+        && optional(import.star())
+        && required(import.semicolon())
+}
 
-    doc.concat_list(|docs| {
-        if !normal_imports.is_empty() {
-            let normal_imports = format_import_list(normal_imports, docs);
-            docs.push(normal_imports);
+fn flush_sortable<'source>(
+    imports: &mut Vec<FormattedImport<'source>>,
+    sections: &mut Vec<Doc<'source>>,
+    doc: &mut DocBuilder<'source>,
+) {
+    if imports.is_empty() {
+        return;
+    }
+    let mut normal = Vec::new();
+    let mut static_ = Vec::new();
+    for import in std::mem::take(imports) {
+        if import.is_static {
+            static_.push(import);
+        } else {
+            normal.push(import);
         }
-        if !static_imports.is_empty() {
-            if !docs.is_empty() {
-                let empty_line = docs.empty_line();
-                docs.push(empty_line);
-            }
-            let static_imports = format_import_list(static_imports, docs);
-            docs.push(static_imports);
-        }
-    })
+    }
+    // Bounded stable sorts over borrowed name keys. No source buffers or syntax
+    // nodes are cloned and no layout alternatives are searched.
+    normal.sort_by(|left, right| left.key.cmp(&right.key));
+    static_.sort_by(|left, right| left.key.cmp(&right.key));
+    if !normal.is_empty() {
+        sections.push(format_import_list(normal, doc));
+    }
+    if !static_.is_empty() {
+        sections.push(format_import_list(static_, doc));
+    }
 }
 
 fn format_import_list<'source>(
@@ -75,8 +115,8 @@ fn format_import_list<'source>(
     doc.concat_list(|docs| {
         for import in imports {
             if !docs.is_empty() {
-                let hard_line = docs.hard_line();
-                docs.push(hard_line);
+                let line = docs.hard_line();
+                docs.push(line);
             }
             let import = import.into_doc(docs);
             docs.push(import);
@@ -85,193 +125,99 @@ fn format_import_list<'source>(
 }
 
 struct FormattedImport<'source> {
-    first_token: Option<jolt_java_syntax::JavaSyntaxToken<'source>>,
-    last_token: Option<jolt_java_syntax::JavaSyntaxToken<'source>>,
+    import: ImportDeclaration<'source>,
+    key: NameSortKey<'source>,
     is_static: bool,
-    path: NameSortKey<'source>,
-    import_token: Option<jolt_java_syntax::JavaSyntaxToken<'source>>,
-    module_token: Option<jolt_java_syntax::JavaSyntaxToken<'source>>,
-    static_token: Option<jolt_java_syntax::JavaSyntaxToken<'source>>,
-    path_doc: Doc<'source>,
-    semicolon: Option<jolt_java_syntax::JavaSyntaxToken<'source>>,
-    trailing: Doc<'source>,
 }
 
 impl<'source> FormattedImport<'source> {
-    fn from_declaration(
-        import: &ImportDeclaration<'source>,
-        doc: &mut DocBuilder<'source>,
-    ) -> Self {
-        let Some(kind) = import.import_kind() else {
-            return Self {
-                first_token: None,
-                last_token: None,
-                is_static: false,
-                path: NameSortKey::recovered(),
-                import_token: None,
-                module_token: None,
-                static_token: None,
-                path_doc: format_token_sequence(doc, import.token_iter(), LeadingTrivia::Preserve),
-                semicolon: None,
-                trailing: Doc::nil(),
-            };
+    fn new(import: ImportDeclaration<'source>, doc: &mut DocBuilder<'source>) -> Self {
+        let on_demand = matches!(
+            resolve_optional_field(import.star(), doc),
+            JavaFormatField::Present(Some(_))
+        );
+        let key = match resolve_required_field(import.name(), doc) {
+            JavaFormatField::Present(name) => NameSortKey::new(&name, on_demand),
+            JavaFormatField::Malformed(_) => NameSortKey::recovered(),
         };
-        let (is_static, path, path_doc) = format_import_kind(import, &kind, doc);
+        let is_static = matches!(
+            resolve_optional_field(import.static_keyword(), doc),
+            JavaFormatField::Present(Some(_))
+        );
         Self {
-            first_token: import.first_token(),
-            last_token: import.last_token(),
+            import,
+            key,
             is_static,
-            path,
-            import_token: import.import_token(),
-            module_token: import.module_token(),
-            static_token: import.static_token(),
-            path_doc,
-            semicolon: import.semicolon(),
-            trailing: doc.concat_list(|tokens| {
-                for token in import.trailing_recovered_tokens() {
-                    let token = format_token(
-                        tokens,
-                        &token,
-                        LeadingTrivia::Preserve,
-                        TrailingTrivia::Preserve,
-                    );
-                    tokens.push(token);
-                }
-            }),
         }
     }
 
-    fn has_leading_comments(&self) -> bool {
-        self.first_token
-            .as_ref()
-            .is_some_and(|token| !token.leading_comments().is_empty())
-    }
-
+    #[allow(clippy::redundant_closure_for_method_calls)]
     fn into_doc(self, doc: &mut DocBuilder<'source>) -> Doc<'source> {
-        let import = doc_concat!(
-            doc,
-            [
-                self.import_token.as_ref().map_or_else(Doc::nil, |token| {
-                    doc_concat!(
-                        doc,
-                        [
-                            format_token_after_relocated_leading_comments(
-                                doc,
-                                token,
-                                TrailingTrivia::Preserve,
-                            ),
-                            doc.space(),
-                        ]
-                    )
-                },),
-                self.module_token
-                    .as_ref()
-                    .map_or_else(Doc::nil, |token| doc_concat!(
-                        doc,
-                        [format_token_with_comments(doc, token), doc.space()]
-                    ),),
-                self.static_token
-                    .as_ref()
-                    .map_or_else(Doc::nil, |token| doc_concat!(
-                        doc,
-                        [format_token_with_comments(doc, token), doc.space()]
-                    ),),
-                self.path_doc,
-                self.trailing,
-                self.semicolon.as_ref().map_or_else(Doc::nil, |token| {
-                    format_token_before_relocated_trailing_comments(
-                        doc,
-                        token,
-                        LeadingTrivia::Preserve,
-                    )
-                },),
-                self.last_token.map_or_else(Doc::nil, |token| {
-                    format_inline_trailing_comment_list(doc, token.trailing_comments())
-                },),
-            ]
-        );
-
-        if self
-            .first_token
-            .as_ref()
-            .is_none_or(|token| token.leading_comments().is_empty())
-        {
-            import
-        } else {
-            let leading_comments = doc.concat_list(|leading_comments| {
-                for comment in self
-                    .first_token
-                    .into_iter()
-                    .flat_map(|token| token.leading_comments())
-                {
-                    if !leading_comments.is_empty() {
-                        let hard_line = leading_comments.hard_line();
-                        leading_comments.push(hard_line);
+        format_or_verbatim(&self.import, doc, |doc| {
+            let first = self.import.first_token();
+            let last = self.import.last_token();
+            let leading = doc.concat_list(|comments| {
+                for comment in first.iter().flat_map(|token| token.leading_comments()) {
+                    if !comments.is_empty() {
+                        let line = comments.hard_line();
+                        comments.push(line);
                     }
-                    let comment = format_comment(leading_comments, &comment);
-                    leading_comments.push(comment);
+                    let formatted = format_comment(comments, &comment);
+                    comments.push(formatted);
                 }
             });
-            doc_concat!(doc, [leading_comments, doc.hard_line(), import,])
-        }
+            let body = format_import_body(&self.import, doc);
+            let trailing = doc.concat_list(|comments| {
+                for comment in last.iter().flat_map(|token| token.trailing_comments()) {
+                    let space = comments.space();
+                    comments.push(space);
+                    let formatted = format_comment(comments, &comment);
+                    comments.push(formatted);
+                }
+            });
+            if first.is_some_and(|token| !token.leading_comments().is_empty()) {
+                doc_concat!(doc, [leading, doc.hard_line(), body, trailing])
+            } else {
+                doc_concat!(doc, [body, trailing])
+            }
+        })
     }
 }
 
-fn format_import_kind<'source>(
+fn format_import_body<'source>(
     import: &ImportDeclaration<'source>,
-    kind: &ImportKind<'source>,
     doc: &mut DocBuilder<'source>,
-) -> (bool, NameSortKey<'source>, Doc<'source>) {
-    match kind {
-        ImportKind::SingleType(name) | ImportKind::SingleModule(name) => {
-            let path = NameSortKey::new(name, false);
-            (false, path, format_name(name, doc))
-        }
-        ImportKind::TypeOnDemand(name) => {
-            let path = NameSortKey::new(name, true);
-            (
-                false,
-                path,
-                doc_concat!(
+) -> Doc<'source> {
+    let keyword = format_required_field(import.import_keyword(), doc, |token, doc| {
+        doc_concat!(
+            doc,
+            [
+                format_token_after_relocated_leading_comments(
                     doc,
-                    [
-                        format_name(name, doc),
-                        import
-                            .on_demand_dot_token()
-                            .as_ref()
-                            .map_or_else(Doc::nil, |token| format_token_with_comments(doc, token)),
-                        import
-                            .star_token()
-                            .as_ref()
-                            .map_or_else(Doc::nil, |token| format_token_with_comments(doc, token)),
-                    ]
+                    &token,
+                    TrailingTrivia::Preserve,
                 ),
-            )
-        }
-        ImportKind::SingleStatic(name) => {
-            let path = NameSortKey::new(name, false);
-            (true, path, format_name(name, doc))
-        }
-        ImportKind::StaticOnDemand(name) => {
-            let path = NameSortKey::new(name, true);
-            (
-                true,
-                path,
-                doc_concat!(
-                    doc,
-                    [
-                        format_name(name, doc),
-                        import
-                            .on_demand_dot_token()
-                            .as_ref()
-                            .map_or_else(Doc::nil, |token| format_token_with_comments(doc, token)),
-                        import
-                            .star_token()
-                            .as_ref()
-                            .map_or_else(Doc::nil, |token| format_token_with_comments(doc, token)),
-                    ]
-                ),
-            )
-        }
-    }
+                doc.space(),
+            ]
+        )
+    });
+    let module = format_optional_field(import.module_keyword(), doc, |token, doc| {
+        doc_concat!(doc, [format_token_with_comments(doc, &token), doc.space()])
+    });
+    let static_ = format_optional_field(import.static_keyword(), doc, |token, doc| {
+        doc_concat!(doc, [format_token_with_comments(doc, &token), doc.space()])
+    });
+    let name = format_required_field(import.name(), doc, |name: NameSyntax<'source>, doc| {
+        format_name(&name, doc)
+    });
+    let dot = format_optional_field(import.on_demand_dot(), doc, |token, doc| {
+        format_token_with_comments(doc, &token)
+    });
+    let star = format_optional_field(import.star(), doc, |token, doc| {
+        format_token_with_comments(doc, &token)
+    });
+    let semicolon = format_required_field(import.semicolon(), doc, |token, doc| {
+        format_token_before_relocated_trailing_comments(doc, &token, LeadingTrivia::Preserve)
+    });
+    doc_concat!(doc, [keyword, module, static_, name, dot, star, semicolon])
 }

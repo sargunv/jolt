@@ -9,19 +9,23 @@ class A {}
 syntax:
 syntax:
 CompilationUnit
-  FieldDeclaration
-    PrimitiveType
-      IntKw "int" @ 0..3 trailing=[Whitespace " "]
-    VariableDeclaratorList
-      VariableDeclarator
-        Identifier "x" @ 4..5
-    Semicolon ";" @ 5..6 trailing=[Whitespace " ", LineComment "// trailing"]
-  ClassDeclaration
-    ClassKw "class" @ 19..24 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Identifier "A" @ 25..26 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 27..28
-      RBrace "}" @ 28..29
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    FieldDeclaration
+      PrimitiveType
+        AnnotationList
+        IntKw "int" @ 0..3 trailing=[Whitespace " "]
+      VariableDeclaratorList
+        VariableDeclarator
+          Identifier "x" @ 4..5
+      Semicolon ";" @ 5..6 trailing=[Whitespace " ", LineComment "// trailing"]
+    ClassDeclaration
+      ClassKw "class" @ 19..24 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "A" @ 25..26 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 27..28
+        ClassBodyMemberList
+        RBrace "}" @ 28..29
   Eof "" @ 29..29
 
 diagnostics:

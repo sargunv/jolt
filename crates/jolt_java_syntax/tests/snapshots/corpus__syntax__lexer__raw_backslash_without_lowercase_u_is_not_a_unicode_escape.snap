@@ -8,11 +8,13 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    Unknown "\\" @ 0..1
-    Identifier "x" @ 1..2 trailing=[Whitespace " "]
-    Unknown "\\" @ 3..4
-    Identifier "U0061" @ 4..9
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      Unknown "\\" @ 0..1
+      Identifier "x" @ 1..2 trailing=[Whitespace " "]
+      Unknown "\\" @ 3..4
+      Identifier "U0061" @ 4..9
   Eof "" @ 9..9
 
 diagnostics:

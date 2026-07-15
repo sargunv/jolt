@@ -8,12 +8,17 @@ ab
 syntax:
 syntax:
 CompilationUnit
-  FieldDeclaration
-    ClassType
-      Name
-        Identifier "a\u{1a}b" @ 0..3
-    VariableDeclaratorList
-      VariableDeclarator
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    FieldDeclaration
+      ClassType
+        ClassTypeSegmentList
+          ClassTypeSegmentNode
+            AnnotationList
+            Name
+              Identifier "a\u{1a}b" @ 0..3
+      VariableDeclaratorList
+        VariableDeclarator
   Eof "" @ 3..3
 
 diagnostics:

@@ -4,7 +4,7 @@ expression: "snapshot(&output, &[])"
 ---
 status: 0
 stdout:
-class  {
+class {
 
 stderr:
 <empty>

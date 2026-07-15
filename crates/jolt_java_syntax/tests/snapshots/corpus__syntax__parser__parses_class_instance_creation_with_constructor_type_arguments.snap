@@ -16,80 +16,108 @@ class Box<T> {
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "ConstructorTypeArgumentsCreation" @ 6..38 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 39..40
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 45..49 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "method" @ 50..56
-          LParen "(" @ 56..57
-          RParen ")" @ 57..58 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 59..60
-            BlockStatement
-              LocalVariableDeclaration
-                ClassType
-                  Name
-                    Identifier "Object" @ 69..75 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "box" @ 76..79 trailing=[Whitespace " "]
-                    Assign "=" @ 80..81 trailing=[Whitespace " "]
-                    VariableInitializer
-                      ObjectCreationExpression
-                        NewKw "new" @ 82..85 trailing=[Whitespace " "]
-                        TypeArgumentList
-                          Lt "<" @ 86..87
-                          TypeArgument
-                            ClassType
-                              Name
-                                Identifier "String" @ 87..93
-                          Gt ">" @ 93..94 trailing=[Whitespace " "]
-                        ClassType
-                          Name
-                            Identifier "Box" @ 95..98
-                        ArgumentList
-                          LParen "(" @ 98..99
-                          LiteralExpression
-                            StringLiteral "\"value\"" @ 99..106
-                          RParen ")" @ 106..107
-              Semicolon ";" @ 107..108
-            RBrace "}" @ 113..114 leading=[Newline "\n", Whitespace "    "]
-      RBrace "}" @ 115..116 leading=[Newline "\n"]
-  ClassDeclaration
-    ClassKw "class" @ 118..123 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "Box" @ 124..127
-    TypeParameterList
-      Lt "<" @ 127..128
-      TypeParameter
-        Identifier "T" @ 128..129
-      Gt ">" @ 129..130 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 131..132
-      ClassBodyDeclaration
-        ConstructorDeclaration
-          TypeParameterList
-            Lt "<" @ 137..138 leading=[Newline "\n", Whitespace "    "]
-            TypeParameter
-              Identifier "U" @ 138..139
-            Gt ">" @ 139..140 trailing=[Whitespace " "]
-          Identifier "Box" @ 141..144
-          LParen "(" @ 144..145
-          FormalParameterList
-            FormalParameter
-              ClassType
-                Name
-                  Identifier "U" @ 145..146 trailing=[Whitespace " "]
-              Identifier "value" @ 147..152
-          RParen ")" @ 152..153 trailing=[Whitespace " "]
-          ConstructorBody
-            LBrace "{" @ 154..155
-            RBrace "}" @ 155..156
-      RBrace "}" @ 157..158 leading=[Newline "\n"]
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "ConstructorTypeArgumentsCreation" @ 6..38 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 39..40
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 45..49 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Identifier "method" @ 50..56
+              LParen "(" @ 56..57
+              RParen ")" @ 57..58 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 59..60
+                BlockStatementList
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
+                            AnnotationList
+                            Name
+                              Identifier "Object" @ 69..75 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "box" @ 76..79 trailing=[Whitespace " "]
+                          Assign "=" @ 80..81 trailing=[Whitespace " "]
+                          VariableInitializer
+                            ObjectCreationExpression
+                              NewKw "new" @ 82..85 trailing=[Whitespace " "]
+                              TypeArgumentList
+                                Lt "<" @ 86..87
+                                TypeArgumentSeparatedList
+                                  TypeArgument
+                                    AnnotationList
+                                    ClassType
+                                      ClassTypeSegmentList
+                                        ClassTypeSegmentNode
+                                          AnnotationList
+                                          Name
+                                            Identifier "String" @ 87..93
+                                Gt ">" @ 93..94 trailing=[Whitespace " "]
+                              ClassType
+                                ClassTypeSegmentList
+                                  ClassTypeSegmentNode
+                                    AnnotationList
+                                    Name
+                                      Identifier "Box" @ 95..98
+                              ArgumentList
+                                LParen "(" @ 98..99
+                                ExpressionList
+                                  LiteralExpression
+                                    StringLiteral "\"value\"" @ 99..106
+                                RParen ")" @ 106..107
+                    Semicolon ";" @ 107..108
+                RBrace "}" @ 113..114 leading=[Newline "\n", Whitespace "    "]
+        RBrace "}" @ 115..116 leading=[Newline "\n"]
+    ClassDeclaration
+      ClassKw "class" @ 118..123 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "Box" @ 124..127
+      TypeParameterList
+        Lt "<" @ 127..128
+        TypeParameterSeparatedList
+          TypeParameter
+            AnnotationList
+            Identifier "T" @ 128..129
+        Gt ">" @ 129..130 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 131..132
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            ConstructorDeclaration
+              TypeParameterList
+                Lt "<" @ 137..138 leading=[Newline "\n", Whitespace "    "]
+                TypeParameterSeparatedList
+                  TypeParameter
+                    AnnotationList
+                    Identifier "U" @ 138..139
+                Gt ">" @ 139..140 trailing=[Whitespace " "]
+              Identifier "Box" @ 141..144
+              LParen "(" @ 144..145
+              FormalParameterList
+                FormalParameter
+                  ParameterModifierList
+                  ClassType
+                    ClassTypeSegmentList
+                      ClassTypeSegmentNode
+                        AnnotationList
+                        Name
+                          Identifier "U" @ 145..146 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "value" @ 147..152
+              RParen ")" @ 152..153 trailing=[Whitespace " "]
+              ConstructorBody
+                LBrace "{" @ 154..155
+                ConstructorBodyEntryList
+                RBrace "}" @ 155..156
+        RBrace "}" @ 157..158 leading=[Newline "\n"]
   Eof "" @ 159..159 leading=[Newline "\n"]
 
 diagnostics:

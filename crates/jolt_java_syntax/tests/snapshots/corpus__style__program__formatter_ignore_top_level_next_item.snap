@@ -11,46 +11,52 @@ class After {int y=3;}
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 18..23 leading=[LineComment "// @formatter:off", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "Raw" @ 24..27 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 28..29
-      ClassBodyDeclaration
-        FieldDeclaration
-          PrimitiveType
-            IntKw "int" @ 29..32 trailing=[Whitespace " "]
-          VariableDeclaratorList
-            VariableDeclarator
-              Identifier "x" @ 33..34
-              Assign "=" @ 34..35
-              VariableInitializer
-                BinaryExpression
-                  LiteralExpression
-                    IntegerLiteral "1" @ 35..36
-                  Plus "+" @ 36..37
-                  LiteralExpression
-                    IntegerLiteral "2" @ 37..38
-          Semicolon ";" @ 38..39
-      RBrace "}" @ 39..40
-  ClassDeclaration
-    ClassKw "class" @ 58..63 leading=[Newline "\n", LineComment "// @formatter:on", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "After" @ 64..69 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 70..71
-      ClassBodyDeclaration
-        FieldDeclaration
-          PrimitiveType
-            IntKw "int" @ 71..74 trailing=[Whitespace " "]
-          VariableDeclaratorList
-            VariableDeclarator
-              Identifier "y" @ 75..76
-              Assign "=" @ 76..77
-              VariableInitializer
-                LiteralExpression
-                  IntegerLiteral "3" @ 77..78
-          Semicolon ";" @ 78..79
-      RBrace "}" @ 79..80
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 18..23 leading=[LineComment "// @formatter:off", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "Raw" @ 24..27 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 28..29
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            FieldDeclaration
+              PrimitiveType
+                AnnotationList
+                IntKw "int" @ 29..32 trailing=[Whitespace " "]
+              VariableDeclaratorList
+                VariableDeclarator
+                  Identifier "x" @ 33..34
+                  Assign "=" @ 34..35
+                  VariableInitializer
+                    BinaryExpression
+                      LiteralExpression
+                        IntegerLiteral "1" @ 35..36
+                      Plus "+" @ 36..37
+                      LiteralExpression
+                        IntegerLiteral "2" @ 37..38
+              Semicolon ";" @ 38..39
+        RBrace "}" @ 39..40
+    ClassDeclaration
+      ClassKw "class" @ 58..63 leading=[Newline "\n", LineComment "// @formatter:on", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "After" @ 64..69 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 70..71
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            FieldDeclaration
+              PrimitiveType
+                AnnotationList
+                IntKw "int" @ 71..74 trailing=[Whitespace " "]
+              VariableDeclaratorList
+                VariableDeclarator
+                  Identifier "y" @ 75..76
+                  Assign "=" @ 76..77
+                  VariableInitializer
+                    LiteralExpression
+                      IntegerLiteral "3" @ 77..78
+              Semicolon ";" @ 78..79
+        RBrace "}" @ 79..80
   Eof "" @ 81..81 leading=[Newline "\n"]
 
 diagnostics:

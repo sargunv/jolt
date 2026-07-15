@@ -16,7 +16,11 @@ fn declared_schema_matches_represented_corpus() {
         let source = read_to_string(&path);
         let parse = parse_compilation_unit(&source);
         let syntax = parse.syntax().unwrap_or_else(|| {
-            panic!("parser produced no represented tree for {}", path.display())
+            panic!(
+                "parser produced no represented tree for {}: {:?}",
+                path.display(),
+                parse.diagnostics()
+            )
         });
         audit.visit(
             &SCHEMA,

@@ -9,10 +9,12 @@ world"
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    StringLiteral "\"hello\\" @ 0..7
-    Identifier "world" @ 8..13 leading=[Newline "\n"]
-    StringLiteral "\"" @ 13..14
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      StringLiteral "\"hello\\" @ 0..7
+      Identifier "world" @ 8..13 leading=[Newline "\n"]
+      StringLiteral "\"" @ 13..14
   Eof "" @ 14..14
 
 diagnostics:

@@ -6,8 +6,7 @@ input:
 class MissingTypeBody;
 
 formatted:
-class MissingTypeBody 
-;
+class MissingTypeBody;
 
 diagnostics:
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(21), end: TextSize(22) }) message=expected type body

@@ -43,418 +43,537 @@ return labels;
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "Example" @ 6..13 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 14..15
-      ClassBodyDeclaration
-        MethodDeclaration
-          ClassType
-            Name
-              Identifier "Object" @ 16..22 leading=[Newline "\n"] trailing=[Whitespace " "]
-          Identifier "pick" @ 23..27
-          LParen "(" @ 27..28
-          FormalParameterList
-            FormalParameter
-              ArrayType
-                ClassType
-                  Name
-                    Identifier "Object" @ 28..34
-                ArrayDimensions
-                  ArrayDimension
-                    LBracket "[" @ 34..35
-                    RBracket "]" @ 35..36 trailing=[Whitespace " "]
-              Identifier "values" @ 37..43
-            Comma "," @ 43..44 trailing=[Whitespace " "]
-            FormalParameter
-              PrimitiveType
-                IntKw "int" @ 45..48 trailing=[Whitespace " "]
-              Identifier "index" @ 49..54
-          RParen ")" @ 54..55 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 56..57
-            BlockStatement
-              ReturnStatement
-                ReturnKw "return" @ 58..64 leading=[Newline "\n"] trailing=[Whitespace " "]
-                ArrayAccessExpression
-                  NameExpression
-                    Identifier "values" @ 65..71
-                  LBracket "[" @ 71..72 trailing=[Whitespace " "]
-                  NameExpression
-                    Identifier "index" @ 73..78 trailing=[Whitespace " "]
-                  RBracket "]" @ 79..80
-                Semicolon ";" @ 80..81
-            RBrace "}" @ 82..83 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        MethodDeclaration
-          ClassType
-            Name
-              Identifier "Object" @ 84..90 leading=[Newline "\n"] trailing=[Whitespace " "]
-          Identifier "pickCommented" @ 91..104
-          LParen "(" @ 104..105
-          FormalParameterList
-            FormalParameter
-              ArrayType
-                ClassType
-                  Name
-                    Identifier "Object" @ 105..111
-                ArrayDimensions
-                  ArrayDimension
-                    LBracket "[" @ 111..112
-                    RBracket "]" @ 112..113 trailing=[Whitespace " "]
-              Identifier "values" @ 114..120
-            Comma "," @ 120..121 trailing=[Whitespace " "]
-            FormalParameter
-              PrimitiveType
-                IntKw "int" @ 122..125 trailing=[Whitespace " "]
-              Identifier "index" @ 126..131
-          RParen ")" @ 131..132 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 133..134
-            BlockStatement
-              ReturnStatement
-                ReturnKw "return" @ 135..141 leading=[Newline "\n"] trailing=[Whitespace " "]
-                ArrayAccessExpression
-                  NameExpression
-                    Identifier "values" @ 142..148
-                  LBracket "[" @ 148..149 trailing=[BlockComment "/* index */", Whitespace " "]
-                  NameExpression
-                    Identifier "index" @ 161..166
-                  RBracket "]" @ 166..167 trailing=[Whitespace " ", BlockComment "/* after */"]
-                Semicolon ";" @ 179..180
-            RBrace "}" @ 181..182 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        MethodDeclaration
-          ClassType
-            Name
-              Identifier "Object" @ 183..189 leading=[Newline "\n"] trailing=[Whitespace " "]
-          Identifier "create" @ 190..196
-          LParen "(" @ 196..197
-          FormalParameterList
-            FormalParameter
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "Example" @ 6..13 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 14..15
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
               ClassType
-                Name
-                  Identifier "Object" @ 197..203 trailing=[Whitespace " "]
-              Identifier "first" @ 204..209
-            Comma "," @ 209..210 trailing=[Whitespace " "]
-            FormalParameter
-              ClassType
-                Name
-                  Identifier "Object" @ 211..217 trailing=[Whitespace " "]
-              Identifier "second" @ 218..224
-          RParen ")" @ 224..225 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 226..227
-            BlockStatement
-              ReturnStatement
-                ReturnKw "return" @ 228..234 leading=[Newline "\n"] trailing=[Whitespace " "]
-                ObjectCreationExpression
-                  ObjectCreationExpression
-                    NewKw "new" @ 235..238 trailing=[Whitespace " "]
-                    ClassType
-                      Name
-                        Identifier "Outer" @ 239..244
-                      TypeArgumentList
-                        Lt "<" @ 244..245
-                        TypeArgument
-                          ClassType
-                            Name
-                              Identifier "String" @ 245..251
-                        Gt ">" @ 251..252
-                    ArgumentList
-                      LParen "(" @ 252..253 trailing=[Whitespace " "]
-                      RParen ")" @ 254..255
-                  Dot "." @ 255..256
-                  NewKw "new" @ 256..259 trailing=[Whitespace " "]
-                  ClassType
+                ClassTypeSegmentList
+                  ClassTypeSegmentNode
+                    AnnotationList
                     Name
-                      Identifier "Inner" @ 260..265
-                  ArgumentList
-                    LParen "(" @ 265..266
-                    NameExpression
-                      Identifier "first" @ 266..271
-                    Comma "," @ 271..272
-                    NameExpression
-                      Identifier "second" @ 272..278
-                    RParen ")" @ 278..279
-                Semicolon ";" @ 279..280
-            RBrace "}" @ 281..282 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        MethodDeclaration
-          ArrayType
-            PrimitiveType
-              IntKw "int" @ 283..286 leading=[Newline "\n"]
-            ArrayDimensions
-              ArrayDimension
-                LBracket "[" @ 286..287
-                RBracket "]" @ 287..288 trailing=[Whitespace " "]
-          Identifier "sized" @ 289..294
-          LParen "(" @ 294..295
-          FormalParameterList
-            FormalParameter
-              PrimitiveType
-                IntKw "int" @ 295..298 trailing=[Whitespace " "]
-              Identifier "count" @ 299..304
-          RParen ")" @ 304..305 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 306..307
-            BlockStatement
-              ReturnStatement
-                ReturnKw "return" @ 308..314 leading=[Newline "\n"] trailing=[Whitespace " "]
-                ArrayCreationExpression
-                  NewKw "new" @ 315..318 trailing=[Whitespace " ", BlockComment "/* array */", Whitespace " "]
+                      Identifier "Object" @ 16..22 leading=[Newline "\n"] trailing=[Whitespace " "]
+              Identifier "pick" @ 23..27
+              LParen "(" @ 27..28
+              FormalParameterList
+                FormalParameter
+                  ParameterModifierList
+                  ArrayType
+                    ClassType
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
+                          Name
+                            Identifier "Object" @ 28..34
+                    ArrayDimensions
+                      ArrayDimension
+                        AnnotationList
+                        LBracket "[" @ 34..35
+                        RBracket "]" @ 35..36 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "values" @ 37..43
+                Comma "," @ 43..44 trailing=[Whitespace " "]
+                FormalParameter
+                  ParameterModifierList
                   PrimitiveType
-                    IntKw "int" @ 331..334
-                  DimExpression
-                    LBracket "[" @ 334..335 trailing=[BlockComment "/* size */", Whitespace " "]
-                    NameExpression
-                      Identifier "count" @ 346..351
-                    RBracket "]" @ 351..352 trailing=[Whitespace " ", BlockComment "/* sized */"]
-                Semicolon ";" @ 364..365
-            RBrace "}" @ 366..367 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        MethodDeclaration
-          ArrayType
-            PrimitiveType
-              IntKw "int" @ 368..371 leading=[Newline "\n"]
-            ArrayDimensions
-              ArrayDimension
-                LBracket "[" @ 371..372
-                RBracket "]" @ 372..373 trailing=[Whitespace " "]
-          Identifier "numbers" @ 374..381
-          LParen "(" @ 381..382
-          RParen ")" @ 382..383 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 384..385
-            BlockStatement
-              ReturnStatement
-                ReturnKw "return" @ 386..392 leading=[Newline "\n"] trailing=[Whitespace " "]
-                ArrayCreationExpression
-                  NewKw "new" @ 393..396 trailing=[Whitespace " "]
-                  ArrayType
-                    PrimitiveType
-                      IntKw "int" @ 397..400
-                    ArrayDimensions
-                      ArrayDimension
-                        LBracket "[" @ 400..401
-                        RBracket "]" @ 401..402 trailing=[Whitespace " "]
-                  ArrayInitializer
-                    LBrace "{" @ 403..404
-                    LiteralExpression
-                      IntegerLiteral "1" @ 404..405
-                    Comma "," @ 405..406
-                    LiteralExpression
-                      IntegerLiteral "2" @ 406..407
-                    Comma "," @ 407..408
-                    LiteralExpression
-                      IntegerLiteral "3" @ 408..409
-                    RBrace "}" @ 409..410
-                Semicolon ";" @ 410..411
-            RBrace "}" @ 412..413 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        MethodDeclaration
-          ArrayType
-            PrimitiveType
-              IntKw "int" @ 414..417 leading=[Newline "\n"]
-            ArrayDimensions
-              ArrayDimension
-                LBracket "[" @ 417..418
-                RBracket "]" @ 418..419 trailing=[Whitespace " "]
-          Identifier "emptyNumbers" @ 420..432
-          LParen "(" @ 432..433
-          RParen ")" @ 433..434 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 435..436
-            BlockStatement
-              ReturnStatement
-                ReturnKw "return" @ 437..443 leading=[Newline "\n"] trailing=[Whitespace " "]
-                ArrayCreationExpression
-                  NewKw "new" @ 444..447 trailing=[Whitespace " "]
-                  ArrayType
-                    PrimitiveType
-                      IntKw "int" @ 448..451
-                    ArrayDimensions
-                      ArrayDimension
-                        LBracket "[" @ 451..452
-                        RBracket "]" @ 452..453 trailing=[Whitespace " "]
-                  ArrayInitializer
-                    LBrace "{" @ 454..455
-                    RBrace "}" @ 455..456
-                Semicolon ";" @ 456..457
-            RBrace "}" @ 458..459 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        MethodDeclaration
-          ArrayType
-            ClassType
-              Name
-                Identifier "String" @ 460..466 leading=[Newline "\n"]
-            ArrayDimensions
-              ArrayDimension
-                LBracket "[" @ 466..467
-                RBracket "]" @ 467..468 trailing=[Whitespace " "]
-          Identifier "emptyLocalLabels" @ 469..485
-          LParen "(" @ 485..486
-          RParen ")" @ 486..487 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 488..489
-            BlockStatement
-              LocalVariableDeclaration
-                ArrayType
-                  ClassType
+                    AnnotationList
+                    IntKw "int" @ 45..48 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "index" @ 49..54
+              RParen ")" @ 54..55 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 56..57
+                BlockStatementList
+                  BlockStatement
+                    ReturnStatement
+                      ReturnKw "return" @ 58..64 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      ArrayAccessExpression
+                        NameExpression
+                          Identifier "values" @ 65..71
+                        LBracket "[" @ 71..72 trailing=[Whitespace " "]
+                        NameExpression
+                          Identifier "index" @ 73..78 trailing=[Whitespace " "]
+                        RBracket "]" @ 79..80
+                      Semicolon ";" @ 80..81
+                RBrace "}" @ 82..83 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            MethodDeclaration
+              ClassType
+                ClassTypeSegmentList
+                  ClassTypeSegmentNode
+                    AnnotationList
                     Name
-                      Identifier "String" @ 490..496 leading=[Newline "\n"]
-                  ArrayDimensions
-                    ArrayDimension
-                      LBracket "[" @ 496..497
-                      RBracket "]" @ 497..498 trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "labels" @ 499..505 trailing=[Whitespace " "]
-                    Assign "=" @ 506..507 trailing=[Whitespace " "]
-                    VariableInitializer
-                      ArrayInitializer
-                        LBrace "{" @ 508..509
-                        RBrace "}" @ 509..510
-              Semicolon ";" @ 510..511
-            BlockStatement
-              ReturnStatement
-                ReturnKw "return" @ 512..518 leading=[Newline "\n"] trailing=[Whitespace " "]
-                NameExpression
-                  Identifier "labels" @ 519..525
-                Semicolon ";" @ 525..526
-            RBrace "}" @ 527..528 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        MethodDeclaration
-          ArrayType
-            PrimitiveType
-              IntKw "int" @ 529..532 leading=[Newline "\n"]
-            ArrayDimensions
-              ArrayDimension
-                LBracket "[" @ 532..533
-                RBracket "]" @ 533..534 trailing=[Whitespace " "]
-          Identifier "commentedNumbers" @ 535..551
-          LParen "(" @ 551..552
-          RParen ")" @ 552..553 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 554..555
-            BlockStatement
-              ReturnStatement
-                ReturnKw "return" @ 556..562 leading=[Newline "\n"] trailing=[Whitespace " "]
-                ArrayCreationExpression
-                  NewKw "new" @ 563..566 trailing=[Whitespace " "]
-                  ArrayType
-                    PrimitiveType
-                      IntKw "int" @ 567..570
-                    ArrayDimensions
-                      ArrayDimension
-                        LBracket "[" @ 570..571
-                        RBracket "]" @ 571..572 trailing=[Whitespace " "]
-                  ArrayInitializer
-                    LBrace "{" @ 573..574 trailing=[BlockComment "/* start */", Whitespace " "]
-                    LiteralExpression
-                      IntegerLiteral "1" @ 586..587
-                    Comma "," @ 587..588 trailing=[Whitespace " ", LineComment "// one"]
-                    LiteralExpression
-                      IntegerLiteral "2" @ 596..597 leading=[Newline "\n"]
-                    Comma "," @ 597..598 trailing=[Whitespace " ", BlockComment "/* two */", Whitespace " "]
-                    LiteralExpression
-                      IntegerLiteral "3" @ 609..610 trailing=[Whitespace " ", BlockComment "/* three */"]
-                    Comma "," @ 622..623 trailing=[Whitespace " ", LineComment "// trailing"]
-                    RBrace "}" @ 636..637 leading=[Newline "\n"]
-                Semicolon ";" @ 637..638
-            RBrace "}" @ 639..640 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        MethodDeclaration
-          ArrayType
-            ClassType
-              Name
-                Identifier "String" @ 641..647 leading=[Newline "\n"]
-            ArrayDimensions
-              ArrayDimension
-                LBracket "[" @ 647..648
-                RBracket "]" @ 648..649 trailing=[Whitespace " "]
-          Identifier "labels" @ 650..656
-          LParen "(" @ 656..657
-          RParen ")" @ 657..658 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 659..660
-            BlockStatement
-              ReturnStatement
-                ReturnKw "return" @ 661..667 leading=[Newline "\n"] trailing=[Whitespace " "]
-                ArrayCreationExpression
-                  NewKw "new" @ 668..671 trailing=[Whitespace " "]
+                      Identifier "Object" @ 84..90 leading=[Newline "\n"] trailing=[Whitespace " "]
+              Identifier "pickCommented" @ 91..104
+              LParen "(" @ 104..105
+              FormalParameterList
+                FormalParameter
+                  ParameterModifierList
                   ArrayType
                     ClassType
-                      Name
-                        Identifier "String" @ 672..678
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
+                          Name
+                            Identifier "Object" @ 105..111
                     ArrayDimensions
                       ArrayDimension
-                        LBracket "[" @ 678..679
-                        RBracket "]" @ 679..680 trailing=[Whitespace " "]
-                  ArrayInitializer
-                    LBrace "{" @ 681..682
-                    LiteralExpression
-                      StringLiteral "\"a very long label that forces the initializer to break across lines\"" @ 682..751
-                    Comma "," @ 751..752
-                    LiteralExpression
-                      StringLiteral "\"another very long label that keeps each item on its own line\"" @ 752..814
-                    Comma "," @ 814..815
-                    LiteralExpression
-                      StringLiteral "\"a third long label for the trailing comma policy\"" @ 815..865
-                    RBrace "}" @ 865..866
-                Semicolon ";" @ 866..867
-            RBrace "}" @ 868..869 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        MethodDeclaration
-          ArrayType
-            ClassType
-              Name
-                Identifier "String" @ 870..876 leading=[Newline "\n"]
-            ArrayDimensions
-              ArrayDimension
-                LBracket "[" @ 876..877
-                RBracket "]" @ 877..878 trailing=[Whitespace " "]
-          Identifier "localLabels" @ 879..890
-          LParen "(" @ 890..891
-          RParen ")" @ 891..892 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 893..894
-            BlockStatement
-              LocalVariableDeclaration
-                ArrayType
-                  ClassType
+                        AnnotationList
+                        LBracket "[" @ 111..112
+                        RBracket "]" @ 112..113 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "values" @ 114..120
+                Comma "," @ 120..121 trailing=[Whitespace " "]
+                FormalParameter
+                  ParameterModifierList
+                  PrimitiveType
+                    AnnotationList
+                    IntKw "int" @ 122..125 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "index" @ 126..131
+              RParen ")" @ 131..132 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 133..134
+                BlockStatementList
+                  BlockStatement
+                    ReturnStatement
+                      ReturnKw "return" @ 135..141 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      ArrayAccessExpression
+                        NameExpression
+                          Identifier "values" @ 142..148
+                        LBracket "[" @ 148..149 trailing=[BlockComment "/* index */", Whitespace " "]
+                        NameExpression
+                          Identifier "index" @ 161..166
+                        RBracket "]" @ 166..167 trailing=[Whitespace " ", BlockComment "/* after */"]
+                      Semicolon ";" @ 179..180
+                RBrace "}" @ 181..182 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            MethodDeclaration
+              ClassType
+                ClassTypeSegmentList
+                  ClassTypeSegmentNode
+                    AnnotationList
                     Name
-                      Identifier "String" @ 895..901 leading=[Newline "\n"]
-                  ArrayDimensions
-                    ArrayDimension
-                      LBracket "[" @ 901..902
-                      RBracket "]" @ 902..903 trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "labels" @ 904..910 trailing=[Whitespace " "]
-                    Assign "=" @ 911..912 trailing=[Whitespace " "]
-                    VariableInitializer
-                      ArrayInitializer
-                        LBrace "{" @ 913..914
-                        LiteralExpression
-                          StringLiteral "\"a very long local label that forces the initializer to break across lines\"" @ 914..989
-                        Comma "," @ 989..990
-                        LiteralExpression
-                          StringLiteral "\"another very long local label that keeps each item on its own line\"" @ 990..1058
-                        Comma "," @ 1058..1059
-                        LiteralExpression
-                          StringLiteral "\"a third long local label for the trailing comma policy\"" @ 1059..1115
-                        RBrace "}" @ 1115..1116
-              Semicolon ";" @ 1116..1117
-            BlockStatement
-              ReturnStatement
-                ReturnKw "return" @ 1118..1124 leading=[Newline "\n"] trailing=[Whitespace " "]
-                NameExpression
-                  Identifier "labels" @ 1125..1131
-                Semicolon ";" @ 1131..1132
-            RBrace "}" @ 1133..1134 leading=[Newline "\n"]
-      RBrace "}" @ 1135..1136 leading=[Newline "\n"]
+                      Identifier "Object" @ 183..189 leading=[Newline "\n"] trailing=[Whitespace " "]
+              Identifier "create" @ 190..196
+              LParen "(" @ 196..197
+              FormalParameterList
+                FormalParameter
+                  ParameterModifierList
+                  ClassType
+                    ClassTypeSegmentList
+                      ClassTypeSegmentNode
+                        AnnotationList
+                        Name
+                          Identifier "Object" @ 197..203 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "first" @ 204..209
+                Comma "," @ 209..210 trailing=[Whitespace " "]
+                FormalParameter
+                  ParameterModifierList
+                  ClassType
+                    ClassTypeSegmentList
+                      ClassTypeSegmentNode
+                        AnnotationList
+                        Name
+                          Identifier "Object" @ 211..217 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "second" @ 218..224
+              RParen ")" @ 224..225 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 226..227
+                BlockStatementList
+                  BlockStatement
+                    ReturnStatement
+                      ReturnKw "return" @ 228..234 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      ObjectCreationExpression
+                        ObjectCreationExpression
+                          NewKw "new" @ 235..238 trailing=[Whitespace " "]
+                          ClassType
+                            ClassTypeSegmentList
+                              ClassTypeSegmentNode
+                                AnnotationList
+                                Name
+                                  Identifier "Outer" @ 239..244
+                                TypeArgumentList
+                                  Lt "<" @ 244..245
+                                  TypeArgumentSeparatedList
+                                    TypeArgument
+                                      AnnotationList
+                                      ClassType
+                                        ClassTypeSegmentList
+                                          ClassTypeSegmentNode
+                                            AnnotationList
+                                            Name
+                                              Identifier "String" @ 245..251
+                                  Gt ">" @ 251..252
+                          ArgumentList
+                            LParen "(" @ 252..253 trailing=[Whitespace " "]
+                            ExpressionList
+                            RParen ")" @ 254..255
+                        Dot "." @ 255..256
+                        NewKw "new" @ 256..259 trailing=[Whitespace " "]
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "Inner" @ 260..265
+                        ArgumentList
+                          LParen "(" @ 265..266
+                          ExpressionList
+                            NameExpression
+                              Identifier "first" @ 266..271
+                            Comma "," @ 271..272
+                            NameExpression
+                              Identifier "second" @ 272..278
+                          RParen ")" @ 278..279
+                      Semicolon ";" @ 279..280
+                RBrace "}" @ 281..282 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            MethodDeclaration
+              ArrayType
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 283..286 leading=[Newline "\n"]
+                ArrayDimensions
+                  ArrayDimension
+                    AnnotationList
+                    LBracket "[" @ 286..287
+                    RBracket "]" @ 287..288 trailing=[Whitespace " "]
+              Identifier "sized" @ 289..294
+              LParen "(" @ 294..295
+              FormalParameterList
+                FormalParameter
+                  ParameterModifierList
+                  PrimitiveType
+                    AnnotationList
+                    IntKw "int" @ 295..298 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "count" @ 299..304
+              RParen ")" @ 304..305 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 306..307
+                BlockStatementList
+                  BlockStatement
+                    ReturnStatement
+                      ReturnKw "return" @ 308..314 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      ArrayCreationExpression
+                        NewKw "new" @ 315..318 trailing=[Whitespace " ", BlockComment "/* array */", Whitespace " "]
+                        PrimitiveType
+                          AnnotationList
+                          IntKw "int" @ 331..334
+                        DimExpressionList
+                          DimExpression
+                            AnnotationList
+                            LBracket "[" @ 334..335 trailing=[BlockComment "/* size */", Whitespace " "]
+                            NameExpression
+                              Identifier "count" @ 346..351
+                            RBracket "]" @ 351..352 trailing=[Whitespace " ", BlockComment "/* sized */"]
+                      Semicolon ";" @ 364..365
+                RBrace "}" @ 366..367 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            MethodDeclaration
+              ArrayType
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 368..371 leading=[Newline "\n"]
+                ArrayDimensions
+                  ArrayDimension
+                    AnnotationList
+                    LBracket "[" @ 371..372
+                    RBracket "]" @ 372..373 trailing=[Whitespace " "]
+              Identifier "numbers" @ 374..381
+              LParen "(" @ 381..382
+              RParen ")" @ 382..383 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 384..385
+                BlockStatementList
+                  BlockStatement
+                    ReturnStatement
+                      ReturnKw "return" @ 386..392 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      ArrayCreationExpression
+                        NewKw "new" @ 393..396 trailing=[Whitespace " "]
+                        ArrayType
+                          PrimitiveType
+                            AnnotationList
+                            IntKw "int" @ 397..400
+                          ArrayDimensions
+                            ArrayDimension
+                              AnnotationList
+                              LBracket "[" @ 400..401
+                              RBracket "]" @ 401..402 trailing=[Whitespace " "]
+                        DimExpressionList
+                        ArrayInitializer
+                          LBrace "{" @ 403..404
+                          VariableInitializerList
+                            LiteralExpression
+                              IntegerLiteral "1" @ 404..405
+                            Comma "," @ 405..406
+                            LiteralExpression
+                              IntegerLiteral "2" @ 406..407
+                            Comma "," @ 407..408
+                            LiteralExpression
+                              IntegerLiteral "3" @ 408..409
+                          RBrace "}" @ 409..410
+                      Semicolon ";" @ 410..411
+                RBrace "}" @ 412..413 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            MethodDeclaration
+              ArrayType
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 414..417 leading=[Newline "\n"]
+                ArrayDimensions
+                  ArrayDimension
+                    AnnotationList
+                    LBracket "[" @ 417..418
+                    RBracket "]" @ 418..419 trailing=[Whitespace " "]
+              Identifier "emptyNumbers" @ 420..432
+              LParen "(" @ 432..433
+              RParen ")" @ 433..434 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 435..436
+                BlockStatementList
+                  BlockStatement
+                    ReturnStatement
+                      ReturnKw "return" @ 437..443 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      ArrayCreationExpression
+                        NewKw "new" @ 444..447 trailing=[Whitespace " "]
+                        ArrayType
+                          PrimitiveType
+                            AnnotationList
+                            IntKw "int" @ 448..451
+                          ArrayDimensions
+                            ArrayDimension
+                              AnnotationList
+                              LBracket "[" @ 451..452
+                              RBracket "]" @ 452..453 trailing=[Whitespace " "]
+                        DimExpressionList
+                        ArrayInitializer
+                          LBrace "{" @ 454..455
+                          VariableInitializerList
+                          RBrace "}" @ 455..456
+                      Semicolon ";" @ 456..457
+                RBrace "}" @ 458..459 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            MethodDeclaration
+              ArrayType
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 460..466 leading=[Newline "\n"]
+                ArrayDimensions
+                  ArrayDimension
+                    AnnotationList
+                    LBracket "[" @ 466..467
+                    RBracket "]" @ 467..468 trailing=[Whitespace " "]
+              Identifier "emptyLocalLabels" @ 469..485
+              LParen "(" @ 485..486
+              RParen ")" @ 486..487 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 488..489
+                BlockStatementList
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      ArrayType
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "String" @ 490..496 leading=[Newline "\n"]
+                        ArrayDimensions
+                          ArrayDimension
+                            AnnotationList
+                            LBracket "[" @ 496..497
+                            RBracket "]" @ 497..498 trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "labels" @ 499..505 trailing=[Whitespace " "]
+                          Assign "=" @ 506..507 trailing=[Whitespace " "]
+                          VariableInitializer
+                            ArrayInitializer
+                              LBrace "{" @ 508..509
+                              VariableInitializerList
+                              RBrace "}" @ 509..510
+                    Semicolon ";" @ 510..511
+                  BlockStatement
+                    ReturnStatement
+                      ReturnKw "return" @ 512..518 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      NameExpression
+                        Identifier "labels" @ 519..525
+                      Semicolon ";" @ 525..526
+                RBrace "}" @ 527..528 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            MethodDeclaration
+              ArrayType
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 529..532 leading=[Newline "\n"]
+                ArrayDimensions
+                  ArrayDimension
+                    AnnotationList
+                    LBracket "[" @ 532..533
+                    RBracket "]" @ 533..534 trailing=[Whitespace " "]
+              Identifier "commentedNumbers" @ 535..551
+              LParen "(" @ 551..552
+              RParen ")" @ 552..553 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 554..555
+                BlockStatementList
+                  BlockStatement
+                    ReturnStatement
+                      ReturnKw "return" @ 556..562 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      ArrayCreationExpression
+                        NewKw "new" @ 563..566 trailing=[Whitespace " "]
+                        ArrayType
+                          PrimitiveType
+                            AnnotationList
+                            IntKw "int" @ 567..570
+                          ArrayDimensions
+                            ArrayDimension
+                              AnnotationList
+                              LBracket "[" @ 570..571
+                              RBracket "]" @ 571..572 trailing=[Whitespace " "]
+                        DimExpressionList
+                        ArrayInitializer
+                          LBrace "{" @ 573..574 trailing=[BlockComment "/* start */", Whitespace " "]
+                          VariableInitializerList
+                            LiteralExpression
+                              IntegerLiteral "1" @ 586..587
+                            Comma "," @ 587..588 trailing=[Whitespace " ", LineComment "// one"]
+                            LiteralExpression
+                              IntegerLiteral "2" @ 596..597 leading=[Newline "\n"]
+                            Comma "," @ 597..598 trailing=[Whitespace " ", BlockComment "/* two */", Whitespace " "]
+                            LiteralExpression
+                              IntegerLiteral "3" @ 609..610 trailing=[Whitespace " ", BlockComment "/* three */"]
+                            Comma "," @ 622..623 trailing=[Whitespace " ", LineComment "// trailing"]
+                          RBrace "}" @ 636..637 leading=[Newline "\n"]
+                      Semicolon ";" @ 637..638
+                RBrace "}" @ 639..640 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            MethodDeclaration
+              ArrayType
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 641..647 leading=[Newline "\n"]
+                ArrayDimensions
+                  ArrayDimension
+                    AnnotationList
+                    LBracket "[" @ 647..648
+                    RBracket "]" @ 648..649 trailing=[Whitespace " "]
+              Identifier "labels" @ 650..656
+              LParen "(" @ 656..657
+              RParen ")" @ 657..658 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 659..660
+                BlockStatementList
+                  BlockStatement
+                    ReturnStatement
+                      ReturnKw "return" @ 661..667 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      ArrayCreationExpression
+                        NewKw "new" @ 668..671 trailing=[Whitespace " "]
+                        ArrayType
+                          ClassType
+                            ClassTypeSegmentList
+                              ClassTypeSegmentNode
+                                AnnotationList
+                                Name
+                                  Identifier "String" @ 672..678
+                          ArrayDimensions
+                            ArrayDimension
+                              AnnotationList
+                              LBracket "[" @ 678..679
+                              RBracket "]" @ 679..680 trailing=[Whitespace " "]
+                        DimExpressionList
+                        ArrayInitializer
+                          LBrace "{" @ 681..682
+                          VariableInitializerList
+                            LiteralExpression
+                              StringLiteral "\"a very long label that forces the initializer to break across lines\"" @ 682..751
+                            Comma "," @ 751..752
+                            LiteralExpression
+                              StringLiteral "\"another very long label that keeps each item on its own line\"" @ 752..814
+                            Comma "," @ 814..815
+                            LiteralExpression
+                              StringLiteral "\"a third long label for the trailing comma policy\"" @ 815..865
+                          RBrace "}" @ 865..866
+                      Semicolon ";" @ 866..867
+                RBrace "}" @ 868..869 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            MethodDeclaration
+              ArrayType
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "String" @ 870..876 leading=[Newline "\n"]
+                ArrayDimensions
+                  ArrayDimension
+                    AnnotationList
+                    LBracket "[" @ 876..877
+                    RBracket "]" @ 877..878 trailing=[Whitespace " "]
+              Identifier "localLabels" @ 879..890
+              LParen "(" @ 890..891
+              RParen ")" @ 891..892 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 893..894
+                BlockStatementList
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      ArrayType
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "String" @ 895..901 leading=[Newline "\n"]
+                        ArrayDimensions
+                          ArrayDimension
+                            AnnotationList
+                            LBracket "[" @ 901..902
+                            RBracket "]" @ 902..903 trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "labels" @ 904..910 trailing=[Whitespace " "]
+                          Assign "=" @ 911..912 trailing=[Whitespace " "]
+                          VariableInitializer
+                            ArrayInitializer
+                              LBrace "{" @ 913..914
+                              VariableInitializerList
+                                LiteralExpression
+                                  StringLiteral "\"a very long local label that forces the initializer to break across lines\"" @ 914..989
+                                Comma "," @ 989..990
+                                LiteralExpression
+                                  StringLiteral "\"another very long local label that keeps each item on its own line\"" @ 990..1058
+                                Comma "," @ 1058..1059
+                                LiteralExpression
+                                  StringLiteral "\"a third long local label for the trailing comma policy\"" @ 1059..1115
+                              RBrace "}" @ 1115..1116
+                    Semicolon ";" @ 1116..1117
+                  BlockStatement
+                    ReturnStatement
+                      ReturnKw "return" @ 1118..1124 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      NameExpression
+                        Identifier "labels" @ 1125..1131
+                      Semicolon ";" @ 1131..1132
+                RBrace "}" @ 1133..1134 leading=[Newline "\n"]
+        RBrace "}" @ 1135..1136 leading=[Newline "\n"]
   Eof "" @ 1137..1137 leading=[Newline "\n"]
 
 diagnostics:

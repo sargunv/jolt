@@ -9,13 +9,18 @@ b
 syntax:
 syntax:
 CompilationUnit
-  FieldDeclaration
-    ClassType
-      Name
-        Identifier "a" @ 0..1
-    VariableDeclaratorList
-      VariableDeclarator
-        Identifier "b" @ 3..4 leading=[Newline "\r\n"]
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    FieldDeclaration
+      ClassType
+        ClassTypeSegmentList
+          ClassTypeSegmentNode
+            AnnotationList
+            Name
+              Identifier "a" @ 0..1
+      VariableDeclaratorList
+        VariableDeclarator
+          Identifier "b" @ 3..4 leading=[Newline "\r\n"]
   Eof "" @ 4..4
 
 diagnostics:

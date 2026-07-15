@@ -3,17 +3,25 @@ use super::{JavaSyntaxKind, Parser};
 impl Parser<'_> {
     pub(super) fn parse_type(&mut self) -> jolt_syntax::CompletedMarker {
         let ty = self.start();
-        self.parse_annotations();
+        let mut lookahead = self.lookahead();
+        lookahead.skip_annotations();
+        let starts_class_type = lookahead.at_name_segment();
 
-        let base_kind = if self.at_primitive_type() {
-            self.bump();
-            JavaSyntaxKind::PrimitiveType
-        } else if self.at_name_segment() {
-            self.parse_class_type_tail();
+        let base_kind = if starts_class_type {
+            let segments = self.start();
+            let segment = self.start();
+            self.parse_annotations();
+            self.parse_class_type_tail_from(segments, segment);
             JavaSyntaxKind::ClassType
         } else {
-            self.expected_here("expected type");
-            return self.complete(ty, JavaSyntaxKind::ErrorNode);
+            self.parse_annotations();
+            if self.at_primitive_type() {
+                self.bump();
+                JavaSyntaxKind::PrimitiveType
+            } else {
+                self.expected_here("expected type");
+                return self.complete(ty, JavaSyntaxKind::ErrorNode);
+            }
         };
 
         if self.starts_array_dimensions() {
@@ -34,10 +42,14 @@ impl Parser<'_> {
 
     pub(super) fn parse_class_type(&mut self) -> jolt_syntax::CompletedMarker {
         let ty = self.start();
-        self.parse_annotations();
+        let mut lookahead = self.lookahead();
+        lookahead.skip_annotations();
 
-        if self.at_name_segment() {
-            self.parse_class_type_tail();
+        if lookahead.at_name_segment() {
+            let segments = self.start();
+            let segment = self.start();
+            self.parse_annotations();
+            self.parse_class_type_tail_from(segments, segment);
             let completed = self.complete(ty, JavaSyntaxKind::ClassType);
             if self.starts_array_dimensions() {
                 let error = self.precede(completed);
@@ -48,6 +60,7 @@ impl Parser<'_> {
                 completed
             }
         } else {
+            self.parse_annotations();
             self.expected_here("expected class or interface type");
             if self.at_primitive_type() || self.at(JavaSyntaxKind::VoidKw) {
                 self.bump();
@@ -75,9 +88,13 @@ impl Parser<'_> {
         }
 
         let intersection = self.precede(ty);
+        self.bump();
+        let remaining = self.start();
+        self.parse_type();
         while self.eat(JavaSyntaxKind::Amp) {
             self.parse_type();
         }
+        self.complete(remaining, JavaSyntaxKind::TypeAmpList);
         self.complete(intersection, JavaSyntaxKind::IntersectionType)
     }
 
@@ -88,9 +105,13 @@ impl Parser<'_> {
         }
 
         let intersection = self.precede(ty);
+        self.bump();
+        let remaining = self.start();
+        self.parse_class_type();
         while self.eat(JavaSyntaxKind::Amp) {
             self.parse_class_type();
         }
+        self.complete(remaining, JavaSyntaxKind::TypeAmpList);
         self.complete(intersection, JavaSyntaxKind::IntersectionType)
     }
 
@@ -101,46 +122,71 @@ impl Parser<'_> {
         }
 
         let union = self.precede(ty);
+        self.bump();
+        let remaining = self.start();
+        self.parse_class_type();
         while self.eat(JavaSyntaxKind::Bar) {
             self.parse_class_type();
         }
+        self.complete(remaining, JavaSyntaxKind::TypeBarList);
         self.complete(union, JavaSyntaxKind::UnionType)
     }
 
-    pub(super) fn parse_class_type_tail(&mut self) {
-        if !self.at_name_segment() {
-            self.expected_here("expected type");
-            return;
-        }
-
+    fn parse_class_type_tail_from(
+        &mut self,
+        segments: jolt_syntax::Marker,
+        mut segment: jolt_syntax::Marker,
+    ) {
         self.parse_class_type_name_run();
         self.parse_optional_type_argument_list();
+        self.complete(segment, JavaSyntaxKind::ClassTypeSegmentNode);
         while self.dot_is_followed_by_annotated_name() {
             self.bump();
+            segment = self.start();
             self.parse_annotations();
             self.parse_class_type_name_run();
             self.parse_optional_type_argument_list();
+            self.complete(segment, JavaSyntaxKind::ClassTypeSegmentNode);
         }
+        self.complete(segments, JavaSyntaxKind::ClassTypeSegmentList);
     }
 
     pub(super) fn parse_class_type_name_run(&mut self) {
         let name = self.start();
-        self.bump();
-        let mut qualified = false;
-        while !self.at(JavaSyntaxKind::Lt) && self.dot_is_followed_by_annotated_name() {
-            qualified = true;
+        let mut lookahead = self.lookahead();
+        lookahead.bump();
+        let qualified = if lookahead.at(JavaSyntaxKind::Dot) {
+            lookahead.bump();
+            lookahead.skip_annotations();
+            lookahead.at_name_segment()
+        } else {
+            false
+        };
+        if !qualified {
             self.bump();
+            self.complete(name, JavaSyntaxKind::Name);
+            return;
+        }
+
+        let first_segment = self.start();
+        self.parse_annotations();
+        self.bump();
+        self.complete(first_segment, JavaSyntaxKind::QualifiedNameSegmentNode);
+        self.bump();
+
+        let remaining_segments = self.start();
+        loop {
+            let segment = self.start();
             self.parse_annotations();
             self.bump();
+            self.complete(segment, JavaSyntaxKind::QualifiedNameSegmentNode);
+            if self.at(JavaSyntaxKind::Lt) || !self.dot_is_followed_by_annotated_name() {
+                break;
+            }
+            self.bump();
         }
-        self.complete(
-            name,
-            if qualified {
-                JavaSyntaxKind::QualifiedName
-            } else {
-                JavaSyntaxKind::Name
-            },
-        );
+        self.complete(remaining_segments, JavaSyntaxKind::NameSegmentDotList);
+        self.complete(name, JavaSyntaxKind::QualifiedName);
     }
 
     pub(super) fn parse_optional_type_argument_list(&mut self) -> bool {
@@ -150,12 +196,14 @@ impl Parser<'_> {
 
         let list = self.start();
         self.bump();
+        let arguments = self.start();
         while !self.at_eof() && !self.at_type_argument_close() {
             self.parse_type_argument();
             if !self.eat(JavaSyntaxKind::Comma) {
                 break;
             }
         }
+        self.complete(arguments, JavaSyntaxKind::TypeArgumentSeparatedList);
         self.eat_type_argument_close();
         self.complete(list, JavaSyntaxKind::TypeArgumentList);
         true
@@ -197,12 +245,14 @@ impl Parser<'_> {
 
     pub(super) fn parse_annotation_element_values(&mut self, stop: JavaSyntaxKind) {
         let list = self.start();
+        let arguments = self.start();
         while !self.at_eof() && !self.at(stop) {
             self.parse_annotation_element_value_or_pair(stop);
             if !self.eat(JavaSyntaxKind::Comma) {
                 break;
             }
         }
+        self.complete(arguments, JavaSyntaxKind::AnnotationElementArgumentList);
         self.complete(list, JavaSyntaxKind::AnnotationElementList);
     }
 
@@ -228,10 +278,12 @@ impl Parser<'_> {
         if self.at(JavaSyntaxKind::LBrace) {
             let initializer = self.start();
             self.bump();
+            let values = self.start();
             while !self.at_eof() && !self.at(JavaSyntaxKind::RBrace) {
                 self.parse_annotation_element_value(JavaSyntaxKind::RBrace);
                 self.eat(JavaSyntaxKind::Comma);
             }
+            self.complete(values, JavaSyntaxKind::AnnotationElementValueList);
             self.expect(
                 JavaSyntaxKind::RBrace,
                 "expected `}` after annotation array initializer",

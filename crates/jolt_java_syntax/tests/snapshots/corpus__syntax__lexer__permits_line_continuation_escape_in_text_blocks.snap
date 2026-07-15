@@ -12,8 +12,10 @@ d
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    TextBlockLiteral "\"\"\"\na\\\nb\\\rc\\\r\nd\n\"\"\"" @ 0..19
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      TextBlockLiteral "\"\"\"\na\\\nb\\\rc\\\r\nd\n\"\"\"" @ 0..19
   Eof "" @ 19..19
 
 diagnostics:

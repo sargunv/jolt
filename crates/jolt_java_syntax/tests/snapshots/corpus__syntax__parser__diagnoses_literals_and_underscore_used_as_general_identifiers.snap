@@ -16,49 +16,55 @@ syntax:
 syntax:
 CompilationUnit
   PackageDeclaration
+    AnnotationList
     PackageKw "package" @ 0..7 trailing=[Whitespace " "]
-  ErrorNode
-    BooleanLiteral "true" @ 8..12
-    Semicolon ";" @ 12..13
-  ClassDeclaration
-    ClassKw "class" @ 15..20 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "InvalidIdentifiers" @ 21..39 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 40..41
-      ClassBodyDeclaration
-        FieldDeclaration
-          PrimitiveType
-            IntKw "int" @ 46..49 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          VariableDeclaratorList
-            VariableDeclarator
-      ClassBodyDeclaration
-        ErrorNode
-          BooleanLiteral "false" @ 50..55
-          Semicolon ";" @ 55..56
-      ClassBodyDeclaration
-        FieldDeclaration
-          PrimitiveType
-            IntKw "int" @ 61..64 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          VariableDeclaratorList
-            VariableDeclarator
-      ClassBodyDeclaration
-        ErrorNode
-          UnderscoreKw "_" @ 65..66
-          Semicolon ";" @ 66..67
-      ClassBodyDeclaration
-        ErrorNode
-          BooleanLiteral "true" @ 72..76 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "value" @ 77..82
-          Semicolon ";" @ 82..83
-      ClassBodyDeclaration
-        ErrorNode
-          VoidKw "void" @ 88..92 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          NullLiteral "null" @ 93..97
-          LParen "(" @ 97..98
-          RParen ")" @ 98..99 trailing=[Whitespace " "]
-          LBrace "{" @ 100..101
-          RBrace "}" @ 101..102
-      RBrace "}" @ 103..104 leading=[Newline "\n"]
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      BooleanLiteral "true" @ 8..12
+      Semicolon ";" @ 12..13
+    ClassDeclaration
+      ClassKw "class" @ 15..20 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "InvalidIdentifiers" @ 21..39 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 40..41
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            FieldDeclaration
+              PrimitiveType
+                AnnotationList
+                IntKw "int" @ 46..49 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              VariableDeclaratorList
+                VariableDeclarator
+          ClassBodyDeclaration
+            ErrorNode
+              BooleanLiteral "false" @ 50..55
+              Semicolon ";" @ 55..56
+          ClassBodyDeclaration
+            FieldDeclaration
+              PrimitiveType
+                AnnotationList
+                IntKw "int" @ 61..64 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              VariableDeclaratorList
+                VariableDeclarator
+          ClassBodyDeclaration
+            ErrorNode
+              UnderscoreKw "_" @ 65..66
+              Semicolon ";" @ 66..67
+          ClassBodyDeclaration
+            ErrorNode
+              BooleanLiteral "true" @ 72..76 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Identifier "value" @ 77..82
+              Semicolon ";" @ 82..83
+          ClassBodyDeclaration
+            ErrorNode
+              VoidKw "void" @ 88..92 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              NullLiteral "null" @ 93..97
+              LParen "(" @ 97..98
+              RParen ")" @ 98..99 trailing=[Whitespace " "]
+              LBrace "{" @ 100..101
+              RBrace "}" @ 101..102
+        RBrace "}" @ 103..104 leading=[Newline "\n"]
   Eof "" @ 105..105 leading=[Newline "\n"]
 
 diagnostics:

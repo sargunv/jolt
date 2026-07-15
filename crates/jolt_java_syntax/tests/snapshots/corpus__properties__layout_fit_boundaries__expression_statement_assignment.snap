@@ -12,46 +12,50 @@ class Example {
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "Example" @ 6..13 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 14..15
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 18..22 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-          Identifier "method" @ 23..29
-          LParen "(" @ 29..30
-          RParen ")" @ 30..31 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 32..33
-            BlockStatement
-              ExpressionStatement
-                AssignmentExpression
-                  NameExpression
-                    Identifier "currentEstimate" @ 38..53 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                  Assign "=" @ 54..55 trailing=[Whitespace " "]
-                  BinaryExpression
-                    ParenthesizedExpression
-                      LParen "(" @ 56..57
-                      BinaryExpression
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "Example" @ 6..13 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 14..15
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 18..22 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Identifier "method" @ 23..29
+              LParen "(" @ 29..30
+              RParen ")" @ 30..31 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 32..33
+                BlockStatementList
+                  BlockStatement
+                    ExpressionStatement
+                      AssignmentExpression
                         NameExpression
-                          Identifier "currentEstimate" @ 57..72 trailing=[Whitespace " "]
-                        Plus "+" @ 73..74 trailing=[Whitespace " "]
+                          Identifier "currentEstimate" @ 38..53 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                        Assign "=" @ 54..55 trailing=[Whitespace " "]
                         BinaryExpression
-                          NameExpression
-                            Identifier "xxxxxxxxxxxxx" @ 75..88 trailing=[Whitespace " "]
-                          Slash "/" @ 89..90 trailing=[Whitespace " "]
-                          NameExpression
-                            Identifier "currentEstimate" @ 91..106
-                      RParen ")" @ 106..107 trailing=[Whitespace " "]
-                    Slash "/" @ 108..109 trailing=[Whitespace " "]
-                    LiteralExpression
-                      FloatingPointLiteral "2.0f" @ 110..114
-                Semicolon ";" @ 114..115
-            RBrace "}" @ 118..119 leading=[Newline "\n", Whitespace "  "]
-      RBrace "}" @ 120..121 leading=[Newline "\n"]
+                          ParenthesizedExpression
+                            LParen "(" @ 56..57
+                            BinaryExpression
+                              NameExpression
+                                Identifier "currentEstimate" @ 57..72 trailing=[Whitespace " "]
+                              Plus "+" @ 73..74 trailing=[Whitespace " "]
+                              BinaryExpression
+                                NameExpression
+                                  Identifier "xxxxxxxxxxxxx" @ 75..88 trailing=[Whitespace " "]
+                                Slash "/" @ 89..90 trailing=[Whitespace " "]
+                                NameExpression
+                                  Identifier "currentEstimate" @ 91..106
+                            RParen ")" @ 106..107 trailing=[Whitespace " "]
+                          Slash "/" @ 108..109 trailing=[Whitespace " "]
+                          LiteralExpression
+                            FloatingPointLiteral "2.0f" @ 110..114
+                      Semicolon ";" @ 114..115
+                RBrace "}" @ 118..119 leading=[Newline "\n", Whitespace "  "]
+        RBrace "}" @ 120..121 leading=[Newline "\n"]
   Eof "" @ 122..122 leading=[Newline "\n"]
 
 diagnostics:

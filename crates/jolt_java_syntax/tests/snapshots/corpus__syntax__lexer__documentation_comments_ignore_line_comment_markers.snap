@@ -8,20 +8,24 @@ int a; /** // not a line comment */ int b;
 syntax:
 syntax:
 CompilationUnit
-  FieldDeclaration
-    PrimitiveType
-      IntKw "int" @ 0..3 trailing=[Whitespace " "]
-    VariableDeclaratorList
-      VariableDeclarator
-        Identifier "a" @ 4..5
-    Semicolon ";" @ 5..6 trailing=[Whitespace " ", DocComment "/** // not a line comment */", Whitespace " "]
-  FieldDeclaration
-    PrimitiveType
-      IntKw "int" @ 36..39 trailing=[Whitespace " "]
-    VariableDeclaratorList
-      VariableDeclarator
-        Identifier "b" @ 40..41
-    Semicolon ";" @ 41..42
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    FieldDeclaration
+      PrimitiveType
+        AnnotationList
+        IntKw "int" @ 0..3 trailing=[Whitespace " "]
+      VariableDeclaratorList
+        VariableDeclarator
+          Identifier "a" @ 4..5
+      Semicolon ";" @ 5..6 trailing=[Whitespace " ", DocComment "/** // not a line comment */", Whitespace " "]
+    FieldDeclaration
+      PrimitiveType
+        AnnotationList
+        IntKw "int" @ 36..39 trailing=[Whitespace " "]
+      VariableDeclaratorList
+        VariableDeclarator
+          Identifier "b" @ 40..41
+      Semicolon ";" @ 41..42
   Eof "" @ 42..42
 
 diagnostics:

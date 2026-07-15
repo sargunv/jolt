@@ -2,7 +2,9 @@ use std::error::Error;
 use std::fmt;
 
 use crate::document::{Doc, DocArena, DocNode, FlatLine, Line, LineMode, LiteralText};
-use crate::source_fragment::{CompletedRenderProof, RenderProof, SourceFragment};
+#[cfg(debug_assertions)]
+use crate::source_fragment::SourceFragment;
+use crate::source_fragment::{CompletedRenderProof, RenderProof};
 use crate::width::{TextWidth, add_width};
 use jolt_syntax::ConservationError;
 
@@ -79,9 +81,16 @@ impl RenderError {
         }
     }
 
+    #[cfg_attr(not(debug_assertions), allow(dead_code))]
     pub(crate) const fn missing_conservation_proof() -> Self {
         Self {
             kind: RenderErrorKind::MissingConservationProof,
+        }
+    }
+
+    pub(crate) fn syntax_invariant(message: &str) -> Self {
+        Self {
+            kind: RenderErrorKind::SyntaxInvariant(message.to_owned()),
         }
     }
 }
@@ -89,8 +98,10 @@ impl RenderError {
 #[derive(Clone, Debug, Eq, PartialEq)]
 enum RenderErrorKind {
     NoCurrentGroup,
+    #[cfg_attr(not(debug_assertions), allow(dead_code))]
     MissingConservationProof,
     Conservation(ConservationError),
+    SyntaxInvariant(String),
 }
 
 impl fmt::Display for RenderError {
@@ -103,6 +114,9 @@ impl fmt::Display for RenderError {
                 formatter.write_str("exceptional source fragment requires a conservation proof")
             }
             RenderErrorKind::Conservation(ref error) => write!(formatter, "{error}"),
+            RenderErrorKind::SyntaxInvariant(ref message) => {
+                write!(formatter, "syntax invariant failed: {message}")
+            }
         }
     }
 }
@@ -120,6 +134,9 @@ pub fn render_to<S: RenderSink>(
     options: RenderOptions,
     sink: S,
 ) -> Result<RenderOutcome, RenderError> {
+    if let Some(error) = arena.invariant_error() {
+        return Err(RenderError::syntax_invariant(error));
+    }
     let mut renderer = Renderer::new(arena, options, sink, None);
     renderer.render_doc(doc, Mode::Break)?;
     Ok(renderer.finish())
@@ -139,6 +156,9 @@ pub fn render_to_tracked<'source, S: RenderSink>(
     sink: S,
     mut proof: RenderProof<'source>,
 ) -> Result<TrackedRenderOutcome<'source>, RenderError> {
+    if let Some(error) = arena.invariant_error() {
+        return Err(RenderError::syntax_invariant(error));
+    }
     let mut renderer = Renderer::new(arena, options, sink, Some(&mut proof));
     renderer.render_doc(doc, Mode::Break)?;
     let render = renderer.finish();
@@ -212,6 +232,7 @@ struct Renderer<'arena, 'proof, 'source, S> {
     fit_group_stack: Vec<GroupFrame>,
     fit_overlay_stack: Vec<FitCommand<'source>>,
     measured_group_fits: bool,
+    #[cfg_attr(not(debug_assertions), allow(dead_code))]
     proof: Option<&'proof mut RenderProof<'source>>,
 }
 
@@ -293,16 +314,17 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
                 self.write_literal(text);
                 Ok(())
             }
+            #[cfg(debug_assertions)]
             Some(DocNode::SourceFragment(fragment)) => {
-                let proof = self
-                    .proof
-                    .as_mut()
-                    .ok_or_else(RenderError::missing_conservation_proof)?;
-                proof
-                    .render_fragment(fragment, arena.source_claims(fragment))
-                    .map_err(|error| RenderError {
-                        kind: RenderErrorKind::Conservation(error),
-                    })?;
+                if let Some(proof) = self.proof.as_mut() {
+                    proof
+                        .render_fragment(fragment, arena.source_claims(fragment))
+                        .map_err(|error| RenderError {
+                            kind: RenderErrorKind::Conservation(error),
+                        })?;
+                } else if !fragment.is_claim_marker() {
+                    return Err(RenderError::missing_conservation_proof());
+                }
                 self.write_source_fragment(fragment);
                 Ok(())
             }
@@ -436,6 +458,7 @@ impl<'arena, 'proof, 'source, S: RenderSink> Renderer<'arena, 'proof, 'source, S
         }
     }
 
+    #[cfg(debug_assertions)]
     fn write_source_fragment(&mut self, fragment: &SourceFragment<'_, '_>) {
         self.write_str(&fragment.text);
         let final_width = fragment.final_width();
@@ -611,6 +634,7 @@ impl<'base, 'scratch, 'source> FitChecker<'base, 'scratch, 'source> {
                     self.width_result(text.final_width())
                 }
             }
+            #[cfg(debug_assertions)]
             Some(DocNode::SourceFragment(fragment)) => {
                 if fragment.is_multiline() {
                     FitResult::No
@@ -793,10 +817,11 @@ enum FitResult {
 mod tests {
     use std::ops::Range;
 
+    use jolt_diagnostics::{Diagnostic, DiagnosticCodeId};
     use jolt_java_syntax::{JavaLanguage, JavaSyntaxKind};
     use jolt_syntax::{
-        Event, Language, RawSyntaxKind, SourceIdentity, SyntaxNode, SyntaxTokenData, SyntaxTrivia,
-        TriviaKind, build_syntax_tree,
+        Event, Language, LanguageLexer, LexedToken, RawSyntaxKind, SourceIdentity, SourceTokenId,
+        SyntaxNode, SyntaxTokenData, SyntaxTrivia, TriviaKind, build_syntax_tree,
     };
     use jolt_text::{TextRange, TextSize};
 
@@ -811,6 +836,77 @@ mod tests {
 
     #[derive(Default)]
     struct StringSink(String);
+
+    struct ClaimLanguage;
+    struct ClaimLexer;
+
+    impl Language for ClaimLanguage {
+        type Kind = JavaSyntaxKind;
+        type Lexer<'source> = ClaimLexer;
+        type NormalizationAuthority = ();
+
+        fn kind_from_raw(raw: RawSyntaxKind) -> Self::Kind {
+            JavaLanguage::kind_from_raw(raw)
+        }
+
+        fn kind_to_raw(kind: Self::Kind) -> RawSyntaxKind {
+            JavaLanguage::kind_to_raw(kind)
+        }
+
+        fn eof_kind() -> Self::Kind {
+            JavaLanguage::eof_kind()
+        }
+
+        fn error_node_kind() -> Self::Kind {
+            JavaLanguage::error_node_kind()
+        }
+
+        fn expected_diagnostic_code() -> DiagnosticCodeId {
+            DiagnosticCodeId::new("test.expected")
+        }
+
+        fn unexpected_diagnostic_code() -> DiagnosticCodeId {
+            DiagnosticCodeId::new("test.unexpected")
+        }
+
+        fn split_token(_token: &LexedToken<Self>) -> Option<&'static [Self::Kind]> {
+            None
+        }
+    }
+
+    impl<'source> LanguageLexer<'source> for ClaimLexer {
+        type Language = ClaimLanguage;
+
+        fn new(_source: &'source str) -> Self {
+            Self
+        }
+
+        fn next_token_into(
+            &mut self,
+            _trivia: &mut Vec<SyntaxTrivia>,
+        ) -> LexedToken<Self::Language> {
+            panic!("tests construct tokens directly")
+        }
+
+        fn finish(self) -> Vec<Diagnostic> {
+            Vec::new()
+        }
+    }
+
+    fn replacement_claim(
+        source: SourceTokenId<'_>,
+        token: NormalizedToken,
+    ) -> ReplacementClaim<'_> {
+        ReplacementClaim::authorized::<ClaimLanguage>((), source, token)
+    }
+
+    fn removal_claim(source: SourceIdentity<'_>, reason: RemovalReason) -> RemovalClaim<'_> {
+        RemovalClaim::authorized::<ClaimLanguage>((), source, reason)
+    }
+
+    fn synthesis_claim(anchor: SourceTokenId<'_>, token: NormalizedToken) -> SynthesisClaim<'_> {
+        SynthesisClaim::authorized::<ClaimLanguage>((), anchor, token)
+    }
 
     impl RenderSink for StringSink {
         fn write_str(&mut self, text: &str) -> RenderControl {
@@ -847,22 +943,20 @@ mod tests {
                 SyntaxTokenData::new(
                     RawSyntaxKind::new(1),
                     TextRange::new(TextSize::new(start), TextSize::new(offset)),
+                    TextRange::new(TextSize::new(start), TextSize::new(offset)),
                     Range::default(),
                     Range::default(),
-                    TextSize::new(character.len_utf8()),
                 )
             })
             .collect::<Vec<_>>();
         let mut events = Vec::with_capacity(tokens.len() + 2);
-        events.push(Event::StartNode {
+        events.push(Event::Start {
             kind: JavaLanguage::kind_to_raw(root_kind),
-            forward_parent: None,
+            forward_parent: 0,
         });
         events.extend((0..tokens.len()).map(|_| Event::Token));
-        events.push(Event::FinishNode);
-        build_syntax_tree(events, tokens, Vec::new())
-            .expect("test syntax tree builds")
-            .0
+        events.push(Event::Finish);
+        build_syntax_tree(&events, tokens, Vec::new()).expect("test syntax tree builds")
     }
 
     fn syntax_tree(source: &str) -> jolt_syntax::SyntaxTree {
@@ -882,54 +976,50 @@ mod tests {
                 SyntaxTokenData::new(
                     RawSyntaxKind::new(1),
                     TextRange::new(TextSize::new(start), TextSize::new(end)),
+                    TextRange::new(TextSize::new(start), TextSize::new(end)),
                     Range::default(),
                     Range::default(),
-                    TextSize::new(character.len_utf8()),
                 )
             })
             .collect();
         let events = vec![
-            Event::StartNode {
+            Event::Start {
                 kind: JavaLanguage::kind_to_raw(JavaSyntaxKind::CompilationUnit),
-                forward_parent: None,
+                forward_parent: 0,
             },
             Event::Token,
-            Event::StartNode {
+            Event::Start {
                 kind: JavaLanguage::kind_to_raw(JavaLanguage::error_node_kind()),
-                forward_parent: None,
+                forward_parent: 0,
             },
             Event::Token,
-            Event::FinishNode,
-            Event::FinishNode,
+            Event::Finish,
+            Event::Finish,
         ];
-        build_syntax_tree(events, tokens, Vec::new())
-            .expect("mixed test syntax tree builds")
-            .0
+        build_syntax_tree(&events, tokens, Vec::new()).expect("mixed test syntax tree builds")
     }
 
     fn syntax_tree_with_line_comment() -> jolt_syntax::SyntaxTree {
         let token = SyntaxTokenData::new(
             RawSyntaxKind::new(1),
+            TextRange::new(TextSize::new(0), TextSize::new(5)),
             TextRange::new(TextSize::new(0), TextSize::new(1)),
             Range::default(),
             0..2,
-            TextSize::new(5),
         );
         let trivia = vec![
             SyntaxTrivia::new(TriviaKind::LineComment, TextSize::new(3)),
             SyntaxTrivia::new(TriviaKind::Newline, TextSize::new(1)),
         ];
         let events = vec![
-            Event::StartNode {
+            Event::Start {
                 kind: JavaLanguage::kind_to_raw(JavaSyntaxKind::CompilationUnit),
-                forward_parent: None,
+                forward_parent: 0,
             },
             Event::Token,
-            Event::FinishNode,
+            Event::Finish,
         ];
-        build_syntax_tree(events, vec![token], trivia)
-            .expect("comment test syntax tree builds")
-            .0
+        build_syntax_tree(&events, vec![token], trivia).expect("comment test syntax tree builds")
     }
 
     #[test]
@@ -957,7 +1047,8 @@ mod tests {
                 .completed_proof()
                 .expect("render completed")
                 .rendered_fragments(),
-            [rendered] if rendered.kind == SourceFragmentKind::MalformedVerbatim
+            [rendered]
+                if matches!(rendered.kind, SourceFragmentKind::MalformedVerbatim { .. })
         ));
     }
 
@@ -1007,7 +1098,8 @@ mod tests {
                 .completed_proof()
                 .expect("render completed")
                 .rendered_fragments(),
-            [rendered] if rendered.kind == SourceFragmentKind::MalformedVerbatim
+            [rendered]
+                if matches!(rendered.kind, SourceFragmentKind::MalformedVerbatim { .. })
         ));
     }
 
@@ -1103,11 +1195,9 @@ mod tests {
         let first = tokens.next().expect("first token").source_id();
         let second = tokens.next().expect("second token").source_id();
         let mut builder = DocBuilder::new();
-        let breaks = builder.replaced_source(ReplacementClaim::for_test(
-            first,
-            NormalizedToken::ImportKeyword,
-        ));
-        let flat = builder.replaced_source(ReplacementClaim::for_test(
+        let breaks =
+            builder.replaced_source(replacement_claim(first, NormalizedToken::ImportKeyword));
+        let flat = builder.replaced_source(replacement_claim(
             second,
             NormalizedToken::ImportAliasKeyword,
         ));
@@ -1116,7 +1206,7 @@ mod tests {
         let flat = builder.resolve_exceptional(flat, None, None, &mut safety);
         let conditional = builder.if_break(breaks, flat);
         let conditional = builder.group(conditional);
-        let removed = builder.removed_source(RemovalClaim::for_test(
+        let removed = builder.removed_source(removal_claim(
             SourceIdentity::Token(first),
             RemovalReason::DuplicateImport,
         ));
@@ -1179,7 +1269,7 @@ mod tests {
         let token = root.first_token().expect("source token");
         let mut builder = DocBuilder::new();
         let source_doc = builder.source_token(&token);
-        let synthesized = builder.synthesized_source(SynthesisClaim::for_test(
+        let synthesized = builder.synthesized_source(synthesis_claim(
             token.source_id(),
             NormalizedToken::EnumSemicolon,
         ));
@@ -1216,10 +1306,8 @@ mod tests {
         let other_root = SyntaxNode::<JavaLanguage>::new_root("y", &other_tree);
         let foreign = other_root.first_token().expect("foreign token").source_id();
         let mut builder = DocBuilder::new();
-        let synthesized = builder.synthesized_source(SynthesisClaim::for_test(
-            foreign,
-            NormalizedToken::EnumSemicolon,
-        ));
+        let synthesized =
+            builder.synthesized_source(synthesis_claim(foreign, NormalizedToken::EnumSemicolon));
         let mut safety = CountingSafety::default();
         let document = builder.resolve_exceptional(synthesized, None, None, &mut safety);
         let arena = builder.into_arena();
@@ -1340,11 +1428,9 @@ mod tests {
         let first = tokens.next().expect("first token").source_id();
         let second = tokens.next().expect("second token").source_id();
         let mut builder = DocBuilder::new();
-        let import = builder.replaced_source(ReplacementClaim::for_test(
-            first,
-            NormalizedToken::ImportKeyword,
-        ));
-        let alias = builder.replaced_source(ReplacementClaim::for_test(
+        let import =
+            builder.replaced_source(replacement_claim(first, NormalizedToken::ImportKeyword));
+        let alias = builder.replaced_source(replacement_claim(
             second,
             NormalizedToken::ImportAliasKeyword,
         ));
@@ -1381,7 +1467,7 @@ mod tests {
                 ends_with_line_comment: true,
             },
         );
-        let synthesized = builder.synthesized_source(SynthesisClaim::for_test(
+        let synthesized = builder.synthesized_source(synthesis_claim(
             token.source_id(),
             NormalizedToken::EnumSemicolon,
         ));

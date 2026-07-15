@@ -14,27 +14,43 @@ syntax:
 syntax:
 CompilationUnit
   PackageDeclaration
+    AnnotationList
     PackageKw "package" @ 0..7 trailing=[Whitespace " "]
     QualifiedName
-      Identifier "com" @ 8..11 trailing=[Whitespace " ", LineComment "// root"]
+      QualifiedNameSegmentNode
+        AnnotationList
+        Identifier "com" @ 8..11 trailing=[Whitespace " ", LineComment "// root"]
       Dot "." @ 24..25 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-      Identifier "example" @ 26..33 trailing=[Whitespace " "]
-      Dot "." @ 34..35 trailing=[Whitespace " "]
-      Identifier "app" @ 36..39
+      NameSegmentDotList
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "example" @ 26..33 trailing=[Whitespace " "]
+        Dot "." @ 34..35 trailing=[Whitespace " "]
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "app" @ 36..39
     Semicolon ";" @ 39..40
-  ImportDeclaration
-    ImportKw "import" @ 42..48 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    QualifiedName
-      Identifier "z" @ 49..50 trailing=[Whitespace " ", BlockComment "/* dot */", Whitespace " "]
-      Dot "." @ 61..62 trailing=[Whitespace " "]
-      Identifier "Z" @ 63..64
-    Semicolon ";" @ 64..65
-  ClassDeclaration
-    ClassKw "class" @ 67..72 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "Names" @ 73..78 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 79..80
-      RBrace "}" @ 80..81
+  ImportDeclarationList
+    ImportDeclaration
+      ImportKw "import" @ 42..48 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "z" @ 49..50 trailing=[Whitespace " ", BlockComment "/* dot */", Whitespace " "]
+        Dot "." @ 61..62 trailing=[Whitespace " "]
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "Z" @ 63..64
+      Semicolon ";" @ 64..65
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 67..72 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "Names" @ 73..78 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 79..80
+        ClassBodyMemberList
+        RBrace "}" @ 80..81
   Eof "" @ 82..82 leading=[Newline "\n"]
 
 diagnostics:

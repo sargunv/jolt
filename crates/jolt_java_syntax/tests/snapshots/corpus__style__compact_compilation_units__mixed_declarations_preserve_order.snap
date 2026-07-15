@@ -17,173 +17,224 @@ final class Tail{}
 syntax:
 syntax:
 CompilationUnit
-  ImportDeclaration
-    ImportKw "import" @ 0..6 trailing=[Whitespace " "]
-    QualifiedName
-      Identifier "java" @ 7..11
-      Dot "." @ 11..12
-      Identifier "util" @ 12..16
-      Dot "." @ 16..17
-      Identifier "List" @ 17..21
-    Semicolon ";" @ 21..22
-  EmptyDeclaration
-    Semicolon ";" @ 23..24 leading=[Newline "\n"]
-  ClassDeclaration
-    ClassKw "class" @ 25..30 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Identifier "Helper" @ 31..37 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 38..39
-      ClassBodyDeclaration
-        MethodDeclaration
-          ClassType
+  ImportDeclarationList
+    ImportDeclaration
+      ImportKw "import" @ 0..6 trailing=[Whitespace " "]
+      QualifiedName
+        QualifiedNameSegmentNode
+          AnnotationList
+          Identifier "java" @ 7..11
+        Dot "." @ 11..12
+        NameSegmentDotList
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "util" @ 12..16
+          Dot "." @ 16..17
+          QualifiedNameSegmentNode
+            AnnotationList
+            Identifier "List" @ 17..21
+      Semicolon ";" @ 21..22
+  CompilationUnitDeclarationList
+    EmptyDeclaration
+      Semicolon ";" @ 23..24 leading=[Newline "\n"]
+    ClassDeclaration
+      ClassKw "class" @ 25..30 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "Helper" @ 31..37 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 38..39
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              ClassType
+                ClassTypeSegmentList
+                  ClassTypeSegmentNode
+                    AnnotationList
+                    Name
+                      Identifier "String" @ 39..45 trailing=[Whitespace " "]
+              Identifier "join" @ 46..50
+              LParen "(" @ 50..51
+              RParen ")" @ 51..52
+              Block
+                LBrace "{" @ 52..53
+                BlockStatementList
+                  BlockStatement
+                    ReturnStatement
+                      ReturnKw "return" @ 53..59 trailing=[Whitespace " "]
+                      LiteralExpression
+                        StringLiteral "\"x\"" @ 60..63
+                      Semicolon ";" @ 63..64
+                RBrace "}" @ 64..65
+        RBrace "}" @ 65..66
+    FieldDeclaration
+      ClassType
+        ClassTypeSegmentList
+          ClassTypeSegmentNode
+            AnnotationList
             Name
-              Identifier "String" @ 39..45 trailing=[Whitespace " "]
-          Identifier "join" @ 46..50
-          LParen "(" @ 50..51
-          RParen ")" @ 51..52
-          Block
-            LBrace "{" @ 52..53
-            BlockStatement
-              ReturnStatement
-                ReturnKw "return" @ 53..59 trailing=[Whitespace " "]
-                LiteralExpression
-                  StringLiteral "\"x\"" @ 60..63
-                Semicolon ";" @ 63..64
-            RBrace "}" @ 64..65
-      RBrace "}" @ 65..66
-  FieldDeclaration
-    ClassType
-      Name
-        Identifier "String" @ 67..73 leading=[Newline "\n"] trailing=[Whitespace " "]
-    VariableDeclaratorList
-      VariableDeclarator
-        Identifier "greeting" @ 74..82
-        Assign "=" @ 82..83
-        VariableInitializer
-          LiteralExpression
-            StringLiteral "\"Hello\"" @ 83..90
-    Semicolon ";" @ 90..91
-  MethodDeclaration
-    VoidType
-      VoidKw "void" @ 92..96 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Identifier "main" @ 97..101
-    LParen "(" @ 101..102
-    RParen ")" @ 102..103
-    Block
-      LBrace "{" @ 103..104
-      BlockStatement
-        ExpressionStatement
-          MethodInvocationExpression
-            NameExpression
-              Identifier "IO" @ 104..106
-            Dot "." @ 106..107
-            Identifier "println" @ 107..114
-            ArgumentList
-              LParen "(" @ 114..115
-              BinaryExpression
-                NameExpression
-                  Identifier "greeting" @ 115..123
-                Plus "+" @ 123..124
-                MethodInvocationExpression
+              Identifier "String" @ 67..73 leading=[Newline "\n"] trailing=[Whitespace " "]
+      VariableDeclaratorList
+        VariableDeclarator
+          Identifier "greeting" @ 74..82
+          Assign "=" @ 82..83
+          VariableInitializer
+            LiteralExpression
+              StringLiteral "\"Hello\"" @ 83..90
+      Semicolon ";" @ 90..91
+    MethodDeclaration
+      VoidType
+        VoidKw "void" @ 92..96 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "main" @ 97..101
+      LParen "(" @ 101..102
+      RParen ")" @ 102..103
+      Block
+        LBrace "{" @ 103..104
+        BlockStatementList
+          BlockStatement
+            ExpressionStatement
+              MethodInvocationExpression
+                QualifiedMethodInvocation
                   NameExpression
-                    Identifier "List" @ 124..128
-                  Dot "." @ 128..129
-                  Identifier "of" @ 129..131
+                    Identifier "IO" @ 104..106
+                  Dot "." @ 106..107
+                  Identifier "println" @ 107..114
                   ArgumentList
-                    LParen "(" @ 131..132
-                    MethodInvocationExpression
-                      ObjectCreationExpression
-                        NewKw "new" @ 132..135 trailing=[Whitespace " "]
-                        ClassType
-                          Name
-                            Identifier "Helper" @ 136..142
-                        ArgumentList
-                          LParen "(" @ 142..143
-                          RParen ")" @ 143..144
-                      Dot "." @ 144..145
-                      Identifier "join" @ 145..149
-                      ArgumentList
-                        LParen "(" @ 149..150
-                        RParen ")" @ 150..151
-                    RParen ")" @ 151..152
-              RParen ")" @ 152..153
-          Semicolon ";" @ 153..154
-      RBrace "}" @ 154..155
-  InterfaceDeclaration
-    InterfaceKw "interface" @ 156..165 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Identifier "Named" @ 166..171
-    InterfaceBody
-      LBrace "{" @ 171..172
-      MethodDeclaration
-        ClassType
-          Name
-            Identifier "String" @ 172..178 trailing=[Whitespace " "]
-        Identifier "name" @ 179..183
-        LParen "(" @ 183..184
-        RParen ")" @ 184..185
-        Semicolon ";" @ 185..186
-      RBrace "}" @ 186..187
-  RecordDeclaration
-    Identifier "record" @ 188..194 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Identifier "Pair" @ 195..199
-    LParen "(" @ 199..200
-    RecordComponentList
-      RecordComponent
-        ClassType
-          Name
-            Identifier "String" @ 200..206 trailing=[Whitespace " "]
-        Identifier "left" @ 207..211
-      Comma "," @ 211..212
-      RecordComponent
-        ClassType
-          Name
-            Identifier "String" @ 212..218 trailing=[Whitespace " "]
-        Identifier "right" @ 219..224
-    RParen ")" @ 224..225
-    RecordBody
-      LBrace "{" @ 225..226
-      RBrace "}" @ 226..227
-  EnumDeclaration
-    EnumKw "enum" @ 228..232 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Identifier "Mode" @ 233..237
-    EnumBody
-      LBrace "{" @ 237..238
-      EnumConstantList
-        EnumConstant
-          Identifier "FAST" @ 238..242
-        Comma "," @ 242..243
-        EnumConstant
-          Identifier "SLOW" @ 243..247
-      RBrace "}" @ 247..248
-  AnnotationInterfaceDeclaration
-    At "@" @ 249..250 leading=[Newline "\n"]
-    InterfaceKw "interface" @ 250..259 trailing=[Whitespace " "]
-    Identifier "Marker" @ 260..266
-    AnnotationInterfaceBody
-      LBrace "{" @ 266..267
-      AnnotationElementList
-        AnnotationElementDeclaration
+                    LParen "(" @ 114..115
+                    ExpressionList
+                      BinaryExpression
+                        NameExpression
+                          Identifier "greeting" @ 115..123
+                        Plus "+" @ 123..124
+                        MethodInvocationExpression
+                          QualifiedMethodInvocation
+                            NameExpression
+                              Identifier "List" @ 124..128
+                            Dot "." @ 128..129
+                            Identifier "of" @ 129..131
+                            ArgumentList
+                              LParen "(" @ 131..132
+                              ExpressionList
+                                MethodInvocationExpression
+                                  QualifiedMethodInvocation
+                                    ObjectCreationExpression
+                                      NewKw "new" @ 132..135 trailing=[Whitespace " "]
+                                      ClassType
+                                        ClassTypeSegmentList
+                                          ClassTypeSegmentNode
+                                            AnnotationList
+                                            Name
+                                              Identifier "Helper" @ 136..142
+                                      ArgumentList
+                                        LParen "(" @ 142..143
+                                        ExpressionList
+                                        RParen ")" @ 143..144
+                                    Dot "." @ 144..145
+                                    Identifier "join" @ 145..149
+                                    ArgumentList
+                                      LParen "(" @ 149..150
+                                      ExpressionList
+                                      RParen ")" @ 150..151
+                              RParen ")" @ 151..152
+                    RParen ")" @ 152..153
+              Semicolon ";" @ 153..154
+        RBrace "}" @ 154..155
+    InterfaceDeclaration
+      InterfaceKw "interface" @ 156..165 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "Named" @ 166..171
+      InterfaceBody
+        LBrace "{" @ 171..172
+        InterfaceBodyMemberList
+          MethodDeclaration
+            ClassType
+              ClassTypeSegmentList
+                ClassTypeSegmentNode
+                  AnnotationList
+                  Name
+                    Identifier "String" @ 172..178 trailing=[Whitespace " "]
+            Identifier "name" @ 179..183
+            LParen "(" @ 183..184
+            RParen ")" @ 184..185
+            Semicolon ";" @ 185..186
+        RBrace "}" @ 186..187
+    RecordDeclaration
+      Identifier "record" @ 188..194 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "Pair" @ 195..199
+      LParen "(" @ 199..200
+      RecordComponentList
+        RecordComponent
+          ParameterModifierList
           ClassType
-            Name
-              Identifier "String" @ 267..273 trailing=[Whitespace " "]
-          Identifier "value" @ 274..279
-          LParen "(" @ 279..280
-          RParen ")" @ 280..281 trailing=[Whitespace " "]
-          DefaultValue
-            DefaultKw "default" @ 282..289 trailing=[Whitespace " "]
-            AnnotationElementValue
-              LiteralExpression
-                StringLiteral "\"ok\"" @ 290..294
-          Semicolon ";" @ 294..295
-      RBrace "}" @ 295..296
-  ClassDeclaration
-    ModifierList
-      FinalKw "final" @ 297..302 leading=[Newline "\n"] trailing=[Whitespace " "]
-    ClassKw "class" @ 303..308 trailing=[Whitespace " "]
-    Identifier "Tail" @ 309..313
-    ClassBody
-      LBrace "{" @ 313..314
-      RBrace "}" @ 314..315
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "String" @ 200..206 trailing=[Whitespace " "]
+          AnnotationList
+          Identifier "left" @ 207..211
+        Comma "," @ 211..212
+        RecordComponent
+          ParameterModifierList
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "String" @ 212..218 trailing=[Whitespace " "]
+          AnnotationList
+          Identifier "right" @ 219..224
+      RParen ")" @ 224..225
+      RecordBody
+        LBrace "{" @ 225..226
+        RecordBodyMemberList
+        RBrace "}" @ 226..227
+    EnumDeclaration
+      EnumKw "enum" @ 228..232 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "Mode" @ 233..237
+      EnumBody
+        LBrace "{" @ 237..238
+        EnumConstantList
+          EnumConstant
+            AnnotationList
+            Identifier "FAST" @ 238..242
+          Comma "," @ 242..243
+          EnumConstant
+            AnnotationList
+            Identifier "SLOW" @ 243..247
+        ClassBodyMemberList
+        RBrace "}" @ 247..248
+    AnnotationInterfaceDeclaration
+      At "@" @ 249..250 leading=[Newline "\n"]
+      InterfaceKw "interface" @ 250..259 trailing=[Whitespace " "]
+      Identifier "Marker" @ 260..266
+      AnnotationInterfaceBody
+        LBrace "{" @ 266..267
+        AnnotationElementList
+          AnnotationInterfaceBodyMemberList
+            AnnotationElementDeclaration
+              ClassType
+                ClassTypeSegmentList
+                  ClassTypeSegmentNode
+                    AnnotationList
+                    Name
+                      Identifier "String" @ 267..273 trailing=[Whitespace " "]
+              Identifier "value" @ 274..279
+              LParen "(" @ 279..280
+              RParen ")" @ 280..281 trailing=[Whitespace " "]
+              DefaultValue
+                DefaultKw "default" @ 282..289 trailing=[Whitespace " "]
+                AnnotationElementValue
+                  LiteralExpression
+                    StringLiteral "\"ok\"" @ 290..294
+              Semicolon ";" @ 294..295
+        RBrace "}" @ 295..296
+    ClassDeclaration
+      ModifierList
+        FinalKw "final" @ 297..302 leading=[Newline "\n"] trailing=[Whitespace " "]
+      ClassKw "class" @ 303..308 trailing=[Whitespace " "]
+      Identifier "Tail" @ 309..313
+      ClassBody
+        LBrace "{" @ 313..314
+        ClassBodyMemberList
+        RBrace "}" @ 314..315
   Eof "" @ 316..316 leading=[Newline "\n"]
 
 diagnostics:

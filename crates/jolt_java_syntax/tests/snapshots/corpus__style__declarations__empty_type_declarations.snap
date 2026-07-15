@@ -11,45 +11,59 @@ enum Color {}
 syntax:
 syntax:
 CompilationUnit
-  InterfaceDeclaration
-    InterfaceKw "interface" @ 0..9 trailing=[Whitespace " "]
-    Identifier "Api" @ 10..13 trailing=[Whitespace " "]
-    InterfaceBody
-      LBrace "{" @ 14..15
-      RBrace "}" @ 15..16
-  RecordDeclaration
-    Identifier "record" @ 17..23 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Identifier "User" @ 24..28
-    LParen "(" @ 28..29
-    RecordComponentList
-      RecordComponent
-        ClassType
-          Name
-            Identifier "String" @ 29..35 trailing=[Whitespace " "]
-        Identifier "name" @ 36..40
-      Comma "," @ 40..41 trailing=[Whitespace " "]
-      RecordComponent
-        PrimitiveType
-          IntKw "int" @ 42..45 trailing=[Whitespace " "]
-        Identifier "age" @ 46..49
-    RParen ")" @ 49..50 trailing=[Whitespace " "]
-    RecordBody
-      LBrace "{" @ 51..52
-      RBrace "}" @ 52..53
-  EnumDeclaration
-    EnumKw "enum" @ 54..58 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Identifier "Color" @ 59..64 trailing=[Whitespace " "]
-    EnumBody
-      LBrace "{" @ 65..66
-      RBrace "}" @ 66..67
-  AnnotationInterfaceDeclaration
-    At "@" @ 68..69 leading=[Newline "\n"]
-    InterfaceKw "interface" @ 69..78 trailing=[Whitespace " "]
-    Identifier "Marker" @ 79..85 trailing=[Whitespace " "]
-    AnnotationInterfaceBody
-      LBrace "{" @ 86..87
-      AnnotationElementList
-      RBrace "}" @ 87..88
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    InterfaceDeclaration
+      InterfaceKw "interface" @ 0..9 trailing=[Whitespace " "]
+      Identifier "Api" @ 10..13 trailing=[Whitespace " "]
+      InterfaceBody
+        LBrace "{" @ 14..15
+        InterfaceBodyMemberList
+        RBrace "}" @ 15..16
+    RecordDeclaration
+      Identifier "record" @ 17..23 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "User" @ 24..28
+      LParen "(" @ 28..29
+      RecordComponentList
+        RecordComponent
+          ParameterModifierList
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "String" @ 29..35 trailing=[Whitespace " "]
+          AnnotationList
+          Identifier "name" @ 36..40
+        Comma "," @ 40..41 trailing=[Whitespace " "]
+        RecordComponent
+          ParameterModifierList
+          PrimitiveType
+            AnnotationList
+            IntKw "int" @ 42..45 trailing=[Whitespace " "]
+          AnnotationList
+          Identifier "age" @ 46..49
+      RParen ")" @ 49..50 trailing=[Whitespace " "]
+      RecordBody
+        LBrace "{" @ 51..52
+        RecordBodyMemberList
+        RBrace "}" @ 52..53
+    EnumDeclaration
+      EnumKw "enum" @ 54..58 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "Color" @ 59..64 trailing=[Whitespace " "]
+      EnumBody
+        LBrace "{" @ 65..66
+        ClassBodyMemberList
+        RBrace "}" @ 66..67
+    AnnotationInterfaceDeclaration
+      At "@" @ 68..69 leading=[Newline "\n"]
+      InterfaceKw "interface" @ 69..78 trailing=[Whitespace " "]
+      Identifier "Marker" @ 79..85 trailing=[Whitespace " "]
+      AnnotationInterfaceBody
+        LBrace "{" @ 86..87
+        AnnotationElementList
+          AnnotationInterfaceBodyMemberList
+        RBrace "}" @ 87..88
   Eof "" @ 89..89 leading=[Newline "\n"]
 
 diagnostics:

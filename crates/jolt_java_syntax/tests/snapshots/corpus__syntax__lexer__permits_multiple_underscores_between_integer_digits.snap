@@ -8,10 +8,12 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    IntegerLiteral "1__2" @ 0..4 trailing=[Whitespace " "]
-    IntegerLiteral "0x1__2" @ 5..11 trailing=[Whitespace " "]
-    IntegerLiteral "0b1__0" @ 12..18
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      IntegerLiteral "1__2" @ 0..4 trailing=[Whitespace " "]
+      IntegerLiteral "0x1__2" @ 5..11 trailing=[Whitespace " "]
+      IntegerLiteral "0b1__0" @ 12..18
   Eof "" @ 18..18
 
 diagnostics:

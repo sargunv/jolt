@@ -8,41 +8,47 @@ class Example { void method() { boolean value = xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "Example" @ 6..13 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 14..15 trailing=[Whitespace " "]
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 16..20 trailing=[Whitespace " "]
-          Identifier "method" @ 21..27
-          LParen "(" @ 27..28
-          RParen ")" @ 28..29 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 30..31 trailing=[Whitespace " "]
-            BlockStatement
-              LocalVariableDeclaration
-                PrimitiveType
-                  BooleanKw "boolean" @ 32..39 trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "value" @ 40..45 trailing=[Whitespace " "]
-                    Assign "=" @ 46..47 trailing=[Whitespace " "]
-                    VariableInitializer
-                      ConditionalExpression
-                        NameExpression
-                          Identifier "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" @ 48..93 trailing=[Whitespace " "]
-                        Question "?" @ 94..95 trailing=[Whitespace " "]
-                        LiteralExpression
-                          BooleanLiteral "true" @ 96..100 trailing=[Whitespace " "]
-                        Colon ":" @ 101..102 trailing=[Whitespace " "]
-                        LiteralExpression
-                          BooleanLiteral "false" @ 103..108
-              Semicolon ";" @ 108..109 trailing=[Whitespace " "]
-            RBrace "}" @ 110..111 trailing=[Whitespace " "]
-      RBrace "}" @ 112..113
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "Example" @ 6..13 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 14..15 trailing=[Whitespace " "]
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 16..20 trailing=[Whitespace " "]
+              Identifier "method" @ 21..27
+              LParen "(" @ 27..28
+              RParen ")" @ 28..29 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 30..31 trailing=[Whitespace " "]
+                BlockStatementList
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      PrimitiveType
+                        AnnotationList
+                        BooleanKw "boolean" @ 32..39 trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "value" @ 40..45 trailing=[Whitespace " "]
+                          Assign "=" @ 46..47 trailing=[Whitespace " "]
+                          VariableInitializer
+                            ConditionalExpression
+                              NameExpression
+                                Identifier "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" @ 48..93 trailing=[Whitespace " "]
+                              Question "?" @ 94..95 trailing=[Whitespace " "]
+                              LiteralExpression
+                                BooleanLiteral "true" @ 96..100 trailing=[Whitespace " "]
+                              Colon ":" @ 101..102 trailing=[Whitespace " "]
+                              LiteralExpression
+                                BooleanLiteral "false" @ 103..108
+                    Semicolon ";" @ 108..109 trailing=[Whitespace " "]
+                RBrace "}" @ 110..111 trailing=[Whitespace " "]
+        RBrace "}" @ 112..113
   Eof "" @ 114..114 leading=[Newline "\n"]
 
 diagnostics:

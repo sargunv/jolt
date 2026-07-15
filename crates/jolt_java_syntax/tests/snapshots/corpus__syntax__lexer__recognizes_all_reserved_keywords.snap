@@ -8,72 +8,78 @@ abstract assert boolean break byte case catch char class const continue default 
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    AbstractKw "abstract" @ 0..8 trailing=[Whitespace " "]
-    AssertKw "assert" @ 9..15 trailing=[Whitespace " "]
-    BooleanKw "boolean" @ 16..23 trailing=[Whitespace " "]
-    BreakKw "break" @ 24..29 trailing=[Whitespace " "]
-    ByteKw "byte" @ 30..34 trailing=[Whitespace " "]
-    CaseKw "case" @ 35..39 trailing=[Whitespace " "]
-    CatchKw "catch" @ 40..45 trailing=[Whitespace " "]
-    CharKw "char" @ 46..50 trailing=[Whitespace " "]
-  ClassDeclaration
-    ClassKw "class" @ 51..56 trailing=[Whitespace " "]
-    ErrorNode
-  ErrorNode
-    ConstKw "const" @ 57..62 trailing=[Whitespace " "]
-    ContinueKw "continue" @ 63..71 trailing=[Whitespace " "]
-    DefaultKw "default" @ 72..79 trailing=[Whitespace " "]
-    DoKw "do" @ 80..82 trailing=[Whitespace " "]
-    DoubleKw "double" @ 83..89 trailing=[Whitespace " "]
-    ElseKw "else" @ 90..94 trailing=[Whitespace " "]
-  EnumDeclaration
-    EnumKw "enum" @ 95..99 trailing=[Whitespace " "]
-    ErrorNode
-  ErrorNode
-    ExtendsKw "extends" @ 100..107 trailing=[Whitespace " "]
-    FinalKw "final" @ 108..113 trailing=[Whitespace " "]
-    FinallyKw "finally" @ 114..121 trailing=[Whitespace " "]
-    FloatKw "float" @ 122..127 trailing=[Whitespace " "]
-    ForKw "for" @ 128..131 trailing=[Whitespace " "]
-    GotoKw "goto" @ 132..136 trailing=[Whitespace " "]
-    IfKw "if" @ 137..139 trailing=[Whitespace " "]
-    ImplementsKw "implements" @ 140..150 trailing=[Whitespace " "]
-  ErrorNode
-    ImportKw "import" @ 151..157 trailing=[Whitespace " "]
-    InstanceofKw "instanceof" @ 158..168 trailing=[Whitespace " "]
-    IntKw "int" @ 169..172 trailing=[Whitespace " "]
-  InterfaceDeclaration
-    InterfaceKw "interface" @ 173..182 trailing=[Whitespace " "]
-    ErrorNode
-  FieldDeclaration
-    PrimitiveType
-      LongKw "long" @ 183..187 trailing=[Whitespace " "]
-    VariableDeclaratorList
-      VariableDeclarator
-  ErrorNode
-    NativeKw "native" @ 188..194 trailing=[Whitespace " "]
-    NewKw "new" @ 195..198 trailing=[Whitespace " "]
-    PackageKw "package" @ 199..206 trailing=[Whitespace " "]
-    PrivateKw "private" @ 207..214 trailing=[Whitespace " "]
-    ProtectedKw "protected" @ 215..224 trailing=[Whitespace " "]
-    PublicKw "public" @ 225..231 trailing=[Whitespace " "]
-    ReturnKw "return" @ 232..238 trailing=[Whitespace " "]
-    ShortKw "short" @ 239..244 trailing=[Whitespace " "]
-    StaticKw "static" @ 245..251 trailing=[Whitespace " "]
-    StrictfpKw "strictfp" @ 252..260 trailing=[Whitespace " "]
-    SuperKw "super" @ 261..266 trailing=[Whitespace " "]
-    SwitchKw "switch" @ 267..273 trailing=[Whitespace " "]
-    SynchronizedKw "synchronized" @ 274..286 trailing=[Whitespace " "]
-    ThisKw "this" @ 287..291 trailing=[Whitespace " "]
-    ThrowKw "throw" @ 292..297 trailing=[Whitespace " "]
-    ThrowsKw "throws" @ 298..304 trailing=[Whitespace " "]
-    TransientKw "transient" @ 305..314 trailing=[Whitespace " "]
-    TryKw "try" @ 315..318 trailing=[Whitespace " "]
-    VoidKw "void" @ 319..323 trailing=[Whitespace " "]
-    VolatileKw "volatile" @ 324..332 trailing=[Whitespace " "]
-    WhileKw "while" @ 333..338 trailing=[Whitespace " "]
-    UnderscoreKw "_" @ 339..340
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      AbstractKw "abstract" @ 0..8 trailing=[Whitespace " "]
+      AssertKw "assert" @ 9..15 trailing=[Whitespace " "]
+      BooleanKw "boolean" @ 16..23 trailing=[Whitespace " "]
+      BreakKw "break" @ 24..29 trailing=[Whitespace " "]
+      ByteKw "byte" @ 30..34 trailing=[Whitespace " "]
+      CaseKw "case" @ 35..39 trailing=[Whitespace " "]
+      CatchKw "catch" @ 40..45 trailing=[Whitespace " "]
+      CharKw "char" @ 46..50 trailing=[Whitespace " "]
+    ClassDeclaration
+      ClassKw "class" @ 51..56 trailing=[Whitespace " "]
+      ClassBody
+        ClassBodyMemberList
+    BogusTypeDeclaration
+      ConstKw "const" @ 57..62 trailing=[Whitespace " "]
+      ContinueKw "continue" @ 63..71 trailing=[Whitespace " "]
+      DefaultKw "default" @ 72..79 trailing=[Whitespace " "]
+      DoKw "do" @ 80..82 trailing=[Whitespace " "]
+      DoubleKw "double" @ 83..89 trailing=[Whitespace " "]
+      ElseKw "else" @ 90..94 trailing=[Whitespace " "]
+    EnumDeclaration
+      EnumKw "enum" @ 95..99 trailing=[Whitespace " "]
+      EnumBody
+        ClassBodyMemberList
+    BogusTypeDeclaration
+      ExtendsKw "extends" @ 100..107 trailing=[Whitespace " "]
+      FinalKw "final" @ 108..113 trailing=[Whitespace " "]
+      FinallyKw "finally" @ 114..121 trailing=[Whitespace " "]
+      FloatKw "float" @ 122..127 trailing=[Whitespace " "]
+      ForKw "for" @ 128..131 trailing=[Whitespace " "]
+      GotoKw "goto" @ 132..136 trailing=[Whitespace " "]
+      IfKw "if" @ 137..139 trailing=[Whitespace " "]
+      ImplementsKw "implements" @ 140..150 trailing=[Whitespace " "]
+    BogusTypeDeclaration
+      ImportKw "import" @ 151..157 trailing=[Whitespace " "]
+      InstanceofKw "instanceof" @ 158..168 trailing=[Whitespace " "]
+      IntKw "int" @ 169..172 trailing=[Whitespace " "]
+    InterfaceDeclaration
+      InterfaceKw "interface" @ 173..182 trailing=[Whitespace " "]
+      InterfaceBody
+        InterfaceBodyMemberList
+    FieldDeclaration
+      PrimitiveType
+        AnnotationList
+        LongKw "long" @ 183..187 trailing=[Whitespace " "]
+      VariableDeclaratorList
+        VariableDeclarator
+    BogusTypeDeclaration
+      NativeKw "native" @ 188..194 trailing=[Whitespace " "]
+      NewKw "new" @ 195..198 trailing=[Whitespace " "]
+      PackageKw "package" @ 199..206 trailing=[Whitespace " "]
+      PrivateKw "private" @ 207..214 trailing=[Whitespace " "]
+      ProtectedKw "protected" @ 215..224 trailing=[Whitespace " "]
+      PublicKw "public" @ 225..231 trailing=[Whitespace " "]
+      ReturnKw "return" @ 232..238 trailing=[Whitespace " "]
+      ShortKw "short" @ 239..244 trailing=[Whitespace " "]
+      StaticKw "static" @ 245..251 trailing=[Whitespace " "]
+      StrictfpKw "strictfp" @ 252..260 trailing=[Whitespace " "]
+      SuperKw "super" @ 261..266 trailing=[Whitespace " "]
+      SwitchKw "switch" @ 267..273 trailing=[Whitespace " "]
+      SynchronizedKw "synchronized" @ 274..286 trailing=[Whitespace " "]
+      ThisKw "this" @ 287..291 trailing=[Whitespace " "]
+      ThrowKw "throw" @ 292..297 trailing=[Whitespace " "]
+      ThrowsKw "throws" @ 298..304 trailing=[Whitespace " "]
+      TransientKw "transient" @ 305..314 trailing=[Whitespace " "]
+      TryKw "try" @ 315..318 trailing=[Whitespace " "]
+      VoidKw "void" @ 319..323 trailing=[Whitespace " "]
+      VolatileKw "volatile" @ 324..332 trailing=[Whitespace " "]
+      WhileKw "while" @ 333..338 trailing=[Whitespace " "]
+      UnderscoreKw "_" @ 339..340
   Eof "" @ 340..340
 
 diagnostics:

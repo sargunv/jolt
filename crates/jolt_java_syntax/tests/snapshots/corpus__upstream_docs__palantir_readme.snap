@@ -83,700 +83,901 @@ var foo = SomeType.builder()
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 83..88 leading=[LineComment "// Origin: https://github.com/palantir/palantir-java-format/blob/develop/README.md", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "PalantirReadmeSnippets" @ 89..111 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 112..113
-      ClassBodyDeclaration
-        ClassDeclaration
-          ModifierList
-            StaticKw "static" @ 114..120 leading=[Newline "\n"] trailing=[Whitespace " "]
-          ClassKw "class" @ 121..126 trailing=[Whitespace " "]
-          Identifier "Example1GoogleJavaFormatOutput" @ 127..157 trailing=[Whitespace " "]
-          ClassBody
-            LBrace "{" @ 158..159
-            ClassBodyDeclaration
-              MethodDeclaration
-                ModifierList
-                  PrivateKw "private" @ 160..167 leading=[Newline "\n"] trailing=[Whitespace " "]
-                  StaticKw "static" @ 168..174 trailing=[Whitespace " "]
-                VoidType
-                  VoidKw "void" @ 175..179 trailing=[Whitespace " "]
-                Identifier "configureResolvedVersionsWithVersionMapping" @ 180..223
-                LParen "(" @ 223..224
-                FormalParameterList
-                  FormalParameter
-                    ClassType
-                      Name
-                        Identifier "Project" @ 224..231 trailing=[Whitespace " "]
-                    Identifier "project" @ 232..239
-                RParen ")" @ 239..240 trailing=[Whitespace " "]
-                Block
-                  LBrace "{" @ 241..242
-                  BlockStatement
-                    ExpressionStatement
-                      MethodInvocationExpression
-                        MethodInvocationExpression
-                          NameExpression
-                            Identifier "project" @ 247..254 leading=[Newline "\n", Whitespace "    "]
-                          Dot "." @ 254..255
-                          Identifier "getPluginManager" @ 255..271
-                          ArgumentList
-                            LParen "(" @ 271..272
-                            RParen ")" @ 272..273
-                        Dot "." @ 286..287 leading=[Newline "\n", Whitespace "            "]
-                        Identifier "withPlugin" @ 287..297
-                        ArgumentList
-                          LParen "(" @ 297..298
-                          LiteralExpression
-                            StringLiteral "\"maven-publish\"" @ 319..334 leading=[Newline "\n", Whitespace "                    "]
-                          Comma "," @ 334..335
-                          LambdaExpression
-                            LambdaParameter
-                              Identifier "plugin" @ 356..362 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
-                            Arrow "->" @ 363..365 trailing=[Whitespace " "]
-                            Block
-                              LBrace "{" @ 366..367
-                              BlockStatement
-                                ExpressionStatement
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 83..88 leading=[LineComment "// Origin: https://github.com/palantir/palantir-java-format/blob/develop/README.md", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "PalantirReadmeSnippets" @ 89..111 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 112..113
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            ClassDeclaration
+              ModifierList
+                StaticKw "static" @ 114..120 leading=[Newline "\n"] trailing=[Whitespace " "]
+              ClassKw "class" @ 121..126 trailing=[Whitespace " "]
+              Identifier "Example1GoogleJavaFormatOutput" @ 127..157 trailing=[Whitespace " "]
+              ClassBody
+                LBrace "{" @ 158..159
+                ClassBodyMemberList
+                  ClassBodyDeclaration
+                    MethodDeclaration
+                      ModifierList
+                        PrivateKw "private" @ 160..167 leading=[Newline "\n"] trailing=[Whitespace " "]
+                        StaticKw "static" @ 168..174 trailing=[Whitespace " "]
+                      VoidType
+                        VoidKw "void" @ 175..179 trailing=[Whitespace " "]
+                      Identifier "configureResolvedVersionsWithVersionMapping" @ 180..223
+                      LParen "(" @ 223..224
+                      FormalParameterList
+                        FormalParameter
+                          ParameterModifierList
+                          ClassType
+                            ClassTypeSegmentList
+                              ClassTypeSegmentNode
+                                AnnotationList
+                                Name
+                                  Identifier "Project" @ 224..231 trailing=[Whitespace " "]
+                          AnnotationList
+                          Identifier "project" @ 232..239
+                      RParen ")" @ 239..240 trailing=[Whitespace " "]
+                      Block
+                        LBrace "{" @ 241..242
+                        BlockStatementList
+                          BlockStatement
+                            ExpressionStatement
+                              MethodInvocationExpression
+                                QualifiedMethodInvocation
                                   MethodInvocationExpression
-                                    MethodInvocationExpression
-                                      MethodInvocationExpression
-                                        MethodInvocationExpression
-                                          MethodInvocationExpression
-                                            NameExpression
-                                              Identifier "project" @ 392..399 leading=[Newline "\n", Whitespace "                        "]
-                                            Dot "." @ 399..400
-                                            Identifier "getExtensions" @ 400..413
-                                            ArgumentList
-                                              LParen "(" @ 413..414
-                                              RParen ")" @ 414..415
-                                          Dot "." @ 448..449 leading=[Newline "\n", Whitespace "                                "]
-                                          Identifier "getByType" @ 449..458
-                                          ArgumentList
-                                            LParen "(" @ 458..459
-                                            ClassLiteralExpression
-                                              NameExpression
-                                                Identifier "PublishingExtension" @ 459..478
-                                              Dot "." @ 478..479
-                                              ClassKw "class" @ 479..484
-                                            RParen ")" @ 484..485
-                                        Dot "." @ 518..519 leading=[Newline "\n", Whitespace "                                "]
-                                        Identifier "getPublications" @ 519..534
-                                        ArgumentList
-                                          LParen "(" @ 534..535
-                                          RParen ")" @ 535..536
-                                      Dot "." @ 569..570 leading=[Newline "\n", Whitespace "                                "]
-                                      Identifier "withType" @ 570..578
+                                    QualifiedMethodInvocation
+                                      NameExpression
+                                        Identifier "project" @ 247..254 leading=[Newline "\n", Whitespace "    "]
+                                      Dot "." @ 254..255
+                                      Identifier "getPluginManager" @ 255..271
                                       ArgumentList
-                                        LParen "(" @ 578..579
-                                        ClassLiteralExpression
-                                          NameExpression
-                                            Identifier "MavenPublication" @ 579..595
-                                          Dot "." @ 595..596
-                                          ClassKw "class" @ 596..601
-                                        RParen ")" @ 601..602
-                                    Dot "." @ 635..636 leading=[Newline "\n", Whitespace "                                "]
-                                    Identifier "configureEach" @ 636..649
-                                    ArgumentList
-                                      LParen "(" @ 649..650
+                                        LParen "(" @ 271..272
+                                        ExpressionList
+                                        RParen ")" @ 272..273
+                                  Dot "." @ 286..287 leading=[Newline "\n", Whitespace "            "]
+                                  Identifier "withPlugin" @ 287..297
+                                  ArgumentList
+                                    LParen "(" @ 297..298
+                                    ExpressionList
+                                      LiteralExpression
+                                        StringLiteral "\"maven-publish\"" @ 319..334 leading=[Newline "\n", Whitespace "                    "]
+                                      Comma "," @ 334..335
                                       LambdaExpression
-                                        LambdaParameter
-                                          Identifier "publication" @ 691..702 leading=[Newline "\n", Whitespace "                                        "] trailing=[Whitespace " "]
-                                        Arrow "->" @ 703..705
-                                        MethodInvocationExpression
-                                          NameExpression
-                                            Identifier "publication" @ 754..765 leading=[Newline "\n", Whitespace "                                                "]
-                                          Dot "." @ 765..766
-                                          Identifier "versionMapping" @ 766..780
-                                          ArgumentList
-                                            LParen "(" @ 780..781
-                                            LambdaExpression
-                                              LambdaParameter
-                                                Identifier "mapping" @ 838..845 leading=[Newline "\n", Whitespace "                                                        "] trailing=[Whitespace " "]
-                                              Arrow "->" @ 846..848 trailing=[Whitespace " "]
-                                              Block
-                                                LBrace "{" @ 849..850
-                                                BlockStatement
-                                                  ExpressionStatement
+                                        LambdaParameterList
+                                          LambdaParameter
+                                            LambdaModifierList
+                                            AnnotationList
+                                            Identifier "plugin" @ 356..362 leading=[Newline "\n", Whitespace "                    "] trailing=[Whitespace " "]
+                                        Arrow "->" @ 363..365 trailing=[Whitespace " "]
+                                        Block
+                                          LBrace "{" @ 366..367
+                                          BlockStatementList
+                                            BlockStatement
+                                              ExpressionStatement
+                                                MethodInvocationExpression
+                                                  QualifiedMethodInvocation
                                                     MethodInvocationExpression
-                                                      NameExpression
-                                                        Identifier "mapping" @ 911..918 leading=[Newline "\n", Whitespace "                                                            "]
-                                                      Dot "." @ 918..919
-                                                      Identifier "allVariants" @ 919..930
-                                                      ArgumentList
-                                                        LParen "(" @ 930..931
-                                                        MethodReferenceExpression
-                                                          NameExpression
-                                                            Identifier "VariantVersionMappingStrategy" @ 1000..1029 leading=[Newline "\n", Whitespace "                                                                    "]
-                                                          DoubleColon "::" @ 1106..1108 leading=[Newline "\n", Whitespace "                                                                            "]
-                                                          Identifier "fromResolutionResult" @ 1108..1128
-                                                        RParen ")" @ 1128..1129
-                                                    Semicolon ";" @ 1129..1130
-                                                RBrace "}" @ 1187..1188 leading=[Newline "\n", Whitespace "                                                        "]
-                                            RParen ")" @ 1188..1189
-                                      RParen ")" @ 1189..1190
-                                  Semicolon ";" @ 1190..1191
-                              RBrace "}" @ 1212..1213 leading=[Newline "\n", Whitespace "                    "]
-                          RParen ")" @ 1213..1214
-                      Semicolon ";" @ 1214..1215
-                  RBrace "}" @ 1216..1217 leading=[Newline "\n"]
-            RBrace "}" @ 1218..1219 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        ClassDeclaration
-          ModifierList
-            StaticKw "static" @ 1221..1227 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-          ClassKw "class" @ 1228..1233 trailing=[Whitespace " "]
-          Identifier "Example1PalantirJavaFormatOutput" @ 1234..1266 trailing=[Whitespace " "]
-          ClassBody
-            LBrace "{" @ 1267..1268
-            ClassBodyDeclaration
-              MethodDeclaration
-                ModifierList
-                  PrivateKw "private" @ 1269..1276 leading=[Newline "\n"] trailing=[Whitespace " "]
-                  StaticKw "static" @ 1277..1283 trailing=[Whitespace " "]
-                VoidType
-                  VoidKw "void" @ 1284..1288 trailing=[Whitespace " "]
-                Identifier "configureResolvedVersionsWithVersionMapping" @ 1289..1332
-                LParen "(" @ 1332..1333
-                FormalParameterList
-                  FormalParameter
-                    ClassType
-                      Name
-                        Identifier "Project" @ 1333..1340 trailing=[Whitespace " "]
-                    Identifier "project" @ 1341..1348
-                RParen ")" @ 1348..1349 trailing=[Whitespace " "]
-                Block
-                  LBrace "{" @ 1350..1351
-                  BlockStatement
-                    ExpressionStatement
-                      MethodInvocationExpression
-                        MethodInvocationExpression
-                          NameExpression
-                            Identifier "project" @ 1356..1363 leading=[Newline "\n", Whitespace "    "]
-                          Dot "." @ 1363..1364
-                          Identifier "getPluginManager" @ 1364..1380
-                          ArgumentList
-                            LParen "(" @ 1380..1381
-                            RParen ")" @ 1381..1382
-                        Dot "." @ 1382..1383
-                        Identifier "withPlugin" @ 1383..1393
-                        ArgumentList
-                          LParen "(" @ 1393..1394
-                          LiteralExpression
-                            StringLiteral "\"maven-publish\"" @ 1394..1409
-                          Comma "," @ 1409..1410 trailing=[Whitespace " "]
-                          LambdaExpression
-                            LambdaParameter
-                              Identifier "plugin" @ 1411..1417 trailing=[Whitespace " "]
-                            Arrow "->" @ 1418..1420 trailing=[Whitespace " "]
-                            Block
-                              LBrace "{" @ 1421..1422
-                              BlockStatement
-                                ExpressionStatement
+                                                      QualifiedMethodInvocation
+                                                        MethodInvocationExpression
+                                                          QualifiedMethodInvocation
+                                                            MethodInvocationExpression
+                                                              QualifiedMethodInvocation
+                                                                MethodInvocationExpression
+                                                                  QualifiedMethodInvocation
+                                                                    NameExpression
+                                                                      Identifier "project" @ 392..399 leading=[Newline "\n", Whitespace "                        "]
+                                                                    Dot "." @ 399..400
+                                                                    Identifier "getExtensions" @ 400..413
+                                                                    ArgumentList
+                                                                      LParen "(" @ 413..414
+                                                                      ExpressionList
+                                                                      RParen ")" @ 414..415
+                                                                Dot "." @ 448..449 leading=[Newline "\n", Whitespace "                                "]
+                                                                Identifier "getByType" @ 449..458
+                                                                ArgumentList
+                                                                  LParen "(" @ 458..459
+                                                                  ExpressionList
+                                                                    ClassLiteralExpression
+                                                                      NameExpression
+                                                                        Identifier "PublishingExtension" @ 459..478
+                                                                      Dot "." @ 478..479
+                                                                      ClassKw "class" @ 479..484
+                                                                  RParen ")" @ 484..485
+                                                            Dot "." @ 518..519 leading=[Newline "\n", Whitespace "                                "]
+                                                            Identifier "getPublications" @ 519..534
+                                                            ArgumentList
+                                                              LParen "(" @ 534..535
+                                                              ExpressionList
+                                                              RParen ")" @ 535..536
+                                                        Dot "." @ 569..570 leading=[Newline "\n", Whitespace "                                "]
+                                                        Identifier "withType" @ 570..578
+                                                        ArgumentList
+                                                          LParen "(" @ 578..579
+                                                          ExpressionList
+                                                            ClassLiteralExpression
+                                                              NameExpression
+                                                                Identifier "MavenPublication" @ 579..595
+                                                              Dot "." @ 595..596
+                                                              ClassKw "class" @ 596..601
+                                                          RParen ")" @ 601..602
+                                                    Dot "." @ 635..636 leading=[Newline "\n", Whitespace "                                "]
+                                                    Identifier "configureEach" @ 636..649
+                                                    ArgumentList
+                                                      LParen "(" @ 649..650
+                                                      ExpressionList
+                                                        LambdaExpression
+                                                          LambdaParameterList
+                                                            LambdaParameter
+                                                              LambdaModifierList
+                                                              AnnotationList
+                                                              Identifier "publication" @ 691..702 leading=[Newline "\n", Whitespace "                                        "] trailing=[Whitespace " "]
+                                                          Arrow "->" @ 703..705
+                                                          MethodInvocationExpression
+                                                            QualifiedMethodInvocation
+                                                              NameExpression
+                                                                Identifier "publication" @ 754..765 leading=[Newline "\n", Whitespace "                                                "]
+                                                              Dot "." @ 765..766
+                                                              Identifier "versionMapping" @ 766..780
+                                                              ArgumentList
+                                                                LParen "(" @ 780..781
+                                                                ExpressionList
+                                                                  LambdaExpression
+                                                                    LambdaParameterList
+                                                                      LambdaParameter
+                                                                        LambdaModifierList
+                                                                        AnnotationList
+                                                                        Identifier "mapping" @ 838..845 leading=[Newline "\n", Whitespace "                                                        "] trailing=[Whitespace " "]
+                                                                    Arrow "->" @ 846..848 trailing=[Whitespace " "]
+                                                                    Block
+                                                                      LBrace "{" @ 849..850
+                                                                      BlockStatementList
+                                                                        BlockStatement
+                                                                          ExpressionStatement
+                                                                            MethodInvocationExpression
+                                                                              QualifiedMethodInvocation
+                                                                                NameExpression
+                                                                                  Identifier "mapping" @ 911..918 leading=[Newline "\n", Whitespace "                                                            "]
+                                                                                Dot "." @ 918..919
+                                                                                Identifier "allVariants" @ 919..930
+                                                                                ArgumentList
+                                                                                  LParen "(" @ 930..931
+                                                                                  ExpressionList
+                                                                                    MethodReferenceExpression
+                                                                                      NameExpression
+                                                                                        Identifier "VariantVersionMappingStrategy" @ 1000..1029 leading=[Newline "\n", Whitespace "                                                                    "]
+                                                                                      DoubleColon "::" @ 1106..1108 leading=[Newline "\n", Whitespace "                                                                            "]
+                                                                                      Identifier "fromResolutionResult" @ 1108..1128
+                                                                                  RParen ")" @ 1128..1129
+                                                                            Semicolon ";" @ 1129..1130
+                                                                      RBrace "}" @ 1187..1188 leading=[Newline "\n", Whitespace "                                                        "]
+                                                                RParen ")" @ 1188..1189
+                                                      RParen ")" @ 1189..1190
+                                                Semicolon ";" @ 1190..1191
+                                          RBrace "}" @ 1212..1213 leading=[Newline "\n", Whitespace "                    "]
+                                    RParen ")" @ 1213..1214
+                              Semicolon ";" @ 1214..1215
+                        RBrace "}" @ 1216..1217 leading=[Newline "\n"]
+                RBrace "}" @ 1218..1219 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            ClassDeclaration
+              ModifierList
+                StaticKw "static" @ 1221..1227 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              ClassKw "class" @ 1228..1233 trailing=[Whitespace " "]
+              Identifier "Example1PalantirJavaFormatOutput" @ 1234..1266 trailing=[Whitespace " "]
+              ClassBody
+                LBrace "{" @ 1267..1268
+                ClassBodyMemberList
+                  ClassBodyDeclaration
+                    MethodDeclaration
+                      ModifierList
+                        PrivateKw "private" @ 1269..1276 leading=[Newline "\n"] trailing=[Whitespace " "]
+                        StaticKw "static" @ 1277..1283 trailing=[Whitespace " "]
+                      VoidType
+                        VoidKw "void" @ 1284..1288 trailing=[Whitespace " "]
+                      Identifier "configureResolvedVersionsWithVersionMapping" @ 1289..1332
+                      LParen "(" @ 1332..1333
+                      FormalParameterList
+                        FormalParameter
+                          ParameterModifierList
+                          ClassType
+                            ClassTypeSegmentList
+                              ClassTypeSegmentNode
+                                AnnotationList
+                                Name
+                                  Identifier "Project" @ 1333..1340 trailing=[Whitespace " "]
+                          AnnotationList
+                          Identifier "project" @ 1341..1348
+                      RParen ")" @ 1348..1349 trailing=[Whitespace " "]
+                      Block
+                        LBrace "{" @ 1350..1351
+                        BlockStatementList
+                          BlockStatement
+                            ExpressionStatement
+                              MethodInvocationExpression
+                                QualifiedMethodInvocation
                                   MethodInvocationExpression
-                                    MethodInvocationExpression
-                                      MethodInvocationExpression
-                                        MethodInvocationExpression
-                                          MethodInvocationExpression
-                                            NameExpression
-                                              Identifier "project" @ 1431..1438 leading=[Newline "\n", Whitespace "        "]
-                                            Dot "." @ 1438..1439
-                                            Identifier "getExtensions" @ 1439..1452
-                                            ArgumentList
-                                              LParen "(" @ 1452..1453
-                                              RParen ")" @ 1453..1454
-                                          Dot "." @ 1471..1472 leading=[Newline "\n", Whitespace "                "]
-                                          Identifier "getByType" @ 1472..1481
-                                          ArgumentList
-                                            LParen "(" @ 1481..1482
-                                            ClassLiteralExpression
-                                              NameExpression
-                                                Identifier "PublishingExtension" @ 1482..1501
-                                              Dot "." @ 1501..1502
-                                              ClassKw "class" @ 1502..1507
-                                            RParen ")" @ 1507..1508
-                                        Dot "." @ 1525..1526 leading=[Newline "\n", Whitespace "                "]
-                                        Identifier "getPublications" @ 1526..1541
-                                        ArgumentList
-                                          LParen "(" @ 1541..1542
-                                          RParen ")" @ 1542..1543
-                                      Dot "." @ 1560..1561 leading=[Newline "\n", Whitespace "                "]
-                                      Identifier "withType" @ 1561..1569
+                                    QualifiedMethodInvocation
+                                      NameExpression
+                                        Identifier "project" @ 1356..1363 leading=[Newline "\n", Whitespace "    "]
+                                      Dot "." @ 1363..1364
+                                      Identifier "getPluginManager" @ 1364..1380
                                       ArgumentList
-                                        LParen "(" @ 1569..1570
-                                        ClassLiteralExpression
-                                          NameExpression
-                                            Identifier "MavenPublication" @ 1570..1586
-                                          Dot "." @ 1586..1587
-                                          ClassKw "class" @ 1587..1592
-                                        RParen ")" @ 1592..1593
-                                    Dot "." @ 1610..1611 leading=[Newline "\n", Whitespace "                "]
-                                    Identifier "configureEach" @ 1611..1624
-                                    ArgumentList
-                                      LParen "(" @ 1624..1625
+                                        LParen "(" @ 1380..1381
+                                        ExpressionList
+                                        RParen ")" @ 1381..1382
+                                  Dot "." @ 1382..1383
+                                  Identifier "withPlugin" @ 1383..1393
+                                  ArgumentList
+                                    LParen "(" @ 1393..1394
+                                    ExpressionList
+                                      LiteralExpression
+                                        StringLiteral "\"maven-publish\"" @ 1394..1409
+                                      Comma "," @ 1409..1410 trailing=[Whitespace " "]
                                       LambdaExpression
-                                        LambdaParameter
-                                          Identifier "publication" @ 1625..1636 trailing=[Whitespace " "]
-                                        Arrow "->" @ 1637..1639 trailing=[Whitespace " "]
-                                        MethodInvocationExpression
-                                          NameExpression
-                                            Identifier "publication" @ 1640..1651
-                                          Dot "." @ 1651..1652
-                                          Identifier "versionMapping" @ 1652..1666
-                                          ArgumentList
-                                            LParen "(" @ 1666..1667
-                                            LambdaExpression
-                                              LambdaParameter
-                                                Identifier "mapping" @ 1667..1674 trailing=[Whitespace " "]
-                                              Arrow "->" @ 1675..1677 trailing=[Whitespace " "]
-                                              Block
-                                                LBrace "{" @ 1678..1679
-                                                BlockStatement
-                                                  ExpressionStatement
+                                        LambdaParameterList
+                                          LambdaParameter
+                                            LambdaModifierList
+                                            AnnotationList
+                                            Identifier "plugin" @ 1411..1417 trailing=[Whitespace " "]
+                                        Arrow "->" @ 1418..1420 trailing=[Whitespace " "]
+                                        Block
+                                          LBrace "{" @ 1421..1422
+                                          BlockStatementList
+                                            BlockStatement
+                                              ExpressionStatement
+                                                MethodInvocationExpression
+                                                  QualifiedMethodInvocation
                                                     MethodInvocationExpression
+                                                      QualifiedMethodInvocation
+                                                        MethodInvocationExpression
+                                                          QualifiedMethodInvocation
+                                                            MethodInvocationExpression
+                                                              QualifiedMethodInvocation
+                                                                MethodInvocationExpression
+                                                                  QualifiedMethodInvocation
+                                                                    NameExpression
+                                                                      Identifier "project" @ 1431..1438 leading=[Newline "\n", Whitespace "        "]
+                                                                    Dot "." @ 1438..1439
+                                                                    Identifier "getExtensions" @ 1439..1452
+                                                                    ArgumentList
+                                                                      LParen "(" @ 1452..1453
+                                                                      ExpressionList
+                                                                      RParen ")" @ 1453..1454
+                                                                Dot "." @ 1471..1472 leading=[Newline "\n", Whitespace "                "]
+                                                                Identifier "getByType" @ 1472..1481
+                                                                ArgumentList
+                                                                  LParen "(" @ 1481..1482
+                                                                  ExpressionList
+                                                                    ClassLiteralExpression
+                                                                      NameExpression
+                                                                        Identifier "PublishingExtension" @ 1482..1501
+                                                                      Dot "." @ 1501..1502
+                                                                      ClassKw "class" @ 1502..1507
+                                                                  RParen ")" @ 1507..1508
+                                                            Dot "." @ 1525..1526 leading=[Newline "\n", Whitespace "                "]
+                                                            Identifier "getPublications" @ 1526..1541
+                                                            ArgumentList
+                                                              LParen "(" @ 1541..1542
+                                                              ExpressionList
+                                                              RParen ")" @ 1542..1543
+                                                        Dot "." @ 1560..1561 leading=[Newline "\n", Whitespace "                "]
+                                                        Identifier "withType" @ 1561..1569
+                                                        ArgumentList
+                                                          LParen "(" @ 1569..1570
+                                                          ExpressionList
+                                                            ClassLiteralExpression
+                                                              NameExpression
+                                                                Identifier "MavenPublication" @ 1570..1586
+                                                              Dot "." @ 1586..1587
+                                                              ClassKw "class" @ 1587..1592
+                                                          RParen ")" @ 1592..1593
+                                                    Dot "." @ 1610..1611 leading=[Newline "\n", Whitespace "                "]
+                                                    Identifier "configureEach" @ 1611..1624
+                                                    ArgumentList
+                                                      LParen "(" @ 1624..1625
+                                                      ExpressionList
+                                                        LambdaExpression
+                                                          LambdaParameterList
+                                                            LambdaParameter
+                                                              LambdaModifierList
+                                                              AnnotationList
+                                                              Identifier "publication" @ 1625..1636 trailing=[Whitespace " "]
+                                                          Arrow "->" @ 1637..1639 trailing=[Whitespace " "]
+                                                          MethodInvocationExpression
+                                                            QualifiedMethodInvocation
+                                                              NameExpression
+                                                                Identifier "publication" @ 1640..1651
+                                                              Dot "." @ 1651..1652
+                                                              Identifier "versionMapping" @ 1652..1666
+                                                              ArgumentList
+                                                                LParen "(" @ 1666..1667
+                                                                ExpressionList
+                                                                  LambdaExpression
+                                                                    LambdaParameterList
+                                                                      LambdaParameter
+                                                                        LambdaModifierList
+                                                                        AnnotationList
+                                                                        Identifier "mapping" @ 1667..1674 trailing=[Whitespace " "]
+                                                                    Arrow "->" @ 1675..1677 trailing=[Whitespace " "]
+                                                                    Block
+                                                                      LBrace "{" @ 1678..1679
+                                                                      BlockStatementList
+                                                                        BlockStatement
+                                                                          ExpressionStatement
+                                                                            MethodInvocationExpression
+                                                                              QualifiedMethodInvocation
+                                                                                NameExpression
+                                                                                  Identifier "mapping" @ 1700..1707 leading=[Newline "\n", Whitespace "                    "]
+                                                                                Dot "." @ 1707..1708
+                                                                                Identifier "allVariants" @ 1708..1719
+                                                                                ArgumentList
+                                                                                  LParen "(" @ 1719..1720
+                                                                                  ExpressionList
+                                                                                    MethodReferenceExpression
+                                                                                      NameExpression
+                                                                                        Identifier "VariantVersionMappingStrategy" @ 1720..1749
+                                                                                      DoubleColon "::" @ 1749..1751
+                                                                                      Identifier "fromResolutionResult" @ 1751..1771
+                                                                                  RParen ")" @ 1771..1772
+                                                                            Semicolon ";" @ 1772..1773
+                                                                      RBrace "}" @ 1790..1791 leading=[Newline "\n", Whitespace "                "]
+                                                                RParen ")" @ 1791..1792
+                                                      RParen ")" @ 1792..1793
+                                                Semicolon ";" @ 1793..1794
+                                          RBrace "}" @ 1799..1800 leading=[Newline "\n", Whitespace "    "]
+                                    RParen ")" @ 1800..1801
+                              Semicolon ";" @ 1801..1802
+                        RBrace "}" @ 1803..1804 leading=[Newline "\n"]
+                RBrace "}" @ 1805..1806 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            ClassDeclaration
+              ModifierList
+                StaticKw "static" @ 1808..1814 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              ClassKw "class" @ 1815..1820 trailing=[Whitespace " "]
+              Identifier "Example2GoogleJavaFormatOutput" @ 1821..1851 trailing=[Whitespace " "]
+              ClassBody
+                LBrace "{" @ 1852..1853
+                ClassBodyMemberList
+                  ClassBodyDeclaration
+                    MethodDeclaration
+                      ModifierList
+                        PrivateKw "private" @ 1854..1861 leading=[Newline "\n"] trailing=[Whitespace " "]
+                        StaticKw "static" @ 1862..1868 trailing=[Whitespace " "]
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
+                            AnnotationList
+                            Name
+                              Identifier "GradleException" @ 1869..1884 trailing=[Whitespace " "]
+                      Identifier "notFound" @ 1885..1893
+                      LParen "(" @ 1893..1894
+                      FormalParameterList
+                        FormalParameter
+                          ParameterModifierList
+                          ClassType
+                            ClassTypeSegmentList
+                              ClassTypeSegmentNode
+                                AnnotationList
+                                Name
+                                  Identifier "String" @ 1903..1909 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                          AnnotationList
+                          Identifier "group" @ 1910..1915
+                        Comma "," @ 1915..1916 trailing=[Whitespace " "]
+                        FormalParameter
+                          ParameterModifierList
+                          ClassType
+                            ClassTypeSegmentList
+                              ClassTypeSegmentNode
+                                AnnotationList
+                                Name
+                                  Identifier "String" @ 1917..1923 trailing=[Whitespace " "]
+                          AnnotationList
+                          Identifier "name" @ 1924..1928
+                        Comma "," @ 1928..1929 trailing=[Whitespace " "]
+                        FormalParameter
+                          ParameterModifierList
+                          ClassType
+                            ClassTypeSegmentList
+                              ClassTypeSegmentNode
+                                AnnotationList
+                                Name
+                                  Identifier "Configuration" @ 1930..1943 trailing=[Whitespace " "]
+                          AnnotationList
+                          Identifier "configuration" @ 1944..1957
+                      RParen ")" @ 1957..1958 trailing=[Whitespace " "]
+                      Block
+                        LBrace "{" @ 1959..1960
+                        BlockStatementList
+                          BlockStatement
+                            LocalVariableDeclaration
+                              ParameterModifierList
+                              ClassType
+                                ClassTypeSegmentList
+                                  ClassTypeSegmentNode
+                                    AnnotationList
+                                    Name
+                                      Identifier "String" @ 1965..1971 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                              VariableDeclaratorList
+                                VariableDeclarator
+                                  Identifier "actual" @ 1972..1978 trailing=[Whitespace " "]
+                                  Assign "=" @ 1979..1980
+                                  VariableInitializer
+                                    MethodInvocationExpression
+                                      QualifiedMethodInvocation
+                                        MethodInvocationExpression
+                                          QualifiedMethodInvocation
+                                            MethodInvocationExpression
+                                              QualifiedMethodInvocation
+                                                MethodInvocationExpression
+                                                  QualifiedMethodInvocation
+                                                    MethodInvocationExpression
+                                                      QualifiedMethodInvocation
+                                                        MethodInvocationExpression
+                                                          QualifiedMethodInvocation
+                                                            MethodInvocationExpression
+                                                              QualifiedMethodInvocation
+                                                                NameExpression
+                                                                  Identifier "configuration" @ 1993..2006 leading=[Newline "\n", Whitespace "            "]
+                                                                Dot "." @ 2006..2007
+                                                                Identifier "getIncoming" @ 2007..2018
+                                                                ArgumentList
+                                                                  LParen "(" @ 2018..2019
+                                                                  ExpressionList
+                                                                  RParen ")" @ 2019..2020
+                                                            Dot "." @ 2020..2021
+                                                            Identifier "getResolutionResult" @ 2021..2040
+                                                            ArgumentList
+                                                              LParen "(" @ 2040..2041
+                                                              ExpressionList
+                                                              RParen ")" @ 2041..2042
+                                                        Dot "." @ 2042..2043
+                                                        Identifier "getAllComponents" @ 2043..2059
+                                                        ArgumentList
+                                                          LParen "(" @ 2059..2060
+                                                          ExpressionList
+                                                          RParen ")" @ 2060..2061
+                                                    Dot "." @ 2061..2062
+                                                    Identifier "stream" @ 2062..2068
+                                                    ArgumentList
+                                                      LParen "(" @ 2068..2069
+                                                      ExpressionList
+                                                      RParen ")" @ 2069..2070
+                                                Dot "." @ 2091..2092 leading=[Newline "\n", Whitespace "                    "]
+                                                Identifier "map" @ 2092..2095
+                                                ArgumentList
+                                                  LParen "(" @ 2095..2096
+                                                  ExpressionList
+                                                    MethodReferenceExpression
                                                       NameExpression
-                                                        Identifier "mapping" @ 1700..1707 leading=[Newline "\n", Whitespace "                    "]
-                                                      Dot "." @ 1707..1708
-                                                      Identifier "allVariants" @ 1708..1719
+                                                        Identifier "ResolvedComponentResult" @ 2096..2119
+                                                      DoubleColon "::" @ 2119..2121
+                                                      Identifier "getModuleVersion" @ 2121..2137
+                                                  RParen ")" @ 2137..2138
+                                            Dot "." @ 2159..2160 leading=[Newline "\n", Whitespace "                    "]
+                                            Identifier "map" @ 2160..2163
+                                            ArgumentList
+                                              LParen "(" @ 2163..2164
+                                              ExpressionList
+                                                LambdaExpression
+                                                  LambdaParameterList
+                                                    LambdaParameter
+                                                      LambdaModifierList
+                                                      AnnotationList
+                                                      Identifier "mvi" @ 2193..2196 leading=[Newline "\n", Whitespace "                            "] trailing=[Whitespace " "]
+                                                  Arrow "->" @ 2197..2199
+                                                  MethodInvocationExpression
+                                                    QualifiedMethodInvocation
+                                                      NameExpression
+                                                        Identifier "String" @ 2236..2242 leading=[Newline "\n", Whitespace "                                    "]
+                                                      Dot "." @ 2242..2243
+                                                      Identifier "format" @ 2243..2249
                                                       ArgumentList
-                                                        LParen "(" @ 1719..1720
-                                                        MethodReferenceExpression
-                                                          NameExpression
-                                                            Identifier "VariantVersionMappingStrategy" @ 1720..1749
-                                                          DoubleColon "::" @ 1749..1751
-                                                          Identifier "fromResolutionResult" @ 1751..1771
-                                                        RParen ")" @ 1771..1772
-                                                    Semicolon ";" @ 1772..1773
-                                                RBrace "}" @ 1790..1791 leading=[Newline "\n", Whitespace "                "]
-                                            RParen ")" @ 1791..1792
-                                      RParen ")" @ 1792..1793
-                                  Semicolon ";" @ 1793..1794
-                              RBrace "}" @ 1799..1800 leading=[Newline "\n", Whitespace "    "]
-                          RParen ")" @ 1800..1801
-                      Semicolon ";" @ 1801..1802
-                  RBrace "}" @ 1803..1804 leading=[Newline "\n"]
-            RBrace "}" @ 1805..1806 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        ClassDeclaration
-          ModifierList
-            StaticKw "static" @ 1808..1814 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-          ClassKw "class" @ 1815..1820 trailing=[Whitespace " "]
-          Identifier "Example2GoogleJavaFormatOutput" @ 1821..1851 trailing=[Whitespace " "]
-          ClassBody
-            LBrace "{" @ 1852..1853
-            ClassBodyDeclaration
-              MethodDeclaration
-                ModifierList
-                  PrivateKw "private" @ 1854..1861 leading=[Newline "\n"] trailing=[Whitespace " "]
-                  StaticKw "static" @ 1862..1868 trailing=[Whitespace " "]
-                ClassType
-                  Name
-                    Identifier "GradleException" @ 1869..1884 trailing=[Whitespace " "]
-                Identifier "notFound" @ 1885..1893
-                LParen "(" @ 1893..1894
-                FormalParameterList
-                  FormalParameter
-                    ClassType
-                      Name
-                        Identifier "String" @ 1903..1909 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                    Identifier "group" @ 1910..1915
-                  Comma "," @ 1915..1916 trailing=[Whitespace " "]
-                  FormalParameter
-                    ClassType
-                      Name
-                        Identifier "String" @ 1917..1923 trailing=[Whitespace " "]
-                    Identifier "name" @ 1924..1928
-                  Comma "," @ 1928..1929 trailing=[Whitespace " "]
-                  FormalParameter
-                    ClassType
-                      Name
-                        Identifier "Configuration" @ 1930..1943 trailing=[Whitespace " "]
-                    Identifier "configuration" @ 1944..1957
-                RParen ")" @ 1957..1958 trailing=[Whitespace " "]
-                Block
-                  LBrace "{" @ 1959..1960
+                                                        LParen "(" @ 2249..2250
+                                                        ExpressionList
+                                                          LiteralExpression
+                                                            StringLiteral "\"\\t- %s:%s:%s\"" @ 2295..2309 leading=[Newline "\n", Whitespace "                                            "]
+                                                          Comma "," @ 2309..2310
+                                                          MethodInvocationExpression
+                                                            QualifiedMethodInvocation
+                                                              NameExpression
+                                                                Identifier "mvi" @ 2355..2358 leading=[Newline "\n", Whitespace "                                            "]
+                                                              Dot "." @ 2358..2359
+                                                              Identifier "getGroup" @ 2359..2367
+                                                              ArgumentList
+                                                                LParen "(" @ 2367..2368
+                                                                ExpressionList
+                                                                RParen ")" @ 2368..2369
+                                                          Comma "," @ 2369..2370 trailing=[Whitespace " "]
+                                                          MethodInvocationExpression
+                                                            QualifiedMethodInvocation
+                                                              NameExpression
+                                                                Identifier "mvi" @ 2371..2374
+                                                              Dot "." @ 2374..2375
+                                                              Identifier "getName" @ 2375..2382
+                                                              ArgumentList
+                                                                LParen "(" @ 2382..2383
+                                                                ExpressionList
+                                                                RParen ")" @ 2383..2384
+                                                          Comma "," @ 2384..2385 trailing=[Whitespace " "]
+                                                          MethodInvocationExpression
+                                                            QualifiedMethodInvocation
+                                                              NameExpression
+                                                                Identifier "mvi" @ 2386..2389
+                                                              Dot "." @ 2389..2390
+                                                              Identifier "getVersion" @ 2390..2400
+                                                              ArgumentList
+                                                                LParen "(" @ 2400..2401
+                                                                ExpressionList
+                                                                RParen ")" @ 2401..2402
+                                                        RParen ")" @ 2402..2403
+                                              RParen ")" @ 2403..2404
+                                        Dot "." @ 2425..2426 leading=[Newline "\n", Whitespace "                    "]
+                                        Identifier "collect" @ 2426..2433
+                                        ArgumentList
+                                          LParen "(" @ 2433..2434
+                                          ExpressionList
+                                            MethodInvocationExpression
+                                              QualifiedMethodInvocation
+                                                NameExpression
+                                                  Identifier "Collectors" @ 2434..2444
+                                                Dot "." @ 2444..2445
+                                                Identifier "joining" @ 2445..2452
+                                                ArgumentList
+                                                  LParen "(" @ 2452..2453
+                                                  ExpressionList
+                                                    LiteralExpression
+                                                      StringLiteral "\"\\n\"" @ 2453..2457
+                                                  RParen ")" @ 2457..2458
+                                          RParen ")" @ 2458..2459
+                            Semicolon ";" @ 2459..2460
+                        RBrace "}" @ 2472..2473 leading=[Newline "\n", Whitespace "    ", LineComment "// ...", Newline "\n"]
+                RBrace "}" @ 2474..2475 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            ClassDeclaration
+              ModifierList
+                StaticKw "static" @ 2477..2483 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              ClassKw "class" @ 2484..2489 trailing=[Whitespace " "]
+              Identifier "Example2PalantirJavaFormatOutput" @ 2490..2522 trailing=[Whitespace " "]
+              ClassBody
+                LBrace "{" @ 2523..2524
+                ClassBodyMemberList
+                  ClassBodyDeclaration
+                    MethodDeclaration
+                      ModifierList
+                        PrivateKw "private" @ 2525..2532 leading=[Newline "\n"] trailing=[Whitespace " "]
+                        StaticKw "static" @ 2533..2539 trailing=[Whitespace " "]
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
+                            AnnotationList
+                            Name
+                              Identifier "GradleException" @ 2540..2555 trailing=[Whitespace " "]
+                      Identifier "notFound" @ 2556..2564
+                      LParen "(" @ 2564..2565
+                      FormalParameterList
+                        FormalParameter
+                          ParameterModifierList
+                          ClassType
+                            ClassTypeSegmentList
+                              ClassTypeSegmentNode
+                                AnnotationList
+                                Name
+                                  Identifier "String" @ 2565..2571 trailing=[Whitespace " "]
+                          AnnotationList
+                          Identifier "group" @ 2572..2577
+                        Comma "," @ 2577..2578 trailing=[Whitespace " "]
+                        FormalParameter
+                          ParameterModifierList
+                          ClassType
+                            ClassTypeSegmentList
+                              ClassTypeSegmentNode
+                                AnnotationList
+                                Name
+                                  Identifier "String" @ 2579..2585 trailing=[Whitespace " "]
+                          AnnotationList
+                          Identifier "name" @ 2586..2590
+                        Comma "," @ 2590..2591 trailing=[Whitespace " "]
+                        FormalParameter
+                          ParameterModifierList
+                          ClassType
+                            ClassTypeSegmentList
+                              ClassTypeSegmentNode
+                                AnnotationList
+                                Name
+                                  Identifier "Configuration" @ 2592..2605 trailing=[Whitespace " "]
+                          AnnotationList
+                          Identifier "configuration" @ 2606..2619
+                      RParen ")" @ 2619..2620 trailing=[Whitespace " "]
+                      Block
+                        LBrace "{" @ 2621..2622
+                        BlockStatementList
+                          BlockStatement
+                            LocalVariableDeclaration
+                              ParameterModifierList
+                              ClassType
+                                ClassTypeSegmentList
+                                  ClassTypeSegmentNode
+                                    AnnotationList
+                                    Name
+                                      Identifier "String" @ 2627..2633 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                              VariableDeclaratorList
+                                VariableDeclarator
+                                  Identifier "actual" @ 2634..2640 trailing=[Whitespace " "]
+                                  Assign "=" @ 2641..2642 trailing=[Whitespace " "]
+                                  VariableInitializer
+                                    MethodInvocationExpression
+                                      QualifiedMethodInvocation
+                                        MethodInvocationExpression
+                                          QualifiedMethodInvocation
+                                            MethodInvocationExpression
+                                              QualifiedMethodInvocation
+                                                MethodInvocationExpression
+                                                  QualifiedMethodInvocation
+                                                    MethodInvocationExpression
+                                                      QualifiedMethodInvocation
+                                                        MethodInvocationExpression
+                                                          QualifiedMethodInvocation
+                                                            MethodInvocationExpression
+                                                              QualifiedMethodInvocation
+                                                                NameExpression
+                                                                  Identifier "configuration" @ 2643..2656
+                                                                Dot "." @ 2656..2657
+                                                                Identifier "getIncoming" @ 2657..2668
+                                                                ArgumentList
+                                                                  LParen "(" @ 2668..2669
+                                                                  ExpressionList
+                                                                  RParen ")" @ 2669..2670
+                                                            Dot "." @ 2670..2671
+                                                            Identifier "getResolutionResult" @ 2671..2690
+                                                            ArgumentList
+                                                              LParen "(" @ 2690..2691
+                                                              ExpressionList
+                                                              RParen ")" @ 2691..2692
+                                                        Dot "." @ 2692..2693
+                                                        Identifier "getAllComponents" @ 2693..2709
+                                                        ArgumentList
+                                                          LParen "(" @ 2709..2710
+                                                          ExpressionList
+                                                          RParen ")" @ 2710..2711
+                                                    Dot "." @ 2711..2712
+                                                    Identifier "stream" @ 2712..2718
+                                                    ArgumentList
+                                                      LParen "(" @ 2718..2719
+                                                      ExpressionList
+                                                      RParen ")" @ 2719..2720
+                                                Dot "." @ 2733..2734 leading=[Newline "\n", Whitespace "            "]
+                                                Identifier "map" @ 2734..2737
+                                                ArgumentList
+                                                  LParen "(" @ 2737..2738
+                                                  ExpressionList
+                                                    MethodReferenceExpression
+                                                      NameExpression
+                                                        Identifier "ResolvedComponentResult" @ 2738..2761
+                                                      DoubleColon "::" @ 2761..2763
+                                                      Identifier "getModuleVersion" @ 2763..2779
+                                                  RParen ")" @ 2779..2780
+                                            Dot "." @ 2793..2794 leading=[Newline "\n", Whitespace "            "]
+                                            Identifier "map" @ 2794..2797
+                                            ArgumentList
+                                              LParen "(" @ 2797..2798
+                                              ExpressionList
+                                                LambdaExpression
+                                                  LambdaParameterList
+                                                    LambdaParameter
+                                                      LambdaModifierList
+                                                      AnnotationList
+                                                      Identifier "mvi" @ 2798..2801 trailing=[Whitespace " "]
+                                                  Arrow "->" @ 2802..2804 trailing=[Whitespace " "]
+                                                  MethodInvocationExpression
+                                                    QualifiedMethodInvocation
+                                                      NameExpression
+                                                        Identifier "String" @ 2805..2811
+                                                      Dot "." @ 2811..2812
+                                                      Identifier "format" @ 2812..2818
+                                                      ArgumentList
+                                                        LParen "(" @ 2818..2819
+                                                        ExpressionList
+                                                          LiteralExpression
+                                                            StringLiteral "\"\\t- %s:%s:%s\"" @ 2819..2833
+                                                          Comma "," @ 2833..2834 trailing=[Whitespace " "]
+                                                          MethodInvocationExpression
+                                                            QualifiedMethodInvocation
+                                                              NameExpression
+                                                                Identifier "mvi" @ 2835..2838
+                                                              Dot "." @ 2838..2839
+                                                              Identifier "getGroup" @ 2839..2847
+                                                              ArgumentList
+                                                                LParen "(" @ 2847..2848
+                                                                ExpressionList
+                                                                RParen ")" @ 2848..2849
+                                                          Comma "," @ 2849..2850 trailing=[Whitespace " "]
+                                                          MethodInvocationExpression
+                                                            QualifiedMethodInvocation
+                                                              NameExpression
+                                                                Identifier "mvi" @ 2851..2854
+                                                              Dot "." @ 2854..2855
+                                                              Identifier "getName" @ 2855..2862
+                                                              ArgumentList
+                                                                LParen "(" @ 2862..2863
+                                                                ExpressionList
+                                                                RParen ")" @ 2863..2864
+                                                          Comma "," @ 2864..2865 trailing=[Whitespace " "]
+                                                          MethodInvocationExpression
+                                                            QualifiedMethodInvocation
+                                                              NameExpression
+                                                                Identifier "mvi" @ 2866..2869
+                                                              Dot "." @ 2869..2870
+                                                              Identifier "getVersion" @ 2870..2880
+                                                              ArgumentList
+                                                                LParen "(" @ 2880..2881
+                                                                ExpressionList
+                                                                RParen ")" @ 2881..2882
+                                                        RParen ")" @ 2882..2883
+                                              RParen ")" @ 2883..2884
+                                        Dot "." @ 2897..2898 leading=[Newline "\n", Whitespace "            "]
+                                        Identifier "collect" @ 2898..2905
+                                        ArgumentList
+                                          LParen "(" @ 2905..2906
+                                          ExpressionList
+                                            MethodInvocationExpression
+                                              QualifiedMethodInvocation
+                                                NameExpression
+                                                  Identifier "Collectors" @ 2906..2916
+                                                Dot "." @ 2916..2917
+                                                Identifier "joining" @ 2917..2924
+                                                ArgumentList
+                                                  LParen "(" @ 2924..2925
+                                                  ExpressionList
+                                                    LiteralExpression
+                                                      StringLiteral "\"\\n\"" @ 2925..2929
+                                                  RParen ")" @ 2929..2930
+                                          RParen ")" @ 2930..2931
+                            Semicolon ";" @ 2931..2932
+                        RBrace "}" @ 2944..2945 leading=[Newline "\n", Whitespace "    ", LineComment "// ...", Newline "\n"]
+                RBrace "}" @ 2946..2947 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 2949..2953 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              Identifier "chainFitsButLastDotPastReviewLimit" @ 2954..2988
+              LParen "(" @ 2988..2989
+              RParen ")" @ 2989..2990 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 2991..2992
+                BlockStatementList
                   BlockStatement
                     LocalVariableDeclaration
-                      ClassType
-                        Name
-                          Identifier "String" @ 1965..1971 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      ParameterModifierList
+                      Identifier "var" @ 2993..2996 leading=[Newline "\n"] trailing=[Whitespace " "]
                       VariableDeclaratorList
                         VariableDeclarator
-                          Identifier "actual" @ 1972..1978 trailing=[Whitespace " "]
-                          Assign "=" @ 1979..1980
+                          Identifier "foo" @ 2997..3000 trailing=[Whitespace " "]
+                          Assign "=" @ 3001..3002 trailing=[Whitespace " "]
                           VariableInitializer
                             MethodInvocationExpression
-                              MethodInvocationExpression
+                              QualifiedMethodInvocation
                                 MethodInvocationExpression
-                                  MethodInvocationExpression
+                                  QualifiedMethodInvocation
                                     MethodInvocationExpression
-                                      MethodInvocationExpression
+                                      QualifiedMethodInvocation
                                         MethodInvocationExpression
-                                          NameExpression
-                                            Identifier "configuration" @ 1993..2006 leading=[Newline "\n", Whitespace "            "]
-                                          Dot "." @ 2006..2007
-                                          Identifier "getIncoming" @ 2007..2018
-                                          ArgumentList
-                                            LParen "(" @ 2018..2019
-                                            RParen ")" @ 2019..2020
-                                        Dot "." @ 2020..2021
-                                        Identifier "getResolutionResult" @ 2021..2040
+                                          QualifiedMethodInvocation
+                                            MethodInvocationExpression
+                                              QualifiedMethodInvocation
+                                                NameExpression
+                                                  Identifier "SomeType" @ 3003..3011
+                                                Dot "." @ 3011..3012
+                                                Identifier "builder" @ 3012..3019
+                                                ArgumentList
+                                                  LParen "(" @ 3019..3020
+                                                  ExpressionList
+                                                  RParen ")" @ 3020..3021
+                                            Dot "." @ 3021..3022
+                                            Identifier "thing1" @ 3022..3028
+                                            ArgumentList
+                                              LParen "(" @ 3028..3029
+                                              ExpressionList
+                                                NameExpression
+                                                  Identifier "thing1" @ 3029..3035
+                                              RParen ")" @ 3035..3036
+                                        Dot "." @ 3036..3037
+                                        Identifier "thing2" @ 3037..3043
                                         ArgumentList
-                                          LParen "(" @ 2040..2041
-                                          RParen ")" @ 2041..2042
-                                      Dot "." @ 2042..2043
-                                      Identifier "getAllComponents" @ 2043..2059
-                                      ArgumentList
-                                        LParen "(" @ 2059..2060
-                                        RParen ")" @ 2060..2061
-                                    Dot "." @ 2061..2062
-                                    Identifier "stream" @ 2062..2068
+                                          LParen "(" @ 3043..3044
+                                          ExpressionList
+                                            NameExpression
+                                              Identifier "thing2" @ 3044..3050
+                                          RParen ")" @ 3050..3051
+                                    Dot "." @ 3051..3052
+                                    Identifier "thing3" @ 3052..3058
                                     ArgumentList
-                                      LParen "(" @ 2068..2069
-                                      RParen ")" @ 2069..2070
-                                  Dot "." @ 2091..2092 leading=[Newline "\n", Whitespace "                    "]
-                                  Identifier "map" @ 2092..2095
-                                  ArgumentList
-                                    LParen "(" @ 2095..2096
-                                    MethodReferenceExpression
-                                      NameExpression
-                                        Identifier "ResolvedComponentResult" @ 2096..2119
-                                      DoubleColon "::" @ 2119..2121
-                                      Identifier "getModuleVersion" @ 2121..2137
-                                    RParen ")" @ 2137..2138
-                                Dot "." @ 2159..2160 leading=[Newline "\n", Whitespace "                    "]
-                                Identifier "map" @ 2160..2163
+                                      LParen "(" @ 3058..3059
+                                      ExpressionList
+                                        NameExpression
+                                          Identifier "thing3" @ 3059..3065
+                                      RParen ")" @ 3065..3066
+                                Dot "." @ 3066..3067
+                                Identifier "build" @ 3067..3072
                                 ArgumentList
-                                  LParen "(" @ 2163..2164
-                                  LambdaExpression
-                                    LambdaParameter
-                                      Identifier "mvi" @ 2193..2196 leading=[Newline "\n", Whitespace "                            "] trailing=[Whitespace " "]
-                                    Arrow "->" @ 2197..2199
-                                    MethodInvocationExpression
-                                      NameExpression
-                                        Identifier "String" @ 2236..2242 leading=[Newline "\n", Whitespace "                                    "]
-                                      Dot "." @ 2242..2243
-                                      Identifier "format" @ 2243..2249
-                                      ArgumentList
-                                        LParen "(" @ 2249..2250
-                                        LiteralExpression
-                                          StringLiteral "\"\\t- %s:%s:%s\"" @ 2295..2309 leading=[Newline "\n", Whitespace "                                            "]
-                                        Comma "," @ 2309..2310
-                                        MethodInvocationExpression
-                                          NameExpression
-                                            Identifier "mvi" @ 2355..2358 leading=[Newline "\n", Whitespace "                                            "]
-                                          Dot "." @ 2358..2359
-                                          Identifier "getGroup" @ 2359..2367
-                                          ArgumentList
-                                            LParen "(" @ 2367..2368
-                                            RParen ")" @ 2368..2369
-                                        Comma "," @ 2369..2370 trailing=[Whitespace " "]
-                                        MethodInvocationExpression
-                                          NameExpression
-                                            Identifier "mvi" @ 2371..2374
-                                          Dot "." @ 2374..2375
-                                          Identifier "getName" @ 2375..2382
-                                          ArgumentList
-                                            LParen "(" @ 2382..2383
-                                            RParen ")" @ 2383..2384
-                                        Comma "," @ 2384..2385 trailing=[Whitespace " "]
-                                        MethodInvocationExpression
-                                          NameExpression
-                                            Identifier "mvi" @ 2386..2389
-                                          Dot "." @ 2389..2390
-                                          Identifier "getVersion" @ 2390..2400
-                                          ArgumentList
-                                            LParen "(" @ 2400..2401
-                                            RParen ")" @ 2401..2402
-                                        RParen ")" @ 2402..2403
-                                  RParen ")" @ 2403..2404
-                              Dot "." @ 2425..2426 leading=[Newline "\n", Whitespace "                    "]
-                              Identifier "collect" @ 2426..2433
-                              ArgumentList
-                                LParen "(" @ 2433..2434
-                                MethodInvocationExpression
-                                  NameExpression
-                                    Identifier "Collectors" @ 2434..2444
-                                  Dot "." @ 2444..2445
-                                  Identifier "joining" @ 2445..2452
-                                  ArgumentList
-                                    LParen "(" @ 2452..2453
-                                    LiteralExpression
-                                      StringLiteral "\"\\n\"" @ 2453..2457
-                                    RParen ")" @ 2457..2458
-                                RParen ")" @ 2458..2459
-                    Semicolon ";" @ 2459..2460
-                  RBrace "}" @ 2472..2473 leading=[Newline "\n", Whitespace "    ", LineComment "// ...", Newline "\n"]
-            RBrace "}" @ 2474..2475 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        ClassDeclaration
-          ModifierList
-            StaticKw "static" @ 2477..2483 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-          ClassKw "class" @ 2484..2489 trailing=[Whitespace " "]
-          Identifier "Example2PalantirJavaFormatOutput" @ 2490..2522 trailing=[Whitespace " "]
-          ClassBody
-            LBrace "{" @ 2523..2524
-            ClassBodyDeclaration
-              MethodDeclaration
-                ModifierList
-                  PrivateKw "private" @ 2525..2532 leading=[Newline "\n"] trailing=[Whitespace " "]
-                  StaticKw "static" @ 2533..2539 trailing=[Whitespace " "]
-                ClassType
-                  Name
-                    Identifier "GradleException" @ 2540..2555 trailing=[Whitespace " "]
-                Identifier "notFound" @ 2556..2564
-                LParen "(" @ 2564..2565
-                FormalParameterList
-                  FormalParameter
-                    ClassType
-                      Name
-                        Identifier "String" @ 2565..2571 trailing=[Whitespace " "]
-                    Identifier "group" @ 2572..2577
-                  Comma "," @ 2577..2578 trailing=[Whitespace " "]
-                  FormalParameter
-                    ClassType
-                      Name
-                        Identifier "String" @ 2579..2585 trailing=[Whitespace " "]
-                    Identifier "name" @ 2586..2590
-                  Comma "," @ 2590..2591 trailing=[Whitespace " "]
-                  FormalParameter
-                    ClassType
-                      Name
-                        Identifier "Configuration" @ 2592..2605 trailing=[Whitespace " "]
-                    Identifier "configuration" @ 2606..2619
-                RParen ")" @ 2619..2620 trailing=[Whitespace " "]
-                Block
-                  LBrace "{" @ 2621..2622
+                                  LParen "(" @ 3072..3073
+                                  ExpressionList
+                                  RParen ")" @ 3073..3074
+                    Semicolon ";" @ 3074..3075
+                RBrace "}" @ 3076..3077 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 3079..3083 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              Identifier "chainSplitByReviewLimit" @ 3084..3107
+              LParen "(" @ 3107..3108
+              RParen ")" @ 3108..3109 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 3110..3111
+                BlockStatementList
                   BlockStatement
                     LocalVariableDeclaration
-                      ClassType
-                        Name
-                          Identifier "String" @ 2627..2633 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      ParameterModifierList
+                      Identifier "var" @ 3112..3115 leading=[Newline "\n"] trailing=[Whitespace " "]
                       VariableDeclaratorList
                         VariableDeclarator
-                          Identifier "actual" @ 2634..2640 trailing=[Whitespace " "]
-                          Assign "=" @ 2641..2642 trailing=[Whitespace " "]
+                          Identifier "foo" @ 3116..3119 trailing=[Whitespace " "]
+                          Assign "=" @ 3120..3121 trailing=[Whitespace " "]
                           VariableInitializer
                             MethodInvocationExpression
-                              MethodInvocationExpression
+                              QualifiedMethodInvocation
                                 MethodInvocationExpression
-                                  MethodInvocationExpression
+                                  QualifiedMethodInvocation
                                     MethodInvocationExpression
-                                      MethodInvocationExpression
+                                      QualifiedMethodInvocation
                                         MethodInvocationExpression
-                                          NameExpression
-                                            Identifier "configuration" @ 2643..2656
-                                          Dot "." @ 2656..2657
-                                          Identifier "getIncoming" @ 2657..2668
-                                          ArgumentList
-                                            LParen "(" @ 2668..2669
-                                            RParen ")" @ 2669..2670
-                                        Dot "." @ 2670..2671
-                                        Identifier "getResolutionResult" @ 2671..2690
+                                          QualifiedMethodInvocation
+                                            MethodInvocationExpression
+                                              QualifiedMethodInvocation
+                                                NameExpression
+                                                  Identifier "SomeType" @ 3122..3130
+                                                Dot "." @ 3130..3131
+                                                Identifier "builder" @ 3131..3138
+                                                ArgumentList
+                                                  LParen "(" @ 3138..3139
+                                                  ExpressionList
+                                                  RParen ")" @ 3139..3140
+                                            Dot "." @ 3149..3150 leading=[Newline "\n", Whitespace "        "]
+                                            Identifier "thing1" @ 3150..3156
+                                            ArgumentList
+                                              LParen "(" @ 3156..3157
+                                              ExpressionList
+                                                NameExpression
+                                                  Identifier "thing1" @ 3157..3163
+                                              RParen ")" @ 3163..3164
+                                        Dot "." @ 3173..3174 leading=[Newline "\n", Whitespace "        "]
+                                        Identifier "thing2" @ 3174..3180
                                         ArgumentList
-                                          LParen "(" @ 2690..2691
-                                          RParen ")" @ 2691..2692
-                                      Dot "." @ 2692..2693
-                                      Identifier "getAllComponents" @ 2693..2709
-                                      ArgumentList
-                                        LParen "(" @ 2709..2710
-                                        RParen ")" @ 2710..2711
-                                    Dot "." @ 2711..2712
-                                    Identifier "stream" @ 2712..2718
+                                          LParen "(" @ 3180..3181
+                                          ExpressionList
+                                            NameExpression
+                                              Identifier "thing2" @ 3181..3187
+                                          RParen ")" @ 3187..3188
+                                    Dot "." @ 3197..3198 leading=[Newline "\n", Whitespace "        "]
+                                    Identifier "thing3" @ 3198..3204
                                     ArgumentList
-                                      LParen "(" @ 2718..2719
-                                      RParen ")" @ 2719..2720
-                                  Dot "." @ 2733..2734 leading=[Newline "\n", Whitespace "            "]
-                                  Identifier "map" @ 2734..2737
-                                  ArgumentList
-                                    LParen "(" @ 2737..2738
-                                    MethodReferenceExpression
-                                      NameExpression
-                                        Identifier "ResolvedComponentResult" @ 2738..2761
-                                      DoubleColon "::" @ 2761..2763
-                                      Identifier "getModuleVersion" @ 2763..2779
-                                    RParen ")" @ 2779..2780
-                                Dot "." @ 2793..2794 leading=[Newline "\n", Whitespace "            "]
-                                Identifier "map" @ 2794..2797
+                                      LParen "(" @ 3204..3205
+                                      ExpressionList
+                                        NameExpression
+                                          Identifier "thing3" @ 3205..3211
+                                      RParen ")" @ 3211..3212
+                                Dot "." @ 3221..3222 leading=[Newline "\n", Whitespace "        "]
+                                Identifier "build" @ 3222..3227
                                 ArgumentList
-                                  LParen "(" @ 2797..2798
-                                  LambdaExpression
-                                    LambdaParameter
-                                      Identifier "mvi" @ 2798..2801 trailing=[Whitespace " "]
-                                    Arrow "->" @ 2802..2804 trailing=[Whitespace " "]
-                                    MethodInvocationExpression
-                                      NameExpression
-                                        Identifier "String" @ 2805..2811
-                                      Dot "." @ 2811..2812
-                                      Identifier "format" @ 2812..2818
-                                      ArgumentList
-                                        LParen "(" @ 2818..2819
-                                        LiteralExpression
-                                          StringLiteral "\"\\t- %s:%s:%s\"" @ 2819..2833
-                                        Comma "," @ 2833..2834 trailing=[Whitespace " "]
-                                        MethodInvocationExpression
-                                          NameExpression
-                                            Identifier "mvi" @ 2835..2838
-                                          Dot "." @ 2838..2839
-                                          Identifier "getGroup" @ 2839..2847
-                                          ArgumentList
-                                            LParen "(" @ 2847..2848
-                                            RParen ")" @ 2848..2849
-                                        Comma "," @ 2849..2850 trailing=[Whitespace " "]
-                                        MethodInvocationExpression
-                                          NameExpression
-                                            Identifier "mvi" @ 2851..2854
-                                          Dot "." @ 2854..2855
-                                          Identifier "getName" @ 2855..2862
-                                          ArgumentList
-                                            LParen "(" @ 2862..2863
-                                            RParen ")" @ 2863..2864
-                                        Comma "," @ 2864..2865 trailing=[Whitespace " "]
-                                        MethodInvocationExpression
-                                          NameExpression
-                                            Identifier "mvi" @ 2866..2869
-                                          Dot "." @ 2869..2870
-                                          Identifier "getVersion" @ 2870..2880
-                                          ArgumentList
-                                            LParen "(" @ 2880..2881
-                                            RParen ")" @ 2881..2882
-                                        RParen ")" @ 2882..2883
-                                  RParen ")" @ 2883..2884
-                              Dot "." @ 2897..2898 leading=[Newline "\n", Whitespace "            "]
-                              Identifier "collect" @ 2898..2905
-                              ArgumentList
-                                LParen "(" @ 2905..2906
-                                MethodInvocationExpression
-                                  NameExpression
-                                    Identifier "Collectors" @ 2906..2916
-                                  Dot "." @ 2916..2917
-                                  Identifier "joining" @ 2917..2924
-                                  ArgumentList
-                                    LParen "(" @ 2924..2925
-                                    LiteralExpression
-                                      StringLiteral "\"\\n\"" @ 2925..2929
-                                    RParen ")" @ 2929..2930
-                                RParen ")" @ 2930..2931
-                    Semicolon ";" @ 2931..2932
-                  RBrace "}" @ 2944..2945 leading=[Newline "\n", Whitespace "    ", LineComment "// ...", Newline "\n"]
-            RBrace "}" @ 2946..2947 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 2949..2953 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-          Identifier "chainFitsButLastDotPastReviewLimit" @ 2954..2988
-          LParen "(" @ 2988..2989
-          RParen ")" @ 2989..2990 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 2991..2992
-            BlockStatement
-              LocalVariableDeclaration
-                Identifier "var" @ 2993..2996 leading=[Newline "\n"] trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "foo" @ 2997..3000 trailing=[Whitespace " "]
-                    Assign "=" @ 3001..3002 trailing=[Whitespace " "]
-                    VariableInitializer
-                      MethodInvocationExpression
-                        MethodInvocationExpression
-                          MethodInvocationExpression
-                            MethodInvocationExpression
-                              MethodInvocationExpression
-                                NameExpression
-                                  Identifier "SomeType" @ 3003..3011
-                                Dot "." @ 3011..3012
-                                Identifier "builder" @ 3012..3019
-                                ArgumentList
-                                  LParen "(" @ 3019..3020
-                                  RParen ")" @ 3020..3021
-                              Dot "." @ 3021..3022
-                              Identifier "thing1" @ 3022..3028
-                              ArgumentList
-                                LParen "(" @ 3028..3029
-                                NameExpression
-                                  Identifier "thing1" @ 3029..3035
-                                RParen ")" @ 3035..3036
-                            Dot "." @ 3036..3037
-                            Identifier "thing2" @ 3037..3043
-                            ArgumentList
-                              LParen "(" @ 3043..3044
-                              NameExpression
-                                Identifier "thing2" @ 3044..3050
-                              RParen ")" @ 3050..3051
-                          Dot "." @ 3051..3052
-                          Identifier "thing3" @ 3052..3058
-                          ArgumentList
-                            LParen "(" @ 3058..3059
-                            NameExpression
-                              Identifier "thing3" @ 3059..3065
-                            RParen ")" @ 3065..3066
-                        Dot "." @ 3066..3067
-                        Identifier "build" @ 3067..3072
-                        ArgumentList
-                          LParen "(" @ 3072..3073
-                          RParen ")" @ 3073..3074
-              Semicolon ";" @ 3074..3075
-            RBrace "}" @ 3076..3077 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 3079..3083 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-          Identifier "chainSplitByReviewLimit" @ 3084..3107
-          LParen "(" @ 3107..3108
-          RParen ")" @ 3108..3109 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 3110..3111
-            BlockStatement
-              LocalVariableDeclaration
-                Identifier "var" @ 3112..3115 leading=[Newline "\n"] trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "foo" @ 3116..3119 trailing=[Whitespace " "]
-                    Assign "=" @ 3120..3121 trailing=[Whitespace " "]
-                    VariableInitializer
-                      MethodInvocationExpression
-                        MethodInvocationExpression
-                          MethodInvocationExpression
-                            MethodInvocationExpression
-                              MethodInvocationExpression
-                                NameExpression
-                                  Identifier "SomeType" @ 3122..3130
-                                Dot "." @ 3130..3131
-                                Identifier "builder" @ 3131..3138
-                                ArgumentList
-                                  LParen "(" @ 3138..3139
-                                  RParen ")" @ 3139..3140
-                              Dot "." @ 3149..3150 leading=[Newline "\n", Whitespace "        "]
-                              Identifier "thing1" @ 3150..3156
-                              ArgumentList
-                                LParen "(" @ 3156..3157
-                                NameExpression
-                                  Identifier "thing1" @ 3157..3163
-                                RParen ")" @ 3163..3164
-                            Dot "." @ 3173..3174 leading=[Newline "\n", Whitespace "        "]
-                            Identifier "thing2" @ 3174..3180
-                            ArgumentList
-                              LParen "(" @ 3180..3181
-                              NameExpression
-                                Identifier "thing2" @ 3181..3187
-                              RParen ")" @ 3187..3188
-                          Dot "." @ 3197..3198 leading=[Newline "\n", Whitespace "        "]
-                          Identifier "thing3" @ 3198..3204
-                          ArgumentList
-                            LParen "(" @ 3204..3205
-                            NameExpression
-                              Identifier "thing3" @ 3205..3211
-                            RParen ")" @ 3211..3212
-                        Dot "." @ 3221..3222 leading=[Newline "\n", Whitespace "        "]
-                        Identifier "build" @ 3222..3227
-                        ArgumentList
-                          LParen "(" @ 3227..3228
-                          RParen ")" @ 3228..3229
-              Semicolon ";" @ 3229..3230
-            RBrace "}" @ 3231..3232 leading=[Newline "\n"]
-      RBrace "}" @ 3233..3234 leading=[Newline "\n"]
+                                  LParen "(" @ 3227..3228
+                                  ExpressionList
+                                  RParen ")" @ 3228..3229
+                    Semicolon ";" @ 3229..3230
+                RBrace "}" @ 3231..3232 leading=[Newline "\n"]
+        RBrace "}" @ 3233..3234 leading=[Newline "\n"]
   Eof "" @ 3235..3235 leading=[Newline "\n"]
 
 diagnostics:

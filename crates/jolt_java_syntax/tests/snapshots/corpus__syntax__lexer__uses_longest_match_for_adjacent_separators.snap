@@ -8,11 +8,13 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    Ellipsis "..." @ 0..3
-    Dot "." @ 3..4 trailing=[Whitespace " "]
-    DoubleColon "::" @ 5..7 trailing=[Whitespace " "]
-    Colon ":" @ 8..9
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      Ellipsis "..." @ 0..3
+      Dot "." @ 3..4 trailing=[Whitespace " "]
+      DoubleColon "::" @ 5..7 trailing=[Whitespace " "]
+      Colon ":" @ 8..9
   Eof "" @ 9..9
 
 diagnostics:

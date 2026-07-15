@@ -1,11 +1,18 @@
 use super::{
     Doc, LambdaExpression, LambdaParameter, LeadingTrivia, TrailingTrivia, comment_forces_line,
     format_annotation, format_block, format_expression, format_separator_with_comments,
-    format_token, format_token_with_comments, format_type, inline_modifier_prefix_from_docs,
-    token_iter_has_comments,
+    format_token, format_token_with_comments, format_type, token_iter_has_comments,
 };
-use crate::helpers::lists::{CommaListItem, comma_list, recovered_comma_list_items};
+use crate::helpers::comments::token_has_comments;
+use crate::helpers::lists::{CommaListItem, comma_list, syntax_comma_list_items};
+use crate::helpers::recovery::{
+    JavaFormatField, JavaFormatListPart, format_optional_field, format_required_field,
+    resolve_list_part, resolve_required_field,
+};
 use jolt_fmt_ir::DocBuilder;
+use jolt_java_syntax::{
+    Block, Expression, JavaSyntaxField, JavaSyntaxListPart, JavaSyntaxView, LambdaModifier,
+};
 
 pub(super) fn format_lambda_expression<'source>(
     expression: &LambdaExpression<'source>,
@@ -13,12 +20,16 @@ pub(super) fn format_lambda_expression<'source>(
 ) -> Doc<'source> {
     let parameters = format_lambda_parameters(expression, doc);
     let arrow = format_lambda_arrow(expression, doc);
-    let body = match expression.expression_body() {
-        Some(body) => format_expression(&body, doc),
-        None => expression
-            .block_body()
-            .map_or_else(Doc::nil, |block| format_block(&block, doc)),
-    };
+    let body = format_required_field(expression.body(), doc, |body, doc| {
+        if let Some(expression) = body.cast_family::<Expression<'source>>() {
+            format_expression(&expression, doc)
+        } else if let Some(block) = body.cast_node::<Block<'source>>() {
+            format_block(&block, doc)
+        } else {
+            doc.block_on_invariant("lambda body was neither expression nor block");
+            Doc::nil()
+        }
+    });
 
     doc_concat!(doc, [parameters, arrow, body])
 }
@@ -27,99 +38,90 @@ fn format_lambda_arrow<'source>(
     expression: &LambdaExpression<'source>,
     doc: &mut jolt_fmt_ir::DocBuilder<'source>,
 ) -> Doc<'source> {
-    let Some(arrow) = expression.arrow() else {
-        return Doc::nil();
-    };
+    format_required_field(expression.arrow(), doc, |arrow, doc| {
+        if arrow.leading_comments().is_empty() && arrow.trailing_comments().is_empty() {
+            let space = doc.space();
+            let arrow = format_separator_with_comments(doc, &arrow, space);
+            return doc_concat!(doc, [doc.space(), arrow]);
+        }
 
-    if arrow.leading_comments().is_empty() && arrow.trailing_comments().is_empty() {
-        let space = doc.space();
-        let arrow = format_separator_with_comments(doc, &arrow, space);
-        return doc_concat!(doc, [doc.space(), arrow]);
-    }
+        let forced_line = arrow
+            .trailing_comments()
+            .any(|comment| comment_forces_line(&comment));
 
-    let forced_line = arrow
-        .trailing_comments()
-        .any(|comment| comment_forces_line(&comment));
-
-    doc_concat!(
-        doc,
-        [
-            doc.space(),
-            format_token(
-                doc,
-                &arrow,
-                LeadingTrivia::Preserve,
-                TrailingTrivia::BeforeLineBreak,
-            ),
-            if forced_line {
-                doc.hard_line()
-            } else {
-                doc.space()
-            },
-        ]
-    )
+        doc_concat!(
+            doc,
+            [
+                doc.space(),
+                format_token(
+                    doc,
+                    &arrow,
+                    LeadingTrivia::Preserve,
+                    TrailingTrivia::BeforeLineBreak,
+                ),
+                if forced_line {
+                    doc.hard_line()
+                } else {
+                    doc.space()
+                },
+            ]
+        )
+    })
 }
 
 fn format_lambda_parameters<'source>(
     expression: &LambdaExpression<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    if let Some(parameter) = expression.concise_parameter()
+    let parameters = resolve_required_field(expression.parameters(), doc);
+    if let JavaFormatField::Present(parameters) = &parameters
+        && expression.is_recovery_free()
+        && optional_delimiter_is_comment_free(expression.open_paren())
+        && optional_delimiter_is_comment_free(expression.close_paren())
+        && let Some(parameter) = single_lambda_parameter(parameters)
         && is_simple_untyped_lambda_parameter(&parameter)
     {
-        if token_iter_has_comments(parameter.token_iter()) {
-            return format_lambda_parameter(&parameter, doc);
-        }
-        return parameter
-            .name()
-            .map_or_else(Doc::nil, |name| format_token_with_comments(doc, &name));
+        let parameter = if token_iter_has_comments(parameter.token_iter()) {
+            format_lambda_parameter(&parameter, doc)
+        } else {
+            format_required_field(parameter.name(), doc, |name, doc| {
+                format_token_with_comments(doc, &name)
+            })
+        };
+        let removals = expression.parameter_parenthesis_removal_claims();
+        let open = removals
+            .open
+            .map_or_else(Doc::nil, |claim| doc.removed_source(claim));
+        let close = removals
+            .close
+            .map_or_else(Doc::nil, |claim| doc.removed_source(claim));
+        return doc_concat!(doc, [open, parameter, close]);
     }
-
-    let parameter_list = expression.parameters();
-    if let Some(parameters) = parameter_list.as_ref() {
-        let mut entries = parameters.entries_with_recovered();
-        if let Some(jolt_java_syntax::RecoveredSeparatedListEntry::Entry(entry)) = entries.next()
-            && entries.next().is_none()
-            && entry.comma.is_none()
-            && is_simple_untyped_lambda_parameter(&entry.parameter)
-        {
-            if token_iter_has_comments(entry.parameter.token_iter()) {
-                return format_lambda_parameter(&entry.parameter, doc);
-            }
-            return entry
-                .parameter
-                .name()
-                .map_or_else(Doc::nil, |name| format_token_with_comments(doc, &name));
-        }
-    }
-
-    let open = parameter_list
-        .as_ref()
-        .and_then(jolt_java_syntax::LambdaParameterList::open_paren)
-        .or_else(|| expression.open_paren());
-    let close = parameter_list
-        .as_ref()
-        .and_then(jolt_java_syntax::LambdaParameterList::close_paren)
-        .or_else(|| expression.close_paren());
-    let has_parameters = parameter_list
-        .as_ref()
-        .is_some_and(|parameters| parameters.parameters().next().is_some());
-
-    if open.is_none() && close.is_none() && !has_parameters {
-        return Doc::nil();
-    }
-
-    let open = open
-        .as_ref()
-        .map_or_else(Doc::nil, |token| format_token_with_comments(doc, token));
-    let parameters = parameter_list.as_ref().map_or_else(Doc::nil, |parameters| {
-        format_lambda_parameter_entries(parameters, doc)
+    let open = format_optional_field(expression.open_paren(), doc, |token, doc| {
+        format_token_with_comments(doc, &token)
     });
-    let close = close
-        .as_ref()
-        .map_or_else(Doc::nil, |token| format_token_with_comments(doc, token));
+    let parameters = match parameters {
+        JavaFormatField::Present(parameters) => format_lambda_parameter_entries(&parameters, doc),
+        JavaFormatField::Malformed(recovery) => recovery,
+    };
+    let close = format_optional_field(expression.close_paren(), doc, |token, doc| {
+        format_token_with_comments(doc, &token)
+    });
 
     doc_group!(doc, doc_concat!(doc, [open, parameters, close]),)
+}
+
+fn optional_delimiter_is_comment_free(
+    field: Result<
+        JavaSyntaxField<'_, jolt_java_syntax::JavaSyntaxToken<'_>>,
+        jolt_java_syntax::JavaSyntaxInvariantError,
+    >,
+) -> bool {
+    match field {
+        Ok(JavaSyntaxField::Missing(_)) => true,
+        Ok(JavaSyntaxField::Present(token)) => !token_has_comments(&token),
+        Ok(JavaSyntaxField::Malformed(_)) | Err(_) => false,
+    }
 }
 
 fn format_lambda_parameter_entries<'source>(
@@ -134,103 +136,157 @@ fn lambda_parameter_items<'source, 'fmt>(
     parameters: &'fmt jolt_java_syntax::LambdaParameterList<'source>,
     doc: &'fmt mut DocBuilder<'source>,
 ) -> Vec<CommaListItem<'source>> {
-    recovered_comma_list_items(doc, parameters.entries_with_recovered(), |entry, doc| {
-        CommaListItem {
-            doc: format_lambda_parameter(&entry.parameter, doc),
-            comma: entry.comma,
-        }
+    syntax_comma_list_items(doc, parameters.parts(), |parameter, doc| {
+        format_lambda_parameter(&parameter, doc)
     })
 }
 
+fn single_lambda_parameter<'source>(
+    parameters: &jolt_java_syntax::LambdaParameterList<'source>,
+) -> Option<LambdaParameter<'source>> {
+    let mut parts = parameters.parts();
+    let parameter = match parts.next()?.ok()? {
+        JavaSyntaxListPart::Item(parameter) => parameter,
+        JavaSyntaxListPart::Separator(_)
+        | JavaSyntaxListPart::Missing(_)
+        | JavaSyntaxListPart::Malformed(_) => return None,
+    };
+    parts.next().is_none().then_some(parameter)
+}
+
+#[allow(clippy::needless_pass_by_value)]
+fn optional_is_absent<T>(
+    field: Result<JavaSyntaxField<'_, T>, jolt_java_syntax::JavaSyntaxInvariantError>,
+) -> bool {
+    matches!(field, Ok(JavaSyntaxField::Missing(_)))
+}
+
+fn required_list_is_empty<'source, T>(
+    field: Result<JavaSyntaxField<'source, T>, jolt_java_syntax::JavaSyntaxInvariantError>,
+) -> bool
+where
+    T: JavaSyntaxView<'source>,
+{
+    matches!(field, Ok(JavaSyntaxField::Present(list)) if list.is_recovery_free() && list.first_token().is_none())
+}
+
 fn is_simple_untyped_lambda_parameter(parameter: &LambdaParameter<'_>) -> bool {
-    parameter.ty().is_none()
-        && parameter.var_token().is_none()
-        && !parameter.is_variable_arity()
-        && parameter.prefix_annotations().next().is_none()
-        && parameter.varargs_annotations().next().is_none()
-        && parameter.modifier_entries().next().is_none()
+    optional_is_absent(parameter.r#type())
+        && optional_is_absent(parameter.ellipsis())
+        && required_list_is_empty(parameter.modifiers())
+        && required_list_is_empty(parameter.varargs_annotations())
 }
 
 fn format_lambda_parameter<'source>(
     parameter: &LambdaParameter<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let prefix_annotations = format_annotation_run(parameter.prefix_annotations(), doc);
-    let modifier_entries = parameter.modifier_entries().collect::<Vec<_>>();
-    let has_inline_prefix = prefix_annotations.is_some() || !modifier_entries.is_empty();
-    let prefix = inline_modifier_prefix_from_docs(doc, prefix_annotations, modifier_entries);
-    let ty = parameter.ty();
-    let var_token = parameter.var_token();
-    let has_type_prefix = ty.is_some() || var_token.is_some();
-    let varargs_annotations = format_annotation_run(parameter.varargs_annotations(), doc);
-    let has_varargs_annotations = varargs_annotations.is_some();
-    let ty = match ty {
-        Some(ty) => format_type(&ty, doc),
-        None => var_token.map_or_else(Doc::nil, |token| format_token_with_comments(doc, &token)),
-    };
-    let name = parameter
-        .name()
-        .map_or_else(Doc::nil, |name| format_token_with_comments(doc, &name));
-
-    if !has_inline_prefix && !has_type_prefix {
-        return name;
-    }
-    if !has_type_prefix {
-        return doc_concat!(doc, [prefix, name]);
-    }
-
+    let modifiers = format_required_field(parameter.modifiers(), doc, |modifiers, doc| {
+        format_lambda_modifiers(modifiers.parts(), doc)
+    });
+    let ty = format_optional_field(parameter.r#type(), doc, |ty, doc| format_type(&ty, doc));
+    let varargs_annotations =
+        format_required_field(parameter.varargs_annotations(), doc, |annotations, doc| {
+            format_annotation_parts(annotations.parts(), doc)
+        });
+    let ellipsis = format_optional_field(parameter.ellipsis(), doc, |ellipsis, doc| {
+        format_token_with_comments(doc, &ellipsis)
+    });
+    let name = format_required_field(parameter.name(), doc, |name, doc| {
+        format_token_with_comments(doc, &name)
+    });
     doc_concat!(
         doc,
         [
-            prefix,
+            modifiers,
             ty,
-            if parameter.is_variable_arity() {
-                if let Some(ellipsis) = parameter.ellipsis_token() {
-                    if has_varargs_annotations {
-                        let annotations =
-                            inline_modifier_prefix_from_docs(doc, varargs_annotations, Vec::new());
-                        doc_concat!(
-                            doc,
-                            [
-                                doc.space(),
-                                annotations,
-                                format_token_with_comments(doc, &ellipsis),
-                                doc.space(),
-                            ]
-                        )
-                    } else {
-                        doc_concat!(
-                            doc,
-                            [format_token_with_comments(doc, &ellipsis), doc.space()]
-                        )
-                    }
-                } else {
-                    Doc::nil()
-                }
+            varargs_annotations,
+            ellipsis,
+            if optional_is_absent(parameter.r#type()) && optional_is_absent(parameter.ellipsis()) {
+                Doc::nil()
             } else {
                 doc.space()
             },
-            name,
+            name
         ]
     )
 }
 
-fn format_annotation_run<'source>(
-    annotations: impl IntoIterator<Item = jolt_java_syntax::Annotation<'source>>,
+fn format_lambda_modifiers<'source>(
+    parts: impl IntoIterator<
+        Item = Result<
+            JavaSyntaxListPart<'source, LambdaModifier<'source>>,
+            jolt_java_syntax::JavaSyntaxInvariantError,
+        >,
+    >,
     doc: &mut DocBuilder<'source>,
-) -> Option<Doc<'source>> {
-    let mut has_annotations = false;
+) -> Doc<'source> {
+    let mut has_parts = false;
     let docs = doc.concat_list(|docs| {
-        for annotation in annotations {
-            if !docs.is_empty() {
+        for part in parts {
+            if has_parts {
                 let space = docs.space();
                 docs.push(space);
             }
-            let annotation = format_annotation(&annotation, docs);
-            docs.push(annotation);
+            has_parts = true;
+            let part = match resolve_list_part(part, docs) {
+                JavaFormatListPart::Item(modifier) => {
+                    if let Some(annotation) =
+                        modifier.cast_node::<jolt_java_syntax::Annotation<'source>>()
+                    {
+                        format_annotation(&annotation, docs)
+                    } else if let Some(token) = modifier.token() {
+                        format_token_with_comments(docs, &token)
+                    } else {
+                        docs.block_on_invariant("lambda modifier had an unknown shape");
+                        Doc::nil()
+                    }
+                }
+                JavaFormatListPart::Separator(separator) => {
+                    format_token_with_comments(docs, &separator)
+                }
+                JavaFormatListPart::Malformed(recovery) => recovery,
+            };
+            docs.push(part);
         }
-        has_annotations = !docs.is_empty();
     });
+    if has_parts {
+        doc_concat!(doc, [docs, doc.space()])
+    } else {
+        Doc::nil()
+    }
+}
 
-    has_annotations.then_some(docs)
+fn format_annotation_parts<'source>(
+    parts: impl IntoIterator<
+        Item = Result<
+            JavaSyntaxListPart<'source, jolt_java_syntax::Annotation<'source>>,
+            jolt_java_syntax::JavaSyntaxInvariantError,
+        >,
+    >,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    let mut has_parts = false;
+    let annotations = doc.concat_list(|docs| {
+        for part in parts {
+            if has_parts {
+                let space = docs.space();
+                docs.push(space);
+            }
+            has_parts = true;
+            let part = match resolve_list_part(part, docs) {
+                JavaFormatListPart::Item(annotation) => format_annotation(&annotation, docs),
+                JavaFormatListPart::Separator(separator) => {
+                    format_token_with_comments(docs, &separator)
+                }
+                JavaFormatListPart::Malformed(recovery) => recovery,
+            };
+            docs.push(part);
+        }
+    });
+    if has_parts {
+        doc_concat!(doc, [doc.space(), annotations, doc.space()])
+    } else {
+        Doc::nil()
+    }
 }

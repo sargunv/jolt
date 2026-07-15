@@ -10,14 +10,15 @@ impl Parser<'_> {
         self.type_modifier_len_at(index).is_some()
     }
 
-    pub(in crate::parser::grammar) fn skip_type_modifier_at(&mut self, index: usize) -> usize {
-        index + self.type_modifier_len_at(index).unwrap_or(1)
-    }
-
     pub(in crate::parser::grammar) fn bump_type_modifier(&mut self) {
-        let next = self.skip_type_modifier_at(self.position());
+        let modifier_len = self.type_modifier_len_at(self.position()).unwrap_or(1);
+        let modifier = (modifier_len == 3).then(|| self.start());
+        let next = self.position() + modifier_len;
         while self.position() < next {
             self.bump();
+        }
+        if let Some(modifier) = modifier {
+            self.complete(modifier, JavaSyntaxKind::NonSealedModifier);
         }
     }
 

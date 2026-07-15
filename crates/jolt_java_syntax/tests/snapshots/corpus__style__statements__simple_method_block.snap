@@ -10,96 +10,113 @@ class Example {
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "Example" @ 6..13 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 14..15
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 18..22 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
-          Identifier "run" @ 23..26
-          LParen "(" @ 26..27
-          RParen ")" @ 27..28 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 29..30 trailing=[Whitespace " "]
-            BlockStatement
-              LocalVariableDeclaration
-                FinalKw "final" @ 31..36 trailing=[Whitespace " "]
-                Identifier "var" @ 37..40 trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "local" @ 41..46
-                    Assign "=" @ 46..47
-                    VariableInitializer
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "Example" @ 6..13 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 14..15
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 18..22 leading=[Newline "\n", Whitespace "  "] trailing=[Whitespace " "]
+              Identifier "run" @ 23..26
+              LParen "(" @ 26..27
+              RParen ")" @ 27..28 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 29..30 trailing=[Whitespace " "]
+                BlockStatementList
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                        FinalKw "final" @ 31..36 trailing=[Whitespace " "]
+                      Identifier "var" @ 37..40 trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "local" @ 41..46
+                          Assign "=" @ 46..47
+                          VariableInitializer
+                            MethodInvocationExpression
+                              UnqualifiedMethodInvocation
+                                NameExpression
+                                  Identifier "prepare" @ 47..54
+                                ArgumentList
+                                  LParen "(" @ 54..55
+                                  ExpressionList
+                                  RParen ")" @ 55..56
+                    Semicolon ";" @ 56..57 trailing=[Whitespace " "]
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                        Annotation
+                          At "@" @ 58..59
+                          Name
+                            Identifier "Decl" @ 59..63 trailing=[Whitespace " "]
+                        FinalKw "final" @ 64..69 trailing=[Whitespace " "]
+                        Annotation
+                          At "@" @ 70..71
+                          Name
+                            Identifier "Type" @ 71..75 trailing=[Whitespace " "]
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
+                            AnnotationList
+                            Name
+                              Identifier "String" @ 76..82 trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "value" @ 83..88
+                          Assign "=" @ 88..89
+                          VariableInitializer
+                            MethodInvocationExpression
+                              UnqualifiedMethodInvocation
+                                NameExpression
+                                  Identifier "current" @ 89..96
+                                ArgumentList
+                                  LParen "(" @ 96..97
+                                  ExpressionList
+                                  RParen ")" @ 97..98
+                    Semicolon ";" @ 98..99 trailing=[Whitespace " "]
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      PrimitiveType
+                        AnnotationList
+                        IntKw "int" @ 100..103 trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "first" @ 104..109
+                          Assign "=" @ 109..110
+                          VariableInitializer
+                            LiteralExpression
+                              IntegerLiteral "1" @ 110..111
+                        Comma "," @ 111..112
+                        VariableDeclarator
+                          Identifier "second" @ 112..118
+                          Assign "=" @ 118..119
+                          VariableInitializer
+                            LiteralExpression
+                              IntegerLiteral "2" @ 119..120
+                    Semicolon ";" @ 120..121 trailing=[Whitespace " "]
+                  BlockStatement
+                    ExpressionStatement
                       MethodInvocationExpression
-                        NameExpression
-                          Identifier "prepare" @ 47..54
-                        ArgumentList
-                          LParen "(" @ 54..55
-                          RParen ")" @ 55..56
-              Semicolon ";" @ 56..57 trailing=[Whitespace " "]
-            BlockStatement
-              LocalVariableDeclaration
-                Annotation
-                  At "@" @ 58..59
-                  Name
-                    Identifier "Decl" @ 59..63 trailing=[Whitespace " "]
-                FinalKw "final" @ 64..69 trailing=[Whitespace " "]
-                Annotation
-                  At "@" @ 70..71
-                  Name
-                    Identifier "Type" @ 71..75 trailing=[Whitespace " "]
-                ClassType
-                  Name
-                    Identifier "String" @ 76..82 trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "value" @ 83..88
-                    Assign "=" @ 88..89
-                    VariableInitializer
-                      MethodInvocationExpression
-                        NameExpression
-                          Identifier "current" @ 89..96
-                        ArgumentList
-                          LParen "(" @ 96..97
-                          RParen ")" @ 97..98
-              Semicolon ";" @ 98..99 trailing=[Whitespace " "]
-            BlockStatement
-              LocalVariableDeclaration
-                PrimitiveType
-                  IntKw "int" @ 100..103 trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "first" @ 104..109
-                    Assign "=" @ 109..110
-                    VariableInitializer
-                      LiteralExpression
-                        IntegerLiteral "1" @ 110..111
-                  Comma "," @ 111..112
-                  VariableDeclarator
-                    Identifier "second" @ 112..118
-                    Assign "=" @ 118..119
-                    VariableInitializer
-                      LiteralExpression
-                        IntegerLiteral "2" @ 119..120
-              Semicolon ";" @ 120..121 trailing=[Whitespace " "]
-            BlockStatement
-              ExpressionStatement
-                MethodInvocationExpression
-                  NameExpression
-                    Identifier "execute" @ 122..129
-                  ArgumentList
-                    LParen "(" @ 129..130
-                    RParen ")" @ 130..131
-                Semicolon ";" @ 131..132 trailing=[Whitespace " "]
-            BlockStatement
-              ReturnStatement
-                ReturnKw "return" @ 133..139
-                Semicolon ";" @ 139..140 trailing=[Whitespace " "]
-            RBrace "}" @ 141..142
-      RBrace "}" @ 143..144 leading=[Newline "\n"]
+                        UnqualifiedMethodInvocation
+                          NameExpression
+                            Identifier "execute" @ 122..129
+                          ArgumentList
+                            LParen "(" @ 129..130
+                            ExpressionList
+                            RParen ")" @ 130..131
+                      Semicolon ";" @ 131..132 trailing=[Whitespace " "]
+                  BlockStatement
+                    ReturnStatement
+                      ReturnKw "return" @ 133..139
+                      Semicolon ";" @ 139..140 trailing=[Whitespace " "]
+                RBrace "}" @ 141..142
+        RBrace "}" @ 143..144 leading=[Newline "\n"]
   Eof "" @ 145..145 leading=[Newline "\n"]
 
 diagnostics:

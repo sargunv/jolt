@@ -8,32 +8,50 @@ record CustomerProfile(String displayName, CustomerIdentifier primaryIdentifier,
 syntax:
 syntax:
 CompilationUnit
-  RecordDeclaration
-    Identifier "record" @ 0..6 trailing=[Whitespace " "]
-    Identifier "CustomerProfile" @ 7..22
-    LParen "(" @ 22..23
-    RecordComponentList
-      RecordComponent
-        ClassType
-          Name
-            Identifier "String" @ 23..29 trailing=[Whitespace " "]
-        Identifier "displayName" @ 30..41
-      Comma "," @ 41..42 trailing=[Whitespace " "]
-      RecordComponent
-        ClassType
-          Name
-            Identifier "CustomerIdentifier" @ 43..61 trailing=[Whitespace " "]
-        Identifier "primaryIdentifier" @ 62..79
-      Comma "," @ 79..80 trailing=[Whitespace " "]
-      RecordComponent
-        ClassType
-          Name
-            Identifier "CommunicationPreferences" @ 81..105 trailing=[Whitespace " "]
-        Identifier "communicationPreferences" @ 106..130
-    RParen ")" @ 130..131 trailing=[Whitespace " "]
-    RecordBody
-      LBrace "{" @ 132..133
-      RBrace "}" @ 133..134
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    RecordDeclaration
+      Identifier "record" @ 0..6 trailing=[Whitespace " "]
+      Identifier "CustomerProfile" @ 7..22
+      LParen "(" @ 22..23
+      RecordComponentList
+        RecordComponent
+          ParameterModifierList
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "String" @ 23..29 trailing=[Whitespace " "]
+          AnnotationList
+          Identifier "displayName" @ 30..41
+        Comma "," @ 41..42 trailing=[Whitespace " "]
+        RecordComponent
+          ParameterModifierList
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "CustomerIdentifier" @ 43..61 trailing=[Whitespace " "]
+          AnnotationList
+          Identifier "primaryIdentifier" @ 62..79
+        Comma "," @ 79..80 trailing=[Whitespace " "]
+        RecordComponent
+          ParameterModifierList
+          ClassType
+            ClassTypeSegmentList
+              ClassTypeSegmentNode
+                AnnotationList
+                Name
+                  Identifier "CommunicationPreferences" @ 81..105 trailing=[Whitespace " "]
+          AnnotationList
+          Identifier "communicationPreferences" @ 106..130
+      RParen ")" @ 130..131 trailing=[Whitespace " "]
+      RecordBody
+        LBrace "{" @ 132..133
+        RecordBodyMemberList
+        RBrace "}" @ 133..134
   Eof "" @ 135..135 leading=[Newline "\n"]
 
 diagnostics:

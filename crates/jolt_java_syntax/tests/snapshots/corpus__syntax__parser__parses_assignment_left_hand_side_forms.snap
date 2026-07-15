@@ -17,83 +17,94 @@ class AssignmentLeftHandSides {
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "AssignmentLeftHandSides" @ 6..29 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 30..31
-      ClassBodyDeclaration
-        FieldDeclaration
-          PrimitiveType
-            IntKw "int" @ 36..39 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          VariableDeclaratorList
-            VariableDeclarator
-              Identifier "field" @ 40..45
-          Semicolon ";" @ 45..46
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 52..56 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "method" @ 57..63
-          LParen "(" @ 63..64
-          FormalParameterList
-            FormalParameter
-              ArrayType
-                PrimitiveType
-                  IntKw "int" @ 64..67
-                ArrayDimensions
-                  ArrayDimension
-                    LBracket "[" @ 67..68
-                    RBracket "]" @ 68..69 trailing=[Whitespace " "]
-              Identifier "values" @ 70..76
-          RParen ")" @ 76..77 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 78..79
-            BlockStatement
-              LocalVariableDeclaration
-                PrimitiveType
-                  IntKw "int" @ 88..91 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "local" @ 92..97
-              Semicolon ";" @ 97..98
-            BlockStatement
-              ExpressionStatement
-                AssignmentExpression
-                  NameExpression
-                    Identifier "local" @ 107..112 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                  Assign "=" @ 113..114 trailing=[Whitespace " "]
-                  LiteralExpression
-                    IntegerLiteral "1" @ 115..116
-                Semicolon ";" @ 116..117
-            BlockStatement
-              ExpressionStatement
-                AssignmentExpression
-                  FieldAccessExpression
-                    ThisExpression
-                      ThisKw "this" @ 126..130 leading=[Newline "\n", Whitespace "        "]
-                    Dot "." @ 130..131
-                    Identifier "field" @ 131..136 trailing=[Whitespace " "]
-                  Assign "=" @ 137..138 trailing=[Whitespace " "]
-                  LiteralExpression
-                    IntegerLiteral "2" @ 139..140
-                Semicolon ";" @ 140..141
-            BlockStatement
-              ExpressionStatement
-                AssignmentExpression
-                  ArrayAccessExpression
-                    NameExpression
-                      Identifier "values" @ 150..156 leading=[Newline "\n", Whitespace "        "]
-                    LBracket "[" @ 156..157
-                    LiteralExpression
-                      IntegerLiteral "0" @ 157..158
-                    RBracket "]" @ 158..159 trailing=[Whitespace " "]
-                  Assign "=" @ 160..161 trailing=[Whitespace " "]
-                  LiteralExpression
-                    IntegerLiteral "3" @ 162..163
-                Semicolon ";" @ 163..164
-            RBrace "}" @ 169..170 leading=[Newline "\n", Whitespace "    "]
-      RBrace "}" @ 171..172 leading=[Newline "\n"]
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "AssignmentLeftHandSides" @ 6..29 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 30..31
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            FieldDeclaration
+              PrimitiveType
+                AnnotationList
+                IntKw "int" @ 36..39 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              VariableDeclaratorList
+                VariableDeclarator
+                  Identifier "field" @ 40..45
+              Semicolon ";" @ 45..46
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 52..56 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Identifier "method" @ 57..63
+              LParen "(" @ 63..64
+              FormalParameterList
+                FormalParameter
+                  ParameterModifierList
+                  ArrayType
+                    PrimitiveType
+                      AnnotationList
+                      IntKw "int" @ 64..67
+                    ArrayDimensions
+                      ArrayDimension
+                        AnnotationList
+                        LBracket "[" @ 67..68
+                        RBracket "]" @ 68..69 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "values" @ 70..76
+              RParen ")" @ 76..77 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 78..79
+                BlockStatementList
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      PrimitiveType
+                        AnnotationList
+                        IntKw "int" @ 88..91 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "local" @ 92..97
+                    Semicolon ";" @ 97..98
+                  BlockStatement
+                    ExpressionStatement
+                      AssignmentExpression
+                        NameExpression
+                          Identifier "local" @ 107..112 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                        Assign "=" @ 113..114 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "1" @ 115..116
+                      Semicolon ";" @ 116..117
+                  BlockStatement
+                    ExpressionStatement
+                      AssignmentExpression
+                        FieldAccessExpression
+                          ThisExpression
+                            ThisKw "this" @ 126..130 leading=[Newline "\n", Whitespace "        "]
+                          Dot "." @ 130..131
+                          Identifier "field" @ 131..136 trailing=[Whitespace " "]
+                        Assign "=" @ 137..138 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "2" @ 139..140
+                      Semicolon ";" @ 140..141
+                  BlockStatement
+                    ExpressionStatement
+                      AssignmentExpression
+                        ArrayAccessExpression
+                          NameExpression
+                            Identifier "values" @ 150..156 leading=[Newline "\n", Whitespace "        "]
+                          LBracket "[" @ 156..157
+                          LiteralExpression
+                            IntegerLiteral "0" @ 157..158
+                          RBracket "]" @ 158..159 trailing=[Whitespace " "]
+                        Assign "=" @ 160..161 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "3" @ 162..163
+                      Semicolon ";" @ 163..164
+                RBrace "}" @ 169..170 leading=[Newline "\n", Whitespace "    "]
+        RBrace "}" @ 171..172 leading=[Newline "\n"]
   Eof "" @ 173..173 leading=[Newline "\n"]
 
 diagnostics:

@@ -14,83 +14,94 @@ class InvalidStatementExpressions {
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "InvalidStatementExpressions" @ 6..33 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 34..35
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 40..44 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "method" @ 45..51
-          LParen "(" @ 51..52
-          FormalParameterList
-            FormalParameter
-              PrimitiveType
-                IntKw "int" @ 52..55 trailing=[Whitespace " "]
-              Identifier "i" @ 56..57
-            Comma "," @ 57..58 trailing=[Whitespace " "]
-            FormalParameter
-              PrimitiveType
-                IntKw "int" @ 59..62 trailing=[Whitespace " "]
-              Identifier "j" @ 63..64
-          RParen ")" @ 64..65 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 66..67
-            BlockStatement
-              ExpressionStatement
-                ErrorNode
-                  BinaryExpression
-                    LiteralExpression
-                      IntegerLiteral "1" @ 76..77 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                    Plus "+" @ 78..79 trailing=[Whitespace " "]
-                    LiteralExpression
-                      IntegerLiteral "2" @ 80..81
-                Semicolon ";" @ 81..82
-            BlockStatement
-              ExpressionStatement
-                ErrorNode
-                  NameExpression
-                    Identifier "i" @ 91..92 leading=[Newline "\n", Whitespace "        "]
-                Semicolon ";" @ 92..93
-            BlockStatement
-              ForStatement
-                BasicForStatement
-                  ForKw "for" @ 102..105 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                  LParen "(" @ 106..107
-                  ForInitializer
-                    StatementExpressionList
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "InvalidStatementExpressions" @ 6..33 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 34..35
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 40..44 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Identifier "method" @ 45..51
+              LParen "(" @ 51..52
+              FormalParameterList
+                FormalParameter
+                  ParameterModifierList
+                  PrimitiveType
+                    AnnotationList
+                    IntKw "int" @ 52..55 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "i" @ 56..57
+                Comma "," @ 57..58 trailing=[Whitespace " "]
+                FormalParameter
+                  ParameterModifierList
+                  PrimitiveType
+                    AnnotationList
+                    IntKw "int" @ 59..62 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "j" @ 63..64
+              RParen ")" @ 64..65 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 66..67
+                BlockStatementList
+                  BlockStatement
+                    ExpressionStatement
                       ErrorNode
                         BinaryExpression
-                          NameExpression
-                            Identifier "i" @ 107..108 trailing=[Whitespace " "]
-                          Plus "+" @ 109..110 trailing=[Whitespace " "]
                           LiteralExpression
-                            IntegerLiteral "1" @ 111..112
-                  Semicolon ";" @ 112..113 trailing=[Whitespace " "]
-                  BinaryExpression
-                    NameExpression
-                      Identifier "i" @ 114..115 trailing=[Whitespace " "]
-                    Lt "<" @ 116..117 trailing=[Whitespace " "]
-                    LiteralExpression
-                      IntegerLiteral "10" @ 118..120
-                  Semicolon ";" @ 120..121 trailing=[Whitespace " "]
-                  ForUpdate
-                    StatementExpressionList
+                            IntegerLiteral "1" @ 76..77 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                          Plus "+" @ 78..79 trailing=[Whitespace " "]
+                          LiteralExpression
+                            IntegerLiteral "2" @ 80..81
+                      Semicolon ";" @ 81..82
+                  BlockStatement
+                    ExpressionStatement
                       ErrorNode
+                        NameExpression
+                          Identifier "i" @ 91..92 leading=[Newline "\n", Whitespace "        "]
+                      Semicolon ";" @ 92..93
+                  BlockStatement
+                    ForStatement
+                      BasicForStatement
+                        ForKw "for" @ 102..105 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                        LParen "(" @ 106..107
+                        ForInitializer
+                          StatementExpressionList
+                            ErrorNode
+                              BinaryExpression
+                                NameExpression
+                                  Identifier "i" @ 107..108 trailing=[Whitespace " "]
+                                Plus "+" @ 109..110 trailing=[Whitespace " "]
+                                LiteralExpression
+                                  IntegerLiteral "1" @ 111..112
+                        Semicolon ";" @ 112..113 trailing=[Whitespace " "]
                         BinaryExpression
                           NameExpression
-                            Identifier "j" @ 122..123 trailing=[Whitespace " "]
-                          Plus "+" @ 124..125 trailing=[Whitespace " "]
+                            Identifier "i" @ 114..115 trailing=[Whitespace " "]
+                          Lt "<" @ 116..117 trailing=[Whitespace " "]
                           LiteralExpression
-                            IntegerLiteral "1" @ 126..127
-                  RParen ")" @ 127..128 trailing=[Whitespace " "]
-                  Block
-                    LBrace "{" @ 129..130
-                    RBrace "}" @ 130..131
-            RBrace "}" @ 136..137 leading=[Newline "\n", Whitespace "    "]
-      RBrace "}" @ 138..139 leading=[Newline "\n"]
+                            IntegerLiteral "10" @ 118..120
+                        Semicolon ";" @ 120..121 trailing=[Whitespace " "]
+                        ForUpdate
+                          StatementExpressionList
+                            ErrorNode
+                              BinaryExpression
+                                NameExpression
+                                  Identifier "j" @ 122..123 trailing=[Whitespace " "]
+                                Plus "+" @ 124..125 trailing=[Whitespace " "]
+                                LiteralExpression
+                                  IntegerLiteral "1" @ 126..127
+                        RParen ")" @ 127..128 trailing=[Whitespace " "]
+                        Block
+                          LBrace "{" @ 129..130
+                          BlockStatementList
+                          RBrace "}" @ 130..131
+                RBrace "}" @ 136..137 leading=[Newline "\n", Whitespace "    "]
+        RBrace "}" @ 138..139 leading=[Newline "\n"]
   Eof "" @ 140..140 leading=[Newline "\n"]
 
 diagnostics:

@@ -8,6 +8,8 @@ use std::borrow::Cow;
 use std::ops::Range;
 
 use jolt_syntax::{Comment, Language, SyntaxToken};
+#[cfg(debug_assertions)]
+use jolt_syntax::{SourceIdentity, TriviaKind};
 
 use crate::{Doc, DocBuilder};
 
@@ -16,6 +18,10 @@ pub struct FormatterIgnoreRange<'source> {
     pub raw_text: &'source str,
     pub raw_text_with_on: &'source str,
     pub interior: Range<usize>,
+    #[cfg(debug_assertions)]
+    claims: Vec<SourceIdentity<'source>>,
+    #[cfg(debug_assertions)]
+    claims_with_on: Vec<SourceIdentity<'source>>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -46,6 +52,8 @@ pub fn formatter_ignore_ranges<'source, L: Language>(
         return Vec::new();
     }
 
+    let tokens: Vec<_> = tokens.into_iter().collect();
+
     let mut off_comment_start = None;
     let mut ranges = Vec::new();
     let mut lines = SourceLineCursor::new(source);
@@ -71,6 +79,10 @@ pub fn formatter_ignore_ranges<'source, L: Language>(
                             &source[start..end_line.raw_end],
                         ),
                         interior: start..end,
+                        #[cfg(debug_assertions)]
+                        claims: Vec::new(),
+                        #[cfg(debug_assertions)]
+                        claims_with_on: Vec::new(),
                     });
                 }
             } else if off_comment_start.is_none()
@@ -81,7 +93,7 @@ pub fn formatter_ignore_ranges<'source, L: Language>(
             }
         };
 
-    for token in tokens {
+    for token in &tokens {
         let mut leading_comment_start = None;
         for comment in token.leading_comments() {
             visit_comment(comment, &mut leading_comment_start);
@@ -93,7 +105,98 @@ pub fn formatter_ignore_ranges<'source, L: Language>(
         }
     }
 
+    #[cfg(debug_assertions)]
+    populate_claims(&mut ranges, base_start, tokens);
+
     ranges
+}
+
+#[cfg(debug_assertions)]
+fn populate_claims<'source, L: Language>(
+    ranges: &mut [FormatterIgnoreRange<'source>],
+    base_start: usize,
+    tokens: impl IntoIterator<Item = SyntaxToken<'source, L>>,
+) {
+    if ranges.is_empty() {
+        return;
+    }
+
+    let mut range_index = 0;
+    for token in tokens {
+        for piece in token
+            .leading_comments()
+            .flat_map(|comment| comment.source_pieces())
+        {
+            append_identity(
+                ranges,
+                &mut range_index,
+                base_start,
+                piece.text_range().start().get()..piece.text_range().end().get(),
+                SourceIdentity::Trivia(piece.id()),
+                piece.trivia().kind() == TriviaKind::Newline,
+            );
+        }
+        if !token.text().is_empty() {
+            let range = token.token_text_range();
+            append_identity(
+                ranges,
+                &mut range_index,
+                base_start,
+                range.start().get()..range.end().get(),
+                SourceIdentity::Token(token.source_id()),
+                false,
+            );
+        }
+        for piece in token
+            .trailing_comments()
+            .flat_map(|comment| comment.source_pieces())
+        {
+            append_identity(
+                ranges,
+                &mut range_index,
+                base_start,
+                piece.text_range().start().get()..piece.text_range().end().get(),
+                SourceIdentity::Trivia(piece.id()),
+                piece.trivia().kind() == TriviaKind::Newline,
+            );
+        }
+    }
+}
+
+#[cfg(debug_assertions)]
+fn append_identity<'source>(
+    ranges: &mut [FormatterIgnoreRange<'source>],
+    range_index: &mut usize,
+    base_start: usize,
+    identity_range: Range<usize>,
+    identity: SourceIdentity<'source>,
+    is_line_ending: bool,
+) {
+    while *range_index < ranges.len() {
+        let with_on_end = base_start
+            + ranges[*range_index].interior.start
+            + ranges[*range_index].raw_text_with_on.len();
+        if with_on_end > identity_range.start
+            || (is_line_ending && with_on_end == identity_range.start)
+        {
+            break;
+        }
+        *range_index += 1;
+    }
+    let Some(range) = ranges.get_mut(*range_index) else {
+        return;
+    };
+    let start = base_start + range.interior.start;
+    let without_on_end = start + range.raw_text.len();
+    let with_on_end = start + range.raw_text_with_on.len();
+    if start <= identity_range.start && identity_range.end <= without_on_end {
+        range.claims.push(identity);
+    }
+    if (start <= identity_range.start && identity_range.end <= with_on_end)
+        || (is_line_ending && identity_range.start == with_on_end)
+    {
+        range.claims_with_on.push(identity);
+    }
 }
 
 #[must_use]
@@ -161,7 +264,7 @@ pub fn formatter_ignore_run_doc<'source>(
         &run.range.raw_text
     };
     let stripped = strip_first_line_indent(raw_text);
-    match stripped {
+    let contents = match stripped {
         Cow::Borrowed(text) => {
             let lines = text.split('\n');
             doc.concat_list(|docs| {
@@ -188,7 +291,16 @@ pub fn formatter_ignore_run_doc<'source>(
                 }
             })
         }
-    }
+    };
+    #[cfg(debug_assertions)]
+    let claims = if run.include_on_marker {
+        run.range.claims_with_on.iter().copied()
+    } else {
+        run.range.claims.iter().copied()
+    };
+    #[cfg(not(debug_assertions))]
+    let claims = std::iter::empty();
+    doc.claimed_source(contents, claims)
 }
 
 #[must_use]

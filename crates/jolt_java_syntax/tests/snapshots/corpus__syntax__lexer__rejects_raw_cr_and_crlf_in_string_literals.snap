@@ -9,13 +9,15 @@ b"
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    StringLiteral "\"a" @ 0..2
-    Identifier "b" @ 3..4 leading=[Newline "\r"]
-    StringLiteral "\" \"" @ 4..7
-    Identifier "a" @ 7..8
-    Identifier "b" @ 10..11 leading=[Newline "\r\n"]
-    StringLiteral "\"" @ 11..12
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      StringLiteral "\"a" @ 0..2
+      Identifier "b" @ 3..4 leading=[Newline "\r"]
+      StringLiteral "\" \"" @ 4..7
+      Identifier "a" @ 7..8
+      Identifier "b" @ 10..11 leading=[Newline "\r\n"]
+      StringLiteral "\"" @ 11..12
   Eof "" @ 12..12
 
 diagnostics:

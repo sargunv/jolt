@@ -139,827 +139,1060 @@ static class Block18JavadocOutput {}
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 65..70 leading=[LineComment "// Origin: https://github.com/google/google-java-format/wiki/FAQ", Newline "\n"] trailing=[Whitespace " "]
-    Identifier "GoogleJavaFormatFaqSnippets" @ 71..98 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 99..100
-      ClassBodyDeclaration
-        MethodDeclaration
-          PrimitiveType
-            IntKw "int" @ 101..104 leading=[Newline "\n"] trailing=[Whitespace " "]
-          Identifier "block01" @ 105..112
-          LParen "(" @ 112..113
-          RParen ")" @ 113..114 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 115..116
-            BlockStatement
-              ReturnStatement
-                ReturnKw "return" @ 117..123 leading=[Newline "\n"] trailing=[Whitespace " "]
-                BinaryExpression
-                  BinaryExpression
-                    BinaryExpression
-                      BinaryExpression
-                        LiteralExpression
-                          IntegerLiteral "1" @ 124..125 trailing=[Whitespace " "]
-                        Minus "-" @ 126..127 trailing=[Whitespace " "]
-                        LiteralExpression
-                          IntegerLiteral "2" @ 128..129 trailing=[Whitespace " "]
-                      Plus "+" @ 130..131 trailing=[Whitespace " "]
-                      LiteralExpression
-                        IntegerLiteral "3" @ 132..133
-                    Minus "-" @ 142..143 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                    LiteralExpression
-                      IntegerLiteral "4" @ 144..145
-                  Plus "+" @ 150..151 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                  LiteralExpression
-                    IntegerLiteral "5" @ 152..153
-                Semicolon ";" @ 153..154
-            RBrace "}" @ 155..156 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        MethodDeclaration
-          PrimitiveType
-            IntKw "int" @ 158..161 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-          Identifier "block02" @ 162..169
-          LParen "(" @ 169..170
-          RParen ")" @ 170..171 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 172..173
-            BlockStatement
-              ReturnStatement
-                ReturnKw "return" @ 174..180 leading=[Newline "\n"] trailing=[Whitespace " "]
-                BinaryExpression
-                  BinaryExpression
-                    BinaryExpression
-                      BinaryExpression
-                        LiteralExpression
-                          IntegerLiteral "1" @ 181..182 trailing=[Whitespace " "]
-                        Minus "-" @ 183..184 trailing=[Whitespace " "]
-                        LiteralExpression
-                          IntegerLiteral "2" @ 185..186 trailing=[Whitespace " "]
-                      Plus "+" @ 187..188 trailing=[Whitespace " "]
-                      LiteralExpression
-                        IntegerLiteral "3" @ 189..190
-                    Minus "-" @ 195..196 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                    LiteralExpression
-                      IntegerLiteral "4" @ 197..198 trailing=[Whitespace " "]
-                  Plus "+" @ 199..200 trailing=[Whitespace " "]
-                  LiteralExpression
-                    IntegerLiteral "5" @ 201..202
-                Semicolon ";" @ 202..203
-            RBrace "}" @ 204..205 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 207..211 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-          Identifier "block03" @ 212..219
-          LParen "(" @ 219..220
-          RParen ")" @ 220..221 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 222..223
-            BlockStatement
-              ExpressionStatement
-                AssignmentExpression
-                  NameExpression
-                    Identifier "currentEstimate" @ 224..239 leading=[Newline "\n"] trailing=[Whitespace " "]
-                  Assign "=" @ 240..241 trailing=[Whitespace " "]
-                  BinaryExpression
-                    ParenthesizedExpression
-                      LParen "(" @ 242..243
-                      BinaryExpression
-                        NameExpression
-                          Identifier "currentEstimate" @ 243..258 trailing=[Whitespace " "]
-                        Plus "+" @ 259..260 trailing=[Whitespace " "]
-                        BinaryExpression
-                          NameExpression
-                            Identifier "argument" @ 261..269 trailing=[Whitespace " "]
-                          Slash "/" @ 270..271 trailing=[Whitespace " "]
-                          NameExpression
-                            Identifier "currentEstimate" @ 272..287
-                      RParen ")" @ 287..288 trailing=[Whitespace " "]
-                    Slash "/" @ 289..290 trailing=[Whitespace " "]
-                    LiteralExpression
-                      FloatingPointLiteral "2.0f" @ 291..295
-                Semicolon ";" @ 295..296
-            RBrace "}" @ 297..298 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 300..304 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-          Identifier "block04" @ 305..312
-          LParen "(" @ 312..313
-          RParen ")" @ 313..314 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 315..316
-            BlockStatement
-              ExpressionStatement
-                AssignmentExpression
-                  NameExpression
-                    Identifier "currentEstimate" @ 317..332 leading=[Newline "\n"] trailing=[Whitespace " "]
-                  Assign "=" @ 333..334
-                  BinaryExpression
-                    ParenthesizedExpression
-                      LParen "(" @ 339..340 leading=[Newline "\n", Whitespace "    "]
-                      BinaryExpression
-                        NameExpression
-                          Identifier "currentEstimate" @ 340..355 trailing=[Whitespace " "]
-                        Plus "+" @ 356..357 trailing=[Whitespace " "]
-                        BinaryExpression
-                          NameExpression
-                            Identifier "argument" @ 358..366 trailing=[Whitespace " "]
-                          Slash "/" @ 367..368 trailing=[Whitespace " "]
-                          NameExpression
-                            Identifier "currentEstimate" @ 369..384
-                      RParen ")" @ 384..385 trailing=[Whitespace " "]
-                    Slash "/" @ 386..387 trailing=[Whitespace " "]
-                    LiteralExpression
-                      FloatingPointLiteral "2.0f" @ 388..392
-                Semicolon ";" @ 392..393
-            RBrace "}" @ 394..395 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 397..401 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-          Identifier "block05" @ 402..409
-          LParen "(" @ 409..410
-          RParen ")" @ 410..411 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 412..413
-            BlockStatement
-              ExpressionStatement
-                AssignmentExpression
-                  NameExpression
-                    Identifier "currentEstimate" @ 414..429 leading=[Newline "\n"] trailing=[Whitespace " "]
-                  Assign "=" @ 430..431
-                  BinaryExpression
-                    ParenthesizedExpression
-                      LParen "(" @ 436..437 leading=[Newline "\n", Whitespace "    "]
-                      BinaryExpression
-                        NameExpression
-                          Identifier "currentEstimate" @ 437..452 trailing=[Whitespace " "]
-                        Plus "+" @ 453..454 trailing=[Whitespace " "]
-                        BinaryExpression
-                          NameExpression
-                            Identifier "argument" @ 455..463 trailing=[Whitespace " "]
-                          Slash "/" @ 464..465 trailing=[Whitespace " "]
-                          NameExpression
-                            Identifier "currentEstimate" @ 466..481
-                      RParen ")" @ 481..482
-                    Slash "/" @ 491..492 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                    LiteralExpression
-                      FloatingPointLiteral "2.0f" @ 493..497
-                Semicolon ";" @ 497..498
-            RBrace "}" @ 499..500 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 502..506 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-          Identifier "block06" @ 507..514
-          LParen "(" @ 514..515
-          RParen ")" @ 515..516 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 517..518
-            BlockStatement
-              ExpressionStatement
-                AssignmentExpression
-                  NameExpression
-                    Identifier "currentEstimate" @ 519..534 leading=[Newline "\n"] trailing=[Whitespace " "]
-                  Assign "=" @ 535..536
-                  BinaryExpression
-                    ParenthesizedExpression
-                      LParen "(" @ 541..542 leading=[Newline "\n", Whitespace "    "]
-                      BinaryExpression
-                        NameExpression
-                          Identifier "currentEstimate" @ 542..557
-                        Plus "+" @ 570..571 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                        BinaryExpression
-                          NameExpression
-                            Identifier "argument" @ 572..580 trailing=[Whitespace " "]
-                          Slash "/" @ 581..582 trailing=[Whitespace " "]
-                          NameExpression
-                            Identifier "currentEstimate" @ 583..598
-                      RParen ")" @ 598..599
-                    Slash "/" @ 608..609 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                    LiteralExpression
-                      FloatingPointLiteral "2.0f" @ 610..614
-                Semicolon ";" @ 614..615
-            RBrace "}" @ 616..617 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 619..623 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-          Identifier "block07" @ 624..631
-          LParen "(" @ 631..632
-          RParen ")" @ 632..633 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 634..635
-            BlockStatement
-              ExpressionStatement
-                AssignmentExpression
-                  NameExpression
-                    Identifier "currentEstimate" @ 636..651 leading=[Newline "\n"] trailing=[Whitespace " "]
-                  Assign "=" @ 652..653
-                  BinaryExpression
-                    ParenthesizedExpression
-                      LParen "(" @ 658..659 leading=[Newline "\n", Whitespace "    "]
-                      BinaryExpression
-                        NameExpression
-                          Identifier "currentEstimate" @ 659..674
-                        Plus "+" @ 687..688 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                        BinaryExpression
-                          NameExpression
-                            Identifier "argument" @ 689..697
-                          Slash "/" @ 714..715 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
-                          NameExpression
-                            Identifier "currentEstimate" @ 716..731
-                      RParen ")" @ 731..732
-                    Slash "/" @ 741..742 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                    LiteralExpression
-                      FloatingPointLiteral "2.0f" @ 743..747
-                Semicolon ";" @ 747..748
-            RBrace "}" @ 749..750 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 752..756 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-          Identifier "block08" @ 757..764
-          LParen "(" @ 764..765
-          RParen ")" @ 765..766 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 767..768
-            BlockStatement
-              ExpressionStatement
-                AssignmentExpression
-                  NameExpression
-                    Identifier "currentEstimate" @ 769..784 leading=[Newline "\n"] trailing=[Whitespace " "]
-                  Assign "=" @ 785..786 trailing=[Whitespace " "]
-                  BinaryExpression
-                    ParenthesizedExpression
-                      LParen "(" @ 787..788 trailing=[Whitespace " ", LineComment "// This is a line comment."]
-                      BinaryExpression
-                        NameExpression
-                          Identifier "currentEstimate" @ 820..835 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                        Plus "+" @ 836..837 trailing=[Whitespace " "]
-                        BinaryExpression
-                          NameExpression
-                            Identifier "argument" @ 838..846 trailing=[Whitespace " "]
-                          Slash "/" @ 847..848 trailing=[Whitespace " "]
-                          NameExpression
-                            Identifier "currentEstimate" @ 849..864
-                      RParen ")" @ 864..865 trailing=[Whitespace " "]
-                    Slash "/" @ 866..867 trailing=[Whitespace " "]
-                    LiteralExpression
-                      FloatingPointLiteral "2.0f" @ 868..872
-                Semicolon ";" @ 872..873
-            RBrace "}" @ 874..875 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 877..881 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-          Identifier "block09" @ 882..889
-          LParen "(" @ 889..890
-          RParen ")" @ 890..891 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 892..893
-            BlockStatement
-              ExpressionStatement
-                AssignmentExpression
-                  NameExpression
-                    Identifier "currentEstimate" @ 894..909 leading=[Newline "\n"] trailing=[Whitespace " "]
-                  Assign "=" @ 910..911
-                  BinaryExpression
-                    ParenthesizedExpression
-                      LParen "(" @ 916..917 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", LineComment "// This is a line comment."]
-                      BinaryExpression
-                        NameExpression
-                          Identifier "currentEstimate" @ 953..968 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                        Plus "+" @ 969..970 trailing=[Whitespace " "]
-                        BinaryExpression
-                          NameExpression
-                            Identifier "argument" @ 971..979 trailing=[Whitespace " "]
-                          Slash "/" @ 980..981 trailing=[Whitespace " "]
-                          NameExpression
-                            Identifier "currentEstimate" @ 982..997
-                      RParen ")" @ 997..998
-                    Slash "/" @ 1007..1008 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                    LiteralExpression
-                      FloatingPointLiteral "2.0f" @ 1009..1013
-                Semicolon ";" @ 1013..1014
-            RBrace "}" @ 1015..1016 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 1018..1022 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-          Identifier "block10" @ 1023..1030
-          LParen "(" @ 1030..1031
-          RParen ")" @ 1031..1032 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 1033..1034
-            BlockStatement
-              LocalVariableDeclaration
-                ClassType
-                  Name
-                    Identifier "Function" @ 1035..1043 leading=[Newline "\n"]
-                  TypeArgumentList
-                    Lt "<" @ 1043..1044
-                    TypeArgument
-                      ClassType
-                        Name
-                          Identifier "T1" @ 1044..1046
-                    Comma "," @ 1046..1047 trailing=[Whitespace " "]
-                    TypeArgument
-                      ClassType
-                        Name
-                          Identifier "T2" @ 1048..1050
-                    Gt ">" @ 1050..1051 trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "function" @ 1052..1060 trailing=[Whitespace " "]
-                    Assign "=" @ 1061..1062 trailing=[Whitespace " "]
-                    VariableInitializer
-                      ObjectCreationExpression
-                        NewKw "new" @ 1063..1066 trailing=[Whitespace " "]
-                        ClassType
-                          Name
-                            Identifier "Function" @ 1067..1075
-                          TypeArgumentList
-                            Lt "<" @ 1075..1076
-                            Gt ">" @ 1076..1077
-                        ArgumentList
-                          LParen "(" @ 1077..1078
-                          RParen ")" @ 1078..1079 trailing=[Whitespace " "]
-                        ClassBody
-                          LBrace "{" @ 1080..1081 trailing=[Whitespace " "]
-                          ClassBodyDeclaration
-                            MethodDeclaration
-                              ClassType
-                                Name
-                                  Identifier "T2" @ 1082..1084 trailing=[Whitespace " "]
-                              Identifier "apply" @ 1085..1090
-                              LParen "(" @ 1090..1091
-                              FormalParameterList
-                                FormalParameter
-                                  ClassType
-                                    Name
-                                      Identifier "T1" @ 1091..1093 trailing=[Whitespace " "]
-                                  Identifier "x" @ 1094..1095
-                              RParen ")" @ 1095..1096 trailing=[Whitespace " "]
-                              Block
-                                LBrace "{" @ 1097..1098
-                                BlockStatement
-                                  ExpressionStatement
-                                    MethodInvocationExpression
-                                      NameExpression
-                                        Identifier "otherFunction" @ 1101..1114 leading=[Newline "\n", Whitespace "  "]
-                                      ArgumentList
-                                        LParen "(" @ 1114..1115
-                                        NameExpression
-                                          Identifier "x" @ 1122..1123 leading=[Newline "\n", Whitespace "      "]
-                                        RParen ")" @ 1123..1124
-                                    Semicolon ";" @ 1124..1125 trailing=[Whitespace " ", LineComment "// Long comment."]
-                                RBrace "}" @ 1147..1148 leading=[Newline "\n", Whitespace "    "]
-                          RBrace "}" @ 1151..1152 leading=[Newline "\n", Whitespace "  "]
-              Semicolon ";" @ 1152..1153
-            RBrace "}" @ 1154..1155 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 1157..1161 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-          Identifier "block11" @ 1162..1169
-          LParen "(" @ 1169..1170
-          RParen ")" @ 1170..1171 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 1172..1173
-            BlockStatement
-              LocalVariableDeclaration
-                ClassType
-                  Name
-                    Identifier "Function" @ 1174..1182 leading=[Newline "\n"]
-                  TypeArgumentList
-                    Lt "<" @ 1182..1183
-                    TypeArgument
-                      ClassType
-                        Name
-                          Identifier "T1" @ 1183..1185
-                    Comma "," @ 1185..1186 trailing=[Whitespace " "]
-                    TypeArgument
-                      ClassType
-                        Name
-                          Identifier "T2" @ 1187..1189
-                    Gt ">" @ 1189..1190 trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "function" @ 1191..1199 trailing=[Whitespace " "]
-                    Assign "=" @ 1200..1201
-                    VariableInitializer
-                      ObjectCreationExpression
-                        NewKw "new" @ 1206..1209 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                        ClassType
-                          Name
-                            Identifier "Function" @ 1210..1218
-                          TypeArgumentList
-                            Lt "<" @ 1218..1219
-                            Gt ">" @ 1219..1220
-                        ArgumentList
-                          LParen "(" @ 1220..1221
-                          RParen ")" @ 1221..1222 trailing=[Whitespace " "]
-                        ClassBody
-                          LBrace "{" @ 1223..1224
-                          ClassBodyDeclaration
-                            MethodDeclaration
-                              ClassType
-                                Name
-                                  Identifier "T2" @ 1231..1233 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
-                              Identifier "apply" @ 1234..1239
-                              LParen "(" @ 1239..1240
-                              FormalParameterList
-                                FormalParameter
-                                  ClassType
-                                    Name
-                                      Identifier "T1" @ 1240..1242 trailing=[Whitespace " "]
-                                  Identifier "x" @ 1243..1244
-                              RParen ")" @ 1244..1245 trailing=[Whitespace " "]
-                              Block
-                                LBrace "{" @ 1246..1247
-                                BlockStatement
-                                  ExpressionStatement
-                                    MethodInvocationExpression
-                                      NameExpression
-                                        Identifier "otherFunction" @ 1258..1271 leading=[Newline "\n", Whitespace "          "]
-                                      ArgumentList
-                                        LParen "(" @ 1271..1272
-                                        NameExpression
-                                          Identifier "x" @ 1289..1290 leading=[Newline "\n", Whitespace "                "]
-                                        RParen ")" @ 1290..1291
-                                    Semicolon ";" @ 1291..1292 trailing=[Whitespace " ", LineComment "// Long comment."]
-                                RBrace "}" @ 1318..1319 leading=[Newline "\n", Whitespace "        "]
-                          RBrace "}" @ 1326..1327 leading=[Newline "\n", Whitespace "      "]
-              Semicolon ";" @ 1327..1328
-            RBrace "}" @ 1329..1330 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 1332..1336 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-          Identifier "block12" @ 1337..1344
-          LParen "(" @ 1344..1345
-          RParen ")" @ 1345..1346 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 1347..1348
-            BlockStatement
-              LocalVariableDeclaration
-                ClassType
-                  Name
-                    Identifier "Function" @ 1349..1357 leading=[Newline "\n"]
-                  TypeArgumentList
-                    Lt "<" @ 1357..1358
-                    TypeArgument
-                      ClassType
-                        Name
-                          Identifier "T1" @ 1358..1360
-                    Comma "," @ 1360..1361 trailing=[Whitespace " "]
-                    TypeArgument
-                      ClassType
-                        Name
-                          Identifier "T2" @ 1362..1364
-                    Gt ">" @ 1364..1365 trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "function" @ 1366..1374 trailing=[Whitespace " "]
-                    Assign "=" @ 1375..1376
-                    VariableInitializer
-                      ObjectCreationExpression
-                        NewKw "new" @ 1381..1384 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                        ClassType
-                          Name
-                            Identifier "Function" @ 1385..1393
-                          TypeArgumentList
-                            Lt "<" @ 1393..1394
-                            Gt ">" @ 1394..1395
-                        ArgumentList
-                          LParen "(" @ 1395..1396
-                          RParen ")" @ 1396..1397 trailing=[Whitespace " "]
-                        ClassBody
-                          LBrace "{" @ 1398..1399
-                          ClassBodyDeclaration
-                            MethodDeclaration
-                              ClassType
-                                Name
-                                  Identifier "T2" @ 1406..1408 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
-                              Identifier "apply" @ 1409..1414
-                              LParen "(" @ 1414..1415
-                              FormalParameterList
-                                FormalParameter
-                                  ClassType
-                                    Name
-                                      Identifier "T1" @ 1415..1417 trailing=[Whitespace " "]
-                                  Identifier "x" @ 1418..1419
-                              RParen ")" @ 1419..1420 trailing=[Whitespace " "]
-                              Block
-                                LBrace "{" @ 1421..1422
-                                BlockStatement
-                                  ExpressionStatement
-                                    MethodInvocationExpression
-                                      NameExpression
-                                        Identifier "otherFunction" @ 1433..1446 leading=[Newline "\n", Whitespace "          "]
-                                      ArgumentList
-                                        LParen "(" @ 1446..1447
-                                        NameExpression
-                                          Identifier "x" @ 1454..1455 leading=[Newline "\n", Whitespace "      "]
-                                        RParen ")" @ 1455..1456
-                                    Semicolon ";" @ 1456..1457 trailing=[Whitespace " ", LineComment "// Long comment."]
-                                RBrace "}" @ 1479..1480 leading=[Newline "\n", Whitespace "    "]
-                          RBrace "}" @ 1483..1484 leading=[Newline "\n", Whitespace "  "]
-              Semicolon ";" @ 1484..1485
-            RBrace "}" @ 1486..1487 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        InterfaceDeclaration
-          InterfaceKw "interface" @ 1489..1498 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-          Identifier "Block13DeclarationInput" @ 1499..1522 trailing=[Whitespace " "]
-          InterfaceBody
-            LBrace "{" @ 1523..1524
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 65..70 leading=[LineComment "// Origin: https://github.com/google/google-java-format/wiki/FAQ", Newline "\n"] trailing=[Whitespace " "]
+      Identifier "GoogleJavaFormatFaqSnippets" @ 71..98 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 99..100
+        ClassBodyMemberList
+          ClassBodyDeclaration
             MethodDeclaration
-              ModifierList
-                PublicKw "public" @ 1525..1531 leading=[Newline "\n"] trailing=[Whitespace " "]
-              ClassType
-                Name
-                  Identifier "Customer" @ 1532..1540 trailing=[Whitespace " "]
-              Identifier "createCustomerLink" @ 1541..1559
-              LParen "(" @ 1559..1560
-              FormalParameterList
-                FormalParameter
-                  ClassType
-                    Name
-                      Identifier "Long" @ 1565..1569 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                  Identifier "externalEntityId" @ 1570..1586
-                Comma "," @ 1586..1587
-                FormalParameter
-                  ClassType
-                    Name
-                      Identifier "String" @ 1592..1598 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                  Identifier "externalEntityIdStr" @ 1599..1618
-                Comma "," @ 1618..1619
-                FormalParameter
-                  Annotation
-                    At "@" @ 1624..1625 leading=[Newline "\n", Whitespace "    "]
-                    Name
-                      Identifier "Required" @ 1625..1633 trailing=[Whitespace " "]
-                  ClassType
-                    Name
-                      Identifier "EntityNamespaceSubtype" @ 1634..1656 trailing=[Whitespace " "]
-                  Identifier "initiator" @ 1657..1666
-                Comma "," @ 1666..1667
-                FormalParameter
-                  Annotation
-                    At "@" @ 1672..1673 leading=[Newline "\n", Whitespace "    "]
-                    Name
-                      Identifier "Required" @ 1673..1681 trailing=[Whitespace " "]
-                  ClassType
-                    Name
-                      Identifier "EntityNamespaceSubtype" @ 1682..1704 trailing=[Whitespace " "]
-                  Identifier "externalEntitySubtype" @ 1705..1726
-                Comma "," @ 1726..1727
-                FormalParameter
-                  ClassType
-                    QualifiedName
-                      Identifier "Customer" @ 1732..1740 leading=[Newline "\n", Whitespace "    "]
-                      Dot "." @ 1740..1741
-                      Identifier "ChangeEvent" @ 1741..1752 trailing=[Whitespace " "]
-                  Identifier "creationEvent" @ 1753..1766
-                Comma "," @ 1766..1767
-                FormalParameter
-                  ClassType
-                    QualifiedName
-                      Identifier "Customer" @ 1772..1780 leading=[Newline "\n", Whitespace "    "]
-                      Dot "." @ 1780..1781
-                      Identifier "ChangeEvent" @ 1781..1792 trailing=[Whitespace " "]
-                  Identifier "lastModificationEvent" @ 1793..1814
-              RParen ")" @ 1814..1815
-              ThrowsClause
-                ThrowsKw "throws" @ 1820..1826 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                ClassType
-                  Name
-                    Identifier "ApiException" @ 1827..1839
-              Semicolon ";" @ 1839..1840
-            RBrace "}" @ 1841..1842 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        InterfaceDeclaration
-          InterfaceKw "interface" @ 1844..1853 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-          Identifier "Block14DeclarationOutput" @ 1854..1878 trailing=[Whitespace " "]
-          InterfaceBody
-            LBrace "{" @ 1879..1880
+              PrimitiveType
+                AnnotationList
+                IntKw "int" @ 101..104 leading=[Newline "\n"] trailing=[Whitespace " "]
+              Identifier "block01" @ 105..112
+              LParen "(" @ 112..113
+              RParen ")" @ 113..114 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 115..116
+                BlockStatementList
+                  BlockStatement
+                    ReturnStatement
+                      ReturnKw "return" @ 117..123 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      BinaryExpression
+                        BinaryExpression
+                          BinaryExpression
+                            BinaryExpression
+                              LiteralExpression
+                                IntegerLiteral "1" @ 124..125 trailing=[Whitespace " "]
+                              Minus "-" @ 126..127 trailing=[Whitespace " "]
+                              LiteralExpression
+                                IntegerLiteral "2" @ 128..129 trailing=[Whitespace " "]
+                            Plus "+" @ 130..131 trailing=[Whitespace " "]
+                            LiteralExpression
+                              IntegerLiteral "3" @ 132..133
+                          Minus "-" @ 142..143 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                          LiteralExpression
+                            IntegerLiteral "4" @ 144..145
+                        Plus "+" @ 150..151 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "5" @ 152..153
+                      Semicolon ";" @ 153..154
+                RBrace "}" @ 155..156 leading=[Newline "\n"]
+          ClassBodyDeclaration
             MethodDeclaration
+              PrimitiveType
+                AnnotationList
+                IntKw "int" @ 158..161 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              Identifier "block02" @ 162..169
+              LParen "(" @ 169..170
+              RParen ")" @ 170..171 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 172..173
+                BlockStatementList
+                  BlockStatement
+                    ReturnStatement
+                      ReturnKw "return" @ 174..180 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      BinaryExpression
+                        BinaryExpression
+                          BinaryExpression
+                            BinaryExpression
+                              LiteralExpression
+                                IntegerLiteral "1" @ 181..182 trailing=[Whitespace " "]
+                              Minus "-" @ 183..184 trailing=[Whitespace " "]
+                              LiteralExpression
+                                IntegerLiteral "2" @ 185..186 trailing=[Whitespace " "]
+                            Plus "+" @ 187..188 trailing=[Whitespace " "]
+                            LiteralExpression
+                              IntegerLiteral "3" @ 189..190
+                          Minus "-" @ 195..196 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                          LiteralExpression
+                            IntegerLiteral "4" @ 197..198 trailing=[Whitespace " "]
+                        Plus "+" @ 199..200 trailing=[Whitespace " "]
+                        LiteralExpression
+                          IntegerLiteral "5" @ 201..202
+                      Semicolon ";" @ 202..203
+                RBrace "}" @ 204..205 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 207..211 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              Identifier "block03" @ 212..219
+              LParen "(" @ 219..220
+              RParen ")" @ 220..221 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 222..223
+                BlockStatementList
+                  BlockStatement
+                    ExpressionStatement
+                      AssignmentExpression
+                        NameExpression
+                          Identifier "currentEstimate" @ 224..239 leading=[Newline "\n"] trailing=[Whitespace " "]
+                        Assign "=" @ 240..241 trailing=[Whitespace " "]
+                        BinaryExpression
+                          ParenthesizedExpression
+                            LParen "(" @ 242..243
+                            BinaryExpression
+                              NameExpression
+                                Identifier "currentEstimate" @ 243..258 trailing=[Whitespace " "]
+                              Plus "+" @ 259..260 trailing=[Whitespace " "]
+                              BinaryExpression
+                                NameExpression
+                                  Identifier "argument" @ 261..269 trailing=[Whitespace " "]
+                                Slash "/" @ 270..271 trailing=[Whitespace " "]
+                                NameExpression
+                                  Identifier "currentEstimate" @ 272..287
+                            RParen ")" @ 287..288 trailing=[Whitespace " "]
+                          Slash "/" @ 289..290 trailing=[Whitespace " "]
+                          LiteralExpression
+                            FloatingPointLiteral "2.0f" @ 291..295
+                      Semicolon ";" @ 295..296
+                RBrace "}" @ 297..298 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 300..304 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              Identifier "block04" @ 305..312
+              LParen "(" @ 312..313
+              RParen ")" @ 313..314 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 315..316
+                BlockStatementList
+                  BlockStatement
+                    ExpressionStatement
+                      AssignmentExpression
+                        NameExpression
+                          Identifier "currentEstimate" @ 317..332 leading=[Newline "\n"] trailing=[Whitespace " "]
+                        Assign "=" @ 333..334
+                        BinaryExpression
+                          ParenthesizedExpression
+                            LParen "(" @ 339..340 leading=[Newline "\n", Whitespace "    "]
+                            BinaryExpression
+                              NameExpression
+                                Identifier "currentEstimate" @ 340..355 trailing=[Whitespace " "]
+                              Plus "+" @ 356..357 trailing=[Whitespace " "]
+                              BinaryExpression
+                                NameExpression
+                                  Identifier "argument" @ 358..366 trailing=[Whitespace " "]
+                                Slash "/" @ 367..368 trailing=[Whitespace " "]
+                                NameExpression
+                                  Identifier "currentEstimate" @ 369..384
+                            RParen ")" @ 384..385 trailing=[Whitespace " "]
+                          Slash "/" @ 386..387 trailing=[Whitespace " "]
+                          LiteralExpression
+                            FloatingPointLiteral "2.0f" @ 388..392
+                      Semicolon ";" @ 392..393
+                RBrace "}" @ 394..395 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 397..401 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              Identifier "block05" @ 402..409
+              LParen "(" @ 409..410
+              RParen ")" @ 410..411 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 412..413
+                BlockStatementList
+                  BlockStatement
+                    ExpressionStatement
+                      AssignmentExpression
+                        NameExpression
+                          Identifier "currentEstimate" @ 414..429 leading=[Newline "\n"] trailing=[Whitespace " "]
+                        Assign "=" @ 430..431
+                        BinaryExpression
+                          ParenthesizedExpression
+                            LParen "(" @ 436..437 leading=[Newline "\n", Whitespace "    "]
+                            BinaryExpression
+                              NameExpression
+                                Identifier "currentEstimate" @ 437..452 trailing=[Whitespace " "]
+                              Plus "+" @ 453..454 trailing=[Whitespace " "]
+                              BinaryExpression
+                                NameExpression
+                                  Identifier "argument" @ 455..463 trailing=[Whitespace " "]
+                                Slash "/" @ 464..465 trailing=[Whitespace " "]
+                                NameExpression
+                                  Identifier "currentEstimate" @ 466..481
+                            RParen ")" @ 481..482
+                          Slash "/" @ 491..492 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                          LiteralExpression
+                            FloatingPointLiteral "2.0f" @ 493..497
+                      Semicolon ";" @ 497..498
+                RBrace "}" @ 499..500 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 502..506 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              Identifier "block06" @ 507..514
+              LParen "(" @ 514..515
+              RParen ")" @ 515..516 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 517..518
+                BlockStatementList
+                  BlockStatement
+                    ExpressionStatement
+                      AssignmentExpression
+                        NameExpression
+                          Identifier "currentEstimate" @ 519..534 leading=[Newline "\n"] trailing=[Whitespace " "]
+                        Assign "=" @ 535..536
+                        BinaryExpression
+                          ParenthesizedExpression
+                            LParen "(" @ 541..542 leading=[Newline "\n", Whitespace "    "]
+                            BinaryExpression
+                              NameExpression
+                                Identifier "currentEstimate" @ 542..557
+                              Plus "+" @ 570..571 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                              BinaryExpression
+                                NameExpression
+                                  Identifier "argument" @ 572..580 trailing=[Whitespace " "]
+                                Slash "/" @ 581..582 trailing=[Whitespace " "]
+                                NameExpression
+                                  Identifier "currentEstimate" @ 583..598
+                            RParen ")" @ 598..599
+                          Slash "/" @ 608..609 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                          LiteralExpression
+                            FloatingPointLiteral "2.0f" @ 610..614
+                      Semicolon ";" @ 614..615
+                RBrace "}" @ 616..617 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 619..623 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              Identifier "block07" @ 624..631
+              LParen "(" @ 631..632
+              RParen ")" @ 632..633 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 634..635
+                BlockStatementList
+                  BlockStatement
+                    ExpressionStatement
+                      AssignmentExpression
+                        NameExpression
+                          Identifier "currentEstimate" @ 636..651 leading=[Newline "\n"] trailing=[Whitespace " "]
+                        Assign "=" @ 652..653
+                        BinaryExpression
+                          ParenthesizedExpression
+                            LParen "(" @ 658..659 leading=[Newline "\n", Whitespace "    "]
+                            BinaryExpression
+                              NameExpression
+                                Identifier "currentEstimate" @ 659..674
+                              Plus "+" @ 687..688 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                              BinaryExpression
+                                NameExpression
+                                  Identifier "argument" @ 689..697
+                                Slash "/" @ 714..715 leading=[Newline "\n", Whitespace "                "] trailing=[Whitespace " "]
+                                NameExpression
+                                  Identifier "currentEstimate" @ 716..731
+                            RParen ")" @ 731..732
+                          Slash "/" @ 741..742 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                          LiteralExpression
+                            FloatingPointLiteral "2.0f" @ 743..747
+                      Semicolon ";" @ 747..748
+                RBrace "}" @ 749..750 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 752..756 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              Identifier "block08" @ 757..764
+              LParen "(" @ 764..765
+              RParen ")" @ 765..766 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 767..768
+                BlockStatementList
+                  BlockStatement
+                    ExpressionStatement
+                      AssignmentExpression
+                        NameExpression
+                          Identifier "currentEstimate" @ 769..784 leading=[Newline "\n"] trailing=[Whitespace " "]
+                        Assign "=" @ 785..786 trailing=[Whitespace " "]
+                        BinaryExpression
+                          ParenthesizedExpression
+                            LParen "(" @ 787..788 trailing=[Whitespace " ", LineComment "// This is a line comment."]
+                            BinaryExpression
+                              NameExpression
+                                Identifier "currentEstimate" @ 820..835 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                              Plus "+" @ 836..837 trailing=[Whitespace " "]
+                              BinaryExpression
+                                NameExpression
+                                  Identifier "argument" @ 838..846 trailing=[Whitespace " "]
+                                Slash "/" @ 847..848 trailing=[Whitespace " "]
+                                NameExpression
+                                  Identifier "currentEstimate" @ 849..864
+                            RParen ")" @ 864..865 trailing=[Whitespace " "]
+                          Slash "/" @ 866..867 trailing=[Whitespace " "]
+                          LiteralExpression
+                            FloatingPointLiteral "2.0f" @ 868..872
+                      Semicolon ";" @ 872..873
+                RBrace "}" @ 874..875 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 877..881 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              Identifier "block09" @ 882..889
+              LParen "(" @ 889..890
+              RParen ")" @ 890..891 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 892..893
+                BlockStatementList
+                  BlockStatement
+                    ExpressionStatement
+                      AssignmentExpression
+                        NameExpression
+                          Identifier "currentEstimate" @ 894..909 leading=[Newline "\n"] trailing=[Whitespace " "]
+                        Assign "=" @ 910..911
+                        BinaryExpression
+                          ParenthesizedExpression
+                            LParen "(" @ 916..917 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " ", LineComment "// This is a line comment."]
+                            BinaryExpression
+                              NameExpression
+                                Identifier "currentEstimate" @ 953..968 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                              Plus "+" @ 969..970 trailing=[Whitespace " "]
+                              BinaryExpression
+                                NameExpression
+                                  Identifier "argument" @ 971..979 trailing=[Whitespace " "]
+                                Slash "/" @ 980..981 trailing=[Whitespace " "]
+                                NameExpression
+                                  Identifier "currentEstimate" @ 982..997
+                            RParen ")" @ 997..998
+                          Slash "/" @ 1007..1008 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                          LiteralExpression
+                            FloatingPointLiteral "2.0f" @ 1009..1013
+                      Semicolon ";" @ 1013..1014
+                RBrace "}" @ 1015..1016 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 1018..1022 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              Identifier "block10" @ 1023..1030
+              LParen "(" @ 1030..1031
+              RParen ")" @ 1031..1032 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 1033..1034
+                BlockStatementList
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
+                            AnnotationList
+                            Name
+                              Identifier "Function" @ 1035..1043 leading=[Newline "\n"]
+                            TypeArgumentList
+                              Lt "<" @ 1043..1044
+                              TypeArgumentSeparatedList
+                                TypeArgument
+                                  AnnotationList
+                                  ClassType
+                                    ClassTypeSegmentList
+                                      ClassTypeSegmentNode
+                                        AnnotationList
+                                        Name
+                                          Identifier "T1" @ 1044..1046
+                                Comma "," @ 1046..1047 trailing=[Whitespace " "]
+                                TypeArgument
+                                  AnnotationList
+                                  ClassType
+                                    ClassTypeSegmentList
+                                      ClassTypeSegmentNode
+                                        AnnotationList
+                                        Name
+                                          Identifier "T2" @ 1048..1050
+                              Gt ">" @ 1050..1051 trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "function" @ 1052..1060 trailing=[Whitespace " "]
+                          Assign "=" @ 1061..1062 trailing=[Whitespace " "]
+                          VariableInitializer
+                            ObjectCreationExpression
+                              NewKw "new" @ 1063..1066 trailing=[Whitespace " "]
+                              ClassType
+                                ClassTypeSegmentList
+                                  ClassTypeSegmentNode
+                                    AnnotationList
+                                    Name
+                                      Identifier "Function" @ 1067..1075
+                                    TypeArgumentList
+                                      Lt "<" @ 1075..1076
+                                      TypeArgumentSeparatedList
+                                      Gt ">" @ 1076..1077
+                              ArgumentList
+                                LParen "(" @ 1077..1078
+                                ExpressionList
+                                RParen ")" @ 1078..1079 trailing=[Whitespace " "]
+                              ClassBody
+                                LBrace "{" @ 1080..1081 trailing=[Whitespace " "]
+                                ClassBodyMemberList
+                                  ClassBodyDeclaration
+                                    MethodDeclaration
+                                      ClassType
+                                        ClassTypeSegmentList
+                                          ClassTypeSegmentNode
+                                            AnnotationList
+                                            Name
+                                              Identifier "T2" @ 1082..1084 trailing=[Whitespace " "]
+                                      Identifier "apply" @ 1085..1090
+                                      LParen "(" @ 1090..1091
+                                      FormalParameterList
+                                        FormalParameter
+                                          ParameterModifierList
+                                          ClassType
+                                            ClassTypeSegmentList
+                                              ClassTypeSegmentNode
+                                                AnnotationList
+                                                Name
+                                                  Identifier "T1" @ 1091..1093 trailing=[Whitespace " "]
+                                          AnnotationList
+                                          Identifier "x" @ 1094..1095
+                                      RParen ")" @ 1095..1096 trailing=[Whitespace " "]
+                                      Block
+                                        LBrace "{" @ 1097..1098
+                                        BlockStatementList
+                                          BlockStatement
+                                            ExpressionStatement
+                                              MethodInvocationExpression
+                                                UnqualifiedMethodInvocation
+                                                  NameExpression
+                                                    Identifier "otherFunction" @ 1101..1114 leading=[Newline "\n", Whitespace "  "]
+                                                  ArgumentList
+                                                    LParen "(" @ 1114..1115
+                                                    ExpressionList
+                                                      NameExpression
+                                                        Identifier "x" @ 1122..1123 leading=[Newline "\n", Whitespace "      "]
+                                                    RParen ")" @ 1123..1124
+                                              Semicolon ";" @ 1124..1125 trailing=[Whitespace " ", LineComment "// Long comment."]
+                                        RBrace "}" @ 1147..1148 leading=[Newline "\n", Whitespace "    "]
+                                RBrace "}" @ 1151..1152 leading=[Newline "\n", Whitespace "  "]
+                    Semicolon ";" @ 1152..1153
+                RBrace "}" @ 1154..1155 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 1157..1161 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              Identifier "block11" @ 1162..1169
+              LParen "(" @ 1169..1170
+              RParen ")" @ 1170..1171 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 1172..1173
+                BlockStatementList
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
+                            AnnotationList
+                            Name
+                              Identifier "Function" @ 1174..1182 leading=[Newline "\n"]
+                            TypeArgumentList
+                              Lt "<" @ 1182..1183
+                              TypeArgumentSeparatedList
+                                TypeArgument
+                                  AnnotationList
+                                  ClassType
+                                    ClassTypeSegmentList
+                                      ClassTypeSegmentNode
+                                        AnnotationList
+                                        Name
+                                          Identifier "T1" @ 1183..1185
+                                Comma "," @ 1185..1186 trailing=[Whitespace " "]
+                                TypeArgument
+                                  AnnotationList
+                                  ClassType
+                                    ClassTypeSegmentList
+                                      ClassTypeSegmentNode
+                                        AnnotationList
+                                        Name
+                                          Identifier "T2" @ 1187..1189
+                              Gt ">" @ 1189..1190 trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "function" @ 1191..1199 trailing=[Whitespace " "]
+                          Assign "=" @ 1200..1201
+                          VariableInitializer
+                            ObjectCreationExpression
+                              NewKw "new" @ 1206..1209 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                              ClassType
+                                ClassTypeSegmentList
+                                  ClassTypeSegmentNode
+                                    AnnotationList
+                                    Name
+                                      Identifier "Function" @ 1210..1218
+                                    TypeArgumentList
+                                      Lt "<" @ 1218..1219
+                                      TypeArgumentSeparatedList
+                                      Gt ">" @ 1219..1220
+                              ArgumentList
+                                LParen "(" @ 1220..1221
+                                ExpressionList
+                                RParen ")" @ 1221..1222 trailing=[Whitespace " "]
+                              ClassBody
+                                LBrace "{" @ 1223..1224
+                                ClassBodyMemberList
+                                  ClassBodyDeclaration
+                                    MethodDeclaration
+                                      ClassType
+                                        ClassTypeSegmentList
+                                          ClassTypeSegmentNode
+                                            AnnotationList
+                                            Name
+                                              Identifier "T2" @ 1231..1233 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+                                      Identifier "apply" @ 1234..1239
+                                      LParen "(" @ 1239..1240
+                                      FormalParameterList
+                                        FormalParameter
+                                          ParameterModifierList
+                                          ClassType
+                                            ClassTypeSegmentList
+                                              ClassTypeSegmentNode
+                                                AnnotationList
+                                                Name
+                                                  Identifier "T1" @ 1240..1242 trailing=[Whitespace " "]
+                                          AnnotationList
+                                          Identifier "x" @ 1243..1244
+                                      RParen ")" @ 1244..1245 trailing=[Whitespace " "]
+                                      Block
+                                        LBrace "{" @ 1246..1247
+                                        BlockStatementList
+                                          BlockStatement
+                                            ExpressionStatement
+                                              MethodInvocationExpression
+                                                UnqualifiedMethodInvocation
+                                                  NameExpression
+                                                    Identifier "otherFunction" @ 1258..1271 leading=[Newline "\n", Whitespace "          "]
+                                                  ArgumentList
+                                                    LParen "(" @ 1271..1272
+                                                    ExpressionList
+                                                      NameExpression
+                                                        Identifier "x" @ 1289..1290 leading=[Newline "\n", Whitespace "                "]
+                                                    RParen ")" @ 1290..1291
+                                              Semicolon ";" @ 1291..1292 trailing=[Whitespace " ", LineComment "// Long comment."]
+                                        RBrace "}" @ 1318..1319 leading=[Newline "\n", Whitespace "        "]
+                                RBrace "}" @ 1326..1327 leading=[Newline "\n", Whitespace "      "]
+                    Semicolon ";" @ 1327..1328
+                RBrace "}" @ 1329..1330 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 1332..1336 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              Identifier "block12" @ 1337..1344
+              LParen "(" @ 1344..1345
+              RParen ")" @ 1345..1346 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 1347..1348
+                BlockStatementList
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      ClassType
+                        ClassTypeSegmentList
+                          ClassTypeSegmentNode
+                            AnnotationList
+                            Name
+                              Identifier "Function" @ 1349..1357 leading=[Newline "\n"]
+                            TypeArgumentList
+                              Lt "<" @ 1357..1358
+                              TypeArgumentSeparatedList
+                                TypeArgument
+                                  AnnotationList
+                                  ClassType
+                                    ClassTypeSegmentList
+                                      ClassTypeSegmentNode
+                                        AnnotationList
+                                        Name
+                                          Identifier "T1" @ 1358..1360
+                                Comma "," @ 1360..1361 trailing=[Whitespace " "]
+                                TypeArgument
+                                  AnnotationList
+                                  ClassType
+                                    ClassTypeSegmentList
+                                      ClassTypeSegmentNode
+                                        AnnotationList
+                                        Name
+                                          Identifier "T2" @ 1362..1364
+                              Gt ">" @ 1364..1365 trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "function" @ 1366..1374 trailing=[Whitespace " "]
+                          Assign "=" @ 1375..1376
+                          VariableInitializer
+                            ObjectCreationExpression
+                              NewKw "new" @ 1381..1384 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                              ClassType
+                                ClassTypeSegmentList
+                                  ClassTypeSegmentNode
+                                    AnnotationList
+                                    Name
+                                      Identifier "Function" @ 1385..1393
+                                    TypeArgumentList
+                                      Lt "<" @ 1393..1394
+                                      TypeArgumentSeparatedList
+                                      Gt ">" @ 1394..1395
+                              ArgumentList
+                                LParen "(" @ 1395..1396
+                                ExpressionList
+                                RParen ")" @ 1396..1397 trailing=[Whitespace " "]
+                              ClassBody
+                                LBrace "{" @ 1398..1399
+                                ClassBodyMemberList
+                                  ClassBodyDeclaration
+                                    MethodDeclaration
+                                      ClassType
+                                        ClassTypeSegmentList
+                                          ClassTypeSegmentNode
+                                            AnnotationList
+                                            Name
+                                              Identifier "T2" @ 1406..1408 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+                                      Identifier "apply" @ 1409..1414
+                                      LParen "(" @ 1414..1415
+                                      FormalParameterList
+                                        FormalParameter
+                                          ParameterModifierList
+                                          ClassType
+                                            ClassTypeSegmentList
+                                              ClassTypeSegmentNode
+                                                AnnotationList
+                                                Name
+                                                  Identifier "T1" @ 1415..1417 trailing=[Whitespace " "]
+                                          AnnotationList
+                                          Identifier "x" @ 1418..1419
+                                      RParen ")" @ 1419..1420 trailing=[Whitespace " "]
+                                      Block
+                                        LBrace "{" @ 1421..1422
+                                        BlockStatementList
+                                          BlockStatement
+                                            ExpressionStatement
+                                              MethodInvocationExpression
+                                                UnqualifiedMethodInvocation
+                                                  NameExpression
+                                                    Identifier "otherFunction" @ 1433..1446 leading=[Newline "\n", Whitespace "          "]
+                                                  ArgumentList
+                                                    LParen "(" @ 1446..1447
+                                                    ExpressionList
+                                                      NameExpression
+                                                        Identifier "x" @ 1454..1455 leading=[Newline "\n", Whitespace "      "]
+                                                    RParen ")" @ 1455..1456
+                                              Semicolon ";" @ 1456..1457 trailing=[Whitespace " ", LineComment "// Long comment."]
+                                        RBrace "}" @ 1479..1480 leading=[Newline "\n", Whitespace "    "]
+                                RBrace "}" @ 1483..1484 leading=[Newline "\n", Whitespace "  "]
+                    Semicolon ";" @ 1484..1485
+                RBrace "}" @ 1486..1487 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            InterfaceDeclaration
+              InterfaceKw "interface" @ 1489..1498 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              Identifier "Block13DeclarationInput" @ 1499..1522 trailing=[Whitespace " "]
+              InterfaceBody
+                LBrace "{" @ 1523..1524
+                InterfaceBodyMemberList
+                  MethodDeclaration
+                    ModifierList
+                      PublicKw "public" @ 1525..1531 leading=[Newline "\n"] trailing=[Whitespace " "]
+                    ClassType
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
+                          Name
+                            Identifier "Customer" @ 1532..1540 trailing=[Whitespace " "]
+                    Identifier "createCustomerLink" @ 1541..1559
+                    LParen "(" @ 1559..1560
+                    FormalParameterList
+                      FormalParameter
+                        ParameterModifierList
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "Long" @ 1565..1569 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                        AnnotationList
+                        Identifier "externalEntityId" @ 1570..1586
+                      Comma "," @ 1586..1587
+                      FormalParameter
+                        ParameterModifierList
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "String" @ 1592..1598 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                        AnnotationList
+                        Identifier "externalEntityIdStr" @ 1599..1618
+                      Comma "," @ 1618..1619
+                      FormalParameter
+                        ParameterModifierList
+                          Annotation
+                            At "@" @ 1624..1625 leading=[Newline "\n", Whitespace "    "]
+                            Name
+                              Identifier "Required" @ 1625..1633 trailing=[Whitespace " "]
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "EntityNamespaceSubtype" @ 1634..1656 trailing=[Whitespace " "]
+                        AnnotationList
+                        Identifier "initiator" @ 1657..1666
+                      Comma "," @ 1666..1667
+                      FormalParameter
+                        ParameterModifierList
+                          Annotation
+                            At "@" @ 1672..1673 leading=[Newline "\n", Whitespace "    "]
+                            Name
+                              Identifier "Required" @ 1673..1681 trailing=[Whitespace " "]
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "EntityNamespaceSubtype" @ 1682..1704 trailing=[Whitespace " "]
+                        AnnotationList
+                        Identifier "externalEntitySubtype" @ 1705..1726
+                      Comma "," @ 1726..1727
+                      FormalParameter
+                        ParameterModifierList
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              QualifiedName
+                                QualifiedNameSegmentNode
+                                  AnnotationList
+                                  Identifier "Customer" @ 1732..1740 leading=[Newline "\n", Whitespace "    "]
+                                Dot "." @ 1740..1741
+                                NameSegmentDotList
+                                  QualifiedNameSegmentNode
+                                    AnnotationList
+                                    Identifier "ChangeEvent" @ 1741..1752 trailing=[Whitespace " "]
+                        AnnotationList
+                        Identifier "creationEvent" @ 1753..1766
+                      Comma "," @ 1766..1767
+                      FormalParameter
+                        ParameterModifierList
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              QualifiedName
+                                QualifiedNameSegmentNode
+                                  AnnotationList
+                                  Identifier "Customer" @ 1772..1780 leading=[Newline "\n", Whitespace "    "]
+                                Dot "." @ 1780..1781
+                                NameSegmentDotList
+                                  QualifiedNameSegmentNode
+                                    AnnotationList
+                                    Identifier "ChangeEvent" @ 1781..1792 trailing=[Whitespace " "]
+                        AnnotationList
+                        Identifier "lastModificationEvent" @ 1793..1814
+                    RParen ")" @ 1814..1815
+                    ThrowsClause
+                      ThrowsKw "throws" @ 1820..1826 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      TypeList
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "ApiException" @ 1827..1839
+                    Semicolon ";" @ 1839..1840
+                RBrace "}" @ 1841..1842 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            InterfaceDeclaration
+              InterfaceKw "interface" @ 1844..1853 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              Identifier "Block14DeclarationOutput" @ 1854..1878 trailing=[Whitespace " "]
+              InterfaceBody
+                LBrace "{" @ 1879..1880
+                InterfaceBodyMemberList
+                  MethodDeclaration
+                    ModifierList
+                      PublicKw "public" @ 1881..1887 leading=[Newline "\n"] trailing=[Whitespace " "]
+                    ClassType
+                      ClassTypeSegmentList
+                        ClassTypeSegmentNode
+                          AnnotationList
+                          Name
+                            Identifier "Customer" @ 1888..1896 trailing=[Whitespace " "]
+                    Identifier "createCustomerLink" @ 1897..1915
+                    LParen "(" @ 1915..1916
+                    FormalParameterList
+                      FormalParameter
+                        ParameterModifierList
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "Long" @ 1923..1927 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+                        AnnotationList
+                        Identifier "externalEntityId" @ 1928..1944
+                      Comma "," @ 1944..1945
+                      FormalParameter
+                        ParameterModifierList
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "String" @ 1952..1958 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
+                        AnnotationList
+                        Identifier "externalEntityIdStr" @ 1959..1978
+                      Comma "," @ 1978..1979
+                      FormalParameter
+                        ParameterModifierList
+                          Annotation
+                            At "@" @ 1986..1987 leading=[Newline "\n", Whitespace "      "]
+                            Name
+                              Identifier "Required" @ 1987..1995 trailing=[Whitespace " "]
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "EntityNamespaceSubtype" @ 1996..2018 trailing=[Whitespace " "]
+                        AnnotationList
+                        Identifier "initiator" @ 2019..2028
+                      Comma "," @ 2028..2029
+                      FormalParameter
+                        ParameterModifierList
+                          Annotation
+                            At "@" @ 2036..2037 leading=[Newline "\n", Whitespace "      "]
+                            Name
+                              Identifier "Required" @ 2037..2045 trailing=[Whitespace " "]
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "EntityNamespaceSubtype" @ 2046..2068 trailing=[Whitespace " "]
+                        AnnotationList
+                        Identifier "externalEntitySubtype" @ 2069..2090
+                      Comma "," @ 2090..2091
+                      FormalParameter
+                        ParameterModifierList
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              QualifiedName
+                                QualifiedNameSegmentNode
+                                  AnnotationList
+                                  Identifier "Customer" @ 2098..2106 leading=[Newline "\n", Whitespace "      "]
+                                Dot "." @ 2106..2107
+                                NameSegmentDotList
+                                  QualifiedNameSegmentNode
+                                    AnnotationList
+                                    Identifier "ChangeEvent" @ 2107..2118 trailing=[Whitespace " "]
+                        AnnotationList
+                        Identifier "creationEvent" @ 2119..2132
+                      Comma "," @ 2132..2133
+                      FormalParameter
+                        ParameterModifierList
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              QualifiedName
+                                QualifiedNameSegmentNode
+                                  AnnotationList
+                                  Identifier "Customer" @ 2140..2148 leading=[Newline "\n", Whitespace "      "]
+                                Dot "." @ 2148..2149
+                                NameSegmentDotList
+                                  QualifiedNameSegmentNode
+                                    AnnotationList
+                                    Identifier "ChangeEvent" @ 2149..2160 trailing=[Whitespace " "]
+                        AnnotationList
+                        Identifier "lastModificationEvent" @ 2161..2182
+                    RParen ")" @ 2182..2183
+                    ThrowsClause
+                      ThrowsKw "throws" @ 2188..2194 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+                      TypeList
+                        ClassType
+                          ClassTypeSegmentList
+                            ClassTypeSegmentNode
+                              AnnotationList
+                              Name
+                                Identifier "ApiException" @ 2195..2207
+                    Semicolon ";" @ 2207..2208
+                RBrace "}" @ 2209..2210 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 2212..2216 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              Identifier "block15" @ 2217..2224
+              LParen "(" @ 2224..2225
+              RParen ")" @ 2225..2226 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 2227..2228
+                BlockStatementList
+                  BlockStatement
+                    ExpressionStatement
+                      MethodInvocationExpression
+                        QualifiedMethodInvocation
+                          MethodInvocationExpression
+                            UnqualifiedMethodInvocation
+                              NameExpression
+                                Identifier "when" @ 2233..2237 leading=[Newline "\n", Whitespace "    "]
+                              ArgumentList
+                                LParen "(" @ 2237..2238
+                                ExpressionList
+                                  MethodInvocationExpression
+                                    QualifiedMethodInvocation
+                                      NameExpression
+                                        Identifier "remoteApi" @ 2238..2247
+                                      Dot "." @ 2247..2248
+                                      Identifier "findOrCreate" @ 2248..2260
+                                      ArgumentList
+                                        LParen "(" @ 2260..2261
+                                        ExpressionList
+                                          NameExpression
+                                            Identifier "FOO_METADATA" @ 2274..2286 leading=[Newline "\n", Whitespace "            "]
+                                          Comma "," @ 2286..2287
+                                          MethodInvocationExpression
+                                            QualifiedMethodInvocation
+                                              NameExpression
+                                                Identifier "Optional" @ 2300..2308 leading=[Newline "\n", Whitespace "            "]
+                                              Dot "." @ 2308..2309
+                                              TypeArgumentList
+                                                Lt "<" @ 2309..2310
+                                                TypeArgumentSeparatedList
+                                                  TypeArgument
+                                                    AnnotationList
+                                                    ClassType
+                                                      ClassTypeSegmentList
+                                                        ClassTypeSegmentNode
+                                                          AnnotationList
+                                                          Name
+                                                            Identifier "TheProto" @ 2310..2318
+                                                Gt ">" @ 2318..2319
+                                              Identifier "absent" @ 2319..2325
+                                              ArgumentList
+                                                LParen "(" @ 2325..2326
+                                                ExpressionList
+                                                RParen ")" @ 2326..2327
+                                          Comma "," @ 2327..2328
+                                          FieldAccessExpression
+                                            NameExpression
+                                              Identifier "AssignReserved" @ 2341..2355 leading=[Newline "\n", Whitespace "            "]
+                                            Dot "." @ 2355..2356
+                                            Identifier "YES" @ 2356..2359
+                                          Comma "," @ 2359..2360
+                                          FieldAccessExpression
+                                            NameExpression
+                                              Identifier "AttachData" @ 2373..2383 leading=[Newline "\n", Whitespace "            "]
+                                            Dot "." @ 2383..2384
+                                            Identifier "YES" @ 2384..2387
+                                        RParen ")" @ 2387..2388
+                                RParen ")" @ 2388..2389
+                          Dot "." @ 2398..2399 leading=[Newline "\n", Whitespace "        "]
+                          Identifier "thenReturn" @ 2399..2409
+                          ArgumentList
+                            LParen "(" @ 2409..2410
+                            ExpressionList
+                              NameExpression
+                                Identifier "OPERATION" @ 2410..2419
+                            RParen ")" @ 2419..2420
+                      Semicolon ";" @ 2420..2421
+                RBrace "}" @ 2422..2423 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 2425..2429 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
+              Identifier "block16" @ 2430..2437
+              LParen "(" @ 2437..2438
+              RParen ")" @ 2438..2439 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 2440..2441
+                BlockStatementList
+                  BlockStatement
+                    ExpressionStatement
+                      MethodInvocationExpression
+                        QualifiedMethodInvocation
+                          MethodInvocationExpression
+                            UnqualifiedMethodInvocation
+                              NameExpression
+                                Identifier "when" @ 2446..2450 leading=[Newline "\n", Whitespace "    "]
+                              ArgumentList
+                                LParen "(" @ 2450..2451
+                                ExpressionList
+                                  MethodInvocationExpression
+                                    QualifiedMethodInvocation
+                                      NameExpression
+                                        Identifier "remoteApi" @ 2464..2473 leading=[Newline "\n", Whitespace "            "]
+                                      Dot "." @ 2473..2474
+                                      Identifier "findOrCreate" @ 2474..2486
+                                      ArgumentList
+                                        LParen "(" @ 2486..2487
+                                        ExpressionList
+                                          NameExpression
+                                            Identifier "FOO_METADATA" @ 2504..2516 leading=[Newline "\n", Whitespace "                "]
+                                          Comma "," @ 2516..2517
+                                          MethodInvocationExpression
+                                            QualifiedMethodInvocation
+                                              NameExpression
+                                                Identifier "Optional" @ 2534..2542 leading=[Newline "\n", Whitespace "                "]
+                                              Dot "." @ 2542..2543
+                                              TypeArgumentList
+                                                Lt "<" @ 2543..2544
+                                                TypeArgumentSeparatedList
+                                                  TypeArgument
+                                                    AnnotationList
+                                                    ClassType
+                                                      ClassTypeSegmentList
+                                                        ClassTypeSegmentNode
+                                                          AnnotationList
+                                                          Name
+                                                            Identifier "TheProto" @ 2544..2552
+                                                Gt ">" @ 2552..2553
+                                              Identifier "absent" @ 2553..2559
+                                              ArgumentList
+                                                LParen "(" @ 2559..2560
+                                                ExpressionList
+                                                RParen ")" @ 2560..2561
+                                          Comma "," @ 2561..2562
+                                          FieldAccessExpression
+                                            NameExpression
+                                              Identifier "AssignReserved" @ 2579..2593 leading=[Newline "\n", Whitespace "                "]
+                                            Dot "." @ 2593..2594
+                                            Identifier "YES" @ 2594..2597
+                                          Comma "," @ 2597..2598
+                                          FieldAccessExpression
+                                            NameExpression
+                                              Identifier "AttachData" @ 2615..2625 leading=[Newline "\n", Whitespace "                "]
+                                            Dot "." @ 2625..2626
+                                            Identifier "YES" @ 2626..2629
+                                        RParen ")" @ 2629..2630
+                                RParen ")" @ 2630..2631
+                          Dot "." @ 2640..2641 leading=[Newline "\n", Whitespace "        "]
+                          Identifier "thenReturn" @ 2641..2651
+                          ArgumentList
+                            LParen "(" @ 2651..2652
+                            ExpressionList
+                              NameExpression
+                                Identifier "OPERATION" @ 2652..2661
+                            RParen ")" @ 2661..2662
+                      Semicolon ";" @ 2662..2663
+                RBrace "}" @ 2664..2665 leading=[Newline "\n"]
+          ClassBodyDeclaration
+            ClassDeclaration
               ModifierList
-                PublicKw "public" @ 1881..1887 leading=[Newline "\n"] trailing=[Whitespace " "]
-              ClassType
-                Name
-                  Identifier "Customer" @ 1888..1896 trailing=[Whitespace " "]
-              Identifier "createCustomerLink" @ 1897..1915
-              LParen "(" @ 1915..1916
-              FormalParameterList
-                FormalParameter
-                  ClassType
-                    Name
-                      Identifier "Long" @ 1923..1927 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
-                  Identifier "externalEntityId" @ 1928..1944
-                Comma "," @ 1944..1945
-                FormalParameter
-                  ClassType
-                    Name
-                      Identifier "String" @ 1952..1958 leading=[Newline "\n", Whitespace "      "] trailing=[Whitespace " "]
-                  Identifier "externalEntityIdStr" @ 1959..1978
-                Comma "," @ 1978..1979
-                FormalParameter
-                  Annotation
-                    At "@" @ 1986..1987 leading=[Newline "\n", Whitespace "      "]
-                    Name
-                      Identifier "Required" @ 1987..1995 trailing=[Whitespace " "]
-                  ClassType
-                    Name
-                      Identifier "EntityNamespaceSubtype" @ 1996..2018 trailing=[Whitespace " "]
-                  Identifier "initiator" @ 2019..2028
-                Comma "," @ 2028..2029
-                FormalParameter
-                  Annotation
-                    At "@" @ 2036..2037 leading=[Newline "\n", Whitespace "      "]
-                    Name
-                      Identifier "Required" @ 2037..2045 trailing=[Whitespace " "]
-                  ClassType
-                    Name
-                      Identifier "EntityNamespaceSubtype" @ 2046..2068 trailing=[Whitespace " "]
-                  Identifier "externalEntitySubtype" @ 2069..2090
-                Comma "," @ 2090..2091
-                FormalParameter
-                  ClassType
-                    QualifiedName
-                      Identifier "Customer" @ 2098..2106 leading=[Newline "\n", Whitespace "      "]
-                      Dot "." @ 2106..2107
-                      Identifier "ChangeEvent" @ 2107..2118 trailing=[Whitespace " "]
-                  Identifier "creationEvent" @ 2119..2132
-                Comma "," @ 2132..2133
-                FormalParameter
-                  ClassType
-                    QualifiedName
-                      Identifier "Customer" @ 2140..2148 leading=[Newline "\n", Whitespace "      "]
-                      Dot "." @ 2148..2149
-                      Identifier "ChangeEvent" @ 2149..2160 trailing=[Whitespace " "]
-                  Identifier "lastModificationEvent" @ 2161..2182
-              RParen ")" @ 2182..2183
-              ThrowsClause
-                ThrowsKw "throws" @ 2188..2194 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-                ClassType
-                  Name
-                    Identifier "ApiException" @ 2195..2207
-              Semicolon ";" @ 2207..2208
-            RBrace "}" @ 2209..2210 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 2212..2216 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-          Identifier "block15" @ 2217..2224
-          LParen "(" @ 2224..2225
-          RParen ")" @ 2225..2226 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 2227..2228
-            BlockStatement
-              ExpressionStatement
-                MethodInvocationExpression
-                  MethodInvocationExpression
-                    NameExpression
-                      Identifier "when" @ 2233..2237 leading=[Newline "\n", Whitespace "    "]
-                    ArgumentList
-                      LParen "(" @ 2237..2238
-                      MethodInvocationExpression
-                        NameExpression
-                          Identifier "remoteApi" @ 2238..2247
-                        Dot "." @ 2247..2248
-                        Identifier "findOrCreate" @ 2248..2260
-                        ArgumentList
-                          LParen "(" @ 2260..2261
-                          NameExpression
-                            Identifier "FOO_METADATA" @ 2274..2286 leading=[Newline "\n", Whitespace "            "]
-                          Comma "," @ 2286..2287
-                          MethodInvocationExpression
-                            NameExpression
-                              Identifier "Optional" @ 2300..2308 leading=[Newline "\n", Whitespace "            "]
-                            Dot "." @ 2308..2309
-                            TypeArgumentList
-                              Lt "<" @ 2309..2310
-                              TypeArgument
-                                ClassType
-                                  Name
-                                    Identifier "TheProto" @ 2310..2318
-                              Gt ">" @ 2318..2319
-                            Identifier "absent" @ 2319..2325
-                            ArgumentList
-                              LParen "(" @ 2325..2326
-                              RParen ")" @ 2326..2327
-                          Comma "," @ 2327..2328
-                          FieldAccessExpression
-                            NameExpression
-                              Identifier "AssignReserved" @ 2341..2355 leading=[Newline "\n", Whitespace "            "]
-                            Dot "." @ 2355..2356
-                            Identifier "YES" @ 2356..2359
-                          Comma "," @ 2359..2360
-                          FieldAccessExpression
-                            NameExpression
-                              Identifier "AttachData" @ 2373..2383 leading=[Newline "\n", Whitespace "            "]
-                            Dot "." @ 2383..2384
-                            Identifier "YES" @ 2384..2387
-                          RParen ")" @ 2387..2388
-                      RParen ")" @ 2388..2389
-                  Dot "." @ 2398..2399 leading=[Newline "\n", Whitespace "        "]
-                  Identifier "thenReturn" @ 2399..2409
-                  ArgumentList
-                    LParen "(" @ 2409..2410
-                    NameExpression
-                      Identifier "OPERATION" @ 2410..2419
-                    RParen ")" @ 2419..2420
-                Semicolon ";" @ 2420..2421
-            RBrace "}" @ 2422..2423 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 2425..2429 leading=[Newline "\n", Newline "\n"] trailing=[Whitespace " "]
-          Identifier "block16" @ 2430..2437
-          LParen "(" @ 2437..2438
-          RParen ")" @ 2438..2439 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 2440..2441
-            BlockStatement
-              ExpressionStatement
-                MethodInvocationExpression
-                  MethodInvocationExpression
-                    NameExpression
-                      Identifier "when" @ 2446..2450 leading=[Newline "\n", Whitespace "    "]
-                    ArgumentList
-                      LParen "(" @ 2450..2451
-                      MethodInvocationExpression
-                        NameExpression
-                          Identifier "remoteApi" @ 2464..2473 leading=[Newline "\n", Whitespace "            "]
-                        Dot "." @ 2473..2474
-                        Identifier "findOrCreate" @ 2474..2486
-                        ArgumentList
-                          LParen "(" @ 2486..2487
-                          NameExpression
-                            Identifier "FOO_METADATA" @ 2504..2516 leading=[Newline "\n", Whitespace "                "]
-                          Comma "," @ 2516..2517
-                          MethodInvocationExpression
-                            NameExpression
-                              Identifier "Optional" @ 2534..2542 leading=[Newline "\n", Whitespace "                "]
-                            Dot "." @ 2542..2543
-                            TypeArgumentList
-                              Lt "<" @ 2543..2544
-                              TypeArgument
-                                ClassType
-                                  Name
-                                    Identifier "TheProto" @ 2544..2552
-                              Gt ">" @ 2552..2553
-                            Identifier "absent" @ 2553..2559
-                            ArgumentList
-                              LParen "(" @ 2559..2560
-                              RParen ")" @ 2560..2561
-                          Comma "," @ 2561..2562
-                          FieldAccessExpression
-                            NameExpression
-                              Identifier "AssignReserved" @ 2579..2593 leading=[Newline "\n", Whitespace "                "]
-                            Dot "." @ 2593..2594
-                            Identifier "YES" @ 2594..2597
-                          Comma "," @ 2597..2598
-                          FieldAccessExpression
-                            NameExpression
-                              Identifier "AttachData" @ 2615..2625 leading=[Newline "\n", Whitespace "                "]
-                            Dot "." @ 2625..2626
-                            Identifier "YES" @ 2626..2629
-                          RParen ")" @ 2629..2630
-                      RParen ")" @ 2630..2631
-                  Dot "." @ 2640..2641 leading=[Newline "\n", Whitespace "        "]
-                  Identifier "thenReturn" @ 2641..2651
-                  ArgumentList
-                    LParen "(" @ 2651..2652
-                    NameExpression
-                      Identifier "OPERATION" @ 2652..2661
-                    RParen ")" @ 2661..2662
-                Semicolon ";" @ 2662..2663
-            RBrace "}" @ 2664..2665 leading=[Newline "\n"]
-      ClassBodyDeclaration
-        ClassDeclaration
-          ModifierList
-            StaticKw "static" @ 2701..2707 leading=[Newline "\n", Newline "\n", DocComment "/**\n * Tests for {@link Foo}.\n */", Newline "\n"] trailing=[Whitespace " "]
-          ClassKw "class" @ 2708..2713 trailing=[Whitespace " "]
-          Identifier "Block17JavadocInput" @ 2714..2733 trailing=[Whitespace " "]
-          ClassBody
-            LBrace "{" @ 2734..2735
-            RBrace "}" @ 2735..2736
-      ClassBodyDeclaration
-        ClassDeclaration
-          ModifierList
-            StaticKw "static" @ 2768..2774 leading=[Newline "\n", Newline "\n", DocComment "/** Tests for {@link Foo}. */", Newline "\n"] trailing=[Whitespace " "]
-          ClassKw "class" @ 2775..2780 trailing=[Whitespace " "]
-          Identifier "Block18JavadocOutput" @ 2781..2801 trailing=[Whitespace " "]
-          ClassBody
-            LBrace "{" @ 2802..2803
-            RBrace "}" @ 2803..2804
-      RBrace "}" @ 2805..2806 leading=[Newline "\n"]
+                StaticKw "static" @ 2701..2707 leading=[Newline "\n", Newline "\n", DocComment "/**\n * Tests for {@link Foo}.\n */", Newline "\n"] trailing=[Whitespace " "]
+              ClassKw "class" @ 2708..2713 trailing=[Whitespace " "]
+              Identifier "Block17JavadocInput" @ 2714..2733 trailing=[Whitespace " "]
+              ClassBody
+                LBrace "{" @ 2734..2735
+                ClassBodyMemberList
+                RBrace "}" @ 2735..2736
+          ClassBodyDeclaration
+            ClassDeclaration
+              ModifierList
+                StaticKw "static" @ 2768..2774 leading=[Newline "\n", Newline "\n", DocComment "/** Tests for {@link Foo}. */", Newline "\n"] trailing=[Whitespace " "]
+              ClassKw "class" @ 2775..2780 trailing=[Whitespace " "]
+              Identifier "Block18JavadocOutput" @ 2781..2801 trailing=[Whitespace " "]
+              ClassBody
+                LBrace "{" @ 2802..2803
+                ClassBodyMemberList
+                RBrace "}" @ 2803..2804
+        RBrace "}" @ 2805..2806 leading=[Newline "\n"]
   Eof "" @ 2807..2807 leading=[Newline "\n"]
 
 diagnostics:

@@ -19,82 +19,98 @@ class DanglingElse {
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "DanglingElse" @ 6..18 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 19..20
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 25..29 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "method" @ 30..36
-          LParen "(" @ 36..37
-          FormalParameterList
-            FormalParameter
-              PrimitiveType
-                BooleanKw "boolean" @ 37..44 trailing=[Whitespace " "]
-              Identifier "first" @ 45..50
-            Comma "," @ 50..51 trailing=[Whitespace " "]
-            FormalParameter
-              PrimitiveType
-                BooleanKw "boolean" @ 52..59 trailing=[Whitespace " "]
-              Identifier "second" @ 60..66
-          RParen ")" @ 66..67 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 68..69
-            BlockStatement
-              IfStatement
-                IfKw "if" @ 78..80 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                LParen "(" @ 81..82
-                NameExpression
-                  Identifier "first" @ 82..87
-                RParen ")" @ 87..88
-                IfStatement
-                  IfKw "if" @ 101..103 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
-                  LParen "(" @ 104..105
-                  NameExpression
-                    Identifier "second" @ 105..111
-                  RParen ")" @ 111..112
-                  ExpressionStatement
-                    MethodInvocationExpression
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "DanglingElse" @ 6..18 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 19..20
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 25..29 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Identifier "method" @ 30..36
+              LParen "(" @ 36..37
+              FormalParameterList
+                FormalParameter
+                  ParameterModifierList
+                  PrimitiveType
+                    AnnotationList
+                    BooleanKw "boolean" @ 37..44 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "first" @ 45..50
+                Comma "," @ 50..51 trailing=[Whitespace " "]
+                FormalParameter
+                  ParameterModifierList
+                  PrimitiveType
+                    AnnotationList
+                    BooleanKw "boolean" @ 52..59 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "second" @ 60..66
+              RParen ")" @ 66..67 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 68..69
+                BlockStatementList
+                  BlockStatement
+                    IfStatement
+                      IfKw "if" @ 78..80 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      LParen "(" @ 81..82
                       NameExpression
-                        Identifier "winner" @ 129..135 leading=[Newline "\n", Whitespace "                "]
-                      ArgumentList
-                        LParen "(" @ 135..136
-                        RParen ")" @ 136..137
-                    Semicolon ";" @ 137..138
-                  ElseKw "else" @ 151..155 leading=[Newline "\n", Whitespace "            "]
-                  ExpressionStatement
-                    MethodInvocationExpression
-                      NameExpression
-                        Identifier "loser" @ 172..177 leading=[Newline "\n", Whitespace "                "]
-                      ArgumentList
-                        LParen "(" @ 177..178
-                        RParen ")" @ 178..179
-                    Semicolon ";" @ 179..180
-            RBrace "}" @ 185..186 leading=[Newline "\n", Whitespace "    "]
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 192..196 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "winner" @ 197..203
-          LParen "(" @ 203..204
-          RParen ")" @ 204..205 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 206..207
-            RBrace "}" @ 207..208
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 213..217 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "loser" @ 218..223
-          LParen "(" @ 223..224
-          RParen ")" @ 224..225 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 226..227
-            RBrace "}" @ 227..228
-      RBrace "}" @ 229..230 leading=[Newline "\n"]
+                        Identifier "first" @ 82..87
+                      RParen ")" @ 87..88
+                      IfStatement
+                        IfKw "if" @ 101..103 leading=[Newline "\n", Whitespace "            "] trailing=[Whitespace " "]
+                        LParen "(" @ 104..105
+                        NameExpression
+                          Identifier "second" @ 105..111
+                        RParen ")" @ 111..112
+                        ExpressionStatement
+                          MethodInvocationExpression
+                            UnqualifiedMethodInvocation
+                              NameExpression
+                                Identifier "winner" @ 129..135 leading=[Newline "\n", Whitespace "                "]
+                              ArgumentList
+                                LParen "(" @ 135..136
+                                ExpressionList
+                                RParen ")" @ 136..137
+                          Semicolon ";" @ 137..138
+                        ElseKw "else" @ 151..155 leading=[Newline "\n", Whitespace "            "]
+                        ExpressionStatement
+                          MethodInvocationExpression
+                            UnqualifiedMethodInvocation
+                              NameExpression
+                                Identifier "loser" @ 172..177 leading=[Newline "\n", Whitespace "                "]
+                              ArgumentList
+                                LParen "(" @ 177..178
+                                ExpressionList
+                                RParen ")" @ 178..179
+                          Semicolon ";" @ 179..180
+                RBrace "}" @ 185..186 leading=[Newline "\n", Whitespace "    "]
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 192..196 leading=[Newline "\n", Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Identifier "winner" @ 197..203
+              LParen "(" @ 203..204
+              RParen ")" @ 204..205 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 206..207
+                BlockStatementList
+                RBrace "}" @ 207..208
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 213..217 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Identifier "loser" @ 218..223
+              LParen "(" @ 223..224
+              RParen ")" @ 224..225 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 226..227
+                BlockStatementList
+                RBrace "}" @ 227..228
+        RBrace "}" @ 229..230 leading=[Newline "\n"]
   Eof "" @ 231..231 leading=[Newline "\n"]
 
 diagnostics:

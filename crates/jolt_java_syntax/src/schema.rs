@@ -279,7 +279,7 @@ macro_rules! java_syntax_schema {
             }
             nodes {
                 ErrorNode => ErrorNode [error_node malformed] {
-                    elements: many (any_element);
+                    elements: many (any_element) => ErrorElement;
                 }
                 CompilationUnit => CompilationUnit [compilation_unit valid] {
                     package: optional (node PackageDeclaration);
@@ -358,7 +358,7 @@ macro_rules! java_syntax_schema {
                         (contextual "default"),
                         (contextual "sealed"),
                         (constructed NonSealedModifier)
-                    ]);
+                    ]) => ModifierElement;
                 }
                 Annotation => Annotation [annotation valid] {
                     at: required (token At);
@@ -381,7 +381,7 @@ macro_rules! java_syntax_schema {
                     semicolon: required (token Semicolon);
                 }
                 AnnotationElementValue => AnnotationElementValue [annotation_element_value valid] {
-                    value: required (choice [(category Expression), (node_set [Annotation, AnnotationArrayInitializer])]);
+                    value: required (choice [(category Expression), (node_set [Annotation, AnnotationArrayInitializer])]) => AnnotationElementValueContent;
                 }
                 AnnotationElementValuePair => AnnotationElementValuePair [annotation_element_value_pair valid] {
                     name: required (token Identifier);
@@ -389,8 +389,8 @@ macro_rules! java_syntax_schema {
                     value: required (node AnnotationElementValue);
                 }
                 AnnotationElementList => AnnotationElementList [annotation_element_list valid] {
-                    arguments: required (list AnnotationElementArgumentList);
-                    declarations: required (list AnnotationInterfaceBodyMemberList);
+                    arguments: optional (list AnnotationElementArgumentList);
+                    declarations: optional (list AnnotationInterfaceBodyMemberList);
                 }
                 AnnotationArrayInitializer => AnnotationArrayInitializer [annotation_array_initializer valid] {
                     open_brace: required (token LBrace);
@@ -458,7 +458,7 @@ macro_rules! java_syntax_schema {
                 }
                 TypeBoundList => TypeBoundList [type_bound_list valid] {
                     extends_keyword: required (token ExtendsKw);
-                    bounds: required (node_set [ClassType, IntersectionType]);
+                    bounds: required (node_set [ClassType, IntersectionType]) => TypeBound;
                 }
                 ExtendsClause => ExtendsClause [extends_clause valid] {
                     extends_keyword: required (token ExtendsKw);
@@ -523,7 +523,6 @@ macro_rules! java_syntax_schema {
                     varargs_annotations: required (list AnnotationList);
                     ellipsis: optional (token Ellipsis);
                     name: required (token_set [Identifier, UnderscoreKw]);
-                    dimensions: optional (list ArrayDimensions);
                 }
                 FieldDeclaration => FieldDeclaration [field_declaration valid] {
                     modifiers: optional (list ModifierList);
@@ -534,6 +533,7 @@ macro_rules! java_syntax_schema {
                 MethodDeclaration => MethodDeclaration [method_declaration valid] {
                     modifiers: optional (list ModifierList);
                     type_parameters: optional (node TypeParameterList);
+                    return_annotations: optional (list AnnotationList);
                     return_type: required (category Type);
                     name: required (token Identifier);
                     open_paren: required (token LParen);
@@ -560,7 +560,7 @@ macro_rules! java_syntax_schema {
                     close_brace: required (token RBrace);
                 }
                 ConstructorInvocation => ConstructorInvocation [constructor_invocation valid] {
-                    qualifier: optional (choice [(category Expression), (node_set [Name, QualifiedName])]);
+                    qualifier: optional (choice [(category Expression), (node_set [Name, QualifiedName])]) => ConstructorQualifier;
                     dot: optional (token Dot);
                     type_arguments: optional (node TypeArgumentList);
                     target: required (token_set [ThisKw, SuperKw]);
@@ -580,7 +580,7 @@ macro_rules! java_syntax_schema {
                     body: required (node Block);
                 }
                 FormalParameterList => FormalParameterList [formal_parameter_list list] {
-                    parameters: one_or_more (node_set [FormalParameter, ReceiverParameter]) [separated (token Comma), minimum 1, trailing forbidden, recovery bogus_owner];
+                    parameters: one_or_more (node_set [FormalParameter, ReceiverParameter]) => FormalParameterListElement [separated (token Comma), minimum 1, trailing forbidden, recovery bogus_owner];
                 }
                 FormalParameter => FormalParameter [formal_parameter valid] {
                     modifiers: required (list ParameterModifierList);
@@ -624,11 +624,11 @@ macro_rules! java_syntax_schema {
                 }
                 LocalVariableDeclaration => LocalVariableDeclaration [local_variable_declaration valid] {
                     modifiers: required (list ParameterModifierList);
-                    r#type: required (choice [(category Type), (contextual "var")]);
+                    r#type: required (choice [(category Type), (contextual "var")]) => LocalVariableType;
                     declarators: required (list VariableDeclaratorList);
                 }
                 LocalClassOrInterfaceDeclaration => LocalClassOrInterfaceDeclaration [local_class_or_interface_declaration valid] {
-                    declaration: required (node_set [ClassDeclaration, InterfaceDeclaration]);
+                    declaration: required (node_set [ClassDeclaration, InterfaceDeclaration]) => LocalTypeDeclaration;
                 }
                 EmptyStatement => EmptyStatement [empty_statement valid] {
                     semicolon: required (token Semicolon);
@@ -677,7 +677,7 @@ macro_rules! java_syntax_schema {
                 SwitchRule => SwitchRule [switch_rule valid] {
                     label: required (node SwitchLabel);
                     arrow: required (token Arrow);
-                    body: required (choice [(category Expression), (node_set [Block, ThrowStatement])]);
+                    body: required (choice [(category Expression), (node_set [Block, ThrowStatement])]) => SwitchRuleBody;
                     semicolon: optional (token Semicolon);
                 }
                 SwitchLabel => SwitchLabel [switch_label valid] {
@@ -689,7 +689,7 @@ macro_rules! java_syntax_schema {
                     expression: required (category Expression);
                 }
                 CasePattern => CasePattern [case_pattern valid] {
-                    pattern: required (node_set [TypePattern, RecordPattern]);
+                    pattern: required (node_set [TypePattern, RecordPattern]) => CasePatternValue;
                 }
                 Guard => Guard [guard valid] {
                     when_keyword: required (contextual "when");
@@ -714,7 +714,7 @@ macro_rules! java_syntax_schema {
                     semicolon: required (token Semicolon);
                 }
                 ForStatement => ForStatement [for_statement valid] {
-                    form: required (node_set [BasicForStatement, EnhancedForStatement]);
+                    form: required (node_set [BasicForStatement, EnhancedForStatement]) => ForStatementForm;
                 }
                 BasicForStatement => BasicForStatement [basic_for_statement valid] {
                     for_keyword: required (token ForKw);
@@ -737,7 +737,7 @@ macro_rules! java_syntax_schema {
                     body: required (category Statement);
                 }
                 ForInitializer => ForInitializer [for_initializer valid] {
-                    value: required (choice [(node LocalVariableDeclaration), (list StatementExpressionList)]);
+                    value: required (choice [(node LocalVariableDeclaration), (list StatementExpressionList)]) => ForInitializerValue;
                 }
                 ForUpdate => ForUpdate [for_update valid] {
                     expressions: required (list StatementExpressionList);
@@ -781,7 +781,7 @@ macro_rules! java_syntax_schema {
                     resources_form: optional (node TryWithResourcesStatement);
                     try_keyword: optional (token TryKw);
                     body: optional (node Block);
-                    catches: required (list CatchClauseList);
+                    catches: optional (list CatchClauseList);
                     finally: optional (node FinallyClause);
                 }
                 TryWithResourcesStatement => TryWithResourcesStatement [try_with_resources_statement valid] {
@@ -802,9 +802,10 @@ macro_rules! java_syntax_schema {
                     modifiers: required (list ParameterModifierList);
                     types: required (node CatchTypeList);
                     name: required (token_set [Identifier, UnderscoreKw]);
+                    dimensions: optional (list ArrayDimensions);
                 }
                 CatchTypeList => CatchTypeList [catch_type_list valid] {
-                    types: required (node_set [ClassType, UnionType]);
+                    types: required (node_set [ClassType, UnionType]) => CatchParameterTypes;
                 }
                 FinallyClause => FinallyClause [finally_clause valid] {
                     finally_keyword: required (token FinallyKw);
@@ -820,12 +821,13 @@ macro_rules! java_syntax_schema {
                     resources: one_or_more (node Resource) [separated (token Semicolon), minimum 1, trailing forbidden, recovery bogus_owner];
                 }
                 Resource => Resource [resource valid] {
-                    value: required (node_set [LocalVariableDeclaration, VariableAccess]);
+                    value: required (node_set [LocalVariableDeclaration, VariableAccess]) => ResourceValue;
                 }
                 VariableAccess => VariableAccess [variable_access valid] {
-                    expression: required (node_set [NameExpression, FieldAccessExpression]);
+                    expression: required (node_set [NameExpression, FieldAccessExpression]) => VariableAccessExpression;
                 }
                 PrimitiveType => PrimitiveType [primitive_type valid] {
+                    annotations: required (list AnnotationList);
                     keyword: required (token_set [BooleanKw, ByteKw, CharKw, DoubleKw, FloatKw, IntKw, LongKw, ShortKw]);
                 }
                 VoidType => VoidType [void_type valid] {
@@ -835,7 +837,7 @@ macro_rules! java_syntax_schema {
                     segments: required (list ClassTypeSegmentList);
                 }
                 ArrayType => ArrayType [array_type valid] {
-                    element_type: required (node_set [PrimitiveType, ClassType]);
+                    element_type: required (node_set [PrimitiveType, ClassType]) => ArrayElementType;
                     dimensions: required (list ArrayDimensions);
                 }
                 IntersectionType => IntersectionType [intersection_type valid] {
@@ -887,7 +889,7 @@ macro_rules! java_syntax_schema {
                     template: required (node LiteralExpression);
                 }
                 NameExpression => NameExpression [name_expression valid] {
-                    annotations: required (list AnnotationList);
+                    annotations: optional (list AnnotationList);
                     identifier: required (token Identifier);
                 }
                 ThisExpression => ThisExpression [this_expression valid] {
@@ -906,7 +908,7 @@ macro_rules! java_syntax_schema {
                     close_paren: required (token RParen);
                 }
                 ClassLiteralExpression => ClassLiteralExpression [class_literal_expression valid] {
-                    target: required (choice [(token_set [BooleanKw, ByteKw, CharKw, DoubleKw, FloatKw, IntKw, LongKw, ShortKw]), (node VoidType), (category Expression)]);
+                    target: required (choice [(token_set [BooleanKw, ByteKw, CharKw, DoubleKw, FloatKw, IntKw, LongKw, ShortKw]), (node VoidType), (category Expression)]) => ClassLiteralTarget;
                     dimensions: optional (list ArrayDimensions);
                     dot: required (token Dot);
                     class_keyword: required (token ClassKw);
@@ -924,10 +926,10 @@ macro_rules! java_syntax_schema {
                     close_bracket: required (token RBracket);
                 }
                 MethodInvocationExpression => MethodInvocationExpression [method_invocation_expression valid] {
-                    form: required (choice [(constructed QualifiedMethodInvocation), (constructed UnqualifiedMethodInvocation)]) [disambiguate longest_then_first];
+                    form: required (choice [(constructed QualifiedMethodInvocation), (constructed UnqualifiedMethodInvocation)]) => MethodInvocationForm [disambiguate longest_then_first];
                 }
                 MethodReferenceExpression => MethodReferenceExpression [method_reference_expression valid] {
-                    receiver: required (choice [(category Expression), (node_set [PrimitiveType, VoidType, ClassType, ArrayType])]);
+                    receiver: required (choice [(category Expression), (node_set [PrimitiveType, VoidType, ClassType, ArrayType])]) => MethodReferenceReceiver;
                     receiver_type_arguments: optional (node TypeArgumentList);
                     double_colon: required (token DoubleColon);
                     target_type_arguments: optional (node TypeArgumentList);
@@ -944,7 +946,7 @@ macro_rules! java_syntax_schema {
                 }
                 ArrayCreationExpression => ArrayCreationExpression [array_creation_expression valid] {
                     new_keyword: required (token NewKw);
-                    r#type: required (node_set [PrimitiveType, ClassType, ArrayType]);
+                    r#type: required (node_set [PrimitiveType, ClassType, ArrayType]) => ArrayCreationType;
                     dimension_expressions: required (list DimExpressionList);
                     dimensions: optional (list ArrayDimensions);
                     initializer: optional (node ArrayInitializer);
@@ -961,7 +963,7 @@ macro_rules! java_syntax_schema {
                     close_brace: required (token RBrace);
                 }
                 AssignmentExpression => AssignmentExpression [assignment_expression valid] {
-                    left: required (node_set [NameExpression, FieldAccessExpression, ArrayAccessExpression]);
+                    left: required (node_set [NameExpression, FieldAccessExpression, ArrayAccessExpression]) => AssignmentTarget;
                     operator: required (choice [
                         (token_set [
                             Assign, PlusEq, MinusEq, StarEq, SlashEq, AmpEq, BarEq,
@@ -969,7 +971,7 @@ macro_rules! java_syntax_schema {
                         ]),
                         (constructed RightShiftAssignmentOperator),
                         (constructed UnsignedRightShiftAssignmentOperator)
-                    ]) [disambiguate longest_then_first];
+                    ]) => AssignmentOperatorRole [disambiguate longest_then_first];
                     right: required (category Expression);
                 }
                 ConditionalExpression => ConditionalExpression [conditional_expression valid] {
@@ -982,7 +984,7 @@ macro_rules! java_syntax_schema {
                 InstanceofExpression => InstanceofExpression [instanceof_expression valid] {
                     expression: required (category Expression);
                     instanceof_keyword: required (token InstanceofKw);
-                    target: required (node_set [PrimitiveType, ClassType, ArrayType, TypePattern, RecordPattern]);
+                    target: required (node_set [PrimitiveType, ClassType, ArrayType, TypePattern, RecordPattern]) => InstanceofTarget;
                 }
                 BinaryExpression => BinaryExpression [binary_expression valid] {
                     left: required (category Expression);
@@ -994,7 +996,7 @@ macro_rules! java_syntax_schema {
                         (constructed GreaterThanOrEqualOperator),
                         (constructed RightShiftOperator),
                         (constructed UnsignedRightShiftOperator)
-                    ]) [disambiguate longest_then_first];
+                    ]) => BinaryOperatorRole [disambiguate longest_then_first];
                     right: required (category Expression);
                 }
                 UnaryExpression => UnaryExpression [unary_expression valid] {
@@ -1016,7 +1018,7 @@ macro_rules! java_syntax_schema {
                     parameters: required (list LambdaParameterList);
                     close_paren: optional (token RParen);
                     arrow: required (token Arrow);
-                    body: required (choice [(category Expression), (node Block)]);
+                    body: required (choice [(category Expression), (node Block)]) => LambdaBody;
                 }
                 LambdaParameterList => LambdaParameterList [lambda_parameter_list list] {
                     parameters: many (node LambdaParameter) [separated (token Comma), minimum 0, trailing forbidden, recovery bogus_owner];
@@ -1027,6 +1029,7 @@ macro_rules! java_syntax_schema {
                     varargs_annotations: required (list AnnotationList);
                     ellipsis: optional (token Ellipsis);
                     name: required (token_set [Identifier, UnderscoreKw]);
+                    dimensions: optional (list ArrayDimensions);
                 }
                 SwitchExpression => SwitchExpression [switch_expression valid] {
                     switch_keyword: required (token SwitchKw);
@@ -1050,7 +1053,7 @@ macro_rules! java_syntax_schema {
                     close_paren: required (token RParen);
                 }
                 ComponentPattern => ComponentPattern [component_pattern valid] {
-                    pattern: required (node_set [TypePattern, RecordPattern, MatchAllPattern]);
+                    pattern: required (node_set [TypePattern, RecordPattern, MatchAllPattern]) => ComponentPatternValue;
                 }
                 MatchAllPattern => MatchAllPattern [match_all_pattern valid] {
                     underscore: required (token UnderscoreKw);
@@ -1073,12 +1076,12 @@ macro_rules! java_syntax_schema {
                     receiver: required (category Expression);
                     dot: required (token Dot);
                     type_arguments: optional (node TypeArgumentList);
-                    name: required (choice [(node NameExpression), (token Identifier)]);
+                    name: required (choice [(node NameExpression), (token Identifier)]) => QualifiedInvocationName;
                     arguments: required (node ArgumentList);
                 }
                 UnqualifiedMethodInvocation => UnqualifiedMethodInvocation [unqualified_method_invocation valid] {
                     type_arguments: optional (node TypeArgumentList);
-                    name: required (choice [(node NameExpression), (token Identifier)]);
+                    name: required (choice [(node NameExpression), (token Identifier)]) => UnqualifiedInvocationName;
                     arguments: required (node ArgumentList);
                 }
                 GreaterThanOrEqualOperator => GreaterThanOrEqualOperator [greater_than_or_equal_operator valid] {
@@ -1109,7 +1112,7 @@ macro_rules! java_syntax_schema {
                     elements: many (node ImportDeclaration);
                 }
                 CompilationUnitDeclarationList => CompilationUnitDeclarationList [compilation_unit_declaration_list list] {
-                    elements: many (choice [(category TypeDeclaration), (node_set [FieldDeclaration, MethodDeclaration, EmptyDeclaration])]);
+                    elements: many (choice [(category TypeDeclaration), (node_set [FieldDeclaration, MethodDeclaration, EmptyDeclaration])]) => CompilationUnitDeclaration;
                 }
                 AnnotationList => AnnotationList [annotation_list list] {
                     elements: many (node Annotation);
@@ -1118,13 +1121,13 @@ macro_rules! java_syntax_schema {
                     elements: many (node ModuleDirective);
                 }
                 RequiresModifierList => RequiresModifierList [requires_modifier_list list] {
-                    elements: many (choice [(token StaticKw), (contextual "transitive")]);
+                    elements: many (choice [(token StaticKw), (contextual "transitive")]) => RequiresModifier;
                 }
                 NameList => NameList [name_list list] {
                     elements: many (category NameSyntax) [separated (token Comma), minimum 0, trailing forbidden, recovery bogus_owner];
                 }
                 AnnotationElementArgumentList => AnnotationElementArgumentList [annotation_element_argument_list list] {
-                    elements: many (node_set [AnnotationElementValue, AnnotationElementValuePair]) [separated (token Comma), minimum 0, trailing forbidden, recovery bogus_owner];
+                    elements: many (node_set [AnnotationElementValue, AnnotationElementValuePair]) => AnnotationArgumentElement [separated (token Comma), minimum 0, trailing forbidden, recovery bogus_owner];
                 }
                 AnnotationInterfaceBodyMemberList => AnnotationInterfaceBodyMemberList [annotation_interface_body_member_list list] {
                     elements: many (category AnnotationInterfaceBodyMember);
@@ -1139,7 +1142,7 @@ macro_rules! java_syntax_schema {
                     elements: many (category Type) [separated (token Comma), minimum 0, trailing forbidden, recovery bogus_owner];
                 }
                 ClassBodyMemberList => ClassBodyMemberList [class_body_member_list list] {
-                    elements: many (node_set [ClassBodyDeclaration, EmptyDeclaration]);
+                    elements: many (node_set [ClassBodyDeclaration, EmptyDeclaration]) => ClassBodyMemberElement;
                 }
                 RecordBodyMemberList => RecordBodyMemberList [record_body_member_list list] {
                     elements: many (node ClassBodyDeclaration);
@@ -1148,22 +1151,22 @@ macro_rules! java_syntax_schema {
                     elements: many (category InterfaceBodyMember);
                 }
                 ParameterModifierList => ParameterModifierList [parameter_modifier_list list] {
-                    elements: many (element_set [Annotation, FinalKw]);
+                    elements: many (element_set [Annotation, FinalKw]) => ParameterModifier;
                 }
                 ConstructorBodyEntryList => ConstructorBodyEntryList [constructor_body_entry_list list] {
-                    elements: many (node_set [ConstructorInvocation, BlockStatement]);
+                    elements: many (node_set [ConstructorInvocation, BlockStatement]) => ConstructorBodyEntryRole;
                 }
                 BlockStatementList => BlockStatementList [block_statement_list list] {
                     elements: many (node BlockStatement);
                 }
                 SwitchEntryList => SwitchEntryList [switch_entry_list list] {
-                    elements: many (node_set [SwitchBlockStatementGroup, SwitchRule]);
+                    elements: many (node_set [SwitchBlockStatementGroup, SwitchRule]) => SwitchEntry;
                 }
                 SwitchLabelColonList => SwitchLabelColonList [switch_label_colon_list list] {
                     elements: many (node SwitchLabel) [separated (token Colon), minimum 0, trailing required, recovery bogus_owner];
                 }
                 SwitchLabelItemList => SwitchLabelItemList [switch_label_item_list list] {
-                    elements: many (element_set [CaseConstant, CasePattern, DefaultKw]) [separated (token Comma), minimum 0, trailing forbidden, recovery bogus_owner];
+                    elements: many (element_set [CaseConstant, CasePattern, DefaultKw]) => SwitchLabelItem [separated (token Comma), minimum 0, trailing forbidden, recovery bogus_owner];
                 }
                 CatchClauseList => CatchClauseList [catch_clause_list list] {
                     elements: many (node CatchClause);
@@ -1190,7 +1193,7 @@ macro_rules! java_syntax_schema {
                     elements: many (category VariableInitializerValue) [separated (token Comma), minimum 0, trailing optional, recovery bogus_owner];
                 }
                 LambdaModifierList => LambdaModifierList [lambda_modifier_list list] {
-                    elements: many (choice [(node Annotation), (token FinalKw), (contextual "var")]) [disambiguate leftmost_longest];
+                    elements: many (choice [(node Annotation), (token FinalKw), (contextual "var")]) => LambdaModifier [disambiguate leftmost_longest];
                 }
                 ExpressionList => ExpressionList [expression_list list] {
                     elements: many (category Expression) [separated (token Comma), minimum 0, trailing forbidden, recovery bogus_owner];

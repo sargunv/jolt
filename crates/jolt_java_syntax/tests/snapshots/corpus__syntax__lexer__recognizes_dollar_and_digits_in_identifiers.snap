@@ -8,19 +8,27 @@ $value value1 _value
 syntax:
 syntax:
 CompilationUnit
-  FieldDeclaration
-    ClassType
-      Name
-        Identifier "$value" @ 0..6 trailing=[Whitespace " "]
-    VariableDeclaratorList
-      VariableDeclarator
-        Identifier "value1" @ 7..13 trailing=[Whitespace " "]
-  FieldDeclaration
-    ClassType
-      Name
-        Identifier "_value" @ 14..20
-    VariableDeclaratorList
-      VariableDeclarator
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    FieldDeclaration
+      ClassType
+        ClassTypeSegmentList
+          ClassTypeSegmentNode
+            AnnotationList
+            Name
+              Identifier "$value" @ 0..6 trailing=[Whitespace " "]
+      VariableDeclaratorList
+        VariableDeclarator
+          Identifier "value1" @ 7..13 trailing=[Whitespace " "]
+    FieldDeclaration
+      ClassType
+        ClassTypeSegmentList
+          ClassTypeSegmentNode
+            AnnotationList
+            Name
+              Identifier "_value" @ 14..20
+      VariableDeclaratorList
+        VariableDeclarator
   Eof "" @ 20..20
 
 diagnostics:

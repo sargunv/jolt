@@ -8,33 +8,39 @@ class C { void m() { int value = /* keep */ ; } }
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "C" @ 6..7 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 8..9 trailing=[Whitespace " "]
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 10..14 trailing=[Whitespace " "]
-          Identifier "m" @ 15..16
-          LParen "(" @ 16..17
-          RParen ")" @ 17..18 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 19..20 trailing=[Whitespace " "]
-            BlockStatement
-              LocalVariableDeclaration
-                PrimitiveType
-                  IntKw "int" @ 21..24 trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "value" @ 25..30 trailing=[Whitespace " "]
-                    Assign "=" @ 31..32 trailing=[Whitespace " ", BlockComment "/* keep */", Whitespace " "]
-                    VariableInitializer
-                      ErrorNode
-              Semicolon ";" @ 44..45 trailing=[Whitespace " "]
-            RBrace "}" @ 46..47 trailing=[Whitespace " "]
-      RBrace "}" @ 48..49
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "C" @ 6..7 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 8..9 trailing=[Whitespace " "]
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 10..14 trailing=[Whitespace " "]
+              Identifier "m" @ 15..16
+              LParen "(" @ 16..17
+              RParen ")" @ 17..18 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 19..20 trailing=[Whitespace " "]
+                BlockStatementList
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      PrimitiveType
+                        AnnotationList
+                        IntKw "int" @ 21..24 trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "value" @ 25..30 trailing=[Whitespace " "]
+                          Assign "=" @ 31..32 trailing=[Whitespace " ", BlockComment "/* keep */", Whitespace " "]
+                          VariableInitializer
+                            ErrorNode
+                    Semicolon ";" @ 44..45 trailing=[Whitespace " "]
+                RBrace "}" @ 46..47 trailing=[Whitespace " "]
+        RBrace "}" @ 48..49
   Eof "" @ 50..50 leading=[Newline "\n"]
 
 diagnostics:

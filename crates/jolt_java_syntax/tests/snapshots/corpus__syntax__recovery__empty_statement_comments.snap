@@ -9,36 +9,43 @@ class C { void m(boolean ready) { while (ready) ; // keep
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "C" @ 6..7 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 8..9 trailing=[Whitespace " "]
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 10..14 trailing=[Whitespace " "]
-          Identifier "m" @ 15..16
-          LParen "(" @ 16..17
-          FormalParameterList
-            FormalParameter
-              PrimitiveType
-                BooleanKw "boolean" @ 17..24 trailing=[Whitespace " "]
-              Identifier "ready" @ 25..30
-          RParen ")" @ 30..31 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 32..33 trailing=[Whitespace " "]
-            BlockStatement
-              WhileStatement
-                WhileKw "while" @ 34..39 trailing=[Whitespace " "]
-                LParen "(" @ 40..41
-                NameExpression
-                  Identifier "ready" @ 41..46
-                RParen ")" @ 46..47 trailing=[Whitespace " "]
-                EmptyStatement
-                  Semicolon ";" @ 48..49 trailing=[Whitespace " ", LineComment "// keep"]
-            RBrace "}" @ 58..59 leading=[Newline "\n"] trailing=[Whitespace " "]
-      RBrace "}" @ 60..61
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "C" @ 6..7 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 8..9 trailing=[Whitespace " "]
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 10..14 trailing=[Whitespace " "]
+              Identifier "m" @ 15..16
+              LParen "(" @ 16..17
+              FormalParameterList
+                FormalParameter
+                  ParameterModifierList
+                  PrimitiveType
+                    AnnotationList
+                    BooleanKw "boolean" @ 17..24 trailing=[Whitespace " "]
+                  AnnotationList
+                  Identifier "ready" @ 25..30
+              RParen ")" @ 30..31 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 32..33 trailing=[Whitespace " "]
+                BlockStatementList
+                  BlockStatement
+                    WhileStatement
+                      WhileKw "while" @ 34..39 trailing=[Whitespace " "]
+                      LParen "(" @ 40..41
+                      NameExpression
+                        Identifier "ready" @ 41..46
+                      RParen ")" @ 46..47 trailing=[Whitespace " "]
+                      EmptyStatement
+                        Semicolon ";" @ 48..49 trailing=[Whitespace " ", LineComment "// keep"]
+                RBrace "}" @ 58..59 leading=[Newline "\n"] trailing=[Whitespace " "]
+        RBrace "}" @ 60..61
   Eof "" @ 62..62 leading=[Newline "\n"]
 
 diagnostics:

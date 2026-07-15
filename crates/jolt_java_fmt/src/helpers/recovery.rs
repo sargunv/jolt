@@ -1,0 +1,215 @@
+use jolt_fmt_ir::{Doc, DocBuilder};
+use jolt_java_syntax::{
+    JavaMissingSyntax, JavaSyntaxField, JavaSyntaxInvariantError, JavaSyntaxListPart,
+    JavaSyntaxToken, JavaSyntaxView,
+};
+
+use super::comments::{comment_forces_line, format_comment, format_leading_comment_list};
+use super::lexical_safety::JavaLexicalSafety;
+
+/// Formats one syntax-owned malformed boundary and claims its exact source.
+pub(crate) fn format_malformed<'source>(
+    malformed: &impl JavaSyntaxView<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    let Some(core) = malformed.malformed_verbatim_core() else {
+        doc.block_on_invariant("malformed Java syntax did not own a verbatim core");
+        return Doc::nil();
+    };
+    let range = core.text_range();
+    let has_tokens = core.tokens().next().is_some();
+    let (left, right) = if range.start() == range.end() || !has_tokens {
+        (None, None)
+    } else {
+        (core.previous_token(), core.next_token())
+    };
+    let mut safety = JavaLexicalSafety;
+    let fragment = doc.malformed_verbatim_with_safety(&core, &mut safety);
+    let fragment = doc.resolve_exceptional(fragment, left.as_ref(), right.as_ref(), &mut safety);
+    format_malformed_with_boundary_comments(&core, fragment, doc)
+}
+
+/// Dispatches a typed Java view exactly once between structured and malformed
+/// formatting. Syntax invariant failures block the arena globally.
+pub(crate) fn format_or_verbatim<'source, V>(
+    view: &V,
+    doc: &mut DocBuilder<'source>,
+    structured: impl FnOnce(&mut DocBuilder<'source>) -> Doc<'source>,
+) -> Doc<'source>
+where
+    V: JavaSyntaxView<'source>,
+{
+    if view.is_malformed() {
+        format_malformed(view, doc)
+    } else {
+        structured(doc)
+    }
+}
+
+#[derive(Clone, Copy)]
+pub(crate) enum JavaFormatField<'source, T> {
+    Present(T),
+    Malformed(Doc<'source>),
+}
+
+pub(crate) enum JavaFormatListPart<'source, T> {
+    Item(T),
+    Separator(JavaSyntaxToken<'source>),
+    Malformed(Doc<'source>),
+}
+
+/// A delimiter slot resolved without losing its exact source position.
+/// Required missing/malformed slots carry their recovery document; optional
+/// absence is represented separately from recovery.
+#[derive(Clone, Copy)]
+pub(crate) enum JavaFormatDelimiter<'source> {
+    Source(JavaSyntaxToken<'source>),
+    Recovery(Doc<'source>),
+}
+
+impl<'source> JavaFormatDelimiter<'source> {
+    pub(crate) fn source(&self) -> Option<&JavaSyntaxToken<'source>> {
+        match self {
+            Self::Source(token) => Some(token),
+            Self::Recovery(_) => None,
+        }
+    }
+}
+
+pub(crate) fn resolve_required_delimiter<'source>(
+    field: Result<JavaSyntaxField<'source, JavaSyntaxToken<'source>>, JavaSyntaxInvariantError>,
+    doc: &mut DocBuilder<'source>,
+) -> JavaFormatDelimiter<'source> {
+    match resolve_required_field(field, doc) {
+        JavaFormatField::Present(token) => JavaFormatDelimiter::Source(token),
+        JavaFormatField::Malformed(recovery) => JavaFormatDelimiter::Recovery(recovery),
+    }
+}
+
+pub(crate) fn resolve_list_part<'source, T>(
+    part: Result<JavaSyntaxListPart<'source, T>, JavaSyntaxInvariantError>,
+    doc: &mut DocBuilder<'source>,
+) -> JavaFormatListPart<'source, T> {
+    match part {
+        Ok(JavaSyntaxListPart::Item(item)) => JavaFormatListPart::Item(item),
+        Ok(JavaSyntaxListPart::Separator(separator)) => JavaFormatListPart::Separator(separator),
+        Ok(JavaSyntaxListPart::Missing(missing)) => {
+            JavaFormatListPart::Malformed(format_missing(&missing, doc))
+        }
+        Ok(JavaSyntaxListPart::Malformed(malformed)) => {
+            JavaFormatListPart::Malformed(format_malformed(&malformed, doc))
+        }
+        Err(error) => {
+            doc.block_on_invariant(error.to_string());
+            JavaFormatListPart::Malformed(Doc::nil())
+        }
+    }
+}
+
+/// Resolves one generated field without letting missing or malformed syntax
+/// leak into a structured layout rule.
+pub(crate) fn resolve_required_field<'source, T>(
+    field: Result<JavaSyntaxField<'source, T>, JavaSyntaxInvariantError>,
+    doc: &mut DocBuilder<'source>,
+) -> JavaFormatField<'source, T> {
+    match field {
+        Ok(JavaSyntaxField::Present(value)) => JavaFormatField::Present(value),
+        Ok(JavaSyntaxField::Malformed(malformed)) => {
+            JavaFormatField::Malformed(format_malformed(&malformed, doc))
+        }
+        Ok(JavaSyntaxField::Missing(missing)) => {
+            JavaFormatField::Malformed(format_missing(&missing, doc))
+        }
+        Err(error) => {
+            doc.block_on_invariant(error.to_string());
+            JavaFormatField::Malformed(Doc::nil())
+        }
+    }
+}
+
+/// Resolves an optional generated field; its empty slot is ordinary absence.
+pub(crate) fn resolve_optional_field<'source, T>(
+    field: Result<JavaSyntaxField<'source, T>, JavaSyntaxInvariantError>,
+    doc: &mut DocBuilder<'source>,
+) -> JavaFormatField<'source, Option<T>> {
+    match field {
+        Ok(JavaSyntaxField::Present(value)) => JavaFormatField::Present(Some(value)),
+        Ok(JavaSyntaxField::Missing(_)) => JavaFormatField::Present(None),
+        Ok(JavaSyntaxField::Malformed(malformed)) => {
+            JavaFormatField::Malformed(format_malformed(&malformed, doc))
+        }
+        Err(error) => {
+            doc.block_on_invariant(error.to_string());
+            JavaFormatField::Malformed(Doc::nil())
+        }
+    }
+}
+
+pub(crate) fn format_required_field<'source, T>(
+    field: Result<JavaSyntaxField<'source, T>, JavaSyntaxInvariantError>,
+    doc: &mut DocBuilder<'source>,
+    structured: impl FnOnce(T, &mut DocBuilder<'source>) -> Doc<'source>,
+) -> Doc<'source> {
+    match resolve_required_field(field, doc) {
+        JavaFormatField::Present(value) => structured(value, doc),
+        JavaFormatField::Malformed(malformed) => malformed,
+    }
+}
+
+pub(crate) fn format_optional_field<'source, T>(
+    field: Result<JavaSyntaxField<'source, T>, JavaSyntaxInvariantError>,
+    doc: &mut DocBuilder<'source>,
+    structured: impl FnOnce(T, &mut DocBuilder<'source>) -> Doc<'source>,
+) -> Doc<'source> {
+    match resolve_optional_field(field, doc) {
+        JavaFormatField::Present(Some(value)) => structured(value, doc),
+        JavaFormatField::Present(None) => Doc::nil(),
+        JavaFormatField::Malformed(malformed) => malformed,
+    }
+}
+
+pub(crate) fn format_missing<'source>(
+    missing: &JavaMissingSyntax<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    let Ok(core) = missing.verbatim_core() else {
+        doc.block_on_invariant("missing Java role did not own an empty verbatim core");
+        return Doc::nil();
+    };
+    let mut safety = JavaLexicalSafety;
+    let fragment = doc.malformed_verbatim_with_safety(&core, &mut safety);
+    doc.resolve_exceptional(fragment, None, None, &mut safety)
+}
+
+fn format_malformed_with_boundary_comments<'source>(
+    core: &jolt_java_syntax::JavaSyntaxVerbatimCore<'source>,
+    fragment: Doc<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    let leading = format_leading_comment_list(
+        doc,
+        core.first_token()
+            .into_iter()
+            .flat_map(|token| token.leading_comments())
+            .filter(|comment| !core.contains(comment.text_range())),
+    );
+    let trailing = doc.concat_list(|comments| {
+        for comment in core
+            .last_token()
+            .into_iter()
+            .flat_map(|token| token.trailing_comments())
+            .filter(|comment| !core.contains(comment.text_range()))
+        {
+            let space = comments.space();
+            comments.push(space);
+            let forces_line = comment_forces_line(&comment);
+            let comment = format_comment(comments, &comment);
+            comments.push(comment);
+            if forces_line {
+                let line = comments.hard_line();
+                comments.push(line);
+            }
+        }
+    });
+    doc_concat!(doc, [leading, fragment, trailing])
+}

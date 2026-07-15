@@ -17,50 +17,58 @@ int after=3;
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "Example" @ 6..13 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 14..15
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 16..20 leading=[Newline "\n"] trailing=[Whitespace " "]
-          Identifier "run" @ 21..24
-          LParen "(" @ 24..25
-          RParen ")" @ 25..26 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 27..28
-            BlockStatement
-              LocalVariableDeclaration
-                PrimitiveType
-                  IntKw "int" @ 66..69 leading=[Newline "\n", LineComment "// before ordinary", Newline "\n", LineComment "// @formatter:off", Newline "\n"] trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "raw" @ 70..73
-                    Assign "=" @ 73..74
-                    VariableInitializer
-                      BinaryExpression
-                        LiteralExpression
-                          IntegerLiteral "1" @ 74..75
-                        Plus "+" @ 75..76
-                        LiteralExpression
-                          IntegerLiteral "2" @ 76..77
-              Semicolon ";" @ 77..78
-            BlockStatement
-              LocalVariableDeclaration
-                PrimitiveType
-                  IntKw "int" @ 114..117 leading=[Newline "\n", LineComment "// @formatter:on", Newline "\n", LineComment "// after ordinary", Newline "\n"] trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "after" @ 118..123
-                    Assign "=" @ 123..124
-                    VariableInitializer
-                      LiteralExpression
-                        IntegerLiteral "3" @ 124..125
-              Semicolon ";" @ 125..126
-            RBrace "}" @ 127..128 leading=[Newline "\n"]
-      RBrace "}" @ 129..130 leading=[Newline "\n"]
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "Example" @ 6..13 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 14..15
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 16..20 leading=[Newline "\n"] trailing=[Whitespace " "]
+              Identifier "run" @ 21..24
+              LParen "(" @ 24..25
+              RParen ")" @ 25..26 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 27..28
+                BlockStatementList
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      PrimitiveType
+                        AnnotationList
+                        IntKw "int" @ 66..69 leading=[Newline "\n", LineComment "// before ordinary", Newline "\n", LineComment "// @formatter:off", Newline "\n"] trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "raw" @ 70..73
+                          Assign "=" @ 73..74
+                          VariableInitializer
+                            BinaryExpression
+                              LiteralExpression
+                                IntegerLiteral "1" @ 74..75
+                              Plus "+" @ 75..76
+                              LiteralExpression
+                                IntegerLiteral "2" @ 76..77
+                    Semicolon ";" @ 77..78
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      PrimitiveType
+                        AnnotationList
+                        IntKw "int" @ 114..117 leading=[Newline "\n", LineComment "// @formatter:on", Newline "\n", LineComment "// after ordinary", Newline "\n"] trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "after" @ 118..123
+                          Assign "=" @ 123..124
+                          VariableInitializer
+                            LiteralExpression
+                              IntegerLiteral "3" @ 124..125
+                    Semicolon ";" @ 125..126
+                RBrace "}" @ 127..128 leading=[Newline "\n"]
+        RBrace "}" @ 129..130 leading=[Newline "\n"]
   Eof "" @ 131..131 leading=[Newline "\n"]
 
 diagnostics:

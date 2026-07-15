@@ -1,10 +1,13 @@
+use super::calls::format_qualified_invocation_name;
 use super::{
     Doc, Expression, ExpressionParentRole, FieldAccessExpression, JavaSyntaxToken, LeadingComments,
     LeadingTrivia, MethodInvocationExpression, TrailingTrivia, format_argument_list,
     format_expression_with_leading_comments, format_leading_comments, format_token,
     format_token_with_comments, format_type_argument_list, trailing_comments_force_line,
 };
+use crate::helpers::recovery::{format_optional_field, format_required_field};
 use jolt_fmt_ir::{ConcatBuilder, DocBuilder};
+use jolt_java_syntax::{JavaSyntaxField, QualifiedMethodInvocation};
 
 struct MemberChainBuilder<'source> {
     root: Option<Expression<'source>>,
@@ -77,6 +80,7 @@ pub(super) fn format_member_chain<'source>(
     });
     let (root, first_suffix, suffix_count) = chain?;
     let root = root?;
+    let first_suffix = first_suffix?;
     let keep_first_suffix_with_root = is_simple_member_chain_root(&root);
     let leading_comments = format_expression_leading_comments(&root, doc);
     let root_doc =
@@ -100,20 +104,35 @@ fn append_chain_expression<'source>(
 ) -> Option<()> {
     match expression {
         Expression::FieldAccessExpression(access) => {
-            let receiver = access.receiver()?;
+            let receiver = present(access.receiver())?;
             append_chain_receiver(builder, receiver, rest_suffixes);
             builder.push_field_access(&access, rest_suffixes);
             Some(())
         }
         Expression::MethodInvocationExpression(invocation) => {
-            invocation.direct_method_name()?;
-            let qualifier = invocation.qualifier()?;
-            append_chain_receiver(builder, qualifier, rest_suffixes);
+            let qualified = qualified_invocation(&invocation)?;
+            let receiver = present(qualified.receiver())?;
+            append_chain_receiver(builder, receiver, rest_suffixes);
             builder.push_method_invocation(&invocation, rest_suffixes);
             Some(())
         }
         _ => None,
     }
+}
+
+fn present<T>(
+    field: Result<JavaSyntaxField<'_, T>, jolt_java_syntax::JavaSyntaxInvariantError>,
+) -> Option<T> {
+    match field.ok()? {
+        JavaSyntaxField::Present(value) => Some(value),
+        JavaSyntaxField::Missing(_) | JavaSyntaxField::Malformed(_) => None,
+    }
+}
+
+fn qualified_invocation<'source>(
+    invocation: &MethodInvocationExpression<'source>,
+) -> Option<QualifiedMethodInvocation<'source>> {
+    present(invocation.form())?.cast_node()
 }
 
 fn append_chain_receiver<'source>(
@@ -129,7 +148,7 @@ fn append_chain_receiver<'source>(
 fn member_chain<'source>(
     doc: &mut DocBuilder<'source>,
     root: Doc<'source>,
-    first_suffix: Option<Doc<'source>>,
+    first_suffix: Doc<'source>,
     rest_suffixes: Doc<'source>,
     suffix_count: u32,
     keep_first_suffix_with_root: bool,
@@ -138,7 +157,6 @@ fn member_chain<'source>(
         return root;
     }
 
-    let first_suffix = first_suffix.expect("member chain suffix exists");
     let head = if keep_first_suffix_with_root {
         doc_concat!(doc, [root, first_suffix])
     } else {
@@ -170,19 +188,18 @@ fn format_field_access_suffix<'source>(
     access: &FieldAccessExpression<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let dot = access.dot_token();
     doc_concat!(
         doc,
         [
-            format_member_dot(dot.as_ref(), doc),
-            access
-                .field_name()
-                .map_or_else(Doc::nil, |name| format_token_with_comments(doc, &name)),
-            access
-                .type_arguments()
-                .map_or_else(Doc::nil, |arguments| format_type_argument_list(
-                    &arguments, doc
-                ),),
+            format_required_field(access.dot(), doc, |dot, doc| {
+                format_member_dot(Some(&dot), doc)
+            }),
+            format_required_field(access.name(), doc, |name, doc| {
+                format_token_with_comments(doc, &name)
+            }),
+            format_optional_field(access.type_arguments(), doc, |arguments, doc| {
+                format_type_argument_list(&arguments, doc)
+            }),
         ]
     )
 }
@@ -191,20 +208,25 @@ fn format_method_invocation_suffix<'source>(
     invocation: &MethodInvocationExpression<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let dot = invocation.dot_token();
+    let Some(invocation) = qualified_invocation(invocation) else {
+        doc.block_on_invariant("member-chain invocation was not qualified");
+        return Doc::nil();
+    };
     doc_concat!(
         doc,
         [
-            format_member_dot(dot.as_ref(), doc),
-            invocation
-                .type_arguments()
-                .map_or_else(Doc::nil, |arguments| format_type_argument_list(
-                    &arguments, doc
-                ),),
-            invocation
-                .direct_method_name()
-                .map_or_else(Doc::nil, |name| format_token_with_comments(doc, &name)),
-            format_argument_list(invocation.arguments(), doc),
+            format_required_field(invocation.dot(), doc, |dot, doc| {
+                format_member_dot(Some(&dot), doc)
+            }),
+            format_optional_field(invocation.type_arguments(), doc, |arguments, doc| {
+                format_type_argument_list(&arguments, doc)
+            }),
+            format_required_field(invocation.name(), doc, |name, doc| {
+                format_qualified_invocation_name(name, LeadingComments::Preserve, doc)
+            }),
+            format_required_field(invocation.arguments(), doc, |arguments, doc| {
+                format_argument_list(Some(arguments), doc)
+            }),
         ]
     )
 }

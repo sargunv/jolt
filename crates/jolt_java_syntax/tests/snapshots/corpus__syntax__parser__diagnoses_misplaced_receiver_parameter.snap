@@ -12,44 +12,58 @@ class MisplacedReceiverOuter {
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "MisplacedReceiverOuter" @ 6..28 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 29..30
-      ClassBodyDeclaration
-        ClassDeclaration
-          ClassKw "class" @ 35..40 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "MisplacedReceiverInner" @ 41..63 trailing=[Whitespace " "]
-          ClassBody
-            LBrace "{" @ 64..65
-            ClassBodyDeclaration
-              MethodDeclaration
-                VoidType
-                  VoidKw "void" @ 74..78 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
-                Identifier "method" @ 79..85
-                LParen "(" @ 85..86
-                FormalParameterList
-                  FormalParameter
-                    ClassType
-                      Name
-                        Identifier "String" @ 86..92 trailing=[Whitespace " "]
-                    Identifier "value" @ 93..98
-                  Comma "," @ 98..99 trailing=[Whitespace " "]
-                  ErrorNode
-                    ReceiverParameter
-                      ClassType
-                        Name
-                          Identifier "MisplacedReceiverOuter" @ 100..122 trailing=[Whitespace " "]
-                      Identifier "MisplacedReceiverOuter" @ 123..145
-                      Dot "." @ 145..146
-                      ThisKw "this" @ 146..150
-                RParen ")" @ 150..151 trailing=[Whitespace " "]
-                Block
-                  LBrace "{" @ 152..153
-                  RBrace "}" @ 153..154
-            RBrace "}" @ 159..160 leading=[Newline "\n", Whitespace "    "]
-      RBrace "}" @ 161..162 leading=[Newline "\n"]
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "MisplacedReceiverOuter" @ 6..28 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 29..30
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            ClassDeclaration
+              ClassKw "class" @ 35..40 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Identifier "MisplacedReceiverInner" @ 41..63 trailing=[Whitespace " "]
+              ClassBody
+                LBrace "{" @ 64..65
+                ClassBodyMemberList
+                  ClassBodyDeclaration
+                    MethodDeclaration
+                      VoidType
+                        VoidKw "void" @ 74..78 leading=[Newline "\n", Whitespace "        "] trailing=[Whitespace " "]
+                      Identifier "method" @ 79..85
+                      LParen "(" @ 85..86
+                      FormalParameterList
+                        FormalParameter
+                          ParameterModifierList
+                          ClassType
+                            ClassTypeSegmentList
+                              ClassTypeSegmentNode
+                                AnnotationList
+                                Name
+                                  Identifier "String" @ 86..92 trailing=[Whitespace " "]
+                          AnnotationList
+                          Identifier "value" @ 93..98
+                        Comma "," @ 98..99 trailing=[Whitespace " "]
+                        ErrorNode
+                          ReceiverParameter
+                            AnnotationList
+                            ClassType
+                              ClassTypeSegmentList
+                                ClassTypeSegmentNode
+                                  AnnotationList
+                                  Name
+                                    Identifier "MisplacedReceiverOuter" @ 100..122 trailing=[Whitespace " "]
+                            Identifier "MisplacedReceiverOuter" @ 123..145
+                            Dot "." @ 145..146
+                            ThisKw "this" @ 146..150
+                      RParen ")" @ 150..151 trailing=[Whitespace " "]
+                      Block
+                        LBrace "{" @ 152..153
+                        BlockStatementList
+                        RBrace "}" @ 153..154
+                RBrace "}" @ 159..160 leading=[Newline "\n", Whitespace "    "]
+        RBrace "}" @ 161..162 leading=[Newline "\n"]
   Eof "" @ 163..163 leading=[Newline "\n"]
 
 diagnostics:

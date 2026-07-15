@@ -14,123 +14,182 @@ class Types<T extends Number & Comparable<T>> {
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "Types" @ 6..11
-    TypeParameterList
-      Lt "<" @ 11..12
-      TypeParameter
-        Identifier "T" @ 12..13 trailing=[Whitespace " "]
-        TypeBoundList
-          ExtendsKw "extends" @ 14..21 trailing=[Whitespace " "]
-          IntersectionType
-            ClassType
-              Name
-                Identifier "Number" @ 22..28 trailing=[Whitespace " "]
-            Amp "&" @ 29..30 trailing=[Whitespace " "]
-            ClassType
-              Name
-                Identifier "Comparable" @ 31..41
-              TypeArgumentList
-                Lt "<" @ 41..42
-                TypeArgument
-                  ClassType
-                    Name
-                      Identifier "T" @ 42..43
-                Gt ">" @ 43..44
-      Gt ">" @ 44..45 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 46..47
-      ClassBodyDeclaration
-        FieldDeclaration
-          PrimitiveType
-            IntKw "int" @ 52..55 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          VariableDeclaratorList
-            VariableDeclarator
-              Identifier "primitive" @ 56..65
-          Semicolon ";" @ 65..66
-      ClassBodyDeclaration
-        FieldDeclaration
-          PrimitiveType
-            DoubleKw "double" @ 71..77 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          VariableDeclaratorList
-            VariableDeclarator
-              Identifier "floating" @ 78..86
-          Semicolon ";" @ 86..87
-      ClassBodyDeclaration
-        FieldDeclaration
-          ClassType
-            QualifiedName
-              Identifier "java" @ 92..96 leading=[Newline "\n", Whitespace "    "]
-              Dot "." @ 96..97
-              Identifier "util" @ 97..101
-              Dot "." @ 101..102
-              Identifier "Map" @ 102..105
-            TypeArgumentList
-              Lt "<" @ 105..106
-              TypeArgument
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "Types" @ 6..11
+      TypeParameterList
+        Lt "<" @ 11..12
+        TypeParameterSeparatedList
+          TypeParameter
+            AnnotationList
+            Identifier "T" @ 12..13 trailing=[Whitespace " "]
+            TypeBoundList
+              ExtendsKw "extends" @ 14..21 trailing=[Whitespace " "]
+              IntersectionType
                 ClassType
-                  Name
-                    Identifier "String" @ 106..112
-              Comma "," @ 112..113 trailing=[Whitespace " "]
-              TypeArgument
-                WildcardType
-                  Question "?" @ 114..115 trailing=[Whitespace " "]
-                  ExtendsKw "extends" @ 116..123 trailing=[Whitespace " "]
-                  ClassType
-                    Name
-                      Identifier "Number" @ 124..130
-              Gt ">" @ 130..131 trailing=[Whitespace " "]
-          VariableDeclaratorList
-            VariableDeclarator
-              Identifier "upper" @ 132..137
-          Semicolon ";" @ 137..138
-      ClassBodyDeclaration
-        FieldDeclaration
-          ArrayType
-            ClassType
-              QualifiedName
-                Identifier "java" @ 143..147 leading=[Newline "\n", Whitespace "    "]
-                Dot "." @ 147..148
-                Identifier "util" @ 148..152
-                Dot "." @ 152..153
-                Identifier "List" @ 153..157
-              TypeArgumentList
-                Lt "<" @ 157..158
-                TypeArgument
-                  WildcardType
-                    Question "?" @ 158..159 trailing=[Whitespace " "]
-                    SuperKw "super" @ 160..165 trailing=[Whitespace " "]
-                    ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
                       Name
-                        Identifier "T" @ 166..167
-                Gt ">" @ 167..168
-            ArrayDimensions
-              ArrayDimension
-                LBracket "[" @ 168..169
-                RBracket "]" @ 169..170 trailing=[Whitespace " "]
-          VariableDeclaratorList
-            VariableDeclarator
-              Identifier "lower" @ 171..176
-          Semicolon ";" @ 176..177
-      ClassBodyDeclaration
-        FieldDeclaration
-          ArrayType
-            ClassType
-              Name
-                Identifier "T" @ 182..183 leading=[Newline "\n", Whitespace "    "]
-            ArrayDimensions
-              ArrayDimension
-                LBracket "[" @ 183..184
-                RBracket "]" @ 184..185
-              ArrayDimension
-                LBracket "[" @ 185..186
-                RBracket "]" @ 186..187 trailing=[Whitespace " "]
-          VariableDeclaratorList
-            VariableDeclarator
-              Identifier "matrix" @ 188..194
-          Semicolon ";" @ 194..195
-      RBrace "}" @ 196..197 leading=[Newline "\n"]
+                        Identifier "Number" @ 22..28 trailing=[Whitespace " "]
+                Amp "&" @ 29..30 trailing=[Whitespace " "]
+                TypeAmpList
+                  ClassType
+                    ClassTypeSegmentList
+                      ClassTypeSegmentNode
+                        AnnotationList
+                        Name
+                          Identifier "Comparable" @ 31..41
+                        TypeArgumentList
+                          Lt "<" @ 41..42
+                          TypeArgumentSeparatedList
+                            TypeArgument
+                              AnnotationList
+                              ClassType
+                                ClassTypeSegmentList
+                                  ClassTypeSegmentNode
+                                    AnnotationList
+                                    Name
+                                      Identifier "T" @ 42..43
+                          Gt ">" @ 43..44
+        Gt ">" @ 44..45 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 46..47
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            FieldDeclaration
+              PrimitiveType
+                AnnotationList
+                IntKw "int" @ 52..55 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              VariableDeclaratorList
+                VariableDeclarator
+                  Identifier "primitive" @ 56..65
+              Semicolon ";" @ 65..66
+          ClassBodyDeclaration
+            FieldDeclaration
+              PrimitiveType
+                AnnotationList
+                DoubleKw "double" @ 71..77 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              VariableDeclaratorList
+                VariableDeclarator
+                  Identifier "floating" @ 78..86
+              Semicolon ";" @ 86..87
+          ClassBodyDeclaration
+            FieldDeclaration
+              ClassType
+                ClassTypeSegmentList
+                  ClassTypeSegmentNode
+                    AnnotationList
+                    QualifiedName
+                      QualifiedNameSegmentNode
+                        AnnotationList
+                        Identifier "java" @ 92..96 leading=[Newline "\n", Whitespace "    "]
+                      Dot "." @ 96..97
+                      NameSegmentDotList
+                        QualifiedNameSegmentNode
+                          AnnotationList
+                          Identifier "util" @ 97..101
+                        Dot "." @ 101..102
+                        QualifiedNameSegmentNode
+                          AnnotationList
+                          Identifier "Map" @ 102..105
+                    TypeArgumentList
+                      Lt "<" @ 105..106
+                      TypeArgumentSeparatedList
+                        TypeArgument
+                          AnnotationList
+                          ClassType
+                            ClassTypeSegmentList
+                              ClassTypeSegmentNode
+                                AnnotationList
+                                Name
+                                  Identifier "String" @ 106..112
+                        Comma "," @ 112..113 trailing=[Whitespace " "]
+                        TypeArgument
+                          AnnotationList
+                          WildcardType
+                            Question "?" @ 114..115 trailing=[Whitespace " "]
+                            ExtendsKw "extends" @ 116..123 trailing=[Whitespace " "]
+                            ClassType
+                              ClassTypeSegmentList
+                                ClassTypeSegmentNode
+                                  AnnotationList
+                                  Name
+                                    Identifier "Number" @ 124..130
+                      Gt ">" @ 130..131 trailing=[Whitespace " "]
+              VariableDeclaratorList
+                VariableDeclarator
+                  Identifier "upper" @ 132..137
+              Semicolon ";" @ 137..138
+          ClassBodyDeclaration
+            FieldDeclaration
+              ArrayType
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      QualifiedName
+                        QualifiedNameSegmentNode
+                          AnnotationList
+                          Identifier "java" @ 143..147 leading=[Newline "\n", Whitespace "    "]
+                        Dot "." @ 147..148
+                        NameSegmentDotList
+                          QualifiedNameSegmentNode
+                            AnnotationList
+                            Identifier "util" @ 148..152
+                          Dot "." @ 152..153
+                          QualifiedNameSegmentNode
+                            AnnotationList
+                            Identifier "List" @ 153..157
+                      TypeArgumentList
+                        Lt "<" @ 157..158
+                        TypeArgumentSeparatedList
+                          TypeArgument
+                            AnnotationList
+                            WildcardType
+                              Question "?" @ 158..159 trailing=[Whitespace " "]
+                              SuperKw "super" @ 160..165 trailing=[Whitespace " "]
+                              ClassType
+                                ClassTypeSegmentList
+                                  ClassTypeSegmentNode
+                                    AnnotationList
+                                    Name
+                                      Identifier "T" @ 166..167
+                        Gt ">" @ 167..168
+                ArrayDimensions
+                  ArrayDimension
+                    AnnotationList
+                    LBracket "[" @ 168..169
+                    RBracket "]" @ 169..170 trailing=[Whitespace " "]
+              VariableDeclaratorList
+                VariableDeclarator
+                  Identifier "lower" @ 171..176
+              Semicolon ";" @ 176..177
+          ClassBodyDeclaration
+            FieldDeclaration
+              ArrayType
+                ClassType
+                  ClassTypeSegmentList
+                    ClassTypeSegmentNode
+                      AnnotationList
+                      Name
+                        Identifier "T" @ 182..183 leading=[Newline "\n", Whitespace "    "]
+                ArrayDimensions
+                  ArrayDimension
+                    AnnotationList
+                    LBracket "[" @ 183..184
+                    RBracket "]" @ 184..185
+                  ArrayDimension
+                    AnnotationList
+                    LBracket "[" @ 185..186
+                    RBracket "]" @ 186..187 trailing=[Whitespace " "]
+              VariableDeclaratorList
+                VariableDeclarator
+                  Identifier "matrix" @ 188..194
+              Semicolon ";" @ 194..195
+        RBrace "}" @ 196..197 leading=[Newline "\n"]
   Eof "" @ 198..198 leading=[Newline "\n"]
 
 diagnostics:

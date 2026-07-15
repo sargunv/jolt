@@ -8,9 +8,11 @@ input:
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    CharacterLiteral "'\u{ffff}'" @ 0..5 trailing=[Whitespace " "]
-    CharacterLiteral "'�'" @ 6..11
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      CharacterLiteral "'\u{ffff}'" @ 0..5 trailing=[Whitespace " "]
+      CharacterLiteral "'�'" @ 6..11
   Eof "" @ 11..11
 
 diagnostics:

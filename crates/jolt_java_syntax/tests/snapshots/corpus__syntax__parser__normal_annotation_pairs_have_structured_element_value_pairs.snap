@@ -17,95 +17,110 @@ class Annotated {}
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ModifierList
-      Annotation
-        At "@" @ 0..1
-        Name
-          Identifier "Normal" @ 1..7
-        AnnotationArgumentList
-          LParen "(" @ 7..8
-          AnnotationElementList
-            AnnotationElementValuePair
-              Identifier "name" @ 8..12 trailing=[Whitespace " "]
-              Assign "=" @ 13..14 trailing=[Whitespace " "]
-              AnnotationElementValue
-                LiteralExpression
-                  StringLiteral "\"test\"" @ 15..21
-            Comma "," @ 21..22 trailing=[Whitespace " "]
-            AnnotationElementValuePair
-              Identifier "nested" @ 23..29 trailing=[Whitespace " "]
-              Assign "=" @ 30..31 trailing=[Whitespace " "]
-              AnnotationElementValue
-                Annotation
-                  At "@" @ 32..33
-                  Name
-                    Identifier "Marker" @ 33..39
-            Comma "," @ 39..40 trailing=[Whitespace " "]
-            AnnotationElementValuePair
-              Identifier "values" @ 41..47 trailing=[Whitespace " "]
-              Assign "=" @ 48..49 trailing=[Whitespace " "]
-              AnnotationElementValue
-                AnnotationArrayInitializer
-                  LBrace "{" @ 50..51
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ModifierList
+        Annotation
+          At "@" @ 0..1
+          Name
+            Identifier "Normal" @ 1..7
+          AnnotationArgumentList
+            LParen "(" @ 7..8
+            AnnotationElementList
+              AnnotationElementArgumentList
+                AnnotationElementValuePair
+                  Identifier "name" @ 8..12 trailing=[Whitespace " "]
+                  Assign "=" @ 13..14 trailing=[Whitespace " "]
                   AnnotationElementValue
                     LiteralExpression
-                      IntegerLiteral "1" @ 51..52
-                  Comma "," @ 52..53 trailing=[Whitespace " "]
+                      StringLiteral "\"test\"" @ 15..21
+                Comma "," @ 21..22 trailing=[Whitespace " "]
+                AnnotationElementValuePair
+                  Identifier "nested" @ 23..29 trailing=[Whitespace " "]
+                  Assign "=" @ 30..31 trailing=[Whitespace " "]
                   AnnotationElementValue
-                    LiteralExpression
-                      IntegerLiteral "2" @ 54..55
-                  RBrace "}" @ 55..56
-          RParen ")" @ 56..57
-    ClassKw "class" @ 58..63 leading=[Newline "\n"] trailing=[Whitespace " "]
-    Identifier "Annotated" @ 64..73 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 74..75
-      RBrace "}" @ 75..76
-  AnnotationInterfaceDeclaration
-    At "@" @ 78..79 leading=[Newline "\n", Newline "\n"]
-    InterfaceKw "interface" @ 79..88 trailing=[Whitespace " "]
-    Identifier "Normal" @ 89..95 trailing=[Whitespace " "]
-    AnnotationInterfaceBody
-      LBrace "{" @ 96..97
-      AnnotationElementList
-        AnnotationElementDeclaration
-          ClassType
-            Name
-              Identifier "String" @ 102..108 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "name" @ 109..113
-          LParen "(" @ 113..114
-          RParen ")" @ 114..115
-          Semicolon ";" @ 115..116
-        AnnotationElementDeclaration
-          ClassType
-            Name
-              Identifier "Marker" @ 121..127 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
-          Identifier "nested" @ 128..134
-          LParen "(" @ 134..135
-          RParen ")" @ 135..136
-          Semicolon ";" @ 136..137
-        AnnotationElementDeclaration
-          ArrayType
-            PrimitiveType
-              IntKw "int" @ 142..145 leading=[Newline "\n", Whitespace "    "]
-            ArrayDimensions
-              ArrayDimension
-                LBracket "[" @ 145..146
-                RBracket "]" @ 146..147 trailing=[Whitespace " "]
-          Identifier "values" @ 148..154
-          LParen "(" @ 154..155
-          RParen ")" @ 155..156
-          Semicolon ";" @ 156..157
-      RBrace "}" @ 158..159 leading=[Newline "\n"]
-  AnnotationInterfaceDeclaration
-    At "@" @ 161..162 leading=[Newline "\n", Newline "\n"]
-    InterfaceKw "interface" @ 162..171 trailing=[Whitespace " "]
-    Identifier "Marker" @ 172..178 trailing=[Whitespace " "]
-    AnnotationInterfaceBody
-      LBrace "{" @ 179..180
-      AnnotationElementList
-      RBrace "}" @ 180..181
+                    Annotation
+                      At "@" @ 32..33
+                      Name
+                        Identifier "Marker" @ 33..39
+                Comma "," @ 39..40 trailing=[Whitespace " "]
+                AnnotationElementValuePair
+                  Identifier "values" @ 41..47 trailing=[Whitespace " "]
+                  Assign "=" @ 48..49 trailing=[Whitespace " "]
+                  AnnotationElementValue
+                    AnnotationArrayInitializer
+                      LBrace "{" @ 50..51
+                      AnnotationElementValueList
+                        AnnotationElementValue
+                          LiteralExpression
+                            IntegerLiteral "1" @ 51..52
+                        Comma "," @ 52..53 trailing=[Whitespace " "]
+                        AnnotationElementValue
+                          LiteralExpression
+                            IntegerLiteral "2" @ 54..55
+                      RBrace "}" @ 55..56
+            RParen ")" @ 56..57
+      ClassKw "class" @ 58..63 leading=[Newline "\n"] trailing=[Whitespace " "]
+      Identifier "Annotated" @ 64..73 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 74..75
+        ClassBodyMemberList
+        RBrace "}" @ 75..76
+    AnnotationInterfaceDeclaration
+      At "@" @ 78..79 leading=[Newline "\n", Newline "\n"]
+      InterfaceKw "interface" @ 79..88 trailing=[Whitespace " "]
+      Identifier "Normal" @ 89..95 trailing=[Whitespace " "]
+      AnnotationInterfaceBody
+        LBrace "{" @ 96..97
+        AnnotationElementList
+          AnnotationInterfaceBodyMemberList
+            AnnotationElementDeclaration
+              ClassType
+                ClassTypeSegmentList
+                  ClassTypeSegmentNode
+                    AnnotationList
+                    Name
+                      Identifier "String" @ 102..108 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Identifier "name" @ 109..113
+              LParen "(" @ 113..114
+              RParen ")" @ 114..115
+              Semicolon ";" @ 115..116
+            AnnotationElementDeclaration
+              ClassType
+                ClassTypeSegmentList
+                  ClassTypeSegmentNode
+                    AnnotationList
+                    Name
+                      Identifier "Marker" @ 121..127 leading=[Newline "\n", Whitespace "    "] trailing=[Whitespace " "]
+              Identifier "nested" @ 128..134
+              LParen "(" @ 134..135
+              RParen ")" @ 135..136
+              Semicolon ";" @ 136..137
+            AnnotationElementDeclaration
+              ArrayType
+                PrimitiveType
+                  AnnotationList
+                  IntKw "int" @ 142..145 leading=[Newline "\n", Whitespace "    "]
+                ArrayDimensions
+                  ArrayDimension
+                    AnnotationList
+                    LBracket "[" @ 145..146
+                    RBracket "]" @ 146..147 trailing=[Whitespace " "]
+              Identifier "values" @ 148..154
+              LParen "(" @ 154..155
+              RParen ")" @ 155..156
+              Semicolon ";" @ 156..157
+        RBrace "}" @ 158..159 leading=[Newline "\n"]
+    AnnotationInterfaceDeclaration
+      At "@" @ 161..162 leading=[Newline "\n", Newline "\n"]
+      InterfaceKw "interface" @ 162..171 trailing=[Whitespace " "]
+      Identifier "Marker" @ 172..178 trailing=[Whitespace " "]
+      AnnotationInterfaceBody
+        LBrace "{" @ 179..180
+        AnnotationElementList
+          AnnotationInterfaceBodyMemberList
+        RBrace "}" @ 180..181
   Eof "" @ 182..182 leading=[Newline "\n"]
 
 diagnostics:

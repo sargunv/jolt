@@ -8,13 +8,15 @@ non-sealedclass MissingSpace {}
 syntax:
 syntax:
 CompilationUnit
-  ErrorNode
-    Identifier "non" @ 0..3
-    Minus "-" @ 3..4
-    Identifier "sealedclass" @ 4..15 trailing=[Whitespace " "]
-    Identifier "MissingSpace" @ 16..28 trailing=[Whitespace " "]
-    LBrace "{" @ 29..30
-    RBrace "}" @ 30..31
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    BogusTypeDeclaration
+      Identifier "non" @ 0..3
+      Minus "-" @ 3..4
+      Identifier "sealedclass" @ 4..15 trailing=[Whitespace " "]
+      Identifier "MissingSpace" @ 16..28 trailing=[Whitespace " "]
+      LBrace "{" @ 29..30
+      RBrace "}" @ 30..31
   Eof "" @ 32..32 leading=[Newline "\n"]
 
 diagnostics:

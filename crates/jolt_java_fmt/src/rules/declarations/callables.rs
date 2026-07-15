@@ -1,105 +1,199 @@
 use super::{
     AnnotationElementDeclaration, CommaListItem, Doc, FormalParameterList, JavaSyntaxToken,
-    LeadingTrivia, MethodDeclaration, ThrowsClause, ThrowsClauseEntry, TrailingTrivia,
-    comment_forces_line, format_annotation_element_value, format_array_dimensions, format_block,
+    LeadingTrivia, MethodDeclaration, ThrowsClause, TrailingTrivia, comment_forces_line,
+    format_annotation_element_value, format_array_dimensions, format_block,
     format_construct_leading_comments, format_constructor_body, format_formal_parameter,
-    format_inline_annotations, format_modifier_prefix, format_receiver_parameter,
-    format_separator_with_comments, format_statement_semicolon, format_token,
-    format_token_after_construct_leading_comments, format_token_sequence,
+    format_modifier_prefix, format_receiver_parameter, format_separator_with_comments,
+    format_statement_semicolon, format_token, format_token_after_construct_leading_comments,
     format_token_with_comments, format_type, format_type_parameter_list,
     format_type_without_leading_comments, format_typed_modifier_prefix, parenthesized_list,
-    recovered_comma_list_items, source_braced_body,
+    source_braced_body,
 };
 use jolt_fmt_ir::DocBuilder;
-use jolt_java_syntax::RecoveredSeparatedListEntry;
+
+use crate::helpers::recovery::{
+    JavaFormatDelimiter, JavaFormatField, JavaFormatListPart, format_optional_field,
+    format_or_verbatim, format_required_field, resolve_list_part, resolve_optional_field,
+    resolve_required_delimiter, resolve_required_field,
+};
+use crate::rules::annotations::format_annotation;
+
+fn format_optional_modifier_prefix<'source>(
+    modifiers: JavaFormatField<'source, Option<jolt_java_syntax::ModifierList<'source>>>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    match modifiers {
+        JavaFormatField::Present(modifiers) => format_modifier_prefix(modifiers, doc),
+        JavaFormatField::Malformed(malformed) => malformed,
+    }
+}
+
+fn format_optional_type_parameters<'source>(
+    parameters: JavaFormatField<'source, Option<jolt_java_syntax::TypeParameterList<'source>>>,
+    doc: &mut DocBuilder<'source>,
+) -> (Doc<'source>, bool) {
+    match parameters {
+        JavaFormatField::Present(Some(parameters)) => {
+            (format_type_parameter_list(Some(parameters), doc), true)
+        }
+        JavaFormatField::Present(None) => (Doc::nil(), false),
+        JavaFormatField::Malformed(malformed) => (malformed, true),
+    }
+}
+
+fn format_optional_throws_clause<'source>(
+    throws: JavaFormatField<'source, Option<ThrowsClause<'source>>>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    match throws {
+        JavaFormatField::Present(Some(throws)) => format_throws_clause(&throws, doc),
+        JavaFormatField::Present(None) => Doc::nil(),
+        JavaFormatField::Malformed(malformed) => malformed,
+    }
+}
+
+fn format_constructor_body_field<'source>(
+    body: Result<
+        jolt_java_syntax::JavaSyntaxField<'source, jolt_java_syntax::ConstructorBody<'source>>,
+        jolt_java_syntax::JavaSyntaxInvariantError,
+    >,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    match resolve_required_field(body, doc) {
+        JavaFormatField::Present(body) => {
+            let open = resolve_required_delimiter(body.open_brace(), doc);
+            let close = resolve_required_delimiter(body.close_brace(), doc);
+            let contents = format_constructor_body(
+                &body,
+                open.source().copied(),
+                close.source().copied(),
+                doc,
+            );
+            source_braced_body(doc, open, close, contents)
+        }
+        JavaFormatField::Malformed(malformed) => malformed,
+    }
+}
 
 pub(super) fn format_constructor_declaration<'source>(
     constructor: &jolt_java_syntax::ConstructorDeclaration<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
+    format_or_verbatim(constructor, doc, |doc| {
+        format_constructor_declaration_structured(constructor, doc)
+    })
+}
+
+fn format_constructor_declaration_structured<'source>(
+    constructor: &jolt_java_syntax::ConstructorDeclaration<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
     let constructor_first_token = constructor.first_token();
+    let modifiers = resolve_optional_field(constructor.modifiers(), doc);
+    let throws = resolve_optional_field(constructor.throws(), doc);
+    let type_parameters = resolve_optional_field(constructor.type_parameters(), doc);
+    let name = format_required_field(constructor.name(), doc, |name, doc| {
+        format_token_after_construct_leading_comments(doc, &name, constructor_first_token.as_ref())
+    });
+    let open_paren = resolve_required_delimiter(constructor.open_paren(), doc);
+    let parameters = resolve_optional_field(constructor.parameters(), doc);
+    let close_paren = resolve_required_delimiter(constructor.close_paren(), doc);
     let prefix = doc_concat!(
         doc,
         [
             format_construct_leading_comments(doc, constructor_first_token.as_ref()),
-            format_modifier_prefix(constructor.modifiers(), doc),
+            format_optional_modifier_prefix(modifiers, doc),
         ]
     );
-    let throws = constructor.throws_clause();
-    let type_parameters = constructor.type_parameters();
-    let has_type_parameters = type_parameters.is_some();
+    let (type_parameters, has_type_parameters) =
+        format_optional_type_parameters(type_parameters, doc);
     let header = doc_concat!(
         doc,
         [
-            format_type_parameter_list(type_parameters, doc),
+            type_parameters,
             if has_type_parameters {
                 doc.space()
             } else {
                 Doc::nil()
             },
-            constructor.name().map_or_else(Doc::nil, |name| {
-                format_token_after_construct_leading_comments(
-                    doc,
-                    &name,
-                    constructor_first_token.as_ref(),
-                )
-            },),
-            format_parameters(
-                constructor.open_paren(),
-                constructor.close_paren(),
-                constructor.parameters(),
-                doc,
-            ),
-            format_throws_clause(throws, doc),
+            name,
+            format_parameters(open_paren, close_paren, parameters, doc,),
+            format_optional_throws_clause(throws, doc),
         ]
     );
-
-    if let Some(body) = constructor.body() {
-        let open = body.open_brace();
-        let close = body.close_brace();
-        callable_declaration_with_body(
-            prefix,
-            header,
-            open.as_ref(),
-            close.as_ref(),
-            format_constructor_body(&body, doc),
-            doc,
-        )
-    } else {
-        doc_concat!(doc, [prefix, doc_group!(doc, header)])
-    }
+    callable_declaration_with_body_doc(
+        prefix,
+        header,
+        format_constructor_body_field(constructor.body(), doc),
+        doc,
+    )
 }
 
 pub(super) fn format_compact_constructor_declaration<'source>(
     constructor: &jolt_java_syntax::CompactConstructorDeclaration<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let prefix = format_modifier_prefix(constructor.modifiers(), doc);
-    let header = constructor
-        .name()
-        .map_or_else(Doc::nil, |name| format_token_with_comments(doc, &name));
+    format_or_verbatim(constructor, doc, |doc| {
+        format_compact_constructor_declaration_structured(constructor, doc)
+    })
+}
 
-    if let Some(body) = constructor.body() {
-        let open = body.open_brace();
-        let close = body.close_brace();
-        callable_declaration_with_body(
-            prefix,
-            header,
-            open.as_ref(),
-            close.as_ref(),
-            format_constructor_body(&body, doc),
-            doc,
-        )
-    } else {
-        doc_concat!(doc, [prefix, doc_group!(doc, header)])
-    }
+fn format_compact_constructor_declaration_structured<'source>(
+    constructor: &jolt_java_syntax::CompactConstructorDeclaration<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    let modifiers = resolve_optional_field(constructor.modifiers(), doc);
+    let prefix = format_optional_modifier_prefix(modifiers, doc);
+    let header = format_required_field(constructor.name(), doc, |name, doc| {
+        format_token_with_comments(doc, &name)
+    });
+
+    callable_declaration_with_body_doc(
+        prefix,
+        header,
+        format_constructor_body_field(constructor.body(), doc),
+        doc,
+    )
 }
 
 pub(crate) fn format_method_declaration<'source>(
     method: &MethodDeclaration<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let modifiers = format_typed_modifier_prefix(method.modifiers(), doc);
+    format_or_verbatim(method, doc, |doc| {
+        format_method_declaration_structured(method, doc)
+    })
+}
+
+fn format_method_declaration_structured<'source>(
+    method: &MethodDeclaration<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    let method_modifiers = resolve_optional_field(method.modifiers(), doc);
+    let throws = resolve_optional_field(method.throws(), doc);
+    let type_parameters = resolve_optional_field(method.type_parameters(), doc);
+    let return_annotations = resolve_optional_field(method.return_annotations(), doc);
+    let parameters = resolve_optional_field(method.parameters(), doc);
+    let name = format_required_field(method.name(), doc, |name, doc| {
+        format_token_with_comments(doc, &name)
+    });
+    let open_paren = resolve_required_delimiter(method.open_paren(), doc);
+    let close_paren = resolve_required_delimiter(method.close_paren(), doc);
+    let dimensions = format_optional_field(method.dimensions(), doc, |dimensions, doc| {
+        format_array_dimensions(&dimensions, doc)
+    });
+    let return_type = format_required_field(method.return_type(), doc, |return_type, doc| {
+        format_type_without_leading_comments(&return_type, doc)
+    });
+    let body = resolve_optional_field(method.body(), doc);
+    let semicolon = method.semicolon();
+    let modifiers = match method_modifiers {
+        JavaFormatField::Present(modifiers) => format_typed_modifier_prefix(modifiers, doc),
+        JavaFormatField::Malformed(malformed) => crate::rules::modifiers::TypedModifierPrefix {
+            declaration_prefix: malformed,
+            type_use_prefix: Doc::nil(),
+        },
+    };
     let prefix = doc_concat!(
         doc,
         [
@@ -107,53 +201,92 @@ pub(crate) fn format_method_declaration<'source>(
             modifiers.declaration_prefix,
         ]
     );
-    let throws = method.throws_clause();
-    let type_parameters = method.type_parameters();
-    let has_type_parameters = type_parameters.is_some();
-    let parameters = method.parameters();
+    let (type_parameters, has_type_parameters) =
+        format_optional_type_parameters(type_parameters, doc);
+    let return_annotations = format_optional_annotation_list(return_annotations, doc);
+    let has_return_annotations = return_annotations.is_some();
     let name_and_parameters = doc_concat!(
         doc,
         [
-            method
-                .name()
-                .map_or_else(Doc::nil, |name| format_token_with_comments(doc, &name)),
-            format_parameters(method.open_paren(), method.close_paren(), parameters, doc,),
-            method.dimensions().map_or_else(Doc::nil, |dimensions| {
-                format_array_dimensions(&dimensions, doc)
-            }),
+            name,
+            format_parameters(open_paren, close_paren, parameters, doc,),
+            dimensions,
         ]
     );
     let header = doc_concat!(
         doc,
         [
-            format_type_parameter_list(type_parameters, doc),
+            type_parameters,
             if has_type_parameters {
                 doc.space()
             } else {
                 Doc::nil()
             },
             modifiers.type_use_prefix,
-            format_inline_annotations(method.return_type_annotations(), doc),
-            method.return_type().map_or_else(Doc::nil, |return_type| {
-                format_type_without_leading_comments(&return_type, doc)
-            },),
+            return_annotations.unwrap_or_else(Doc::nil),
+            if has_return_annotations {
+                doc.space()
+            } else {
+                Doc::nil()
+            },
+            return_type,
             doc.space(),
             name_and_parameters,
-            format_throws_clause(throws, doc),
+            format_optional_throws_clause(throws, doc),
         ]
     );
 
-    if let Some(body) = method.body() {
-        callable_declaration_with_body_doc(prefix, header, format_block(&body, doc), doc)
-    } else {
-        doc_concat!(
+    match body {
+        JavaFormatField::Present(Some(body)) => {
+            callable_declaration_with_body_doc(prefix, header, format_block(&body, doc), doc)
+        }
+        JavaFormatField::Present(None) => doc_concat!(
             doc,
             [
                 prefix,
                 doc_group!(doc, header),
-                format_statement_semicolon(method.semicolon(), doc),
+                format_statement_semicolon(semicolon, doc)
             ]
-        )
+        ),
+        JavaFormatField::Malformed(malformed) => doc_concat!(
+            doc,
+            [
+                prefix,
+                doc_group!(doc, header),
+                doc.space(),
+                malformed,
+                format_statement_semicolon(semicolon, doc),
+            ]
+        ),
+    }
+}
+
+fn format_optional_annotation_list<'source>(
+    annotations: JavaFormatField<'source, Option<jolt_java_syntax::AnnotationList<'source>>>,
+    doc: &mut DocBuilder<'source>,
+) -> Option<Doc<'source>> {
+    match annotations {
+        JavaFormatField::Present(None) => None,
+        JavaFormatField::Malformed(recovery) => Some(recovery),
+        JavaFormatField::Present(Some(annotations)) => Some(doc.concat_list(|docs| {
+            let mut first = true;
+            for part in annotations.parts() {
+                if !first {
+                    let space = docs.space();
+                    docs.push(space);
+                }
+                first = false;
+                let part = match resolve_list_part(part, docs) {
+                    JavaFormatListPart::Item(annotation) => format_annotation(&annotation, docs),
+                    JavaFormatListPart::Separator(separator) => {
+                        docs.block_on_invariant("annotation list had a separator");
+                        format_token_with_comments(docs, &separator)
+                    }
+                    JavaFormatListPart::Malformed(recovery) => recovery,
+                };
+                docs.push(part);
+            }
+        })),
     }
 }
 
@@ -161,6 +294,29 @@ pub(super) fn format_annotation_element_declaration<'source>(
     element: &AnnotationElementDeclaration<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
+    format_or_verbatim(element, doc, |doc| {
+        format_annotation_element_declaration_structured(element, doc)
+    })
+}
+
+fn format_annotation_element_declaration_structured<'source>(
+    element: &AnnotationElementDeclaration<'source>,
+    doc: &mut DocBuilder<'source>,
+) -> Doc<'source> {
+    let modifiers = resolve_optional_field(element.modifiers(), doc);
+    let ty = format_required_field(element.r#type(), doc, |ty, doc| format_type(&ty, doc));
+    let name = format_required_field(element.name(), doc, |name, doc| {
+        format_token_with_comments(doc, &name)
+    });
+    let open = resolve_required_delimiter(element.open_paren(), doc);
+    let close = resolve_required_delimiter(element.close_paren(), doc);
+    let dimensions = format_optional_field(element.dimensions(), doc, |dimensions, doc| {
+        format_array_dimensions(&dimensions, doc)
+    });
+    let default = format_optional_field(element.default(), doc, |default, doc| {
+        format_annotation_element_default(&default, doc)
+    });
+    let semicolon = element.semicolon();
     doc_concat!(
         doc,
         [
@@ -169,122 +325,104 @@ pub(super) fn format_annotation_element_declaration<'source>(
                 doc_concat!(
                     doc,
                     [
-                        format_modifier_prefix(element.modifiers(), doc),
-                        element
-                            .ty()
-                            .map_or_else(Doc::nil, |ty| format_type(&ty, doc)),
+                        format_optional_modifier_prefix(modifiers, doc),
+                        ty,
                         doc.space(),
-                        element
-                            .name()
-                            .map_or_else(Doc::nil, |name| format_token_with_comments(doc, &name)),
-                        format_empty_parameters(doc, element.open_paren(), element.close_paren()),
-                        element.dimensions().map_or_else(Doc::nil, |dimensions| {
-                            format_array_dimensions(&dimensions, doc)
-                        },),
-                        format_annotation_element_default(element.default_value(), doc),
+                        name,
+                        format_empty_parameters(doc, open, close),
+                        dimensions,
+                        default,
                     ]
                 ),
             ),
-            format_statement_semicolon(element.semicolon(), doc),
+            format_statement_semicolon(semicolon, doc),
         ]
     )
 }
 
 fn format_annotation_element_default<'source>(
-    default: Option<jolt_java_syntax::DefaultValue<'source>>,
+    default: &jolt_java_syntax::DefaultValue<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    default.map_or_else(Doc::nil, |default| {
-        doc_concat!(
-            doc,
-            [
-                doc.space(),
-                default
-                    .default_token()
-                    .map_or_else(Doc::nil, |token| doc_concat!(
-                        doc,
-                        [format_token_with_comments(doc, &token), doc.space()]
-                    ),),
-                default
-                    .value()
-                    .map_or_else(Doc::nil, |value| format_annotation_element_value(
-                        &value, doc
-                    ),),
-            ]
-        )
-    })
+    let keyword = format_required_field(default.default_keyword(), doc, |keyword, doc| {
+        format_token_with_comments(doc, &keyword)
+    });
+    let value = format_required_field(default.value(), doc, |value, doc| {
+        format_annotation_element_value(&value, doc)
+    });
+    doc_concat!(doc, [doc.space(), keyword, doc.space(), value])
 }
 
 fn format_parameters<'source>(
-    open: Option<JavaSyntaxToken<'source>>,
-    close: Option<JavaSyntaxToken<'source>>,
-    parameters: Option<FormalParameterList<'source>>,
+    open: JavaFormatDelimiter<'source>,
+    close: JavaFormatDelimiter<'source>,
+    parameters: JavaFormatField<'source, Option<FormalParameterList<'source>>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let open = parameters
-        .as_ref()
-        .and_then(FormalParameterList::open_paren)
-        .or(open);
-    let close = parameters
-        .as_ref()
-        .and_then(FormalParameterList::close_paren)
-        .or(close);
-    let Some(parameters) = parameters else {
-        return format_empty_parameters(doc, open, close);
+    let parameters = match parameters {
+        JavaFormatField::Present(Some(parameters)) => parameter_list_items(&parameters, doc),
+        JavaFormatField::Present(None) => Vec::new(),
+        JavaFormatField::Malformed(malformed) => vec![CommaListItem {
+            doc: malformed,
+            comma: None,
+        }],
     };
-
-    let items = parameter_list_items(&parameters, doc);
-    parenthesized_list(doc, open.as_ref(), close.as_ref(), items)
+    parenthesized_list(doc, open, close, parameters)
 }
 
 fn parameter_list_items<'source, 'fmt>(
     parameters: &'fmt FormalParameterList<'source>,
     doc: &'fmt mut DocBuilder<'source>,
 ) -> Vec<CommaListItem<'source>> {
-    recovered_comma_list_items(doc, parameters.entries_with_recovered(), |entry, doc| {
-        CommaListItem {
-            doc: match entry.item {
-                jolt_java_syntax::FormalParameterListItem::ReceiverParameter(parameter) => {
+    let parts = parameters.parts();
+    let (lower, _) = parts.size_hint();
+    let mut items = Vec::with_capacity(lower);
+    for part in parts {
+        match resolve_list_part(part, doc) {
+            JavaFormatListPart::Item(item) => {
+                let item_doc = if let Some(parameter) =
+                    item.cast_node::<jolt_java_syntax::ReceiverParameter<'source>>()
+                {
                     format_receiver_parameter(&parameter, doc)
-                }
-                jolt_java_syntax::FormalParameterListItem::FormalParameter(parameter) => {
+                } else if let Some(parameter) =
+                    item.cast_node::<jolt_java_syntax::FormalParameter<'source>>()
+                {
                     format_formal_parameter(&parameter, doc)
+                } else {
+                    doc.block_on_invariant("formal parameter list item had an undeclared kind");
+                    Doc::nil()
+                };
+                items.push(CommaListItem {
+                    doc: item_doc,
+                    comma: None,
+                });
+            }
+            JavaFormatListPart::Separator(comma) => {
+                if let Some(item) = items.last_mut() {
+                    item.comma = Some(comma);
+                } else {
+                    doc.block_on_invariant("formal parameter separator had no preceding item");
                 }
-            },
-            comma: entry.comma,
+            }
+            JavaFormatListPart::Malformed(malformed) => items.push(CommaListItem {
+                doc: malformed,
+                comma: None,
+            }),
         }
-    })
+    }
+    items
 }
 
 fn format_empty_parameters<'source>(
     doc: &mut jolt_fmt_ir::DocBuilder<'source>,
-    open: Option<JavaSyntaxToken<'source>>,
-    close: Option<JavaSyntaxToken<'source>>,
+    open: JavaFormatDelimiter<'source>,
+    close: JavaFormatDelimiter<'source>,
 ) -> Doc<'source> {
     parenthesized_list(
         doc,
-        open.as_ref(),
-        close.as_ref(),
+        open,
+        close,
         std::iter::empty::<CommaListItem<'source>>(),
-    )
-}
-
-fn callable_declaration_with_body<'source>(
-    prefix: Doc<'source>,
-    header: Doc<'source>,
-    open: Option<&JavaSyntaxToken<'source>>,
-    close: Option<&JavaSyntaxToken<'source>>,
-    body: Option<Doc<'source>>,
-    doc: &mut DocBuilder<'source>,
-) -> Doc<'source> {
-    doc_concat!(
-        doc,
-        [
-            prefix,
-            doc_group!(doc, header),
-            doc.space(),
-            source_braced_body(doc, open, close, body),
-        ]
     )
 }
 
@@ -298,17 +436,20 @@ fn callable_declaration_with_body_doc<'source>(
 }
 
 fn format_throws_clause<'source>(
-    throws: Option<ThrowsClause<'source>>,
+    throws: &ThrowsClause<'source>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let Some(throws) = throws else {
-        return Doc::nil();
+    let entries = match resolve_required_field(throws.exceptions(), doc) {
+        JavaFormatField::Present(exceptions) => exceptions
+            .parts()
+            .map(|part| resolve_list_part(part, doc))
+            .collect::<Vec<_>>(),
+        JavaFormatField::Malformed(malformed) => vec![JavaFormatListPart::Malformed(malformed)],
     };
-    let mut entries = throws.entries_with_recovered().peekable();
-    if entries.peek().is_none() {
+    if entries.is_empty() {
         return doc_indent!(
             doc,
-            doc_concat!(doc, [doc.line(), format_throws_keyword(doc, &throws)])
+            doc_concat!(doc, [doc.line(), format_throws_keyword(doc, throws)])
         );
     }
 
@@ -318,9 +459,9 @@ fn format_throws_clause<'source>(
             doc,
             [
                 doc.line(),
-                format_throws_keyword(doc, &throws),
-                format_throws_keyword_spacing(doc, &throws),
-                format_throws_entries(entries, doc),
+                format_throws_keyword(doc, throws),
+                format_throws_keyword_spacing(doc, throws),
+                format_throws_entries(&entries, doc),
             ]
         )
     )
@@ -330,21 +471,22 @@ fn format_throws_keyword<'source>(
     doc: &mut jolt_fmt_ir::DocBuilder<'source>,
     throws: &ThrowsClause<'source>,
 ) -> Doc<'source> {
-    throws.keyword().map_or_else(Doc::nil, |keyword| {
-        format_token(
+    match resolve_required_field(throws.throws_keyword(), doc) {
+        JavaFormatField::Present(keyword) => format_token(
             doc,
             &keyword,
             LeadingTrivia::Preserve,
             TrailingTrivia::BeforeLineBreak,
-        )
-    })
+        ),
+        JavaFormatField::Malformed(malformed) => malformed,
+    }
 }
 
 fn format_throws_keyword_spacing<'source>(
     doc: &mut jolt_fmt_ir::DocBuilder<'source>,
     throws: &ThrowsClause<'source>,
 ) -> Doc<'source> {
-    if throws.keyword().is_some_and(|keyword| {
+    if matches!(resolve_required_field(throws.throws_keyword(), doc), JavaFormatField::Present(keyword) if {
         keyword
             .trailing_comments()
             .any(|comment| comment_forces_line(&comment))
@@ -356,20 +498,19 @@ fn format_throws_keyword_spacing<'source>(
 }
 
 fn format_throws_entries<'source>(
-    entries: impl IntoIterator<Item = RecoveredSeparatedListEntry<'source, ThrowsClauseEntry<'source>>>,
+    entries: &[JavaFormatListPart<'source, jolt_java_syntax::Type<'source>>],
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
-    let mut entries = entries.into_iter().peekable();
+    let mut entries = entries.iter().peekable();
     let Some(entry) = entries.next() else {
         return Doc::nil();
     };
 
-    let first = format_throws_entry(entry, entries.peek().is_some(), doc);
+    let first = format_throws_entry(entry, entries.peek().copied(), doc);
     let contents = doc.concat_list(|docs| {
         docs.push(first);
         while let Some(entry) = entries.next() {
-            let has_next = entries.peek().is_some();
-            let entry_doc = format_throws_entry(entry, has_next, docs);
+            let entry_doc = format_throws_entry(entry, entries.peek().copied(), docs);
             docs.push(entry_doc);
         }
     });
@@ -378,42 +519,28 @@ fn format_throws_entries<'source>(
 }
 
 fn format_throws_entry<'source>(
-    entry: RecoveredSeparatedListEntry<'source, ThrowsClauseEntry<'source>>,
-    has_next: bool,
+    entry: &JavaFormatListPart<'source, jolt_java_syntax::Type<'source>>,
+    next: Option<&JavaFormatListPart<'source, jolt_java_syntax::Type<'source>>>,
     doc: &mut DocBuilder<'source>,
 ) -> Doc<'source> {
+    let has_next = next.is_some();
+    let next_is_separator = matches!(next, Some(JavaFormatListPart::Separator(_)));
     match entry {
-        RecoveredSeparatedListEntry::Entry(entry) => doc_concat!(
+        JavaFormatListPart::Item(exception) => doc_concat!(
             doc,
             [
-                format_type(&entry.exception, doc),
-                format_throws_entry_separator(doc, entry.comma, has_next),
+                format_type(exception, doc),
+                format_throws_entry_separator(doc, None, has_next && !next_is_separator),
             ]
         ),
-        RecoveredSeparatedListEntry::Token(token) => doc_concat!(
+        JavaFormatListPart::Separator(token) => {
+            format_throws_entry_separator(doc, Some(*token), has_next)
+        }
+        JavaFormatListPart::Malformed(malformed) => doc_concat!(
             doc,
             [
-                format_token(
-                    doc,
-                    &token,
-                    LeadingTrivia::Preserve,
-                    TrailingTrivia::Preserve,
-                ),
-                format_throws_entry_separator(doc, None, has_next),
-            ]
-        ),
-        RecoveredSeparatedListEntry::Error(error) => doc_concat!(
-            doc,
-            [
-                format_token_sequence(doc, error.token_iter(), LeadingTrivia::Preserve),
-                format_throws_entry_separator(doc, None, has_next),
-            ]
-        ),
-        RecoveredSeparatedListEntry::Node(node) => doc_concat!(
-            doc,
-            [
-                format_token_sequence(doc, node.token_iter(), LeadingTrivia::Preserve),
-                format_throws_entry_separator(doc, None, has_next),
+                *malformed,
+                format_throws_entry_separator(doc, None, has_next && !next_is_separator),
             ]
         ),
     }

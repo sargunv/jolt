@@ -20,7 +20,7 @@ use crate::helpers::comments::{
 use crate::helpers::lists::{
     CommaListItem, braced_comma_list_with_trailing_separator, parenthesized_list,
 };
-use crate::helpers::modifiers::inline_modifier_prefix_from_docs;
+use crate::helpers::recovery::format_malformed;
 use crate::rules::annotations::format_annotation;
 use crate::rules::declarations::format_anonymous_class_body;
 use crate::rules::patterns::format_pattern;
@@ -133,6 +133,7 @@ fn format_expression_with_leading_comments<'source>(
         Expression::ObjectCreationExpression(expression) => {
             format_object_creation_expression(expression, doc)
         }
+        Expression::BogusExpression(expression) => format_malformed(expression, doc),
     }
 }
 

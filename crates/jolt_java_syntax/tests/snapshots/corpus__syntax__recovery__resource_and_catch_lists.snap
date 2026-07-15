@@ -8,73 +8,89 @@ class C { void m() { try (a + /* resource */ ; b) {} catch (A | /* catch */ | B 
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "C" @ 6..7 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 8..9 trailing=[Whitespace " "]
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 10..14 trailing=[Whitespace " "]
-          Identifier "m" @ 15..16
-          LParen "(" @ 16..17
-          RParen ")" @ 17..18 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 19..20 trailing=[Whitespace " "]
-            BlockStatement
-              TryStatement
-                TryWithResourcesStatement
-                  TryKw "try" @ 21..24 trailing=[Whitespace " "]
-                  ResourceSpecification
-                    LParen "(" @ 25..26
-                    ResourceList
-                      Resource
-                        ErrorNode
-                          BinaryExpression
-                            NameExpression
-                              Identifier "a" @ 26..27 trailing=[Whitespace " "]
-                            Plus "+" @ 28..29 trailing=[Whitespace " ", BlockComment "/* resource */", Whitespace " "]
-                            ErrorNode
-                              Semicolon ";" @ 45..46 trailing=[Whitespace " "]
-                          ErrorNode
-                            Identifier "b" @ 47..48
-                    RParen ")" @ 48..49 trailing=[Whitespace " "]
-                  Block
-                    LBrace "{" @ 50..51
-                    RBrace "}" @ 51..52 trailing=[Whitespace " "]
-                  CatchClause
-                    CatchKw "catch" @ 53..58 trailing=[Whitespace " "]
-                    LParen "(" @ 59..60
-                    CatchParameter
-                      CatchTypeList
-                        UnionType
-                          ClassType
-                            Name
-                              Identifier "A" @ 60..61 trailing=[Whitespace " "]
-                          Bar "|" @ 62..63 trailing=[Whitespace " ", BlockComment "/* catch */", Whitespace " "]
-                          ErrorNode
-                          Bar "|" @ 76..77 trailing=[Whitespace " "]
-                          ClassType
-                            Name
-                              Identifier "B" @ 78..79 trailing=[Whitespace " "]
-                      Identifier "e" @ 80..81
-                    RParen ")" @ 81..82 trailing=[Whitespace " "]
-                    Block
-                      LBrace "{" @ 83..84
-                      RBrace "}" @ 84..85 trailing=[Whitespace " "]
-            RBrace "}" @ 86..87 trailing=[Whitespace " "]
-      RBrace "}" @ 88..89
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "C" @ 6..7 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 8..9 trailing=[Whitespace " "]
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 10..14 trailing=[Whitespace " "]
+              Identifier "m" @ 15..16
+              LParen "(" @ 16..17
+              RParen ")" @ 17..18 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 19..20 trailing=[Whitespace " "]
+                BlockStatementList
+                  BlockStatement
+                    TryStatement
+                      TryWithResourcesStatement
+                        TryKw "try" @ 21..24 trailing=[Whitespace " "]
+                        ResourceSpecification
+                          LParen "(" @ 25..26
+                          ResourceList
+                            Resource
+                              ErrorNode
+                                BinaryExpression
+                                  NameExpression
+                                    Identifier "a" @ 26..27 trailing=[Whitespace " "]
+                                  Plus "+" @ 28..29 trailing=[Whitespace " ", BlockComment "/* resource */", Whitespace " "]
+                                  ErrorNode
+                            Semicolon ";" @ 45..46 trailing=[Whitespace " "]
+                            Resource
+                              VariableAccess
+                                NameExpression
+                                  Identifier "b" @ 47..48
+                          RParen ")" @ 48..49 trailing=[Whitespace " "]
+                        Block
+                          LBrace "{" @ 50..51
+                          BlockStatementList
+                          RBrace "}" @ 51..52 trailing=[Whitespace " "]
+                        CatchClauseList
+                          CatchClause
+                            CatchKw "catch" @ 53..58 trailing=[Whitespace " "]
+                            LParen "(" @ 59..60
+                            CatchParameter
+                              ParameterModifierList
+                              CatchTypeList
+                                UnionType
+                                  ClassType
+                                    ClassTypeSegmentList
+                                      ClassTypeSegmentNode
+                                        AnnotationList
+                                        Name
+                                          Identifier "A" @ 60..61 trailing=[Whitespace " "]
+                                  Bar "|" @ 62..63 trailing=[Whitespace " ", BlockComment "/* catch */", Whitespace " "]
+                                  TypeBarList
+                                    ErrorNode
+                                      AnnotationList
+                                    Bar "|" @ 76..77 trailing=[Whitespace " "]
+                                    ClassType
+                                      ClassTypeSegmentList
+                                        ClassTypeSegmentNode
+                                          AnnotationList
+                                          Name
+                                            Identifier "B" @ 78..79 trailing=[Whitespace " "]
+                              Identifier "e" @ 80..81
+                            RParen ")" @ 81..82 trailing=[Whitespace " "]
+                            Block
+                              LBrace "{" @ 83..84
+                              BlockStatementList
+                              RBrace "}" @ 84..85 trailing=[Whitespace " "]
+                RBrace "}" @ 86..87 trailing=[Whitespace " "]
+        RBrace "}" @ 88..89
   Eof "" @ 90..90 leading=[Newline "\n"]
 
 diagnostics:
   code=java.parse.expected_syntax severity=Error stage=Parser range=45..46 message="expected expression"
-  code=java.parse.invalid_resource_variable_access severity=Error stage=Parser range=47..48 message="unexpected token in resource variable access"
-  code=java.parse.invalid_resource_variable_access severity=Error stage=Parser range=48..49 message="expected resource variable declaration or variable access"
+  code=java.parse.invalid_resource_variable_access severity=Error stage=Parser range=45..46 message="expected resource variable declaration or variable access"
   code=java.parse.expected_syntax severity=Error stage=Parser range=76..77 message="expected class or interface type"
 
 diagnostics:
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(45), end: TextSize(46) }) message=expected expression
-code=java.parse.invalid_resource_variable_access severity=Error stage=Parser range=Some(TextRange { start: TextSize(47), end: TextSize(48) }) message=unexpected token in resource variable access
-code=java.parse.invalid_resource_variable_access severity=Error stage=Parser range=Some(TextRange { start: TextSize(48), end: TextSize(49) }) message=expected resource variable declaration or variable access
+code=java.parse.invalid_resource_variable_access severity=Error stage=Parser range=Some(TextRange { start: TextSize(45), end: TextSize(46) }) message=expected resource variable declaration or variable access
 code=java.parse.expected_syntax severity=Error stage=Parser range=Some(TextRange { start: TextSize(76), end: TextSize(77) }) message=expected class or interface type

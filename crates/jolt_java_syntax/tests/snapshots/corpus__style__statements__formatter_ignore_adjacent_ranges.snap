@@ -19,78 +19,90 @@ int after=5;
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "Example" @ 6..13 trailing=[Whitespace " "]
-    ClassBody
-      LBrace "{" @ 14..15
-      ClassBodyDeclaration
-        MethodDeclaration
-          VoidType
-            VoidKw "void" @ 16..20 leading=[Newline "\n"] trailing=[Whitespace " "]
-          Identifier "run" @ 21..24
-          LParen "(" @ 24..25
-          RParen ")" @ 25..26 trailing=[Whitespace " "]
-          Block
-            LBrace "{" @ 27..28
-            BlockStatement
-              LocalVariableDeclaration
-                PrimitiveType
-                  IntKw "int" @ 29..32 leading=[Newline "\n"] trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "before" @ 33..39
-                    Assign "=" @ 39..40
-                    VariableInitializer
-                      LiteralExpression
-                        IntegerLiteral "1" @ 40..41
-              Semicolon ";" @ 41..42
-            BlockStatement
-              LocalVariableDeclaration
-                PrimitiveType
-                  IntKw "int" @ 61..64 leading=[Newline "\n", LineComment "// @formatter:off", Newline "\n"] trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "first" @ 65..70
-                    Assign "=" @ 70..71
-                    VariableInitializer
-                      BinaryExpression
-                        LiteralExpression
-                          IntegerLiteral "1" @ 71..72
-                        Plus "+" @ 72..73
-                        LiteralExpression
-                          IntegerLiteral "2" @ 73..74
-              Semicolon ";" @ 74..75
-            BlockStatement
-              LocalVariableDeclaration
-                PrimitiveType
-                  IntKw "int" @ 111..114 leading=[Newline "\n", LineComment "// @formatter:on", Newline "\n", LineComment "// @formatter:off", Newline "\n"] trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "second" @ 115..121
-                    Assign "=" @ 121..122
-                    VariableInitializer
-                      BinaryExpression
-                        LiteralExpression
-                          IntegerLiteral "3" @ 122..123
-                        Plus "+" @ 123..124
-                        LiteralExpression
-                          IntegerLiteral "4" @ 124..125
-              Semicolon ";" @ 125..126
-            BlockStatement
-              LocalVariableDeclaration
-                PrimitiveType
-                  IntKw "int" @ 144..147 leading=[Newline "\n", LineComment "// @formatter:on", Newline "\n"] trailing=[Whitespace " "]
-                VariableDeclaratorList
-                  VariableDeclarator
-                    Identifier "after" @ 148..153
-                    Assign "=" @ 153..154
-                    VariableInitializer
-                      LiteralExpression
-                        IntegerLiteral "5" @ 154..155
-              Semicolon ";" @ 155..156
-            RBrace "}" @ 157..158 leading=[Newline "\n"]
-      RBrace "}" @ 159..160 leading=[Newline "\n"]
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "Example" @ 6..13 trailing=[Whitespace " "]
+      ClassBody
+        LBrace "{" @ 14..15
+        ClassBodyMemberList
+          ClassBodyDeclaration
+            MethodDeclaration
+              VoidType
+                VoidKw "void" @ 16..20 leading=[Newline "\n"] trailing=[Whitespace " "]
+              Identifier "run" @ 21..24
+              LParen "(" @ 24..25
+              RParen ")" @ 25..26 trailing=[Whitespace " "]
+              Block
+                LBrace "{" @ 27..28
+                BlockStatementList
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      PrimitiveType
+                        AnnotationList
+                        IntKw "int" @ 29..32 leading=[Newline "\n"] trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "before" @ 33..39
+                          Assign "=" @ 39..40
+                          VariableInitializer
+                            LiteralExpression
+                              IntegerLiteral "1" @ 40..41
+                    Semicolon ";" @ 41..42
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      PrimitiveType
+                        AnnotationList
+                        IntKw "int" @ 61..64 leading=[Newline "\n", LineComment "// @formatter:off", Newline "\n"] trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "first" @ 65..70
+                          Assign "=" @ 70..71
+                          VariableInitializer
+                            BinaryExpression
+                              LiteralExpression
+                                IntegerLiteral "1" @ 71..72
+                              Plus "+" @ 72..73
+                              LiteralExpression
+                                IntegerLiteral "2" @ 73..74
+                    Semicolon ";" @ 74..75
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      PrimitiveType
+                        AnnotationList
+                        IntKw "int" @ 111..114 leading=[Newline "\n", LineComment "// @formatter:on", Newline "\n", LineComment "// @formatter:off", Newline "\n"] trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "second" @ 115..121
+                          Assign "=" @ 121..122
+                          VariableInitializer
+                            BinaryExpression
+                              LiteralExpression
+                                IntegerLiteral "3" @ 122..123
+                              Plus "+" @ 123..124
+                              LiteralExpression
+                                IntegerLiteral "4" @ 124..125
+                    Semicolon ";" @ 125..126
+                  BlockStatement
+                    LocalVariableDeclaration
+                      ParameterModifierList
+                      PrimitiveType
+                        AnnotationList
+                        IntKw "int" @ 144..147 leading=[Newline "\n", LineComment "// @formatter:on", Newline "\n"] trailing=[Whitespace " "]
+                      VariableDeclaratorList
+                        VariableDeclarator
+                          Identifier "after" @ 148..153
+                          Assign "=" @ 153..154
+                          VariableInitializer
+                            LiteralExpression
+                              IntegerLiteral "5" @ 154..155
+                    Semicolon ";" @ 155..156
+                RBrace "}" @ 157..158 leading=[Newline "\n"]
+        RBrace "}" @ 159..160 leading=[Newline "\n"]
   Eof "" @ 161..161 leading=[Newline "\n"]
 
 diagnostics:

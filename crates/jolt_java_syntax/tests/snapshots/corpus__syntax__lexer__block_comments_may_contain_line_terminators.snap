@@ -10,20 +10,24 @@ int a; /* one
 syntax:
 syntax:
 CompilationUnit
-  FieldDeclaration
-    PrimitiveType
-      IntKw "int" @ 0..3 trailing=[Whitespace " "]
-    VariableDeclaratorList
-      VariableDeclarator
-        Identifier "a" @ 4..5
-    Semicolon ";" @ 5..6 trailing=[Whitespace " "]
-  FieldDeclaration
-    PrimitiveType
-      IntKw "int" @ 31..34 leading=[BlockComment "/* one\n two\r\n three\r */", Whitespace " "] trailing=[Whitespace " "]
-    VariableDeclaratorList
-      VariableDeclarator
-        Identifier "b" @ 35..36
-    Semicolon ";" @ 36..37
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    FieldDeclaration
+      PrimitiveType
+        AnnotationList
+        IntKw "int" @ 0..3 trailing=[Whitespace " "]
+      VariableDeclaratorList
+        VariableDeclarator
+          Identifier "a" @ 4..5
+      Semicolon ";" @ 5..6 trailing=[Whitespace " "]
+    FieldDeclaration
+      PrimitiveType
+        AnnotationList
+        IntKw "int" @ 31..34 leading=[BlockComment "/* one\n two\r\n three\r */", Whitespace " "] trailing=[Whitespace " "]
+      VariableDeclaratorList
+        VariableDeclarator
+          Identifier "b" @ 35..36
+      Semicolon ";" @ 36..37
   Eof "" @ 37..37
 
 diagnostics:

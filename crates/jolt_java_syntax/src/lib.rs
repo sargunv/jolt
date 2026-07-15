@@ -6,6 +6,7 @@ mod kind;
 mod language;
 mod lexer;
 mod nodes;
+mod normalization;
 mod parser;
 mod shape;
 
@@ -16,4 +17,5 @@ pub use kind::JavaSyntaxKind;
 pub use language::JavaLanguage;
 pub use lexer::JavaLexer;
 pub use nodes::*;
+pub use normalization::{JavaDelimiterRemoval, JavaDelimiterSynthesis};
 pub use parser::{JavaParse, parse_compilation_unit};

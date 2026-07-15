@@ -8,18 +8,23 @@ a；b a＋b
 syntax:
 syntax:
 CompilationUnit
-  FieldDeclaration
-    ClassType
-      Name
-        Identifier "a" @ 0..1
-    VariableDeclaratorList
-      VariableDeclarator
-  ErrorNode
-    Unknown "；" @ 1..4
-    Identifier "b" @ 4..5 trailing=[Whitespace " "]
-    Identifier "a" @ 6..7
-    Unknown "＋" @ 7..10
-    Identifier "b" @ 10..11
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    FieldDeclaration
+      ClassType
+        ClassTypeSegmentList
+          ClassTypeSegmentNode
+            AnnotationList
+            Name
+              Identifier "a" @ 0..1
+      VariableDeclaratorList
+        VariableDeclarator
+    BogusTypeDeclaration
+      Unknown "；" @ 1..4
+      Identifier "b" @ 4..5 trailing=[Whitespace " "]
+      Identifier "a" @ 6..7
+      Unknown "＋" @ 7..10
+      Identifier "b" @ 10..11
   Eof "" @ 11..11
 
 diagnostics:

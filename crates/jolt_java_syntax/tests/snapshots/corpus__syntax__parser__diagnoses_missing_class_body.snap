@@ -8,11 +8,14 @@ class A;
 syntax:
 syntax:
 CompilationUnit
-  ClassDeclaration
-    ClassKw "class" @ 0..5 trailing=[Whitespace " "]
-    Identifier "A" @ 6..7
-    ErrorNode
-      Semicolon ";" @ 7..8
+  ImportDeclarationList
+  CompilationUnitDeclarationList
+    ClassDeclaration
+      ClassKw "class" @ 0..5 trailing=[Whitespace " "]
+      Identifier "A" @ 6..7
+      ClassBody
+        Semicolon ";" @ 7..8
+        ClassBodyMemberList
   Eof "" @ 8..8
 
 diagnostics:

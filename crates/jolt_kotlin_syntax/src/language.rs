@@ -8,10 +8,15 @@ use crate::parser::KotlinParseDiagnosticCode;
 /// Kotlin language binding for the shared syntax tree infrastructure.
 pub enum KotlinLanguage {}
 
+#[doc(hidden)]
+#[derive(Clone, Copy)]
+pub struct KotlinNormalizationAuthority(pub(crate) ());
+
 impl Language for KotlinLanguage {
     type Kind = KotlinSyntaxKind;
 
     type Lexer<'source> = KotlinLexer<'source>;
+    type NormalizationAuthority = KotlinNormalizationAuthority;
 
     fn kind_from_raw(raw: RawSyntaxKind) -> Self::Kind {
         KotlinSyntaxKind::from_raw(raw).expect("raw Kotlin syntax kind must be valid")
