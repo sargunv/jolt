@@ -64,7 +64,25 @@ fn format_syntax_to_sink<S: RenderSink + ?Sized>(
     let proof = RenderProof::new(root.conservation_tracker());
     let result = match render_to_tracked(&arena, doc, render_options, sink, proof) {
         Ok(outcome) if outcome.halted() => FormatSinkResult::Halted,
-        Ok(_) => FormatSinkResult::Complete,
+        Ok(outcome) => {
+            #[cfg(debug_assertions)]
+            assert!(
+                !root.is_recovery_free()
+                    || outcome
+                        .completed_proof()
+                        .expect("completed render has a conservation proof")
+                        .rendered_fragments()
+                        .iter()
+                        .all(|fragment| !matches!(
+                            fragment.kind,
+                            jolt_fmt_ir::SourceFragmentKind::MalformedVerbatim { .. }
+                        )),
+                "recovery-free Java syntax rendered a malformed-verbatim fragment"
+            );
+            #[cfg(not(debug_assertions))]
+            let _ = outcome;
+            FormatSinkResult::Complete
+        }
         Err(error) => FormatSinkResult::Blocked {
             diagnostics: vec![render_error_diagnostic(&error)],
         },

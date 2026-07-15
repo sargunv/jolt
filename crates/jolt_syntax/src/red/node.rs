@@ -110,15 +110,12 @@ impl<'tree, L: Language> SyntaxNode<'tree, L> {
     #[must_use]
     pub fn is_directly_malformed(&self) -> bool {
         self.tree.is_directly_malformed(self.id)
-            // Kotlin still uses the raw factory until its typed syntax phase.
-            || self.raw_kind() == L::kind_to_raw(L::error_node_kind())
     }
 
     /// Returns whether this subtree contains no malformed node or missing slot.
     #[must_use]
     pub fn is_recovery_free(&self) -> bool {
         self.tree.is_recovery_free(self.id)
-            && self.raw_kind() != L::kind_to_raw(L::error_node_kind())
     }
 
     pub(crate) const fn tree(&self) -> &'tree SyntaxTree {

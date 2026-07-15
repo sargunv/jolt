@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use jolt_syntax::{
     BuildSyntaxTreeError, FactoryNode, FactorySlot, ParsedChildren, RawSyntaxKind, SyntaxFactory,
     SyntaxTreeSink,

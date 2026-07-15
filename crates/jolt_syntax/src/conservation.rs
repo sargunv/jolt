@@ -747,8 +747,9 @@ mod tests {
     use jolt_text::{TextRange, TextSize};
 
     use crate::{
-        Event, Language, LanguageLexer, LexedToken, RawSyntaxKind, SyntaxNode, SyntaxTokenData,
-        SyntaxTrivia, TriviaKind, build_syntax_tree,
+        BuildSyntaxTreeError, Event, FactoryNode, Language, LanguageLexer, LexedToken,
+        ParsedChildren, RawSyntaxKind, SyntaxFactory, SyntaxNode, SyntaxTokenData, SyntaxTreeSink,
+        SyntaxTrivia, TriviaKind, build_syntax_tree_with_factory,
     };
 
     use super::{ConservationError, SourceIdentity, SourceTriviaSide, SyntaxVerbatimCore};
@@ -763,6 +764,18 @@ mod tests {
 
     struct TestLanguage;
     struct UnusedLexer;
+    struct TestFactory;
+
+    impl SyntaxFactory for TestFactory {
+        fn make_syntax(
+            &self,
+            kind: RawSyntaxKind,
+            _children: ParsedChildren<'_>,
+            sink: &mut SyntaxTreeSink<'_>,
+        ) -> Result<FactoryNode, BuildSyntaxTreeError> {
+            Ok(sink.raw(kind))
+        }
+    }
 
     impl Language for TestLanguage {
         type Kind = TestKind;
@@ -873,7 +886,8 @@ mod tests {
             Event::Token,
             Event::Finish,
         ];
-        let tree = build_syntax_tree(events, tokens, trivia).expect("valid tree");
+        let tree = build_syntax_tree_with_factory("", events, tokens, trivia, &TestFactory)
+            .expect("valid tree");
         (source, tree)
     }
 

@@ -508,6 +508,25 @@ an explicit bound, or generating exact slot-capacity metadata. They require a
 separate design and measurement decision. Eliding intentional physical lists or
 constructed syntax is not an optimization path.
 
+Phase 10 closes the shared migration layer rather than absorbing every syntax
+family's recovery migration. It deletes the test-only raw tree constructor, the
+Phase 7 dynamic schema matcher/static audit representation, and the red-tree
+generic-error special case. Generated factories, slot indices, typed borrowed
+views, and the compact parent overlay remain the sole production model. Existing
+render proofs become a hard recovery-free zero-malformed-verbatim gate, and
+source scans plus an exact baseline projection make forbidden patterns and
+implementation size executable.
+
+Remaining parser `ErrorNode` sites are frozen and then replaced by the
+category-compatible bogus owners assigned to the vertical Java and Kotlin
+phases. The public kind disappears with the transitional recovery architecture,
+after the final owning phase. Exact bidirectional diagnostic ownership follows
+the same migration: source-range overlap or a file-wide "has diagnostics" flag
+is not ownership, so each vertical phase supplies structural node/missing-slot
+identity and the final completion proof checks both directions. Phase 10 retains
+the accepted Phase 9 timing exception as an explicit open gate and does not add
+a second benchmark harness.
+
 ## Rejected Designs
 
 - **Formatter-facing parts tree:** duplicates syntax and invites divergence.

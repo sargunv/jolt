@@ -9,9 +9,9 @@ audited_nodes = 24656
 exact_valid_shapes = 24360
 malformed_nodes = 201
 clean_missing_required_shapes = 0
-diagnostic_missing_required_shapes = 73
+diagnostic_missing_required_shapes = 83
 clean_unexpected_shapes = 0
-diagnostic_unexpected_shapes = 22
+diagnostic_unexpected_shapes = 12
 error_node_owners = 95
 
 [clean_missing_required]
@@ -69,12 +69,19 @@ syntax__lexer__uses_longest_match_for_adjacent_minus_operators: FieldDeclaration
 syntax__lexer__uses_longest_match_for_adjacent_minus_operators: VariableDeclarator occurrence 1 ()
 syntax__lexer__uses_longest_match_for_keyword_and_literal_prefixes: FieldDeclaration occurrence 1 (ClassType VariableDeclaratorList)
 syntax__lexer__uses_longest_match_for_keyword_and_literal_prefixes: FieldDeclaration occurrence 2 (ClassType VariableDeclaratorList)
+syntax__parser__diagnoses_invalid_declaration_contexts: VariableDeclaratorList occurrence 2 (VariableDeclarator ErrorNode)
+syntax__parser__diagnoses_invalid_declaration_contexts: VariableDeclaratorList occurrence 3 (VariableDeclarator ErrorNode)
+syntax__parser__diagnoses_invalid_declaration_contexts: VariableDeclaratorList occurrence 4 (VariableDeclarator ErrorNode)
 syntax__parser__diagnoses_invalid_expression_forms: ParenthesizedExpression occurrence 1 (LParen("(") RParen(")"))
+syntax__parser__diagnoses_invalid_lambda_parameters: LambdaParameterList occurrence 1 (LambdaParameter Comma(",") LambdaParameter ErrorNode)
+syntax__parser__diagnoses_invalid_lambda_parameters: LambdaParameterList occurrence 2 (LambdaParameter Comma(",") LambdaParameter ErrorNode)
+syntax__parser__diagnoses_invalid_lambda_parameters: LambdaParameterList occurrence 3 (LambdaParameter ErrorNode LambdaParameter)
 syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: PackageDeclaration occurrence 1 (AnnotationList PackageKw("package"))
 syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: FieldDeclaration occurrence 1 (PrimitiveType VariableDeclaratorList)
 syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: VariableDeclarator occurrence 1 ()
 syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: FieldDeclaration occurrence 2 (PrimitiveType VariableDeclaratorList)
 syntax__parser__diagnoses_literals_and_underscore_used_as_general_identifiers: VariableDeclarator occurrence 2 ()
+syntax__parser__disambiguates_when_in_switch_labels__invalid_guard: SwitchLabelItemList occurrence 1 (CaseConstant ErrorNode)
 syntax__parser__recovers_invalid_syntax_with_error_nodes_and_diagnostics: MethodDeclaration occurrence 1 (VoidType Identifier("method") LParen("(") FormalParameterList Block)
 syntax__parser__recovers_invalid_syntax_with_error_nodes_and_diagnostics: FormalParameter occurrence 1 (ParameterModifierList ErrorNode AnnotationList)
 syntax__parser__recovers_malformed_nested_generic_member: VariableDeclarator occurrence 1 ()
@@ -84,10 +91,13 @@ syntax__parser__recovers_missing_declaration_names: AnnotationElementDeclaration
 syntax__parser__recovers_missing_declaration_names: EnumConstant occurrence 1 (AnnotationList)
 syntax__recovery__enum_pattern_and_for_lists: EnumConstant occurrence 2 (AnnotationList)
 syntax__recovery__enum_pattern_and_for_lists: VariableDeclarator occurrence 2 ()
+syntax__recovery__header_clauses: NameList occurrence 1 (Name Comma(",") Comma(",") Name)
 syntax__recovery__import_and_module_directives: ImportDeclaration occurrence 1 (ImportKw("import") Semicolon(";"))
 syntax__recovery__import_and_module_directives: RequiresDirective occurrence 1 (Identifier("requires") RequiresModifierList Semicolon(";"))
 syntax__recovery__method_invocation_without_name: QualifiedMethodInvocation occurrence 1 (NameExpression Dot(".") ArgumentList)
 syntax__recovery__qualifier_dots_without_qualifiers: ConstructorInvocation occurrence 1 (TypeArgumentList ErrorNode Semicolon(";"))
+syntax__recovery__switch_and_module_lists: SwitchLabelItemList occurrence 1 (CaseConstant Comma(",") Comma(",") CaseConstant)
+syntax__recovery__switch_and_module_lists: NameList occurrence 1 (Name Comma(",") Comma(",") Name)
 syntax__recovery__type_annotation_and_parameter_lists: TypeParameter occurrence 2 (AnnotationList)
 syntax__recovery__type_annotation_and_parameter_lists: FormalParameter occurrence 2 (ParameterModifierList ErrorNode AnnotationList)
 
@@ -95,26 +105,16 @@ syntax__recovery__type_annotation_and_parameter_lists: FormalParameter occurrenc
 
 [diagnostic_unexpected]
 syntax__parser__diagnoses_invalid_declaration_contexts: VariableDeclarator occurrence 1 has valid kind with direct malformed ownership [bytes=13, tokens=3, children=3] (Identifier("value") Assign("=") ErrorNode)
-syntax__parser__diagnoses_invalid_declaration_contexts: VariableDeclaratorList occurrence 2 (VariableDeclarator ErrorNode)
-syntax__parser__diagnoses_invalid_declaration_contexts: VariableDeclaratorList occurrence 3 (VariableDeclarator ErrorNode)
 syntax__parser__diagnoses_invalid_declaration_contexts: VariableDeclarator occurrence 4 has valid kind with direct malformed ownership [bytes=7, tokens=1, children=2] (Identifier("missing") ErrorNode)
-syntax__parser__diagnoses_invalid_declaration_contexts: VariableDeclaratorList occurrence 4 (VariableDeclarator ErrorNode)
 syntax__parser__diagnoses_invalid_expression_forms: ExpressionStatement occurrence 2 has valid kind with direct malformed ownership [bytes=16, tokens=4, children=4] (ErrorNode ErrorNode ErrorNode Semicolon(";"))
 syntax__parser__diagnoses_invalid_expression_forms: ExpressionStatement occurrence 3 has valid kind with direct malformed ownership [bytes=19, tokens=7, children=4] (ObjectCreationExpression ErrorNode ErrorNode Semicolon(";"))
 syntax__parser__diagnoses_invalid_expression_forms: ArrayCreationExpression occurrence 2 has valid kind with direct malformed ownership [bytes=17, tokens=10, children=4] (NewKw("new") PrimitiveType DimExpressionList ErrorNode)
-syntax__parser__diagnoses_invalid_lambda_parameters: LambdaParameterList occurrence 1 (LambdaParameter Comma(",") LambdaParameter ErrorNode)
-syntax__parser__diagnoses_invalid_lambda_parameters: LambdaParameterList occurrence 2 (LambdaParameter Comma(",") LambdaParameter ErrorNode)
-syntax__parser__diagnoses_invalid_lambda_parameters: LambdaParameterList occurrence 3 (LambdaParameter ErrorNode LambdaParameter)
 syntax__parser__diagnoses_missing_class_body: ClassBody occurrence 1 has valid kind with direct malformed ownership [bytes=1, tokens=1, children=2] (Semicolon(";") ClassBodyMemberList)
-syntax__parser__disambiguates_when_in_switch_labels__invalid_guard: SwitchLabelItemList occurrence 1 (CaseConstant ErrorNode)
-syntax__recovery__header_clauses: NameList occurrence 1 (Name Comma(",") Comma(",") Name)
 syntax__recovery__import_trailing_tokens: ImportDeclaration occurrence 1 has valid kind with direct malformed ownership [bytes=26, tokens=7, children=4] (ImportKw("import") QualifiedName ErrorNode Semicolon(";"))
 syntax__recovery__missing_type_body_token: ClassBody occurrence 1 has valid kind with direct malformed ownership [bytes=1, tokens=1, children=2] (Semicolon(";") ClassBodyMemberList)
 syntax__recovery__qualifier_dots_without_qualifiers: ExpressionStatement occurrence 1 has valid kind with direct malformed ownership [bytes=15, tokens=6, children=6] (ErrorNode ErrorNode ErrorNode ErrorNode ErrorNode Semicolon(";"))
 syntax__recovery__qualifier_dots_without_qualifiers: ExpressionStatement occurrence 2 has valid kind with direct malformed ownership [bytes=7, tokens=3, children=3] (ErrorNode ErrorNode Semicolon(";"))
 syntax__recovery__qualifier_dots_without_qualifiers: ExpressionStatement occurrence 3 has valid kind with direct malformed ownership [bytes=8, tokens=3, children=3] (ErrorNode ErrorNode Semicolon(";"))
-syntax__recovery__switch_and_module_lists: SwitchLabelItemList occurrence 1 (CaseConstant Comma(",") Comma(",") CaseConstant)
-syntax__recovery__switch_and_module_lists: NameList occurrence 1 (Name Comma(",") Comma(",") Name)
 syntax__recovery__wildcard_bounds_and_type_argument_annotations: WildcardType occurrence 1 has valid kind with direct malformed ownership [bytes=21, tokens=2, children=3] (Question("?") ExtendsKw("extends") ErrorNode)
 
 [error_node_ownership]

@@ -661,33 +661,6 @@ impl SyntaxTreeSink<'_> {
     }
 }
 
-struct RawFactory;
-
-impl SyntaxFactory for RawFactory {
-    fn make_syntax(
-        &self,
-        kind: RawSyntaxKind,
-        _children: ParsedChildren<'_>,
-        sink: &mut SyntaxTreeSink<'_>,
-    ) -> Result<FactoryNode, BuildSyntaxTreeError> {
-        Ok(sink.raw(kind))
-    }
-}
-
-/// Builds a raw lossless tree without language-specific slot placement.
-///
-/// # Errors
-///
-/// Returns an error when parser events are structurally inconsistent with
-/// their represented tokens.
-pub fn build_syntax_tree(
-    events: Vec<Event>,
-    tokens: Vec<SyntaxTokenData>,
-    trivia: Vec<SyntaxTrivia>,
-) -> Result<SyntaxTree, BuildSyntaxTreeError> {
-    build_syntax_tree_with_factory("", events, tokens, trivia, &RawFactory)
-}
-
 #[doc(hidden)]
 pub fn build_syntax_tree_with_factory(
     source: &str,
@@ -904,7 +877,28 @@ struct PartialNode {
 
 #[cfg(test)]
 mod tests {
-    use crate::{BuildSyntaxTreeError, Event, RawSyntaxKind, build_syntax_tree};
+    use crate::{BuildSyntaxTreeError, Event, RawSyntaxKind};
+
+    use super::{
+        FactoryNode, ParsedChildren, SyntaxFactory, SyntaxTreeSink, build_syntax_tree_with_factory,
+    };
+
+    struct TestFactory;
+
+    impl SyntaxFactory for TestFactory {
+        fn make_syntax(
+            &self,
+            kind: RawSyntaxKind,
+            _children: ParsedChildren<'_>,
+            sink: &mut SyntaxTreeSink<'_>,
+        ) -> Result<FactoryNode, BuildSyntaxTreeError> {
+            Ok(sink.raw(kind))
+        }
+    }
+
+    fn build(events: Vec<Event>) -> Result<super::SyntaxTree, BuildSyntaxTreeError> {
+        build_syntax_tree_with_factory("", events, Vec::new(), Vec::new(), &TestFactory)
+    }
 
     #[test]
     fn construction_only_consumed_event_is_rejected_from_input() {
@@ -917,8 +911,7 @@ mod tests {
             Event::Finish,
         ];
 
-        let error = build_syntax_tree(events, Vec::new(), Vec::new())
-            .expect_err("caller-provided consumed event must be rejected");
+        let error = build(events).expect_err("caller-provided consumed event must be rejected");
         assert_eq!(
             error,
             BuildSyntaxTreeError::UnexpectedConsumedEvent { position: 1 }
@@ -937,8 +930,7 @@ mod tests {
         }
         events.extend(std::iter::repeat_n(Event::Finish, DEPTH));
 
-        let tree = build_syntax_tree(events, Vec::new(), Vec::new())
-            .expect("deep forward-parent chain is a valid tree");
+        let tree = build(events).expect("deep forward-parent chain is a valid tree");
 
         assert_eq!(tree.nodes.len(), DEPTH);
     }

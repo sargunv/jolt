@@ -34,7 +34,7 @@ pub use red::{
 #[cfg(feature = "bench")]
 pub use syntax_tree::SyntaxTreeMetrics;
 pub use syntax_tree::{
-    BuildSyntaxTreeError, SyntaxTokenData, SyntaxTree, SyntaxTrivia, TriviaKind, build_syntax_tree,
+    BuildSyntaxTreeError, SyntaxTokenData, SyntaxTree, SyntaxTrivia, TriviaKind,
 };
 #[doc(hidden)]
 pub use syntax_tree::{

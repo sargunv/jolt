@@ -1,13 +1,11 @@
 use jolt_test_support::{
-    SchemaAudit, assert_schema_deterministic, collect_java_files, fixture_snapshot_name,
-    java_fixture_root, read_to_string,
+    SchemaAudit, collect_java_files, fixture_snapshot_name, java_fixture_root, read_to_string,
 };
 
-use crate::{parse_compilation_unit, shape::SCHEMA};
+use crate::{parse_compilation_unit, shape::audit_physical_node};
 
 #[test]
 fn declared_schema_matches_represented_corpus() {
-    assert_schema_deterministic(&SCHEMA);
     let root = java_fixture_root(env!("CARGO_MANIFEST_DIR"));
     let paths = collect_java_files(&root);
     let mut audit = SchemaAudit::new("java");
@@ -23,10 +21,10 @@ fn declared_schema_matches_represented_corpus() {
             )
         });
         audit.visit(
-            &SCHEMA,
             &fixture_snapshot_name(&root, &path),
             *syntax.syntax(),
             !parse.diagnostics().is_empty(),
+            audit_physical_node,
         );
     }
 

@@ -676,15 +676,60 @@ the gate.
 
 ### New Phase 10: Shared Uniform-Tree Architecture Closeout
 
-Remove test-only reference construction, temporary audit carriers, the
-generic-error-only malformed owner, and both formatter-local
-`FormatterInsertedToken` enums. Retain only the single physical node/slot model,
-one generated factory per language, typed borrowed views, and the compact parent
-overlay. Pre-size the formatter document arena only if measurement confirms a
-remaining growth cost. Enable forbidden-pattern, bidirectional diagnostic-owner,
-node-slot exhaustiveness, clean-zero-verbatim, malformed
-conservation/idempotence, production LOC, and benchmark-ready performance gates.
-The existing realistic benchmark remains the only performance harness.
+Remove test-only raw/reference tree construction, the Phase 7 dynamic schema
+matcher and its static audit metadata, and the red-tree special case that made a
+generic parser error kind malformed without factory ownership. Retain only the
+single physical node/slot model, one generated factory per language, typed
+borrowed views, generated slot indices/categories, and the compact parent
+overlay. The two formatter-local `FormatterInsertedToken` enums were already
+replaced by syntax-issued normalization claims in Phases 8 and 9; forbid their
+return rather than adding another replacement. Pre-size the formatter document
+arena only if measurement confirms a remaining growth cost.
+
+Make the architecture claims executable: validate physical parent/slot
+relationships and generated node coverage, reject forbidden production patterns,
+assert that recovery-free trees render zero malformed-verbatim fragments, retain
+hard malformed conservation/idempotence tests, report the exact implementation
+LOC projection against `2197128`, and keep the existing realistic benchmark as
+the only performance harness. Phase 10 inherits the explicitly accepted Phase 9
+timing exception; benchmark readiness must not be reported as a passing timing
+gate.
+
+Do not migrate every remaining parser `ErrorNode` in this shared closeout. Those
+sites span all Java and Kotlin syntax families and their category-compatible
+bogus replacements belong to the focused vertical Phases 11–20. Freeze the
+inventory here, remove each site in its owning vertical phase, and delete the
+kind with the final transitional recovery architecture in Phase 22. Likewise, do
+not fake bidirectional diagnostic ownership with file-level diagnostic flags or
+overlapping source ranges: the current diagnostic value has no structural owner
+identity. Each vertical phase must introduce exact node or missing-slot
+ownership for the structural diagnostics it migrates; Phase 24 enables the
+workspace-wide bidirectional proof after that inventory is complete.
+
+Implementation status: **implemented, gate-green, and uncommitted**. The public
+raw tree builder and red-node generic-error fallback are gone. The 1,188-line
+generic schema interpreter is replaced by a small physical-tree inventory plus
+language-local test expansion of the production schema; the expansion checks
+slot count, exact token/node/category kinds, required empties, list alternation,
+parent/index links, and malformed ownership without retaining a second runtime
+shape model. Ten Java and twelve Kotlin diagnostic list shapes are now correctly
+reported as missing required physical slots instead of unexpected reconstructed
+child sequences; clean/exact/malformed counts are unchanged.
+
+Debug/test recovery-free render completion now rejects every malformed-verbatim
+ledger entry. The architecture test freezes generic `ErrorNode` use by grammar
+file, forbids deleted construction/audit/normalization names, and enforces this
+exact implementation projection command:
+
+```sh
+git diff --numstat 2197128 -- \
+  ':(glob)crates/**/*.rs' \
+  ':(glob)tools/**/*.py'
+```
+
+The Phase 10 review point is +25,936/-24,204 implementation lines, net +1,732
+from `2197128`, down 583 lines from accepted Phase 9's net +2,315. The final
+roadmap remains responsible for crossing below zero.
 
 Every canonical-layout phase from 11 through 20 restores the historical fixture
 scopes assigned to it by `formatter-retained-regressions.toml` and removes the

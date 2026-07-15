@@ -820,8 +820,9 @@ mod tests {
     use jolt_diagnostics::{Diagnostic, DiagnosticCodeId};
     use jolt_java_syntax::{JavaLanguage, JavaSyntaxKind};
     use jolt_syntax::{
-        Event, Language, LanguageLexer, LexedToken, RawSyntaxKind, SourceIdentity, SourceTokenId,
-        SyntaxNode, SyntaxTokenData, SyntaxTrivia, TriviaKind, build_syntax_tree,
+        BuildSyntaxTreeError, Event, FactoryNode, Language, LanguageLexer, LexedToken,
+        ParsedChildren, RawSyntaxKind, SourceIdentity, SourceTokenId, SyntaxFactory, SyntaxNode,
+        SyntaxTokenData, SyntaxTreeSink, SyntaxTrivia, TriviaKind, build_syntax_tree_with_factory,
     };
     use jolt_text::{TextRange, TextSize};
 
@@ -839,6 +840,22 @@ mod tests {
 
     struct ClaimLanguage;
     struct ClaimLexer;
+    struct ClaimFactory;
+
+    impl SyntaxFactory for ClaimFactory {
+        fn make_syntax(
+            &self,
+            kind: RawSyntaxKind,
+            _children: ParsedChildren<'_>,
+            sink: &mut SyntaxTreeSink<'_>,
+        ) -> Result<FactoryNode, BuildSyntaxTreeError> {
+            if kind == JavaLanguage::kind_to_raw(JavaLanguage::error_node_kind()) {
+                Ok(sink.raw_malformed(kind))
+            } else {
+                Ok(sink.raw(kind))
+            }
+        }
+    }
 
     impl Language for ClaimLanguage {
         type Kind = JavaSyntaxKind;
@@ -956,7 +973,8 @@ mod tests {
         });
         events.extend((0..tokens.len()).map(|_| Event::Token));
         events.push(Event::Finish);
-        build_syntax_tree(events, tokens, Vec::new()).expect("test syntax tree builds")
+        build_syntax_tree_with_factory("", events, tokens, Vec::new(), &ClaimFactory)
+            .expect("test syntax tree builds")
     }
 
     fn syntax_tree(source: &str) -> jolt_syntax::SyntaxTree {
@@ -996,7 +1014,8 @@ mod tests {
             Event::Finish,
             Event::Finish,
         ];
-        build_syntax_tree(events, tokens, Vec::new()).expect("mixed test syntax tree builds")
+        build_syntax_tree_with_factory("", events, tokens, Vec::new(), &ClaimFactory)
+            .expect("mixed test syntax tree builds")
     }
 
     fn syntax_tree_with_line_comment() -> jolt_syntax::SyntaxTree {
@@ -1019,7 +1038,8 @@ mod tests {
             Event::Token,
             Event::Finish,
         ];
-        build_syntax_tree(events, vec![token], trivia).expect("comment test syntax tree builds")
+        build_syntax_tree_with_factory("", events, vec![token], trivia, &ClaimFactory)
+            .expect("comment test syntax tree builds")
     }
 
     #[test]

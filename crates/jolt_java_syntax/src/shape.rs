@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use jolt_syntax::{
     BuildSyntaxTreeError, FactoryNode, FactorySlot, ParsedChildren, RawSyntaxKind, SyntaxFactory,
     SyntaxTreeSink,
@@ -321,3 +319,161 @@ macro_rules! define_java_factory {
 }
 
 java_syntax_schema!(define_java_factory);
+
+#[cfg(test)]
+macro_rules! java_audit_matches {
+    ($slot:ident, (token $kind:ident)) => {
+        matches!($slot, jolt_syntax::SyntaxSlot::Token(token) if token.kind() == JavaSyntaxKind::$kind)
+    };
+    ($slot:ident, (token_set [$($kind:ident),*])) => {
+        matches!($slot, jolt_syntax::SyntaxSlot::Token(token) if matches!(token.kind(), $(JavaSyntaxKind::$kind)|*))
+    };
+    ($slot:ident, (element_set [$($kind:ident),*])) => {
+        match $slot {
+            jolt_syntax::SyntaxSlot::Node(node) => matches!(node.kind(), $(JavaSyntaxKind::$kind)|*),
+            jolt_syntax::SyntaxSlot::Token(token) => matches!(token.kind(), $(JavaSyntaxKind::$kind)|*),
+            jolt_syntax::SyntaxSlot::Empty => false,
+        }
+    };
+    ($slot:ident, (contextual $text:literal)) => {
+        matches!($slot, jolt_syntax::SyntaxSlot::Token(token) if token.kind() == JavaSyntaxKind::Identifier && token.text() == $text)
+    };
+    ($slot:ident, (node $kind:ident)) => {
+        matches!($slot, jolt_syntax::SyntaxSlot::Node(node) if node.kind() == JavaSyntaxKind::$kind)
+    };
+    ($slot:ident, (constructed $kind:ident)) => {
+        java_audit_matches!($slot, (node $kind))
+    };
+    ($slot:ident, (list $kind:ident)) => {
+        java_audit_matches!($slot, (node $kind))
+    };
+    ($slot:ident, (node_set [$($kind:ident),*])) => {
+        matches!($slot, jolt_syntax::SyntaxSlot::Node(node) if matches!(node.kind(), $(JavaSyntaxKind::$kind)|*))
+    };
+    ($slot:ident, (category $category:ident)) => {
+        matches!($slot, jolt_syntax::SyntaxSlot::Node(node) if java_category_accepts(Category::$category, Some(node.kind())))
+    };
+    ($slot:ident, (any_node)) => {
+        matches!($slot, jolt_syntax::SyntaxSlot::Node(_))
+    };
+    ($slot:ident, (any_element)) => {
+        !matches!($slot, jolt_syntax::SyntaxSlot::Empty)
+    };
+    ($slot:ident, (choice [$($matcher:tt),*])) => {
+        false $(|| java_audit_matches!($slot, $matcher))*
+    };
+}
+
+#[cfg(test)]
+macro_rules! java_audit_fixed_field {
+    ($slot:ident, $missing:ident, required, $matcher:tt) => {
+        match $slot {
+            jolt_syntax::SyntaxSlot::Empty => $missing = true,
+            jolt_syntax::SyntaxSlot::Node(node) if node.is_directly_malformed() => {}
+            _ if java_audit_matches!($slot, $matcher) => {}
+            _ => return jolt_test_support::PhysicalNodeAudit::Unexpected,
+        }
+    };
+    ($slot:ident, $missing:ident, optional, $matcher:tt) => {
+        match $slot {
+            jolt_syntax::SyntaxSlot::Empty => {}
+            _ if java_audit_matches!($slot, $matcher) => {}
+            _ => return jolt_test_support::PhysicalNodeAudit::Unexpected,
+        }
+    };
+}
+
+#[cfg(test)]
+macro_rules! java_audit_node {
+    ($node:ident, valid; $($field:ident: $cardinality:ident $matcher:tt $(=> $role:ident)? $([$($policy:tt)*])?;)*) => {{
+        let mut cursor = 0;
+        #[allow(unused_mut)]
+        let mut missing = false;
+        $(
+            let Some(slot) = $node.slot_at(cursor) else {
+                return jolt_test_support::PhysicalNodeAudit::Unexpected;
+            };
+            java_audit_fixed_field!(slot, missing, $cardinality, $matcher);
+            cursor += 1;
+        )*
+        if cursor != $node.slot_count() {
+            jolt_test_support::PhysicalNodeAudit::Unexpected
+        } else if missing {
+            jolt_test_support::PhysicalNodeAudit::MissingRequired
+        } else {
+            jolt_test_support::PhysicalNodeAudit::Exact
+        }
+    }};
+    ($node:ident, constructed; $($fields:tt)*) => {
+        java_audit_node!($node, valid; $($fields)*)
+    };
+    ($node:ident, list; $field:ident: $cardinality:ident $matcher:tt $(=> $role:ident)?;) => {{
+        let mut missing = false;
+        for index in 0..$node.slot_count() {
+            let slot = $node.slot_at(index).expect("physical list slot");
+            match slot {
+                jolt_syntax::SyntaxSlot::Empty => missing = true,
+                jolt_syntax::SyntaxSlot::Node(child) if child.is_directly_malformed() => {}
+                _ if java_audit_matches!(slot, $matcher) => {}
+                _ => return jolt_test_support::PhysicalNodeAudit::Unexpected,
+            }
+        }
+        if missing {
+            jolt_test_support::PhysicalNodeAudit::MissingRequired
+        } else {
+            jolt_test_support::PhysicalNodeAudit::Exact
+        }
+    }};
+    ($node:ident, list; $field:ident: $cardinality:ident $matcher:tt $(=> $role:ident)? [disambiguate $policy:ident];) => {
+        java_audit_node!($node, list; $field: $cardinality $matcher $(=> $role)?;)
+    };
+    ($node:ident, list; $field:ident: $cardinality:ident $matcher:tt $(=> $role:ident)? [separated $separator:tt, minimum $minimum:literal, trailing $trailing:ident, recovery bogus_owner];) => {{
+        let mut missing = false;
+        for index in 0..$node.slot_count() {
+            let slot = $node.slot_at(index).expect("physical separated-list slot");
+            if matches!(slot, jolt_syntax::SyntaxSlot::Empty) {
+                missing = true;
+            } else if index % 2 == 0 {
+                if !matches!(slot, jolt_syntax::SyntaxSlot::Node(child) if child.is_directly_malformed())
+                    && !java_audit_matches!(slot, $matcher)
+                {
+                    return jolt_test_support::PhysicalNodeAudit::Unexpected;
+                }
+            } else if !java_audit_matches!(slot, $separator) {
+                return jolt_test_support::PhysicalNodeAudit::Unexpected;
+            }
+        }
+        if missing {
+            jolt_test_support::PhysicalNodeAudit::MissingRequired
+        } else {
+            jolt_test_support::PhysicalNodeAudit::Exact
+        }
+    }};
+    ($node:ident, malformed; $($fields:tt)*) => {
+        jolt_test_support::PhysicalNodeAudit::Malformed
+    };
+}
+
+#[cfg(test)]
+macro_rules! define_java_physical_audit {
+    (
+        tokens { $($token:ident,)* }
+        categories { $($family:ident => $bogus:ident { $($member:ident,)* })* }
+        nodes {
+            $($kind:ident => $wrapper:ident [$module:ident $class:ident] { $($fields:tt)* })*
+        }
+    ) => {
+        pub(crate) fn audit_physical_node(
+            node: jolt_syntax::SyntaxNode<'_, crate::JavaLanguage>,
+        ) -> jolt_test_support::PhysicalNodeAudit {
+            match node.kind() {
+                $(JavaSyntaxKind::$kind => java_audit_node!(node, $class; $($fields)*),)*
+                $(JavaSyntaxKind::$bogus => jolt_test_support::PhysicalNodeAudit::Malformed,)*
+                _ => jolt_test_support::PhysicalNodeAudit::Unexpected,
+            }
+        }
+    };
+}
+
+#[cfg(test)]
+java_syntax_schema!(define_java_physical_audit);

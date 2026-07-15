@@ -13,7 +13,7 @@ use unicode_width::UnicodeWidthStr;
 
 mod schema_audit;
 
-pub use schema_audit::{SchemaAudit, assert_schema_deterministic};
+pub use schema_audit::{PhysicalNodeAudit, SchemaAudit};
 
 #[derive(Default)]
 pub struct StringSink {
